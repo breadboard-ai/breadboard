@@ -4,269 +4,293 @@
 
 export { executeStep, executeTool, parseExecutionOutput };
 
-import {
-  Capabilities,
-  FileSystemReadWritePath,
-  InlineDataCapabilityPart,
-  JsonSerializable,
-  LLMContent,
-  Outcome,
-} from "@breadboard-ai/types";
-import { StreamableReporter } from "./output.js";
-import {
-  decodeBase64,
-  encodeBase64,
-  err,
-  ErrorMetadata,
-  ErrorWithMetadata,
-  ok,
-  toLLMContentInline,
-  toLLMContentStored,
-} from "./utils.js";
-import { A2ModuleArgs } from "../runnable-module-factory.js";
+  import {
+    Capabilities,
+    FileSystemReadWritePath,
+    InlineDataCapabilityPart,
+    JsonSerializable,
+    LLMContent,
+    Outcome,
+  } from "@breadboard-ai/types";
+  import { getCurrentStepState, StreamableReporter } from "./output.js";
+  import {
+    decodeBase64,
+    encodeBase64,
+    err,
+    ErrorMetadata,
+    ErrorWithMetadata,
+    ok,
+    toLLMContentInline,
+    toLLMContentStored,
+  } from "./utils.js";
+  import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-const DEFAULT_BACKEND_ENDPOINT =
-  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
+  const DEFAULT_BACKEND_ENDPOINT =
+    "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
 
-type Chunk = {
-  mimetype: string;
-  data: string;
-  substreamName?: string;
-};
-
-export type Content = {
-  chunks: Chunk[];
-};
-
-export type ContentMap = {
-  [key: string]: Content;
-};
-
-export type PlanStep = {
-  stepName: string;
-  modelApi: string;
-  inputParameters: string[];
-  systemPrompt?: string;
-  stepIntent?: string;
-  output?: string;
-  isListOutput?: boolean;
-  options?: {
-    disablePromptRewrite?: boolean;
-    renderMode?: string;
-    modelName?: string;
-    systemInstruction?: string;
+  type Chunk = {
+    mimetype: string;
+    data: string;
+    substreamName?: string;
   };
-};
 
-export type GcsConfig = {
-  bucket_name: string;
-  folder_path?: string;
-  project_name?: string;
-};
-
-export type ExecuteStepRequest = {
-  planStep: PlanStep;
-  execution_inputs: ContentMap;
-};
-
-export type ExecuteStepResponse = {
-  executionOutputs: ContentMap;
-  errorMessage?: string;
-};
-
-export type ExecuteStepErrorResponse = {
-  error: {
-    code: number;
-    message: string;
-    status: string;
-    details: unknown;
+  export type Content = {
+    chunks: Chunk[];
   };
-};
 
-type ExecutionOutput = {
-  chunks: LLMContent[];
-  requestedModel?: string;
-  executedModel?: string;
-};
+  export type ContentMap = {
+    [key: string]: Content;
+  };
 
-const GCS_PATH_PREFIX = "text/gcs-path/";
+  export type PlanStep = {
+    stepName: string;
+    modelApi: string;
+    inputParameters: string[];
+    systemPrompt?: string;
+    stepIntent?: string;
+    output?: string;
+    isListOutput?: boolean;
+    options?: {
+      disablePromptRewrite?: boolean;
+      renderMode?: string;
+      modelName?: string;
+      systemInstruction?: string;
+    };
+  };
 
-function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
-  let requestedModel: string | undefined = undefined;
-  let executedModel: string | undefined = undefined;
-  const chunks: LLMContent[] = [];
-  input?.forEach((chunk) => {
-    if (chunk.substreamName === "requested-model") {
-      requestedModel = chunk.data;
-    } else if (chunk.substreamName === "executed-model") {
-      executedModel = chunk.data;
-    } else {
-      chunks.push(toLLMContent(chunk));
-    }
-  });
-  if (chunks.length === 0) {
-    return err(`Unable to find data in the output`, {
-      origin: "server",
-      kind: "bug",
-    });
-  }
-  return { chunks, requestedModel, executedModel };
+  export type GcsConfig = {
+    bucket_name: string;
+    folder_path?: string;
+    project_name?: string;
+  };
 
-  function toLLMContent({ mimetype, data }: Chunk): LLMContent {
-    if (mimetype === "text/html") {
-      return toLLMContentInline(mimetype, decodeBase64(data));
-    } else if (mimetype.endsWith("/storedData")) {
-      return toLLMContentStored(mimetype.replace("/storedData", ""), data);
-    } else if (mimetype.startsWith(GCS_PATH_PREFIX)) {
-      const gcsPath = new TextDecoder().decode(
-        Uint8Array.from(atob(data), (m) => m.codePointAt(0)!)
-      );
-      const handle = new URL(
-        `/board/blobs/${gcsPath.split("/").at(-1)}`,
-        window.location.href
-      ).href;
-      const actualMimeType = mimetype.slice(GCS_PATH_PREFIX.length);
-      return toLLMContentStored(actualMimeType, handle);
-    }
-    return toLLMContentInline(mimetype, data);
-  }
-}
+  export type ExecuteStepRequest = {
+    planStep: PlanStep;
+    execution_inputs: ContentMap;
+  };
 
-async function executeTool<
-  T extends JsonSerializable = Record<string, JsonSerializable>,
->(
-  caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
-  api: string,
-  params: Record<string, string>
-): Promise<Outcome<T | string>> {
-  const inputParameters = Object.keys(params);
-  const execution_inputs = Object.fromEntries(
-    Object.entries(params).map(([name, value]) => {
-      return [
-        name,
-        {
-          chunks: [
-            {
-              mimetype: "text/plan",
-              data: encodeBase64(value),
-            },
-          ],
-        },
-      ];
-    })
-  );
-  const response = await executeStep(caps, moduleArgs, {
-    planStep: {
-      stepName: api,
-      modelApi: api,
-      output: "data",
-      inputParameters,
-      isListOutput: false,
-    },
-    execution_inputs,
-  });
-  if (!ok(response)) return response;
+  export type ExecuteStepResponse = {
+    executionOutputs: ContentMap;
+    errorMessage?: string;
+  };
 
-  const {
-    inlineData: { data },
-  } = response.chunks.at(0)!.parts.at(0) as InlineDataCapabilityPart;
-  const jsonString = decodeBase64(data!);
-  try {
-    return JSON.parse(jsonString) as T;
-  } catch {
-    return jsonString;
-  }
-}
+  export type ExecuteStepErrorResponse = {
+    error: {
+      code: number;
+      message: string;
+      status: string;
+      details: unknown;
+    };
+  };
 
-type BackendSettings = {
-  endpoint_url: string;
-};
-async function getBackendUrl(caps: Capabilities) {
-  const reading = await caps.read({ path: "/env/settings/backend" });
-  if (ok(reading)) {
-    const part = reading.data?.at(0)?.parts?.at(0);
-    if (part && "json" in part) {
-      const settings = part.json as BackendSettings;
-      if (settings && settings.endpoint_url) {
-        return settings.endpoint_url;
+  type ExecutionOutput = {
+    chunks: LLMContent[];
+    requestedModel?: string;
+    executedModel?: string;
+  };
+
+  const GCS_PATH_PREFIX = "text/gcs-path/";
+
+  function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
+    let requestedModel: string | undefined = undefined;
+    let executedModel: string | undefined = undefined;
+    const chunks: LLMContent[] = [];
+    input?.forEach((chunk) => {
+      if (chunk.substreamName === "requested-model") {
+        requestedModel = chunk.data;
+      } else if (chunk.substreamName === "executed-model") {
+        executedModel = chunk.data;
+      } else {
+        chunks.push(toLLMContent(chunk));
       }
-    }
-  }
-  return DEFAULT_BACKEND_ENDPOINT;
-}
-
-async function executeStep(
-  caps: Capabilities,
-  { fetchWithCreds, context }: A2ModuleArgs,
-  body: ExecuteStepRequest
-): Promise<Outcome<ExecutionOutput>> {
-  const model = body.planStep.options?.modelName || body.planStep.stepName;
-  const reporter = new StreamableReporter(caps, {
-    title: `Calling ${model}`,
-    icon: "spark",
-  });
-  try {
-    await reporter.start();
-    await reporter.sendUpdate("Step Input", elideEncodedData(body), "upload");
-    // Call the API.
-    const url = await getBackendUrl(caps);
-    // Record model call with action tracker.
-    caps.write({
-      path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
-      data: [],
     });
-    let response: ExecuteStepResponse;
-    try {
-      const fetchResponse = await fetchWithCreds(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: context.signal,
-        body: JSON.stringify(body),
+    if (chunks.length === 0) {
+      return err(`Unable to find data in the output`, {
+        origin: "server",
+        kind: "bug",
       });
-      if (!fetchResponse.ok) {
-        const { $error, metadata } = decodeFetchError(
-          await fetchResponse.text(),
-          model
+    }
+    return { chunks, requestedModel, executedModel };
+
+    function toLLMContent({ mimetype, data }: Chunk): LLMContent {
+      if (mimetype === "text/html") {
+        return toLLMContentInline(mimetype, decodeBase64(data));
+      } else if (mimetype.endsWith("/storedData")) {
+        return toLLMContentStored(mimetype.replace("/storedData", ""), data);
+      } else if (mimetype.startsWith(GCS_PATH_PREFIX)) {
+        const gcsPath = new TextDecoder().decode(
+          Uint8Array.from(atob(data), (m) => m.codePointAt(0)!)
         );
-        return reporter.sendError(err($error, metadata));
+        const handle = new URL(
+          `/board/blobs/${gcsPath.split("/").at(-1)}`,
+          window.location.href
+        ).href;
+        const actualMimeType = mimetype.slice(GCS_PATH_PREFIX.length);
+        return toLLMContentStored(actualMimeType, handle);
       }
-      response = await fetchResponse.json();
-    } catch (e) {
-      return reporter.sendError(
-        err((e as Error).message, {
-          origin: "server",
-          model,
-        })
-      );
+      return toLLMContentInline(mimetype, data);
     }
-    if (!response) {
-      return await reporter.sendError(
-        err(`Request to "${model}" failed, please try again`, {
-          origin: "server",
-          kind: "bug",
-        })
-      );
-    }
-    if (response.errorMessage) {
-      const errorMessage = decodeMetadata(response.errorMessage, model);
-      return await reporter.sendError(
-        err(errorMessage.$error, errorMessage.metadata)
-      );
-    }
-    await reporter.sendUpdate(
-      "Step Output",
-      elideEncodedData(response),
-      "download"
-    );
-    const output_key = body.planStep.output || "";
-    return parseExecutionOutput(response.executionOutputs[output_key]?.chunks);
-  } finally {
-    await reporter.close();
   }
-}
+
+  async function executeTool<
+    T extends JsonSerializable = Record<string, JsonSerializable>,
+  >(
+    caps: Capabilities,
+    moduleArgs: A2ModuleArgs,
+    api: string,
+    params: Record<string, string>
+  ): Promise<Outcome<T | string>> {
+    const inputParameters = Object.keys(params);
+    const execution_inputs = Object.fromEntries(
+      Object.entries(params).map(([name, value]) => {
+        return [
+          name,
+          {
+            chunks: [
+              {
+                mimetype: "text/plan",
+                data: encodeBase64(value),
+              },
+            ],
+          },
+        ];
+      })
+    );
+    const response = await executeStep(caps, moduleArgs, {
+      planStep: {
+        stepName: api,
+        modelApi: api,
+        output: "data",
+        inputParameters,
+        isListOutput: false,
+      },
+      execution_inputs,
+    });
+    if (!ok(response)) return response;
+
+    const {
+      inlineData: { data },
+    } = response.chunks.at(0)!.parts.at(0) as InlineDataCapabilityPart;
+    const jsonString = decodeBase64(data!);
+    try {
+      return JSON.parse(jsonString) as T;
+    } catch {
+      return jsonString;
+    }
+  }
+
+  type BackendSettings = {
+    endpoint_url: string;
+  };
+  async function getBackendUrl(caps: Capabilities) {
+    const reading = await caps.read({ path: "/env/settings/backend" });
+    if (ok(reading)) {
+      const part = reading.data?.at(0)?.parts?.at(0);
+      if (part && "json" in part) {
+        const settings = part.json as BackendSettings;
+        if (settings && settings.endpoint_url) {
+          return settings.endpoint_url;
+        }
+      }
+    }
+    return DEFAULT_BACKEND_ENDPOINT;
+  }
+
+  type ProgressUpdateOptions = {
+    message?: string;
+    expectedDurationInSec?: number;
+  };
+
+  async function executeStep(
+    caps: Capabilities,
+    moduleArgs: A2ModuleArgs,
+    body: ExecuteStepRequest,
+    progressUpdateOptions?: ProgressUpdateOptions
+  ): Promise<Outcome<ExecutionOutput>> {
+    const { fetchWithCreds, context } = moduleArgs;
+    const model = body.planStep.options?.modelName || body.planStep.stepName;
+    const { appScreen, title } = getCurrentStepState(moduleArgs);
+    const reporter = new StreamableReporter(caps, {
+      title: `Calling ${model}`,
+      icon: "spark",
+    });
+    try {
+      if (appScreen) {
+        appScreen.progress = progressUpdateOptions?.message || title;
+        if (progressUpdateOptions?.expectedDurationInSec) {
+          appScreen.expectedDuration =
+            progressUpdateOptions.expectedDurationInSec;
+        } else {
+          appScreen.expectedDuration = -1;
+        }
+      }
+
+      await reporter.start();
+      await reporter.sendUpdate("Step Input", elideEncodedData(body), "upload");
+      // Call the API.
+      const url = await getBackendUrl(caps);
+      // Record model call with action tracker.
+      caps.write({
+        path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
+        data: [],
+      });
+      let response: ExecuteStepResponse;
+      try {
+        const fetchResponse = await fetchWithCreds(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: context.signal,
+          body: JSON.stringify(body),
+        });
+        if (!fetchResponse.ok) {
+          const { $error, metadata } = decodeFetchError(
+            await fetchResponse.text(),
+            model
+          );
+          return reporter.sendError(err($error, metadata));
+        }
+        response = await fetchResponse.json();
+      } catch (e) {
+        return reporter.sendError(
+          err((e as Error).message, {
+            origin: "server",
+            model,
+          })
+        );
+      }
+      if (!response) {
+        return await reporter.sendError(
+          err(`Request to "${model}" failed, please try again`, {
+            origin: "server",
+            kind: "bug",
+          })
+        );
+      }
+      if (response.errorMessage) {
+        const errorMessage = decodeMetadata(response.errorMessage, model);
+        return await reporter.sendError(
+          err(errorMessage.$error, errorMessage.metadata)
+        );
+      }
+      await reporter.sendUpdate(
+        "Step Output",
+        elideEncodedData(response),
+        "download"
+      );
+      const output_key = body.planStep.output || "";
+      return parseExecutionOutput(
+        response.executionOutputs[output_key]?.chunks
+      );
+    } finally {
+      await reporter.close();
+      if (appScreen) {
+        appScreen.progress = undefined;
+        appScreen.expectedDuration = -1;
+      }
+    }
+  }
 
 export function elideEncodedData<T>(obj: T): T {
   if (obj === null || typeof obj !== "object") return obj;

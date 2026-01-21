@@ -29,6 +29,14 @@ export const type = css`
       "slnt" 0,
       "wdth" 100,
       "GRAD" 0;
+
+    &.unvaried {
+      font-variation-settings:
+        "slnt" 0,
+        "wdth" 100,
+        "GRAD" 0,
+        "ROND" 0;
+    }
   }
 
   .round {

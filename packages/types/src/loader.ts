@@ -22,6 +22,7 @@ export type GraphProviderItem = {
   mine: boolean;
   readonly: boolean;
   handle: unknown;
+  metadata?: {liteModeFeaturedIndex?: number};
 };
 
 export type GraphProviderStore = {

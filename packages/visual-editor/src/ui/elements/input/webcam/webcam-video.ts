@@ -28,6 +28,12 @@ export class WebcamVideoInput extends LitElement {
   @state()
   accessor #value: string | null = null;
 
+  @state()
+  accessor #recorder: MediaRecorder | null = null;
+
+  @state()
+  accessor #showRecordButton = false;
+
   static styles = [
     baseColors,
     icons,
@@ -152,10 +158,8 @@ export class WebcamVideoInput extends LitElement {
   ];
 
   #stream: MediaStream | null = null;
-  #recorder: MediaRecorder | null = null;
   #blobs: Blob[] = [];
   #renderableValue: string | null = null;
-  #showRecordButton = false;
   #preview = document.createElement("video");
   #width = 0;
   #height = 0;

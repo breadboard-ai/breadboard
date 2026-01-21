@@ -38,7 +38,11 @@ type AudioGeneratorOutputs = {
   context: LLMContent[] | DescriberResult;
 };
 
-export { invoke as default, describe, callMusicGen };
+export { invoke as default, describe, callMusicGen, makeMusicInstruction };
+
+function makeMusicInstruction() {
+  return `Generate music using the prompt below. Use that prompt exactly.\n\nPROMPT:`;
+}
 
 async function callMusicGen(
   caps: Capabilities,
@@ -87,9 +91,8 @@ async function invoke(
     moduleArgs,
     new ArgumentNameGenerator(caps, moduleArgs)
   );
-  const substituting = await template.substitute(
-    params,
-    async ({ path: url, instance }) => toolManager.addTool(url, instance)
+  const substituting = await template.substitute(params, async (part) =>
+    toolManager.addTool(part)
   );
   if (!ok(substituting)) {
     return substituting;

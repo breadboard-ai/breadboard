@@ -7,24 +7,23 @@
 import { signal } from "signal-utils";
 import { VisualEditorMode } from "../types/types.js";
 import { SignalSet } from "signal-utils/set";
-import { SignalMap } from "signal-utils/map";
 import { SignalArray } from "signal-utils/array";
-import { ToastType } from "../events/events.js";
 import { UI, UIOverlays, UILoadState, SubscriptionStatus } from "./types.js";
-import {
-  RuntimeFlagManager,
-  RuntimeFlags,
-  ConsentRequestWithCallback,
-} from "@breadboard-ai/types";
-import { AsyncComputed } from "signal-utils/async-computed";
-import { devUrlParams } from "../utils/urls.js";
+import { ConsentRequestWithCallback } from "@breadboard-ai/types";
 
 export { createUIState };
 
-function createUIState(flags: RuntimeFlagManager): UI {
-  return new ReactiveUIState(flags);
+/**
+ * @deprecated
+ */
+function createUIState(): UI {
+  throw new Error("ReactiveUI State is no longer instatiable");
+  return new ReactiveUIState();
 }
 
+/**
+ * @deprecated
+ */
 class ReactiveUIState implements UI {
   @signal
   accessor mode: VisualEditorMode = "canvas";
@@ -71,36 +70,8 @@ class ReactiveUIState implements UI {
 
   accessor show = new SignalSet<UIOverlays>();
 
-  accessor toasts = new SignalMap<
-    string,
-    {
-      message: string;
-      type: ToastType;
-      persistent: boolean;
-    }
-  >();
-
   /**
    * Consent requests that will be displayed as a modal popup
    */
   accessor consentRequests = new SignalArray<ConsentRequestWithCallback>();
-
-  @signal
-  get flags(): RuntimeFlags | null {
-    return this.#flags.value || null;
-  }
-
-  #flagManager: RuntimeFlagManager;
-  #flags = new AsyncComputed<RuntimeFlags>(async (signal) => {
-    signal.throwIfAborted();
-
-    return this.#flagManager.flags();
-  });
-
-  constructor(flagManager: RuntimeFlagManager) {
-    this.#flagManager = flagManager;
-    if (devUrlParams().forceSignInState) {
-      this.show.add("SignInModal");
-    }
-  }
 }

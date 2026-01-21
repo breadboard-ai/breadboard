@@ -11,19 +11,19 @@ import * as BreadboardUI from "../../ui/index.js";
 export const AddWithEdgeRoute: EventRoute<"node.addwithedge"> = {
   event: "node.addwithedge",
 
-  async do({ runtime, tab, originalEvent, uiState }) {
+  async do({ runtime, tab, originalEvent, appController }) {
     if (!tab) {
       return false;
     }
 
-    uiState.blockingAction = true;
+    appController.global.main.blockingAction = true;
     await runtime.edit.addNodeWithEdge(
       tab,
       originalEvent.detail.node,
       originalEvent.detail.edge,
       originalEvent.detail.subGraphId
     );
-    uiState.blockingAction = false;
+    appController.global.main.blockingAction = false;
 
     runtime.select.selectNodes(
       tab.id,
@@ -39,8 +39,8 @@ export const AddWithEdgeRoute: EventRoute<"node.addwithedge"> = {
 export const ChangeRoute: EventRoute<"node.change"> = {
   event: "node.change",
 
-  async do({ runtime, tab, originalEvent, uiState }) {
-    uiState.blockingAction = true;
+  async do({ runtime, tab, originalEvent, appController }) {
+    appController.global.main.blockingAction = true;
     await runtime.edit.changeNodeConfigurationPart(
       tab,
       originalEvent.detail.id,
@@ -49,7 +49,7 @@ export const ChangeRoute: EventRoute<"node.change"> = {
       originalEvent.detail.metadata,
       originalEvent.detail.ins
     );
-    uiState.blockingAction = false;
+    appController.global.main.blockingAction = false;
 
     return false;
   },
@@ -58,18 +58,18 @@ export const ChangeRoute: EventRoute<"node.change"> = {
 export const MultiChangeRoute: EventRoute<"node.multichange"> = {
   event: "node.multichange",
 
-  async do({ runtime, tab, originalEvent, uiState }) {
+  async do({ runtime, tab, originalEvent, appController }) {
     if (!tab) {
       return false;
     }
 
-    uiState.blockingAction = true;
+    appController.global.main.blockingAction = true;
     await runtime.edit.multiEdit(
       tab,
       originalEvent.detail.edits,
       originalEvent.detail.description
     );
-    uiState.blockingAction = false;
+    appController.global.main.blockingAction = false;
 
     const additions: string[] = originalEvent.detail.edits
       .map((edit) => (edit.type === "addnode" ? edit.node.id : null))
@@ -92,8 +92,8 @@ export const MultiChangeRoute: EventRoute<"node.multichange"> = {
 export const ChangeEdgeRoute: EventRoute<"node.changeedge"> = {
   event: "node.changeedge",
 
-  async do({ runtime, tab, originalEvent, uiState }) {
-    uiState.blockingAction = true;
+  async do({ runtime, tab, originalEvent, appController }) {
+    appController.global.main.blockingAction = true;
     await runtime.edit.changeEdge(
       tab,
       originalEvent.detail.changeType,
@@ -101,7 +101,7 @@ export const ChangeEdgeRoute: EventRoute<"node.changeedge"> = {
       originalEvent.detail.to,
       originalEvent.detail.subGraphId
     );
-    uiState.blockingAction = false;
+    appController.global.main.blockingAction = false;
 
     return false;
   },
@@ -111,10 +111,10 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
   {
     event: "node.changeedgeattachmentpoint",
 
-    async do({ runtime, tab, originalEvent, uiState }) {
+    async do({ runtime, tab, originalEvent, appController }) {
       const { graphId } = originalEvent.detail;
 
-      uiState.blockingAction = true;
+      appController.global.main.blockingAction = true;
       await runtime.edit.changeEdgeAttachmentPoint(
         tab,
         graphId === BreadboardUI.Constants.MAIN_BOARD_ID ? "" : graphId,
@@ -122,7 +122,7 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
         originalEvent.detail.which,
         originalEvent.detail.attachmentPoint
       );
-      uiState.blockingAction = false;
+      appController.global.main.blockingAction = false;
 
       return false;
     },
@@ -131,8 +131,8 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
 export const ActionRoute: EventRoute<"node.action"> = {
   event: "node.action",
 
-  async do({ runtime, uiState, originalEvent }) {
-    uiState.blockingAction = true;
+  async do({ runtime, appController, originalEvent }) {
+    appController.global.main.blockingAction = true;
     try {
       const project = runtime.state.project;
       if (!project) {
@@ -146,7 +146,7 @@ export const ActionRoute: EventRoute<"node.action"> = {
       }
       return false;
     } finally {
-      uiState.blockingAction = false;
+      appController.global.main.blockingAction = false;
     }
   },
 };

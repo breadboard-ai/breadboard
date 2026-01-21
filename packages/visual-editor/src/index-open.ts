@@ -8,9 +8,14 @@ import { DRIVE_PROPERTY_OPAL_SHARE_SURFACE } from "@breadboard-ai/utils/google-d
 import { customElement } from "lit/decorators.js";
 import { MainBase } from "./main-base.js";
 import { makeUrl, parseUrl } from "./ui/utils/urls.js";
+import { makeShareLinkFromTemplate } from "./utils/make-share-link-from-template.js";
 
 @customElement("bb-open-main")
 export class OpenMain extends MainBase {
+  override async handleAppAccessCheckResult(): Promise<void> {
+    // Intentionally do nothing on open -- let the final destination handle it.
+  }
+
   override async doPostInitWork() {
     const url = parseUrl(window.location.href);
     if (url.page !== "open") {
@@ -40,31 +45,23 @@ export class OpenMain extends MainBase {
     }
     const shareSurface =
       fileMetadata?.properties?.[DRIVE_PROPERTY_OPAL_SHARE_SURFACE];
-    if (shareSurface) {
-      const urlTemplate =
-        this.guestConfiguration?.shareSurfaceUrlTemplates?.[shareSurface];
-      if (urlTemplate) {
-        const redirectUrl = new URL(
-          urlTemplate
-            .replaceAll("{fileId}", url.fileId)
-            .replaceAll("{resourceKey}", url.resourceKey ?? "")
-        );
-        // Remove any empty parameters. A slightly hacky way to clean up
-        // resourceKey parameters when there is no resourceKey.
-        for (const [name, value] of redirectUrl.searchParams) {
-          if (!value) {
-            redirectUrl.searchParams.delete(name);
-          }
-        }
-        console.log(`[open] Redirecting to share surface`, redirectUrl);
-        window.parent.location.href = redirectUrl.href;
-        return;
-      }
+    const shareSurfaceUrlTemplate =
+      shareSurface &&
+      this.guestConfiguration.shareSurfaceUrlTemplates?.[shareSurface];
+    if (shareSurfaceUrlTemplate) {
+      const redirectUrl = makeShareLinkFromTemplate({
+        urlTemplate: shareSurfaceUrlTemplate,
+        fileId: url.fileId,
+        resourceKey: url.resourceKey,
+      });
+      console.log(`[open] Redirecting to share surface`, redirectUrl);
+      window.parent.location.href = redirectUrl;
+      return;
     }
 
     // Check if the user is from a domain with a special configuration, and
     // redirect to the /open/ page on that domain's preferred url if set.
-    const userDomain = this.signinAdapter.domain;
+    const userDomain = await this.signinAdapter.domain;
     const userDomainPreferredUrl =
       userDomain && this.globalConfig.domains?.[userDomain]?.preferredUrl;
     if (userDomainPreferredUrl) {
@@ -86,6 +83,7 @@ export class OpenMain extends MainBase {
       mode: "app",
       flow: `drive:/${url.fileId}`,
       resourceKey: url.resourceKey,
+      guestPrefixed: true,
     });
   }
 

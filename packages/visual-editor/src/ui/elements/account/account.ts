@@ -20,17 +20,17 @@ import { SigninAdapter } from "../../utils/signin-adapter.js";
 
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
-import { uiStateContext } from "../../contexts/ui-state.js";
-import { UI } from "../../state/types.js";
 import { type } from "../../styles/host/type.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 @customElement("bb-account-switcher")
 export class AccountSwitcher extends SignalWatcher(LitElement) {
   @property()
   accessor signInAdapter: SigninAdapter | null = null;
 
-  @consume({ context: uiStateContext })
-  accessor uiState!: UI;
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
 
   @query("dialog")
   accessor #dialog: HTMLDialogElement | null = null;
@@ -242,20 +242,22 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
 
   #renderCreditCount() {
     const innerRender = () => {
-      if (this.uiState.subscriptionCredits === -2) {
+      if (this.appController.global.main.subscriptionCredits === -2) {
         return html` <span class="g-icon filled-heavy round">error</span>Failed
           to retrieve`;
       }
 
-      if (this.uiState.subscriptionCredits === -1) {
+      if (this.appController.global.main.subscriptionCredits === -1) {
         return html` <span class="g-icon rotate filled-heavy round"
             >progress_activity</span
           >Updating...`;
       }
 
       return html`<span class="g-icon circle filled-heavy round">spark</span
-        >${this.uiState.subscriptionCredits} AI
-        Credit${this.uiState.subscriptionCredits !== 1 ? "s" : ""}`;
+        >${this.appController.global.main.subscriptionCredits} AI
+        Credit${this.appController.global.main.subscriptionCredits !== 1
+          ? "s"
+          : ""}`;
     };
 
     return html`<span id="credit-count"> ${innerRender()} </span>`;
@@ -295,9 +297,10 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
           }
 
           if (
-            this.uiState.flags?.googleOne &&
-            (this.uiState.subscriptionStatus === "error" ||
-              this.uiState.subscriptionStatus === "subscribed")
+            this.appController.global.flags?.googleOne &&
+            (this.appController.global.main.subscriptionStatus === "error" ||
+              this.appController.global.main.subscriptionStatus ===
+                "subscribed")
           ) {
             this.dispatchEvent(new SubscriberCreditRefreshEvent());
           }
@@ -320,19 +323,19 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
             : Strings.from("APP_NAME")}
         </h1>
         <section id="user-info">
-          ${this.signInAdapter.picture
+          ${this.signInAdapter?.pictureSignal
             ? html`<img
-                src=${this.signInAdapter.picture}
-                alt=${this.signInAdapter.name}
+                src=${this.signInAdapter?.pictureSignal}
+                alt=${this.signInAdapter?.nameSignal}
               />`
             : nothing}
           <div>
-            <p>${this.signInAdapter.name}</p>
+            <p>${this.signInAdapter.nameSignal}</p>
           </div>
         </section>
-        ${this.uiState.flags?.googleOne &&
-        (this.uiState.subscriptionStatus === "subscribed" ||
-          this.uiState.subscriptionStatus === "error")
+        ${this.appController.global.flags?.googleOne &&
+        (this.appController.global.main.subscriptionStatus === "subscribed" ||
+          this.appController.global.main.subscriptionStatus === "error")
           ? html` <section
                 id="g1-container"
                 class="w-500 sans-flex md-body-medium"

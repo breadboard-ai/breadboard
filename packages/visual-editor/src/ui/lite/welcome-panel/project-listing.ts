@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type BoardServer, type GraphProviderItem } from "@breadboard-ai/types";
+import {
+  MutableGraphCollection,
+  type BoardServer,
+  type GraphProviderItem,
+} from "@breadboard-ai/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
@@ -14,16 +18,19 @@ import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
+import "../../elements/welcome-panel/homepage-search-button.js";
 import { StateEvent } from "../../events/events.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import * as StringsHelper from "../../strings/helper.js";
-import type { RecentBoard } from "../../types/types.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import type { ActionTracker } from "../../types/types.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
-import "../../elements/welcome-panel/homepage-search-button.js";
 
 import * as Styles from "../../styles/styles.js";
+import { styleMap } from "lit/directives/style-map.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -36,15 +43,42 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
 
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
+
   @consume({ context: boardServerContext, subscribe: true })
   @state()
   accessor boardServer: BoardServer | undefined;
 
-  @property({ attribute: false })
-  accessor recentBoards: RecentBoard[] = [];
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined;
 
   @property()
   accessor featuredFilter: string | null = null;
+
+  @property()
+  accessor libraryTitle: string | null = null;
+
+  @property()
+  accessor libraryIcon: string | null = null;
+
+  @property()
+  accessor noLibraryAppsTitle: string | null = null;
+
+  @property()
+  accessor galleryTitle: string | null = null;
+
+  @property()
+  accessor galleryIcon: string | null = null;
+
+  @property()
+  accessor createNewTitle: string | null = null;
+
+  @property()
+  accessor allowCreate: boolean = true;
+
+  @property({ reflect: true, type: String })
+  accessor createNewIcon: string | null = null;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -120,7 +154,8 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         margin: 0 0 var(--bb-grid-size) 0;
       }
 
-      #no-projects-panel {
+      #no-projects-panel,
+      #no-create-panel {
         background: var(--sys-color--surface-container-low);
         color: var(--sys-color--on-surface-low);
         padding: var(--bb-grid-size-4);
@@ -130,6 +165,10 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         .g-icon {
           vertical-align: bottom;
         }
+      }
+
+      #no-create-panel {
+        margin-top: var(--bb-grid-size-3);
       }
 
       #create-new-button-inline {
@@ -184,7 +223,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         }
 
         .g-icon::after {
-          content: "add";
+          content: var(--create-new-icon, "add");
         }
       }
 
@@ -262,22 +301,33 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       );
       return nothing;
     }
-    if (userGraphs.loading || galleryGraphs.loading) {
+    if (galleryGraphs.loading) {
       return html`
         <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
       `;
     }
-    const userHasAnyGraphs = userGraphs.size > 0 && !FORCE_NO_BOARDS;
-    const filteredGraphs = FORCE_NO_BOARDS ? [] : [...userGraphs.entries()];
     const featuredGraphs = this.#filterGraphs(
       [...galleryGraphs.entries()],
       this.featuredFilter
     );
 
+    featuredGraphs.sort(([, a], [, b]) => {
+      const indexA = a.metadata?.liteModeFeaturedIndex;
+      const indexB = b.metadata?.liteModeFeaturedIndex;
+      if (indexA !== undefined && indexB !== undefined) {
+        return indexA - indexB;
+      }
+      if (indexA !== undefined) {
+        return -1;
+      }
+      if (indexB !== undefined) {
+        return 1;
+      }
+      return 0;
+    });
     return [
       this.#renderFeaturedGraphs(featuredGraphs),
-      this.#renderUserGraphs(this.#sortUserGraphs(filteredGraphs)),
-      userHasAnyGraphs ? nothing : this.#renderNoUserGraphsPanel(),
+      this.#renderUserGraphs(userGraphs),
     ];
   }
 
@@ -300,7 +350,8 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   #sortUserGraphs(
     items: [string, GraphProviderItem][]
   ): [string, GraphProviderItem][] {
-    const recentBoards = this.recentBoards;
+    const recentBoards = this.appController.home.recent.boards;
+    console.log(recentBoards);
     return items.sort(([, dataA], [, dataB]) => {
       // Sort by pinned status first if possible.
       const boardA = recentBoards.find((board) => board.url === dataA.url);
@@ -330,28 +381,45 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     });
   }
 
-  #renderUserGraphs(myItems: [string, GraphProviderItem][]) {
+  #renderUserGraphs(userGraphsCollection: MutableGraphCollection) {
+    if (!FORCE_NO_BOARDS && userGraphsCollection.loading) {
+      return html`
+        <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
+      `;
+    }
+    const userGraphs = FORCE_NO_BOARDS
+      ? []
+      : this.#sortUserGraphs([...userGraphsCollection.entries()]);
+    const createNewIcon = this.createNewIcon
+      ? `"${this.createNewIcon}"`
+      : '"add"';
     return html`
       <div class="gallery-wrapper">
         <bb-gallery-lite
-          .headerText=${Strings.from(
-            "LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE"
-          )}
-          .recentBoards=${this.recentBoards}
-          .items=${myItems}
+          .headerIcon=${this.libraryIcon}
+          .headerText=${this.libraryTitle ??
+          Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE")}
+          .items=${userGraphs}
           .pageSize=${PAGE_SIZE}
         >
-          <button
-            slot="actions"
-            id="create-new-button-inline"
-            class="md-title-small sans-flex w-500"
-            @click=${this.#clickNewProjectButton}
-          >
-            <span class="g-icon round"></span>
-            ${Strings.from("COMMAND_NEW_PROJECT")}
-          </button>
+          ${this.allowCreate
+            ? html`<button
+                slot="actions"
+                id="create-new-button-inline"
+                class="md-title-small sans-flex w-500"
+                style=${styleMap({
+                  ["--create-new-icon"]: createNewIcon,
+                })}
+                @click=${this.#clickNewProjectButton}
+              >
+                <span class="g-icon round"></span>
+                ${this.createNewTitle ?? Strings.from("COMMAND_NEW_PROJECT")}
+              </button>`
+            : nothing}
         </bb-gallery-lite>
       </div>
+      ${userGraphs.length === 0 ? this.#renderNoUserGraphsPanel() : nothing}
+      ${this.allowCreate ? nothing : this.#renderNoCreatePanel()}
     `;
   }
 
@@ -359,7 +427,16 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     return html`
       <div id="no-projects-panel">
         <span class="g-icon">pentagon</span>
-        ${Strings.from("LABEL_NO_OPALS_LITE")}
+        ${this.noLibraryAppsTitle ?? Strings.from("LABEL_NO_OPALS_LITE")}
+      </div>
+    `;
+  }
+
+  #renderNoCreatePanel() {
+    return html`
+      <div id="no-create-panel">
+        <span class="g-icon">info</span>
+        ${Strings.from("LABEL_NO_CREATE_COMPACT")}
       </div>
     `;
   }
@@ -372,7 +449,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
           </div>`
         : html`<bb-gallery-lite
             collapsable
-            .headerText=${Strings.from("LABEL_SAMPLE_GALLERY_TITLE_LITE")}
+            .headerIcon=${this.galleryIcon}
+            .headerText=${this.galleryTitle ??
+            Strings.from("LABEL_SAMPLE_GALLERY_TITLE_LITE")}
             .items=${sampleItems}
             .pageSize=${/* Unlimited */ -1}
             forceCreatorToBeTeam
@@ -386,7 +465,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       return;
     }
 
-    ActionTracker.createNew();
+    this.actionTracker?.createNew();
 
     evt.target.disabled = true;
     this.dispatchEvent(

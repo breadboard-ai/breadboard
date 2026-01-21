@@ -130,6 +130,10 @@ function collateAllInternalTurns(har: Har): InternalTurn[] {
 
     const contextKey = JSON.stringify(requestContext);
     const allResponseParts: DataPart[] = [];
+    if (!entry.response) {
+      console.warn("A HAR entry without a response encountered, skipping");
+      continue;
+    }
     const responseText = entry.response.content?.text;
     const mimeType = entry.response.content?.mimeType;
 

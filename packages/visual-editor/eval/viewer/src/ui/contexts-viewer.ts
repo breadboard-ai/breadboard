@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LLMContent, TextCapabilityPart } from "@breadboard-ai/types";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
-import { FinalChainReport } from "../../../collate-context.js";
-import { DataPart, LLMContent, TextCapabilityPart } from "@breadboard-ai/types";
 import { markdown } from "../../../../src/ui/directives/markdown.js";
+import { FinalChainReport } from "../../../collate-context.js";
+
 import "../../../../src/ui/elements/json-tree/json-tree.js";
+import "./llm-content-viewer.js";
 
 export { ContextsViewer };
 
@@ -69,15 +71,6 @@ class ContextsViewer extends LitElement {
           &.model,
           &.unknown {
             background-color: var(--light-dark-n-95);
-          }
-
-          ul {
-            padding: 0;
-
-            & li.part {
-              border-radius: var(--bb-grid-size-2);
-              border: 1px solid var(--light-dark-n-90);
-            }
           }
         }
       }
@@ -141,45 +134,9 @@ class ContextsViewer extends LitElement {
     return html`<li class="${role}">
       <details open>
         <summary>${role}</summary>
-        <ul class="parts">
-          ${map(turn.parts || [], (part: DataPart) =>
-            this.#renderPart(part, role === "model" && isJsonOutput)
-          )}
-        </ul>
+        <ui-llm-content-viewer .content=${turn} .isJsonOutput=${isJsonOutput}>
+        </ui-llm-content-viewer>
       </details>
     </li>`;
-  }
-
-  #renderPart(part: DataPart, isJsonOutput: boolean) {
-    if (part.thought && "text" in part) {
-      return html`<li class="part thought">
-        <strong>Thought:</strong>${markdown(part.text)}
-      </li>`;
-    }
-
-    if ("functionCall" in part) {
-      return html`<li class="part function-call">
-        <div class="name">call ${part.functionCall.name}</div>
-        <bb-json-tree .json=${part.functionCall.args}></bb-json-tree>
-      </li>`;
-    }
-
-    if ("functionResponse" in part) {
-      return html`<li class="part function-response">
-        <div class="name">response ${part.functionResponse.name}</div>
-        <bb-json-tree .json=${part.functionResponse.response}></bb-json-tree>
-      </li>`;
-    }
-
-    if ("text" in part) {
-      if (isJsonOutput) {
-        return html`<li class="part text">
-          <bb-json-tree .json=${JSON.parse(part.text)}></bb-json-tree>
-        </li>`;
-      }
-      return html`<li class="part text">${markdown(part.text)}</li>`;
-    }
-
-    return html`<li>${JSON.stringify(part, null, 2)}</li>`;
   }
 }

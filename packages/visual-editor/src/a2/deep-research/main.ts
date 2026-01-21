@@ -15,7 +15,11 @@ import { ToolManager } from "../a2/tool-manager.js";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { invoke as default, describe };
+export { invoke as default, describe, makeDeepResearchInstruction };
+
+function makeDeepResearchInstruction() {
+  return "Do deep, iterative research to fulfill the following objective:";
+}
 
 export type ResearcherInputs = {
   context?: LLMContent[];
@@ -153,9 +157,8 @@ async function invoke(
   let content = context || [toLLMContent("Start the research")];
 
   const template = new Template(caps, query);
-  const substituting = await template.substitute(
-    params,
-    async ({ path: url, instance }) => toolManager.addTool(url, instance)
+  const substituting = await template.substitute(params, async (part) =>
+    toolManager.addTool(part)
   );
   if (!ok(substituting)) {
     return substituting;

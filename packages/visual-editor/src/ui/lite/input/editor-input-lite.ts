@@ -10,15 +10,14 @@ import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { uiStateContext } from "../../contexts/ui-state.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import "../../elements/input/expanding-textarea.js";
 import { SnackbarEvent, UnsnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
-import { LiteModeState, UI } from "../../state/types.js";
+import { LiteModeState } from "../../state/types.js";
 import * as StringsHelper from "../../strings/helper.js";
 import * as Styles from "../../styles/styles.js";
-import { SnackType } from "../../types/types.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import { ActionTracker, SnackType } from "../../types/types.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -28,8 +27,8 @@ export type LiteEditInputController = {
 
 @customElement("bb-editor-input-lite")
 export class EditorInputLite extends SignalWatcher(LitElement) {
-  @consume({ context: uiStateContext })
-  accessor uiState!: UI;
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker!: ActionTracker;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -49,6 +48,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
       #container {
         display: flex;
         flex-direction: column;
+        position: relative;
 
         & bb-expanding-textarea {
           --min-lines: 1;
@@ -61,6 +61,10 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
 
           &:focus-within {
             outline: 1px solid var(--light-dark-n-70);
+          }
+
+          &[disabled] {
+            opacity: 0.3;
           }
         }
       }
@@ -93,6 +97,9 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   @property()
   accessor state!: LiteModeState;
 
+  @property({ reflect: true, type: Boolean })
+  accessor editable = false;
+
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 
   override render() {
@@ -107,14 +114,13 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
       <div id="container">
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
-          .disabled=${isGenerating}
+          .disabled=${isGenerating || !this.editable}
           .classes=${"sans-flex w-400 md-body-large"}
           .orientation=${"vertical"}
           .value=${this.state.currentExampleIntent}
           .placeholder=${this.state.empty
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW_ALT")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
-          .systemThemeOverride=${true}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}
@@ -144,7 +150,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     const description = input?.value;
     if (!description) return;
 
-    ActionTracker.flowGenEdit(this.state.graph?.url);
+    this.actionTracker?.flowGenEdit(this.state.graph?.url);
 
     this.state.startGenerating();
 

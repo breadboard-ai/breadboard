@@ -6,17 +6,17 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import { retryableFetch } from "./utils.js";
 import {
-  GOOGLE_DRIVE_UPLOAD_API_PREFIX,
   GOOGLE_DRIVE_FILES_API_PREFIX,
+  GOOGLE_DRIVE_UPLOAD_API_PREFIX,
 } from "@breadboard-ai/types";
+import { fetchWithRetry } from "../fetch-with-retry.js";
 
 type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
 
 export interface GoogleDriveClientOptions {
-  apiBaseUrl?: string;
+  apiBaseUrl?: Promise<string>;
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
   proxyApiBaseUrl?: string;
   fetchWithCreds: typeof globalThis.fetch;
@@ -173,7 +173,7 @@ export type DriveFileId = { id: string; resourceKey?: string };
 type GoogleApiAuthorization = "fetchWithCreds" | "anonymous";
 
 export class GoogleDriveClient {
-  readonly #apiUrl: string;
+  readonly #apiUrl: Promise<string>;
   readonly #publicProxy:
     | {
         apiUrl: string;
@@ -185,7 +185,8 @@ export class GoogleDriveClient {
   readonly isTestApi: boolean;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.#apiUrl = options.apiBaseUrl || GOOGLE_DRIVE_FILES_API_PREFIX;
+    this.#apiUrl =
+      options.apiBaseUrl || Promise.resolve(GOOGLE_DRIVE_FILES_API_PREFIX);
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
           apiUrl: options.proxyApiBaseUrl,
@@ -217,7 +218,7 @@ export class GoogleDriveClient {
     const fetchToUse =
       authorization === "anonymous" ? globalThis.fetch : this.fetchWithCreds;
 
-    return retryableFetch(fetchToUse, url, { ...init, headers });
+    return fetchWithRetry(fetchToUse, url, { ...init, headers });
   }
 
   #makeFetchHeaders(resourceKeys: DriveFileId[] | undefined): Headers {
@@ -240,13 +241,8 @@ export class GoogleDriveClient {
     }
   }
 
-  unmarkFileForReadingWithPublicProxy(...fileIds: string[]): void {
-    if (!this.#publicProxy) {
-      return;
-    }
-    for (const fileId of fileIds) {
-      this.#publicProxy.marked.delete(fileId);
-    }
+  fileIsMarkedForReadingWithPublicProxy(fileId: string): boolean {
+    return !!this.#publicProxy?.marked.has(fileId);
   }
 
   async #maybeProxyApiUrl(
@@ -259,12 +255,13 @@ export class GoogleDriveClient {
     const fileIsMarkedAsPublic =
       this.#publicProxy && this.#publicProxy.marked.has(fileId);
     const isAlwaysProxying =
-      this.#publicProxy?.apiUrl && this.#apiUrl === this.#publicProxy.apiUrl;
+      this.#publicProxy?.apiUrl &&
+      (await this.#apiUrl) === this.#publicProxy.apiUrl;
     return {
       apiUrl:
         !bypassProxy && fileIsMarkedAsPublic
           ? this.#publicProxy.apiUrl
-          : this.#apiUrl,
+          : await this.#apiUrl,
       authorization:
         (!bypassProxy && fileIsMarkedAsPublic) || isAlwaysProxying
           ? "anonymous"
@@ -355,7 +352,7 @@ export class GoogleDriveClient {
     file: File & { name: string; mimeType: string },
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
-    const url = new URL(this.#apiUrl);
+    const url = new URL(await this.#apiUrl);
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
@@ -507,7 +504,7 @@ export class GoogleDriveClient {
     metadata: File & { parents?: never },
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
-    const url = new URL(`${this.#apiUrl}/${encodeURIComponent(fileId)}`);
+    const url = new URL(`${await this.#apiUrl}/${encodeURIComponent(fileId)}`);
     if (options?.addParents) {
       url.searchParams.set("addParents", options.addParents.join(","));
     }
@@ -537,7 +534,7 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<void> {
     const response = await this.#fetch(
-      new URL(`${this.#apiUrl}/${encodeURIComponent(fileId)}`),
+      new URL(`${await this.#apiUrl}/${encodeURIComponent(fileId)}`),
       { method: "DELETE", signal: options?.signal }
     );
     if (!response.ok) {
@@ -571,7 +568,7 @@ export class GoogleDriveClient {
     options?: T
   ): Promise<ListFilesResponse<NarrowedDriveFileFromOptions<T>>> {
     // TODO(aomarks) Make this an async iterator.
-    const url = new URL(this.#apiUrl);
+    const url = new URL(await this.#apiUrl);
     url.searchParams.set("q", query);
     if (options?.pageSize) {
       url.searchParams.set("pageSize", String(options.pageSize));
@@ -605,7 +602,7 @@ export class GoogleDriveClient {
     options: CreatePermissionOptions
   ): Promise<Permission> {
     const url = new URL(
-      `${this.#apiUrl}/${encodeURIComponent(fileId)}/permissions`
+      `${await this.#apiUrl}/${encodeURIComponent(fileId)}/permissions`
     );
     url.searchParams.set(
       "sendNotificationEmail",
@@ -637,7 +634,7 @@ export class GoogleDriveClient {
   ): Promise<void> {
     const response = await this.#fetch(
       new URL(
-        `${this.#apiUrl}/${encodeURIComponent(fileId)}/permissions/${encodeURIComponent(permissionId)}`
+        `${await this.#apiUrl}/${encodeURIComponent(fileId)}/permissions/${encodeURIComponent(permissionId)}`
       ),
       {
         method: "DELETE",
@@ -667,7 +664,7 @@ export class GoogleDriveClient {
   > {
     fileId = normalizeFileId(fileId);
     const url = new URL(
-      `${this.#apiUrl}/${encodeURIComponent(fileId.id)}/copy`
+      `${await this.#apiUrl}/${encodeURIComponent(fileId.id)}/copy`
     );
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
@@ -687,7 +684,7 @@ export class GoogleDriveClient {
     count: number,
     options?: BaseRequestOptions
   ): Promise<[string, ...string[]]> {
-    const url = new URL(`${this.#apiUrl}/generateIds`);
+    const url = new URL(`${await this.#apiUrl}/generateIds`);
     url.searchParams.set("count", String(count));
     const response = await this.#fetch(url, { signal: options?.signal });
     if (!response.ok) {

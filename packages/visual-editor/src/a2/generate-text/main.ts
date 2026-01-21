@@ -29,7 +29,7 @@ import {
 import { filterUndefined } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { invoke as default, describe };
+export { invoke as default, describe, makeTextInstruction };
 
 /**
  * Maximum amount of function-calling turns that we take before bailing.
@@ -39,6 +39,14 @@ const MAX_TURN_COUNT = 10;
 type Inputs = {
   context: SharedContext;
 };
+
+function makeTextInstruction({ pro }: { pro: boolean }) {
+  if (pro) {
+    return () =>
+      `For this session, the user strongly prefers to use the "pro" model for "generate_text" function.`;
+  }
+  return () => "";
+}
 
 class GenerateText {
   private toolManager!: ToolManager;
@@ -69,7 +77,7 @@ class GenerateText {
     const keepChattingTool = createKeepChattingTool();
     const substituting = await template.substitute(
       sharedContext.params,
-      async ({ path: url, instance }) => toolManager.addTool(url, instance)
+      async (part) => toolManager.addTool(part)
     );
     this.#hasTools = toolManager.hasTools();
     if (sharedContext.chat) {

@@ -13,11 +13,15 @@ import {
   InputValues,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
-import { RuntimeSnackbarEvent } from "../../runtime/events.js";
+import {
+  RuntimeSnackbarEvent,
+  RuntimeUnsnackbarEvent,
+} from "../../runtime/events.js";
 import { StateEvent } from "../../ui/events/events.js";
 import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
+import { isHydrating } from "../../controller/utils/hydration.js";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -82,15 +86,21 @@ export const RunRoute: EventRoute<"board.run"> = {
 export const LoadRoute: EventRoute<"board.load"> = {
   event: "board.load",
 
-  async do({ runtime, originalEvent, uiState }) {
+  async do({ runtime, originalEvent, appController }) {
+    if (isHydrating(() => appController.global.main.mode)) {
+      await appController.global.main.hydrated;
+    }
+
     runtime.router.go({
       page: "graph",
-      mode: uiState.mode,
+      mode: appController.global.main.mode,
       flow: originalEvent.detail.url,
       resourceKey: undefined,
       shared: originalEvent.detail.shared,
       dev: parseUrl(window.location.href).dev,
+      guestPrefixed: true,
     });
+    appController.home.recent.add({ url: originalEvent.detail.url });
     return false;
   },
 };
@@ -124,10 +134,10 @@ export const RedoRoute: EventRoute<"board.redo"> = {
 export const TogglePinRoute: EventRoute<"board.togglepin"> = {
   event: "board.togglepin",
 
-  async do({ runtime, originalEvent }) {
-    runtime.board.setPinnedStatus(
+  async do({ appController, originalEvent }) {
+    appController.home.recent.setPin(
       originalEvent.detail.url,
-      originalEvent.detail.status
+      originalEvent.detail.status === "pin"
     );
     return false;
   },
@@ -136,7 +146,7 @@ export const TogglePinRoute: EventRoute<"board.togglepin"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, runtime, originalEvent, settings }) {
+  async do({ tab, runtime, settings }) {
     if (!tab) {
       return false;
     }
@@ -148,9 +158,9 @@ export const StopRoute: EventRoute<"board.stop"> = {
       if (url.searchParams.has("results")) {
         url.searchParams.delete("results");
         history.pushState(null, "", url);
+
+        runtime.state.project?.resetRun();
       }
-      runtime.state.project?.resetRun();
-      return true;
     }
 
     const tabId = tab?.id ?? null;
@@ -160,20 +170,14 @@ export const StopRoute: EventRoute<"board.stop"> = {
     }
 
     abortController.abort("Run stopped");
-    const runner = runtime.run.getRunner(tabId);
-    if (runner?.running()) {
-      await runner?.run();
-    }
 
-    if (originalEvent.detail.clearLastRun) {
-      await runtime.run.clearLastRun(tabId, tab?.graph.url);
-      if (!settings) {
-        console.warn(`No settings, unable to prepare next run.`);
-      } else {
-        const preparingNextRun = await runtime.prepareRun(tab, settings);
-        if (!ok(preparingNextRun)) {
-          console.warn(preparingNextRun.$error);
-        }
+    await runtime.run.clearLastRun(tabId, tab?.graph.url);
+    if (!settings) {
+      console.warn(`No settings, unable to prepare next run.`);
+    } else {
+      const preparingNextRun = await runtime.prepareRun(tab, settings);
+      if (!ok(preparingNextRun)) {
+        console.warn(preparingNextRun.$error);
       }
     }
 
@@ -189,23 +193,24 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     runtime,
     settings,
     googleDriveClient,
-    uiState,
+    appController,
     askUserToSignInIfNeeded,
     boardServer,
+    actionTracker,
   }) {
     await StopRoute.do({
       tab,
       runtime,
       originalEvent: new StateEvent({
         eventType: "board.stop",
-        clearLastRun: true,
       }),
       settings,
       googleDriveClient,
-      uiState,
+      appController,
       askUserToSignInIfNeeded,
       boardServer,
     });
+    actionTracker?.runApp(tab?.graph.url, "console");
     await RunRoute.do({
       tab,
       runtime,
@@ -214,7 +219,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       }),
       settings,
       googleDriveClient,
-      uiState,
+      appController,
       askUserToSignInIfNeeded,
       boardServer,
     });
@@ -237,7 +242,7 @@ export const InputRoute: EventRoute<"board.input"> = {
 
     const data = originalEvent.detail.data as InputValues;
     if (!runner.running()) {
-      runner.run(data);
+      runner.resumeWithInputs(data);
     }
 
     return false;
@@ -247,15 +252,15 @@ export const InputRoute: EventRoute<"board.input"> = {
 export const RenameRoute: EventRoute<"board.rename"> = {
   event: "board.rename",
 
-  async do({ tab, runtime, originalEvent, uiState }) {
-    uiState.blockingAction = true;
+  async do({ tab, runtime, originalEvent, appController }) {
+    appController.global.main.blockingAction = true;
     runtime.shell.setPageTitle(originalEvent.detail.title);
     await runtime.edit.updateBoardTitleAndDescription(
       tab,
       originalEvent.detail.title,
       originalEvent.detail.description
     );
-    uiState.blockingAction = false;
+    appController.global.main.blockingAction = false;
     return false;
   },
 };
@@ -266,20 +271,22 @@ export const CreateRoute: EventRoute<"board.create"> = {
   async do({
     tab,
     runtime,
-    uiState,
+    appController,
     originalEvent,
     askUserToSignInIfNeeded,
     embedHandler,
   }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
+      // The user didn't sign in, so hide any snackbars.
+      runtime.dispatchEvent(new RuntimeUnsnackbarEvent());
       return false;
     }
 
-    const boardServerName = uiState.boardServer;
-    const location = uiState.boardLocation;
+    const boardServerName = appController.global.main.boardServer;
+    const location = appController.global.main.boardLocation;
     const fileName = globalThis.crypto.randomUUID();
 
-    uiState.blockingAction = true;
+    appController.global.main.blockingAction = true;
     const result = await runtime.board.saveAs(
       boardServerName,
       location,
@@ -288,7 +295,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
       originalEvent.detail.messages.start !== "",
       originalEvent.detail.messages
     );
-    uiState.blockingAction = false;
+    appController.global.main.blockingAction = false;
 
     if (!result?.url) {
       return false;
@@ -308,6 +315,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
         // created it.
         resourceKey: undefined,
         dev,
+        guestPrefixed: true,
       },
       tab?.id,
       originalEvent.detail.editHistoryCreator
@@ -325,8 +333,8 @@ export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
   async do(deps) {
-    const { runtime, originalEvent, uiState } = deps;
-    uiState.blockingAction = true;
+    const { runtime, originalEvent, appController } = deps;
+    appController.global.main.blockingAction = true;
 
     // Immediately acknowledge the user's action with a snackbar. This will be
     // superseded by another snackbar in the "board.create" route, but if it
@@ -360,7 +368,7 @@ export const RemixRoute: EventRoute<"board.remix"> = {
       }),
     });
 
-    uiState.blockingAction = false;
+    appController.global.main.blockingAction = false;
 
     return false;
   },
@@ -370,19 +378,21 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
   event: "board.delete",
 
   async do(deps) {
-    const { tab, runtime, originalEvent, uiState } = deps;
+    const { tab, runtime, originalEvent, appController } = deps;
     const boardServer = runtime.board.googleDriveBoardServer;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
     }
 
-    uiState.blockingAction = true;
+    appController.global.main.blockingAction = true;
     await runtime.board.delete(
       boardServer.name,
       originalEvent.detail.url,
       originalEvent.detail.messages
     );
-    uiState.blockingAction = false;
+    appController.home.recent.remove(originalEvent.detail.url);
+    await appController.home.recent.isSettled;
+    appController.global.main.blockingAction = false;
 
     if (tab) {
       runtime.select.deselectAll(tab.id, runtime.select.generateId());

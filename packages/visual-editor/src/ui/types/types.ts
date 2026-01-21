@@ -204,7 +204,7 @@ export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
 }
 
 export interface RecentBoard {
-  title: string;
+  title?: string;
   url: string;
   pinned?: boolean;
   [key: string]: unknown;
@@ -419,6 +419,7 @@ export type EnumValue = {
   title: string;
   id: string;
   icon?: string;
+  svgIcon?: string;
   description?: string;
   tag?: string; // Typically used for keyboard shortcuts.
   hidden?: boolean;
@@ -427,10 +428,6 @@ export type EnumValue = {
    * Currently used to provide proactive quota notification.
    */
   info?: string;
-  /**
-   * When true, shows control flow tools.
-   */
-  showControlFlowTools?: boolean;
 };
 
 export enum SnackType {
@@ -549,12 +546,12 @@ export interface BaseUrlInit {
   oauthRedirect?: string;
   lite?: boolean;
   colorScheme?: "light" | "dark";
+  guestPrefixed: boolean;
 }
 
 export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
   new?: boolean;
-  mode?: VisualEditorMode;
   redirectFromLanding?: boolean;
 }
 
@@ -583,3 +580,45 @@ export interface OpenUrlInit extends BaseUrlInit {
 }
 
 export type UserSignInResponse = "success" | "failure" | "dismissed";
+
+export interface ActionTracker {
+  load(type: "app" | "canvas" | "landing" | "home", shared: boolean): void;
+  openApp(url: string, source: "gallery" | "user"): void;
+  remixApp(url: string, source: "gallery" | "user" | "editor"): void;
+  createNew(): void;
+  flowGenCreate(): void;
+  flowGenEdit(url: string | undefined): void;
+  runApp(
+    url: string | undefined,
+    source: "app_preview" | "app_view" | "console"
+  ): void;
+  publishApp(url: string | undefined): void;
+  signOutSuccess(): void;
+  signInSuccess(): void;
+  errorUnknown(): void;
+  errorConfig(): void;
+  errorRecitation(): void;
+  errorCapacity(medium: string): void;
+  errorSafety(): void;
+  addNewStep(type?: string): void;
+  editStep(type: "manual" | "flowgen"): void;
+  shareResults(type: "download" | "save_to_drive" | "copy_share_link"): void;
+
+  // Updates GA properties
+
+  /**
+   * Updates the current status of the user. Call it whenever the sign in
+   * status of the user is determined.
+   *
+   * Will also be automatically called by:
+   * - `signInSuccess`
+   * - `signOutSuccess`
+   */
+  updateSignedInStatus(signedIn: boolean): void;
+
+  /**
+   * Updates the current eligibility status of the user. Call right after the
+   * checkAppAccess call.
+   */
+  updateCanAccessStatus(canAccess: boolean): void;
+}

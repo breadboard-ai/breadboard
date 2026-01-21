@@ -18,6 +18,7 @@ import {
 import type {
   CheckAppAccessResult,
   FindUserOpalFolderResult,
+  GetDriveCollectorFileResult,
   GuestConfiguration,
   ListUserOpalsResult,
   OpalShellHostProtocol,
@@ -49,8 +50,11 @@ import { checkFetchAllowlist } from "./fetch-allowlist.js";
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
 import {
   findUserOpalFolder,
+  getDriveCollectorFile,
   listUserOpals,
 } from "./google-drive-host-operations.js";
+import { createFetchWithCreds } from "@breadboard-ai/utils/fetch-with-creds.js";
+import { GTagEventSender } from "./gtag-event-sender.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -105,53 +109,61 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   };
 
   validateScopes = async (): Promise<
-    { ok: true } | { ok: false; error: string }
+    | { ok: true }
+    | {
+        ok: false;
+        code: "signed-out" | "missing-scopes" | "other";
+        error: string;
+      }
   > => {
-    const state = await this.getSignInState();
-    if (state.status !== "signedin") {
-      return { ok: false, error: "User was signed out" };
+    const scopesResult = await this.#fetchScopesFromTokenInfoApi();
+    if (!scopesResult.ok) {
+      return {
+        ok: false,
+        code:
+          scopesResult.code === "access-revoked"
+            ? "signed-out"
+            : scopesResult.code,
+        error: scopesResult.error,
+      };
     }
-
-    const settingsHelper = await this.#settingsHelper;
-    const settingsValueStr = (
-      await settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)
-    )?.value as string | undefined;
-    if (!settingsValueStr) {
-      return { ok: false, error: "No local connection storage" };
-    }
-    const settingsValue = JSON.parse(settingsValueStr) as TokenGrant;
-
+    const scopes = scopesResult.value;
     const canonicalizedUserScopes = new Set<string>();
-    if (settingsValue.scopes) {
-      for (const scope of settingsValue.scopes) {
-        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
-      }
-    } else {
-      // This is an older signin which doesn't have scopes stored locally. We
-      // can fetch them from an API and upgrade the storage for next time.
-      const tokenInfoScopes = await this.#fetchScopesFromTokenInfoApi();
-      if (!tokenInfoScopes.ok) {
-        console.error(
-          `[signin] Unable to fetch scopes from token info API:` +
-            ` ${tokenInfoScopes.error}`
-        );
-        return tokenInfoScopes;
-      }
-      for (const scope of tokenInfoScopes.value) {
-        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
-      }
-      console.info(`[signin] Upgrading signin storage to include scopes`);
-      await settingsHelper.set(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID,
-        {
-          name: SIGN_IN_CONNECTION_ID,
-          value: JSON.stringify({
-            ...settingsValue,
-            scopes: tokenInfoScopes.value,
-          } satisfies TokenGrant),
+    for (const scope of scopes) {
+      canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
+    }
+
+    {
+      // Check if we have an older signin which doesn't have scopes stored
+      // locally, and update if necessary.
+      //
+      // TODO(aomarks) This might not be necessary now, but I think there is a
+      // spot elsewhere where we read these scopes that needs to be
+      // removed/updated first.
+      const settingsHelper = await this.#settingsHelper;
+      const settingsValueStr = (
+        await settingsHelper.get(
+          SETTINGS_TYPE.CONNECTIONS,
+          SIGN_IN_CONNECTION_ID
+        )
+      )?.value as string | undefined;
+      if (settingsValueStr) {
+        const settingsValue = JSON.parse(settingsValueStr) as TokenGrant;
+        if (!settingsValue.scopes) {
+          console.info(`[signin] Upgrading signin storage to include scopes`);
+          await settingsHelper.set(
+            SETTINGS_TYPE.CONNECTIONS,
+            SIGN_IN_CONNECTION_ID,
+            {
+              name: SIGN_IN_CONNECTION_ID,
+              value: JSON.stringify({
+                ...settingsValue,
+                scopes,
+              } satisfies TokenGrant),
+            }
+          );
         }
-      );
+      }
     }
 
     const canonicalizedRequiredScopes = new Set(
@@ -163,6 +175,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (missingScopes.length > 0) {
       return {
         ok: false,
+        code: "missing-scopes",
         error: `Missing scopes: ${missingScopes.join(", ")}`,
       };
     } else {
@@ -179,19 +192,32 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       shareSurface: undefined,
       shareSurfaceUrlTemplates:
         CLIENT_DEPLOYMENT_CONFIG.SHARE_SURFACE_URL_TEMPLATES,
+      supportsPropertyTracking: true,
     };
   };
 
   /** See https://cloud.google.com/docs/authentication/token-types#access */
   async #fetchScopesFromTokenInfoApi(): Promise<
-    { ok: true; value: string[] } | { ok: false; error: string }
+    | { ok: true; value: string[] }
+    | {
+        ok: false;
+        code: "signed-out" | "access-revoked" | "other";
+        error: string;
+      }
   > {
     const url = new URL("https://oauth2.googleapis.com/tokeninfo");
     // Make sure we have a fresh token, this API will return HTTP 400 for an
     // expired token.
-    const token = await this.#getToken();
+    let token;
+    try {
+      token = await this.#getToken();
+    } catch (e) {
+      // This handles the case where the user signed in, then revoked access
+      // through settings, and the token we were using has expired.
+      return { ok: false, code: "signed-out", error: String(e) };
+    }
     if (token.state === "signedout") {
-      return { ok: false, error: "User was signed out" };
+      return { ok: false, code: "signed-out", error: "User was signed out" };
     }
     url.searchParams.set("access_token", token.grant.access_token);
 
@@ -199,17 +225,35 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     try {
       response = await fetch(url);
     } catch (e) {
-      return { ok: false, error: `Network error: ${e}` };
+      return { ok: false, code: "other", error: `Network error: ${e}` };
     }
     if (!response.ok) {
-      return { ok: false, error: `HTTP ${response.status} error` };
+      try {
+        const body = (await response.json()) as { error?: string };
+        if (body.error === "invalid_token") {
+          return {
+            ok: false,
+            code: "access-revoked",
+            error: JSON.stringify(body),
+          };
+        } else {
+          console.debug(`Unhandled tokeninfo error`, body);
+        }
+      } catch {
+        // ignore
+      }
+      return {
+        ok: false,
+        code: "other",
+        error: `HTTP ${response.status} error`,
+      };
     }
 
     let result: { scope: string };
     try {
       result = await response.json();
     } catch (e) {
-      return { ok: false, error: `JSON parse error: ${e}` };
+      return { ok: false, code: "other", error: `JSON parse error: ${e}` };
     }
 
     return { ok: true, value: result.scope.split(" ") };
@@ -311,10 +355,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       `
     );
     if (!popup) {
-      return {
-        ok: false,
-        error: { code: "other", userMessage: "Popups are disabled" },
-      };
+      return this.#signInWithFallbackDialog(scopes);
     }
     return await this.#listenForSignIn(nonce, scopes, popup);
   };
@@ -346,18 +387,52 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return { url: url.href, nonce };
   }
 
+  /**
+   * Display a sign-in dialog as fallback for when we were blocked from
+   * immediately calling window.open.
+
+   * Safari has a much shorter navigator.userActivation.isActive timeout than
+   * Chrome and Firefox, which means that too much time can elapse between the
+   * guest asking for a sign-in and the host calling window.open.
+   */
+  #signInWithFallbackDialog(scopes: string[]): Promise<SignInResult> {
+    const dialog = document.createElement("dialog");
+    dialog.id = "fallback-sign-in-dialog";
+
+    const h1 = document.createElement("h1");
+    h1.textContent = "Sign in to use Opal";
+    dialog.appendChild(h1);
+
+    const p = document.createElement("p");
+    p.textContent =
+      "To continue, you'll need to sign in with your Google account.";
+    dialog.appendChild(p);
+
+    const button = document.createElement("button");
+    button.appendChild(document.createTextNode("Sign in with Google"));
+    dialog.appendChild(button);
+
+    dialog.addEventListener("close", () => dialog.remove(), { once: true });
+    document.body.appendChild(dialog);
+
+    return new Promise((resolve) => {
+      button.addEventListener(
+        "click",
+        () => {
+          dialog.close();
+          resolve(this.signIn(scopes));
+        },
+        { once: true }
+      );
+      dialog.showModal();
+    });
+  }
+
   async #listenForSignIn(
     nonce: string,
     scopes: string[],
     popup: Window
   ): Promise<SignInResult> {
-    console.info(`[shell host] Listening for sign in`);
-    if (!scopes) {
-      return {
-        ok: false,
-        error: { code: "other", userMessage: "Unexpected sign-in attempt" },
-      };
-    }
     console.info(`[shell host] Awaiting grant response`);
     const abortCtl = new AbortController();
     const popupMessage = await new Promise<OAuthPopupMessage>((resolve) => {
@@ -382,7 +457,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (popupMessage.nonce !== nonce) {
       return {
         ok: false,
-        error: { code: "other", userMessage: "Mismatched nonce" },
+        error: { code: "other", userMessage: "Verification failed" },
       };
     }
     const { grantResponse } = popupMessage;
@@ -427,7 +502,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
 
     // Check for any missing required scopes.
-    const requiredScopes = scopes ?? ALWAYS_REQUIRED_OAUTH_SCOPES;
+    const requiredScopes = scopes.length
+      ? scopes
+      : ALWAYS_REQUIRED_OAUTH_SCOPES;
     const actualScopes = new Set(grantResponse.scopes ?? []);
     const missingScopes = requiredScopes.filter(
       (scope) => !actualScopes.has(scope)
@@ -715,7 +792,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (token.state === "valid") {
       return await this.#checkAppAccessWithToken(token.grant.access_token);
     } else {
-      return { canAccess: false };
+      return {
+        canAccess: false,
+        accessStatus: "ACCESS_STATUS_UNSPECIFIED",
+      };
     }
   };
 
@@ -726,7 +806,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       console.info(
         `[shell host] Using test gaia; Skipping geo restriction check`
       );
-      return { canAccess: true };
+      return { canAccess: true, accessStatus: "ACCESS_STATUS_OK" };
     }
     const response = await fetch(
       new URL(
@@ -738,8 +818,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} error checking geo restriction`);
     }
-    const result = (await response.json()) as { canAccess?: boolean };
-    return { canAccess: !!result.canAccess };
+    return (await response.json()) as CheckAppAccessResult;
   }
 
   sendToEmbedder = async (message: BreadboardMessage): Promise<void> => {
@@ -759,7 +838,12 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const userFolderName =
       CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
 
-    return findUserOpalFolder(userFolderName, token.grant.access_token);
+    return findUserOpalFolder({
+      userFolderName,
+      fetchWithCreds: createFetchWithCreds(
+        async () => token.grant.access_token
+      ),
+    });
   };
 
   listUserOpals = async (): Promise<ListUserOpalsResult> => {
@@ -773,6 +857,47 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       };
     }
     const isTestApi = !!(await this.getConfiguration()).isTestApi;
-    return listUserOpals(token.grant.access_token, isTestApi);
+    return listUserOpals({
+      isTestApi,
+      fetchWithCreds: createFetchWithCreds(
+        async () => token.grant.access_token
+      ),
+    });
+  };
+
+  getDriveCollectorFile = async (
+    mimeType: string,
+    connectorId: string,
+    graphId: string
+  ): Promise<GetDriveCollectorFileResult> => {
+    const token = await this.#getToken([
+      "https://www.googleapis.com/auth/drive.readonly",
+    ]);
+    if (token.state !== "valid") {
+      return {
+        ok: false,
+        error: "User is signed out or doesn't have sufficient scope",
+      };
+    }
+    return getDriveCollectorFile({
+      mimeType,
+      connectorId,
+      graphId,
+      fetchWithCreds: createFetchWithCreds(
+        async () => token.grant.access_token
+      ),
+    });
+  };
+
+  private readonly actionEventSender = new GTagEventSender(
+    CLIENT_DEPLOYMENT_CONFIG.MEASUREMENT_ID,
+    async () => (await this.getSignInState()).status === "signedin"
+  );
+  trackAction = async (action: string, payload: Record<string, string>) => {
+    this.actionEventSender.sendEvent(action, payload);
+  };
+
+  trackProperties = async (payload: Record<string, string | undefined>) => {
+    this.actionEventSender.setProperties(payload);
   };
 }

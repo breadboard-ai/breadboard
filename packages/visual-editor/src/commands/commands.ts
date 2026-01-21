@@ -175,28 +175,32 @@ const ToggleExperimentalComponentsCommand: KeyboardCommand = {
     return true;
   },
 
-  async do({ settings }: KeyboardCommandDeps): Promise<void> {
-    if (!settings) {
-      return;
-    }
+  async do({ appController }: KeyboardCommandDeps): Promise<void> {
+    appController.global.main.experimentalComponents =
+      !appController.global.main.experimentalComponents;
 
-    const setting = settings.getItem(
-      BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-      "Show Experimental Components"
-    );
+    componentStatus = appController.global.main.experimentalComponents
+      ? "Enabled"
+      : "Disabled";
+  },
+};
 
-    if (setting && typeof setting.value === "boolean") {
-      const newSetting = structuredClone(setting);
-      newSetting.value = !newSetting.value;
-      componentStatus = newSetting.value ? "Enabled" : "Disabled";
+let debugStatus = "Enabled";
+const ToggleDebugCommand: KeyboardCommand = {
+  keys: ["Cmd+Shift+d", "Ctrl+Shift+d"],
+  alwaysNotify: true,
+  get messageComplete() {
+    return `Debug ${debugStatus}`;
+  },
 
-      settings.setItem(
-        BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-        "Show Experimental Components",
-        newSetting
-      );
-      settings.saveItem(BreadboardUI.Types.SETTINGS_TYPE.GENERAL, newSetting);
-    }
+  willHandle() {
+    return true;
+  },
+
+  async do({ appController }: KeyboardCommandDeps): Promise<void> {
+    appController.global.debug.enabled = !appController.global.debug.enabled;
+
+    debugStatus = appController.global.debug.enabled ? "Enabled" : "Disabled";
   },
 };
 
@@ -693,6 +697,7 @@ export const keyboardCommands = new Map<string[], KeyboardCommand>([
     ToggleExperimentalComponentsCommand.keys,
     ToggleExperimentalComponentsCommand,
   ],
+  [ToggleDebugCommand.keys, ToggleDebugCommand],
   [UndoCommand.keys, UndoCommand],
   [RedoCommand.keys, RedoCommand],
   [DuplicateCommand.keys, DuplicateCommand],

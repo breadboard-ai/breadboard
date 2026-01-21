@@ -8,6 +8,7 @@
     "clean": "git clean -Xdf -e !.vscode/settings.json",
     "update": "rm package-lock.json && npm i",
     "test": "wireit",
+    "coverage": "wireit",
     "build": "wireit",
     "lint": "wireit",
     "dev": "npm run dev -w packages/unified-server --watch",
@@ -34,6 +35,11 @@
         "<workspaces>#<this>",
         "!./packages/ui-tests#<this>",
         "!./experiments/screens#<this>"
+      ]
+    },
+    "coverage": {
+      "dependencies": [
+        "<workspaces>#<this>"
       ]
     },
     "lint": {
@@ -105,7 +111,7 @@
     "ava": "6.4.1",
     "eslint": "^8.57.1",
     "eslint-plugin-expect-type": "^0.6.2",
-    "prettier": "^3.6.2",
+    "prettier": "^3.7.4",
     "syncpack": "^13.0.3",
     "typescript": "^5.8.3",
     "wireit": "^0.15.0-pre.2"

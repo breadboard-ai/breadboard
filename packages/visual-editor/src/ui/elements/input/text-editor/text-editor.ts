@@ -17,19 +17,14 @@ import { icons } from "../../../styles/icons.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { jsonStringify } from "../../../utils/json-stringify.js";
 import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js";
+import { ROUTE_TOOL_PATH } from "../../../../a2/a2/tool-manager.js";
 
 export function chicletHtml(
   part: TemplatePart,
   projectState: Project | null,
   subGraphId: string | null
 ) {
-  const {
-    type,
-    invalid,
-    mimeType,
-    parameterType = "none",
-    parameterTarget,
-  } = part;
+  const { type, invalid, mimeType } = part;
   const assetType = getAssetType(mimeType) ?? "";
   const { icon: srcIcon, tags: metadataTags } = expandChiclet(
     part,
@@ -37,8 +32,9 @@ export function chicletHtml(
     subGraphId
   );
 
-  const { title } = part;
+  const { title, path, instance } = part;
   let metadataIcon = srcIcon;
+  let sourceTitle = title;
   const label = document.createElement("label");
   label.classList.add("chiclet");
 
@@ -63,8 +59,9 @@ export function chicletHtml(
     label.classList.add("invalid");
   }
 
-  if (parameterType !== "none") {
-    label.dataset.parameter = parameterType;
+  if (path === ROUTE_TOOL_PATH) {
+    label.dataset.parameter = "step";
+    sourceTitle = "Go to";
     metadataIcon = "start";
   }
 
@@ -85,19 +82,19 @@ export function chicletHtml(
   preambleEl.textContent = Template.preamble(part);
   titleEl.textContent = jsonStringify(title);
   titleEl.classList.add("visible-after");
-  titleEl.dataset.label = title;
+  titleEl.dataset.label = sourceTitle;
   postambleEl.textContent = Template.postamble();
 
   label.appendChild(preambleEl);
   label.appendChild(titleEl);
 
   // If there is a target then we need to expand this.
-  if (parameterType === "step") {
+  if (path === ROUTE_TOOL_PATH) {
     let targetIcon;
     let targetTitle;
-    if (parameterTarget) {
+    if (instance) {
       const { icon, title } = expandChiclet(
-        { path: parameterTarget, type: "in", title: "unknown" },
+        { path: instance, type: "in", title: "unknown" },
         projectState,
         subGraphId
       );
@@ -153,9 +150,6 @@ export class TextEditor extends LitElement {
   accessor supportsFastAccess = true;
 
   @property()
-  accessor showControlFlowTools = false;
-
-  @property()
   accessor nodeId: string | null = null;
 
   @property()
@@ -199,6 +193,7 @@ export class TextEditor extends LitElement {
           var(--text-editor-padding-right, var(--bb-grid-size-2))
           var(--text-editor-padding-bottom, var(--bb-grid-size-2))
           var(--text-editor-padding-left, var(--bb-grid-size-2));
+        scrollbar-width: none;
 
         &.placeholder::before {
           content: "Type your prompt here";
@@ -404,7 +399,7 @@ export class TextEditor extends LitElement {
       // Fresh add of a routing tool – trigger the fast access menu for the
       // step. We wait a frame so that the processing from adding the step has
       // completed (including unsetting the fast access menu target).
-      if (part.parameterType === "step" && !part.parameterTarget) {
+      if (part.path === ROUTE_TOOL_PATH && !part.instance) {
         requestAnimationFrame(() => {
           this.#triggerFastAccessIfOnStepParam(appendedEl);
         });
@@ -890,10 +885,6 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    if (!this.#editorRef.value.lastChild) {
-      return;
-    }
-
     const selection = this.#getCurrentSelection();
     if (!selection || selection.rangeCount === 0) {
       return;
@@ -1036,13 +1027,15 @@ export class TextEditor extends LitElement {
       this.#fastAccessRef.value.focusFilter();
     });
 
-    this.#fastAccessRef.value.selectedIndex = 0;
-    this.#fastAccessRef.value.showAssets = this.#fastAccessTarget === null;
-    this.#fastAccessRef.value.showTools = this.#fastAccessTarget === null;
-    this.#fastAccessRef.value.showParameters = false;
-    this.#fastAccessRef.value.showControlFlowTools =
-      this.showControlFlowTools && this.#fastAccessTarget === null;
+    const hasTarget = this.#fastAccessTarget !== null;
 
+    this.#fastAccessRef.value.selectedIndex = 0;
+    this.#fastAccessRef.value.showAssets = !hasTarget;
+    this.#fastAccessRef.value.showTools = !hasTarget;
+    this.#fastAccessRef.value.showComponents = !hasTarget;
+    this.#fastAccessRef.value.showRoutes = hasTarget;
+    this.#fastAccessRef.value.showParameters = false;
+    this.#fastAccessRef.value.showControlFlowTools = !hasTarget;
     this.#isUsingFastAccess = true;
   }
 
@@ -1057,6 +1050,9 @@ export class TextEditor extends LitElement {
 
   #setFastAccessTarget(part: TemplatePart | null) {
     this.#fastAccessTarget = part;
+    if (this.#fastAccessRef.value && this.#fastAccessTarget !== null) {
+      this.#fastAccessRef.value.updateFilter("");
+    }
   }
 
   #updateEditorValue() {
@@ -1190,7 +1186,6 @@ export class TextEditor extends LitElement {
             type: evt.accessType,
             mimeType: evt.mimeType,
             instance: evt.instance,
-            parameterType: evt.parameterType,
           };
 
           // If, however, there is a fast access target, i.e., an existing
@@ -1199,7 +1194,8 @@ export class TextEditor extends LitElement {
           if (this.#fastAccessTarget !== null) {
             targetPart = {
               ...this.#fastAccessTarget,
-              parameterTarget: evt.path,
+              instance: evt.path,
+              title: evt.title,
             };
           }
 
@@ -1211,11 +1207,10 @@ export class TextEditor extends LitElement {
         }}
         .graphId=${this.subGraphId}
         .nodeId=${this.nodeId}
-        .showControlFlowTools=${this.showControlFlowTools &&
-        this.#fastAccessTarget === null}
+        .showControlFlowTools=${this.#fastAccessTarget === null}
         .showAssets=${this.#fastAccessTarget === null}
         .showTools=${this.#fastAccessTarget === null}
-        .state=${this.projectState?.fastAccess}
+        .state=${this.projectState?.stepEditor.fastAccess}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;
   }

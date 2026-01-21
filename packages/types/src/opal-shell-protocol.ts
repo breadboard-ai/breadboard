@@ -21,8 +21,9 @@ export const SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE =
 export declare interface OpalShellHostProtocol {
   getSignInState(): Promise<SignInState>;
 
-  // TODO(aomarks) Do this within getSignInState so that we don't need this
-  // method.
+  // TODO(aomarks) Rename this validateSignInState or similar, because it now
+  // handles both missing scopes and the case where the user has revoked access
+  // through account settings.
   validateScopes(): Promise<ValidateScopesResult>;
 
   getConfiguration(): Promise<GuestConfiguration>;
@@ -46,6 +47,19 @@ export declare interface OpalShellHostProtocol {
   checkAppAccess(): Promise<CheckAppAccessResult>;
 
   sendToEmbedder(message: BreadboardMessage): Promise<void>;
+
+  getDriveCollectorFile(
+    mimeType: string,
+    connectorId: string,
+    graphId: string
+  ): Promise<GetDriveCollectorFileResult>;
+
+  trackAction(
+    event: string,
+    payload?: Record<string, string | undefined>
+  ): Promise<void>;
+
+  trackProperties(payload: Record<string, string | undefined>): Promise<void>;
 }
 
 export declare interface OpalShellGuestProtocol {
@@ -65,7 +79,11 @@ export declare type SignInState =
 
 export declare type ValidateScopesResult =
   | { ok: true }
-  | { ok: false; error: string };
+  | {
+      ok: false;
+      code?: "signed-out" | "missing-scopes" | "other";
+      error: string;
+    };
 
 export declare type SignInResult =
   | { ok: true; state: SignInState }
@@ -85,7 +103,7 @@ export declare type FindUserOpalFolderResult =
   | { ok: true; id: string }
   | { ok: false; error: string };
 
-export declare type ListOpalFileItem = {
+export declare type ListDriveFileItem = {
   id: string;
   name: string;
   modifiedTime: string;
@@ -97,7 +115,7 @@ export declare type ListOpalFileItem = {
 export declare type ListUserOpalsResult =
   | {
       ok: true;
-      files: ListOpalFileItem[];
+      files: ListDriveFileItem[];
     }
   | { ok: false; error: string };
 
@@ -115,7 +133,18 @@ export declare interface PickDriveFilesDocument {
 
 export declare interface CheckAppAccessResult {
   canAccess: boolean;
+  accessStatus?:
+    | "ACCESS_STATUS_UNSPECIFIED"
+    | "ACCESS_STATUS_OK"
+    | "ACCESS_STATUS_REGION_RESTRICTED"
+    | "ACCESS_STATUS_TOS_NOT_ACCEPTED"
+    | "ACCESS_STATUS_ENVIRONMENT_RESTRICTED"
+    | "ACCESS_STATUS_DASHER_ACCOUNT";
 }
+
+export declare type GetDriveCollectorFileResult =
+  | { ok: true; id: string | null }
+  | { ok: false; error: string };
 
 export declare interface ShareDriveFilesOptions {
   fileIds: string[];
@@ -123,7 +152,16 @@ export declare interface ShareDriveFilesOptions {
 
 export declare type GuestConfiguration = {
   consentMessage: string;
+  noAccessDasherMessage?: string;
+  noAccessRegionRestrictedMessage?: string;
   advancedEditorOrigin?: string;
+  galleryTitle?: string;
+  galleryIcon?: string;
+  libraryTitle?: string;
+  libraryIcon?: string;
+  noLibraryAppsTitle?: string;
+  createNewTitle?: string;
+  createNewIcon?: string;
   isTestApi?: boolean;
 
   /**
@@ -154,4 +192,11 @@ export declare type GuestConfiguration = {
    * performed will be removed.
    */
   shareSurfaceUrlTemplates: Record<string, string> | undefined;
+
+  /**
+   * If true, supports tracking GA properties. This is a transitional flag,
+   * which allows us to implement property tracking in the shell guest without
+   * breaking existing shell hosts.
+   */
+  supportsPropertyTracking?: boolean;
 };

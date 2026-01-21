@@ -13,6 +13,7 @@ import type {
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
+  NodeIdentifier,
   NodeMetadata,
   OutputValues,
 } from "@breadboard-ai/types";
@@ -179,5 +180,9 @@ class VirtualNode implements InspectableNode {
 
   deleted(): boolean {
     return false;
+  }
+
+  routes(): NodeIdentifier[] {
+    return [];
   }
 }

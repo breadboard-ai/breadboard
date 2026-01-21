@@ -24,17 +24,21 @@ import {
 import { ReactiveProjectRun } from "./project-run.js";
 import { Template } from "@breadboard-ai/utils";
 import { FlowGenerator } from "../flow-gen/flow-generator.js";
+import { AppController } from "../../controller/controller.js";
 
 export { createLiteModeState };
 
-function createLiteModeState(context: RuntimeContext) {
-  return new ReactiveLiteModeState(context);
+function createLiteModeState(
+  context: RuntimeContext,
+  appController: AppController
+) {
+  return new ReactiveLiteModeState(context, appController);
 }
 
 const EXAMPLES: LiteModeIntentExample[] = [
   {
     intent:
-      "An app that takes a topic, then researches current news on the topic and creates an alternative history fiction story based on these news",
+      "Help me prepare for a quiz on a given topic by creating sample questions with hints as an interactive quiz",
   },
   {
     intent:
@@ -46,7 +50,7 @@ const EXAMPLES: LiteModeIntentExample[] = [
   },
   {
     intent:
-      "An app that invents a family board game based on the ideas I provide",
+      "An app that takes a given resume and a job description the candidate is interested in, then provides a critique of the resume",
   },
 ];
 
@@ -134,7 +138,7 @@ class ReactiveLiteModeState implements LiteModeState {
 
     if (this.viewError) return "error";
 
-    const { loadState } = this.context.ui;
+    const { loadState } = this.appController.global.main;
     switch (loadState) {
       case "Home": {
         const parsedUrl = this.context.router.parsedUrl;
@@ -172,7 +176,10 @@ class ReactiveLiteModeState implements LiteModeState {
 
   planner: LiteModePlannerState;
 
-  constructor(private readonly context: RuntimeContext) {
+  constructor(
+    private readonly context: RuntimeContext,
+    private readonly appController: AppController
+  ) {
     this.planner = new PlannerState(this.context.flowGenerator);
   }
 }
@@ -245,21 +252,29 @@ function getStatus(
 class PlannerState implements LiteModePlannerState {
   @signal
   get status() {
-    return this.flowGenerator.currentStatus || "Creating your Opal";
+    return this.flowGenerator.currentStatus || "Creating your app";
   }
 
   @signal
   get thought() {
     return (
-      trimWithEllipsis(this.flowGenerator.currentThought, 10) || "Planning ..."
+      trimWithEllipsis(
+        progressFromThought(this.flowGenerator.currentThought),
+        10
+      ) || "Planning ..."
     );
   }
 
   constructor(private readonly flowGenerator: FlowGenerator) {}
 }
 
+function progressFromThought(thought: string | null): string | null {
+  if (!thought) return null;
+  const match = thought.match(/\*\*(.*?)\*\*/);
+  return match ? match[1] : null;
+}
+
 function trimWithEllipsis(text: string | null, length: number) {
-  // TODO: Implement this using word boundaries, not string length.
   if (!text) return null;
   const words = text.split(" ");
   if (words.length <= length + 1) return text;

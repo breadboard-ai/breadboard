@@ -16,6 +16,7 @@ import {
   isLLMContentArray,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
+import { ROUTE_TOOL_PATH } from "../../../../a2/a2/tool-manager.js";
 
 export function createChiclets(
   port: InspectablePort | null,
@@ -68,7 +69,7 @@ export function createChiclets(
   const chiclets: HTMLTemplateResult[] = [];
   const template = new Template(valStr);
   template.placeholders.forEach((part) => {
-    const { type, title, invalid, mimeType, parameterType } = part;
+    const { type, path, title, invalid, mimeType, instance } = part;
     const assetType = getAssetType(mimeType) ?? "";
 
     const { icon: srcIcon, tags: metadataTags } = expandChiclet(
@@ -77,27 +78,24 @@ export function createChiclets(
       subGraphId
     );
 
+    let sourceTitle = title;
     let targetIcon;
     let targetTitle;
     let metadataIcon = srcIcon;
-    if (parameterType) {
-      switch (parameterType) {
-        case "step":
-          metadataIcon = "start";
-          if (part.parameterTarget) {
-            const { icon, title } = expandChiclet(
-              { path: part.parameterTarget, type: "in", title: "unknown" },
-              projectState,
-              subGraphId
-            );
+    if (path === ROUTE_TOOL_PATH) {
+      metadataIcon = "start";
+      sourceTitle = "Go to";
+      if (instance) {
+        const { icon, title } = expandChiclet(
+          { path: instance, type: "in", title: "unknown" },
+          projectState,
+          subGraphId
+        );
 
-            targetIcon = icon;
-            targetTitle = title;
-          } else {
-            targetTitle = " " + "[not set]";
-          }
-
-          break;
+        targetIcon = icon;
+        targetTitle = title;
+      } else {
+        targetTitle = " " + "[not set]";
       }
     }
 
@@ -114,7 +112,8 @@ export function createChiclets(
             ></span>`
           : nothing}
         <span>${Template.preamble(part)}</span
-        ><span class="visible-after" data-label=${title}>${title}</span
+        ><span class="visible-after" data-label=${sourceTitle}
+          >${sourceTitle}</span
         >${targetIcon
           ? html`<span
               class="g-icon filled round target"

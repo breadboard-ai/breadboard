@@ -118,9 +118,6 @@ export class Renderer extends LitElement {
   accessor mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
-  accessor showExperimentalComponents = false;
-
-  @property()
   accessor showAssetsInGraph = false;
 
   @property()
@@ -967,17 +964,6 @@ export class Renderer extends LitElement {
     }
 
     if (
-      changedProperties.has("runState") ||
-      changedProperties.has("runStateEffect")
-    ) {
-      const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
-      const runState = this.runState;
-      if (mainGraph) {
-        mainGraph.highlightActivity(runState);
-      }
-    }
-
-    if (
       (changedProperties.has("graph") ||
         changedProperties.has("graphTopologyUpdateId") ||
         changedProperties.has("allowEdgeAttachmentMove") ||
@@ -1062,6 +1048,17 @@ export class Renderer extends LitElement {
 
       // Update disclaimer.
       this.showDisclaimer = this.graph.nodes().length !== 0;
+    }
+
+    if (
+      changedProperties.has("runState") ||
+      changedProperties.has("runStateEffect")
+    ) {
+      const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
+      const runState = this.runState;
+      if (mainGraph) {
+        mainGraph.highlightActivity(runState);
+      }
     }
 
     if (
@@ -1738,7 +1735,6 @@ export class Renderer extends LitElement {
         .history=${this.history}
         .mainGraphId=${this.mainGraphId}
         .showDefaultAdd=${showDefaultAdd}
-        .showExperimentalComponents=${this.showExperimentalComponents}
         .readOnly=${this.readOnly}
         @wheel=${(evt: WheelEvent) => {
           evt.stopImmediatePropagation();

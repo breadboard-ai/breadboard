@@ -17,6 +17,12 @@ import {
   SHELL_ORIGIN_URL_PARAMETER,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import * as comlink from "comlink";
+import {
+  getLogger,
+  setDebuggableAppController,
+  stubAppController,
+} from "../controller/utils/logging/logger.js";
+import * as Formatter from "../controller/utils/logging/formatter.js";
 
 initializeOpalShellGuest();
 
@@ -32,6 +38,7 @@ async function initializeOpalShellGuest() {
     console.error(`Could not find #opal-app iframe`);
     return;
   }
+  const label = "Shell Host";
   const shellPrefix = CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX;
   const hostUrl = new URL(window.location.href);
   const pathname = shellPrefix
@@ -56,6 +63,10 @@ async function initializeOpalShellGuest() {
     };
   } = {};
 
+  setDebuggableAppController(stubAppController);
+  const logger = getLogger();
+  const checkForDebugStatus = false;
+
   // Establish MessageChannel.
   window.addEventListener("message", (event) => {
     if (
@@ -66,14 +77,22 @@ async function initializeOpalShellGuest() {
       event.data !== null &&
       event.data.type === SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST
     ) {
-      console.log(
-        "[shell host] Received establish MessageChannel request from",
-        event.origin
+      logger.log(
+        Formatter.info(
+          "Received establish MessageChannel request from",
+          event.origin
+        ),
+        label,
+        checkForDebugStatus
       );
 
       if (boxedState.value) {
-        console.log(
-          "[shell host] Discarding previous guest, iframe must have navigated"
+        logger.log(
+          Formatter.info(
+            "Discarding previous guest, iframe must have navigated"
+          ),
+          label,
+          checkForDebugStatus
         );
         boxedState.value.guest[comlink.releaseProxy]();
         boxedState.value.port.close();
@@ -87,14 +106,27 @@ async function initializeOpalShellGuest() {
         );
       }
 
-      console.log("[shell host] Sending establish MessageChannel response");
+      logger.log(
+        Formatter.info("Sending establish MessageChannel response"),
+        label,
+        checkForDebugStatus
+      );
       const port = event.ports[0];
       port.postMessage({ type: SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE });
 
       // Initialize bi-directional comlink APIs
-      console.log("[shell host] Exposing host API");
+      logger.log(
+        Formatter.info("Exposing host API"),
+        label,
+        checkForDebugStatus
+      );
       comlink.expose(shellHost satisfies OpalShellHostProtocol, port);
-      console.log("[shell host] Connecting to guest API");
+      logger.log(
+        Formatter.info("Connecting to guest API"),
+        label,
+        checkForDebugStatus
+      );
+
       const guest = comlink.wrap<OpalShellGuestProtocol>(port);
       boxedState.value = { port, guest };
     }

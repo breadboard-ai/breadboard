@@ -16,7 +16,6 @@ import type {
   InspectableGraph,
   InspectableNode,
   InspectableNodeType,
-  LLMContent,
   ModuleIdentifier,
   MutableGraph,
   NodeConfiguration,
@@ -24,52 +23,15 @@ import type {
   NodeTypeIdentifier,
   Outcome,
 } from "@breadboard-ai/types";
-import {
-  err,
-  graphUrlLike,
-  Template,
-  TemplatePart,
-} from "@breadboard-ai/utils";
+import { err, graphUrlLike, TemplatePart } from "@breadboard-ai/utils";
 import { getModuleId, isModule } from "../utils.js";
 import { GraphNodeType } from "./graph-node-type.js";
 import { InspectableAssetImpl } from "./inspectable-asset.js";
 import { VirtualNode } from "./virtual-node.js";
-import { isLLMContent, isLLMContentArray } from "../../../data/common.js";
+import { scanConfiguration } from "../../../utils/scan-configuration.js";
+import { ROUTE_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
 
-export { GraphQueries };
-
-/**
- * Performs an action based on the supplied template part
- */
-type TemplatePartScanner = (part: TemplatePart) => void;
-
-function scanConfiguration(
-  config: NodeConfiguration,
-  scanner: TemplatePartScanner
-): void {
-  for (const [, portValue] of Object.entries(config)) {
-    let contents: LLMContent[] | null = null;
-    if (isLLMContent(portValue)) {
-      contents = [portValue];
-    } else if (isLLMContentArray(portValue)) {
-      contents = portValue;
-    }
-    if (!contents) continue;
-    for (const content of contents) {
-      for (const part of content.parts) {
-        if ("text" in part) {
-          const template = new Template(part.text);
-          if (template.hasPlaceholders) {
-            template.transform((part) => {
-              scanner(part);
-              return part;
-            });
-          }
-        }
-      }
-    }
-  }
-}
+export { GraphQueries, toolsFromConfiguration, routesFromConfiguration };
 
 /**
  * Encapsulates common graph operations.
@@ -240,11 +202,7 @@ class GraphQueries {
   tools() {
     const tools: TemplatePart[] = [];
     for (const node of this.#mutable.nodes.nodes(this.#graphId)) {
-      scanConfiguration(node.configuration(), (part) => {
-        if (part.type === "tool") {
-          tools.push(part);
-        }
-      });
+      tools.push(...toolsFromConfiguration(node.configuration()));
     }
     return tools;
   }
@@ -252,4 +210,28 @@ class GraphQueries {
   usesTool(path: string): boolean {
     return this.tools().some((tool) => tool.path === path);
   }
+
+  routes(nodeId: NodeIdentifier) {
+    const node = this.#mutable.nodes.get(nodeId, this.#graphId);
+    if (!node) {
+      return [];
+    }
+    return routesFromConfiguration(node.configuration());
+  }
+}
+
+function toolsFromConfiguration(configuration: NodeConfiguration) {
+  const tools: TemplatePart[] = [];
+  scanConfiguration(configuration, (part) => {
+    if (part.type === "tool") {
+      tools.push(part);
+    }
+  });
+  return tools;
+}
+
+function routesFromConfiguration(configuration: NodeConfiguration) {
+  return toolsFromConfiguration(configuration)
+    .filter((part) => part.path === ROUTE_TOOL_PATH && part.instance)
+    .map((part) => part.instance!);
 }

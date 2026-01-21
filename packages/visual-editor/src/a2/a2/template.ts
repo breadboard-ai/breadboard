@@ -4,10 +4,10 @@
 
 export { invoke as default, describe, Template };
 
-import { type Params } from "./common.js";
+import type { Params } from "./common.js";
 import { ok, err, isLLMContent, isLLMContentArray } from "./utils.js";
 import { ConnectorManager } from "./connector-manager.js";
-import {
+import type {
   Capabilities,
   DataPart,
   FileSystemPath,
@@ -15,6 +15,8 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import { ROUTE_TOOL_PATH } from "./tool-manager.js";
+import { escapeHtml } from "../../utils/escape-html.js";
 
 type LLMContentWithMetadata = LLMContent & {
   $metadata: unknown;
@@ -144,15 +146,6 @@ class Template {
           try {
             maybeTemplatePart = JSON.parse(json);
             if (isParamPart(maybeTemplatePart)) {
-              // Do some extra parsing for connector tools
-              // if (isTool(maybeTemplatePart)) {
-              //   const [path, connector] = maybeTemplatePart.path.split("|");
-              //   if (connector && connector.startsWith("connectors/")) {
-              //     maybeTemplatePart.path = path;
-              //     maybeTemplatePart.instance = connector;
-              //   }
-              //   console.log("TOOL", maybeTemplatePart);
-              // }
               parts.push(maybeTemplatePart);
             } else {
               maybeTemplatePart = null;
@@ -233,6 +226,8 @@ class Template {
     for (const part of this.#parts) {
       if ("type" in part) {
         parts.push({ text: await callback(part) });
+      } else if ("text" in part && !part.thought) {
+        parts.push({ text: escapeHtml(part.text) });
       } else {
         parts.push(part);
       }
@@ -372,6 +367,15 @@ class Template {
 
   static part(part: ParamPart) {
     return `{${JSON.stringify(part)}}`;
+  }
+
+  static route(title: string, instance: string) {
+    return Template.part({
+      type: "tool",
+      title,
+      path: ROUTE_TOOL_PATH,
+      instance,
+    });
   }
 
   /**

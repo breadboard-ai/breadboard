@@ -3,22 +3,23 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { type OAuthScope } from "../../connection/oauth-scopes.js";
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { type OAuthScope } from "../../connection/oauth-scopes.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+import { markdown } from "../../directives/markdown.js";
+import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
+import { ActionTracker, UserSignInResponse } from "../../types/types.js";
 import {
   signinAdapterContext,
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
-import { UserSignInResponse } from "../../types/types.js";
-import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
-import { markdown } from "../../directives/markdown.js";
-import { classMap } from "lit/directives/class-map.js";
 
 type State =
   | { status: "closed" }
@@ -28,6 +29,7 @@ type State =
         | "add-scope"
         | "geo-restriction"
         | "missing-scopes"
+        | "consent-only"
         | "other-error";
       request: SignInRequest;
     };
@@ -50,8 +52,14 @@ export class VESignInModal extends LitElement {
   @property({ attribute: false })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined = undefined;
+
   @property()
   accessor consentMessage: string | undefined = undefined;
+
+  @property()
+  accessor blurBackground: boolean | null = null;
 
   @state()
   accessor #state: State = { status: "closed" };
@@ -71,8 +79,15 @@ export class VESignInModal extends LitElement {
         max-width: 318px;
 
         &.large {
+          width: calc(100vw - 90px);
           max-width: 500px;
           align-items: flex-end;
+
+          #consent {
+            height: calc(100vh - 210px);
+            max-height: 450px;
+            overflow-y: auto;
+          }
         }
       }
 
@@ -99,6 +114,11 @@ export class VESignInModal extends LitElement {
         }
         &:hover {
           background: var(--light-dark-n-25);
+        }
+
+        &[disabled] {
+          cursor: not-allowed;
+          opacity: 0.5;
         }
       }
 
@@ -156,12 +176,16 @@ export class VESignInModal extends LitElement {
     }
   }
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+  }
+
   render() {
     const { status } = this.#state;
     if (status === "closed") {
       return nothing;
     }
-    if (status === "sign-in") {
+    if (status === "sign-in" || status === "consent-only") {
       return this.#renderSignIn();
     }
     if (status === "add-scope") {
@@ -259,7 +283,7 @@ export class VESignInModal extends LitElement {
     return html`
       <bb-modal
         appearance="basic"
-        blurBackground
+        ?blurBackground=${this.blurBackground}
         .modalTitle=${title}
         @bbmodaldismissed=${() => this.#close("dismissed")}
       >
@@ -276,11 +300,18 @@ export class VESignInModal extends LitElement {
         <button
           id="cancel-button"
           class="sans"
-          @click=${() => this.dispatchEvent(new ModalDismissedEvent())}
+          @click=${() => {
+            this.dispatchEvent(new ModalDismissedEvent());
+            this.#close("dismissed");
+          }}
         >
           Cancel
         </button>
-        <button id="sign-in-button" class="sans" @click=${this.#onClickSignIn}>
+        <button
+          id="sign-in-button"
+          class="sans accept"
+          @click=${this.#onClickAccept}
+        >
           Accept
         </button>
       </div>
@@ -305,6 +336,21 @@ export class VESignInModal extends LitElement {
     `;
   }
 
+  async openAndWaitForConsent(): Promise<UserSignInResponse> {
+    let resolve: (outcome: UserSignInResponse) => void;
+    const outcomePromise = new Promise<UserSignInResponse>(
+      (r) => (resolve = r)
+    );
+
+    this.#state = {
+      status: "consent-only",
+      request: { outcomePromise, outcomeResolve: resolve!, scopes: [] },
+    };
+    const result = await outcomePromise;
+    this.#state = { status: "closed" };
+    return result;
+  }
+
   async openAndWaitForSignIn(
     scopes?: OAuthScope[],
     status?: "sign-in" | "add-scope"
@@ -313,7 +359,9 @@ export class VESignInModal extends LitElement {
       return (await this.#state.request.outcomePromise) ? "success" : "failure";
     }
     status ??=
-      this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in";
+      (await this.signinAdapter?.state) === "signedin"
+        ? "add-scope"
+        : "sign-in";
     let resolve: (outcome: UserSignInResponse) => void;
     const outcomePromise = new Promise<UserSignInResponse>(
       (r) => (resolve = r)
@@ -331,6 +379,14 @@ export class VESignInModal extends LitElement {
       new StateEvent({ eventType: "host.usersignin", result })
     );
     return result;
+  }
+
+  async #onClickAccept() {
+    if (this.#state.status !== "consent-only") {
+      return this.#onClickSignIn();
+    }
+    this.actionTracker?.signInSuccess();
+    this.#close("success");
   }
 
   async #onClickSignIn() {
@@ -356,6 +412,8 @@ export class VESignInModal extends LitElement {
         this.#state = { status: "other-error", request };
       }
       return;
+    } else {
+      this.actionTracker?.signInSuccess();
     }
     if (status === "sign-in") {
       // TODO(aomarks) Remove the reload after the app is fully reactive to a

@@ -26,9 +26,11 @@ export {
   getDoc,
   getPresentation,
   getSpreadsheetMetadata,
-  query,
+  getSpreadsheetValues,
+  setSpreadsheetValues,
   updateDoc,
   updatePresentation,
+  updateSpreadsheet,
 };
 
 // These are various Google Drive-specific types.
@@ -629,6 +631,18 @@ export type SlidesRequest =
   | { createImage: SlidesCreateImageRequest }
   | { updateTextStyle: SlidesUpdateTextStyleRequest };
 
+export type SpreadsheetRequest =
+  | {
+      addSheet: { properties: { title: string } };
+    }
+  | { deleteSheet: { sheetId: number } }
+  | {
+      updateSheetProperties: {
+        properties: { sheetId: number; title: string };
+        fields: string;
+      };
+    };
+
 export type SpreadsheetValueRange = {
   range?: string;
   majorDimension?: "ROWS" | "COLUMNS";
@@ -685,21 +699,6 @@ async function create(
   }
 
   return api(moduleArgs, GOOGLE_DRIVE_FILES_API_PREFIX, "POST", body);
-}
-
-async function query(
-  moduleArgs: A2ModuleArgs,
-  query: string
-): Promise<Outcome<FileQueryResponse>> {
-  if (!query) {
-    return err("Please supply the query.");
-  }
-
-  return api(
-    moduleArgs,
-    `${GOOGLE_DRIVE_FILES_API_PREFIX}?q=${encodeURIComponent(query)}`,
-    "GET"
-  );
 }
 
 async function del(moduleArgs: A2ModuleArgs, id: string) {
@@ -799,6 +798,45 @@ async function getSpreadsheetMetadata(moduleArgs: A2ModuleArgs, id: string) {
   );
 }
 
+async function getSpreadsheetValues(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  range: string
+) {
+  return api<SpreadsheetValueRange>(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${range}`,
+    "GET"
+  );
+}
+
+async function updateSpreadsheet(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  requests: SpreadsheetRequest[]
+) {
+  return api(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}:batchUpdate`,
+    "POST",
+    { requests }
+  );
+}
+
+async function setSpreadsheetValues(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  range: string,
+  values: unknown[][]
+) {
+  return api<void>(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    "PUT",
+    { values }
+  );
+}
+
 async function appendSpreadsheetValues(
   moduleArgs: A2ModuleArgs,
   id: string,
@@ -852,6 +890,14 @@ ${body}
   }
 }
 
+type BackendError = {
+  error: {
+    code: number;
+    message: string;
+    status: string;
+  };
+};
+
 async function api<T>(
   { fetchWithCreds, context }: A2ModuleArgs,
   url: string,
@@ -867,7 +913,13 @@ async function api<T>(
       requestInit.body = JSON.stringify(body);
     }
     const response = await fetchWithCreds(url, requestInit);
-    return response.json() as Promise<Outcome<T>>;
+    const json = await response.json();
+    if ("error" in json) {
+      const error = json as BackendError;
+      console.error(`Drive Error`, json);
+      return err(error.error.message);
+    }
+    return json as T;
   } catch (e) {
     return err((e as Error).message);
   }
