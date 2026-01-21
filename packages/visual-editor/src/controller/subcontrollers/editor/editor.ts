@@ -7,6 +7,7 @@
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 
+export * as Selection from "./selection/selection.js";
 export * as Sidebar from "./sidebar/sidebar.js";
 
 export class EditorController extends RootController {

@@ -8,12 +8,13 @@ import { DebugController } from "./subcontrollers/debug-controller.js";
 import { FeedbackController } from "./subcontrollers/feedback-controller.js";
 import * as Editor from "./subcontrollers/editor/editor.js";
 import * as Home from "./subcontrollers/home/home.js";
-import { DebuggableAppController } from "./types.js";
+import { DebuggableAppController, HydratedController } from "./types.js";
 import { ToastController } from "./subcontrollers/toast-controller.js";
 import * as Migrations from "./migration/migrations.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
 import { FlagController } from "./subcontrollers/flag-controller.js";
 import { GlobalController } from "./subcontrollers/global/global.js";
+import { isHydratedController } from "./utils/hydration.js";
 
 class Controller implements AppController {
   editor: AppController["editor"];
@@ -25,6 +26,7 @@ class Controller implements AppController {
 
     this.editor = {
       main: new Editor.EditorController("Editor_Main"),
+      selection: new Editor.Selection.SelectionController("Editor_Selection"),
       sidebar: {
         settings: new Editor.Sidebar.SettingsController(
           "Editor_Sidebar_Settings"
@@ -60,18 +62,31 @@ class Controller implements AppController {
     };
   }
 
-  /* c8 ignore next 12 */
+  #walk(collect: HydratedController[] = [], target: unknown = this) {
+    if (target === null || typeof target !== "object") {
+      return;
+    }
+
+    const safeTarget = target as Record<string, unknown>;
+    const props = Object.getOwnPropertyNames(safeTarget);
+
+    for (const propName of props) {
+      const prop = safeTarget[propName];
+
+      if (isHydratedController(prop)) {
+        collect.push(prop);
+        continue;
+      }
+      this.#walk(collect, prop);
+    }
+
+    return collect;
+  }
+
   get isHydrated(): Promise<number[]> {
-    return Promise.all([
-      this.editor.main.isHydrated,
-      this.editor.sidebar.settings.isHydrated,
-      this.home.recent.isHydrated,
-      this.global.main.isHydrated,
-      this.global.flags.isHydrated,
-      this.global.debug.isHydrated,
-      this.global.feedback.isHydrated,
-      this.global.toasts.isHydrated,
-    ]);
+    const controllers: HydratedController[] = [];
+    this.#walk(controllers, this);
+    return Promise.all(controllers.map((c) => c.isHydrated));
   }
 }
 
@@ -90,6 +105,7 @@ export const appController = (flags?: RuntimeFlags) => {
 export interface AppController extends DebuggableAppController {
   editor: {
     main: Editor.EditorController;
+    selection: Editor.Selection.SelectionController;
     sidebar: {
       settings: Editor.Sidebar.SettingsController;
     };
