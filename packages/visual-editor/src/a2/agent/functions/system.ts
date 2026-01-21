@@ -121,7 +121,7 @@ Only after you've completely fulfilled the objective call the "${OBJECTIVE_FULFI
 
 NOTE ON WHAT TO RETURN: 
 
-1. Return outcome as a text content that can reference VFS files. They will be included as part of the outcome. For example, if you need to return multiple existing images or videos or even a whole project, just reference it in the "objective_outcome" parameter.
+1. Return outcome as a text content that can reference VFS files. They will be included as part of the outcome. For example, if you need to return multiple existing images or videos, just reference them using <file> tags in the "objective_outcome" parameter.
 
 2. Only return what is asked for in the objective. DO NOT return any extraneous commentary or intermediate outcomes. For instance, when asked to evaluate multiple products for product market fit and return the verdict on which fits the best, you must only return the verdict and skip the rest of intermediate information you might have produced as a result of evaluation. As another example, when asked to generate an image, just return a VFS file reference to the image without any extraneous text.
 
@@ -153,7 +153,7 @@ The system you're working in uses the virtual file system (VFS). The VFS paths a
 
 You can use the <file src="/vfs/path" /> syntax to embed them in text.
 
-Only reference files or projects that you know to exist. If you aren't sure, call the "${LIST_FILES_FUNCTION}" function to confirm their existence. Do NOT make hypothetical file tags: they will cause processing errors.
+Only reference files that you know to exist. If you aren't sure, call the "${LIST_FILES_FUNCTION}" function to confirm their existence. Do NOT make hypothetical file tags: they will cause processing errors.
 
 NOTE: The post-processing parser that reads your generated output and replaces the <file src="/vfs/path" /> with the contents of the file. Make sure that your output still makes sense after the replacement.
 
@@ -174,51 +174,6 @@ Rubric:
 Evaluate proposal <file src="/vfs/proposal.md" /> according to the rubric <file src="/vfs/rubric.md" />
 
 In the good example above, the replaced texts fit neatly under each heading. In the bad example, the replaced text is stuffed into the sentence.
-
-## Using Projects
-
-Particularly when working on complicated problems, rely on projects to group work and to pass the work around. In particular, use projects when the expected length of final output is large.
-
-A "project" is a collection of files. Projects can be used to group files so  that they could be referenced together. For example, you can create a project to collect all files relevant to fulfilling the objective.
-
-Projects are more like groupings rather than folders. Files that are added to the project still retain their original paths, but now also belong to the project. Same file can be part of multiple projects.
-
-Projects can also be referenced as files and all have this VFS path structure: "/vfs/projects/[name_of_project]". Project names use snake_case for naming.
-
-Project file reference is equivalent to referencing all files within the project in their insertion order. For example, if a project "blah" contains three files "/vfs/image1.png", "/vfs/text7.md" and "/vfs/file10.pdf", then:  
-
-"<file src="/vfs/projects/blah" />" 
-
-is equivalent to:
-
-"<file src="/vfs/image1.png" />
-<file src="/vfs/text7.md" />
-<file src="/vfs/file10.pdf" />"
-
-Projects can be used to manage a growing set of files around the project.
-
-Many functions will have the "project_path" parameter. Use it to add their output directly to the project.
-
-Pay attention to the objective. If it requires multiple files to be produced and accumulated along the way, use the "Work Area Project" pattern:
-
-- create a project
-- add files to it as they are generated or otherwise produced.
-- reference the project as a file whenever you need to pass all of those files
-to the next task.
-
-Example: let's suppose that your objective is to write a multi-chapter report based on some provided background information.
-
-This is a great fit for the "Work Area Project" pattern, because you have some initial context (provided background information) and then each chapter is added to that context.
-
-Thus, a solid plan to fulfill this objective would be to:
-
-1. Create a "workarea" project (path "/vfs/projects/workarea")
-2. Write background information as one or more files, using "project_path" to add them directly to the project
-3. Write each chapter of the report using "generate_text", referencing the "/vfs/projects/workarea" VFS path in the prompt and supplying this same path as the "project_path" for the output. This way, the "generate_text" will use all files in the project as context, and it will contribute the newly written chapter to the same project.
-4. When done generating information, create a new "report" project (path "/vfs/projects/report")
-5. Add only the chapters to that project, so that the initial background information is not part of the final output
-6. Call the "system_objective_fulfilled" function with <file src="/vfs/project/report" /> as the outcome.
-
 `;
 
 function getSystemFunctionGroup(args: SystemFunctionArgs): FunctionGroup {
@@ -326,15 +281,6 @@ The name of the file without the extension.
 This is the name that will come after the "/vfs/" prefix in the VFS file path.
 Use snake_case for naming.`.trim()
           ),
-          project_path: z
-            .string()
-            .describe(
-              `
-The VFS path to a project. If specified, the result will be added to that
-project. Use this parameter as a convenient way to add newly created file to an
-existing project.`.trim()
-            )
-            .optional(),
           text: z.string().describe(`The text to write into a VFS file`),
         },
         response: {
@@ -348,9 +294,7 @@ existing project.`.trim()
             .optional(),
         },
       },
-      async ({ file_name, project_path, text }) => {
-        console.log("FILE_NAME", file_name);
-        console.log("TEXT TO WRITE", text);
+      async ({ file_name, text }) => {
         const translatedContent = await args.translator.fromPidginString(text);
         if (!ok(translatedContent)) {
           return { error: translatedContent.$error };
@@ -358,11 +302,8 @@ existing project.`.trim()
         const file_path = args.fileSystem.write(
           file_name,
           toText(translatedContent),
-          "text/markdown"
+          "text/plain"
         );
-        if (project_path) {
-          args.fileSystem.addFilesToProject(project_path, [file_path]);
-        }
         return { file_path };
       }
     ),
@@ -377,15 +318,6 @@ The name of the file without the extension.
 This is the name that will come after the "/vfs/" prefix in the VFS file path.
 Use snake_case for naming.`.trim()
           ),
-          project_path: z
-            .string()
-            .describe(
-              `
-The VFS path to a project. If specified, the result will be added to that
-project. Use this parameter as a convenient way to add newly created file to an
-existing project.`.trim()
-            )
-            .optional(),
           text: z.string().describe(`The text to write into a VFS file`),
         },
         response: {
@@ -394,17 +326,12 @@ existing project.`.trim()
             .describe("The VS path to the file containing the provided text"),
         },
       },
-      async ({ file_name, project_path, text }) => {
-        console.log("FILE_NAME", file_name);
-        console.log("JSON TO WRITE", text);
+      async ({ file_name, text }) => {
         const file_path = args.fileSystem.write(
           file_name,
           text,
           "application/javascript"
         );
-        if (project_path) {
-          args.fileSystem.addFilesToProject(project_path, [file_path]);
-        }
         return { file_path };
       }
     ),
@@ -418,12 +345,6 @@ existing project.`.trim()
   
 The VFS path of the file to which to append text. If a file does not
 exist, it will be created`
-          ),
-          project_path: z.string().describe(
-            `
-The VFS path to a project. If specified, the result will be added to that
-project. Use this parameter as a convenient way to add newly created file to an
-existing project.`.trim()
           ),
           text: z.string().describe(`The text to append to the file`),
         },
@@ -442,15 +363,10 @@ If an error has occurred, will contain a description of the error`
             .optional(),
         },
       },
-      async ({ file_path, project_path, text }) => {
-        console.log("FILE_NAME", file_path);
-        console.log("TEXT TO APPEND", text);
+      async ({ file_path, text }) => {
         const appending = args.fileSystem.append(file_path, text);
         if (!ok(appending)) return { error: appending.$error };
 
-        if (project_path) {
-          args.fileSystem.addFilesToProject(project_path, [file_path]);
-        }
         return { file_path };
       }
     ),
@@ -490,104 +406,11 @@ If an error has occurred, will contain a description of the error`
         return { text };
       }
     ),
-    defineFunction(
-      {
-        name: "system_create_project",
-        description: `Creates a project with the provided name. A project is a
-collection of files. Projects can be used to group files so that they could be
-referenced together. For example, you can create a project to collect all files relevant to the fulfilling the objective. 
-
-Projects are more like groupings rather than folders. Files that are added to 
-the project still retain their original paths, but now also belong to the 
-project. Same file can be part of multiple projects.
-
-Projects can also be referenced as files and all have this VFS path structure:
-"/vfs/projects/[name_of_project]".
-
-Such a file reference is equivalent to referencing all files within the project
-in their insertion order. For example, if a project "blah" contains three files:
-"/vfs/image1.png", "/vfs/text7.md" and "/vfs/file10.pdf", 
-then  
-
-"<file src="/vfs/projects/blah" />" 
-
-is equivalent to:
-
-"<file src="/vfs/image1.png" />
-<file src="/vfs/text7.md" />
-<file src="/vfs/file10.pdf" />"
-`,
-        parameters: {
-          name: z.string().describe(`Name of the project. This is the name that
-will come after "/vfs/projects/" prefix in the file path. Use snake_case for
-naming.`),
-        },
-        response: {
-          file_path: z.string().describe(`The VFS path to the project. Will be
-in the form of "/vfs/projects/[name_of_project]".`),
-        },
-      },
-      async ({ name }) => {
-        return { file_path: args.fileSystem.createProject(name) };
-      }
-    ),
-    defineFunction(
-      {
-        name: "system_add_files_to_project",
-        description: `Adds files to a project`,
-        parameters: {
-          project_file_path: z.string().describe(`The VFS path to the project
-to which to add files`),
-          files_to_add: z.array(
-            z.string().describe(`
-The VFS path to a file to add to the project`)
-          ),
-        },
-        response: {
-          report: z.string().describe(`A brief report on the updated contents of
-the file`),
-        },
-      },
-      async ({ project_file_path, files_to_add }) => {
-        const result = args.fileSystem.addFilesToProject(
-          project_file_path,
-          files_to_add
-        );
-
-        return {
-          report: `
-- Total files: ${result.total}
-- Existing files: ${result.existing.join(", ")}
-- Added files: ${result.added.join(", ")}`,
-        };
-      }
-    ),
-    defineFunction(
-      {
-        name: "system_list_project_contents",
-        description: `Lists all files currently in the project`,
-        parameters: {
-          project_file_path: z.string().describe(`The VFS path to the project`),
-        },
-        response: {
-          file_paths: z.array(
-            z.string().describe(`
-The VFS path to a file that is in this project
-`)
-          ),
-        },
-      },
-      async ({ project_file_path }) => {
-        return {
-          file_paths: args.fileSystem.listProjectContents(project_file_path),
-        };
-      }
-    ),
     defineFunctionLoose(
       {
         name: CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
         description:
-          "When working on complicated problem, use this throw-away scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially. To better help yourself, make sure to include all meta-tasks: formatting/preparing the outputs, creating or updating projects, and so on.",
+          "When working on complicated problem, use this throw-away scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially.",
         parametersJsonSchema: TASK_TREE_SCHEMA,
         responseJsonSchema: {
           type: "object",

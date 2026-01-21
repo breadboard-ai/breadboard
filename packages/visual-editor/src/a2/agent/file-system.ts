@@ -44,11 +44,7 @@ export type AgentFileSystemArgs = {
 
 class AgentFileSystem {
   #fileCount = 0;
-
-  #projects: Map<string, Set<string>> = new Map();
-
   #files: Map<string, FileDescriptor> = new Map();
-
   #routes: Map<string, string> = new Map([
     ["", ""],
     ["/", "/"],
@@ -149,25 +145,6 @@ class AgentFileSystem {
     }
   }
 
-  #getProjectFiles(path: string): Outcome<DataPart[]> {
-    const project = this.#projects.get(path);
-    if (!project) {
-      return err(`Project "${path}" not found`);
-    }
-    const errors: string[] = [];
-    const files = [...project].map((path) => {
-      const file = this.#getFile(path);
-      if (!ok(file)) {
-        errors.push(file.$error);
-      }
-      return file;
-    });
-    if (errors.length > 0) {
-      return err(errors.join(","));
-    }
-    return files as DataPart[];
-  }
-
   async #getMemoryFile(path: string): Promise<Outcome<DataPart[]>> {
     const sheetName = path.replace("/vfs/memory/", "");
     const sheet = await this.memoryManager?.readSheet({
@@ -213,9 +190,6 @@ class AgentFileSystem {
     if (path.startsWith("/vfs/system/")) {
       return this.#getSystemFile(path);
     }
-    if (path.startsWith("/vfs/projects/")) {
-      return this.#getProjectFiles(path);
-    }
     if (path.startsWith("/vfs/memory/")) {
       return this.#getMemoryFile(path);
     }
@@ -226,7 +200,6 @@ class AgentFileSystem {
 
   async listFiles(): Promise<string> {
     const files = [...this.#files.keys()];
-    const projects = [...this.#projects.keys()];
     const system = [...this.systemFiles.keys()];
     const memory = [];
     const memoryMetadata = await this.memoryManager?.getSheetMetadata();
@@ -235,34 +208,7 @@ class AgentFileSystem {
         ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
       );
     }
-    return [...files, ...system, ...memory, ...projects].join("\n");
-  }
-
-  createProject(name: string): string {
-    return `/vfs/projects/${name}`;
-  }
-
-  addFilesToProject(
-    projectPath: string,
-    files: string[]
-  ): AddFilesToProjectResult {
-    let project = this.#projects.get(projectPath);
-    if (!project) {
-      project = new Set();
-      this.#projects.set(projectPath, project);
-    }
-    const existing = [...project];
-    files.forEach((file) => project.add(file));
-    return {
-      total: project.size,
-      existing,
-      added: files,
-    };
-  }
-
-  listProjectContents(projectPath: string): string[] {
-    const project = this.#projects.get(projectPath);
-    return [...(project || [])];
+    return [...files, ...system, ...memory].join("\n");
   }
 
   addRoute(originalRoute: string): string {
