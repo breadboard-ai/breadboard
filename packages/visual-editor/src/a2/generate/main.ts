@@ -23,6 +23,7 @@ import { makeImageInstruction } from "../a2/image-generator.js";
 import { makeSpeechInstruction } from "../audio-generator/main.js";
 import { makeVideoInstruction } from "../video-generator/main.js";
 import { makeMusicInstruction } from "../music-generator/main.js";
+import type { ModelConstraint } from "../agent/functions/generate.js";
 
 export { invoke as default, describe };
 
@@ -68,6 +69,11 @@ type Mode = {
    * This instruction is added to the overall objective of the step,
    */
   makeInstruction: (inputs: Record<string, unknown>) => string;
+  /**
+   * A model constraint, to narrow the kinds of models the agent can call
+   * when in this mode.
+   */
+  modelConstraint: ModelConstraint;
 };
 
 const PROMPT_PORT = "config$prompt";
@@ -93,6 +99,7 @@ const MODES: Mode[] = [
       [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
+    modelConstraint: "text-flash",
   },
   {
     id: "text-3-flash",
@@ -110,6 +117,7 @@ const MODES: Mode[] = [
       [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
+    modelConstraint: "text-flash",
   },
   {
     id: "text",
@@ -127,6 +135,7 @@ const MODES: Mode[] = [
       [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
+    modelConstraint: "text-flash",
   },
   {
     id: "text-2.5-pro",
@@ -144,6 +153,7 @@ const MODES: Mode[] = [
       [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
+    modelConstraint: "text-pro",
   },
 
   {
@@ -162,6 +172,7 @@ const MODES: Mode[] = [
       [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
+    modelConstraint: "text-pro",
   },
   {
     id: "think",
@@ -178,6 +189,7 @@ const MODES: Mode[] = [
       [LIST_PORT, "z-list"],
     ]),
     makeInstruction: makeGoOverListInstruction,
+    modelConstraint: "none",
   },
   {
     id: "deep-research",
@@ -194,6 +206,7 @@ const MODES: Mode[] = [
       [LIST_PORT, "z-list"],
     ]),
     makeInstruction: makeDeepResearchInstruction,
+    modelConstraint: "none",
   },
   {
     id: "image-gen",
@@ -207,6 +220,7 @@ const MODES: Mode[] = [
     info: `Image ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: false }),
+    modelConstraint: "image",
   },
   {
     id: "image",
@@ -221,6 +235,7 @@ const MODES: Mode[] = [
     info: "Image generation has limited free quota",
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: false }),
+    modelConstraint: "image",
   },
   {
     id: "image-pro",
@@ -235,6 +250,7 @@ const MODES: Mode[] = [
     info: `Image ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: true }),
+    modelConstraint: "image",
   },
   {
     id: "audio",
@@ -248,6 +264,7 @@ const MODES: Mode[] = [
     info: `Audio ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "text"]]),
     makeInstruction: makeSpeechInstruction,
+    modelConstraint: "speech",
   },
   {
     id: "video",
@@ -261,6 +278,7 @@ const MODES: Mode[] = [
     info: `Video ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeVideoInstruction,
+    modelConstraint: "video",
   },
   {
     id: "music",
@@ -274,6 +292,7 @@ const MODES: Mode[] = [
     info: `Music ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "text"]]),
     makeInstruction: makeMusicInstruction,
+    modelConstraint: "music",
   },
 ] as const;
 
@@ -341,6 +360,7 @@ async function invoke(
       "b-ui-prompt": { parts: [] },
       ...rest,
       "b-si-instruction": resolvedMode.makeInstruction(rest),
+      "b-si-constraint": resolvedMode.modelConstraint,
     };
     return agent(agentInputs, caps, moduleArgs);
   } else {
