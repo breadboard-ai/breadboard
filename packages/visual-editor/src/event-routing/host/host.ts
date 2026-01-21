@@ -31,6 +31,8 @@ export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> 
         return false;
       }
 
+      console.log(originalEvent.detail.selections);
+
       runtime.select.processSelections(
         tab.id,
         originalEvent.detail.selectionChangeId,

@@ -8,9 +8,9 @@ import { EditSpec, GraphDescriptor } from "@breadboard-ai/types";
 import { KeyboardCommand, KeyboardCommandDeps } from "./types.js";
 import * as BreadboardUI from "../ui/index.js";
 import { MAIN_BOARD_ID } from "../runtime/util.js";
-import { inspectableAssetEdgeToString } from "../ui/utils/workspace.js";
 import { ClipboardReader } from "../utils/clipboard-reader.js";
 import { Tab } from "../runtime/types.js";
+import { toAssetEdgeIdentifier } from "../controller/utils/helpers/helpers.js";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
@@ -118,9 +118,7 @@ const DeleteCommand: KeyboardCommand = {
         if (Array.isArray(assetEdges)) {
           for (const selectedAssetEdge of selectionGraph.assetEdges) {
             for (const assetEdge of assetEdges) {
-              if (
-                selectedAssetEdge !== inspectableAssetEdgeToString(assetEdge)
-              ) {
+              if (selectedAssetEdge !== toAssetEdgeIdentifier(assetEdge)) {
                 continue;
               }
 
