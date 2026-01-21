@@ -8,6 +8,12 @@
 import type { Signal } from "@lit-labs/signals";
 import type { pending } from "./utils/sentinel.js";
 import { type BaseBladeParams } from "tweakpane";
+import { NodeIdentifier } from "@breadboard-ai/types";
+
+export type AssetIdentifier = string;
+export type EdgeIdentifier =
+  `${NodeIdentifier}:${string}->${NodeIdentifier}:${string}`;
+export type AssetEdgeIdentifier = `${AssetIdentifier}->${NodeIdentifier}`;
 
 export interface DebugController {
   enabled: boolean;

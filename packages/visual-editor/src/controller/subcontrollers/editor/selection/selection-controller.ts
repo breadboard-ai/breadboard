@@ -4,25 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  Edge,
-  GraphDescriptor,
-  InspectableGraph,
-  NodeIdentifier,
-} from "@breadboard-ai/types";
+import { InspectableGraph, NodeIdentifier } from "@breadboard-ai/types";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
-
-type EdgeIdentifier = `${string}:${string}->${string}:${string}`;
+import { ok } from "@breadboard-ai/utils";
+import {
+  AssetEdgeIdentifier,
+  AssetIdentifier,
+  EdgeIdentifier,
+} from "../../../types.js";
+import {
+  toAssetEdgeIdentifier,
+  toEdgeIdentifier,
+} from "../../../utils/helpers/helpers.js";
 
 interface Selection {
   nodes: Set<NodeIdentifier>;
   edges: Set<EdgeIdentifier>;
-}
-
-export function toEdgeIdentifier(edge: Edge): EdgeIdentifier {
-  const edgeIn = edge.out === "*" ? "*" : edge.in;
-  return `${edge.from}:${edge.out}->${edge.to}:${edgeIn}`;
+  assets: Set<AssetIdentifier>;
+  assetEdges: Set<AssetEdgeIdentifier>;
 }
 
 export class SelectionController extends RootController {
@@ -30,6 +30,8 @@ export class SelectionController extends RootController {
   private accessor _selection: Selection = {
     nodes: new Set(),
     edges: new Set(),
+    assets: new Set(),
+    assetEdges: new Set(),
   };
 
   get selection(): Readonly<Selection> {
@@ -39,6 +41,8 @@ export class SelectionController extends RootController {
   clear() {
     this.removeNodes();
     this.removeEdges();
+    this.removeAssets();
+    this.removeAssetEdges();
   }
 
   addNode(id: NodeIdentifier) {
@@ -65,19 +69,49 @@ export class SelectionController extends RootController {
     this._selection.edges.clear();
   }
 
-  selectAll(graph: InspectableGraph | GraphDescriptor) {
-    let descriptor = graph;
-    if ("raw" in descriptor) {
-      descriptor = descriptor.raw();
-    }
+  addAsset(id: AssetIdentifier) {
+    this._selection.assets.add(id);
+  }
 
+  removeAsset(id: AssetIdentifier) {
+    this._selection.assets.delete(id);
+  }
+
+  removeAssets() {
+    this._selection.assets.clear();
+  }
+
+  addAssetEdge(id: AssetEdgeIdentifier) {
+    this._selection.assetEdges.add(id);
+  }
+
+  removeAssetEdge(id: AssetEdgeIdentifier) {
+    this._selection.assetEdges.delete(id);
+  }
+
+  removeAssetEdges() {
+    this._selection.assetEdges.clear();
+  }
+
+  selectAll(graph: InspectableGraph) {
     this.clear();
-    for (const node of descriptor.nodes) {
-      this._selection.nodes.add(node.id);
+    for (const node of graph.nodes()) {
+      this.addNode(node.descriptor.id);
     }
 
-    for (const edge of descriptor.edges) {
-      this._selection.edges.add(toEdgeIdentifier(edge));
+    for (const edge of graph.edges()) {
+      this.addEdge(toEdgeIdentifier(edge.raw()));
+    }
+
+    for (const asset of graph.assets().keys()) {
+      this.addAsset(asset);
+    }
+
+    const assetEdges = graph.assetEdges();
+    if (ok(assetEdges)) {
+      for (const assetEdge of assetEdges) {
+        this.addAssetEdge(toAssetEdgeIdentifier(assetEdge));
+      }
     }
   }
 }
