@@ -87,9 +87,6 @@ class Logger {
         code = "\x1B[42;97m";
         method = console.debug;
         break;
-      default:
-        code = "\x1B[107;30m";
-        break;
     }
 
     method.call(

@@ -14,7 +14,6 @@ import { VisualEditorMode } from "../../../ui/types/types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 import { HTMLTemplateResult } from "lit";
-import { signal } from "signal-utils";
 
 export class GlobalController extends RootController {
   @field({ persist: "local" })
@@ -51,10 +50,7 @@ export class GlobalController extends RootController {
   @field()
   accessor showStatusUpdateChip: boolean | null = null;
 
-  /**
-   * TODO: Figure out whether this should remain a signal or be an `@field`.
-   */
-  @signal
+  @field()
   accessor lastSnackbarDetailsInfo: string | HTMLTemplateResult | null = null;
 
   @field()

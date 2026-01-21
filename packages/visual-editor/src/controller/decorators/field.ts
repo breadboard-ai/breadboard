@@ -16,6 +16,7 @@ import {
 import { pendingStorageWrites } from "../context/writes.js";
 import { typesMatch } from "./utils/types-match.js";
 import { wrap, unwrap } from "./utils/wrap-unwrap.js";
+import { isLitTemplateResultRecursive } from "./utils/is-lit-template.js";
 
 const localStorageWrapper = new WebStorageWrapper("local");
 const sessionStorageWrapper = new WebStorageWrapper("session");
@@ -25,6 +26,10 @@ const idbStorageWrapper = new IdbStorageWrapper(
 );
 
 type StorageType = "local" | "session" | "idb";
+interface FieldPersistenceOptions {
+  persist?: StorageType;
+  deep?: boolean;
+}
 
 function getStore(type: StorageType) {
   if (type === "local") return localStorageWrapper;
@@ -43,8 +48,29 @@ function getName<Context extends WeakKey, Value extends PrimitiveValue>(
   return `${target.constructor.name}_${String(context.name)}${suffix}`;
 }
 
+function throwIfPersistingTheUnpersistable<Value extends PrimitiveValue>(
+  name: string,
+  apiOpts: FieldPersistenceOptions,
+  value: Value
+) {
+  if (apiOpts.persist && isLitTemplateResultRecursive(value)) {
+    throw new PersistEntityError(name);
+  }
+}
+
+export class PersistEntityError extends Error {
+  constructor(fieldName: string) {
+    super(
+      `Attempted persistance of HTMLTemplateResult of field "${fieldName}".` +
+        " Do not persiste HTMLTemplateResults; they do not restore correctly." +
+        " Persist the underlying data instead."
+    );
+    this.name = "PersistEntityError";
+  }
+}
+
 export function field<Value extends PrimitiveValue>(
-  apiOpts: { persist?: StorageType; deep?: boolean } = {}
+  apiOpts: FieldPersistenceOptions = {}
 ) {
   return function <Context extends WeakKey>(
     target: ClassAccessorDecoratorTarget<Context, Value>,
@@ -73,11 +99,23 @@ export function field<Value extends PrimitiveValue>(
         const state = signals.get(this);
         if (!state) throw new Error("Uninitialized");
 
+        throwIfPersistingTheUnpersistable(
+          String(context.name),
+          apiOpts,
+          newValue
+        );
+
         // Any persistence is handled by the Watcher in init().
         state.set((createDeep ? wrap(newValue) : newValue) as Value);
       },
 
       init(this: Context, initialValue: Value): Value {
+        throwIfPersistingTheUnpersistable(
+          String(context.name),
+          apiOpts,
+          initialValue
+        );
+
         // Initialize Signal with the Pending Symbol.
         const state = new Signal.State<Value | pending>(PENDING_HYDRATION);
         signals.set(this, state);

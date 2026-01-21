@@ -10,6 +10,7 @@ import { field } from "../../../src/controller/decorators/field.js";
 import { RootController } from "../../../src/controller/subcontrollers/root-controller.js";
 import { isHydrating } from "../../../src/controller/utils/hydration.js";
 import { unwrap } from "../../../src/controller/decorators/utils/wrap-unwrap.js";
+import { html, HTMLTemplateResult } from "lit";
 
 function clean(a: unknown) {
   return JSON.parse(JSON.stringify(a));
@@ -204,5 +205,86 @@ suite("Field Decorator", () => {
     assert.deepStrictEqual(unwrap(instance.map), mapAdjusted);
     assert.deepStrictEqual(unwrap(instance.mapLocal), mapAdjusted);
     assert.deepStrictEqual(unwrap(instance.mapIdb), mapAdjusted);
+  });
+
+  test("should throw on Lit templates (immediate, initialization)", async () => {
+    class LitController extends RootController {
+      @field({ persist: "idb" })
+      accessor item: HTMLTemplateResult = html`Hello, World`;
+    }
+
+    assert.rejects(async () => {
+      const instance = new LitController("Lit_1");
+      await instance.isHydrated;
+    });
+  });
+
+  test("should throw on Lit templates (immediate, post initialization)", async () => {
+    class LitController extends RootController {
+      @field({ persist: "idb" })
+      accessor item: HTMLTemplateResult | null = null;
+    }
+
+    const instance = new LitController("Lit_2");
+    await instance.isHydrated;
+
+    assert.throws(() => {
+      instance.item = html`Template Result`;
+    });
+  });
+
+  test("should throw on Lit templates (nested, initialization)", async () => {
+    class LitController extends RootController {
+      @field({ persist: "idb" })
+      accessor item: HTMLTemplateResult[] = [html`Hello, World`];
+    }
+
+    assert.rejects(async () => {
+      const instance = new LitController("Lit_3");
+      await instance.isHydrated;
+    });
+  });
+
+  test("should throw on Lit templates (immediate, post initialization)", async () => {
+    class LitController extends RootController {
+      @field({ persist: "idb" })
+      accessor item: HTMLTemplateResult[] | null = null;
+    }
+
+    const instance = new LitController("Lit_4");
+    await instance.isHydrated;
+
+    assert.throws(() => {
+      instance.item = [html`Template Result`];
+    });
+  });
+
+  test("should throw on Lit templates (complex nested, initialization)", async () => {
+    class LitController extends RootController {
+      @field({ persist: "local" })
+      accessor doNotUse = new Map<string, Map<string, HTMLTemplateResult[]>>([
+        ["a", new Map([["b", [html`Value`]]])],
+      ]);
+    }
+
+    assert.rejects(async () => {
+      const instance = new LitController("Lit_3");
+      await instance.isHydrated;
+    });
+  });
+
+  test("should throw on Lit templates (complex nested, post initialization)", async () => {
+    class LitController extends RootController {
+      @field({ persist: "local" })
+      accessor doNotUse: Map<string, Map<string, HTMLTemplateResult[]>> | null =
+        null;
+    }
+
+    const instance = new LitController("Lit_4");
+    await instance.isHydrated;
+
+    assert.throws(() => {
+      instance.doNotUse = new Map([["a", new Map([["b", [html`Value`]]])]]);
+    });
   });
 });
