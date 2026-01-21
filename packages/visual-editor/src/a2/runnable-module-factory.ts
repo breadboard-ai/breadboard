@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  MutableGraph,
+import type {
+  ConsentManager,
   GraphDescriptor,
-  Outcome,
   InputValues,
-  OutputValues,
-  NodeMetadata,
+  MutableGraph,
   NodeHandlerContext,
+  NodeMetadata,
+  Outcome,
+  OutputValues,
 } from "@breadboard-ai/types";
 import {
   CapabilitiesManager,
@@ -27,10 +28,10 @@ import {
 } from "@breadboard-ai/types/sandbox.js";
 import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 
-import { a2 } from "./a2.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { urlComponentsFromString } from "../engine/loader/loader.js";
 import { McpClientManager } from "../mcp/index.js";
-import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { a2 } from "./a2.js";
 
 export { createA2ModuleFactory };
 
@@ -41,6 +42,7 @@ export type A2ModuleFactoryArgs = {
   mcpClientManager: McpClientManager;
   fetchWithCreds: typeof globalThis.fetch;
   shell: OpalShellHostProtocol;
+  consentManager: ConsentManager;
 };
 
 export type A2ModuleArgs = A2ModuleFactoryArgs & {

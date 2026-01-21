@@ -142,14 +142,6 @@ export class Runtime extends EventTarget {
       OPAL_BACKEND_API_PREFIX
     );
 
-    const sandbox = createA2ModuleFactory({
-      mcpClientManager: this.mcpClientManager,
-      fetchWithCreds: this.fetchWithCreds,
-      shell: config.shellHost,
-    });
-
-    const kits = addRunModule(sandbox, []);
-
     this.consentManager = new ConsentManager(
       async (request: ConsentRequest, uiType: ConsentUIType) => {
         return new Promise<ConsentAction>((resolve) => {
@@ -175,6 +167,15 @@ export class Runtime extends EventTarget {
         });
       }
     );
+
+    const sandbox = createA2ModuleFactory({
+      mcpClientManager: this.mcpClientManager,
+      fetchWithCreds: this.fetchWithCreds,
+      shell: config.shellHost,
+      consentManager: this.consentManager,
+    });
+
+    const kits = addRunModule(sandbox, []);
 
     this.googleDriveBoardServer = createGoogleDriveBoardServer(
       this.signinAdapter,
