@@ -210,6 +210,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host([icon="videocam_auto"]),
       :host([icon="generative-search"]),
       :host([icon="generative"]),
+      :host([icon="select_all"]),
       :host([icon="laps"]) {
         --background: var(--ui-generate);
       }
