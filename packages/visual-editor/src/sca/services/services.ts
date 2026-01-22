@@ -40,7 +40,7 @@ import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
 import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";
 import { ActionTracker } from "../../ui/types/types.js";
 
-interface AppServices {
+export interface AppServices {
   actionTracker: ActionTracker;
   autonamer: Autonamer;
   consentManager: ConsentManager;

@@ -4,12 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AppController } from "../../controller/controller.js";
+import { type AppController } from "../../controller/controller.js";
+import { type AppServices } from "../../services/services.js";
+import { makeAction } from "../binder.js";
 
-export async function load(_app: AppController) {
-  // TODO
+export const bind = makeAction();
+
+export async function load() {
+  const { controller, services } = bind;
+  console.log(controller, services);
 }
 
-export async function edit(_app: AppController) {
+export async function edit(_app: AppController, _services: AppServices) {
   // TODO
 }

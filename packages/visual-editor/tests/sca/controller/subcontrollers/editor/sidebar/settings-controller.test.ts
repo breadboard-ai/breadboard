@@ -21,7 +21,7 @@ suite("SidebarController", () => {
     const store = new SidebarController("Settings_1");
     await store.isHydrated;
 
-    assert.strictEqual(store.hydrated.get(), true);
+    assert.strictEqual(store.hydrated, true);
   });
 
   test("Read and write", async () => {

@@ -88,7 +88,7 @@ export const LoadRoute: EventRoute<"board.load"> = {
 
   async do({ runtime, originalEvent, sca }) {
     if (Utils.Helpers.isHydrating(() => sca.controller.global.main.mode)) {
-      await sca.controller.global.main.hydrated;
+      await sca.controller.global.main.isHydrated;
     }
 
     runtime.router.go({
