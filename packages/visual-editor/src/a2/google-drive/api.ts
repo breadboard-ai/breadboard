@@ -633,7 +633,7 @@ export type SlidesRequest =
 
 export type SpreadsheetRequest =
   | {
-      addSheet: { properties: { title: string } };
+      addSheet: { properties: { title: string; index?: number } };
     }
   | { deleteSheet: { sheetId: number } }
   | {
