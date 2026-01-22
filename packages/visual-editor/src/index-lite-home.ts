@@ -3,6 +3,8 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+import * as BreadboardUI from "./ui/index.js";
+const Strings = BreadboardUI.Strings.forSection("Global");
 
 import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
@@ -38,6 +40,7 @@ import { createActionTracker } from "./ui/utils/action-tracker.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { scaContext } from "./sca/context/context.js";
 import { sca, type SCA } from "./sca/sca.js";
+import { RuntimeConfig } from "./runtime/types.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -112,8 +115,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
     const opalShell = mainArgs.shellHost;
     const signinAdapter = new SigninAdapter(opalShell);
 
-    this.sca = sca(mainArgs.globalConfig.flags);
-
     this.actionTracker = createActionTracker(
       opalShell,
       !!this.guestConfiguration.supportsPropertyTracking
@@ -147,6 +148,18 @@ export class LiteHome extends SignalWatcher(LitElement) {
       opalShell.findUserOpalFolder,
       opalShell.listUserOpals
     );
+
+    const config: RuntimeConfig = {
+      globalConfig: this.globalConfig,
+      guestConfig: this.guestConfiguration,
+      settings: mainArgs.settings,
+      shellHost: opalShell,
+      env: mainArgs.env,
+      appName: Strings.from("APP_NAME"),
+      appSubName: Strings.from("SUB_APP_NAME"),
+    };
+
+    this.sca = sca(config, mainArgs.globalConfig.flags);
 
     const sizeDetector = window.matchMedia("(max-width: 500px)");
     const reactToScreenWidth = () => {

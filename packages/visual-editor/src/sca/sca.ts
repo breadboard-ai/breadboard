@@ -78,7 +78,13 @@ import * as Services from "./services/services.js";
 import * as Controller from "./controller/controller.js";
 import * as Actions from "./actions/actions.js";
 import * as Utils from "./utils/utils.js";
-import { type RuntimeFlags } from "@breadboard-ai/types";
+import {
+  ConsentAction,
+  ConsentRequest,
+  ConsentUIType,
+  type RuntimeFlags,
+} from "@breadboard-ai/types";
+import { RuntimeConfig } from "../runtime/types.js";
 
 export interface SCA {
   services: ReturnType<typeof Services.services>;
@@ -86,17 +92,36 @@ export interface SCA {
   actions: ReturnType<typeof Actions.actions>;
 }
 
-let inst: SCA;
-export function sca(flags: RuntimeFlags) {
-  if (!inst) {
-    inst = {
-      services: Services.services(),
-      controller: Controller.appController(flags),
-      actions: Actions.actions(),
+let instance: SCA;
+export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
+  if (!instance) {
+    const controller = Controller.appController(flags);
+    const actions = Actions.actions();
+
+    // The Consent service apparently needs to know about the controller states
+    // which is less than ideal.
+    // TODO: Figure out a better way to handle this.
+    const consentCallback = async (
+      _request: ConsentRequest,
+      _uiType: ConsentUIType
+    ) => {
+      return Promise.resolve(ConsentAction.DENY);
     };
 
-    Utils.Logging.setDebuggableAppController(inst.controller);
+    const services = Services.services(
+      config,
+      controller.global.flags,
+      consentCallback
+    );
+
+    instance = {
+      services,
+      controller,
+      actions,
+    };
+
+    Utils.Logging.setDebuggableAppController(instance.controller);
   }
 
-  return inst;
+  return instance;
 }

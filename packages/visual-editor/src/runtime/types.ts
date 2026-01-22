@@ -58,7 +58,7 @@ export interface Tab {
 }
 
 export interface RuntimeConfig {
-  sca: Readonly<SCA>;
+  sca?: Readonly<SCA>;
   globalConfig: GlobalConfig;
   guestConfig: GuestConfiguration;
   settings: SettingsStore;

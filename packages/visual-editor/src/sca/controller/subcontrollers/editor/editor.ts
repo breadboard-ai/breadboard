@@ -25,12 +25,7 @@ export class EditorController extends RootController {
   @field()
   accessor graphId: string | null = null;
 
-  /**
-   * 2. The Context Switcher
-   * Call this whenever the active tab changes.
-   */
   setGraph(graph: EditableGraph | null, readOnly: boolean = false) {
-    // A. Teardown old graph listeners
     if (this.#disconnectOldGraph) {
       this.#disconnectOldGraph();
       this.#disconnectOldGraph = null;
@@ -49,20 +44,13 @@ export class EditorController extends RootController {
     };
 
     graph.addEventListener("graphchange", changeHandler);
-
-    // D. Store cleanup logic for next time
     this.#disconnectOldGraph = () => {
       graph.removeEventListener("graphchange", changeHandler);
     };
 
-    // E. Initial Tick
     this.version++;
   }
 
-  /**
-   * 3. The Operation Gatekeeper
-   * Now "edit" just uses the internal reference.
-   */
   async edit(edits: EditSpec[], description: string): Promise<boolean> {
     if (this.readOnly) {
       console.warn("Attempted to edit read-only graph");

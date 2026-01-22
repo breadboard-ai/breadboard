@@ -215,6 +215,7 @@ suite("SelectionController", () => {
     store.selectAll(inspectableGraph);
     await store.isSettled;
     assert.deepStrictEqual(unwrap(store.selection), full);
+    assert.equal(store.size, 9);
 
     store.clear();
     await store.isSettled;

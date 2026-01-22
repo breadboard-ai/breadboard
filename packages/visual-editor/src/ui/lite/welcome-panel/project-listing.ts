@@ -351,7 +351,6 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     items: [string, GraphProviderItem][]
   ): [string, GraphProviderItem][] {
     const recentBoards = this.sca.controller.home.recent.boards;
-    console.log(recentBoards);
     return items.sort(([, dataA], [, dataB]) => {
       // Sort by pinned status first if possible.
       const boardA = recentBoards.find((board) => board.url === dataA.url);
