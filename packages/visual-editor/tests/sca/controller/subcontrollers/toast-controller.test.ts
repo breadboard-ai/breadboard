@@ -25,7 +25,7 @@ suite("ToastController", () => {
     const store = new ToastController("Toast_1", DEFAULT_TIMEOUT);
     await store.isHydrated;
 
-    assert.strictEqual(store.hydrated.get(), true);
+    assert.strictEqual(store.hydrated, true);
   });
 
   test("Add and remove", async () => {

@@ -824,6 +824,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   render() {
+    const isHydrated = this.sca.controller.global.flags.hydrated;
+    if (!isHydrated) {
+      return nothing;
+    }
+
     if (this.hasActiveTab) {
       return this.#renderTabControls();
     }

@@ -96,7 +96,6 @@ let instance: SCA;
 export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
   if (!instance) {
     const controller = Controller.appController(flags);
-    const actions = Actions.actions();
 
     // The Consent service apparently needs to know about the controller states
     // which is less than ideal.
@@ -113,6 +112,8 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
       controller.global.flags,
       consentCallback
     );
+
+    const actions = Actions.actions(controller, services);
 
     instance = {
       services,

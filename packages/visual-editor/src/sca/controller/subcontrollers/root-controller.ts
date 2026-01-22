@@ -17,15 +17,21 @@ export abstract class RootController implements HydratedController {
 
   constructor(public readonly id: string) {}
 
-  public readonly hydrated = new Signal.Computed<boolean | pending>(() => {
-    if (this.#trackedSignals.size === 0) return true;
+  public get hydrated() {
+    return !isHydrating(() => this.hydratedInternal.get());
+  }
 
-    for (const sig of this.#trackedSignals) {
-      if (isHydrating(() => sig.get())) return PENDING_HYDRATION;
+  private readonly hydratedInternal = new Signal.Computed<boolean | pending>(
+    () => {
+      if (this.#trackedSignals.size === 0) return true;
+
+      for (const sig of this.#trackedSignals) {
+        if (isHydrating(() => sig.get())) return PENDING_HYDRATION;
+      }
+
+      return true;
     }
-
-    return true;
-  });
+  );
 
   /**
    * Indicates that the controller has fully hydrated.
@@ -36,7 +42,7 @@ export abstract class RootController implements HydratedController {
     this.#isHydratedPromise = new Promise((resolve) => {
       // Use an effect to watch the computed 'hydrated' signal
       const stop = effect(() => {
-        const status = this.hydrated.get();
+        const status = this.hydratedInternal.get();
 
         if (status === true) {
           // We wrap this in a microtask to ensure all 'init'
