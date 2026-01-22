@@ -232,7 +232,7 @@ objective. Call ONLY when all means of fulfilling the objective have been
 exhausted.`,
         parameters: {
           user_message: z.string().describe(
-            `
+            tr`
 Text to display to the user upon admitting failure to
 fulfill the objective. Provide a friendly explanation of why the objective
 is impossible to fulfill and offer helpful suggestions, but don't end with a question, since that would leave the user hanging: you've failed and can't answer that question`.trim()
@@ -240,7 +240,7 @@ is impossible to fulfill and offer helpful suggestions, but don't end with a que
           href: z
             .string()
             .describe(
-              `
+              tr`
 The url of the next agent to which to transfer control upon
 failure. By default, the control is transferred to the root agent "/". 
 If the objective specifies other agent URLs using the
@@ -276,7 +276,7 @@ If the objective specifies other agent URLs using the
         description: "Writes the provided text to a VFS file",
         parameters: {
           file_name: z.string().describe(
-            `
+            tr`
 The name of the file without the extension.
 This is the name that will come after the "/vfs/" prefix in the VFS file path.
 Use snake_case for naming.`.trim()
@@ -313,7 +313,7 @@ Use snake_case for naming.`.trim()
         description: "Writes the provided JSON string to a file",
         parameters: {
           file_name: z.string().describe(
-            `
+            tr`
 The name of the file without the extension.
 This is the name that will come after the "/vfs/" prefix in the VFS file path.
 Use snake_case for naming.`.trim()
@@ -409,8 +409,7 @@ If an error has occurred, will contain a description of the error`
     defineFunctionLoose(
       {
         name: CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
-        description:
-          "When working on complicated problem, use this throw-away scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially.",
+        description: tr`When working on a complicated problem, use this throw-away scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially.`,
         parametersJsonSchema: TASK_TREE_SCHEMA,
         responseJsonSchema: {
           type: "object",
