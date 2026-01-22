@@ -45,8 +45,8 @@ import {
 import { parseUrl } from "../../../utils/urls.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { appControllerContext } from "../../../../controller/context/context.js";
-import { AppController } from "../../../../controller/controller.js";
+import { scaContext } from "../../../../sca/context/context.js";
+import { type SCA } from "../../../../sca/sca.js";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -66,8 +66,8 @@ const parsedUrl = parseUrl(window.location.href);
 
 @customElement("bb-floating-input")
 export class FloatingInput extends SignalWatcher(LitElement) {
-  @consume({ context: appControllerContext })
-  accessor appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property()
   accessor schema: Schema | null = null;
@@ -448,11 +448,10 @@ export class FloatingInput extends SignalWatcher(LitElement) {
     }
 
     let attemptFocus = false;
-    if (this.focusWhenIn[0] === this.appController.global.main.mode) {
+    if (this.focusWhenIn[0] === this.sca.controller.global.main.mode) {
       if (
         this.focusWhenIn[1] !== undefined &&
-        this.appController.editor.sidebar.settings.section ===
-          this.focusWhenIn[1]
+        this.sca.controller.editor.sidebar.section === this.focusWhenIn[1]
       ) {
         attemptFocus = true;
       } else if (this.focusWhenIn[1] === undefined) {
@@ -507,7 +506,7 @@ export class FloatingInput extends SignalWatcher(LitElement) {
     let inputContents: HTMLTemplateResult | symbol = nothing;
     const showGDrive =
       !parsedUrl.lite ||
-      !!this.appController.global.flags?.enableDrivePickerInLiteMode;
+      !!this.sca.controller.global.flags?.enableDrivePickerInLiteMode;
     if (this.schema) {
       const props = Object.entries(this.schema.properties ?? {});
       const supportedActions = this.#determineSupportedActions(props);

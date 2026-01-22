@@ -16,7 +16,7 @@ import { Runtime } from "./runtime.js";
 import { RuntimeTabChangeEvent } from "./events.js";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
-import { AppController } from "../controller/controller.js";
+import { AppController } from "../sca/controller/controller.js";
 
 export { StateManager };
 

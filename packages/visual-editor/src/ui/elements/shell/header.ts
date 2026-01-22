@@ -28,16 +28,16 @@ import {
 } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { hasEnabledGlobalSettings } from "./global-settings.js";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
-import { isHydrating } from "../../../controller/utils/hydration.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
+import { Utils } from "../../../sca/utils.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
 @customElement("bb-ve-header")
 export class VEHeader extends SignalWatcher(LitElement) {
-  @consume({ context: appControllerContext })
-  accessor #appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined = undefined;
@@ -80,9 +80,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   @state()
   accessor #showRemixInfo = false;
-
-  @consume({ context: appControllerContext })
-  accessor appController!: AppController;
 
   static styles = [
     Styles.HostType.type,
@@ -548,10 +545,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
     ];
 
     if (
-      !isHydrating(
-        () => this.#appController.global.main.experimentalComponents
+      !Utils.Helpers.isHydrating(
+        () => this.sca.controller.global.main.experimentalComponents
       ) &&
-      this.#appController.global.main.experimentalComponents
+      this.sca.controller.global.main.experimentalComponents
     ) {
       options.push({
         id: "copy-board-contents",
@@ -597,7 +594,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         svgIcon:
           "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
       },
-      ...(hasEnabledGlobalSettings(this.appController)
+      ...(hasEnabledGlobalSettings(this.sca)
         ? [
             {
               id: "show-global-settings",

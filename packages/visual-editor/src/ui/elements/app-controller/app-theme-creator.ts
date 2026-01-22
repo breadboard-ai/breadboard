@@ -40,15 +40,15 @@ import {
 } from "../../types/types.js";
 import { renderThumbnail } from "../../utils/image.js";
 import { convertImageToInlineData } from "./image-convert.js";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 const MAX_UPLOAD_SIZE = 5_242_880; // 5MB.
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends SignalWatcher(LitElement) {
-  @consume({ context: appControllerContext })
-  accessor appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property()
   accessor projectState: Project | null = null;
@@ -544,7 +544,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       if (!this.projectState) {
         throw new Error("Unable to generate theme: project is not initialized");
       }
-      this.appController.global.main.blockingAction = true;
+      this.sca.controller.global.main.blockingAction = true;
       const newTheme = await this.projectState.themes.generateTheme(
         {
           random,
@@ -554,7 +554,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
         },
         this.#abortController.signal
       );
-      this.appController.global.main.blockingAction = false;
+      this.sca.controller.global.main.blockingAction = false;
       if (!ok(newTheme)) {
         throw new Error(newTheme.$error);
       }
@@ -681,12 +681,12 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                   return;
                 }
 
-                this.appController.global.main.blockingAction = true;
+                this.sca.controller.global.main.blockingAction = true;
 
                 const deleting = await this.projectState.themes.deleteTheme(
                   this.theme
                 );
-                this.appController.global.main.blockingAction = false;
+                this.sca.controller.global.main.blockingAction = false;
 
                 if (!ok(deleting)) {
                   this.#displayError(deleting.$error);
@@ -720,9 +720,9 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                       }
 
                       this.#changed = true;
-                      this.appController.global.main.blockingAction = true;
+                      this.sca.controller.global.main.blockingAction = true;
                       this.projectState.themes.setCurrent(id);
-                      this.appController.global.main.blockingAction = false;
+                      this.sca.controller.global.main.blockingAction = false;
                     }}
                   >
                     ${guard(

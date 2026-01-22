@@ -36,8 +36,8 @@ import { ActionTracker, SnackbarMessage, SnackType } from "./ui/types/types.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { createActionTracker } from "./ui/utils/action-tracker.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
-import { appControllerContext } from "./controller/context/context.js";
-import { appController, AppController } from "./controller/controller.js";
+import { scaContext } from "./sca/context/context.js";
+import { sca, type SCA } from "./sca/sca.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -78,8 +78,8 @@ export class LiteHome extends SignalWatcher(LitElement) {
   @state()
   accessor compactView = false;
 
-  @provide({ context: appControllerContext })
-  protected accessor appController: AppController;
+  @provide({ context: scaContext })
+  protected accessor sca: SCA;
 
   /**
    * Indicates whether we're currently remixing or deleting boards.
@@ -112,7 +112,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     const opalShell = mainArgs.shellHost;
     const signinAdapter = new SigninAdapter(opalShell);
 
-    this.appController = appController(mainArgs.globalConfig.flags);
+    this.sca = sca(mainArgs.globalConfig.flags);
 
     this.actionTracker = createActionTracker(
       opalShell,
@@ -237,12 +237,12 @@ export class LiteHome extends SignalWatcher(LitElement) {
    * @param url -- url to remove
    */
   async removeRecentBoard(url: string) {
-    await this.appController.home.recent.remove(url);
+    await this.sca.controller.home.recent.remove(url);
   }
 
   async addRecentBoard(url: string, title: string) {
     url = url.replace(window.location.origin, "");
-    await this.appController.home.recent.add({
+    await this.sca.controller.home.recent.add({
       title,
       url,
     });
@@ -343,11 +343,11 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
   async togglePin(url: string) {
     url = url.replace(window.location.origin, "");
-    const board = this.appController.home.recent.boards.find(
+    const board = this.sca.controller.home.recent.boards.find(
       (b) => b.url === url
     );
     if (board) {
-      await this.appController.home.recent.setPin(url, !board.pinned);
+      await this.sca.controller.home.recent.setPin(url, !board.pinned);
     }
   }
 

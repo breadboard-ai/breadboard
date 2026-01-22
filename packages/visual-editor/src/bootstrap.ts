@@ -13,17 +13,11 @@ import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
 import { connectToOpalShellHost } from "./ui/utils/opal-shell-guest.js";
-import {
-  getLogger,
-  setDebuggableAppController,
-  stubAppController,
-} from "./controller/utils/logging/logger.js";
-import * as Formatter from "./controller/utils/logging/formatter.js";
+import { Utils } from "./sca/utils.js";
 
 export { bootstrap };
 
-setDebuggableAppController(stubAppController);
-const logger = getLogger();
+const logger = Utils.Logging.getLogger();
 
 function setColorScheme(colorScheme?: "light" | "dark") {
   const scheme =
@@ -125,11 +119,12 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
       logger.log(
-        Formatter.warning(
+        Utils.Logging.Formatter.warning(
           "No googleDrive.publishPermissions were configured." +
             " Publishing with Google Drive will not be supported."
         ),
-        "Bootstrap"
+        "Bootstrap",
+        false /* checkDebuggableAppControllerStatus */
       );
     }
 
@@ -164,7 +159,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
     const Strings = StringsHelper.forSection("Global");
     logger.log(
-      Formatter.info(
+      Utils.Logging.Formatter.info(
         `Visual Editor: Version ${pkg.default.version}; Commit ${GIT_HASH}]`
       ),
       Strings.from("APP_NAME"),

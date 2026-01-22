@@ -26,8 +26,8 @@ import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 import "./homepage-search-button.js";
 import { HomepageSearchButton } from "./homepage-search-button.js";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -37,8 +37,8 @@ const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
 
 @customElement("bb-project-listing")
 export class ProjectListing extends SignalWatcher(LitElement) {
-  @consume({ context: appControllerContext })
-  accessor appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
@@ -441,7 +441,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   #sortUserGraphs(
     items: [string, GraphProviderItem][]
   ): [string, GraphProviderItem][] {
-    const recentBoards = this.appController.home.recent.boards;
+    const recentBoards = this.sca.controller.home.recent.boards;
     return items.sort(([, dataA], [, dataB]) => {
       // Sort by pinned status first if possible.
       const boardA = recentBoards.find((board) => board.url === dataA.url);

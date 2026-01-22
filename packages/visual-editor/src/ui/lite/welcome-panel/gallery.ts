@@ -27,8 +27,8 @@ import { guard } from "lit/directives/guard.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 const COLLAPSED_KEY = "gallery-lite-collapsed";
 const GlobalStrings = StringsHelper.forSection("Global");
@@ -484,8 +484,8 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
   #overflowMenuConfig: { x: number; y: number; value: string } | null = null;
 
-  @consume({ context: appControllerContext })
-  accessor appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @consume({ context: signinAdapterContext })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
@@ -573,7 +573,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   }
 
   #isPinned(url: string): boolean {
-    const recentBoards = this.appController.home.recent.boards;
+    const recentBoards = this.sca.controller.home.recent.boards;
     const currentItem = recentBoards.find((board) => {
       return url === board.url;
     });

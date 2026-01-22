@@ -29,8 +29,8 @@ import "./gallery.js";
 import * as Styles from "../../styles/styles.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -43,8 +43,8 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
 
-  @consume({ context: appControllerContext })
-  accessor appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @consume({ context: boardServerContext, subscribe: true })
   @state()
@@ -350,7 +350,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   #sortUserGraphs(
     items: [string, GraphProviderItem][]
   ): [string, GraphProviderItem][] {
-    const recentBoards = this.appController.home.recent.boards;
+    const recentBoards = this.sca.controller.home.recent.boards;
     console.log(recentBoards);
     return items.sort(([, dataA], [, dataB]) => {
       // Sort by pinned status first if possible.

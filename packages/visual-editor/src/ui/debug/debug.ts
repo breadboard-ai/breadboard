@@ -5,7 +5,7 @@
  */
 
 import type { Pane } from "tweakpane";
-import { AppController } from "../../controller/controller.js";
+import { AppController } from "../../sca/controller/controller.js";
 
 /**
  * Global state for the debug interface lifecycle.

@@ -41,7 +41,7 @@ import { GraphAsset } from "./graph-asset.js";
 import { AssetPath, NodeRunState } from "@breadboard-ai/types";
 import { RendererRunState, RendererState } from "../../state/index.js";
 import { getStepIcon } from "../../utils/get-step-icon.js";
-import { toAssetEdgeIdentifier } from "../../../controller/utils/helpers/helpers.js";
+import { toAssetEdgeIdentifier } from "../../../sca/utils/helpers/helpers.js";
 
 @customElement("bb-graph")
 export class Graph extends Box {
