@@ -374,7 +374,7 @@ async function invoke(
 
   if (flags?.agentMode) {
     const agentInputs: AgentInputs = {
-      "b-ui-enable": "none",
+      "b-ui-consistent": false,
       "b-ui-prompt": { parts: [] },
       ...rest,
       "b-si-instruction": resolvedMode.makeInstruction(rest),
@@ -465,8 +465,8 @@ async function describe(
   }
   if (flags?.agentMode) {
     const agentSchema = computeAgentSchema(rest);
-    modeSchema = { ...modeSchema, ...agentSchema.props };
-    behavior = [...behavior, ...agentSchema.hints];
+    modeSchema = { ...modeSchema, ...agentSchema };
+    behavior = [...behavior];
   }
 
   return {

@@ -102,7 +102,7 @@ export type MemoryManager = {
   deleteSheet(args: { name: string }): Promise<Outcome<AgentOutcome>>;
 };
 
-export type UIType = "none" | "chat" | "a2ui";
+export type UIType = "chat" | "a2ui";
 
 export const VALID_INPUT_TYPES = ["any", "text", "file-upload"] as const;
 
