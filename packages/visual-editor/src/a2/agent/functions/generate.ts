@@ -39,6 +39,7 @@ export { getGenerateFunctionGroup };
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 
 const FLASH_MODEL_NAME = "gemini-2.5-flash";
+const CODE_GENERATION_MODEL_NAME = "gemini-3-flash-preview";
 const PRO_MODEL_NAME = "gemini-3-pro-preview";
 const LITE_MODEL_NAME = "gemini-2.5-flash-lite";
 
@@ -65,21 +66,43 @@ export type GenerateFunctionArgs = {
 };
 
 const GENERATE_TEXT_FUNCTION = "generate_text";
+const GENERATE_AND_EXECUTE_CODE_FUNCTION = "generate_and_execute_code";
 
 const instruction = tr`
 
 ## When to call "${GENERATE_TEXT_FUNCTION}" function
 
-When evaluating the objective, make sure to determine whether calling "${GENERATE_TEXT_FUNCTION}" is warranted. The key tradeoff here is latency: because it's an additional model call, the "generate_text" will take longer to finish.
+When evaluating the objective, make sure to determine whether calling "${GENERATE_TEXT_FUNCTION}" function is warranted. The key tradeoff here is latency: because it's an additional model call, the "generate_text" will take longer to finish.
 
 Your job is to fulfill the objective as efficiently as possible, so weigh the need to invoke "${GENERATE_TEXT_FUNCTION}" carefully.
 
 Here is the rules of thumb:
 
-- For shorter responses like a chat conversation, just do the text generation yourself. You are an LLM and you can do it without calling "${GENERATE_TEXT_FUNCTION}".
-- For longer responses like generating a chapter of a book or analyzing a large and complex set of files, use "${GENERATE_TEXT_FUNCTION}".
+- For shorter responses like a chat conversation, just do the text generation yourself. You are an LLM and you can do it without calling "${GENERATE_TEXT_FUNCTION}" function.
+- For longer responses like generating a chapter of a book or analyzing a large and complex set of files, use "${GENERATE_TEXT_FUNCTION}" function.
 
 
+### How to write a good prompt for the code generator
+
+The "${GENERATE_AND_EXECUTE_CODE_FUNCTION}" function is a self-contained code generator with a sandboxed code execution environment. Think of it as a sub-agent that both generates the code and executes it, then provides the result. This sub-agent takes a natural language prompt to do its job.
+
+A good code generator prompt will include the following components:
+
+1. Preference for the Python library to use. For example "Use the reportlab library to generate PDF"
+
+2. What to consume as input. Focus on the "what", rather than the "how". When binary files are passed as input, use the key words "use provided file". Do NOT refer to VFS paths, see below.
+
+3. The high-level approach to solving the problem with code. If applicable, specify algorithms or techniques to use.
+
+4. What to deliver as output. Again, do not worry about the "how", instead specify the "what". For text files, use the key word "return" in the prompt. For binary files, use the key word word "save". For example, "Return the resulting number" or "Save the PDF file" or "Save all four resulting images". Do NOT ask to name the files, see below.
+
+The code generator prompt may include references to VFS files and it may output references to VFS files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to the VFS. 
+
+Because of this translation layer, DO NOT mention VFS or VFS references in the prompt outside of the <file> tag.
+
+For example, if you need to include  an existing file at "/vfs/text3.md" into the prompt, you can reference it as <file src="/vfs/text3.md" />. If you do not use <file> tags, the code generator will not be able to access the file.
+
+For output, do not ask the code generator to name the files. It will assign its own file names names to save in the sandbox, and these will be picked up at the sandbox boundary and translated into <file> tags for you.
 `;
 
 function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
@@ -211,7 +234,7 @@ that involve generation of text. Supports multimodal content input.`.trim(),
 
 Detailed prompt to use for text generation. The prompt may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.
 
-These references can point to files of any type, such as images, audio, videos, etc. Projects can also be referenced in this way.
+These references can point to files of any type, such as images, audio, videos, etc.
 `),
         model: z.enum(["pro", "flash", "lite"]).describe(tr`
 
@@ -602,7 +625,7 @@ A status update to show in the UI that provides more detail on the reason why th
   );
   const codeFunction = defineFunction(
     {
-      name: "generate_and_execute_code",
+      name: GENERATE_AND_EXECUTE_CODE_FUNCTION,
       description: tr`
 Generates and executes Python code, returning the result of execution.
 
@@ -656,15 +679,10 @@ NOTE: The Python code execution environment has no access to the virtual file sy
 
         `,
       parameters: {
-        spec: z.string().describe(tr`
-Detailed spec for the code to generate. A spec can be in natural language or the exact Python code. 
+        prompt: z.string().describe(tr`
+Detailed prompt for the code to generate. DO NOT write Python code as the prompt. Instead DO use the natural language. This will let the code generator within this tool make the best decisions on what code to write. Your job is not to write code, but to direct the code generator.
 
-When it's in natural language, the spec may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the spec. If you do not use <file> tags, the code generator will not be able to access the file.
-
-NOTE: The Python code execution environment has no access to the VFS. If you need to read or write files, you must use the natural language for the spec.
-
-These references can point to files of any type, such as images, audio, videos, etc. Projects can also be referenced in this way.
-
+The prompt may include references to VFS files as <file> tags.
 `),
         search_grounding: z
           .boolean()
@@ -694,12 +712,9 @@ For example, "Creating random values" or "Computing prime numbers"`),
           .optional(),
       },
     },
-    async ({ spec, search_grounding, status_update }, statusUpdater) => {
-      console.log("SPEC", spec);
-      console.log("SEARCH_GROUNDING", search_grounding);
-
+    async ({ prompt, search_grounding, status_update }, statusUpdater) => {
       if (status_update) {
-        statusUpdater(status_update);
+        statusUpdater(status_update, { expectedDurationInSec: 40 });
       } else {
         if (search_grounding) {
           statusUpdater("Researching");
@@ -713,7 +728,7 @@ For example, "Creating random values" or "Computing prime numbers"`),
       }
       tools.push({ codeExecution: {} });
       if (tools.length === 0) tools = undefined;
-      const translated = await translator.fromPidginString(spec);
+      const translated = await translator.fromPidginString(prompt);
       if (!ok(translated)) return { error: translated.$error };
       const body = await conformGeminiBody(moduleArgs, {
         systemInstruction: defaultSystemInstruction(),
@@ -725,24 +740,49 @@ For example, "Creating random values" or "Computing prime numbers"`),
       let maxRetries = 5;
       do {
         const generating = await streamGenerateContent(
-          resolveTextModel("flash"),
+          CODE_GENERATION_MODEL_NAME,
           body,
           moduleArgs
         );
         if (!ok(generating)) {
           return { error: generating.$error };
         }
+        let lastCodeExecutionError: string | null = null;
         for await (const chunk of generating) {
           const parts = chunk.candidates.at(0)?.content?.parts;
           if (!parts) continue;
           for (const part of parts) {
-            if (!part || !("text" in part)) continue;
-            if (part.thought) {
-              statusUpdater(part.text, { isThought: true });
-            } else {
-              results.push(part);
+            if (!part) continue;
+            if ("text" in part) {
+              if (part.thought) {
+                statusUpdater(part.text, { isThought: true });
+              } else {
+                results.push(part);
+              }
+            } else if ("inlineData" in part) {
+              // File result
+              const file = fileSystem.add(part);
+              if (!ok(file)) {
+                return {
+                  error: `Code generation failed due to invalid file output.`,
+                };
+              }
+              results.push({ text: `<file src="${file}" />` });
+            } else if ("codeExecutionResult" in part) {
+              const { outcome, output } = part.codeExecutionResult;
+              if (outcome !== "OUTCOME_OK") {
+                lastCodeExecutionError = output;
+              } else {
+                lastCodeExecutionError = null;
+              }
             }
           }
+        }
+
+        if (lastCodeExecutionError) {
+          return {
+            error: `The code generator tried and failed with the following error:\n\n${lastCodeExecutionError}`,
+          };
         }
         if (results.length > 0) break;
         console.log("WAITING TO RETRY");
