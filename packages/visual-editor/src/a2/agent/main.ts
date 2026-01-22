@@ -8,6 +8,7 @@ import {
   Capabilities,
   LLMContent,
   Outcome,
+  RuntimeFlags,
   Schema,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
@@ -16,6 +17,7 @@ import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Loop } from "./loop.js";
 import type { ModelConstraint } from "./functions/generate.js";
+import { readFlags } from "../a2/settings.js";
 
 export { invoke as default, computeAgentSchema, describe };
 
@@ -31,16 +33,27 @@ type AgentOutputs = {
   [key: string]: LLMContent[];
 };
 
-function computeAgentSchema({
-  "b-ui-consistent": enableA2UI = false,
-}: Record<string, unknown>) {
-  const uiPromptSchema: Schema["properties"] = enableA2UI
+function computeAgentSchema(
+  flags: Readonly<RuntimeFlags> | undefined,
+  { "b-ui-consistent": enableA2UI = false }: Record<string, unknown>
+) {
+  const uiPromptSchema: Schema["properties"] =
+    flags?.consistentUI && enableA2UI
+      ? {
+          "b-ui-prompt": {
+            type: "object",
+            behavior: ["llm-content", "config", "hint-advanced"],
+            title: "UI Layout instructions",
+            description: "Instructions for UI layout",
+          },
+        }
+      : {};
+  const uiConsistent: Schema["properties"] = flags?.consistentUI
     ? {
-        "b-ui-prompt": {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "UI Layout instructions",
-          description: "Instructions for UI layout",
+        "b-ui-consistent": {
+          type: "boolean",
+          title: "Use A2UI",
+          behavior: ["config", "hint-advanced", "reactive"],
         },
       }
     : {};
@@ -51,11 +64,7 @@ function computeAgentSchema({
       title: "Objective",
       description: "The objective for the agent",
     },
-    "b-ui-consistent": {
-      type: "boolean",
-      title: "Use A2UI",
-      behavior: ["config", "hint-advanced", "reactive"],
-    },
+    ...uiConsistent,
     ...uiPromptSchema,
   } satisfies Schema["properties"];
 }
@@ -99,9 +108,11 @@ async function invoke(
 
 async function describe(
   { inputs: { config$prompt, ...rest } }: { inputs: AgentInputs },
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ) {
-  const uiSchemas = computeAgentSchema(rest);
+  const flags = await readFlags(moduleArgs);
+  const uiSchemas = computeAgentSchema(flags, rest);
   const template = new Template(caps, config$prompt);
   return {
     inputSchema: {

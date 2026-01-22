@@ -464,7 +464,7 @@ async function describe(
     behavior.push(...(describing.inputSchema.behavior || []));
   }
   if (flags?.agentMode) {
-    const agentSchema = computeAgentSchema(rest);
+    const agentSchema = computeAgentSchema(flags, rest);
     modeSchema = { ...modeSchema, ...agentSchema };
     behavior = [...behavior];
   }
