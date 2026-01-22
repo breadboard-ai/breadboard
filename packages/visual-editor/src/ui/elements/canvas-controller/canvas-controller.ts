@@ -74,13 +74,13 @@ import { isEmpty } from "../../utils/utils.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
 import * as Theme from "../../../theme/index.js";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
-  @consume({ context: appControllerContext })
-  accessor #appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   /**
    * Indicates whether or not the UI can currently run a flow or not.
@@ -146,14 +146,14 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   @state()
   set sideNavItem(item: "console" | "edit-history" | "editor" | "preview") {
-    if (item === this.#appController.editor.sidebar.settings.section) {
+    if (item === this.sca.controller.editor.sidebar.section) {
       return;
     }
 
-    this.#appController.editor.sidebar.settings.section = item;
+    this.sca.controller.editor.sidebar.section = item;
   }
   get sideNavItem() {
-    return this.#appController.editor.sidebar.settings.section;
+    return this.sca.controller.editor.sidebar.section;
   }
 
   @state()
@@ -352,7 +352,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         this.highlightState,
         this.visualChangeId,
         this.graphTopologyUpdateId,
-        this.#appController.global.flags,
+        this.sca.controller.global.flags,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -368,7 +368,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .projectState=${this.projectState}
           .runState=${runState}
           .runStateEffect=${this.#runStateEffect}
-          .runtimeFlags=${this.#appController.global.flags}
+          .runtimeFlags=${this.sca.controller.global.flags}
           .graph=${graph}
           .graphIsMine=${this.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
@@ -503,7 +503,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           selectionCount,
           this.sideNavItem,
           this.graphTopologyUpdateId,
-          this.#appController.global.flags,
+          this.sca.controller.global.flags,
         ],
         () => {
           return html`<bb-app-controller
@@ -517,7 +517,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             .isMine=${this.graphIsMine}
             .projectRun=${this.projectState?.run}
             .readOnly=${!this.graphIsMine}
-            .runtimeFlags=${this.#appController.global.flags}
+            .runtimeFlags=${this.sca.controller.global.flags}
             .settings=${this.settings}
             .showGDrive=${this.signedIn}
             .status=${this.status}

@@ -31,8 +31,6 @@ export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> 
         return false;
       }
 
-      console.log(originalEvent.detail.selections);
-
       runtime.select.processSelections(
         tab.id,
         originalEvent.detail.selectionChangeId,
@@ -47,8 +45,8 @@ export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> 
 export const LockRoute: EventRoute<"host.lock"> = {
   event: "host.lock",
 
-  async do({ appController }) {
-    appController.global.main.blockingAction = true;
+  async do({ sca }) {
+    sca.controller.global.main.blockingAction = true;
     return false;
   },
 };
@@ -56,8 +54,8 @@ export const LockRoute: EventRoute<"host.lock"> = {
 export const UnlockRoute: EventRoute<"host.unlock"> = {
   event: "host.unlock",
 
-  async do({ appController }) {
-    appController.global.main.blockingAction = false;
+  async do({ sca }) {
+    sca.controller.global.main.blockingAction = false;
     return false;
   },
 };

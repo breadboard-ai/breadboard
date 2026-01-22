@@ -9,7 +9,7 @@ import { Runtime } from "../runtime/runtime.js";
 import { Tab, WorkspaceSelectionStateWithChangeId } from "../runtime/types.js";
 import type * as BreadboardUI from "../ui/index.js";
 import { MutableGraphStore } from "@breadboard-ai/types";
-import { AppController } from "../controller/controller.js";
+import { AppController } from "../sca/controller/controller.js";
 
 export interface KeyboardCommandDeps {
   runtime: Runtime;

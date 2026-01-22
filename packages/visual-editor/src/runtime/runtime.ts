@@ -70,7 +70,7 @@ import {
   envFromGraphDescriptor,
 } from "../data/file-system.js";
 import { ActionTracker } from "../ui/types/types.js";
-import { AppController } from "../controller/controller.js";
+import { AppController } from "../sca/controller/controller.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -98,7 +98,7 @@ export class Runtime extends EventTarget {
   constructor(config: RuntimeConfig) {
     super();
 
-    this.appController = config.appController;
+    this.appController = config.sca.controller;
     this.flags = this.appController.global.flags;
 
     this.signinAdapter = new SigninAdapter(config.shellHost);

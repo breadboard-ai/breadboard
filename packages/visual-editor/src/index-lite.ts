@@ -447,8 +447,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   override async doPostInitWork(): Promise<void> {
-    await this.appController.global.performMigrations();
-    await this.appController.isHydrated;
+    await this.sca.controller.global.performMigrations();
+    await this.sca.controller.isHydrated;
 
     this.runtime.board.addEventListener(
       RuntimeBoardLoadErrorEvent.eventName,
@@ -490,7 +490,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     this.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       this.accessStatus = result;
-      this.appController.global.main.show.add("NoAccessModal");
+      this.sca.controller.global.main.show.add("NoAccessModal");
     } else {
       /**
        * The remix triggering code goes here, though this is a bit of a hack.
@@ -767,7 +767,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .isMine=${this.tab?.graphIsMine ?? false}
         .projectRun=${renderValues.projectState?.run}
         .readOnly=${true}
-        .runtimeFlags=${this.appController.global.flags}
+        .runtimeFlags=${this.sca.controller.global.flags}
         .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
         .status=${renderValues.tabStatus}
         .shouldShowFirstRunMessage=${true}
@@ -827,13 +827,13 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return [
       this.renderTooltip(),
       this.#renderOnboardingTooltip(),
-      this.appController.global.main.show.has("NoAccessModal")
+      this.sca.controller.global.main.show.has("NoAccessModal")
         ? this.renderNoAccessModal()
         : nothing,
-      this.appController.global.main.show.has("SignInModal")
+      this.sca.controller.global.main.show.has("SignInModal")
         ? this.renderSignInModal(false)
         : nothing,
-      this.appController.global.main.show.has("SnackbarDetailsModal")
+      this.sca.controller.global.main.show.has("SnackbarDetailsModal")
         ? this.renderSnackbarDetailsModal()
         : nothing,
     ];
@@ -841,7 +841,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #isInert() {
     return (
-      this.appController.global.main.blockingAction ||
+      this.sca.controller.global.main.blockingAction ||
       this.runtime.state.lite.status == "generating" ||
       this.runtime.state.lite.viewType === "loading"
     );

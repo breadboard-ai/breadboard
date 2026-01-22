@@ -24,7 +24,7 @@ import {
 import { ReactiveProjectRun } from "./project-run.js";
 import { Template } from "@breadboard-ai/utils";
 import { FlowGenerator } from "../flow-gen/flow-generator.js";
-import { AppController } from "../../controller/controller.js";
+import { AppController } from "../../sca/controller/controller.js";
 
 export { createLiteModeState };
 

@@ -17,12 +17,7 @@ import {
   SHELL_ORIGIN_URL_PARAMETER,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import * as comlink from "comlink";
-import {
-  getLogger,
-  setDebuggableAppController,
-  stubAppController,
-} from "../controller/utils/logging/logger.js";
-import * as Formatter from "../controller/utils/logging/formatter.js";
+import { Utils } from "../sca/utils.js";
 
 initializeOpalShellGuest();
 
@@ -63,8 +58,7 @@ async function initializeOpalShellGuest() {
     };
   } = {};
 
-  setDebuggableAppController(stubAppController);
-  const logger = getLogger();
+  const logger = Utils.Logging.getLogger();
   const checkForDebugStatus = false;
 
   // Establish MessageChannel.
@@ -78,7 +72,7 @@ async function initializeOpalShellGuest() {
       event.data.type === SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST
     ) {
       logger.log(
-        Formatter.info(
+        Utils.Logging.Formatter.info(
           "Received establish MessageChannel request from",
           event.origin
         ),
@@ -88,7 +82,7 @@ async function initializeOpalShellGuest() {
 
       if (boxedState.value) {
         logger.log(
-          Formatter.info(
+          Utils.Logging.Formatter.info(
             "Discarding previous guest, iframe must have navigated"
           ),
           label,
@@ -107,7 +101,9 @@ async function initializeOpalShellGuest() {
       }
 
       logger.log(
-        Formatter.info("Sending establish MessageChannel response"),
+        Utils.Logging.Formatter.info(
+          "Sending establish MessageChannel response"
+        ),
         label,
         checkForDebugStatus
       );
@@ -116,13 +112,13 @@ async function initializeOpalShellGuest() {
 
       // Initialize bi-directional comlink APIs
       logger.log(
-        Formatter.info("Exposing host API"),
+        Utils.Logging.Formatter.info("Exposing host API"),
         label,
         checkForDebugStatus
       );
       comlink.expose(shellHost satisfies OpalShellHostProtocol, port);
       logger.log(
-        Formatter.info("Connecting to guest API"),
+        Utils.Logging.Formatter.info("Connecting to guest API"),
         label,
         checkForDebugStatus
       );

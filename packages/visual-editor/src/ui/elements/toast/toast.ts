@@ -10,13 +10,13 @@ import { customElement, property } from "lit/decorators.js";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-toast")
 export class Toast extends LitElement {
-  @consume({ context: appControllerContext })
-  accessor #appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property({ type: Boolean })
   accessor closing = false;
@@ -116,7 +116,7 @@ export class Toast extends LitElement {
         "animationend",
         () => {
           if (!this.toastId) return;
-          this.#appController.global.toasts.untoast(this.toastId);
+          this.sca.controller.global.toasts.untoast(this.toastId);
         },
         { once: true }
       );

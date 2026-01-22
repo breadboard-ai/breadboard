@@ -77,13 +77,10 @@ import { hash, ok } from "@breadboard-ai/utils";
 import { MainArguments } from "./types/types.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
-import { appController, type AppController } from "./controller/controller.js";
-import { appControllerContext } from "./controller/context/context.js";
-import {
-  getLogger,
-  setDebuggableAppController,
-} from "./controller/utils/logging/logger.js";
-import * as Formatter from "./controller/utils/logging/formatter.js";
+
+import { sca, SCA } from "./sca/sca.js";
+import { Utils } from "./sca/utils.js";
+import { scaContext } from "./sca/context/context.js";
 
 export { MainBase };
 
@@ -135,8 +132,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   @provide({ context: actionTrackerContext })
   protected accessor actionTracker: ActionTracker;
 
-  @provide({ context: appControllerContext })
-  protected accessor appController: AppController;
+  @provide({ context: scaContext })
+  protected accessor sca: SCA;
+
+  #appController!: SCA["controller"];
 
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
@@ -196,9 +195,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     if (
       values[0]?.type !== "info" &&
-      this.appController.global.main.showStatusUpdateChip === null
+      this.#appController.global.main.showStatusUpdateChip === null
     ) {
-      this.appController.global.main.showStatusUpdateChip = true;
+      this.#appController.global.main.showStatusUpdateChip = true;
     }
   }
   get statusUpdates() {
@@ -225,7 +224,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected readonly settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
   protected readonly hostOrigin: URL;
-  protected readonly logger: ReturnType<typeof getLogger> = getLogger();
+  protected readonly logger: ReturnType<typeof Utils.Logging.getLogger> =
+    Utils.Logging.getLogger();
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
@@ -252,11 +252,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.hostOrigin = args.hostOrigin;
 
     // Controller
-    this.appController = appController(args.globalConfig.flags);
-    setDebuggableAppController(this.appController);
+    this.sca = sca(args.globalConfig.flags);
+    this.#appController = this.sca.controller;
 
     this.runtime = new Runtime.Runtime({
-      appController: this.appController,
+      sca: this.sca,
       globalConfig: this.globalConfig,
       guestConfig: this.guestConfiguration,
       settings: this.settings,
@@ -300,7 +300,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           this.emailPrefsManager.prefsValid &&
           !this.emailPrefsManager.hasStoredPreferences
         ) {
-          this.appController.global.main.show.add("WarmWelcome");
+          this.sca.controller.global.main.show.add("WarmWelcome");
         }
       });
     }
@@ -344,7 +344,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.#checkSubscriptionStatus();
 
     this.logger.log(
-      Formatter.info("Visual Editor Initialized"),
+      Utils.Logging.Formatter.info("Visual Editor Initialized"),
       Strings.from("APP_NAME"),
       false
     );
@@ -420,26 +420,26 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   async #checkSubscriptionStatus() {
     try {
-      await this.appController.isHydrated;
-      const flags = await this.appController.global.flags.flags();
+      await this.sca.controller.isHydrated;
+      const flags = await this.sca.controller.global.flags.flags();
       if (flags.googleOne) {
         this.logger.log(
-          Formatter.verbose(`Checking subscriber status`),
+          Utils.Logging.Formatter.verbose(`Checking subscriber status`),
           "Google One"
         );
         const response = await this.runtime.apiClient.getG1SubscriptionStatus({
           include_credit_data: true,
         });
-        this.appController.global.main.subscriptionStatus = response.is_member
+        this.sca.controller.global.main.subscriptionStatus = response.is_member
           ? "subscribed"
           : "not-subscribed";
-        this.appController.global.main.subscriptionCredits =
+        this.sca.controller.global.main.subscriptionCredits =
           response.remaining_credits;
       }
     } catch (err) {
       console.warn(err);
-      this.appController.global.main.subscriptionStatus = "error";
-      this.appController.global.main.subscriptionCredits = -2;
+      this.sca.controller.global.main.subscriptionStatus = "error";
+      this.sca.controller.global.main.subscriptionCredits = -2;
     }
   }
 
@@ -454,7 +454,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeShareMissingEvent.eventName,
       () => {
-        this.appController.global.main.show.add("MissingShare");
+        this.sca.controller.global.main.show.add("MissingShare");
       }
     );
 
@@ -466,7 +466,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.addEventListener(
       Runtime.Events.RuntimeToastEvent.eventName,
       (evt: Runtime.Events.RuntimeToastEvent) => {
-        this.appController.global.toasts.toast(
+        this.sca.controller.global.toasts.toast(
           evt.message,
           evt.toastType,
           evt.persistent,
@@ -545,7 +545,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       (evt: Runtime.Events.RuntimeErrorEvent) => {
         // Wait a frame so we don't end up accidentally spamming the render.
         requestAnimationFrame(() => {
-          this.appController.global.toasts.toast(
+          this.sca.controller.global.toasts.toast(
             evt.message,
             BreadboardUI.Events.ToastType.ERROR
           );
@@ -557,7 +557,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       Runtime.Events.RuntimeBoardLoadErrorEvent.eventName,
       () => {
         if (this.tab) {
-          this.appController.global.main.loadState = "Error";
+          this.sca.controller.global.main.loadState = "Error";
         }
 
         this.snackbar(
@@ -574,7 +574,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeErrorEvent.eventName,
       (evt: Runtime.Events.RuntimeErrorEvent) => {
-        this.appController.global.toasts.toast(
+        this.sca.controller.global.toasts.toast(
           evt.message,
           BreadboardUI.Events.ToastType.ERROR
         );
@@ -617,10 +617,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           if (this.tab.graph.url && this.tab.graphIsMine) {
             const board: RecentBoard = { url: this.tab.graph.url };
             if (this.tab.graph.title) board.title = this.tab.graph.title;
-            this.appController.home.recent.add(board);
+            this.sca.controller.home.recent.add(board);
           }
 
-          this.appController.global.main.loadState = "Loaded";
+          this.sca.controller.global.main.loadState = "Loaded";
           this.runtime.select.refresh(
             this.tab.id,
             this.runtime.util.createWorkspaceSelectionChangeId()
@@ -720,14 +720,14 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.runtime.board.currentURL = evt.url;
 
         if (evt.mode) {
-          this.appController.global.main.mode = evt.mode;
+          this.sca.controller.global.main.mode = evt.mode;
         }
         const parsedUrl = this.runtime.router.parsedUrl;
         const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
         if (parsedUrl.page === "home") {
           this.actionTracker.load("home", false);
         } else {
-          this.actionTracker.load(this.appController.global.main.mode, shared);
+          this.actionTracker.load(this.sca.controller.global.main.mode, shared);
         }
 
         const urlWithoutMode = new URL(evt.url);
@@ -765,7 +765,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
               );
             }, LOADING_TIMEOUT);
 
-            this.appController.global.main.loadState = "Loading";
+            this.sca.controller.global.main.loadState = "Loading";
             await this.runtime.board.createTabFromURL(
               boardUrl,
               undefined,
@@ -795,8 +795,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   async #generateBoardFromGraph(graph: GraphDescriptor) {
-    const boardServerName = this.appController.global.main.boardServer;
-    const location = this.appController.global.main.boardLocation;
+    const boardServerName = this.sca.controller.global.main.boardServer;
+    const location = this.sca.controller.global.main.boardLocation;
     const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
 
     const saveResult = await this.runtime.board.saveAs(
@@ -843,10 +843,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   #maybeShowWelcomePanel() {
     if (this.tab === null) {
-      this.appController.global.main.loadState = "Home";
+      this.sca.controller.global.main.loadState = "Home";
     }
 
-    if (this.appController.global.main.loadState !== "Home") {
+    if (this.sca.controller.global.main.loadState !== "Home") {
       return;
     }
     this.#hideAllOverlays();
@@ -854,11 +854,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   #hideAllOverlays() {
-    this.appController.global.main.show.delete("BoardEditModal");
-    this.appController.global.main.show.delete("BetterOnDesktopModal");
-    this.appController.global.main.show.delete("MissingShare");
-    this.appController.global.main.show.delete("StatusUpdateModal");
-    this.appController.global.main.show.delete("VideoModal");
+    this.sca.controller.global.main.show.delete("BoardEditModal");
+    this.sca.controller.global.main.show.delete("BetterOnDesktopModal");
+    this.sca.controller.global.main.show.delete("MissingShare");
+    this.sca.controller.global.main.show.delete("StatusUpdateModal");
+    this.sca.controller.global.main.show.delete("VideoModal");
   }
 
   #onShowTooltip(evt: Event) {
@@ -933,7 +933,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     const deps: KeyboardCommandDeps = {
       runtime: this.runtime,
-      appController: this.appController,
+      appController: this.sca.controller,
       selectionState: this.selectionState,
       tab: this.tab,
       originalEvent: evt,
@@ -953,7 +953,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         // Toast.
         let toastId;
         const notifyUser = () => {
-          toastId = this.appController.global.toasts.toast(
+          toastId = this.sca.controller.global.toasts.toast(
             command.messagePending ?? Strings.from("STATUS_GENERIC_WORKING"),
             BreadboardUI.Events.ToastType.PENDING,
             true
@@ -973,13 +973,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
         // Perform the command.
         try {
-          this.appController.global.main.blockingAction = true;
+          this.sca.controller.global.main.blockingAction = true;
           await command.do(deps);
-          this.appController.global.main.blockingAction = false;
+          this.sca.controller.global.main.blockingAction = false;
 
           // Replace the toast.
           if (toastId) {
-            this.appController.global.toasts.toast(
+            this.sca.controller.global.toasts.toast(
               command.messageComplete ?? Strings.from("STATUS_GENERIC_WORKING"),
               command.messageType ?? BreadboardUI.Events.ToastType.INFORMATION,
               false,
@@ -988,7 +988,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
         } catch (err) {
           const commandErr = err as { message: string };
-          this.appController.global.toasts.toast(
+          this.sca.controller.global.toasts.toast(
             commandErr.message ?? Strings.from("ERROR_GENERIC"),
             BreadboardUI.Events.ToastType.ERROR,
             false,
@@ -999,7 +999,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           if (notifyUserOnTimeout) {
             clearTimeout(notifyUserOnTimeout);
           }
-          this.appController.global.main.blockingAction = false;
+          this.sca.controller.global.main.blockingAction = false;
         }
 
         this.#handlingShortcut = false;
@@ -1054,7 +1054,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.runtime.board.createTabFromDescriptor(runData);
       } catch (err) {
         console.warn(err);
-        this.appController.global.toasts.toast(
+        this.sca.controller.global.toasts.toast(
           Strings.from("ERROR_LOAD_FAILED"),
           BreadboardUI.Events.ToastType.ERROR
         );
@@ -1109,7 +1109,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       canSave,
       projectState,
       saveStatus,
-      showingOverlay: this.appController.global.main.show.size > 0,
+      showingOverlay: this.sca.controller.global.main.show.size > 0,
       themeHash,
       tabStatus,
     } satisfies RenderValues;
@@ -1131,19 +1131,19 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       boardServer: this.boardServer,
       actionTracker: this.actionTracker,
       embedHandler: this.embedHandler,
-      appController: this.appController,
+      sca: this.sca,
     };
   }
 
   protected willUpdate(): void {
-    if (!this.appController.global.main) {
+    if (!this.sca.controller.global.main) {
       return;
     }
 
     if (this.tosStatus && !this.tosStatus.canAccess) {
-      this.appController.global.main.show.add("TOS");
+      this.sca.controller.global.main.show.add("TOS");
     } else {
-      this.appController.global.main.show.delete("TOS");
+      this.sca.controller.global.main.show.delete("TOS");
     }
   }
 
@@ -1159,7 +1159,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
     }
   ) {
-    this.appController.global.main.blockingAction = true;
+    this.sca.controller.global.main.blockingAction = true;
     this.runtime.actionTracker.remixApp(url, "editor");
     const remixRoute = eventRoutes.get("board.remix");
     const refresh = await remixRoute?.do(
@@ -1171,7 +1171,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         })
       )
     );
-    this.appController.global.main.blockingAction = false;
+    this.sca.controller.global.main.blockingAction = false;
     if (refresh) {
       requestAnimationFrame(() => {
         this.requestUpdate();
@@ -1180,7 +1180,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   protected async invokeDeleteEventRouteWith(url: string) {
-    this.appController.global.main.blockingAction = true;
+    this.sca.controller.global.main.blockingAction = true;
     const deleteRoute = eventRoutes.get("board.delete");
     const refresh = await deleteRoute?.do(
       this.collectEventRouteDeps(
@@ -1196,7 +1196,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         })
       )
     );
-    this.appController.global.main.blockingAction = false;
+    this.sca.controller.global.main.blockingAction = false;
 
     if (refresh) {
       requestAnimationFrame(() => {
@@ -1226,9 +1226,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "details": {
-            this.appController.global.main.lastSnackbarDetailsInfo =
+            this.sca.controller.global.main.lastSnackbarDetailsInfo =
               evt.value ?? null;
-            this.appController.global.main.show.add("SnackbarDetailsModal");
+            this.sca.controller.global.main.show.add("SnackbarDetailsModal");
             break;
           }
 
@@ -1268,7 +1268,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         if (checkSignInConsent()) {
           return "success";
         } else {
-          this.appController.global.main.show.add("SignInModal");
+          this.sca.controller.global.main.show.add("SignInModal");
           await this.updateComplete;
           const signInModal = this.signInModalRef.value;
           if (!signInModal) {
@@ -1285,7 +1285,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         }
       }
     }
-    this.appController.global.main.show.add("SignInModal");
+    this.sca.controller.global.main.show.add("SignInModal");
     await this.updateComplete;
     const signInModal = this.signInModalRef.value;
     if (!signInModal) {
@@ -1307,7 +1307,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         .consentMessage=${this.guestConfiguration.consentMessage}
         .blurBackground=${blurBackground}
         @bbmodaldismissed=${() => {
-          this.appController.global.main.show.delete("SignInModal");
+          this.sca.controller.global.main.show.delete("SignInModal");
         }}
       ></bb-sign-in-modal>
     `;
@@ -1315,21 +1315,21 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected renderSnackbarDetailsModal() {
     return html`<bb-snackbar-details-modal
-      .details=${this.appController.global.main.lastSnackbarDetailsInfo}
+      .details=${this.sca.controller.global.main.lastSnackbarDetailsInfo}
       @bbmodaldismissed=${() => {
-        this.appController.global.main.lastSnackbarDetailsInfo = null;
-        this.appController.global.main.show.delete("SnackbarDetailsModal");
+        this.sca.controller.global.main.lastSnackbarDetailsInfo = null;
+        this.sca.controller.global.main.show.delete("SnackbarDetailsModal");
       }}
     ></bb-snackbar-details-modal>`;
   }
 
   protected renderConsentRequests() {
-    if (this.appController.global.main.consentRequests[0]) {
+    if (this.sca.controller.global.main.consentRequests[0]) {
       return html`
         <bb-consent-request-modal
-          .consentRequest=${this.appController.global.main.consentRequests[0]}
+          .consentRequest=${this.sca.controller.global.main.consentRequests[0]}
           @bbmodaldismissed=${() => {
-            this.appController.global.main.consentRequests.shift();
+            this.sca.controller.global.main.consentRequests.shift();
           }}
         ></bb-consent-request-modal>
       `;

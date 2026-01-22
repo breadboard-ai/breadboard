@@ -5,17 +5,17 @@
  */
 import { html, css, nothing, LitElement } from "lit";
 import { customElement } from "lit/decorators.js";
-import { isHydrating } from "../../../controller/utils/hydration.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
+import { type SCA } from "../../../sca/sca.js";
+import { Utils } from "../../../sca/utils.js";
+import { scaContext } from "../../../sca/context/context.js";
 
 @customElement("ui-splitter")
 export class UISplitter extends SignalWatcher(LitElement) {
-  @consume({ context: appControllerContext })
-  accessor #appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = [
     css`
@@ -111,12 +111,12 @@ export class UISplitter extends SignalWatcher(LitElement) {
   }
 
   render() {
-    if (!this.#appController) return nothing;
+    if (!this.sca.controller) return nothing;
 
-    const split = this.#appController.editor.main.split;
-    if (isHydrating(() => split)) return nothing;
+    const split = this.sca.controller.editor.splitter.split;
+    if (Utils.Helpers.isHydrating(() => split)) return nothing;
 
-    const [left, right] = this.#appController.editor.main.getClampedValues(
+    const [left, right] = this.sca.controller.editor.splitter.getClampedValues(
       split,
       this.#bounds
     );
@@ -141,7 +141,7 @@ export class UISplitter extends SignalWatcher(LitElement) {
             }}
             @pointermove=${(evt: PointerEvent) => {
               if (!this.#isDragging) return;
-              this.#appController.editor.main.setSplit(
+              this.sca.controller.editor.splitter.setSplit(
                 (evt.pageX - this.#bounds.x) / this.#bounds.width
               );
             }}

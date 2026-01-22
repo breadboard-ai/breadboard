@@ -43,13 +43,13 @@ import { GoogleDriveFileId, ItemSelect } from "../elements.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
 import { DATA_TYPE } from "./constants.js";
 import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-editor-controls")
 export class EditorControls extends LitElement {
-  @consume({ context: appControllerContext })
-  accessor #appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @consume({ context: actionTrackerContext })
   accessor actionTracker!: ActionTracker | undefined;
@@ -667,7 +667,7 @@ export class EditorControls extends LitElement {
   willUpdate() {
     this.#storeReady = Promise.resolve();
     if (this.graphStore) {
-      this.#storeReady = this.#appController.isHydrated.then(() => {
+      this.#storeReady = this.sca.controller.isHydrated.then(() => {
         return new Promise((resolve) => {
           if (!this.graphStore) {
             resolve();

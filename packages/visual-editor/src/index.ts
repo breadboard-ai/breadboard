@@ -17,9 +17,8 @@ import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./ui/types/types.js";
-import { isHydrating } from "./controller/utils/hydration.js";
 import { repeat } from "lit/directives/repeat.js";
-import { getLogger } from "./controller/utils/logging/logger.js";
+import { Utils } from "./sca/utils.js";
 
 // Build constant.
 declare const ENABLE_DEBUG_TOOLING: boolean;
@@ -32,7 +31,7 @@ export { Main };
 @customElement("bb-main")
 class Main extends MainBase {
   override async doPostInitWork() {
-    await this.appController.global.performMigrations();
+    await this.sca.controller.global.performMigrations();
 
     this.maybeNotifyAboutPreferredUrlForDomain();
     this.maybeNotifyAboutDesktopModality();
@@ -46,29 +45,31 @@ class Main extends MainBase {
     windowWithExperimentalFeatures.toggleExperimentalFeatures = async () => {
       // Ignore the call if the value is still hydrating.
       if (
-        isHydrating(() => this.appController.global.main.experimentalComponents)
+        Utils.Helpers.isHydrating(
+          () => this.sca.controller.global.main.experimentalComponents
+        )
       ) {
         return;
       }
 
       // Toggle the value and await the set.
-      this.appController.global.main.experimentalComponents =
-        !this.appController.global.main.experimentalComponents;
-      await this.appController.global.main.isSettled;
+      this.sca.controller.global.main.experimentalComponents =
+        !this.sca.controller.global.main.experimentalComponents;
+      await this.sca.controller.global.main.isSettled;
 
       // Inform the user.
-      const logger = getLogger();
+      const logger = Utils.Logging.getLogger();
       logger.logItem(
         "info",
         "",
         "Experimental Features",
         false,
-        this.appController.global.main.experimentalComponents
+        this.sca.controller.global.main.experimentalComponents
           ? "Enabled"
           : "Disabled"
       );
 
-      return this.appController.global.main.experimentalComponents.valueOf();
+      return this.sca.controller.global.main.experimentalComponents.valueOf();
     };
   }
 
@@ -110,7 +111,7 @@ class Main extends MainBase {
       return;
     }
 
-    this.appController.global.main.show.add("BetterOnDesktopModal");
+    this.sca.controller.global.main.show.add("BetterOnDesktopModal");
   }
 
   override async handleAppAccessCheckResult(
@@ -142,16 +143,16 @@ class Main extends MainBase {
     const content = html`<div
       id="content"
       ?inert=${renderValues.showingOverlay ||
-      this.appController.global.main.blockingAction}
+      this.sca.controller.global.main.blockingAction}
     >
-      ${this.appController.global.main.show.has("TOS") ||
-      this.appController.global.main.show.has("MissingShare")
+      ${this.sca.controller.global.main.show.has("TOS") ||
+      this.sca.controller.global.main.show.has("MissingShare")
         ? nothing
         : [
             this.#renderCanvasController(renderValues),
             this.#renderAppController(renderValues),
             this.#renderWelcomePanel(),
-            this.appController.global.main.showStatusUpdateChip
+            this.sca.controller.global.main.showStatusUpdateChip
               ? this.#renderStatusUpdateBar()
               : nothing,
           ]}
@@ -187,7 +188,7 @@ class Main extends MainBase {
         this.unsnackbar(evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-        this.appController.global.toasts.toast(
+        this.sca.controller.global.toasts.toast(
           toastEvent.message,
           toastEvent.toastType
         );
@@ -203,34 +204,34 @@ class Main extends MainBase {
       ${[
         this.#renderHeader(renderValues),
         content,
-        this.appController.global.main.show.has("MissingShare")
+        this.sca.controller.global.main.show.has("MissingShare")
           ? this.#renderMissingShareDialog()
           : nothing,
-        this.appController.global.main.show.has("TOS")
+        this.sca.controller.global.main.show.has("TOS")
           ? this.#renderTosDialog()
           : nothing,
-        this.appController.global.main.show.has("BoardEditModal")
+        this.sca.controller.global.main.show.has("BoardEditModal")
           ? this.#renderBoardEditModal()
           : nothing,
-        this.appController.global.main.show.has("SnackbarDetailsModal")
+        this.sca.controller.global.main.show.has("SnackbarDetailsModal")
           ? this.renderSnackbarDetailsModal()
           : nothing,
-        this.appController.global.main.show.has("BetterOnDesktopModal")
+        this.sca.controller.global.main.show.has("BetterOnDesktopModal")
           ? this.#renderBetterOnDesktopModal()
           : nothing,
-        this.appController.global.main.show.has("VideoModal")
+        this.sca.controller.global.main.show.has("VideoModal")
           ? this.#renderVideoModal()
           : nothing,
-        this.appController.global.main.show.has("StatusUpdateModal")
+        this.sca.controller.global.main.show.has("StatusUpdateModal")
           ? this.#renderStatusUpdateModal()
           : nothing,
-        this.appController.global.main.show.has("GlobalSettings")
+        this.sca.controller.global.main.show.has("GlobalSettings")
           ? this.#renderGlobalSettingsModal(renderValues)
           : nothing,
-        this.appController.global.main.show.has("WarmWelcome")
+        this.sca.controller.global.main.show.has("WarmWelcome")
           ? this.#renderWarmWelcomeModal()
           : nothing,
-        this.appController.global.main.show.has("SignInModal")
+        this.sca.controller.global.main.show.has("SignInModal")
           ? this.renderSignInModal()
           : nothing,
         this.renderTooltip(),
@@ -249,8 +250,8 @@ class Main extends MainBase {
     }
 
     // TODO: Reenable this.
-    // if (this.appController.debug.enabled) {
-    //   addDebugPanel(this.appController);
+    // if (this.sca.controller.debug.enabled) {
+    //   addDebugPanel(this.sca.controller);
     // } else {
     //   removeDebugPanel();
     // }
@@ -259,7 +260,7 @@ class Main extends MainBase {
   }
 
   #renderWelcomePanel() {
-    if (this.appController.global.main.loadState !== "Home") {
+    if (this.sca.controller.global.main.loadState !== "Home") {
       return nothing;
     }
 
@@ -269,8 +270,8 @@ class Main extends MainBase {
   #renderAppController(renderValues: RenderValues) {
     const graphIsEmpty = BreadboardUI.Utils.isEmpty(this.tab?.graph ?? null);
     const active =
-      this.appController.global.main.mode === "app" &&
-      this.appController.global.main.loadState !== "Home";
+      this.sca.controller.global.main.mode === "app" &&
+      this.sca.controller.global.main.loadState !== "Home";
 
     return html`<bb-app-controller
       class=${classMap({ active })}
@@ -280,7 +281,7 @@ class Main extends MainBase {
       .isMine=${this.tab?.graphIsMine ?? false}
       .projectRun=${renderValues.projectState?.run}
       .readOnly=${true}
-      .runtimeFlags=${this.appController.global.flags}
+      .runtimeFlags=${this.sca.controller.global.flags}
       .settings=${this.settings}
       .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
       .status=${renderValues.tabStatus}
@@ -293,7 +294,7 @@ class Main extends MainBase {
     return html` <bb-canvas-controller
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
-      .canRun=${this.appController.global.main.canRunMain}
+      .canRun=${this.sca.controller.global.main.canRunMain}
       .editor=${this.runtime.edit.getEditor(this.tab)}
       .graph=${this.tab?.graph ?? null}
       .graphIsMine=${this.tab?.graphIsMine ?? false}
@@ -311,7 +312,7 @@ class Main extends MainBase {
       .themeHash=${renderValues.themeHash}
       .visualChangeId=${this.lastVisualChangeId}
       @bbshowvideomodal=${() => {
-        this.appController.global.main.show.add("VideoModal");
+        this.sca.controller.global.main.show.add("VideoModal");
       }}
       @bbeditorpositionchange=${(
         evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
@@ -345,7 +346,7 @@ class Main extends MainBase {
       .boardTitle=${this.tab?.graph.title ?? null}
       .boardDescription=${this.tab?.graph.description ?? null}
       @bbmodaldismissed=${() => {
-        this.appController.global.main.show.delete("BoardEditModal");
+        this.sca.controller.global.main.show.delete("BoardEditModal");
       }}
     ></bb-edit-board-modal>`;
   }
@@ -353,7 +354,7 @@ class Main extends MainBase {
   #renderBetterOnDesktopModal() {
     return html`<bb-better-on-desktop-modal
       @bbmodaldismissed=${() => {
-        this.appController.global.main.show.delete("BetterOnDesktopModal");
+        this.sca.controller.global.main.show.delete("BetterOnDesktopModal");
       }}
     ></bb-better-on-desktop-modal>`;
   }
@@ -361,7 +362,7 @@ class Main extends MainBase {
   #renderVideoModal() {
     return html`<bb-video-modal
       @bbmodaldismissed=${() => {
-        this.appController.global.main.show.delete("VideoModal");
+        this.sca.controller.global.main.show.delete("VideoModal");
       }}
     ></bb-video-modal>`;
   }
@@ -395,8 +396,8 @@ class Main extends MainBase {
       class=${classMap(classes)}
       aria-role="button"
       @click=${() => {
-        this.appController.global.main.show.add("StatusUpdateModal");
-        this.appController.global.main.showStatusUpdateChip = false;
+        this.sca.controller.global.main.show.add("StatusUpdateModal");
+        this.sca.controller.global.main.showStatusUpdateChip = false;
       }}
     >
       <div>
@@ -408,7 +409,7 @@ class Main extends MainBase {
         @click=${(evt: Event) => {
           evt.preventDefault();
           evt.stopImmediatePropagation();
-          this.appController.global.main.showStatusUpdateChip = false;
+          this.sca.controller.global.main.showStatusUpdateChip = false;
         }}
       >
         <span class="g-icon round filled">close</span>
@@ -420,8 +421,8 @@ class Main extends MainBase {
     return html`<bb-status-update-modal
       .updates=${this.statusUpdates}
       @bbmodaldismissed=${() => {
-        this.appController.global.main.show.delete("StatusUpdateModal");
-        this.appController.global.main.showStatusUpdateChip = false;
+        this.sca.controller.global.main.show.delete("StatusUpdateModal");
+        this.sca.controller.global.main.showStatusUpdateChip = false;
       }}
     ></bb-status-update-modal>`;
   }
@@ -430,10 +431,10 @@ class Main extends MainBase {
     return html`<bb-global-settings-modal
       .flags=${this.runtime.flags.flags()}
       .project=${renderValues.projectState}
-      .uiState=${this.appController.global.main}
+      .uiState=${this.sca.controller.global.main}
       .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-        this.appController.global.main.show.delete("GlobalSettings");
+        this.sca.controller.global.main.show.delete("GlobalSettings");
       }}
     ></bb-global-settings-modal>`;
   }
@@ -442,7 +443,7 @@ class Main extends MainBase {
     return html`<bb-warm-welcome-modal
       .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-        this.appController.global.main.show.delete("WarmWelcome");
+        this.sca.controller.global.main.show.delete("WarmWelcome");
       }}
     ></bb-warm-welcome-modal>`;
   }
@@ -461,7 +462,7 @@ class Main extends MainBase {
         const showModalIfNeeded = () => {
           if (
             el &&
-            this.appController.global.main.show.has("MissingShare") &&
+            this.sca.controller.global.main.show.has("MissingShare") &&
             el.isConnected
           ) {
             const dialog = el as HTMLDialogElement;
@@ -507,7 +508,7 @@ class Main extends MainBase {
         const showModalIfNeeded = () => {
           if (
             el &&
-            this.appController.global.main.show.has("TOS") &&
+            this.sca.controller.global.main.show.has("TOS") &&
             el.isConnected
           ) {
             const dialog = el as HTMLDialogElement;
@@ -548,12 +549,14 @@ class Main extends MainBase {
   }
 
   #renderToasts() {
-    if (isHydrating(() => this.appController.global.toasts.toasts))
+    if (
+      Utils.Helpers.isHydrating(() => this.sca.controller.global.toasts.toasts)
+    )
       return nothing;
 
-    const toastCount = this.appController.global.toasts.toasts.size;
+    const toastCount = this.sca.controller.global.toasts.toasts.size;
     return html`${repeat(
-      this.appController.global.toasts.toasts,
+      this.sca.controller.global.toasts.toasts,
       ([toastId]) => toastId,
       ([toastId, toast], idx) => {
         const offset = toastCount - idx - 1;
@@ -571,16 +574,16 @@ class Main extends MainBase {
   #renderHeader(renderValues: RenderValues) {
     return html`<bb-ve-header
       ?inert=${renderValues.showingOverlay ||
-      this.appController.global.main.blockingAction}
+      this.sca.controller.global.main.blockingAction}
       .signinAdapter=${this.signinAdapter}
       .hasActiveTab=${this.tab !== null}
       .tabTitle=${this.tab?.graph?.title ?? null}
       .url=${this.tab?.graph?.url ?? null}
-      .loadState=${this.appController.global.main.loadState}
+      .loadState=${this.sca.controller.global.main.loadState}
       .canSave=${renderValues.canSave}
       .isMine=${this.runtime.board.isMine(this.tab?.graph.url)}
       .saveStatus=${renderValues.saveStatus}
-      .mode=${this.appController.global.main.mode}
+      .mode=${this.sca.controller.global.main.mode}
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
         this.runtime.actionTracker.signOutSuccess();
@@ -622,12 +625,12 @@ class Main extends MainBase {
       }}
       @bbsubscribercreditrefresh=${async () => {
         try {
-          this.appController.global.main.subscriptionCredits = -1;
+          this.sca.controller.global.main.subscriptionCredits = -1;
           const response = await this.runtime.apiClient.getG1Credits();
-          this.appController.global.main.subscriptionCredits =
+          this.sca.controller.global.main.subscriptionCredits =
             response.remaining_credits ?? 0;
         } catch (err) {
-          this.appController.global.main.subscriptionCredits = -2;
+          this.sca.controller.global.main.subscriptionCredits = -2;
           console.warn(err);
         }
       }}
@@ -650,7 +653,7 @@ class Main extends MainBase {
               return;
             }
 
-            this.appController.global.main.show.add("BoardEditModal");
+            this.sca.controller.global.main.show.add("BoardEditModal");
             break;
           }
 
@@ -678,7 +681,7 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            this.appController.global.feedback.open(this.globalConfig);
+            this.sca.controller.global.feedback.open(this.globalConfig);
             break;
           }
 
@@ -693,7 +696,7 @@ class Main extends MainBase {
           }
 
           case "demo-video": {
-            this.appController.global.main.show.add("VideoModal");
+            this.sca.controller.global.main.show.add("VideoModal");
             break;
           }
 
@@ -707,13 +710,13 @@ class Main extends MainBase {
           }
 
           case "show-global-settings": {
-            this.appController.global.main.show.add("GlobalSettings");
+            this.sca.controller.global.main.show.add("GlobalSettings");
             break;
           }
 
           case "status-update": {
-            this.appController.global.main.show.add("StatusUpdateModal");
-            this.appController.global.main.showStatusUpdateChip = false;
+            this.sca.controller.global.main.show.add("StatusUpdateModal");
+            this.sca.controller.global.main.showStatusUpdateChip = false;
             break;
           }
 
@@ -725,7 +728,7 @@ class Main extends MainBase {
             await navigator.clipboard.writeText(
               JSON.stringify(this.tab.graph, null, 2)
             );
-            this.appController.global.toasts.toast(
+            this.sca.controller.global.toasts.toast(
               Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
               BreadboardUI.Events.ToastType.INFORMATION
             );

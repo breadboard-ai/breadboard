@@ -10,9 +10,10 @@ import { customElement } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
 import { spinAnimationStyles } from "../../styles/spin-animation.js";
-import { appControllerContext } from "../../../controller/context/context.js";
-import { AppController } from "../../../controller/controller.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
+import { Utils } from "../../../sca/utils.js";
 
 @customElement("bb-feedback-panel")
 export class FeedbackPanel extends SignalWatcher(LitElement) {
@@ -58,14 +59,16 @@ export class FeedbackPanel extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @consume({ context: appControllerContext })
-  accessor #appController!: AppController;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   readonly #loadingPanel: Ref<HTMLDialogElement> = createRef();
 
   override render() {
-    if (!this.#appController) return nothing;
-    const status = this.#appController.global.feedback.status;
+    if (!this.sca.controller) return nothing;
+    const status = this.sca.controller.global.feedback.status;
+    if (Utils.Helpers.isHydrating(() => status)) return nothing;
+
     if (status === "loading") {
       return this.#renderLoadingPanel();
     }
@@ -88,14 +91,15 @@ export class FeedbackPanel extends SignalWatcher(LitElement) {
   }
 
   #onLoadingPanelClose() {
-    this.#appController.global.feedback.close();
+    this.sca.controller.global.feedback.close();
   }
 
   override updated(changedProperties: PropertyValues): void {
     super.updated(changedProperties);
-    if (!this.#appController) return;
+    if (!this.sca.controller) return;
+    if (Utils.Helpers.isHydrating(() => status)) return;
 
-    if (this.#appController.global.feedback.status === "loading") {
+    if (this.sca.controller.global.feedback.status === "loading") {
       const panel = this.#loadingPanel.value;
       if (panel) {
         panel.showModal();
