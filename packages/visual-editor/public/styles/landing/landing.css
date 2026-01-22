@@ -5,7 +5,7 @@
  */
 
 :root {
-  --default-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --default-font-family: "Google Sans Flex", Helvetica, Arial, sans-serif;
   --default-font-family-mono: "Courier New", Courier, monospace;
 }
 
@@ -319,7 +319,9 @@
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transition: opacity .25s ease-in-out, visibility .25s linear;
+  transition:
+    opacity 0.25s ease-in-out,
+    visibility 0.25s linear;
 }
 
 #video-container:hover .dimmed-cover {
@@ -583,40 +585,46 @@ main {
       & li {
         border: 1px solid #665ef6;
         border-radius: 40px;
-        padding: 16px 24px;
+        padding: 34px 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
         width: 100%;
         min-height: 300px;
 
-        & .feature-icon {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: #efeefe;
-          border-radius: 50%;
-          width: 60px;
-          height: 60px;
+        & .feature-icon-container {
+          height: 76px;
 
-          & .g-icon {
-            font-size: 40px;
+          & .feature-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #efeefe;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+
+            & .g-icon {
+              font-size: 40px;
+            }
           }
         }
 
         & h2 {
           text-align: center;
-          font-size: 18px;
-          margin: 20px 0;
+          font-size: 24px;
+          line-height: 40px;
+          margin: 0;
         }
 
         & p {
           text-align: center;
-          max-width: 240px;
-          font-size: 14px;
+          max-width: 292px;
+          font-size: 18px;
           margin: 0;
+          line-height: 150%;
         }
 
         &:last-of-type {
@@ -966,10 +974,21 @@ footer {
 
       ul {
         flex-direction: row;
-        gap: 38px;
+        gap: 40px;
 
         & li {
           border-radius: 70px;
+          min-height: 388px;
+          gap: 26px;
+
+          & .feature-icon-container {
+            height: 150px;
+
+            & .feature-icon {
+              margin-bottom: 35px;
+              margin-top: 35px;
+            }
+          }
         }
       }
     }
