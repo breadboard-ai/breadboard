@@ -104,7 +104,7 @@ class Loop {
     objective,
     params,
     uiPrompt,
-    uiType = "none",
+    uiType = "chat",
     extraInstruction = "",
     modelConstraint = "none",
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {

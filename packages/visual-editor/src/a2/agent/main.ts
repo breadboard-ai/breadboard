@@ -5,26 +5,25 @@
  */
 
 import {
-  BehaviorSchema,
   Capabilities,
   LLMContent,
   Outcome,
+  RuntimeFlags,
   Schema,
-  SchemaEnumValue,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Loop } from "./loop.js";
-import { UIType } from "./types.js";
 import type { ModelConstraint } from "./functions/generate.js";
+import { readFlags } from "../a2/settings.js";
 
 export { invoke as default, computeAgentSchema, describe };
 
 export type AgentInputs = {
   config$prompt: LLMContent;
-  "b-ui-enable": UIType;
+  "b-ui-consistent": boolean;
   "b-ui-prompt": LLMContent;
   "b-si-instruction"?: string;
   "b-si-constraint": ModelConstraint;
@@ -34,35 +33,12 @@ type AgentOutputs = {
   [key: string]: LLMContent[];
 };
 
-const UI_TYPES = [
-  {
-    id: "none",
-    title: "None",
-    icon: "close",
-    description: "This step can't interact with user",
-  },
-  {
-    id: "chat",
-    title: "Chat",
-    icon: "chat_mirror",
-    description: "This step can chat with the user",
-  },
-  {
-    id: "a2ui",
-    title: "Interactive UI",
-    icon: "web",
-    description: "This step can generate interactive UI",
-  },
-] satisfies SchemaEnumValue[];
-
-const UI_TYPE_VALUES = UI_TYPES.map((type) => type.id);
-
-function computeAgentSchema({
-  "b-ui-enable": enableUI = "none",
-}: Record<string, unknown>) {
-  enableUI = UI_TYPE_VALUES.includes(enableUI as string) ? enableUI : "none";
+function computeAgentSchema(
+  flags: Readonly<RuntimeFlags> | undefined,
+  { "b-ui-consistent": enableA2UI = false }: Record<string, unknown>
+) {
   const uiPromptSchema: Schema["properties"] =
-    enableUI === "a2ui"
+    flags?.consistentUI && enableA2UI
       ? {
           "b-ui-prompt": {
             type: "object",
@@ -72,34 +48,31 @@ function computeAgentSchema({
           },
         }
       : {};
-  const chatSchema: BehaviorSchema[] =
-    enableUI !== "none" ? ["hint-chat-mode"] : [];
-
+  const uiConsistent: Schema["properties"] = flags?.consistentUI
+    ? {
+        "b-ui-consistent": {
+          type: "boolean",
+          title: "Use A2UI",
+          behavior: ["config", "hint-advanced", "reactive"],
+        },
+      }
+    : {};
   return {
-    hints: chatSchema,
-    props: {
-      config$prompt: {
-        type: "object",
-        behavior: ["llm-content", "config", "hint-preview"],
-        title: "Objective",
-        description: "The objective for the agent",
-      },
-      "b-ui-enable": {
-        type: "string",
-        enum: UI_TYPES,
-        title: "User interaction",
-        description: "Specifies the type of user interaction",
-        behavior: ["config", "hint-advanced", "reactive"],
-      },
-      ...uiPromptSchema,
-    } as Schema["properties"],
-  };
+    config$prompt: {
+      type: "object",
+      behavior: ["llm-content", "config", "hint-preview"],
+      title: "Objective",
+      description: "The objective for the agent",
+    },
+    ...uiConsistent,
+    ...uiPromptSchema,
+  } satisfies Schema["properties"];
 }
 
 async function invoke(
   {
     config$prompt: objective,
-    "b-ui-enable": uiType = "none",
+    "b-ui-consistent": enableA2UI = false,
     "b-ui-prompt": uiPrompt,
     "b-si-instruction": extraInstruction,
     "b-si-constraint": modelConstraint,
@@ -111,13 +84,12 @@ async function invoke(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  uiType = UI_TYPE_VALUES.includes(uiType) ? uiType : "none";
   const loop = new Loop(caps, moduleArgs);
   const result = await loop.run({
     objective,
     params,
     extraInstruction,
-    uiType,
+    uiType: enableA2UI ? "a2ui" : "chat",
     uiPrompt,
     modelConstraint,
   });
@@ -136,9 +108,11 @@ async function invoke(
 
 async function describe(
   { inputs: { config$prompt, ...rest } }: { inputs: AgentInputs },
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ) {
-  const uiSchemas = computeAgentSchema(rest);
+  const flags = await readFlags(moduleArgs);
+  const uiSchemas = computeAgentSchema(flags, rest);
   const template = new Template(caps, config$prompt);
   return {
     inputSchema: {
@@ -150,10 +124,10 @@ async function describe(
           title: "Context in",
           behavior: ["main-port"],
         },
-        ...uiSchemas.props,
+        ...uiSchemas,
         ...template.schemas(),
       },
-      behavior: ["at-wireable", ...uiSchemas.hints],
+      behavior: ["at-wireable"],
       ...template.requireds(),
       additionalProperties: false,
     } satisfies Schema,
