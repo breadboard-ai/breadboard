@@ -23,6 +23,7 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
+  RuntimeConfig,
   TabId,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
@@ -135,8 +136,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   @provide({ context: scaContext })
   protected accessor sca: SCA;
 
-  #appController!: SCA["controller"];
-
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
 
@@ -195,9 +194,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     if (
       values[0]?.type !== "info" &&
-      this.#appController.global.main.showStatusUpdateChip === null
+      this.sca.controller.global.main.showStatusUpdateChip === null
     ) {
-      this.#appController.global.main.showStatusUpdateChip = true;
+      this.sca.controller.global.main.showStatusUpdateChip = true;
     }
   }
   get statusUpdates() {
@@ -252,11 +251,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.hostOrigin = args.hostOrigin;
 
     // Controller
-    this.sca = sca(args.globalConfig.flags);
-    this.#appController = this.sca.controller;
-
-    this.runtime = new Runtime.Runtime({
-      sca: this.sca,
+    const config: RuntimeConfig = {
       globalConfig: this.globalConfig,
       guestConfig: this.guestConfiguration,
       settings: this.settings,
@@ -264,7 +259,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       env: args.env,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
-    });
+    };
+    this.sca = sca(config, args.globalConfig.flags);
+
+    // Append SCA to the config.
+    config.sca = this.sca;
+    this.runtime = new Runtime.Runtime(config);
 
     this.signinAdapter = this.runtime.signinAdapter;
     this.googleDriveClient = this.runtime.googleDriveClient;

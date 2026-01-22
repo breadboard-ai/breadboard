@@ -98,6 +98,7 @@ export class Runtime extends EventTarget {
   constructor(config: RuntimeConfig) {
     super();
 
+    if (!config.sca) throw new Error("Expected SCA");
     this.appController = config.sca.controller;
     this.flags = this.appController.global.flags;
 
