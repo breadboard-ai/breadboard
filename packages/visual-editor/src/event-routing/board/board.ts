@@ -260,14 +260,30 @@ export const RenameRoute: EventRoute<"board.rename"> = {
   event: "board.rename",
 
   async do({ tab, runtime, originalEvent, sca }) {
-    sca.controller.global.main.blockingAction = true;
-    runtime.shell.setPageTitle(originalEvent.detail.title);
-    await runtime.edit.updateBoardTitleAndDescription(
-      tab,
-      originalEvent.detail.title,
-      originalEvent.detail.description
-    );
-    sca.controller.global.main.blockingAction = false;
+    try {
+      sca.controller.global.main.blockingAction = true;
+      runtime.shell.setPageTitle(originalEvent.detail.title);
+      await runtime.edit.updateBoardTitleAndDescription(
+        tab,
+        originalEvent.detail.title,
+        originalEvent.detail.description
+      );
+
+      // SCA Action - currently inert.
+      await sca.actions.graph.edit(
+        [
+          {
+            type: "changegraphmetadata",
+            title: originalEvent.detail.title || undefined,
+            description: originalEvent.detail.description || undefined,
+            graphId: "",
+          },
+        ],
+        "Updating title and description"
+      );
+    } finally {
+      sca.controller.global.main.blockingAction = false;
+    }
     return false;
   },
 };

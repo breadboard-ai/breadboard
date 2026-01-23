@@ -15,7 +15,7 @@ export abstract class RootController implements HydratedController {
   #trackedSignals = new Set<Signal.State<unknown>>();
   #isHydratedPromise?: Promise<number>;
 
-  constructor(public readonly id: string) {}
+  constructor(public readonly controllerId: string) {}
 
   public get hydrated() {
     return !isHydrating(() => this.hydratedInternal.get());

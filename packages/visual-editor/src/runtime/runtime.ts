@@ -85,6 +85,8 @@ export class Runtime extends EventTarget {
     this.fileSystem = config.sca.services.fileSystem;
     this.mcpClientManager = config.sca.services.mcpClientManager;
     this.googleDriveBoardServer = config.sca.services.googleDriveBoardServer;
+    this.emailPrefsManager = config.sca.services.emailPrefsManager;
+    this.flowGenerator = config.sca.services.flowGenerator;
 
     const kits = config.sca.services.kits;
     const loader = config.sca.services.loader;
@@ -98,7 +100,9 @@ export class Runtime extends EventTarget {
       graphStore,
       this.googleDriveBoardServer,
       this.signinAdapter,
-      this.googleDriveClient
+      this.googleDriveClient,
+      /** Here for migrations */
+      config.sca
     );
     this.util = Util;
     this.select = new Select();
@@ -108,8 +112,7 @@ export class Runtime extends EventTarget {
       this.fetchWithCreds,
       OPAL_BACKEND_API_PREFIX
     );
-    this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
-    this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);
+
     this.state = new StateManager(this, graphStore, this.appController);
     this.run = new Run(graphStore, this.state, this.flags, kits);
 
