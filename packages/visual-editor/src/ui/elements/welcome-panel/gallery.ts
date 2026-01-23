@@ -25,10 +25,6 @@ import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
 import { ActionTracker, OverflowAction } from "../../types/types.js";
 import { renderThumbnail } from "../../utils/image.js";
-import {
-  type SigninAdapter,
-  signinAdapterContext,
-} from "../../utils/signin-adapter.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
@@ -415,9 +411,6 @@ export class Gallery extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  @consume({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
-
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
 
@@ -677,12 +670,12 @@ export class Gallery extends SignalWatcher(LitElement) {
     if (this.forceCreatorToBeTeam) {
       return html`<span class="g-icon">spark</span>`;
     }
-    if (item.mine && this.signinAdapter?.pictureSignal) {
+    if (item.mine && this.sca.services.signinAdapter.pictureSignal) {
       return html`
         <img
           class="signed-in"
           crossorigin="anonymous"
-          src=${this.signinAdapter?.pictureSignal}
+          src=${this.sca.services.signinAdapter.pictureSignal}
         />
       `;
     }
@@ -693,10 +686,10 @@ export class Gallery extends SignalWatcher(LitElement) {
     if (this.forceCreatorToBeTeam) {
       return Strings.from("LABEL_TEAM_NAME");
     }
-    if (!item.mine || !this.signinAdapter) {
+    if (!item.mine || !this.sca.services.signinAdapter) {
       return "Unknown User";
     }
-    return this.signinAdapter.nameSignal || "Unknown User";
+    return this.sca.services.signinAdapter.nameSignal || "Unknown User";
   }
 
   #renderPagination() {

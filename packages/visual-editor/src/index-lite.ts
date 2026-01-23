@@ -768,7 +768,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .projectRun=${renderValues.projectState?.run}
         .readOnly=${true}
         .runtimeFlags=${this.sca.controller.global.flags}
-        .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
+        .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
+        "signedin"}
         .status=${renderValues.tabStatus}
         .shouldShowFirstRunMessage=${true}
         .firstRunMessage=${Strings.from("LABEL_FIRST_RUN_LITE")}

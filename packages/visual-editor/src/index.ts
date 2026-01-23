@@ -74,7 +74,7 @@ class Main extends MainBase {
   }
 
   async maybeNotifyAboutPreferredUrlForDomain() {
-    const domain = await this.signinAdapter.domain;
+    const domain = await this.sca.services.signinAdapter.domain;
     if (!domain) {
       return;
     }
@@ -119,7 +119,7 @@ class Main extends MainBase {
   ): Promise<void> {
     this.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
-      await this.signinAdapter.signOut();
+      await this.sca.services.signinAdapter.signOut();
       window.history.pushState(
         undefined,
         "",
@@ -283,7 +283,8 @@ class Main extends MainBase {
       .readOnly=${true}
       .runtimeFlags=${this.sca.controller.global.flags}
       .settings=${this.settings}
-      .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
+      .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
+      "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
     >
@@ -307,7 +308,8 @@ class Main extends MainBase {
       .readOnly=${this.tab?.readOnly ?? true}
       .selectionState=${this.selectionState}
       .settings=${this.settings}
-      .signedIn=${this.signinAdapter.stateSignal?.status === "signedin"}
+      .signedIn=${this.sca.services.signinAdapter.stateSignal?.status ===
+      "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
       .visualChangeId=${this.lastVisualChangeId}
@@ -575,7 +577,7 @@ class Main extends MainBase {
     return html`<bb-ve-header
       ?inert=${renderValues.showingOverlay ||
       this.sca.controller.global.main.blockingAction}
-      .signinAdapter=${this.signinAdapter}
+      .signinAdapter=${this.sca.services.signinAdapter}
       .hasActiveTab=${this.tab !== null}
       .tabTitle=${this.tab?.graph?.title ?? null}
       .url=${this.tab?.graph?.url ?? null}
@@ -585,7 +587,7 @@ class Main extends MainBase {
       .saveStatus=${renderValues.saveStatus}
       .mode=${this.sca.controller.global.main.mode}
       @bbsignout=${async () => {
-        await this.signinAdapter.signOut();
+        await this.sca.services.signinAdapter.signOut();
         this.runtime.actionTracker.signOutSuccess();
         window.location.href = makeUrl({
           page: "landing",
@@ -608,7 +610,7 @@ class Main extends MainBase {
           dev: parsedUrl.dev,
           guestPrefixed: true,
         };
-        if ((await this.signinAdapter.state) === "signedin") {
+        if ((await this.sca.services.signinAdapter.state) === "signedin") {
           this.runtime.router.go(homepage);
         } else {
           // Note that router.go() can't navigate to the landing page, because

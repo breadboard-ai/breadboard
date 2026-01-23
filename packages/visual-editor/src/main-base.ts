@@ -60,10 +60,6 @@ import {
   UserSignInResponse,
 } from "./ui/types/types.js";
 import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
-import {
-  SigninAdapter,
-  signinAdapterContext,
-} from "./ui/utils/signin-adapter.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 
 import { Admin } from "./admin.js";
@@ -102,9 +98,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
-
-  @provide({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter;
 
   @provide({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator;
@@ -259,15 +252,14 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     config.sca = this.sca;
     this.runtime = new Runtime.Runtime(config);
 
-    this.signinAdapter = this.sca.services.signinAdapter;
     this.googleDriveClient = this.sca.services.googleDriveClient;
 
     // Asyncronously check if the user has an access restriction (e.g. geo) and
     // if they are signed in with all required scopes.
-    this.signinAdapter.state.then((state) => {
+    this.sca.services.signinAdapter.state.then((state) => {
       if (state === "signedin") {
         this.actionTracker.updateSignedInStatus(true);
-        this.signinAdapter
+        this.sca.services.signinAdapter
           .checkAppAccess()
           .then(this.handleAppAccessCheckResult.bind(this));
         this.opalShell
@@ -303,7 +295,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       args,
       this.globalConfig,
       this.googleDriveClient,
-      this.signinAdapter
+      this.sca.services.signinAdapter
     );
     admin.runtime = this.runtime;
     admin.settingsHelper = this.settingsHelper;
@@ -322,7 +314,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     });
 
     // Once we've determined the sign-in status, relay it to an embedder.
-    this.signinAdapter.state.then((state) =>
+    this.sca.services.signinAdapter.state.then((state) =>
       this.embedHandler?.sendToEmbedder({
         type: "home_loaded",
         isSignedIn: state === "signedin",
@@ -348,13 +340,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   ): Promise<void>;
 
   async handleValidateScopesResult(result: ValidateScopesResult) {
-    if (!result.ok && (await this.signinAdapter.state) === "signedin") {
+    if (
+      !result.ok &&
+      (await this.sca.services.signinAdapter.state) === "signedin"
+    ) {
       console.log(
         "[signin] oauth scopes were missing or the user revoked access, " +
           "forcing signin.",
         result
       );
-      await this.signinAdapter.signOut();
+      await this.sca.services.signinAdapter.signOut();
       window.location.href = makeUrl({
         page: "landing",
         redirect: parseUrl(window.location.href),
@@ -1239,7 +1234,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       if (!scopes?.length) {
         return true;
       }
-      const currentScopes = await this.signinAdapter.scopes;
+      const currentScopes = await this.sca.services.signinAdapter.scopes;
       if (
         currentScopes &&
         scopes.every((scope) =>
@@ -1251,7 +1246,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return false;
     };
 
-    if ((await this.signinAdapter.state) === "signedin") {
+    if ((await this.sca.services.signinAdapter.state) === "signedin") {
       if (await verifyScopes()) {
         if (!this.guestConfiguration.consentMessage) {
           return "success";
