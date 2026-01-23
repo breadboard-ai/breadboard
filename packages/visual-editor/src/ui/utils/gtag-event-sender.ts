@@ -92,6 +92,7 @@ class GTagEventSender {
 
     await this.initialized;
     globalThis.gtag?.("set", "user_properties", properties);
+    globalThis.gtag?.("event", "user_property_update", properties);
   }
 
   async sendEvent(action: string, params?: Record<string, string | undefined>) {
