@@ -12,6 +12,7 @@ import {
   LLMContent,
   Outcome,
   OutputValues,
+  RuntimeFlags,
   Schema,
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -27,13 +28,9 @@ import type { ModelConstraint } from "../agent/functions/generate.js";
 
 export { invoke as default, describe };
 
-type GenerationModes = (typeof MODES)[number];
-
-type ModeId = GenerationModes["id"];
-
 type Inputs = {
   context?: LLMContent[];
-  "generation-mode"?: ModeId;
+  "generation-mode"?: string;
   "p-for-each"?: boolean;
   [PROMPT_PORT]: LLMContent;
 } & Record<string, unknown>;
@@ -41,6 +38,11 @@ type Inputs = {
 type DescribeInputs = {
   inputs: Inputs;
   asType?: boolean;
+};
+
+type ResolvedModes = {
+  modes: Mode[];
+  current: Mode;
 };
 
 type Mode = {
@@ -81,7 +83,7 @@ const ASK_USER_PORT = "config$ask-user";
 const LIST_PORT = "config$list";
 const LIMIT_MSG = "generation has a daily limit";
 
-const MODES: Mode[] = [
+const ALL_MODES: Mode[] = [
   {
     id: "agent",
     type: "text",
@@ -173,7 +175,6 @@ const MODES: Mode[] = [
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
   },
-
   {
     id: "text-3-pro",
     type: "text",
@@ -314,13 +315,26 @@ const MODES: Mode[] = [
   },
 ] as const;
 
-const DEFAULT_MODE = MODES[0];
+const AGENT_MODE_IDS = [
+  "agent",
+  "text-3-flash",
+  "text-3-pro",
+  "image",
+  "image-pro",
+  "audio",
+  "video",
+  "music",
+];
 
-const modeMap = new Map(MODES.map((mode) => [mode.id, mode]));
+const AGENT_MODES = ALL_MODES.filter(({ id }) => AGENT_MODE_IDS.includes(id));
+
+const PRE_AGENT_MODES = ALL_MODES.filter(({ id }) => id !== "agent");
+
+const modeMap = new Map(ALL_MODES.map((mode) => [mode.id, mode]));
 
 // Maps the prompt port to various names of the other ports.
-const portMapForward = new Map<ModeId, Map<string, string>>(
-  MODES.map((mode) => [mode.id, mode.portMap])
+const portMapForward = new Map<string, Map<string, string>>(
+  ALL_MODES.map((mode) => [mode.id, mode.portMap])
 );
 
 const portMapReverse = new Map(
@@ -343,7 +357,7 @@ function translate<T extends Record<string, unknown>>(
 }
 
 function forwardPorts<T extends Record<string, unknown>>(
-  mode: ModeId,
+  mode: string,
   ports: T
 ): T {
   const forwardingMap = portMapForward.get(mode);
@@ -352,7 +366,7 @@ function forwardPorts<T extends Record<string, unknown>>(
 }
 
 function receivePorts<T extends Record<string, unknown>>(
-  mode: ModeId,
+  mode: string,
   ports: T
 ): T {
   const reverseMap = portMapReverse.get(mode);
@@ -360,8 +374,14 @@ function receivePorts<T extends Record<string, unknown>>(
   return translate(ports, reverseMap);
 }
 
-function getMode(modeId: ModeId | undefined): GenerationModes {
-  return modeMap.get(modeId || DEFAULT_MODE.id) || DEFAULT_MODE;
+function resolveModes(
+  modeId: string | undefined,
+  flags: Readonly<RuntimeFlags> | undefined
+): ResolvedModes {
+  const modes = flags?.agentMode ? AGENT_MODES : PRE_AGENT_MODES;
+  const defaultMode = modes[0];
+  const current = modeMap.get(modeId || defaultMode.id) || defaultMode;
+  return { modes, current };
 }
 
 async function invoke(
@@ -369,20 +389,20 @@ async function invoke(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
-  const resolvedMode = getMode(mode);
   const flags = await readFlags(moduleArgs);
+  const { current } = resolveModes(mode, flags);
 
   if (flags?.agentMode) {
     const agentInputs: AgentInputs = {
       "b-ui-consistent": false,
       "b-ui-prompt": { parts: [] },
       ...rest,
-      "b-si-instruction": resolvedMode.makeInstruction(rest),
-      "b-si-constraint": resolvedMode.modelConstraint,
+      "b-si-instruction": current.makeInstruction(rest),
+      "b-si-constraint": current.modelConstraint,
     };
     return agent(agentInputs, caps, moduleArgs);
   } else {
-    const { url: $board, type, modelName } = resolvedMode;
+    const { url: $board, type, modelName } = current;
     const generateForEach = (flags?.generateForEach && !!useForEach) ?? false;
     // Model is treated as part of the Mode, but actually maps N:1
     // on actual underlying step type.
@@ -448,7 +468,8 @@ async function describe(
     }
   }
 
-  const { url, type } = getMode(mode);
+  const { current, modes } = resolveModes(mode, flags);
+  const { url, type } = current;
   let modeSchema: Schema["properties"] = {};
   let behavior: BehaviorSchema[] = [];
   behavior = [...generateForEachBehavior];
@@ -483,7 +504,7 @@ async function describe(
         "generation-mode": {
           type: "string",
           title: "Mode",
-          enum: MODES,
+          enum: modes,
           behavior: ["config", "hint-preview", "reactive", "hint-controller"],
         },
         context: {
