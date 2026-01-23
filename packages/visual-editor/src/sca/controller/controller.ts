@@ -27,7 +27,7 @@ class Controller implements AppController {
     const runtimeFlags = flags;
 
     this.editor = {
-      main: new Editor.EditorController("Editor_Main"),
+      graph: new Editor.Graph.GraphController("Editor_Graph"),
       selection: new Editor.Selection.SelectionController("Editor_Selection"),
       splitter: new Editor.Splitter.SplitterController("Editor_Splitter"),
       sidebar: new Editor.Sidebar.SidebarController("Editor_Sidebar"),
@@ -104,7 +104,7 @@ export const appController = (flags?: RuntimeFlags) => {
 
 export interface AppController extends DebuggableAppController {
   editor: {
-    main: Editor.EditorController;
+    graph: Editor.Graph.GraphController;
     selection: Editor.Selection.SelectionController;
     splitter: Editor.Splitter.SplitterController;
     sidebar: Editor.Sidebar.SidebarController;

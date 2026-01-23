@@ -43,7 +43,7 @@ function getName<Context extends WeakKey, Value extends PrimitiveValue>(
   target: Context,
   context: ClassAccessorDecoratorContext<Context, Value>
 ) {
-  const id = (target as unknown as { id?: string }).id;
+  const id = (target as unknown as { controllerId?: string }).controllerId;
   const suffix = id ? `_${id}` : "";
   return `${target.constructor.name}_${String(context.name)}${suffix}`;
 }

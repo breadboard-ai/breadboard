@@ -42,6 +42,7 @@ import {
 } from "./util.js";
 import { GoogleDriveBoardServer } from "../board-server/server.js";
 import { parseUrl } from "../ui/utils/urls.js";
+import { SCA } from "../sca/sca.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -86,7 +87,9 @@ export class Board extends EventTarget {
     public readonly graphStore: MutableGraphStore,
     public readonly googleDriveBoardServer: GoogleDriveBoardServer,
     private readonly signinAdapter: SigninAdapter,
-    private readonly googleDriveClient?: GoogleDriveClient
+    private readonly googleDriveClient?: GoogleDriveClient,
+    /** Here for migrations */
+    private readonly __sca?: SCA
   ) {
     super();
     this.googleDriveBoardServer.addEventListener(
@@ -399,6 +402,18 @@ export class Board extends EventTarget {
         finalOutputValues,
       });
 
+      if (this.__sca) {
+        this.__sca.controller.editor.graph.id = id;
+        this.__sca.controller.editor.graph.graph = graph;
+        this.__sca.controller.editor.graph.url = url;
+        this.__sca.controller.editor.graph.version = version;
+        this.__sca.controller.editor.graph.readOnly = !graphIsMine;
+        this.__sca.controller.editor.graph.graphIsMine = graphIsMine;
+        this.__sca.controller.editor.graph.mainGraphId = mainGraphId.result;
+        this.__sca.controller.editor.graph.lastLoadedVersion =
+          lastLoadedVersion;
+      }
+
       // If there's a current tab, close it.
       // We are in a single-tab environment for now.
       if (this.#currentTabId) {
@@ -462,6 +477,10 @@ export class Board extends EventTarget {
         nextTab = tabList[t - 1];
         break;
       }
+    }
+
+    if (this.__sca) {
+      this.__sca.controller.editor.graph.resetAll();
     }
 
     this.#tabs.delete(id);
