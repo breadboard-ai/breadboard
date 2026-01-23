@@ -138,6 +138,10 @@ export const ENABLE_DRIVE_PICKER_IN_LITE_MODE = getBoolean(
   "ENABLE_DRIVE_PICKER_IN_LITE_MODE"
 );
 
+export const ENABLE_AGENT_EXPORT_TO_DRIVE = getBoolean(
+  "ENABLE_AGENT_EXPORT_TO_DRIVE"
+);
+
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
   return process.env[flagName] ?? "";

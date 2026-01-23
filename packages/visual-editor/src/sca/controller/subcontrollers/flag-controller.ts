@@ -54,6 +54,9 @@ export class FlagController
   @field({ persist: "idb" })
   private accessor _streamPlanner: boolean | null = null;
 
+  @field({ persist: "idb" })
+  private accessor _enableAgentExportToDrive: boolean | null = null;
+
   get agentMode() {
     if (this._agentMode === null)
       throw new Error("agentMode was not set by environment");
@@ -137,6 +140,13 @@ export class FlagController
     if (this._streamPlanner === null)
       throw new Error("streamPlanner was not set by environment");
     return this._streamPlanner;
+  }
+
+  get enableAgentExportToDrive() {
+    if (this._enableAgentExportToDrive === null) {
+      throw new Error("enableAgentExportToDrive was not set by environment");
+    }
+    return this._enableAgentExportToDrive;
   }
 
   @field({ persist: "local" })

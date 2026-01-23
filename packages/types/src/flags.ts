@@ -74,6 +74,10 @@ export type RuntimeFlags = {
    * non-lite mode).
    */
   enableDrivePickerInLiteMode: boolean;
+  /**
+   * Enables "export to Drive" capability for the agent
+   */
+  enableAgentExportToDrive: boolean;
 };
 
 /**
