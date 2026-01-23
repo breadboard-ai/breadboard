@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ConsentRequestWithCallback } from "@breadboard-ai/types";
 import {
   SubscriptionStatus,
   UILoadState,
@@ -19,7 +18,7 @@ export class GlobalController extends RootController {
   @field({ persist: "local" })
   accessor experimentalComponents = false;
 
-  @field({ persist: "local" })
+  @field()
   accessor mode: VisualEditorMode = "canvas";
 
   @field({ persist: "local" })
@@ -61,7 +60,4 @@ export class GlobalController extends RootController {
 
   @field()
   accessor show = new Set<UIOverlays>();
-
-  @field()
-  accessor consentRequests: ConsentRequestWithCallback[] = [];
 }

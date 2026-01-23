@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, ConsentManager } from "@breadboard-ai/types";
+import { Capabilities } from "@breadboard-ai/types";
 import { mkdir, writeFile } from "fs/promises";
 import { mock } from "node:test";
 import { dirname, join } from "path";
@@ -28,6 +28,7 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
 import { getAuthenticatedClient } from "./authenticate.js";
+import { type ConsentController } from "../src/sca/controller/subcontrollers/consent-controller.js";
 
 export { session };
 
@@ -290,11 +291,14 @@ class EvalRun implements EvalHarnessRuntimeArgs {
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
     fetchWithCreds: this.fetchWithCreds,
-    consentManager: {
-      async queryConsent() {
-        return true;
-      },
-    } as Partial<ConsentManager> as ConsentManager,
+    getConsentController() {
+      return {
+        async queryConsent() {
+          return true;
+        },
+      } as Partial<ConsentController> as ConsentController;
+    },
+
     context: {
       currentGraph: {
         title: this.title,

@@ -61,6 +61,10 @@
  * - **Examples:** `createAndAutonameNode`, `moveSelectionToNewGraph`,
  *   `prepareRun`.
  *
+ * Note: Controllers have simple atomic mutations, Actions coordinate multi-step
+ * changes using Services and Controllers. If the value is simply to be updated
+ * do it in the Controller directly. Not every change needs to be an Action.
+ *
  * ---
  *
  * ## The Data Flow Cycle
@@ -78,12 +82,7 @@ import * as Services from "./services/services.js";
 import * as Controller from "./controller/controller.js";
 import * as Actions from "./actions/actions.js";
 import * as Utils from "./utils/utils.js";
-import {
-  ConsentAction,
-  ConsentRequest,
-  ConsentUIType,
-  type RuntimeFlags,
-} from "@breadboard-ai/types";
+import { type RuntimeFlags } from "@breadboard-ai/types";
 import { RuntimeConfig } from "../runtime/types.js";
 
 export interface SCA {
@@ -96,23 +95,11 @@ let instance: SCA;
 export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
   if (!instance) {
     const controller = Controller.appController(flags);
-
-    // The Consent service apparently needs to know about the controller states
-    // which is less than ideal.
-    // TODO: Figure out a better way to handle this.
-    const consentCallback = async (
-      _request: ConsentRequest,
-      _uiType: ConsentUIType
-    ) => {
-      return Promise.resolve(ConsentAction.DENY);
-    };
-
     const services = Services.services(
       config,
       controller.global.flags,
-      consentCallback
+      () => controller.global.consent
     );
-
     const actions = Actions.actions(controller, services);
 
     instance = {

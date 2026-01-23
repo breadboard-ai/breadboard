@@ -63,7 +63,12 @@ export abstract class RootController implements HydratedController {
    * is populated by the @field decorator indirectly.
    */
   get isSettled(): Promise<void[]> {
-    return Promise.all(pendingStorageWrites.get(this) ?? []);
+    // Storage writes might be enqueued asynchronously, so we need to schedule
+    // the settled check for after that. We do so by always resolving on a
+    // Promise and then doing a check.
+    return Promise.resolve().then(() =>
+      Promise.all(pendingStorageWrites.get(this) ?? [])
+    );
   }
 
   /**

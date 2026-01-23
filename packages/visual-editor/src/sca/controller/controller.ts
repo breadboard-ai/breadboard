@@ -16,6 +16,7 @@ import { isHydratedController } from "../utils/helpers/helpers.js";
 import * as Editor from "./subcontrollers/editor/editor.js";
 import * as Home from "./subcontrollers/home/home.js";
 import * as Migrations from "./migration/migrations.js";
+import { ConsentController } from "./subcontrollers/consent-controller.js";
 
 class Controller implements AppController {
   editor: AppController["editor"];
@@ -42,6 +43,7 @@ class Controller implements AppController {
       debug: new DebugController("Debug"),
       feedback: new FeedbackController("Feedback"),
       toasts: new ToastController("Toasts"),
+      consent: new ConsentController("Consent"),
 
       // Migrations are tested independently so this block is ignored for coverage
       // However c8 needs to know the number of lines to ignore, so number below
@@ -116,6 +118,7 @@ export interface AppController extends DebuggableAppController {
     debug: DebugController;
     feedback: FeedbackController;
     toasts: ToastController;
+    consent: ConsentController;
     performMigrations(): Promise<void>;
   };
   isHydrated: Promise<number[]>;

@@ -80,17 +80,15 @@ import {
   saveOutputsAsFile,
 } from "../../../data/save-outputs-as-file.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { consentManagerContext } from "../../contexts/consent-manager.js";
 import {
   GlobalConfig,
   globalConfigContext,
 } from "../../contexts/global-config.js";
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
-import {
-  CONSENT_RENDER_INFO,
-  ConsentManager,
-} from "../../utils/consent-manager.js";
+import { CONSENT_RENDER_INFO } from "../../utils/consent-content-items.js";
 import { isDocSlidesOrSheetsOutput } from "../../../a2/a2/utils.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { SCA } from "../../../sca/sca.js";
 
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -140,8 +138,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor run: ProjectRun | null = null;
 
   @state()
-  @consume({ context: consentManagerContext })
-  accessor consentManager: ConsentManager | undefined = undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @state()
   @consume({ context: actionTrackerContext })
@@ -417,10 +415,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderConsent() {
-    const consentRequest = this.run?.app.consentRequests[0];
-    if (!consentRequest) {
+    const requests = this.sca.controller.global.consent.pendingInApp;
+    if (!requests || requests.length === 0) {
       return nothing;
     }
+
+    const consentRequest = requests[0];
     const renderInfo = CONSENT_RENDER_INFO[consentRequest.request.type];
 
     // TypeScript struggles to disambiguate this, so marking it as `any`.
@@ -434,12 +434,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           <button
             id="grant-consent"
             @click=${() => {
-              consentRequest.consentCallback(ConsentAction.ALWAYS_ALLOW);
-              // This is gross, but allows the next screen to render so we don't
-              // jank back to the starting screen for a split second
-              setTimeout(() => {
-                this.run?.app.consentRequests.shift();
-              });
+              this.sca.controller.global.consent.updatePendingRequest(
+                consentRequest,
+                ConsentAction.ALWAYS_ALLOW
+              );
             }}
           >
             Allow Access
@@ -1077,64 +1075,67 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       </div>
     `;
 
+    const shouldRenderProgress =
+      this.run.app.state === "progress" &&
+      this.sca.controller.global.consent.pendingInApp.length === 0;
     let content: Array<HTMLTemplateResult | symbol> = [];
     if (this.isEmpty) {
       content = [this.#renderEmptyState()];
     } else {
-      switch (this.run.app.state) {
-        case "splash":
-          content = [splashScreen];
-          break;
+      if (this.sca.controller.global.consent.pendingInApp.length > 0) {
+        content = [this.#renderConsent()];
+      } else {
+        switch (this.run.app.state) {
+          case "splash":
+            content = [splashScreen];
+            break;
 
-        case "progress":
-          // Progress is always rendered but hidden (so as to avoid re-renders),
-          // so this becomes a no-op here to ensure we cover all states.
-          // The only thing we need to do is clean up after input
-          this.style.setProperty("--input-clearance", `0px`);
-          break;
+          case "progress":
+            // Progress is always rendered but hidden (so as to avoid re-renders),
+            // so this becomes a no-op here to ensure we cover all states.
+            // The only thing we need to do is clean up after input
+            this.style.setProperty("--input-clearance", `0px`);
+            break;
 
-        case "input":
-          content = [this.#renderOutputs(), this.#renderInput()];
-          break;
+          case "input":
+            content = [this.#renderOutputs(), this.#renderInput()];
+            break;
 
-        case "output":
-          if (this.graph && this.boardServer) {
-            void maybeTriggerNlToOpalSatisfactionSurvey(
-              this.run,
-              this.graph,
-              this.boardServer
+          case "output":
+            if (this.graph && this.boardServer) {
+              void maybeTriggerNlToOpalSatisfactionSurvey(
+                this.run,
+                this.graph,
+                this.boardServer
+              );
+            }
+            content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
+            break;
+
+          case "error":
+            content = [this.#renderError()];
+            break;
+
+          case "interactive":
+            content = [this.#renderOutputs()];
+            break;
+
+          default: {
+            console.warn(
+              "Unknown state",
+              this.run.app.state,
+              "rendering splash screen"
             );
+            content = [splashScreen];
           }
-          content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
-          break;
-
-        case "error":
-          content = [this.#renderError()];
-          break;
-
-        case "interactive":
-          content = [this.#renderOutputs()];
-          break;
-
-        case "consent":
-          content = [this.#renderConsent()];
-          break;
-
-        default: {
-          console.warn(
-            "Unknown state",
-            this.run.app.state,
-            "rendering splash screen"
-          );
-          content = [splashScreen];
         }
       }
     }
 
     return html`<section class=${classMap(classes)} style=${styleMap(styles)}>
       <div id="content">
-        ${this.#renderControls()}
-        ${this.#renderProgress(this.run.app.state === "progress")} ${content}
+        ${this.#renderControls()} ${this.#renderProgress(shouldRenderProgress)}
+        ${content}
       </div>
     </section>`;
   }

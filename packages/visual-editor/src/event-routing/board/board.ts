@@ -26,7 +26,14 @@ import { Utils } from "../../sca/utils.js";
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({ tab, runtime, settings, askUserToSignInIfNeeded, boardServer }) {
+  async do({
+    tab,
+    runtime,
+    settings,
+    askUserToSignInIfNeeded,
+    boardServer,
+    sca,
+  }) {
     if (!tab) {
       console.warn(`Unable to prepare run: no Tab provided`);
       return false;
@@ -64,7 +71,7 @@ export const RunRoute: EventRoute<"board.run"> = {
         graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
       ) {
         if (
-          !(await runtime.consentManager.queryConsent(
+          !(await sca.controller.global.consent.queryConsent(
             {
               type: ConsentType.GET_ANY_WEBPAGE,
               scope: {},

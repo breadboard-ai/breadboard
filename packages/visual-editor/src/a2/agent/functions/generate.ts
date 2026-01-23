@@ -96,7 +96,7 @@ A good code generator prompt will include the following components:
 
 4. What to deliver as output. Again, do not worry about the "how", instead specify the "what". For text files, use the key word "return" in the prompt. For binary files, use the key word word "save". For example, "Return the resulting number" or "Save the PDF file" or "Save all four resulting images". Do NOT ask to name the files, see below.
 
-The code generator prompt may include references to VFS files and it may output references to VFS files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to the VFS. 
+The code generator prompt may include references to VFS files and it may output references to VFS files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to the VFS.
 
 Because of this translation layer, DO NOT mention VFS or VFS references in the prompt outside of the <file> tag.
 
@@ -122,7 +122,7 @@ function defineGenerateFunctions(
           .describe(`Detailed prompt to use for image generation.
 
 This model can generate multiple images from a single prompt. Especially when
-looking for consistency across images (for instance, when generating video 
+looking for consistency across images (for instance, when generating video
 keyframes), this is a very useful capability.
 
 Be specific about how many images to generate.
@@ -265,7 +265,7 @@ naming. Only use when the "output_format" is set to "file".`
           .describe(
             `
 Whether or not to use Google Search grounding. Grounding with Google Search
-connects the Gemini model to real-time web content and works with all available 
+connects the Gemini model to real-time web content and works with all available
 languages. This allows Gemini to provide more accurate answers and cite
 verifiable sources beyond its knowledge cutoff.`.trim()
           )
@@ -274,8 +274,8 @@ verifiable sources beyond its knowledge cutoff.`.trim()
           .boolean()
           .describe(
             `Whether or not to use
-Google Maps grounding. Grounding with Google Maps connects the generative 
-capabilities of Gemini with the rich, factual, and up-to-date data of Google 
+Google Maps grounding. Grounding with Google Maps connects the generative
+capabilities of Gemini with the rich, factual, and up-to-date data of Google
 Maps`
           )
           .optional(),
@@ -318,7 +318,7 @@ generator. Will be provided when the "output_format" is set to "file"`
         text: z
           .string()
           .describe(
-            `The text output of the generator. Will be 
+            `The text output of the generator. Will be
 provided when the "output_format" is set to "text"`
           )
           .optional(),
@@ -360,7 +360,7 @@ provided when the "output_format" is set to "text"`
         tools.push({ googleMaps: {} });
       }
       if (url_context) {
-        const consent = await moduleArgs.consentManager.queryConsent(
+        const consent = await moduleArgs.getConsentController().queryConsent(
           {
             type: ConsentType.GET_ANY_WEBPAGE,
             scope: {},
@@ -585,7 +585,7 @@ The following elements should be considered for your prompt:
 
 For example:
 
-An energetic (mood) electronic dance track (genre) with a fast tempo (tempo) and a driving beat (rhythm), featuring prominent synthesizers (instrumentation) and electronic drums (instrumentation). High-quality production (production quality).	
+An energetic (mood) electronic dance track (genre) with a fast tempo (tempo) and a driving beat (rhythm), featuring prominent synthesizers (instrumentation) and electronic drums (instrumentation). High-quality production (production quality).
 
 A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synthesizers (instrumentation) and soft, evolving pads (instrumentation/arrangement). Slow tempo (tempo) with a spacious reverb (ambiance/production). Starts with a simple synth melody, then adds layers of atmospheric pads (arrangement).
 `,
