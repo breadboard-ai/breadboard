@@ -12,10 +12,9 @@ import {
 } from "../../ui/utils/action-tracker.js";
 import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
-  ConsentAction,
-  ConsentRequest,
-  ConsentUIType,
   GOOGLE_DRIVE_FILES_API_PREFIX,
+  GraphLoader,
+  Kit,
   OPAL_BACKEND_API_PREFIX,
   PersistentBackend,
   RuntimeFlagManager,
@@ -27,7 +26,6 @@ import { createEphemeralBlobStore } from "../../engine/file-system/ephemeral-blo
 import { composeFileSystemBackends } from "../../engine/file-system/composed-peristent-backend.js";
 import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
-import { ConsentManager } from "../../ui/utils/consent-manager.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
 import { addRunModule } from "../../engine/add-run-module.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
@@ -39,16 +37,21 @@ import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
 import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";
 import { ActionTracker } from "../../ui/types/types.js";
+import { type ConsentController } from "../controller/subcontrollers/consent-controller.js";
+import { GoogleDriveBoardServer } from "../../board-server/server.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
   autonamer: Autonamer;
-  consentManager: ConsentManager;
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
   fileSystem: ReturnType<typeof createFileSystem>;
   flowGenerator: FlowGenerator;
+  googleDriveBoardServer: GoogleDriveBoardServer;
   googleDriveClient: GoogleDriveClient;
+  graphStore: ReturnType<typeof createGraphStore>;
+  kits: Kit[];
+  loader: GraphLoader;
   mcpClientManager: McpClientManager;
   signinAdapter: SigninAdapter;
 }
@@ -58,10 +61,7 @@ let instance: AppServices | null = null;
 export function services(
   config: RuntimeConfig,
   flags: RuntimeFlagManager,
-  consentCallback: (
-    request: ConsentRequest,
-    uiType: ConsentUIType
-  ) => Promise<ConsentAction>
+  getConsentController: () => ConsentController
 ) {
   if (!instance) {
     const signinAdapter = new SigninAdapter(config.shellHost);
@@ -105,13 +105,11 @@ export function services(
       OPAL_BACKEND_API_PREFIX
     );
 
-    const consentManager = new ConsentManager(consentCallback);
-
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,
       shell: config.shellHost,
-      consentManager: consentManager,
+      getConsentController,
     });
     const kits = addRunModule(sandbox, []);
     const googleDriveBoardServer = createGoogleDriveBoardServer(
@@ -146,15 +144,18 @@ export function services(
     instance = {
       actionTracker,
       autonamer,
-      consentManager,
       emailPrefsManager,
       fetchWithCreds,
       fileSystem,
       flowGenerator,
+      googleDriveBoardServer,
       googleDriveClient,
+      graphStore,
+      kits,
+      loader,
       mcpClientManager,
       signinAdapter,
-    };
+    } satisfies AppServices;
   }
 
   return instance;

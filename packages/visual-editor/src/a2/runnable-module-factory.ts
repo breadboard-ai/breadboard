@@ -5,7 +5,6 @@
  */
 
 import type {
-  ConsentManager,
   GraphDescriptor,
   InputValues,
   MutableGraph,
@@ -32,6 +31,7 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 import { urlComponentsFromString } from "../engine/loader/loader.js";
 import { McpClientManager } from "../mcp/index.js";
 import { a2 } from "./a2.js";
+import { type ConsentController } from "../sca/controller/subcontrollers/consent-controller.js";
 
 export { createA2ModuleFactory };
 
@@ -42,7 +42,7 @@ export type A2ModuleFactoryArgs = {
   mcpClientManager: McpClientManager;
   fetchWithCreds: typeof globalThis.fetch;
   shell: OpalShellHostProtocol;
-  consentManager: ConsentManager;
+  getConsentController: () => ConsentController;
 };
 
 export type A2ModuleArgs = A2ModuleFactoryArgs & {

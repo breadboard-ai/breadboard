@@ -56,18 +56,6 @@ describe("ReactiveApp", () => {
     assert.strictEqual(app.state, "splash");
   });
 
-  it("switches to 'consent' state when consentRequests exist", () => {
-    app.consentRequests.push({
-      request: {
-        type: "GET_ANY_WEBPAGE" as any,
-        scope: {},
-        graphUrl: "test",
-      },
-      consentCallback: () => {},
-    });
-    assert.strictEqual(app.state, "consent");
-  });
-
   it("switches to 'error' state when run has error", () => {
     // We need to add a screen so it's not 'splash'
     const screen = new ReactiveAppScreen("test", undefined);
@@ -152,27 +140,6 @@ describe("ReactiveApp", () => {
     assert.strictEqual(app.last, s2);
   });
   describe("Reactivity", () => {
-    it("updates 'state' when consentRequests change", () => {
-      const computed = new Signal.Computed(() => app.state);
-      const watcher = new SignalWatcher(computed);
-      watcher.watch();
-
-      assert.strictEqual(app.state, "splash");
-      assert.strictEqual(watcher.count, 0);
-
-      app.consentRequests.push({
-        request: {
-          type: "GET_ANY_WEBPAGE" as any,
-          scope: {},
-          graphUrl: "test",
-        },
-        consentCallback: () => {},
-      });
-
-      assert.strictEqual(app.state, "consent");
-      assert.strictEqual(watcher.count, 1);
-    });
-
     it("updates 'state' when screens change", () => {
       const computed = new Signal.Computed(() => app.state);
       const watcher = new SignalWatcher(computed);

@@ -12,7 +12,8 @@ import {
   MemoryManager,
   SheetMetadataWithFilePath,
 } from "../src/a2/agent/types.js";
-import { ConsentManager, Outcome } from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
+import { type ConsentController } from "../src/sca/controller/subcontrollers/consent-controller.js";
 
 export { stubCaps, stubModuleArgs, stubMemoryManager };
 
@@ -48,11 +49,13 @@ const stubModuleArgs: A2ModuleArgs = {
   },
   context: {},
   shell: {} as unknown as OpalShellHostProtocol,
-  consentManager: {
-    async queryConsent() {
-      return true;
-    },
-  } as Partial<ConsentManager> as ConsentManager,
+  getConsentController() {
+    return {
+      async queryConsent() {
+        return true;
+      },
+    } as Partial<ConsentController> as ConsentController;
+  },
 };
 
 const stubMemoryManager: MemoryManager = {

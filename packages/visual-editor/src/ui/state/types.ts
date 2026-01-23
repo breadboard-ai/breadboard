@@ -23,7 +23,6 @@ import {
   OutputValues,
   ParameterMetadata,
   RunError,
-  ConsentRequestWithCallback,
   GraphDescriptor,
   EditableGraph,
 } from "@breadboard-ai/types";
@@ -409,10 +408,6 @@ export type UI = {
   loadState: UILoadState;
   show: Set<UIOverlays>;
   showStatusUpdateChip: boolean | null;
-  /**
-   * Consent requests that will be displayed as a modal popup
-   */
-  consentRequests: Array<ConsentRequestWithCallback>;
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
   subscriptionStatus: SubscriptionStatus;

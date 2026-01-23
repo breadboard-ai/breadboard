@@ -36,7 +36,6 @@ import {
   type OAuthScope,
 } from "./ui/connection/oauth-scopes.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
-import { consentManagerContext } from "./ui/contexts/consent-manager.js";
 import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
 import { VESignInModal } from "./ui/elements/elements.js";
@@ -60,8 +59,6 @@ import {
   RecentBoard,
   UserSignInResponse,
 } from "./ui/types/types.js";
-import { ConsentManager } from "./ui/utils/consent-manager.js";
-import { EmailPrefsManager } from "./ui/utils/email-prefs-manager.js";
 import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
 import {
   SigninAdapter,
@@ -123,9 +120,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @provide({ context: opalShellContext })
   accessor opalShell: OpalShellHostProtocol;
-
-  @provide({ context: consentManagerContext })
-  accessor #consentManager: ConsentManager;
 
   @provide({ context: guestConfigurationContext })
   protected accessor guestConfiguration: GuestConfiguration;
@@ -221,7 +215,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     createRef();
   protected readonly embedHandler: EmbedHandler | undefined;
   protected readonly settings: SettingsStore;
-  readonly emailPrefsManager: EmailPrefsManager;
   protected readonly hostOrigin: URL;
   protected readonly logger: ReturnType<typeof Utils.Logging.getLogger> =
     Utils.Logging.getLogger();
@@ -266,9 +259,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     config.sca = this.sca;
     this.runtime = new Runtime.Runtime(config);
 
-    this.signinAdapter = this.runtime.signinAdapter;
-    this.googleDriveClient = this.runtime.googleDriveClient;
-    this.#consentManager = this.runtime.consentManager;
+    this.signinAdapter = this.sca.services.signinAdapter;
+    this.googleDriveClient = this.sca.services.googleDriveClient;
 
     // Asyncronously check if the user has an access restriction (e.g. geo) and
     // if they are signed in with all required scopes.
@@ -284,28 +276,27 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     });
 
-    this.emailPrefsManager = this.runtime.emailPrefsManager;
-    this.flowGenerator = this.runtime.flowGenerator;
-    this.actionTracker = this.runtime.actionTracker;
+    this.flowGenerator = this.sca.services.flowGenerator;
+    this.actionTracker = this.sca.services.actionTracker;
 
     this.embedHandler = args.embedHandler;
 
     this.#addRuntimeEventHandlers();
 
-    this.boardServer = this.runtime.googleDriveBoardServer;
+    this.boardServer = this.sca.services.googleDriveBoardServer;
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
-      this.emailPrefsManager.refreshPrefs().then(() => {
+      this.sca.services.emailPrefsManager.refreshPrefs().then(() => {
         if (
-          this.emailPrefsManager.prefsValid &&
-          !this.emailPrefsManager.hasStoredPreferences
+          this.sca.services.emailPrefsManager.prefsValid &&
+          !this.sca.services.emailPrefsManager.hasStoredPreferences
         ) {
           this.sca.controller.global.main.show.add("WarmWelcome");
         }
       });
     }
 
-    this.graphStore = this.runtime.board.graphStore;
+    this.graphStore = this.sca.services.graphStore;
 
     // Admin.
     const admin = new Admin(
@@ -1324,17 +1315,14 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   protected renderConsentRequests() {
-    if (this.sca.controller.global.main.consentRequests[0]) {
-      return html`
-        <bb-consent-request-modal
-          .consentRequest=${this.sca.controller.global.main.consentRequests[0]}
-          @bbmodaldismissed=${() => {
-            this.sca.controller.global.main.consentRequests.shift();
-          }}
-        ></bb-consent-request-modal>
-      `;
-    }
-    return nothing;
+    if (this.sca.controller.global.consent.pendingModal.length === 0)
+      return nothing;
+
+    return html`
+      <bb-consent-request-modal
+        .consentRequest=${this.sca.controller.global.consent.pendingModal[0]}
+      ></bb-consent-request-modal>
+    `;
   }
 
   protected async handleRoutedEvent(

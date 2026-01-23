@@ -8,7 +8,11 @@
 
 import type { Signal } from "@lit-labs/signals";
 import { type BaseBladeParams } from "tweakpane";
-import { NodeIdentifier } from "@breadboard-ai/types";
+import {
+  ConsentRequest,
+  ConsentUIType,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import { GlobalConfig } from "../ui/contexts/global-config.js";
 import {
   GuestConfiguration,
@@ -107,4 +111,9 @@ export interface DebugParams<Value> {
         label?: string;
         format(v: Value, host: DebugFormatter): DebugLog;
       };
+}
+
+export interface PendingConsent {
+  request: ConsentRequest;
+  askUsingUiType?: ConsentUIType;
 }

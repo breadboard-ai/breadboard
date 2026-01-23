@@ -9,7 +9,6 @@ import { LLMContent } from "./llm-content.js";
 import { Particle } from "./particles.js";
 import { NodeRunState } from "./run-status.js";
 import { Schema } from "./schema.js";
-import { ConsentRequestWithCallback } from "./consent-manager.js";
 
 export type SimplifiedProjectRunState = {
   console: Map<string, ConsoleEntry>;
@@ -171,10 +170,6 @@ export type App = {
    * The last screen.
    */
   last: AppScreen | null;
-  /**
-   * In-app consent requests that are pending user approval.
-   */
-  consentRequests: ConsentRequestWithCallback[];
 };
 
 /**

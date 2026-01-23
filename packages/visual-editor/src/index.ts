@@ -432,7 +432,7 @@ class Main extends MainBase {
       .flags=${this.runtime.flags.flags()}
       .project=${renderValues.projectState}
       .uiState=${this.sca.controller.global.main}
-      .emailPrefsManager=${this.emailPrefsManager}
+      .emailPrefsManager=${this.sca.services.emailPrefsManager}
       @bbmodaldismissed=${() => {
         this.sca.controller.global.main.show.delete("GlobalSettings");
       }}
@@ -441,7 +441,7 @@ class Main extends MainBase {
 
   #renderWarmWelcomeModal() {
     return html`<bb-warm-welcome-modal
-      .emailPrefsManager=${this.emailPrefsManager}
+      .emailPrefsManager=${this.sca.services.emailPrefsManager}
       @bbmodaldismissed=${() => {
         this.sca.controller.global.main.show.delete("WarmWelcome");
       }}
