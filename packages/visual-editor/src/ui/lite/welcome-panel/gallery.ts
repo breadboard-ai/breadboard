@@ -15,10 +15,6 @@ import { styleMap } from "lit/directives/style-map.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { ActionTracker, OverflowAction } from "../../types/types.js";
-import {
-  type SigninAdapter,
-  signinAdapterContext,
-} from "../../utils/signin-adapter.js";
 import { until } from "lit/directives/until.js";
 import { renderThumbnail } from "../../utils/image.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
@@ -486,9 +482,6 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @consume({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
