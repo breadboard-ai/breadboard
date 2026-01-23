@@ -315,6 +315,21 @@ const ALL_MODES: Mode[] = [
   },
 ] as const;
 
+const AGENT_MODE_IDS = [
+  "agent",
+  "text-3-flash",
+  "text-3-pro",
+  "image",
+  "image-pro",
+  "audio",
+  "video",
+  "music",
+];
+
+const AGENT_MODES = ALL_MODES.filter(({ id }) => AGENT_MODE_IDS.includes(id));
+
+const PRE_AGENT_MODES = ALL_MODES.filter(({ id }) => id !== "agent");
+
 const modeMap = new Map(ALL_MODES.map((mode) => [mode.id, mode]));
 
 // Maps the prompt port to various names of the other ports.
@@ -363,10 +378,7 @@ function resolveModes(
   modeId: string | undefined,
   flags: Readonly<RuntimeFlags> | undefined
 ): ResolvedModes {
-  let modes = [...ALL_MODES];
-  if (!flags?.agentMode) {
-    modes = modes.filter((mode) => mode.id !== "agent");
-  }
+  const modes = flags?.agentMode ? AGENT_MODES : PRE_AGENT_MODES;
   const defaultMode = modes[0];
   const current = modeMap.get(modeId || defaultMode.id) || defaultMode;
   return { modes, current };
