@@ -485,7 +485,7 @@ class InternalRunStateController {
     }
 
     const path = this.path();
-    this.callback({
+    await this.callback({
       type: "nodestart",
       data: {
         node: task.node,
@@ -576,7 +576,7 @@ class InternalRunStateController {
         }
       }
     }
-    this.callback({
+    await this.callback({
       type: "nodeend",
       data: {
         node: task.node,
