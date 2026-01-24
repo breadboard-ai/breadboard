@@ -115,10 +115,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     const opalShell = mainArgs.shellHost;
     const signinAdapter = new SigninAdapter(opalShell);
 
-    this.actionTracker = createActionTracker(
-      opalShell,
-      !!this.guestConfiguration.supportsPropertyTracking
-    );
+    this.actionTracker = createActionTracker(opalShell);
 
     // Board server
     const proxyApiBaseUrl = new URL(

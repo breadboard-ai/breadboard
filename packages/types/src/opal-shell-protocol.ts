@@ -192,11 +192,4 @@ export declare type GuestConfiguration = {
    * performed will be removed.
    */
   shareSurfaceUrlTemplates: Record<string, string> | undefined;
-
-  /**
-   * If true, supports tracking GA properties. This is a transitional flag,
-   * which allows us to implement property tracking in the shell guest without
-   * breaking existing shell hosts.
-   */
-  supportsPropertyTracking?: boolean;
 };

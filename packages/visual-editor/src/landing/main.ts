@@ -91,11 +91,7 @@ async function init() {
     return;
   }
 
-  const { supportsPropertyTracking } = await shellHost.getConfiguration();
-  const actionTracker = createActionTracker(
-    shellHost,
-    !!supportsPropertyTracking
-  );
+  const actionTracker = createActionTracker(shellHost);
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",
@@ -216,10 +212,10 @@ async function init() {
     }
 
     // This funciton is a blur even handler and is used as a click detecting meachanism:
-    // 1. When the user clicks on the iframe, the click is not detected on the main page, 
+    // 1. When the user clicks on the iframe, the click is not detected on the main page,
     // because it is part of the iframe.
     // 2. But a blur event is detected on the main page and we check where that event is coming from.
-    // 3. Edge case: for the blur event to be detected, in case the user hasn't interacted with the page 
+    // 3. Edge case: for the blur event to be detected, in case the user hasn't interacted with the page
     // at all, we need to make sure that the app is focusd initially, hence: window.focus();
     const handleSecondaryVideoIframeClick = () => {
       // requestAnimationFrame is needed, because activeElement is updated at the end of the execution stack
@@ -228,12 +224,13 @@ async function init() {
           return;
         }
         if (secondaryVideoContainer) {
-          const secondaryVideoCover = secondaryVideoContainer.querySelector(".dimmed-cover");
+          const secondaryVideoCover =
+            secondaryVideoContainer.querySelector(".dimmed-cover");
           secondaryVideoCover?.remove();
         }
-        window.removeEventListener('blur', handleSecondaryVideoIframeClick);
+        window.removeEventListener("blur", handleSecondaryVideoIframeClick);
       });
-    }
+    };
 
     // gain window focus so that blur even will fire without any user interaction
     if (document.hasFocus() === false) {
@@ -241,7 +238,7 @@ async function init() {
       document.body?.focus?.();
     }
 
-    window.addEventListener('blur', handleSecondaryVideoIframeClick);
+    window.addEventListener("blur", handleSecondaryVideoIframeClick);
   } catch (err) {
     console.warn(err);
     return;

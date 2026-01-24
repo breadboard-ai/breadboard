@@ -31,7 +31,7 @@ describe("Guest Action Tracker", () => {
 
   describe("Property computer", () => {
     it("upgrades to 'visitor'", () => {
-      const tracker = new GuestActionTracker(mockShellHostProtocol, true);
+      const tracker = new GuestActionTracker(mockShellHostProtocol);
       tracker.incrementVisitedPages();
       deepStrictEqual(currentUserType(), "one_time");
       tracker.incrementVisitedPages();
@@ -42,7 +42,7 @@ describe("Guest Action Tracker", () => {
     });
 
     it("upgrades to 'signed-in' and back", () => {
-      const tracker = new GuestActionTracker(mockShellHostProtocol, true);
+      const tracker = new GuestActionTracker(mockShellHostProtocol);
       tracker.incrementVisitedPages();
       deepStrictEqual(currentUserType(), "one_time");
       tracker.updateSignedInStatus(true);
@@ -62,7 +62,7 @@ describe("Guest Action Tracker", () => {
     });
 
     it("upgrades to 'can_access' and back", () => {
-      const tracker = new GuestActionTracker(mockShellHostProtocol, true);
+      const tracker = new GuestActionTracker(mockShellHostProtocol);
       tracker.incrementVisitedPages();
       deepStrictEqual(currentUserType(), "one_time");
       tracker.updateSignedInStatus(true);
@@ -84,7 +84,7 @@ describe("Guest Action Tracker", () => {
     });
 
     it("upgrades 'can_access' to 'engaged' by incrementing opals created", () => {
-      const tracker = new GuestActionTracker(mockShellHostProtocol, true);
+      const tracker = new GuestActionTracker(mockShellHostProtocol);
       tracker.updateCanAccessStatus(true);
       deepStrictEqual(currentUserType(), "can_access");
       tracker.incrementCreatedOpals();
@@ -95,7 +95,7 @@ describe("Guest Action Tracker", () => {
     });
 
     it("upgrades 'can_access' to 'engaged' by incrementing opals ran", () => {
-      const tracker = new GuestActionTracker(mockShellHostProtocol, true);
+      const tracker = new GuestActionTracker(mockShellHostProtocol);
       tracker.updateCanAccessStatus(true);
       deepStrictEqual(currentUserType(), "can_access");
       tracker.incrementStartedOpals();
@@ -106,7 +106,7 @@ describe("Guest Action Tracker", () => {
     });
 
     it("handles additional sign in/access changes when already `engaged`", () => {
-      const tracker = new GuestActionTracker(mockShellHostProtocol, true);
+      const tracker = new GuestActionTracker(mockShellHostProtocol);
       tracker.updateCanAccessStatus(true);
       deepStrictEqual(currentUserType(), "can_access");
       tracker.incrementStartedOpals();
@@ -119,7 +119,7 @@ describe("Guest Action Tracker", () => {
     });
 
     it("upgrades back to 'engaged' after signing back in", () => {
-      const tracker = new GuestActionTracker(mockShellHostProtocol, true);
+      const tracker = new GuestActionTracker(mockShellHostProtocol);
       tracker.updateCanAccessStatus(true);
       deepStrictEqual(currentUserType(), "can_access");
       tracker.incrementStartedOpals();
