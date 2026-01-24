@@ -18,7 +18,6 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 export {
   appendSpreadsheetValues,
   create,
-  upload,
   createPresentation,
   del,
   exp,
@@ -31,6 +30,7 @@ export {
   updateDoc,
   updatePresentation,
   updateSpreadsheet,
+  upload,
 };
 
 // These are various Google Drive-specific types.
@@ -45,6 +45,18 @@ export type FileQueryResponse = {
 
 export type FileInfo = {
   id: string;
+};
+
+export type DriveFileMetadata = {
+  name: string;
+  mimeType?: string;
+  parents?: string[];
+  description?: string;
+  id?: string; // Optional if you're specifying your own ID (rare)
+  /** Custom properties visible to any app */
+  properties?: Record<string, string>;
+  /** Custom properties visible ONLY to your specific Drive App ID */
+  appProperties?: Record<string, string>;
 };
 
 /**
@@ -692,7 +704,7 @@ async function get(moduleArgs: A2ModuleArgs, id: string) {
 
 async function create(
   moduleArgs: A2ModuleArgs,
-  body: unknown
+  body: DriveFileMetadata
 ): Promise<Outcome<CreateFileResponse>> {
   if (!body) {
     return err("Please supply the body of the file to create.");
@@ -859,7 +871,7 @@ async function appendSpreadsheetValues(
 
 async function upload(
   { fetchWithCreds, context }: A2ModuleArgs,
-  metadata: { name: string; mimeType: string; [key: string]: string }, // Structured metadata
+  metadata: DriveFileMetadata,
   fileBlob: Blob // Using Blob for better binary handling
 ): Promise<Outcome<{ id: string }>> {
   // 1. Generate a unique boundary

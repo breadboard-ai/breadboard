@@ -13,8 +13,9 @@ import { FunctionGroup } from "../types.js";
 import { AgentFileSystem } from "../file-system.js";
 import { ok } from "@breadboard-ai/utils/outcome.js";
 import { asBlob } from "../../../data/common.js";
-import { upload } from "../../google-drive/api.js";
+import { create, upload } from "../../google-drive/api.js";
 import { getMimeTypeMapping } from "../../google-drive/get-mime-type-mapping.js";
+import { GOOGLE_DRIVE_FOLDER_MIME_TYPE } from "@breadboard-ai/utils/google-drive/operations.js";
 
 export { getGoogleDriveFunctionGroup };
 
@@ -58,6 +59,14 @@ If true, converts Office documents or CSVs into Google Docs/Slides/Sheets.
 `
             )
             .default(true),
+          parent: z
+            .string()
+            .describe(
+              tr`
+            
+The Google Drive folder that will be the parent of this newly uploaded file`
+            )
+            .optional(),
         },
         response: {
           file_path: z
@@ -79,10 +88,7 @@ If an error has occurred, will contain a description of the error
             .optional(),
         },
       },
-      async ({ file_path, name, convert }) => {
-        console.log("file_path", file_path);
-        console.log("convert", convert);
-
+      async ({ file_path, name, convert, parent }) => {
         const files = await fileSystem.get(file_path);
         if (!ok(files)) {
           return { error: files.$error };
@@ -106,9 +112,10 @@ If an error has occurred, will contain a description of the error
             error: `Unable to retrieve file "${file_path}": this functionality is not yet implemented`,
           };
         }
+        const parents = parent ? [parent] : undefined;
         const uploading = await upload(
           moduleArgs,
-          { name, mimeType: targetMime },
+          { name, mimeType: targetMime, parents },
           blob
         );
         if (!ok(uploading)) {
@@ -122,6 +129,57 @@ If an error has occurred, will contain a description of the error
         });
         if (!ok(handle)) return handle;
         return { file_path: handle };
+      }
+    ),
+    defineFunction(
+      {
+        name: "google_drive_create_folder",
+        description: tr`
+Creates a new Google Drive folder.
+`,
+        parameters: {
+          name: z.string().describe(tr`
+The user-friendly name of the file that will show up in Drive list
+`),
+          parent: z
+            .string()
+            .describe(
+              tr`
+            
+The Google Drive folder that will be the parent of this newly created folder`
+            )
+            .optional(),
+        },
+        response: {
+          folder_id: z
+            .string()
+            .describe(
+              tr`
+The Google Drive Folder ID of the newly created folder`
+            )
+            .optional(),
+          error: z
+            .string()
+            .describe(
+              tr`
+
+If an error has occurred, will contain a description of the error
+`
+            )
+            .optional(),
+        },
+      },
+      async ({ name, parent }) => {
+        const parents = parent ? [parent] : undefined;
+        const creating = await create(moduleArgs, {
+          name,
+          mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+          parents,
+        });
+        if (!ok(creating)) {
+          return { error: creating.$error };
+        }
+        return { folder_id: creating.id };
       }
     ),
   ];
