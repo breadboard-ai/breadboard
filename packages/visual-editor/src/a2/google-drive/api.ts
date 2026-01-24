@@ -815,7 +815,7 @@ async function updateSpreadsheet(
   id: string,
   requests: SpreadsheetRequest[]
 ) {
-  return api(
+  return api<void>(
     moduleArgs,
     `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}:batchUpdate`,
     "POST",
