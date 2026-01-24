@@ -37,11 +37,11 @@ class SheetManager implements MemoryManager {
     return this.sheetGetter(true);
   }
 
-  private ensureSheetId(): Promise<string> {
+  private ensureSheetId(): Promise<Outcome<string>> {
     if (!this.sheetId) {
       this.sheetId = this.sheetGetter(false);
     }
-    return this.sheetId as Promise<string>;
+    return this.sheetId as Promise<Outcome<string>>;
   }
 
   async createSheet(args: SheetMetadata) {
@@ -55,7 +55,9 @@ class SheetManager implements MemoryManager {
     const addSheet = await updateSpreadsheet(this.moduleArgs, sheetId, [
       { addSheet: { properties: { title: name } } },
     ]);
-    if (!ok(addSheet)) return addSheet;
+    if (!ok(addSheet)) {
+      return { success: false, error: addSheet.$error };
+    }
 
     const creating = await setSpreadsheetValues(
       this.moduleArgs,
@@ -63,7 +65,9 @@ class SheetManager implements MemoryManager {
       `${name}!A1`,
       [args.columns]
     );
-    if (!ok(creating)) return creating;
+    if (!ok(creating)) {
+      return { success: false, error: creating.$error };
+    }
     return { success: true };
   }
 
@@ -103,7 +107,7 @@ class SheetManager implements MemoryManager {
 
   async deleteSheet(args: {
     name: string;
-  }): Promise<Outcome<{ success: boolean }>> {
+  }): Promise<Outcome<{ success: boolean; error?: string }>> {
     const { name } = args;
     console.log("NAME", name);
 
@@ -114,7 +118,9 @@ class SheetManager implements MemoryManager {
     if (!ok(metadata)) return metadata;
 
     const sheet = metadata.sheets.find((s) => s.properties.title === args.name);
-    if (!sheet) return err(`Sheet "${args.name}" not found.`);
+    if (!sheet) {
+      return { success: false, error: `Sheet "${args.name}" not found.` };
+    }
 
     const deleting = await updateSpreadsheet(this.moduleArgs, sheetId, [
       { deleteSheet: { sheetId: sheet.properties.sheetId } },

@@ -152,6 +152,7 @@ class AgentFileSystem {
     });
     if (!sheet) return [];
     if (!ok(sheet)) return sheet;
+    if ("error" in sheet) return err(sheet.error);
     return [{ text: JSON.stringify(sheet.values) }];
   }
 
