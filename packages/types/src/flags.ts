@@ -77,7 +77,7 @@ export type RuntimeFlags = {
   /**
    * Enables "export to Drive" capability for the agent
    */
-  enableAgentExportToDrive: boolean;
+  enableGoogleDriveTools: boolean;
 };
 
 /**

@@ -29,7 +29,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   streamPlanner: false,
   streamGenWebpage: false,
   enableDrivePickerInLiteMode: false,
-  enableAgentExportToDrive: false,
+  enableGoogleDriveTools: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(
