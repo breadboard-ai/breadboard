@@ -48,16 +48,11 @@ export type ComputedProperties = {
 const ACTION_TRACKER_STORAGE_KEY = "ga_stats";
 
 class GuestActionTracker implements ActionTracker {
-  constructor(
-    private readonly host: OpalShellHostProtocol,
-    private readonly supportsPropertyTracking: boolean | undefined
-  ) {}
+  constructor(private readonly host: OpalShellHostProtocol) {}
 
   // Property tracking
 
   private trackProperty(updater: TrackedValuesUpdater): void {
-    if (!this.supportsPropertyTracking) return;
-
     updateStorage((current) => {
       const { update, props } = updater(current);
       let updated = { ...current, ...update };

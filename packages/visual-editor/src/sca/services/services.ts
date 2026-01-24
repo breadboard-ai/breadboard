@@ -67,10 +67,7 @@ export function services(
     const signinAdapter = new SigninAdapter(config.shellHost);
     const fetchWithCreds = signinAdapter.fetchWithCreds;
 
-    const actionTracker = createActionTracker(
-      config.shellHost,
-      !!config.guestConfig.supportsPropertyTracking
-    );
+    const actionTracker = createActionTracker(config.shellHost);
 
     const proxyApiBaseUrl = new URL(
       "/api/drive-proxy/drive/v3/files",

@@ -11,11 +11,8 @@ import { GuestActionTracker } from "./guest-action-tracker.js";
 
 export { createActionTracker, createActionTrackerBackend };
 
-function createActionTracker(
-  host: OpalShellHostProtocol,
-  supportsPropertyTracking: boolean
-): ActionTracker {
-  return new GuestActionTracker(host, supportsPropertyTracking);
+function createActionTracker(host: OpalShellHostProtocol): ActionTracker {
+  return new GuestActionTracker(host);
 }
 
 function createActionTrackerBackend() {
