@@ -31,6 +31,7 @@ import { FunctionGroup, UIType } from "./types.js";
 import { CHAT_LOG_VFS_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
+import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
 
 export { Loop };
 
@@ -201,6 +202,13 @@ class Loop {
         );
       } else {
         functionGroups.push(getNoUiFunctionGroup());
+      }
+
+      const enableGoogleDriveTools = await moduleArgs.context.flags?.flags();
+      if (enableGoogleDriveTools) {
+        functionGroups.push(
+          getGoogleDriveFunctionGroup({ fileSystem, moduleArgs })
+        );
       }
 
       const objectiveTools = objectivePidgin.tools.list().at(0);

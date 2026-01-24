@@ -18,7 +18,7 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 export {
   appendSpreadsheetValues,
   create,
-  createMultipart,
+  upload,
   createPresentation,
   del,
   exp,
@@ -857,39 +857,65 @@ async function appendSpreadsheetValues(
   );
 }
 
-async function createMultipart(
+async function upload(
   { fetchWithCreds, context }: A2ModuleArgs,
-  metadata: unknown,
-  body: unknown,
-  mimeType: string
+  metadata: { name: string; mimeType: string; [key: string]: string }, // Structured metadata
+  fileBlob: Blob // Using Blob for better binary handling
 ): Promise<Outcome<{ id: string }>> {
-  const boundary = "BB-BB-BB-BB-BB-BB";
+  // 1. Generate a unique boundary
+  const boundary = `-------${crypto.randomUUID()}`;
   const url = `${GOOGLE_DRIVE_UPLOAD_API_PREFIX}?uploadType=multipart`;
+
   try {
+    // 2. Build the parts.
+    // For conversion, metadata.mimeType is the TARGET (e.g., Google Slides)
+    // fileBlob.type is the SOURCE (e.g., .pptx)
+
+    const delimiter = `--${boundary}\r\n`;
+    const closeDelimiter = `\r\n--${boundary}--`;
+
+    const metadataPart =
+      `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+      `${JSON.stringify(metadata)}\r\n`;
+
+    const mediaPartHeader = `Content-Type: ${fileBlob.type}\r\n\r\n`;
+
+    // 3. Compose the body as a Blob to avoid string-binary conversion issues
+    const multipartBody = new Blob(
+      [
+        delimiter,
+        metadataPart,
+        delimiter,
+        mediaPartHeader,
+        fileBlob,
+        closeDelimiter,
+      ],
+      { type: `multipart/related; boundary=${boundary}` }
+    );
+
     const requestInit: RequestInit = {
       method: "POST",
       headers: {
-        ["Content-Type"]: `multipart/related; boundary=${boundary}`,
+        // Fetch will correctly set the Content-Type header from the Blob
       },
-      body: `--${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(metadata, null, 2)}
---${boundary}
-Content-Type: ${mimeType}; charset=UTF-8
-Content-Transfer-Encoding: base64
-
-${body}
---${boundary}--`,
+      body: multipartBody,
       signal: context.signal,
     };
+
     const response = await fetchWithCreds(url, requestInit);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return err(
+        `Upload failed: ${errorData.error?.message || response.statusText}`
+      );
+    }
+
     return response.json() as Promise<Outcome<{ id: string }>>;
   } catch (e) {
-    return err((e as Error).message);
+    return err(e instanceof Error ? e.message : String(e));
   }
 }
-
 type BackendError = {
   error: {
     code: number;
