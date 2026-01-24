@@ -21,4 +21,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   requireConsentForOpenWebpage: true,
   streamGenWebpage: false,
   streamPlanner: false,
+  enableGoogleDriveTools: false,
 };

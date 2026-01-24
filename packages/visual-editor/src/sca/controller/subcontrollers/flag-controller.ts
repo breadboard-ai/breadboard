@@ -22,6 +22,9 @@ export class FlagController
   private accessor _enableDrivePickerInLiteMode: boolean | null = null;
 
   @field({ persist: "idb" })
+  private accessor _enableGoogleDriveTools: boolean | null = null;
+
+  @field({ persist: "idb" })
   private accessor _force2DGraph: boolean | null = null;
 
   @field({ persist: "idb" })
@@ -70,6 +73,13 @@ export class FlagController
     if (this._enableDrivePickerInLiteMode === null)
       throw new Error("enableDrivePickerInLiteMode was not set by environment");
     return this._enableDrivePickerInLiteMode;
+  }
+
+  get enableGoogleDriveTools() {
+    if (this._enableGoogleDriveTools === null) {
+      throw new Error("enableGoogleDriveTools was not set by environment");
+    }
+    return this._enableGoogleDriveTools;
   }
 
   get force2DGraph() {
@@ -249,6 +259,12 @@ export class FlagController
         this._streamPlanner = value;
         return;
       }
+
+      case "enableGoogleDriveTools": {
+        if (onlyIfNull && this._enableGoogleDriveTools !== null) return;
+        this._enableGoogleDriveTools = value;
+        return;
+      }
     }
   }
 
@@ -267,6 +283,11 @@ export class FlagController
 
       this.#set("agentMode", env.agentMode, onlyIfNull);
       this.#set("consistentUI", env.consistentUI, onlyIfNull);
+      this.#set(
+        "enableGoogleDriveTools",
+        env.enableGoogleDriveTools,
+        onlyIfNull
+      );
       this.#set(
         "enableDrivePickerInLiteMode",
         env.enableDrivePickerInLiteMode,
