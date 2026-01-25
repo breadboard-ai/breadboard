@@ -179,7 +179,8 @@ class PidginTranslator {
 
   async toPidgin(
     content: LLMContent,
-    params: Params
+    params: Params,
+    textAsFiles: boolean
   ): Promise<Outcome<ToPidginResult>> {
     const template = new Template(this.caps, content);
     const toolManager = new ToolManager(this.caps, this.moduleArgs);
@@ -260,7 +261,7 @@ class PidginTranslator {
     }
 
     return {
-      text: substituteParts(pidginContent, this.fileSystem, false),
+      text: substituteParts(pidginContent, this.fileSystem, textAsFiles),
       tools: toolManager,
     };
 

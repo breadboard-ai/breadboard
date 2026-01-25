@@ -244,21 +244,6 @@ The Gemini model to use for text generation. How to choose the right model:
 - choose "lite" for high throughput. Use this model when speed is paramount.
 
 `),
-        output_format: z.enum(["file", "text"]).describe(tr`
-
-The output format. When "file" is specified, the output will be saved as a VFS file and the "file_path" response parameter will be provided as output. Use this when you expect a long output from the text generator. NOTE that choosing this option will prevent you from seeing the output directly: you only get back the VFS path to the file. You can read this file as a separate action, but if you do expect to read it, the "text" output format might be a better choice.
-
-When "text" is specified, the output will be returned as text directlty, and the "text" response parameter will be provided.`),
-        file_name: z
-          .string()
-          .describe(
-            tr`
-
-The name of the file to save the output to. This is the name that
-will come after "/vfs/" prefix in the file path. Use snake_case for
-naming. Only use when the "output_format" is set to "file".`
-          )
-          .optional(),
         search_grounding: z
           .boolean()
           .describe(
@@ -307,19 +292,9 @@ For example, "Researching the story" or "Writing a poem"`),
             `If an error has occurred, will contain a description of the error`
           )
           .optional(),
-        file_path: z
-          .string()
-          .describe(
-            `The VFS path with the output of the
-generator. Will be provided when the "output_format" is set to "file"`
-          )
-          .optional(),
         text: z
           .string()
-          .describe(
-            `The text output of the generator. Will be
-provided when the "output_format" is set to "text"`
-          )
+          .describe(`The output of the text generator.`)
           .optional(),
       },
     },
@@ -330,9 +305,7 @@ provided when the "output_format" is set to "text"`
         search_grounding,
         maps_grounding,
         url_context,
-        output_format,
         status_update,
-        file_name,
       },
       statusUpdater
     ) => {
@@ -414,16 +387,13 @@ provided when the "output_format" is set to "text"`
       if (textParts.length === 0) {
         return { error: `No text was generated. Please try again` };
       }
-      if (textParts.length > 1) {
-        console.warn(`More than one part generated`, results);
-      }
-      const part = textParts[0];
-      const file_path = fileSystem.add(part, file_name);
-      if (!ok(file_path)) return file_path;
-      if (output_format === "text") {
-        return { text: toText({ parts: textParts }) };
-      }
-      return { file_path };
+      const pidginString = await translator.toPidgin(
+        { parts: textParts },
+        {},
+        true
+      );
+      if (!ok(pidginString)) return pidginString;
+      return { text: pidginString.text };
     }
   );
   const videoFunction = defineFunction(
