@@ -27,7 +27,13 @@ import {
   mapDefinitions,
 } from "../function-definition.js";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction.js";
-import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils.js";
+import {
+  llm,
+  mergeContent,
+  mergeTextParts,
+  toText,
+  tr,
+} from "../../a2/utils.js";
 import { callVideoGen, expandVeoError } from "../../video-generator/main.js";
 import { callAudioGen, VOICES } from "../../audio-generator/main.js";
 import { callMusicGen } from "../../music-generator/main.js";
@@ -689,10 +695,18 @@ For example, "Creating random values" or "Computing prime numbers"`),
       }
       tools.push({ codeExecution: {} });
       if (tools.length === 0) tools = undefined;
+
       const translated = await translator.fromPidginString(prompt);
       if (!ok(translated)) return { error: translated.$error };
       const body = await conformGeminiBody(moduleArgs, {
-        systemInstruction: defaultSystemInstruction(),
+        systemInstruction: llm`${tr`
+
+Your job is to generate and execute code to fulfill your objective.
+
+You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.
+DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please.
+
+`}`.asContent(),
         contents: [translated],
         tools,
       });

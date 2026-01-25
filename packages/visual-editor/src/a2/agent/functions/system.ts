@@ -160,6 +160,8 @@ Example 2: "Make a blog post writer. It ... shows the header graphic and the blo
 
 Example 2: "Examine the state and if it's empty, go to ... otherwise, go to ..." -- return an empty string.
 
+IMPORTANT: DO NOT start the "${OBJECTIVE_OUTCOME_PARAMETER}" parameter value with a "Here is ..." or "Okay", or "Alright" or any preambles. You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why. Just the output, please. 
+
 In situations when you failed to fulfill the objective, invoke the "${FAILED_TO_FULFILL_FUNCTION}" function.
 
 
