@@ -81,7 +81,7 @@ Unless the objective explicitly asks for a particular type of input, use the "an
         );
         if (!ok(chatResponse)) return chatResponse;
         const { input } = chatResponse;
-        const pidgin = await args.translator.toPidgin(input, {});
+        const pidgin = await args.translator.toPidgin(input, {}, true);
         if (!ok(pidgin)) return pidgin;
         return { user_input: pidgin.text };
       }

@@ -114,7 +114,11 @@ class Loop {
 
     ui.progress.startAgent(objective);
     try {
-      const objectivePidgin = await translator.toPidgin(objective, params);
+      const objectivePidgin = await translator.toPidgin(
+        objective,
+        params,
+        true
+      );
       if (!ok(objectivePidgin)) return objectivePidgin;
 
       if (extraInstruction) {
