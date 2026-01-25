@@ -251,8 +251,6 @@ If the objective specifies other agent URLs using the
         },
       },
       async ({ user_message }) => {
-        console.log("FAILURE! Failed to fulfill the objective");
-        console.log("User message:", user_message);
         args.failureCallback(user_message);
         return {};
       }
@@ -344,7 +342,6 @@ If an error has occurred, will contain a description of the error`
         },
       },
       async ({ file_path }) => {
-        console.log("FILE PATH", file_path);
         const text = await args.fileSystem.readText(file_path);
         if (!ok(text)) return { error: text.$error };
         return { text };

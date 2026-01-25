@@ -151,9 +151,6 @@ class Loop {
             if (!ok(originalRoute)) return originalRoute;
 
             terminateLoop = true;
-            console.log("SUCCESS! Objective fulfilled");
-            console.log("Transfer control to", originalRoute);
-            console.log("Objective outcomes:", objective_outcome);
             result = {
               success: true,
               href: originalRoute,
@@ -269,7 +266,6 @@ class Loop {
           for (const part of parts) {
             if (part.thought) {
               if ("text" in part) {
-                console.log("THOUGHT", part.text);
                 ui.progress.thought(part.text);
               } else {
                 console.log("INVALID THOUGHT", part);

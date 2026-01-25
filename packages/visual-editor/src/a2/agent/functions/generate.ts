@@ -189,7 +189,6 @@ For example, "Generating page 4 of the report" or "Combining the images into one
       statusUpdater(status_update || "Generating Image(s)", {
         expectedDurationInSec: 50,
       });
-      console.log("PROMPT", prompt);
 
       const imageParts = await fileSystem.getMany(inputImages);
       if (!ok(imageParts)) return { error: imageParts.$error };
@@ -337,12 +336,6 @@ provided when the "output_format" is set to "text"`
       },
       statusUpdater
     ) => {
-      console.log("PROMPT", prompt);
-      console.log("MODEL", model);
-      console.log("SEARCH_GROUNDING", search_grounding);
-      console.log("MAPS_GROUNDING", maps_grounding);
-      console.log("OUTPUT_PATH", output_format);
-
       if (status_update) {
         statusUpdater(status_update);
       } else {
@@ -490,8 +483,6 @@ For example, "Making a marketing video" or "Creating the video concept"`),
       { prompt, status_update, aspect_ratio, images },
       statusUpdateCallback
     ) => {
-      console.log("PROMPT", prompt);
-      console.log("ASPECT RATIO", aspect_ratio);
       statusUpdateCallback(status_update || "Generating Video", {
         expectedDurationInSec: 70,
       });
