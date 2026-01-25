@@ -235,7 +235,7 @@ exhausted.`,
             tr`
 Text to display to the user upon admitting failure to
 fulfill the objective. Provide a friendly explanation of why the objective
-is impossible to fulfill and offer helpful suggestions, but don't end with a question, since that would leave the user hanging: you've failed and can't answer that question`.trim()
+is impossible to fulfill and offer helpful suggestions, but don't end with a question, since that would leave the user hanging: you've failed and can't answer that question`
           ),
           href: z
             .string()
@@ -245,14 +245,12 @@ The url of the next agent to which to transfer control upon
 failure. By default, the control is transferred to the root agent "/". 
 If the objective specifies other agent URLs using the
  <a href="url">title</a> syntax, and calls to choose a different agent to which
- to  transfer control, then that url should be used instead.`.trim()
+ to  transfer control, then that url should be used instead.`
             )
             .default("/"),
         },
       },
       async ({ user_message }) => {
-        console.log("FAILURE! Failed to fulfill the objective");
-        console.log("User message:", user_message);
         args.failureCallback(user_message);
         return {};
       }
@@ -272,16 +270,22 @@ If the objective specifies other agent URLs using the
     ),
     defineFunction(
       {
-        name: "system_write_text_to_file",
+        name: "system_write_file",
         description: "Writes the provided text to a VFS file",
         parameters: {
           file_name: z.string().describe(
             tr`
 The name of the file without the extension.
 This is the name that will come after the "/vfs/" prefix in the VFS file path.
-Use snake_case for naming.`.trim()
+Use snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten`
           ),
-          text: z.string().describe(`The text to write into a VFS file`),
+          content: z.string().describe(`The content to write into a VFS file`),
+          mime_type: z
+            .string()
+            .describe(
+              `The text MIME type of the content, such as "text/plain", "application/json", "text/csv", etc.`
+            )
+            .default("text/plain"),
         },
         response: {
           file_path: z
@@ -294,79 +298,17 @@ Use snake_case for naming.`.trim()
             .optional(),
         },
       },
-      async ({ file_name, text }) => {
-        const translatedContent = await args.translator.fromPidginString(text);
+      async ({ file_name, content, mime_type }) => {
+        const translatedContent =
+          await args.translator.fromPidginString(content);
         if (!ok(translatedContent)) {
           return { error: translatedContent.$error };
         }
         const file_path = args.fileSystem.write(
           file_name,
           toText(translatedContent),
-          "text/plain"
+          mime_type
         );
-        return { file_path };
-      }
-    ),
-    defineFunction(
-      {
-        name: "system_write_json_to_file",
-        description: "Writes the provided JSON string to a file",
-        parameters: {
-          file_name: z.string().describe(
-            tr`
-The name of the file without the extension.
-This is the name that will come after the "/vfs/" prefix in the VFS file path.
-Use snake_case for naming.`.trim()
-          ),
-          text: z.string().describe(`The text to write into a VFS file`),
-        },
-        response: {
-          file_path: z
-            .string()
-            .describe("The VS path to the file containing the provided text"),
-        },
-      },
-      async ({ file_name, text }) => {
-        const file_path = args.fileSystem.write(
-          file_name,
-          text,
-          "application/javascript"
-        );
-        return { file_path };
-      }
-    ),
-    defineFunction(
-      {
-        name: "system_append_text_to_file",
-        description: "Appends provided text to a file",
-        parameters: {
-          file_path: z.string().describe(
-            tr`
-  
-The VFS path of the file to which to append text. If a file does not
-exist, it will be created`
-          ),
-          text: z.string().describe(`The text to append to the file`),
-        },
-        response: {
-          file_path: z
-            .string()
-            .describe("The VS path to the file to which the text was appended")
-            .optional(),
-          error: z
-            .string()
-            .describe(
-              tr`
-
-If an error has occurred, will contain a description of the error`
-            )
-            .optional(),
-        },
-      },
-      async ({ file_path, text }) => {
-        const appending = args.fileSystem.append(file_path, text);
-        if (!ok(appending)) return { error: appending.$error };
-
         return { file_path };
       }
     ),
@@ -378,7 +320,7 @@ If an error has occurred, will contain a description of the error`
         parameters: {
           file_path: z.string().describe(
             tr`
-The VFS path of the file to read the text from.`.trim()
+The VFS path of the file to read the text from.`
           ),
         },
         response: {
@@ -400,7 +342,6 @@ If an error has occurred, will contain a description of the error`
         },
       },
       async ({ file_path }) => {
-        console.log("FILE PATH", file_path);
         const text = await args.fileSystem.readText(file_path);
         if (!ok(text)) return { error: text.$error };
         return { text };
