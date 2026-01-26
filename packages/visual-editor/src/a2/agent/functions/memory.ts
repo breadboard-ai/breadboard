@@ -17,6 +17,7 @@ import {
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
 import { taskIdSchema } from "./system.js";
+import { TaskTreeManager } from "../task-tree-manager.js";
 
 export { getMemoryFunctionGroup };
 
@@ -30,6 +31,7 @@ export type MemoryFunctionArgs = {
   translator: PidginTranslator;
   fileSystem: AgentFileSystem;
   memoryManager: SheetManager;
+  taskTreeManager: TaskTreeManager;
 };
 
 const instruction = tr`
@@ -56,7 +58,7 @@ function getMemoryFunctionGroup(args: MemoryFunctionArgs): FunctionGroup {
 }
 
 function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
-  const { translator, fileSystem, memoryManager } = args;
+  const { translator, fileSystem, memoryManager, taskTreeManager } = args;
   return [
     defineFunction(
       {
@@ -159,7 +161,7 @@ The 2D array of data to write.
         },
       },
       async ({ range, values: pidginValues, task_id }) => {
-        console.log("TASK_ID", task_id);
+        taskTreeManager.setInProgress(task_id, "");
         const errors: string[] = [];
         const values = await Promise.all(
           pidginValues.map(async (list) => {

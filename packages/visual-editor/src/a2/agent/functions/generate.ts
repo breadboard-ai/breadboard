@@ -40,6 +40,7 @@ import { callMusicGen } from "../../music-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
 import { taskIdSchema } from "./system.js";
+import { TaskTreeManager } from "../task-tree-manager.js";
 
 export { getGenerateFunctionGroup };
 
@@ -70,6 +71,7 @@ export type GenerateFunctionArgs = {
   moduleArgs: A2ModuleArgs;
   translator: PidginTranslator;
   modelConstraint: ModelConstraint;
+  taskTreeManager: TaskTreeManager;
 };
 
 const GENERATE_TEXT_FUNCTION = "generate_text";
@@ -119,7 +121,14 @@ function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
 function defineGenerateFunctions(
   args: GenerateFunctionArgs
 ): FunctionDefinition[] {
-  const { fileSystem, caps, moduleArgs, translator, modelConstraint } = args;
+  const {
+    fileSystem,
+    caps,
+    moduleArgs,
+    translator,
+    modelConstraint,
+    taskTreeManager,
+  } = args;
   const imageFunction = defineFunction(
     {
       name: "generate_images",
@@ -201,7 +210,7 @@ For example, "Generating page 4 of the report" or "Combining the images into one
       },
       statusUpdater
     ) => {
-      console.log("TASK_ID", task_id);
+      taskTreeManager.setInProgress(task_id, status_update);
       statusUpdater(status_update || "Generating Image(s)", {
         expectedDurationInSec: 50,
       });
@@ -327,7 +336,7 @@ For example, "Researching the story" or "Writing a poem"`),
       },
       statusUpdater
     ) => {
-      console.log("TASK_ID", task_id);
+      taskTreeManager.setInProgress(task_id, status_update);
       if (status_update) {
         statusUpdater(status_update);
       } else {
@@ -473,7 +482,7 @@ For example, "Making a marketing video" or "Creating the video concept"`),
       { prompt, status_update, aspect_ratio, images, task_id },
       statusUpdateCallback
     ) => {
-      console.log("TASK_ID", task_id);
+      taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Video", {
         expectedDurationInSec: 70,
       });
@@ -533,7 +542,7 @@ A status update to show in the UI that provides more detail on the reason why th
       },
     },
     async ({ text, status_update, voice, task_id }, statusUpdateCallback) => {
-      console.log("TASK_ID", task_id);
+      taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Speech", {
         expectedDurationInSec: 20,
       });
@@ -593,7 +602,7 @@ A status update to show in the UI that provides more detail on the reason why th
       },
     },
     async ({ prompt, status_update, task_id }, statusUpdateCallback) => {
-      console.log("TASK_ID", task_id);
+      taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Music", {
         expectedDurationInSec: 30,
       });
@@ -703,7 +712,7 @@ For example, "Creating random values" or "Computing prime numbers"`),
       { prompt, search_grounding, status_update, task_id },
       statusUpdater
     ) => {
-      console.log("TASK_ID", task_id);
+      taskTreeManager.setInProgress(task_id, status_update);
       if (status_update) {
         statusUpdater(status_update, { expectedDurationInSec: 40 });
       } else {

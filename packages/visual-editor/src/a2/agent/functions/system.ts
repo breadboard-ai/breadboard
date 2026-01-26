@@ -18,12 +18,14 @@ import {
 } from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
+import { TaskTree, TaskTreeManager } from "../task-tree-manager.js";
 
 export { FAILED_TO_FULFILL_FUNCTION, getSystemFunctionGroup, taskIdSchema };
 
 export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
   translator: PidginTranslator;
+  taskTreeManager: TaskTreeManager;
   successCallback(href: string, pidginString: string): Outcome<void>;
   failureCallback(message: string): void;
 };
@@ -77,7 +79,7 @@ The unique id of the task, must be in the format of "task_NNN" where NNN is the 
     },
   },
   properties: {
-    taskTree: {
+    task_tree: {
       type: "object",
       $ref: "#/definitions/TaskNode",
     },
@@ -411,12 +413,8 @@ When working on a complicated problem, use this function to create a scratch pad
           },
         },
       },
-      async ({ taskTree }) => {
-        const file_path = args.fileSystem.write(
-          "task_tree",
-          JSON.stringify(taskTree),
-          "application/json"
-        );
+      async ({ task_tree }) => {
+        const file_path = args.taskTreeManager.set(task_tree as TaskTree);
         return { file_path };
       }
     ),
@@ -441,8 +439,8 @@ The "task_id" from the task tree to mark as completed`)
         },
       },
       async ({ task_ids }) => {
-        console.log("MARK TASK COMPLETE", task_ids);
-        return { file_path: "/vfs/task_tree.json" };
+        const file_path = args.taskTreeManager.setComplete(task_ids);
+        return { file_path };
       }
     ),
   ];
