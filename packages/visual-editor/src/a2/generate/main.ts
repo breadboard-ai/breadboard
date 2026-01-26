@@ -126,7 +126,7 @@ const ALL_MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 3 Flash",
-    description: "Use for everyday tasks",
+    description: "Best for everyday tasks",
     icon: "text_analysis",
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
@@ -144,7 +144,7 @@ const ALL_MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Flash",
-    description: "For everyday tasks, plus more",
+    description: "Good model for everyday tasks",
     icon: "text_analysis",
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
@@ -162,7 +162,7 @@ const ALL_MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Pro",
-    description: "Best for complex tasks",
+    description: "Good model for complex tasks",
     icon: "text_analysis",
     modelName: "gemini-2.5-pro",
     promptPlaceholderText:
@@ -180,7 +180,7 @@ const ALL_MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 3 Pro",
-    description: "Latest and greatest",
+    description: "Best for complex tasks",
     icon: "text_analysis",
     modelName: "gemini-3-pro-preview",
     promptPlaceholderText:
@@ -245,8 +245,8 @@ const ALL_MODES: Mode[] = [
     id: "image",
     type: "image",
     url: "embed://a2/a2.bgl.json#module:image-editor",
-    title: "Gemini 2.5 Flash Image (Nano Banana)",
-    description: "Generates images from text and images",
+    title: "Nano Banana",
+    description: "For image editing and generation",
     icon: "photo_spark",
     modelName: "ai_image_tool",
     promptPlaceholderText:
@@ -260,8 +260,8 @@ const ALL_MODES: Mode[] = [
     id: "image-pro",
     type: "image",
     url: "embed://a2/a2.bgl.json#module:image-editor",
-    title: "Gemini 3 Pro Image (Nano Banana)",
-    description: "Optimized for professional asset production",
+    title: "Nano Banana Pro",
+    description: "For complex visuals with text",
     icon: "photo_spark",
     modelName: "gemini-3-pro-image-preview",
     promptPlaceholderText:
