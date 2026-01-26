@@ -17,14 +17,18 @@ import {
   type ArgsRawShape,
 } from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
+import {
+  TASK_TREE_SCHEMA,
+  TaskTree,
+  TaskTreeManager,
+} from "../task-tree-manager.js";
 import { FunctionGroup } from "../types.js";
-import { TaskTree, TaskTreeManager } from "../task-tree-manager.js";
 
 export {
   FAILED_TO_FULFILL_FUNCTION,
   getSystemFunctionGroup,
-  taskIdSchema,
   statusUpdateSchema,
+  taskIdSchema,
 };
 
 export type SystemFunctionArgs = {
@@ -43,53 +47,6 @@ const MARK_COMPLETED_TASKS_FUNCTION = "system_mark_completed_tasks";
 
 const OBJECTIVE_OUTCOME_PARAMETER = "objective_outcome";
 const TASK_ID_PARAMETER = "task_id";
-
-const TASK_TREE_SCHEMA = {
-  type: "object",
-  definitions: {
-    TaskNode: {
-      type: "object",
-      required: ["task_id", "description", "execution_mode", "status"],
-      properties: {
-        task_id: {
-          type: "string",
-          description: tr`
-The unique id of the task, must be in the format of "task_NNN" where NNN is the number`,
-        },
-        description: {
-          type: "string",
-          description:
-            "Detailed explanation of what fulfilling this objective entails.",
-        },
-        execution_mode: {
-          type: "string",
-          description:
-            "Defines how immediate subtasks should be executed. 'serial' means one by one in order; 'concurrent' means all at the same time.",
-          enum: ["serial", "concurrent"],
-        },
-        status: {
-          type: "string",
-          description: "The current status of a task",
-          enum: ["not_started", "in_progress", "complete"],
-        },
-        subtasks: {
-          type: "array",
-          description:
-            "Ordered list of child tasks. If execution_mode is serial, the order matters.",
-          items: {
-            $ref: "#/definitions/TaskNode",
-          },
-        },
-      },
-    },
-  },
-  properties: {
-    task_tree: {
-      type: "object",
-      $ref: "#/definitions/TaskNode",
-    },
-  },
-};
 
 const statusUpdateSchema = {
   status_update: z.string().describe(tr`
