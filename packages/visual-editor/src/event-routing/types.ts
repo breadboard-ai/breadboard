@@ -13,6 +13,7 @@ import { SettingsStore } from "../ui/data/settings-store.js";
 import { EmbedHandler } from "../ui/embed/embed.js";
 import type * as BreadboardUI from "../ui/index.js";
 import { ActionTracker, UserSignInResponse } from "../ui/types/types.js";
+import { type SCA } from "../sca/sca.js";
 
 type StateCustomEvent<K extends keyof BreadboardUI.Events.StateEventDetailMap> =
   BreadboardUI.Events.StateEvent<K>;
@@ -24,7 +25,7 @@ export interface EventRouteDeps<
   runtime: Runtime;
   settings: SettingsStore | null;
   tab: Tab | null;
-  uiState: BreadboardUI.State.UI;
+  sca: SCA;
   googleDriveClient: GoogleDriveClient | null;
   askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<UserSignInResponse>;
   boardServer: BoardServer;

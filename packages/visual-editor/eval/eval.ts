@@ -28,6 +28,7 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
 import { getAuthenticatedClient } from "./authenticate.js";
+import { type ConsentController } from "../src/sca/controller/subcontrollers/consent-controller.js";
 
 export { session };
 
@@ -290,6 +291,14 @@ class EvalRun implements EvalHarnessRuntimeArgs {
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
     fetchWithCreds: this.fetchWithCreds,
+    getConsentController() {
+      return {
+        async queryConsent() {
+          return true;
+        },
+      } as Partial<ConsentController> as ConsentController;
+    },
+
     context: {
       currentGraph: {
         title: this.title,
@@ -389,6 +398,9 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         throw new Error("Function not implemented.");
       },
       trackAction: function (): Promise<void> {
+        throw new Error("Function not implemented.");
+      },
+      trackProperties: function (): Promise<void> {
         throw new Error("Function not implemented.");
       },
     } satisfies OpalShellHostProtocol,

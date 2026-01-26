@@ -15,11 +15,9 @@ import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { ActionTracker, UserSignInResponse } from "../../types/types.js";
-import {
-  signinAdapterContext,
-  type SigninAdapter,
-} from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { SCA } from "../../../sca/sca.js";
 
 type State =
   | { status: "closed" }
@@ -48,9 +46,9 @@ function appName() {
 
 @customElement("bb-sign-in-modal")
 export class VESignInModal extends LitElement {
-  @consume({ context: signinAdapterContext })
+  @consume({ context: scaContext })
   @property({ attribute: false })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
+  accessor sca!: SCA;
 
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined = undefined;
@@ -359,7 +357,7 @@ export class VESignInModal extends LitElement {
       return (await this.#state.request.outcomePromise) ? "success" : "failure";
     }
     status ??=
-      (await this.signinAdapter?.state) === "signedin"
+      (await this.sca.services.signinAdapter.state) === "signedin"
         ? "add-scope"
         : "sign-in";
     let resolve: (outcome: UserSignInResponse) => void;
@@ -393,12 +391,14 @@ export class VESignInModal extends LitElement {
     if (this.#state.status === "closed") {
       return;
     }
-    if (!this.signinAdapter) {
+    if (!this.sca.services.signinAdapter) {
       console.warn(`sign-in-modal was not provided a signinAdapter`);
       this.#close("failure");
       return;
     }
-    const result = await this.signinAdapter.signIn(this.#state.request.scopes);
+    const result = await this.sca.services.signinAdapter.signIn(
+      this.#state.request.scopes
+    );
     const { status, request } = this.#state;
     if (!result.ok) {
       const { code } = result.error;

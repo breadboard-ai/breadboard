@@ -44,7 +44,18 @@ type ImageGeneratorOutputs = {
   context: LLMContent[] | DescriberResult;
 };
 
-export { invoke as default, describe };
+export { invoke as default, describe, makeImageInstruction };
+
+function makeImageInstruction({ pro }: { pro: boolean }) {
+  return (inputs: Record<string, unknown>) => {
+    const modelHint = pro ? `pro` : `flash`;
+    const aspectRatio = (inputs as ImageGeneratorInputs)["p-aspect-ratio"];
+    const aspectRatioHint = aspectRatio
+      ? ` Provide image in ${aspectRatio} aspect ratio.`
+      : ``;
+    return `Generate an image using the prompt below. Use that prompt exactly.${aspectRatioHint}. Use the "${modelHint}" model for image generation.\n\nPROMPT:`;
+  };
+}
 
 function gatheringRequest(
   caps: Capabilities,

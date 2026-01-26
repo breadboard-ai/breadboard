@@ -8,31 +8,74 @@ import {
   Capabilities,
   LLMContent,
   Outcome,
+  RuntimeFlags,
   Schema,
 } from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
+import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { Params } from "../a2/common.js";
 import { Loop } from "./loop.js";
-import { ok } from "@breadboard-ai/utils";
+import type { ModelConstraint } from "./functions/generate.js";
+import { readFlags } from "../a2/settings.js";
 
-export { invoke as default, describe };
+export { invoke as default, computeAgentSchema, describe };
 
-type AgentInputs = {
+export type AgentInputs = {
   config$prompt: LLMContent;
-  "b-ui-enable": boolean;
+  "b-ui-consistent": boolean;
   "b-ui-prompt": LLMContent;
+  "b-si-instruction"?: string;
+  "b-si-constraint": ModelConstraint;
 } & Params;
 
 type AgentOutputs = {
   [key: string]: LLMContent[];
 };
 
+function computeAgentSchema(
+  flags: Readonly<RuntimeFlags> | undefined,
+  { "b-ui-consistent": enableA2UI = false }: Record<string, unknown>
+) {
+  const uiPromptSchema: Schema["properties"] =
+    flags?.consistentUI && enableA2UI
+      ? {
+          "b-ui-prompt": {
+            type: "object",
+            behavior: ["llm-content", "config", "hint-advanced"],
+            title: "UI Layout instructions",
+            description: "Instructions for UI layout",
+          },
+        }
+      : {};
+  const uiConsistent: Schema["properties"] = flags?.consistentUI
+    ? {
+        "b-ui-consistent": {
+          type: "boolean",
+          title: "Use A2UI",
+          behavior: ["config", "hint-advanced", "reactive"],
+        },
+      }
+    : {};
+  return {
+    config$prompt: {
+      type: "object",
+      behavior: ["llm-content", "config", "hint-preview"],
+      title: "Objective",
+      description: "The objective for the agent",
+    },
+    ...uiConsistent,
+    ...uiPromptSchema,
+  } satisfies Schema["properties"];
+}
+
 async function invoke(
   {
     config$prompt: objective,
-    "b-ui-enable": enableUI,
+    "b-ui-consistent": enableA2UI = false,
     "b-ui-prompt": uiPrompt,
+    "b-si-instruction": extraInstruction,
+    "b-si-constraint": modelConstraint,
     ...rest
   }: AgentInputs,
   caps: Capabilities,
@@ -42,7 +85,14 @@ async function invoke(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
   const loop = new Loop(caps, moduleArgs);
-  const result = await loop.run({ objective, params, enableUI, uiPrompt });
+  const result = await loop.run({
+    objective,
+    params,
+    extraInstruction,
+    uiType: enableA2UI ? "a2ui" : "chat",
+    uiPrompt,
+    modelConstraint,
+  });
   if (!ok(result)) return result;
   console.log("LOOP", result);
   const context: LLMContent[] = [];
@@ -57,21 +107,12 @@ async function invoke(
 }
 
 async function describe(
-  {
-    inputs: { config$prompt, "b-ui-enable": enableUI },
-  }: { inputs: AgentInputs },
-  caps: Capabilities
+  { inputs: { config$prompt, ...rest } }: { inputs: AgentInputs },
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ) {
-  const uiPromptSchema: Schema["properties"] = enableUI
-    ? {
-        "b-ui-prompt": {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "UI Layout instructions",
-          description: "Instructions for UI layout",
-        },
-      }
-    : {};
+  const flags = await readFlags(moduleArgs);
+  const uiSchemas = computeAgentSchema(flags, rest);
   const template = new Template(caps, config$prompt);
   return {
     inputSchema: {
@@ -83,20 +124,7 @@ async function describe(
           title: "Context in",
           behavior: ["main-port"],
         },
-        config$prompt: {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-preview"],
-          title: "Objective",
-          description: "The objective for the agent",
-        },
-        "b-ui-enable": {
-          type: "boolean",
-          title: "Interact with user",
-          description:
-            "If checked, enables the agent to interact with the user",
-          behavior: ["config", "hint-advanced", "reactive"],
-        },
-        ...uiPromptSchema,
+        ...uiSchemas,
         ...template.schemas(),
       },
       behavior: ["at-wireable"],

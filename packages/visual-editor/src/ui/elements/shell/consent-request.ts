@@ -12,16 +12,20 @@ import "@material/web/tabs/tabs.js";
 import "@material/web/checkbox/checkbox.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { ModalDismissedEvent } from "../../events/events.js";
-import {
-  ConsentRequestWithCallback,
-  ConsentAction,
-} from "@breadboard-ai/types";
-import { CONSENT_RENDER_INFO } from "../../utils/consent-manager.js";
+import { ConsentAction } from "@breadboard-ai/types";
+import { CONSENT_RENDER_INFO } from "../../utils/consent-content-items.js";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import { SCA } from "../../../sca/sca.js";
+import { PendingConsent } from "../../../sca/types.js";
 
 @customElement("bb-consent-request-modal")
 export class VEConsentRequestModal extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property()
-  accessor consentRequest: ConsentRequestWithCallback | null = null;
+  accessor consentRequest: PendingConsent | null = null;
 
   static styles = [
     type,
@@ -58,7 +62,12 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
     } else {
       action = ConsentAction.DENY;
     }
-    this.consentRequest?.consentCallback(action);
+
+    if (!this.consentRequest) return;
+    this.sca.controller.global.consent.updatePendingRequest(
+      this.consentRequest,
+      action
+    );
   }
 
   render() {

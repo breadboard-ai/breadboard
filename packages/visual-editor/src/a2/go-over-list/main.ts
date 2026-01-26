@@ -21,7 +21,19 @@ import { ThinkStrategist } from "./think-strategist.js";
 import { type Strategist } from "./types.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { invoke as default, describe };
+export { invoke as default, makeGoOverListInstruction, describe };
+
+const makeGoOverListInstruction = (inputs: Record<string, unknown>) => {
+  let strategy: string;
+  if (inputs.strategy === STRATEGISTS[1].name) {
+    strategy = `Plan tasks as a sequence, anticipating that each next task will depend on the previous one:`;
+  } else if (inputs.strategy === STRATEGISTS[2].name) {
+    strategy = `Plan as you go, anticipating that each next task result will affect the rest of the plan`;
+  } else {
+    strategy = `Plan all tasks and do them at once, in parallel:`;
+  }
+  return `Carefully plan and execute to fulfill the objective below. ${strategy}`;
+};
 
 type Inputs = {
   context: LLMContent[];

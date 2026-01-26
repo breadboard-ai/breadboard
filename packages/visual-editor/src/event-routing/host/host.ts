@@ -45,8 +45,8 @@ export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> 
 export const LockRoute: EventRoute<"host.lock"> = {
   event: "host.lock",
 
-  async do({ uiState }) {
-    uiState.blockingAction = true;
+  async do({ sca }) {
+    sca.controller.global.main.blockingAction = true;
     return false;
   },
 };
@@ -54,8 +54,8 @@ export const LockRoute: EventRoute<"host.lock"> = {
 export const UnlockRoute: EventRoute<"host.unlock"> = {
   event: "host.unlock",
 
-  async do({ uiState }) {
-    uiState.blockingAction = false;
+  async do({ sca }) {
+    sca.controller.global.main.blockingAction = false;
     return false;
   },
 };

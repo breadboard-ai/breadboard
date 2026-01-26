@@ -19,8 +19,9 @@ import { now } from "./now.js";
 import { SignalMap } from "signal-utils/map";
 import { GeminiBody } from "../a2/gemini.js";
 import { AgentProgressManager } from "./types.js";
-import { llm } from "../a2/utils.js";
+import { llm, progressFromThought } from "../a2/utils.js";
 import { StatusUpdateCallbackOptions } from "./function-definition.js";
+import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
 
 export { ProgressWorkItem };
 
@@ -54,7 +55,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   constructor(
     public readonly title: string,
     public readonly icon: string,
-    private readonly screen: AppScreen
+    private readonly screen: AppScreen | undefined
   ) {
     this.start = performance.now();
   }
@@ -74,14 +75,18 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    * The agent started execution.
    */
   startAgent(objective: LLMContent) {
-    this.screen.progress = "Analyzing the objective";
-    this.screen.expectedDuration = -1;
+    if (this.screen) {
+      this.screen.progress = StarterPhraseVendor.instance.phrase();
+      this.screen.expectedDuration = -1;
+    }
     this.#add("Objective", "summarize", objective);
   }
 
   generatingLayouts(uiPrompt: LLMContent | undefined) {
-    this.screen.progress = "Generating layouts";
-    this.screen.expectedDuration = 70;
+    if (this.screen) {
+      this.screen.progress = "Generating layouts";
+      this.screen.expectedDuration = 70;
+    }
     this.#add("Generating Layouts", "web", uiPrompt ?? llm``.asContent());
   }
 
@@ -100,9 +105,11 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    */
   thought(text: string) {
     this.#add("Thought", "spark", llm`${text}`.asContent());
-    this.#previousStatus = this.screen.progress;
-    this.screen.progress = progressFromThought(text);
-    this.screen.expectedDuration = -1;
+    if (this.screen) {
+      this.#previousStatus = this.screen.progress;
+      this.screen.progress = progressFromThought(text);
+      this.screen.expectedDuration = -1;
+    }
   }
 
   /**
@@ -128,6 +135,8 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
       if (!status) return;
       this.thought(status);
     } else {
+      if (!this.screen) return;
+
       if (status == null) {
         if (this.#previousStatus) {
           this.screen.progress = this.#previousStatus;
@@ -159,8 +168,10 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    * The agent finished executing.
    */
   finish() {
-    this.screen.progress = undefined;
-    this.screen.expectedDuration = -1;
+    if (this.screen) {
+      this.screen.progress = undefined;
+      this.screen.expectedDuration = -1;
+    }
     this.end = performance.now();
   }
 }
@@ -188,9 +199,4 @@ function createUpdate(title: string, icon: string, body: unknown) {
     ["icon", { text: icon }],
   ]);
   return { type: "update", group };
-}
-
-function progressFromThought(thought: string): string | undefined {
-  const match = thought.match(/\*\*(.*?)\*\*/);
-  return match ? match[1] : undefined;
 }

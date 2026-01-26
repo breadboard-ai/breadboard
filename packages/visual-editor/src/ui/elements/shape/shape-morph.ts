@@ -121,7 +121,6 @@ export class ShapeMorph extends LitElement {
       return;
     }
 
-    console.log("[Suspend Animation]", this.id);
     this.#animator.pause();
   }
 
@@ -130,7 +129,6 @@ export class ShapeMorph extends LitElement {
       return;
     }
 
-    console.log("[Resume Animation]", this.id);
     this.#animator.resume();
   }
 

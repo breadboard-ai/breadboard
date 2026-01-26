@@ -3,6 +3,8 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+import * as BreadboardUI from "./ui/index.js";
+const Strings = BreadboardUI.Strings.forSection("Global");
 
 import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
@@ -18,7 +20,6 @@ import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
 import { GoogleDriveBoardServer } from "./board-server/server.js";
-import { RecentBoardStore } from "./data/recent-boards.js";
 import { MainArguments } from "./types/types.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
 import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
@@ -37,6 +38,9 @@ import { ActionTracker, SnackbarMessage, SnackType } from "./ui/types/types.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { createActionTracker } from "./ui/utils/action-tracker.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
+import { scaContext } from "./sca/context/context.js";
+import { sca, type SCA } from "./sca/sca.js";
+import { RuntimeConfig } from "./runtime/types.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -77,6 +81,9 @@ export class LiteHome extends SignalWatcher(LitElement) {
   @state()
   accessor compactView = false;
 
+  @provide({ context: scaContext })
+  protected accessor sca: SCA;
+
   /**
    * Indicates whether we're currently remixing or deleting boards.
    */
@@ -90,11 +97,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
     message: SnackbarMessage;
     replaceAll: boolean;
   }> = [];
-
-  /**
-   * Recent boards machinery.
-   */
-  #recentBoardStore = RecentBoardStore.instance();
 
   readonly #embedHandler?: EmbedHandler;
 
@@ -113,12 +115,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     const opalShell = mainArgs.shellHost;
     const signinAdapter = new SigninAdapter(opalShell);
 
-    this.actionTracker = createActionTracker(
-      opalShell,
-      mainArgs.guestConfiguration,
-      mainArgs.globalConfig.MEASUREMENT_ID,
-      () => signinAdapter.state.then((state) => state === "signedin")
-    );
+    this.actionTracker = createActionTracker(opalShell);
 
     // Board server
     const proxyApiBaseUrl = new URL(
@@ -148,7 +145,19 @@ export class LiteHome extends SignalWatcher(LitElement) {
       opalShell.findUserOpalFolder,
       opalShell.listUserOpals
     );
-    this.#recentBoardStore.restore();
+
+    const config: RuntimeConfig = {
+      globalConfig: this.globalConfig,
+      guestConfig: this.guestConfiguration,
+      settings: mainArgs.settings,
+      shellHost: opalShell,
+      env: mainArgs.env,
+      appName: Strings.from("APP_NAME"),
+      appSubName: Strings.from("SUB_APP_NAME"),
+    };
+
+    this.sca = sca(config, mainArgs.globalConfig.flags);
+
     const sizeDetector = window.matchMedia("(max-width: 500px)");
     const reactToScreenWidth = () => {
       if (sizeDetector.matches) {
@@ -238,12 +247,12 @@ export class LiteHome extends SignalWatcher(LitElement) {
    * @param url -- url to remove
    */
   async removeRecentBoard(url: string) {
-    await this.#recentBoardStore.remove(url);
+    await this.sca.controller.home.recent.remove(url);
   }
 
   async addRecentBoard(url: string, title: string) {
     url = url.replace(window.location.origin, "");
-    await this.#recentBoardStore.add({
+    await this.sca.controller.home.recent.add({
       title,
       url,
     });
@@ -344,9 +353,11 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
   async togglePin(url: string) {
     url = url.replace(window.location.origin, "");
-    const board = this.#recentBoardStore.boards.find((b) => b.url === url);
+    const board = this.sca.controller.home.recent.boards.find(
+      (b) => b.url === url
+    );
     if (board) {
-      await this.#recentBoardStore.setPin(url, !board.pinned);
+      await this.sca.controller.home.recent.setPin(url, !board.pinned);
     }
   }
 
@@ -361,7 +372,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
         .galleryIcon=${this.guestConfiguration.galleryIcon ?? null}
         .createNewTitle=${this.guestConfiguration.createNewTitle ?? null}
         .createNewIcon=${this.guestConfiguration.createNewIcon ?? null}
-        .recentBoards=${this.#recentBoardStore.boards}
         .allowCreate=${!this.compactView}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>

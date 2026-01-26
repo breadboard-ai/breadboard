@@ -474,23 +474,30 @@ class DriveOperations {
     return err(folder.error);
   }
 
-  async findOrCreateFolder(): Promise<Outcome<string>> {
-    const existing = await this.findFolder();
-    if (typeof existing === "string" && existing) {
-      return existing;
-    }
+  #findOrCreateFolderPromise: Promise<Outcome<string>> | undefined;
 
-    try {
-      const { id } = await this.#googleDriveClient.createFileMetadata(
-        { name: this.#userFolderName, mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE },
-        { fields: ["id"] }
-      );
-      console.log("[Google Drive] Created new root folder", id);
-      this.#cachedFolderId = id;
-      return id;
-    } catch (e) {
-      return err((e as Error).message);
-    }
+  async findOrCreateFolder(): Promise<Outcome<string>> {
+    return (this.#findOrCreateFolderPromise ??= (async () => {
+      const existing = await this.findFolder();
+      if (typeof existing === "string" && existing) {
+        return existing;
+      }
+
+      try {
+        const { id } = await this.#googleDriveClient.createFileMetadata(
+          {
+            name: this.#userFolderName,
+            mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+          },
+          { fields: ["id"] }
+        );
+        console.log("[Google Drive] Created new root folder", id);
+        this.#cachedFolderId = id;
+        return id;
+      } catch (e) {
+        return err((e as Error).message);
+      }
+    })());
   }
 
   async deleteGraph(url: URL): Promise<Outcome<void>> {

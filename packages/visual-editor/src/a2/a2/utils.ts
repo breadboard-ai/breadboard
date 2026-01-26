@@ -4,8 +4,10 @@ import {
   JsonSerializable,
   LLMContent,
   Outcome,
+  OutputValues,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
+import { isStoredData as isStoredDataPart } from "@breadboard-ai/utils";
 
 /**
  * @fileoverview Common utils for manipulating LLM Content and other relevant types.
@@ -40,6 +42,8 @@ export {
   toJson,
   fromJson,
   tr,
+  isDocSlidesOrSheetsOutput,
+  progressFromThought,
 };
 
 export type ErrorReason =
@@ -243,10 +247,27 @@ function toText(c: LLMContent | LLMContent[]): string {
 
   function contentToText(content: LLMContent) {
     if (!content.parts) return "";
-    return content.parts
-      .map((part) => ("text" in part ? part.text : ""))
-      .join("\n\n");
+    return content.parts.map(partToText).join("\n\n");
   }
+
+  function partToText(part: DataPart) {
+    if ("text" in part) {
+      return part.text;
+    }
+    if ("inlineData" in part) {
+      const { mimeType, data } = part.inlineData;
+      if (isTextMimeType(mimeType)) {
+        return decodeBase64(data);
+      }
+    }
+    return "";
+  }
+}
+
+function isTextMimeType(mimeType: string) {
+  if (mimeType.startsWith("text/")) return true;
+  if (mimeType === "application/json") return true;
+  return false;
 }
 
 function contentToJSON<T>(content?: LLMContent): T {
@@ -466,4 +487,34 @@ function tr(strings: TemplateStringsArray, ...values: unknown[]): string {
       return acc + str + (values[i] || "");
     }, "")
     .trim();
+}
+
+const DOC_MIME_TYPE = "application/vnd.google-apps.document";
+const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
+const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
+
+function isDocSlidesOrSheetsOutput(output: OutputValues): boolean {
+  if (!isLLMContentArray(output.context)) {
+    return false;
+  }
+  for (const el of output.context) {
+    for (const part of el.parts) {
+      if (isStoredDataPart(part)) {
+        const mimeType = part.storedData.mimeType;
+        if (
+          mimeType === DOC_MIME_TYPE ||
+          mimeType === SHEETS_MIME_TYPE ||
+          mimeType === SLIDES_MIME_TYPE
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function progressFromThought(thought: string): string | undefined {
+  const match = thought.match(/\*\*(.*?)\*\*/);
+  return match ? match[1] : undefined;
 }

@@ -20,8 +20,8 @@ import { A2UIRenderer } from "../types.js";
 
 export { SmartLayoutPipeline };
 
-const SPEC_MODEL = "gemini-flash-latest";
-const TEMPLATE_MODEL = "gemini-flash-latest";
+const SPEC_MODEL = "gemini-3-flash-preview";
+const TEMPLATE_MODEL = "gemini-3-flash-preview";
 
 export type SmartLayoutPipelineArgs = {
   caps: Capabilities;
@@ -48,7 +48,7 @@ class SmartLayoutPipeline {
       );
     }
 
-    const translated = await translator.toPidgin(content, params);
+    const translated = await translator.toPidgin(content, params, false);
     if (!ok(translated)) return translated;
 
     // 1. Create a spec from the data.
@@ -86,10 +86,10 @@ class SmartLayoutPipeline {
 
   async run(content: LLMContent, params: Params): Promise<Outcome<unknown[]>> {
     const { caps, moduleArgs } = this.args;
-    const fileSystem = new AgentFileSystem(null);
+    const fileSystem = new AgentFileSystem({ memoryManager: null });
     const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
 
-    const translated = await translator.toPidgin(content, params);
+    const translated = await translator.toPidgin(content, params, false);
     if (!ok(translated)) return translated;
 
     // 1. Create a spec from the data.

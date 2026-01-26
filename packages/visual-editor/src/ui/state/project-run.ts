@@ -61,6 +61,7 @@ import {
 import { decodeError, decodeErrorData } from "./utils/decode-error.js";
 import { ParticleOperationReader } from "./utils/particle-operation-reader.js";
 import { ActionTracker } from "../types/types.js";
+import { computeControlState } from "../../runtime/control.js";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -452,6 +453,9 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
     this.renderer.nodes.set(id, { status: "working" });
 
+    const controlState = computeControlState(event.data.inputs);
+    if (controlState.skip) return;
+
     // This looks like duplication with the console logic above,
     // but it's a hedge toward the future where screens and console entries
     // might go out of sync.
@@ -524,7 +528,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     if (nodeState === "interrupted") {
       // When the input is in the "interrupted" state, we just resume running
       // and let the input-bubbling machinery handle the abort signals.
-      this.runner?.run({});
+      this.runner?.resumeWithInputs({});
       return;
     }
 

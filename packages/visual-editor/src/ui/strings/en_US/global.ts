@@ -60,8 +60,11 @@ export default {
   COMMAND_SEND_FEEDBACK: {
     str: "Send feedback",
   },
+  COMMAND_DOCUMENTATION: {
+    str: "Read Documentation",
+  },
   COMMAND_JOIN_CHAT: {
-    str: "Google Labs Discord",
+    str: "Discord",
   },
   COMMAND_WATCH_DEMO_VIDEO: {
     str: "Watch Demo Video",

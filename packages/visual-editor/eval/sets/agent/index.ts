@@ -16,7 +16,7 @@ session({ name: "Agent" }, async (session) => {
       title,
       async ({ caps, moduleArgs }) => {
         const loop = new Loop(caps, moduleArgs);
-        return loop.run({ objective, params: {}, enableUI: false });
+        return loop.run({ objective, params: {}, uiType: "chat" });
       },
     ];
 
@@ -30,11 +30,12 @@ session({ name: "Agent" }, async (session) => {
   await evalObjective("./halloween-mugs.js");
   await evalObjective("./funny-joke.js");
   await evalObjective("./marketing-pitch.js");
-  await evalObjective("./impossible-chat.js");
+  await evalObjective("./impossible-task.js");
   await evalObjective("./print-or-display.js");
   await evalObjective("./json-output.js");
   await evalObjective("./blog-post-writer.js");
   await evalObjective("./alien-names.js");
   await evalObjective("./state-detector.js");
   await evalObjective("./news-tracker.js");
+  await evalObjective("./get-recipe.js");
 });
