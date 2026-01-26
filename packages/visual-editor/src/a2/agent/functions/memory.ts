@@ -16,7 +16,7 @@ import {
 } from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
-import { taskIdSchema } from "./system.js";
+import { statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 
 export { getMemoryFunctionGroup };
@@ -74,9 +74,13 @@ naming.`),
 An array of strings representing the column headers (e.g., ['Name', 'Status']).`
             ),
           ...taskIdSchema,
+          ...statusUpdateSchema,
         },
       },
-      memoryManager.createSheet.bind(memoryManager)
+      async ({ task_id, status_update, ...parameters }) => {
+        taskTreeManager.setInProgress(task_id, status_update);
+        return memoryManager.createSheet(parameters);
+      }
     ),
     defineFunction(
       {
@@ -103,6 +107,7 @@ The output format. When "file" is specified, the output will be saved as a VFS f
 
 When "json" is specified, the output will be returned as JSON directlty, and the "json" response parameter will be provided.`),
           ...taskIdSchema,
+          ...statusUpdateSchema,
         },
         response: {
           file_path: z
@@ -122,7 +127,9 @@ provided when the "output_format" is set to "json"`
         },
       },
       async (args) => {
-        const { output_format, file_name, ...rest } = args;
+        const { output_format, file_name, status_update, task_id, ...rest } =
+          args;
+        taskTreeManager.setInProgress(task_id, status_update);
         const result = await memoryManager.readSheet(rest);
         if (!ok(result)) return result;
         const parts = llm`${result}`.asParts().at(0);
@@ -191,9 +198,13 @@ Deletes a specific memory sheet`,
         parameters: {
           name: z.string().describe(tr`The name of the sheet`),
           ...taskIdSchema,
+          ...statusUpdateSchema,
         },
       },
-      memoryManager.deleteSheet.bind(memoryManager)
+      async ({ task_id, status_update, ...parameters }) => {
+        taskTreeManager.setInProgress(task_id, status_update);
+        return memoryManager.deleteSheet(parameters);
+      }
     ),
     defineFunction(
       {
@@ -202,6 +213,7 @@ Deletes a specific memory sheet`,
 Returns the names and header rows of all memory sheets.`,
         parameters: {
           ...taskIdSchema,
+          ...statusUpdateSchema,
         },
         response: {
           sheets: z.array(
@@ -223,7 +235,10 @@ The list of column names
           ),
         },
       },
-      memoryManager.getSheetMetadata.bind(memoryManager)
+      async ({ task_id, status_update }) => {
+        taskTreeManager.setInProgress(task_id, status_update);
+        return memoryManager.getSheetMetadata();
+      }
     ),
   ];
 }

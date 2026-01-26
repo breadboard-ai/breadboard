@@ -20,7 +20,12 @@ import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
 import { TaskTree, TaskTreeManager } from "../task-tree-manager.js";
 
-export { FAILED_TO_FULFILL_FUNCTION, getSystemFunctionGroup, taskIdSchema };
+export {
+  FAILED_TO_FULFILL_FUNCTION,
+  getSystemFunctionGroup,
+  taskIdSchema,
+  statusUpdateSchema,
+};
 
 export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
@@ -85,6 +90,13 @@ The unique id of the task, must be in the format of "task_NNN" where NNN is the 
     },
   },
 };
+
+const statusUpdateSchema = {
+  status_update: z.string().describe(tr`
+  A status update to show in the UI that provides more detail on the reason why this function was called.
+  
+  For example, "Creating random values", "Writing the memo", "Generating videos", "Making music", etc.`),
+} satisfies ArgsRawShape;
 
 const taskIdSchema = {
   [TASK_ID_PARAMETER]: z

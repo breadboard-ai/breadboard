@@ -61,8 +61,14 @@ class AgentFileSystem {
     this.systemFiles.set(path, getter);
   }
 
+  overwrite(name: string, data: string, mimeType: string): string {
+    const path = this.#createNamed(name, mimeType, false);
+    this.#files.set(path, { data, mimeType, type: "text" });
+    return path;
+  }
+
   write(name: string, data: string, mimeType: string): string {
-    const path = this.#createNamed(name, mimeType);
+    const path = this.#createNamed(name, mimeType, true);
     this.#files.set(path, { data, mimeType, type: "text" });
     return path;
   }
@@ -232,7 +238,7 @@ class AgentFileSystem {
     const create = (mimeType: string) => {
       if (fileName) {
         const withoutExtension = fileName.replace(/\.[^/.]+$/, "");
-        return this.#createNamed(withoutExtension, mimeType);
+        return this.#createNamed(withoutExtension, mimeType, true);
       }
       return this.create(mimeType);
     };
@@ -270,7 +276,11 @@ class AgentFileSystem {
     return this.#files;
   }
 
-  #createNamed(name: string, mimeType: string): string {
+  #createNamed(
+    name: string,
+    mimeType: string,
+    overwriteWarning: boolean
+  ): string {
     let filename;
     if (name.includes(".")) {
       filename = name;
@@ -279,7 +289,7 @@ class AgentFileSystem {
       filename = `${name}.${ext}`;
     }
     const path = `/vfs/${filename}`;
-    if (this.#files.has(path)) {
+    if (overwriteWarning && this.#files.has(path)) {
       console.warn(`File "${path}" already exists, will be overwritten`);
     }
     return path;

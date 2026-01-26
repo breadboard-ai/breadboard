@@ -45,9 +45,7 @@ class SheetManager implements MemoryManager {
   }
 
   async createSheet(args: SheetMetadata) {
-    const { name, columns } = args;
-    console.log("NAME", name);
-    console.log("COLUMNS", columns);
+    const { name } = args;
 
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
@@ -73,7 +71,6 @@ class SheetManager implements MemoryManager {
 
   async readSheet(args: { range: string }) {
     const { range } = args;
-    console.log("RANGE", range);
 
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
@@ -86,8 +83,6 @@ class SheetManager implements MemoryManager {
     values: string[][];
   }): Promise<Outcome<{ success: boolean; error?: string }>> {
     const { range, values } = args;
-    console.log("RANGE", range);
-    console.log("VALUES", values);
 
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
@@ -108,9 +103,6 @@ class SheetManager implements MemoryManager {
   async deleteSheet(args: {
     name: string;
   }): Promise<Outcome<{ success: boolean; error?: string }>> {
-    const { name } = args;
-    console.log("NAME", name);
-
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
 

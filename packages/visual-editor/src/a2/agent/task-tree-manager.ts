@@ -26,7 +26,7 @@ class TaskTreeManager {
   constructor(private readonly fileSystem: AgentFileSystem) {}
 
   private save() {
-    return this.fileSystem.write(
+    return this.fileSystem.overwrite(
       "task_tree",
       JSON.stringify(this.tree),
       "application/json"
@@ -34,7 +34,6 @@ class TaskTreeManager {
   }
 
   set(tree: TaskTree) {
-    console.log("WHAT IS THIS", tree);
     this.tree = tree;
     this.taskMap.clear();
     this.messageMap.clear();
