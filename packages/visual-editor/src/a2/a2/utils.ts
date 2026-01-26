@@ -247,10 +247,27 @@ function toText(c: LLMContent | LLMContent[]): string {
 
   function contentToText(content: LLMContent) {
     if (!content.parts) return "";
-    return content.parts
-      .map((part) => ("text" in part ? part.text : ""))
-      .join("\n\n");
+    return content.parts.map(partToText).join("\n\n");
   }
+
+  function partToText(part: DataPart) {
+    if ("text" in part) {
+      return part.text;
+    }
+    if ("inlineData" in part) {
+      const { mimeType, data } = part.inlineData;
+      if (isTextMimeType(mimeType)) {
+        return decodeBase64(data);
+      }
+    }
+    return "";
+  }
+}
+
+function isTextMimeType(mimeType: string) {
+  if (mimeType.startsWith("text/")) return true;
+  if (mimeType === "application/json") return true;
+  return false;
 }
 
 function contentToJSON<T>(content?: LLMContent): T {

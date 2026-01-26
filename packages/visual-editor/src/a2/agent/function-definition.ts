@@ -29,7 +29,7 @@ export type ZodFunctionDefinition<
   response?: TResponse;
 };
 
-type ArgsRawShape = {
+export type ArgsRawShape = {
   [k: string]: ZodType;
 };
 

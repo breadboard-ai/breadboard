@@ -39,6 +39,7 @@ import { callAudioGen, VOICES } from "../../audio-generator/main.js";
 import { callMusicGen } from "../../music-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
+import { taskIdSchema } from "./system.js";
 
 export { getGenerateFunctionGroup };
 
@@ -172,6 +173,7 @@ For example, "Generating page 4 of the report" or "Combining the images into one
           .enum(["1:1", "9:16", "16:9", "4:3", "3:4"])
           .describe(`The aspect ratio for the generated images`)
           .default("16:9"),
+        ...taskIdSchema,
       },
       response: {
         error: z
@@ -189,9 +191,17 @@ For example, "Generating page 4 of the report" or "Combining the images into one
       },
     },
     async (
-      { prompt, images: inputImages, status_update, model, aspect_ratio },
+      {
+        prompt,
+        images: inputImages,
+        status_update,
+        model,
+        aspect_ratio,
+        task_id,
+      },
       statusUpdater
     ) => {
+      console.log("TASK_ID", task_id);
       statusUpdater(status_update || "Generating Image(s)", {
         expectedDurationInSec: 50,
       });
@@ -290,6 +300,7 @@ Specify URLs in the prompt.
 A status update to show in the UI that provides more detail on the reason why this function was called.
 
 For example, "Researching the story" or "Writing a poem"`),
+        ...taskIdSchema,
       },
       response: {
         error: z
@@ -312,9 +323,11 @@ For example, "Researching the story" or "Writing a poem"`),
         maps_grounding,
         url_context,
         status_update,
+        task_id,
       },
       statusUpdater
     ) => {
+      console.log("TASK_ID", task_id);
       if (status_update) {
         statusUpdater(status_update);
       } else {
@@ -441,6 +454,7 @@ For example, "Making a marketing video" or "Creating the video concept"`),
           .enum(["16:9", "9:16"])
           .describe(`The aspect ratio of the video`)
           .default("16:9"),
+        ...taskIdSchema,
       },
       response: {
         error: z
@@ -456,9 +470,10 @@ For example, "Making a marketing video" or "Creating the video concept"`),
       },
     },
     async (
-      { prompt, status_update, aspect_ratio, images },
+      { prompt, status_update, aspect_ratio, images, task_id },
       statusUpdateCallback
     ) => {
+      console.log("TASK_ID", task_id);
       statusUpdateCallback(status_update || "Generating Video", {
         expectedDurationInSec: 70,
       });
@@ -502,6 +517,7 @@ A status update to show in the UI that provides more detail on the reason why th
           .enum(VOICES)
           .default("Female (English)")
           .describe("The voice to use for speech generation"),
+        ...taskIdSchema,
       },
       response: {
         error: z
@@ -516,7 +532,8 @@ A status update to show in the UI that provides more detail on the reason why th
           .optional(),
       },
     },
-    async ({ text, status_update, voice }, statusUpdateCallback) => {
+    async ({ text, status_update, voice, task_id }, statusUpdateCallback) => {
+      console.log("TASK_ID", task_id);
       statusUpdateCallback(status_update || "Generating Speech", {
         expectedDurationInSec: 20,
       });
@@ -560,6 +577,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
         prompt: z.string().describe(`The prompt from which to generate music`),
         status_update: z.string().describe(tr`
 A status update to show in the UI that provides more detail on the reason why this function was called.`),
+        ...taskIdSchema,
       },
       response: {
         error: z
@@ -574,7 +592,8 @@ A status update to show in the UI that provides more detail on the reason why th
           .optional(),
       },
     },
-    async ({ prompt, status_update }, statusUpdateCallback) => {
+    async ({ prompt, status_update, task_id }, statusUpdateCallback) => {
+      console.log("TASK_ID", task_id);
       statusUpdateCallback(status_update || "Generating Music", {
         expectedDurationInSec: 30,
       });
@@ -663,6 +682,7 @@ connects the code generation model to real-time web content and works with all a
 A status update to show in the UI that provides more detail on the reason why this function was called.
 
 For example, "Creating random values" or "Computing prime numbers"`),
+        ...taskIdSchema,
       },
       response: {
         error: z
@@ -679,7 +699,11 @@ For example, "Creating random values" or "Computing prime numbers"`),
           .optional(),
       },
     },
-    async ({ prompt, search_grounding, status_update }, statusUpdater) => {
+    async (
+      { prompt, search_grounding, status_update, task_id },
+      statusUpdater
+    ) => {
+      console.log("TASK_ID", task_id);
       if (status_update) {
         statusUpdater(status_update, { expectedDurationInSec: 40 });
       } else {

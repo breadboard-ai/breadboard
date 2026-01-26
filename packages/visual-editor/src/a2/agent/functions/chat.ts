@@ -14,6 +14,7 @@ import {
 } from "../function-definition.js";
 import { ChatManager, FunctionGroup, VALID_INPUT_TYPES } from "../types.js";
 import { PidginTranslator } from "../pidgin-translator.js";
+import { taskIdSchema } from "./system.js";
 
 export { getChatFunctionGroup, CHAT_LOG_VFS_PATH };
 
@@ -69,12 +70,14 @@ Unless the objective explicitly asks for a particular type of input, use the "an
 `
             )
             .default("any"),
+          ...taskIdSchema,
         },
         response: {
           user_input: z.string().describe(`Response from the user`),
         },
       },
-      async ({ user_message, input_type }) => {
+      async ({ user_message, input_type, task_id }) => {
+        console.log("TASK_ID", task_id);
         const chatResponse = await args.chatManager.chat(
           user_message,
           input_type

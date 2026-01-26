@@ -16,6 +16,7 @@ import {
 } from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
+import { taskIdSchema } from "./system.js";
 
 export { getMemoryFunctionGroup };
 
@@ -70,6 +71,7 @@ naming.`),
               tr`
 An array of strings representing the column headers (e.g., ['Name', 'Status']).`
             ),
+          ...taskIdSchema,
         },
       },
       memoryManager.createSheet.bind(memoryManager)
@@ -98,6 +100,7 @@ naming. Only use when the "output_format" is set to "file".`
 The output format. When "file" is specified, the output will be saved as a VFS file and the "file_path" response parameter will be provided as output. Use this when you expect a long output from the sheet. NOTE that choosing this option will prevent you from seeing the output directly: you only get back the VFS path to the file. You can read this file as a separate action, but if you do expect to read it, the "json" output format might be a better choice.
 
 When "json" is specified, the output will be returned as JSON directlty, and the "json" response parameter will be provided.`),
+          ...taskIdSchema,
         },
         response: {
           file_path: z
@@ -152,10 +155,11 @@ The data to write, may include references to VFS files. For instance, if you hav
           ).describe(tr`
 The 2D array of data to write.
 `),
+          ...taskIdSchema,
         },
       },
-      async (args) => {
-        const { range, values: pidginValues } = args;
+      async ({ range, values: pidginValues, task_id }) => {
+        console.log("TASK_ID", task_id);
         const errors: string[] = [];
         const values = await Promise.all(
           pidginValues.map(async (list) => {
@@ -184,6 +188,7 @@ The 2D array of data to write.
 Deletes a specific memory sheet`,
         parameters: {
           name: z.string().describe(tr`The name of the sheet`),
+          ...taskIdSchema,
         },
       },
       memoryManager.deleteSheet.bind(memoryManager)
@@ -193,7 +198,9 @@ Deletes a specific memory sheet`,
         name: MEMORY_GET_METADATA_FUNCTION,
         description: tr`
 Returns the names and header rows of all memory sheets.`,
-        parameters: {},
+        parameters: {
+          ...taskIdSchema,
+        },
         response: {
           sheets: z.array(
             z.object({

@@ -14,11 +14,12 @@ import {
   defineFunctionLoose,
   FunctionDefinition,
   mapDefinitions,
+  type ArgsRawShape,
 } from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
 
-export { FAILED_TO_FULFILL_FUNCTION, getSystemFunctionGroup };
+export { FAILED_TO_FULFILL_FUNCTION, getSystemFunctionGroup, taskIdSchema };
 
 export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
@@ -30,16 +31,24 @@ export type SystemFunctionArgs = {
 const LIST_FILES_FUNCTION = "system_list_files";
 const OBJECTIVE_FULFILLED_FUNCTION = "system_objective_fulfilled";
 const FAILED_TO_FULFILL_FUNCTION = "system_failed_to_fulfill_objective";
-const CREATE_TASK_TREE_SCRATCHPAD_FUNCTION = "create_task_tree_scratchpad";
+const CREATE_TASK_TREE_FUNCTION = "system_create_task_tree";
+const MARK_COMPLETED_TASKS_FUNCTION = "system_mark_completed_tasks";
+
 const OBJECTIVE_OUTCOME_PARAMETER = "objective_outcome";
+const TASK_ID_PARAMETER = "task_id";
 
 const TASK_TREE_SCHEMA = {
   type: "object",
   definitions: {
     TaskNode: {
       type: "object",
-      required: ["description", "execution_mode"],
+      required: ["task_id", "description", "execution_mode", "status"],
       properties: {
+        task_id: {
+          type: "string",
+          description: tr`
+The unique id of the task, must be in the format of "task_NNN" where NNN is the number`,
+        },
         description: {
           type: "string",
           description:
@@ -50,6 +59,11 @@ const TASK_TREE_SCHEMA = {
           description:
             "Defines how immediate subtasks should be executed. 'serial' means one by one in order; 'concurrent' means all at the same time.",
           enum: ["serial", "concurrent"],
+        },
+        status: {
+          type: "string",
+          description: "The current status of a task",
+          enum: ["not_started", "in_progress", "complete"],
         },
         subtasks: {
           type: "array",
@@ -69,6 +83,14 @@ const TASK_TREE_SCHEMA = {
     },
   },
 };
+
+const taskIdSchema = {
+  [TASK_ID_PARAMETER]: z
+    .string(
+      tr`If applicable, the "task_id" value of the relevant task in the task tree.`
+    )
+    .optional(),
+} satisfies ArgsRawShape;
 
 const instruction = tr`
 
@@ -118,15 +140,19 @@ When dealing with complex problems, adopt the OODA loop approach: instead of dev
 
 ### Creating and Using a Task Tree
 
-When working on a complicated problem, use the "${CREATE_TASK_TREE_SCRATCHPAD_FUNCTION}" function create a dependency tree for the tasks. Take the following approach:
+When working on a complicated problem, use the "${CREATE_TASK_TREE_FUNCTION}" function create a dependency tree for the tasks. Every task must loosely correspond to a function being called.
+
+Take the following approach:
 
 First, consider which tasks can be executed concurrently and which ones must be executed serially?
 
 When faced with the choice of serial or concurrent execution, choose concurrency to save precious time.
 
-Then, formulate a precise plan that will result in fulfilling the objective. Outline this plan on a scratchpad, so that it's clear to you how to execute it.
+Now, start executing the plan. 
 
-Now start executing the plan. For concurrent tasks, make sure to generate multiple function calls simultaneously. 
+For concurrent tasks, make sure to generate multiple function calls simultaneously. 
+
+To better match function calls to tasks, use the "${TASK_ID_PARAMETER}" parameter in the function calls. To express more granularity within a task, add extra identifiers at the end like this: "task_001_1". This means "task_001, part 1".
 
 After each task is completed, examine: is the plan still good? Did the results of the tasks affect the outcome? If not, keep going. Otherwise, reexamine the plan and adjust it accordingly.
 
@@ -369,8 +395,12 @@ If an error has occurred, will contain a description of the error`
     ),
     defineFunctionLoose(
       {
-        name: CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
-        description: tr`When working on a complicated problem, use this function to create a scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially.`,
+        name: CREATE_TASK_TREE_FUNCTION,
+        description: tr`
+
+When working on a complicated problem, use this function to create a scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially.
+
+`,
         parametersJsonSchema: TASK_TREE_SCHEMA,
         responseJsonSchema: {
           type: "object",
@@ -383,11 +413,36 @@ If an error has occurred, will contain a description of the error`
       },
       async ({ taskTree }) => {
         const file_path = args.fileSystem.write(
-          "task_tree_scratchpad",
+          "task_tree",
           JSON.stringify(taskTree),
           "application/json"
         );
         return { file_path };
+      }
+    ),
+    defineFunction(
+      {
+        name: MARK_COMPLETED_TASKS_FUNCTION,
+        description: tr`
+Mark one or more tasks defined with the "${CREATE_TASK_TREE_FUNCTION}" as complete.
+`,
+        parameters: {
+          task_ids: z
+            .array(
+              z.string(tr`
+The "task_id" from the task tree to mark as completed`)
+            )
+            .describe("The list of tasks to mark as completed"),
+        },
+        response: {
+          file_path: z
+            .string()
+            .describe("The VFS path to the updated task tree"),
+        },
+      },
+      async ({ task_ids }) => {
+        console.log("MARK TASK COMPLETE", task_ids);
+        return { file_path: "/vfs/task_tree.json" };
       }
     ),
   ];
