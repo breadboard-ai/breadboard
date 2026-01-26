@@ -33,6 +33,8 @@ import { hasEnabledGlobalSettings } from "./global-settings.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { Utils } from "../../../sca/utils.js";
+import { AppController } from "../../../sca/controller/controller.js";
+import { until } from "lit/directives/until.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -657,27 +659,37 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderExperimentalLabel() {
-    return html`${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
-    Strings.from("PROVIDER_NAME") !== ""
-      ? html`<span
-          class="sans"
-          id="experiment"
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                Strings.from("TEXT_EXPERIMENT_MODE"),
-                evt.clientX,
-                evt.clientY + 90,
-                { status: false, isMultiLine: true }
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          >Experiment mode</span
-        >`
-      : nothing}`;
+    const hasOverrides = this.sca.controller.global.flags
+      .overrides()
+      .then((overrides) => {
+        if (Object.keys(overrides).length > 0) {
+          return html`<span
+            class="sans"
+            id="experiment"
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new ShowTooltipEvent(
+                  Strings.from("TEXT_EXPERIMENT_MODE"),
+                  evt.clientX,
+                  evt.clientY + 90,
+                  { status: false, isMultiLine: true }
+                )
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+            }}
+            >Experiment mode</span
+          >`;
+        } else {
+          return html`${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
+          Strings.from("PROVIDER_NAME") !== ""
+            ? html`<span class="sans" id="experiment">Experiment</span>`
+            : nothing}`;
+        }
+      });
+
+    return html`${until(hasOverrides, nothing)}`;
   }
 
   #renderStatusLabel() {
