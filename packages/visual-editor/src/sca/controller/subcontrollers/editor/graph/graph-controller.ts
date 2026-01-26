@@ -4,14 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
+import {
+  EditableGraph,
+  GraphChangeEvent,
+  GraphChangeRejectEvent,
+  GraphDescriptor,
+} from "@breadboard-ai/types";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { Tab } from "../../../../../runtime/types.js";
 
 export class GraphController extends RootController {
   @field()
-  accessor graph: GraphDescriptor | null = null;
+  private accessor _editor: EditableGraph | null = null;
+
+  @field()
+  private accessor _graph: GraphDescriptor | null = null;
 
   @field()
   accessor id: ReturnType<typeof globalThis.crypto.randomUUID> | null = null;
@@ -29,11 +37,62 @@ export class GraphController extends RootController {
   accessor readOnly = false;
 
   @field()
+  accessor lastEditError: string | null = null;
+
+  /**
+   * Here for migrations.
+   * @deprecated
+   */
+  @field()
   accessor graphIsMine = false;
 
+  /**
+   * Here for migrations.
+   * @deprecated
+   */
   @field()
   accessor mainGraphId: ReturnType<typeof globalThis.crypto.randomUUID> | null =
     null;
+
+  get editor() {
+    return this._editor;
+  }
+
+  setEditor(editor: EditableGraph | null) {
+    if (this._editor) {
+      this._editor.removeEventListener("graphchange", this.#onGraphChangeBound);
+      this._editor.removeEventListener(
+        "graphchangereject",
+        this.#onGraphChangeRejectBound
+      );
+    }
+
+    this._editor = editor;
+    this._graph = this._editor?.raw() ?? null;
+    this.lastEditError = null;
+
+    if (!this._editor) return;
+    this._editor.addEventListener("graphchange", this.#onGraphChangeBound);
+    this._editor.addEventListener(
+      "graphchangereject",
+      this.#onGraphChangeRejectBound
+    );
+  }
+
+  #onGraphChangeBound = this.#onGraphChange.bind(this);
+  #onGraphChange(evt: GraphChangeEvent) {
+    this._graph = evt.graph;
+    this.lastEditError = null;
+    this.version++;
+  }
+
+  #onGraphChangeRejectBound = this.#onGraphChangeReject.bind(this);
+  #onGraphChangeReject(evt: GraphChangeRejectEvent) {
+    this._graph = evt.graph;
+    if (evt.reason.type === "error") {
+      this.lastEditError = evt.reason.error;
+    }
+  }
 
   /**
    * Here for migrations.
@@ -41,18 +100,18 @@ export class GraphController extends RootController {
    * @deprecated
    */
   asTab(): Tab | null {
-    if (!this.graph || !this.id || !this.mainGraphId) return null;
+    if (!this._graph || !this.id || !this.mainGraphId) return null;
 
     return {
       id: this.id,
-      graph: this.graph,
+      graph: this._graph,
       graphIsMine: this.graphIsMine,
       readOnly: !this.graphIsMine,
       boardServer: null,
-      lastLoadedVersion: 0,
+      lastLoadedVersion: this.lastLoadedVersion,
       mainGraphId: this.mainGraphId,
       moduleId: null,
-      name: this.graph.title ?? "Untitled app",
+      name: this._graph.title ?? "Untitled app",
       subGraphId: null,
       type: 0,
       version: this.version,
@@ -66,7 +125,8 @@ export class GraphController extends RootController {
    */
   resetAll() {
     this.id = null;
-    this.graph = null;
+    this._editor = null;
+    this._graph = null;
     this.url = null;
     this.version = 0;
     this.readOnly = false;

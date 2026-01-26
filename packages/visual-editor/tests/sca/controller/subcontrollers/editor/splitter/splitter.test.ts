@@ -6,8 +6,8 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import { SplitterController } from "../../../../../src/sca/controller/subcontrollers/editor/splitter/splitter-controller.js";
-import { Rect } from "../../stubs/rect.js";
+import { SplitterController } from "../../../../../../src/sca/controller/subcontrollers/editor/splitter/splitter-controller.js";
+import { Rect } from "../../../stubs/rect.js";
 
 suite("SplitterController", () => {
   test("Basics", async () => {

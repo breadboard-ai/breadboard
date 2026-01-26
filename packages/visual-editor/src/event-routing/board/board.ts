@@ -57,8 +57,10 @@ export const RunRoute: EventRoute<"board.run"> = {
 
     // b/452677430 - Check for consent before running shared Opals that
     // use the get_webpage tool, as this could be a data exfiltration vector
-    if ((await runtime.flags.flags()).requireConsentForGetWebpage) {
-      const editor = runtime.edit.getEditor(tab);
+    if (
+      (await sca.controller.global.flags.flags()).requireConsentForGetWebpage
+    ) {
+      const editor = sca.controller.editor.graph.editor;
       const graph = editor?.inspect("");
       const url = tab.graph.url;
       const isGalleryApp =
@@ -115,12 +117,12 @@ export const LoadRoute: EventRoute<"board.load"> = {
 export const UndoRoute: EventRoute<"board.undo"> = {
   event: "board.undo",
 
-  async do({ runtime, tab }) {
+  async do({ tab, sca }) {
     if (tab?.readOnly || !tab?.graphIsMine) {
       return false;
     }
 
-    runtime.edit.undo(tab);
+    sca.actions.graph.undo();
     return false;
   },
 };
@@ -128,12 +130,12 @@ export const UndoRoute: EventRoute<"board.undo"> = {
 export const RedoRoute: EventRoute<"board.redo"> = {
   event: "board.redo",
 
-  async do({ runtime, tab }) {
+  async do({ sca, tab }) {
     if (tab?.readOnly || !tab?.graphIsMine) {
       return false;
     }
 
-    runtime.edit.redo(tab);
+    sca.actions.graph.redo();
     return false;
   },
 };
@@ -259,27 +261,13 @@ export const InputRoute: EventRoute<"board.input"> = {
 export const RenameRoute: EventRoute<"board.rename"> = {
   event: "board.rename",
 
-  async do({ tab, runtime, originalEvent, sca }) {
+  async do({ runtime, originalEvent, sca }) {
     try {
       sca.controller.global.main.blockingAction = true;
       runtime.shell.setPageTitle(originalEvent.detail.title);
-      await runtime.edit.updateBoardTitleAndDescription(
-        tab,
+      await sca.actions.graph.updateBoardTitleAndDescription(
         originalEvent.detail.title,
         originalEvent.detail.description
-      );
-
-      // SCA Action - currently inert.
-      await sca.actions.graph.edit(
-        [
-          {
-            type: "changegraphmetadata",
-            title: originalEvent.detail.title || undefined,
-            description: originalEvent.detail.description || undefined,
-            graphId: "",
-          },
-        ],
-        "Updating title and description"
       );
     } finally {
       sca.controller.global.main.blockingAction = false;

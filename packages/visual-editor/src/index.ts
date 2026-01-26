@@ -31,7 +31,10 @@ export { Main };
 @customElement("bb-main")
 class Main extends MainBase {
   override async doPostInitWork() {
-    await this.sca.controller.global.performMigrations();
+    await Promise.all([
+      this.sca.controller.global.performMigrations(),
+      this.sca.controller.global.debug.isHydrated,
+    ]);
 
     this.maybeNotifyAboutPreferredUrlForDomain();
     this.maybeNotifyAboutDesktopModality();
@@ -296,13 +299,13 @@ class Main extends MainBase {
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
       .canRun=${this.sca.controller.global.main.canRunMain}
-      .editor=${this.runtime.edit.getEditor(this.tab)}
+      .editor=${this.sca.controller.editor.graph.editor}
       .graph=${this.tab?.graph ?? null}
       .graphIsMine=${this.tab?.graphIsMine ?? false}
       .graphStore=${this.graphStore}
       .graphStoreUpdateId=${this.graphStoreUpdateId}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .history=${this.runtime.edit.getHistory(this.tab)}
+      .history=${this.sca.controller.editor.graph.editor?.history() ?? null}
       .mainGraphId=${this.tab?.mainGraphId}
       .projectState=${renderValues.projectState}
       .readOnly=${this.tab?.readOnly ?? true}

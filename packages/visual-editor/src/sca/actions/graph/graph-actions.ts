@@ -4,32 +4,109 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EditSpec } from "@breadboard-ai/types";
+import {
+  Edge,
+  EditSpec,
+  EditTransform,
+  NodeDescriptor,
+} from "@breadboard-ai/types";
 import { makeAction } from "../binder.js";
+import { AddNodeWithEdge } from "../../../ui/transforms/index.js";
 
 export const bind = makeAction();
 
-export async function edit(spec: EditSpec[], label: string, dryRun = false) {
-  const { controller, services } = bind;
-  const { graph } = controller.editor.graph;
+/**
+ * @fileoverview
+ *
+ * Contains Actions for editing graphs.
+ *
+ * Note: Currently these Actions does not require the graphStore service because
+ * we keep the editor instance on the graphController. This is so that it is a
+ * stable reference on which we can listen to legacy events. However, the aim is
+ * to remove events in favor of Signals, which, when complete, will mean that
+ * edits can get a fresh editor from the graphStore service here.
+ *
+ *
+ */
 
-  if (!graph) {
-    console.warn("No active graph to edit");
-    return;
-  }
+/**
+ * Runs a generic edit.
+ */
+async function editInternal(spec: EditSpec[], label: string, dryRun = false) {
+  const { controller } = bind;
 
-  const editor = services.graphStore.editByDescriptor(graph);
+  // TODO: Get the editor instance from the graphStore service. Note that the
+  // edit event fired by the editor instance here will be picked up and routed
+  // through the Runtime so that main-base picks it up and triggers an autosave.
+  const { editor } = controller.editor.graph;
   if (!editor) {
-    console.warn("Unable to create editor for graph");
-    return;
+    throw new Error("No active graph to edit");
   }
 
   const result = await editor.edit(spec, label, dryRun);
-  if (!result.success) {
-    throw new Error("Unable to edit graph");
+  if (result.success) {
+    return;
   }
 
-  console.log("Commit graph action");
+  throw new Error("Unable to edit graph");
+}
 
-  return result;
+async function applyInternal(transform: EditTransform) {
+  const { controller } = bind;
+
+  // TODO: Get the editor instance from the graphStore service. Note that the
+  // edit event fired by the editor instance here will be picked up and routed
+  // through the Runtime so that main-base picks it up and triggers an autosave.
+  const { editor } = controller.editor.graph;
+  if (!editor) {
+    throw new Error("No active graph to transform");
+  }
+
+  const result = await editor.apply(transform);
+  if (result.success) {
+    return;
+  }
+
+  throw new Error(result.error);
+}
+
+export async function undo() {
+  const { controller } = bind;
+  const history = controller.editor.graph.editor?.history();
+  if (!history || !history.canUndo()) return;
+  return history.undo();
+}
+
+export async function redo() {
+  const { controller } = bind;
+  const history = controller.editor.graph.editor?.history();
+  if (!history || !history.canRedo()) return;
+  return history.redo();
+}
+
+export async function updateBoardTitleAndDescription(
+  title: string | null,
+  description: string | null
+) {
+  return editInternal(
+    [
+      {
+        type: "changegraphmetadata",
+        title: title ?? undefined,
+        description: description ?? undefined,
+        graphId: "",
+      },
+    ],
+    "Updating title and description"
+  );
+}
+
+export async function addNodeWithEdge(
+  node: NodeDescriptor,
+  edge: Edge,
+  subGraphId: string | null = null
+) {
+  const graphId = subGraphId ?? "";
+  const transform = new AddNodeWithEdge(node, edge, graphId);
+  return applyInternal(transform);
 }

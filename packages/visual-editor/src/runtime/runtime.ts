@@ -107,13 +107,18 @@ export class Runtime extends EventTarget {
     this.util = Util;
     this.select = new Select();
     this.router = new Router();
-    this.edit = new Edit(graphStore, autonamer, this.flags);
+    this.edit = new Edit(graphStore, autonamer, this.flags, config.sca);
     this.apiClient = new AppCatalystApiClient(
       this.fetchWithCreds,
       OPAL_BACKEND_API_PREFIX
     );
 
-    this.state = new StateManager(this, graphStore, this.appController);
+    this.state = new StateManager(
+      this,
+      graphStore,
+      this.appController,
+      config.sca
+    );
     this.run = new Run(graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();

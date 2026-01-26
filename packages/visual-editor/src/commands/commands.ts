@@ -44,12 +44,12 @@ const UndoCommand: KeyboardCommand = {
     return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
-  async do({ runtime, tab }: KeyboardCommandDeps): Promise<void> {
+  async do({ sca, tab }: KeyboardCommandDeps): Promise<void> {
     if (tab?.readOnly || !tab?.graphIsMine) {
       return;
     }
 
-    runtime.edit.undo(tab);
+    sca.actions.graph.undo();
   },
 };
 
@@ -60,12 +60,12 @@ const RedoCommand: KeyboardCommand = {
     return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
-  async do({ runtime, tab }: KeyboardCommandDeps): Promise<void> {
+  async do({ sca, tab }: KeyboardCommandDeps): Promise<void> {
     if (tab?.readOnly || !tab?.graphIsMine) {
       return;
     }
 
-    runtime.edit.redo(tab);
+    sca.actions.graph.redo();
   },
 };
 
@@ -78,6 +78,7 @@ const DeleteCommand: KeyboardCommand = {
 
   async do({
     runtime,
+    sca,
     selectionState,
     tab,
     originalEvent,
@@ -90,7 +91,7 @@ const DeleteCommand: KeyboardCommand = {
       return;
     }
 
-    const editor = runtime.edit.getEditor(tab);
+    const editor = sca.controller.editor.graph.editor;
     if (!editor) {
       throw new Error("Unable to edit");
     }
@@ -176,11 +177,11 @@ const ToggleExperimentalComponentsCommand: KeyboardCommand = {
     return true;
   },
 
-  async do({ appController }: KeyboardCommandDeps): Promise<void> {
-    appController.global.main.experimentalComponents =
-      !appController.global.main.experimentalComponents;
+  async do({ sca }: KeyboardCommandDeps): Promise<void> {
+    sca.controller.global.main.experimentalComponents =
+      !sca.controller.global.main.experimentalComponents;
 
-    componentStatus = appController.global.main.experimentalComponents
+    componentStatus = sca.controller.global.main.experimentalComponents
       ? "Enabled"
       : "Disabled";
   },
@@ -198,10 +199,10 @@ const ToggleDebugCommand: KeyboardCommand = {
     return true;
   },
 
-  async do({ appController }: KeyboardCommandDeps): Promise<void> {
-    appController.global.debug.enabled = !appController.global.debug.enabled;
+  async do({ sca }: KeyboardCommandDeps): Promise<void> {
+    sca.controller.global.debug.enabled = !sca.controller.global.debug.enabled;
 
-    debugStatus = appController.global.debug.enabled ? "Enabled" : "Disabled";
+    debugStatus = sca.controller.global.debug.enabled ? "Enabled" : "Disabled";
   },
 };
 
@@ -216,12 +217,13 @@ const SelectAllCommand: KeyboardCommand = {
     runtime,
     tab,
     originalEvent,
+    sca,
   }: KeyboardCommandDeps): Promise<void> {
     if (!isFocusedOnGraphRenderer(originalEvent)) {
       return;
     }
 
-    const editor = runtime.edit.getEditor(tab);
+    const editor = sca.controller.editor.graph.editor;
     if (!editor) {
       return;
     }
@@ -251,12 +253,13 @@ const CopyCommand: KeyboardCommand = {
     selectionState,
     tab,
     originalEvent,
+    sca,
   }: KeyboardCommandDeps): Promise<void> {
     if (!isFocusedOnGraphRenderer(originalEvent)) {
       return;
     }
 
-    const editor = runtime.edit.getEditor(tab);
+    const editor = sca.controller.editor.graph.editor;
     if (!editor) {
       throw new Error("Unable to edit graph");
     }
@@ -291,6 +294,7 @@ const CutCommand: KeyboardCommand = {
     selectionState,
     tab,
     originalEvent,
+    sca,
   }: KeyboardCommandDeps): Promise<void> {
     if (!isFocusedOnGraphRenderer(originalEvent)) {
       return;
@@ -300,7 +304,7 @@ const CutCommand: KeyboardCommand = {
       return;
     }
 
-    const editor = runtime.edit.getEditor(tab);
+    const editor = sca.controller.editor.graph.editor;
     if (!editor) {
       throw new Error("Unable to edit");
     }
@@ -333,127 +337,6 @@ const CutCommand: KeyboardCommand = {
   },
 };
 
-const GroupCommand: KeyboardCommand = {
-  keys: ["Cmd+g", "Ctrl+g"],
-
-  willHandle(tab: Tab | null, evt: Event) {
-    return tab !== null && isFocusedOnGraphRenderer(evt);
-  },
-
-  async do({
-    runtime,
-    selectionState,
-    tab,
-    originalEvent,
-  }: KeyboardCommandDeps): Promise<void> {
-    if (!isFocusedOnGraphRenderer(originalEvent)) {
-      return;
-    }
-
-    if (tab?.readOnly) {
-      return;
-    }
-
-    const editor = runtime.edit.getEditor(tab);
-    if (!editor) {
-      throw new Error("Unable to edit");
-    }
-
-    if (
-      !tab ||
-      !selectionState ||
-      selectionState.selectionState.graphs.size === 0
-    ) {
-      throw new Error("Nothing to group");
-    }
-
-    const destinationGraphId = globalThis.crypto.randomUUID();
-    for (const [sourceGraphId, selection] of selectionState.selectionState
-      .graphs) {
-      if (selection.nodes.size === 0) {
-        continue;
-      }
-
-      await runtime.edit.moveNodesToGraph(
-        tab,
-        [...selection.nodes],
-        sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId,
-        destinationGraphId
-      );
-    }
-
-    // Clear all selections.
-    runtime.select.processSelections(
-      tab.id,
-      runtime.util.createWorkspaceSelectionChangeId(),
-      null,
-      true
-    );
-  },
-};
-
-const UngroupCommand: KeyboardCommand = {
-  keys: ["Cmd+Shift+g", "Ctrl+Shift+g"],
-
-  willHandle(tab: Tab | null, evt: Event) {
-    return tab !== null && isFocusedOnGraphRenderer(evt);
-  },
-
-  async do({
-    runtime,
-    selectionState,
-    tab,
-    originalEvent,
-  }: KeyboardCommandDeps): Promise<void> {
-    if (!isFocusedOnGraphRenderer(originalEvent)) {
-      return;
-    }
-
-    if (tab?.readOnly) {
-      return;
-    }
-
-    const editor = runtime.edit.getEditor(tab);
-    if (!editor) {
-      throw new Error("Unable to edit");
-    }
-
-    if (
-      !tab ||
-      !selectionState ||
-      selectionState.selectionState.graphs.size === 0
-    ) {
-      throw new Error("Nothing to ungroup");
-    }
-
-    for (const [sourceGraphId, selection] of selectionState.selectionState
-      .graphs) {
-      if (selection.nodes.size === 0) {
-        continue;
-      }
-
-      if (sourceGraphId === MAIN_BOARD_ID) {
-        continue;
-      }
-
-      await runtime.edit.moveNodesToGraph(
-        tab,
-        [...selection.nodes],
-        sourceGraphId,
-        ""
-      );
-    }
-
-    // Clear all selections.
-    runtime.select.processSelections(
-      tab.id,
-      runtime.util.createWorkspaceSelectionChangeId(),
-      null,
-      true
-    );
-  },
-};
-
 const PasteCommand: KeyboardCommand = {
   keys: ["Cmd+v", "Ctrl+v"],
 
@@ -466,7 +349,7 @@ const PasteCommand: KeyboardCommand = {
     tab,
     selectionState,
     pointerLocation,
-    graphStore,
+    sca,
   }: KeyboardCommandDeps): Promise<void> {
     if (tab?.readOnly) {
       return;
@@ -490,7 +373,7 @@ const PasteCommand: KeyboardCommand = {
 
     // Option 1. User pastes a board when there is no tab - create a new tab
     if (tab) {
-      const editor = runtime.edit.getEditor(tab);
+      const editor = sca.controller.editor.graph.editor;
       if (!editor) {
         throw new Error("Unable to edit graph");
       }
@@ -542,7 +425,7 @@ const PasteCommand: KeyboardCommand = {
         // Here we go looking for the Generate so that we can add it to the
         // graph with the pasted text.
         // TODO: Find a better way to locate Generate and populate it.
-        const maybeGenerate = graphStore
+        const maybeGenerate = sca.services.graphStore
           .graphs()
           .find((graph) => graph.title === "Generate");
         if (!maybeGenerate || !maybeGenerate.url) {
@@ -610,12 +493,13 @@ const DuplicateCommand: KeyboardCommand = {
     selectionState,
     pointerLocation,
     originalEvent,
+    sca,
   }: KeyboardCommandDeps): Promise<void> {
     if (!isFocusedOnGraphRenderer(originalEvent)) {
       return;
     }
 
-    const editor = runtime.edit.getEditor(tab);
+    const editor = sca.controller.editor.graph.editor;
     if (!editor) {
       throw new Error("Unable to edit graph");
     }
@@ -692,8 +576,6 @@ export const keyboardCommands = new Map<string[], KeyboardCommand>([
   [CopyCommand.keys, CopyCommand],
   [CutCommand.keys, CutCommand],
   [PasteCommand.keys, PasteCommand],
-  [GroupCommand.keys, GroupCommand],
-  [UngroupCommand.keys, UngroupCommand],
   [
     ToggleExperimentalComponentsCommand.keys,
     ToggleExperimentalComponentsCommand,
