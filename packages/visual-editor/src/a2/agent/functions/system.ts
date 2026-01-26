@@ -158,6 +158,8 @@ To better match function calls to tasks, use the "${TASK_ID_PARAMETER}" paramete
 
 After each task is completed, examine: is the plan still good? Did the results of the tasks affect the outcome? If not, keep going. Otherwise, reexamine the plan and adjust it accordingly.
 
+Use the "${MARK_COMPLETED_TASKS_FUNCTION}" function to keep track of the completed tasks. All tasks are automatically marked as completed when the "${OBJECTIVE_FULFILLED_FUNCTION}" is called, so avoid the unnecessary "${MARK_COMPLETED_TASKS_FUNCTION}" function calls at the end. 
+
 ### Problem Domain Escalation
 
 While fulfilling the task, it may become apparent to you that your initial guess of the problem domain is wrong. Most commonly, this will cause the problem domain escalation: simple problems turn out complicated, and complicated become complex. Be deliberate about recognizing this change. When it happens, remind yourself about the problem domain escalation and adjust the strategy appropriately.
