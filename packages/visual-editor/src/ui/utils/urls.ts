@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import {
   BaseUrlInit,
   GraphUrlInit,
@@ -12,6 +13,7 @@ import {
   MakeUrlInit,
   OpenUrlInit,
 } from "../types/types.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 
 export function devUrlParams(): Required<BaseUrlInit>["dev"] {
   // TODO(aomarks) Add a flag so that we only allow these in dev.
@@ -24,8 +26,6 @@ const MODE = "mode";
 const LITE = "lite" as const;
 const NEW = "new";
 const REMIX = "remix";
-const MODE_APP = "app" as const;
-const MODE_CANVAS = "canvas" as const;
 const COLOR_SCHEME = "color-scheme" as const;
 const COLOR_SCHEME_LIGHT = "light" as const;
 const COLOR_SCHEME_DARK = "dark" as const;
@@ -42,7 +42,8 @@ const DEV_PREFIX = "dev-";
  */
 export function makeUrl(
   init: MakeUrlInit,
-  base: string | URL = window.location.href
+  base: string | URL = window.location.href,
+  enableNewUrlScheme = CLIENT_DEPLOYMENT_CONFIG.ENABLE_NEW_URL_SCHEME
 ): string {
   const baseOrigin =
     typeof base === "string" ? new URL(base).origin : base.origin;
@@ -53,7 +54,6 @@ export function makeUrl(
   }
   if (page === "home") {
     url.pathname = "/";
-    url.searchParams.set(MODE, init.mode ?? MODE_CANVAS);
     if (init.lite) {
       url.searchParams.set(LITE, init.lite === true ? "true" : "false");
     }
@@ -72,7 +72,9 @@ export function makeUrl(
       url.searchParams.set(NEW, init.new === true ? "true" : "false");
     }
   } else if (page === "graph") {
-    url.searchParams.set(FLOW, init.flow);
+    if (!enableNewUrlScheme) {
+      url.searchParams.set(FLOW, init.flow);
+    }
     if (init.resourceKey) {
       url.searchParams.set(RESOURCE_KEY, init.resourceKey);
     }
@@ -99,7 +101,22 @@ export function makeUrl(
           : COLOR_SCHEME_DARK
       );
     }
-    url.searchParams.set(MODE, init.mode);
+    if (!enableNewUrlScheme) {
+      url.searchParams.set(MODE, init.mode);
+    } else {
+      const driveId = extractGoogleDriveFileId(init.flow);
+      if (!driveId) {
+        throw new Error("unsupported graph id " + init.flow);
+      }
+      if (init.mode === "app") {
+        url.pathname = "app/" + encodeURIComponent(driveId);
+      } else if (init.mode === "canvas") {
+        url.pathname = "edit/" + encodeURIComponent(driveId);
+      } else {
+        init.mode satisfies never;
+        throw new Error("unsupported mode " + init.mode);
+      }
+    }
   } else if (page === "landing") {
     url.pathname = "landing/";
     if (init.geoRestriction) {
@@ -158,7 +175,7 @@ export function makeUrl(
       // A little extra cleanup. The URL class escapes search params very
       // strictly, and does not allow bare search params.
       .replace("drive%3A%2F", "drive:/")
-      .replace(/[?&]shared=/, "&shared")
+      .replace(/([?&])shared=/, "$1shared")
   );
 }
 
@@ -228,12 +245,21 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     };
     return open;
   } else {
-    const flow = url.searchParams.get(FLOW) || url.searchParams.get(TAB0);
+    let flow =
+      url.searchParams.get(FLOW) ||
+      url.searchParams.get(TAB0) ||
+      (pathname.startsWith("/app/") && pathname.slice("/app/".length)) ||
+      (pathname.startsWith("/edit/") && pathname.slice("/edit/".length));
+    if (
+      flow &&
+      !flow.startsWith("drive:/") &&
+      (pathname.startsWith("/app/") || pathname.startsWith("/edit/"))
+    ) {
+      flow = "drive:/" + flow;
+    }
     if (!flow) {
       const home: HomeUrlInit = {
         page: "home",
-        mode:
-          url.searchParams.get("mode") === MODE_APP ? MODE_APP : MODE_CANVAS,
         lite: url.searchParams.get("lite") === "true",
         colorScheme:
           url.searchParams.get("color-scheme") === COLOR_SCHEME_LIGHT
@@ -252,9 +278,13 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       }
       return home;
     }
+    const mode =
+      url.searchParams.get(MODE) === "app" || pathname.startsWith("/app/")
+        ? "app"
+        : "canvas";
     const graph: GraphUrlInit = {
       page: "graph",
-      mode: url.searchParams.get(MODE) === "app" ? "app" : "canvas",
+      mode,
       lite: url.searchParams.get(LITE) === "true",
       colorScheme:
         url.searchParams.get("color-scheme") === COLOR_SCHEME_LIGHT
@@ -262,7 +292,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
           : url.searchParams.get("color-scheme") === COLOR_SCHEME_DARK
             ? COLOR_SCHEME_DARK
             : undefined,
-      flow: flow,
+      flow,
       resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
       guestPrefixed,
     };

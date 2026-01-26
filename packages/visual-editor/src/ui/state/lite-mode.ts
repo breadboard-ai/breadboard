@@ -24,11 +24,15 @@ import {
 import { ReactiveProjectRun } from "./project-run.js";
 import { Template } from "@breadboard-ai/utils";
 import { FlowGenerator } from "../flow-gen/flow-generator.js";
+import { AppController } from "../../sca/controller/controller.js";
 
 export { createLiteModeState };
 
-function createLiteModeState(context: RuntimeContext) {
-  return new ReactiveLiteModeState(context);
+function createLiteModeState(
+  context: RuntimeContext,
+  appController: AppController
+) {
+  return new ReactiveLiteModeState(context, appController);
 }
 
 const EXAMPLES: LiteModeIntentExample[] = [
@@ -134,7 +138,7 @@ class ReactiveLiteModeState implements LiteModeState {
 
     if (this.viewError) return "error";
 
-    const { loadState } = this.context.ui;
+    const { loadState } = this.appController.global.main;
     switch (loadState) {
       case "Home": {
         const parsedUrl = this.context.router.parsedUrl;
@@ -172,7 +176,10 @@ class ReactiveLiteModeState implements LiteModeState {
 
   planner: LiteModePlannerState;
 
-  constructor(private readonly context: RuntimeContext) {
+  constructor(
+    private readonly context: RuntimeContext,
+    private readonly appController: AppController
+  ) {
     this.planner = new PlannerState(this.context.flowGenerator);
   }
 }

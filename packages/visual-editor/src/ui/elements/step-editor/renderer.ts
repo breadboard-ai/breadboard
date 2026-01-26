@@ -118,9 +118,6 @@ export class Renderer extends LitElement {
   accessor mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
-  accessor showExperimentalComponents = false;
-
-  @property()
   accessor showAssetsInGraph = false;
 
   @property()
@@ -1738,7 +1735,6 @@ export class Renderer extends LitElement {
         .history=${this.history}
         .mainGraphId=${this.mainGraphId}
         .showDefaultAdd=${showDefaultAdd}
-        .showExperimentalComponents=${this.showExperimentalComponents}
         .readOnly=${this.readOnly}
         @wheel=${(evt: WheelEvent) => {
           evt.stopImmediatePropagation();

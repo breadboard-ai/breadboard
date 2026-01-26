@@ -89,12 +89,14 @@ export type AgentOutcome = {
   error?: string;
 };
 
+export type ReadSheetOutcome = SpreadsheetValueRange | { error: string };
+
 /**
  * A generic type of managing memory, styled as a Google Sheet.
  */
 export type MemoryManager = {
   getSheetMetadata(): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>>;
-  readSheet(args: { range: string }): Promise<Outcome<SpreadsheetValueRange>>;
+  readSheet(args: { range: string }): Promise<Outcome<ReadSheetOutcome>>;
   updateSheet(args: {
     range: string;
     values: string[][];
@@ -102,9 +104,9 @@ export type MemoryManager = {
   deleteSheet(args: { name: string }): Promise<Outcome<AgentOutcome>>;
 };
 
-export type UIType = "none" | "chat" | "a2ui";
+export type UIType = "chat" | "a2ui";
 
-export const VALID_INPUT_TYPES = ["any", "text", "file-upload", "any"] as const;
+export const VALID_INPUT_TYPES = ["any", "text", "file-upload"] as const;
 
 export type ChatInputType = (typeof VALID_INPUT_TYPES)[number];
 

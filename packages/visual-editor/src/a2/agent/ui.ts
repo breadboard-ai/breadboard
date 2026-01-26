@@ -77,18 +77,18 @@ class AgentUI implements A2UIRenderer, ChatManager {
     const { appScreen, consoleEntry } = getCurrentStepState(this.moduleArgs);
     this.#consoleEntry = consoleEntry;
     this.#appScreen = appScreen;
-    this.progress = new ProgressWorkItem("Agent", "spark", this.#appScreen!);
+    if (!this.#appScreen) {
+      console.warn(
+        `Unable to find app screen for this agent. Trying to render UI will fail.`
+      );
+    }
+    this.progress = new ProgressWorkItem("Agent", "spark", this.#appScreen);
     if (!this.#consoleEntry) {
       console.warn(
         `Unable to find console entry for this agent. Trying to render UI will fail.`
       );
     } else {
       this.#consoleEntry.work.set(crypto.randomUUID(), this.progress);
-    }
-    if (!this.#appScreen) {
-      console.warn(
-        `Unable to find app screen for this agent. Trying to render UI will fail.`
-      );
     }
   }
 

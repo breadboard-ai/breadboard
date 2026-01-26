@@ -19,9 +19,7 @@ import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
 import {
   OPAL_BACKEND_API_PREFIX,
-  GOOGLE_DRIVE_FILES_API_PREFIX,
   Outcome,
-  PersistentBackend,
   RunConfig,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
@@ -33,44 +31,22 @@ import {
 } from "./events.js";
 import { SettingsStore } from "../ui/data/settings-store.js";
 import { inputsFromSettings } from "../ui/data/inputs.js";
-import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
-import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
-import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
-import { createFileSystemBackend, createFlagManager } from "../idb/index.js";
-import { RecentBoardStore } from "../data/recent-boards.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { McpClientManager } from "../mcp/index.js";
-import {
-  ConsentAction,
-  ConsentUIType,
-  ConsentRequest,
-  FileSystem,
-} from "@breadboard-ai/types";
-import { ConsentManager } from "../ui/utils/consent-manager.js";
+import { FileSystem } from "@breadboard-ai/types";
 import { SigninAdapter } from "../ui/utils/signin-adapter.js";
-import {
-  createActionTracker,
-  createActionTrackerBackend,
-} from "../ui/utils/action-tracker.js";
-import { envFromSettings } from "../utils/env-from-settings.js";
-import { builtInMcpClients } from "../mcp-clients.js";
 import { GoogleDriveBoardServer } from "../board-server/server.js";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { AppCatalystApiClient } from "../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../ui/utils/email-prefs-manager.js";
 import { err } from "@breadboard-ai/utils";
-import { createFileSystem } from "../engine/file-system/index.js";
-import { createEphemeralBlobStore } from "../engine/file-system/ephemeral-blob-store.js";
-import { composeFileSystemBackends } from "../engine/file-system/composed-peristent-backend.js";
-import { addRunModule } from "../engine/add-run-module.js";
-import { createGraphStore } from "../engine/inspector/index.js";
-import { createLoader } from "../engine/loader/index.js";
 import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
 } from "../data/file-system.js";
 import { ActionTracker } from "../ui/types/types.js";
+import { AppController } from "../sca/controller/controller.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -83,137 +59,50 @@ export class Runtime extends EventTarget {
   public readonly flags: RuntimeFlagManager;
   public readonly util: typeof Util;
   public readonly fetchWithCreds: typeof globalThis.fetch;
-  public readonly consentManager: ConsentManager;
   public readonly signinAdapter: SigninAdapter;
   public readonly googleDriveClient: GoogleDriveClient;
   public readonly fileSystem: FileSystem;
   public readonly mcpClientManager: McpClientManager;
-  public readonly recentBoardStore: RecentBoardStore;
   public readonly googleDriveBoardServer: GoogleDriveBoardServer;
   public readonly flowGenerator: FlowGenerator;
   public readonly apiClient: AppCatalystApiClient;
   public readonly actionTracker: ActionTracker;
   public readonly emailPrefsManager: EmailPrefsManager;
+  private readonly appController: AppController;
 
   constructor(config: RuntimeConfig) {
     super();
 
-    this.flags = createFlagManager(config.globalConfig.flags);
+    if (!config.sca) throw new Error("Expected SCA");
 
-    this.signinAdapter = new SigninAdapter(config.shellHost);
-    this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
+    this.appController = config.sca.controller;
+    this.flags = this.appController.global.flags;
 
-    this.actionTracker = createActionTracker(
-      config.shellHost,
-      config.guestConfig,
-      config.globalConfig.MEASUREMENT_ID,
-      () => this.signinAdapter.state.then((state) => state === "signedin")
-    );
+    this.signinAdapter = config.sca.services.signinAdapter;
+    this.fetchWithCreds = config.sca.services.fetchWithCreds;
+    this.actionTracker = config.sca.services.actionTracker;
+    this.googleDriveClient = config.sca.services.googleDriveClient;
+    this.fileSystem = config.sca.services.fileSystem;
+    this.mcpClientManager = config.sca.services.mcpClientManager;
+    this.googleDriveBoardServer = config.sca.services.googleDriveBoardServer;
+    this.emailPrefsManager = config.sca.services.emailPrefsManager;
+    this.flowGenerator = config.sca.services.flowGenerator;
 
-    const proxyApiBaseUrl = new URL(
-      "/api/drive-proxy/drive/v3/files",
-      window.location.href
-    ).href;
-    const apiBaseUrl = this.signinAdapter.state.then((state) =>
-      state === "signedout" ? proxyApiBaseUrl : GOOGLE_DRIVE_FILES_API_PREFIX
-    );
-    this.googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl,
-      proxyApiBaseUrl,
-      fetchWithCreds: this.fetchWithCreds,
-      isTestApi: !!config.guestConfig?.isTestApi,
-    });
-
-    this.fileSystem = createFileSystem({
-      env: [...envFromSettings(config.settings), ...(config.env || [])],
-      local: createFileSystemBackend(createEphemeralBlobStore()),
-      mnt: composeFileSystemBackends(
-        new Map<string, PersistentBackend>([
-          ["track", createActionTrackerBackend()],
-        ])
-      ),
-    });
-
-    this.mcpClientManager = new McpClientManager(
-      builtInMcpClients,
-      {
-        fileSystem: this.fileSystem,
-        fetchWithCreds: this.fetchWithCreds,
-      },
-      OPAL_BACKEND_API_PREFIX
-    );
-
-    const sandbox = createA2ModuleFactory({
-      mcpClientManager: this.mcpClientManager,
-      fetchWithCreds: this.fetchWithCreds,
-      shell: config.shellHost,
-    });
-
-    const kits = addRunModule(sandbox, []);
-
-    this.consentManager = new ConsentManager(
-      async (request: ConsentRequest, uiType: ConsentUIType) => {
-        return new Promise<ConsentAction>((resolve) => {
-          if (uiType === ConsentUIType.MODAL) {
-            const uiState = this.state.ui;
-            uiState.consentRequests.push({
-              request,
-              consentCallback: resolve,
-            });
-          } else {
-            const appState = this.state.project?.run.app;
-            if (appState) {
-              appState.consentRequests.push({
-                request,
-                consentCallback: resolve,
-              });
-            } else {
-              console.warn(
-                "In-app consent requested when no app state existed"
-              );
-              resolve(ConsentAction.DENY);
-            }
-          }
-        });
-      }
-    );
-
-    this.recentBoardStore = RecentBoardStore.instance();
-
-    this.googleDriveBoardServer = createGoogleDriveBoardServer(
-      this.signinAdapter,
-      this.googleDriveClient,
-      config.shellHost.findUserOpalFolder,
-      config.shellHost.listUserOpals
-    );
-    const a2Server = createA2Server();
-
-    const loader = createLoader([this.googleDriveBoardServer, a2Server]);
-    const graphStoreArgs = {
-      kits,
-      loader,
-      sandbox,
-      fileSystem: this.fileSystem,
-      flags: this.flags,
-    };
-    const graphStore = createGraphStore(graphStoreArgs);
-
-    for (const [, item] of a2Server.userGraphs?.entries() || []) {
-      graphStore.addByURL(item.url, [], {});
-    }
-
-    const autonamer = new Autonamer(graphStoreArgs, this.fileSystem, sandbox);
-
+    const kits = config.sca.services.kits;
+    const loader = config.sca.services.loader;
+    const graphStore = config.sca.services.graphStore;
+    const autonamer = config.sca.services.autonamer;
     const { appName, appSubName } = config;
-    this.shell = new Shell(appName, appSubName);
 
+    this.shell = new Shell(appName, appSubName);
     this.board = new Board(
       loader,
       graphStore,
       this.googleDriveBoardServer,
-      this.recentBoardStore,
       this.signinAdapter,
-      this.googleDriveClient
+      this.googleDriveClient,
+      /** Here for migrations */
+      config.sca
     );
     this.util = Util;
     this.select = new Select();
@@ -223,15 +112,11 @@ export class Runtime extends EventTarget {
       this.fetchWithCreds,
       OPAL_BACKEND_API_PREFIX
     );
-    this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
-    this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);
 
-    this.state = new StateManager(this, graphStore);
-
+    this.state = new StateManager(this, graphStore, this.appController);
     this.run = new Run(graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();
-    void this.recentBoardStore.restore();
   }
 
   async prepareRun(tab: Tab, settings: SettingsStore): Promise<Outcome<void>> {

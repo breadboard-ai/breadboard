@@ -23,12 +23,17 @@ import { addMessageEventListenerToAllowedEmbedderIfPresent } from "./embedder.js
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { OAuthBasedOpalShell } from "./oauth-based-opal-shell.js";
 import "./url-pattern-conditional-polyfill.js";
+import { Utils } from "../../sca/utils.js";
 
 export const opalShellContext = createContext<
   OpalShellHostProtocol | undefined
 >("OpalShell");
 
 const SHELL_ORIGIN_SESSION_STORAGE_KEY = "shellOrigin";
+
+const logger = Utils.Logging.getLogger();
+const label = "Shell Guest";
+const checkForDebugStatus = false;
 
 export async function connectToOpalShellHost(): Promise<{
   shellHost: OpalShellHostProtocol;
@@ -39,7 +44,11 @@ export async function connectToOpalShellHost(): Promise<{
   if (!hostOrigin) {
     // TODO(aomarks) Remove once we are fully migrated to the iframe
     // arrangement.
-    console.log("[shell guest] Creating legacy host");
+    logger.log(
+      Utils.Logging.Formatter.info("Creating legacy host"),
+      label,
+      checkForDebugStatus
+    );
     const shellHost = new OAuthBasedOpalShell();
     const embedHandler = new EmbedHandlerImpl(shellHost);
     addMessageEventListenerToAllowedEmbedderIfPresent(
@@ -53,10 +62,18 @@ export async function connectToOpalShellHost(): Promise<{
   const shellPort = await establishMessageChannelWithShellHost(hostOrigin);
 
   // Initialize bi-directional comlink APIs
-  console.log("[shell guest] Connecting to host API");
+  logger.log(
+    Utils.Logging.Formatter.info("Connecting to host API"),
+    label,
+    checkForDebugStatus
+  );
   const shellHost = comlink.wrap<OpalShellHostProtocol>(shellPort);
   beginSyncronizingUrls(shellHost);
-  console.log("[shell guest] Exposing guest API");
+  logger.log(
+    Utils.Logging.Formatter.info("Exposing guest API"),
+    label,
+    checkForDebugStatus
+  );
   const embedHandler = new EmbedHandlerImpl(shellHost);
   comlink.expose(
     new OpalShellGuest(embedHandler) satisfies OpalShellGuestProtocol,
@@ -81,9 +98,13 @@ async function establishMessageChannelWithShellHost(
   hostOrigin: string
 ): Promise<MessagePort> {
   const { port1, port2 } = new MessageChannel();
-  console.log(
-    "[shell guest] Sending establish MessageChannel request to",
-    hostOrigin
+  logger.log(
+    Utils.Logging.Formatter.info(
+      "Sending establish MessageChannel request to",
+      hostOrigin
+    ),
+    label,
+    checkForDebugStatus
   );
   window.parent.postMessage(
     { type: SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST },
@@ -102,7 +123,13 @@ async function establishMessageChannelWithShellHost(
         event.data !== null &&
         event.data.type === SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE
       ) {
-        console.log("[shell guest] Received establish MessageChannel response");
+        logger.log(
+          Utils.Logging.Formatter.info(
+            "Received establish MessageChannel response"
+          ),
+          label,
+          checkForDebugStatus
+        );
         responseReceived.resolve();
         listenerAbortCtl.abort();
       }
@@ -182,17 +209,25 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
     passedInShellOrigin ||
     sessionStorage.getItem(SHELL_ORIGIN_SESSION_STORAGE_KEY);
   if (!shellOrigin) {
-    console.error(
-      `[shell guest] Could not find shell origin because shell did not set ` +
-        `the ${JSON.stringify(SHELL_ORIGIN_URL_PARAMETER)} URL parameter.`
+    logger.log(
+      Utils.Logging.Formatter.error(
+        `Could not find shell origin because shell did not set ` +
+          `the ${JSON.stringify(SHELL_ORIGIN_URL_PARAMETER)} URL parameter.`
+      ),
+      label,
+      checkForDebugStatus
     );
     return;
   }
 
   for (const pattern of allowedOriginPatterns) {
     if (new URLPattern(pattern).test(shellOrigin)) {
-      console.debug(
-        `[shell guest] ${shellOrigin} matched allowed origin ${pattern}`
+      logger.log(
+        Utils.Logging.Formatter.verbose(
+          `${shellOrigin} matched allowed origin ${pattern}`
+        ),
+        label,
+        checkForDebugStatus
       );
       if (passedInShellOrigin) {
         sessionStorage.setItem(
@@ -203,7 +238,14 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
       return shellOrigin;
     }
   }
-  console.error("[shell guest] Shell origin was not in allowlist", shellOrigin);
+  logger.log(
+    Utils.Logging.Formatter.error(
+      "Shell origin was not in allowlist",
+      shellOrigin
+    ),
+    label,
+    checkForDebugStatus
+  );
 }
 
 function beginSyncronizingUrls(host: OpalShellHostProtocol) {

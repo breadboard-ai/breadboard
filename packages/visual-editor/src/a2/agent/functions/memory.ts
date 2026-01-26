@@ -16,6 +16,8 @@ import {
 } from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
+import { statusUpdateSchema, taskIdSchema } from "./system.js";
+import { TaskTreeManager } from "../task-tree-manager.js";
 
 export { getMemoryFunctionGroup };
 
@@ -29,6 +31,7 @@ export type MemoryFunctionArgs = {
   translator: PidginTranslator;
   fileSystem: AgentFileSystem;
   memoryManager: SheetManager;
+  taskTreeManager: TaskTreeManager;
 };
 
 const instruction = tr`
@@ -55,7 +58,7 @@ function getMemoryFunctionGroup(args: MemoryFunctionArgs): FunctionGroup {
 }
 
 function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
-  const { translator, fileSystem, memoryManager } = args;
+  const { translator, fileSystem, memoryManager, taskTreeManager } = args;
   return [
     defineFunction(
       {
@@ -70,9 +73,14 @@ naming.`),
               tr`
 An array of strings representing the column headers (e.g., ['Name', 'Status']).`
             ),
+          ...taskIdSchema,
+          ...statusUpdateSchema,
         },
       },
-      memoryManager.createSheet.bind(memoryManager)
+      async ({ task_id, status_update, ...parameters }) => {
+        taskTreeManager.setInProgress(task_id, status_update);
+        return memoryManager.createSheet(parameters);
+      }
     ),
     defineFunction(
       {
@@ -98,6 +106,8 @@ naming. Only use when the "output_format" is set to "file".`
 The output format. When "file" is specified, the output will be saved as a VFS file and the "file_path" response parameter will be provided as output. Use this when you expect a long output from the sheet. NOTE that choosing this option will prevent you from seeing the output directly: you only get back the VFS path to the file. You can read this file as a separate action, but if you do expect to read it, the "json" output format might be a better choice.
 
 When "json" is specified, the output will be returned as JSON directlty, and the "json" response parameter will be provided.`),
+          ...taskIdSchema,
+          ...statusUpdateSchema,
         },
         response: {
           file_path: z
@@ -117,7 +127,9 @@ provided when the "output_format" is set to "json"`
         },
       },
       async (args) => {
-        const { output_format, file_name, ...rest } = args;
+        const { output_format, file_name, status_update, task_id, ...rest } =
+          args;
+        taskTreeManager.setInProgress(task_id, status_update);
         const result = await memoryManager.readSheet(rest);
         if (!ok(result)) return result;
         const parts = llm`${result}`.asParts().at(0);
@@ -152,10 +164,11 @@ The data to write, may include references to VFS files. For instance, if you hav
           ).describe(tr`
 The 2D array of data to write.
 `),
+          ...taskIdSchema,
         },
       },
-      async (args) => {
-        const { range, values: pidginValues } = args;
+      async ({ range, values: pidginValues, task_id }) => {
+        taskTreeManager.setInProgress(task_id, "");
         const errors: string[] = [];
         const values = await Promise.all(
           pidginValues.map(async (list) => {
@@ -184,16 +197,24 @@ The 2D array of data to write.
 Deletes a specific memory sheet`,
         parameters: {
           name: z.string().describe(tr`The name of the sheet`),
+          ...taskIdSchema,
+          ...statusUpdateSchema,
         },
       },
-      memoryManager.deleteSheet.bind(memoryManager)
+      async ({ task_id, status_update, ...parameters }) => {
+        taskTreeManager.setInProgress(task_id, status_update);
+        return memoryManager.deleteSheet(parameters);
+      }
     ),
     defineFunction(
       {
         name: MEMORY_GET_METADATA_FUNCTION,
         description: tr`
 Returns the names and header rows of all memory sheets.`,
-        parameters: {},
+        parameters: {
+          ...taskIdSchema,
+          ...statusUpdateSchema,
+        },
         response: {
           sheets: z.array(
             z.object({
@@ -214,7 +235,10 @@ The list of column names
           ),
         },
       },
-      memoryManager.getSheetMetadata.bind(memoryManager)
+      async ({ task_id, status_update }) => {
+        taskTreeManager.setInProgress(task_id, status_update);
+        return memoryManager.getSheetMetadata();
+      }
     ),
   ];
 }

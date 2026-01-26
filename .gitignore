@@ -148,6 +148,6 @@ lcov.info
 # Ignore any remaining instances of sandbox.wasm that might lurk in the tree.
 sandbox.wasm
 
-**/storage/
-**/storage/local-storage
-**/storage/session-storage
+**/test-storage/
+**/test-storage/local-storage
+**/test-storage/session-storage

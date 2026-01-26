@@ -11,11 +11,10 @@ import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { uiStateContext } from "../../contexts/ui-state.js";
 import "../../elements/input/expanding-textarea.js";
 import { SnackbarEvent, UnsnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
-import { LiteModeState, UI } from "../../state/types.js";
+import { LiteModeState } from "../../state/types.js";
 import * as StringsHelper from "../../strings/helper.js";
 import * as Styles from "../../styles/styles.js";
 import { ActionTracker, SnackType } from "../../types/types.js";
@@ -28,9 +27,6 @@ export type LiteEditInputController = {
 
 @customElement("bb-editor-input-lite")
 export class EditorInputLite extends SignalWatcher(LitElement) {
-  @consume({ context: uiStateContext })
-  accessor uiState!: UI;
-
   @consume({ context: actionTrackerContext })
   accessor actionTracker!: ActionTracker;
 

@@ -18,7 +18,55 @@ import {
   isTextCapabilityPart,
 } from "../../../../data/common.js";
 
-export function createTruncatedValue(port: InspectablePort | null) {
+export { truncateString, createTruncatedValue };
+
+const TOTAL_STRING_LENGTH = 150;
+const SUBSTRING_SUFFIX = "... ";
+const SUBSTRING_LIMIT = TOTAL_STRING_LENGTH - SUBSTRING_SUFFIX.length;
+
+function truncateString(s: string): string {
+  if (s.length < TOTAL_STRING_LENGTH) return s;
+
+  try {
+    const segmenter = new Intl.Segmenter(undefined, {
+      granularity: "sentence",
+    });
+    const segments = segmenter.segment(s);
+
+    let result = "";
+
+    for (const { segment } of segments) {
+      if ((result + segment).length <= SUBSTRING_LIMIT) {
+        result += segment;
+      } else {
+        break;
+      }
+    }
+
+    if (result.length === 0) {
+      const wordSegmenter = new Intl.Segmenter(undefined, {
+        granularity: "word",
+      });
+      const words = wordSegmenter.segment(s.substring(0, SUBSTRING_LIMIT));
+
+      for (const { segment } of words) {
+        if ((result + segment).length <= SUBSTRING_LIMIT) {
+          result += segment;
+        } else {
+          break;
+        }
+      }
+      return `${result.trimEnd()}${SUBSTRING_SUFFIX}`;
+    }
+
+    return result.trimEnd();
+  } catch (e) {
+    console.warn("Intl.Segmenter failed, falling back to basic truncation", e);
+  }
+  return `${s.substring(0, SUBSTRING_LIMIT).trimEnd()}${SUBSTRING_SUFFIX}`;
+}
+
+function createTruncatedValue(port: InspectablePort | null) {
   const MAX_SIZE = 220;
 
   if (!port) {
@@ -113,10 +161,5 @@ export function createTruncatedValue(port: InspectablePort | null) {
   const template = new Template(valStr);
   template.substitute((part) => part.title);
 
-  valStr = template.renderable;
-  if (valStr.length >= 35) {
-    valStr = `${valStr.substring(0, 32)}...`;
-  }
-
-  return valStr;
+  return truncateString(template.renderable);
 }

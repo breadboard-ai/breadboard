@@ -13,8 +13,11 @@ import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
 import { connectToOpalShellHost } from "./ui/utils/opal-shell-guest.js";
+import { Utils } from "./sca/utils.js";
 
 export { bootstrap };
+
+const logger = Utils.Logging.getLogger();
 
 function setColorScheme(colorScheme?: "light" | "dark") {
   const scheme =
@@ -115,9 +118,13 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       hostOrigin,
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
-      console.warn(
-        "No googleDrive.publishPermissions were configured." +
-          " Publishing with Google Drive will not be supported."
+      logger.log(
+        Utils.Logging.Formatter.warning(
+          "No googleDrive.publishPermissions were configured." +
+            " Publishing with Google Drive will not be supported."
+        ),
+        "Bootstrap",
+        false /* checkDebuggableAppControllerStatus */
       );
     }
 
@@ -151,8 +158,12 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     }
 
     const Strings = StringsHelper.forSection("Global");
-    console.log(
-      `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.default.version}; Commit ${GIT_HASH}]`
+    logger.log(
+      Utils.Logging.Formatter.info(
+        `Visual Editor: Version ${pkg.default.version}; Commit ${GIT_HASH}]`
+      ),
+      Strings.from("APP_NAME"),
+      false
     );
   } else {
     // Prevent endless looping.

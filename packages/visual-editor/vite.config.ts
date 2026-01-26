@@ -14,13 +14,17 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default defineConfig(async (): Promise<UserConfig> => {
+export default defineConfig(async (buildEnv): Promise<UserConfig> => {
   const [definedAssets, buildInfo] = await Promise.all([
     configureAssets(__dirname),
     tryGetGitHash(),
   ]);
 
-  const define = { ...buildInfo, ...definedAssets };
+  const define = {
+    ...buildInfo,
+    ...definedAssets,
+    ENABLE_DEBUG_TOOLING: buildEnv.mode === "development",
+  };
 
   const entry: Record<string, string> = {
     index: "./index.html",

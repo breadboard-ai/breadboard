@@ -14,12 +14,7 @@ import type {
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
-import { createContext } from "@lit/context";
 import { signal } from "signal-utils";
-
-export const signinAdapterContext = createContext<SigninAdapter | undefined>(
-  "SigninAdapter"
-);
 
 export class SigninAdapter implements SignInInfo {
   readonly #opalShell: OpalShellHostProtocol;

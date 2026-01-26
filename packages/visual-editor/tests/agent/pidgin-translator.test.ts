@@ -30,7 +30,8 @@ describe("Pidgin Translator", () => {
       const s = `<a href="foo">FOO</a>`;
       const translated = await makeTranslator().toPidgin(
         llm`${s}`.asContent(),
-        {}
+        {},
+        false
       );
       if (!ok(translated)) {
         fail(translated.$error);
@@ -50,7 +51,8 @@ describe("Pidgin Translator", () => {
 
       const translated = await translator.toPidgin(
         llm`Go to ${Template.route("Route A", "cool-route")}`.asContent(),
-        {}
+        {},
+        false
       );
       if (!ok(translated)) {
         fail(translated.$error);
@@ -64,7 +66,8 @@ describe("Pidgin Translator", () => {
     it("fails when adding malformed routes", async () => {
       const translated = await makeTranslator().toPidgin(
         llm`Go to ${Template.part({ type: "tool", title: "Route A", path: ROUTE_TOOL_PATH })}`.asContent(),
-        {}
+        {},
+        false
       );
       if (ok(translated)) {
         fail(`No error when adding malformed route`);

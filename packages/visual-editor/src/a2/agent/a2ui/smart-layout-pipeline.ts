@@ -48,7 +48,7 @@ class SmartLayoutPipeline {
       );
     }
 
-    const translated = await translator.toPidgin(content, params);
+    const translated = await translator.toPidgin(content, params, false);
     if (!ok(translated)) return translated;
 
     // 1. Create a spec from the data.
@@ -89,7 +89,7 @@ class SmartLayoutPipeline {
     const fileSystem = new AgentFileSystem({ memoryManager: null });
     const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
 
-    const translated = await translator.toPidgin(content, params);
+    const translated = await translator.toPidgin(content, params, false);
     if (!ok(translated)) return translated;
 
     // 1. Create a spec from the data.

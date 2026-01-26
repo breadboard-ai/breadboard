@@ -21,7 +21,6 @@ import {
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { type RunResults } from "@breadboard-ai/utils/google-drive/operations.js";
 import * as idb from "idb";
-import { RecentBoardStore } from "../data/recent-boards.js";
 import * as BreadboardUI from "../ui/index.js";
 import { BOARD_SAVE_STATUS } from "../ui/types/types.js";
 import type { SigninAdapter } from "../ui/utils/signin-adapter.js";
@@ -42,6 +41,8 @@ import {
   createAppPaletteIfNeeded,
 } from "./util.js";
 import { GoogleDriveBoardServer } from "../board-server/server.js";
+import { parseUrl } from "../ui/utils/urls.js";
+import { SCA } from "../sca/sca.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -85,9 +86,10 @@ export class Board extends EventTarget {
     public readonly loader: GraphLoader,
     public readonly graphStore: MutableGraphStore,
     public readonly googleDriveBoardServer: GoogleDriveBoardServer,
-    private readonly recentBoardStore: RecentBoardStore,
     private readonly signinAdapter: SigninAdapter,
-    private readonly googleDriveClient?: GoogleDriveClient
+    private readonly googleDriveClient?: GoogleDriveClient,
+    /** Here for migrations */
+    private readonly __sca?: SCA
   ) {
     super();
     this.googleDriveBoardServer.addEventListener(
@@ -109,32 +111,6 @@ export class Board extends EventTarget {
   }
 
   currentURL: URL | null = null;
-
-  getRecentBoards(): readonly BreadboardUI.Types.RecentBoard[] {
-    return this.recentBoardStore.boards;
-  }
-
-  async setPinnedStatus(url: string, status: "pin" | "unpin" = "unpin") {
-    url = url.replace(window.location.origin, "");
-    await this.recentBoardStore.setPin(url, status === "pin");
-  }
-
-  async #trackRecentBoard(url?: string) {
-    if (!this.currentTab || !url) {
-      return;
-    }
-
-    url = url.replace(window.location.origin, "");
-    await this.recentBoardStore.add({
-      title: this.currentTab.graph.title ?? "Untitled",
-      url,
-    });
-  }
-
-  async #removeRecentUrl(url: string) {
-    url = url.replace(window.location.origin, "");
-    await this.recentBoardStore.remove(url);
-  }
 
   #canParse(url: string, base?: string) {
     // TypeScript assumes that if `canParse` does not exist, then URL is
@@ -197,24 +173,8 @@ export class Board extends EventTarget {
   }
 
   getBoardURL(url: URL): string | undefined {
-    const params = new URLSearchParams(url.search);
-
-    let t = 0;
-    const board = params.get("board");
-    if (board) {
-      params.set(`tab${t++}`, board);
-      params.delete("board");
-    }
-
-    const tabs = [...params]
-      .filter((param) => param[0].startsWith("flow"))
-      .sort(([idA], [idB]) => {
-        if (idA > idB) return 1;
-        if (idA < idB) return -1;
-        return 0;
-      });
-
-    return tabs[0]?.[1];
+    const parsed = parseUrl(url);
+    return parsed.page === "graph" ? parsed.flow : undefined;
   }
 
   async createTabsFromURL(url: URL, closeAllTabs = false) {
@@ -442,6 +402,18 @@ export class Board extends EventTarget {
         finalOutputValues,
       });
 
+      if (this.__sca) {
+        this.__sca.controller.editor.graph.id = id;
+        this.__sca.controller.editor.graph.graph = graph;
+        this.__sca.controller.editor.graph.url = url;
+        this.__sca.controller.editor.graph.version = version;
+        this.__sca.controller.editor.graph.readOnly = !graphIsMine;
+        this.__sca.controller.editor.graph.graphIsMine = graphIsMine;
+        this.__sca.controller.editor.graph.mainGraphId = mainGraphId.result;
+        this.__sca.controller.editor.graph.lastLoadedVersion =
+          lastLoadedVersion;
+      }
+
       // If there's a current tab, close it.
       // We are in a single-tab environment for now.
       if (this.#currentTabId) {
@@ -456,7 +428,6 @@ export class Board extends EventTarget {
         return;
       }
 
-      await this.#trackRecentBoard(graph.url);
       const isNewerVersionOfSharedGraph =
         !graphIsMine && lastLoadedVersion !== -1 && lastLoadedVersion < version;
 
@@ -506,6 +477,10 @@ export class Board extends EventTarget {
         nextTab = tabList[t - 1];
         break;
       }
+    }
+
+    if (this.__sca) {
+      this.__sca.controller.editor.graph.resetAll();
     }
 
     this.#tabs.delete(id);
@@ -827,7 +802,6 @@ export class Board extends EventTarget {
 
     const result = await boardServer.delete(new URL(url));
 
-    await this.#removeRecentUrl(url);
     if (this.#currentTabId) {
       this.closeTab(this.#currentTabId);
     }
@@ -838,7 +812,7 @@ export class Board extends EventTarget {
         messages.end,
         BreadboardUI.Types.SnackType.INFORMATION,
         [],
-        true,
+        false,
         true
       )
     );

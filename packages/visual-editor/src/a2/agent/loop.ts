@@ -17,7 +17,10 @@ import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { AgentFileSystem } from "./file-system.js";
 import { FunctionCallerImpl } from "./function-caller.js";
-import { getGenerateFunctionGroup } from "./functions/generate.js";
+import {
+  getGenerateFunctionGroup,
+  ModelConstraint,
+} from "./functions/generate.js";
 import { getSystemFunctionGroup } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
@@ -28,6 +31,8 @@ import { FunctionGroup, UIType } from "./types.js";
 import { CHAT_LOG_VFS_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
+import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
+import { TaskTreeManager } from "./task-tree-manager.js";
 
 export { Loop };
 
@@ -37,6 +42,7 @@ export type AgentRunArgs = {
   uiType?: UIType;
   uiPrompt?: LLMContent;
   extraInstruction?: string;
+  modelConstraint?: ModelConstraint;
 };
 
 export type AgentRawResult = {
@@ -80,6 +86,7 @@ class Loop {
   private readonly fileSystem: AgentFileSystem;
   private readonly ui: AgentUI;
   private readonly memoryManager: SheetManager;
+  private readonly taskTreeManager: TaskTreeManager;
 
   constructor(
     private readonly caps: Capabilities,
@@ -94,21 +101,34 @@ class Loop {
     });
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
+    this.taskTreeManager = new TaskTreeManager(this.fileSystem);
   }
 
   async run({
     objective,
     params,
     uiPrompt,
-    uiType = "none",
+    uiType = "chat",
     extraInstruction = "",
+    modelConstraint = "none",
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
-    const { caps, moduleArgs, fileSystem, translator, ui, memoryManager } =
-      this;
+    const {
+      caps,
+      moduleArgs,
+      fileSystem,
+      translator,
+      ui,
+      memoryManager,
+      taskTreeManager,
+    } = this;
 
     ui.progress.startAgent(objective);
     try {
-      const objectivePidgin = await translator.toPidgin(objective, params);
+      const objectivePidgin = await translator.toPidgin(
+        objective,
+        params,
+        true
+      );
       if (!ok(objectivePidgin)) return objectivePidgin;
 
       if (extraInstruction) {
@@ -132,6 +152,7 @@ class Loop {
         getSystemFunctionGroup({
           fileSystem,
           translator,
+          taskTreeManager,
           failureCallback: (objective_outcome: string) => {
             terminateLoop = true;
             result = {
@@ -145,9 +166,6 @@ class Loop {
             if (!ok(originalRoute)) return originalRoute;
 
             terminateLoop = true;
-            console.log("SUCCESS! Objective fulfilled");
-            console.log("Transfer control to", originalRoute);
-            console.log("Objective outcomes:", objective_outcome);
             result = {
               success: true,
               href: originalRoute,
@@ -163,6 +181,8 @@ class Loop {
           caps,
           moduleArgs,
           translator,
+          modelConstraint,
+          taskTreeManager,
         })
       );
       functionGroups.push(
@@ -170,6 +190,7 @@ class Loop {
           translator,
           fileSystem,
           memoryManager,
+          taskTreeManager,
         })
       );
 
@@ -191,10 +212,17 @@ class Loop {
           JSON.stringify(ui.chatLog)
         );
         functionGroups.push(
-          getChatFunctionGroup({ chatManager: ui, translator })
+          getChatFunctionGroup({ chatManager: ui, translator, taskTreeManager })
         );
       } else {
         functionGroups.push(getNoUiFunctionGroup());
+      }
+
+      const enableGoogleDriveTools = await moduleArgs.context.flags?.flags();
+      if (enableGoogleDriveTools) {
+        functionGroups.push(
+          getGoogleDriveFunctionGroup({ fileSystem, moduleArgs })
+        );
       }
 
       const objectiveTools = objectivePidgin.tools.list().at(0);
@@ -255,7 +283,6 @@ class Loop {
           for (const part of parts) {
             if (part.thought) {
               if ("text" in part) {
-                console.log("THOUGHT", part.text);
                 ui.progress.thought(part.text);
               } else {
                 console.log("INVALID THOUGHT", part);

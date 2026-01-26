@@ -1,0 +1,9 @@
+{
+  "all": false,
+  "src": ["src"],
+  "exclude": ["**/*.test.ts", "**/tests/**", "**/types.ts", "**/context.ts"],
+  "include": ["src/sca/controller/**/*.ts"],
+  "omit-empty": true,
+  "check-coverage": false,
+  "exclude-after-remap": true
+}

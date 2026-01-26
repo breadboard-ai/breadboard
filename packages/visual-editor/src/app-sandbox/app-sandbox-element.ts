@@ -10,8 +10,6 @@ import { consume } from "@lit/context";
 import { css, html, LitElement, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { consentManagerContext } from "../ui/contexts/consent-manager.js";
-import type { ConsentManager } from "../ui/utils/consent-manager.js";
 import { INTERCEPT_POPUPS_SCRIPT } from "./app-sandbox-intercept-popups.js";
 import {
   type AppSandboxSrcDocMessage,
@@ -19,6 +17,8 @@ import {
   type AppSandboxRequestOpenPopupMessage,
   isAppSandboxRequestOpenPopupMessage,
 } from "./app-sandbox-protocol.js";
+import { scaContext } from "../sca/context/context.js";
+import { SCA } from "../sca/sca.js";
 
 /**
  * This element manages an outer iframe, which itself contains an inner iframe.
@@ -49,8 +49,8 @@ export class AppSandbox extends SignalWatcher(LitElement) {
   @property() accessor graphUrl = "";
 
   @state()
-  @consume({ context: consentManagerContext })
-  accessor consentManager: ConsentManager | undefined = undefined;
+  @consume({ context: scaContext })
+  accessor sca: SCA | undefined = undefined;
 
   readonly #iframe = createRef<HTMLIFrameElement>();
   get #iframeContentWindow() {
@@ -125,10 +125,10 @@ export class AppSandbox extends SignalWatcher(LitElement) {
   };
 
   async #onIframeRequestOpenPopup({ url }: AppSandboxRequestOpenPopupMessage) {
-    if (!this.consentManager || !this.graphUrl) {
+    if (!this.sca || !this.graphUrl) {
       return;
     }
-    const allow = await this.consentManager.queryConsent(
+    const allow = await this.sca.controller.global.consent.queryConsent(
       {
         graphUrl: this.graphUrl,
         type: ConsentType.OPEN_WEBPAGE,

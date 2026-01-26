@@ -23,8 +23,6 @@ import {
   OutputValues,
   ParameterMetadata,
   RunError,
-  RuntimeFlags,
-  ConsentRequestWithCallback,
   GraphDescriptor,
   EditableGraph,
 } from "@breadboard-ai/types";
@@ -38,7 +36,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { ConnectorInstance, ConnectorType } from "../connectors/types.js";
-import { StateEvent, ToastType } from "../events/events.js";
+import { StateEvent } from "../events/events.js";
 import {
   AppTheme,
   ParsedUrlProvider,
@@ -410,21 +408,8 @@ export type UI = {
   loadState: UILoadState;
   show: Set<UIOverlays>;
   showStatusUpdateChip: boolean | null;
-  toasts: Map<
-    string,
-    {
-      message: string;
-      type: ToastType;
-      persistent: boolean;
-    }
-  >;
-  /**
-   * Consent requests that will be displayed as a modal popup
-   */
-  consentRequests: Array<ConsentRequestWithCallback>;
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
-  flags: RuntimeFlags | null;
   subscriptionStatus: SubscriptionStatus;
   subscriptionCredits: number;
 };
@@ -504,7 +489,6 @@ export type LiteModeState = {
  */
 export type RuntimeContext = {
   readonly project: Project | null;
-  readonly ui: UI;
   readonly router: ParsedUrlProvider;
   readonly flowGenerator: FlowGenerator;
 };
