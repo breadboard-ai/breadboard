@@ -32,6 +32,7 @@ import { CHAT_LOG_VFS_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
 import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
+import { TaskTreeManager } from "./task-tree-manager.js";
 
 export { Loop };
 
@@ -85,6 +86,7 @@ class Loop {
   private readonly fileSystem: AgentFileSystem;
   private readonly ui: AgentUI;
   private readonly memoryManager: SheetManager;
+  private readonly taskTreeManager: TaskTreeManager;
 
   constructor(
     private readonly caps: Capabilities,
@@ -99,6 +101,7 @@ class Loop {
     });
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
+    this.taskTreeManager = new TaskTreeManager(this.fileSystem);
   }
 
   async run({
@@ -109,8 +112,15 @@ class Loop {
     extraInstruction = "",
     modelConstraint = "none",
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
-    const { caps, moduleArgs, fileSystem, translator, ui, memoryManager } =
-      this;
+    const {
+      caps,
+      moduleArgs,
+      fileSystem,
+      translator,
+      ui,
+      memoryManager,
+      taskTreeManager,
+    } = this;
 
     ui.progress.startAgent(objective);
     try {
@@ -142,6 +152,7 @@ class Loop {
         getSystemFunctionGroup({
           fileSystem,
           translator,
+          taskTreeManager,
           failureCallback: (objective_outcome: string) => {
             terminateLoop = true;
             result = {
@@ -171,6 +182,7 @@ class Loop {
           moduleArgs,
           translator,
           modelConstraint,
+          taskTreeManager,
         })
       );
       functionGroups.push(
@@ -178,6 +190,7 @@ class Loop {
           translator,
           fileSystem,
           memoryManager,
+          taskTreeManager,
         })
       );
 
@@ -199,7 +212,7 @@ class Loop {
           JSON.stringify(ui.chatLog)
         );
         functionGroups.push(
-          getChatFunctionGroup({ chatManager: ui, translator })
+          getChatFunctionGroup({ chatManager: ui, translator, taskTreeManager })
         );
       } else {
         functionGroups.push(getNoUiFunctionGroup());

@@ -27,12 +27,20 @@ import {
   mapDefinitions,
 } from "../function-definition.js";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction.js";
-import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils.js";
+import {
+  llm,
+  mergeContent,
+  mergeTextParts,
+  toText,
+  tr,
+} from "../../a2/utils.js";
 import { callVideoGen, expandVeoError } from "../../video-generator/main.js";
 import { callAudioGen, VOICES } from "../../audio-generator/main.js";
 import { callMusicGen } from "../../music-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
+import { statusUpdateSchema, taskIdSchema } from "./system.js";
+import { TaskTreeManager } from "../task-tree-manager.js";
 
 export { getGenerateFunctionGroup };
 
@@ -63,6 +71,7 @@ export type GenerateFunctionArgs = {
   moduleArgs: A2ModuleArgs;
   translator: PidginTranslator;
   modelConstraint: ModelConstraint;
+  taskTreeManager: TaskTreeManager;
 };
 
 const GENERATE_TEXT_FUNCTION = "generate_text";
@@ -112,7 +121,14 @@ function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
 function defineGenerateFunctions(
   args: GenerateFunctionArgs
 ): FunctionDefinition[] {
-  const { fileSystem, caps, moduleArgs, translator, modelConstraint } = args;
+  const {
+    fileSystem,
+    caps,
+    moduleArgs,
+    translator,
+    modelConstraint,
+    taskTreeManager,
+  } = args;
   const imageFunction = defineFunction(
     {
       name: "generate_images",
@@ -158,14 +174,12 @@ The Gemini model to use for image generation. How to choose the right model:
         images: z
           .array(z.string().describe("An input image, specified as a VS path"))
           .describe("A list of input images, specified as VFS paths"),
-        status_update: z.string().describe(tr`
-A status update to show in the UI that provides more detail on the reason why this function was called.
-
-For example, "Generating page 4 of the report" or "Combining the images into one"`),
         aspect_ratio: z
           .enum(["1:1", "9:16", "16:9", "4:3", "3:4"])
           .describe(`The aspect ratio for the generated images`)
           .default("16:9"),
+        ...taskIdSchema,
+        ...statusUpdateSchema,
       },
       response: {
         error: z
@@ -183,9 +197,17 @@ For example, "Generating page 4 of the report" or "Combining the images into one
       },
     },
     async (
-      { prompt, images: inputImages, status_update, model, aspect_ratio },
+      {
+        prompt,
+        images: inputImages,
+        status_update,
+        model,
+        aspect_ratio,
+        task_id,
+      },
       statusUpdater
     ) => {
+      taskTreeManager.setInProgress(task_id, status_update);
       statusUpdater(status_update || "Generating Image(s)", {
         expectedDurationInSec: 50,
       });
@@ -280,10 +302,8 @@ Specify URLs in the prompt.
 `
           )
           .optional(),
-        status_update: z.string().describe(tr`
-A status update to show in the UI that provides more detail on the reason why this function was called.
-
-For example, "Researching the story" or "Writing a poem"`),
+        ...taskIdSchema,
+        ...statusUpdateSchema,
       },
       response: {
         error: z
@@ -306,9 +326,11 @@ For example, "Researching the story" or "Writing a poem"`),
         maps_grounding,
         url_context,
         status_update,
+        task_id,
       },
       statusUpdater
     ) => {
+      taskTreeManager.setInProgress(task_id, status_update);
       if (status_update) {
         statusUpdater(status_update);
       } else {
@@ -427,14 +449,12 @@ The following elements should be included in your prompt:
             "A list of input reference images, specified as VFS paths. Use reference images only when you need to start with a particular image."
           )
           .optional(),
-        status_update: z.string().describe(tr`
-A status update to show in the UI that provides more detail on the reason why this function was called.
-
-For example, "Making a marketing video" or "Creating the video concept"`),
         aspect_ratio: z
           .enum(["16:9", "9:16"])
           .describe(`The aspect ratio of the video`)
           .default("16:9"),
+        ...taskIdSchema,
+        ...statusUpdateSchema,
       },
       response: {
         error: z
@@ -450,9 +470,10 @@ For example, "Making a marketing video" or "Creating the video concept"`),
       },
     },
     async (
-      { prompt, status_update, aspect_ratio, images },
+      { prompt, status_update, aspect_ratio, images, task_id },
       statusUpdateCallback
     ) => {
+      taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Video", {
         expectedDurationInSec: 70,
       });
@@ -490,12 +511,12 @@ For example, "Making a marketing video" or "Creating the video concept"`),
       description: "Generates speech from text",
       parameters: {
         text: z.string().describe("The verbatim text to turn into speech."),
-        status_update: z.string().describe(tr`
-A status update to show in the UI that provides more detail on the reason why this function was called.`),
         voice: z
           .enum(VOICES)
           .default("Female (English)")
           .describe("The voice to use for speech generation"),
+        ...taskIdSchema,
+        ...statusUpdateSchema,
       },
       response: {
         error: z
@@ -510,7 +531,8 @@ A status update to show in the UI that provides more detail on the reason why th
           .optional(),
       },
     },
-    async ({ text, status_update, voice }, statusUpdateCallback) => {
+    async ({ text, status_update, voice, task_id }, statusUpdateCallback) => {
+      taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Speech", {
         expectedDurationInSec: 20,
       });
@@ -552,8 +574,8 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
 `,
       parameters: {
         prompt: z.string().describe(`The prompt from which to generate music`),
-        status_update: z.string().describe(tr`
-A status update to show in the UI that provides more detail on the reason why this function was called.`),
+        ...taskIdSchema,
+        ...statusUpdateSchema,
       },
       response: {
         error: z
@@ -568,7 +590,8 @@ A status update to show in the UI that provides more detail on the reason why th
           .optional(),
       },
     },
-    async ({ prompt, status_update }, statusUpdateCallback) => {
+    async ({ prompt, status_update, task_id }, statusUpdateCallback) => {
+      taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Music", {
         expectedDurationInSec: 30,
       });
@@ -653,10 +676,8 @@ Whether or not to use Google Search grounding. Grounding with Google Search
 connects the code generation model to real-time web content and works with all available languages. This allows Gemini to power more complex use cases.`.trim()
           )
           .optional(),
-        status_update: z.string().describe(tr`
-A status update to show in the UI that provides more detail on the reason why this function was called.
-
-For example, "Creating random values" or "Computing prime numbers"`),
+        ...statusUpdateSchema,
+        ...taskIdSchema,
       },
       response: {
         error: z
@@ -673,7 +694,11 @@ For example, "Creating random values" or "Computing prime numbers"`),
           .optional(),
       },
     },
-    async ({ prompt, search_grounding, status_update }, statusUpdater) => {
+    async (
+      { prompt, search_grounding, status_update, task_id },
+      statusUpdater
+    ) => {
+      taskTreeManager.setInProgress(task_id, status_update);
       if (status_update) {
         statusUpdater(status_update, { expectedDurationInSec: 40 });
       } else {
@@ -689,10 +714,18 @@ For example, "Creating random values" or "Computing prime numbers"`),
       }
       tools.push({ codeExecution: {} });
       if (tools.length === 0) tools = undefined;
+
       const translated = await translator.fromPidginString(prompt);
       if (!ok(translated)) return { error: translated.$error };
       const body = await conformGeminiBody(moduleArgs, {
-        systemInstruction: defaultSystemInstruction(),
+        systemInstruction: llm`${tr`
+
+Your job is to generate and execute code to fulfill your objective.
+
+You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.
+DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please.
+
+`}`.asContent(),
         contents: [translated],
         tools,
       });
