@@ -25,6 +25,7 @@ import * as BreadboardUI from "../ui/index.js";
 import { BOARD_SAVE_STATUS } from "../ui/types/types.js";
 import type { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import {
+  RuntimeBoardEditEvent,
   RuntimeBoardLoadErrorEvent,
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeErrorEvent,
@@ -383,7 +384,7 @@ export class Board extends EventTarget {
         await this.#saveSharedVersionHistory(graph.url, version);
       }
 
-      this.#tabs.set(id, {
+      const tab: Tab = {
         id,
         name: graph.title ?? "Untitled board",
         graph,
@@ -400,11 +401,45 @@ export class Board extends EventTarget {
         history: await this.#loadLocalHistory(url),
         onHistoryChanged: (history) => this.#saveLocalHistory(url, history),
         finalOutputValues,
-      });
+      };
+
+      this.#tabs.set(id, tab);
 
       if (this.__sca) {
+        // Set up legacy event handling.
+        const editor = this.graphStore.editByDescriptor(graph, {
+          creator: tab.creator,
+          history: tab.history,
+          onHistoryChanged: tab.onHistoryChanged,
+        });
+        if (!editor) throw new Error("Unable to edit by descriptor");
+
+        editor.addEventListener("graphchange", (evt) => {
+          tab.graph = evt.graph;
+
+          this.dispatchEvent(
+            new RuntimeBoardEditEvent(
+              tab.id,
+              // This is wrong, since we lose the graphId here.
+              // TODO: Propagate graphId out to listeners of
+              // RuntimeBoardEditEvent.
+              evt.visualOnly ? [] : evt.affectedNodes.map((node) => node.id),
+              evt.visualOnly
+            )
+          );
+        });
+
+        editor.addEventListener("graphchangereject", (evt) => {
+          tab.graph = evt.graph;
+
+          const { reason } = evt;
+          if (reason.type === "error") {
+            this.dispatchEvent(new RuntimeErrorEvent(reason.error));
+          }
+        });
+
         this.__sca.controller.editor.graph.id = id;
-        this.__sca.controller.editor.graph.graph = graph;
+        this.__sca.controller.editor.graph.setEditor(editor);
         this.__sca.controller.editor.graph.url = url;
         this.__sca.controller.editor.graph.version = version;
         this.__sca.controller.editor.graph.readOnly = !graphIsMine;

@@ -75,6 +75,7 @@ import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js"
 import { sca, SCA } from "./sca/sca.js";
 import { Utils } from "./sca/utils.js";
 import { scaContext } from "./sca/context/context.js";
+import { effect } from "signal-utils/subtle/microtask-effect";
 
 export { MainBase };
 
@@ -247,6 +248,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       appSubName: Strings.from("SUB_APP_NAME"),
     };
     this.sca = sca(config, args.globalConfig.flags);
+    Utils.Logging.setDebuggableAppController(this.sca.controller);
 
     // Append SCA to the config.
     config.sca = this.sca;
@@ -367,6 +369,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   connectedCallback(): void {
     super.connectedCallback();
 
+    this.#createEffects();
+
     window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.addEventListener("pointerdown", this.#hideTooltipBound);
@@ -398,6 +402,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    this.#destroyEffects();
+
     window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.removeEventListener("pointerdown", this.#hideTooltipBound);
@@ -426,6 +432,49 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       console.warn(err);
       this.sca.controller.global.main.subscriptionStatus = "error";
       this.sca.controller.global.main.subscriptionCredits = -2;
+    }
+  }
+
+  #disposers: Array<() => void> = [];
+  #createEffects() {
+    const createDisposableEffects = (cbs: Array<() => void>) => {
+      for (const cb of cbs) {
+        const disposer = effect(cb);
+        this.#disposers.push(disposer);
+      }
+    };
+
+    const effects = [
+      // Effect: Listen for edits to save.
+      () => {
+        const { version, graphIsMine } = this.sca.controller.editor.graph;
+        if (!graphIsMine || version === -1) {
+          return;
+        }
+
+        // TODO: Wire save to this behavior.
+        this.logger.log(
+          Utils.Logging.Formatter.info("Version change:", version),
+          "Editor"
+        );
+      },
+    ];
+    createDisposableEffects(effects);
+  }
+
+  #destroyEffects() {
+    try {
+      this.logger.log(
+        Utils.Logging.Formatter.info(
+          `Removing ${this.#disposers.length} effects`
+        ),
+        "Editor"
+      );
+      for (const disposer of this.#disposers) {
+        disposer.call(null);
+      }
+    } finally {
+      this.#disposers.length = 0;
     }
   }
 
@@ -515,7 +564,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     );
 
-    this.runtime.edit.addEventListener(
+    // Historically this event came from this.runtime.edit, but during the
+    // migration to SCA the listeners are created during this.runtime.board's
+    // tab creation process, so it is the one that now fires the events.
+
+    this.runtime.board.addEventListener(
       Runtime.Events.RuntimeBoardEditEvent.eventName,
       () => {
         this.runtime.board.save(
@@ -919,13 +972,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     const deps: KeyboardCommandDeps = {
       runtime: this.runtime,
-      appController: this.sca.controller,
+      sca: this.sca,
       selectionState: this.selectionState,
       tab: this.tab,
       originalEvent: evt,
       pointerLocation: this.lastPointerPosition,
       settings: this.settings,
-      graphStore: this.graphStore,
       strings: Strings,
     } as const;
 

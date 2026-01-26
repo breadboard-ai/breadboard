@@ -17,6 +17,7 @@ import { RuntimeTabChangeEvent } from "./events.js";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { AppController } from "../sca/controller/controller.js";
+import { SCA } from "../sca/sca.js";
 
 export { StateManager };
 
@@ -38,11 +39,14 @@ class StateManager implements RuntimeContext {
     // Omitting state to avoid circular references
     private readonly runtime: Omit<Runtime, "state">,
     store: MutableGraphStore,
-    appController: AppController
+    appController: AppController,
+    private readonly __sca: SCA
   ) {
     this.#store = store;
     this.flowGenerator = this.runtime.flowGenerator;
     this.lite = createLiteModeState(this, appController);
+
+    // TODO: Remove this event in favor of an effect.
     this.runtime.board.addEventListener(RuntimeTabChangeEvent.eventName, () => {
       const tab = this.runtime.board.currentTab;
       if (!tab) {
@@ -57,7 +61,7 @@ class StateManager implements RuntimeContext {
       const mainGraphId = tab.mainGraphId;
       if (mainGraphId === this.#currentMainGraphId) return;
       this.#currentMainGraphId = mainGraphId;
-      const editor = this.runtime.edit.getEditor(tab);
+      const editor = this.__sca.controller.editor.graph.editor;
       this.project = this.createProjectState(mainGraphId, editor);
     });
   }

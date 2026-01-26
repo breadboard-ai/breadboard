@@ -134,5 +134,10 @@ suite("FlagController", () => {
       () => String(store.streamPlanner),
       new Error("streamPlanner was not set by environment")
     );
+
+    assert.throws(
+      () => String(store.enableGoogleDriveTools),
+      new Error("enableGoogleDriveTools was not set by environment")
+    );
   });
 });

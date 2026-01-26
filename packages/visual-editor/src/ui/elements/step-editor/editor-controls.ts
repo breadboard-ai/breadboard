@@ -172,6 +172,10 @@ export class EditorControls extends LitElement {
             margin: var(--bb-grid-size) 0 var(--bb-grid-size-2) 0;
           }
 
+          &[disabled] {
+            opacity: 0.38;
+          }
+
           &:not([disabled]) {
             cursor: pointer;
 
