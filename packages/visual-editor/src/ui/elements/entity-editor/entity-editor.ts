@@ -42,7 +42,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
-import { Project, StepEditorSurface, UI } from "../../state/index.js";
+import { Project, StepEditorSurface } from "../../state/index.js";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
@@ -72,7 +72,6 @@ import {
 } from "../elements.js";
 
 import type { EmbedState } from "@breadboard-ai/types/embedder.js";
-import { uiStateContext } from "../../contexts/ui-state.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import {
@@ -148,9 +147,6 @@ export class EntityEditor
 
   @state()
   accessor values: InputValues | undefined;
-
-  @consume({ context: uiStateContext })
-  accessor uiState!: UI;
 
   static styles = [
     icons,
