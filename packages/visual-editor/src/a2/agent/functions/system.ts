@@ -278,12 +278,15 @@ If the objective specifies other agent URLs using the
       {
         name: LIST_FILES_FUNCTION,
         description: "Lists all VFS files",
-        parameters: {},
+        parameters: {
+          ...statusUpdateSchema,
+        },
         response: {
           list: z.string().describe("List of all files as VFS paths"),
         },
       },
-      async () => {
+      async ({ status_update }, statusUpdate) => {
+        statusUpdate(status_update || "Getting a list of files");
         return { list: await args.fileSystem.listFiles() };
       }
     ),
