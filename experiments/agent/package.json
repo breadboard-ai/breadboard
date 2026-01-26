@@ -12,7 +12,7 @@
   "license": "Apache-2.0",
   "description": "",
   "dependencies": {
-    "@google/genai": "^1.27.0",
+    "@google/genai": "^1.35.0",
     "dotenv": "^17.2.3",
     "mime": "^4.1.0",
     "zod": "^4.3.5"
