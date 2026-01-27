@@ -42,10 +42,12 @@ class Main extends MainBase {
   }
 
   private addExperimentalToggleToWindow() {
-    const windowWithExperimentalFeatures = globalThis.window as unknown as {
+    const guestWindow = globalThis.window as unknown as {
       toggleExperimentalFeatures(): Promise<unknown>;
+      downloadAgentTraces(): object;
+      getAgentRuns(): unknown[];
     };
-    windowWithExperimentalFeatures.toggleExperimentalFeatures = async () => {
+    guestWindow.toggleExperimentalFeatures = async () => {
       // Ignore the call if the value is still hydrating.
       if (
         Utils.Helpers.isHydrating(
@@ -73,6 +75,24 @@ class Main extends MainBase {
       );
 
       return this.sca.controller.global.main.experimentalComponents.valueOf();
+    };
+
+    guestWindow.downloadAgentTraces = () => {
+      const traces = this.sca.services.agentContext.exportTraces();
+      const blob = new Blob([JSON.stringify(traces, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `agent-traces-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      return traces;
+    };
+
+    guestWindow.getAgentRuns = () => {
+      return this.sca.services.agentContext.getAllRuns();
     };
   }
 
@@ -178,7 +198,7 @@ class Main extends MainBase {
         >
       ) => this.handleRoutedEvent(evt)}
       @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
-      this.sca.controller.global.snackbars.snackbar(
+        this.sca.controller.global.snackbars.snackbar(
           snackbarEvent.message,
           snackbarEvent.snackType,
           snackbarEvent.actions,
@@ -188,7 +208,7 @@ class Main extends MainBase {
         );
       }}
       @bbunsnackbar=${(evt: BreadboardUI.Events.UnsnackbarEvent) => {
-      this.sca.controller.global.snackbars.unsnackbar(evt.snackbarId);
+        this.sca.controller.global.snackbars.unsnackbar(evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
         this.sca.controller.global.toasts.toast(

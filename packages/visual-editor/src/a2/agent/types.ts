@@ -139,3 +139,32 @@ export type MappedDefinitions = {
 export type FunctionGroup = MappedDefinitions & {
   instruction?: string;
 };
+
+/**
+ * Status of an agent loop run.
+ */
+export type RunStatus = "running" | "failed" | "completed";
+
+/**
+ * Trace information for a function group (serializable).
+ */
+export type FunctionGroupTrace = {
+  name: string | undefined;
+  declarationNames: string[];
+};
+
+/**
+ * Stored state of an agent loop run, used for resume and trace download.
+ */
+export type RunState = {
+  id: string;
+  status: RunStatus;
+  startTime: number;
+  endTime?: number;
+  contents: LLMContent[];
+  functionGroups: FunctionGroupTrace[];
+  lastCompleteTurnIndex: number;
+  error?: string;
+  /** The original objective for this run */
+  objective: LLMContent;
+};

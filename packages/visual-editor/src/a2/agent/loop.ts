@@ -25,7 +25,7 @@ import { getSystemFunctionGroup } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
 import { getMemoryFunctionGroup } from "./functions/memory.js";
-import { FunctionGroup, MemoryManager, UIType } from "./types.js";
+import { FunctionGroup, MemoryManager, RunState, UIType } from "./types.js";
 import { CHAT_LOG_VFS_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
@@ -85,6 +85,7 @@ class Loop {
   private readonly ui: AgentUI;
   private readonly memoryManager: MemoryManager;
   private readonly taskTreeManager: TaskTreeManager;
+  private runState?: RunState;
 
   constructor(
     private readonly caps: Capabilities,
@@ -222,6 +223,14 @@ class Loop {
         );
       }
 
+      // Initialize run state tracking
+      const runId = moduleArgs.context.currentStep?.id ?? crypto.randomUUID();
+      this.runState = moduleArgs.agentContext.createRun(runId, objective);
+      this.runState.functionGroups = functionGroups.map((fg) => ({
+        name: fg.instruction?.slice(0, 50),
+        declarationNames: fg.declarations.map((d) => d.name),
+      }));
+
       const objectiveTools = objectivePidgin.tools.list().at(0);
       const tools: Tool[] = [
         {
@@ -271,11 +280,19 @@ class Loop {
         for await (const chunk of generated) {
           const content = chunk.candidates?.at(0)?.content;
           if (!content) {
+            if (this.runState) {
+              this.runState.status = "failed";
+              this.runState.error = "No content in Gemini response";
+              this.runState.endTime = performance.now();
+            }
             return err(
               `Agent unable to proceed: no content in Gemini response`
             );
           }
           contents.push(content);
+          if (this.runState) {
+            this.runState.contents.push(content);
+          }
           const parts = content.parts || [];
           for (const part of parts) {
             if (part.thought) {
@@ -296,10 +313,19 @@ class Loop {
         const functionResults = await functionCaller.getResults();
         if (!functionResults) continue;
         if (!ok(functionResults)) {
+          if (this.runState) {
+            this.runState.status = "failed";
+            this.runState.error = functionResults.$error;
+            this.runState.endTime = performance.now();
+          }
           return err(`Agent unable to proceed: ${functionResults.$error}`);
         }
         ui.progress.functionResult(functionResults);
         contents.push(functionResults);
+        if (this.runState) {
+          this.runState.contents.push(functionResults);
+          this.runState.lastCompleteTurnIndex++;
+        }
       }
       return this.#finalizeResult(result);
     } finally {
@@ -310,7 +336,16 @@ class Loop {
   async #finalizeResult(raw: AgentRawResult): Promise<Outcome<AgentResult>> {
     const { success, href, objective_outcome } = raw;
     if (!success) {
+      if (this.runState) {
+        this.runState.status = "failed";
+        this.runState.error = objective_outcome;
+        this.runState.endTime = performance.now();
+      }
       return err(objective_outcome);
+    }
+    if (this.runState) {
+      this.runState.status = "completed";
+      this.runState.endTime = performance.now();
     }
     const outcomes = await this.translator.fromPidginString(objective_outcome);
     if (!ok(outcomes)) return outcomes;
