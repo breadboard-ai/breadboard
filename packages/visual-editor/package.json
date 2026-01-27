@@ -201,7 +201,7 @@
     "google-auth-library": "^10.1.0",
     "jsdom": "^27.4.0",
     "node-localstorage": "^3.0.5",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.1",
     "tsx": "^4.20.6",
     "tweakpane": "^4.0.5",
     "typescript": "^5.8.3",
