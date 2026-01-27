@@ -219,6 +219,99 @@ suite("Graph Actions", () => {
           (err: Error) => err.message.includes("nonexistent")
         );
       });
+
+      test("addNode creates a new node", async () => {
+        assert.strictEqual(testGraph.nodes.length, 2);
+
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.addNode(
+          {
+            id: "new-node",
+            type: "promptTemplate",
+            metadata: { title: "New Node" },
+          },
+          ""
+        );
+        testGraph = await changeWatcher;
+
+        assert.strictEqual(testGraph.nodes.length, 3);
+        const newNode = testGraph.nodes.find((n) => n.id === "new-node");
+        assert.ok(newNode, "New node should exist");
+        assert.strictEqual(newNode.type, "promptTemplate");
+        assert.strictEqual(newNode.metadata?.title, "New Node");
+      });
+
+      test("moveSelectionPositions updates node positions", async () => {
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.moveSelectionPositions([
+          { type: "node", id: "foo", graphId: "", x: 100, y: 200 },
+        ]);
+        testGraph = await changeWatcher;
+
+        const node = testGraph.nodes.find((n) => n.id === "foo");
+        assert.ok(node, "Node should exist");
+        assert.strictEqual(
+          (node.metadata?.visual as { x: number } | undefined)?.x,
+          100
+        );
+        assert.strictEqual(
+          (node.metadata?.visual as { y: number } | undefined)?.y,
+          200
+        );
+      });
+
+      test("moveSelectionPositions updates asset positions", async () => {
+        // First add an asset to the graph
+        const editor = graphActions.bind.controller.editor.graph.editor;
+        assert.ok(editor, "Editor should exist");
+
+        await editor.edit(
+          [
+            {
+              type: "addasset",
+              path: "test-asset.txt",
+              data: { inline: "test content" },
+              metadata: {
+                title: "Test Asset",
+                type: "content",
+              },
+            },
+          ],
+          "Add test asset"
+        );
+
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.moveSelectionPositions([
+          { type: "asset", id: "test-asset.txt", graphId: "", x: 300, y: 400 },
+        ]);
+        testGraph = await changeWatcher;
+
+        const asset = testGraph.assets?.["test-asset.txt"];
+        assert.ok(asset, "Asset should exist");
+        assert.strictEqual(
+          (asset.metadata?.visual as { x: number } | undefined)?.x,
+          300
+        );
+        assert.strictEqual(
+          (asset.metadata?.visual as { y: number } | undefined)?.y,
+          400
+        );
+      });
+
+      test("moveSelectionPositions skips assets without metadata", async () => {
+        // This should not throw - just skip the asset
+        await graphActions.moveSelectionPositions([
+          {
+            type: "asset",
+            id: "nonexistent-asset.txt",
+            graphId: "",
+            x: 100,
+            y: 200,
+          },
+        ]);
+        // If we get here without throwing, the test passes
+        assert.ok(true, "Should not throw for missing asset");
+      });
     });
   });
 });

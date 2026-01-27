@@ -5,17 +5,20 @@
  */
 
 import {
+  AssetMetadata,
   Edge,
   EditSpec,
   EditTransform,
   GraphIdentifier,
   NodeConfiguration,
+  NodeDescriptor,
   NodeIdentifier,
   NodeMetadata,
 } from "@breadboard-ai/types";
 import { makeAction } from "../binder.js";
 import { ChangeEdge, UpdateNode } from "../../../ui/transforms/index.js";
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
+import type { SelectionPositionUpdate } from "../../../ui/events/node/node.js";
 
 export const bind = makeAction();
 
@@ -127,16 +130,6 @@ export async function changeNodeConfiguration(
   metadata: NodeMetadata | null = null,
   portsToAutowire: InPort[] | null = null
 ) {
-  const { controller } = bind;
-  const { editor, readOnly } = controller.editor.graph;
-  if (!editor) {
-    throw new Error("No active graph to edit");
-  }
-
-  if (readOnly) {
-    return;
-  }
-
   const updateNodeTransform = new UpdateNode(
     id,
     graphId,
@@ -145,10 +138,9 @@ export async function changeNodeConfiguration(
     portsToAutowire
   );
 
-  const result = await editor.apply(updateNodeTransform);
-  if (!result.success) {
-    throw new Error(result.error);
-  }
+  await applyInternal(updateNodeTransform);
+
+  const { controller } = bind;
 
   // Set the signal so the autoname trigger can react.
   controller.editor.graph.lastNodeConfigChange = {
@@ -157,4 +149,68 @@ export async function changeNodeConfiguration(
     configuration: configurationPart,
     titleUserModified: updateNodeTransform.titleUserModified,
   };
+}
+
+/**
+ * Adds a single node to the graph.
+ */
+export function addNode(node: NodeDescriptor, graphId: GraphIdentifier) {
+  return editInternal(
+    [{ type: "addnode", graphId, node }],
+    `Add step: ${node.metadata?.title ?? node.id}`
+  );
+}
+
+/**
+ * Updates the positions of selected nodes and assets.
+ */
+export function moveSelectionPositions(updates: SelectionPositionUpdate[]) {
+  const { controller } = bind;
+  const { editor } = controller.editor.graph;
+  if (!editor) {
+    throw new Error("No active graph to edit");
+  }
+
+  const edits: EditSpec[] = [];
+
+  for (const update of updates) {
+    if (update.type === "node") {
+      // Fetch existing metadata from editor, merge visual coordinates
+      const inspector = editor.inspect(update.graphId);
+      const node = inspector.nodeById(update.id);
+      const existingMetadata = node?.metadata() ?? {};
+      const existingVisual = (existingMetadata.visual ?? {}) as Record<
+        string,
+        unknown
+      >;
+      const metadata: NodeMetadata = {
+        ...existingMetadata,
+        visual: { ...existingVisual, x: update.x, y: update.y },
+      };
+      edits.push({
+        type: "changemetadata",
+        id: update.id,
+        graphId: update.graphId,
+        metadata,
+      });
+    } else {
+      // Asset position update
+      const graph = editor.raw();
+      const asset = graph.assets?.[update.id];
+      if (!asset?.metadata) {
+        continue;
+      }
+      const metadata: AssetMetadata = {
+        ...asset.metadata,
+        visual: { x: update.x, y: update.y },
+      };
+      edits.push({
+        type: "changeassetmetadata",
+        path: update.id,
+        metadata,
+      });
+    }
+  }
+
+  return editInternal(edits, "Update selection position");
 }

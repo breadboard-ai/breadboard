@@ -23,7 +23,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { calculateBounds } from "./utils/calculate-bounds.js";
 import { clamp } from "./utils/clamp.js";
 import {
-  EditSpec,
   GraphIdentifier,
   InspectableGraph,
   InspectableNode,
@@ -31,7 +30,6 @@ import {
   MutableGraphStore,
   NodeDescriptor,
   NodeIdentifier,
-  NodeValue
 } from "@breadboard-ai/types";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
@@ -72,7 +70,7 @@ import { collectAssetIds, collectNodeIds } from "./utils/collect-ids.js";
 import { EditorControls } from "./editor-controls.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants.js";
-import { AssetMetadata, EditHistory, RuntimeFlags } from "@breadboard-ai/types";
+import { EditHistory, RuntimeFlags } from "@breadboard-ai/types";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command.js";
 import { Project, RendererRunState, RendererState } from "../../state/index.js";
 import { baseColors } from "../../styles/host/base-colors.js";
@@ -638,16 +636,9 @@ export class Renderer extends LitElement {
 
     this.dispatchEvent(
       new StateEvent({
-        eventType: "node.multichange",
-        description: `Add step: ${title}`,
-        subGraphId: null,
-        edits: [
-          {
-            type: "addnode",
-            graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
-            node,
-          },
-        ],
+        eventType: "node.add",
+        node,
+        graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
       })
     );
   }
@@ -1388,7 +1379,13 @@ export class Renderer extends LitElement {
       return;
     }
 
-    const edits: EditSpec[] = [];
+    const edits: {
+      type: "node" | "asset";
+      id: string;
+      graphId: string;
+      x: number;
+      y: number;
+    }[] = [];
 
     for (const graphId of this.selectionState.selectionState.graphs.keys()) {
       const graph = this.#graphs.get(graphId);
@@ -1409,58 +1406,39 @@ export class Renderer extends LitElement {
           continue;
         }
 
-        const metadata = { ...(graphNode.metadata() ?? {}) };
-        metadata.visual ??= {};
-
-        const visual = metadata.visual as Record<string, number>;
-        visual.x = toGridSize(graph.transform.e + graphNodeEntity.transform.e);
-        visual.y = toGridSize(graph.transform.f + graphNodeEntity.transform.f);
-
         const editGraphId = graphId === MAIN_BOARD_ID ? "" : graphId;
         edits.push({
-          type: "changemetadata",
-          graphId: editGraphId,
+          type: "node",
           id: nodeId,
-          metadata,
+          graphId: editGraphId,
+          x: toGridSize(graph.transform.e + graphNodeEntity.transform.e),
+          y: toGridSize(graph.transform.f + graphNodeEntity.transform.f),
         });
       }
 
       for (const assetPath of graphSelection.assets) {
         // Find the InspectableNode and the GraphNode entity and create the
         // updated metadata from the two.
-        const graphAsset = graph.assets.get(assetPath);
         const graphAssetEntity = graph.entities.get(assetPath);
-        if (!graphAsset || !graphAssetEntity) {
+        if (!graphAssetEntity) {
           continue;
         }
 
-        const visual = (graphAsset.visual ?? {}) as Record<string, NodeValue>;
-        visual.x = toGridSize(graph.transform.e + graphAssetEntity.transform.e);
-        visual.y = toGridSize(graph.transform.f + graphAssetEntity.transform.f);
-
-        const metadata: AssetMetadata = {
-          title: graphAsset.title,
-          type: graphAsset.type,
-          description: graphAsset.description,
-          subType: graphAsset.subType,
-          visual,
-          managed: graphAsset.managed,
-        };
-
+        const editGraphId = graphId === MAIN_BOARD_ID ? "" : graphId;
         edits.push({
-          type: "changeassetmetadata",
-          path: assetPath,
-          metadata,
+          type: "asset",
+          id: assetPath,
+          graphId: editGraphId,
+          x: toGridSize(graph.transform.e + graphAssetEntity.transform.e),
+          y: toGridSize(graph.transform.f + graphAssetEntity.transform.f),
         });
       }
     }
 
     this.dispatchEvent(
       new StateEvent({
-        eventType: "node.multichange",
-        description: "Update selection position",
-        edits,
-        subGraphId: null,
+        eventType: "node.moveselection",
+        updates: edits,
       })
     );
   }

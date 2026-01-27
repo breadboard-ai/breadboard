@@ -6,7 +6,6 @@
 
 import {
   Edge,
-  EditSpec,
   GraphIdentifier,
   NodeConfiguration,
   NodeDescriptor,
@@ -43,11 +42,31 @@ export interface Change extends BaseEventDetail<`${Namespace}.change`> {
   readonly ins: { path: string; title: string }[] | null;
 }
 
-export interface MultiChange
-  extends BaseEventDetail<`${Namespace}.multichange`> {
-  readonly edits: EditSpec[];
-  readonly description: string;
-  readonly subGraphId: string | null;
+/**
+ * Event for adding a single node to the graph.
+ */
+export interface Add extends BaseEventDetail<`${Namespace}.add`> {
+  readonly node: NodeDescriptor;
+  readonly graphId: GraphIdentifier;
+}
+
+/**
+ * Position update for a node or asset during selection move.
+ */
+export interface SelectionPositionUpdate {
+  readonly type: "node" | "asset";
+  readonly id: string;
+  readonly graphId: GraphIdentifier;
+  readonly x: number;
+  readonly y: number;
+}
+
+/**
+ * Event for updating positions of selected nodes and assets.
+ */
+export interface MoveSelection
+  extends BaseEventDetail<`${Namespace}.moveselection`> {
+  readonly updates: SelectionPositionUpdate[];
 }
 
 export interface ChangeEdge extends BaseEventDetail<`${Namespace}.changeedge`> {
