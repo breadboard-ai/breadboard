@@ -23,6 +23,7 @@ import {
   TaskTreeManager,
 } from "../task-tree-manager.js";
 import { FunctionGroup } from "../types.js";
+import { GENERATE_TEXT_FUNCTION } from "./generate.js";
 
 export {
   FAILED_TO_FULFILL_FUNCTION,
@@ -337,8 +338,11 @@ Use snake_case for naming. If the file does not exist, it will be created. If th
     defineFunction(
       {
         name: "system_read_text_from_file",
-        description:
-          "Reads text from a file and return text as string. If the file does not contain text, empty string will be returned",
+        description: tr`
+
+Reads text from a file and return text as string. If the file does not contain text or is not supported, an error will be returned. Google Drive files may contain images and other non-textual content. Please use "${GENERATE_TEXT_FUNCTION}" to read them at full fidelity.
+
+`,
         parameters: {
           file_path: z.string().describe(
             tr`

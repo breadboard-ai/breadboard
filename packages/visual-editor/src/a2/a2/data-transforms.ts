@@ -19,7 +19,9 @@ import { isFileDataCapabilityPart } from "../../data/common.js";
 
 export { createDataPartTansformer, driveFileToBlob, toGcsAwareChunk };
 
-const BLOB_PREFIX = new URL("/board/blobs/", window.location.href).href;
+function getBlobPrefix(): string {
+  return new URL("/board/blobs/", window.location.href).href;
+}
 
 const BACKEND_UPLOAD_BLOB_FILE_ENDPOINT = "/v1beta1/uploadBlobFile";
 
@@ -140,7 +142,7 @@ async function driveFileToBlob(
   part: StoredDataCapabilityPart
 ): Promise<Outcome<BlobStoredData>> {
   const existingHandle = part.storedData.handle;
-  if (existingHandle.startsWith(BLOB_PREFIX)) {
+  if (existingHandle.startsWith(getBlobPrefix())) {
     return { part };
   } else if (!existingHandle.startsWith("drive:/")) {
     return err(`Unknown blob URL: "${existingHandle}`);
