@@ -471,11 +471,6 @@ const PasteCommand: KeyboardCommand = {
         runtime.util.createWorkspaceSelectionChangeId(),
         workspaceSelection
       );
-    } else {
-      // Option 2. User pastes a board.
-      if (boardContents) {
-        runtime.board.createTabFromDescriptor(boardContents);
-      }
     }
   },
 };

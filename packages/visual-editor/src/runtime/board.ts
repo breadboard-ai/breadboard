@@ -163,9 +163,6 @@ export class Board extends EventTarget {
     return this.#tabs.get(this.#currentTabId) ?? null;
   }
 
-  getTabById(tab: TabId): Tab | null {
-    return this.#tabs.get(tab) ?? null;
-  }
 
   getTabURLs(): string[] {
     return [...this.#tabs.values()]
@@ -206,70 +203,7 @@ export class Board extends EventTarget {
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
-  async #toDigest(descriptor: GraphDescriptor) {
-    const graph = structuredClone(descriptor);
-    delete graph.url;
 
-    const str = JSON.stringify(graph, null, 2);
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(str);
-
-    const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
-    return [...new Uint8Array(digest)]
-      .map((v) => v.toString(16).padStart(2, "0"))
-      .join("");
-  }
-
-  async createTabFromDescriptor(
-    descriptor: GraphDescriptor,
-    createNewTab = false,
-    dispatchTabChangeEvent = true
-  ) {
-    const descriptorUrl = await this.#toDigest(descriptor);
-    descriptor.url = `descriptor://${descriptorUrl}`;
-
-    // Re-use an existing tab if possible.
-    if (!createNewTab) {
-      for (const [id, tab] of this.#tabs) {
-        if (tab.graph.url !== descriptor.url) {
-          continue;
-        }
-
-        this.#currentTabId = id;
-        this.dispatchEvent(new RuntimeTabChangeEvent());
-        return;
-      }
-    }
-
-    const moduleId = descriptor.main || null;
-
-    const id = globalThis.crypto.randomUUID();
-    const mainGraphId = this.graphStore.addByDescriptor(descriptor);
-    if (!mainGraphId.success) {
-      throw new Error(`Unable to add graph: ${mainGraphId.error}`);
-    }
-    this.#tabs.set(id, {
-      id,
-      name: descriptor.title ?? "Untitled board",
-      graph: descriptor,
-      graphIsMine: true,
-      mainGraphId: mainGraphId.result,
-      subGraphId: null,
-      boardServer: null,
-      moduleId,
-      version: 1,
-      lastLoadedVersion: 1,
-      type: TabType.DESCRIPTOR,
-      readOnly: false,
-    });
-
-    this.#currentTabId = id;
-    if (!dispatchTabChangeEvent) {
-      return;
-    }
-
-    this.dispatchEvent(new RuntimeTabChangeEvent());
-  }
 
   async createTabFromURL(
     boardUrl: string,
@@ -477,14 +411,6 @@ export class Board extends EventTarget {
     }
   }
 
-  changeTab(id: TabId) {
-    if (!this.#tabs.has(id)) {
-      return;
-    }
-
-    this.#currentTabId = id;
-    this.dispatchEvent(new RuntimeTabChangeEvent());
-  }
 
   closeAllTabs() {
     const tabList = [...this.#tabs.keys()];
