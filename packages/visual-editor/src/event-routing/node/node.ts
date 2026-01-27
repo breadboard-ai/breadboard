@@ -34,8 +34,8 @@ export const ChangeRoute: EventRoute<"node.change"> = {
   },
 };
 
-export const MultiChangeRoute: EventRoute<"node.multichange"> = {
-  event: "node.multichange",
+export const AddRoute: EventRoute<"node.add"> = {
+  event: "node.add",
 
   async do({ runtime, tab, originalEvent, sca }) {
     if (!tab) {
@@ -43,27 +43,40 @@ export const MultiChangeRoute: EventRoute<"node.multichange"> = {
     }
 
     sca.controller.global.main.blockingAction = true;
-    await runtime.edit.multiEdit(
-      tab,
-      originalEvent.detail.edits,
-      originalEvent.detail.description
-    );
-    sca.controller.global.main.blockingAction = false;
+    try {
+      await sca.actions.graph.addNode(
+        originalEvent.detail.node,
+        originalEvent.detail.graphId
+      );
 
-    const additions: string[] = originalEvent.detail.edits
-      .map((edit) => (edit.type === "addnode" ? edit.node.id : null))
-      .filter((item) => item !== null);
-
-    if (additions.length === 0) {
-      return false;
+      // Select the new node
+      runtime.select.selectNodes(
+        tab.id,
+        runtime.select.generateId(),
+        originalEvent.detail.graphId || BreadboardUI.Constants.MAIN_BOARD_ID,
+        [originalEvent.detail.node.id]
+      );
+    } finally {
+      sca.controller.global.main.blockingAction = false;
     }
 
-    runtime.select.selectNodes(
-      tab.id,
-      runtime.select.generateId(),
-      originalEvent.detail.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-      additions
-    );
+    return false;
+  },
+};
+
+export const MoveSelectionRoute: EventRoute<"node.moveselection"> = {
+  event: "node.moveselection",
+
+  async do({ originalEvent, sca }) {
+    sca.controller.global.main.blockingAction = true;
+    try {
+      await sca.actions.graph.moveSelectionPositions(
+        originalEvent.detail.updates
+      );
+    } finally {
+      sca.controller.global.main.blockingAction = false;
+    }
+
     return false;
   },
 };

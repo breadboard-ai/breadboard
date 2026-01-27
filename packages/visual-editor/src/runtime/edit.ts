@@ -11,8 +11,6 @@ import {
   GraphDescriptor,
   MutableGraphStore,
   NodeConfiguration,
-  NodeDescriptor,
-  NodeIdentifier,
 } from "@breadboard-ai/types";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
 import { Tab, WorkspaceVisualChangeId, WorkspaceVisualState } from "./types.js";
@@ -194,52 +192,7 @@ export class Edit extends EventTarget {
     this.dispatchEvent(new RuntimeErrorEvent(changing.error));
   }
 
-  async updateNodeMetadata(
-    tab: Tab | null,
-    id: NodeIdentifier,
-    metadata: NodeDescriptor["metadata"],
-    subGraphId: string | null = null
-  ) {
-    if (tab?.readOnly) {
-      return;
-    }
 
-    const editableGraph = this.getEditor(tab);
-    const graphId = subGraphId || "";
-
-    if (!editableGraph) {
-      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
-      return;
-    }
-
-    const inspectableGraph = editableGraph.inspect(subGraphId);
-    const existingNode = inspectableGraph.nodeById(id);
-    const existingMetadata = existingNode?.metadata() || {};
-    const newMetadata = {
-      ...existingMetadata,
-      ...metadata,
-    };
-
-    return editableGraph.edit(
-      [{ type: "changemetadata", id, metadata: newMetadata, graphId }],
-      `Change metadata for "${id}"`
-    );
-  }
-
-  async multiEdit(tab: Tab | null, edits: EditSpec[], description: string) {
-    if (tab?.readOnly) {
-      return;
-    }
-
-    const editableGraph = this.getEditor(tab);
-
-    if (!editableGraph) {
-      console.warn("Unable to multi-edit; no active graph");
-      return;
-    }
-
-    return editableGraph.edit(edits, description);
-  }
 
   /**
    * @deprecated Use `sca.actions.graph.changeNodeConfiguration` instead.
