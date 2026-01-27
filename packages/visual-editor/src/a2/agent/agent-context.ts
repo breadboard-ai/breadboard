@@ -34,9 +34,9 @@ class AgentContext {
       status: "running",
       startTime: performance.now(),
       contents: [],
-      functionGroups: [],
       lastCompleteTurnIndex: -1,
       objective,
+      files: {},
     };
     this.#runs.set(id, state);
     return state;

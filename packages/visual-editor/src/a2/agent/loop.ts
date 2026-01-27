@@ -101,6 +101,21 @@ class Loop {
     this.taskTreeManager = new TaskTreeManager(this.fileSystem);
   }
 
+  /**
+   * Captures files and marks run as failed, returning the error for pass-through.
+   */
+  #captureAndFail<T extends { $error: string }>(error: T): T {
+    if (this.runState) {
+      this.runState.status = "failed";
+      this.runState.error = error.$error;
+      this.runState.endTime = performance.now();
+      for (const [path, file] of this.fileSystem.files) {
+        this.runState.files[path] = { ...file };
+      }
+    }
+    return error;
+  }
+
   async run({
     objective,
     params,
@@ -226,10 +241,6 @@ class Loop {
       // Initialize run state tracking
       const runId = moduleArgs.context.currentStep?.id ?? crypto.randomUUID();
       this.runState = moduleArgs.agentContext.createRun(runId, objective);
-      this.runState.functionGroups = functionGroups.map((fg) => ({
-        name: fg.instruction?.slice(0, 50),
-        declarationNames: fg.declarations.map((d) => d.name),
-      }));
 
       const objectiveTools = objectivePidgin.tools.list().at(0);
       const tools: Tool[] = [
@@ -263,16 +274,26 @@ class Loop {
           tools,
         };
         const conformedBody = await conformGeminiBody(moduleArgs, body);
-        if (!ok(conformedBody)) return conformedBody;
+        if (!ok(conformedBody)) {
+          return this.#captureAndFail(conformedBody);
+        }
 
         ui.progress.sendRequest(AGENT_MODEL, conformedBody);
+
+        // Capture the request body for the first request only
+        if (this.runState && !this.runState.requestBody) {
+          this.runState.model = AGENT_MODEL;
+          this.runState.requestBody = conformedBody;
+        }
 
         const generated = await streamGenerateContent(
           AGENT_MODEL,
           conformedBody,
           moduleArgs
         );
-        if (!ok(generated)) return generated;
+        if (!ok(generated)) {
+          return this.#captureAndFail(generated);
+        }
         const functionCaller = new FunctionCallerImpl(
           functionDefinitionMap,
           objectivePidgin.tools
@@ -280,13 +301,8 @@ class Loop {
         for await (const chunk of generated) {
           const content = chunk.candidates?.at(0)?.content;
           if (!content) {
-            if (this.runState) {
-              this.runState.status = "failed";
-              this.runState.error = "No content in Gemini response";
-              this.runState.endTime = performance.now();
-            }
-            return err(
-              `Agent unable to proceed: no content in Gemini response`
+            return this.#captureAndFail(
+              err(`Agent unable to proceed: no content in Gemini response`)
             );
           }
           contents.push(content);
@@ -313,12 +329,9 @@ class Loop {
         const functionResults = await functionCaller.getResults();
         if (!functionResults) continue;
         if (!ok(functionResults)) {
-          if (this.runState) {
-            this.runState.status = "failed";
-            this.runState.error = functionResults.$error;
-            this.runState.endTime = performance.now();
-          }
-          return err(`Agent unable to proceed: ${functionResults.$error}`);
+          return this.#captureAndFail(
+            err(`Agent unable to proceed: ${functionResults.$error}`)
+          );
         }
         ui.progress.functionResult(functionResults);
         contents.push(functionResults);
@@ -328,6 +341,9 @@ class Loop {
         }
       }
       return this.#finalizeResult(result);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      return this.#captureAndFail(err(`Agent error: ${errorMessage}`));
     } finally {
       ui.progress.finish();
     }
@@ -336,16 +352,15 @@ class Loop {
   async #finalizeResult(raw: AgentRawResult): Promise<Outcome<AgentResult>> {
     const { success, href, objective_outcome } = raw;
     if (!success) {
-      if (this.runState) {
-        this.runState.status = "failed";
-        this.runState.error = objective_outcome;
-        this.runState.endTime = performance.now();
-      }
-      return err(objective_outcome);
+      return this.#captureAndFail(err(objective_outcome));
     }
+    // Capture files for successful run
     if (this.runState) {
       this.runState.status = "completed";
       this.runState.endTime = performance.now();
+      for (const [path, file] of this.fileSystem.files) {
+        this.runState.files[path] = { ...file };
+      }
     }
     const outcomes = await this.translator.fromPidginString(objective_outcome);
     if (!ok(outcomes)) return outcomes;

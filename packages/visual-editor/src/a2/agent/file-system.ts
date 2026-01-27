@@ -16,20 +16,12 @@ import {
 import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 import { toText } from "../a2/utils.js";
-import { MemoryManager } from "./types.js";
+import { FileDescriptor, MemoryManager } from "./types.js";
 import { GENERATE_TEXT_FUNCTION } from "./functions/generate.js";
 
 export { AgentFileSystem };
 
 const KNOWN_TYPES = ["audio", "video", "image", "text"];
-
-export type FileDescriptor = {
-  type: "text" | "storedData" | "inlineData" | "fileData";
-  mimeType: string;
-  data: string;
-  title?: string;
-  resourceKey?: string;
-};
 
 export type AddFilesToProjectResult = {
   existing: string[];
