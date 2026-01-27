@@ -10,6 +10,7 @@ import {
   getSpreadsheetMetadata,
   getSpreadsheetValues,
   setSpreadsheetValues,
+  SpreadsheetValueRange,
   updateSpreadsheet,
 } from "./api.js";
 import {
@@ -19,7 +20,7 @@ import {
 } from "../agent/types.js";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
-export { SheetManager };
+export { SheetManager, parseSheetName };
 export type { SheetManagerConfig };
 
 type SheetManagerConfig = {
@@ -32,8 +33,24 @@ export type SheetGetter = (
   readonly: boolean
 ) => Promise<Outcome<string | null>>;
 
+/**
+ * Extracts the sheet name from a range like "SheetName!A1:B10" or "'Sheet Name'!A1".
+ * Returns null if no sheet name prefix (uses default sheet).
+ */
+function parseSheetName(range: string): string | null {
+  const match = range.match(/^(?:'([^']+)'|([^!]+))!/);
+  if (!match) return null;
+  return match[1] || match[2];
+}
+
 class SheetManager implements MemoryManager {
   private sheetId: Promise<Outcome<string | null>> | null = null;
+
+  // Read caches - cleared on any write
+  private readCache = new Map<string, Outcome<SpreadsheetValueRange>>();
+  private metadataCache: Outcome<{
+    sheets: SheetMetadataWithFilePath[];
+  }> | null = null;
 
   constructor(
     private readonly config: SheetManagerConfig,
@@ -41,6 +58,8 @@ class SheetManager implements MemoryManager {
   ) {}
 
   private checkSheetId(context: NodeHandlerContext) {
+    // sheetId is cached separately from reads - only invalidated on create
+    if (this.sheetId) return this.sheetId;
     return this.sheetGetter(context, true);
   }
 
@@ -53,6 +72,18 @@ class SheetManager implements MemoryManager {
 
   private makeModuleArgs(context: NodeHandlerContext) {
     return { ...this.config, context };
+  }
+
+  private clearSheetCache(sheetName: string) {
+    // Clear matching read cache entries
+    for (const range of this.readCache.keys()) {
+      const cachedSheetName = parseSheetName(range);
+      if (cachedSheetName === sheetName) {
+        this.readCache.delete(range);
+      }
+    }
+    // Always clear metadata since sheet list changed
+    this.metadataCache = null;
   }
 
   async createSheet(context: NodeHandlerContext, args: SheetMetadata) {
@@ -78,16 +109,30 @@ class SheetManager implements MemoryManager {
     if (!ok(creating)) {
       return { success: false, error: creating.$error };
     }
+
+    this.clearSheetCache(name);
     return { success: true };
   }
 
   async readSheet(context: NodeHandlerContext, args: { range: string }) {
     const { range } = args;
 
+    // Check cache first
+    const cached = this.readCache.get(range);
+    if (cached) return cached;
+
     const sheetId = await this.ensureSheetId(context);
     if (!ok(sheetId)) return sheetId;
 
-    return getSpreadsheetValues(this.makeModuleArgs(context), sheetId, range);
+    const result = await getSpreadsheetValues(
+      this.makeModuleArgs(context),
+      sheetId,
+      range
+    );
+
+    // Cache the result
+    this.readCache.set(range, result);
+    return result;
   }
 
   async updateSheet(
@@ -109,6 +154,8 @@ class SheetManager implements MemoryManager {
       return { success: false, error: updating.$error };
     }
 
+    const sheetName = parseSheetName(range);
+    if (sheetName) this.clearSheetCache(sheetName);
     return { success: true };
   }
 
@@ -133,12 +180,16 @@ class SheetManager implements MemoryManager {
     ]);
     if (!ok(deleting)) return deleting;
 
+    this.clearSheetCache(args.name);
     return { success: true };
   }
 
   async getSheetMetadata(
     context: NodeHandlerContext
   ): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>> {
+    // Check cache first
+    if (this.metadataCache) return this.metadataCache;
+
     const sheetId = await this.checkSheetId(context);
     if (!sheetId) {
       return { sheets: [] };
@@ -180,9 +231,12 @@ class SheetManager implements MemoryManager {
       if (errors.length > 0) {
         return err(errors.join(","));
       }
-      return { sheets };
+      const result = { sheets };
+      this.metadataCache = result;
+      return result;
     } catch (e) {
       return err((e as Error).message);
     }
   }
 }
+
