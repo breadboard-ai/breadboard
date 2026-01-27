@@ -28,7 +28,7 @@ class RemoveAssetWithRefs implements EditTransform {
         (part) => {
           const { type, path } = part;
           if (type === "asset" && path === this.path) {
-            return { ...part, invalid: true };
+            return { ...part, removed: true };
           }
           return null;
         },
