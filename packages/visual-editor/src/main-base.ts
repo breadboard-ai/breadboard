@@ -1028,28 +1028,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.snackbarRef.value?.hide(id);
   }
 
-  protected attemptImportFromDrop(evt: DragEvent) {
-    if (
-      !evt.dataTransfer ||
-      !evt.dataTransfer.files ||
-      !evt.dataTransfer.files.length
-    ) {
-      return;
-    }
-
-    const fileDropped = evt.dataTransfer.files[0];
-    fileDropped.text().then((data) => {
-      try {
-        const runData = JSON.parse(data) as GraphDescriptor;
-        this.runtime.board.createTabFromDescriptor(runData);
-      } catch (err) {
-        console.warn(err);
-        this.sca.controller.global.toasts.toast(
-          Strings.from("ERROR_LOAD_FAILED"),
-          BreadboardUI.Events.ToastType.ERROR
-        );
-      }
-    });
+  /**
+   * @deprecated File drop to create new tab is no longer supported
+   */
+  protected attemptImportFromDrop(_evt: DragEvent) {
+  // No-op: createTabFromDescriptor functionality removed
   }
 
   protected getRenderValues(): RenderValues {

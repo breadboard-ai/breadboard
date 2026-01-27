@@ -32,7 +32,7 @@ import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
 import { createA2Server } from "../../a2/index.js";
 import { createLoader } from "../../engine/loader/index.js";
 import { createGraphStore } from "../../engine/inspector/index.js";
-import { Autonamer } from "../../runtime/autonamer.js";
+import { Autonamer } from "./autonamer.js";
 import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
 import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CapabilitiesManagerImpl } from "../engine/runtime/legacy.js";
+import { CapabilitiesManagerImpl } from "../../engine/runtime/legacy.js";
 import type {
   Kit,
   MutableGraph,
@@ -19,10 +19,10 @@ import {
 } from "@breadboard-ai/types";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import { ok } from "@breadboard-ai/utils";
-import { composeFileSystemBackends } from "../engine/file-system/composed-peristent-backend.js";
-import { createEphemeralBlobStore } from "../engine/file-system/ephemeral-blob-store.js";
-import { createFileSystem } from "../engine/file-system/index.js";
-import { createFileSystemBackend } from "../idb/index.js";
+import { composeFileSystemBackends } from "../../engine/file-system/composed-peristent-backend.js";
+import { createEphemeralBlobStore } from "../../engine/file-system/ephemeral-blob-store.js";
+import { createFileSystem } from "../../engine/file-system/index.js";
+import { createFileSystemBackend } from "../../idb/index.js";
 
 export { Autonamer };
 
