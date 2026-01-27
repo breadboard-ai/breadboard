@@ -18,7 +18,6 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { ref } from "lit/directives/ref.js";
 import { GoogleDriveBoardServer } from "./board-server/server.js";
 import { MainArguments } from "./types/types.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
@@ -34,7 +33,7 @@ import type {
 } from "./ui/events/events.js";
 import * as BBLite from "./ui/lite/lite.js";
 import "./ui/lite/welcome-panel/project-listing.js";
-import { ActionTracker, SnackbarMessage, SnackType } from "./ui/types/types.js";
+import { ActionTracker, SnackType } from "./ui/types/types.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { createActionTracker } from "./ui/utils/action-tracker.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
@@ -88,15 +87,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
    * Indicates whether we're currently remixing or deleting boards.
    */
   #busy = false;
-
-  /**
-   * The snackbar machinery
-   */
-  accessor #snackbar: BBLite.Snackbar | undefined;
-  #pendingSnackbarMessages: Array<{
-    message: SnackbarMessage;
-    replaceAll: boolean;
-  }> = [];
 
   readonly #embedHandler?: EmbedHandler;
 
@@ -260,21 +250,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
   #renderSnackbar() {
     return html`<bb-snackbar
-      ${ref((el: Element | undefined) => {
-        if (!el) {
-          this.#snackbar = undefined;
-        }
-
-        this.#snackbar = el as BBLite.Snackbar;
-        for (const pendingMessage of this.#pendingSnackbarMessages) {
-          const { message, id, type } = pendingMessage.message;
-          if (message) {
-            this.snackbar(message, type, id);
-          }
-        }
-
-        this.#pendingSnackbarMessages.length = 0;
-      })}
       @bbsnackbaraction=${async (evt: SnackbarActionEvent) => {
         evt.callback?.();
       }}
@@ -282,28 +257,18 @@ export class LiteHome extends SignalWatcher(LitElement) {
   }
 
   snackbar(message: string | HTMLTemplateResult, type: SnackType, id: UUID) {
-    const replaceAll = true;
-    const snackbarMessage: SnackbarMessage = {
-      id,
+    this.sca.controller.global.snackbars.snackbar(
       message,
       type,
-      persistent: false,
-      actions: [],
-    };
-
-    if (!this.#snackbar) {
-      this.#pendingSnackbarMessages.push({
-        message: snackbarMessage,
-        replaceAll,
-      });
-      return;
-    }
-
-    return this.#snackbar.show(snackbarMessage, replaceAll);
+      [],
+      false,
+      id,
+      true // replaceAll
+    );
   }
 
   unsnackbar(id: UUID) {
-    this.#snackbar?.hide(id);
+    this.sca.controller.global.snackbars.unsnackbar(id);
   }
 
   async deleteBoard(url: string): Promise<Outcome<void>> {

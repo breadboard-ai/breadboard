@@ -13,10 +13,6 @@ import {
   InputValues,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
-import {
-  RuntimeSnackbarEvent,
-  RuntimeUnsnackbarEvent,
-} from "../../runtime/events.js";
 import { StateEvent } from "../../ui/events/events.js";
 import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
@@ -289,21 +285,14 @@ export const CreateRoute: EventRoute<"board.create"> = {
   }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
       // The user didn't sign in, so hide any snackbars.
-      runtime.dispatchEvent(new RuntimeUnsnackbarEvent());
+      sca.controller.global.snackbars.unsnackbar();
       return false;
     }
 
-    const boardServerName = sca.controller.global.main.boardServer;
-    const location = sca.controller.global.main.boardLocation;
-    const fileName = globalThis.crypto.randomUUID();
 
     sca.controller.global.main.blockingAction = true;
-    const result = await runtime.board.saveAs(
-      boardServerName,
-      location,
-      fileName,
+    const result = await sca.actions.board.saveAs(
       originalEvent.detail.graph,
-      originalEvent.detail.messages.start !== "",
       originalEvent.detail.messages
     );
     sca.controller.global.main.blockingAction = false;
@@ -351,15 +340,13 @@ export const RemixRoute: EventRoute<"board.remix"> = {
     // superseded by another snackbar in the "board.create" route, but if it
     // takes any amount of time to get the latest version of the graph from the
     // store the user will at least have this acknowledgment.
-    runtime.dispatchEvent(
-      new RuntimeSnackbarEvent(
-        globalThis.crypto.randomUUID(),
-        originalEvent.detail.messages.start,
-        BreadboardUI.Types.SnackType.PENDING,
-        [],
-        true,
-        true // Replace existing snackbars.
-      )
+    sca.controller.global.snackbars.snackbar(
+      originalEvent.detail.messages.start,
+      BreadboardUI.Types.SnackType.PENDING,
+      [],
+      true,
+      undefined,
+      true // Replace existing snackbars.
     );
 
     const graphStore = runtime.board.graphStore;
@@ -390,14 +377,12 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
 
   async do(deps) {
     const { tab, runtime, originalEvent, sca } = deps;
-    const boardServer = runtime.board.googleDriveBoardServer;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
     }
 
     sca.controller.global.main.blockingAction = true;
-    await runtime.board.delete(
-      boardServer.name,
+    await sca.actions.board.deleteBoard(
       originalEvent.detail.url,
       originalEvent.detail.messages
     );

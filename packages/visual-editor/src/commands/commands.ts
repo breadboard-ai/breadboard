@@ -25,12 +25,12 @@ const SaveCommand: KeyboardCommand = {
     return tab !== null;
   },
 
-  async do({ runtime, tab, strings }: KeyboardCommandDeps): Promise<void> {
+  async do({ sca, tab, strings }: KeyboardCommandDeps): Promise<void> {
     if (tab?.readOnly || !tab?.graphIsMine) {
       return;
     }
 
-    await runtime.board.save(tab?.id ?? null, 0, {
+    await sca.actions.board.save({
       start: strings.from("STATUS_SAVING_PROJECT"),
       end: strings.from("STATUS_PROJECT_SAVED"),
     });
