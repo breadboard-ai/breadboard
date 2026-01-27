@@ -1404,7 +1404,6 @@ export class EntityEditor
           return item.id === port.value && item.info !== undefined;
         });
 
-        // info icon
         const extendedInfoOutput =
           extendedInfo && typeof extendedInfo !== "string"
             ? html`<div class="info">
