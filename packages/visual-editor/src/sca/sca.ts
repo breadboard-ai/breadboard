@@ -65,6 +65,18 @@
  * changes using Services and Controllers. If the value is simply to be updated
  * do it in the Controller directly. Not every change needs to be an Action.
  *
+ * ## 4. Triggers (The "Side Effects")
+ *
+ * Triggers are used to react to changes in the application state and perform
+ * side effects. They are registered with the application and are called when
+ * the state changes.
+ *
+ * Triggers are defined in the `triggers` directory and are registered with the
+ * application in `app.ts`.
+ *
+ * Triggers are best thought of as automatic Actions that are triggered by
+ * changes in the application state.
+ *
  * ---
  *
  * ## The Data Flow Cycle
@@ -81,6 +93,7 @@
 import * as Services from "./services/services.js";
 import * as Controller from "./controller/controller.js";
 import * as Actions from "./actions/actions.js";
+import * as Triggers from "./triggers/triggers.js";
 import * as Utils from "./utils/utils.js";
 import { type RuntimeFlags } from "@breadboard-ai/types";
 import { RuntimeConfig } from "../runtime/types.js";
@@ -108,6 +121,10 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
       actions,
     };
 
+    // Set up triggers for side effects once the controller is ready.
+    controller.isHydrated.then(() => {
+      Triggers.triggers(controller, services, actions);
+    });
     Utils.Logging.setDebuggableAppController(instance.controller);
   }
 

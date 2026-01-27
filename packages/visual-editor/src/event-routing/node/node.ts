@@ -8,34 +8,6 @@ import { ok } from "@breadboard-ai/utils";
 import { EventRoute } from "../types.js";
 import * as BreadboardUI from "../../ui/index.js";
 
-export const AddWithEdgeRoute: EventRoute<"node.addwithedge"> = {
-  event: "node.addwithedge",
-
-  async do({ runtime, tab, originalEvent, sca }) {
-    if (!tab) {
-      return false;
-    }
-
-    sca.controller.global.main.blockingAction = true;
-    await runtime.edit.addNodeWithEdge(
-      tab,
-      originalEvent.detail.node,
-      originalEvent.detail.edge,
-      originalEvent.detail.subGraphId
-    );
-    sca.controller.global.main.blockingAction = false;
-
-    runtime.select.selectNodes(
-      tab.id,
-      runtime.select.generateId(),
-      originalEvent.detail.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-      [originalEvent.detail.node.id]
-    );
-
-    return false;
-  },
-};
-
 export const ChangeRoute: EventRoute<"node.change"> = {
   event: "node.change",
 

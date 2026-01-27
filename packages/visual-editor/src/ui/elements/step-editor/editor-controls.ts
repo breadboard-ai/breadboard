@@ -714,11 +714,10 @@ export class EditorControls extends LitElement {
   #handleChosenKitItem(nodeType: string) {
     let x;
     let y;
-    let nodeId;
     let subGraphId;
     const createAtCenter = true;
     this.dispatchEvent(
-      new NodeAddEvent(nodeType, createAtCenter, x, y, nodeId, subGraphId)
+      new NodeAddEvent(nodeType, createAtCenter, x, y, subGraphId)
     );
     this.hidePickers();
   }
