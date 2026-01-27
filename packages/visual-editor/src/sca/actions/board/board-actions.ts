@@ -33,7 +33,7 @@ export async function save() {
   // TODO: Implement the behavior.
 
   logger.log(
-    Utils.Logging.Formatter.info(
+    Utils.Logging.Formatter.verbose(
       "Version change:",
       controller.editor.graph.version
     ),

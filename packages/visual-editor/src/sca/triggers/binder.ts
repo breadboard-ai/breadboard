@@ -15,8 +15,6 @@ export type DefaultBindings = {
   actions: AppActions;
 };
 
-const disposers: Map<string, () => void> = new Map();
-
 interface EffectTrigger {
   register: (name: string, cb: () => void) => void;
   clean: () => void;
@@ -34,6 +32,8 @@ export type Trigger<T> = ((deps: T) => void) & T & EffectTrigger;
 
 export function makeTrigger<T extends DefaultBindings>(): Trigger<T> {
   let deps: T | undefined;
+  // Per-instance disposers map to keep triggers isolated by category.
+  const disposers: Map<string, () => void> = new Map();
 
   const setter = (newDeps: T) => {
     deps = newDeps;

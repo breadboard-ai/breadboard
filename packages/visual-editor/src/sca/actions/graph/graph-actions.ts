@@ -8,10 +8,14 @@ import {
   Edge,
   EditSpec,
   EditTransform,
-  NodeDescriptor,
+  GraphIdentifier,
+  NodeConfiguration,
+  NodeIdentifier,
+  NodeMetadata,
 } from "@breadboard-ai/types";
 import { makeAction } from "../binder.js";
-import { AddNodeWithEdge } from "../../../ui/transforms/index.js";
+import { ChangeEdge, UpdateNode } from "../../../ui/transforms/index.js";
+import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 
 export const bind = makeAction();
 
@@ -101,12 +105,56 @@ export async function updateBoardTitleAndDescription(
   );
 }
 
-export async function addNodeWithEdge(
-  node: NodeDescriptor,
-  edge: Edge,
+export async function changeEdge(
+  changeType: "add" | "remove" | "move",
+  from: Edge,
+  to?: Edge,
   subGraphId: string | null = null
 ) {
   const graphId = subGraphId ?? "";
-  const transform = new AddNodeWithEdge(node, edge, graphId);
+  const transform = new ChangeEdge(changeType, graphId, from, to);
   return applyInternal(transform);
+}
+
+/**
+ * Changes a node's configuration and sets the lastNodeConfigChange signal
+ * to trigger autonaming as a side effect.
+ */
+export async function changeNodeConfiguration(
+  id: NodeIdentifier,
+  graphId: GraphIdentifier,
+  configurationPart: NodeConfiguration,
+  metadata: NodeMetadata | null = null,
+  portsToAutowire: InPort[] | null = null
+) {
+  const { controller } = bind;
+  const { editor, readOnly } = controller.editor.graph;
+  if (!editor) {
+    throw new Error("No active graph to edit");
+  }
+
+  if (readOnly) {
+    return;
+  }
+
+  const updateNodeTransform = new UpdateNode(
+    id,
+    graphId,
+    configurationPart,
+    metadata,
+    portsToAutowire
+  );
+
+  const result = await editor.apply(updateNodeTransform);
+  if (!result.success) {
+    throw new Error(result.error);
+  }
+
+  // Set the signal so the autoname trigger can react.
+  controller.editor.graph.lastNodeConfigChange = {
+    nodeId: id,
+    graphId,
+    configuration: configurationPart,
+    titleUserModified: updateNodeTransform.titleUserModified,
+  };
 }

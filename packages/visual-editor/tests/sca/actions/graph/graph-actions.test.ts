@@ -12,11 +12,15 @@ import { AppController } from "../../../../src/sca/controller/controller.js";
 import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
 import { testKit } from "../../../test-kit.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
+import type { ConfigChangeContext } from "../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 
 function makeFreshGraph(): GraphDescriptor {
   return {
     edges: [],
-    nodes: [{ id: "foo", type: "promptTemplate" }],
+    nodes: [
+      { id: "foo", type: "promptTemplate" },
+      { id: "bar", type: "promptTemplate" },
+    ],
   } satisfies GraphDescriptor;
 }
 
@@ -62,10 +66,7 @@ suite("Graph Actions", () => {
 
     test("throw on apply", async () => {
       await assert.rejects(async () => {
-        await graphActions.addNodeWithEdge(
-          { id: "foo", type: "foo" },
-          { from: "foo", to: "bar" }
-        );
+        await graphActions.changeEdge("move", { from: "foo", to: "bar" });
       }, new Error("No active graph to transform"));
     });
   });
@@ -91,60 +92,133 @@ suite("Graph Actions", () => {
           editor: {
             graph: {
               editor,
+              lastNodeConfigChange: null,
             },
           },
         } as AppController,
       });
     });
 
-    test("Update title & description", async () => {
-      await graphActions.updateBoardTitleAndDescription(
-        "New Title",
-        "New Description"
-      );
-
-      assert.strictEqual(testGraph.title, "New Title");
-      assert.strictEqual(testGraph.description, "New Description");
-    });
-
-    test("undo & redo", async () => {
-      // Should not fail, even though there is no change to the graph.
-      await assert.doesNotReject(async () => {
-        await graphActions.redo();
-        await graphActions.undo();
-      });
-
-      await graphActions.addNodeWithEdge(
-        { id: "bar", type: "secrets" },
-        { from: "foo", to: "bar", in: "*", out: "*" }
-      );
-
-      assert.strictEqual(testGraph.nodes.length, 2);
-      assert.strictEqual(testGraph.edges.length, 1);
-
-      const changeWatcher = editorChange(graphActions);
-      await graphActions.undo();
-      testGraph = await changeWatcher;
-
-      assert.strictEqual(testGraph.nodes.length, 1);
-      assert.strictEqual(testGraph.edges.length, 0);
-
-      const changeWatcher2 = editorChange(graphActions);
-      await graphActions.redo();
-      testGraph = await changeWatcher2;
-
-      assert.strictEqual(testGraph.nodes.length, 2);
-      assert.strictEqual(testGraph.edges.length, 1);
-    });
-
     test("throws when transforms fail", async () => {
       await assert.rejects(async () => {
-        await graphActions.addNodeWithEdge(
+        await graphActions.changeEdge(
+          "remove",
           // Unknown type: foo so bar does not get added.
-          { id: "bar", type: "foo" },
           { from: "foo", to: "bar", in: "*", out: "*" }
         );
-      }, new Error(`Unable to find node with id "bar"`));
+      }, new Error(`Edge from "foo:*" to "bar:*" does not exist`));
+    });
+
+    suite("functionality", () => {
+      test("Update title & description", async () => {
+        await graphActions.updateBoardTitleAndDescription(
+          "New Title",
+          "New Description"
+        );
+
+        assert.strictEqual(testGraph.title, "New Title");
+        assert.strictEqual(testGraph.description, "New Description");
+      });
+
+      test("Change Edge", async () => {
+        assert.strictEqual(testGraph.edges.length, 0);
+
+        await graphActions.changeEdge("add", {
+          from: "foo",
+          to: "bar",
+          in: "*",
+          out: "*",
+        });
+
+        assert.strictEqual(testGraph.edges.length, 1);
+
+        await graphActions.changeEdge("remove", {
+          from: "foo",
+          to: "bar",
+          in: "*",
+          out: "*",
+        });
+
+        assert.strictEqual(testGraph.edges.length, 0);
+      });
+
+      test("undo & redo", async () => {
+        // Should not fail, even though there is no change to the graph.
+        await assert.doesNotReject(async () => {
+          await graphActions.redo();
+          await graphActions.undo();
+        });
+
+        await graphActions.changeEdge("add", {
+          from: "foo",
+          to: "bar",
+          in: "*",
+          out: "*",
+        });
+
+        assert.strictEqual(testGraph.nodes.length, 2);
+        assert.strictEqual(testGraph.edges.length, 1);
+
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.undo();
+        testGraph = await changeWatcher;
+
+        assert.strictEqual(testGraph.nodes.length, 2);
+        assert.strictEqual(testGraph.edges.length, 0);
+
+        const changeWatcher2 = editorChange(graphActions);
+        await graphActions.redo();
+        testGraph = await changeWatcher2;
+
+        assert.strictEqual(testGraph.nodes.length, 2);
+        assert.strictEqual(testGraph.edges.length, 1);
+      });
+
+      test("changeNodeConfiguration updates node and sets signal", async () => {
+        // Get the controller from the binder
+        const controller = graphActions.bind.controller;
+
+        // Verify initial state
+        assert.strictEqual(controller.editor.graph.lastNodeConfigChange, null);
+
+        // Change the configuration of node "foo"
+        await graphActions.changeNodeConfiguration(
+          "foo",
+          "", // main graph
+          { prompt: "Hello world" }
+        );
+
+        // Verify the signal was set
+        const change = controller.editor.graph
+          .lastNodeConfigChange as ConfigChangeContext | null;
+        assert.ok(change, "lastNodeConfigChange should be set");
+        assert.strictEqual(change.nodeId, "foo");
+        assert.strictEqual(change.graphId, "");
+        assert.deepStrictEqual(change.configuration, { prompt: "Hello world" });
+        assert.strictEqual(
+          typeof change.titleUserModified,
+          "boolean",
+          "titleUserModified should be a boolean"
+        );
+
+        // Verify the node configuration was actually updated
+        const node = testGraph.nodes.find((n) => n.id === "foo");
+        assert.ok(node, "Node should exist");
+        assert.deepStrictEqual(node.configuration, { prompt: "Hello world" });
+      });
+
+      test("changeNodeConfiguration throws when node doesn't exist", async () => {
+        await assert.rejects(
+          async () => {
+            await graphActions.changeNodeConfiguration(
+              "nonexistent",
+              "",
+              { prompt: "test" }
+            );
+          },
+          (err: Error) => err.message.includes("nonexistent")
+        );
+      });
     });
   });
 });
