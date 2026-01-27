@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert";
-import { afterEach, suite, test } from "node:test";
+import { after, afterEach, before, suite, test } from "node:test";
 import { AppServices } from "../../../src/sca/services/services.js";
 import { AppActions } from "../../../src/sca/actions/actions.js";
 import {
@@ -16,8 +16,17 @@ import {
 } from "../../../src/sca/triggers/triggers.js";
 import { makeTrigger } from "../../../src/sca/triggers/binder.js";
 import { makeTestController } from "./utils.js";
+import { setDOM, unsetDOM } from "../../fake-dom.js";
 
 suite("Triggers", () => {
+  before(() => {
+    setDOM();
+  });
+
+  after(() => {
+    unsetDOM();
+  });
+
   afterEach(() => {
     destroy();
   });
@@ -35,11 +44,14 @@ suite("Triggers", () => {
 
   test("cleans up", () => {
     triggers(makeTestController(), {} as AppServices, {} as AppActions);
-    assert.deepStrictEqual(list(), { board: ["Save Trigger"] });
+    assert.deepStrictEqual(list(), {
+      board: ["Save Trigger"],
+      node: ["Autoname Trigger"],
+    });
     clean();
 
     // Cleaning removes the triggers and the instance.
-    assert.deepStrictEqual(list(), { board: [] });
+    assert.deepStrictEqual(list(), { board: [], node: [] });
 
     // Confirm that listing and cleaning do not throw in the absence of a
     // trigger instance.

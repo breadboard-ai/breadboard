@@ -9,10 +9,24 @@ import {
   GraphChangeEvent,
   GraphChangeRejectEvent,
   GraphDescriptor,
+  GraphIdentifier,
+  NodeConfiguration,
+  NodeIdentifier,
 } from "@breadboard-ai/types";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { Tab } from "../../../../../runtime/types.js";
+
+/**
+ * Context for tracking node configuration changes.
+ * Used by the autoname trigger to react to config updates.
+ */
+export interface ConfigChangeContext {
+  nodeId: NodeIdentifier;
+  graphId: GraphIdentifier;
+  configuration: NodeConfiguration;
+  titleUserModified: boolean;
+}
 
 export class GraphController extends RootController {
   @field()
@@ -38,6 +52,13 @@ export class GraphController extends RootController {
 
   @field()
   accessor lastEditError: string | null = null;
+
+  /**
+   * Tracks the most recent node configuration change.
+   * Set by the changeNodeConfiguration action, consumed by the autoname trigger.
+   */
+  @field()
+  accessor lastNodeConfigChange: ConfigChangeContext | null = null;
 
   /**
    * Here for migrations.
@@ -133,5 +154,6 @@ export class GraphController extends RootController {
     this.graphIsMine = false;
     this.mainGraphId = null;
     this.lastLoadedVersion = 0;
+    this.lastNodeConfigChange = null;
   }
 }

@@ -11,16 +11,23 @@ import * as BreadboardUI from "../../ui/index.js";
 export const ChangeRoute: EventRoute<"node.change"> = {
   event: "node.change",
 
-  async do({ runtime, tab, originalEvent, sca }) {
+  async do({ runtime: _runtime, tab, originalEvent, sca }) {
+    if (tab?.readOnly) {
+      return false;
+    }
+
     sca.controller.global.main.blockingAction = true;
-    await runtime.edit.changeNodeConfigurationPart(
-      tab,
-      originalEvent.detail.id,
-      originalEvent.detail.configurationPart,
-      originalEvent.detail.subGraphId,
-      originalEvent.detail.metadata,
-      originalEvent.detail.ins
-    );
+    try {
+      await sca.actions.graph.changeNodeConfiguration(
+        originalEvent.detail.id,
+        originalEvent.detail.subGraphId ?? "",
+        originalEvent.detail.configurationPart,
+        originalEvent.detail.metadata,
+        originalEvent.detail.ins
+      );
+    } catch (error) {
+      console.warn("Failed to change node configuration", error);
+    }
     sca.controller.global.main.blockingAction = false;
 
     return false;

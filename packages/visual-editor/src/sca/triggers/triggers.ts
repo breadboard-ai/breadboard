@@ -8,9 +8,11 @@ import { AppActions } from "../actions/actions.js";
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
 import * as Board from "./board/board-triggers.js";
+import * as Node from "./node/node-triggers.js";
 
 export interface AppTriggers {
   board: typeof Board;
+  node: typeof Node;
 }
 
 type TriggerKey = keyof AppTriggers;
@@ -24,10 +26,12 @@ export function triggers(
 ) {
   if (!instance) {
     Board.bind({ controller, services, actions });
+    Node.bind({ controller, services, actions });
     register();
 
     instance = {
       board: Board,
+      node: Node,
     } satisfies AppTriggers;
   }
   return instance;
@@ -35,6 +39,7 @@ export function triggers(
 
 export function register() {
   Board.registerSaveTrigger();
+  Node.registerAutonameTrigger();
 }
 
 export function clean() {
