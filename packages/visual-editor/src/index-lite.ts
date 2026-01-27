@@ -899,7 +899,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #onSnackbar(event: BreadboardUI.Events.SnackbarEvent) {
-    this.snackbar(
+    this.sca.controller.global.snackbars.snackbar(
       event.message,
       event.snackType,
       event.actions,
@@ -910,7 +910,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #onUnSnackbar(event: BreadboardUI.Events.UnsnackbarEvent) {
-    this.unsnackbar(event.snackbarId);
+    this.sca.controller.global.snackbars.unsnackbar(event.snackbarId);
   }
 
   protected async invokeBoardReplaceRoute(

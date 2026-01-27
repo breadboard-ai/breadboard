@@ -10,11 +10,18 @@ import { repeat } from "lit/directives/repeat.js";
 import { SnackbarActionEvent } from "../../events/events.js";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 const DEFAULT_TIMEOUT = 8000;
 
 @customElement("bb-snackbar")
-export class Snackbar extends LitElement {
+export class Snackbar extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property({ reflect: true, type: Boolean })
   accessor active = false;
 
@@ -24,7 +31,6 @@ export class Snackbar extends LitElement {
   @property()
   accessor timeout = DEFAULT_TIMEOUT;
 
-  #messages: SnackbarMessage[] = [];
   #timeout = 0;
 
   static styles = [
@@ -156,67 +162,53 @@ export class Snackbar extends LitElement {
     `,
   ];
 
-  show(message: SnackbarMessage, replaceAll = false) {
-    const existingMessage = this.#messages.findIndex(
-      (msg) => msg.id === message.id
-    );
-    if (existingMessage === -1) {
-      if (replaceAll) {
-        this.#messages.length = 0;
-      }
-
-      this.#messages.push(message);
-    } else {
-      this.#messages[existingMessage] = message;
+  /**
+   * Gets the messages from the SnackbarController signal.
+   */
+  get #messages(): SnackbarMessage[] {
+    // Read from the signal - SignalWatcher will auto-update when it changes
+    const snackbarMap = this.sca?.controller.global.snackbars.snackbars;
+    if (!snackbarMap) {
+      return [];
     }
+    return Array.from(snackbarMap.values());
+  }
 
+  /**
+   * Hides a snackbar by ID, delegating to the SnackbarController.
+   */
+  hide(id?: SnackbarUUID) {
+    this.sca?.controller.global.snackbars.unsnackbar(id);
+  }
+
+  protected willUpdate(): void {
+    const messages = this.#messages;
+
+    // Update active/error state based on messages
+    this.active = messages.length > 0;
+    this.error = messages.some((msg) => msg.type === SnackType.ERROR);
+
+  // Handle auto-dismiss timeout
     window.clearTimeout(this.#timeout);
-    if (!this.#messages.every((msg) => msg.persistent)) {
+    if (messages.length > 0 && !messages.every((msg) => msg.persistent)) {
       this.#timeout = window.setTimeout(() => {
         this.hide();
       }, this.timeout);
     }
-
-    this.error = this.#messages.some((msg) => msg.type === SnackType.ERROR);
-    this.active = true;
-    this.requestUpdate();
-
-    return message.id;
-  }
-
-  hide(id?: SnackbarUUID) {
-    if (id) {
-      const idx = this.#messages.findIndex((msg) => msg.id === id);
-      if (idx !== -1) {
-        this.#messages.splice(idx, 1);
-      }
-    } else {
-      this.#messages.length = 0;
-    }
-
-    this.active = this.#messages.length !== 0;
-    this.updateComplete.then((avoidedUpdate) => {
-      if (!avoidedUpdate) {
-        return;
-      }
-
-      this.requestUpdate();
-    });
   }
 
   render() {
+    const messages = this.#messages;
+
     let rotate = false;
     let icon = "";
-    for (let i = this.#messages.length - 1; i >= 0; i--) {
-      if (
-        !this.#messages[i].type ||
-        this.#messages[i].type === SnackType.NONE
-      ) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (!messages[i].type || messages[i].type === SnackType.NONE) {
         continue;
       }
 
-      icon = this.#messages[i].type;
-      if (this.#messages[i].type === SnackType.PENDING) {
+      icon = messages[i].type;
+      if (messages[i].type === SnackType.PENDING) {
         icon = "progress_activity";
         rotate = true;
       }
@@ -236,7 +228,7 @@ export class Snackbar extends LitElement {
         : nothing}
       <div id="messages">
         ${repeat(
-          this.#messages,
+          messages,
           (message) => message.id,
           (message) => {
             return html`<div>${message.message}</div>`;
@@ -245,7 +237,7 @@ export class Snackbar extends LitElement {
       </div>
       <div id="actions">
         ${repeat(
-          this.#messages,
+          messages,
           (message) => message.id,
           (message) => {
             if (!message.actions) {

@@ -12,6 +12,7 @@ import { AppController } from "../../../../src/sca/controller/controller.js";
 import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
 import { testKit } from "../../../test-kit.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
+import { SnackType, SnackbarUUID } from "../../../../src/ui/types/types.js";
 
 function makeFreshGraph(): GraphDescriptor {
   return {
@@ -22,15 +23,48 @@ function makeFreshGraph(): GraphDescriptor {
 }
 
 /**
- * Creates a mock logger for testing.
+ * Creates a mock snackbar controller for testing.
  */
-function makeMockLogger() {
-  const logs: { message: unknown; label: string }[] = [];
+function makeMockSnackbarController() {
+  const snackbars: Map<
+    SnackbarUUID,
+    { message: string; type: SnackType }
+  > = new Map();
+  let lastId: SnackbarUUID | null = null;
+
   return {
-    log: (message: unknown, label: string) => {
-      logs.push({ message, label });
+    snackbar: (
+      message: string,
+      type: SnackType,
+      _actions?: unknown[],
+      _persistent?: boolean,
+      _id?: SnackbarUUID,
+      _replaceAll?: boolean
+    ): SnackbarUUID => {
+      const id =
+        _id ?? (globalThis.crypto.randomUUID() as SnackbarUUID);
+      snackbars.set(id, { message, type });
+      lastId = id;
+      return id;
     },
-    logs,
+    update: (id: SnackbarUUID, message: string, type: SnackType) => {
+      snackbars.set(id, { message, type });
+      return true;
+    },
+    unsnackbar: (id?: SnackbarUUID) => {
+      if (id) {
+        snackbars.delete(id);
+      } else {
+        snackbars.clear();
+      }
+    },
+    // Test helpers
+    get entries() {
+      return snackbars;
+    },
+    get lastId() {
+      return lastId;
+    },
   };
 }
 
@@ -41,15 +75,24 @@ function makeMockBoardServer(options: {
   canSave?: boolean;
   saveResult?: { result: boolean };
   saveShouldThrow?: boolean;
+  createUrl?: string;
+  createShouldThrow?: boolean;
+  deleteShouldThrow?: boolean;
 }) {
   let lastSavedGraph: GraphDescriptor | null = null;
   let saveCallCount = 0;
+  let createCallCount = 0;
+  let deleteCallCount = 0;
 
   return {
     canProvide: () => ({
       save: options.canSave ?? true,
     }),
-    save: async (_url: URL, graph: GraphDescriptor, _userInitiated: boolean) => {
+    save: async (
+      _url: URL,
+      graph: GraphDescriptor,
+      _userInitiated: boolean
+    ) => {
       saveCallCount++;
       if (options.saveShouldThrow) {
         throw new Error("Save failed");
@@ -57,12 +100,33 @@ function makeMockBoardServer(options: {
       lastSavedGraph = graph;
       return options.saveResult ?? { result: true };
     },
+    create: async (_url: URL, _graph: GraphDescriptor) => {
+      createCallCount++;
+      if (options.createShouldThrow) {
+        throw new Error("Create failed");
+      }
+      return { result: true, url: options.createUrl ?? "https://new.com/board.json" };
+    },
+    deepCopy: async (_url: URL, graph: GraphDescriptor) => graph,
+    delete: async (_url: URL) => {
+      deleteCallCount++;
+      if (options.deleteShouldThrow) {
+        throw new Error("Delete failed");
+      }
+      return { result: true };
+    },
     // Test helpers
     get lastSavedGraph() {
       return lastSavedGraph;
     },
     get saveCallCount() {
       return saveCallCount;
+    },
+    get createCallCount() {
+      return createCallCount;
+    },
+    get deleteCallCount() {
+      return deleteCallCount;
     },
   };
 }
@@ -75,7 +139,7 @@ function makeMockController(options: {
   url: string | null;
   readOnly: boolean;
 }) {
-  const mockLogger = makeMockLogger();
+  const mockSnackbars = makeMockSnackbarController();
   return {
     controller: {
       editor: {
@@ -85,9 +149,10 @@ function makeMockController(options: {
         debug: {
           enabled: false,
         },
+        snackbars: mockSnackbars,
       },
-    } as AppController,
-    mockLogger,
+    } as unknown as AppController,
+    mockSnackbars,
   };
 }
 
@@ -113,10 +178,9 @@ suite("Board Actions", () => {
           controller,
         });
 
-        await assert.rejects(
-          async () => boardActions.save(),
-          { message: "save() called without an active editor" }
-        );
+        await assert.rejects(async () => boardActions.save(), {
+          message: "save() called without an active editor",
+        });
       });
     });
 
@@ -227,6 +291,38 @@ suite("Board Actions", () => {
         assert.strictEqual(mockBoardServer.saveCallCount, 1);
         assert.ok(mockBoardServer.lastSavedGraph, "Should have saved a graph");
       });
+
+      test("shows snackbar for user-initiated save", async () => {
+        const graphStore = makeTestGraphStore({ kits: [testKit] });
+        const testGraph = makeFreshGraph();
+        const mainGraphId = graphStore.addByDescriptor(testGraph);
+        if (!mainGraphId.success) assert.fail("Unable to create graph");
+        const editor = graphStore.edit(mainGraphId.result);
+
+        const mockBoardServer = makeMockBoardServer({ canSave: true });
+        const { controller, mockSnackbars } = makeMockController({
+          editor,
+          url: "https://example.com/board.json",
+          readOnly: false,
+        });
+
+        boardActions.bind({
+          services: {
+            graphStore,
+            googleDriveBoardServer: mockBoardServer,
+          } as unknown as AppServices,
+          controller,
+        });
+
+        await boardActions.save({ start: "Saving...", end: "Saved!" });
+
+        // Snackbar should have been updated with success message
+        assert.ok(mockSnackbars.lastId, "Should have created a snackbar");
+        const entry = mockSnackbars.entries.get(mockSnackbars.lastId);
+        assert.ok(entry, "Should have snackbar entry");
+        assert.strictEqual(entry.message, "Saved!");
+        assert.strictEqual(entry.type, SnackType.INFORMATION);
+      });
     });
 
     suite("error handling", () => {
@@ -260,6 +356,127 @@ suite("Board Actions", () => {
         assert.ok(result, "Should return a result");
         assert.strictEqual(result.result, false);
       });
+    });
+  });
+
+  suite("saveAs", () => {
+    const boardActions = Board;
+
+    test("creates new board and returns URL", async () => {
+      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const testGraph = makeFreshGraph();
+
+      const mockBoardServer = makeMockBoardServer({
+        createUrl: "https://example.com/new-board.json",
+      });
+      const { controller, mockSnackbars } = makeMockController({
+        editor: null,
+        url: null,
+        readOnly: false,
+      });
+
+      boardActions.bind({
+        services: {
+          graphStore,
+          googleDriveBoardServer: mockBoardServer,
+        } as unknown as AppServices,
+        controller,
+      });
+
+      const result = await boardActions.saveAs(testGraph, {
+        start: "Creating...",
+        end: "Created!",
+        error: "Failed to create",
+      });
+
+      assert.ok(result, "Should return a result");
+      assert.strictEqual(result.result, true);
+      assert.ok(result.url, "Should return a URL");
+      assert.strictEqual(
+        result.url.href,
+        "https://example.com/new-board.json"
+      );
+      assert.strictEqual(mockBoardServer.createCallCount, 1);
+      // Snackbar should be cleared on success
+      assert.strictEqual(mockSnackbars.entries.size, 0);
+    });
+
+    test("returns fail when create returns no URL", async () => {
+      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const testGraph = makeFreshGraph();
+
+      const mockBoardServer = makeMockBoardServer({});
+      // Override create to return no URL
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockBoardServer as any).create = async () => ({ result: false, url: undefined });
+
+      const { controller } = makeMockController({
+        editor: null,
+        url: null,
+        readOnly: false,
+      });
+
+      boardActions.bind({
+        services: {
+          graphStore,
+          googleDriveBoardServer: mockBoardServer,
+        } as unknown as AppServices,
+        controller,
+      });
+
+      const result = await boardActions.saveAs(testGraph, {
+        start: "Creating...",
+        end: "Created!",
+        error: "Failed to create",
+      });
+
+      assert.ok(result, "Should return a result");
+      assert.strictEqual(result.result, false);
+      // Snackbar shows error before being cleared in finally
+      // The entries will be empty since unsnackbar() is called in finally
+    });
+  });
+
+  suite("deleteBoard", () => {
+    const boardActions = Board;
+
+    test("deletes board and shows snackbar", async () => {
+      const graphStore = makeTestGraphStore({ kits: [testKit] });
+
+      const mockBoardServer = makeMockBoardServer({});
+      const { controller, mockSnackbars } = makeMockController({
+        editor: null,
+        url: null,
+        readOnly: false,
+      });
+
+      boardActions.bind({
+        services: {
+          graphStore,
+          googleDriveBoardServer: mockBoardServer,
+        } as unknown as AppServices,
+        controller,
+      });
+
+      const result = await boardActions.deleteBoard(
+        "https://example.com/board.json",
+        {
+          start: "Deleting...",
+          end: "Deleted!",
+          error: "Failed to delete",
+        }
+      );
+
+      assert.ok(result, "Should return a result");
+      assert.strictEqual(result.result, true);
+      assert.strictEqual(mockBoardServer.deleteCallCount, 1);
+
+      // Snackbar should show success message
+      assert.ok(mockSnackbars.lastId);
+      const entry = mockSnackbars.entries.get(mockSnackbars.lastId);
+      assert.ok(entry, "Should have snackbar entry");
+      assert.strictEqual(entry.message, "Deleted!");
+      assert.strictEqual(entry.type, SnackType.INFORMATION);
     });
   });
 });

@@ -14,7 +14,7 @@ import type {
 } from "@breadboard-ai/types";
 import { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
-import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
+import { html, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
 import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
 import { SettingsStore } from "./ui/data/settings-store.js";
@@ -464,7 +464,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.addEventListener(
       Runtime.Events.RuntimeSnackbarEvent.eventName,
       (evt: Runtime.Events.RuntimeSnackbarEvent) => {
-        this.snackbar(
+        this.sca.controller.global.snackbars.snackbar(
           evt.message,
           evt.snackType,
           evt.actions,
@@ -478,7 +478,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.addEventListener(
       Runtime.Events.RuntimeUnsnackbarEvent.eventName,
       () => {
-        this.unsnackbar();
+        this.sca.controller.global.snackbars.unsnackbar();
       }
     );
 
@@ -539,7 +539,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           this.sca.controller.global.main.loadState = "Error";
         }
 
-        this.snackbar(
+        this.sca.controller.global.snackbars.snackbar(
           Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
           BreadboardUI.Types.SnackType.WARNING,
           [],
@@ -563,7 +563,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeNewerSharedVersionEvent.eventName,
       () => {
-        this.snackbar(
+        this.sca.controller.global.snackbars.snackbar(
           Strings.from("STATUS_NEWER_VERSION"),
           BreadboardUI.Types.SnackType.INFORMATION,
           [],
@@ -734,7 +734,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
             let snackbarId: BreadboardUI.Types.SnackbarUUID | undefined;
             const loadingTimeout = setTimeout(() => {
               snackbarId = globalThis.crypto.randomUUID();
-              this.snackbar(
+              this.sca.controller.global.snackbars.snackbar(
                 Strings.from("STATUS_GENERIC_LOADING"),
                 BreadboardUI.Types.SnackType.PENDING,
                 [],
@@ -757,7 +757,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
             );
             clearTimeout(loadingTimeout);
             if (snackbarId) {
-              this.unsnackbar(snackbarId);
+              this.sca.controller.global.snackbars.unsnackbar(snackbarId);
             }
           }
         }
@@ -774,22 +774,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   async #generateBoardFromGraph(graph: GraphDescriptor) {
-    const boardServerName = this.sca.controller.global.main.boardServer;
-    const location = this.sca.controller.global.main.boardLocation;
-    const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
-
-    const saveResult = await this.runtime.board.saveAs(
-      boardServerName,
-      location,
-      fileName,
-      graph,
-      true,
-      {
-        start: Strings.from("STATUS_CREATING_PROJECT"),
-        end: Strings.from("STATUS_PROJECT_CREATED"),
-        error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-      }
-    );
+    const saveResult = await this.sca.actions.board.saveAs(graph, {
+      start: Strings.from("STATUS_CREATING_PROJECT"),
+      end: Strings.from("STATUS_PROJECT_CREATED"),
+      error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+    });
 
     if (!saveResult || !saveResult.result || !saveResult.url) {
       return;
@@ -829,7 +818,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
     this.#hideAllOverlays();
-    this.unsnackbar();
+    this.sca.controller.global.snackbars.unsnackbar();
   }
 
   #hideAllOverlays() {
@@ -984,36 +973,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         break;
       }
     }
-  }
-
-  async snackbar(
-    message: string | HTMLTemplateResult,
-    type: BreadboardUI.Types.SnackType,
-    actions: BreadboardUI.Types.SnackbarAction[] = [],
-    persistent = false,
-    id = globalThis.crypto.randomUUID(),
-    replaceAll = false
-  ) {
-    if (!this.snackbarRef.value) {
-      await this.updateComplete;
-      if (!this.snackbarRef.value) {
-        console.warn(
-          `[main-base] Could not render snackbar message ` +
-            `because snackbar element was not rendered`,
-          { id, message }
-        );
-        return;
-      }
-    }
-
-    return this.snackbarRef.value.show(
-      { id, message, type, persistent, actions },
-      replaceAll
-    );
-  }
-
-  unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
-    this.snackbarRef.value?.hide(id);
   }
 
   /**
@@ -1187,7 +1146,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "details": {
-            this.sca.controller.global.main.lastSnackbarDetailsInfo =
+            this.sca.controller.global.snackbars.lastDetailsInfo =
               evt.value ?? null;
             this.sca.controller.global.main.show.add("SnackbarDetailsModal");
             break;
@@ -1276,9 +1235,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected renderSnackbarDetailsModal() {
     return html`<bb-snackbar-details-modal
-      .details=${this.sca.controller.global.main.lastSnackbarDetailsInfo}
+      .details=${this.sca.controller.global.snackbars.lastDetailsInfo}
       @bbmodaldismissed=${() => {
-        this.sca.controller.global.main.lastSnackbarDetailsInfo = null;
+      this.sca.controller.global.snackbars.lastDetailsInfo = null;
         this.sca.controller.global.main.show.delete("SnackbarDetailsModal");
       }}
     ></bb-snackbar-details-modal>`;

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { GraphDescriptor } from "@breadboard-ai/types";
+import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
 import { Utils } from "../../utils.js";
 import { makeAction } from "../binder.js";
 
@@ -26,16 +28,17 @@ const LABEL = "Board Actions";
 /**
  * Saves the current board to the board server.
  *
- * This action is typically called by the save trigger when the graph version
- * changes. It delegates to the board server for persistence.
- *
+ * @param messages Optional messages for user acknowledgment snackbars
  * @throws Error if called without an editor (programming error)
  * @returns Promise resolving to save result, or undefined if save is not applicable
  */
-export async function save(): Promise<{ result: boolean } | undefined> {
+export async function save(
+  messages?: { start: string; end: string } | null
+): Promise<{ result: boolean } | undefined> {
   const { controller, services } = bind;
   const { editor, url, readOnly } = controller.editor.graph;
   const logger = Utils.Logging.getLogger(controller);
+  const snackbars = controller.global.snackbars;
 
   // Guard: These are programming errors - the trigger should check these
   if (!editor) {
@@ -67,9 +70,28 @@ export async function save(): Promise<{ result: boolean } | undefined> {
     throw new Error("save() called but editor has no graph");
   }
 
+  // User-initiated save: show snackbar
+  let snackbarId: SnackbarUUID | undefined;
+  if (messages) {
+    snackbarId = snackbars.snackbar(
+      messages.start,
+      SnackType.PENDING,
+      [],
+      true, // persistent
+      undefined,
+      true // replaceAll
+    );
+  }
+
   try {
     // The board server handles debouncing/queueing internally
-    const result = await boardServer.save(boardUrl, graph, false);
+    const result = await boardServer.save(boardUrl, graph, !!messages);
+
+    // Update snackbar on success
+    if (snackbarId && messages) {
+      snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
+    }
+
     return result;
   } catch (error) {
     logger.log(
@@ -78,6 +100,125 @@ export async function save(): Promise<{ result: boolean } | undefined> {
       ),
       LABEL
     );
+
+    // Update snackbar on error (if we had one)
+    if (snackbarId) {
+      snackbars.unsnackbar(snackbarId);
+    }
+
     return { result: false };
   }
+}
+
+/**
+ * State to prevent concurrent saveAs operations.
+ */
+let isSavingAs = false;
+
+/**
+ * Saves the current graph as a new board.
+ *
+ * @param graph The graph descriptor to save
+ * @param messages Snackbar messages for user feedback
+ * @returns Promise resolving to result with new URL, or null if operation can't proceed
+ */
+export async function saveAs(
+  graph: GraphDescriptor,
+  messages: { start: string; end: string; error: string }
+): Promise<{ result: boolean; url?: URL } | null> {
+  const { controller, services } = bind;
+  const snackbars = controller.global.snackbars;
+
+  // Prevent concurrent saveAs operations
+  if (isSavingAs) {
+    return null;
+  }
+
+  isSavingAs = true;
+
+  const snackbarId = snackbars.snackbar(
+    messages.start,
+    SnackType.PENDING,
+    [],
+    true, // persistent
+    undefined,
+    true // replaceAll
+  );
+
+  const fail = { result: false, error: "Unable to save", url: undefined };
+
+  const boardServer = services.googleDriveBoardServer;
+  if (!boardServer) {
+    isSavingAs = false;
+    snackbars.update(snackbarId, messages.error, SnackType.ERROR);
+    return fail;
+  }
+
+  try {
+    // A placeholder URL since create() doesn't actually use it
+    const ignoredPlaceholderUrl = new URL("http://invalid");
+
+    // Replace pointers with inline data so that copies get created when saving
+    const copiedGraph = await boardServer.deepCopy(ignoredPlaceholderUrl, graph);
+
+    const createResult = await boardServer.create(
+      ignoredPlaceholderUrl,
+      copiedGraph
+    );
+
+    if (!createResult.url) {
+      isSavingAs = false;
+      snackbars.update(snackbarId, messages.error, SnackType.ERROR);
+      return fail;
+    }
+
+    // Clear all snackbars on success (matching original behavior)
+    snackbars.unsnackbar();
+
+    return { result: true, url: new URL(createResult.url) };
+  } catch {
+    return fail;
+  } finally {
+    snackbars.unsnackbar();
+    isSavingAs = false;
+  }
+}
+
+/**
+ * Deletes a board from the board server.
+ *
+ * @param url The URL of the board to delete
+ * @param messages Snackbar messages for user feedback
+ * @returns Promise resolving to the delete result
+ */
+export async function deleteBoard(
+  url: string,
+  messages: { start: string; end: string; error: string }
+): Promise<{ result: boolean }> {
+  const { controller, services } = bind;
+  const snackbars = controller.global.snackbars;
+
+  const snackbarId = snackbars.snackbar(
+    messages.start,
+    SnackType.PENDING,
+    [],
+    true, // persistent
+    undefined,
+    true // replaceAll
+  );
+
+  const fail = { result: false, error: "Unable to delete" };
+
+  const boardServer = services.googleDriveBoardServer;
+  if (!boardServer) {
+    snackbars.update(snackbarId, messages.error, SnackType.ERROR);
+    return fail;
+  }
+
+  const result = await boardServer.delete(new URL(url));
+
+  // Update snackbar with success message
+  snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
+
+  return result;
 }

@@ -12,7 +12,6 @@ import {
 import { VisualEditorMode } from "../../../../ui/types/types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
-import { HTMLTemplateResult } from "lit";
 
 export class GlobalController extends RootController {
   @field({ persist: "local" })
@@ -48,9 +47,6 @@ export class GlobalController extends RootController {
 
   @field()
   accessor showStatusUpdateChip: boolean | null = null;
-
-  @field()
-  accessor lastSnackbarDetailsInfo: string | HTMLTemplateResult | null = null;
 
   @field()
   accessor subscriptionStatus: SubscriptionStatus = "indeterminate";

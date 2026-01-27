@@ -86,7 +86,7 @@ class Main extends MainBase {
       return;
     }
 
-    this.snackbar(
+    this.sca.controller.global.snackbars.snackbar(
       html`
         Users from ${domain} should prefer
         <a href="${url}" target="_blank">${new URL(url).hostname}</a>
@@ -178,7 +178,7 @@ class Main extends MainBase {
         >
       ) => this.handleRoutedEvent(evt)}
       @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
-        this.snackbar(
+      this.sca.controller.global.snackbars.snackbar(
           snackbarEvent.message,
           snackbarEvent.snackType,
           snackbarEvent.actions,
@@ -188,7 +188,7 @@ class Main extends MainBase {
         );
       }}
       @bbunsnackbar=${(evt: BreadboardUI.Events.UnsnackbarEvent) => {
-        this.unsnackbar(evt.snackbarId);
+      this.sca.controller.global.snackbars.unsnackbar(evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
         this.sca.controller.global.toasts.toast(
