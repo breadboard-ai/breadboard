@@ -30,6 +30,39 @@ interface EffectTrigger {
  */
 export type Trigger<T> = ((deps: T) => void) & T & EffectTrigger;
 
+/**
+ * Creates a dependency injection binder for Triggers with effect management.
+ *
+ * Similar to `makeAction()`, but with additional methods for reactive effect registration:
+ * - `bind.register(name, callback)`: Register an effect that re-runs when signals change
+ * - `bind.clean()`: Stop all registered effects (useful for testing)
+ * - `bind.list()`: Get names of all registered effects
+ *
+ * **How effects work:**
+ * When you call `bind.register()`, the callback is wrapped in `signal-utils/subtle/microtask-effect`.
+ * Any signals read during execution become dependencies. When those signals change,
+ * the effect automatically re-runs.
+ *
+ * **Example:**
+ * ```typescript
+ * export const bind = makeTrigger();
+ *
+ * export function registerAutonameTrigger() {
+ *   bind.register("Autoname", async () => {
+ *     const { controller, services } = bind;
+ *
+ *     // Reading this signal registers it as a dependency
+ *     const change = controller.editor.graph.lastNodeConfigChange;
+ *     if (!change) return;
+ *
+ *     // Side effect runs when lastNodeConfigChange updates
+ *     await services.autonamer.autoname(change);
+ *   });
+ * }
+ * ```
+ *
+ * @returns A Proxy with setter/getter behavior plus effect management methods
+ */
 export function makeTrigger<T extends DefaultBindings>(): Trigger<T> {
   let deps: T | undefined;
   // Per-instance disposers map to keep triggers isolated by category.

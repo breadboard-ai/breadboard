@@ -19,6 +19,37 @@ type DefaultBindings = {
  */
 type Action<T> = ((deps: T) => void) & T;
 
+/**
+ * Creates a dependency injection binder for Actions.
+ *
+ * The returned object serves dual purposes:
+ * 1. **As a function**: Call with dependencies to bind them: `bind({ controller, services })`
+ * 2. **As an object**: Access dependencies via properties: `bind.controller`, `bind.services`
+ *
+ * This pattern allows Actions to be defined as standalone functions that receive
+ * their dependencies via closure rather than parameter passing.
+ *
+ * **How it works:**
+ * Uses a JavaScript Proxy to intercept property access. When you access `bind.controller`,
+ * the Proxy returns the bound dependency (or throws if not yet bound).
+ *
+ * **Example:**
+ * ```typescript
+ * // At module level
+ * export const bind = makeAction();
+ *
+ * // During bootstrap (in actions.ts)
+ * bind({ controller, services });
+ *
+ * // In action functions
+ * export function myAction() {
+ *   const { controller, services } = bind;
+ *   // Use controller and services
+ * }
+ * ```
+ *
+ * @returns A Proxy that acts as both setter and getter for dependencies
+ */
 export function makeAction<T extends DefaultBindings>(): Action<T> {
   let deps: T | undefined;
 
