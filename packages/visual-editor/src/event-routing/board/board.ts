@@ -417,7 +417,7 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
   event: "board.replace",
 
   async do(deps) {
-    const { tab, runtime, originalEvent, googleDriveClient } = deps;
+    const { tab, runtime, originalEvent, googleDriveClient, sca } = deps;
 
     const { replacement, theme } = originalEvent.detail;
 
@@ -470,8 +470,7 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
       replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
     }
 
-    await runtime.edit.replaceGraph(
-      tab,
+    await sca.actions.graph.replace(
       replacement,
       originalEvent.detail.creator
     );

@@ -84,10 +84,9 @@ export const MoveSelectionRoute: EventRoute<"node.moveselection"> = {
 export const ChangeEdgeRoute: EventRoute<"node.changeedge"> = {
   event: "node.changeedge",
 
-  async do({ runtime, tab, originalEvent, sca }) {
+  async do({ originalEvent, sca }) {
     sca.controller.global.main.blockingAction = true;
-    await runtime.edit.changeEdge(
-      tab,
+    await sca.actions.graph.changeEdge(
       originalEvent.detail.changeType,
       originalEvent.detail.from,
       originalEvent.detail.to,
@@ -103,18 +102,20 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
   {
     event: "node.changeedgeattachmentpoint",
 
-    async do({ runtime, tab, originalEvent, sca }) {
+  async do({ originalEvent, sca }) {
       const { graphId } = originalEvent.detail;
 
       sca.controller.global.main.blockingAction = true;
-      await runtime.edit.changeEdgeAttachmentPoint(
-        tab,
-        graphId === BreadboardUI.Constants.MAIN_BOARD_ID ? "" : graphId,
-        originalEvent.detail.edge,
-        originalEvent.detail.which,
-        originalEvent.detail.attachmentPoint
-      );
-      sca.controller.global.main.blockingAction = false;
+      try {
+        await sca.actions.graph.changeEdgeAttachmentPoint(
+          graphId === BreadboardUI.Constants.MAIN_BOARD_ID ? "" : graphId,
+          originalEvent.detail.edge,
+          originalEvent.detail.which,
+          originalEvent.detail.attachmentPoint
+        );
+      } finally {
+        sca.controller.global.main.blockingAction = false;
+      }
 
       return false;
     },

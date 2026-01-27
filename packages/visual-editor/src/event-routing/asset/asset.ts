@@ -11,16 +11,17 @@ import * as BreadboardUI from "../../ui/index.js";
 export const ChangeEdgeRoute: EventRoute<"asset.changeedge"> = {
   event: "asset.changeedge",
 
-  async do({ runtime, tab, originalEvent, sca }) {
+  async do({ originalEvent, sca }) {
     sca.controller.global.main.blockingAction = true;
-    await runtime.edit.changeAssetEdge(
-      tab,
-      originalEvent.detail.changeType,
-      originalEvent.detail.assetEdge,
-      originalEvent.detail.subGraphId
-    );
-
-    sca.controller.global.main.blockingAction = false;
+    try {
+      await sca.actions.graph.changeAssetEdge(
+        originalEvent.detail.changeType,
+        originalEvent.detail.assetEdge,
+        originalEvent.detail.subGraphId
+      );
+    } finally {
+      sca.controller.global.main.blockingAction = false;
+    }
     return false;
   },
 };

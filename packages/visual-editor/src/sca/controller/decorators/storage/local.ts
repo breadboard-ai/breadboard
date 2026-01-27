@@ -31,11 +31,13 @@ export class WebStorageWrapper implements Storage {
     this.store.setItem(name, JSON.stringify(value, jsonReplacer));
   }
 
-  async clear() {
-    this.store.clear();
-  }
-
   async delete(name: string) {
     this.store.removeItem(name);
+  }
+
+  // Not tested because in tests we use the in-memory storage.
+  /* c8 ignore next 3 */
+  async clear() {
+    this.store.clear();
   }
 }

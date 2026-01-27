@@ -47,6 +47,7 @@ import {
 } from "../data/file-system.js";
 import { ActionTracker } from "../ui/types/types.js";
 import { AppController } from "../sca/controller/controller.js";
+import { SCA } from "../sca/sca.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -70,11 +71,17 @@ export class Runtime extends EventTarget {
   public readonly emailPrefsManager: EmailPrefsManager;
   private readonly appController: AppController;
 
+  /**
+   * @deprecated Keep for backward compatibility
+   */
+  private readonly __sca: SCA;
+
   constructor(config: RuntimeConfig) {
     super();
 
     if (!config.sca) throw new Error("Expected SCA");
 
+    this.__sca = config.sca;
     this.appController = config.sca.controller;
     this.flags = this.appController.global.flags;
 
@@ -91,7 +98,6 @@ export class Runtime extends EventTarget {
     const kits = config.sca.services.kits;
     const loader = config.sca.services.loader;
     const graphStore = config.sca.services.graphStore;
-    const autonamer = config.sca.services.autonamer;
     const { appName, appSubName } = config;
 
     this.shell = new Shell(appName, appSubName);
@@ -107,7 +113,7 @@ export class Runtime extends EventTarget {
     this.util = Util;
     this.select = new Select();
     this.router = new Router();
-    this.edit = new Edit(graphStore, autonamer, this.flags, config.sca);
+    this.edit = new Edit();
     this.apiClient = new AppCatalystApiClient(
       this.fetchWithCreds,
       OPAL_BACKEND_API_PREFIX
@@ -137,11 +143,11 @@ export class Runtime extends EventTarget {
       diagnostics: true,
       kits: [], // The kits are added by the runtime.
       loader: this.board.loader,
-      graphStore: this.edit.graphStore,
-      fileSystem: this.edit.graphStore.fileSystem.createRunFileSystem({
+      graphStore: this.__sca.services.graphStore,
+      fileSystem: this.__sca.services.graphStore.fileSystem.createRunFileSystem({
         graphUrl: url,
         env: envFromGraphDescriptor(
-          this.edit.graphStore.fileSystem.env(),
+          this.__sca.services.graphStore.fileSystem.env(),
           graph
         ),
         assets: assetsFromGraphDescriptor(graph),

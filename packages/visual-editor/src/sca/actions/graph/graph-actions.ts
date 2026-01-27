@@ -7,8 +7,10 @@
 import {
   AssetMetadata,
   Edge,
+  EditHistoryCreator,
   EditSpec,
   EditTransform,
+  GraphDescriptor,
   GraphIdentifier,
   NodeConfiguration,
   NodeDescriptor,
@@ -16,9 +18,15 @@ import {
   NodeMetadata,
 } from "@breadboard-ai/types";
 import { makeAction } from "../binder.js";
-import { ChangeEdge, UpdateNode } from "../../../ui/transforms/index.js";
+import {
+  ChangeAssetEdge,
+  ChangeEdge,
+  ChangeEdgeAttachmentPoint,
+  UpdateNode,
+} from "../../../ui/transforms/index.js";
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 import type { SelectionPositionUpdate } from "../../../ui/events/node/node.js";
+import type { AssetEdge, EdgeAttachmentPoint } from "../../../ui/types/types.js";
 
 export const bind = makeAction();
 
@@ -213,4 +221,43 @@ export function moveSelectionPositions(updates: SelectionPositionUpdate[]) {
   }
 
   return editInternal(edits, "Update selection position");
+}
+
+/**
+ * Changes an asset edge (add or remove).
+ */
+export function changeAssetEdge(
+  changeType: "add" | "remove",
+  edge: AssetEdge,
+  subGraphId: string | null = null
+) {
+  const graphId = subGraphId ?? "";
+  const transform = new ChangeAssetEdge(changeType, graphId, edge);
+  return applyInternal(transform);
+}
+
+/**
+ * Changes an edge attachment point.
+ */
+export function changeEdgeAttachmentPoint(
+  graphId: GraphIdentifier,
+  edge: Edge,
+  which: "from" | "to",
+  attachmentPoint: EdgeAttachmentPoint
+) {
+  const transform = new ChangeEdgeAttachmentPoint(graphId, edge, which, attachmentPoint);
+  return applyInternal(transform);
+}
+
+/**
+ * Replaces the entire graph with a new graph descriptor.
+ */
+export function replace(
+  replacement: GraphDescriptor,
+  creator: EditHistoryCreator
+) {
+  return editInternal(
+    [{ type: "replacegraph", replacement, creator }],
+    "Replace graph"
+  );
 }
