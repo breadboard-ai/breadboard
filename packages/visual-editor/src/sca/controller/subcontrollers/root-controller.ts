@@ -11,6 +11,42 @@ import { isHydrating } from "../../utils/helpers/helpers.js";
 import { effect } from "signal-utils/subtle/microtask-effect";
 import { pendingStorageWrites } from "../context/writes.js";
 
+/**
+ * Abstract base class for all SCA controllers.
+ *
+ * Provides the hydration lifecycle for controllers with persisted `@field` values.
+ * When a controller has fields persisted to storage (localStorage, sessionStorage,
+ * or IndexedDB), those values must be loaded asynchronously. `RootController` tracks
+ * this loading process and exposes promises to await completion.
+ *
+ * **Hydration Lifecycle:**
+ * 1. Controller is instantiated with initial values
+ * 2. `@field` decorator registers persisted signals via `registerSignalHydration()`
+ * 3. Persisted values load asynchronously from storage
+ * 4. `isHydrated` promise resolves when all values are loaded
+ *
+ * **Key Properties:**
+ * - `controllerId`: Unique identifier used for storage key namespacing
+ * - `isHydrated`: Promise resolving when all persisted fields are loaded
+ * - `isSettled`: Promise resolving when all storage writes complete
+ * - `hydrated`: Synchronous boolean check (throws during hydration)
+ *
+ * @example
+ * ```typescript
+ * class MyController extends RootController {
+ *   @field({ persist: "local" })
+ *   accessor userPref = "default";
+ *
+ *   constructor() {
+ *     super("MyController");  // Unique ID for storage
+ *   }
+ * }
+ *
+ * // Wait for hydration before accessing persisted fields
+ * await myController.isHydrated;
+ * console.log(myController.userPref);  // Safe to access
+ * ```
+ */
 export abstract class RootController implements HydratedController {
   #trackedSignals = new Set<Signal.State<unknown>>();
   #isHydratedPromise?: Promise<number>;
