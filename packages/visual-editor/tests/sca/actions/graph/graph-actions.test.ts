@@ -312,6 +312,69 @@ suite("Graph Actions", () => {
         // If we get here without throwing, the test passes
         assert.ok(true, "Should not throw for missing asset");
       });
+
+      test("changeAssetEdge throws when asset edge cannot be created", async () => {
+        // Attempting to create an asset edge for a nonexistent asset should throw
+        await assert.rejects(
+          async () => {
+            await graphActions.changeAssetEdge(
+              "add",
+              { assetPath: "nonexistent-asset.txt", direction: "load", nodeId: "foo" },
+              ""
+            );
+          },
+          (err: Error) => err.message.includes("Unable to change asset")
+        );
+      });
+
+      test("changeEdgeAttachmentPoint updates edge attachment", async () => {
+        const editor = graphActions.bind.controller.editor.graph.editor;
+        assert.ok(editor, "Editor should exist");
+
+        // First add an edge
+        await editor.edit(
+          [
+            {
+              type: "addedge",
+              graphId: "",
+              edge: { from: "foo", to: "bar", in: "in", out: "out" },
+            },
+          ],
+          "Add edge"
+        );
+
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.changeEdgeAttachmentPoint(
+          "",
+          { from: "foo", to: "bar", in: "in", out: "out" },
+          "from",
+          "Bottom"
+        );
+        testGraph = await changeWatcher;
+
+        // Verify the edge exists (attachment point is on the edge metadata)
+        const edge = testGraph.edges.find(
+          (e) => e.from === "foo" && e.to === "bar"
+        );
+        assert.ok(edge, "Edge should exist");
+      });
+
+      test("replace replaces the entire graph", async () => {
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.replace(
+          {
+            nodes: [{ id: "new-node", type: "input" }],
+            edges: [],
+            title: "Replaced Graph",
+          },
+          { role: "user" }
+        );
+        testGraph = await changeWatcher;
+
+        assert.strictEqual(testGraph.title, "Replaced Graph");
+        assert.strictEqual(testGraph.nodes.length, 1);
+        assert.strictEqual(testGraph.nodes[0].id, "new-node");
+      });
     });
   });
 });

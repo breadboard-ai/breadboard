@@ -357,7 +357,7 @@ const PasteCommand: KeyboardCommand = {
 
     const result = await new ClipboardReader(
       tab?.graph.url,
-      runtime.edit.graphStore
+      sca.services.graphStore
     ).read();
 
     let boardContents: GraphDescriptor | undefined;
