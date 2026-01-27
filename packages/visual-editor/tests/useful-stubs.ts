@@ -45,7 +45,12 @@ const stubCaps: Capabilities = {
 
 const stubModuleArgs: A2ModuleArgs = {
   mcpClientManager: {} as unknown as McpClientManager,
-  agentContext: new AgentContext(),
+  agentContext: new AgentContext({
+    shell: {} as unknown as OpalShellHostProtocol,
+    fetchWithCreds: () => {
+      throw new Error(`fetchWithCreds not implemented`);
+    },
+  }),
   fetchWithCreds: () => {
     throw new Error(`fetchWithCreds not implemented`);
   },
@@ -61,6 +66,9 @@ const stubModuleArgs: A2ModuleArgs = {
 };
 
 const stubMemoryManager: MemoryManager = {
+  createSheet: () => {
+    throw new Error(`Not implemented`);
+  },
   readSheet: () => {
     throw new Error(`Not implemented`);
   },

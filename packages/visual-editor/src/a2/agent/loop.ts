@@ -25,9 +25,7 @@ import { getSystemFunctionGroup } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
 import { getMemoryFunctionGroup } from "./functions/memory.js";
-import { SheetManager } from "../google-drive/sheet-manager.js";
-import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
-import { FunctionGroup, UIType } from "./types.js";
+import { FunctionGroup, MemoryManager, UIType } from "./types.js";
 import { CHAT_LOG_VFS_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
@@ -85,18 +83,16 @@ class Loop {
   private readonly translator: PidginTranslator;
   private readonly fileSystem: AgentFileSystem;
   private readonly ui: AgentUI;
-  private readonly memoryManager: SheetManager;
+  private readonly memoryManager: MemoryManager;
   private readonly taskTreeManager: TaskTreeManager;
 
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs
   ) {
-    this.memoryManager = new SheetManager(
-      moduleArgs,
-      memorySheetGetter(moduleArgs)
-    );
+    this.memoryManager = moduleArgs.agentContext.memoryManager;
     this.fileSystem = new AgentFileSystem({
+      context: moduleArgs.context,
       memoryManager: this.memoryManager,
     });
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
@@ -187,6 +183,7 @@ class Loop {
       );
       functionGroups.push(
         getMemoryFunctionGroup({
+          context: moduleArgs.context,
           translator,
           fileSystem,
           memoryManager,

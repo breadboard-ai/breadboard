@@ -291,7 +291,10 @@ class EvalRun implements EvalHarnessRuntimeArgs {
 
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
-    agentContext: new AgentContext(),
+    agentContext: new AgentContext({
+      shell: {} as unknown as OpalShellHostProtocol,
+      fetchWithCreds: this.fetchWithCreds,
+    }),
     fetchWithCreds: this.fetchWithCreds,
     getConsentController() {
       return {

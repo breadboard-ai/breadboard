@@ -6,13 +6,14 @@
 
 import { describe, it } from "node:test";
 import { AgentFileSystem } from "../../src/a2/agent/file-system.js";
-import { stubMemoryManager } from "../useful-stubs.js";
+import { stubMemoryManager, stubModuleArgs } from "../useful-stubs.js";
 import { err, ok } from "@breadboard-ai/utils/outcome.js";
 import { deepStrictEqual, fail, ok as success } from "node:assert";
 
 describe("Agent File System", () => {
   it("handles existing system files", async () => {
     const fileSystem = new AgentFileSystem({
+      context: stubModuleArgs.context,
       memoryManager: stubMemoryManager,
     });
     fileSystem.addSystemFile("/vfs/system/foo", () => "foo");
@@ -25,6 +26,7 @@ describe("Agent File System", () => {
 
   it("handles non-existing system files", async () => {
     const fileSystem = new AgentFileSystem({
+      context: stubModuleArgs.context,
       memoryManager: stubMemoryManager,
     });
     fileSystem.addSystemFile("/vfs/system/foo", () => "foo");
@@ -38,6 +40,7 @@ describe("Agent File System", () => {
 
   it("handles failure to get a system file", async () => {
     const fileSystem = new AgentFileSystem({
+      context: stubModuleArgs.context,
       memoryManager: stubMemoryManager,
     });
     fileSystem.addSystemFile("/vfs/system/foo", () => err("Sorry"));

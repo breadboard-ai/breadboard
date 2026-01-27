@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeHandlerContext } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
 import z from "zod";
 import { llm, ok, toText, tr } from "../../a2/utils.js";
-import { SheetManager } from "../../google-drive/sheet-manager.js";
 import { AgentFileSystem } from "../file-system.js";
 import {
   defineFunction,
@@ -15,7 +15,7 @@ import {
   mapDefinitions,
 } from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
-import { FunctionGroup } from "../types.js";
+import { FunctionGroup, MemoryManager } from "../types.js";
 import { statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 
@@ -28,9 +28,10 @@ const MEMORY_DELETE_SHEET_FUNCTION = "memory_delete_sheet";
 const MEMORY_GET_METADATA_FUNCTION = "memory_get_metadata";
 
 export type MemoryFunctionArgs = {
+  context: NodeHandlerContext;
   translator: PidginTranslator;
   fileSystem: AgentFileSystem;
-  memoryManager: SheetManager;
+  memoryManager: MemoryManager;
   taskTreeManager: TaskTreeManager;
 };
 
@@ -58,7 +59,8 @@ function getMemoryFunctionGroup(args: MemoryFunctionArgs): FunctionGroup {
 }
 
 function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
-  const { translator, fileSystem, memoryManager, taskTreeManager } = args;
+  const { context, translator, fileSystem, memoryManager, taskTreeManager } =
+    args;
   return [
     defineFunction(
       {
@@ -79,7 +81,7 @@ An array of strings representing the column headers (e.g., ['Name', 'Status']).`
       },
       async ({ task_id, status_update, ...parameters }) => {
         taskTreeManager.setInProgress(task_id, status_update);
-        return memoryManager.createSheet(parameters);
+        return memoryManager.createSheet(context, parameters);
       }
     ),
     defineFunction(
@@ -130,7 +132,7 @@ provided when the "output_format" is set to "json"`
         const { output_format, file_name, status_update, task_id, ...rest } =
           args;
         taskTreeManager.setInProgress(task_id, status_update);
-        const result = await memoryManager.readSheet(rest);
+        const result = await memoryManager.readSheet(context, rest);
         if (!ok(result)) return result;
         const parts = llm`${result}`.asParts().at(0);
         if (!parts) {
@@ -187,7 +189,7 @@ The 2D array of data to write.
         if (errors.length > 0) {
           return { error: errors.join(", ") };
         }
-        return memoryManager.updateSheet({ range, values });
+        return memoryManager.updateSheet(context, { range, values });
       }
     ),
     defineFunction(
@@ -203,7 +205,7 @@ Deletes a specific memory sheet`,
       },
       async ({ task_id, status_update, ...parameters }) => {
         taskTreeManager.setInProgress(task_id, status_update);
-        return memoryManager.deleteSheet(parameters);
+        return memoryManager.deleteSheet(context, parameters);
       }
     ),
     defineFunction(
@@ -237,7 +239,7 @@ The list of column names
       },
       async ({ task_id, status_update }) => {
         taskTreeManager.setInProgress(task_id, status_update);
-        return memoryManager.getSheetMetadata();
+        return memoryManager.getSheetMetadata(context);
       }
     ),
   ];

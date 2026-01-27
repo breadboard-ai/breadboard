@@ -103,7 +103,10 @@ export function services(
       OPAL_BACKEND_API_PREFIX
     );
 
-    const agentContext = new AgentContext();
+    const agentContext = new AgentContext({
+      shell: config.shellHost,
+      fetchWithCreds,
+    });
 
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
