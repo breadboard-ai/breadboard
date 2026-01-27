@@ -77,3 +77,5 @@ up that file with `npm run test`.
 If you're writing a test in `packages/visual-editor/tests` and the code-to-be-tested
 contains signals, use the `packages/visual-editor/tests/signal-watcher.ts` helper
 for easy reactivity testing.
+
+In `packages/visual-editor/package.json`, there's an `npm run test:only` command that enables the `--test-only` flag. Use it to narrow the scope of tests.
