@@ -42,7 +42,7 @@ import { FunctionGroup } from "../types.js";
 import { statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 
-export { getGenerateFunctionGroup };
+export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 

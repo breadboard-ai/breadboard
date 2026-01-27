@@ -16,6 +16,7 @@ import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 import { toText } from "../a2/utils.js";
 import { MemoryManager } from "./types.js";
+import { GENERATE_TEXT_FUNCTION } from "./functions/generate.js";
 
 export { AgentFileSystem };
 
@@ -165,6 +166,25 @@ class AgentFileSystem {
   async readText(path: string): Promise<Outcome<string>> {
     const parts = await this.get(path);
     if (!ok(parts)) return parts;
+    const errors: string[] = [];
+    parts.forEach((part) => {
+      if ("storedData" in part) {
+        const { handle, mimeType } = part.storedData;
+        if (handle.startsWith("drive:/")) {
+          errors.push(
+            `Google Drive files may contain images and other non-textual content. Please use "${GENERATE_TEXT_FUNCTION}" to read them at full fidelity.`
+          );
+        } else {
+          errors.push(
+            `Reading text from file with mimeType ${mimeType} is not supported.`
+          );
+        }
+      }
+    });
+
+    if (errors.length > 0) {
+      return err(errors.join(", "));
+    }
 
     return toText({ parts });
   }
