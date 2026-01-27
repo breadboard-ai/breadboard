@@ -42,6 +42,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { Project, StepEditorSurface } from "../../state/index.js";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
@@ -49,7 +50,6 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
-import { Project, StepEditorSurface } from "../../state/index.js";
 import {
   ActionTracker,
   EnumValue,
@@ -1404,11 +1404,27 @@ export class EntityEditor
           return item.id === port.value && item.info !== undefined;
         });
 
+        let finalInfo = "";
+        if (extendedInfo && typeof extendedInfo !== "string") {
+          if (extendedInfo?.info) {
+            finalInfo = extendedInfo.info;
+          }
+
+          const dailyLimitReached = false; // @TODO Integrate the backend once the daily limit check is ready
+          const isGoogleUser = false; // @TODO Integrate the backend once the google user check is ready
+          if (
+            extendedInfo?.subscriberInfo &&
+            dailyLimitReached &&
+            isGoogleUser
+          ) {
+            finalInfo = extendedInfo?.subscriberInfo;
+          }
+        }
+
         const extendedInfoOutput =
           extendedInfo && typeof extendedInfo !== "string"
             ? html`<div class="info">
-                <span class="g-icon round filled">warning</span
-                >${extendedInfo.info}
+                <span class="g-icon round filled">warning</span>${finalInfo}
               </div>`
             : nothing;
 
