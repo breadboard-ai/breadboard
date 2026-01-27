@@ -41,7 +41,6 @@ export const eventRoutes = new Map<
 
   /** Node */
   [Node.ActionRoute.event, Node.ActionRoute],
-  [Node.AddWithEdgeRoute.event, Node.AddWithEdgeRoute],
   [Node.ChangeRoute.event, Node.ChangeRoute],
   [Node.MultiChangeRoute.event, Node.MultiChangeRoute],
   [Node.ChangeEdgeRoute.event, Node.ChangeEdgeRoute],

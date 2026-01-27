@@ -101,6 +101,7 @@ export class Surface extends Root {
       .surfaceId=${this.surfaceId}
       .processor=${this.processor}
       .childComponents=${this.surface.componentTree}
+      .enableCustomElements=${this.enableCustomElements}
     ></a2ui-root>`;
   }
 

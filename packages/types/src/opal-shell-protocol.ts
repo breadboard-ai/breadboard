@@ -58,6 +58,8 @@ export declare interface OpalShellHostProtocol {
     event: string,
     payload?: Record<string, string | undefined>
   ): Promise<void>;
+
+  trackProperties(payload: Record<string, string | undefined>): Promise<void>;
 }
 
 export declare interface OpalShellGuestProtocol {
@@ -190,11 +192,4 @@ export declare type GuestConfiguration = {
    * performed will be removed.
    */
   shareSurfaceUrlTemplates: Record<string, string> | undefined;
-
-  /**
-   * If true, supports tracking actions. This is a transitional flag, which
-   * allows us to implement action tracking in the shell guest without breaking
-   * existing shell hosts.
-   */
-  supportsActionTracking?: boolean;
 };

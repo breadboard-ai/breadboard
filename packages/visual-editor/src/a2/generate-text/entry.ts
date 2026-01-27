@@ -9,11 +9,12 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
-import { readSettings } from "../a2/settings.js";
+import { readFlags } from "../a2/settings.js";
 import { Template } from "../a2/template.js";
-import { defaultLLMContent, ok } from "../a2/utils.js";
+import { defaultLLMContent } from "../a2/utils.js";
 import { defaultSystemInstruction } from "./system-instruction.js";
 import type { SharedContext } from "./types.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 
@@ -70,44 +71,13 @@ async function invoke({
 
 async function describe(
   { inputs: { description, "config$ask-user": chat } }: DescribeInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ) {
-  const settings = await readSettings(caps);
-  const chatSchema: BehaviorSchema[] = chat ? ["hint-chat-mode"] : [];
-  const experimental =
-    ok(settings) && !!settings["Show Experimental Components"];
-  const template = new Template(caps, description);
-  let extra: Record<string, Schema> = {};
-  if (experimental) {
-    extra = {
-      // "p-list": {
-      //   type: "boolean",
-      //   title: "Make a list",
-      //   behavior: ["config", "hint-preview", "hint-advanced"],
-      //   icon: "summarize",
-      //   description:
-      //     "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
-      // },
-    };
-  }
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
-        description: {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-preview"],
-          title: "Prompt",
-          description:
-            "Give the model additional context on what to do, like specific rules/guidelines to adhere to or specify behavior separate from the provided context.",
-          default: defaultLLMContent(),
-        },
-        context: {
-          type: "array",
-          items: { type: "object", behavior: ["llm-content"] },
-          title: "Context in",
-          behavior: ["main-port"],
-        },
+  const flags = await readFlags(moduleArgs);
+  const chatSchema: Schema["properties"] = flags?.agentMode
+    ? {}
+    : {
         "p-chat": {
           type: "boolean",
           title: "Review with user",
@@ -129,10 +99,32 @@ async function describe(
           title: "Model",
           description: "The specific model version to generate with",
         },
-        ...extra,
+      };
+  const chatHints: BehaviorSchema[] = chat ? ["hint-chat-mode"] : [];
+  const template = new Template(caps, description);
+
+  return {
+    inputSchema: {
+      type: "object",
+      properties: {
+        description: {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-preview"],
+          title: "Prompt",
+          description:
+            "Give the model additional context on what to do, like specific rules/guidelines to adhere to or specify behavior separate from the provided context.",
+          default: defaultLLMContent(),
+        },
+        context: {
+          type: "array",
+          items: { type: "object", behavior: ["llm-content"] },
+          title: "Context in",
+          behavior: ["main-port"],
+        },
+        ...chatSchema,
         ...template.schemas(),
       },
-      behavior: ["at-wireable", ...chatSchema],
+      behavior: ["at-wireable", ...chatHints],
       ...template.requireds(),
     } satisfies Schema,
     outputSchema: {

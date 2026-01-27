@@ -72,6 +72,8 @@ export function createChiclets(
     const { type, path, title, invalid, mimeType, instance } = part;
     const assetType = getAssetType(mimeType) ?? "";
 
+    if (type !== "tool") return;
+
     const { icon: srcIcon, tags: metadataTags } = expandChiclet(
       part,
       projectState,

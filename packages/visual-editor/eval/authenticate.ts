@@ -22,7 +22,7 @@ const SCOPES: string[] = [
 ];
 const TOKEN_PATH = path.join(ROOT_DIR, "token.local.json");
 const PORT = 3000;
-const REDIRECT_URL = `http://localhost:${PORT}`;
+const REDIRECT_URL = `http://localhost:${PORT}/oauth/`;
 
 async function getAuthenticatedClient(): Promise<OAuth2Client> {
   config({ quiet: true });

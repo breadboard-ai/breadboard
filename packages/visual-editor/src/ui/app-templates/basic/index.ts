@@ -23,6 +23,13 @@ import {
   SnackType,
 } from "../../types/types.js";
 
+// Custom Elements for the App.
+import "./a2ui-custom-elements/a2ui-custom-pdf-viewer.js";
+import "./a2ui-custom-elements/a2ui-custom-media-container.js";
+import "./a2ui-custom-elements/a2ui-custom-video.js";
+import "./a2ui-custom-elements/a2ui-custom-google-drive.js";
+import "./header/header.js";
+
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume, provide } from "@lit/context";
 import { classMap } from "lit/directives/class-map.js";
@@ -42,11 +49,8 @@ import {
 } from "../../events/events.js";
 import { ProjectRun } from "../../state/types.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
-import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
+import { appScreenToA2UIProcessor } from "../shared/utils/app-screen-to-a2ui.js";
 import { styles as appStyles } from "./index.styles.js";
-import { theme as uiTheme } from "./theme/light.js";
-
-import "./header/header.js";
 
 import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
@@ -55,7 +59,6 @@ import {
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import * as ParticlesUI from "../../../particles-ui/index.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl, parseUrl } from "../../utils/urls.js";
@@ -77,16 +80,15 @@ import {
   saveOutputsAsFile,
 } from "../../../data/save-outputs-as-file.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { consentManagerContext } from "../../contexts/consent-manager.js";
 import {
   GlobalConfig,
   globalConfigContext,
 } from "../../contexts/global-config.js";
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
-import {
-  CONSENT_RENDER_INFO,
-  ConsentManager,
-} from "../../utils/consent-manager.js";
+import { CONSENT_RENDER_INFO } from "../../utils/consent-content-items.js";
+import { isDocSlidesOrSheetsOutput } from "../../../a2/a2/utils.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { SCA } from "../../../sca/sca.js";
 
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -128,9 +130,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @property({ attribute: false })
   accessor globalConfig: GlobalConfig | undefined;
 
-  @provide({ context: ParticlesUI.Context.themeContext })
-  accessor theme: ParticlesUI.Types.UITheme = uiTheme;
-
   @provide({ context: A2UI.Context.themeContext })
   accessor a2uitheme: v0_8.Types.Theme = a2uiTheme;
 
@@ -139,8 +138,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor run: ProjectRun | null = null;
 
   @state()
-  @consume({ context: consentManagerContext })
-  accessor consentManager: ConsentManager | undefined = undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @state()
   @consume({ context: actionTrackerContext })
@@ -329,32 +328,24 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           console.warn(err);
           activityContents = html`Unable to parse response`;
         }
-      } else if (last.a2ui) {
-        const { processor, receiver } = last.a2ui;
+      } else {
+        let processor;
+        let receiver;
+
+        // A2UI payload received.
+        if (last.a2ui) {
+          processor = last.a2ui.processor;
+          receiver = last.a2ui.receiver;
+        } else {
+          // Likely a raw LLM Content that needs to be converted to A2UI.
+          processor = appScreenToA2UIProcessor(last);
+          receiver = null;
+        }
+
         activityContents = html`<section id="surfaces">
           <bb-a2ui-client-view .processor=${processor} .receiver=${receiver}>
           </bb-a2ui-client-view>
         </section>`;
-      } else {
-        // Convert app screen to particles. There's a belt-and-braces check
-        // afterwards to ensure that the top-level list has a valid
-        // presentation because by default a Particle doesn't have one but we
-        // still need it at this point.
-        // TODO: Remove this conversion when ProjectRun.app emits particles
-        const group = appScreenToParticles(last);
-        if (typeof group?.presentation === "string") {
-          group.presentation = {
-            behaviors: [],
-            orientation: "vertical",
-            type: "list",
-          };
-        }
-
-        activityContents = html` <particle-ui-list
-          class=${classMap(this.theme.groups.list)}
-          .group=${group}
-          .orientation=${group?.presentation?.orientation}
-        ></particle-ui-list>`;
       }
     }
 
@@ -424,10 +415,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderConsent() {
-    const consentRequest = this.run?.app.consentRequests[0];
-    if (!consentRequest) {
+    const requests = this.sca.controller.global.consent.pendingInApp;
+    if (!requests || requests.length === 0) {
       return nothing;
     }
+
+    const consentRequest = requests[0];
     const renderInfo = CONSENT_RENDER_INFO[consentRequest.request.type];
 
     // TypeScript struggles to disambiguate this, so marking it as `any`.
@@ -441,12 +434,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           <button
             id="grant-consent"
             @click=${() => {
-              consentRequest.consentCallback(ConsentAction.ALWAYS_ALLOW);
-              // This is gross, but allows the next screen to render so we don't
-              // jank back to the starting screen for a split second
-              setTimeout(() => {
-                this.run?.app.consentRequests.shift();
-              });
+              this.sca.controller.global.consent.updatePendingRequest(
+                consentRequest,
+                ConsentAction.ALWAYS_ALLOW
+              );
             }}
           >
             Allow Access
@@ -473,6 +464,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const allowSharingOutputs = !parsedUrl.lite;
 
+    const isBtnDisabled = isDocSlidesOrSheetsOutput(this.run.finalOutput);
+
     return html`
       <div id="save-results-button-container">
         ${allowSharingOutputs
@@ -487,6 +480,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               </button>`
             : html`<button
                 id="save-results-button"
+                ?disabled=${isBtnDisabled}
                 class="sans-flex w-500 round md-body-medium"
                 @click=${this.#onClickSaveResults}
                 ${ref(this.#shareResultsButton)}
@@ -497,6 +491,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           : nothing}
         <button
           id="export-output-button"
+          ?disabled=${isBtnDisabled}
           @click=${this.#onClickExportOutput}
           class="sans-flex w-500 round md-body-medium"
         >
@@ -1080,64 +1075,67 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       </div>
     `;
 
+    const shouldRenderProgress =
+      this.run.app.state === "progress" &&
+      this.sca.controller.global.consent.pendingInApp.length === 0;
     let content: Array<HTMLTemplateResult | symbol> = [];
     if (this.isEmpty) {
       content = [this.#renderEmptyState()];
     } else {
-      switch (this.run.app.state) {
-        case "splash":
-          content = [splashScreen];
-          break;
+      if (this.sca.controller.global.consent.pendingInApp.length > 0) {
+        content = [this.#renderConsent()];
+      } else {
+        switch (this.run.app.state) {
+          case "splash":
+            content = [splashScreen];
+            break;
 
-        case "progress":
-          // Progress is always rendered but hidden (so as to avoid re-renders),
-          // so this becomes a no-op here to ensure we cover all states.
-          // The only thing we need to do is clean up after input
-          this.style.setProperty("--input-clearance", `0px`);
-          break;
+          case "progress":
+            // Progress is always rendered but hidden (so as to avoid re-renders),
+            // so this becomes a no-op here to ensure we cover all states.
+            // The only thing we need to do is clean up after input
+            this.style.setProperty("--input-clearance", `0px`);
+            break;
 
-        case "input":
-          content = [this.#renderOutputs(), this.#renderInput()];
-          break;
+          case "input":
+            content = [this.#renderOutputs(), this.#renderInput()];
+            break;
 
-        case "output":
-          if (this.graph && this.boardServer) {
-            void maybeTriggerNlToOpalSatisfactionSurvey(
-              this.run,
-              this.graph,
-              this.boardServer
+          case "output":
+            if (this.graph && this.boardServer) {
+              void maybeTriggerNlToOpalSatisfactionSurvey(
+                this.run,
+                this.graph,
+                this.boardServer
+              );
+            }
+            content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
+            break;
+
+          case "error":
+            content = [this.#renderError()];
+            break;
+
+          case "interactive":
+            content = [this.#renderOutputs()];
+            break;
+
+          default: {
+            console.warn(
+              "Unknown state",
+              this.run.app.state,
+              "rendering splash screen"
             );
+            content = [splashScreen];
           }
-          content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
-          break;
-
-        case "error":
-          content = [this.#renderError()];
-          break;
-
-        case "interactive":
-          content = [this.#renderOutputs()];
-          break;
-
-        case "consent":
-          content = [this.#renderConsent()];
-          break;
-
-        default: {
-          console.warn(
-            "Unknown state",
-            this.run.app.state,
-            "rendering splash screen"
-          );
-          content = [splashScreen];
         }
       }
     }
 
     return html`<section class=${classMap(classes)} style=${styleMap(styles)}>
       <div id="content">
-        ${this.#renderControls()}
-        ${this.#renderProgress(this.run.app.state === "progress")} ${content}
+        ${this.#renderControls()} ${this.#renderProgress(shouldRenderProgress)}
+        ${content}
       </div>
     </section>`;
   }

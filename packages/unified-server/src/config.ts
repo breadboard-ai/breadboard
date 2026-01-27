@@ -60,6 +60,7 @@ export async function createClientConfig(opts: {
     SHELL_PREFIX: flags.SHELL_PREFIX,
     ENABLE_EMAIL_OPT_IN: flags.ENABLE_EMAIL_OPT_IN,
     SHARE_SURFACE_URL_TEMPLATES: flags.SHARE_SURFACE_URL_TEMPLATES,
+    ENABLE_NEW_URL_SCHEME: flags.ENABLE_NEW_URL_SCHEME,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,
@@ -76,6 +77,8 @@ export async function createClientConfig(opts: {
         flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
       streamPlanner: flags.STREAM_PLANNER,
       streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
+      enableDrivePickerInLiteMode: flags.ENABLE_DRIVE_PICKER_IN_LITE_MODE,
+      enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
     },
   };
 }

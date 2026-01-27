@@ -87,18 +87,28 @@ class PlanRunner
     return !!this.#run && !this.#pendingResult;
   }
 
-  async run(inputs?: InputValues, interactiveMode = false): Promise<boolean> {
+  start(): Promise<void> {
+    return this.run();
+  }
+
+  resumeWithInputs(inputs: InputValues): Promise<void> {
+    return this.run(inputs);
+  }
+
+  private async run(
+    inputs?: InputValues,
+    interactiveMode = false
+  ): Promise<void> {
     if (this.#inRun) {
       if (!inputs) {
         // This is a situation when the "Start" button is clicked on a run
         // while we're paused. This may happen when the first step is
         // interrupted.
         await this.#controller?.restart();
-
-        return true;
+        return;
       }
       this.#resumeWith = inputs;
-      return false;
+      return;
     }
     this.#inRun = true;
     try {
@@ -130,7 +140,7 @@ class PlanRunner
         if (result.done) {
           this.#run = null;
           this.#pendingResult = null;
-          return true;
+          return;
         }
         const { type, data, reply } = result.value;
         switch (type) {
@@ -156,7 +166,7 @@ class PlanRunner
                     timestamp: timestamp(),
                   })
                 );
-                return false;
+                return;
               }
             }
             break;
@@ -475,7 +485,7 @@ class InternalRunStateController {
     }
 
     const path = this.path();
-    this.callback({
+    await this.callback({
       type: "nodestart",
       data: {
         node: task.node,
@@ -566,7 +576,7 @@ class InternalRunStateController {
         }
       }
     }
-    this.callback({
+    await this.callback({
       type: "nodeend",
       data: {
         node: task.node,

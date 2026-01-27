@@ -1226,8 +1226,7 @@ export class EntityEditor
     value: LLMContent | undefined,
     graphId: GraphIdentifier,
     fastAccess: boolean,
-    isReferenced: boolean,
-    showControlFlowTools: boolean
+    isReferenced: boolean
   ) {
     const portValue = getLLMContentPortValue(value, port.schema);
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
@@ -1244,7 +1243,6 @@ export class EntityEditor
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
       .value=${textPart.text}
       .supportsFastAccess=${fastAccess}
-      .showControlFlowTools=${showControlFlowTools}
       .readOnly=${this.readOnly}
       id=${port.name}
       name=${port.name}
@@ -1263,8 +1261,6 @@ export class EntityEditor
     nodeId: NodeIdentifier,
     inputPorts: PortLike[]
   ) {
-    let showControlFlowTools = false;
-
     const hasTextEditor =
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
 
@@ -1292,8 +1288,7 @@ export class EntityEditor
                 isLLMContent(port.value) ? port.value : undefined,
                 graphId,
                 !advanced,
-                isReferenced,
-                showControlFlowTools
+                isReferenced
               ),
             ];
           } else {
@@ -1314,8 +1309,7 @@ export class EntityEditor
                 : undefined,
               graphId,
               true,
-              true,
-              showControlFlowTools
+              true
             );
           }
           break;
@@ -1359,13 +1353,6 @@ export class EntityEditor
                 (value) => enumValue(value).id == port.value
               ) ?? port.schema.enum[0]
             );
-
-            // Brittle, because it depends on the controller port to be first
-            // in the list of the ports (ok for now, since we sort it that
-            // way). Let's fix this to be less brittle somehow.
-            if (currentValue.showControlFlowTools) {
-              showControlFlowTools = true;
-            }
 
             const classes: Record<string, boolean> = {};
             if (currentValue.icon) {
@@ -1420,8 +1407,7 @@ export class EntityEditor
         const extendedInfoOutput =
           extendedInfo && typeof extendedInfo !== "string"
             ? html`<div class="info">
-                <span class="g-icon round filled">warning</span
-                >${extendedInfo.info}
+                <span class="g-icon round">info</span>${extendedInfo.info}
               </div>`
             : nothing;
 
@@ -1815,10 +1801,6 @@ function enumValue(value: SchemaEnumValue): EnumValue {
 
   if (value.hidden) {
     enumVal.hidden = value.hidden;
-  }
-
-  if (value.showControlFlowTools) {
-    enumVal.showControlFlowTools = value.showControlFlowTools;
   }
 
   return enumVal;

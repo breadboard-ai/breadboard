@@ -9,7 +9,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { Project } from "../../state/index.js";
-import { RuntimeFlags } from "@breadboard-ai/types";
 import "@material/web/tabs/primary-tab.js";
 import "@material/web/tabs/tabs.js";
 import "@material/web/checkbox/checkbox.js";
@@ -19,6 +18,9 @@ import * as BreadboardUI from "../../../ui/index.js";
 import { EmailPrefsManager } from "../../utils/email-prefs-manager.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -28,14 +30,13 @@ enum TabId {
   INTEGRATIONS = "INTEGRATIONS",
 }
 
-function getTabEnabledMap(
-  uiState: BreadboardUI.State.UI | undefined,
-  showExperimentalComponents: boolean
-): Record<TabId, boolean> {
+function getTabEnabledMap(sca: SCA | undefined): Record<TabId, boolean> {
   return {
     [TabId.GENERAL]: Boolean(CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN),
-    [TabId.INTEGRATIONS]: Boolean(uiState?.flags?.mcp),
-    [TabId.EXPERIMENTAL]: showExperimentalComponents,
+    [TabId.INTEGRATIONS]: Boolean(sca?.controller?.global?.flags?.mcp),
+    [TabId.EXPERIMENTAL]: Boolean(
+      sca?.controller?.global.main.experimentalComponents
+    ),
   };
 }
 
@@ -51,22 +52,14 @@ function shouldShowTabs(enabledTabs: Record<TabId, boolean>) {
 /**
  * Returns whether there are any enabled global settings
  */
-export function hasEnabledGlobalSettings(
-  uiState: BreadboardUI.State.UI | undefined,
-  showExperimentalComponents: boolean
-) {
-  return (
-    countEnabledTabs(getTabEnabledMap(uiState, showExperimentalComponents)) > 0
-  );
+export function hasEnabledGlobalSettings(sca: SCA | undefined) {
+  return countEnabledTabs(getTabEnabledMap(sca)) > 0;
 }
 
 @customElement("bb-global-settings-modal")
 export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
-  @property()
-  accessor flags: Promise<Readonly<RuntimeFlags>> | null = null;
-
-  @property()
-  accessor showExperimentalComponents: boolean = false;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property()
   accessor project: Project | null = null;
@@ -231,16 +224,16 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
       [TabId.EXPERIMENTAL]: {
         name: Strings.from("LABEL_SETTINGS_EXPERIMENTAL"),
         template: () =>
-          html` <bb-runtime-flags .flags=${this.flags}> </bb-runtime-flags>`,
+          html` <bb-runtime-flags
+            .flags=${this.sca.controller.global.flags.flags()}
+          >
+          </bb-runtime-flags>`,
       },
     };
   }
 
   willUpdate() {
-    this.enabledTabs = getTabEnabledMap(
-      this.uiState,
-      this.showExperimentalComponents
-    );
+    this.enabledTabs = getTabEnabledMap(this.sca);
     // Changing settings might cause the currently selected tab to become disabled;
     // In this case, change the active tab to the first enabled one
     const enabledTabs = this.enabledTabs;

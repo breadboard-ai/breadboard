@@ -12,6 +12,7 @@ import { icons } from "../../../styles/icons.js";
 import { EnumValue } from "../../../types/types.js";
 import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("bb-item-select")
 export class ItemSelect extends LitElement {
@@ -261,6 +262,7 @@ export class ItemSelect extends LitElement {
       :host([alignment="bottom"]) #item-selector {
         top: var(--top);
         bottom: auto;
+        max-height: calc(100vh - var(--top));
       }
     `,
   ];
@@ -271,6 +273,29 @@ export class ItemSelect extends LitElement {
   #values: EnumValue[] = [];
   #toggleRef: Ref<HTMLButtonElement> = createRef();
   #selectorRef: Ref<HTMLDialogElement> = createRef();
+
+  #hasIcon(value: Pick<EnumValue, "icon" | "svgIcon">) {
+    return value.icon !== undefined || value.svgIcon !== undefined;
+  }
+
+  #renderIcon(value: Pick<EnumValue, "icon" | "svgIcon">) {
+    if (value.icon) {
+      return html`<span class="g-icon filled">${value.icon}</span>`;
+    }
+
+    if (value.svgIcon) {
+      const icon = value.svgIcon.trim();
+      const background = icon.startsWith("var(") ? icon : `var(${icon})`;
+      return html`<span
+        class="svg-icon"
+        style=${styleMap({
+          background: `${background} center center / 20px 20px no-repeat`,
+        })}
+      ></span>`;
+    }
+
+    return nothing;
+  }
 
   #handleChange() {
     this.#selected = this.#highlighted;
@@ -306,7 +331,7 @@ export class ItemSelect extends LitElement {
     };
     const classes: Record<string, boolean> = {
       selected: true,
-      icon: renderedValue.icon !== undefined,
+      icon: this.#hasIcon(renderedValue),
       round: true,
       "w-500": true,
       "sans-flex": true,
@@ -325,9 +350,7 @@ export class ItemSelect extends LitElement {
             }}
             ${ref(this.#toggleRef)}
           >
-            ${renderedValue.icon
-              ? html`<span class="g-icon filled">${renderedValue.icon}</span>`
-              : nothing}
+            ${this.#renderIcon(renderedValue)}
             ${renderedValue.title
               ? html`<span class="title">${renderedValue.title}</span>`
               : nothing}
@@ -427,7 +450,7 @@ export class ItemSelect extends LitElement {
 
               const classes: Record<string, boolean> = {
                 double: value.description !== undefined,
-                icon: value.icon !== undefined,
+                icon: this.#hasIcon(value),
                 tag: value.tag !== undefined,
                 active: idx === this.#highlighted,
                 round: true,
@@ -437,7 +460,6 @@ export class ItemSelect extends LitElement {
 
               return html`<li>
                 <button
-                  ?autofocus=${idx === this.#highlighted}
                   @pointerover=${() => {
                     this.#highlighted = idx;
                     this.requestUpdate();
@@ -447,9 +469,7 @@ export class ItemSelect extends LitElement {
                   }}
                   class=${classMap(classes)}
                 >
-                  ${value.icon
-                    ? html`<span class="g-icon filled">${value.icon}</span>`
-                    : nothing}
+                  ${this.#renderIcon(value)}
                   <span>
                     <span class="title">${value.title}</span>
 

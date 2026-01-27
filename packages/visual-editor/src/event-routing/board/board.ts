@@ -21,11 +21,19 @@ import { StateEvent } from "../../ui/events/events.js";
 import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
+import { Utils } from "../../sca/utils.js";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({ tab, runtime, settings, askUserToSignInIfNeeded, boardServer }) {
+  async do({
+    tab,
+    runtime,
+    settings,
+    askUserToSignInIfNeeded,
+    boardServer,
+    sca,
+  }) {
     if (!tab) {
       console.warn(`Unable to prepare run: no Tab provided`);
       return false;
@@ -49,8 +57,10 @@ export const RunRoute: EventRoute<"board.run"> = {
 
     // b/452677430 - Check for consent before running shared Opals that
     // use the get_webpage tool, as this could be a data exfiltration vector
-    if ((await runtime.flags.flags()).requireConsentForGetWebpage) {
-      const editor = runtime.edit.getEditor(tab);
+    if (
+      (await sca.controller.global.flags.flags()).requireConsentForGetWebpage
+    ) {
+      const editor = sca.controller.editor.graph.editor;
       const graph = editor?.inspect("");
       const url = tab.graph.url;
       const isGalleryApp =
@@ -63,7 +73,7 @@ export const RunRoute: EventRoute<"board.run"> = {
         graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
       ) {
         if (
-          !(await runtime.consentManager.queryConsent(
+          !(await sca.controller.global.consent.queryConsent(
             {
               type: ConsentType.GET_ANY_WEBPAGE,
               scope: {},
@@ -85,16 +95,21 @@ export const RunRoute: EventRoute<"board.run"> = {
 export const LoadRoute: EventRoute<"board.load"> = {
   event: "board.load",
 
-  async do({ runtime, originalEvent, uiState }) {
+  async do({ runtime, originalEvent, sca }) {
+    if (Utils.Helpers.isHydrating(() => sca.controller.global.main.mode)) {
+      await sca.controller.global.main.isHydrated;
+    }
+
     runtime.router.go({
       page: "graph",
-      mode: uiState.mode,
+      mode: sca.controller.global.main.mode,
       flow: originalEvent.detail.url,
       resourceKey: undefined,
       shared: originalEvent.detail.shared,
       dev: parseUrl(window.location.href).dev,
       guestPrefixed: true,
     });
+    sca.controller.home.recent.add({ url: originalEvent.detail.url });
     return false;
   },
 };
@@ -102,12 +117,12 @@ export const LoadRoute: EventRoute<"board.load"> = {
 export const UndoRoute: EventRoute<"board.undo"> = {
   event: "board.undo",
 
-  async do({ runtime, tab }) {
+  async do({ tab, sca }) {
     if (tab?.readOnly || !tab?.graphIsMine) {
       return false;
     }
 
-    runtime.edit.undo(tab);
+    sca.actions.graph.undo();
     return false;
   },
 };
@@ -115,12 +130,12 @@ export const UndoRoute: EventRoute<"board.undo"> = {
 export const RedoRoute: EventRoute<"board.redo"> = {
   event: "board.redo",
 
-  async do({ runtime, tab }) {
+  async do({ sca, tab }) {
     if (tab?.readOnly || !tab?.graphIsMine) {
       return false;
     }
 
-    runtime.edit.redo(tab);
+    sca.actions.graph.redo();
     return false;
   },
 };
@@ -128,10 +143,10 @@ export const RedoRoute: EventRoute<"board.redo"> = {
 export const TogglePinRoute: EventRoute<"board.togglepin"> = {
   event: "board.togglepin",
 
-  async do({ runtime, originalEvent }) {
-    runtime.board.setPinnedStatus(
+  async do({ sca, originalEvent }) {
+    sca.controller.home.recent.setPin(
       originalEvent.detail.url,
-      originalEvent.detail.status
+      originalEvent.detail.status === "pin"
     );
     return false;
   },
@@ -140,7 +155,7 @@ export const TogglePinRoute: EventRoute<"board.togglepin"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, runtime, originalEvent, settings }) {
+  async do({ tab, runtime, settings }) {
     if (!tab) {
       return false;
     }
@@ -152,9 +167,9 @@ export const StopRoute: EventRoute<"board.stop"> = {
       if (url.searchParams.has("results")) {
         url.searchParams.delete("results");
         history.pushState(null, "", url);
+
+        runtime.state.project?.resetRun();
       }
-      runtime.state.project?.resetRun();
-      return true;
     }
 
     const tabId = tab?.id ?? null;
@@ -164,20 +179,14 @@ export const StopRoute: EventRoute<"board.stop"> = {
     }
 
     abortController.abort("Run stopped");
-    const runner = runtime.run.getRunner(tabId);
-    if (runner?.running()) {
-      await runner?.run();
-    }
 
-    if (originalEvent.detail.clearLastRun) {
-      await runtime.run.clearLastRun(tabId, tab?.graph.url);
-      if (!settings) {
-        console.warn(`No settings, unable to prepare next run.`);
-      } else {
-        const preparingNextRun = await runtime.prepareRun(tab, settings);
-        if (!ok(preparingNextRun)) {
-          console.warn(preparingNextRun.$error);
-        }
+    await runtime.run.clearLastRun(tabId, tab?.graph.url);
+    if (!settings) {
+      console.warn(`No settings, unable to prepare next run.`);
+    } else {
+      const preparingNextRun = await runtime.prepareRun(tab, settings);
+      if (!ok(preparingNextRun)) {
+        console.warn(preparingNextRun.$error);
       }
     }
 
@@ -193,7 +202,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     runtime,
     settings,
     googleDriveClient,
-    uiState,
+    sca,
     askUserToSignInIfNeeded,
     boardServer,
     actionTracker,
@@ -203,11 +212,10 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       runtime,
       originalEvent: new StateEvent({
         eventType: "board.stop",
-        clearLastRun: true,
       }),
       settings,
       googleDriveClient,
-      uiState,
+      sca,
       askUserToSignInIfNeeded,
       boardServer,
     });
@@ -220,7 +228,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       }),
       settings,
       googleDriveClient,
-      uiState,
+      sca,
       askUserToSignInIfNeeded,
       boardServer,
     });
@@ -243,7 +251,7 @@ export const InputRoute: EventRoute<"board.input"> = {
 
     const data = originalEvent.detail.data as InputValues;
     if (!runner.running()) {
-      runner.run(data);
+      runner.resumeWithInputs(data);
     }
 
     return false;
@@ -253,15 +261,17 @@ export const InputRoute: EventRoute<"board.input"> = {
 export const RenameRoute: EventRoute<"board.rename"> = {
   event: "board.rename",
 
-  async do({ tab, runtime, originalEvent, uiState }) {
-    uiState.blockingAction = true;
-    runtime.shell.setPageTitle(originalEvent.detail.title);
-    await runtime.edit.updateBoardTitleAndDescription(
-      tab,
-      originalEvent.detail.title,
-      originalEvent.detail.description
-    );
-    uiState.blockingAction = false;
+  async do({ runtime, originalEvent, sca }) {
+    try {
+      sca.controller.global.main.blockingAction = true;
+      runtime.shell.setPageTitle(originalEvent.detail.title);
+      await sca.actions.graph.updateBoardTitleAndDescription(
+        originalEvent.detail.title,
+        originalEvent.detail.description
+      );
+    } finally {
+      sca.controller.global.main.blockingAction = false;
+    }
     return false;
   },
 };
@@ -272,7 +282,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
   async do({
     tab,
     runtime,
-    uiState,
+    sca,
     originalEvent,
     askUserToSignInIfNeeded,
     embedHandler,
@@ -283,11 +293,11 @@ export const CreateRoute: EventRoute<"board.create"> = {
       return false;
     }
 
-    const boardServerName = uiState.boardServer;
-    const location = uiState.boardLocation;
+    const boardServerName = sca.controller.global.main.boardServer;
+    const location = sca.controller.global.main.boardLocation;
     const fileName = globalThis.crypto.randomUUID();
 
-    uiState.blockingAction = true;
+    sca.controller.global.main.blockingAction = true;
     const result = await runtime.board.saveAs(
       boardServerName,
       location,
@@ -296,7 +306,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
       originalEvent.detail.messages.start !== "",
       originalEvent.detail.messages
     );
-    uiState.blockingAction = false;
+    sca.controller.global.main.blockingAction = false;
 
     if (!result?.url) {
       return false;
@@ -334,8 +344,8 @@ export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
   async do(deps) {
-    const { runtime, originalEvent, uiState } = deps;
-    uiState.blockingAction = true;
+    const { runtime, originalEvent, sca } = deps;
+    sca.controller.global.main.blockingAction = true;
 
     // Immediately acknowledge the user's action with a snackbar. This will be
     // superseded by another snackbar in the "board.create" route, but if it
@@ -369,7 +379,7 @@ export const RemixRoute: EventRoute<"board.remix"> = {
       }),
     });
 
-    uiState.blockingAction = false;
+    sca.controller.global.main.blockingAction = false;
 
     return false;
   },
@@ -379,19 +389,21 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
   event: "board.delete",
 
   async do(deps) {
-    const { tab, runtime, originalEvent, uiState } = deps;
+    const { tab, runtime, originalEvent, sca } = deps;
     const boardServer = runtime.board.googleDriveBoardServer;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
     }
 
-    uiState.blockingAction = true;
+    sca.controller.global.main.blockingAction = true;
     await runtime.board.delete(
       boardServer.name,
       originalEvent.detail.url,
       originalEvent.detail.messages
     );
-    uiState.blockingAction = false;
+    sca.controller.home.recent.remove(originalEvent.detail.url);
+    await sca.controller.home.recent.isSettled;
+    sca.controller.global.main.blockingAction = false;
 
     if (tab) {
       runtime.select.deselectAll(tab.id, runtime.select.generateId());

@@ -101,7 +101,11 @@
           <span class="app-name"></span>
         </h1>
         <div class="sans-flex round w-500 md-title-large" id="video-container">
+          <div class="dimmed-cover">
+            <img src="/styles/landing/images/play-btn.svg" width="72" height="auto" alt="Youtube play button" />
+          </div>
           <iframe
+            id="video-player"
             width="100%"
             height="100%"
             src="https://www.youtube.com/embed/g9RBGnz-vqk"
@@ -120,19 +124,29 @@
         </h1>
         <ul>
           <li>
-            <div class="feature-icon"><span class="g-icon">code_off</span></div>
+            <div class="feature-icon-container">
+              <div class="feature-icon">
+                <span class="g-icon">code_off</span>
+              </div>
+            </div>
             <h2 class="sans w-400">No-Code Creation</h2>
             <p>Build powerful AI mini-apps using natural language.</p>
           </li>
           <li>
-            <div class="feature-icon">
-              <span class="g-icon">rocket_launch</span>
+            <div class="feature-icon-container">
+              <div class="feature-icon">
+                <span class="g-icon">rocket_launch</span>
+              </div>
             </div>
             <h2 class="sans w-400">Rapid Prototyping</h2>
             <p>Turn ideas into working applications in minutes, not months.</p>
           </li>
           <li>
-            <div class="feature-icon"><span class="g-icon">polyline</span></div>
+            <div class="feature-icon-container">
+              <div class="feature-icon">
+                <span class="g-icon">polyline</span>
+              </div>
+            </div>
             <h2 class="sans w-400">Intuitive Visual Editing</h2>
             <p>
               Edit and refine your app&rsquo;s logic with a node-based workflow.

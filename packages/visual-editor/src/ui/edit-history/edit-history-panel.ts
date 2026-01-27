@@ -16,15 +16,13 @@ import type {
   GraphDescriptor,
 } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import {
-  type SigninAdapter,
-  signinAdapterContext,
-} from "../utils/signin-adapter.js";
 import type { HighlightStateWithChangeId } from "../types/types.js";
 import { findChangedNodes } from "../flow-gen/flow-diff.js";
 import { HighlightEvent } from "../elements/step-editor/events/events.js";
 import { MAIN_BOARD_ID } from "../constants/constants.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
+import { scaContext } from "../../sca/context/context.js";
+import { SCA } from "../../sca/sca.js";
 
 @customElement("bb-edit-history-panel")
 export class EditHistoryPanel extends SignalWatcher(LitElement) {
@@ -122,8 +120,8 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @consume({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property({ attribute: false })
   accessor history: EditHistory | undefined | null = undefined;
@@ -257,7 +255,7 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
       // all change events to be explicit about creator.
       case "user":
       case "unknown": {
-        const picture = this.signinAdapter?.pictureSignal;
+        const picture = this.sca.services.signinAdapter.pictureSignal;
         return picture
           ? html`
               <img class="signed-in" crossorigin="anonymous" src=${picture} />
@@ -282,7 +280,7 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
       // all change events to be explicit about creator.
       case "user":
       case "unknown": {
-        return this.signinAdapter?.name ?? "Unknown User";
+        return this.sca.services.signinAdapter.name ?? "Unknown User";
       }
       case "assistant": {
         return "Assistant";

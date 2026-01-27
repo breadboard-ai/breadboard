@@ -3,6 +3,9 @@
  */
 import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
+import { Template } from "../a2/template.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { executeOpalAdkStream } from "../a2/opal-adk-stream.js";
 import invokeGemini, {
   type GeminiInputs,
   type Tool,
@@ -10,12 +13,14 @@ import invokeGemini, {
 } from "../a2/gemini.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
 import { report } from "../a2/output.js";
-import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils.js";
-import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { invoke as default, describe };
+export { invoke as default, describe, makeDeepResearchInstruction };
+
+function makeDeepResearchInstruction() {
+  return "Do deep, iterative research to fulfill the following objective:";
+}
 
 export type ResearcherInputs = {
   context?: LLMContent[];
@@ -139,11 +144,37 @@ async function thought(
   });
 }
 
-async function invoke(
+async function invokeOpalAdk(
   { context, query, summarize, ...params }: ResearcherInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
+  const template = new Template(caps, query);
+  const toolManager = new ToolManager(
+    caps,
+    moduleArgs,
+    new ArgumentNameGenerator(caps, moduleArgs)
+  );
+  const substituting = await template.substitute(params, async (part) =>
+    toolManager.addTool(part)
+  );
+  if (!ok(substituting)) {
+    return substituting;
+  }
+
+  const results = await executeOpalAdkStream(caps, moduleArgs, [substituting], "deep_research");
+  console.log("deep-research results", results)
+  return {
+    context: [...(context || []), results]
+  };
+}
+
+async function invokeLegacy(
+  { context, query, summarize, ...params }: ResearcherInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+) {
+  console.log('calling deep research agent.')
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
   const toolManager = new ToolManager(
     caps,
@@ -159,6 +190,7 @@ async function invoke(
   if (!ok(substituting)) {
     return substituting;
   }
+
   if (!toolManager.hasTools()) {
     // If no tools supplied (legacy case, actually), initialize
     // with a set of default tools.
@@ -232,6 +264,20 @@ async function invoke(
   return {
     context: [...(context || []), toLLMContent(results.join("\n\n\n"))],
   };
+}
+
+async function invoke(
+  { context, query, summarize, ...params }: ResearcherInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+) {
+  const flags = await moduleArgs.context.flags?.flags();
+  const opalAdkEnabled = flags?.opalAdk || false;
+  if (opalAdkEnabled) {
+    return invokeOpalAdk({ context, query, summarize, ...params }, caps, moduleArgs);
+  } else {
+    return invokeLegacy({ context, query, summarize, ...params }, caps, moduleArgs);
+  }
 }
 
 type DescribeInputs = {

@@ -47,12 +47,10 @@ import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
 import { ActionTracker } from "../../types/types.js";
-import {
-  signinAdapterContext,
-  type SigninAdapter,
-} from "../../utils/signin-adapter.js";
 import { makeUrl } from "../../utils/urls.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { SCA } from "../../../sca/sca.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -402,9 +400,9 @@ export class SharePanel extends LitElement {
   @property({ attribute: false })
   accessor globalConfig: GlobalConfig | undefined;
 
-  @consume({ context: signinAdapterContext })
+  @consume({ context: scaContext })
   @property({ attribute: false })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
+  accessor sca!: SCA;
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient | undefined;
@@ -1091,7 +1089,7 @@ export class SharePanel extends LitElement {
         granularlyShared: false,
         shareableFile: undefined,
         latestVersion: thisFileMetadata.version,
-        userDomain: (await this.signinAdapter?.domain) ?? "",
+        userDomain: (await this.sca.services.signinAdapter.domain) ?? "",
       };
       return;
     }
@@ -1137,7 +1135,7 @@ export class SharePanel extends LitElement {
           ],
       },
       latestVersion: thisFileMetadata.version,
-      userDomain: (await this.signinAdapter?.domain) ?? "",
+      userDomain: (await this.sca.services.signinAdapter.domain) ?? "",
     };
 
     console.debug(

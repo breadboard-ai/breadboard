@@ -24,6 +24,7 @@ import {
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { isLLMContent, isLLMContentArray } from "../../data/common.js";
+import { substituteDefaultTool } from "./substitute-default-tool.js";
 
 export { PidginTranslator };
 
@@ -58,6 +59,13 @@ const SPLIT_REGEX =
 
 const FILE_PARSE_REGEX = /<file\s+src\s*=\s*"([^"]*)"\s*\/>/;
 const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
+
+/**
+ * When the text is below this number, it will be simply inlined (small prompts, short outputs, etc.)
+ * When the text is above this number, it will be inlined _and_ prefaced with
+ * a VFS file reference.
+ */
+const MAX_INLINE_CHARACTER_LENGTH = 1000;
 
 /**
  * Translates to and from Agent pidgin: a simplified XML-like
@@ -171,7 +179,8 @@ class PidginTranslator {
 
   async toPidgin(
     content: LLMContent,
-    params: Params
+    params: Params,
+    textAsFiles: boolean
   ): Promise<Outcome<ToPidginResult>> {
     const template = new Template(this.caps, content);
     const toolManager = new ToolManager(this.caps, this.moduleArgs);
@@ -202,11 +211,11 @@ class PidginTranslator {
             } else if (typeof value === "string") {
               return value;
             } else if (isLLMContent(value)) {
-              return substituteParts(value, this.fileSystem);
+              return substituteParts(value, this.fileSystem, true);
             } else if (isLLMContentArray(value)) {
               const last = value.at(-1);
               if (!last) return "";
-              return substituteParts(last, this.fileSystem);
+              return substituteParts(last, this.fileSystem, true);
             } else {
               errors.push(
                 `Agent: Unknown param value type: "${JSON.stringify(value)}`
@@ -228,6 +237,10 @@ class PidginTranslator {
               const routeName = this.fileSystem.addRoute(param.instance);
               return `<a href="${routeName}">${param.title}</a>`;
             } else {
+              const substitute = substituteDefaultTool(param);
+              if (substitute !== null) {
+                return substitute;
+              }
               const addingTool = await toolManager.addTool(param);
               if (!ok(addingTool)) {
                 errors.push(addingTool.$error);
@@ -248,15 +261,31 @@ class PidginTranslator {
     }
 
     return {
-      text: substituteParts(pidginContent, this.fileSystem),
+      text: substituteParts(pidginContent, this.fileSystem, textAsFiles),
       tools: toolManager,
     };
 
-    function substituteParts(value: LLMContent, fileSystem: AgentFileSystem) {
+    function substituteParts(
+      value: LLMContent,
+      fileSystem: AgentFileSystem,
+      textAsFiles: boolean
+    ) {
       const values: string[] = [];
       for (const part of value.parts) {
         if ("text" in part) {
-          values.push(part.text);
+          const { text } = part;
+          if (textAsFiles && text.length > MAX_INLINE_CHARACTER_LENGTH) {
+            const name = fileSystem.add(part);
+            if (ok(name)) {
+              values.push(`<content src="${name}">
+${text}</content>`);
+              continue;
+            } else {
+              console.warn(name.$error);
+            }
+          } else {
+            values.push(text);
+          }
         } else {
           const name = fileSystem.add(part);
           if (!ok(name)) {

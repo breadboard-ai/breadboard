@@ -25,9 +25,7 @@ export interface Run extends BaseEventDetail<`${Namespace}.run`> {
   readonly eventType: `${Namespace}.run`;
 }
 
-export interface Stop extends BaseEventDetail<`${Namespace}.stop`> {
-  readonly clearLastRun: boolean;
-}
+export type Stop = BaseEventDetail<`${Namespace}.stop`>;
 
 export interface ModeToggle extends BaseEventDetail<`${Namespace}.modetoggle`> {
   readonly mode: VisualEditorMode;

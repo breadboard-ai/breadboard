@@ -43,9 +43,14 @@ import { GoogleDriveFileId, ItemSelect } from "../elements.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
 import { DATA_TYPE } from "./constants.js";
 import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-editor-controls")
 export class EditorControls extends LitElement {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @consume({ context: actionTrackerContext })
   accessor actionTracker!: ActionTracker | undefined;
 
@@ -165,6 +170,10 @@ export class EditorControls extends LitElement {
             border-radius: var(--bb-grid-size) var(--bb-grid-size)
               var(--bb-grid-size-12) var(--bb-grid-size-12);
             margin: var(--bb-grid-size) 0 var(--bb-grid-size-2) 0;
+          }
+
+          &[disabled] {
+            opacity: 0.38;
           }
 
           &:not([disabled]) {
@@ -662,40 +671,42 @@ export class EditorControls extends LitElement {
   willUpdate() {
     this.#storeReady = Promise.resolve();
     if (this.graphStore) {
-      this.#storeReady = new Promise((resolve) => {
-        if (!this.graphStore) {
-          resolve();
-          return;
-        }
+      this.#storeReady = this.sca.controller.isHydrated.then(() => {
+        return new Promise((resolve) => {
+          if (!this.graphStore) {
+            resolve();
+            return;
+          }
 
-        const awaitingUpdate = new Set<string>();
-        const onGraphUpdate = (evt: GraphStoreUpdateEvent) => {
-          if (awaitingUpdate.has(evt.mainGraphId)) {
-            awaitingUpdate.delete(evt.mainGraphId);
+          const awaitingUpdate = new Set<string>();
+          const onGraphUpdate = (evt: GraphStoreUpdateEvent) => {
+            if (awaitingUpdate.has(evt.mainGraphId)) {
+              awaitingUpdate.delete(evt.mainGraphId);
+            }
+
+            if (awaitingUpdate.size === 0) {
+              this.graphStore?.removeEventListener(
+                "update",
+                onGraphUpdate as EventListener
+              );
+              resolve();
+            }
+          };
+
+          this.graphStore.addEventListener("update", onGraphUpdate);
+
+          for (const graph of this.graphStore.graphs()) {
+            if (!graph.updating) {
+              continue;
+            }
+
+            awaitingUpdate.add(graph.mainGraph.id);
           }
 
           if (awaitingUpdate.size === 0) {
-            this.graphStore?.removeEventListener(
-              "update",
-              onGraphUpdate as EventListener
-            );
             resolve();
           }
-        };
-
-        this.graphStore.addEventListener("update", onGraphUpdate);
-
-        for (const graph of this.graphStore.graphs()) {
-          if (!graph.updating) {
-            continue;
-          }
-
-          awaitingUpdate.add(graph.mainGraph.id);
-        }
-
-        if (awaitingUpdate.size === 0) {
-          resolve();
-        }
+        });
       });
     }
   }
@@ -703,11 +714,10 @@ export class EditorControls extends LitElement {
   #handleChosenKitItem(nodeType: string) {
     let x;
     let y;
-    let nodeId;
     let subGraphId;
     const createAtCenter = true;
     this.dispatchEvent(
-      new NodeAddEvent(nodeType, createAtCenter, x, y, nodeId, subGraphId)
+      new NodeAddEvent(nodeType, createAtCenter, x, y, subGraphId)
     );
     this.hidePickers();
   }

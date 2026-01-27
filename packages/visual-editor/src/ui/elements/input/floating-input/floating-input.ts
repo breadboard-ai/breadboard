@@ -34,8 +34,6 @@ import { icons } from "../../../styles/icons.js";
 import { type } from "../../../styles/host/type.js";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
-import { uiStateContext } from "../../../contexts/ui-state.js";
-import { UI } from "../../../state/types.js";
 import { FloatingInputFocusState } from "../../../types/types.js";
 import {
   isFileDataCapabilityPart,
@@ -46,6 +44,9 @@ import {
 } from "../../../../data/common.js";
 import { parseUrl } from "../../../utils/urls.js";
 import { createRef, ref } from "lit/directives/ref.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { scaContext } from "../../../../sca/context/context.js";
+import { type SCA } from "../../../../sca/sca.js";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -64,7 +65,10 @@ interface SupportedActions {
 const parsedUrl = parseUrl(window.location.href);
 
 @customElement("bb-floating-input")
-export class FloatingInput extends LitElement {
+export class FloatingInput extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property()
   accessor schema: Schema | null = null;
 
@@ -88,9 +92,6 @@ export class FloatingInput extends LitElement {
 
   @state()
   accessor showAddAssetModal = false;
-
-  @consume({ context: uiStateContext })
-  accessor #uiState!: UI;
 
   static styles = [
     icons,
@@ -289,6 +290,7 @@ export class FloatingInput extends LitElement {
         case "upload": {
           supportedActions.allowAddAssets = true;
           supportedActions.actions.upload = true;
+          supportedActions.actions.gdrive = true;
           return supportedActions;
         }
 
@@ -446,10 +448,10 @@ export class FloatingInput extends LitElement {
     }
 
     let attemptFocus = false;
-    if (this.focusWhenIn[0] === this.#uiState.mode) {
+    if (this.focusWhenIn[0] === this.sca.controller.global.main.mode) {
       if (
         this.focusWhenIn[1] !== undefined &&
-        this.#uiState.editorSection === this.focusWhenIn[1]
+        this.sca.controller.editor.sidebar.section === this.focusWhenIn[1]
       ) {
         attemptFocus = true;
       } else if (this.focusWhenIn[1] === undefined) {
@@ -502,7 +504,9 @@ export class FloatingInput extends LitElement {
 
   render() {
     let inputContents: HTMLTemplateResult | symbol = nothing;
-    const showGDrive = !parsedUrl.lite;
+    const showGDrive =
+      !parsedUrl.lite ||
+      !!this.sca.controller.global.flags?.enableDrivePickerInLiteMode;
     if (this.schema) {
       const props = Object.entries(this.schema.properties ?? {});
       const supportedActions = this.#determineSupportedActions(props);

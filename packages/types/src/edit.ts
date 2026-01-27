@@ -260,6 +260,11 @@ export type EditableGraph = {
     options?: { once?: boolean }
   ): void;
 
+  removeEventListener<Key extends keyof EditableGraphEventMap>(
+    eventName: Key,
+    listener: ((evt: EditableGraphEventMap[Key]) => void) | null
+  ): void;
+
   /**
    * Performs an edit operation on the graph.
    * @param edits -- a list of changes to apply

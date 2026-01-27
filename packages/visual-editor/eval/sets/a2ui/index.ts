@@ -20,7 +20,7 @@ session({ name: "A2UI" }, async (session) => {
     const params: Parameters<typeof session.eval> = [
       title,
       async ({ caps, moduleArgs, logger }) => {
-        const fileSystem = new AgentFileSystem(null);
+        const fileSystem = new AgentFileSystem({ memoryManager: null });
         const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
         const pipeline = new SmartLayoutPipeline({
           caps,

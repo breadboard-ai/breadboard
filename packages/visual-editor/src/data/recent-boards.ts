@@ -20,9 +20,12 @@ interface RecentBoardsDB extends idb.DBSchema {
 const RECENT_BOARDS_NAME = "recent-boards";
 const RECENT_BOARDS_VERSION = 3;
 
+/** @deprecated */
 export class RecentBoardStore {
-  static #instance: RecentBoardStore;
-  static instance() {
+  static #instance: RecentBoardStore | null;
+
+  /** @deprecated */
+  static __instance() {
     if (!this.#instance) {
       this.#instance = new RecentBoardStore();
     }
@@ -34,6 +37,11 @@ export class RecentBoardStore {
   // Not instantiated directly.
   private constructor() {}
 
+  async clear() {
+    this.boards.length = 0;
+    await this.#store();
+  }
+
   async add(board: RecentBoard) {
     const index = this.boards.findIndex((b) => b.url === board.url);
     if (index !== -1) {
@@ -41,9 +49,21 @@ export class RecentBoardStore {
       if (board.title) {
         existing.title = board.title;
       }
-      this.boards.unshift(existing);
+      this.boards.unshift(
+        new SignalObject({
+          url: existing.url,
+          title: existing.title,
+          pinned: existing.pinned ?? false,
+        })
+      );
     } else {
-      this.boards.unshift(board);
+      this.boards.unshift(
+        new SignalObject({
+          url: board.url,
+          title: board.title,
+          pinned: board.pinned ?? false,
+        })
+      );
     }
 
     if (this.boards.length > 50) {

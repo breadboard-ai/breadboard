@@ -14,15 +14,7 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
-import {
-  ActionTracker,
-  OverflowAction,
-  RecentBoard,
-} from "../../types/types.js";
-import {
-  type SigninAdapter,
-  signinAdapterContext,
-} from "../../utils/signin-adapter.js";
+import { ActionTracker, OverflowAction } from "../../types/types.js";
 import { until } from "lit/directives/until.js";
 import { renderThumbnail } from "../../utils/image.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
@@ -31,6 +23,8 @@ import { guard } from "lit/directives/guard.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 const COLLAPSED_KEY = "gallery-lite-collapsed";
 const GlobalStrings = StringsHelper.forSection("Global");
@@ -486,8 +480,8 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
   #overflowMenuConfig: { x: number; y: number; value: string } | null = null;
 
-  @consume({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
@@ -535,9 +529,6 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   @property({ type: Number })
   accessor pageSize = 4;
 
-  @property({ attribute: false })
-  accessor recentBoards: RecentBoard[] = [];
-
   @property({ reflect: true, type: Boolean })
   accessor isAnimatingHeight = false;
 
@@ -575,7 +566,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   }
 
   #isPinned(url: string): boolean {
-    const recentBoards = this.recentBoards;
+    const recentBoards = this.sca.controller.home.recent.boards;
     const currentItem = recentBoards.find((board) => {
       return url === board.url;
     });

@@ -5,6 +5,7 @@
  */
 
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ZodRawShapeCompat } from "@modelcontextprotocol/sdk/server/zod-compat.js";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {
   CallToolRequest,
@@ -14,8 +15,7 @@ import type {
   Tool,
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
-import z, { AnyZodObject, ZodRawShape } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import z, { ZodObject } from "zod";
 import {
   McpBuiltInClient,
   McpCallToolResult,
@@ -27,9 +27,9 @@ export { BuiltInClient };
 
 type ToolDeclaration = {
   info: Tool;
-  inputZodSchema?: AnyZodObject;
-  outputZodSchema?: AnyZodObject;
-  callback: ToolCallback<undefined | ZodRawShape>;
+  inputZodSchema?: ZodObject;
+  outputZodSchema?: ZodObject;
+  callback: ToolCallback<undefined | ZodRawShapeCompat>;
 };
 
 type BuiltInClientArgs = {
@@ -99,7 +99,7 @@ class BuiltInClient implements McpBuiltInClient {
         );
       }
       const args = parseResult.data;
-      const callback = tool.callback as ToolCallback<ZodRawShape>;
+      const callback = tool.callback as ToolCallback<ZodRawShapeCompat>;
       return callback(args, DUMMY_EXTRA);
     } else {
       const callback = tool.callback as ToolCallback<undefined>;
@@ -111,7 +111,10 @@ class BuiltInClient implements McpBuiltInClient {
     return { tools: this.tools };
   }
 
-  addTool<InputArgs extends z.ZodRawShape, OutputArgs extends z.ZodRawShape>(
+  addTool<
+    InputArgs extends ZodRawShapeCompat,
+    OutputArgs extends ZodRawShapeCompat,
+  >(
     name: string,
     config: {
       title?: string;
@@ -142,7 +145,7 @@ class BuiltInClient implements McpBuiltInClient {
 
     function toSchema<T>(t: T | undefined) {
       return t
-        ? zodToJsonSchema(z.object(t), { strictUnions: true })
+        ? z.object(t).toJSONSchema()
         : { type: "object", properties: {} };
     }
   }
