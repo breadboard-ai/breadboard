@@ -29,7 +29,7 @@ export class Audio extends Root {
   accessor url: StringValue | null = null;
 
   /** Note: A special-case is applied to the host because an <audio> embed needs
-   * at least 225px to render correctly.
+   * at least 225px by 55px to render correctly.
    */
   static styles = [
     structuralStyles,
@@ -41,7 +41,7 @@ export class Audio extends Root {
       :host {
         display: block;
         flex: var(--weight);
-        min-height: 0;
+        min-height: 55px;
         overflow: auto;
         min-width: 225px;
       }

@@ -45,8 +45,8 @@ export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> 
 export const LockRoute: EventRoute<"host.lock"> = {
   event: "host.lock",
 
-  async do({ uiState }) {
-    uiState.blockingAction = true;
+  async do({ sca }) {
+    sca.controller.global.main.blockingAction = true;
     return false;
   },
 };
@@ -54,8 +54,8 @@ export const LockRoute: EventRoute<"host.lock"> = {
 export const UnlockRoute: EventRoute<"host.unlock"> = {
   event: "host.unlock",
 
-  async do({ uiState }) {
-    uiState.blockingAction = false;
+  async do({ sca }) {
+    sca.controller.global.main.blockingAction = false;
     return false;
   },
 };
@@ -72,6 +72,15 @@ export const FlagChangeRoute: EventRoute<"host.flagchange"> = {
     } else {
       await runtime.flags.clearOverride(originalEvent.detail.flag);
     }
+    return false;
+  },
+};
+
+export const UserSignInRoute: EventRoute<"host.usersignin"> = {
+  event: "host.usersignin",
+
+  async do() {
+    // Noop for main routing. This event is only handled in Lite mode.
     return false;
   },
 };

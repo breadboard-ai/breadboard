@@ -22,33 +22,115 @@ transferHandlers.set("URL", {
   deserialize: (serialized) => new URL(serialized),
 } satisfies TransferHandler<URL, string>);
 
+/** As of December 2025, Safari does not support Transferable Stream
+ * (https://caniuse.com/mdn-api_readablestream_transferable), in which case we
+ * can bridge it with a MessageChannel.
+ */
+const BROWSER_SUPPORTS_TRANSFERABLE_STREAM = (() => {
+  const stream = new ReadableStream();
+  const { port1 } = new MessageChannel();
+  try {
+    port1.postMessage(stream, [stream]);
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
 /**
  * Serialize Responses as parameters for the Response constructor, and transfer
  * the body stream memory to avoid a copy.
  */
 transferHandlers.set("Response", {
   canHandle: (value) => value instanceof Response,
-  serialize: ({ body, headers, status, statusText }) => [
-    {
-      body,
-      init: {
-        // Headers instances are not cloneable, but their entries arrays are,
-        // and conveniently those arrays are also valid as headers, so we can
-        // just convert.
-        headers: [...headers],
-        status,
-        statusText,
+  serialize: (response) => {
+    const { headers, status, statusText } = response;
+
+    let body;
+    if (response.body === null || NULL_BODY_STATUS.has(status)) {
+      body = null;
+    } else if (BROWSER_SUPPORTS_TRANSFERABLE_STREAM) {
+      body = response.body;
+    } else {
+      const channel = new MessageChannel();
+      void sendBridgedBodyStream(response.body.getReader(), channel.port1);
+      body = channel.port2;
+    }
+
+    return [
+      {
+        body,
+        init: {
+          // Headers instances are not cloneable, but their entries arrays are,
+          // and conveniently those arrays are also valid as headers, so we can
+          // just convert.
+          headers: [...headers],
+          status,
+          statusText,
+        },
       },
-    },
-    // Transfers the body.
-    body ? [body] : [],
-  ],
+      body ? [body] : [],
+    ];
+  },
   deserialize: ({ body, init }) =>
-    new Response(NULL_BODY_STATUS.has(init.status || 0) ? null : body, init),
+    new Response(
+      body instanceof MessagePort ? receiveBridgedBodyStream(body) : body,
+      init
+    ),
 } satisfies TransferHandler<Response, SerializedResponse>);
 
+type ReadableStreamBridgeMessage =
+  | { done: false; value: ArrayBuffer }
+  | { done: true };
+
+async function sendBridgedBodyStream(
+  reader: ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>,
+  sendPort: MessagePort
+) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    sendPort.postMessage(
+      {
+        done: false,
+        value: value.buffer,
+      } satisfies ReadableStreamBridgeMessage,
+      [value.buffer]
+    );
+  }
+  reader.releaseLock();
+  sendPort.postMessage({ done: true } satisfies ReadableStreamBridgeMessage);
+  sendPort.close();
+}
+
+function receiveBridgedBodyStream(
+  recvPort: MessagePort
+): ReadableStream<ArrayBuffer> {
+  const stream = new TransformStream<Uint8Array>();
+  const writer = stream.writable.getWriter();
+  const abort = new AbortController();
+  recvPort.addEventListener(
+    "message",
+    (event) => {
+      const data = event.data as ReadableStreamBridgeMessage;
+      if (data.done) {
+        writer.close();
+        abort.abort();
+      } else {
+        writer.write(new Uint8Array(data.value));
+      }
+    },
+    { signal: abort.signal }
+  );
+  recvPort.start();
+  return stream.readable;
+}
+
 type SerializedResponse = {
-  body: ReadableStream<Uint8Array<ArrayBuffer>> | null;
+  body: ReadableStream<Uint8Array> | MessagePort | null;
   init: ResponseInit;
 };
 

@@ -18,7 +18,6 @@ import { GraphNode } from "./graph-node.js";
 import {
   createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
-  inspectableAssetEdgeToString,
   inspectableEdgeToString,
 } from "../../utils/workspace.js";
 import { GraphEdge } from "./graph-edge.js";
@@ -42,6 +41,7 @@ import { GraphAsset } from "./graph-asset.js";
 import { AssetPath, NodeRunState } from "@breadboard-ai/types";
 import { RendererRunState, RendererState } from "../../state/index.js";
 import { getStepIcon } from "../../utils/get-step-icon.js";
+import { toAssetEdgeIdentifier } from "../../../sca/utils/helpers/helpers.js";
 
 @customElement("bb-graph")
 export class Graph extends Box {
@@ -136,7 +136,7 @@ export class Graph extends Box {
       graphNode.ownerGraph = this.graphId;
       graphNode.updating = node.type().currentMetadata().updating ?? false;
       graphNode.nodeTitle = node.title();
-      graphNode.nodeDescription = node.descriptor.metadata?.description || "";
+      graphNode.nodeDescription = node.descriptor.metadata?.step_intent || "";
 
       graphNode.isStart = node.isStart();
 
@@ -269,7 +269,7 @@ export class Graph extends Box {
 
     // Add new edges.
     for (const edge of assetEdges) {
-      const edgeId = inspectableAssetEdgeToString(edge);
+      const edgeId = toAssetEdgeIdentifier(edge);
       let graphEdge = this.entities.get(edgeId) as GraphEdge;
       if (!graphEdge) {
         const from = this.entities.get(edge.assetPath) as GraphAsset;
@@ -296,9 +296,7 @@ export class Graph extends Box {
         continue;
       }
 
-      if (
-        assetEdges.find((edge) => inspectableAssetEdgeToString(edge) === id)
-      ) {
+      if (assetEdges.find((edge) => toAssetEdgeIdentifier(edge) === id)) {
         continue;
       }
 
@@ -384,7 +382,7 @@ export class Graph extends Box {
 
     if (Array.isArray(this.#assetEdges)) {
       for (const assetEdge of this.#assetEdges) {
-        const id = inspectableAssetEdgeToString(assetEdge);
+        const id = toAssetEdgeIdentifier(assetEdge);
         const graphAssetEdge = this.entities.get(id) as GraphEdge;
         if (!graphAssetEdge) {
           continue;
@@ -441,7 +439,7 @@ export class Graph extends Box {
 
     if (Array.isArray(this.#assetEdges)) {
       for (const assetEdge of this.#assetEdges) {
-        const id = inspectableAssetEdgeToString(assetEdge);
+        const id = toAssetEdgeIdentifier(assetEdge);
         const graphAssetEdge = this.entities.get(id) as GraphEdge;
         if (!graphAssetEdge) {
           continue;

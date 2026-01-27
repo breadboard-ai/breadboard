@@ -37,7 +37,10 @@ import {
   isLLMContentBehavior,
   isPreviewBehavior,
 } from "../../utils/behaviors.js";
-import { createTruncatedValue } from "./utils/create-truncated-value.js";
+import {
+  createTruncatedValue,
+  truncateString,
+} from "./utils/create-truncated-value.js";
 import { styles as ChicletStyles } from "../../styles/chiclet.js";
 import { toGridSize } from "./utils/to-grid-size.js";
 import { DragConnectorReceiver } from "../../types/types.js";
@@ -207,6 +210,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host([icon="videocam_auto"]),
       :host([icon="generative-search"]),
       :host([icon="generative"]),
+      :host([icon="select_all"]),
       :host([icon="laps"]) {
         --background: var(--ui-generate);
       }
@@ -502,6 +506,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                   padding: 1px;
                   width: 100%;
                   white-space: normal;
+                  text-align: left;
                 }
 
                 & .missing {
@@ -767,7 +772,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                     classes.object = true;
                     if (port.value) {
                       if (this.nodeDescription) {
-                        value = html`<p>${this.nodeDescription}</p>`;
+                        value = html`<p>
+                          ${truncateString(this.nodeDescription)}
+                        </p>`;
                       } else {
                         value = html`<p>${createTruncatedValue(port)}</p>`;
                       }

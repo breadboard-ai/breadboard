@@ -7,8 +7,24 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Editor");
 
-import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
+import {
+  EditHistory,
+  GraphStoreEntry,
+  GraphStoreUpdateEvent,
+  InspectableGraph,
+  MainGraphIdentifier,
+  MutableGraphStore,
+} from "@breadboard-ai/types";
+import { parseBase64DataUrl } from "@breadboard-ai/utils";
+import { consume } from "@lit/context";
+import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { map } from "lit/directives/map.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { until } from "lit/directives/until.js";
+import { isA2 } from "../../../a2/index.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import {
   HideTooltipEvent,
   ShowTooltipEvent,
@@ -19,32 +35,25 @@ import {
   ZoomOutEvent,
   ZoomToFitEvent,
 } from "../../events/events.js";
-import { EditHistory } from "@breadboard-ai/types";
-import {
-  GraphStoreEntry,
-  GraphStoreUpdateEvent,
-  InspectableGraph,
-  MainGraphIdentifier,
-  MutableGraphStore,
-} from "@breadboard-ai/types";
-import { map } from "lit/directives/map.js";
-import { classMap } from "lit/directives/class-map.js";
-import { DATA_TYPE } from "./constants.js";
-import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
-import { isA2 } from "../../../a2/index.js";
-import { until } from "lit/directives/until.js";
-import { GoogleDriveFileId, ItemSelect } from "../elements.js";
-import { NewAsset } from "../../types/types.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
+import { ActionTracker, NewAsset } from "../../types/types.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
+import { GoogleDriveFileId, ItemSelect } from "../elements.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
-import { parseBase64DataUrl } from "@breadboard-ai/utils";
+import { DATA_TYPE } from "./constants.js";
+import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-editor-controls")
 export class EditorControls extends LitElement {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker!: ActionTracker | undefined;
+
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
 
@@ -161,6 +170,10 @@ export class EditorControls extends LitElement {
             border-radius: var(--bb-grid-size) var(--bb-grid-size)
               var(--bb-grid-size-12) var(--bb-grid-size-12);
             margin: var(--bb-grid-size) 0 var(--bb-grid-size-2) 0;
+          }
+
+          &[disabled] {
+            opacity: 0.38;
           }
 
           &:not([disabled]) {
@@ -658,40 +671,42 @@ export class EditorControls extends LitElement {
   willUpdate() {
     this.#storeReady = Promise.resolve();
     if (this.graphStore) {
-      this.#storeReady = new Promise((resolve) => {
-        if (!this.graphStore) {
-          resolve();
-          return;
-        }
+      this.#storeReady = this.sca.controller.isHydrated.then(() => {
+        return new Promise((resolve) => {
+          if (!this.graphStore) {
+            resolve();
+            return;
+          }
 
-        const awaitingUpdate = new Set<string>();
-        const onGraphUpdate = (evt: GraphStoreUpdateEvent) => {
-          if (awaitingUpdate.has(evt.mainGraphId)) {
-            awaitingUpdate.delete(evt.mainGraphId);
+          const awaitingUpdate = new Set<string>();
+          const onGraphUpdate = (evt: GraphStoreUpdateEvent) => {
+            if (awaitingUpdate.has(evt.mainGraphId)) {
+              awaitingUpdate.delete(evt.mainGraphId);
+            }
+
+            if (awaitingUpdate.size === 0) {
+              this.graphStore?.removeEventListener(
+                "update",
+                onGraphUpdate as EventListener
+              );
+              resolve();
+            }
+          };
+
+          this.graphStore.addEventListener("update", onGraphUpdate);
+
+          for (const graph of this.graphStore.graphs()) {
+            if (!graph.updating) {
+              continue;
+            }
+
+            awaitingUpdate.add(graph.mainGraph.id);
           }
 
           if (awaitingUpdate.size === 0) {
-            this.graphStore?.removeEventListener(
-              "update",
-              onGraphUpdate as EventListener
-            );
             resolve();
           }
-        };
-
-        this.graphStore.addEventListener("update", onGraphUpdate);
-
-        for (const graph of this.graphStore.graphs()) {
-          if (!graph.updating) {
-            continue;
-          }
-
-          awaitingUpdate.add(graph.mainGraph.id);
-        }
-
-        if (awaitingUpdate.size === 0) {
-          resolve();
-        }
+        });
       });
     }
   }
@@ -742,11 +757,11 @@ export class EditorControls extends LitElement {
           draggable="true"
           class=${classMap(classes)}
           @click=${() => {
-            ActionTracker.addNewStep(item.metadata.title);
+            this.actionTracker?.addNewStep(item.metadata.title);
             this.#handleChosenKitItem(item.id);
           }}
           @dragstart=${(evt: DragEvent) => {
-            ActionTracker.addNewStep(item.metadata.title);
+            this.actionTracker?.addNewStep(item.metadata.title);
             if (!evt.dataTransfer) {
               return;
             }

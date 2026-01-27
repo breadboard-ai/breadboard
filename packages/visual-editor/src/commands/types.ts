@@ -8,12 +8,12 @@ import { SettingsStore } from "../ui/data/settings-store.js";
 import { Runtime } from "../runtime/runtime.js";
 import { Tab, WorkspaceSelectionStateWithChangeId } from "../runtime/types.js";
 import type * as BreadboardUI from "../ui/index.js";
-import { MutableGraphStore } from "@breadboard-ai/types";
+import type { SCA } from "../sca/sca.js";
 
 export interface KeyboardCommandDeps {
   runtime: Runtime;
+  sca: SCA;
   selectionState: WorkspaceSelectionStateWithChangeId | null;
-  graphStore: MutableGraphStore;
   tab: Tab | null;
   originalEvent: KeyboardEvent;
   pointerLocation: { x: number; y: number };

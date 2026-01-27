@@ -13,33 +13,12 @@
     name="twitter:image"
     content="{{origin}}/images/share-card-{{bucket}}.png"
   />
-  <style>
-    :root {
-      --sys-color--body-background-light: #ffffff;
-      --sys-color--body-background-dark: #131314;
-    }
-
-    iframe#opal-app {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      background: var(--sys-color--body-background-light);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      iframe#opal-app {
-        background: var(--sys-color--body-background-dark);
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="/styles/shell.css" />
 </head>
 <body>
   <iframe
     id="opal-app"
-    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-storage-access-by-user-activation allow-downloads"
+    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-storage-access-by-user-activation allow-downloads allow-top-navigation"
     allow="clipboard-read; clipboard-write; microphone; camera"
   ></iframe>
   <template>

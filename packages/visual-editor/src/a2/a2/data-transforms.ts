@@ -5,6 +5,7 @@
  */
 
 import {
+  OPAL_BACKEND_API_PREFIX,
   Chunk,
   DataPartTransformer,
   FileDataPart,
@@ -50,6 +51,7 @@ export type GoogleDriveToGeminiResponse = {
 export type UploadGeminiFileRequest =
   | {
       driveFileId: string;
+      driveResourceKey?: string;
     }
   | { blobId: string };
 
@@ -87,16 +89,11 @@ async function driveFileToGeminiFile(
   part: FileDataPart
 ): Promise<Outcome<FileDataPart>> {
   const driveFileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
-  const searchParams = new URLSearchParams();
-  const { resourceKey, mimeType } = part.fileData;
-  if (resourceKey) {
-    searchParams.set("resourceKey", resourceKey);
-  }
-  if (mimeType) {
-    searchParams.set("mimeType", mimeType);
-  }
-
+  const { resourceKey } = part.fileData;
   const request: UploadGeminiFileRequest = { driveFileId };
+  if (resourceKey) {
+    request.driveResourceKey = resourceKey;
+  }
   const response: Outcome<UploadGeminiFileResponse> = await callBackend(
     moduleArgs,
     request,
@@ -194,12 +191,7 @@ async function callBackend<Req, Res>(
   request: Req,
   endpoint: string
 ): Promise<Outcome<Res>> {
-  const backendApiEndpoint =
-    context.clientDeploymentConfiguration?.BACKEND_API_ENDPOINT;
-  if (!backendApiEndpoint) {
-    return err(`Unable to transform: backend API endpoint not specified`);
-  }
-  const url = new URL(endpoint, backendApiEndpoint);
+  const url = new URL(endpoint, OPAL_BACKEND_API_PREFIX);
 
   try {
     const fetching = await fetchWithCreds(url, {

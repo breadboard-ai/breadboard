@@ -11,8 +11,12 @@ export type ClientDeploymentConfiguration = {
   MEASUREMENT_ID?: string;
   BACKEND_API_ENDPOINT?: string;
   ENVIRONMENT_NAME?: string;
+  ENABLE_NEW_URL_SCHEME?: boolean;
   GOOGLE_OAUTH_TOKEN_ENDPOINT?: string;
   GOOGLE_OAUTH_AUTH_ENDPOINT?: string;
+  GOOGLE_DOCS_API_ENDPOINT?: string;
+  GOOGLE_SHEETS_API_ENDPOINT?: string;
+  GOOGLE_SLIDES_API_ENDPOINT?: string;
   GOOGLE_DRIVE_API_ENDPOINT?: string;
   GOOGLE_DRIVE_PUBLISH_PERMISSIONS?: GoogleDrivePermission[];
   GOOGLE_DRIVE_USER_FOLDER_NAME?: string;
@@ -31,6 +35,7 @@ export type ClientDeploymentConfiguration = {
    */
   ALLOW_3P_MODULES?: boolean;
   ENABLE_EMAIL_OPT_IN?: boolean;
+  SHARE_SURFACE_URL_TEMPLATES: Record<string, string>;
   domains?: Record<string, DomainConfiguration>;
   flags: RuntimeFlags;
 };

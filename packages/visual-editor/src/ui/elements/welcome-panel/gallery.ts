@@ -5,30 +5,28 @@
  */
 
 import type { GraphProviderItem } from "@breadboard-ai/types";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { guard } from "lit/directives/guard.js";
 import { keyed } from "lit/directives/keyed.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { until } from "lit/directives/until.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
-import { icons } from "../../styles/icons.js";
-import { OverflowAction, RecentBoard } from "../../types/types.js";
-import {
-  type SigninAdapter,
-  signinAdapterContext,
-} from "../../utils/signin-adapter.js";
-import { until } from "lit/directives/until.js";
-import { renderThumbnail } from "../../utils/image.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { guard } from "lit/directives/guard.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
-import { SignalWatcher } from "@lit-labs/signals";
+import { icons } from "../../styles/icons.js";
+import { ActionTracker, OverflowAction } from "../../types/types.js";
+import { renderThumbnail } from "../../utils/image.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 const GlobalStrings = StringsHelper.forSection("Global");
 const Strings = StringsHelper.forSection("ProjectListing");
@@ -271,7 +269,7 @@ export class Gallery extends SignalWatcher(LitElement) {
         }
 
         &.default {
-          background-color: var(--light-dark-n-100);
+          background-color: var(--n-100);
           object-fit: contain;
           box-sizing: border-box;
           padding: var(--bb-grid-size-8);
@@ -410,11 +408,14 @@ export class Gallery extends SignalWatcher(LitElement) {
 
   #overflowMenuConfig: { x: number; y: number; value: string } | null = null;
 
-  @consume({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
+
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker!: ActionTracker | undefined;
 
   @property({ attribute: false })
   accessor items: [string, GraphProviderItem][] | null = null;
@@ -437,13 +438,10 @@ export class Gallery extends SignalWatcher(LitElement) {
   @property({ type: Number })
   accessor pageSize = 8;
 
-  @property({ attribute: false })
-  accessor recentBoards: RecentBoard[] = [];
-
   readonly #paginationContainer = createRef<HTMLElement>();
 
   #isPinned(url: string): boolean {
-    const recentBoards = this.recentBoards;
+    const recentBoards = this.sca.controller.home.recent.boards;
     const currentItem = recentBoards.find((board) => {
       return url === board.url;
     });
@@ -672,12 +670,12 @@ export class Gallery extends SignalWatcher(LitElement) {
     if (this.forceCreatorToBeTeam) {
       return html`<span class="g-icon">spark</span>`;
     }
-    if (item.mine && this.signinAdapter?.picture) {
+    if (item.mine && this.sca.services.signinAdapter.pictureSignal) {
       return html`
         <img
           class="signed-in"
           crossorigin="anonymous"
-          src=${this.signinAdapter.picture}
+          src=${this.sca.services.signinAdapter.pictureSignal}
         />
       `;
     }
@@ -688,10 +686,10 @@ export class Gallery extends SignalWatcher(LitElement) {
     if (this.forceCreatorToBeTeam) {
       return Strings.from("LABEL_TEAM_NAME");
     }
-    if (item.mine && this.signinAdapter?.name) {
-      return this.signinAdapter.name;
+    if (!item.mine || !this.sca.services.signinAdapter) {
+      return "Unknown User";
     }
-    return "Unknown User";
+    return this.sca.services.signinAdapter.nameSignal || "Unknown User";
   }
 
   #renderPagination() {
@@ -780,7 +778,10 @@ export class Gallery extends SignalWatcher(LitElement) {
   }
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
-    ActionTracker.openApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
+    this.actionTracker?.openApp(
+      url,
+      this.forceCreatorToBeTeam ? "gallery" : "user"
+    );
     this.dispatchEvent(
       new StateEvent({
         eventType: "board.load",
@@ -800,7 +801,10 @@ export class Gallery extends SignalWatcher(LitElement) {
     event: PointerEvent | KeyboardEvent | OverflowMenuActionEvent,
     url: string
   ) {
-    ActionTracker.remixApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
+    this.actionTracker?.remixApp(
+      url,
+      this.forceCreatorToBeTeam ? "gallery" : "user"
+    );
     event.stopPropagation();
     this.dispatchEvent(
       new StateEvent({

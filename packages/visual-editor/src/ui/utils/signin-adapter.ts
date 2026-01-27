@@ -14,54 +14,90 @@ import type {
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
-import { createContext } from "@lit/context";
-
-export const signinAdapterContext = createContext<SigninAdapter | undefined>(
-  "SigninAdapter"
-);
+import { signal } from "signal-utils";
 
 export class SigninAdapter implements SignInInfo {
   readonly #opalShell: OpalShellHostProtocol;
-  #state: SignInState;
+  #state: Promise<SignInState>;
   readonly fetchWithCreds: typeof globalThis.fetch;
 
-  constructor(
-    opalShell: OpalShellHostProtocol,
-    // TODO(aomarks) Hacky workaround for asynchrony, revisit the API for the
-    // getters so that we don't need this.
-    initialState: SignInState
-  ) {
+  constructor(opalShell: OpalShellHostProtocol) {
     this.#opalShell = opalShell;
     this.fetchWithCreds = opalShell.fetchWithCreds.bind(opalShell);
-    this.#state = initialState;
+    this.#state = opalShell.getSignInState();
+    this.#setStatePromise(this.#state);
   }
 
+  #setStatePromise(state: Promise<SignInState>) {
+    this.#state = state;
+    state.then((value) => {
+      if (this.#state === state) {
+        this.stateSignal = value;
+      }
+    });
+  }
+
+  // TODO: Each signal also has a promise, since some code still depends
+  // on awaiting the current signin state vs. reactively rendering it.
+  // Ideally we audit those places and switch to signal-based patterns.
+  // Until then, each promise just returns the corresponding signal
+  // getter, so we don't have to duplicate the status guard logic.
+
+  @signal
+  accessor stateSignal: SignInState | undefined = undefined;
+
   get state() {
-    return this.#state.status;
+    return this.#state.then(({ status }) => status);
+  }
+
+  @signal
+  get nameSignal() {
+    return this.stateSignal?.status === "signedin"
+      ? this.stateSignal.name
+      : undefined;
   }
 
   get name() {
-    return this.#state.status === "signedin" ? this.#state.name : undefined;
+    return this.#state.then(() => this.nameSignal);
+  }
+
+  @signal
+  get pictureSignal() {
+    return this.stateSignal?.status === "signedin"
+      ? this.stateSignal.picture
+      : undefined;
   }
 
   get picture() {
-    return this.#state.status === "signedin" ? this.#state.picture : undefined;
+    return this.#state.then(() => this.pictureSignal);
+  }
+
+  @signal
+  get domainSignal() {
+    return this.stateSignal?.status === "signedin"
+      ? this.stateSignal.domain
+      : undefined;
   }
 
   get domain() {
-    return this.#state.status === "signedin" ? this.#state.domain : undefined;
+    return this.#state.then(() => this.domainSignal);
   }
 
-  get scopes(): Set<string> | undefined {
-    return this.#state.status === "signedin"
-      ? new Set(this.#state.scopes)
+  @signal
+  get scopesSignal() {
+    return this.stateSignal?.status === "signedin"
+      ? new Set(this.stateSignal.scopes)
       : undefined;
+  }
+
+  get scopes(): Promise<Set<string> | undefined> {
+    return this.#state.then(() => this.scopesSignal);
   }
 
   async signIn(scopes: OAuthScope[] = []): Promise<SignInResult> {
     const result = await this.#opalShell.signIn(scopes);
     if (result.ok) {
-      this.#state = result.state;
+      this.#setStatePromise(Promise.resolve(result.state));
     }
     return result;
   }
@@ -79,7 +115,7 @@ export class SigninAdapter implements SignInInfo {
           )
         ))(),
     ]);
-    this.#state = { status: "signedout" };
+    this.#setStatePromise(Promise.resolve({ status: "signedout" }));
   }
 
   checkAppAccess(): Promise<CheckAppAccessResult> {

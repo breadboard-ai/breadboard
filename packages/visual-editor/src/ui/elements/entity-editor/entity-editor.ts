@@ -4,13 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+  AssetPath,
+  GraphDescriptor,
+  GraphIdentifier,
+  InputValues,
   InspectableGraph,
   InspectableNode,
   InspectableNodePorts,
+  JsonSerializable,
+  LLMContent,
   MainGraphIdentifier,
   MutableGraphStore,
+  NodeIdentifier,
+  NodeValue,
+  Outcome,
   Schema,
   SchemaEnumValue,
+  TextCapabilityPart,
 } from "@breadboard-ai/types";
 import {
   isStoredData,
@@ -20,46 +30,18 @@ import {
   TemplatePartTransformCallback,
 } from "@breadboard-ai/utils";
 import {
-  LitElement,
-  html,
   css,
+  html,
   HTMLTemplateResult,
+  LitElement,
   nothing,
   PropertyValues,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  EnumValue,
-  WorkspaceSelectionStateWithChangeId,
-} from "../../types/types.js";
-import {
-  AssetPath,
-  GraphDescriptor,
-  GraphIdentifier,
-  InputValues,
-  JsonSerializable,
-  LLMContent,
-  NodeIdentifier,
-  NodeValue,
-  Outcome,
-  TextCapabilityPart,
-} from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
-import { until } from "lit/directives/until.js";
-import {
-  isConfigurableBehavior,
-  isLLMContentBehavior,
-} from "../../utils/index.js";
-import {
-  FastAccessMenu,
-  ItemSelect,
-  LLMPartInput,
-  TextEditor,
-} from "../elements.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { isCtrlCommand } from "../../utils/is-ctrl-command.js";
+import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
-import { Project, StepEditorSurface } from "../../state/index.js";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
@@ -67,30 +49,47 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
+import { Project, StepEditorSurface } from "../../state/index.js";
+import {
+  ActionTracker,
+  EnumValue,
+  WorkspaceSelectionStateWithChangeId,
+} from "../../types/types.js";
 import {
   isControllerBehavior,
   isLLMContentArrayBehavior,
 } from "../../utils/behaviors.js";
+import {
+  isConfigurableBehavior,
+  isLLMContentBehavior,
+} from "../../utils/index.js";
+import { isCtrlCommand } from "../../utils/is-ctrl-command.js";
+import {
+  FastAccessMenu,
+  ItemSelect,
+  LLMPartInput,
+  TextEditor,
+} from "../elements.js";
 
-import * as StringsHelper from "../../strings/helper.js";
-import { FlowGenConstraint } from "../../flow-gen/flow-generator.js";
-import { ConnectorView } from "../../connectors/types.js";
-import { SignalWatcher } from "@lit-labs/signals";
-import { icons } from "../../styles/icons.js";
-import { consume } from "@lit/context";
-import { embedderContext } from "../../contexts/embedder.js";
-import { embedState } from "../../embed/embed.js";
 import type { EmbedState } from "@breadboard-ai/types/embedder.js";
-import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
-import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type.js";
-import { iconSubstitute } from "../../utils/icon-substitute.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
 import {
   isLLMContent,
   isLLMContentArray,
   isTextCapabilityPart,
 } from "../../../data/common.js";
+import { ConnectorView } from "../../connectors/types.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+import { embedderContext } from "../../contexts/embedder.js";
+import { embedState } from "../../embed/embed.js";
+import { FlowGenConstraint } from "../../flow-gen/flow-generator.js";
+import * as StringsHelper from "../../strings/helper.js";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
+import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
+import { iconSubstitute } from "../../utils/icon-substitute.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -142,6 +141,9 @@ export class EntityEditor
 
   @consume({ context: embedderContext })
   accessor embedState: EmbedState = embedState();
+
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined;
 
   @state()
   accessor values: InputValues | undefined;
@@ -1000,7 +1002,7 @@ export class EntityEditor
     const { values, ins } = this.#takePortValues(formValues, ports);
     const configuration = { ...node.configuration(), ...values };
 
-    ActionTracker.editStep("manual");
+    this.actionTracker?.editStep("manual");
 
     this.dispatchEvent(
       new StateEvent({
@@ -1224,8 +1226,7 @@ export class EntityEditor
     value: LLMContent | undefined,
     graphId: GraphIdentifier,
     fastAccess: boolean,
-    isReferenced: boolean,
-    showControlFlowTools: boolean
+    isReferenced: boolean
   ) {
     const portValue = getLLMContentPortValue(value, port.schema);
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
@@ -1242,7 +1243,6 @@ export class EntityEditor
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
       .value=${textPart.text}
       .supportsFastAccess=${fastAccess}
-      .showControlFlowTools=${showControlFlowTools}
       .readOnly=${this.readOnly}
       id=${port.name}
       name=${port.name}
@@ -1261,8 +1261,6 @@ export class EntityEditor
     nodeId: NodeIdentifier,
     inputPorts: PortLike[]
   ) {
-    let showControlFlowTools = false;
-
     const hasTextEditor =
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
 
@@ -1290,8 +1288,7 @@ export class EntityEditor
                 isLLMContent(port.value) ? port.value : undefined,
                 graphId,
                 !advanced,
-                isReferenced,
-                showControlFlowTools
+                isReferenced
               ),
             ];
           } else {
@@ -1312,8 +1309,7 @@ export class EntityEditor
                 : undefined,
               graphId,
               true,
-              true,
-              showControlFlowTools
+              true
             );
           }
           break;
@@ -1357,13 +1353,6 @@ export class EntityEditor
                 (value) => enumValue(value).id == port.value
               ) ?? port.schema.enum[0]
             );
-
-            // Brittle, because it depends on the controller port to be first
-            // in the list of the ports (ok for now, since we sort it that
-            // way). Let's fix this to be less brittle somehow.
-            if (currentValue.showControlFlowTools) {
-              showControlFlowTools = true;
-            }
 
             const classes: Record<string, boolean> = {};
             if (currentValue.icon) {
@@ -1462,7 +1451,7 @@ export class EntityEditor
                   stepId: nodeId,
                 } satisfies FlowGenConstraint}
                 @bbgraphreplace=${() => {
-                  ActionTracker.editStep("flowgen");
+                  this.actionTracker?.editStep("flowgen");
                   // Ignore all edits to this point so that we don't issue
                   // a submit and stomp the new values.
                   this.#edited = false;
@@ -1777,14 +1766,13 @@ export class EntityEditor
               type: evt.accessType,
               mimeType: evt.mimeType,
               instance: evt.instance,
-              parameterType: "none",
             };
 
             this.#editorRef.value.addItem(part);
           }}
           .graphId=${null}
           .nodeId=${null}
-          .state=${this.projectState?.fastAccess}
+          .state=${this.projectState?.stepEditor.fastAccess}
         ></bb-fast-access-menu>
         <div ${ref(this.#proxyRef)} id="proxy"></div>`,
     ];
@@ -1813,10 +1801,6 @@ function enumValue(value: SchemaEnumValue): EnumValue {
 
   if (value.hidden) {
     enumVal.hidden = value.hidden;
-  }
-
-  if (value.showControlFlowTools) {
-    enumVal.showControlFlowTools = value.showControlFlowTools;
   }
 
   return enumVal;

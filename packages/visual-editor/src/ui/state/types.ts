@@ -23,9 +23,8 @@ import {
   OutputValues,
   ParameterMetadata,
   RunError,
-  RuntimeFlags,
-  ConsentRequestWithCallback,
   GraphDescriptor,
+  EditableGraph,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -37,15 +36,15 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { ConnectorInstance, ConnectorType } from "../connectors/types.js";
-import { StateEvent, ToastType } from "../events/events.js";
+import { StateEvent } from "../events/events.js";
 import {
   AppTheme,
   ParsedUrlProvider,
   VisualEditorMode,
+  WorkspaceSelectionState,
 } from "../types/types.js";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
-import { FilteredMap } from "./utils/filtered-map.js";
 import type { FlowGenerator } from "../flow-gen/flow-generator.js";
 
 /**
@@ -277,15 +276,6 @@ export type Organizer = {
   ): Promise<Outcome<void>>;
 
   /**
-   * Current graph's parameters.
-   */
-  parameters: Map<string, ParameterMetadata>;
-  changeParameterMetadata(
-    id: string,
-    metadata: ParameterMetadata
-  ): Promise<Outcome<void>>;
-
-  /**
    * Available connectors
    */
   connectors: ConnectorState;
@@ -333,6 +323,15 @@ export type Component = {
 
 export type Components = Map<NodeIdentifier, Component>;
 
+export type TitledItem = {
+  title?: string;
+};
+
+export type FilterableMap<T extends TitledItem> = {
+  results: ReadonlyMap<string, T>;
+  filter: string;
+};
+
 /**
  * Represents the Model+Controller for the "@" Menu.
  */
@@ -340,10 +339,14 @@ export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
-  controlFlow: FilteredMap<Tool>;
+  controlFlow: FilterableMap<Tool>;
   components: Map<GraphIdentifier, Components>;
   parameters: Map<string, ParameterMetadata>;
   integrations: FilteredIntegrations;
+  /**
+   * Available routes for the current step.
+   */
+  routes: FilterableMap<Component>;
 };
 
 /**
@@ -384,7 +387,8 @@ export type UIOverlays =
   | "VideoModal"
   | "StatusUpdateModal"
   | "SignInModal"
-  | "WarmWelcome";
+  | "WarmWelcome"
+  | "NoAccessModal";
 
 export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
 
@@ -404,21 +408,8 @@ export type UI = {
   loadState: UILoadState;
   show: Set<UIOverlays>;
   showStatusUpdateChip: boolean | null;
-  toasts: Map<
-    string,
-    {
-      message: string;
-      type: ToastType;
-      persistent: boolean;
-    }
-  >;
-  /**
-   * Consent requests that will be displayed as a modal popup
-   */
-  consentRequests: Array<ConsentRequestWithCallback>;
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
-  flags: RuntimeFlags | null;
   subscriptionStatus: SubscriptionStatus;
   subscriptionCredits: number;
 };
@@ -498,7 +489,6 @@ export type LiteModeState = {
  */
 export type RuntimeContext = {
   readonly project: Project | null;
-  readonly ui: UI;
   readonly router: ParsedUrlProvider;
   readonly flowGenerator: FlowGenerator;
 };
@@ -582,15 +572,13 @@ export type Integrations = {
  * Contains all the state for the project.
  */
 export type Project = {
-  run: ProjectRun;
-  graphAssets: Map<AssetPath, GraphAsset>;
-  parameters: Map<string, ParameterMetadata>;
-  connectors: ConnectorState;
-  integrations: Integrations;
-  organizer: Organizer;
-  fastAccess: FastAccess;
-  renderer: RendererState;
-  stepEditor: StepEditor;
+  readonly run: ProjectRun;
+  readonly graphAssets: Map<AssetPath, GraphAsset>;
+  readonly connectors: ConnectorState;
+  readonly integrations: Integrations;
+  readonly organizer: Organizer;
+  readonly renderer: RendererState;
+  readonly stepEditor: StepEditor;
   readonly themes: ProjectThemeState;
 
   /**
@@ -638,6 +626,17 @@ export type ProjectInternal = Project & {
   addConnectorInstance(url: string): void;
 };
 
+export type ProjectValues = {
+  graphAssets: Map<AssetPath, GraphAsset>;
+  tools: Map<string, Tool>;
+  myTools: Map<string, Tool>;
+  controlFlowTools: Map<string, Tool>;
+  components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
+  parameters: Map<string, ParameterMetadata>;
+  integrations: Integrations;
+  editable: EditableGraph | undefined;
+};
+
 export type EphemeralParticleTree = {
   tree: ParticleTree;
   done: boolean;
@@ -656,7 +655,13 @@ export type RendererRunState = {
  * Represents the Model + Controler for the Step Editor.
  */
 export type StepEditor = {
+  fastAccess: FastAccess;
+  updateSelection(selectionState: WorkspaceSelectionState): void;
   surface: StepEditorSurface | null;
+  nodeSelection: {
+    graph: GraphIdentifier;
+    node: NodeIdentifier;
+  } | null;
 };
 
 /**

@@ -15,6 +15,7 @@ import {
 import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 import { toText } from "../a2/utils.js";
+import { MemoryManager } from "./types.js";
 
 export { AgentFileSystem };
 
@@ -35,15 +36,39 @@ export type AddFilesToProjectResult = {
   error?: string;
 };
 
+export type SystemFileGetter = () => Outcome<string>;
+
+export type AgentFileSystemArgs = {
+  memoryManager: MemoryManager | null;
+};
+
 class AgentFileSystem {
   #fileCount = 0;
-
-  #projects: Map<string, Set<string>> = new Map();
-
   #files: Map<string, FileDescriptor> = new Map();
+  #routes: Map<string, string> = new Map([
+    ["", ""],
+    ["/", "/"],
+  ]);
+
+  private readonly memoryManager: MemoryManager | null;
+  private readonly systemFiles: Map<string, SystemFileGetter> = new Map();
+
+  constructor(args: AgentFileSystemArgs) {
+    this.memoryManager = args.memoryManager;
+  }
+
+  addSystemFile(path: string, getter: SystemFileGetter) {
+    this.systemFiles.set(path, getter);
+  }
+
+  overwrite(name: string, data: string, mimeType: string): string {
+    const path = this.#createNamed(name, mimeType, false);
+    this.#files.set(path, { data, mimeType, type: "text" });
+    return path;
+  }
 
   write(name: string, data: string, mimeType: string): string {
-    const path = this.#createNamed(name, mimeType);
+    const path = this.#createNamed(name, mimeType, true);
     this.#files.set(path, { data, mimeType, type: "text" });
     return path;
   }
@@ -78,6 +103,14 @@ class AgentFileSystem {
       case "text":
         return undefined;
     }
+  }
+
+  #getSystemFile(path: string): Outcome<DataPart[]> {
+    const getter = this.systemFiles?.get(path);
+    if (!getter) return err(`File ${path} was not found`);
+    const text = getter();
+    if (!ok(text)) return text;
+    return [{ text }];
   }
 
   #getFile(path: string): Outcome<DataPart> {
@@ -118,36 +151,29 @@ class AgentFileSystem {
     }
   }
 
-  #getProjectFiles(path: string): Outcome<DataPart[]> {
-    const project = this.#projects.get(path);
-    if (!project) {
-      return err(`Project "${path}" not found`);
-    }
-    const errors: string[] = [];
-    const files = [...project].map((path) => {
-      const file = this.#getFile(path);
-      if (!ok(file)) {
-        errors.push(file.$error);
-      }
-      return file;
+  async #getMemoryFile(path: string): Promise<Outcome<DataPart[]>> {
+    const sheetName = path.replace("/vfs/memory/", "");
+    const sheet = await this.memoryManager?.readSheet({
+      range: `${sheetName}!A:ZZ`,
     });
-    if (errors.length > 0) {
-      return err(errors.join(","));
-    }
-    return files as DataPart[];
+    if (!sheet) return [];
+    if (!ok(sheet)) return sheet;
+    if ("error" in sheet) return err(sheet.error);
+    return [{ text: JSON.stringify(sheet.values) }];
   }
 
-  readText(path: string): Outcome<string> {
-    const parts = this.get(path);
+  async readText(path: string): Promise<Outcome<string>> {
+    const parts = await this.get(path);
     if (!ok(parts)) return parts;
 
     return toText({ parts });
   }
 
-  getMany(paths: string[]): Outcome<DataPart[]> {
+  async getMany(paths: string[]): Promise<Outcome<DataPart[]>> {
     const inputErrors: string[] = [];
-    const files: DataPart[] = paths
-      .map((path) => this.get(path))
+    const files: DataPart[] = (
+      await Promise.all(paths.map((path) => this.get(path)))
+    )
       .filter((part) => {
         if (!ok(part)) {
           inputErrors.push(part.$error);
@@ -162,52 +188,57 @@ class AgentFileSystem {
     return files;
   }
 
-  get(path: string): Outcome<DataPart[]> {
+  async get(path: string): Promise<Outcome<DataPart[]>> {
     // Do a path fix-up just in case: sometimes, Gemini decides to use
     // "vfs/file" instead of "/vfs/file".
     if (path.startsWith("vfs/")) {
       path = `/${path}`;
     }
-    if (path.startsWith("/vfs/projects")) {
-      return this.#getProjectFiles(path);
+    if (path.startsWith("/vfs/system/")) {
+      return this.#getSystemFile(path);
+    }
+    if (path.startsWith("/vfs/memory/")) {
+      return this.#getMemoryFile(path);
     }
     const file = this.#getFile(path);
     if (!ok(file)) return file;
     return [file];
   }
 
-  createProject(name: string): string {
-    return `/vfs/projects/${name}`;
-  }
-
-  addFilesToProject(
-    projectPath: string,
-    files: string[]
-  ): AddFilesToProjectResult {
-    let project = this.#projects.get(projectPath);
-    if (!project) {
-      project = new Set();
-      this.#projects.set(projectPath, project);
+  async listFiles(): Promise<string> {
+    const files = [...this.#files.keys()];
+    const system = [...this.systemFiles.keys()];
+    const memory = [];
+    const memoryMetadata = await this.memoryManager?.getSheetMetadata();
+    if (memoryMetadata && ok(memoryMetadata)) {
+      memory.push(
+        ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
+      );
     }
-    const existing = [...project];
-    files.forEach((file) => project.add(file));
-    return {
-      total: project.size,
-      existing,
-      added: files,
-    };
+    return [...files, ...system, ...memory].join("\n");
   }
 
-  listProjectContents(projectPath: string): string[] {
-    const project = this.#projects.get(projectPath);
-    return [...(project || [])];
+  addRoute(originalRoute: string): string {
+    // The "- 1" is because by default, we add two routes. So now, the count for
+    // newly added routes will start at 1.
+    const routeName = `/route-${this.#routes.size - 1}`;
+    this.#routes.set(routeName, originalRoute);
+    return routeName;
+  }
+
+  getOriginalRoute(routeName: string): Outcome<string> {
+    const originalRoute = this.#routes.get(routeName);
+    if (!originalRoute) {
+      return err(`Route "${routeName}" not found`);
+    }
+    return originalRoute;
   }
 
   add(part: DataPart, fileName?: string): Outcome<string> {
     const create = (mimeType: string) => {
       if (fileName) {
         const withoutExtension = fileName.replace(/\.[^/.]+$/, "");
-        return this.#createNamed(withoutExtension, mimeType);
+        return this.#createNamed(withoutExtension, mimeType, true);
       }
       return this.create(mimeType);
     };
@@ -245,7 +276,11 @@ class AgentFileSystem {
     return this.#files;
   }
 
-  #createNamed(name: string, mimeType: string): string {
+  #createNamed(
+    name: string,
+    mimeType: string,
+    overwriteWarning: boolean
+  ): string {
     let filename;
     if (name.includes(".")) {
       filename = name;
@@ -254,7 +289,7 @@ class AgentFileSystem {
       filename = `${name}.${ext}`;
     }
     const path = `/vfs/${filename}`;
-    if (this.#files.has(path)) {
+    if (overwriteWarning && this.#files.has(path)) {
       console.warn(`File "${path}" already exists, will be overwritten`);
     }
     return path;

@@ -13,8 +13,8 @@ import {
   Outcome,
 } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
-import { StreamableReporter } from "./output.js";
-import { err, ok, toLLMContentInline } from "./utils.js";
+import { getCurrentStepState, StreamableReporter } from "./output.js";
+import { err, ok, progressFromThought, toLLMContentInline } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 const DEFAULT_STREAM_BACKEND_ENDPOINT =
@@ -45,6 +45,7 @@ type StreamingRequestBody = {
     parts: StreamingRequestPart[];
     role: string;
   }>;
+  driveResourceKeys?: Record<string, string>;
 };
 
 async function getStreamBackendUrl(caps: Capabilities): Promise<string> {
@@ -79,6 +80,7 @@ function buildStreamingRequestBody(
   modelName: string
 ): StreamingRequestBody {
   const contents: StreamingRequestBody["contents"] = [];
+  const driveResourceKeys: StreamingRequestBody["driveResourceKeys"] = {};
 
   let textCount = 0;
   let mediaCount = 0;
@@ -114,6 +116,10 @@ function buildStreamingRequestBody(
         mediaCount++;
         const handle = part.storedData.handle;
         const mimeType = part.storedData.mimeType;
+        const resourceKey = part.storedData.resourceKey;
+        if (resourceKey) {
+          driveResourceKeys[handle] = resourceKey;
+        }
 
         // Parse URL into appropriate fileUri format
         const fileUri = parseStoredDataUrl(handle);
@@ -134,12 +140,16 @@ function buildStreamingRequestBody(
     }
   }
 
-  return {
+  const requestBody: StreamingRequestBody = {
     intent: "",
     modelName,
     userInstruction: instruction,
     contents,
   };
+  if (Object.keys(driveResourceKeys).length > 0) {
+    requestBody.driveResourceKeys = driveResourceKeys;
+  }
+  return requestBody;
 }
 
 /**
@@ -190,9 +200,13 @@ async function executeWebpageStream(
     icon: "web",
   });
 
+  const { appScreen } = getCurrentStepState(moduleArgs);
+
   try {
     await reporter.start();
     await reporter.sendUpdate("Preparing request", { modelName }, "upload");
+
+    if (appScreen) appScreen.progress = "Generating HTML";
 
     const baseUrl = await getStreamBackendUrl(caps);
     const url = new URL(baseUrl);
@@ -241,6 +255,12 @@ async function executeWebpageStream(
 
         if (chunkType === "thought") {
           thoughtCount++;
+
+          if (appScreen) {
+            appScreen.progress = progressFromThought(text);
+            appScreen.expectedDuration = -1;
+          }
+
           await reporter.sendUpdate(
             `Thinking (${thoughtCount})`,
             text,
@@ -268,6 +288,10 @@ async function executeWebpageStream(
   } catch (e) {
     return reporter.sendError(err((e as Error).message));
   } finally {
+    if (appScreen) {
+      appScreen.progress = undefined;
+      appScreen.expectedDuration = -1;
+    }
     reporter.close();
   }
 }

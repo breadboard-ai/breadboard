@@ -206,6 +206,10 @@ export class Graph implements EditableGraph {
     this.#eventTarget.addEventListener(eventName, listener, options);
   }
 
+  removeEventListener(eventName: string, listener: EventListener): void {
+    this.#eventTarget.removeEventListener(eventName, listener);
+  }
+
   #shouldDiscardEdit(edit: EditSpec) {
     if (this.#imperativeMain) {
       return !validImperativeEdits.includes(edit.type);

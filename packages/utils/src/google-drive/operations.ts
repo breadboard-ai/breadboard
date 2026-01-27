@@ -20,15 +20,16 @@ import { type AppProperties } from "./utils.js";
 
 export { DriveOperations, PROTOCOL };
 
-import {
-  extractGoogleDriveFileId,
-  readProperties,
-  truncateValueForUtf8,
-} from "./utils.js";
-import type { GoogleDriveClient } from "./google-drive-client.js";
-import { DriveLookupCache } from "./drive-lookup-cache.js";
-import { purgeStoredDataInMemoryValues } from "@breadboard-ai/utils";
-import { err } from "@breadboard-ai/utils";
+  import {
+    extractGoogleDriveFileId,
+    readProperties,
+    truncateValueForUtf8,
+  } from "./utils.js";
+  import type { GoogleDriveClient } from "./google-drive-client.js";
+  import { DriveLookupCache } from "./drive-lookup-cache.js";
+  import { purgeStoredDataInMemoryValues } from "@breadboard-ai/utils";
+  import { err } from "@breadboard-ai/utils";
+  import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 const PROTOCOL = "drive:";
 
@@ -39,10 +40,11 @@ const RUN_RESULTS_MIME_TYPE = "application/vnd.breadboard.run-results+json";
 const RUN_RESULTS_GRAPH_URL_APP_PROPERTY = "graphUrl";
 
 // Properties related to sharing graphs.
-export const IS_SHAREABLE_COPY_PROPERTY = "isShareableCopy";
-export const LATEST_SHARED_VERSION_PROPERTY = "latestSharedVersion";
-export const MAIN_TO_SHAREABLE_COPY_PROPERTY = "mainToShareableCopy";
-export const SHAREABLE_COPY_TO_MAIN_PROPERTY = "shareableCopyToMain";
+export const DRIVE_PROPERTY_IS_SHAREABLE_COPY = "isShareableCopy";
+export const DRIVE_PROPERTY_LATEST_SHARED_VERSION = "latestSharedVersion";
+export const DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY = "mainToShareableCopy";
+export const DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN = "shareableCopyToMain";
+export const DRIVE_PROPERTY_OPAL_SHARE_SURFACE = "opalShareSurface";
 
 export interface MakeGraphListQueryInit {
   kind: "editable" | "shareable";
@@ -59,7 +61,7 @@ export function makeGraphListQuery({
     mimeType = ${quote(GRAPH_MIME_TYPE)}
     and trashed = false
     and ${kind === "editable" ? "not" : ""} properties has {
-      key = ${quote(IS_SHAREABLE_COPY_PROPERTY)}
+      key = ${quote(DRIVE_PROPERTY_IS_SHAREABLE_COPY)}
       and value = "true"
     }
     ${owner ? `and ${quote(owner)} in owners` : ""}
@@ -117,7 +119,8 @@ class DriveOperations {
     _refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
     googleDriveClient: GoogleDriveClient,
-    publishPermissions: gapi.client.drive.Permission[]
+    publishPermissions: gapi.client.drive.Permission[],
+    private readonly findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"]
   ) {
     if (!userFolderName) {
       throw new Error(`userFolderName was empty`);
@@ -462,54 +465,39 @@ class DriveOperations {
     if (this.#cachedFolderId) {
       return this.#cachedFolderId;
     }
-    const query =
-      `name=${quote(this.#userFolderName)}` +
-      ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
-      ` and trashed=false`;
-    let { files } = await this.#googleDriveClient.listFiles(query, {
-      fields: ["id", "mimeType"],
-      orderBy: [
-        {
-          field: "createdTime",
-          dir: "desc",
-        },
-      ],
-    });
-    // This shouldn't be required based on the query above, but for some reason
-    // the TestGaia drive endpoint doesn't seem to respect the mimeType query
-    files = files.filter((f) => f.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE);
-    if (files.length > 0) {
-      if (files.length > 1) {
-        console.warn(
-          "[Google Drive] Multiple candidate root folders found," +
-            " picking the first created one arbitrarily:",
-          files
-        );
-      }
-      const id = files[0]!.id;
-      console.log("[Google Drive] Found existing root folder", id);
+    const folder = await this.findUserOpalFolder();
+    if (folder.ok) {
+      const { id } = folder;
       this.#cachedFolderId = id;
       return id;
     }
+    return err(folder.error);
   }
 
-  async findOrCreateFolder(): Promise<Outcome<string>> {
-    const existing = await this.findFolder();
-    if (typeof existing === "string" && existing) {
-      return existing;
-    }
+  #findOrCreateFolderPromise: Promise<Outcome<string>> | undefined;
 
-    try {
-      const { id } = await this.#googleDriveClient.createFileMetadata(
-        { name: this.#userFolderName, mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE },
-        { fields: ["id"] }
-      );
-      console.log("[Google Drive] Created new root folder", id);
-      this.#cachedFolderId = id;
-      return id;
-    } catch (e) {
-      return err((e as Error).message);
-    }
+  async findOrCreateFolder(): Promise<Outcome<string>> {
+    return (this.#findOrCreateFolderPromise ??= (async () => {
+      const existing = await this.findFolder();
+      if (typeof existing === "string" && existing) {
+        return existing;
+      }
+
+      try {
+        const { id } = await this.#googleDriveClient.createFileMetadata(
+          {
+            name: this.#userFolderName,
+            mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+          },
+          { fields: ["id"] }
+        );
+        console.log("[Google Drive] Created new root folder", id);
+        this.#cachedFolderId = id;
+        return id;
+      } catch (e) {
+        return err((e as Error).message);
+      }
+    })());
   }
 
   async deleteGraph(url: URL): Promise<Outcome<void>> {

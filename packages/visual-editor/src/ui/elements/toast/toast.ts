@@ -4,16 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ToastRemovedEvent, ToastType } from "../../events/events.js";
+import { ToastType } from "../../events/events.js";
 import { LitElement, html, css, PropertyValueMap } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
-
-const DEFAULT_TIMEOUT = 8000;
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-toast")
 export class Toast extends LitElement {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
+  @property({ type: Boolean })
+  accessor closing = false;
+
   @property({ reflect: true })
   accessor toastId: string | null = null;
 
@@ -22,9 +29,6 @@ export class Toast extends LitElement {
 
   @property()
   accessor message = "";
-
-  @property()
-  accessor timeout = DEFAULT_TIMEOUT;
 
   @property()
   accessor offset = 0;
@@ -54,6 +58,7 @@ export class Toast extends LitElement {
         transition: translate 0.2s cubic-bezier(0, 0, 0.3, 1);
         animation: slideIn 0.15s cubic-bezier(0, 0, 0.3, 1) forwards;
         max-width: min(360px, 80vw);
+        z-index: 1000;
       }
 
       :host([type="warning"]) {
@@ -102,49 +107,20 @@ export class Toast extends LitElement {
     `,
   ];
 
-  #removalTimeout = -1;
-  connectedCallback(): void {
-    super.connectedCallback();
-
-    this.removeAfter(this.timeout);
-  }
-
-  protected willUpdate(
-    changedProperties:
-      | PropertyValueMap<{ timeout: number }>
-      | Map<PropertyKey, unknown>
-  ): void {
-    if (changedProperties.has("timeout")) {
-      if (!this.timeout) {
-        this.timeout = DEFAULT_TIMEOUT;
-      }
-
-      if (changedProperties.get("timeout") !== this.timeout) {
-        this.removeAfter(this.timeout);
-      }
-    }
-  }
-
-  removeAfter(timeout: number) {
-    if (timeout === 0) {
-      return;
-    }
-
-    clearTimeout(this.#removalTimeout);
-    this.#removalTimeout = window.setTimeout(() => {
+  protected willUpdate(changedProperties: PropertyValueMap<this>): void {
+    if (changedProperties.has("closing") && this.closing) {
+      // Trigger a closing animation and, on completion, inform the controller
+      // that the toast has finished it's closing animation.
+      this.classList.add("toasted");
       this.addEventListener(
         "animationend",
         () => {
-          this.remove();
-          if (this.toastId) {
-            this.dispatchEvent(new ToastRemovedEvent(this.toastId));
-          }
+          if (!this.toastId) return;
+          this.sca.controller.global.toasts.untoast(this.toastId);
         },
         { once: true }
       );
-
-      this.classList.add("toasted");
-    }, timeout);
+    }
   }
 
   render() {

@@ -7,24 +7,23 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
-import { SettingsStore } from "./ui/data/settings-store.js";
 import type {
   AppScreenOutput,
   BoardServer,
   ConformsToNodeValue,
-  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
+import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
+import { SettingsStore } from "./ui/data/settings-store.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { RecentBoardStore } from "./data/recent-boards.js";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
+  RuntimeConfig,
   TabId,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
@@ -36,43 +35,47 @@ import {
   canonicalizeOAuthScope,
   type OAuthScope,
 } from "./ui/connection/oauth-scopes.js";
-import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
-import { consentManagerContext } from "./ui/contexts/consent-manager.js";
+import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
-import { uiStateContext } from "./ui/contexts/ui-state.js";
 import { VESignInModal } from "./ui/elements/elements.js";
 import { EmbedHandler, embedState, EmbedState } from "./ui/embed/embed.js";
 
+import type {
+  CheckAppAccessResult,
+  GuestConfiguration,
+  OpalShellHostProtocol,
+  ValidateScopesResult,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
+import { SignalWatcher } from "@lit-labs/signals";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 import {
   FlowGenerator,
   flowGeneratorContext,
 } from "./ui/flow-gen/flow-generator.js";
 import { ReactiveAppScreen } from "./ui/state/app-screen.js";
-import { UserSignInResponse } from "./ui/types/types.js";
-import { ActionTracker } from "./ui/utils/action-tracker.js";
-import { ConsentManager } from "./ui/utils/consent-manager.js";
-import { EmailPrefsManager } from "./ui/utils/email-prefs-manager.js";
+import {
+  ActionTracker,
+  RecentBoard,
+  UserSignInResponse,
+} from "./ui/types/types.js";
 import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
-import {
-  SigninAdapter,
-  signinAdapterContext,
-} from "./ui/utils/signin-adapter.js";
-import { makeUrl, parseUrl } from "./ui/utils/urls.js";
-import {
-  GuestConfiguration,
-  OpalShellHostProtocol,
-} from "@breadboard-ai/types/opal-shell-protocol.js";
-import { SignalWatcher } from "@lit-labs/signals";
+import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 
 import { Admin } from "./admin.js";
 import { keyboardCommands } from "./commands/commands.js";
 import { KeyboardCommandDeps } from "./commands/types.js";
 import { eventRoutes } from "./event-routing/event-routing.js";
 
-import { MainArguments } from "./types/types.js";
 import { hash, ok } from "@breadboard-ai/utils";
+import { MainArguments } from "./types/types.js";
+import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
+import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
+
+import { sca, SCA } from "./sca/sca.js";
+import { Utils } from "./sca/utils.js";
+import { scaContext } from "./sca/context/context.js";
+import { effect } from "signal-utils/subtle/microtask-effect";
 
 export { MainBase };
 
@@ -81,7 +84,6 @@ export type RenderValues = {
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
   projectState: BreadboardUI.State.Project | null;
   showingOverlay: boolean;
-  showExperimentalComponents: boolean;
   themeHash: number;
   tabStatus: BreadboardUI.Types.STATUS;
 };
@@ -90,17 +92,13 @@ const LOADING_TIMEOUT = 1250;
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 const UPDATE_HASH_KEY = "bb-main-update-hash";
 
-const parsedUrl = parseUrl(window.location.href);
-
+const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
 abstract class MainBase extends SignalWatcher(LitElement) {
   @provide({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig;
 
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
-
-  @provide({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter;
 
   @provide({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator;
@@ -114,15 +112,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   @provide({ context: boardServerContext })
   accessor boardServer: BoardServer;
 
-  @provide({ context: uiStateContext })
-  @state()
-  accessor uiState: BreadboardUI.State.UI;
-
   @provide({ context: opalShellContext })
   accessor opalShell: OpalShellHostProtocol;
 
-  @provide({ context: consentManagerContext })
-  accessor #consentManager: ConsentManager;
+  @provide({ context: guestConfigurationContext })
+  protected accessor guestConfiguration: GuestConfiguration;
+
+  @provide({ context: actionTrackerContext })
+  protected accessor actionTracker: ActionTracker;
+
+  @provide({ context: scaContext })
+  protected accessor sca: SCA;
 
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
@@ -182,9 +182,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     if (
       values[0]?.type !== "info" &&
-      this.uiState.showStatusUpdateChip === null
+      this.sca.controller.global.main.showStatusUpdateChip === null
     ) {
-      this.uiState.showStatusUpdateChip = true;
+      this.sca.controller.global.main.showStatusUpdateChip = true;
     }
   }
   get statusUpdates() {
@@ -198,16 +198,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   protected lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   protected runtime: Runtime.Runtime;
-
-  protected snackbarElement: BreadboardUI.Elements.Snackbar | undefined =
-    undefined;
-  protected pendingSnackbarMessages: Array<{
-    message: BreadboardUI.Types.SnackbarMessage;
-    replaceAll: boolean;
-  }> = [];
+  protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
   protected boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
-  protected recentBoardStore: RecentBoardStore;
   protected lastPointerPosition = { x: 0, y: 0 };
   protected tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   protected canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
@@ -216,11 +209,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     createRef();
   protected readonly embedHandler: EmbedHandler | undefined;
   protected readonly settings: SettingsStore;
-  readonly emailPrefsManager: EmailPrefsManager;
   protected readonly hostOrigin: URL;
-
-  // Configuration provided by shell host
-  protected readonly guestConfiguration: GuestConfiguration;
+  protected readonly logger: ReturnType<typeof Utils.Logging.getLogger> =
+    Utils.Logging.getLogger();
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
@@ -235,7 +226,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Static deployment config
     this.globalConfig = args.globalConfig;
 
-    // Configuration provided by shell hos
+    // Configuration provided by shell host
     this.guestConfiguration = args.guestConfiguration;
 
     // User settings
@@ -246,75 +237,67 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.opalShell = args.shellHost;
     this.hostOrigin = args.hostOrigin;
 
-    this.runtime = new Runtime.Runtime({
+    // Controller
+    const config: RuntimeConfig = {
       globalConfig: this.globalConfig,
+      guestConfig: this.guestConfiguration,
       settings: this.settings,
       shellHost: this.opalShell,
-      initialSignInState: args.initialSignInState,
       env: args.env,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
+    };
+    this.sca = sca(config, args.globalConfig.flags);
+    Utils.Logging.setDebuggableAppController(this.sca.controller);
+
+    // Append SCA to the config.
+    config.sca = this.sca;
+    this.runtime = new Runtime.Runtime(config);
+
+    this.googleDriveClient = this.sca.services.googleDriveClient;
+
+    // Asyncronously check if the user has an access restriction (e.g. geo) and
+    // if they are signed in with all required scopes.
+    this.sca.services.signinAdapter.state.then((state) => {
+      if (state === "signedin") {
+        this.actionTracker.updateSignedInStatus(true);
+        this.sca.services.signinAdapter
+          .checkAppAccess()
+          .then(this.handleAppAccessCheckResult.bind(this));
+        this.opalShell
+          .validateScopes()
+          .then(this.handleValidateScopesResult.bind(this));
+      }
     });
 
-    this.signinAdapter = this.runtime.signinAdapter;
-    this.googleDriveClient = this.runtime.googleDriveClient;
-    this.#consentManager = this.runtime.consentManager;
-    this.recentBoardStore = this.runtime.recentBoardStore;
-
-    // Asyncronously check if the user has a geo-restriction and sign out if so.
-    if (this.signinAdapter.state === "signedin") {
-      this.signinAdapter.checkAppAccess().then(async (access) => {
-        if (!access.canAccess) {
-          await this.signinAdapter.signOut();
-          window.history.pushState(
-            undefined,
-            "",
-            makeUrl({
-              page: "landing",
-              geoRestriction: true,
-              redirect: { page: "home" },
-            })
-          );
-          window.location.reload();
-        }
-      });
-    }
-
-    this.emailPrefsManager = this.runtime.emailPrefsManager;
-    this.flowGenerator = this.runtime.flowGenerator;
+    this.flowGenerator = this.sca.services.flowGenerator;
+    this.actionTracker = this.sca.services.actionTracker;
 
     this.embedHandler = args.embedHandler;
 
     this.#addRuntimeEventHandlers();
 
-    this.boardServer = this.runtime.googleDriveBoardServer;
-    this.uiState = this.runtime.state.ui;
+    this.boardServer = this.sca.services.googleDriveBoardServer;
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
-      this.emailPrefsManager.refreshPrefs().then(() => {
+      this.sca.services.emailPrefsManager.refreshPrefs().then(() => {
         if (
-          this.emailPrefsManager.prefsValid &&
-          !this.emailPrefsManager.hasStoredPreferences
+          this.sca.services.emailPrefsManager.prefsValid &&
+          !this.sca.services.emailPrefsManager.hasStoredPreferences
         ) {
-          this.uiState.show.add("WarmWelcome");
+          this.sca.controller.global.main.show.add("WarmWelcome");
         }
       });
     }
 
-    if (parsedUrl.page === "graph") {
-      const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
-      ActionTracker.load(this.uiState.mode, shared);
-    } else if (parsedUrl.page === "home") {
-      ActionTracker.load("home", false);
-    }
-    this.graphStore = this.runtime.board.graphStore;
+    this.graphStore = this.sca.services.graphStore;
 
     // Admin.
     const admin = new Admin(
       args,
       this.globalConfig,
       this.googleDriveClient,
-      this.signinAdapter
+      this.sca.services.signinAdapter
     );
     admin.runtime = this.runtime;
     admin.settingsHelper = this.settingsHelper;
@@ -333,27 +316,60 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     });
 
     // Once we've determined the sign-in status, relay it to an embedder.
-    this.embedHandler?.sendToEmbedder({
-      type: "home_loaded",
-      isSignedIn: this.signinAdapter.state === "signedin",
-    });
-
-    this.#maybeNotifyAboutPreferredUrlForDomain();
-    this.#maybeNotifyAboutDesktopModality();
+    this.sca.services.signinAdapter.state.then((state) =>
+      this.embedHandler?.sendToEmbedder({
+        type: "home_loaded",
+        isSignedIn: state === "signedin",
+      })
+    );
 
     this.runtime.shell.startTrackUpdates();
     this.runtime.router.init();
 
-    void this.#checkSubscriptionStatus(this.runtime.flags);
+    this.#checkSubscriptionStatus();
 
-    console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
+    this.logger.log(
+      Utils.Logging.Formatter.info("Visual Editor Initialized"),
+      Strings.from("APP_NAME"),
+      false
+    );
+
     this.doPostInitWork();
+  }
+
+  abstract handleAppAccessCheckResult(
+    result: CheckAppAccessResult
+  ): Promise<void>;
+
+  async handleValidateScopesResult(result: ValidateScopesResult) {
+    if (
+      !result.ok &&
+      (await this.sca.services.signinAdapter.state) === "signedin"
+    ) {
+      console.log(
+        "[signin] oauth scopes were missing or the user revoked access, " +
+          "forcing signin.",
+        result
+      );
+      await this.sca.services.signinAdapter.signOut();
+      window.location.href = makeUrl({
+        page: "landing",
+        redirect: parseUrl(window.location.href),
+        missingScopes: result.code === "missing-scopes",
+        oauthRedirect:
+          new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
+          undefined,
+        guestPrefixed: true,
+      });
+    }
   }
 
   abstract doPostInitWork(): Promise<void>;
 
   connectedCallback(): void {
     super.connectedCallback();
+
+    this.#createEffects();
 
     window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
@@ -386,71 +402,80 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    this.#destroyEffects();
+
     window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.removeEventListener("pointerdown", this.#hideTooltipBound);
     window.removeEventListener("keydown", this.#onKeyboardShortCut);
   }
 
-  async #checkSubscriptionStatus(flagManager: RuntimeFlagManager) {
+  async #checkSubscriptionStatus() {
     try {
-      const flags = await flagManager.flags();
+      await this.sca.controller.isHydrated;
+      const flags = await this.sca.controller.global.flags.flags();
       if (flags.googleOne) {
-        console.log(`[Google One] Checking subscriber status`);
+        this.logger.log(
+          Utils.Logging.Formatter.verbose(`Checking subscriber status`),
+          "Google One"
+        );
         const response = await this.runtime.apiClient.getG1SubscriptionStatus({
           include_credit_data: true,
         });
-        this.uiState.subscriptionStatus = response.is_member
+        this.sca.controller.global.main.subscriptionStatus = response.is_member
           ? "subscribed"
           : "not-subscribed";
-        this.uiState.subscriptionCredits = response.remaining_credits;
+        this.sca.controller.global.main.subscriptionCredits =
+          response.remaining_credits;
       }
     } catch (err) {
       console.warn(err);
-      this.uiState.subscriptionStatus = "error";
-      this.uiState.subscriptionCredits = -2;
+      this.sca.controller.global.main.subscriptionStatus = "error";
+      this.sca.controller.global.main.subscriptionCredits = -2;
     }
   }
 
-  #maybeNotifyAboutDesktopModality() {
-    if (
-      parsedUrl.page !== "graph" ||
-      !parsedUrl.shared ||
-      parsedUrl.mode !== "canvas"
-    ) {
-      return;
-    }
+  #disposers: Array<() => void> = [];
+  #createEffects() {
+    const createDisposableEffects = (cbs: Array<() => void>) => {
+      for (const cb of cbs) {
+        const disposer = effect(cb);
+        this.#disposers.push(disposer);
+      }
+    };
 
-    // There's little point in attempting to differentiate between "mobile" and
-    // "desktop" here for any number of reasons, but as a reasonable proxy we
-    // will check that there's some screen estate available to show both the
-    // editor and the app preview before we show the modal.
-    if (window.innerWidth > 1280) {
-      return;
-    }
+    const effects = [
+      // Effect: Listen for edits to save.
+      () => {
+        const { version, graphIsMine } = this.sca.controller.editor.graph;
+        if (!graphIsMine || version === -1) {
+          return;
+        }
 
-    this.uiState.show.add("BetterOnDesktopModal");
+        // TODO: Wire save to this behavior.
+        this.logger.log(
+          Utils.Logging.Formatter.info("Version change:", version),
+          "Editor"
+        );
+      },
+    ];
+    createDisposableEffects(effects);
   }
 
-  async #maybeNotifyAboutPreferredUrlForDomain() {
-    const domain = this.signinAdapter.domain;
-    if (!domain) {
-      return;
+  #destroyEffects() {
+    try {
+      this.logger.log(
+        Utils.Logging.Formatter.info(
+          `Removing ${this.#disposers.length} effects`
+        ),
+        "Editor"
+      );
+      for (const disposer of this.#disposers) {
+        disposer.call(null);
+      }
+    } finally {
+      this.#disposers.length = 0;
     }
-    const url = this.globalConfig.domains?.[domain]?.preferredUrl;
-    if (!url) {
-      return;
-    }
-
-    this.snackbar(
-      html`
-        Users from ${domain} should prefer
-        <a href="${url}" target="_blank">${new URL(url).hostname}</a>
-      `,
-      BreadboardUI.Types.SnackType.WARNING,
-      [],
-      true
-    );
   }
 
   #addRuntimeEventHandlers() {
@@ -464,7 +489,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeShareMissingEvent.eventName,
       () => {
-        this.uiState.show.add("MissingShare");
+        this.sca.controller.global.main.show.add("MissingShare");
       }
     );
 
@@ -476,7 +501,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.addEventListener(
       Runtime.Events.RuntimeToastEvent.eventName,
       (evt: Runtime.Events.RuntimeToastEvent) => {
-        this.toast(evt.message, evt.toastType, evt.persistent, evt.toastId);
+        this.sca.controller.global.toasts.toast(
+          evt.message,
+          evt.toastType,
+          evt.persistent,
+          evt.toastId
+        );
       }
     );
 
@@ -511,6 +541,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.select.addEventListener(
       Runtime.Events.RuntimeSelectionChangeEvent.eventName,
       (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
+        // TODO: Consider plumbing project state directly into Select and
+        // calling it from there directly.
+        this.runtime.state.project?.stepEditor.updateSelection(
+          evt.selectionState
+        );
         this.selectionState = {
           selectionChangeId: evt.selectionChangeId,
           selectionState: evt.selectionState,
@@ -529,7 +564,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     );
 
-    this.runtime.edit.addEventListener(
+    // Historically this event came from this.runtime.edit, but during the
+    // migration to SCA the listeners are created during this.runtime.board's
+    // tab creation process, so it is the one that now fires the events.
+
+    this.runtime.board.addEventListener(
       Runtime.Events.RuntimeBoardEditEvent.eventName,
       () => {
         this.runtime.board.save(
@@ -545,7 +584,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       (evt: Runtime.Events.RuntimeErrorEvent) => {
         // Wait a frame so we don't end up accidentally spamming the render.
         requestAnimationFrame(() => {
-          this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+          this.sca.controller.global.toasts.toast(
+            evt.message,
+            BreadboardUI.Events.ToastType.ERROR
+          );
         });
       }
     );
@@ -554,12 +596,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       Runtime.Events.RuntimeBoardLoadErrorEvent.eventName,
       () => {
         if (this.tab) {
-          this.uiState.loadState = "Error";
+          this.sca.controller.global.main.loadState = "Error";
         }
 
-        this.toast(
+        this.snackbar(
           Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
-          BreadboardUI.Events.ToastType.ERROR
+          BreadboardUI.Types.SnackType.WARNING,
+          [],
+          true,
+          globalThis.crypto.randomUUID(),
+          true
         );
       }
     );
@@ -567,7 +613,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeErrorEvent.eventName,
       (evt: Runtime.Events.RuntimeErrorEvent) => {
-        this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+        this.sca.controller.global.toasts.toast(
+          evt.message,
+          BreadboardUI.Events.ToastType.ERROR
+        );
       }
     );
 
@@ -604,7 +653,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
             console.warn(preparingNextRun.$error);
           }
 
-          this.uiState.loadState = "Loaded";
+          if (this.tab.graph.url && this.tab.graphIsMine) {
+            const board: RecentBoard = { url: this.tab.graph.url };
+            if (this.tab.graph.title) board.title = this.tab.graph.title;
+            this.sca.controller.home.recent.add(board);
+          }
+
+          this.sca.controller.global.main.loadState = "Loaded";
           this.runtime.select.refresh(
             this.tab.id,
             this.runtime.util.createWorkspaceSelectionChangeId()
@@ -704,7 +759,14 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.runtime.board.currentURL = evt.url;
 
         if (evt.mode) {
-          this.uiState.mode = evt.mode;
+          this.sca.controller.global.main.mode = evt.mode;
+        }
+        const parsedUrl = this.runtime.router.parsedUrl;
+        const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
+        if (parsedUrl.page === "home") {
+          this.actionTracker.load("home", false);
+        } else {
+          this.actionTracker.load(this.sca.controller.global.main.mode, shared);
         }
 
         const urlWithoutMode = new URL(evt.url);
@@ -742,7 +804,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
               );
             }, LOADING_TIMEOUT);
 
-            this.uiState.loadState = "Loading";
+            this.sca.controller.global.main.loadState = "Loading";
             await this.runtime.board.createTabFromURL(
               boardUrl,
               undefined,
@@ -772,8 +834,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   async #generateBoardFromGraph(graph: GraphDescriptor) {
-    const boardServerName = this.uiState.boardServer;
-    const location = this.uiState.boardLocation;
+    const boardServerName = this.sca.controller.global.main.boardServer;
+    const location = this.sca.controller.global.main.boardLocation;
     const fileName = `${globalThis.crypto.randomUUID()}.bgl.json`;
 
     const saveResult = await this.runtime.board.saveAs(
@@ -820,10 +882,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   #maybeShowWelcomePanel() {
     if (this.tab === null) {
-      this.uiState.loadState = "Home";
+      this.sca.controller.global.main.loadState = "Home";
     }
 
-    if (this.uiState.loadState !== "Home") {
+    if (this.sca.controller.global.main.loadState !== "Home") {
       return;
     }
     this.#hideAllOverlays();
@@ -831,11 +893,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   #hideAllOverlays() {
-    this.uiState.show.delete("BoardEditModal");
-    this.uiState.show.delete("BetterOnDesktopModal");
-    this.uiState.show.delete("MissingShare");
-    this.uiState.show.delete("StatusUpdateModal");
-    this.uiState.show.delete("VideoModal");
+    this.sca.controller.global.main.show.delete("BoardEditModal");
+    this.sca.controller.global.main.show.delete("BetterOnDesktopModal");
+    this.sca.controller.global.main.show.delete("MissingShare");
+    this.sca.controller.global.main.show.delete("StatusUpdateModal");
+    this.sca.controller.global.main.show.delete("VideoModal");
   }
 
   #onShowTooltip(evt: Event) {
@@ -910,12 +972,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     const deps: KeyboardCommandDeps = {
       runtime: this.runtime,
+      sca: this.sca,
       selectionState: this.selectionState,
       tab: this.tab,
       originalEvent: evt,
       pointerLocation: this.lastPointerPosition,
       settings: this.settings,
-      graphStore: this.graphStore,
       strings: Strings,
     } as const;
 
@@ -929,7 +991,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         // Toast.
         let toastId;
         const notifyUser = () => {
-          toastId = this.toast(
+          toastId = this.sca.controller.global.toasts.toast(
             command.messagePending ?? Strings.from("STATUS_GENERIC_WORKING"),
             BreadboardUI.Events.ToastType.PENDING,
             true
@@ -949,13 +1011,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
         // Perform the command.
         try {
-          this.uiState.blockingAction = true;
+          this.sca.controller.global.main.blockingAction = true;
           await command.do(deps);
-          this.uiState.blockingAction = false;
+          this.sca.controller.global.main.blockingAction = false;
 
           // Replace the toast.
           if (toastId) {
-            this.toast(
+            this.sca.controller.global.toasts.toast(
               command.messageComplete ?? Strings.from("STATUS_GENERIC_WORKING"),
               command.messageType ?? BreadboardUI.Events.ToastType.INFORMATION,
               false,
@@ -964,7 +1026,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
         } catch (err) {
           const commandErr = err as { message: string };
-          this.toast(
+          this.sca.controller.global.toasts.toast(
             commandErr.message ?? Strings.from("ERROR_GENERIC"),
             BreadboardUI.Events.ToastType.ERROR,
             false,
@@ -975,7 +1037,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           if (notifyUserOnTimeout) {
             clearTimeout(notifyUserOnTimeout);
           }
-          this.uiState.blockingAction = false;
+          this.sca.controller.global.main.blockingAction = false;
         }
 
         this.#handlingShortcut = false;
@@ -984,31 +1046,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }
   }
 
-  untoast(id?: string) {
-    if (!id) {
-      return;
-    }
-
-    this.uiState.toasts.delete(id);
-    this.requestUpdate();
-  }
-
-  toast(
-    message: string,
-    type: BreadboardUI.Events.ToastType,
-    persistent = false,
-    id = globalThis.crypto.randomUUID()
-  ) {
-    if (message.length > 77) {
-      message = message.slice(0, 74) + "...";
-    }
-
-    console.warn(message);
-    this.uiState.toasts.set(id, { message, type, persistent });
-    return id;
-  }
-
-  snackbar(
+  async snackbar(
     message: string | HTMLTemplateResult,
     type: BreadboardUI.Types.SnackType,
     actions: BreadboardUI.Types.SnackbarAction[] = [],
@@ -1016,45 +1054,26 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     id = globalThis.crypto.randomUUID(),
     replaceAll = false
   ) {
-    if (!this.snackbarElement) {
-      this.pendingSnackbarMessages.push({
-        message: {
-          id,
-          message,
-          type,
-          persistent,
-          actions,
-        },
-        replaceAll,
-      });
-      return;
+    if (!this.snackbarRef.value) {
+      await this.updateComplete;
+      if (!this.snackbarRef.value) {
+        console.warn(
+          `[main-base] Could not render snackbar message ` +
+            `because snackbar element was not rendered`,
+          { id, message }
+        );
+        return;
+      }
     }
 
-    return this.snackbarElement.show(
-      {
-        id,
-        message,
-        type,
-        persistent,
-        actions,
-      },
+    return this.snackbarRef.value.show(
+      { id, message, type, persistent, actions },
       replaceAll
     );
   }
 
   unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
-    if (!this.snackbarElement) {
-      if (!id) {
-        this.pendingSnackbarMessages.length = 0;
-      } else {
-        this.pendingSnackbarMessages = this.pendingSnackbarMessages.filter(
-          (message) => message.message.id !== id
-        );
-      }
-      return;
-    }
-
-    this.snackbarElement.hide(id);
+    this.snackbarRef.value?.hide(id);
   }
 
   protected attemptImportFromDrop(evt: DragEvent) {
@@ -1073,7 +1092,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.runtime.board.createTabFromDescriptor(runData);
       } catch (err) {
         console.warn(err);
-        this.toast(
+        this.sca.controller.global.toasts.toast(
           Strings.from("ERROR_LOAD_FAILED"),
           BreadboardUI.Events.ToastType.ERROR
         );
@@ -1115,10 +1134,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       projectState.run.app.screens.set("final", current);
     }
 
-    const showExperimentalComponents: boolean = this.settings
-      .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-      .items.get("Show Experimental Components")?.value as boolean;
-
     const canSave = this.tab
       ? this.runtime.board.canSave(this.tab.id) && !this.tab.readOnly
       : false;
@@ -1132,8 +1147,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       canSave,
       projectState,
       saveStatus,
-      showingOverlay: this.uiState.show.size > 0,
-      showExperimentalComponents,
+      showingOverlay: this.sca.controller.global.main.show.size > 0,
       themeHash,
       tabStatus,
     } satisfies RenderValues;
@@ -1149,24 +1163,25 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       runtime: this.runtime,
       settings: this.settings,
       tab: this.tab,
-      uiState: this.uiState,
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.askUserToSignInIfNeeded(scopes),
       boardServer: this.boardServer,
+      actionTracker: this.actionTracker,
       embedHandler: this.embedHandler,
+      sca: this.sca,
     };
   }
 
   protected willUpdate(): void {
-    if (!this.uiState) {
+    if (!this.sca.controller.global.main) {
       return;
     }
 
     if (this.tosStatus && !this.tosStatus.canAccess) {
-      this.uiState.show.add("TOS");
+      this.sca.controller.global.main.show.add("TOS");
     } else {
-      this.uiState.show.delete("TOS");
+      this.sca.controller.global.main.show.delete("TOS");
     }
   }
 
@@ -1182,7 +1197,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
     }
   ) {
-    this.uiState.blockingAction = true;
+    this.sca.controller.global.main.blockingAction = true;
+    this.runtime.actionTracker.remixApp(url, "editor");
     const remixRoute = eventRoutes.get("board.remix");
     const refresh = await remixRoute?.do(
       this.collectEventRouteDeps(
@@ -1193,7 +1209,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         })
       )
     );
-    this.uiState.blockingAction = false;
+    this.sca.controller.global.main.blockingAction = false;
     if (refresh) {
       requestAnimationFrame(() => {
         this.requestUpdate();
@@ -1202,7 +1218,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   protected async invokeDeleteEventRouteWith(url: string) {
-    this.uiState.blockingAction = true;
+    this.sca.controller.global.main.blockingAction = true;
     const deleteRoute = eventRoutes.get("board.delete");
     const refresh = await deleteRoute?.do(
       this.collectEventRouteDeps(
@@ -1218,7 +1234,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         })
       )
     );
-    this.uiState.blockingAction = false;
+    this.sca.controller.global.main.blockingAction = false;
 
     if (refresh) {
       requestAnimationFrame(() => {
@@ -1229,21 +1245,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected renderSnackbar() {
     return html`<bb-snackbar
-      ${ref((el: Element | undefined) => {
-        if (!el) {
-          this.snackbarElement = undefined;
-          return;
-        }
-
-        this.snackbarElement = el as BreadboardUI.Elements.Snackbar;
-        for (const pendingMessage of this.pendingSnackbarMessages) {
-          const { message, id, persistent, type, actions } =
-            pendingMessage.message;
-          this.snackbar(message, type, actions, persistent, id);
-        }
-
-        this.pendingSnackbarMessages.length = 0;
-      })}
+      ${ref(this.snackbarRef)}
       @bbsnackbaraction=${async (
         evt: BreadboardUI.Events.SnackbarActionEvent
       ) => {
@@ -1262,8 +1264,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "details": {
-            this.uiState.lastSnackbarDetailsInfo = evt.value ?? null;
-            this.uiState.show.add("SnackbarDetailsModal");
+            this.sca.controller.global.main.lastSnackbarDetailsInfo =
+              evt.value ?? null;
+            this.sca.controller.global.main.show.add("SnackbarDetailsModal");
             break;
           }
 
@@ -1279,55 +1282,94 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected async askUserToSignInIfNeeded(
     scopes?: OAuthScope[]
   ): Promise<UserSignInResponse> {
-    if (this.signinAdapter.state === "signedin") {
+    const verifyScopes = async (): Promise<boolean> => {
       if (!scopes?.length) {
-        return "success";
+        return true;
       }
-      const currentScopes = this.signinAdapter.scopes;
+      const currentScopes = await this.sca.services.signinAdapter.scopes;
       if (
         currentScopes &&
         scopes.every((scope) =>
           currentScopes.has(canonicalizeOAuthScope(scope))
         )
       ) {
-        return "success";
+        return true;
+      }
+      return false;
+    };
+
+    if ((await this.sca.services.signinAdapter.state) === "signedin") {
+      if (await verifyScopes()) {
+        if (!this.guestConfiguration.consentMessage) {
+          return "success";
+        }
+        if (checkSignInConsent()) {
+          return "success";
+        } else {
+          this.sca.controller.global.main.show.add("SignInModal");
+          await this.updateComplete;
+          const signInModal = this.signInModalRef.value;
+          if (!signInModal) {
+            console.warn(`Could not find sign-in modal.`);
+            return "failure";
+          }
+          const result = await signInModal.openAndWaitForConsent();
+          if (result === "success") {
+            storeSignInConsent();
+            return "success";
+          } else {
+            return "failure";
+          }
+        }
       }
     }
-    this.uiState.show.add("SignInModal");
+    this.sca.controller.global.main.show.add("SignInModal");
     await this.updateComplete;
     const signInModal = this.signInModalRef.value;
     if (!signInModal) {
       console.warn(`Could not find sign-in modal.`);
       return "failure";
     }
-    return signInModal.openAndWaitForSignIn(scopes);
+    const result = await signInModal.openAndWaitForSignIn(scopes);
+    if (result === "success") {
+      storeSignInConsent();
+    }
+    return result;
   }
 
   protected readonly signInModalRef = createRef<VESignInModal>();
-  protected renderSignInModal() {
+  protected renderSignInModal(blurBackground = true) {
     return html`
       <bb-sign-in-modal
         ${ref(this.signInModalRef)}
         .consentMessage=${this.guestConfiguration.consentMessage}
+        .blurBackground=${blurBackground}
         @bbmodaldismissed=${() => {
-          this.uiState.show.delete("SignInModal");
+          this.sca.controller.global.main.show.delete("SignInModal");
         }}
       ></bb-sign-in-modal>
     `;
   }
 
+  protected renderSnackbarDetailsModal() {
+    return html`<bb-snackbar-details-modal
+      .details=${this.sca.controller.global.main.lastSnackbarDetailsInfo}
+      @bbmodaldismissed=${() => {
+        this.sca.controller.global.main.lastSnackbarDetailsInfo = null;
+        this.sca.controller.global.main.show.delete("SnackbarDetailsModal");
+      }}
+    ></bb-snackbar-details-modal>`;
+  }
+
   protected renderConsentRequests() {
-    if (this.uiState.consentRequests[0]) {
-      return html`
-        <bb-consent-request-modal
-          .consentRequest=${this.uiState.consentRequests[0]}
-          @bbmodaldismissed=${() => {
-            this.uiState.consentRequests.shift();
-          }}
-        ></bb-consent-request-modal>
-      `;
-    }
-    return nothing;
+    if (this.sca.controller.global.consent.pendingModal.length === 0)
+      return nothing;
+
+    return html`
+      <bb-consent-request-modal
+        .consentRequest=${this.sca.controller.global.consent.pendingModal[0]}
+      ></bb-consent-request-modal>
+    `;
   }
 
   protected async handleRoutedEvent(
@@ -1356,4 +1398,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
   }
+}
+
+function checkSignInConsent(): boolean {
+  const consent = localStorage.getItem(SIGN_IN_CONSENT_KEY);
+  if (consent === "true") {
+    return true;
+  }
+  return false;
+}
+
+function storeSignInConsent() {
+  localStorage.setItem(SIGN_IN_CONSENT_KEY, "true");
 }

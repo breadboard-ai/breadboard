@@ -4,11 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { type BoardServer, type GraphDescriptor } from "@breadboard-ai/types";
+import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type {
+  DriveFileId,
+  GoogleDriveClient,
+  NarrowedDriveFile,
+} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
-  IS_SHAREABLE_COPY_PROPERTY,
-  LATEST_SHARED_VERSION_PROPERTY,
-  MAIN_TO_SHAREABLE_COPY_PROPERTY,
-  SHAREABLE_COPY_TO_MAIN_PROPERTY,
+  DRIVE_PROPERTY_IS_SHAREABLE_COPY,
+  DRIVE_PROPERTY_LATEST_SHARED_VERSION,
+  DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
+  DRIVE_PROPERTY_OPAL_SHARE_SURFACE,
+  DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import {
   diffAssetReadPermissions,
@@ -17,39 +25,32 @@ import {
   permissionMatchesAnyOf,
   type GoogleDriveAsset,
 } from "@breadboard-ai/utils/google-drive/utils.js";
-import type {
-  DriveFileId,
-  GoogleDriveClient,
-  NarrowedDriveFile,
-} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { type GraphDescriptor } from "@breadboard-ai/types";
-import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
-import { type BoardServer } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
+import { GoogleDriveBoardServer } from "../../../board-server/server.js";
+import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
-import {
-  signinAdapterContext,
-  type SigninAdapter,
-} from "../../utils/signin-adapter.js";
-import { type GoogleDriveSharePanel } from "../elements.js";
+import { ActionTracker } from "../../types/types.js";
 import { makeUrl } from "../../utils/urls.js";
-import { GoogleDriveBoardServer } from "../../../board-server/server.js";
+import { type GoogleDriveSharePanel } from "../elements.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { SCA } from "../../../sca/sca.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -72,8 +73,10 @@ type State =
         resourceKey: string | undefined;
         stale: boolean;
         permissions: gapi.client.drive.Permission[];
+        shareSurface: string | undefined;
       };
       latestVersion: string;
+      userDomain: string;
     }
   | {
       status: "writable";
@@ -85,9 +88,11 @@ type State =
             resourceKey: string | undefined;
             stale: boolean;
             permissions: gapi.client.drive.Permission[];
+            shareSurface: string | undefined;
           }
         | undefined;
       latestVersion: string;
+      userDomain: string;
     }
   | {
       status: "updating";
@@ -96,6 +101,7 @@ type State =
       shareableFile:
         | { id: string; resourceKey: string | undefined; stale: boolean }
         | undefined;
+      userDomain: string;
     }
   | {
       status: "granular";
@@ -205,6 +211,7 @@ export class SharePanel extends LitElement {
         padding: 0 var(--bb-grid-size-6);
         font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
           var(--bb-font-family);
+        color: var(--sys-color--inverse-on-surface);
 
         .g-icon {
           vertical-align: middle;
@@ -290,7 +297,7 @@ export class SharePanel extends LitElement {
           font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           text-align: center;
-          color: var(--light-dark-n-98);
+          color: var(--sys-color--on-surface);
         }
       }
 
@@ -314,6 +321,10 @@ export class SharePanel extends LitElement {
           margin-left: var(--bb-grid-size-8);
           border-color: var(--light-dark-n-98);
           font-weight: 500;
+
+          &.bb-button-outlined {
+            color: var(--sys-color--on-surface-low);
+          }
         }
       }
 
@@ -389,15 +400,21 @@ export class SharePanel extends LitElement {
   @property({ attribute: false })
   accessor globalConfig: GlobalConfig | undefined;
 
-  @consume({ context: signinAdapterContext })
+  @consume({ context: scaContext })
   @property({ attribute: false })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
+  accessor sca!: SCA;
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient | undefined;
 
   @consume({ context: boardServerContext, subscribe: true })
   accessor boardServer: BoardServer | undefined;
+
+  @consume({ context: guestConfigurationContext })
+  accessor guestConfiguration: GuestConfiguration | undefined;
+
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined;
 
   @property({ attribute: false })
   accessor graph: GraphDescriptor | undefined;
@@ -574,6 +591,7 @@ export class SharePanel extends LitElement {
       published: oldState.published,
       granularlyShared: oldState.granularlyShared,
       shareableFile: oldState.shareableFile,
+      userDomain: oldState.userDomain,
     };
 
     const shareableFileUrl = new URL(`drive:/${oldState.shareableFile.id}`);
@@ -589,7 +607,7 @@ export class SharePanel extends LitElement {
       // Update the latest version property on the main file.
       this.googleDriveClient.updateFileMetadata(oldState.shareableFile.id, {
         properties: {
-          [LATEST_SHARED_VERSION_PROPERTY]: oldState.latestVersion,
+          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: oldState.latestVersion,
         },
       }),
       // Ensure all assets have the same permissions as the shareable file,
@@ -617,10 +635,18 @@ export class SharePanel extends LitElement {
   }
 
   #renderDisallowedPublishingNotice() {
-    const {
-      domain,
-      config: { disallowPublicPublishing, preferredUrl },
-    } = this.#userDomain;
+    if (
+      this.#state.status !== "writable" &&
+      this.#state.status !== "updating"
+    ) {
+      return nothing;
+    }
+    const domain = this.#state.userDomain;
+    if (!domain) {
+      return nothing;
+    }
+    const { disallowPublicPublishing, preferredUrl } =
+      this.globalConfig?.domains?.[domain] ?? {};
     if (!disallowPublicPublishing) {
       return nothing;
     }
@@ -700,10 +726,17 @@ export class SharePanel extends LitElement {
 
   #renderPublishedSwitch() {
     const { status } = this.#state;
+    if (status !== "writable" && status !== "updating") {
+      return nothing;
+    }
     const published =
       (status === "writable" || status === "updating") && this.#state.published;
-    const disabled =
-      this.#userDomain.config.disallowPublicPublishing || status === "updating";
+
+    const domain = this.#state.userDomain;
+    const { disallowPublicPublishing } =
+      this.globalConfig?.domains?.[domain] ?? {};
+
+    const disabled = disallowPublicPublishing || status === "updating";
     return html`
       <div id="published-switch-container">
         ${status === "updating"
@@ -893,7 +926,7 @@ export class SharePanel extends LitElement {
     }
     const selected = input.selected;
     if (selected) {
-      ActionTracker.publishApp(this.graph.url);
+      this.actionTracker?.publishApp(this.graph.url);
       this.#publish();
     } else {
       this.#unpublish();
@@ -927,6 +960,17 @@ export class SharePanel extends LitElement {
         state.status === "readonly") &&
       state.shareableFile
     ) {
+      const shareSurface = this.guestConfiguration?.shareSurface;
+      const shareSurfaceUrlTemplate =
+        shareSurface &&
+        this.guestConfiguration?.shareSurfaceUrlTemplates?.[shareSurface];
+      if (shareSurfaceUrlTemplate) {
+        return makeShareLinkFromTemplate({
+          urlTemplate: shareSurfaceUrlTemplate,
+          fileId: state.shareableFile.id,
+          resourceKey: state.shareableFile.resourceKey,
+        });
+      }
       return makeUrl(
         {
           page: "graph",
@@ -934,6 +978,7 @@ export class SharePanel extends LitElement {
           flow: `drive:/${state.shareableFile.id}`,
           resourceKey: state.shareableFile.resourceKey,
           shared: true,
+          guestPrefixed: false,
         },
         this.globalConfig?.hostOrigin
       );
@@ -997,7 +1042,7 @@ export class SharePanel extends LitElement {
     );
 
     const thisFileIsAShareableCopy =
-      thisFileMetadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY] !==
+      thisFileMetadata.properties?.[DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN] !==
       undefined;
     if (thisFileIsAShareableCopy) {
       this.#state = {
@@ -1011,7 +1056,7 @@ export class SharePanel extends LitElement {
     }
 
     const shareableCopyFileId =
-      thisFileMetadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
+      thisFileMetadata.properties?.[DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY];
 
     if (!thisFileMetadata.ownedByMe) {
       this.#state = {
@@ -1044,6 +1089,7 @@ export class SharePanel extends LitElement {
         granularlyShared: false,
         shareableFile: undefined,
         latestVersion: thisFileMetadata.version,
+        userDomain: (await this.sca.services.signinAdapter.domain) ?? "",
       };
       return;
     }
@@ -1080,11 +1126,16 @@ export class SharePanel extends LitElement {
         stale:
           thisFileMetadata.version !==
           shareableCopyFileMetadata.properties?.[
-            LATEST_SHARED_VERSION_PROPERTY
+            DRIVE_PROPERTY_LATEST_SHARED_VERSION
           ],
         permissions: shareableCopyFileMetadata.permissions ?? [],
+        shareSurface:
+          shareableCopyFileMetadata.properties?.[
+            DRIVE_PROPERTY_OPAL_SHARE_SURFACE
+          ],
       },
       latestVersion: thisFileMetadata.version,
+      userDomain: (await this.sca.services.signinAdapter.domain) ?? "",
     };
 
     console.debug(
@@ -1122,6 +1173,7 @@ export class SharePanel extends LitElement {
       published: true,
       granularlyShared: oldState.granularlyShared,
       shareableFile,
+      userDomain: oldState.userDomain,
     };
 
     let newLatestVersion: string | undefined;
@@ -1132,6 +1184,7 @@ export class SharePanel extends LitElement {
         resourceKey: copyResult.shareableCopyResourceKey,
         stale: false,
         permissions: publishPermissions,
+        shareSurface: this.guestConfiguration?.shareSurface,
       };
       newLatestVersion = copyResult.newMainVersion;
     }
@@ -1160,6 +1213,7 @@ export class SharePanel extends LitElement {
       granularlyShared: oldState.granularlyShared,
       shareableFile,
       latestVersion: newLatestVersion ?? oldState.latestVersion,
+      userDomain: oldState.userDomain,
     };
   }
 
@@ -1348,6 +1402,7 @@ export class SharePanel extends LitElement {
       published: false,
       granularlyShared: oldState.granularlyShared,
       shareableFile,
+      userDomain: this.#state.userDomain,
     };
 
     console.debug(
@@ -1373,17 +1428,7 @@ export class SharePanel extends LitElement {
       granularlyShared: oldState.granularlyShared,
       shareableFile,
       latestVersion: oldState.latestVersion,
-    };
-  }
-
-  get #userDomain(): { domain: string; config: DomainConfiguration } {
-    const domain = this.signinAdapter?.domain;
-    if (!domain) {
-      return { domain: "unknown", config: {} };
-    }
-    return {
-      domain,
-      config: this.globalConfig?.domains?.[domain] ?? {},
+      userDomain: oldState.userDomain,
     };
   }
 
@@ -1441,7 +1486,7 @@ export class SharePanel extends LitElement {
       mainFileId,
       {
         properties: {
-          [MAIN_TO_SHAREABLE_COPY_PROPERTY]: shareableCopyFileId,
+          [DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY]: shareableCopyFileId,
         },
       },
       { fields: ["version"] }
@@ -1454,14 +1499,18 @@ export class SharePanel extends LitElement {
     // component.
     await this.boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
 
+    const shareSurface = this.guestConfiguration?.shareSurface;
     const shareableCopyMetadata =
       await this.googleDriveClient.updateFileMetadata(
         shareableCopyFileId,
         {
           properties: {
-            [SHAREABLE_COPY_TO_MAIN_PROPERTY]: mainFileId,
-            [LATEST_SHARED_VERSION_PROPERTY]: updateMainResult.version,
-            [IS_SHAREABLE_COPY_PROPERTY]: "true",
+            [DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN]: mainFileId,
+            [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: updateMainResult.version,
+            [DRIVE_PROPERTY_IS_SHAREABLE_COPY]: "true",
+            ...(shareSurface
+              ? { [DRIVE_PROPERTY_OPAL_SHARE_SURFACE]: shareSurface }
+              : {}),
           },
         },
         { fields: ["resourceKey"] }

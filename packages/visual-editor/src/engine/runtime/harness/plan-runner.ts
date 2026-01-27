@@ -13,6 +13,7 @@ import {
   HarnessRunResult,
   InputValues,
   NodeConfiguration,
+  NodeDescriptor,
   NodeHandlerContext,
   NodeIdentifier,
   NodeLifecycleState,
@@ -54,6 +55,11 @@ import {
 
 import { fromProbe, fromRunnerResult } from "./local.js";
 import { isLLMContentArray } from "../../../data/common.js";
+import {
+  augmentWithSkipOutputs,
+  computeControlState,
+  computeSkipOutputs,
+} from "../../../runtime/control.js";
 
 export { PlanRunner };
 
@@ -81,18 +87,28 @@ class PlanRunner
     return !!this.#run && !this.#pendingResult;
   }
 
-  async run(inputs?: InputValues, interactiveMode = false): Promise<boolean> {
+  start(): Promise<void> {
+    return this.run();
+  }
+
+  resumeWithInputs(inputs: InputValues): Promise<void> {
+    return this.run(inputs);
+  }
+
+  private async run(
+    inputs?: InputValues,
+    interactiveMode = false
+  ): Promise<void> {
     if (this.#inRun) {
       if (!inputs) {
         // This is a situation when the "Start" button is clicked on a run
         // while we're paused. This may happen when the first step is
         // interrupted.
         await this.#controller?.restart();
-
-        return true;
+        return;
       }
       this.#resumeWith = inputs;
-      return false;
+      return;
     }
     this.#inRun = true;
     try {
@@ -124,7 +140,7 @@ class PlanRunner
         if (result.done) {
           this.#run = null;
           this.#pendingResult = null;
-          return true;
+          return;
         }
         const { type, data, reply } = result.value;
         switch (type) {
@@ -150,7 +166,7 @@ class PlanRunner
                     timestamp: timestamp(),
                   })
                 );
-                return false;
+                return;
               }
             }
             break;
@@ -250,9 +266,16 @@ class PlanRunner
   #updateEdgeState(state: NodeLifecycleState, info: PlanNodeInfo) {
     switch (state) {
       case "inactive":
-      case "skipped":
         this.dispatchEvent(
           new EdgeStateChangeEvent({ edges: info.downstream, state: "initial" })
+        );
+        break;
+      case "skipped":
+        this.dispatchEvent(
+          new EdgeStateChangeEvent({
+            edges: [...info.upstream, ...info.downstream],
+            state: "initial",
+          })
         );
         break;
       case "working":
@@ -423,11 +446,15 @@ class InternalRunStateController {
     return error;
   }
 
-  fromTask(task: Task, config: NodeConfiguration): TraversalResult {
+  fromTask(
+    descriptor: NodeDescriptor,
+    inputs: InputValues,
+    config: NodeConfiguration
+  ): TraversalResult {
     // This is probably wrong, dig in later.
     return {
-      descriptor: task.node,
-      inputs: { ...config, ...task.inputs },
+      descriptor,
+      inputs: { ...config, ...inputs },
       missingInputs: [],
       current: { from: "", to: "" },
       opportunities: [],
@@ -458,7 +485,7 @@ class InternalRunStateController {
     }
 
     const path = this.path();
-    this.callback({
+    await this.callback({
       type: "nodestart",
       data: {
         node: task.node,
@@ -479,7 +506,13 @@ class InternalRunStateController {
       env: context.fileSystem.env(),
     });
     const invoker = new NodeInvoker(
-      { ...context, fileSystem, signal, currentStep: task.node },
+      {
+        ...context,
+        fileSystem,
+        signal,
+        currentStep: task.node,
+        currentGraph: this.graph,
+      },
       { graph: this.graph },
       async (result) => {
         const harnessResult = fromRunnerResult(result);
@@ -508,10 +541,22 @@ class InternalRunStateController {
       outputs = nodeConfiguration as { $error: string };
       console.warn(`Can't get latest config`, outputs.$error);
     } else {
-      outputs = await invoker.invokeNode(
-        this.fromTask(task, nodeConfiguration),
-        path
-      );
+      const controlState = computeControlState(task.inputs);
+      if (controlState.skip) {
+        outputs = computeSkipOutputs(nodeConfiguration);
+      } else {
+        outputs = augmentWithSkipOutputs(
+          nodeConfiguration,
+          await invoker.invokeNode(
+            this.fromTask(
+              task.node,
+              controlState.adjustedInputs,
+              nodeConfiguration
+            ),
+            path
+          )
+        );
+      }
       if (signal.aborted) {
         const interrupting = this.orchestrator.setInterrupted(task.node.id);
         if (!ok(interrupting)) {
@@ -531,7 +576,7 @@ class InternalRunStateController {
         }
       }
     }
-    this.callback({
+    await this.callback({
       type: "nodeend",
       data: {
         node: task.node,

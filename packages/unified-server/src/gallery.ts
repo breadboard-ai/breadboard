@@ -57,7 +57,13 @@ export interface CachingFeaturedGalleryInit {
   cacheRefreshSeconds: number;
 }
 
-type FeaturedGalleryFile = NarrowedDriveFile<"id" | "name" | "properties">;
+// Add files to this sheet to order the lite mode featured gallery
+const LITE_MODE_FEATURED_INDEX_SHEET_ID =
+  "1GgTEwc9oZGH1jiriAL97eU8pH_xFN9F06ENHfEADYnc";
+
+type FeaturedGalleryFile = NarrowedDriveFile<"id" | "name" | "properties"> & {
+  liteModeFeaturedIndex?: number;
+};
 
 export class CachingFeaturedGallery {
   static async makeReady(
@@ -155,18 +161,57 @@ export class CachingFeaturedGallery {
     return new Map(entries);
   }
 
+  async #fetchLiteModeFeaturedIndices(): Promise<Map<string, number>> {
+    try {
+      const response = await this.#driveClient.exportFile(
+        LITE_MODE_FEATURED_INDEX_SHEET_ID,
+        {
+          mimeType: "text/csv",
+        }
+      );
+      const text = await response.text();
+      const map = new Map<string, number>();
+      const lines = text.split(/\r?\n/);
+      // We assume there is a header row
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const id = line.split(",")[0]?.trim();
+        if (id) {
+          map.set(id, i-1);
+        }
+      }
+      console.log(`[gallery middleware] Fetched lite mode featured indices:`, [...map.keys()]);
+      return map;
+    } catch (e) {
+      console.warn(
+        `[gallery middleware] Failed to fetch lite mode featured indices:`,
+        e
+      );
+      return new Map();
+    }
+  }
+
   async #refresh() {
-    const [globalMetadataAndGraphs, locationSpecificMetadataAndGraphs] =
-      await Promise.all([
-        this.#listGlobalMetadataAndGraphs(),
-        this.#listLocationSpecificMetadataAndGraphs(),
-      ]);
+    const [
+      globalMetadataAndGraphs,
+      locationSpecificMetadataAndGraphs,
+      liteModeFeaturedIndices,
+    ] = await Promise.all([
+      this.#listGlobalMetadataAndGraphs(),
+      this.#listLocationSpecificMetadataAndGraphs(),
+      this.#fetchLiteModeFeaturedIndices(),
+    ]);
 
     const globalMetadata: FeaturedGalleryFile[] = [];
     const allGraphIds = new Set<string>();
     const allAssetIds = new Set<string>();
 
     for (const { metadata, graph } of globalMetadataAndGraphs) {
+      if (liteModeFeaturedIndices.has(metadata.id)) {
+        metadata.liteModeFeaturedIndex = liteModeFeaturedIndices.get(
+          metadata.id
+        );
+      }
       globalMetadata.push(metadata);
       allGraphIds.add(metadata.id);
       for (const asset of findGoogleDriveAssetsInGraph(graph)) {
@@ -182,6 +227,11 @@ export class CachingFeaturedGallery {
     ] of locationSpecificMetadataAndGraphs.entries()) {
       const locationMetadata: FeaturedGalleryFile[] = [];
       for (const { metadata, graph } of graphs) {
+        if (liteModeFeaturedIndices.has(metadata.id)) {
+          metadata.liteModeFeaturedIndex = liteModeFeaturedIndices.get(
+            metadata.id
+          );
+        }
         locationMetadata.push(metadata);
         allGraphIds.add(metadata.id);
         for (const asset of findGoogleDriveAssetsInGraph(graph)) {

@@ -19,6 +19,9 @@ interface FlagOverrides extends DBSchema {
   };
 }
 
+/**
+ * @deprecated
+ */
 class IdbFlagManager implements RuntimeFlagManager {
   #db: Promise<IDBPDatabase<FlagOverrides>>;
   #env: RuntimeFlags;

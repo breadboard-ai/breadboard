@@ -80,6 +80,14 @@ export const styles: CSSResultGroup = [
       }
     }
 
+    :host([isrefreshingapptheme]) {
+      .app-template #content #input #run .g-icon::before {
+        content: "progress_activity";
+        display: inline-block;
+        animation: rotate 1s linear infinite;
+      }
+    }
+
     .app-template {
       --custom-color-text: light-dark(var(--p-25), var(--p-80));
       --custom-color-header: light-dark(var(--n-5), var(--n-95));
@@ -253,7 +261,7 @@ export const styles: CSSResultGroup = [
             box-sizing: border-box;
             background-clip: content-box;
             flex: 1;
-            max-width: 800px;
+            max-width: 600px;
             max-height: calc(55cqh - 54px);
             animation: glide 2150ms linear infinite;
           }
@@ -305,6 +313,15 @@ export const styles: CSSResultGroup = [
             max-height: 5lh;
             overflow: hidden;
             text-overflow: ellipsis;
+          }
+
+          & h1,
+          & p {
+            transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+            &.invisible {
+              opacity: 0;
+            }
           }
         }
 
@@ -514,11 +531,6 @@ export const styles: CSSResultGroup = [
             }
           }
 
-          & .html-view {
-            width: 100%;
-            height: 100cqh;
-          }
-
           & .empty-state {
             flex: 1;
             color: var(--light-dark-n-50);
@@ -651,6 +663,10 @@ export const styles: CSSResultGroup = [
           position: relative;
           background: transparent;
 
+          & #run-container {
+            position: relative;
+          }
+
           & #sign-in,
           & #run {
             display: flex;
@@ -669,6 +685,11 @@ export const styles: CSSResultGroup = [
 
             --transition-properties: opacity;
             transition: var(--transition);
+
+            &.invisible {
+              opacity: 0;
+              pointer-events: none;
+            }
 
             &.running {
               background: var(--light-dark-p-50) url(/images/progress-ui.svg)
@@ -898,8 +919,8 @@ export const styles: CSSResultGroup = [
           justify-content: center;
           width: 200px;
           height: var(--bb-grid-size-12);
-          background: var(--light-dark-p-15, var(--light-dark-p-98));
-          color: var(--light-dark-p-100, var(--light-dark-p-30));
+          background: light-dark(var(--p-15), var(--p-90));
+          color: light-dark(var(--p-100), var(--p-30));
           border-radius: var(--bb-grid-size-12);
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);

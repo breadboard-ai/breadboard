@@ -5,56 +5,18 @@
  */
 
 import { consume } from "@lit/context";
-import { css, html, LitElement, nothing } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { customElement } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
 import { spinAnimationStyles } from "../../styles/spin-animation.js";
-import {
-  type GlobalConfig,
-  globalConfigContext,
-} from "../../contexts/global-config.js";
-
-type UserFeedbackApi = {
-  startFeedback(
-    configuration: {
-      productId: string;
-      bucket?: string;
-      productVersion?: string;
-      callback?: () => void;
-      onLoadCallback?: () => void;
-    },
-    productData?: { [key: string]: string }
-  ): void;
-};
-
-type WindowWithUserFeedbackApi = Window &
-  typeof globalThis & {
-    userfeedback: { api: UserFeedbackApi };
-  };
-
-let googleFeedbackApiPromise;
-function loadGoogleFeedbackApi(): Promise<UserFeedbackApi> {
-  return (googleFeedbackApiPromise ??= new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://support.google.com/inapp/api.js";
-    script.async = true;
-    script.addEventListener(
-      "load",
-      () => resolve((window as WindowWithUserFeedbackApi).userfeedback.api),
-      { once: true }
-    );
-    script.addEventListener("error", (reason) => reject(reason), {
-      once: true,
-    });
-    document.body.appendChild(script);
-  }));
-}
-
-type State = { status: "closed" } | { status: "loading" } | { status: "open" };
+import { SignalWatcher } from "@lit-labs/signals";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
+import { Utils } from "../../../sca/utils.js";
 
 @customElement("bb-feedback-panel")
-export class FeedbackPanel extends LitElement {
+export class FeedbackPanel extends SignalWatcher(LitElement) {
   static readonly styles = [
     icons,
     spinAnimationStyles,
@@ -97,22 +59,21 @@ export class FeedbackPanel extends LitElement {
     `,
   ];
 
-  @consume({ context: globalConfigContext })
-  accessor globalConfig: GlobalConfig | undefined;
-
-  @state()
-  accessor #state: State = { status: "closed" };
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   readonly #loadingPanel: Ref<HTMLDialogElement> = createRef();
 
   override render() {
-    const { status } = this.#state;
+    if (!this.sca.controller) return nothing;
+    const status = this.sca.controller.global.feedback.status;
+    if (Utils.Helpers.isHydrating(() => status)) return nothing;
+
     if (status === "loading") {
       return this.#renderLoadingPanel();
     }
     // When open, we're not in control of rendering at all, it's not a component
     // we control.
-    status satisfies "open" | "closed";
     return nothing;
   }
 
@@ -130,11 +91,15 @@ export class FeedbackPanel extends LitElement {
   }
 
   #onLoadingPanelClose() {
-    this.#state = { status: "closed" };
+    this.sca.controller.global.feedback.close();
   }
 
-  override updated() {
-    if (this.#state.status === "loading") {
+  override updated(changedProperties: PropertyValues): void {
+    super.updated(changedProperties);
+    if (!this.sca.controller) return;
+    if (Utils.Helpers.isHydrating(() => status)) return;
+
+    if (this.sca.controller.global.feedback.status === "loading") {
       const panel = this.#loadingPanel.value;
       if (panel) {
         panel.showModal();
@@ -142,64 +107,6 @@ export class FeedbackPanel extends LitElement {
         console.error(`Loading panel was not rendered`);
       }
     }
-  }
-
-  async open() {
-    if (this.#state.status !== "closed") {
-      return;
-    }
-
-    if (!this.globalConfig) {
-      console.error(`No environment was provided.`);
-      return;
-    }
-    const productId = this.globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID;
-    if (!productId) {
-      console.error(
-        `No GOOGLE_FEEDBACK_PRODUCT_ID was set` +
-          ` in the client deployment configuration.`
-      );
-      return;
-    }
-    const bucket = this.globalConfig.GOOGLE_FEEDBACK_BUCKET;
-    if (!bucket) {
-      console.error(
-        `No GOOGLE_FEEDBACK_BUCKET was set` +
-          ` in the client deployment configuration.`
-      );
-      return;
-    }
-    const { packageJsonVersion: version, gitCommitHash } =
-      this.globalConfig.buildInfo;
-
-    this.#state = { status: "loading" };
-    let api;
-    try {
-      api = await loadGoogleFeedbackApi();
-    } catch (e) {
-      console.error(`Error loading Google Feedback script: ${e}`);
-      this.#state = { status: "closed" };
-      return;
-    }
-    if (this.#state.status !== "loading") {
-      // The user might have pressed Escape on the loading panel in the
-      // meantime.
-      return;
-    }
-    api.startFeedback({
-      productId,
-      bucket,
-      productVersion: `${version} (${gitCommitHash})`,
-      onLoadCallback: () => {
-        // Note that the API we loaded earlier is very tiny. This startFeedback
-        // call is what actually loads most of the JavaScript, so we want to
-        // keep the loading indicator visible until this callback fires.
-        this.#state = { status: "open" };
-      },
-      callback: () => {
-        this.#state = { status: "closed" };
-      },
-    });
   }
 }
 

@@ -30,14 +30,12 @@ class ReactiveOrganizer implements Organizer {
   #project: ProjectInternal;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
   readonly graphUrl: URL | null;
-  readonly parameters: Map<string, ParameterMetadata>;
   readonly connectors: ConnectorState;
 
   constructor(project: ProjectInternal) {
     this.#project = project;
     this.graphAssets = project.graphAssets;
     this.graphUrl = project.graphUrl;
-    this.parameters = project.parameters;
     this.connectors = project.connectors;
   }
 

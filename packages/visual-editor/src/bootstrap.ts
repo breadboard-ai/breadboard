@@ -13,11 +13,17 @@ import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
 import { connectToOpalShellHost } from "./ui/utils/opal-shell-guest.js";
+import { Utils } from "./sca/utils.js";
 
 export { bootstrap };
 
+const logger = Utils.Logging.getLogger();
+
 function setColorScheme(colorScheme?: "light" | "dark") {
-  const scheme = document.createElement("style");
+  const scheme =
+    document.head.querySelector("#scheme") ?? document.createElement("style");
+  scheme.id = "scheme";
+
   if (colorScheme) {
     scheme.textContent = `:root { --color-scheme: ${colorScheme}; }`;
   } else {
@@ -57,27 +63,24 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const { SettingsStore } = await import("./ui/data/settings-store.js");
   const settings = await SettingsStore.restoredInstance();
 
-  const signinAdapter = new SigninAdapter(
-    shellHost,
-    await shellHost.getSignInState()
-  );
+  const signinAdapter = new SigninAdapter(shellHost);
 
   const StringsHelper = await import("./ui/strings/helper.js");
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
-  const scopeValidation = await signinAdapter.validateScopes();
   const guestConfiguration = await shellHost.getConfiguration();
   const parsedUrl = parseUrl(window.location.href);
   const { lite, page, colorScheme } = parsedUrl;
   if (
-    (signinAdapter.state === "signedin" && scopeValidation.ok) ||
-    (signinAdapter.state === "signedout" &&
-      // Signed-out users can access public graphs
-      (page === "graph" ||
-        // The Lite gallery has a signed-out mode
-        (lite && page === "home") ||
-        // The open page prompts to sign-in and then redirects.
-        page === "open"))
+    // Signed-out users can access public graphs.
+    page === "graph" ||
+    // The open page prompts to sign-in and then redirects.
+    page === "open" ||
+    // The Lite gallery has a signed-out mode.
+    (page === "home" && lite) ||
+    // IMPORTANT: Keep this `await` as the last condition, so that we don't need
+    // to block on it in all of the above cases which don't care about signin.
+    (await signinAdapter.state) === "signedin"
   ) {
     const icon = document.createElement("link");
     icon.rel = "icon";
@@ -111,18 +114,29 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       globalConfig,
       guestConfiguration,
       shellHost,
-      initialSignInState: await shellHost.getSignInState(),
       parsedUrl,
       hostOrigin,
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
-      console.warn(
-        "No googleDrive.publishPermissions were configured." +
-          " Publishing with Google Drive will not be supported."
+      logger.log(
+        Utils.Logging.Formatter.warning(
+          "No googleDrive.publishPermissions were configured." +
+            " Publishing with Google Drive will not be supported."
+        ),
+        "Bootstrap",
+        false /* checkDebuggableAppControllerStatus */
       );
     }
 
     setColorScheme(colorScheme);
+    embedHandler.addEventListener("theme_change", (evt) => {
+      if (evt.type !== "theme_change") {
+        return;
+      }
+
+      setColorScheme(evt.message.theme);
+    });
+
     if (page === "open") {
       const { OpenMain } = await import("./index-open.js");
       const main = new OpenMain(mainArgs);
@@ -144,8 +158,12 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     }
 
     const Strings = StringsHelper.forSection("Global");
-    console.log(
-      `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.default.version}; Commit ${GIT_HASH}]`
+    logger.log(
+      Utils.Logging.Formatter.info(
+        `Visual Editor: Version ${pkg.default.version}; Commit ${GIT_HASH}]`
+      ),
+      Strings.from("APP_NAME"),
+      false
     );
   } else {
     // Prevent endless looping.
@@ -167,8 +185,10 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       oauthRedirect:
         new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
         undefined,
+      guestPrefixed: true,
     };
-    if (signinAdapter.state === "signedin" && !scopeValidation.ok) {
+    const scopeValidation = await signinAdapter.validateScopes();
+    if ((await signinAdapter.state) === "signedin" && !scopeValidation.ok) {
       console.log(
         "[signin] oauth scopes were missing or unavailable, forcing signin.",
         scopeValidation.error

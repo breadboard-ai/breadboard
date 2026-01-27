@@ -4,14 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Outcome } from "@breadboard-ai/types";
+import {
+  GOOGLE_DOCS_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
+  GOOGLE_DRIVE_UPLOAD_API_PREFIX,
+  GOOGLE_SHEETS_API_PREFIX,
+  GOOGLE_SLIDES_API_PREFIX,
+  Outcome,
+} from "@breadboard-ai/types";
 import { err } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export {
   appendSpreadsheetValues,
   create,
-  createMultipart,
   createPresentation,
   del,
   exp,
@@ -19,9 +25,12 @@ export {
   getDoc,
   getPresentation,
   getSpreadsheetMetadata,
-  query,
+  getSpreadsheetValues,
+  setSpreadsheetValues,
   updateDoc,
   updatePresentation,
+  updateSpreadsheet,
+  upload,
 };
 
 // These are various Google Drive-specific types.
@@ -36,6 +45,18 @@ export type FileQueryResponse = {
 
 export type FileInfo = {
   id: string;
+};
+
+export type DriveFileMetadata = {
+  name: string;
+  mimeType?: string;
+  parents?: string[];
+  description?: string;
+  id?: string; // Optional if you're specifying your own ID (rare)
+  /** Custom properties visible to any app */
+  properties?: Record<string, string>;
+  /** Custom properties visible ONLY to your specific Drive App ID */
+  appProperties?: Record<string, string>;
 };
 
 /**
@@ -622,6 +643,18 @@ export type SlidesRequest =
   | { createImage: SlidesCreateImageRequest }
   | { updateTextStyle: SlidesUpdateTextStyleRequest };
 
+export type SpreadsheetRequest =
+  | {
+      addSheet: { properties: { title: string; index?: number } };
+    }
+  | { deleteSheet: { sheetId: number } }
+  | {
+      updateSheetProperties: {
+        properties: { sheetId: number; title: string };
+        fields: string;
+      };
+    };
+
 export type SpreadsheetValueRange = {
   range?: string;
   majorDimension?: "ROWS" | "COLUMNS";
@@ -664,40 +697,20 @@ async function get(moduleArgs: A2ModuleArgs, id: string) {
   }
   return api(
     moduleArgs,
-    `https://www.googleapis.com/drive/v3/files/${id}`,
+    `${GOOGLE_DRIVE_FILES_API_PREFIX}/${encodeURIComponent(id)}`,
     "GET"
   );
 }
 
 async function create(
   moduleArgs: A2ModuleArgs,
-  body: unknown
+  body: DriveFileMetadata
 ): Promise<Outcome<CreateFileResponse>> {
   if (!body) {
     return err("Please supply the body of the file to create.");
   }
 
-  return api(
-    moduleArgs,
-    "https://www.googleapis.com/drive/v3/files",
-    "POST",
-    body
-  );
-}
-
-async function query(
-  moduleArgs: A2ModuleArgs,
-  query: string
-): Promise<Outcome<FileQueryResponse>> {
-  if (!query) {
-    return err("Please supply the query.");
-  }
-
-  return api(
-    moduleArgs,
-    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}`,
-    "GET"
-  );
+  return api(moduleArgs, GOOGLE_DRIVE_FILES_API_PREFIX, "POST", body);
 }
 
 async function del(moduleArgs: A2ModuleArgs, id: string) {
@@ -707,7 +720,7 @@ async function del(moduleArgs: A2ModuleArgs, id: string) {
 
   return api(
     moduleArgs,
-    `https://www.googleapis.com/drive/v3/files/${id}`,
+    `${GOOGLE_DRIVE_FILES_API_PREFIX}/${encodeURIComponent(id)}`,
     "DELETE"
   );
 }
@@ -718,7 +731,7 @@ async function exp(moduleArgs: A2ModuleArgs, fileId: string, mimeType: string) {
   }
   return api(
     moduleArgs,
-    `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${mimeType}`,
+    `${GOOGLE_DRIVE_FILES_API_PREFIX}/${encodeURIComponent(fileId)}/export?mimeType=${mimeType}`,
     "GET"
   );
 }
@@ -729,7 +742,7 @@ async function getDoc(moduleArgs: A2ModuleArgs, id: string) {
   }
   return api(
     moduleArgs,
-    `https://docs.googleapis.com/v1/documents/${id}`,
+    `${GOOGLE_DOCS_API_PREFIX}/${encodeURIComponent(id)}`,
     "GET"
   );
 }
@@ -743,7 +756,7 @@ async function updateDoc(moduleArgs: A2ModuleArgs, id: string, body: unknown) {
   }
   return api(
     moduleArgs,
-    `https://docs.googleapis.com/v1/documents/${id}:batchUpdate`,
+    `${GOOGLE_DOCS_API_PREFIX}/${encodeURIComponent(id)}:batchUpdate`,
     "POST",
     body
   );
@@ -755,7 +768,7 @@ async function getPresentation(
 ): Promise<Outcome<SlidesPresentation>> {
   return api(
     moduleArgs,
-    `https://slides.googleapis.com/v1/presentations/${id}`,
+    `${GOOGLE_SLIDES_API_PREFIX}/${encodeURIComponent(id)}`,
     "GET"
   );
 }
@@ -764,12 +777,7 @@ async function createPresentation(
   moduleArgs: A2ModuleArgs,
   title: string
 ): Promise<Outcome<SlidesPresentation>> {
-  return api(
-    moduleArgs,
-    "https://slides.googleapis.com/v1/presentations",
-    "POST",
-    { title }
-  );
+  return api(moduleArgs, GOOGLE_SLIDES_API_PREFIX, "POST", { title });
 }
 
 async function updatePresentation(
@@ -785,7 +793,7 @@ async function updatePresentation(
   }
   return api(
     moduleArgs,
-    `https://slides.googleapis.com/v1/presentations/${id}:batchUpdate`,
+    `${GOOGLE_SLIDES_API_PREFIX}/${encodeURIComponent(id)}:batchUpdate`,
     "POST",
     body
   );
@@ -797,8 +805,47 @@ async function getSpreadsheetMetadata(moduleArgs: A2ModuleArgs, id: string) {
   }
   return api<SheetList>(
     moduleArgs,
-    `https://sheets.googleapis.com/v4/spreadsheets/${id}?fields=sheets.properties`,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}?fields=sheets.properties`,
     "GET"
+  );
+}
+
+async function getSpreadsheetValues(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  range: string
+) {
+  return api<SpreadsheetValueRange>(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${range}`,
+    "GET"
+  );
+}
+
+async function updateSpreadsheet(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  requests: SpreadsheetRequest[]
+) {
+  return api<void>(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}:batchUpdate`,
+    "POST",
+    { requests }
+  );
+}
+
+async function setSpreadsheetValues(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  range: string,
+  values: unknown[][]
+) {
+  return api<void>(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    "PUT",
+    { values }
   );
 }
 
@@ -816,44 +863,78 @@ async function appendSpreadsheetValues(
   }
   return api(
     moduleArgs,
-    `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
     "POST",
     body
   );
 }
 
-async function createMultipart(
+async function upload(
   { fetchWithCreds, context }: A2ModuleArgs,
-  metadata: unknown,
-  body: unknown,
-  mimeType: string
+  metadata: DriveFileMetadata,
+  fileBlob: Blob // Using Blob for better binary handling
 ): Promise<Outcome<{ id: string }>> {
-  const boundary = "BB-BB-BB-BB-BB-BB";
-  const url = `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+  // 1. Generate a unique boundary
+  const boundary = `-------${crypto.randomUUID()}`;
+  const url = `${GOOGLE_DRIVE_UPLOAD_API_PREFIX}?uploadType=multipart`;
+
   try {
+    // 2. Build the parts.
+    // For conversion, metadata.mimeType is the TARGET (e.g., Google Slides)
+    // fileBlob.type is the SOURCE (e.g., .pptx)
+
+    const delimiter = `--${boundary}\r\n`;
+    const closeDelimiter = `\r\n--${boundary}--`;
+
+    const metadataPart =
+      `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+      `${JSON.stringify(metadata)}\r\n`;
+
+    const mediaPartHeader = `Content-Type: ${fileBlob.type}\r\n\r\n`;
+
+    // 3. Compose the body as a Blob to avoid string-binary conversion issues
+    const multipartBody = new Blob(
+      [
+        delimiter,
+        metadataPart,
+        delimiter,
+        mediaPartHeader,
+        fileBlob,
+        closeDelimiter,
+      ],
+      { type: `multipart/related; boundary=${boundary}` }
+    );
+
     const requestInit: RequestInit = {
       method: "POST",
       headers: {
-        ["Content-Type"]: `multipart/related; boundary=${boundary}`,
+        // Fetch will correctly set the Content-Type header from the Blob
       },
-      body: `--${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(metadata, null, 2)}
---${boundary}
-Content-Type: ${mimeType}; charset=UTF-8
-Content-Transfer-Encoding: base64
-
-${body}
---${boundary}--`,
+      body: multipartBody,
       signal: context.signal,
     };
+
     const response = await fetchWithCreds(url, requestInit);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return err(
+        `Upload failed: ${errorData.error?.message || response.statusText}`
+      );
+    }
+
     return response.json() as Promise<Outcome<{ id: string }>>;
   } catch (e) {
-    return err((e as Error).message);
+    return err(e instanceof Error ? e.message : String(e));
   }
 }
+type BackendError = {
+  error: {
+    code: number;
+    message: string;
+    status: string;
+  };
+};
 
 async function api<T>(
   { fetchWithCreds, context }: A2ModuleArgs,
@@ -870,7 +951,13 @@ async function api<T>(
       requestInit.body = JSON.stringify(body);
     }
     const response = await fetchWithCreds(url, requestInit);
-    return response.json() as Promise<Outcome<T>>;
+    const json = await response.json();
+    if ("error" in json) {
+      const error = json as BackendError;
+      console.error(`Drive Error`, json);
+      return err(error.error.message);
+    }
+    return json as T;
   } catch (e) {
     return err((e as Error).message);
   }

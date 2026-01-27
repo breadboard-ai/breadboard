@@ -37,10 +37,8 @@ export class Header extends LitElement {
   @property()
   accessor replayActive = false;
 
-  // Note: if this is true it supersedes menuActive. It will also switch the
-  // order of the buttons, too.
   @property()
-  accessor fullScreenActive: "available" | "active" | null = null;
+  accessor fullScreenActive: "available" | "active" | "no-exit" | null = null;
 
   @property({ reflect: true, type: Boolean })
   accessor small = false;
@@ -286,7 +284,7 @@ export class Header extends LitElement {
   }
 
   #renderFullScreen() {
-    if (this.fullScreenActive === null) {
+    if (this.fullScreenActive === null || this.fullScreenActive === "no-exit") {
       return nothing;
     }
 
@@ -363,18 +361,9 @@ export class Header extends LitElement {
       @click=${() => {
         this.dispatchEvent(new HideTooltipEvent());
         if (this.running) {
-          this.dispatchEvent(
-            new StateEvent({
-              eventType: "board.stop",
-              clearLastRun: true,
-            })
-          );
+          this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
         } else {
-          this.dispatchEvent(
-            new StateEvent({
-              eventType: "board.restart",
-            })
-          );
+          this.dispatchEvent(new StateEvent({ eventType: "board.restart" }));
         }
       }}
     >
@@ -400,12 +389,7 @@ export class Header extends LitElement {
         this.dispatchEvent(new HideTooltipEvent());
       }}
       @click=${() => {
-        this.dispatchEvent(
-          new StateEvent({
-            eventType: "board.stop",
-            clearLastRun: true,
-          })
-        );
+        this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
       }}
     >
       <span class="g-icon">replay</span>

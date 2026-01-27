@@ -16,9 +16,16 @@ export async function renderThumbnail(
   thumbnailUrl: string | null | undefined,
   googleDriveClient: GoogleDriveClient,
   classes: ClassInfo,
-  alt?: string
+  alt?: string,
+  showLoaderIfNoImage?: boolean
 ) {
   const renderTag = (src?: string | null, fade = false) => {
+    if (!src && showLoaderIfNoImage) {
+      return html` <div class="generating-theme">
+        <span class="g-icon round filled w-500">progress_activity</span>
+      </div>`;
+    }
+
     return html`<img
       class=${classMap({ ...classes, default: !src, hidden: fade })}
       src=${src ?? MAIN_ICON}

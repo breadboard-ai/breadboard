@@ -27,6 +27,8 @@ import {
 import { readFlags } from "./settings.js";
 import { renderConsistentUI } from "./render-consistent-ui.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { Params } from "./common.js";
+import { isLLMContent, isLLMContentArray } from "../../data/common.js";
 
 export { invoke as default, describe };
 
@@ -327,6 +329,20 @@ async function saveToGoogleDrive(
   >;
 }
 
+function paramsToContent(params: Params): LLMContent {
+  const parts = Object.values(params).flatMap((value) => {
+    if (typeof value === "string") {
+      return { text: value } as TextCapabilityPart;
+    } else if (isLLMContent(value)) {
+      return value.parts;
+    } else if (isLLMContentArray(value)) {
+      return value.at(-1)?.parts || [];
+    }
+    return { text: JSON.stringify(value) };
+  });
+  return { parts, role: "user" };
+}
+
 async function invoke(
   {
     text,
@@ -391,8 +407,11 @@ async function invoke(
         modelName
       );
       if (!ok(webPage)) {
-        console.error("Failed to generate html output", webPage.$error);
-        return webPage;
+        console.warn(
+          "Failed to generate html output, returning inputs as output",
+          webPage.$error
+        );
+        return { context: [paramsToContent(params)] };
       } else {
         out = webPage;
         console.log(out);

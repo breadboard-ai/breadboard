@@ -20,9 +20,10 @@ import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
 import { icons } from "../styles/icons.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
-import { ActionTracker } from "../utils/action-tracker.js";
 import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
 import { flowGenWithTheme } from "./flowgen-with-theme.js";
+import { actionTrackerContext } from "../contexts/action-tracker-context.js";
+import { ActionTracker } from "../types/types.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -159,6 +160,9 @@ export class FlowgenEditorInput extends LitElement {
   @consume({ context: projectStateContext })
   accessor projectState: Project | undefined;
 
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined;
+
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
 
@@ -282,16 +286,14 @@ export class FlowgenEditorInput extends LitElement {
       }
       this.#state = { status: "generating" };
 
-      ActionTracker.flowGenEdit(this.currentGraph?.url);
+      this.actionTracker?.flowGenEdit(this.currentGraph?.url);
 
       if (!this.flowGenerator) return;
       if (!this.currentGraph) return;
       if (!this.projectState) return;
 
       this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
-      this.dispatchEvent(
-        new StateEvent({ eventType: "board.stop", clearLastRun: true })
-      );
+      this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
 
       flowGenWithTheme(
         this.flowGenerator,

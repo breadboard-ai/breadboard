@@ -41,6 +41,9 @@ export async function createClientConfig(opts: {
     ENVIRONMENT_NAME: flags.ENVIRONMENT_NAME,
     GOOGLE_OAUTH_TOKEN_ENDPOINT: flags.GOOGLE_OAUTH_TOKEN_ENDPOINT,
     GOOGLE_OAUTH_AUTH_ENDPOINT: flags.GOOGLE_OAUTH_AUTH_ENDPOINT,
+    GOOGLE_DOCS_API_ENDPOINT: flags.GOOGLE_DOCS_API_ENDPOINT,
+    GOOGLE_SHEETS_API_ENDPOINT: flags.GOOGLE_SHEETS_API_ENDPOINT,
+    GOOGLE_SLIDES_API_ENDPOINT: flags.GOOGLE_SLIDES_API_ENDPOINT,
     GOOGLE_DRIVE_API_ENDPOINT: flags.GOOGLE_DRIVE_API_ENDPOINT,
     GOOGLE_DRIVE_PUBLISH_PERMISSIONS: flags.GOOGLE_DRIVE_PUBLISH_PERMISSIONS,
     GOOGLE_DRIVE_USER_FOLDER_NAME: flags.GOOGLE_DRIVE_USER_FOLDER_NAME,
@@ -56,6 +59,8 @@ export async function createClientConfig(opts: {
     SHELL_HOST_ORIGINS: flags.SHELL_HOST_ORIGINS,
     SHELL_PREFIX: flags.SHELL_PREFIX,
     ENABLE_EMAIL_OPT_IN: flags.ENABLE_EMAIL_OPT_IN,
+    SHARE_SURFACE_URL_TEMPLATES: flags.SHARE_SURFACE_URL_TEMPLATES,
+    ENABLE_NEW_URL_SCHEME: flags.ENABLE_NEW_URL_SCHEME,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,
@@ -64,7 +69,6 @@ export async function createClientConfig(opts: {
       gulfRenderer: flags.ENABLE_GULF_RENDERER,
       consistentUI: flags.ENABLE_CONSISTENT_UI,
       agentMode: flags.ENABLE_AGENT_MODE,
-      observeSystemTheme: flags.OBSERVE_SYSTEM_THEME,
       opalAdk: flags.ENABLE_OPAL_ADK,
       outputTemplates: flags.ENABLE_OUTPUT_TEMPLATES,
       googleOne: flags.ENABLE_GOOGLE_ONE,
@@ -73,6 +77,8 @@ export async function createClientConfig(opts: {
         flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
       streamPlanner: flags.STREAM_PLANNER,
       streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
+      enableDrivePickerInLiteMode: flags.ENABLE_DRIVE_PICKER_IN_LITE_MODE,
+      enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
     },
   };
 }

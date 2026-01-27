@@ -5,28 +5,22 @@
  */
 
 import type {
-  LandingUrlInit,
-  MakeUrlInit,
-  LanguagePack,
   GraphUrlInit,
+  LandingUrlInit,
+  LanguagePack,
+  MakeUrlInit,
 } from "../ui/types/types.js";
-import { SigninAdapter } from "../ui/utils/signin-adapter.js";
-import {
-  ActionTracker,
-  initializeAnalytics,
-} from "../ui/utils/action-tracker.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
+import { createActionTracker } from "../ui/utils/action-tracker.js";
 import { connectToOpalShellHost } from "../ui/utils/opal-shell-guest.js";
-import * as Shell from "./shell.js";
-import { parseUrl, makeUrl } from "../ui/utils/urls.js";
+import { SigninAdapter } from "../ui/utils/signin-adapter.js";
+import { makeUrl, parseUrl } from "../ui/utils/urls.js";
 import "./carousel.js";
+import * as Shell from "./shell.js";
 
 const parsedUrl = parseUrl(window.location.href) as LandingUrlInit;
 if (parsedUrl.page !== "landing") {
   console.warn("unexpected parse of landing page url", parsedUrl);
 }
-
-const deploymentConfiguration = CLIENT_DEPLOYMENT_CONFIG;
 
 function redirect(target?: MakeUrlInit) {
   if (target) {
@@ -35,10 +29,6 @@ function redirect(target?: MakeUrlInit) {
   }
 
   window.location.href = makeUrl(parsedUrl.redirect);
-}
-
-if (deploymentConfiguration?.MEASUREMENT_ID) {
-  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID, false);
 }
 
 let lastVideo = 0;
@@ -94,17 +84,14 @@ function embedIntroVideo(target: HTMLDivElement) {
 
 async function init() {
   const { shellHost, embedHandler } = await connectToOpalShellHost();
-  const signinAdapter = new SigninAdapter(
-    shellHost,
-    await shellHost.getSignInState()
-  );
+  const signinAdapter = new SigninAdapter(shellHost);
 
-  if (signinAdapter.state === "signedin") {
+  if ((await signinAdapter.state) === "signedin") {
     redirect();
     return;
   }
 
-  ActionTracker.signInPageView();
+  const actionTracker = createActionTracker(shellHost);
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",
@@ -142,6 +129,8 @@ async function init() {
       sharedFlowDialogTitle,
       introVideo,
       landingCarousel,
+      secondaryVideo,
+      secondaryVideoContainer,
     } = Shell.obtainElements();
 
     Shell.setAllAppNameHolders(Strings.from("APP_NAME"));
@@ -176,7 +165,7 @@ async function init() {
         return;
       }
 
-      ActionTracker.signInSuccess();
+      actionTracker.signInSuccess();
       console.info(`[landing] Redirecting after sign-in`, event.target);
       redirect(destination);
     };
@@ -221,6 +210,35 @@ async function init() {
         sharedFlowDialog.close();
       });
     }
+
+    // This funciton is a blur even handler and is used as a click detecting meachanism:
+    // 1. When the user clicks on the iframe, the click is not detected on the main page,
+    // because it is part of the iframe.
+    // 2. But a blur event is detected on the main page and we check where that event is coming from.
+    // 3. Edge case: for the blur event to be detected, in case the user hasn't interacted with the page
+    // at all, we need to make sure that the app is focusd initially, hence: window.focus();
+    const handleSecondaryVideoIframeClick = () => {
+      // requestAnimationFrame is needed, because activeElement is updated at the end of the execution stack
+      requestAnimationFrame(() => {
+        if (document.activeElement !== secondaryVideo) {
+          return;
+        }
+        if (secondaryVideoContainer) {
+          const secondaryVideoCover =
+            secondaryVideoContainer.querySelector(".dimmed-cover");
+          secondaryVideoCover?.remove();
+        }
+        window.removeEventListener("blur", handleSecondaryVideoIframeClick);
+      });
+    };
+
+    // gain window focus so that blur even will fire without any user interaction
+    if (document.hasFocus() === false) {
+      window.focus();
+      document.body?.focus?.();
+    }
+
+    window.addEventListener("blur", handleSecondaryVideoIframeClick);
   } catch (err) {
     console.warn(err);
     return;

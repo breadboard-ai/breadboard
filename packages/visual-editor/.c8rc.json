@@ -1,0 +1,17 @@
+{
+  "all": false,
+  "src": ["src"],
+  "exclude": [
+    "**/*.test.ts",
+    "**/tests/**",
+    "**/types.ts",
+    "**/context.ts",
+    "src/sca/services/**/*",
+    "src/sca/*.ts",
+    "src/sca/utils/utils.ts"
+  ],
+  "include": ["src/sca/**/*.ts"],
+  "omit-empty": true,
+  "check-coverage": false,
+  "exclude-after-remap": true
+}

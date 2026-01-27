@@ -9,6 +9,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import {
   globalConfigContext,
@@ -20,12 +21,13 @@ import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
-import type { RecentBoard } from "../../types/types.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import { ActionTracker } from "../../types/types.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 import "./homepage-search-button.js";
 import { HomepageSearchButton } from "./homepage-search-button.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -35,6 +37,9 @@ const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
 
 @customElement("bb-project-listing")
 export class ProjectListing extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
 
@@ -42,8 +47,8 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   @state()
   accessor boardServer: BoardServer | undefined;
 
-  @property({ attribute: false })
-  accessor recentBoards: RecentBoard[] = [];
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined;
 
   @property()
   accessor userFilter: string | null = null;
@@ -436,7 +441,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   #sortUserGraphs(
     items: [string, GraphProviderItem][]
   ): [string, GraphProviderItem][] {
-    const recentBoards = this.recentBoards;
+    const recentBoards = this.sca.controller.home.recent.boards;
     return items.sort(([, dataA], [, dataB]) => {
       // Sort by pinned status first if possible.
       const boardA = recentBoards.find((board) => board.url === dataA.url);
@@ -490,11 +495,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
     return html`
       <div class="gallery-wrapper">
-        <bb-gallery
-          .recentBoards=${this.recentBoards}
-          .items=${myItems}
-          .pageSize=${PAGE_SIZE}
-        ></bb-gallery>
+        <bb-gallery .items=${myItems} .pageSize=${PAGE_SIZE}></bb-gallery>
       </div>
     `;
   }
@@ -565,7 +566,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
       return;
     }
 
-    ActionTracker.createNew();
+    this.actionTracker?.createNew();
 
     evt.target.disabled = true;
     this.dispatchEvent(

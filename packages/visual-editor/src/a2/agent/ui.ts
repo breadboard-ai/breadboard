@@ -9,6 +9,8 @@ import {
   AppScreenOutput,
   Capabilities,
   ConsoleEntry,
+  DeepReadonly,
+  LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -20,7 +22,14 @@ import { v0_8 } from "../../a2ui/index.js";
 import { A2UIClient } from "./a2ui/client.js";
 import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
 import { ProgressWorkItem } from "./progress-work-item.js";
-import { A2UIRenderer } from "./types.js";
+import {
+  A2UIRenderer,
+  ChatInputType,
+  ChatManager,
+  ChatResponse,
+  VALID_INPUT_TYPES,
+} from "./types.js";
+import { getCurrentStepState } from "../a2/output.js";
 
 export { AgentUI };
 
@@ -36,11 +45,7 @@ export type UserResponse = {
   text?: string;
 };
 
-export type RawUserResponse = {
-  text: string;
-};
-
-class AgentUI implements A2UIRenderer {
+class AgentUI implements A2UIRenderer, ChatManager {
   readonly client: A2UIClient;
 
   /**
@@ -61,31 +66,29 @@ class AgentUI implements A2UIRenderer {
   readonly #appScreen: AppScreen | undefined;
   #appScreenOutput: AppScreenOutput | undefined;
 
+  readonly #chatLog: LLMContent[] = [];
+
   constructor(
-    _caps: Capabilities,
+    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     private readonly translator: PidginTranslator
   ) {
     this.client = new A2UIClient();
-    const { currentStep, getProjectRunState } = this.moduleArgs.context;
-    const stepId = currentStep?.id;
-    if (stepId) {
-      const runState = getProjectRunState?.();
-      this.#consoleEntry = runState?.console.get(stepId);
-      this.#appScreen = runState?.app.screens.get(stepId);
+    const { appScreen, consoleEntry } = getCurrentStepState(this.moduleArgs);
+    this.#consoleEntry = consoleEntry;
+    this.#appScreen = appScreen;
+    if (!this.#appScreen) {
+      console.warn(
+        `Unable to find app screen for this agent. Trying to render UI will fail.`
+      );
     }
-    this.progress = new ProgressWorkItem("Agent", "spark", this.#appScreen!);
+    this.progress = new ProgressWorkItem("Agent", "spark", this.#appScreen);
     if (!this.#consoleEntry) {
       console.warn(
         `Unable to find console entry for this agent. Trying to render UI will fail.`
       );
     } else {
       this.#consoleEntry.work.set(crypto.randomUUID(), this.progress);
-    }
-    if (!this.#appScreen) {
-      console.warn(
-        `Unable to find app screen for this agent. Trying to render UI will fail.`
-      );
     }
   }
 
@@ -119,6 +122,44 @@ class AgentUI implements A2UIRenderer {
     return this.#outputWorkItem;
   }
 
+  get chatLog(): DeepReadonly<LLMContent[]> {
+    return this.#chatLog;
+  }
+
+  async chat(
+    pidginString: string,
+    inputType: string
+  ): Promise<Outcome<ChatResponse>> {
+    const typedInputType = (VALID_INPUT_TYPES as readonly string[]).includes(
+      inputType
+    )
+      ? (inputType as ChatInputType)
+      : "any";
+    const message = await this.translator.fromPidginString(pidginString);
+    if (!ok(message)) return message;
+    this.#chatLog.push({ ...message, role: "model" });
+    await this.caps.output({
+      schema: {
+        properties: { message: { type: "object", behavior: ["llm-content"] } },
+      },
+      message,
+    });
+    const response = (await this.caps.input({
+      schema: {
+        properties: {
+          input: {
+            type: "object",
+            behavior: ["transient", "llm-content", "hint-required"],
+            format: computeFormat(typedInputType),
+          },
+        },
+      },
+    })) as Outcome<ChatResponse>;
+    if (!ok(response)) return response;
+    this.#chatLog.push({ ...response.input, role: "user" });
+    return response;
+  }
+
   async render(
     a2UIPayload: unknown[]
   ): Promise<Outcome<Record<string, unknown>>> {
@@ -129,7 +170,7 @@ class AgentUI implements A2UIRenderer {
     return this.awaitUserInput();
   }
 
-  renderUserInterface(
+  private renderUserInterface(
     messages: v0_8.Types.ServerToClientMessage[]
   ): Outcome<void> {
     const workItem = this.#updateWorkItem();
@@ -143,7 +184,7 @@ class AgentUI implements A2UIRenderer {
     workItem.renderUserInterface();
   }
 
-  async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
+  private async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
 
@@ -154,5 +195,16 @@ class AgentUI implements A2UIRenderer {
     const result = await this.client.awaitUserInput();
     this.#appScreen!.status = "processing";
     return result;
+  }
+}
+
+function computeFormat(inputType: ChatInputType): string {
+  switch (inputType) {
+    case "any":
+      return "asterisk";
+    case "file-upload":
+      return "upload";
+    case "text":
+      return "edit_note";
   }
 }

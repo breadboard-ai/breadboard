@@ -6,11 +6,12 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import * as Styles from "../../styles/styles.js";
-import { SigninAdapter } from "../../utils/signin-adapter.js";
-import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
+import { classMap } from "lit/directives/class-map.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import {
   CloseEvent,
   OverflowMenuActionEvent,
@@ -18,18 +19,29 @@ import {
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
-import { classMap } from "lit/directives/class-map.js";
-import { UI, UILoadState } from "../../state/types.js";
-import { consume } from "@lit/context";
-import { uiStateContext } from "../../contexts/ui-state.js";
-import { SignalWatcher } from "@lit-labs/signals";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import { UILoadState } from "../../state/types.js";
+import * as Styles from "../../styles/styles.js";
+import {
+  ActionTracker,
+  BOARD_SAVE_STATUS,
+  EnumValue,
+} from "../../types/types.js";
+import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { hasEnabledGlobalSettings } from "./global-settings.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
+import { Utils } from "../../../sca/utils.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
 @customElement("bb-ve-header")
 export class VEHeader extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined = undefined;
+
   @property()
   accessor signinAdapter: SigninAdapter | null = null;
 
@@ -68,9 +80,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   @state()
   accessor #showRemixInfo = false;
-
-  @consume({ context: uiStateContext })
-  accessor #uiState!: UI;
 
   static styles = [
     Styles.HostType.type,
@@ -535,7 +544,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
       },
     ];
 
-    if (this.showExperimentalComponents) {
+    if (
+      !Utils.Helpers.isHydrating(
+        () => this.sca.controller.global.main.experimentalComponents
+      ) &&
+      this.sca.controller.global.main.experimentalComponents
+    ) {
       options.push({
         id: "copy-board-contents",
         title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
@@ -565,6 +579,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
         icon: "flag",
       },
       {
+        id: "documentation",
+        title: Strings.from("COMMAND_DOCUMENTATION"),
+        icon: "quick_reference_all",
+      },
+      {
         id: "status-update",
         title: Strings.from("COMMAND_STATUS_UPDATE"),
         icon: "bigtop_updates",
@@ -572,12 +591,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
       {
         id: "chat",
         title: Strings.from("COMMAND_JOIN_CHAT"),
-        icon: "open_in_new",
+        svgIcon:
+          "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
       },
-      ...(hasEnabledGlobalSettings(
-        this.#uiState,
-        this.showExperimentalComponents
-      )
+      ...(hasEnabledGlobalSettings(this.sca)
         ? [
             {
               id: "show-global-settings",
@@ -675,7 +692,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           return;
         }
 
-        ActionTracker.remixApp(this.url, "editor");
+        this.actionTracker?.remixApp(this.url, "editor");
         this.dispatchEvent(
           new StateEvent({
             eventType: "board.remix",
@@ -717,7 +734,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
           this.dispatchEvent(new ShareRequestedEvent());
         }}
       >
-        <span class="g-icon">share</span>Share app
+        <span class="g-icon">share</span>${Strings.from(
+          "COMMAND_COPY_APP_PREVIEW_URL"
+        )}
       </button>`;
     }
 
@@ -728,14 +747,21 @@ export class VEHeader extends SignalWatcher(LitElement) {
         this.dispatchEvent(new ShareRequestedEvent());
       }}
     >
-      <span class="g-icon">share</span>Share app
+      <span class="g-icon">share</span>${Strings.from(
+        "COMMAND_COPY_APP_PREVIEW_URL"
+      )}
     </button>`;
   }
 
   #renderUser() {
-    if (!this.signinAdapter || this.signinAdapter.state !== "signedin") {
+    if (
+      !this.signinAdapter ||
+      this.signinAdapter.stateSignal?.status !== "signedin"
+    ) {
       return nothing;
     }
+    const name = this.signinAdapter.nameSignal;
+    const picture = this.signinAdapter.pictureSignal;
 
     return html`<button
         id="toggle-user-menu"
@@ -743,12 +769,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
           this.#showAccountSwitcher = true;
         }}
       >
-        ${this.signinAdapter.picture
+        ${picture
           ? html`<img
               id="user-pic"
               crossorigin
-              .src=${this.signinAdapter.picture}
-              alt=${this.signinAdapter.name ?? "No name"}
+              .src=${picture}
+              alt=${name ?? "No name"}
             />`
           : // For unknown reasons, the token info may not include a `picture` URL or `name`.
             // Since we use the avatar as a button to access the menu, we render an icon in
@@ -798,6 +824,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   render() {
+    const isHydrated = this.sca.controller.global.flags.hydrated;
+    if (!isHydrated) {
+      return nothing;
+    }
+
     if (this.hasActiveTab) {
       return this.#renderTabControls();
     }
