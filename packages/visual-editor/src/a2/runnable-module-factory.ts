@@ -32,6 +32,7 @@ import { urlComponentsFromString } from "../engine/loader/loader.js";
 import { McpClientManager } from "../mcp/index.js";
 import { a2 } from "./a2.js";
 import { type ConsentController } from "../sca/controller/subcontrollers/consent-controller.js";
+import { AgentContext } from "./agent/agent-context.js";
 
 export { createA2ModuleFactory };
 
@@ -43,6 +44,7 @@ export type A2ModuleFactoryArgs = {
   fetchWithCreds: typeof globalThis.fetch;
   shell: OpalShellHostProtocol;
   getConsentController: () => ConsentController;
+  agentContext: AgentContext;
 };
 
 export type A2ModuleArgs = A2ModuleFactoryArgs & {

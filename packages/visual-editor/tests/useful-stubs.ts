@@ -7,6 +7,7 @@
 import { Capabilities } from "@breadboard-ai/types/capabilities.js";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
+import { AgentContext } from "../src/a2/agent/agent-context.js";
 import { McpClientManager } from "../src/mcp/client-manager.js";
 import {
   MemoryManager,
@@ -44,6 +45,7 @@ const stubCaps: Capabilities = {
 
 const stubModuleArgs: A2ModuleArgs = {
   mcpClientManager: {} as unknown as McpClientManager,
+  agentContext: new AgentContext(),
   fetchWithCreds: () => {
     throw new Error(`fetchWithCreds not implemented`);
   },

@@ -11,6 +11,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import type { callGeminiImage } from "../src/a2/a2/image-utils.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
+import { AgentContext } from "../src/a2/agent/agent-context.js";
 import { McpClientManager } from "../src/mcp/index.js";
 import { autoClearingInterval } from "./auto-clearing-interval.js";
 import { collateContexts } from "./collate-context.js";
@@ -290,6 +291,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
 
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
+    agentContext: new AgentContext(),
     fetchWithCreds: this.fetchWithCreds,
     getConsentController() {
       return {
