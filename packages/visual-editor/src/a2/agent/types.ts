@@ -7,6 +7,7 @@
 import type {
   FunctionCallCapabilityPart,
   LLMContent,
+  NodeHandlerContext,
   Outcome,
 } from "@breadboard-ai/types";
 import type { FunctionDeclaration, GeminiBody } from "../a2/gemini.js";
@@ -95,13 +96,25 @@ export type ReadSheetOutcome = SpreadsheetValueRange | { error: string };
  * A generic type of managing memory, styled as a Google Sheet.
  */
 export type MemoryManager = {
-  getSheetMetadata(): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>>;
-  readSheet(args: { range: string }): Promise<Outcome<ReadSheetOutcome>>;
-  updateSheet(args: {
-    range: string;
-    values: string[][];
-  }): Promise<Outcome<AgentOutcome>>;
-  deleteSheet(args: { name: string }): Promise<Outcome<AgentOutcome>>;
+  createSheet(
+    context: NodeHandlerContext,
+    args: SheetMetadata
+  ): Promise<Outcome<AgentOutcome>>;
+  getSheetMetadata(
+    context: NodeHandlerContext
+  ): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>>;
+  readSheet(
+    context: NodeHandlerContext,
+    args: { range: string }
+  ): Promise<Outcome<ReadSheetOutcome>>;
+  updateSheet(
+    context: NodeHandlerContext,
+    args: { range: string; values: string[][] }
+  ): Promise<Outcome<AgentOutcome>>;
+  deleteSheet(
+    context: NodeHandlerContext,
+    args: { name: string }
+  ): Promise<Outcome<AgentOutcome>>;
 };
 
 export type UIType = "chat" | "a2ui";

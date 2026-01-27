@@ -4,53 +4,96 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Outcome } from "@breadboard-ai/types/data.js";
+import { NodeHandlerContext, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils/outcome.js";
 import {
   getSpreadsheetMetadata,
   getSpreadsheetValues,
   setSpreadsheetValues,
+  SpreadsheetValueRange,
   updateSpreadsheet,
 } from "./api.js";
-import { A2ModuleArgs } from "../runnable-module-factory.js";
 import {
   MemoryManager,
   SheetMetadata,
   SheetMetadataWithFilePath,
 } from "../agent/types.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
-export { SheetManager };
+export { SheetManager, parseSheetName };
+export type { SheetManagerConfig };
+
+type SheetManagerConfig = {
+  shell: OpalShellHostProtocol;
+  fetchWithCreds: typeof fetch;
+};
 
 export type SheetGetter = (
+  context: NodeHandlerContext,
   readonly: boolean
 ) => Promise<Outcome<string | null>>;
+
+/**
+ * Extracts the sheet name from a range like "SheetName!A1:B10" or "'Sheet Name'!A1".
+ * Returns null if no sheet name prefix (uses default sheet).
+ */
+function parseSheetName(range: string): string | null {
+  const match = range.match(/^(?:'([^']+)'|([^!]+))!/);
+  if (!match) return null;
+  return match[1] || match[2];
+}
 
 class SheetManager implements MemoryManager {
   private sheetId: Promise<Outcome<string | null>> | null = null;
 
+  // Read caches - cleared on any write
+  private readCache = new Map<string, Outcome<SpreadsheetValueRange>>();
+  private metadataCache: Outcome<{
+    sheets: SheetMetadataWithFilePath[];
+  }> | null = null;
+
   constructor(
-    private readonly moduleArgs: A2ModuleArgs,
+    private readonly config: SheetManagerConfig,
     private readonly sheetGetter: SheetGetter
   ) {}
 
-  private checkSheetId() {
-    return this.sheetGetter(true);
+  private checkSheetId(context: NodeHandlerContext) {
+    // sheetId is cached separately from reads - only invalidated on create
+    if (this.sheetId) return this.sheetId;
+    return this.sheetGetter(context, true);
   }
 
-  private ensureSheetId(): Promise<Outcome<string>> {
+  private ensureSheetId(context: NodeHandlerContext): Promise<Outcome<string>> {
     if (!this.sheetId) {
-      this.sheetId = this.sheetGetter(false);
+      this.sheetId = this.sheetGetter(context, false);
     }
     return this.sheetId as Promise<Outcome<string>>;
   }
 
-  async createSheet(args: SheetMetadata) {
+  private makeModuleArgs(context: NodeHandlerContext) {
+    return { ...this.config, context };
+  }
+
+  private clearSheetCache(sheetName: string) {
+    // Clear matching read cache entries
+    for (const range of this.readCache.keys()) {
+      const cachedSheetName = parseSheetName(range);
+      if (cachedSheetName === sheetName) {
+        this.readCache.delete(range);
+      }
+    }
+    // Always clear metadata since sheet list changed
+    this.metadataCache = null;
+  }
+
+  async createSheet(context: NodeHandlerContext, args: SheetMetadata) {
     const { name } = args;
 
-    const sheetId = await this.ensureSheetId();
+    const sheetId = await this.ensureSheetId(context);
     if (!ok(sheetId)) return sheetId;
 
-    const addSheet = await updateSpreadsheet(this.moduleArgs, sheetId, [
+    const moduleArgs = this.makeModuleArgs(context);
+    const addSheet = await updateSpreadsheet(moduleArgs, sheetId, [
       { addSheet: { properties: { title: name } } },
     ]);
     if (!ok(addSheet)) {
@@ -58,7 +101,7 @@ class SheetManager implements MemoryManager {
     }
 
     const creating = await setSpreadsheetValues(
-      this.moduleArgs,
+      moduleArgs,
       sheetId,
       `${name}!A1`,
       [args.columns]
@@ -66,29 +109,43 @@ class SheetManager implements MemoryManager {
     if (!ok(creating)) {
       return { success: false, error: creating.$error };
     }
+
+    this.clearSheetCache(name);
     return { success: true };
   }
 
-  async readSheet(args: { range: string }) {
+  async readSheet(context: NodeHandlerContext, args: { range: string }) {
     const { range } = args;
 
-    const sheetId = await this.ensureSheetId();
+    // Check cache first
+    const cached = this.readCache.get(range);
+    if (cached) return cached;
+
+    const sheetId = await this.ensureSheetId(context);
     if (!ok(sheetId)) return sheetId;
 
-    return getSpreadsheetValues(this.moduleArgs, sheetId, range);
+    const result = await getSpreadsheetValues(
+      this.makeModuleArgs(context),
+      sheetId,
+      range
+    );
+
+    // Cache the result
+    this.readCache.set(range, result);
+    return result;
   }
 
-  async updateSheet(args: {
-    range: string;
-    values: string[][];
-  }): Promise<Outcome<{ success: boolean; error?: string }>> {
+  async updateSheet(
+    context: NodeHandlerContext,
+    args: { range: string; values: string[][] }
+  ): Promise<Outcome<{ success: boolean; error?: string }>> {
     const { range, values } = args;
 
-    const sheetId = await this.ensureSheetId();
+    const sheetId = await this.ensureSheetId(context);
     if (!ok(sheetId)) return sheetId;
 
     const updating = await setSpreadsheetValues(
-      this.moduleArgs,
+      this.makeModuleArgs(context),
       sheetId,
       range,
       values
@@ -97,16 +154,20 @@ class SheetManager implements MemoryManager {
       return { success: false, error: updating.$error };
     }
 
+    const sheetName = parseSheetName(range);
+    if (sheetName) this.clearSheetCache(sheetName);
     return { success: true };
   }
 
-  async deleteSheet(args: {
-    name: string;
-  }): Promise<Outcome<{ success: boolean; error?: string }>> {
-    const sheetId = await this.ensureSheetId();
+  async deleteSheet(
+    context: NodeHandlerContext,
+    args: { name: string }
+  ): Promise<Outcome<{ success: boolean; error?: string }>> {
+    const sheetId = await this.ensureSheetId(context);
     if (!ok(sheetId)) return sheetId;
 
-    const metadata = await getSpreadsheetMetadata(this.moduleArgs, sheetId);
+    const moduleArgs = this.makeModuleArgs(context);
+    const metadata = await getSpreadsheetMetadata(moduleArgs, sheetId);
     if (!ok(metadata)) return metadata;
 
     const sheet = metadata.sheets.find((s) => s.properties.title === args.name);
@@ -114,25 +175,30 @@ class SheetManager implements MemoryManager {
       return { success: false, error: `Sheet "${args.name}" not found.` };
     }
 
-    const deleting = await updateSpreadsheet(this.moduleArgs, sheetId, [
+    const deleting = await updateSpreadsheet(moduleArgs, sheetId, [
       { deleteSheet: { sheetId: sheet.properties.sheetId } },
     ]);
     if (!ok(deleting)) return deleting;
 
+    this.clearSheetCache(args.name);
     return { success: true };
   }
 
-  async getSheetMetadata(): Promise<
-    Outcome<{ sheets: SheetMetadataWithFilePath[] }>
-  > {
-    const sheetId = await this.checkSheetId();
+  async getSheetMetadata(
+    context: NodeHandlerContext
+  ): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>> {
+    // Check cache first
+    if (this.metadataCache) return this.metadataCache;
+
+    const sheetId = await this.checkSheetId(context);
     if (!sheetId) {
       return { sheets: [] };
     }
     if (!ok(sheetId)) return sheetId;
     this.sheetId = Promise.resolve(sheetId);
 
-    const metadata = await getSpreadsheetMetadata(this.moduleArgs, sheetId);
+    const moduleArgs = this.makeModuleArgs(context);
+    const metadata = await getSpreadsheetMetadata(moduleArgs, sheetId);
     if (!ok(metadata)) return metadata;
 
     const errors: string[] = [];
@@ -142,7 +208,7 @@ class SheetManager implements MemoryManager {
       const file_path = `/vfs/memory/${encodeURIComponent(name)}`;
 
       const valuesRes = await getSpreadsheetValues(
-        this.moduleArgs,
+        moduleArgs,
         sheetId,
         `${encodeURIComponent(name)}!1:1`
       );
@@ -165,9 +231,12 @@ class SheetManager implements MemoryManager {
       if (errors.length > 0) {
         return err(errors.join(","));
       }
-      return { sheets };
+      const result = { sheets };
+      this.metadataCache = result;
+      return result;
     } catch (e) {
       return err((e as Error).message);
     }
   }
 }
+

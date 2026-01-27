@@ -10,10 +10,21 @@ import {
   GOOGLE_DRIVE_UPLOAD_API_PREFIX,
   GOOGLE_SHEETS_API_PREFIX,
   GOOGLE_SLIDES_API_PREFIX,
+  NodeHandlerContext,
   Outcome,
 } from "@breadboard-ai/types";
 import { err } from "../a2/utils.js";
-import { A2ModuleArgs } from "../runnable-module-factory.js";
+
+export type { ApiDeps };
+
+/**
+ * Minimal dependencies for API calls. This is the subset of A2ModuleArgs
+ * that the API functions actually use.
+ */
+type ApiDeps = {
+  fetchWithCreds: typeof fetch;
+  context: NodeHandlerContext;
+};
 
 export {
   appendSpreadsheetValues,
@@ -691,7 +702,7 @@ export type Metadata = {
 
 export type Method = "GET" | "POST" | "PUT" | "DELETE";
 
-async function get(moduleArgs: A2ModuleArgs, id: string) {
+async function get(moduleArgs: ApiDeps, id: string) {
   if (!id) {
     return err("Please supply file id.");
   }
@@ -703,7 +714,7 @@ async function get(moduleArgs: A2ModuleArgs, id: string) {
 }
 
 async function create(
-  moduleArgs: A2ModuleArgs,
+  moduleArgs: ApiDeps,
   body: DriveFileMetadata
 ): Promise<Outcome<CreateFileResponse>> {
   if (!body) {
@@ -713,7 +724,7 @@ async function create(
   return api(moduleArgs, GOOGLE_DRIVE_FILES_API_PREFIX, "POST", body);
 }
 
-async function del(moduleArgs: A2ModuleArgs, id: string) {
+async function del(moduleArgs: ApiDeps, id: string) {
   if (!id) {
     return err("Please supply the id of the file to delete");
   }
@@ -725,7 +736,7 @@ async function del(moduleArgs: A2ModuleArgs, id: string) {
   );
 }
 
-async function exp(moduleArgs: A2ModuleArgs, fileId: string, mimeType: string) {
+async function exp(moduleArgs: ApiDeps, fileId: string, mimeType: string) {
   if (!fileId) {
     return err("Please supply the file id to export.");
   }
@@ -736,7 +747,7 @@ async function exp(moduleArgs: A2ModuleArgs, fileId: string, mimeType: string) {
   );
 }
 
-async function getDoc(moduleArgs: A2ModuleArgs, id: string) {
+async function getDoc(moduleArgs: ApiDeps, id: string) {
   if (!id) {
     return err("Please supply the doc id to get.");
   }
@@ -747,7 +758,7 @@ async function getDoc(moduleArgs: A2ModuleArgs, id: string) {
   );
 }
 
-async function updateDoc(moduleArgs: A2ModuleArgs, id: string, body: unknown) {
+async function updateDoc(moduleArgs: ApiDeps, id: string, body: unknown) {
   if (!id) {
     return err("Please supply the id of the doc to update.");
   }
@@ -763,7 +774,7 @@ async function updateDoc(moduleArgs: A2ModuleArgs, id: string, body: unknown) {
 }
 
 async function getPresentation(
-  moduleArgs: A2ModuleArgs,
+  moduleArgs: ApiDeps,
   id: string
 ): Promise<Outcome<SlidesPresentation>> {
   return api(
@@ -774,14 +785,14 @@ async function getPresentation(
 }
 
 async function createPresentation(
-  moduleArgs: A2ModuleArgs,
+  moduleArgs: ApiDeps,
   title: string
 ): Promise<Outcome<SlidesPresentation>> {
   return api(moduleArgs, GOOGLE_SLIDES_API_PREFIX, "POST", { title });
 }
 
 async function updatePresentation(
-  moduleArgs: A2ModuleArgs,
+  moduleArgs: ApiDeps,
   id: string,
   body: { requests: SlidesRequest[] }
 ) {
@@ -799,7 +810,7 @@ async function updatePresentation(
   );
 }
 
-async function getSpreadsheetMetadata(moduleArgs: A2ModuleArgs, id: string) {
+async function getSpreadsheetMetadata(moduleArgs: ApiDeps, id: string) {
   if (!id) {
     return err("Please supply the id of the spreadsheet to update.");
   }
@@ -811,7 +822,7 @@ async function getSpreadsheetMetadata(moduleArgs: A2ModuleArgs, id: string) {
 }
 
 async function getSpreadsheetValues(
-  moduleArgs: A2ModuleArgs,
+  moduleArgs: ApiDeps,
   id: string,
   range: string
 ) {
@@ -823,7 +834,7 @@ async function getSpreadsheetValues(
 }
 
 async function updateSpreadsheet(
-  moduleArgs: A2ModuleArgs,
+  moduleArgs: ApiDeps,
   id: string,
   requests: SpreadsheetRequest[]
 ) {
@@ -836,7 +847,7 @@ async function updateSpreadsheet(
 }
 
 async function setSpreadsheetValues(
-  moduleArgs: A2ModuleArgs,
+  moduleArgs: ApiDeps,
   id: string,
   range: string,
   values: unknown[][]
@@ -850,7 +861,7 @@ async function setSpreadsheetValues(
 }
 
 async function appendSpreadsheetValues(
-  moduleArgs: A2ModuleArgs,
+  moduleArgs: ApiDeps,
   id: string,
   range: string,
   body: SpreadsheetValuesAppend
@@ -870,7 +881,7 @@ async function appendSpreadsheetValues(
 }
 
 async function upload(
-  { fetchWithCreds, context }: A2ModuleArgs,
+  { fetchWithCreds, context }: ApiDeps,
   metadata: DriveFileMetadata,
   fileBlob: Blob // Using Blob for better binary handling
 ): Promise<Outcome<{ id: string }>> {
@@ -937,7 +948,7 @@ type BackendError = {
 };
 
 async function api<T>(
-  { fetchWithCreds, context }: A2ModuleArgs,
+  { fetchWithCreds, context }: ApiDeps,
   url: string,
   method: Method,
   body: unknown | null = null

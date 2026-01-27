@@ -27,6 +27,7 @@ import { composeFileSystemBackends } from "../../engine/file-system/composed-per
 import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
+import { AgentContext } from "../../a2/agent/agent-context.js";
 import { addRunModule } from "../../engine/add-run-module.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
 import { createA2Server } from "../../a2/index.js";
@@ -102,11 +103,17 @@ export function services(
       OPAL_BACKEND_API_PREFIX
     );
 
+    const agentContext = new AgentContext({
+      shell: config.shellHost,
+      fetchWithCreds,
+    });
+
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,
       shell: config.shellHost,
       getConsentController,
+      agentContext,
     });
     const kits = addRunModule(sandbox, []);
     const googleDriveBoardServer = createGoogleDriveBoardServer(

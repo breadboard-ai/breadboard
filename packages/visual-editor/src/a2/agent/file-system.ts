@@ -9,6 +9,7 @@ import {
   DeepReadonly,
   FileDataPart,
   InlineDataCapabilityPart,
+  NodeHandlerContext,
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
@@ -40,6 +41,7 @@ export type AddFilesToProjectResult = {
 export type SystemFileGetter = () => Outcome<string>;
 
 export type AgentFileSystemArgs = {
+  context: NodeHandlerContext;
   memoryManager: MemoryManager | null;
 };
 
@@ -51,10 +53,12 @@ class AgentFileSystem {
     ["/", "/"],
   ]);
 
+  private readonly context: NodeHandlerContext;
   private readonly memoryManager: MemoryManager | null;
   private readonly systemFiles: Map<string, SystemFileGetter> = new Map();
 
   constructor(args: AgentFileSystemArgs) {
+    this.context = args.context;
     this.memoryManager = args.memoryManager;
   }
 
@@ -154,7 +158,7 @@ class AgentFileSystem {
 
   async #getMemoryFile(path: string): Promise<Outcome<DataPart[]>> {
     const sheetName = path.replace("/vfs/memory/", "");
-    const sheet = await this.memoryManager?.readSheet({
+    const sheet = await this.memoryManager?.readSheet(this.context, {
       range: `${sheetName}!A:ZZ`,
     });
     if (!sheet) return [];
@@ -229,7 +233,9 @@ class AgentFileSystem {
     const files = [...this.#files.keys()];
     const system = [...this.systemFiles.keys()];
     const memory = [];
-    const memoryMetadata = await this.memoryManager?.getSheetMetadata();
+    const memoryMetadata = await this.memoryManager?.getSheetMetadata(
+      this.context
+    );
     if (memoryMetadata && ok(memoryMetadata)) {
       memory.push(
         ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
