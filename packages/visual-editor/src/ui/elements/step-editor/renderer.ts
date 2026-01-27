@@ -23,7 +23,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { calculateBounds } from "./utils/calculate-bounds.js";
 import { clamp } from "./utils/clamp.js";
 import {
-  Edge,
   EditSpec,
   GraphIdentifier,
   InspectableGraph,
@@ -32,7 +31,7 @@ import {
   MutableGraphStore,
   NodeDescriptor,
   NodeIdentifier,
-  NodeValue,
+  NodeValue
 } from "@breadboard-ai/types";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
@@ -568,7 +567,6 @@ export class Renderer extends LitElement {
     createAtCenter = true,
     x?: number,
     y?: number,
-    connectedTo?: NodeIdentifier,
     subGraphId?: GraphIdentifier
   ) {
     let useXandYCoordinatesForSubgraph = true;
@@ -638,36 +636,20 @@ export class Renderer extends LitElement {
       },
     };
 
-    if (connectedTo) {
-      const edge: Edge = {
-        from: connectedTo,
-        to: id,
-      };
-
-      this.dispatchEvent(
-        new StateEvent({
-          eventType: "node.addwithedge",
-          edge,
-          node,
-          subGraphId: targetGraphId === MAIN_BOARD_ID ? null : targetGraphId,
-        })
-      );
-    } else {
-      this.dispatchEvent(
-        new StateEvent({
-          eventType: "node.multichange",
-          description: `Add step: ${title}`,
-          subGraphId: null,
-          edits: [
-            {
-              type: "addnode",
-              graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
-              node,
-            },
-          ],
-        })
-      );
-    }
+    this.dispatchEvent(
+      new StateEvent({
+        eventType: "node.multichange",
+        description: `Add step: ${title}`,
+        subGraphId: null,
+        edits: [
+          {
+            type: "addnode",
+            graphId: targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId,
+            node,
+          },
+        ],
+      })
+    );
   }
 
   #dragStart: DOMPoint | null = null;
@@ -1129,10 +1111,10 @@ export class Renderer extends LitElement {
     this.camera.transform.translateSelf(
       (this.#lastBoundsForInteraction.width -
         this.#boundsForInteraction.width) *
-        0.5,
+      0.5,
       (this.#lastBoundsForInteraction.height -
         this.#boundsForInteraction.height) *
-        0.5
+      0.5
     );
   }
 
@@ -1248,9 +1230,9 @@ export class Renderer extends LitElement {
 
     const delta = Math.min(
       (this.#boundsForInteraction.width - 2 * this.graphFitPadding) /
-        bounds.width,
+      bounds.width,
       (this.#boundsForInteraction.height - 2 * this.graphFitPadding) /
-        bounds.height,
+      bounds.height,
       1
     );
 
@@ -1630,8 +1612,8 @@ export class Renderer extends LitElement {
 
           return html`<div
             @bbnodeconfigurationrequest=${(
-              evt: NodeConfigurationRequestEvent
-            ) => {
+            evt: NodeConfigurationRequestEvent
+          ) => {
               this.dispatchEvent(
                 new NodeConfigurationUpdateRequestEvent(
                   evt.nodeId,
@@ -1745,7 +1727,6 @@ export class Renderer extends LitElement {
             evt.createAtCenter,
             evt.x,
             evt.y,
-            evt.connectedTo,
             evt.subGraphId
           );
         }}

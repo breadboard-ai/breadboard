@@ -8,7 +8,8 @@
     "**/context.ts",
     "src/sca/services/**/*",
     "src/sca/*.ts",
-    "src/sca/utils/utils.ts"
+    "src/sca/utils/utils.ts",
+    "src/sca/utils/logging/logging.ts"
   ],
   "include": ["src/sca/**/*.ts"],
   "omit-empty": true,
