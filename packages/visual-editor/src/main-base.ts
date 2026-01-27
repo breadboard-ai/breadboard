@@ -88,7 +88,6 @@ export type RenderValues = {
 };
 
 const LOADING_TIMEOUT = 1250;
-const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 const UPDATE_HASH_KEY = "bb-main-update-hash";
 
 const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
@@ -516,20 +515,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     );
 
-    // Historically this event came from this.runtime.edit, but during the
-    // migration to SCA the listeners are created during this.runtime.board's
-    // tab creation process, so it is the one that now fires the events.
+    // Note: Auto-save is now handled by registerSaveTrigger in SCA.
+    // The trigger watches for version changes and calls actions.board.save().
 
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeBoardEditEvent.eventName,
-      () => {
-        this.runtime.board.save(
-          this.tab?.id ?? null,
-          BOARD_AUTO_SAVE_TIMEOUT,
-          null
-        );
-      }
-    );
 
     this.runtime.edit.addEventListener(
       Runtime.Events.RuntimeErrorEvent.eventName,
