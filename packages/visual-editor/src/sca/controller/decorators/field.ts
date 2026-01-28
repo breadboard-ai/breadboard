@@ -78,7 +78,7 @@ export function field<Value extends PrimitiveValue>(
   ): ClassAccessorDecoratorResult<Context, Value> {
     const signals = new WeakMap<Context, Signal.State<Value | pending>>();
     const createDeep =
-      typeof apiOpts.deep === "undefined" ? false : apiOpts.deep;
+      typeof apiOpts.deep === "undefined" ? true : apiOpts.deep;
 
     return {
       get(this: Context) {
