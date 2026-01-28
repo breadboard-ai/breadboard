@@ -18,6 +18,9 @@ import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { jsonStringify } from "../../../utils/json-stringify.js";
 import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js";
 import { ROUTE_TOOL_PATH } from "../../../../a2/a2/tool-manager.js";
+import { scaContext } from "../../../../sca/context/context.js";
+import { consume } from "@lit/context";
+import { SCA } from "../../../../sca/sca.js";
 
 export function chicletHtml(
   part: TemplatePart,
@@ -127,6 +130,9 @@ export function chicletHtml(
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
+  @consume({ context: scaContext })
+  protected accessor sca: SCA | undefined = undefined;
+
   @property()
   set value(value: string) {
     this.#rawValue = value;
@@ -1028,6 +1034,7 @@ export class TextEditor extends LitElement {
     });
 
     const hasTarget = this.#fastAccessTarget !== null;
+    const isAgentic = this.sca?.controller.global.flags.agentMode === true;
 
     this.#fastAccessRef.value.selectedIndex = 0;
     this.#fastAccessRef.value.showAssets = !hasTarget;
@@ -1035,7 +1042,7 @@ export class TextEditor extends LitElement {
     this.#fastAccessRef.value.showComponents = !hasTarget;
     this.#fastAccessRef.value.showRoutes = hasTarget;
     this.#fastAccessRef.value.showParameters = false;
-    this.#fastAccessRef.value.showControlFlowTools = !hasTarget;
+    this.#fastAccessRef.value.showControlFlowTools = isAgentic && !hasTarget;
     this.#isUsingFastAccess = true;
   }
 
