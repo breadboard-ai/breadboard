@@ -71,6 +71,7 @@ export const SHELL_CSP = {
     "opal-gapi-url",
     "gapi#gapi",
     "goog#html",
+    "'allow-duplicates'",
   ],
 };
 
