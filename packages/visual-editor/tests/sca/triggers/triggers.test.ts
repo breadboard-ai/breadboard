@@ -6,7 +6,6 @@
 
 import assert from "node:assert";
 import { after, afterEach, before, suite, test } from "node:test";
-import { AppServices } from "../../../src/sca/services/services.js";
 import { AppActions } from "../../../src/sca/actions/actions.js";
 import {
   triggers,
@@ -15,7 +14,7 @@ import {
   destroy,
 } from "../../../src/sca/triggers/triggers.js";
 import { makeTrigger } from "../../../src/sca/triggers/binder.js";
-import { makeTestController } from "./utils.js";
+import { makeTestController, makeTestServices } from "./utils.js";
 import { setDOM, unsetDOM } from "../../fake-dom.js";
 
 suite("Triggers", () => {
@@ -35,11 +34,7 @@ suite("Triggers", () => {
     assert.doesNotThrow(() => {
       triggers(
         makeTestController(),
-        {
-          agentContext: {
-            invalidateResumableRuns: () => {},
-          },
-        } as AppServices,
+        makeTestServices(),
         {} as AppActions
       );
     });
@@ -53,11 +48,7 @@ suite("Triggers", () => {
   test("cleans up", () => {
     triggers(
       makeTestController(),
-      {
-        agentContext: {
-          invalidateResumableRuns: () => {},
-        },
-      } as AppServices,
+      makeTestServices(),
       {} as AppActions
     );
     assert.deepStrictEqual(list(), {

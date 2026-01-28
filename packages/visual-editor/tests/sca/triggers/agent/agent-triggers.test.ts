@@ -7,9 +7,9 @@
 import assert from "node:assert";
 import { after, afterEach, before, suite, test } from "node:test";
 import {
-  registerSaveTrigger,
+  registerGraphInvalidateTrigger,
   bind,
-} from "../../../../src/sca/triggers/board/board-triggers.js";
+} from "../../../../src/sca/triggers/agent/agent-triggers.js";
 import { appController } from "../../../../src/sca/controller/controller.js";
 import { AppActions } from "../../../../src/sca/actions/actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
@@ -19,7 +19,7 @@ import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 
 
 
-suite("Board Triggers", () => {
+suite("Agent Triggers", () => {
   // Get the singleton controller once for all tests
   let controller: ReturnType<typeof appController>;
 
@@ -43,19 +43,18 @@ suite("Board Triggers", () => {
     controller.editor.graph.version = 0;
   });
 
-  test("Save trigger fires when version changes on a writable graph", async () => {
-    // Track whether save was called
-    let saveCalled = false;
-    const actions = {
-      board: {
-        bind: {},
-        async save() {
-          saveCalled = true;
+  test("Graph invalidate trigger fires when version changes on a writable graph", async () => {
+    // Track whether invalidateResumableRuns was called
+    let invalidateCalled = false;
+    const services = {
+      agentContext: {
+        invalidateResumableRuns() {
+          invalidateCalled = true;
         },
       },
-    } as AppActions;
+    } as AppServices;
 
-    const services = {} as AppServices;
+    const actions = {} as AppActions;
 
     // Bind the trigger dependencies.
     bind({ controller, services, actions });
@@ -66,11 +65,11 @@ suite("Board Triggers", () => {
     controller.editor.graph.version = 0;
 
     // Register the trigger - this creates the effect.
-    registerSaveTrigger();
+    registerGraphInvalidateTrigger();
 
     // Reset the flag after initial effect run.
     await flushEffects();
-    saveCalled = false;
+    invalidateCalled = false;
 
     // Trigger a version change by incrementing the version.
     controller.editor.graph.version = 1;
@@ -78,21 +77,24 @@ suite("Board Triggers", () => {
     // Wait for the microtask effect to run.
     await flushEffects();
 
-    assert.strictEqual(saveCalled, true, "save() should have been called");
+    assert.strictEqual(
+      invalidateCalled,
+      true,
+      "invalidateResumableRuns() should have been called"
+    );
   });
 
-  test("Save trigger does not fire when graph is readOnly", async () => {
-    let saveCalled = false;
-    const actions = {
-      board: {
-        bind: {},
-        async save() {
-          saveCalled = true;
+  test("Graph invalidate trigger does not fire when graph is readOnly", async () => {
+    let invalidateCalled = false;
+    const services = {
+      agentContext: {
+        invalidateResumableRuns() {
+          invalidateCalled = true;
         },
       },
-    } as AppActions;
+    } as AppServices;
 
-    const services = {} as AppServices;
+    const actions = {} as AppActions;
 
     bind({ controller, services, actions });
 
@@ -102,33 +104,32 @@ suite("Board Triggers", () => {
     controller.editor.graph.version = 0;
 
     // Register the trigger and flush initial effect.
-    registerSaveTrigger();
+    registerGraphInvalidateTrigger();
     await flushEffects();
-    saveCalled = false;
+    invalidateCalled = false;
 
     // Trigger a version change.
     controller.editor.graph.version = 2;
     await flushEffects();
 
     assert.strictEqual(
-      saveCalled,
+      invalidateCalled,
       false,
-      "save() should not have been called for readOnly graph"
+      "invalidateResumableRuns() should not have been called for readOnly graph"
     );
   });
 
-  test("Save trigger does not fire when version is -1", async () => {
-    let saveCalled = false;
-    const actions = {
-      board: {
-        bind: {},
-        async save() {
-          saveCalled = true;
+  test("Graph invalidate trigger does not fire when version is -1", async () => {
+    let invalidateCalled = false;
+    const services = {
+      agentContext: {
+        invalidateResumableRuns() {
+          invalidateCalled = true;
         },
       },
-    } as AppActions;
+    } as AppServices;
 
-    const services = {} as AppServices;
+    const actions = {} as AppActions;
 
     bind({ controller, services, actions });
 
@@ -137,43 +138,13 @@ suite("Board Triggers", () => {
     controller.editor.graph.readOnly = false;
     controller.editor.graph.version = -1;
 
-    registerSaveTrigger();
+    registerGraphInvalidateTrigger();
     await flushEffects();
 
     assert.strictEqual(
-      saveCalled,
+      invalidateCalled,
       false,
-      "save() should not have been called when version is -1"
-    );
-  });
-
-  test("Save trigger does not fire when there is no editor", async () => {
-    let saveCalled = false;
-    const actions = {
-      board: {
-        bind: {},
-        async save() {
-          saveCalled = true;
-        },
-      },
-    } as AppActions;
-
-    const services = {} as AppServices;
-
-    bind({ controller, services, actions });
-
-    // Don't set an editor (explicitly set to null).
-    controller.editor.graph.setEditor(null);
-    controller.editor.graph.readOnly = false;
-    controller.editor.graph.version = 1;
-
-    registerSaveTrigger();
-    await flushEffects();
-
-    assert.strictEqual(
-      saveCalled,
-      false,
-      "save() should not have been called when there is no editor"
+      "invalidateResumableRuns() should not have been called when version is -1"
     );
   });
 });
