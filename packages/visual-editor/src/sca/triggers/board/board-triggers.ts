@@ -56,3 +56,45 @@ export function registerNewerVersionTrigger() {
   });
 }
 
+/**
+ * Sets up the save status listener on googleDriveBoardServer.
+ * Updates controller.editor.graph.saveStatus when the board server reports changes.
+ *
+ * This is not a signal-driven trigger but an external event listener that
+ * bridges the googleDriveBoardServer's savestatuschange event to SCA state.
+ */
+export function registerSaveStatusListener() {
+  const { controller, services } = bind;
+
+  // TODO: This is not a trigger - it's an event listener. We should use
+  // signals instead.
+  services.googleDriveBoardServer.addEventListener(
+    "savestatuschange",
+    ({ url, status }) => {
+      const currentUrl = controller.editor.graph.url;
+
+      // Only update if this is the current graph
+      if (!currentUrl || currentUrl !== url) {
+        return;
+      }
+
+      // Map BoardServerSaveEventStatus to our simplified status
+      switch (status) {
+        case "saving":
+          controller.editor.graph.saveStatus = "saving";
+          break;
+        case "idle":
+          controller.editor.graph.saveStatus = "saved";
+          break;
+        case "debouncing":
+        case "queued":
+          controller.editor.graph.saveStatus = "unsaved";
+          break;
+        default:
+          controller.editor.graph.saveStatus = "saved";
+          break;
+      }
+    }
+  );
+}
+

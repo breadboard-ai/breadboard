@@ -568,12 +568,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Note: RuntimeTabCloseEvent listener removed - stop-run logic moved to
     // before close() call in route handler
 
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeBoardSaveStatusChangeEvent.eventName,
-      () => {
-        this.requestUpdate();
-      }
-    );
+    // Note: RuntimeBoardSaveStatusChangeEvent listener removed -
+    // save status now tracked by registerSaveStatusListener trigger
+    // which updates controller.editor.graph.saveStatus
 
     this.runtime.run.addEventListener(
       Runtime.Events.RuntimeBoardRunEvent.eventName,
@@ -629,7 +626,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.router.addEventListener(
       Runtime.Events.RuntimeURLChangeEvent.eventName,
       async (evt: Runtime.Events.RuntimeURLChangeEvent) => {
-        this.runtime.board.currentURL = evt.url;
 
         if (evt.mode) {
           this.sca.controller.global.main.mode = evt.mode;
@@ -662,7 +658,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           return;
         } else {
           // Load the tab.
-          const boardUrl = this.runtime.board.getBoardURL(urlWithoutMode);
+          const parsedBoardUrl = parseUrl(urlWithoutMode);
+          const boardUrl =
+            parsedBoardUrl.page === "graph" ? parsedBoardUrl.flow : undefined;
           if (!boardUrl || boardUrl === this.tab?.graph.url) {
             return;
           }
@@ -741,7 +739,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       //
       // So, we need to wait for full initialization before we broadcast.
       const { url } = saveResult;
-      const boardServer = this.runtime.board.googleDriveBoardServer;
+      const boardServer = this.sca.services.googleDriveBoardServer;
       await boardServer.flushSaveQueue(url.href);
       this.embedHandler.sendToEmbedder({
         type: "board_id_created",
@@ -1004,14 +1002,37 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       projectState.run.app.screens.set("final", current);
     }
 
-    const canSave = this.tab
-      ? this.runtime.board.canSave(this.tab.id) && !this.tab.readOnly
-      : false;
+    // Inline canSave logic - use services directly
+    let canSave = false;
+    if (this.tab && !this.tab.readOnly) {
+      const graphUrl = this.sca.controller.editor.graph.url;
+      if (graphUrl) {
+        const boardServer = this.sca.services.googleDriveBoardServer;
+        const capabilities = boardServer?.canProvide(new URL(graphUrl));
+        canSave = capabilities !== false && !!capabilities?.save;
+      }
+    }
 
-    const saveStatus = this.tab
-      ? (this.runtime.board.saveStatus(this.tab.id) ??
-        BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED)
-      : BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
+    // Get saveStatus from controller and map to enum
+    let saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS =
+      BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
+    if (this.tab) {
+      const status = this.sca.controller.editor.graph.saveStatus;
+      switch (status) {
+        case "saving":
+          saveStatus = BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING;
+          break;
+        case "saved":
+          saveStatus = BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED;
+          break;
+        case "unsaved":
+          saveStatus = BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED;
+          break;
+        case "error":
+          saveStatus = BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
+          break;
+      }
+    }
 
     return {
       canSave,

@@ -45,6 +45,7 @@ export function register() {
   Agent.registerGraphInvalidateTrigger();
   Board.registerSaveTrigger();
   Board.registerNewerVersionTrigger();
+  Board.registerSaveStatusListener();
   Node.registerAutonameTrigger();
 }
 

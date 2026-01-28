@@ -43,7 +43,12 @@ export function makeTestServices(
 ): AppServices {
   return {
     agentContext,
-  } as AppServices;
+    // Mock googleDriveBoardServer for registerSaveStatusListener
+    googleDriveBoardServer: {
+      addEventListener: () => { },
+      removeEventListener: () => { },
+    },
+  } as unknown as AppServices;
 }
 
 /**

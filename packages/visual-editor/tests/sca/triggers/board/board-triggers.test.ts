@@ -9,6 +9,7 @@ import { after, afterEach, before, mock, suite, test } from "node:test";
 import {
   registerSaveTrigger,
   registerNewerVersionTrigger,
+  registerSaveStatusListener,
   bind,
 } from "../../../../src/sca/triggers/board/board-triggers.js";
 import { appController } from "../../../../src/sca/controller/controller.js";
@@ -240,5 +241,187 @@ suite("Board Triggers", () => {
     } finally {
       snackbarMock.mock.restore();
     }
+  });
+
+  suite("registerSaveStatusListener", () => {
+    // Helper to create a mock googleDriveBoardServer with event listener support
+    function createMockBoardServer() {
+      type SaveStatusChangeHandler = (event: { url: string; status: string }) => void;
+      const listeners: SaveStatusChangeHandler[] = [];
+
+      return {
+        addEventListener: (
+          _event: string,
+          handler: SaveStatusChangeHandler
+        ) => {
+          listeners.push(handler);
+        },
+        removeEventListener: () => { },
+        // Helper to emit events in tests
+        emit: (url: string, status: string) => {
+          for (const listener of listeners) {
+            listener({ url, status });
+          }
+        },
+      };
+    }
+
+    test("updates saveStatus to 'saving' when server reports 'saving'", async () => {
+      const mockServer = createMockBoardServer();
+      const actions = { board: { bind: {}, save: async () => { } } } as AppActions;
+      const services = {
+        googleDriveBoardServer: mockServer,
+      } as unknown as AppServices;
+
+      bind({ controller, services, actions });
+
+      // Set up the graph controller with a URL
+      controller.editor.graph.url = "https://example.com/graph";
+      controller.editor.graph.saveStatus = "saved";
+
+      registerSaveStatusListener();
+
+      // Emit a savestatuschange event with matching URL
+      mockServer.emit("https://example.com/graph", "saving");
+
+      assert.strictEqual(
+        controller.editor.graph.saveStatus,
+        "saving",
+        "saveStatus should be 'saving'"
+      );
+    });
+
+    test("updates saveStatus to 'saved' when server reports 'idle'", async () => {
+      const mockServer = createMockBoardServer();
+      const actions = { board: { bind: {}, save: async () => { } } } as AppActions;
+      const services = {
+        googleDriveBoardServer: mockServer,
+      } as unknown as AppServices;
+
+      bind({ controller, services, actions });
+
+      controller.editor.graph.url = "https://example.com/graph";
+      controller.editor.graph.saveStatus = "saving";
+
+      registerSaveStatusListener();
+      mockServer.emit("https://example.com/graph", "idle");
+
+      assert.strictEqual(
+        controller.editor.graph.saveStatus,
+        "saved",
+        "saveStatus should be 'saved'"
+      );
+    });
+
+    test("updates saveStatus to 'unsaved' when server reports 'debouncing'", async () => {
+      const mockServer = createMockBoardServer();
+      const actions = { board: { bind: {}, save: async () => { } } } as AppActions;
+      const services = {
+        googleDriveBoardServer: mockServer,
+      } as unknown as AppServices;
+
+      bind({ controller, services, actions });
+
+      controller.editor.graph.url = "https://example.com/graph";
+      controller.editor.graph.saveStatus = "saved";
+
+      registerSaveStatusListener();
+      mockServer.emit("https://example.com/graph", "debouncing");
+
+      assert.strictEqual(
+        controller.editor.graph.saveStatus,
+        "unsaved",
+        "saveStatus should be 'unsaved'"
+      );
+    });
+
+    test("updates saveStatus to 'unsaved' when server reports 'queued'", async () => {
+      const mockServer = createMockBoardServer();
+      const actions = { board: { bind: {}, save: async () => { } } } as AppActions;
+      const services = {
+        googleDriveBoardServer: mockServer,
+      } as unknown as AppServices;
+
+      bind({ controller, services, actions });
+
+      controller.editor.graph.url = "https://example.com/graph";
+      controller.editor.graph.saveStatus = "saved";
+
+      registerSaveStatusListener();
+      mockServer.emit("https://example.com/graph", "queued");
+
+      assert.strictEqual(
+        controller.editor.graph.saveStatus,
+        "unsaved",
+        "saveStatus should be 'unsaved'"
+      );
+    });
+
+    test("ignores savestatuschange events for different URLs", async () => {
+      const mockServer = createMockBoardServer();
+      const actions = { board: { bind: {}, save: async () => { } } } as AppActions;
+      const services = {
+        googleDriveBoardServer: mockServer,
+      } as unknown as AppServices;
+
+      bind({ controller, services, actions });
+
+      controller.editor.graph.url = "https://example.com/my-graph";
+      controller.editor.graph.saveStatus = "saved";
+
+      registerSaveStatusListener();
+      // Emit an event for a different URL
+      mockServer.emit("https://example.com/other-graph", "saving");
+
+      assert.strictEqual(
+        controller.editor.graph.saveStatus,
+        "saved",
+        "saveStatus should remain 'saved' for different URL"
+      );
+    });
+
+    test("ignores savestatuschange events when no graph URL is set", async () => {
+      const mockServer = createMockBoardServer();
+      const actions = { board: { bind: {}, save: async () => { } } } as AppActions;
+      const services = {
+        googleDriveBoardServer: mockServer,
+      } as unknown as AppServices;
+
+      bind({ controller, services, actions });
+
+      controller.editor.graph.url = null;
+      controller.editor.graph.saveStatus = "saved";
+
+      registerSaveStatusListener();
+      mockServer.emit("https://example.com/graph", "saving");
+
+      assert.strictEqual(
+        controller.editor.graph.saveStatus,
+        "saved",
+        "saveStatus should remain 'saved' when no graph URL is set"
+      );
+    });
+
+    test("defaults to 'saved' for unknown status values", async () => {
+      const mockServer = createMockBoardServer();
+      const actions = { board: { bind: {}, save: async () => { } } } as AppActions;
+      const services = {
+        googleDriveBoardServer: mockServer,
+      } as unknown as AppServices;
+
+      bind({ controller, services, actions });
+
+      controller.editor.graph.url = "https://example.com/graph";
+      controller.editor.graph.saveStatus = "unsaved";
+
+      registerSaveStatusListener();
+      mockServer.emit("https://example.com/graph", "unknown-status");
+
+      assert.strictEqual(
+        controller.editor.graph.saveStatus,
+        "saved",
+        "saveStatus should default to 'saved' for unknown status"
+      );
+    });
   });
 });

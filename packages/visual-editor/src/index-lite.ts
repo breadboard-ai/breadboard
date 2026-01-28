@@ -474,7 +474,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if (!fileId) {
       return;
     }
-    const isMine = this.runtime.board.isMine(url);
+    const isMine = this.sca.services.googleDriveBoardServer.isMine(new URL(url));
     const isFeaturedGalleryItem =
       // This is a bit hacky and indirect, but an easy way to tell if something
       // is from the public gallery is to check if the GoogleDriveClient has

@@ -54,6 +54,13 @@ export class GraphController extends RootController {
   accessor lastEditError: string | null = null;
 
   /**
+   * Tracks the current save status of the board.
+   * Updated by the saveStatusChange trigger when the board server reports changes.
+   */
+  @field()
+  accessor saveStatus: "saved" | "saving" | "unsaved" | "error" = "saved";
+
+  /**
    * Tracks the most recent node configuration change.
    * Set by the changeNodeConfiguration action, consumed by the autoname trigger.
    */

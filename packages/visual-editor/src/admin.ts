@@ -58,7 +58,8 @@ export class Admin {
   }
 
   #gdriveBoardServer(): GoogleDriveBoardServer {
-    return this.runtime.board.googleDriveBoardServer;
+    // Use the driveBoardServer property set on this class
+    return this.driveBoardServer!;
   }
 
   get gdrive() {
