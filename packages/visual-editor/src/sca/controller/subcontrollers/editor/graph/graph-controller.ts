@@ -29,10 +29,15 @@ export interface ConfigChangeContext {
 }
 
 export class GraphController extends RootController {
-  @field()
+  @field({ deep: false })
   private accessor _editor: EditableGraph | null = null;
 
-  @field()
+  /**
+   * We set this to shallow because we update it via the Editor API, and that
+   * wholesale changes the graph. Also parts of the graph might be
+   * structureClone'd and so we don't want those to break.
+   */
+  @field({ deep: false })
   private accessor _graph: GraphDescriptor | null = null;
 
   @field()
