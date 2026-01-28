@@ -294,6 +294,18 @@ class AgentFileSystem {
     return this.#files;
   }
 
+  /**
+   * Restores file system state from a saved snapshot.
+   * Used for resuming failed runs.
+   */
+  restoreFrom(files: Record<string, FileDescriptor>): void {
+    this.#files.clear();
+    for (const [path, descriptor] of Object.entries(files)) {
+      this.#files.set(path, { ...descriptor });
+    }
+    this.#fileCount = this.#files.size;
+  }
+
   #createNamed(
     name: string,
     mimeType: string,

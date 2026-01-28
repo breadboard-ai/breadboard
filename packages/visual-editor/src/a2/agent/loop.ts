@@ -102,13 +102,48 @@ class Loop {
   }
 
   /**
+   * Finds a resumable failed run for the given step ID.
+   */
+  #findResumableRun(stepId: string): RunState | undefined {
+    const run = this.moduleArgs.agentContext.getRun(stepId);
+    return run?.status === "failed" && run.resumable ? run : undefined;
+  }
+
+  /**
+   * Restores state from a previous failed run.
+   * Trims trailing model turns so the conversation ends on a user turn.
+   */
+  #restoreFromRun(run: RunState): LLMContent[] {
+    // Restore file system
+    this.fileSystem.restoreFrom(run.files);
+    // Reuse the run state
+    this.runState = run;
+    run.status = "running";
+    run.error = undefined;
+    // Trim trailing model turns
+    const contents = [...run.contents];
+    while (contents.length > 0 && contents.at(-1)?.role === "model") {
+      contents.pop();
+    }
+    return contents;
+  }
+
+  /**
    * Captures files and marks run as failed, returning the error for pass-through.
+   * Filters out any contents with $error parts before saving.
    */
   #captureAndFail<T extends { $error: string }>(error: T): T {
     if (this.runState) {
       this.runState.status = "failed";
       this.runState.error = error.$error;
       this.runState.endTime = performance.now();
+      // Filter out content items containing $error parts
+      this.runState.contents = this.runState.contents.filter(
+        (content) =>
+          !content.parts?.some(
+            (part) => "$error" in part || (part as { $error?: unknown }).$error
+          )
+      );
       for (const [path, file] of this.fileSystem.files) {
         this.runState.files[path] = { ...file };
       }
@@ -147,9 +182,22 @@ class Loop {
         extraInstruction = `${extraInstruction}\n\n`;
       }
 
-      const contents: LLMContent[] = [
-        llm`<objective>${extraInstruction}${objectivePidgin.text}</objective>`.asContent(),
-      ];
+      // Check for a resumable failed run for this step (skip if no stepId)
+      const stepId = this.moduleArgs.context.currentStep?.id;
+      const resumableRun = stepId ? this.#findResumableRun(stepId) : undefined;
+      const objectiveContent =
+        llm`<objective>${extraInstruction}${objectivePidgin.text}</objective>`.asContent();
+      let contents: LLMContent[];
+      if (resumableRun) {
+        // Resume from the previous failed run, prepending objective
+        contents = [objectiveContent, ...this.#restoreFromRun(resumableRun)];
+        console.log(
+          `Resuming run ${resumableRun.id} from turn ${resumableRun.lastCompleteTurnIndex + 1}`
+        );
+      } else {
+        // Fresh start
+        contents = [objectiveContent];
+      }
 
       let terminateLoop = false;
       let result: AgentRawResult = {
@@ -238,9 +286,13 @@ class Loop {
         );
       }
 
-      // Initialize run state tracking
-      const runId = moduleArgs.context.currentStep?.id ?? crypto.randomUUID();
-      this.runState = moduleArgs.agentContext.createRun(runId, objective);
+      // Initialize run state tracking (only if stepId exists and not resuming)
+      if (stepId && !resumableRun) {
+        this.runState = this.moduleArgs.agentContext.createRun(
+          stepId,
+          objective
+        );
+      }
 
       const objectiveTools = objectivePidgin.tools.list().at(0);
       const tools: Tool[] = [

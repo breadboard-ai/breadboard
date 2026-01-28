@@ -172,4 +172,6 @@ export type RunState = {
   objective: LLMContent;
   /** Files created/used during the run (from AgentFileSystem) */
   files: Record<string, FileDescriptor>;
+  /** Whether this run can be resumed (set to false when graph is edited) */
+  resumable: boolean;
 };

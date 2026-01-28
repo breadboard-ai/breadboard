@@ -37,6 +37,7 @@ class AgentContext {
       lastCompleteTurnIndex: -1,
       objective,
       files: {},
+      resumable: true,
     };
     this.#runs.set(id, state);
     return state;
@@ -54,6 +55,17 @@ class AgentContext {
    */
   getAllRuns(): RunState[] {
     return [...this.#runs.values()];
+  }
+
+  /**
+   * Marks all failed runs as non-resumable (called when graph is edited).
+   */
+  invalidateResumableRuns(): void {
+    for (const run of this.#runs.values()) {
+      if (run.status === "failed") {
+        run.resumable = false;
+      }
+    }
   }
 
   /**
