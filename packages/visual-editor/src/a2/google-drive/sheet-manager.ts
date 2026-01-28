@@ -43,47 +43,65 @@ function parseSheetName(range: string): string | null {
   return match[1] || match[2];
 }
 
-class SheetManager implements MemoryManager {
-  private sheetId: Promise<Outcome<string | null>> | null = null;
+type GraphCache = {
+  sheetId: Promise<Outcome<string | null>> | null;
+  readCache: Map<string, Outcome<SpreadsheetValueRange>>;
+  metadata: Outcome<{ sheets: SheetMetadataWithFilePath[] }> | null;
+};
 
-  // Read caches - cleared on any write
-  private readCache = new Map<string, Outcome<SpreadsheetValueRange>>();
-  private metadataCache: Outcome<{
-    sheets: SheetMetadataWithFilePath[];
-  }> | null = null;
+class SheetManager implements MemoryManager {
+  // All caches are scoped by graph URL to prevent cross-graph pollution
+  private cacheByGraph = new Map<string, GraphCache>();
 
   constructor(
     private readonly config: SheetManagerConfig,
     private readonly sheetGetter: SheetGetter
   ) {}
 
+  private getGraphKey(context: NodeHandlerContext): string {
+    return context.currentGraph?.url || "";
+  }
+
+  private getGraphCache(context: NodeHandlerContext): GraphCache {
+    const graphKey = this.getGraphKey(context);
+    let cache = this.cacheByGraph.get(graphKey);
+    if (!cache) {
+      cache = { sheetId: null, readCache: new Map(), metadata: null };
+      this.cacheByGraph.set(graphKey, cache);
+    }
+    return cache;
+  }
+
   private checkSheetId(context: NodeHandlerContext) {
+    const cache = this.getGraphCache(context);
     // sheetId is cached separately from reads - only invalidated on create
-    if (this.sheetId) return this.sheetId;
+    if (cache.sheetId) return cache.sheetId;
     return this.sheetGetter(context, true);
   }
 
   private ensureSheetId(context: NodeHandlerContext): Promise<Outcome<string>> {
-    if (!this.sheetId) {
-      this.sheetId = this.sheetGetter(context, false);
+    const cache = this.getGraphCache(context);
+    if (!cache.sheetId) {
+      cache.sheetId = this.sheetGetter(context, false);
     }
-    return this.sheetId as Promise<Outcome<string>>;
+    return cache.sheetId as Promise<Outcome<string>>;
   }
 
   private makeModuleArgs(context: NodeHandlerContext) {
     return { ...this.config, context };
   }
 
-  private clearSheetCache(sheetName: string) {
+  private clearSheetCache(context: NodeHandlerContext, sheetName: string) {
+    const cache = this.getGraphCache(context);
     // Clear matching read cache entries
-    for (const range of this.readCache.keys()) {
+    for (const range of cache.readCache.keys()) {
       const cachedSheetName = parseSheetName(range);
       if (cachedSheetName === sheetName) {
-        this.readCache.delete(range);
+        cache.readCache.delete(range);
       }
     }
     // Always clear metadata since sheet list changed
-    this.metadataCache = null;
+    cache.metadata = null;
   }
 
   async createSheet(context: NodeHandlerContext, args: SheetMetadata) {
@@ -110,15 +128,17 @@ class SheetManager implements MemoryManager {
       return { success: false, error: creating.$error };
     }
 
-    this.clearSheetCache(name);
+    this.clearSheetCache(context, name);
     return { success: true };
   }
 
   async readSheet(context: NodeHandlerContext, args: { range: string }) {
     const { range } = args;
 
+    const cache = this.getGraphCache(context);
+
     // Check cache first
-    const cached = this.readCache.get(range);
+    const cached = cache.readCache.get(range);
     if (cached) return cached;
 
     const sheetId = await this.ensureSheetId(context);
@@ -131,7 +151,7 @@ class SheetManager implements MemoryManager {
     );
 
     // Cache the result
-    this.readCache.set(range, result);
+    cache.readCache.set(range, result);
     return result;
   }
 
@@ -155,7 +175,7 @@ class SheetManager implements MemoryManager {
     }
 
     const sheetName = parseSheetName(range);
-    if (sheetName) this.clearSheetCache(sheetName);
+    if (sheetName) this.clearSheetCache(context, sheetName);
     return { success: true };
   }
 
@@ -180,22 +200,24 @@ class SheetManager implements MemoryManager {
     ]);
     if (!ok(deleting)) return deleting;
 
-    this.clearSheetCache(args.name);
+    this.clearSheetCache(context, args.name);
     return { success: true };
   }
 
   async getSheetMetadata(
     context: NodeHandlerContext
   ): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>> {
+    const cache = this.getGraphCache(context);
+
     // Check cache first
-    if (this.metadataCache) return this.metadataCache;
+    if (cache.metadata) return cache.metadata;
 
     const sheetId = await this.checkSheetId(context);
     if (!sheetId) {
       return { sheets: [] };
     }
     if (!ok(sheetId)) return sheetId;
-    this.sheetId = Promise.resolve(sheetId);
+    cache.sheetId = Promise.resolve(sheetId);
 
     const moduleArgs = this.makeModuleArgs(context);
     const metadata = await getSpreadsheetMetadata(moduleArgs, sheetId);
@@ -232,11 +254,10 @@ class SheetManager implements MemoryManager {
         return err(errors.join(","));
       }
       const result = { sheets };
-      this.metadataCache = result;
+      cache.metadata = result;
       return result;
     } catch (e) {
       return err((e as Error).message);
     }
   }
 }
-
