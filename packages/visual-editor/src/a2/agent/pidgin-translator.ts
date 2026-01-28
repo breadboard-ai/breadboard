@@ -33,6 +33,12 @@ export type ToPidginResult = {
   tools: SimplifiedToolManager;
 };
 
+export type SubstitutePartsArgs = {
+  value: LLMContent;
+  fileSystem: AgentFileSystem;
+  textAsFiles: boolean;
+};
+
 export type PidginTextPart = {
   text: string;
 };
@@ -211,11 +217,19 @@ class PidginTranslator {
             } else if (typeof value === "string") {
               return value;
             } else if (isLLMContent(value)) {
-              return substituteParts(value, this.fileSystem, true);
+              return substituteParts({
+                value,
+                fileSystem: this.fileSystem,
+                textAsFiles: true,
+              });
             } else if (isLLMContentArray(value)) {
               const last = value.at(-1);
               if (!last) return "";
-              return substituteParts(last, this.fileSystem, true);
+              return substituteParts({
+                value: last,
+                fileSystem: this.fileSystem,
+                textAsFiles: true,
+              });
             } else {
               errors.push(
                 `Agent: Unknown param value type: "${JSON.stringify(value)}`
@@ -261,15 +275,19 @@ class PidginTranslator {
     }
 
     return {
-      text: substituteParts(pidginContent, this.fileSystem, textAsFiles),
+      text: substituteParts({
+        value: pidginContent,
+        fileSystem: this.fileSystem,
+        textAsFiles,
+      }),
       tools: toolManager,
     };
 
-    function substituteParts(
-      value: LLMContent,
-      fileSystem: AgentFileSystem,
-      textAsFiles: boolean
-    ) {
+    function substituteParts({
+      value,
+      fileSystem,
+      textAsFiles,
+    }: SubstitutePartsArgs) {
       const values: string[] = [];
       for (const part of value.parts) {
         if ("text" in part) {
