@@ -26,10 +26,8 @@ function makeFreshGraph(): GraphDescriptor {
  * Creates a mock snackbar controller for testing.
  */
 function makeMockSnackbarController() {
-  const snackbars: Map<
-    SnackbarUUID,
-    { message: string; type: SnackType }
-  > = new Map();
+  const snackbars: Map<SnackbarUUID, { message: string; type: SnackType }> =
+    new Map();
   let lastId: SnackbarUUID | null = null;
 
   return {
@@ -41,8 +39,7 @@ function makeMockSnackbarController() {
       _id?: SnackbarUUID,
       _replaceAll?: boolean
     ): SnackbarUUID => {
-      const id =
-        _id ?? (globalThis.crypto.randomUUID() as SnackbarUUID);
+      const id = _id ?? (globalThis.crypto.randomUUID() as SnackbarUUID);
       snackbars.set(id, { message, type });
       lastId = id;
       return id;
@@ -105,7 +102,10 @@ function makeMockBoardServer(options: {
       if (options.createShouldThrow) {
         throw new Error("Create failed");
       }
-      return { result: true, url: options.createUrl ?? "https://new.com/board.json" };
+      return {
+        result: true,
+        url: options.createUrl ?? "https://new.com/board.json",
+      };
     },
     deepCopy: async (_url: URL, graph: GraphDescriptor) => graph,
     delete: async (_url: URL) => {
@@ -392,10 +392,7 @@ suite("Board Actions", () => {
       assert.ok(result, "Should return a result");
       assert.strictEqual(result.result, true);
       assert.ok(result.url, "Should return a URL");
-      assert.strictEqual(
-        result.url.href,
-        "https://example.com/new-board.json"
-      );
+      assert.strictEqual(result.url.href, "https://example.com/new-board.json");
       assert.strictEqual(mockBoardServer.createCallCount, 1);
       // Snackbar should be cleared on success
       assert.strictEqual(mockSnackbars.entries.size, 0);
@@ -407,8 +404,14 @@ suite("Board Actions", () => {
 
       const mockBoardServer = makeMockBoardServer({});
       // Override create to return no URL
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (mockBoardServer as any).create = async () => ({ result: false, url: undefined });
+      (
+        mockBoardServer as unknown as {
+          create: () => Promise<{ result: false; url: undefined }>;
+        }
+      ).create = async () => ({
+        result: false,
+        url: undefined,
+      });
 
       const { controller } = makeMockController({
         editor: null,
@@ -497,7 +500,7 @@ suite("Board Actions", () => {
       const mockBoardMain = {
         isHydrated: Promise.resolve(),
         getEditHistory: () => [],
-        saveEditHistory: () => { },
+        saveEditHistory: () => {},
         newerVersionAvailable: false,
       };
 
@@ -575,4 +578,3 @@ suite("Board Actions", () => {
     });
   });
 });
-
