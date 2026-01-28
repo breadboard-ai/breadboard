@@ -53,8 +53,7 @@ export class Admin {
   }
 
   get project(): Project | null {
-    const tab = this.runtime.board.tabs.values().next().value;
-    if (!tab) return null;
+    // Return project directly - no longer need to check tabs
     return this.runtime.state.project;
   }
 
