@@ -14,7 +14,7 @@ import {
   SheetMetadataWithFilePath,
 } from "../src/a2/agent/types.js";
 import { Outcome } from "@breadboard-ai/types";
-import { type ConsentController } from "../src/sca/controller/subcontrollers/consent-controller.js";
+import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
 
 export { stubCaps, stubModuleArgs, stubMemoryManager };
 

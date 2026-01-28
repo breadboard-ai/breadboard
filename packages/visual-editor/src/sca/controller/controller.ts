@@ -4,20 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { setDebuggableAppController } from "../utils/logging/logger.js";
-import { DebugController } from "./subcontrollers/debug-controller.js";
-import { FeedbackController } from "./subcontrollers/feedback-controller.js";
 import { DebuggableAppController, HydratedController } from "../types.js";
-import { ToastController } from "./subcontrollers/toast-controller.js";
-import { SnackbarController } from "./subcontrollers/snackbar-controller.js";
+import { BoardController } from "./subcontrollers/board/board-controller.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
-import { FlagController } from "./subcontrollers/flag-controller.js";
-import { GlobalController } from "./subcontrollers/global/global.js";
 import { isHydratedController } from "../utils/helpers/helpers.js";
 
+import * as Global from "./subcontrollers/global/global.js";
 import * as Editor from "./subcontrollers/editor/editor.js";
 import * as Home from "./subcontrollers/home/home.js";
 import * as Migrations from "./migration/migrations.js";
-import { ConsentController } from "./subcontrollers/consent-controller.js";
 
 /**
  * The root application controller that organizes all domain-specific
@@ -37,6 +32,7 @@ class Controller implements AppController {
   editor: AppController["editor"];
   home: AppController["home"];
   global: AppController["global"];
+  board: AppController["board"];
 
   constructor(flags: RuntimeFlags) {
     const runtimeFlags = flags;
@@ -53,13 +49,13 @@ class Controller implements AppController {
     };
 
     this.global = {
-      main: new GlobalController("Global"),
-      flags: new FlagController("Flags", runtimeFlags),
-      debug: new DebugController("Debug"),
-      feedback: new FeedbackController("Feedback"),
-      toasts: new ToastController("Toasts"),
-      snackbars: new SnackbarController("Snackbars"),
-      consent: new ConsentController("Consent"),
+      main: new Global.GlobalController("Global"),
+      flags: new Global.FlagController("Flags", runtimeFlags),
+      debug: new Global.DebugController("Debug"),
+      feedback: new Global.FeedbackController("Feedback"),
+      toasts: new Global.ToastController("Toasts"),
+      snackbars: new Global.SnackbarController("Snackbars"),
+      consent: new Global.ConsentController("Consent"),
 
       // Migrations are tested independently so this block is ignored for coverage
       // However c8 needs to know the number of lines to ignore, so number below
@@ -76,6 +72,10 @@ class Controller implements AppController {
         await Migrations.flagsMigration(controller.global.flags, runtimeFlags);
       },
     };
+
+    this.board = {
+      main: new BoardController("Board")
+    }
   }
 
   /**
@@ -162,14 +162,17 @@ export interface AppController extends DebuggableAppController {
     recent: Home.RecentBoardsController;
   };
   global: {
-    main: GlobalController;
-    flags: FlagController;
-    debug: DebugController;
-    feedback: FeedbackController;
-    toasts: ToastController;
-    snackbars: SnackbarController;
-    consent: ConsentController;
+    main: Global.GlobalController;
+    flags: Global.FlagController;
+    debug: Global.DebugController;
+    feedback: Global.FeedbackController;
+    toasts: Global.ToastController;
+    snackbars: Global.SnackbarController;
+    consent: Global.ConsentController;
     performMigrations(): Promise<void>;
+  };
+  board: {
+    main: BoardController;
   };
   isHydrated: Promise<number[]>;
 }

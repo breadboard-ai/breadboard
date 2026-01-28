@@ -5,8 +5,8 @@
  */
 
 import { RuntimeFlagManager, RuntimeFlags } from "@breadboard-ai/types";
-import { field } from "../decorators/field.js";
-import { RootController } from "./root-controller.js";
+import { field } from "../../decorators/field.js";
+import { RootController } from "../root-controller.js";
 
 export class FlagController
   extends RootController

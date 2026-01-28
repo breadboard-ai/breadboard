@@ -6,9 +6,9 @@
 
 import assert from "node:assert";
 import { afterEach, beforeEach, suite, test } from "node:test";
-import { SnackbarController } from "../../../../src/sca/controller/subcontrollers/snackbar-controller.js";
-import { SnackType } from "../../../../src/ui/types/types.js";
-import { setDOM, unsetDOM } from "../../../fake-dom.js";
+import { SnackbarController } from "../../../../../src/sca/controller/subcontrollers/global/snackbar-controller.js";
+import { SnackType } from "../../../../../src/ui/types/types.js";
+import { setDOM, unsetDOM } from "../../../../fake-dom.js";
 
 suite("SnackbarController", () => {
   beforeEach(() => {

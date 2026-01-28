@@ -5,9 +5,9 @@
  */
 
 import type { HTMLTemplateResult } from "lit";
-import type { SnackbarAction, SnackType, SnackbarUUID } from "../../../ui/types/types.js";
-import { field } from "../decorators/field.js";
-import { RootController } from "./root-controller.js";
+import type { SnackbarAction, SnackType, SnackbarUUID } from "../../../../ui/types/types.js";
+import { field } from "../../decorators/field.js";
+import { RootController } from "../root-controller.js";
 
 /**
  * Snackbar message data stored in the controller.
