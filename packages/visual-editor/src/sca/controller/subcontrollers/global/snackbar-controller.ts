@@ -34,7 +34,7 @@ type SnackbarMap = Map<SnackbarUUID, SnackbarEntry>;
  * and automatically re-renders when the state changes.
  */
 export class SnackbarController extends RootController {
-  @field()
+  @field({ deep: true })
   private accessor _snackbars: SnackbarMap = new Map();
 
   /**
