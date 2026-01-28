@@ -29,12 +29,16 @@ export class BoardController extends RootController {
 
   /**
    * Tracks edit history (undo/redo stack) for each board URL.
-   * Persisted to IDB so users can undo/redo across sessions.
+   * Persisted to IDB so users can undo/redo across sessions. This is not a deep
+   * field because the consumed history needs to be passed to structuredClone
+   * which cannot handle Proxies.
+   *
+   * @deep false
    *
    * Key: Board URL
    * Value: Array of edit history entries
    */
-  @field({ persist: "idb" })
+  @field({ persist: "idb", deep: false })
   private accessor editHistory: Map<string, EditHistoryEntry[]> = new Map();
 
   /**

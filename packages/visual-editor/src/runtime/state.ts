@@ -13,7 +13,6 @@ import {
   MutableGraphStore,
 } from "@breadboard-ai/types";
 import { Runtime } from "./runtime.js";
-import { RuntimeTabChangeEvent } from "./events.js";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { AppController } from "../sca/controller/controller.js";
@@ -45,25 +44,28 @@ class StateManager implements RuntimeContext {
     this.#store = store;
     this.flowGenerator = this.runtime.flowGenerator;
     this.lite = createLiteModeState(this, appController);
+  }
 
-    // TODO: Remove this event in favor of an effect.
-    this.runtime.board.addEventListener(RuntimeTabChangeEvent.eventName, () => {
-      const tab = this.runtime.board.currentTab;
-      if (!tab) {
-        // When the tab is null and the main graph id is not null, we are in the
-        // process of closing a tab. Reset the state.
-        if (this.#currentMainGraphId) {
-          this.#currentMainGraphId = null;
-          this.project = null;
-        }
-        return;
+  /**
+   * Syncs project state from the SCA controller.
+   * Called directly after load/close actions.
+   */
+  syncProjectState(): void {
+    const tab = this.__sca.controller.editor.graph.asTab();
+    if (!tab) {
+      // When the tab is null and the main graph id is not null, we are in the
+      // process of closing a tab. Reset the state.
+      if (this.#currentMainGraphId) {
+        this.#currentMainGraphId = null;
+        this.project = null;
       }
-      const mainGraphId = tab.mainGraphId;
-      if (mainGraphId === this.#currentMainGraphId) return;
-      this.#currentMainGraphId = mainGraphId;
-      const editor = this.__sca.controller.editor.graph.editor;
-      this.project = this.createProjectState(mainGraphId, editor);
-    });
+      return;
+    }
+    const mainGraphId = tab.mainGraphId;
+    if (mainGraphId === this.#currentMainGraphId) return;
+    this.#currentMainGraphId = mainGraphId;
+    const editor = this.__sca.controller.editor.graph.editor;
+    this.project = this.createProjectState(mainGraphId, editor);
   }
 
   get router() {

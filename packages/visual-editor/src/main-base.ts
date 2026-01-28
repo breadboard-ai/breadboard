@@ -122,8 +122,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   @provide({ context: scaContext })
   protected accessor sca: SCA;
 
-  @state()
-  protected accessor tab: Runtime.Types.Tab | null = null;
+  // Computed from SCA controller - no longer stored
+  protected get tab(): Runtime.Types.Tab | null {
+    return this.sca.controller.editor.graph.asTab();
+  }
 
   /**
    * Monotonically increases whenever the graph topology of a graph in the
@@ -346,7 +348,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     ) {
       console.log(
         "[signin] oauth scopes were missing or the user revoked access, " +
-          "forcing signin.",
+        "forcing signin.",
         result
       );
       await this.sca.services.signinAdapter.signOut();
@@ -435,8 +437,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    const currentUrl = new URL(window.location.href);
-
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeShareMissingEvent.eventName,
       () => {
@@ -518,7 +518,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Note: Auto-save is now handled by registerSaveTrigger in SCA.
     // The trigger watches for version changes and calls actions.board.save().
 
-
     this.runtime.edit.addEventListener(
       Runtime.Events.RuntimeErrorEvent.eventName,
       (evt: Runtime.Events.RuntimeErrorEvent) => {
@@ -563,42 +562,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Note: RuntimeNewerSharedVersionEvent listener moved to
     // SCA trigger: Board.registerNewerVersionTrigger()
 
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeTabChangeEvent.eventName,
-      async () => {
-        this.tab = this.runtime.board.currentTab;
-        this.#maybeShowWelcomePanel();
-
-        if (this.tab) {
-          if (this.tab.graph.title) {
-            this.runtime.shell.setPageTitle(this.tab.graph.title);
-          }
-
-          const preparingNextRun = await this.runtime.prepareRun(
-            this.tab,
-            this.settings
-          );
-          if (!ok(preparingNextRun)) {
-            console.warn(preparingNextRun.$error);
-          }
-
-          if (this.tab.graph.url && this.tab.graphIsMine) {
-            const board: RecentBoard = { url: this.tab.graph.url };
-            if (this.tab.graph.title) board.title = this.tab.graph.title;
-            this.sca.controller.home.recent.add(board);
-          }
-
-          this.sca.controller.global.main.loadState = "Loaded";
-          this.runtime.select.refresh(
-            this.tab.id,
-            this.runtime.util.createWorkspaceSelectionChangeId()
-          );
-        } else {
-          this.runtime.router.clearFlowParameters();
-          this.runtime.shell.setPageTitle(null);
-        }
-      }
-    );
+    // Note: RuntimeTabChangeEvent listener removed - logic moved to
+    // #handleBoardStateChanged() which is called directly after load/close
 
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeTabCloseEvent.eventName,
@@ -703,15 +668,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
         // Close tab, go to the home page.
         if (parseUrl(urlWithoutMode).page === "home") {
-          if (this.tab) {
-            this.runtime.board.closeTab(this.tab.id);
-            return;
-          }
-
-          // This does a round-trip to clear out any tabs, after which it
-          // will dispatch an event which will cause the welcome page to be
-          // shown.
-          this.runtime.board.createTabsFromURL(currentUrl);
+          this.sca.actions.board.close();
+          await this.#handleBoardStateChanged();
+          return;
         } else {
           // Load the tab.
           const boardUrl = this.runtime.board.getBoardURL(urlWithoutMode);
@@ -734,19 +693,23 @@ abstract class MainBase extends SignalWatcher(LitElement) {
             }, LOADING_TIMEOUT);
 
             this.sca.controller.global.main.loadState = "Loading";
-            await this.runtime.board.createTabFromURL(
-              boardUrl,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              evt.creator,
-              evt.resultsFileId
-            );
+            const loadResult = await this.sca.actions.board.load(boardUrl, {
+              creator: evt.creator,
+              resultsFileId: evt.resultsFileId,
+            });
             clearTimeout(loadingTimeout);
             if (snackbarId) {
               this.sca.controller.global.snackbars.unsnackbar(snackbarId);
+            }
+            if (!loadResult.success) {
+              this.logger.log(
+                Utils.Logging.Formatter.warning(
+                  `Failed to load board: ${loadResult.reason}`
+                ),
+                "Main Base"
+              );
+            } else {
+              await this.#handleBoardStateChanged();
             }
           }
         }
@@ -795,6 +758,53 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         type: "board_id_created",
         id: url.href,
       });
+    }
+  }
+
+  /**
+   * Handles post-load/close state changes.
+   * Calls syncProjectState directly instead of event dispatch.
+   */
+  async #handleBoardStateChanged(): Promise<void> {
+    // Sync project state (creates the Project object for the loaded graph)
+    this.runtime.state.syncProjectState();
+
+    // Dispatch event for index-lite.ts which still uses event listeners
+    // TODO: Remove when index-lite.ts is fully migrated to signals
+    this.runtime.board.dispatchEvent(
+      new Runtime.Events.RuntimeTabChangeEvent()
+    );
+
+    const tab = this.tab;
+    this.#maybeShowWelcomePanel();
+
+    if (tab) {
+      if (tab.graph.title) {
+        this.runtime.shell.setPageTitle(tab.graph.title);
+      }
+
+      const preparingNextRun = await this.runtime.prepareRun(
+        tab,
+        this.settings
+      );
+      if (!ok(preparingNextRun)) {
+        console.warn(preparingNextRun.$error);
+      }
+
+      if (tab.graph.url && tab.graphIsMine) {
+        const board: RecentBoard = { url: tab.graph.url };
+        if (tab.graph.title) board.title = tab.graph.title;
+        this.sca.controller.home.recent.add(board);
+      }
+
+      this.sca.controller.global.main.loadState = "Loaded";
+      this.runtime.select.refresh(
+        tab.id,
+        this.runtime.util.createWorkspaceSelectionChangeId()
+      );
+    } else {
+      this.runtime.router.clearFlowParameters();
+      this.runtime.shell.setPageTitle(null);
     }
   }
 
@@ -968,7 +978,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
    * @deprecated File drop to create new tab is no longer supported
    */
   protected attemptImportFromDrop(_evt: DragEvent) {
-  // No-op: createTabFromDescriptor functionality removed
+    // No-op: createTabFromDescriptor functionality removed
   }
 
   protected getRenderValues(): RenderValues {
@@ -1216,8 +1226,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         .consentMessage=${this.guestConfiguration.consentMessage}
         .blurBackground=${blurBackground}
         @bbmodaldismissed=${() => {
-          this.sca.controller.global.main.show.delete("SignInModal");
-        }}
+      this.sca.controller.global.main.show.delete("SignInModal");
+    }}
       ></bb-sign-in-modal>
     `;
   }
