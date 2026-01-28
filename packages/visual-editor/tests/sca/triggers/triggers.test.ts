@@ -33,7 +33,15 @@ suite("Triggers", () => {
 
   test("Instantiates without error", () => {
     assert.doesNotThrow(() => {
-      triggers(makeTestController(), {} as AppServices, {} as AppActions);
+      triggers(
+        makeTestController(),
+        {
+          agentContext: {
+            invalidateResumableRuns: () => {},
+          },
+        } as AppServices,
+        {} as AppActions
+      );
     });
 
     assert.throws(() => {
@@ -43,15 +51,24 @@ suite("Triggers", () => {
   });
 
   test("cleans up", () => {
-    triggers(makeTestController(), {} as AppServices, {} as AppActions);
+    triggers(
+      makeTestController(),
+      {
+        agentContext: {
+          invalidateResumableRuns: () => {},
+        },
+      } as AppServices,
+      {} as AppActions
+    );
     assert.deepStrictEqual(list(), {
       board: ["Save Trigger"],
       node: ["Autoname Trigger"],
+      agent: ["Graph Invalidate Trigger"],
     });
     clean();
 
     // Cleaning removes the triggers and the instance.
-    assert.deepStrictEqual(list(), { board: [], node: [] });
+    assert.deepStrictEqual(list(), { agent: [], board: [], node: [] });
 
     // Confirm that listing and cleaning do not throw in the absence of a
     // trigger instance.
