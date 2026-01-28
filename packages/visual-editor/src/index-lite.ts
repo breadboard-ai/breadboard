@@ -387,7 +387,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #advancedEditorLink: Ref<HTMLElement> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
 
-  private accessStatus: CheckAppAccessResult | null = null;
+  private accessor accessStatus: CheckAppAccessResult | null = null;
 
   private boardLoaded: Promise<void>;
 
@@ -424,6 +424,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return this.handleRoutedEvent(evt);
     });
 
+    // Set up promise that resolves when board is loaded
     let resolve: (() => void) | undefined;
     this.boardLoaded = new Promise<void>((r) => {
       resolve = r;

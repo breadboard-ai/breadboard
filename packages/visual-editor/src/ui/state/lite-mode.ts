@@ -146,6 +146,11 @@ class ReactiveLiteModeState implements LiteModeState {
           zeroState = !!parsedUrl.new;
           if (zeroState) return "home";
         }
+        // If the URL has a flow but loadState is still "Home", the load
+        // action hasn't started yet - treat as "loading" rather than "invalid"
+        if (parsedUrl.page === "graph" && parsedUrl.flow) {
+          return "loading";
+        }
         console.warn("Invalid Home URL state", parsedUrl);
         return "invalid";
       }
