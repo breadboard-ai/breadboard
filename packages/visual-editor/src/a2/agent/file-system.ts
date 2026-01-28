@@ -16,20 +16,12 @@ import {
 import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 import { toText } from "../a2/utils.js";
-import { MemoryManager } from "./types.js";
+import { FileDescriptor, MemoryManager } from "./types.js";
 import { GENERATE_TEXT_FUNCTION } from "./functions/generate.js";
 
 export { AgentFileSystem };
 
 const KNOWN_TYPES = ["audio", "video", "image", "text"];
-
-export type FileDescriptor = {
-  type: "text" | "storedData" | "inlineData" | "fileData";
-  mimeType: string;
-  data: string;
-  title?: string;
-  resourceKey?: string;
-};
 
 export type AddFilesToProjectResult = {
   existing: string[];
@@ -300,6 +292,18 @@ class AgentFileSystem {
 
   get files(): ReadonlyMap<string, DeepReadonly<FileDescriptor>> {
     return this.#files;
+  }
+
+  /**
+   * Restores file system state from a saved snapshot.
+   * Used for resuming failed runs.
+   */
+  restoreFrom(files: Record<string, FileDescriptor>): void {
+    this.#files.clear();
+    for (const [path, descriptor] of Object.entries(files)) {
+      this.#files.set(path, { ...descriptor });
+    }
+    this.#fileCount = this.#files.size;
   }
 
   #createNamed(

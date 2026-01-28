@@ -18,6 +18,14 @@ import type {
 import type { SimplifiedToolManager } from "../a2/tool-manager.js";
 import type { SpreadsheetValueRange } from "../google-drive/api.js";
 
+export type FileDescriptor = {
+  type: "text" | "storedData" | "inlineData" | "fileData";
+  mimeType: string;
+  data: string;
+  title?: string;
+  resourceKey?: string;
+};
+
 export type FunctionCallerFactory = {
   create(
     builtIn: Map<string, FunctionDefinition>,
@@ -138,4 +146,32 @@ export type MappedDefinitions = {
 
 export type FunctionGroup = MappedDefinitions & {
   instruction?: string;
+};
+
+/**
+ * Status of an agent loop run.
+ */
+export type RunStatus = "running" | "failed" | "completed";
+
+/**
+ * Stored state of an agent loop run, used for resume and trace download.
+ */
+export type RunState = {
+  id: string;
+  status: RunStatus;
+  startTime: number;
+  endTime?: number;
+  contents: LLMContent[];
+  /** The model name used for this run */
+  model?: string;
+  /** The full request body sent to Gemini (captured after first request) */
+  requestBody?: GeminiBody;
+  lastCompleteTurnIndex: number;
+  error?: string;
+  /** The original objective for this run */
+  objective: LLMContent;
+  /** Files created/used during the run (from AgentFileSystem) */
+  files: Record<string, FileDescriptor>;
+  /** Whether this run can be resumed (set to false when graph is edited) */
+  resumable: boolean;
 };

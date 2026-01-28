@@ -43,6 +43,7 @@ import { GoogleDriveBoardServer } from "../../board-server/server.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
+  agentContext: AgentContext;
   autonamer: Autonamer;
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
@@ -147,6 +148,7 @@ export function services(
 
     instance = {
       actionTracker,
+      agentContext,
       autonamer,
       emailPrefsManager,
       fetchWithCreds,

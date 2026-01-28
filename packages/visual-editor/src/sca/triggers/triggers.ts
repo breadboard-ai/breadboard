@@ -7,10 +7,12 @@
 import { AppActions } from "../actions/actions.js";
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
+import * as Agent from "./agent/agent-triggers.js";
 import * as Board from "./board/board-triggers.js";
 import * as Node from "./node/node-triggers.js";
 
 export interface AppTriggers {
+  agent: typeof Agent;
   board: typeof Board;
   node: typeof Node;
 }
@@ -25,11 +27,13 @@ export function triggers(
   actions: AppActions
 ) {
   if (!instance) {
+    Agent.bind({ controller, services, actions });
     Board.bind({ controller, services, actions });
     Node.bind({ controller, services, actions });
     register();
 
     instance = {
+      agent: Agent,
       board: Board,
       node: Node,
     } satisfies AppTriggers;
@@ -38,6 +42,7 @@ export function triggers(
 }
 
 export function register() {
+  Agent.registerGraphInvalidateTrigger();
   Board.registerSaveTrigger();
   Node.registerAutonameTrigger();
 }

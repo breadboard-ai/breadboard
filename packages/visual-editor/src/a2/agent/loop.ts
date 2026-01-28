@@ -31,6 +31,7 @@ import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
 import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
 import { TaskTreeManager } from "./task-tree-manager.js";
+import { RunStateManager } from "./run-state-manager.js";
 
 export { Loop };
 
@@ -85,6 +86,7 @@ class Loop {
   private readonly ui: AgentUI;
   private readonly memoryManager: MemoryManager;
   private readonly taskTreeManager: TaskTreeManager;
+  private readonly runStateManager: RunStateManager;
 
   constructor(
     private readonly caps: Capabilities,
@@ -98,6 +100,10 @@ class Loop {
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
     this.taskTreeManager = new TaskTreeManager(this.fileSystem);
+    this.runStateManager = new RunStateManager(
+      moduleArgs.agentContext,
+      this.fileSystem
+    );
   }
 
   async run({
@@ -131,9 +137,14 @@ class Loop {
         extraInstruction = `${extraInstruction}\n\n`;
       }
 
-      const contents: LLMContent[] = [
-        llm`<objective>${extraInstruction}${objectivePidgin.text}</objective>`.asContent(),
-      ];
+      // Start or resume the run via RunStateManager
+      const stepId = this.moduleArgs.context.currentStep?.id;
+      const objectiveContent =
+        llm`<objective>${extraInstruction}${objectivePidgin.text}</objective>`.asContent();
+      const { contents } = this.runStateManager.startOrResume(
+        stepId,
+        objectiveContent
+      );
 
       let terminateLoop = false;
       let result: AgentRawResult = {
@@ -254,16 +265,23 @@ class Loop {
           tools,
         };
         const conformedBody = await conformGeminiBody(moduleArgs, body);
-        if (!ok(conformedBody)) return conformedBody;
+        if (!ok(conformedBody)) {
+          return this.runStateManager.fail(conformedBody);
+        }
 
         ui.progress.sendRequest(AGENT_MODEL, conformedBody);
+
+        // Capture the request body for the first request only
+        this.runStateManager.captureRequestBody(AGENT_MODEL, conformedBody);
 
         const generated = await streamGenerateContent(
           AGENT_MODEL,
           conformedBody,
           moduleArgs
         );
-        if (!ok(generated)) return generated;
+        if (!ok(generated)) {
+          return this.runStateManager.fail(generated);
+        }
         const functionCaller = new FunctionCallerImpl(
           functionDefinitionMap,
           objectivePidgin.tools
@@ -271,11 +289,12 @@ class Loop {
         for await (const chunk of generated) {
           const content = chunk.candidates?.at(0)?.content;
           if (!content) {
-            return err(
-              `Agent unable to proceed: no content in Gemini response`
+            return this.runStateManager.fail(
+              err(`Agent unable to proceed: no content in Gemini response`)
             );
           }
           contents.push(content);
+          this.runStateManager.pushContent(content);
           const parts = content.parts || [];
           for (const part of parts) {
             if (part.thought) {
@@ -296,12 +315,19 @@ class Loop {
         const functionResults = await functionCaller.getResults();
         if (!functionResults) continue;
         if (!ok(functionResults)) {
-          return err(`Agent unable to proceed: ${functionResults.$error}`);
+          return this.runStateManager.fail(
+            err(`Agent unable to proceed: ${functionResults.$error}`)
+          );
         }
         ui.progress.functionResult(functionResults);
         contents.push(functionResults);
+        this.runStateManager.pushContent(functionResults);
+        this.runStateManager.completeTurn();
       }
       return this.#finalizeResult(result);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      return this.runStateManager.fail(err(`Agent error: ${errorMessage}`));
     } finally {
       ui.progress.finish();
     }
@@ -310,8 +336,10 @@ class Loop {
   async #finalizeResult(raw: AgentRawResult): Promise<Outcome<AgentResult>> {
     const { success, href, objective_outcome } = raw;
     if (!success) {
-      return err(objective_outcome);
+      return this.runStateManager.fail(err(objective_outcome));
     }
+    // Capture files for successful run
+    this.runStateManager.complete();
     const outcomes = await this.translator.fromPidginString(objective_outcome);
     if (!ok(outcomes)) return outcomes;
     const intermediateFiles = [...this.fileSystem.files.keys()];
