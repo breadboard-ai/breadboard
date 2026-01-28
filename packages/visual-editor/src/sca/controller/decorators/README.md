@@ -50,24 +50,34 @@ class MyController extends RootController {
 
 ## Deep Tracking
 
-By default, `@field` uses deep signal wrapping for objects and arrays. This means mutations to nested properties trigger reactivity:
+By default, `@field` uses **shallow** signal tracking. This means only full property replacement triggers reactivity, which is more efficient for primitive values:
 
 ```typescript
 @field()
-accessor items: string[] = [];
+accessor theme = "light";
 
 // This triggers reactivity
+this.theme = "dark";
+```
+
+For objects and arrays where you need mutations (like `.push()` or `.set()`) to trigger reactivity, enable deep tracking:
+
+```typescript
+@field({ deep: true })
+accessor items: string[] = [];
+
+// This triggers reactivity because deep: true
 this.items.push("new item");
 ```
 
-To disable deep tracking (for performance with large immutable data):
+Without `deep: true`, you would need full replacement:
 
 ```typescript
-@field({ deep: false })
-accessor largeData = { ... };
+@field()  // deep: false by default
+accessor items: string[] = [];
 
 // Only full replacement triggers reactivity
-this.largeData = { ...this.largeData, updated: true };
+this.items = [...this.items, "new item"];
 ```
 
 ---

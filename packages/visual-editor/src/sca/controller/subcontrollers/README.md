@@ -114,11 +114,11 @@ accessor isLoading = false;
 @field()
 accessor errorMessage: string | null = null;
 
-@field()
+@field({ deep: true })  // deep: true for collections that mutate
 accessor items: Item[] = [];
 
 // ❌ Avoid: Nested state object
-@field()
+@field({ deep: true })
 accessor state = { isLoading: false, error: null, items: [] };
 ```
 
