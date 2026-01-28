@@ -29,10 +29,10 @@ export interface ConfigChangeContext {
 }
 
 export class GraphController extends RootController {
-  @field()
+  @field({ deep: false })
   private accessor _editor: EditableGraph | null = null;
 
-  @field()
+  @field({ deep: false })
   private accessor _graph: GraphDescriptor | null = null;
 
   @field()
