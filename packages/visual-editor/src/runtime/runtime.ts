@@ -96,20 +96,10 @@ export class Runtime extends EventTarget {
     this.flowGenerator = config.sca.services.flowGenerator;
 
     const kits = config.sca.services.kits;
-    const loader = config.sca.services.loader;
-    const graphStore = config.sca.services.graphStore;
     const { appName, appSubName } = config;
 
     this.shell = new Shell(appName, appSubName);
-    this.board = new Board(
-      loader,
-      graphStore,
-      this.googleDriveBoardServer,
-      this.signinAdapter,
-      this.googleDriveClient,
-      /** Here for migrations */
-      config.sca
-    );
+    this.board = new Board();
     this.util = Util;
     this.select = new Select();
     this.router = new Router();
@@ -121,11 +111,11 @@ export class Runtime extends EventTarget {
 
     this.state = new StateManager(
       this,
-      graphStore,
+      this.__sca.services.graphStore,
       this.appController,
       config.sca
     );
-    this.run = new Run(graphStore, this.state, this.flags, kits);
+    this.run = new Run(this.__sca.services.graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();
   }
@@ -142,7 +132,7 @@ export class Runtime extends EventTarget {
       runner: graph,
       diagnostics: true,
       kits: [], // The kits are added by the runtime.
-      loader: this.board.loader,
+      loader: this.__sca.services.loader,
       graphStore: this.__sca.services.graphStore,
       fileSystem: this.__sca.services.graphStore.fileSystem.createRunFileSystem({
         graphUrl: url,

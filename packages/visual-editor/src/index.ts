@@ -345,13 +345,6 @@ class Main extends MainBase {
         this.lastPointerPosition.x = evt.x;
         this.lastPointerPosition.y = evt.y;
       }}
-      @bbinteraction=${() => {
-        if (!this.tab) {
-          return;
-        }
-
-        this.runtime.board.clearPendingBoardSave(this.tab.id);
-      }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
         const message: IterateOnPromptMessage = {
           type: "iterate_on_prompt",
@@ -606,7 +599,11 @@ class Main extends MainBase {
       .url=${this.tab?.graph?.url ?? null}
       .loadState=${this.sca.controller.global.main.loadState}
       .canSave=${renderValues.canSave}
-      .isMine=${this.runtime.board.isMine(this.tab?.graph.url)}
+      .isMine=${this.tab?.graph.url
+        ? this.sca.services.googleDriveBoardServer.isMine(
+            new URL(this.tab.graph.url)
+          )
+        : false}
       .saveStatus=${renderValues.saveStatus}
       .mode=${this.sca.controller.global.main.mode}
       @bbsignout=${async () => {

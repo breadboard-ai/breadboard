@@ -333,7 +333,7 @@ export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
   async do(deps) {
-    const { runtime, originalEvent, sca } = deps;
+    const { originalEvent, sca } = deps;
     sca.controller.global.main.blockingAction = true;
 
     // Immediately acknowledge the user's action with a snackbar. This will be
@@ -349,7 +349,7 @@ export const RemixRoute: EventRoute<"board.remix"> = {
       true // Replace existing snackbars.
     );
 
-    const graphStore = runtime.board.graphStore;
+    const graphStore = sca.services.graphStore;
     const addResult = graphStore.addByURL(originalEvent.detail.url, [], {});
     const graph = structuredClone(
       (await graphStore.getLatest(addResult.mutable)).graph
