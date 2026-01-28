@@ -18,6 +18,13 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 // Minimal stub context for testing
 const stubContext: NodeHandlerContext = {} as NodeHandlerContext;
 
+// Helper to create a context with a specific graph URL
+function createContextWithGraph(url: string): NodeHandlerContext {
+  return {
+    currentGraph: { url },
+  } as NodeHandlerContext;
+}
+
 // Mock responses
 const mockSpreadsheetMetadata = {
   sheets: [
@@ -91,6 +98,128 @@ describe("SheetManager", () => {
 
       await manager.getSheetMetadata(stubContext);
       strictEqual(callCount(), 1, "should not call sheetGetter again");
+    });
+  });
+
+  // ==================== graph-scoped cache isolation ====================
+  describe("graph-scoped cache isolation", () => {
+    it("isolates sheetId cache between different graphs", async () => {
+      const { config } = createMockConfig();
+      const { sheetGetter, callCount } = createMockSheetGetter("test-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      const graphAContext = createContextWithGraph(
+        "https://example.com/graphA"
+      );
+      const graphBContext = createContextWithGraph(
+        "https://example.com/graphB"
+      );
+
+      // First call to graph A
+      await manager.readSheet(graphAContext, { range: "Sheet1!A1" });
+      strictEqual(callCount(), 1);
+
+      // First call to graph B should call sheetGetter again
+      await manager.readSheet(graphBContext, { range: "Sheet1!A1" });
+      strictEqual(callCount(), 2, "should call sheetGetter for each graph");
+
+      // Second call to graph A should use cached sheetId
+      await manager.readSheet(graphAContext, { range: "Sheet1!A2" });
+      strictEqual(
+        callCount(),
+        2,
+        "should not call sheetGetter again for graph A"
+      );
+    });
+
+    it("isolates read cache between different graphs", async () => {
+      const { config, fetchMock } = createMockConfig();
+      const { sheetGetter } = createMockSheetGetter("test-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      const graphAContext = createContextWithGraph(
+        "https://example.com/graphA"
+      );
+      const graphBContext = createContextWithGraph(
+        "https://example.com/graphB"
+      );
+
+      // Read same range from graph A
+      await manager.readSheet(graphAContext, { range: "Sheet1!A1" });
+      const countAfterFirstRead = fetchMock.mock.calls.length;
+
+      // Read same range from graph B - should NOT use graph A's cache
+      await manager.readSheet(graphBContext, { range: "Sheet1!A1" });
+      strictEqual(
+        fetchMock.mock.calls.length > countAfterFirstRead,
+        true,
+        "should make new API call for different graph"
+      );
+    });
+
+    it("isolates metadata cache between different graphs", async () => {
+      const { config, fetchMock } = createMockConfig();
+      const { sheetGetter } = createMockSheetGetter("test-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      const graphAContext = createContextWithGraph(
+        "https://example.com/graphA"
+      );
+      const graphBContext = createContextWithGraph(
+        "https://example.com/graphB"
+      );
+
+      // Get metadata for graph A
+      await manager.getSheetMetadata(graphAContext);
+      const countAfterFirst = fetchMock.mock.calls.length;
+
+      // Get metadata for graph B - should NOT use graph A's cache
+      await manager.getSheetMetadata(graphBContext);
+      strictEqual(
+        fetchMock.mock.calls.length > countAfterFirst,
+        true,
+        "should make new API call for different graph"
+      );
+    });
+
+    it("cache invalidation only affects the specified graph", async () => {
+      const { config, fetchMock } = createMockConfig(
+        async () => new Response("{}")
+      );
+      const { sheetGetter } = createMockSheetGetter("sheet-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      const graphAContext = createContextWithGraph(
+        "https://example.com/graphA"
+      );
+      const graphBContext = createContextWithGraph(
+        "https://example.com/graphB"
+      );
+
+      // Prime caches for both graphs
+      await manager.readSheet(graphAContext, { range: "Sheet1!A1" });
+      await manager.readSheet(graphBContext, { range: "Sheet1!A1" });
+      const countAfterReads = fetchMock.mock.calls.length;
+
+      // Update in graph A should only clear graph A's cache
+      await manager.updateSheet(graphAContext, {
+        range: "Sheet1!A1",
+        values: [["new"]],
+      });
+
+      // Read from graph A should make new API call (cache cleared)
+      await manager.readSheet(graphAContext, { range: "Sheet1!A1" });
+      // Read from graph B should still be cached
+      await manager.readSheet(graphBContext, { range: "Sheet1!A1" });
+
+      // Only one new read call expected (for graph A)
+      // updateSheet makes 1 call, then readSheet for A makes 1 call
+      // readSheet for B should be cached (0 calls)
+      strictEqual(
+        fetchMock.mock.calls.length,
+        countAfterReads + 2,
+        "graph B should still be cached"
+      );
     });
   });
 
