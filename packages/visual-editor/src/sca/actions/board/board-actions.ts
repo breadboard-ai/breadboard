@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor } from "@breadboard-ai/types";
+import type { EditHistoryCreator, GraphDescriptor, OutputValues } from "@breadboard-ai/types";
 import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
 import { Utils } from "../../utils.js";
 import { makeAction } from "../binder.js";
+import * as Helpers from "./helpers/helpers.js";
 
 export const bind = makeAction();
 
@@ -222,3 +223,178 @@ export async function deleteBoard(
 
   return result;
 }
+
+/**
+ * Options for the load action.
+ */
+export interface LoadOptions {
+  /** Base URL to resolve relative URLs against */
+  baseUrl?: string | null;
+  /** Module ID to focus on (for imperative graphs) */
+  moduleId?: string | null;
+  /** Subgraph ID to focus on */
+  subGraphId?: string | null;
+  /** Creator info for edit history */
+  creator?: EditHistoryCreator;
+  /** Google Drive file ID containing run results */
+  resultsFileId?: string;
+}
+
+/**
+ * Result type for the load action.
+ */
+export type LoadResult =
+  | { success: true }
+  | { success: false; reason: "invalid-url" | "auth-required" | "load-failed" | "race-condition" };
+
+// The helpers used for the function below are tested, but to test the function
+// itself we need to mock the controller and services, which is a lot of mocks
+// for not a lot of reassurance. So we ignore the body for coverage reporting.
+
+/* c8 ignore start */
+
+/**
+ * Loads a board from a URL.
+ *
+ * This action:
+ * 1. Resolves the URL relative to the current board
+ * 2. Loads the graph from the URL
+ * 3. Prepares the graph (validation, theme, palette)
+ * 4. Checks for newer versions (shared graphs)
+ * 5. Loads edit history and final output values if applicable
+ * 6. Initializes the editor with the graph
+ *
+ * @param url The URL of the board to load
+ * @param options Optional load configuration
+ * @returns Load result indicating success or failure reason
+ */
+export async function load(
+  url: string,
+  options: LoadOptions = {}
+): Promise<LoadResult> {
+  const { controller, services } = bind;
+  const logger = Utils.Logging.getLogger(controller);
+  const LABEL = "Board Actions";
+
+  // Track the URL at start to detect race conditions
+  const urlAtStart = controller.editor.graph.url;
+
+  // 1. Resolve URL relative to current board
+  const resolvedUrl = Helpers.resolveUrl(url, options.baseUrl ?? null);
+
+  if (!resolvedUrl || !Helpers.canParse(resolvedUrl)) {
+    logger.log(
+      Utils.Logging.Formatter.warning(`Invalid URL: ${url}`),
+      LABEL
+    );
+    return { success: false, reason: "invalid-url" };
+  }
+
+  // 2. Load the graph
+  const loadResult = await Helpers.loadGraph(resolvedUrl, urlAtStart, {
+    loader: services.loader,
+    signinAdapter: services.signinAdapter,
+    boardServer: services.googleDriveBoardServer,
+  });
+
+  if (!loadResult.success) {
+    logger.log(
+      Utils.Logging.Formatter.warning(`Failed to load: ${loadResult.reason}`),
+      LABEL
+    );
+    return { success: false, reason: loadResult.reason };
+  }
+
+  const { graph, boardServer } = loadResult;
+
+  // 3. Prepare the graph
+  const prepared = await Helpers.prepareGraph(graph, {
+    moduleId: options.moduleId,
+    subGraphId: options.subGraphId,
+    googleDriveClient: services.googleDriveClient,
+  });
+
+  // 4. Check for race condition - URL changed during async operations
+  if (controller.editor.graph.url !== urlAtStart) {
+    logger.log(
+      Utils.Logging.Formatter.info("URL changed during load, aborting"),
+      LABEL
+    );
+    return { success: false, reason: "race-condition" };
+  }
+
+  // 5. Check version for shared graphs
+  const isMineCheck = (u: string | undefined) =>
+    u ? boardServer.isMine(new URL(u)) : false;
+  const versionInfo = await Helpers.checkVersion(
+    graph.url,
+    boardServer,
+    controller.board.main,
+    { isMine: isMineCheck }
+  );
+
+  const version = versionInfo?.version ?? -1;
+  const lastLoadedVersion = versionInfo?.lastLoadedVersion ?? -1;
+
+  // 6. Load edit history from BoardController
+  await controller.board.main.isHydrated;
+  const history = controller.board.main.getEditHistory(resolvedUrl);
+
+  // 7. Load results if resultsFileId provided
+  let finalOutputValues: OutputValues | undefined;
+  if (options.resultsFileId && services.googleDriveClient) {
+    const resultsResult = await Helpers.loadResults(
+      options.resultsFileId,
+      services.googleDriveClient
+    );
+    if (resultsResult.success) {
+      finalOutputValues = resultsResult.finalOutputValues;
+    }
+  }
+
+  // 8. Initialize the editor
+  Helpers.initializeEditor(services.graphStore, controller.editor.graph, {
+    graph: prepared.graph,
+    moduleId: prepared.moduleId,
+    subGraphId: prepared.subGraphId,
+    url: resolvedUrl,
+    readOnly: !isMineCheck(resolvedUrl),
+    version,
+    lastLoadedVersion,
+    creator: options.creator,
+    history,
+    onHistoryChanged: (h) => controller.board.main.saveEditHistory(resolvedUrl, h),
+    finalOutputValues,
+  });
+
+  // 9. Update board controller state
+  if (versionInfo?.isNewer) {
+    controller.board.main.newerVersionAvailable = true;
+  }
+
+  // 10. Update global load state
+  controller.global.main.loadState = "Loaded";
+
+  logger.log(
+    Utils.Logging.Formatter.info(`Loaded board: ${resolvedUrl}`),
+    LABEL
+  );
+
+  return { success: true };
+}
+
+/* c8 ignore stop */
+
+/**
+ * Closes the current board and returns to the home state.
+ */
+export function close(): void {
+  const { controller } = bind;
+
+  // Reset the graph controller state
+  controller.editor.graph.resetAll();
+
+  // Return to home state
+  controller.global.main.loadState = "Home";
+}
+

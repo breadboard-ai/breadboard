@@ -560,19 +560,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     );
 
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeNewerSharedVersionEvent.eventName,
-      () => {
-        this.sca.controller.global.snackbars.snackbar(
-          Strings.from("STATUS_NEWER_VERSION"),
-          BreadboardUI.Types.SnackType.INFORMATION,
-          [],
-          true,
-          globalThis.crypto.randomUUID(),
-          true
-        );
-      }
-    );
+    // Note: RuntimeNewerSharedVersionEvent listener moved to
+    // SCA trigger: Board.registerNewerVersionTrigger()
 
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeTabChangeEvent.eventName,

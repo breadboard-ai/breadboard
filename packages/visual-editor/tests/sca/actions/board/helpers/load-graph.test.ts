@@ -5,8 +5,12 @@
  */
 
 import assert from "node:assert";
-import { suite, test } from "node:test";
-import { canLoad } from "../../../../../src/sca/actions/board/helpers/load-graph.js";
+import { afterEach, beforeEach, suite, test } from "node:test";
+import {
+  canLoad,
+  loadGraph,
+} from "../../../../../src/sca/actions/board/helpers/load-graph.js";
+import { setDOM, unsetDOM } from "../../../../fake-dom.js";
 
 suite("load-graph helpers", () => {
   suite("canLoad", () => {
@@ -48,4 +52,102 @@ suite("load-graph helpers", () => {
   // Note: loadGraph itself is harder to unit test as it requires
   // mocking the loader and signin adapter. Those tests should be
   // integration tests or use proper mocking infrastructure.
+
+  // This test doesn't need DOM because it returns early due to invalid URL
+  test("loadGraph returns invalid-url for unparseable URL", async () => {
+    const result = await loadGraph("", null, {
+      loader: {} as never,
+      signinAdapter: {} as never,
+      boardServer: null as never,
+    });
+
+    assert.strictEqual(result.success, false);
+    if (!result.success) {
+      assert.strictEqual(result.reason, "invalid-url");
+    }
+  });
+
+  suite("loadGraph", () => {
+    beforeEach(() => {
+      setDOM();
+    });
+
+    afterEach(() => {
+      unsetDOM();
+    });
+
+    test("returns load-failed when loader fails and user is signed in", async () => {
+      const mockLoader = {
+        load: async () => ({ success: false }),
+      };
+
+      const mockSigninAdapter = {
+        get state() {
+          return Promise.resolve("valid");
+        },
+      };
+
+      const result = await loadGraph("https://example.com/board.json", null, {
+        loader: mockLoader as never,
+        signinAdapter: mockSigninAdapter as never,
+        boardServer: null as never,
+      });
+
+      assert.strictEqual(result.success, false);
+      if (!result.success) {
+        assert.strictEqual(result.reason, "load-failed");
+      }
+    });
+
+    test("returns auth-required when loader fails and user is signed out", async () => {
+      const mockLoader = {
+        load: async () => ({ success: false }),
+      };
+
+      const mockSigninAdapter = {
+        get state() {
+          return Promise.resolve("signedout");
+        },
+      };
+
+      const result = await loadGraph("https://example.com/board.json", null, {
+        loader: mockLoader as never,
+        signinAdapter: mockSigninAdapter as never,
+        boardServer: null as never,
+      });
+
+      assert.strictEqual(result.success, false);
+      if (!result.success) {
+        assert.strictEqual(result.reason, "auth-required");
+      }
+    });
+
+    test("returns success with graph when loader succeeds", async () => {
+      const mockGraph = { nodes: [], edges: [] };
+      const mockLoader = {
+        load: async () => ({ success: true, graph: mockGraph }),
+      };
+
+      const mockSigninAdapter = {
+        get state() {
+          return Promise.resolve("valid");
+        },
+      };
+
+      const mockBoardServer = { name: "test" };
+
+      const result = await loadGraph("https://example.com/board.json", null, {
+        loader: mockLoader as never,
+        signinAdapter: mockSigninAdapter as never,
+        boardServer: mockBoardServer as never,
+      });
+
+      assert.strictEqual(result.success, true);
+      if (result.success) {
+        assert.deepStrictEqual(result.graph, mockGraph);
+        assert.strictEqual(result.boardServer, mockBoardServer);
+      }
+    });
+  });
 });
+

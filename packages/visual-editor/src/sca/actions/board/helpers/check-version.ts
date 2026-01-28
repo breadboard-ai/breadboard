@@ -5,7 +5,7 @@
  */
 
 import type { BoardServer } from "@breadboard-ai/types";
-import type { SCA } from "../../../sca.js";
+import type { BoardController } from "../../../controller/subcontrollers/board/board-controller.js";
 
 export type { VersionInfo, CheckVersionDeps };
 
@@ -42,14 +42,14 @@ interface CheckVersionDeps {
  *
  * @param graphUrl The URL of the graph
  * @param boardServer The board server the graph came from
- * @param sca The SCA instance for accessing BoardController
+ * @param boardController The board controller for version history
  * @param deps Dependencies (isMine function)
  * @returns Version information, or null if version checking is not applicable
  */
 export async function checkVersion(
   graphUrl: string | undefined,
   boardServer: BoardServer | null,
-  sca: SCA,
+  boardController: BoardController,
   deps: CheckVersionDeps
 ): Promise<VersionInfo | null> {
   // Don't check version for graphs we own
@@ -61,8 +61,6 @@ export async function checkVersion(
   if (!graphUrl || !boardServer?.getLatestSharedVersion) {
     return null;
   }
-
-  const boardController = sca.controller.board.main;
 
   // Ensure version history is hydrated from IDB before reading
   await boardController.isHydrated;
