@@ -348,7 +348,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     ) {
       console.log(
         "[signin] oauth scopes were missing or the user revoked access, " +
-        "forcing signin.",
+          "forcing signin.",
         result
       );
       await this.sca.services.signinAdapter.signOut();
@@ -565,29 +565,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Note: RuntimeTabChangeEvent listener removed - logic moved to
     // #handleBoardStateChanged() which is called directly after load/close
 
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeTabCloseEvent.eventName,
-      async (evt: Runtime.Events.RuntimeTabCloseEvent) => {
-        if (!evt.tabId) {
-          return;
-        }
-
-        if (this.tab?.id !== evt.tabId) {
-          return;
-        }
-
-        if (
-          this.boardRunStatus.get(evt.tabId) ===
-          BreadboardUI.Types.STATUS.STOPPED
-        ) {
-          return;
-        }
-
-        this.boardRunStatus.set(evt.tabId, BreadboardUI.Types.STATUS.STOPPED);
-        this.runtime.run.getAbortSignal(evt.tabId)?.abort();
-        this.requestUpdate();
-      }
-    );
+    // Note: RuntimeTabCloseEvent listener removed - stop-run logic moved to
+    // before close() call in route handler
 
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeBoardSaveStatusChangeEvent.eventName,
@@ -668,6 +647,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
         // Close tab, go to the home page.
         if (parseUrl(urlWithoutMode).page === "home") {
+          // Stop any running board before closing
+          const closingTabId = this.tab?.id;
+          if (closingTabId) {
+            this.boardRunStatus.set(
+              closingTabId,
+              BreadboardUI.Types.STATUS.STOPPED
+            );
+            this.runtime.run.getAbortSignal(closingTabId)?.abort();
+          }
+
           this.sca.actions.board.close();
           await this.#handleBoardStateChanged();
           return;
@@ -1226,8 +1215,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         .consentMessage=${this.guestConfiguration.consentMessage}
         .blurBackground=${blurBackground}
         @bbmodaldismissed=${() => {
-      this.sca.controller.global.main.show.delete("SignInModal");
-    }}
+          this.sca.controller.global.main.show.delete("SignInModal");
+        }}
       ></bb-sign-in-modal>
     `;
   }
@@ -1236,7 +1225,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html`<bb-snackbar-details-modal
       .details=${this.sca.controller.global.snackbars.lastDetailsInfo}
       @bbmodaldismissed=${() => {
-      this.sca.controller.global.snackbars.lastDetailsInfo = null;
+        this.sca.controller.global.snackbars.lastDetailsInfo = null;
         this.sca.controller.global.main.show.delete("SnackbarDetailsModal");
       }}
     ></bb-snackbar-details-modal>`;

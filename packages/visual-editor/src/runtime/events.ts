@@ -156,14 +156,6 @@ export class RuntimeTabChangeEvent extends Event {
   }
 }
 
-export class RuntimeTabCloseEvent extends Event {
-  static eventName = "runtimetabclose" as const;
-
-  constructor(public readonly tabId: TabId) {
-    super(RuntimeTabCloseEvent.eventName, { ...eventInit });
-  }
-}
-
 export class RuntimeSelectionChangeEvent extends Event {
   static eventName = "runtimeselectionchange" as const;
 
@@ -242,7 +234,6 @@ type RuntimeEvents =
   | RuntimeErrorEvent
   | RuntimeBoardEditEvent
   | RuntimeTabChangeEvent
-  | RuntimeTabCloseEvent
   | RuntimeBoardRunEvent;
 
 declare global {

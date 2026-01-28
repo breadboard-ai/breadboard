@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { EditHistoryCreator, GraphDescriptor, OutputValues } from "@breadboard-ai/types";
+import type {
+  EditHistoryCreator,
+  GraphDescriptor,
+  OutputValues,
+} from "@breadboard-ai/types";
 import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
 import { Utils } from "../../utils.js";
 import { makeAction } from "../binder.js";
@@ -160,7 +164,10 @@ export async function saveAs(
     const ignoredPlaceholderUrl = new URL("http://invalid");
 
     // Replace pointers with inline data so that copies get created when saving
-    const copiedGraph = await boardServer.deepCopy(ignoredPlaceholderUrl, graph);
+    const copiedGraph = await boardServer.deepCopy(
+      ignoredPlaceholderUrl,
+      graph
+    );
 
     const createResult = await boardServer.create(
       ignoredPlaceholderUrl,
@@ -245,7 +252,14 @@ export interface LoadOptions {
  */
 export type LoadResult =
   | { success: true }
-  | { success: false; reason: "invalid-url" | "auth-required" | "load-failed" | "race-condition" };
+  | {
+      success: false;
+      reason:
+        | "invalid-url"
+        | "auth-required"
+        | "load-failed"
+        | "race-condition";
+    };
 
 // The helpers used for the function below are tested, but to test the function
 // itself we need to mock the controller and services, which is a lot of mocks
@@ -283,10 +297,7 @@ export async function load(
   const resolvedUrl = Helpers.resolveUrl(url, options.baseUrl ?? null);
 
   if (!resolvedUrl || !Helpers.canParse(resolvedUrl)) {
-    logger.log(
-      Utils.Logging.Formatter.warning(`Invalid URL: ${url}`),
-      LABEL
-    );
+    logger.log(Utils.Logging.Formatter.warning(`Invalid URL: ${url}`), LABEL);
     return { success: false, reason: "invalid-url" };
   }
 
@@ -363,7 +374,8 @@ export async function load(
     lastLoadedVersion,
     creator: options.creator,
     history,
-    onHistoryChanged: (h) => controller.board.main.saveEditHistory(resolvedUrl, h),
+    onHistoryChanged: (h) =>
+      controller.board.main.saveEditHistory(resolvedUrl, h),
     finalOutputValues,
   });
 
@@ -397,4 +409,3 @@ export function close(): void {
   // Return to home state
   controller.global.main.loadState = "Home";
 }
-

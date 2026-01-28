@@ -15,7 +15,6 @@ import type { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import {
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeTabChangeEvent,
-  RuntimeTabCloseEvent,
 } from "./events.js";
 import { Tab, TabId } from "./types.js";
 import { GoogleDriveBoardServer } from "../board-server/server.js";
@@ -112,7 +111,6 @@ export class Board extends EventTarget {
     }
 
     this.#tabs.delete(id);
-    this.dispatchEvent(new RuntimeTabCloseEvent(id));
 
     if (id !== this.#currentTabId) {
       return;
