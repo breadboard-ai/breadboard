@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { EditableGraph } from "@breadboard-ai/types";
 import { AppController } from "../../../src/sca/controller/controller.js";
 import { AppServices } from "../../../src/sca/services/services.js";
 
@@ -35,4 +36,23 @@ export function makeTestServices(
   return {
     agentContext,
   } as AppServices;
+}
+
+/**
+ * Creates a mock EditableGraph that has the required methods for the
+ * GraphController's setEditor to work.
+ */
+export function createMockEditor(): EditableGraph {
+  return {
+    raw: () => ({}),
+    addEventListener: () => { },
+    removeEventListener: () => { },
+  } as unknown as EditableGraph;
+}
+
+/**
+ * Waits for microtask effects to run.
+ */
+export async function flushEffects() {
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
 }

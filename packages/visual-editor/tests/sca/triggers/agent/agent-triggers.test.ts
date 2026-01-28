@@ -13,28 +13,11 @@ import {
 import { appController } from "../../../../src/sca/controller/controller.js";
 import { AppActions } from "../../../../src/sca/actions/actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
+import { createMockEditor, flushEffects } from "../utils.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
-import { EditableGraph } from "@breadboard-ai/types";
 
-/**
- * Creates a mock EditableGraph that has the required methods for the
- * GraphController's setEditor to work.
- */
-function createMockEditor(): EditableGraph {
-  return {
-    raw: () => ({}),
-    addEventListener: () => {},
-    removeEventListener: () => {},
-  } as unknown as EditableGraph;
-}
 
-/**
- * Waits for microtask effects to run.
- */
-async function flushEffects() {
-  await new Promise<void>((resolve) => queueMicrotask(resolve));
-}
 
 suite("Agent Triggers", () => {
   // Get the singleton controller once for all tests

@@ -13,6 +13,7 @@ import {
 import { appController } from "../../../../src/sca/controller/controller.js";
 import { AppActions } from "../../../../src/sca/actions/actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
+import { flushEffects } from "../utils.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 import { EditableGraph } from "@breadboard-ai/types";
@@ -37,12 +38,7 @@ function createMockEditor(): EditableGraph {
   } as unknown as EditableGraph;
 }
 
-/**
- * Waits for microtask effects to run.
- */
-async function flushEffects() {
-  await new Promise<void>((resolve) => queueMicrotask(resolve));
-}
+
 
 suite("Node Triggers", () => {
   let controller: ReturnType<typeof appController>;
