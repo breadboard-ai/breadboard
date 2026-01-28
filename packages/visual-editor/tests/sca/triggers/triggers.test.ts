@@ -52,7 +52,7 @@ suite("Triggers", () => {
       {} as AppActions
     );
     assert.deepStrictEqual(list(), {
-      board: ["Save Trigger"],
+      board: ["Save Trigger", "Newer Version Trigger"],
       node: ["Autoname Trigger"],
       agent: ["Graph Invalidate Trigger"],
     });

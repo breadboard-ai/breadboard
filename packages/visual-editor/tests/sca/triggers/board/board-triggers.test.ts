@@ -5,9 +5,10 @@
  */
 
 import assert from "node:assert";
-import { after, afterEach, before, suite, test } from "node:test";
+import { after, afterEach, before, mock, suite, test } from "node:test";
 import {
   registerSaveTrigger,
+  registerNewerVersionTrigger,
   bind,
 } from "../../../../src/sca/triggers/board/board-triggers.js";
 import { appController } from "../../../../src/sca/controller/controller.js";
@@ -175,5 +176,69 @@ suite("Board Triggers", () => {
       false,
       "save() should not have been called when there is no editor"
     );
+  });
+
+  test("Newer version trigger shows snackbar when newerVersionAvailable is true", async () => {
+    // Use mock.method to mock the snackbar method
+    const snackbarMock = mock.method(
+      controller.global.snackbars,
+      "snackbar",
+      () => "mock-id"
+    );
+
+    try {
+      const actions = { board: { bind: {}, save: async () => { } } } as AppActions;
+      const services = {} as AppServices;
+
+      bind({ controller, services, actions });
+
+      // Set up initial state: no newer version
+      controller.board.main.newerVersionAvailable = false;
+
+      registerNewerVersionTrigger();
+      await flushEffects();
+      snackbarMock.mock.resetCalls();
+
+      // Trigger: set newer version available
+      controller.board.main.newerVersionAvailable = true;
+      await flushEffects();
+
+      assert.strictEqual(snackbarMock.mock.callCount(), 1, "snackbar() should have been called");
+      const callArgs = snackbarMock.mock.calls[0].arguments;
+      assert.ok((callArgs[0] as string).includes("newer version"), "Should mention newer version");
+      // Flag should be reset
+      assert.strictEqual(controller.board.main.newerVersionAvailable, false);
+    } finally {
+      snackbarMock.mock.restore();
+    }
+  });
+
+  test("Newer version trigger does not fire when newerVersionAvailable is false", async () => {
+    const snackbarMock = mock.method(
+      controller.global.snackbars,
+      "snackbar",
+      () => "mock-id"
+    );
+
+    try {
+      const actions = { board: { bind: {}, save: async () => { } } } as AppActions;
+      const services = {} as AppServices;
+
+      bind({ controller, services, actions });
+
+      // Set up initial state: no newer version
+      controller.board.main.newerVersionAvailable = false;
+
+      registerNewerVersionTrigger();
+      await flushEffects();
+
+      assert.strictEqual(
+        snackbarMock.mock.callCount(),
+        0,
+        "snackbar() should not have been called when newerVersionAvailable is false"
+      );
+    } finally {
+      snackbarMock.mock.restore();
+    }
   });
 });

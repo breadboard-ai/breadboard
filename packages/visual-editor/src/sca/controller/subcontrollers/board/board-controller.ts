@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { EditHistoryEntry } from "@breadboard-ai/types";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 
@@ -12,6 +13,7 @@ import { RootController } from "../root-controller.js";
  *
  * Manages:
  * - Shared version history (to detect newer versions of shared graphs)
+ * - Edit history (undo/redo state per board URL)
  * - Board loading state
  */
 export class BoardController extends RootController {
@@ -23,7 +25,17 @@ export class BoardController extends RootController {
    * Value: Version number from board server
    */
   @field({ persist: "idb" })
-  accessor sharedVersionHistory: Map<string, number> = new Map();
+  private accessor sharedVersionHistory: Map<string, number> = new Map();
+
+  /**
+   * Tracks edit history (undo/redo stack) for each board URL.
+   * Persisted to IDB so users can undo/redo across sessions.
+   *
+   * Key: Board URL
+   * Value: Array of edit history entries
+   */
+  @field({ persist: "idb" })
+  private accessor editHistory: Map<string, EditHistoryEntry[]> = new Map();
 
   /**
    * Whether there's a newer version of the current shared graph available.
@@ -55,5 +67,26 @@ export class BoardController extends RootController {
    */
   recordVersion(url: string, version: number): void {
     this.sharedVersionHistory.set(url, version);
+  }
+
+  /**
+   * Gets the edit history for a board URL.
+   *
+   * @param url The board URL
+   * @returns The edit history entries, or empty array if none
+   */
+  getEditHistory(url: string): EditHistoryEntry[] {
+    return this.editHistory.get(url) ?? [];
+  }
+
+  /**
+   * Saves the edit history for a board URL.
+   * This is automatically persisted to IndexedDB via the @field decorator.
+   *
+   * @param url The board URL
+   * @param history The edit history entries to save
+   */
+  saveEditHistory(url: string, history: Readonly<EditHistoryEntry[]>): void {
+    this.editHistory.set(url, [...history]);
   }
 }

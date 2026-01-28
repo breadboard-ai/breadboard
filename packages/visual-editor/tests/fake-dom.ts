@@ -19,6 +19,7 @@ export function setDOM() {
   globalThis.Node = dom.window.Node;
   globalThis.Event = dom.window.Event;
   globalThis.CustomEvent = dom.window.CustomEvent;
+  unsetGlobalThis.location = dom.window.location;
 
   if (!unsetGlobalThis.trustedTypes) {
     unsetGlobalThis.trustedTypes = {
@@ -38,4 +39,5 @@ export function unsetDOM() {
   unsetGlobalThis.Node = undefined;
   unsetGlobalThis.Event = undefined;
   unsetGlobalThis.CustomEvent = undefined;
+  unsetGlobalThis.location = undefined;
 }

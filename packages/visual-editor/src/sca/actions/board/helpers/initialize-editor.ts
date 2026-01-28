@@ -14,7 +14,7 @@ import type {
   MutableGraphStore,
   OutputValues,
 } from "@breadboard-ai/types";
-import type { SCA } from "../../../sca.js";
+import type * as Editor from "../../../controller/subcontrollers/editor/editor.js";
 
 /**
  * Options for initializing the editor.
@@ -28,8 +28,8 @@ export interface InitializeEditorOptions {
   subGraphId: GraphIdentifier | null;
   /** The URL the graph was loaded from */
   url: string;
-  /** Whether the graph belongs to the current user */
-  graphIsMine: boolean;
+  /** Whether the graph is read-only (not owned by current user) */
+  readOnly: boolean;
   /** Version information */
   version: number;
   lastLoadedVersion: number;
@@ -61,22 +61,22 @@ export interface InitializeEditorResult {
  * - Adds the graph to the graph store
  * - Creates an editor instance
  * - Wires up event listeners for graph changes
- * - Updates the SCA controller state
+ * - Updates the graph controller state
  *
  * @param graphStore The mutable graph store
- * @param sca The SCA instance for controller access
+ * @param graphController The graph controller to update
  * @param options Editor initialization options
  * @returns The editor ID and main graph ID
  */
 export function initializeEditor(
   graphStore: MutableGraphStore,
-  sca: SCA,
+  graphController: Editor.Graph.GraphController,
   options: InitializeEditorOptions
 ): InitializeEditorResult {
   const {
     graph,
     url,
-    graphIsMine,
+    readOnly,
     version,
     lastLoadedVersion,
     creator,
@@ -104,13 +104,13 @@ export function initializeEditor(
   const id = globalThis.crypto.randomUUID();
 
   // Set up controller state
-  const graphController = sca.controller.editor.graph;
   graphController.id = id;
   graphController.setEditor(editor);
   graphController.url = url;
   graphController.version = version;
-  graphController.readOnly = !graphIsMine;
-  graphController.graphIsMine = graphIsMine;
+  graphController.readOnly = readOnly;
+  // Derive graphIsMine from readOnly for legacy compat (deprecated)
+  graphController.graphIsMine = !readOnly;
   graphController.mainGraphId = mainGraphId.result;
   graphController.lastLoadedVersion = lastLoadedVersion;
 
@@ -124,8 +124,10 @@ export function initializeEditor(
 /**
  * Resets the editor state, preparing for a new graph or returning to home.
  *
- * @param sca The SCA instance
+ * @param graphController The graph controller to reset
  */
-export function resetEditor(sca: SCA): void {
-  sca.controller.editor.graph.resetAll();
+export function resetEditor(
+  graphController: Editor.Graph.GraphController
+): void {
+  graphController.resetAll();
 }

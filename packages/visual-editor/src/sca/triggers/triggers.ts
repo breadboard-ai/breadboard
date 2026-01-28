@@ -44,6 +44,7 @@ export function triggers(
 export function register() {
   Agent.registerGraphInvalidateTrigger();
   Board.registerSaveTrigger();
+  Board.registerNewerVersionTrigger();
   Node.registerAutonameTrigger();
 }
 

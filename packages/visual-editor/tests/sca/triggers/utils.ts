@@ -22,8 +22,16 @@ export function makeTestController(graph = defaultGraph): AppController {
       debug: {
         enabled: true,
       },
+      snackbars: {
+        snackbar: () => "mock-id",
+      },
     },
-  } as AppController;
+    board: {
+      main: {
+        newerVersionAvailable: false,
+      },
+    },
+  } as unknown as AppController;
 }
 
 const defaultAgentContext = {

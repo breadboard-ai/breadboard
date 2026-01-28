@@ -18,6 +18,59 @@ suite("load-results helpers", () => {
     }
   });
 
-  // Note: Testing with a real GoogleDriveClient would require mocking
-  // the fetch calls. These tests cover the guard conditions.
+  test("returns success when client returns finalOutputValues", async () => {
+    const mockOutputValues = { foo: "bar" };
+    const mockClient = {
+      getFileMedia: async () => ({
+        json: async () => ({ finalOutputValues: mockOutputValues }),
+      }),
+    };
+
+    const result = await loadResults(
+      "file-id-123",
+      mockClient as never
+    );
+
+    assert.strictEqual(result.success, true);
+    if (result.success) {
+      assert.deepStrictEqual(result.finalOutputValues, mockOutputValues);
+    }
+  });
+
+  test("returns no-results when finalOutputValues is missing", async () => {
+    const mockClient = {
+      getFileMedia: async () => ({
+        json: async () => ({}),
+      }),
+    };
+
+    const result = await loadResults(
+      "file-id-123",
+      mockClient as never
+    );
+
+    assert.strictEqual(result.success, false);
+    if (!result.success) {
+      assert.strictEqual(result.reason, "no-results");
+    }
+  });
+
+  test("returns load-failed when client throws", async () => {
+    const mockClient = {
+      getFileMedia: async () => {
+        throw new Error("Network error");
+      },
+    };
+
+    const result = await loadResults(
+      "file-id-123",
+      mockClient as never
+    );
+
+    assert.strictEqual(result.success, false);
+    if (!result.success) {
+      assert.strictEqual(result.reason, "load-failed");
+    }
+  });
 });
+

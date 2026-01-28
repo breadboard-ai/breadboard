@@ -57,20 +57,23 @@ class Controller implements AppController {
       snackbars: new Global.SnackbarController("Snackbars"),
       consent: new Global.ConsentController("Consent"),
 
-      // Migrations are tested independently so this block is ignored for coverage
-      // However c8 needs to know the number of lines to ignore, so number below
-      // needs to be kept in sync with the size of performMigrations.
-      /* c8 ignore next 10 */
+      // Migrations are tested independently so this block is ignored for
+      // coverage reporting.
+
+      /* c8 ignore start */
       async performMigrations() {
         const controller = appController();
         if (!controller) {
           console.warn("Unable to complete migrations; no controller instance");
         }
 
-        // List of migrations to await.
+        // List of migrations to await. These should be done in sequence rather
+        // than with a Promise.all() as the migrations are not necessarily
+        // independent of each other.
         await Migrations.recentBoardsMigration(controller.home.recent);
         await Migrations.flagsMigration(controller.global.flags, runtimeFlags);
       },
+      /* c8 ignore end */
     };
 
     this.board = {
