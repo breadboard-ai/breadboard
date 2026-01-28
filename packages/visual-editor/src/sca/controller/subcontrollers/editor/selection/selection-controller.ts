@@ -26,7 +26,7 @@ interface Selection {
 }
 
 export class SelectionController extends RootController {
-  @field({ deep: true })
+  @field()
   private accessor _selection: Selection = {
     nodes: new Set(),
     edges: new Set(),

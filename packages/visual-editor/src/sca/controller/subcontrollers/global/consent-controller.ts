@@ -35,10 +35,10 @@ export function createConsentKey(request: ConsentRequest): ConsentKey {
 }
 
 export class ConsentController extends RootController {
-  @field({ persist: "idb", deep: true })
+  @field({ persist: "idb" })
   private accessor _consents = new Map<ConsentKey, ConsentRecord>();
 
-  @field({ deep: true })
+  @field()
   private accessor _pendingConsents = new Map<
     PendingConsent,
     (value: ConsentAction) => void

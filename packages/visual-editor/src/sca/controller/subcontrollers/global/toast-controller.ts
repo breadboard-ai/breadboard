@@ -22,7 +22,7 @@ type ToastMap = Map<
 const MAX_TOAST_LENGTH = 77;
 
 export class ToastController extends RootController {
-  @field({ deep: true })
+  @field()
   private accessor _toasts: ToastMap = new Map();
 
   constructor(
