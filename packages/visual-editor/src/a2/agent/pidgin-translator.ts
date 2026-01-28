@@ -13,7 +13,7 @@ import {
 } from "@breadboard-ai/types";
 import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
-import { mergeTextParts } from "../a2/utils.js";
+import { mergeTextParts, tr } from "../a2/utils.js";
 import { AgentFileSystem } from "./file-system.js";
 import { err, ok } from "@breadboard-ai/utils";
 import {
@@ -34,7 +34,8 @@ export type ToPidginResult = {
 };
 
 export type SubstitutePartsArgs = {
-  value: LLMContent;
+  title: string | undefined;
+  content: LLMContent;
   fileSystem: AgentFileSystem;
   textAsFiles: boolean;
 };
@@ -218,7 +219,8 @@ class PidginTranslator {
               return value;
             } else if (isLLMContent(value)) {
               return substituteParts({
-                value,
+                title: param.title,
+                content: value,
                 fileSystem: this.fileSystem,
                 textAsFiles: true,
               });
@@ -226,7 +228,8 @@ class PidginTranslator {
               const last = value.at(-1);
               if (!last) return "";
               return substituteParts({
-                value: last,
+                title: param.title,
+                content: last,
                 fileSystem: this.fileSystem,
                 textAsFiles: true,
               });
@@ -274,17 +277,31 @@ class PidginTranslator {
       return err(`Agent: ${errors.join(",")}`);
     }
 
-    return {
-      text: substituteParts({
-        value: pidginContent,
-        fileSystem: this.fileSystem,
-        textAsFiles,
-      }),
-      tools: toolManager,
-    };
+    const text =
+      pidginContent.parts.length === 1 && "text" in pidginContent.parts[0]
+        ? pidginContent.parts[0].text
+        : undefined;
+    if (text === undefined) {
+      console.warn(
+        `Agent: Substitution failed, expected single text part, got`,
+        pidginContent
+      );
+      return {
+        text: substituteParts({
+          title: undefined,
+          content: pidginContent,
+          fileSystem: this.fileSystem,
+          textAsFiles,
+        }),
+        tools: toolManager,
+      };
+    }
+
+    return { text, tools: toolManager };
 
     function substituteParts({
-      value,
+      title,
+      content: value,
       fileSystem,
       textAsFiles,
     }: SubstitutePartsArgs) {
@@ -313,7 +330,14 @@ ${text}</content>`);
           values.push(`<file src="${name}" />`);
         }
       }
-      return values.join("\n");
+      const text = values.join("\n");
+      if (!title) return text;
+
+      return tr`
+<input source-agent="${title}">
+${text}
+</input>
+`;
     }
   }
 }
