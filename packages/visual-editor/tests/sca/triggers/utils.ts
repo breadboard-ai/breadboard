@@ -5,6 +5,7 @@
  */
 
 import { AppController } from "../../../src/sca/controller/controller.js";
+import { AppServices } from "../../../src/sca/services/services.js";
 
 const defaultGraph = {
   version: 0,
@@ -22,4 +23,16 @@ export function makeTestController(graph = defaultGraph): AppController {
       },
     },
   } as AppController;
+}
+
+const defaultAgentContext = {
+  invalidateResumableRuns: () => { },
+};
+
+export function makeTestServices(
+  agentContext = defaultAgentContext
+): AppServices {
+  return {
+    agentContext,
+  } as AppServices;
 }
