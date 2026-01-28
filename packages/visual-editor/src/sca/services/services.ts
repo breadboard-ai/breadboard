@@ -38,7 +38,7 @@ import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
 import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";
 import { ActionTracker } from "../../ui/types/types.js";
-import { type ConsentController } from "../controller/subcontrollers/consent-controller.js";
+import { type ConsentController } from "../controller/subcontrollers/global/global.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 
 export interface AppServices {

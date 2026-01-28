@@ -9,9 +9,9 @@ import {
   ConsentRequest,
   ConsentUIType,
 } from "@breadboard-ai/types";
-import { field } from "../decorators/field.js";
-import { RootController } from "./root-controller.js";
-import { PendingConsent } from "../../types.js";
+import { field } from "../../decorators/field.js";
+import { RootController } from "../root-controller.js";
+import { PendingConsent } from "../../../types.js";
 
 export interface ConsentRecord {
   graphUrl: string;

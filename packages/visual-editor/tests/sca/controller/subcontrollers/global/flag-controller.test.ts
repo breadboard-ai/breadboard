@@ -6,8 +6,8 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import { FlagController } from "../../../../src/sca/controller/subcontrollers/flag-controller.js";
-import { defaultRuntimeFlags } from "../data/default-flags.js";
+import { FlagController } from "../../../../../src/sca/controller/subcontrollers/global/flag-controller.js";
+import { defaultRuntimeFlags } from "../../data/default-flags.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
 
 suite("FlagController", () => {

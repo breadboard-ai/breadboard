@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RootController } from "./root-controller.js";
-import { GlobalConfig } from "../../../ui/contexts/global-config.js";
-import { createTrustedFeedbackURL } from "../../../ui/trusted-types/feedback-url.js";
-import { field } from "../decorators/field.js";
+import { RootController } from "../root-controller.js";
+import { GlobalConfig } from "../../../../ui/contexts/global-config.js";
+import { createTrustedFeedbackURL } from "../../../../ui/trusted-types/feedback-url.js";
+import { field } from "../../decorators/field.js";
 import type { TrustedScriptURL } from "trusted-types/lib/index.js";
 
 type UserFeedbackApi = {
@@ -72,7 +72,7 @@ export class FeedbackController extends RootController {
     if (!productId) {
       console.error(
         `No GOOGLE_FEEDBACK_PRODUCT_ID was set` +
-          ` in the client deployment configuration.`
+        ` in the client deployment configuration.`
       );
       return;
     }
@@ -80,7 +80,7 @@ export class FeedbackController extends RootController {
     if (!bucket) {
       console.error(
         `No GOOGLE_FEEDBACK_BUCKET was set` +
-          ` in the client deployment configuration.`
+        ` in the client deployment configuration.`
       );
       return;
     }

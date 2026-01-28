@@ -11,7 +11,7 @@ import { RecentBoardsController } from "../../../../src/sca/controller/subcontro
 import { RecentBoardStore } from "../../../../src/data/recent-boards.js";
 import { IdbFlagManager } from "../../../../src/idb/flags/idb-flag-manager.js";
 import { defaultRuntimeFlags } from "../data/default-flags.js";
-import { FlagController } from "../../../../src/sca/controller/subcontrollers/flag-controller.js";
+import { FlagController } from "../../../../src/sca/controller/subcontrollers/global/global.js";
 
 suite("Migrations", () => {
   test("recentBoardsMigration", async () => {

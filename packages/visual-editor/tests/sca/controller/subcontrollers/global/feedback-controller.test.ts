@@ -14,9 +14,9 @@ import {
   before,
   after,
 } from "node:test";
-import { FeedbackController } from "../../../../src/sca/controller/subcontrollers/feedback-controller.js";
-import { GlobalConfig } from "../../../../src/ui/contexts/global-config.js";
-import { setDOM, unsetDOM } from "../../../fake-dom.js";
+import { FeedbackController } from "../../../../../src/sca/controller/subcontrollers/global/feedback-controller.js";
+import { GlobalConfig } from "../../../../../src/ui/contexts/global-config.js";
+import { setDOM, unsetDOM } from "../../../../fake-dom.js";
 
 type UserFeedbackConfig = {
   productId: string;

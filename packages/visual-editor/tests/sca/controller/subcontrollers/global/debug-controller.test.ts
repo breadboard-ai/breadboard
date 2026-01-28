@@ -6,7 +6,7 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import { DebugController } from "../../../../src/sca/controller/subcontrollers/debug-controller.js";
+import { DebugController } from "../../../../../src/sca/controller/subcontrollers/global/debug-controller.js";
 
 suite("DebugController", () => {
   test("Enable and Disable", async () => {

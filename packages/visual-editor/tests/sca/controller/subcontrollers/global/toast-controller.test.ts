@@ -6,9 +6,9 @@
 
 import assert from "node:assert";
 import { afterEach, beforeEach, suite, test } from "node:test";
-import { ToastController } from "../../../../src/sca/controller/subcontrollers/toast-controller.js";
-import { ToastType } from "../../../../src/ui/events/events.js";
-import { setDOM, unsetDOM } from "../../../fake-dom.js";
+import { ToastController } from "../../../../../src/sca/controller/subcontrollers/global/toast-controller.js";
+import { ToastType } from "../../../../../src/ui/events/events.js";
+import { setDOM, unsetDOM } from "../../../../fake-dom.js";
 
 suite("ToastController", () => {
   const DEFAULT_TIMEOUT = 100;

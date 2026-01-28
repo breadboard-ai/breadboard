@@ -1,0 +1,131 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import type {
+  MainGraphIdentifier,
+  EditHistoryCreator,
+  EditHistoryEntry,
+  GraphDescriptor,
+  GraphIdentifier,
+  ModuleIdentifier,
+  MutableGraphStore,
+  OutputValues,
+} from "@breadboard-ai/types";
+import type { SCA } from "../../../sca.js";
+
+/**
+ * Options for initializing the editor.
+ */
+export interface InitializeEditorOptions {
+  /** The prepared graph to edit */
+  graph: GraphDescriptor;
+  /** The resolved module ID */
+  moduleId: ModuleIdentifier | null;
+  /** The resolved subgraph ID */
+  subGraphId: GraphIdentifier | null;
+  /** The URL the graph was loaded from */
+  url: string;
+  /** Whether the graph belongs to the current user */
+  graphIsMine: boolean;
+  /** Version information */
+  version: number;
+  lastLoadedVersion: number;
+  /** Creator info for edit history */
+  creator?: EditHistoryCreator;
+  /** Pre-loaded edit history */
+  history?: EditHistoryEntry[];
+  /** Callback when history changes */
+  onHistoryChanged?: (history: Readonly<EditHistoryEntry[]>) => void;
+  /** Pre-loaded final output values */
+  finalOutputValues?: OutputValues;
+}
+
+/**
+ * Result of initializing the editor.
+ */
+export interface InitializeEditorResult {
+  success: true;
+  /** The editor ID (for identifying this editing session) */
+  id: string;
+  /** The main graph ID in the graph store */
+  mainGraphId: MainGraphIdentifier;
+}
+
+/**
+ * Sets up the editor state for a loaded graph.
+ *
+ * This function:
+ * - Adds the graph to the graph store
+ * - Creates an editor instance
+ * - Wires up event listeners for graph changes
+ * - Updates the SCA controller state
+ *
+ * @param graphStore The mutable graph store
+ * @param sca The SCA instance for controller access
+ * @param options Editor initialization options
+ * @returns The editor ID and main graph ID
+ */
+export function initializeEditor(
+  graphStore: MutableGraphStore,
+  sca: SCA,
+  options: InitializeEditorOptions
+): InitializeEditorResult {
+  const {
+    graph,
+    url,
+    graphIsMine,
+    version,
+    lastLoadedVersion,
+    creator,
+    history,
+    onHistoryChanged,
+  } = options;
+
+  // Add graph to store
+  const mainGraphId = graphStore.addByDescriptor(graph);
+  if (!mainGraphId.success) {
+    throw new Error(`Unable to add graph: ${mainGraphId.error}`);
+  }
+
+  // Create editor
+  const editor = graphStore.editByDescriptor(graph, {
+    creator,
+    history,
+    onHistoryChanged,
+  });
+  if (!editor) {
+    throw new Error("Unable to edit by descriptor");
+  }
+
+  // Generate a session ID
+  const id = globalThis.crypto.randomUUID();
+
+  // Set up controller state
+  const graphController = sca.controller.editor.graph;
+  graphController.id = id;
+  graphController.setEditor(editor);
+  graphController.url = url;
+  graphController.version = version;
+  graphController.readOnly = !graphIsMine;
+  graphController.graphIsMine = graphIsMine;
+  graphController.mainGraphId = mainGraphId.result;
+  graphController.lastLoadedVersion = lastLoadedVersion;
+
+  return {
+    success: true,
+    id,
+    mainGraphId: mainGraphId.result,
+  };
+}
+
+/**
+ * Resets the editor state, preparing for a new graph or returning to home.
+ *
+ * @param sca The SCA instance
+ */
+export function resetEditor(sca: SCA): void {
+  sca.controller.editor.graph.resetAll();
+}

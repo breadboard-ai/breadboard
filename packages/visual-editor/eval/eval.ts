@@ -29,7 +29,7 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
 import { getAuthenticatedClient } from "./authenticate.js";
-import { type ConsentController } from "../src/sca/controller/subcontrollers/consent-controller.js";
+import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
 
 export { session };
 

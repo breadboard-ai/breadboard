@@ -12,13 +12,13 @@ import {
   ConsentRecord,
   createConsentKey,
   stringifyScope,
-} from "../../../../src/sca/controller/subcontrollers/consent-controller.js";
+} from "../../../../../src/sca/controller/subcontrollers/global/consent-controller.js";
 import {
   ConsentAction,
   ConsentType,
   ConsentUIType,
 } from "@breadboard-ai/types";
-import { unwrap } from "../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
+import { unwrap } from "../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
 
 function consentTestFactory(
   name: string,

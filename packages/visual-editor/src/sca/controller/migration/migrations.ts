@@ -8,7 +8,7 @@ import { RecentBoardStore } from "../../../data/recent-boards.js";
 import { RecentBoardsController } from "../subcontrollers/home/recent-boards-controller.js";
 import { unwrap } from "../decorators/utils/wrap-unwrap.js";
 import { RecentBoard } from "../../../ui/types/types.js";
-import { FlagController } from "../subcontrollers/flag-controller.js";
+import { FlagController } from "../subcontrollers/global/global.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
 import { IdbFlagManager } from "../../../idb/flags/idb-flag-manager.js";
 
