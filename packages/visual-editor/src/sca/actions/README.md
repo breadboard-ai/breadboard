@@ -92,7 +92,13 @@ await sca.actions.graph.edit([{ type: "addnode", ... }], "Add");
 
 ### Board Actions (`sca.actions.board`)
 
-Board-level actions for save, load, and lifecycle operations.
+| Action | Purpose |
+|--------|---------|
+| `load(url, options?)` | Load a board from URL (resolves, validates, sets up graph) |
+| `close()` | Close current board and return to home state |
+| `save(messages?)` | Save current board to board server |
+| `saveAs(graph, messages)` | Save current graph as a new board |
+| `deleteBoard(url, messages)` | Delete a board from the board server |
 
 ---
 
