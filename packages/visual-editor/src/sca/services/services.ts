@@ -40,6 +40,7 @@ import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";
 import { ActionTracker } from "../../ui/types/types.js";
 import { type ConsentController } from "../controller/subcontrollers/global/global.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
+import { RunService } from "./run-service.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
@@ -55,6 +56,7 @@ export interface AppServices {
   kits: Kit[];
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
+  runService: RunService;
   signinAdapter: SigninAdapter;
 }
 
@@ -160,6 +162,7 @@ export function services(
       kits,
       loader,
       mcpClientManager,
+      runService: new RunService(),
       signinAdapter,
     } satisfies AppServices;
   }

@@ -12,6 +12,7 @@ import { isHydratedController } from "../utils/helpers/helpers.js";
 import * as Global from "./subcontrollers/global/global.js";
 import * as Editor from "./subcontrollers/editor/editor.js";
 import * as Home from "./subcontrollers/home/home.js";
+import * as Run from "./subcontrollers/run/run.js";
 import * as Migrations from "./migration/migrations.js";
 
 /**
@@ -33,6 +34,7 @@ class Controller implements AppController {
   home: AppController["home"];
   global: AppController["global"];
   board: AppController["board"];
+  run: AppController["run"];
 
   constructor(flags: RuntimeFlags) {
     const runtimeFlags = flags;
@@ -96,6 +98,10 @@ class Controller implements AppController {
 
     this.board = {
       main: new BoardController("Board", "BoardController"),
+    };
+
+    this.run = {
+      main: new Run.RunController("Run", "RunController"),
     };
   }
 
@@ -194,6 +200,9 @@ export interface AppController extends DebuggableAppController {
   };
   board: {
     main: BoardController;
+  };
+  run: {
+    main: Run.RunController;
   };
   isHydrated: Promise<number[]>;
 }
