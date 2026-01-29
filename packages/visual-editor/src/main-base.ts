@@ -1088,8 +1088,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
     }
   ) {
-    this.sca.controller.global.main.blockingAction = true;
-    this.runtime.actionTracker.remixApp(url, "editor");
     const remixRoute = eventRoutes.get("board.remix");
     const refresh = await remixRoute?.do(
       this.collectEventRouteDeps(
@@ -1100,7 +1098,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         })
       )
     );
-    this.sca.controller.global.main.blockingAction = false;
     if (refresh) {
       requestAnimationFrame(() => {
         this.requestUpdate();

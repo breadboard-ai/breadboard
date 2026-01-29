@@ -503,6 +503,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;
       if (!remixUrl) return;
       await this.boardLoaded;
+      this.runtime.actionTracker.remixApp(remixUrl, "user");
       this.invokeRemixEventRouteWith(remixUrl);
     }
   }
