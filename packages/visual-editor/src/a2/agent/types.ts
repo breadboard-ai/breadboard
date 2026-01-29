@@ -135,8 +135,24 @@ export type ChatResponse = {
   input: LLMContent;
 };
 
+export type ChatChoice = {
+  id: string;
+  label: string;
+};
+
+export type ChatChoiceSelectionMode = "single" | "multiple";
+
+export type ChatChoicesResponse = {
+  selected: string[];
+};
+
 export type ChatManager = {
   chat(pidginString: string, inputType: string): Promise<Outcome<ChatResponse>>;
+  presentChoices(
+    message: string,
+    choices: ChatChoice[],
+    selectionMode: ChatChoiceSelectionMode
+  ): Promise<Outcome<ChatChoicesResponse>>;
 };
 
 export type MappedDefinitions = {

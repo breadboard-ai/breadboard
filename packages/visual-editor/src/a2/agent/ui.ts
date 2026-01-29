@@ -24,6 +24,9 @@ import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
 import { ProgressWorkItem } from "./progress-work-item.js";
 import {
   A2UIRenderer,
+  ChatChoice,
+  ChatChoicesResponse,
+  ChatChoiceSelectionMode,
   ChatInputType,
   ChatManager,
   ChatResponse,
@@ -158,6 +161,255 @@ class AgentUI implements A2UIRenderer, ChatManager {
     if (!ok(response)) return response;
     this.#chatLog.push({ ...response.input, role: "user" });
     return response;
+  }
+
+  /**
+   * Presents choices to the user and returns the selected choice IDs.
+   *
+   * For "single" mode: renders choice buttons - clicking one returns that ID.
+   * For "multiple" mode: renders checkboxes with a submit button.
+   */
+  async presentChoices(
+    message: string,
+    choices: ChatChoice[],
+    selectionMode: ChatChoiceSelectionMode
+  ): Promise<Outcome<ChatChoicesResponse>> {
+    const surfaceId = "@choices";
+
+    if (selectionMode === "single") {
+      return this.#presentSingleChoice(message, choices, surfaceId);
+    } else {
+      return this.#presentMultipleChoice(message, choices, surfaceId);
+    }
+  }
+
+  async #presentSingleChoice(
+    message: string,
+    choices: ChatChoice[],
+    surfaceId: string
+  ): Promise<Outcome<ChatChoicesResponse>> {
+    // Build button components for each choice
+    const buttonComponents: v0_8.Types.ComponentInstance[] = choices.map(
+      (choice, index) => ({
+        id: `choice-btn-${index}`,
+        component: {
+          Button: {
+            child: `choice-text-${index}`,
+            action: {
+              name: "select",
+              context: [
+                {
+                  key: "choiceId",
+                  value: { literalString: choice.id },
+                },
+              ],
+            },
+          },
+        },
+      })
+    );
+
+    // Build text components for button labels
+    const textComponents: v0_8.Types.ComponentInstance[] = choices.map(
+      (choice, index) => ({
+        id: `choice-text-${index}`,
+        component: {
+          Text: {
+            text: { literalString: choice.label },
+            usageHint: "body",
+          },
+        },
+      })
+    );
+
+    // Build the message text component
+    const messageComponent: v0_8.Types.ComponentInstance = {
+      id: "message-text",
+      component: {
+        Text: {
+          text: { literalString: message },
+          usageHint: "body",
+        },
+      },
+    };
+
+    // Build the root column layout
+    const rootComponent: v0_8.Types.ComponentInstance = {
+      id: "root",
+      component: {
+        Column: {
+          children: {
+            explicitList: [
+              "message-text",
+              ...choices.map((_, i) => `choice-btn-${i}`),
+            ],
+          },
+          distribution: "start",
+          alignment: "stretch",
+        },
+      },
+    };
+
+    const messages: v0_8.Types.ServerToClientMessage[] = [
+      {
+        surfaceUpdate: {
+          surfaceId,
+          components: [
+            rootComponent,
+            messageComponent,
+            ...buttonComponents,
+            ...textComponents,
+          ],
+        },
+      },
+      {
+        beginRendering: {
+          surfaceId,
+          root: "root",
+        },
+      },
+    ];
+
+    // Render the UI and await user input
+    const rendering = this.renderUserInterface(messages);
+    if (!ok(rendering)) return rendering;
+
+    const userAction = await this.awaitUserInput();
+    if (!ok(userAction)) return userAction;
+
+    // Extract the selected choice ID from the action context
+    const choiceId = userAction.userAction?.context?.choiceId;
+    if (typeof choiceId !== "string") {
+      return err("No choice was selected");
+    }
+
+    return { selected: [choiceId] };
+  }
+
+  async #presentMultipleChoice(
+    message: string,
+    choices: ChatChoice[],
+    surfaceId: string
+  ): Promise<Outcome<ChatChoicesResponse>> {
+    // Build checkbox components for each choice
+    const checkboxComponents: v0_8.Types.ComponentInstance[] = choices.map(
+      (choice, index) => ({
+        id: `choice-checkbox-${index}`,
+        component: {
+          CheckBox: {
+            label: { literalString: choice.label },
+            value: { path: `/selections/${choice.id}` },
+          },
+        },
+      })
+    );
+
+    // Build the message text component
+    const messageComponent: v0_8.Types.ComponentInstance = {
+      id: "message-text",
+      component: {
+        Text: {
+          text: { literalString: message },
+          usageHint: "body",
+        },
+      },
+    };
+
+    // Build submit button
+    const submitButtonText: v0_8.Types.ComponentInstance = {
+      id: "submit-text",
+      component: {
+        Text: {
+          text: { literalString: "Submit" },
+          usageHint: "body",
+        },
+      },
+    };
+
+    const submitButton: v0_8.Types.ComponentInstance = {
+      id: "submit-btn",
+      component: {
+        Button: {
+          child: "submit-text",
+          action: {
+            name: "submit",
+            context: choices.map((choice) => ({
+              key: choice.id,
+              value: { path: `/selections/${choice.id}` },
+            })),
+          },
+        },
+      },
+    };
+
+    // Build the root column layout
+    const rootComponent: v0_8.Types.ComponentInstance = {
+      id: "root",
+      component: {
+        Column: {
+          children: {
+            explicitList: [
+              "message-text",
+              ...choices.map((_, i) => `choice-checkbox-${i}`),
+              "submit-btn",
+            ],
+          },
+          distribution: "start",
+          alignment: "stretch",
+        },
+      },
+    };
+
+    // Initialize selection state in data model (all unchecked)
+    const dataInit: v0_8.Types.DataModelUpdate = {
+      surfaceId,
+      path: "/selections",
+      contents: choices.map((choice) => ({
+        key: choice.id,
+        valueBoolean: false,
+      })),
+    };
+
+    const messages: v0_8.Types.ServerToClientMessage[] = [
+      { dataModelUpdate: dataInit },
+      {
+        surfaceUpdate: {
+          surfaceId,
+          components: [
+            rootComponent,
+            messageComponent,
+            ...checkboxComponents,
+            submitButtonText,
+            submitButton,
+          ],
+        },
+      },
+      {
+        beginRendering: {
+          surfaceId,
+          root: "root",
+        },
+      },
+    ];
+
+    // Render the UI and await user input
+    const rendering = this.renderUserInterface(messages);
+    if (!ok(rendering)) return rendering;
+
+    const userAction = await this.awaitUserInput();
+    if (!ok(userAction)) return userAction;
+
+    // Extract selected choices from the action context
+    const context = userAction.userAction?.context;
+    if (!context) {
+      return err("No selections received");
+    }
+
+    const selected = choices
+      .filter((choice) => context[choice.id] === true)
+      .map((choice) => choice.id);
+
+    return { selected };
   }
 
   async render(
