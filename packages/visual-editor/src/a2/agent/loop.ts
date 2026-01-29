@@ -333,7 +333,7 @@ class Loop {
       const errorMessage = e instanceof Error ? e.message : String(e);
       return this.runStateManager.fail(err(`Agent error: ${errorMessage}`));
     } finally {
-      ui.progress.finish();
+      ui.finish();
     }
   }
 

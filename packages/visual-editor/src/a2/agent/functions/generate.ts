@@ -229,7 +229,7 @@ The Gemini model to use for image generation. How to choose the right model:
         true,
         aspect_ratio
       );
-      if (!ok(generated)) return generated;
+      if (!ok(generated)) return { error: generated.$error };
       const errors: string[] = [];
       const parts = mergeContent(generated, "user").parts;
       const images = parts
