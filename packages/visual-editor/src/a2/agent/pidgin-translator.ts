@@ -203,13 +203,21 @@ class PidginTranslator {
               errors.push(content.$error);
               return "";
             }
-            const part = content?.at(-1)?.parts.at(0);
-            if (!part) {
+            const lastContent = content?.at(-1);
+            if (!lastContent || lastContent.parts.length === 0) {
               errors.push(`Agent: Invalid asset format`);
               return "";
             }
-            const name = this.fileSystem.add(part);
-            return `<file src="${name}" />`;
+            const inner = substituteParts({
+              title: undefined,
+              content: lastContent,
+              fileSystem: this.fileSystem,
+              textAsFiles,
+            });
+            const title = param.title || "asset";
+            return tr`<asset title="${title}">
+${inner}
+</asset>`;
           }
           case "in": {
             const value = params[Template.toId(param.path)];
