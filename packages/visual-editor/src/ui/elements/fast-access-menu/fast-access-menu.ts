@@ -225,6 +225,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         &[icon="videocam_auto"],
         &[icon="generative-search"],
         &[icon="generative"],
+        &[icon="select_all"],
         &[icon="laps"] {
           --background: var(--ui-generate);
         }
