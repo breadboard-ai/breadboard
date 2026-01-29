@@ -228,6 +228,11 @@ class AgentUI implements A2UIRenderer, ChatManager {
     this.#appScreen!.status = "processing";
     return result;
   }
+
+  finish() {
+    this.progress.finish();
+    this.#outputWorkItem?.finish();
+  }
 }
 
 function computeFormat(inputType: ChatInputType): string {
