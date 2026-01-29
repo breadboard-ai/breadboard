@@ -221,6 +221,9 @@ export async function remix(
   const graphController = controller.editor.graph;
   const snackbars = controller.global.snackbars;
 
+  const logger = Utils.Logging.getLogger(controller);
+  const LABEL = "Board Actions";
+
   // Immediately acknowledge the user's action with a snackbar.
   // This will be superseded by saveAs, but provides instant feedback.
   snackbars.snackbar(
@@ -240,9 +243,12 @@ export async function remix(
   // This handles the common case of remixing from the header and avoids
   // URL mismatch issues (e.g., resourcekey param removed by loader).
   if (currentGraph && graphController.url === url) {
+    logger.log(Utils.Logging.Formatter.verbose("Using current graph"), LABEL);
     graph = structuredClone(currentGraph);
   } else {
     // Fall back to loading from the store (for gallery remixes, etc.)
+    logger.log(Utils.Logging.Formatter.verbose("Using graph store"), LABEL);
+
     const graphStore = services.graphStore;
     const addResult = graphStore.addByURL(url, [], {});
     const mutable = await graphStore.getLatest(addResult.mutable);
