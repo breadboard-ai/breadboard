@@ -27,7 +27,6 @@ import {
   EnumValue,
 } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
-import { hasEnabledGlobalSettings } from "./global-settings.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { Utils } from "../../../sca/utils.js";
