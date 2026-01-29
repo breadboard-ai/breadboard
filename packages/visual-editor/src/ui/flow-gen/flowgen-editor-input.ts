@@ -4,16 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { LitElement, type PropertyValues, css, html, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { projectStateContext } from "../contexts/project-state.js";
 import "../elements/input/expanding-textarea.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
-import { StateEvent, UtteranceEvent } from "../events/events.js";
+import { UtteranceEvent } from "../events/events.js";
 import { Project } from "../state/types.js";
 import * as StringsHelper from "../strings/helper.js";
 import { baseColors } from "../styles/host/base-colors.js";
@@ -21,19 +20,17 @@ import { type } from "../styles/host/type.js";
 import { icons } from "../styles/icons.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
 import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
-import { flowGenWithTheme } from "./flowgen-with-theme.js";
 import { actionTrackerContext } from "../contexts/action-tracker-context.js";
 import { ActionTracker } from "../types/types.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { scaContext } from "../../sca/context/context.js";
+import { type SCA } from "../../sca/sca.js";
+import type { FlowgenInputStatus } from "../../sca/controller/subcontrollers/global/flowgen-input-controller.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
-type State =
-  | { status: "initial" }
-  | { status: "generating" }
-  | { status: "error"; error: unknown; suggestedIntent?: string };
-
 @customElement("bb-flowgen-editor-input")
-export class FlowgenEditorInput extends LitElement {
+export class FlowgenEditorInput extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     baseColors,
@@ -207,6 +204,9 @@ export class FlowgenEditorInput extends LitElement {
     `,
   ];
 
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @consume({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator | undefined;
 
@@ -216,11 +216,35 @@ export class FlowgenEditorInput extends LitElement {
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
 
-  @property({ type: Object })
-  accessor currentGraph: GraphDescriptor | undefined;
+  /**
+   * Get state from controller (signal-backed for cross-breakpoint sync).
+   */
+  get #state(): FlowgenInputStatus {
+    return (
+      this.sca?.controller.global.flowgenInput.state ?? { status: "initial" }
+    );
+  }
 
-  @state()
-  accessor #state: State = { status: "initial" };
+  /**
+   * Set state on controller.
+   */
+  set #state(value: FlowgenInputStatus) {
+    this.sca?.controller.global.flowgenInput.setState(value);
+  }
+
+  /**
+   * Get input value from controller.
+   */
+  get #inputValue(): string {
+    return this.sca?.controller.global.flowgenInput.inputValue ?? "";
+  }
+
+  /**
+   * Set input value on controller.
+   */
+  set #inputValue(value: string) {
+    this.sca?.controller.global.flowgenInput.setInputValue(value);
+  }
 
   @property({ type: Boolean, reflect: true })
   accessor focused = false;
@@ -338,9 +362,11 @@ export class FlowgenEditorInput extends LitElement {
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
           .disabled=${isGenerating}
+          .value=${this.#inputValue}
           .placeholder=${this.hasEmptyGraph
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
+          @input=${this.#onInputSync}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}
@@ -383,35 +409,14 @@ export class FlowgenEditorInput extends LitElement {
         this.#state = { status: "initial" };
         return;
       }
-      this.#state = { status: "generating" };
 
-      this.actionTracker?.flowGenEdit(this.currentGraph?.url);
-
-      if (!this.flowGenerator) return;
-      if (!this.currentGraph) return;
+      // Validate all required dependencies are available BEFORE calling action
+      if (!this.sca) return;
       if (!this.projectState) return;
 
-      this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
-      this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
-
-      flowGenWithTheme(
-        this.flowGenerator,
-        description,
-        this.currentGraph,
-        this.projectState
-      )
-        .then((response) => {
-          if ("error" in response) {
-            return this.#onGenerateError(
-              response.error,
-              response.suggestedIntent
-            );
-          }
-          return this.#onGenerateComplete(response.flow, response.theme);
-        })
-        .finally(() => {
-          this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
-        });
+      // Delegate to SCA action - this survives DOM changes during resize
+      // SCA action handles setting generating/initial status
+      this.sca.actions.flowgen.generate(description, this.projectState);
     }
   }
 
@@ -419,36 +424,13 @@ export class FlowgenEditorInput extends LitElement {
     this.#state = { status: "initial" };
   }
 
-  #onGenerateComplete(graph: GraphDescriptor, theme?: GraphTheme) {
-    if (this.#state.status !== "generating") {
-      return;
-    }
-    this.dispatchEvent(
-      new StateEvent({
-        eventType: "board.replace",
-        replacement: graph,
-        theme,
-        creator: { role: "assistant" },
-      })
-    );
-    this.#state = { status: "initial" };
-    this.#clearInput();
-    this.generating = false;
-  }
-
-  #onGenerateError(error: unknown, suggestedIntent?: string) {
-    if (this.#state.status !== "generating") {
-      return;
-    }
-    console.error("Error generating board", error);
-    console.log("Suggested intent", suggestedIntent);
-    this.#state = { status: "error", error, suggestedIntent };
-    this.generating = false;
-  }
-
-  #clearInput() {
-    if (this.#descriptionInput.value) {
-      this.#descriptionInput.value.value = "";
+  /**
+   * Sync input value to controller on every keystroke.
+   */
+  #onInputSync() {
+    const input = this.#descriptionInput.value;
+    if (input) {
+      this.#inputValue = input.value;
     }
   }
 

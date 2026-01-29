@@ -17,6 +17,8 @@ import { SettingsStore } from "./ui/data/settings-store.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
+import "./ui/lite/step-list-view/step-list-view.js";
+import "./ui/lite/input/editor-input-lite.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
   RuntimeConfig,

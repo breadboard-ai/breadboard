@@ -12,11 +12,14 @@ import {
   EditTransform,
   GraphDescriptor,
   GraphIdentifier,
+  GraphMetadata,
+  GraphTheme,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
   NodeMetadata,
 } from "@breadboard-ai/types";
+import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { makeAction } from "../binder.js";
 import {
   ChangeAssetEdge,
@@ -27,7 +30,7 @@ import {
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 import type { SelectionPositionUpdate } from "../../../ui/events/node/node.js";
 import type { AssetEdge, EdgeAttachmentPoint } from "../../../ui/types/types.js";
-
+import { GraphUtils } from "../../../utils/graph-utils.js";
 export const bind = makeAction();
 
 /**
@@ -260,4 +263,75 @@ export function replace(
     [{ type: "replacegraph", replacement, creator }],
     "Replace graph"
   );
+}
+
+export interface ReplaceWithThemeOptions {
+  /** The replacement graph (will be mutated to apply theme) */
+  replacement: GraphDescriptor;
+  /** Optional theme to apply to the graph */
+  theme?: GraphTheme;
+  /** Edit history creator info */
+  creator: EditHistoryCreator;
+  /** Google Drive client for palette creation when no theme provided */
+  googleDriveClient?: GoogleDriveClient | null;
+}
+
+/**
+ * Replaces the entire graph with full theme handling.
+ *
+ * This action handles:
+ * 1. Applying a generated theme if provided
+ * 2. Falling back to default theme application if no theme (requires googleDriveClient)
+ * 3. Preserving splash screen from current graph's theme if replacement lacks one
+ */
+export async function replaceWithTheme(options: ReplaceWithThemeOptions) {
+  const { replacement, theme, creator, googleDriveClient } = options;
+  const { controller } = bind;
+
+  // 1. Apply theme or defaults
+  if (theme) {
+    const metadata: GraphMetadata = (replacement.metadata ??= {});
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    metadata.visual.presentation.themes ??= {};
+
+    const id = globalThis.crypto.randomUUID();
+    metadata.visual.presentation.themes[id] = theme;
+    metadata.visual.presentation.theme = id;
+  } else if (googleDriveClient) {
+    // Apply defaults only when no theme is provided
+    GraphUtils.applyDefaultThemeInformationIfNonePresent(replacement);
+    await GraphUtils.createAppPaletteIfNeeded(replacement, googleDriveClient);
+  }
+
+  // 2. Preserve splash screen from current theme if replacement doesn't have one
+  // TODO: Remove this when the Planner persists the existing theme.
+  const currentGraph = controller.editor.graph.editor?.raw();
+  if (currentGraph) {
+    const currentPresentation = currentGraph.metadata?.visual?.presentation;
+    const currentTheme = currentPresentation?.theme;
+    const currentThemes = currentPresentation?.themes;
+    const currentThemeHasSplashScreen =
+      currentTheme &&
+      currentThemes &&
+      currentThemes[currentTheme] &&
+      currentThemes[currentTheme].splashScreen;
+
+    const replacementPresentation = replacement.metadata?.visual?.presentation;
+    const replacementTheme = replacementPresentation?.theme;
+    const replacementThemes = replacementPresentation?.themes;
+    const replacementThemeHasSplashScreen =
+      replacementTheme &&
+      replacementThemes &&
+      replacementThemes[replacementTheme] &&
+      replacementThemes[replacementTheme].splashScreen;
+
+    if (currentThemeHasSplashScreen && !replacementThemeHasSplashScreen) {
+      console.log("[graph replacement] Persisting existing theme");
+      replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
+    }
+  }
+
+  // 3. Replace the graph
+  return replace(replacement, creator);
 }

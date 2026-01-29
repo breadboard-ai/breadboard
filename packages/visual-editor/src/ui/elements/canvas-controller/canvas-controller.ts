@@ -47,9 +47,11 @@ import {
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Project, RendererRunState } from "../../state/types.js";
+import { Project, RendererRunState, LiteModeState } from "../../state/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
+import "../../lite/step-list-view/step-list-view.js";
+import "../../lite/prompt/prompt-view.js";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
@@ -69,6 +71,7 @@ import { emptyStyles } from "../../styles/host/colors-empty.js";
 const focusAppControllerWhenIn = ["canvas", "preview"];
 
 import "./empty-state.js";
+import "../../flow-gen/flowgen-editor-input.js";
 import { isEmpty } from "../../utils/utils.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
@@ -141,6 +144,9 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
   #themeOptions: AppTemplateAdditionalOptionsAvailable | null = null;
+
+  @property()
+  accessor liteState: LiteModeState | null = null;
 
   @state()
   set sideNavItem(item: "console" | "edit-history" | "editor" | "preview") {
@@ -669,10 +675,45 @@ export class CanvasController extends SignalWatcher(LitElement) {
       </ui-splitter>
     `;
 
+    // On narrow screens with a loaded graph, show step-list instead of full editor
+    // For empty graphs, show the empty state with flowgen input
+    // When generating, switch to step-list view to show planner thoughts
+    // While loading (no graph or liteState), show nothing to match non-narrow behavior
+    const isGenerating =
+      this.sca?.controller.global.flowgenInput.state.status === "generating";
+    const showStepListView = !graphIsEmpty || isGenerating;
+    const prompt =
+      this.graph?.metadata?.raw_intent ?? this.graph?.metadata?.intent ?? null;
+    const narrowScreenContent =
+      !graph || !this.liteState
+        ? nothing
+        : html`<section id="narrow-view">
+            ${showStepListView
+              ? html`<bb-prompt-view
+                    .prompt=${prompt}
+                    .state=${this.liteState}
+                  ></bb-prompt-view>
+                  <bb-step-list-view
+                    .state=${this.liteState}
+                  ></bb-step-list-view>`
+              : html`<bb-empty-state narrow></bb-empty-state>`}
+            ${this.readOnly
+              ? nothing
+              : html`<bb-flowgen-editor-input
+                  .hasEmptyGraph=${graphIsEmpty}
+                  .projectState=${this.projectState}
+                ></bb-flowgen-editor-input>`}
+          </section>`;
+
+    const screenSize = this.sca.controller.global.screenSize.size;
     return [
-      graph
-        ? html`<section id="create-view">${contentContainer}</section>`
-        : html`<section id="content" class="welcome">${graphEditor}</section>`,
+      screenSize === "narrow"
+        ? narrowScreenContent
+        : graph
+          ? html`<section id="create-view">${contentContainer}</section>`
+          : html`<section id="content" class="welcome">
+              ${graphEditor}
+            </section>`,
       html`
         <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
         </bb-share-panel>

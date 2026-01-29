@@ -18,21 +18,21 @@ export const styles = [
     }
 
     :host {
-      --header-height: 0;
+      --header-height: var(--bb-grid-size-14);
       flex: 1 0 auto;
       display: flex;
     }
 
     #container {
       display: grid;
-      flex: 1 0 auto;
+      flex: 1 1 auto;
       background-color: var(--light-dark-n-100);
-      grid-template-rows: auto;
+      grid-template-rows: var(--header-height) auto;
     }
 
     bb-ve-header {
       z-index: 150;
-      display: none;
+      display: block;
     }
 
     #status-update-bar {
@@ -95,7 +95,7 @@ export const styles = [
       }
     }
 
-    @media (min-width: 600px) {
+    @media (min-width: 620px) {
       :host {
         --header-height: var(--bb-grid-size-14);
       }

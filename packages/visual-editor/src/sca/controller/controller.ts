@@ -72,6 +72,10 @@ class Controller implements AppController {
       flags: new Global.FlagController("Flags", "FlagController", runtimeFlags),
       debug: new Global.DebugController("Debug", "DebugController"),
       feedback: new Global.FeedbackController("Feedback", "FeedbackController"),
+      flowgenInput: new Global.FlowgenInputController(
+        "FlowgenInput",
+        "FlowgenInputController"
+      ),
       toasts: new Global.ToastController("Toasts", "ToastController"),
       snackbars: new Global.SnackbarController(
         "Snackbars",
@@ -82,6 +86,10 @@ class Controller implements AppController {
         "StatusUpdatesController"
       ),
       consent: new Global.ConsentController("Consent", "ConsentController"),
+      screenSize: new Global.ScreenSizeController(
+        "ScreenSize",
+        "ScreenSizeController"
+      ),
 
       // Migrations are tested independently so this block is ignored for
       // coverage reporting.
@@ -204,10 +212,12 @@ export interface AppController extends DebuggableAppController {
     flags: Global.FlagController;
     debug: Global.DebugController;
     feedback: Global.FeedbackController;
+    flowgenInput: Global.FlowgenInputController;
     toasts: Global.ToastController;
     snackbars: Global.SnackbarController;
     statusUpdates: Global.StatusUpdatesController;
     consent: Global.ConsentController;
+    screenSize: Global.ScreenSizeController;
     performMigrations(): Promise<void>;
   };
   board: {

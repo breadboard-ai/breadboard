@@ -18,6 +18,9 @@ export class StepListView extends SignalWatcher(LitElement) {
   @property()
   accessor state: LiteModeState | null = null;
 
+  @property({ type: Boolean, reflect: true })
+  accessor lite = false;
+
   static styles = [
     Styles.HostIcons.icons,
     Styles.HostBehavior.behavior,
@@ -110,6 +113,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                 cursor: pointer;
                 min-height: 48px;
 
+                /* Loading animation for lite mode (gray) */
                 &.loading {
                   --light: oklch(
                     from var(--sys-color--surface-container-high) l c h / 20%
@@ -135,6 +139,15 @@ export class StepListView extends SignalWatcher(LitElement) {
                   padding-right: var(--bb-grid-size-4);
                   display: flex;
                   flex-direction: column;
+                  flex: 1 1 0;
+                  min-width: 0;
+
+                  & .step-title-text,
+                  & .step-thought {
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                  }
 
                   & .step-thought {
                     color: var(--sys-color--on-surface-variant);
@@ -144,58 +157,110 @@ export class StepListView extends SignalWatcher(LitElement) {
                 & .step-icon {
                   flex: 0 0 auto;
                 }
+              }
 
-                & > .marker-container {
+              /* Step type colors - only when not in lite mode */
+              :host(:not([lite])) & > summary {
+                /* Input steps (yellow) */
+                &.chat_mirror {
+                  background: var(--ui-get-input);
+                  color: var(--n-0);
+                }
+
+                /* Display steps (blue) */
+                &.responsive_layout,
+                &.drive_presentation,
+                &.sheets,
+                &.web,
+                &.docs {
+                  background: var(--ui-display);
+                  color: var(--n-0);
+                }
+
+                /* Generative steps (green) */
+                &.spark,
+                &.photo_spark,
+                &.audio_magic_eraser,
+                &.text_analysis,
+                &.generative-image-edit,
+                &.generative-code,
+                &.videocam_auto,
+                &.generative-search,
+                &.generative,
+                &.laps {
+                  background: var(--ui-generate);
+                  color: var(--n-0);
+                }
+
+                &.loading {
+                  /* Use n-30 gray for subtle visibility against non-lite background */
+                  --light: oklch(from var(--n-80) l c h / 50%);
+                  --dark: oklch(from var(--n-80) l c h / 80%);
+
+                  background: linear-gradient(
+                    123deg,
+                    var(--light) 0%,
+                    var(--dark) 25%,
+                    var(--light) 50%,
+                    var(--dark) 75%,
+                    var(--light) 100%
+                  );
+                  background-size: 200% 200%;
+                  animation: glide 2150ms linear infinite;
+                }
+              }
+
+              /* Marker container styles - apply to all modes */
+              & > summary > .marker-container {
+                flex: 0 0 auto;
+                position: relative;
+
+                &:has(> .marker.processing-generation) {
+                  width: 32px;
+                  height: 32px;
+                }
+
+                & > .marker {
                   flex: 0 0 auto;
-                  position: relative;
 
-                  &:has(> .marker.processing-generation) {
-                    width: 32px;
-                    height: 32px;
+                  &::before {
+                    content: "keyboard_arrow_down";
                   }
-
-                  & > .marker {
-                    flex: 0 0 auto;
+                  &.pending,
+                  &.working {
+                    animation: rotate 1s linear infinite;
 
                     &::before {
-                      content: "keyboard_arrow_down";
+                      content: "progress_activity";
                     }
-                    &.pending,
-                    &.working {
-                      animation: rotate 1s linear infinite;
+                  }
 
-                      &::before {
-                        content: "progress_activity";
-                      }
-                    }
+                  &.processing-generation {
+                    animation: none;
+                    width: 32px;
+                    height: 32px;
 
-                    &.processing-generation {
-                      animation: none;
+                    &::before {
+                      content: "";
+                      display: block;
                       width: 32px;
                       height: 32px;
-
-                      &::before {
-                        content: "";
-                        display: block;
-                        width: 32px;
-                        height: 32px;
-                        animation: rotate 1s linear infinite;
-                        background: url(/images/progress-md.svg) center center /
-                          100% 100% no-repeat;
-                        border-radius: 50%;
-                      }
+                      animation: rotate 1s linear infinite;
+                      background: url(/images/progress-md.svg) center center /
+                        100% 100% no-repeat;
+                      border-radius: 50%;
                     }
                   }
+                }
 
-                  & > .generating {
-                    flex: 0 0 auto;
-                    position: absolute;
-                    width: 20px;
-                    height: 20px;
-                    left: 6px;
-                    top: 6px;
-                    color: var(--sys-color--on-surface-variant);
-                  }
+                & > .generating {
+                  flex: 0 0 auto;
+                  position: absolute;
+                  width: 20px;
+                  height: 20px;
+                  left: 6px;
+                  top: 6px;
+                  color: var(--sys-color--on-surface-variant);
                 }
               }
 
@@ -214,6 +279,10 @@ export class StepListView extends SignalWatcher(LitElement) {
                 border: 1px solid var(--sys-color--surface-variant);
                 color: var(--sys-color--on-surface-variant);
                 margin-top: var(--bb-grid-size-2);
+
+                :host(:not([lite])) & {
+                  background: var(--light-dark-n-100);
+                }
 
                 > p {
                   margin: 0;
@@ -281,13 +350,17 @@ export class StepListView extends SignalWatcher(LitElement) {
         status?: "generating" | "loading";
         animated?: boolean;
         animationDelay?: number;
+        colorClass?: string;
       }
     ) => {
       if (options.status === "loading") {
         return html`<details>
           <summary
             inert
-            class=${classMap({ loading: options.status === "loading" })}
+            class=${classMap({
+              loading: options.status === "loading",
+              [options.colorClass ?? ""]: !!options.colorClass,
+            })}
           ></summary>
         </details>`;
       }
@@ -314,7 +387,7 @@ export class StepListView extends SignalWatcher(LitElement) {
             animationDelay,
           })}
         >
-          <summary>
+          <summary class=${step.icon ?? ""}>
             <span class="marker-container">
               <span class=${classMap(markerClasses)}></span>
               ${options.status === "generating"
@@ -323,13 +396,13 @@ export class StepListView extends SignalWatcher(LitElement) {
                   >`
                 : nothing}
             </span>
-            ${step.icon
+            ${step.icon && options.status !== "generating"
               ? html`<span class="step-icon g-icon filled-heavy round"
                   >${step.icon}</span
                 >`
               : nothing}
-            <span class="step-title sans md-title-medium w-500"
-              >${step.title}
+            <span class="step-title sans md-title-medium w-500">
+              <span class="step-title-text">${step.title}</span>
               ${options.status === "generating"
                 ? html`<span class="step-thought sans md-body-medium w-400"
                     >${step.label}</span
@@ -352,9 +425,13 @@ export class StepListView extends SignalWatcher(LitElement) {
     };
 
     const renderPlaceholders = () => {
+      // Use first step's icon for color, or default to chat_mirror (yellow/input)
+      const firstStepIcon = this.state?.steps?.size
+        ? ([...this.state.steps.values()][0]?.icon ?? "chat_mirror")
+        : "chat_mirror";
       return html`<ul id="list">
         ${this.state?.status === "generating"
-          ? renderPlannerProgress()
+          ? renderPlannerProgress(firstStepIcon)
           : nothing}
         ${repeat(new Array(4), () => {
           return html`<li>
@@ -370,14 +447,14 @@ export class StepListView extends SignalWatcher(LitElement) {
                 status: "loading",
                 title: "",
               },
-              { status: "loading" }
+              { status: "loading", colorClass: firstStepIcon }
             )}
           </li>`;
         })}
       </ul>`;
     };
 
-    const renderPlannerProgress = () => {
+    const renderPlannerProgress = (iconClass: string = "chat_mirror") => {
       if (!this.state?.planner) {
         return nothing;
       }
@@ -390,6 +467,7 @@ export class StepListView extends SignalWatcher(LitElement) {
             "processing-generation": true,
           },
           {
+            icon: iconClass,
             label: this.state?.planner.thought,
             prompt: "",
             status: "pending",
@@ -413,7 +491,7 @@ export class StepListView extends SignalWatcher(LitElement) {
         return renderPlaceholders();
       } else if (this.state?.status === "generating") {
         return html`<ul id="list">
-          ${renderPlannerProgress()}
+          ${renderPlannerProgress("chat_mirror")}
         </ul>`;
       }
       return nothing;

@@ -6,18 +6,12 @@
 
 import { EventRoute } from "../types.js";
 
-import {
-  ConsentType,
-  ConsentUIType,
-  GraphMetadata,
-  InputValues,
-} from "@breadboard-ai/types";
+import { ConsentType, ConsentUIType, InputValues } from "@breadboard-ai/types";
 
 import { StateEvent } from "../../ui/events/events.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { Utils } from "../../sca/utils.js";
-import { GraphUtils } from "../../utils/graph-utils.js";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -400,60 +394,16 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
   event: "board.replace",
 
   async do(deps) {
-    const { tab, originalEvent, googleDriveClient, sca } = deps;
+    const { originalEvent, googleDriveClient, sca } = deps;
+    const { replacement, theme, creator } = originalEvent.detail;
 
-    const { replacement, theme } = originalEvent.detail;
-
-    if (theme) {
-      const metadata: GraphMetadata = (replacement.metadata ??= {});
-      metadata.visual ??= {};
-      metadata.visual.presentation ??= {};
-      metadata.visual.presentation.themes ??= {};
-
-      const id = globalThis.crypto.randomUUID();
-      metadata.visual.presentation.themes[id] = theme;
-      metadata.visual.presentation.theme = id;
-    } else {
-      GraphUtils.applyDefaultThemeInformationIfNonePresent(replacement);
-      await GraphUtils.createAppPaletteIfNeeded(
-        replacement,
-        googleDriveClient
-      );
-    }
-
-    // If there is a theme applied it shouldn't be possible to revert this to
-    // the default theme with a board replacement, so we protect against that
-    // here.
-    //
-    // We instead check the current graph for a splash image, and the
-    // replacement as well. If the current graph has a splash image and the
-    // replacement does not, we copy the current theme across.
-    //
-    // TODO: Remove this when the Planner persists the existing theme.
-    const currentPresentation = tab?.graph.metadata?.visual?.presentation;
-    const currentTheme = currentPresentation?.theme;
-    const currentThemes = currentPresentation?.themes;
-    const currentThemeHasSplashScreen =
-      currentTheme &&
-      currentThemes &&
-      currentThemes[currentTheme] &&
-      currentThemes[currentTheme].splashScreen;
-
-    const replacementPresentation = replacement.metadata?.visual?.presentation;
-    const replacementTheme = replacementPresentation?.theme;
-    const replacementThemes = replacementPresentation?.themes;
-    const replacementThemeHasSplashScreen =
-      replacementTheme &&
-      replacementThemes &&
-      replacementThemes[replacementTheme] &&
-      replacementThemes[replacementTheme].splashScreen;
-
-    if (currentThemeHasSplashScreen && !replacementThemeHasSplashScreen) {
-      console.log("[board replacement] Persisting existing theme");
-      replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
-    }
-
-    await sca.actions.graph.replace(replacement, originalEvent.detail.creator);
+    // Theme handling is centralized in the SCA action
+    await sca.actions.graph.replaceWithTheme({
+      replacement,
+      theme,
+      creator,
+      googleDriveClient,
+    });
 
     return false;
   },
