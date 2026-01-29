@@ -48,9 +48,10 @@ import {
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Project, RendererRunState } from "../../state/types.js";
+import { Project, RendererRunState, LiteModeState } from "../../state/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
+import "../../lite/step-list-view/step-list-view.js";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
@@ -143,6 +144,12 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
   #themeOptions: AppTemplateAdditionalOptionsAvailable | null = null;
+
+  @property()
+  accessor screenSize: "narrow" | "medium" | "wide" = "wide";
+
+  @property()
+  accessor liteState: LiteModeState | null = null;
 
   @state()
   set sideNavItem(item: "console" | "edit-history" | "editor" | "preview") {
@@ -672,10 +679,24 @@ export class CanvasController extends SignalWatcher(LitElement) {
       </ui-splitter>
     `;
 
+    // On narrow screens with a loaded graph, show step-list instead of full editor
+    const narrowScreenContent =
+      graph && this.liteState
+        ? html`<section id="narrow-view">
+            <bb-step-list-view .state=${this.liteState}></bb-step-list-view>
+          </section>`
+        : html`<section id="content" class="welcome">
+            ${this.#maybeRenderEmptyState()}
+          </section>`;
+
     return [
-      graph
-        ? html`<section id="create-view">${contentContainer}</section>`
-        : html`<section id="content" class="welcome">${graphEditor}</section>`,
+      this.screenSize === "narrow"
+        ? narrowScreenContent
+        : graph
+          ? html`<section id="create-view">${contentContainer}</section>`
+          : html`<section id="content" class="welcome">
+              ${graphEditor}
+            </section>`,
       html`
         <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
         </bb-share-panel>

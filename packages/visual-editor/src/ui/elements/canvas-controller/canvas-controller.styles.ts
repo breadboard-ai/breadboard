@@ -71,12 +71,25 @@ export const styles = [
     }
 
     #controls-activity,
-    #create-view {
+    #create-view,
+    #narrow-view {
       width: 100%;
       height: 100%;
       overflow: auto;
       position: relative;
       contain: strict;
+    }
+
+    #narrow-view {
+      display: flex;
+      flex-direction: column;
+      background-color: var(--light-dark-n-100);
+      padding: var(--bb-grid-size-3);
+
+      & bb-step-list-view {
+        flex: 1 1 auto;
+        overflow: auto;
+      }
     }
 
     #create-view {

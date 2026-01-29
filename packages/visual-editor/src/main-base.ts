@@ -21,6 +21,8 @@ import { SettingsStore } from "./ui/data/settings-store.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
+import "./ui/lite/step-list-view/step-list-view.js";
+import "./ui/lite/input/editor-input-lite.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
   RuntimeConfig,
@@ -159,6 +161,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @state()
   protected accessor tosStatus: CheckAppAccessResponse | null = null;
+
+  @state()
+  protected accessor screenSize: "narrow" | "medium" | "wide" = "wide";
 
   @state()
   protected set statusUpdates(
@@ -327,6 +332,25 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.router.init();
 
     this.#checkSubscriptionStatus();
+
+    // Set up reactive narrow screen detection
+    const narrowScreenQuery = window.matchMedia("(max-width: 620px)");
+    const mediumScreenQuery = window.matchMedia("(max-width: 830px)");
+
+    const updateScreenSize = () => {
+      if (narrowScreenQuery.matches) {
+        this.screenSize = "narrow";
+      } else if (mediumScreenQuery.matches) {
+        this.screenSize = "medium";
+      } else {
+        this.screenSize = "wide";
+      }
+    };
+
+    updateScreenSize();
+
+    narrowScreenQuery.addEventListener("change", updateScreenSize);
+    mediumScreenQuery.addEventListener("change", updateScreenSize);
 
     this.logger.log(
       Utils.Logging.Formatter.info("Visual Editor Initialized"),
@@ -626,7 +650,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.router.addEventListener(
       Runtime.Events.RuntimeURLChangeEvent.eventName,
       async (evt: Runtime.Events.RuntimeURLChangeEvent) => {
-
         if (evt.mode) {
           this.sca.controller.global.main.mode = evt.mode;
         }

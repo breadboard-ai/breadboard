@@ -220,6 +220,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             background: var(--light-dark-n-0);
             height: var(--bb-grid-size-10);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+            white-space: nowrap;
 
             > * {
               pointer-events: none;
@@ -295,7 +296,41 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             }
           }
         }
-      }
+
+        @media (max-width: 600px) {
+          padding: 0 var(--bb-grid-size-3) var(--bb-grid-size-6)
+            var(--bb-grid-size-3);
+
+          & #hero {
+            padding: 0 var(--bb-grid-size-4);
+
+            & h1 {
+              margin: var(--bb-grid-size-4) 0 0 0;
+              font-size: 20px;
+              line-height: 28px;
+            }
+          }
+
+          & bb-homepage-search-button {
+            display: none;
+          }
+
+          & #content .gallery-wrapper {
+            margin-top: 0;
+          }
+
+          & #board-listing {
+            #location-selector,
+            .gallery-title {
+              font-size: 20px;
+            }
+            & .gallery-wrapper {
+              & .gallery-header {
+                margin-bottom: var(--bb-grid-size-4);
+              }
+            }
+          }
+        }
 
       #app-version {
         font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
