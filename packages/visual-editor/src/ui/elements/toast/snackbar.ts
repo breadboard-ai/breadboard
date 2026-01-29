@@ -86,7 +86,7 @@ export class Snackbar extends SignalWatcher(LitElement) {
       #messages {
         color: var(--text-color);
         flex: 1 1 auto;
-        margin-right: var(--bb-grid-size-11);
+        margin-right: var(--bb-grid-size-3);
         a,
         a:visited {
           color: var(--light-dark-p-40);
@@ -113,6 +113,11 @@ export class Snackbar extends SignalWatcher(LitElement) {
           color: var(--text-color);
           opacity: 0.7;
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+          &.long-button {
+            min-width: 160px;
+            margin: 0;
+          }
 
           &:not([disabled]) {
             cursor: pointer;
@@ -249,6 +254,7 @@ export class Snackbar extends SignalWatcher(LitElement) {
               (action) => action.value,
               (action) => {
                 return html`<button
+                  class="${action?.cssClass}"
                   @click=${() => {
                     this.hide();
                     this.dispatchEvent(
