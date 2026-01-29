@@ -57,7 +57,7 @@ export class Checkbox extends Root {
     `,
   ];
 
-  #setBoundValue(value: string) {
+  #setBoundValue(checked: boolean) {
     if (!this.value || !this.processor) {
       return;
     }
@@ -73,7 +73,7 @@ export class Checkbox extends Root {
     this.processor.setData(
       this.component,
       this.value.path,
-      value,
+      checked,
       this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
     );
   }
@@ -88,16 +88,16 @@ export class Checkbox extends Root {
       <input
         class=${classMap(this.theme.components.CheckBox.element)}
         autocomplete="off"
-        @input=${(evt: Event) => {
+        @change=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;
           }
 
-          this.#setBoundValue(evt.target.value);
+          this.#setBoundValue(evt.target.checked);
         }}
         id="data"
         type="checkbox"
-        .value=${value}
+        .checked=${value}
       />
       <label class=${classMap(this.theme.components.CheckBox.label)} for="data"
         >${this.label?.literalString}</label
@@ -122,15 +122,19 @@ export class Checkbox extends Root {
           this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
 
+        if (typeof textValue === "boolean") {
+          return this.#renderField(textValue);
+        }
+
         if (textValue === null) {
           return html`Invalid label`;
         }
 
-        if (typeof textValue !== "boolean") {
+        if (textValue !== "true" && textValue !== "false") {
           return html`Invalid label`;
         }
 
-        return this.#renderField(textValue);
+        return this.#renderField(textValue === "true");
       }
     }
 

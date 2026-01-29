@@ -24,12 +24,17 @@ import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
 import { ProgressWorkItem } from "./progress-work-item.js";
 import {
   A2UIRenderer,
+  ChatChoice,
+  ChatChoiceLayout,
+  ChatChoicesResponse,
+  ChatChoiceSelectionMode,
   ChatInputType,
   ChatManager,
   ChatResponse,
   VALID_INPUT_TYPES,
 } from "./types.js";
 import { getCurrentStepState } from "../a2/output.js";
+import { ChoicePresenter } from "./choice-presenter.js";
 
 export { AgentUI };
 
@@ -68,6 +73,8 @@ class AgentUI implements A2UIRenderer, ChatManager {
 
   readonly #chatLog: LLMContent[] = [];
 
+  readonly #choicePresenter: ChoicePresenter;
+
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
@@ -83,6 +90,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
       );
     }
     this.progress = new ProgressWorkItem("Agent", "spark", this.#appScreen);
+    this.#choicePresenter = new ChoicePresenter(translator, this);
     if (!this.#consoleEntry) {
       console.warn(
         `Unable to find console entry for this agent. Trying to render UI will fail.`
@@ -160,6 +168,28 @@ class AgentUI implements A2UIRenderer, ChatManager {
     return response;
   }
 
+  /**
+   * Presents choices to the user and returns the selected choice IDs.
+   *
+   * For "single" mode: renders choice buttons - clicking one returns that ID.
+   * For "multiple" mode: renders checkboxes with a submit button.
+   *
+   * Both message and choice labels support pidgin format with file references.
+   */
+  async presentChoices(
+    message: string,
+    choices: ChatChoice[],
+    selectionMode: ChatChoiceSelectionMode,
+    layout: ChatChoiceLayout = "list"
+  ): Promise<Outcome<ChatChoicesResponse>> {
+    return this.#choicePresenter.presentChoices(
+      message,
+      choices,
+      selectionMode,
+      layout
+    );
+  }
+
   async render(
     a2UIPayload: unknown[]
   ): Promise<Outcome<Record<string, unknown>>> {
@@ -170,7 +200,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     return this.awaitUserInput();
   }
 
-  private renderUserInterface(
+  renderUserInterface(
     messages: v0_8.Types.ServerToClientMessage[]
   ): Outcome<void> {
     const workItem = this.#updateWorkItem();
@@ -184,7 +214,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     workItem.renderUserInterface();
   }
 
-  private async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
+  async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
 

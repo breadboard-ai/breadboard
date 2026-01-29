@@ -135,8 +135,33 @@ export type ChatResponse = {
   input: LLMContent;
 };
 
+export type ChatChoice = {
+  id: string;
+  label: string;
+};
+
+export type ChatChoiceSelectionMode = "single" | "multiple";
+
+/**
+ * Layout options for presenting choices:
+ * - "list": Vertical stack (default) - best for longer choice labels
+ * - "row": Horizontal inline - best for short choices like "Yes/No"
+ * - "grid": Wrapping grid - adapts to available space
+ */
+export type ChatChoiceLayout = "list" | "row" | "grid";
+
+export type ChatChoicesResponse = {
+  selected: string[];
+};
+
 export type ChatManager = {
   chat(pidginString: string, inputType: string): Promise<Outcome<ChatResponse>>;
+  presentChoices(
+    message: string,
+    choices: ChatChoice[],
+    selectionMode: ChatChoiceSelectionMode,
+    layout?: ChatChoiceLayout
+  ): Promise<Outcome<ChatChoicesResponse>>;
 };
 
 export type MappedDefinitions = {

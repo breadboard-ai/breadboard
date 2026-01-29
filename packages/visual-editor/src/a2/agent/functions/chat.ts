@@ -12,7 +12,14 @@ import {
   FunctionDefinition,
   mapDefinitions,
 } from "../function-definition.js";
-import { ChatManager, FunctionGroup, VALID_INPUT_TYPES } from "../types.js";
+import {
+  ChatChoice,
+  ChatChoiceLayout,
+  ChatChoiceSelectionMode,
+  ChatManager,
+  FunctionGroup,
+  VALID_INPUT_TYPES,
+} from "../types.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
@@ -20,6 +27,7 @@ import { TaskTreeManager } from "../task-tree-manager.js";
 export { getChatFunctionGroup, CHAT_LOG_VFS_PATH };
 
 const CHAT_REQUEST_USER_INPUT = "chat_request_user_input";
+const CHAT_PRESENT_CHOICES = "chat_present_choices";
 const CHAT_LOG_VFS_PATH = "/vfs/system/chat_log.json";
 
 export type ChatFunctionsArgs = {
@@ -32,21 +40,23 @@ const instruction = tr`
 
 ## Interacting with the User
 
-Use the "${CHAT_REQUEST_USER_INPUT}" function to interact with the user via a chat-like UI. Every function call is equivalent to a full conversation turn: your request, then user's input.
+Use the "${CHAT_PRESENT_CHOICES}" function when you have a discrete set of options for the user to choose from. This provides a better user experience than asking them to type their selection.
+
+Use the "${CHAT_REQUEST_USER_INPUT}" function for freeform text input or file uploads.
+
+Prefer structured choices over freeform input when the answer space is bounded.
 
 The chat log is maintained automatically at the VFS file "${CHAT_LOG_VFS_PATH}".
 
-Structure the requests to anticipate user's answers and minimize the amount of typing they need to do. If appropriate, offer choices, so that the user can just enter the letter and/or number of the choices.
-
-If the user input requires multiple entries, split the conversation into multiple turns. For example, if you have three questions to ask, ask them over three full conversation turns (three calls to "${CHAT_REQUEST_USER_INPUT}" function) rather than in one call.
-
-The user does not need to see a wall of text and dread typing back another wall of text as their input.
+If the user input requires multiple entries, split the conversation into multiple turns. For example, if you have three questions to ask, ask them over three full conversation turns rather than in one call.
 
 `;
 
 function getChatFunctionGroup(args: ChatFunctionsArgs): FunctionGroup {
   return { ...mapDefinitions(defineChatFunctions(args)), instruction };
 }
+
+const VALID_SELECTION_MODES: ChatChoiceSelectionMode[] = ["single", "multiple"];
 
 function defineChatFunctions(args: ChatFunctionsArgs): FunctionDefinition[] {
   return [
@@ -89,6 +99,69 @@ Unless the objective explicitly asks for a particular type of input, use the "an
         const pidgin = await args.translator.toPidgin(input, {}, true);
         if (!ok(pidgin)) return pidgin;
         return { user_input: pidgin.text };
+      }
+    ),
+    defineFunction(
+      {
+        name: CHAT_PRESENT_CHOICES,
+        description: tr`
+Presents the user with a set of choices to select from. Use when you need the user to make a decision from a predefined set of options. 
+`,
+        parameters: {
+          user_message: z.string().describe(
+            tr`
+Message explaining what the user should choose. The content may include references to VFS files using <file src="/vfs/name.ext" /> tags.
+`
+          ),
+          choices: z
+            .array(
+              z.object({
+                id: z.string().describe(`Unique identifier for this choice`),
+                label: z
+                  .string()
+                  .describe(
+                    `Display text for the choice. The content may include references to VFS files using <file src="/vfs/name.ext" /> tags.`
+                  ),
+              })
+            )
+            .describe(`The choices to present to the user`),
+          selection_mode: z.enum(VALID_SELECTION_MODES).describe(
+            tr`
+"single" for choose-one (radio buttons), "multiple" for any-of (checkboxes).
+`
+          ),
+          layout: z
+            .enum(["list", "row", "grid"])
+            .optional()
+            .default("list")
+            .describe(
+              tr`
+Layout hint for displaying choices:
+- "list" (default): Vertical stack, best for longer choice labels
+- "row": Horizontal inline, best for short choices like "Yes/No" or side-by-side comparisons (e.g. images)
+- "grid": Wrapping grid that adapts to available space
+`
+            ),
+          ...taskIdSchema,
+        },
+        response: {
+          selected: z
+            .array(z.string())
+            .describe(
+              `Array of selected choice IDs. For "single" mode, this will have exactly one element.`
+            ),
+        },
+      },
+      async ({ user_message, choices, selection_mode, layout, task_id }) => {
+        args.taskTreeManager.setInProgress(task_id, "");
+        const choicesResponse = await args.chatManager.presentChoices(
+          user_message,
+          choices as ChatChoice[],
+          selection_mode as ChatChoiceSelectionMode,
+          layout as ChatChoiceLayout
+        );
+        if (!ok(choicesResponse)) return choicesResponse;
+        return { selected: choicesResponse.selected };
       }
     ),
   ];

@@ -177,7 +177,7 @@ export const theme: v0_8.Types.Theme = {
       "border-br-12": true,
       "border-bw-0": true,
       "border-bs-s": true,
-      "behavior-ho-70": true,
+      "behavior-ho-95": true,
       "color-bgc-p15": true,
     },
     Card: { "border-br-9": true, "color-bgc-p100": true, "layout-p-6": true },
