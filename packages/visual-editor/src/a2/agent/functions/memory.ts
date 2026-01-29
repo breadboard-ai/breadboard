@@ -51,7 +51,9 @@ To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
 
 IMPORTANT: Before using memory functions, decide if you need memory at all. Rule of thumb:
 - if the objective contains the "remember" or "recall" keywords, use memory.
-- otherwise, use the VFS file system.
+- otherwise, use the VFS file system to store intermediate results.
+
+Example: the objective is to play a game and track a score within the game. In this case, you should use the VFS file system to store the score, not memory.
 `;
 
 function getMemoryFunctionGroup(args: MemoryFunctionArgs): FunctionGroup {
