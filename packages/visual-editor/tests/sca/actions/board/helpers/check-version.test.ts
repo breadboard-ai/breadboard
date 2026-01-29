@@ -21,7 +21,10 @@ suite("check-version helpers", () => {
   });
 
   test("returns null for graphs owned by user", async () => {
-    const controller = new BoardController("CheckVersionTest_1");
+    const controller = new BoardController(
+      "CheckVersionTest_1",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const mockBoardServer = {
@@ -39,7 +42,10 @@ suite("check-version helpers", () => {
   });
 
   test("returns null when no URL provided", async () => {
-    const controller = new BoardController("CheckVersionTest_2");
+    const controller = new BoardController(
+      "CheckVersionTest_2",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const mockBoardServer = {
@@ -54,7 +60,10 @@ suite("check-version helpers", () => {
   });
 
   test("returns null when board server is null", async () => {
-    const controller = new BoardController("CheckVersionTest_3");
+    const controller = new BoardController(
+      "CheckVersionTest_3",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const result = await checkVersion(
@@ -68,7 +77,10 @@ suite("check-version helpers", () => {
   });
 
   test("returns null when board server lacks getLatestSharedVersion", async () => {
-    const controller = new BoardController("CheckVersionTest_4");
+    const controller = new BoardController(
+      "CheckVersionTest_4",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const mockBoardServer = {} as unknown as BoardServer;
@@ -84,7 +96,10 @@ suite("check-version helpers", () => {
   });
 
   test("returns version info for shared graph (first load)", async () => {
-    const controller = new BoardController("CheckVersionTest_5");
+    const controller = new BoardController(
+      "CheckVersionTest_5",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const mockBoardServer = {
@@ -105,7 +120,10 @@ suite("check-version helpers", () => {
   });
 
   test("detects newer version when version increases", async () => {
-    const controller = new BoardController("CheckVersionTest_6");
+    const controller = new BoardController(
+      "CheckVersionTest_6",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const url = "https://example.com/board.json";

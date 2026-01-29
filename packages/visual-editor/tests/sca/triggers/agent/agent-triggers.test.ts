@@ -17,8 +17,6 @@ import { createMockEditor, flushEffects } from "../utils.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 
-
-
 suite("Agent Triggers", () => {
   // Get the singleton controller once for all tests
   let controller: ReturnType<typeof appController>;
