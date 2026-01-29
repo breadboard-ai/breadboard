@@ -29,6 +29,7 @@ export { getChatFunctionGroup, CHAT_LOG_VFS_PATH };
 const CHAT_REQUEST_USER_INPUT = "chat_request_user_input";
 const CHAT_PRESENT_CHOICES = "chat_present_choices";
 const CHAT_LOG_VFS_PATH = "/vfs/system/chat_log.json";
+const NONE_OF_THE_ABOVE_ID = "__none_of_the_above__";
 
 export type ChatFunctionsArgs = {
   chatManager: ChatManager;
@@ -142,6 +143,12 @@ Layout hint for displaying choices:
 - "grid": Wrapping grid that adapts to available space
 `
             ),
+          none_of_the_above_label: z
+            .string()
+            .optional()
+            .describe(
+              tr`If provided, adds a visually distinct "none of the above" escape option with this label (e.g., "Exit", "Skip", "Try Again"). Rendered below a separator with secondary styling. When selected, returns ID "${NONE_OF_THE_ABOVE_ID}". Best suited for single selection mode; in multiple mode it behaves as a regular checkbox.`
+            ),
           ...taskIdSchema,
         },
         response: {
@@ -152,13 +159,21 @@ Layout hint for displaying choices:
             ),
         },
       },
-      async ({ user_message, choices, selection_mode, layout, task_id }) => {
+      async ({
+        user_message,
+        choices,
+        selection_mode,
+        layout,
+        none_of_the_above_label,
+        task_id,
+      }) => {
         args.taskTreeManager.setInProgress(task_id, "");
         const choicesResponse = await args.chatManager.presentChoices(
           user_message,
           choices as ChatChoice[],
           selection_mode as ChatChoiceSelectionMode,
-          layout as ChatChoiceLayout
+          layout as ChatChoiceLayout,
+          none_of_the_above_label
         );
         if (!ok(choicesResponse)) return choicesResponse;
         return { selected: choicesResponse.selected };

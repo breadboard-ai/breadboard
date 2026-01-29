@@ -160,7 +160,8 @@ export type ChatManager = {
     message: string,
     choices: ChatChoice[],
     selectionMode: ChatChoiceSelectionMode,
-    layout?: ChatChoiceLayout
+    layout?: ChatChoiceLayout,
+    noneOfTheAboveLabel?: string
   ): Promise<Outcome<ChatChoicesResponse>>;
 };
 
