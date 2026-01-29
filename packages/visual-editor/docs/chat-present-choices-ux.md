@@ -16,7 +16,8 @@ set of options. The UX varies based on two key dimensions:
 | **Selection Mode** | `single`, `multiple`  | How many choices the user can select |
 | **Layout**         | `list`, `row`, `grid` | How choices are visually arranged    |
 
-This creates **6 core UX states** (2 selection modes × 3 layouts).
+This creates **6 core UX states** (2 selection modes × 3 layouts), with an
+optional **"None of the Above"** escape hatch.
 
 ---
 
@@ -296,14 +297,15 @@ content:
 
 ## Input Parameters Reference
 
-| Parameter         | Type   | Required | Default  | Description                                               |
-| ----------------- | ------ | -------- | -------- | --------------------------------------------------------- |
-| `user_message`    | string | ✓        | —        | Message explaining what to choose; supports `<file>` tags |
-| `choices`         | array  | ✓        | —        | Array of `{id, label}` objects                            |
-| `choices[].id`    | string | ✓        | —        | Unique identifier returned on selection                   |
-| `choices[].label` | string | ✓        | —        | Display text; supports `<file>` tags                      |
-| `selection_mode`  | enum   | ✓        | —        | `"single"` or `"multiple"`                                |
-| `layout`          | enum   |          | `"list"` | `"list"`, `"row"`, or `"grid"`                            |
+| Parameter                 | Type   | Required | Default  | Description                                               |
+| ------------------------- | ------ | -------- | -------- | --------------------------------------------------------- |
+| `user_message`            | string | ✓        | —        | Message explaining what to choose; supports `<file>` tags |
+| `choices`                 | array  | ✓        | —        | Array of `{id, label}` objects                            |
+| `choices[].id`            | string | ✓        | —        | Unique identifier returned on selection                   |
+| `choices[].label`         | string | ✓        | —        | Display text; supports `<file>` tags                      |
+| `selection_mode`          | enum   | ✓        | —        | `"single"` or `"multiple"`                                |
+| `layout`                  | enum   |          | `"list"` | `"list"`, `"row"`, or `"grid"`                            |
+| `none_of_the_above_label` | string |          | —        | Optional escape option label (e.g., "Exit", "Skip")       |
 
 ---
 
@@ -317,3 +319,47 @@ content:
 
 - **Single mode**: Always returns exactly 1 element
 - **Multiple mode**: Returns 0 or more elements
+- **When "None of the Above" is selected**: Returns `"__none_of_the_above__"` as
+  the ID
+
+---
+
+## "None of the Above" Option
+
+The optional `none_of_the_above_label` parameter adds an escape hatch for users
+to reject all presented choices.
+
+### Visual Treatment
+
+```
+┌─────────────────────────────────┐
+│  Which option do you prefer?    │
+│                                 │
+│  ┌───────────────────────────┐  │
+│  │       Option A            │  │ ← Primary button
+│  └───────────────────────────┘  │
+│  ┌───────────────────────────┐  │
+│  │       Option B            │  │ ← Primary button
+│  └───────────────────────────┘  │
+│  ─────────────────────────────  │ ← Divider
+│  ┌───────────────────────────┐  │
+│  │        Exit               │  │ ← Secondary button
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
+```
+
+### Behavior
+
+| Selection Mode | Component        | Behavior                                                         |
+| -------------- | ---------------- | ---------------------------------------------------------------- |
+| `single`       | Secondary button | Clicking returns `["__none_of_the_above__"]` immediately         |
+| `multiple`     | Checkbox         | Works like any other checkbox; included in selections if checked |
+
+### Design Guidelines
+
+1. **Visual Distinction**: Always rendered below a divider with secondary button
+   styling
+2. **Fixed ID**: Always returns `"__none_of_the_above__"` when selected
+3. **Single Mode Recommended**: Best suited for single selection; in multiple
+   mode it behaves as a regular checkbox
+4. **Common Labels**: "Exit", "Skip", "Try Again", "None apply", "Go back"

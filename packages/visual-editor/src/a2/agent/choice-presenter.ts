@@ -18,7 +18,9 @@ import {
   ChatChoiceSelectionMode,
 } from "./types.js";
 
-export { ChoicePresenter };
+export { ChoicePresenter, NONE_OF_THE_ABOVE_ID };
+
+const NONE_OF_THE_ABOVE_ID = "__none_of_the_above__";
 
 /**
  * Interface for the UI rendering capabilities needed by ChoicePresenter.
@@ -59,7 +61,8 @@ class ChoicePresenter {
     message: string,
     choices: ChatChoice[],
     selectionMode: ChatChoiceSelectionMode,
-    layout: ChatChoiceLayout = "list"
+    layout: ChatChoiceLayout = "list",
+    noneOfTheAboveLabel?: string
   ): Promise<Outcome<ChatChoicesResponse>> {
     const surfaceId = "@choices";
 
@@ -81,14 +84,16 @@ class ChoicePresenter {
         messageContent,
         translatedChoices,
         surfaceId,
-        layout
+        layout,
+        noneOfTheAboveLabel
       );
     } else {
       return this.#presentMultipleChoice(
         messageContent,
         translatedChoices,
         surfaceId,
-        layout
+        layout,
+        noneOfTheAboveLabel
       );
     }
   }
@@ -152,7 +157,8 @@ class ChoicePresenter {
     messageContent: LLMContent,
     choices: { id: string; content: LLMContent }[],
     surfaceId: string,
-    layout: ChatChoiceLayout
+    layout: ChatChoiceLayout,
+    noneOfTheAboveLabel?: string
   ): Promise<Outcome<ChatChoicesResponse>> {
     const allParts: v0_8.Types.ComponentInstance[] = [];
     const topLevelIds: string[] = [];
@@ -261,14 +267,66 @@ class ChoicePresenter {
     );
     allParts.push(choicesContainer);
 
-    // Build the root column layout (message on top, choices below)
+    // Build the "none of the above" section if provided
+    const noneOfTheAboveIds: string[] = [];
+    if (noneOfTheAboveLabel) {
+      // Add a separator
+      const separatorId = "none-separator";
+      allParts.push({
+        id: separatorId,
+        component: {
+          Divider: {},
+        },
+      });
+      noneOfTheAboveIds.push(separatorId);
+
+      // Create text for the "none" button
+      const noneTextId = "none-text";
+      allParts.push({
+        id: noneTextId,
+        component: {
+          Text: {
+            text: { literalString: noneOfTheAboveLabel },
+            usageHint: "body",
+          },
+        },
+      });
+
+      // Create secondary-styled button for "none of the above"
+      const noneButtonId = "none-btn";
+      allParts.push({
+        id: noneButtonId,
+        component: {
+          Button: {
+            child: noneTextId,
+            variant: "secondary",
+            action: {
+              name: "select",
+              context: [
+                {
+                  key: "choiceId",
+                  value: { literalString: NONE_OF_THE_ABOVE_ID },
+                },
+              ],
+            },
+          },
+        },
+      });
+      noneOfTheAboveIds.push(noneButtonId);
+    }
+
+    // Build the root column layout (message on top, choices below, optional "none" section)
     const rootComponent: v0_8.Types.ComponentInstance = {
       id: "root",
       weight: 1,
       component: {
         Column: {
           children: {
-            explicitList: [...topLevelIds, choicesContainerId],
+            explicitList: [
+              ...topLevelIds,
+              choicesContainerId,
+              ...noneOfTheAboveIds,
+            ],
           },
           distribution: "center",
           alignment: "center",
@@ -312,7 +370,8 @@ class ChoicePresenter {
     messageContent: LLMContent,
     choices: { id: string; content: LLMContent }[],
     surfaceId: string,
-    layout: ChatChoiceLayout
+    layout: ChatChoiceLayout,
+    noneOfTheAboveLabel?: string
   ): Promise<Outcome<ChatChoicesResponse>> {
     const allParts: v0_8.Types.ComponentInstance[] = [];
     const topLevelIds: string[] = [];
@@ -399,6 +458,33 @@ class ChoicePresenter {
     );
     allParts.push(choicesContainer);
 
+    // Build the "none of the above" section if provided
+    const noneOfTheAboveIds: string[] = [];
+    if (noneOfTheAboveLabel) {
+      // Add a separator
+      const separatorId = "none-separator";
+      allParts.push({
+        id: separatorId,
+        component: {
+          Divider: {},
+        },
+      });
+      noneOfTheAboveIds.push(separatorId);
+
+      // Add checkbox for "none of the above"
+      const noneCheckboxId = "none-checkbox";
+      allParts.push({
+        id: noneCheckboxId,
+        component: {
+          CheckBox: {
+            label: { literalString: noneOfTheAboveLabel },
+            value: { path: `/selections/${NONE_OF_THE_ABOVE_ID}` },
+          },
+        },
+      });
+      noneOfTheAboveIds.push(noneCheckboxId);
+    }
+
     // Build the root column layout (message, choices, submit button)
     const rootComponent: v0_8.Types.ComponentInstance = {
       id: "root",
@@ -406,7 +492,12 @@ class ChoicePresenter {
       component: {
         Column: {
           children: {
-            explicitList: [...topLevelIds, choicesContainerId, "submit-btn"],
+            explicitList: [
+              ...topLevelIds,
+              choicesContainerId,
+              ...noneOfTheAboveIds,
+              "submit-btn",
+            ],
           },
           distribution: "center",
           alignment: "center",
@@ -416,13 +507,21 @@ class ChoicePresenter {
     allParts.push(rootComponent);
 
     // Initialize selection state in data model (all unchecked)
+    const dataContents = choices.map((choice) => ({
+      key: choice.id,
+      valueBoolean: false,
+    }));
+    // Add none-of-the-above to data model if provided
+    if (noneOfTheAboveLabel) {
+      dataContents.push({
+        key: NONE_OF_THE_ABOVE_ID,
+        valueBoolean: false,
+      });
+    }
     const dataInit: v0_8.Types.DataModelUpdate = {
       surfaceId,
       path: "/selections",
-      contents: choices.map((choice) => ({
-        key: choice.id,
-        valueBoolean: false,
-      })),
+      contents: dataContents,
     };
 
     const messages: v0_8.Types.ServerToClientMessage[] = [
@@ -454,9 +553,13 @@ class ChoicePresenter {
       return err("No selections received");
     }
 
-    const selected = choices
-      .filter((choice) => context[choice.id] === true)
-      .map((choice) => choice.id);
+    // Build list of all choice IDs (including none-of-the-above if present)
+    const allChoiceIds = choices.map((choice) => choice.id);
+    if (noneOfTheAboveLabel) {
+      allChoiceIds.push(NONE_OF_THE_ABOVE_ID);
+    }
+
+    const selected = allChoiceIds.filter((id) => context[id] === true);
 
     return { selected };
   }

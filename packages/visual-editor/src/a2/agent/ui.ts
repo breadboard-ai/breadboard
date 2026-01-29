@@ -180,13 +180,15 @@ class AgentUI implements A2UIRenderer, ChatManager {
     message: string,
     choices: ChatChoice[],
     selectionMode: ChatChoiceSelectionMode,
-    layout: ChatChoiceLayout = "list"
+    layout: ChatChoiceLayout = "list",
+    noneOfTheAboveLabel?: string
   ): Promise<Outcome<ChatChoicesResponse>> {
     return this.#choicePresenter.presentChoices(
       message,
       choices,
       selectionMode,
-      layout
+      layout,
+      noneOfTheAboveLabel
     );
   }
 

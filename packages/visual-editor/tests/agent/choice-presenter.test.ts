@@ -647,4 +647,182 @@ describe("ChoicePresenter", () => {
       deepStrictEqual(update.surfaceId, "@choices");
     });
   });
+
+  describe("presentChoices - none_of_the_above_label", () => {
+    describe("single selection mode", () => {
+      it("renders separator and secondary button when noneOfTheAboveLabel is provided", async () => {
+        const mockRenderer = createMockRenderer({ choiceId: "a" });
+        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+        await presenter.presentChoices(
+          "Pick one:",
+          [{ id: "a", label: "Option A" }],
+          "single",
+          "list",
+          "Skip"
+        );
+
+        // Verify separator exists
+        const separator = findComponent(
+          mockRenderer.capturedMessages,
+          "none-separator"
+        );
+        assert(separator !== undefined, "Separator should exist");
+        assert(
+          separator?.component && "Divider" in separator.component,
+          "Should be a Divider"
+        );
+
+        // Verify secondary button exists
+        const noneBtn = findComponent(
+          mockRenderer.capturedMessages,
+          "none-btn"
+        );
+        assert(noneBtn !== undefined, "None button should exist");
+        assert(
+          noneBtn?.component && "Button" in noneBtn.component,
+          "Should be a Button"
+        );
+        const button = (noneBtn!.component as { Button: { variant?: string } })
+          .Button;
+        deepStrictEqual(button.variant, "secondary");
+      });
+
+      it("returns __none_of_the_above__ ID when none button is selected", async () => {
+        const mockRenderer = createMockRenderer({
+          choiceId: "__none_of_the_above__",
+        });
+        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+        const result = await presenter.presentChoices(
+          "Pick one:",
+          [{ id: "a", label: "Option A" }],
+          "single",
+          "list",
+          "Exit"
+        );
+
+        if (!ok(result)) {
+          fail(`Expected success, got error: ${result.$error}`);
+        }
+        deepStrictEqual(result.selected, ["__none_of_the_above__"]);
+      });
+
+      it("does not render separator or none button when noneOfTheAboveLabel is not provided", async () => {
+        const mockRenderer = createMockRenderer({ choiceId: "a" });
+        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+        await presenter.presentChoices(
+          "Pick one:",
+          [{ id: "a", label: "Option A" }],
+          "single"
+        );
+
+        const separator = findComponent(
+          mockRenderer.capturedMessages,
+          "none-separator"
+        );
+        const noneBtn = findComponent(
+          mockRenderer.capturedMessages,
+          "none-btn"
+        );
+
+        deepStrictEqual(separator, undefined, "Separator should not exist");
+        deepStrictEqual(noneBtn, undefined, "None button should not exist");
+      });
+    });
+
+    describe("multiple selection mode", () => {
+      it("renders separator and checkbox when noneOfTheAboveLabel is provided", async () => {
+        const mockRenderer = createMockRenderer({
+          a: false,
+          __none_of_the_above__: false,
+        });
+        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+        await presenter.presentChoices(
+          "Select all:",
+          [{ id: "a", label: "Option A" }],
+          "multiple",
+          "list",
+          "None apply"
+        );
+
+        // Verify separator exists
+        const separator = findComponent(
+          mockRenderer.capturedMessages,
+          "none-separator"
+        );
+        assert(separator !== undefined, "Separator should exist");
+
+        // Verify checkbox exists
+        const noneCheckbox = findComponent(
+          mockRenderer.capturedMessages,
+          "none-checkbox"
+        );
+        assert(noneCheckbox !== undefined, "None checkbox should exist");
+        assert(
+          noneCheckbox?.component && "CheckBox" in noneCheckbox.component,
+          "Should be a CheckBox"
+        );
+      });
+
+      it("includes __none_of_the_above__ in selections when checked", async () => {
+        const mockRenderer = createMockRenderer({
+          a: true,
+          __none_of_the_above__: true,
+        });
+        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+        const result = await presenter.presentChoices(
+          "Select all:",
+          [{ id: "a", label: "Option A" }],
+          "multiple",
+          "list",
+          "None apply"
+        );
+
+        if (!ok(result)) {
+          fail(`Expected success, got error: ${result.$error}`);
+        }
+        deepStrictEqual(result.selected, ["a", "__none_of_the_above__"]);
+      });
+
+      it("initializes none_of_the_above in data model as unchecked", async () => {
+        const mockRenderer = createMockRenderer({});
+        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+        await presenter.presentChoices(
+          "Select:",
+          [{ id: "a", label: "A" }],
+          "multiple",
+          "list",
+          "Skip"
+        );
+
+        // Find the dataModelUpdate message
+        const dataUpdate = mockRenderer.capturedMessages.find(
+          (m) => "dataModelUpdate" in m
+        );
+        assert(dataUpdate !== undefined, "Data model update should exist");
+
+        const update = (
+          dataUpdate as {
+            dataModelUpdate: {
+              path: string;
+              contents: { key: string; valueBoolean: boolean }[];
+            };
+          }
+        ).dataModelUpdate;
+
+        // Should include both regular choice and none_of_the_above
+        deepStrictEqual(update.contents.length, 2);
+        const noneEntry = update.contents.find(
+          (c) => c.key === "__none_of_the_above__"
+        );
+        assert(noneEntry !== undefined, "None of the above should be in data");
+        deepStrictEqual(noneEntry!.valueBoolean, false);
+      });
+    });
+  });
 });
