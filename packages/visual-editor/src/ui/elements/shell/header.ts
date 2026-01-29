@@ -27,7 +27,6 @@ import {
   EnumValue,
 } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
-import { hasEnabledGlobalSettings } from "./global-settings.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { Utils } from "../../../sca/utils.js";
@@ -594,15 +593,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
         svgIcon:
           "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
       },
-      ...(hasEnabledGlobalSettings(this.sca)
-        ? [
-            {
-              id: "show-global-settings",
-              title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
-              icon: "settings_2",
-            },
-          ]
-        : []),
+      {
+        id: "show-global-settings",
+        title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
+        icon: "settings_2",
+      },
       {
         id: "demo-video",
         title: Strings.from("COMMAND_WATCH_DEMO_VIDEO"),

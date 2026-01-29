@@ -21,7 +21,6 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-c
 import { consume } from "@lit/context";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
-import { isHydrating } from "../../../sca/utils/helpers/helpers.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -32,16 +31,12 @@ enum TabId {
 }
 
 function getTabEnabledMap(sca: SCA | undefined): Record<TabId, boolean> {
-  console.warn(
-    "getTabEnabled",
-    isHydrating(() => sca?.controller.global.flags.mcp)
-  );
   return {
     [TabId.GENERAL]: Boolean(CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN),
-    [TabId.INTEGRATIONS]: false, //Boolean(sca?.controller?.global?.flags?.mcp),
-    [TabId.EXPERIMENTAL]: false, //Boolean(
-    //   sca?.controller?.global.main.experimentalComponents
-    // ),
+    [TabId.INTEGRATIONS]: Boolean(sca?.controller?.global?.flags?.mcp),
+    [TabId.EXPERIMENTAL]: Boolean(
+      sca?.controller?.global.main.experimentalComponents
+    ),
   };
 }
 
@@ -52,13 +47,6 @@ function countEnabledTabs(enabledTabs: Record<TabId, boolean>) {
 // Only show tabs if there are two or more, since it looks weird to have a single centered tab
 function shouldShowTabs(enabledTabs: Record<TabId, boolean>) {
   return countEnabledTabs(enabledTabs) > 1;
-}
-
-/**
- * Returns whether there are any enabled global settings
- */
-export function hasEnabledGlobalSettings(sca: SCA | undefined) {
-  return countEnabledTabs(getTabEnabledMap(sca)) > 0;
 }
 
 @customElement("bb-global-settings-modal")
