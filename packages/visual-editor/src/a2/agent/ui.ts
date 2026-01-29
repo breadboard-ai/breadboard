@@ -33,6 +33,8 @@ import {
   VALID_INPUT_TYPES,
 } from "./types.js";
 import { getCurrentStepState } from "../a2/output.js";
+import { llmContentToA2UIComponents } from "./llm-content-to-a2ui.js";
+import { isTextCapabilityPart } from "../../data/common.js";
 
 export { AgentUI };
 
@@ -168,6 +170,8 @@ class AgentUI implements A2UIRenderer, ChatManager {
    *
    * For "single" mode: renders choice buttons - clicking one returns that ID.
    * For "multiple" mode: renders checkboxes with a submit button.
+   *
+   * Both message and choice labels support pidgin format with file references.
    */
   async presentChoices(
     message: string,
@@ -176,25 +180,89 @@ class AgentUI implements A2UIRenderer, ChatManager {
   ): Promise<Outcome<ChatChoicesResponse>> {
     const surfaceId = "@choices";
 
+    // Translate pidgin strings to LLMContent
+    const messageContent = await this.translator.fromPidginString(message);
+    if (!ok(messageContent)) return messageContent;
+
+    const translatedChoices: { id: string; content: LLMContent }[] = [];
+    for (const choice of choices) {
+      const labelContent = await this.translator.fromPidginString(choice.label);
+      if (!ok(labelContent)) return labelContent;
+      translatedChoices.push({ id: choice.id, content: labelContent });
+    }
+
     if (selectionMode === "single") {
-      return this.#presentSingleChoice(message, choices, surfaceId);
+      return this.#presentSingleChoice(
+        messageContent,
+        translatedChoices,
+        surfaceId
+      );
     } else {
-      return this.#presentMultipleChoice(message, choices, surfaceId);
+      return this.#presentMultipleChoice(
+        messageContent,
+        translatedChoices,
+        surfaceId
+      );
     }
   }
 
   async #presentSingleChoice(
-    message: string,
-    choices: ChatChoice[],
+    messageContent: LLMContent,
+    choices: { id: string; content: LLMContent }[],
     surfaceId: string
   ): Promise<Outcome<ChatChoicesResponse>> {
-    // Build button components for each choice
-    const buttonComponents: v0_8.Types.ComponentInstance[] = choices.map(
-      (choice, index) => ({
-        id: `choice-btn-${index}`,
+    const allParts: v0_8.Types.ComponentInstance[] = [];
+    const topLevelIds: string[] = [];
+
+    // Convert message to components
+    const messageComponents = llmContentToA2UIComponents(messageContent, {
+      idPrefix: "message",
+    });
+    allParts.push(...messageComponents.parts);
+
+    // Wrap message components in a container if there are multiple
+    if (messageComponents.ids.length > 1) {
+      const messageContainerId = "message-container";
+      allParts.push({
+        id: messageContainerId,
+        component: {
+          Column: {
+            children: { explicitList: messageComponents.ids },
+          },
+        },
+      });
+      topLevelIds.push(messageContainerId);
+    } else if (messageComponents.ids.length === 1) {
+      topLevelIds.push(messageComponents.ids[0]);
+    }
+
+    // Build buttons for each choice
+    const buttonIds: string[] = [];
+    for (let i = 0; i < choices.length; i++) {
+      const choice = choices[i];
+      const choiceComponents = llmContentToA2UIComponents(choice.content, {
+        idPrefix: `choice-${i}`,
+      });
+      allParts.push(...choiceComponents.parts);
+
+      // Create a row container for the choice content
+      const choiceContentId = `choice-content-${i}`;
+      allParts.push({
+        id: choiceContentId,
+        component: {
+          Row: {
+            children: { explicitList: choiceComponents.ids },
+          },
+        },
+      });
+
+      // Create button wrapping the choice content
+      const buttonId = `choice-btn-${i}`;
+      allParts.push({
+        id: buttonId,
         component: {
           Button: {
-            child: `choice-text-${index}`,
+            child: choiceContentId,
             action: {
               name: "select",
               context: [
@@ -206,32 +274,9 @@ class AgentUI implements A2UIRenderer, ChatManager {
             },
           },
         },
-      })
-    );
-
-    // Build text components for button labels
-    const textComponents: v0_8.Types.ComponentInstance[] = choices.map(
-      (choice, index) => ({
-        id: `choice-text-${index}`,
-        component: {
-          Text: {
-            text: { literalString: choice.label },
-            usageHint: "body",
-          },
-        },
-      })
-    );
-
-    // Build the message text component
-    const messageComponent: v0_8.Types.ComponentInstance = {
-      id: "message-text",
-      component: {
-        Text: {
-          text: { literalString: message },
-          usageHint: "body",
-        },
-      },
-    };
+      });
+      buttonIds.push(buttonId);
+    }
 
     // Build the root column layout
     const rootComponent: v0_8.Types.ComponentInstance = {
@@ -239,27 +284,20 @@ class AgentUI implements A2UIRenderer, ChatManager {
       component: {
         Column: {
           children: {
-            explicitList: [
-              "message-text",
-              ...choices.map((_, i) => `choice-btn-${i}`),
-            ],
+            explicitList: [...topLevelIds, ...buttonIds],
           },
           distribution: "start",
           alignment: "stretch",
         },
       },
     };
+    allParts.push(rootComponent);
 
     const messages: v0_8.Types.ServerToClientMessage[] = [
       {
         surfaceUpdate: {
           surfaceId,
-          components: [
-            rootComponent,
-            messageComponent,
-            ...buttonComponents,
-            ...textComponents,
-          ],
+          components: allParts,
         },
       },
       {
@@ -287,33 +325,56 @@ class AgentUI implements A2UIRenderer, ChatManager {
   }
 
   async #presentMultipleChoice(
-    message: string,
-    choices: ChatChoice[],
+    messageContent: LLMContent,
+    choices: { id: string; content: LLMContent }[],
     surfaceId: string
   ): Promise<Outcome<ChatChoicesResponse>> {
+    const allParts: v0_8.Types.ComponentInstance[] = [];
+    const topLevelIds: string[] = [];
+
+    // Convert message to components
+    const messageComponents = llmContentToA2UIComponents(messageContent, {
+      idPrefix: "message",
+    });
+    allParts.push(...messageComponents.parts);
+
+    // Wrap message components in a container if there are multiple
+    if (messageComponents.ids.length > 1) {
+      const messageContainerId = "message-container";
+      allParts.push({
+        id: messageContainerId,
+        component: {
+          Column: {
+            children: { explicitList: messageComponents.ids },
+          },
+        },
+      });
+      topLevelIds.push(messageContainerId);
+    } else if (messageComponents.ids.length === 1) {
+      topLevelIds.push(messageComponents.ids[0]);
+    }
+
     // Build checkbox components for each choice
-    const checkboxComponents: v0_8.Types.ComponentInstance[] = choices.map(
-      (choice, index) => ({
-        id: `choice-checkbox-${index}`,
+    // Note: CheckBox uses a string label, so we extract text from the first text part
+    const checkboxIds: string[] = [];
+    for (let i = 0; i < choices.length; i++) {
+      const choice = choices[i];
+      // Extract text from LLMContent for the label
+      const textPart = choice.content.parts.find(isTextCapabilityPart);
+      const labelText = textPart?.text.trim() ?? `Choice ${choice.id}`;
+
+      const checkboxId = `choice-checkbox-${i}`;
+      allParts.push({
+        id: checkboxId,
         component: {
           CheckBox: {
-            label: { literalString: choice.label },
+            label: { literalString: labelText },
             value: { path: `/selections/${choice.id}` },
           },
         },
-      })
-    );
-
-    // Build the message text component
-    const messageComponent: v0_8.Types.ComponentInstance = {
-      id: "message-text",
-      component: {
-        Text: {
-          text: { literalString: message },
-          usageHint: "body",
-        },
-      },
-    };
+      });
+      checkboxIds.push(checkboxId);
+    }
 
     // Build submit button
     const submitButtonText: v0_8.Types.ComponentInstance = {
@@ -325,6 +386,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
         },
       },
     };
+    allParts.push(submitButtonText);
 
     const submitButton: v0_8.Types.ComponentInstance = {
       id: "submit-btn",
@@ -341,6 +403,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
         },
       },
     };
+    allParts.push(submitButton);
 
     // Build the root column layout
     const rootComponent: v0_8.Types.ComponentInstance = {
@@ -348,17 +411,14 @@ class AgentUI implements A2UIRenderer, ChatManager {
       component: {
         Column: {
           children: {
-            explicitList: [
-              "message-text",
-              ...choices.map((_, i) => `choice-checkbox-${i}`),
-              "submit-btn",
-            ],
+            explicitList: [...topLevelIds, ...checkboxIds, "submit-btn"],
           },
           distribution: "start",
           alignment: "stretch",
         },
       },
     };
+    allParts.push(rootComponent);
 
     // Initialize selection state in data model (all unchecked)
     const dataInit: v0_8.Types.DataModelUpdate = {
@@ -375,13 +435,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
       {
         surfaceUpdate: {
           surfaceId,
-          components: [
-            rootComponent,
-            messageComponent,
-            ...checkboxComponents,
-            submitButtonText,
-            submitButton,
-          ],
+          components: allParts,
         },
       },
       {
