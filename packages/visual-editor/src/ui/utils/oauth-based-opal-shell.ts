@@ -828,6 +828,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const maxDelay = 5000;
     let attempts = 0;
     let delay = 1000;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
         return await checkAppAccess();
