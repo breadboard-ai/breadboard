@@ -90,6 +90,6 @@ class FunctionCallerImpl implements FunctionCaller {
     if (errors.length > 0) {
       return err(errors.join(","));
     }
-    return { parts: functionResponses as DataPart[] };
+    return { parts: functionResponses as DataPart[], role: "user" };
   }
 }
