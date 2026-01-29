@@ -396,6 +396,16 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
       runtime.select.deselectAll(tab.id, runtime.select.generateId());
     }
 
+    if (runtime.router.parsedUrl.page === "home") return false;
+
+    const { lite, dev } = parseUrl(window.location.href);
+    runtime.router.go({
+      page: "home",
+      lite,
+      dev,
+      guestPrefixed: true,
+    });
+
     return false;
   },
 };
