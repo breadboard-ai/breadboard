@@ -98,11 +98,14 @@ class ChoicePresenter {
    * - "list": Column (vertical stack)
    * - "row": Row (horizontal inline)
    * - "grid": Row with flex-wrap (adapts to space)
+   *
+   * @param stretchToFill - If true, stretch items to fill available space (for complex content)
    */
   #buildChoicesContainer(
     id: string,
     childIds: string[],
-    layout: ChatChoiceLayout
+    layout: ChatChoiceLayout,
+    stretchToFill: boolean = false
   ): v0_8.Types.ComponentInstance {
     switch (layout) {
       case "row":
@@ -112,7 +115,7 @@ class ChoicePresenter {
             Row: {
               children: { explicitList: childIds },
               distribution: "start",
-              alignment: "center",
+              alignment: stretchToFill ? "stretch" : "center",
             },
           },
         };
@@ -124,7 +127,7 @@ class ChoicePresenter {
             Row: {
               children: { explicitList: childIds },
               distribution: "start",
-              alignment: "start",
+              alignment: stretchToFill ? "stretch" : "start",
             },
           },
           // Note: flex-wrap would need custom CSS or A2UI extension
@@ -177,7 +180,10 @@ class ChoicePresenter {
     }
 
     // Build buttons for each choice
+    // Track if any choice has complex content (multi-part) to determine layout behavior
     const buttonIds: string[] = [];
+    let hasComplexContent = false;
+
     for (let i = 0; i < choices.length; i++) {
       const choice = choices[i];
       const choiceComponents = llmContentToA2UIComponents(choice.content, {
@@ -190,6 +196,10 @@ class ChoicePresenter {
       // Use Row for single-part content
       const choiceContentId = `choice-content-${i}`;
       const useStacked = choiceComponents.ids.length > 1;
+      if (useStacked) {
+        hasComplexContent = true;
+      }
+
       allParts.push({
         id: choiceContentId,
         component: useStacked
@@ -197,6 +207,7 @@ class ChoicePresenter {
               Column: {
                 children: { explicitList: choiceComponents.ids },
                 alignment: "center",
+                distribution: "start",
               },
             }
           : {
@@ -207,8 +218,9 @@ class ChoicePresenter {
       });
 
       // Create button wrapping the choice content
+      // For row/grid layout with complex content, give buttons equal weight
       const buttonId = `choice-btn-${i}`;
-      allParts.push({
+      const buttonComponent: v0_8.Types.ComponentInstance = {
         id: buttonId,
         component: {
           Button: {
@@ -224,29 +236,42 @@ class ChoicePresenter {
             },
           },
         },
-      });
+      };
       buttonIds.push(buttonId);
+      allParts.push(buttonComponent);
+    }
+
+    // Apply weights for equal sizing only when content is complex
+    if (hasComplexContent && (layout === "row" || layout === "grid")) {
+      for (const part of allParts) {
+        if (buttonIds.includes(part.id)) {
+          part.weight = 1;
+        }
+      }
     }
 
     // Build the choices container based on layout
+    // Use stretch alignment only for complex content (cards with images)
     const choicesContainerId = "choices-container";
     const choicesContainer = this.#buildChoicesContainer(
       choicesContainerId,
       buttonIds,
-      layout
+      layout,
+      hasComplexContent
     );
     allParts.push(choicesContainer);
 
     // Build the root column layout (message on top, choices below)
     const rootComponent: v0_8.Types.ComponentInstance = {
       id: "root",
+      weight: 1,
       component: {
         Column: {
           children: {
             explicitList: [...topLevelIds, choicesContainerId],
           },
-          distribution: "start",
-          alignment: "stretch",
+          distribution: "center",
+          alignment: "center",
         },
       },
     };
@@ -377,13 +402,14 @@ class ChoicePresenter {
     // Build the root column layout (message, choices, submit button)
     const rootComponent: v0_8.Types.ComponentInstance = {
       id: "root",
+      weight: 1,
       component: {
         Column: {
           children: {
             explicitList: [...topLevelIds, choicesContainerId, "submit-btn"],
           },
-          distribution: "start",
-          alignment: "stretch",
+          distribution: "center",
+          alignment: "center",
         },
       },
     };

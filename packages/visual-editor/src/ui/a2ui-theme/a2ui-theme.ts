@@ -170,11 +170,11 @@ export const theme: v0_8.Types.Theme = {
   components: {
     AudioPlayer: {},
     Button: {
-      "layout-pt-2": true,
-      "layout-pb-2": true,
-      "layout-pl-3": true,
-      "layout-pr-3": true,
-      "border-br-12": true,
+      "layout-pt-4": true,
+      "layout-pb-4": true,
+      "layout-pl-4": true,
+      "layout-pr-4": true,
+      "border-br-6": true,
       "border-bw-0": true,
       "border-bs-s": true,
       "behavior-ho-95": true,
