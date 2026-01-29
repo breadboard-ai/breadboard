@@ -12,7 +12,11 @@ import { RuntimeFlags } from "@breadboard-ai/types";
 
 suite("FlagController", () => {
   test("Provides env", async () => {
-    const store = new FlagController("Flags_1", defaultRuntimeFlags);
+    const store = new FlagController(
+      "Flags_1",
+      "FlagController",
+      defaultRuntimeFlags
+    );
     await store.isHydrated;
     await store.isSettled;
 
@@ -20,7 +24,11 @@ suite("FlagController", () => {
   });
 
   test("Provides all flags", async () => {
-    const store = new FlagController("Flags_2", defaultRuntimeFlags);
+    const store = new FlagController(
+      "Flags_2",
+      "FlagController",
+      defaultRuntimeFlags
+    );
     await store.isHydrated;
     await store.isSettled;
 
@@ -39,7 +47,11 @@ suite("FlagController", () => {
   });
 
   test("Allows overrides", async () => {
-    const store = new FlagController("Flags_3", defaultRuntimeFlags);
+    const store = new FlagController(
+      "Flags_3",
+      "FlagController",
+      defaultRuntimeFlags
+    );
     await store.isHydrated;
     await store.isSettled;
 
@@ -61,7 +73,11 @@ suite("FlagController", () => {
   });
 
   test("Throws for unset overrides", async () => {
-    const store = new FlagController("Flags_4", {} as RuntimeFlags);
+    const store = new FlagController(
+      "Flags_4",
+      "FlagController",
+      {} as RuntimeFlags
+    );
     await store.isHydrated;
     await store.isSettled;
 

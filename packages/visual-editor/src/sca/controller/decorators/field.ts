@@ -43,9 +43,13 @@ function getName<Context extends WeakKey, Value extends PrimitiveValue>(
   target: Context,
   context: ClassAccessorDecoratorContext<Context, Value>
 ) {
-  const id = (target as unknown as { controllerId?: string }).controllerId;
-  const suffix = id ? `_${id}` : "";
-  return `${target.constructor.name}_${String(context.name)}${suffix}`;
+  const { controllerId, persistenceId } = target as unknown as {
+    controllerId?: string;
+    persistenceId?: string;
+  };
+  const suffix = controllerId ? `_${controllerId}` : "";
+  const prefix = persistenceId ? persistenceId : target.constructor.name;
+  return `${prefix}_${String(context.name)}${suffix}`;
 }
 
 function throwIfPersistingTheUnpersistable<Value extends PrimitiveValue>(

@@ -193,6 +193,90 @@ export async function saveAs(
 }
 
 /**
+ * Result type for the remix action.
+ */
+export type RemixResult =
+  | { success: true; url: URL }
+  | { success: false; reason: "no-graph" | "save-failed" };
+
+/**
+ * Remixes a graph by creating a copy with " Remix" appended to the title
+ * and saving it as a new board.
+ *
+ * This action:
+ * 1. Shows an immediate snackbar to acknowledge the user's action
+ * 2. Resolves the graph from editor (if URL matches) or graph store
+ * 3. Clones the graph with " Remix" appended to the title
+ * 4. Saves the new graph via saveAs
+ *
+ * @param url The URL of the graph to remix
+ * @param messages Snackbar messages for user feedback
+ * @returns The save result with new URL, or an error result
+ */
+export async function remix(
+  url: string,
+  messages: { start: string; end: string; error: string }
+): Promise<RemixResult> {
+  const { controller, services } = bind;
+  const graphController = controller.editor.graph;
+  const snackbars = controller.global.snackbars;
+
+  // Immediately acknowledge the user's action with a snackbar.
+  // This will be superseded by saveAs, but provides instant feedback.
+  snackbars.snackbar(
+    messages.start,
+    SnackType.PENDING,
+    [],
+    true,
+    undefined,
+    true // Replace existing snackbars.
+  );
+
+  // Resolve the graph to remix
+  const currentGraph = graphController.editor?.raw();
+  let graph: GraphDescriptor;
+
+  // First check if the currently open graph matches the remix URL.
+  // This handles the common case of remixing from the header and avoids
+  // URL mismatch issues (e.g., resourcekey param removed by loader).
+  if (currentGraph && graphController.url === url) {
+    graph = structuredClone(currentGraph);
+  } else {
+    // Fall back to loading from the store (for gallery remixes, etc.)
+    const graphStore = services.graphStore;
+    const addResult = graphStore.addByURL(url, [], {});
+    const mutable = await graphStore.getLatest(addResult.mutable);
+
+    if (!mutable.graph || mutable.graph.nodes.length === 0) {
+      // Empty graph means the load failed - likely URL mismatch
+      snackbars.snackbar(
+        messages.error,
+        SnackType.ERROR,
+        [],
+        false,
+        undefined,
+        true
+      );
+      return { success: false, reason: "no-graph" };
+    }
+
+    graph = structuredClone(mutable.graph);
+  }
+
+  // Append " Remix" to the title
+  graph.title = `${graph.title ?? "Untitled"} Remix`;
+
+  // Save as a new board
+  const saveResult = await saveAs(graph, messages);
+
+  if (!saveResult?.result || !saveResult.url) {
+    return { success: false, reason: "save-failed" };
+  }
+
+  return { success: true, url: saveResult.url };
+}
+
+/**
  * Deletes a board from the board server.
  *
  * @param url The URL of the board to delete
@@ -253,13 +337,13 @@ export interface LoadOptions {
 export type LoadResult =
   | { success: true }
   | {
-      success: false;
-      reason:
-        | "invalid-url"
-        | "auth-required"
-        | "load-failed"
-        | "race-condition";
-    };
+    success: false;
+    reason:
+    | "invalid-url"
+    | "auth-required"
+    | "load-failed"
+    | "race-condition";
+  };
 
 // The helpers used for the function below are tested, but to test the function
 // itself we need to mock the controller and services, which is a lot of mocks

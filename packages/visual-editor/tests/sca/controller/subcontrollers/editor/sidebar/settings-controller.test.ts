@@ -18,14 +18,14 @@ suite("SidebarController", () => {
   });
 
   test("Basics", async () => {
-    const store = new SidebarController("Settings_1");
+    const store = new SidebarController("Settings_1", "SidebarController");
     await store.isHydrated;
 
     assert.strictEqual(store.hydrated, true);
   });
 
   test("Read and write", async () => {
-    const store = new SidebarController("Settings_2");
+    const store = new SidebarController("Settings_2", "SidebarController");
     await store.isHydrated;
 
     store.section = "console";

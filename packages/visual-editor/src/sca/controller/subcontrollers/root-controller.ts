@@ -51,7 +51,22 @@ export abstract class RootController implements HydratedController {
   #trackedSignals = new Set<Signal.State<unknown>>();
   #isHydratedPromise?: Promise<number>;
 
-  constructor(public readonly controllerId: string) {}
+  /**
+   * We use a persistenceId to namespace the storage keys. This allows us to
+   * have multiple instances of the same controller with different controller
+   * IDs, but it also makes them resistant to minification of the controller
+   * class name via the persistenceId.
+   *
+   * The storage key format used in field persistence is:
+   * `${persistenceId}_${fieldName}_${controllerId}`
+   *
+   * @param controllerId The ID of the instance.
+   * @param persistenceId A consistent ID used when fields in are persisted.
+   */
+  constructor(
+    public readonly controllerId: string,
+    public readonly persistenceId: string
+  ) { }
 
   public get hydrated() {
     return !isHydrating(() => this.hydratedInternal.get());

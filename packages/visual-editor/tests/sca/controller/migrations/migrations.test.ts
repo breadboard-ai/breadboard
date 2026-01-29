@@ -27,7 +27,10 @@ suite("Migrations", () => {
     oldStore.add(boards[0]);
     oldStore.add(boards[1]);
 
-    const recent = new RecentBoardsController("RecentBoard_Migration");
+    const recent = new RecentBoardsController(
+      "RecentBoard_Migration",
+      "RecentBoardsController"
+    );
     await recent.isHydrated;
 
     await Migrations.recentBoardsMigration(recent);
@@ -47,7 +50,10 @@ suite("Migrations", () => {
     // TEST 3: Migrate over the top of an already-migrated Controller.
     // This time we have already got something in the RecentBoardsController and
     // so we avoid migrating over the top.
-    const recent2 = new RecentBoardsController("RecentBoard_Migration_2");
+    const recent2 = new RecentBoardsController(
+      "RecentBoard_Migration_2",
+      "RecentBoardsController"
+    );
     await recent2.isHydrated;
 
     // Add a board directly.
@@ -71,6 +77,7 @@ suite("Migrations", () => {
 
     const flagController = new FlagController(
       "Flag_Migration",
+      "FlagController",
       defaultRuntimeFlags
     );
     await flagController.isHydrated;

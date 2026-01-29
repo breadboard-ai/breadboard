@@ -10,14 +10,20 @@ import { RecentBoardsController } from "../../../../../src/sca/controller/subcon
 
 suite("RecentBoardsController", () => {
   test("Basics", async () => {
-    const store = new RecentBoardsController("Recent_1");
+    const store = new RecentBoardsController(
+      "Recent_1",
+      "RecentBoardsController"
+    );
     await store.isHydrated;
 
     assert.strictEqual(store.boards.length, 0);
   });
 
   test("Adding URLs", async () => {
-    const store = new RecentBoardsController("Recent_2");
+    const store = new RecentBoardsController(
+      "Recent_2",
+      "RecentBoardsController"
+    );
     await store.isHydrated;
 
     const boards = [
@@ -39,7 +45,10 @@ suite("RecentBoardsController", () => {
   });
 
   test("Removing URLs", async () => {
-    const store = new RecentBoardsController("Recent_2");
+    const store = new RecentBoardsController(
+      "Recent_2",
+      "RecentBoardsController"
+    );
     await store.isHydrated;
 
     const boards = [
@@ -68,7 +77,11 @@ suite("RecentBoardsController", () => {
   });
 
   test("Truncates storage", async () => {
-    const store = new RecentBoardsController("Recent_3", 1);
+    const store = new RecentBoardsController(
+      "Recent_3",
+      "RecentBoardsController",
+      1
+    );
     await store.isHydrated;
 
     const boards = [
@@ -86,7 +99,10 @@ suite("RecentBoardsController", () => {
   });
 
   test("Pins items", async () => {
-    const store = new RecentBoardsController("Recent_4");
+    const store = new RecentBoardsController(
+      "Recent_4",
+      "RecentBoardsController"
+    );
     await store.isHydrated;
 
     const boards = [

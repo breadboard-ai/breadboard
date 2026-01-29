@@ -25,7 +25,10 @@ suite("Debug Decorator", () => {
       }
     }
 
-    const instance = new DebugTestController("DebugTest");
+    const instance = new DebugTestController(
+      "DebugTest",
+      "DebugTestController"
+    );
     assert.strictEqual(instance.name, "test");
   });
 
@@ -46,7 +49,10 @@ suite("Debug Decorator", () => {
     // Mock the console.info calls.
     const infoMock = mock.method(console, "info");
 
-    const instance = new DebugTestController("DebugTest_2");
+    const instance = new DebugTestController(
+      "DebugTest_2",
+      "DebugTestController"
+    );
     const name = instance.name;
     assert.strictEqual(name, "test");
     await instance.isSettled;
@@ -105,7 +111,10 @@ suite("Debug Decorator", () => {
     // Mock the console.info calls.
     const infoMock = mock.method(console, "info");
 
-    const instance = new DebugTestController("DebugTest_3");
+    const instance = new DebugTestController(
+      "DebugTest_3",
+      "DebugTestController"
+    );
     const name = instance.name;
     assert.strictEqual(name, "test");
     await instance.isSettled;

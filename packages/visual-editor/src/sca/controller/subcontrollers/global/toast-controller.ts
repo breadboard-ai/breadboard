@@ -26,10 +26,11 @@ export class ToastController extends RootController {
   private accessor _toasts: ToastMap = new Map();
 
   constructor(
-    id: string,
+    controllerId: string,
+    persistenceId: string,
     private readonly defaultTimeout = 8000
   ) {
-    super(id);
+    super(controllerId, persistenceId);
   }
 
   get toasts(): Readonly<ToastMap> {

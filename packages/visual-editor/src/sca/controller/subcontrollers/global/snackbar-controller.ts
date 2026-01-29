@@ -48,8 +48,8 @@ export class SnackbarController extends RootController {
   @field()
   accessor lastDetailsInfo: string | HTMLTemplateResult | null = null;
 
-  constructor(id: string) {
-    super(id);
+  constructor(controllerId: string, persistenceId: string) {
+    super(controllerId, persistenceId);
   }
 
   get snackbars(): Readonly<SnackbarMap> {

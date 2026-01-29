@@ -39,7 +39,7 @@ suite("GraphController", () => {
   });
 
   test("Takes an editor", async () => {
-    const store = new GraphController("Graph_1");
+    const store = new GraphController("Graph_1", "GraphController");
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
@@ -49,7 +49,7 @@ suite("GraphController", () => {
   });
 
   test("Unhooks an existing editor", async () => {
-    const store = new GraphController("Graph_2");
+    const store = new GraphController("Graph_2", "GraphController");
     await store.isHydrated;
 
     // Apply the default editor.
@@ -91,7 +91,7 @@ suite("GraphController", () => {
   });
 
   test("Tracks errors", async () => {
-    const store = new GraphController("Graph_3");
+    const store = new GraphController("Graph_3", "GraphController");
     await store.isHydrated;
 
     // Apply the default editor.
@@ -135,7 +135,7 @@ suite("GraphController", () => {
   });
 
   test("provides legacy tab info (deprecated)", async () => {
-    const store = new GraphController("Graph_4");
+    const store = new GraphController("Graph_4", "GraphController");
     await store.isHydrated;
 
     // Nothing set, should get a null tab
