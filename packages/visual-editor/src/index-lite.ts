@@ -17,10 +17,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
-import {
-  RuntimeBoardLoadErrorEvent,
-  RuntimeTabChangeEvent,
-} from "./runtime/events.js";
+import { RuntimeBoardLoadErrorEvent } from "./runtime/events.js";
+import { effect } from "signal-utils/subtle/microtask-effect";
 import { eventRoutes } from "./event-routing/event-routing.js";
 import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -394,16 +392,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   constructor(args: MainArguments) {
     super(args);
 
-    const { parsedUrl } = args;
-
-    // Set the app to fullscreen if the parsed URL indicates that this was
-    // opened from a share action.
-    this.showAppFullscreen =
-      (parsedUrl && "flow" in parsedUrl && parsedUrl.shared) ?? false;
-    this.runtime.board.addEventListener(RuntimeTabChangeEvent.eventName, () =>
-      this.#goFullScreenIfGraphIsProbablyShared()
-    );
-
     this.#showAdvancedEditorOnboardingTooltip =
       (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
       "true";
@@ -424,16 +412,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return this.handleRoutedEvent(evt);
     });
 
-    // Set up promise that resolves when board is loaded
-    let resolve: (() => void) | undefined;
-    this.boardLoaded = new Promise<void>((r) => {
-      resolve = r;
-    });
-    this.runtime.board.addEventListener(
-      RuntimeTabChangeEvent.eventName,
-      () => resolve!(),
-      { once: true }
-    );
+    // boardLoaded promise that resolves when loadState becomes "Loaded"
+    // Uses signal-based waiting instead of event listeners
+    this.boardLoaded = this.#waitForLoadState();
 
     const sizeDetector = window.matchMedia("(max-width: 500px)");
     const reactToScreenWidth = () => {
@@ -460,7 +441,24 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
     );
 
+    // Set fullscreen for shared boards on initial load
     const parsedUrl = this.runtime.router.parsedUrl;
+    this.showAppFullscreen =
+      (parsedUrl && "flow" in parsedUrl && parsedUrl.shared) ?? false;
+
+    // Check fullscreen once when loadState becomes "Loaded" for the first time
+    // Effect disposes itself after the initial load check
+    let lastLoadState = this.sca.controller.global.main.loadState;
+    const stopFullscreenWatch = effect(() => {
+      const currentLoadState = this.sca.controller.global.main.loadState;
+      if (currentLoadState === "Loaded" && lastLoadState !== "Loaded") {
+        this.#goFullScreenIfGraphIsProbablyShared();
+        // Dispose after first load - only needed once at boot
+        queueMicrotask(() => stopFullscreenWatch());
+      }
+      lastLoadState = currentLoadState;
+    });
+
     if (parsedUrl.page !== "home") return;
     await this.askUserToSignInIfNeeded();
   }
@@ -483,6 +481,24 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if (!isMine && !isFeaturedGalleryItem) {
       this.showAppFullscreen = true;
     }
+  }
+
+  /**
+   * Returns a Promise that resolves when loadState becomes "Loaded".
+   * Uses effect-based signal watching with proper disposal.
+   */
+  #waitForLoadState(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const stop = effect(() => {
+        if (this.sca.controller.global.main.loadState === "Loaded") {
+          // Use queueMicrotask to ensure effect cleanup happens safely
+          queueMicrotask(() => {
+            stop();
+            resolve();
+          });
+        }
+      });
+    });
   }
 
   override async handleAppAccessCheckResult(
@@ -522,22 +538,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     this.runtime.state.lite.currentExampleIntent = intent;
 
     if (!projectState) {
-      // This is a zero state: we don't yet have a projectState.
-      // Let's create it.
-
-      // This is plain nasty: we're basically trying to line up a bunch of
-      // event-driven operations into a sequence of async invocations.
-      let resolve: (() => void) | undefined = undefined;
-      const waitForTabToChange = new Promise<void>((resolveToSave) => {
-        resolve = resolveToSave;
-      });
-      this.runtime.board.addEventListener(
-        RuntimeTabChangeEvent.eventName,
-        () => resolve?.(),
-        { once: true }
-      );
+      // Zero state: need to create the board first, then wait for load
       await this.invokeBoardCreateRoute();
-      await waitForTabToChange;
+      await this.#waitForLoadState();
       projectState = this.runtime.state.project;
       if (!projectState) {
         return { error: `Failed to create a new opal.` };
