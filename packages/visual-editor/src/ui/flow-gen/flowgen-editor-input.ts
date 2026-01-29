@@ -84,13 +84,66 @@ export class FlowgenEditorInput extends LitElement {
         padding-right: var(--bb-grid-size-5);
         word-break: auto-phrase;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
         margin-bottom: var(--bb-grid-size-4);
+        max-height: 250px;
+        overflow-y: auto;
 
         > *:not(button) {
           user-select: text;
         }
+      }
+
+      #dismiss-button {
+        position: sticky;
+        top: var(--bb-grid-size-2);
+        margin-top: var(--bb-grid-size-2);
+        align-self: flex-start;
+      }
+
+      .error details {
+        margin-top: var(--bb-grid-size-2);
+      }
+
+      .error details summary {
+        cursor: pointer;
+        color: var(--light-dark-n-70);
+        font-size: 0.9em;
+      }
+
+      .suggestion-label {
+        display: block;
+        margin-top: var(--bb-grid-size-2);
+        font-weight: 500;
+      }
+
+      .suggested-prompt {
+        display: block;
+        background: var(--light-dark-n-30);
+        border-left: 3px solid var(--ui-custom-o-100);
+        padding: var(--bb-grid-size-3);
+        margin: var(--bb-grid-size-2) 0;
+        border-radius: var(--bb-grid-size);
+        font-style: italic;
+      }
+
+      .use-suggestion-button {
+        display: block;
+        margin-top: var(--bb-grid-size-2);
+        background: var(--ui-custom-o-100);
+        color: var(--light-dark-n-100);
+        border: none;
+        border-radius: var(--bb-grid-size-2);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+        cursor: pointer;
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        transition: background 0.2s ease;
+      }
+
+      .use-suggestion-button:hover {
+        background: var(--ui-custom-o-80);
       }
 
       #gradient-border-container {
@@ -218,18 +271,64 @@ export class FlowgenEditorInput extends LitElement {
           // structure. Unwrap if needed.
           error = error.error;
         }
-        let message;
+        let message: string;
         if (typeof error === "object" && error !== null && "message" in error) {
-          message = error.message;
+          message = error.message ?? "";
         } else {
           message = String(error);
         }
+
+        // Check for "Feel free to try this instead: '...' Validation" pattern
+        const suggestionMatch = message.match(
+          /Feel free to try this instead:\s*'(.+?)'\s*Validation/
+        );
+        if (suggestionMatch) {
+          const suggestedPrompt = suggestionMatch[1];
+          const beforeSuggestion = message.slice(
+            0,
+            message.indexOf("Feel free to try this instead:")
+          );
+          const afterSuggestion = message.slice(
+            message.indexOf(suggestionMatch[0]) + suggestionMatch[0].length
+          );
+          return html`
+            <span class="error">
+              ${beforeSuggestion.trim()}
+              <span class="suggestion-label"
+                >Feel free to try this instead:</span
+              >
+              <span class="suggested-prompt">${suggestedPrompt}</span>
+              <button
+                class="use-suggestion-button"
+                @click=${() => this.#useSuggestedPrompt(suggestedPrompt)}
+              >
+                Use suggested prompt
+              </button>
+              ${afterSuggestion.trim()
+                ? html`<details>
+                    <summary>Show details</summary>
+                    Validation${afterSuggestion}
+                  </details>`
+                : nothing}
+            </span>
+          `;
+        }
+
         return html`<span class="error">${message}</span>`;
       }
       default: {
         this.#state satisfies never;
       }
     }
+  }
+
+  #useSuggestedPrompt(prompt: string) {
+    if (this.#descriptionInput.value) {
+      this.#descriptionInput.value.value = prompt;
+    }
+    this.#state = { status: "initial" };
+    // Trigger generation with the new prompt
+    this.#onInputChange();
   }
 
   #renderInput() {

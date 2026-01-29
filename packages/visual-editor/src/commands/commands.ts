@@ -276,6 +276,11 @@ const CopyCommand: KeyboardCommand = {
   alwaysNotify: true,
 
   willHandle(tab: Tab | null, evt: Event) {
+    // If text is selected (e.g., error messages), allow native copy behavior.
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      return false;
+    }
     return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
