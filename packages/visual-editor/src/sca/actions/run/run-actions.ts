@@ -109,6 +109,7 @@ export function prepare(config: PrepareRunConfig): void {
 
   // Register status listeners on the runner
   runner.addEventListener("start", () => {
+    controller.run.main.setStatus(STATUS.RUNNING);
     logger.log(
       Utils.Logging.Formatter.verbose(`Runner started for ${url}`),
       LABEL,
