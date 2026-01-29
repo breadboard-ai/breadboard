@@ -39,7 +39,7 @@ import { callAudioGen, VOICES } from "../../audio-generator/main.js";
 import { callMusicGen } from "../../music-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
-import { statusUpdateSchema, taskIdSchema } from "./system.js";
+import { fileNameSchema, statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 
 export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
@@ -178,6 +178,7 @@ The Gemini model to use for image generation. How to choose the right model:
           .enum(["1:1", "9:16", "16:9", "4:3", "3:4"])
           .describe(`The aspect ratio for the generated images`)
           .default("16:9"),
+        ...fileNameSchema,
         ...taskIdSchema,
         ...statusUpdateSchema,
       },
@@ -203,6 +204,7 @@ The Gemini model to use for image generation. How to choose the right model:
         status_update,
         model,
         aspect_ratio,
+        file_name,
         task_id,
       },
       statusUpdater
@@ -229,8 +231,15 @@ The Gemini model to use for image generation. How to choose the right model:
       );
       if (!ok(generated)) return generated;
       const errors: string[] = [];
-      const images = mergeContent(generated, "user")
-        .parts.map((part) => fileSystem.add(part))
+      const parts = mergeContent(generated, "user").parts;
+      const images = parts
+        .map((part, index) => {
+          const name =
+            file_name && parts.length > 1
+              ? `${file_name}_${index + 1}`
+              : file_name;
+          return fileSystem.add(part, name);
+        })
         .map((part) => {
           if (!ok(part)) {
             errors.push(part.$error);
@@ -453,6 +462,7 @@ The following elements should be included in your prompt:
           .enum(["16:9", "9:16"])
           .describe(`The aspect ratio of the video`)
           .default("16:9"),
+        ...fileNameSchema,
         ...taskIdSchema,
         ...statusUpdateSchema,
       },
@@ -470,7 +480,7 @@ The following elements should be included in your prompt:
       },
     },
     async (
-      { prompt, status_update, aspect_ratio, images, task_id },
+      { prompt, status_update, aspect_ratio, images, file_name, task_id },
       statusUpdateCallback
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
@@ -498,7 +508,7 @@ The following elements should be included in your prompt:
       if (!dataPart || !("storedData" in dataPart)) {
         return { error: `No video was generated` };
       }
-      const video = fileSystem.add(dataPart);
+      const video = fileSystem.add(dataPart, file_name);
       if (!ok(video)) {
         return { error: video.$error };
       }
@@ -515,6 +525,7 @@ The following elements should be included in your prompt:
           .enum(VOICES)
           .default("Female (English)")
           .describe("The voice to use for speech generation"),
+        ...fileNameSchema,
         ...taskIdSchema,
         ...statusUpdateSchema,
       },
@@ -531,7 +542,10 @@ The following elements should be included in your prompt:
           .optional(),
       },
     },
-    async ({ text, status_update, voice, task_id }, statusUpdateCallback) => {
+    async (
+      { text, status_update, voice, file_name, task_id },
+      statusUpdateCallback
+    ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Speech", {
         expectedDurationInSec: 20,
@@ -543,7 +557,7 @@ The following elements should be included in your prompt:
       if (!dataPart || !("storedData" in dataPart)) {
         return { error: `No speech was generated` };
       }
-      const speech = fileSystem.add(dataPart);
+      const speech = fileSystem.add(dataPart, file_name);
       if (!ok(speech)) return { error: speech.$error };
       return { speech };
     }
@@ -574,6 +588,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
 `,
       parameters: {
         prompt: z.string().describe(`The prompt from which to generate music`),
+        ...fileNameSchema,
         ...taskIdSchema,
         ...statusUpdateSchema,
       },
@@ -590,7 +605,10 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
           .optional(),
       },
     },
-    async ({ prompt, status_update, task_id }, statusUpdateCallback) => {
+    async (
+      { prompt, status_update, file_name, task_id },
+      statusUpdateCallback
+    ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Music", {
         expectedDurationInSec: 30,
@@ -602,7 +620,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
       if (!dataPart || !("storedData" in dataPart)) {
         return { error: `No speech was generated` };
       }
-      const music = fileSystem.add(dataPart);
+      const music = fileSystem.add(dataPart, file_name);
       if (!ok(music)) return { error: music.$error };
       return { music };
     }

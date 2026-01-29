@@ -27,6 +27,7 @@ import { GENERATE_TEXT_FUNCTION } from "./generate.js";
 
 export {
   FAILED_TO_FULFILL_FUNCTION,
+  fileNameSchema,
   getSystemFunctionGroup,
   statusUpdateSchema,
   taskIdSchema,
@@ -60,6 +61,15 @@ const taskIdSchema = {
   [TASK_ID_PARAMETER]: z
     .string(
       tr`If applicable, the "task_id" value of the relevant task in the task tree.`
+    )
+    .optional(),
+} satisfies ArgsRawShape;
+
+const fileNameSchema = {
+  file_name: z
+    .string()
+    .describe(
+      tr`Optional name for the generated file (without extension). Use snake_case for naming. The system will automatically add the appropriate extension based on the file type.`
     )
     .optional(),
 } satisfies ArgsRawShape;
