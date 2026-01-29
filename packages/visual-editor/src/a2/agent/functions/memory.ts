@@ -49,6 +49,9 @@ To recall, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the stan
 
 To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
 
+IMPORTANT: Before using memory functions, decide if you need memory at all. Rule of thumb:
+- if the objective contains the "remember" or "recall" keywords, use memory.
+- otherwise, use the VFS file system.
 `;
 
 function getMemoryFunctionGroup(args: MemoryFunctionArgs): FunctionGroup {
