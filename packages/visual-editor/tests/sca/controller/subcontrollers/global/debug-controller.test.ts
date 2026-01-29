@@ -10,7 +10,7 @@ import { DebugController } from "../../../../../src/sca/controller/subcontroller
 
 suite("DebugController", () => {
   test("Enable and Disable", async () => {
-    const store = new DebugController("Debug_1");
+    const store = new DebugController("Debug_1", "DebugController");
     await store.isHydrated;
 
     store.enabled = true;

@@ -27,7 +27,7 @@ function consentTestFactory(
   expectation: Map<ConsentKey, ConsentRecord>
 ) {
   return async function () {
-    const store = new ConsentController(name);
+    const store = new ConsentController(name, "ConsentController");
     await store.isHydrated;
 
     const request = {
@@ -157,7 +157,7 @@ suite("ConsentController", () => {
   suite("query (Modal)", consentTestSuiteFactory(ConsentUIType.MODAL));
 
   test("clear consent", async () => {
-    const store = new ConsentController("Clearable");
+    const store = new ConsentController("Clearable", "ConsentController");
     await store.isHydrated;
 
     const request = {
@@ -179,7 +179,7 @@ suite("ConsentController", () => {
     await store.isSettled;
 
     // Create another instance of the store and check that the permission exists.
-    const store2 = new ConsentController("Clearable");
+    const store2 = new ConsentController("Clearable", "ConsentController");
     await store2.isHydrated;
 
     assert.deepStrictEqual(

@@ -22,7 +22,7 @@ suite("Field Decorator", () => {
       @field() accessor name = "default";
     }
 
-    const instance = new TestController("Test");
+    const instance = new TestController("Test", "TestController");
     assert.strictEqual(instance.name, "default");
   });
 
@@ -31,7 +31,7 @@ suite("Field Decorator", () => {
       class FooController extends RootController {
         @field({ persist: "foo" as "local" }) accessor name = "foo";
       }
-      new FooController("Foo");
+      new FooController("Foo", "FooController");
     }, new Error("Unsupported type or not yet implemented"));
   });
 
@@ -43,7 +43,10 @@ suite("Field Decorator", () => {
     }
 
     // Check on the field hydration.
-    const instance = new PersistentController("Persistence");
+    const instance = new PersistentController(
+      "Persistence",
+      "PersistentController"
+    );
     assert(isHydrating(() => instance.foo));
     assert(isHydrating(() => instance.bar));
     assert(isHydrating(() => instance.baz));
@@ -61,7 +64,10 @@ suite("Field Decorator", () => {
     await instance.isSettled;
 
     // Check on the field persistence by instantiating a new version.
-    const instance2 = new PersistentController("Persistence");
+    const instance2 = new PersistentController(
+      "Persistence",
+      "PersistentController"
+    );
     await instance2.isHydrated;
     assert.strictEqual(instance2.foo, "foo2");
     assert.strictEqual(instance2.bar, "foo2");
@@ -73,7 +79,7 @@ suite("Field Decorator", () => {
       @field({ deep: true }) accessor data = { user: "anon" };
     }
 
-    const instance = new DeepController("Deep_1");
+    const instance = new DeepController("Deep_1", "DeepController");
     assert.deepStrictEqual(instance.data, { user: "anon" });
   });
 
@@ -82,7 +88,7 @@ suite("Field Decorator", () => {
       @field({ deep: true, persist: "idb" }) accessor data = { user: "anon" };
     }
 
-    const instance = new DeepController("Deep_2");
+    const instance = new DeepController("Deep_2", "DeepController");
     await instance.isHydrated;
     assert.deepStrictEqual(instance.data, { user: "anon" });
 
@@ -90,7 +96,7 @@ suite("Field Decorator", () => {
     await instance.isSettled;
     assert.deepStrictEqual(instance.data, { user: "anon2" });
 
-    const instance2 = new DeepController("Deep_2");
+    const instance2 = new DeepController("Deep_2", "DeepController");
     await instance2.isHydrated;
     assert.deepStrictEqual(instance2.data, { user: "anon2" });
   });
@@ -104,7 +110,7 @@ suite("Field Decorator", () => {
       ];
     }
 
-    const instance = new ArrayController("Array");
+    const instance = new ArrayController("Array", "ArrayController");
     await instance.isHydrated;
     assert.deepStrictEqual(clean(instance.data), [
       { a: 1 },
@@ -125,7 +131,7 @@ suite("Field Decorator", () => {
       { c: 90 },
     ]);
 
-    const instance2 = new ArrayController("Array");
+    const instance2 = new ArrayController("Array", "ArrayController");
     await instance2.isHydrated;
     assert.deepStrictEqual(clean(instance2.data), [
       { a: 1 },
@@ -151,7 +157,7 @@ suite("Field Decorator", () => {
       @field({ deep: true, persist: "idb" }) accessor setIdb = new Set(set);
     }
 
-    const instance = new SetMapController("Map");
+    const instance = new SetMapController("Map", "SetMapController");
     await instance.isHydrated;
 
     assert.deepStrictEqual(unwrap(instance.map), map);
@@ -162,7 +168,7 @@ suite("Field Decorator", () => {
     assert.deepStrictEqual(unwrap(instance.setLocal), set);
     assert.deepStrictEqual(unwrap(instance.setIdb), set);
 
-    const instance2 = new SetMapController("Map");
+    const instance2 = new SetMapController("Map", "SetMapController");
     await instance2.isHydrated;
 
     assert.deepStrictEqual(unwrap(instance2.map), map);
@@ -183,7 +189,7 @@ suite("Field Decorator", () => {
       @field({ deep: true, persist: "idb" }) accessor mapIdb = new Map(map);
     }
 
-    const instance = new MapController("Map_2");
+    const instance = new MapController("Map_2", "MapController");
     await instance.isHydrated;
 
     instance.map.get("a")!.set("b", "d");
@@ -199,7 +205,7 @@ suite("Field Decorator", () => {
     assert.deepStrictEqual(unwrap(instance.mapIdb), mapAdjusted);
 
     // Check for persistence.
-    const instance2 = new MapController("Map_2");
+    const instance2 = new MapController("Map_2", "MapController");
     await instance2.isHydrated;
 
     assert.deepStrictEqual(unwrap(instance.map), mapAdjusted);
@@ -214,7 +220,7 @@ suite("Field Decorator", () => {
     }
 
     assert.rejects(async () => {
-      const instance = new LitController("Lit_1");
+      const instance = new LitController("Lit_1", "LitController");
       await instance.isHydrated;
     });
   });
@@ -225,7 +231,7 @@ suite("Field Decorator", () => {
       accessor item: HTMLTemplateResult | null = null;
     }
 
-    const instance = new LitController("Lit_2");
+    const instance = new LitController("Lit_2", "LitController");
     await instance.isHydrated;
 
     assert.throws(() => {
@@ -240,7 +246,7 @@ suite("Field Decorator", () => {
     }
 
     assert.rejects(async () => {
-      const instance = new LitController("Lit_3");
+      const instance = new LitController("Lit_3", "LitController");
       await instance.isHydrated;
     });
   });
@@ -251,7 +257,7 @@ suite("Field Decorator", () => {
       accessor item: HTMLTemplateResult[] | null = null;
     }
 
-    const instance = new LitController("Lit_4");
+    const instance = new LitController("Lit_4", "LitController");
     await instance.isHydrated;
 
     assert.throws(() => {
@@ -268,7 +274,7 @@ suite("Field Decorator", () => {
     }
 
     assert.rejects(async () => {
-      const instance = new LitController("Lit_3");
+      const instance = new LitController("Lit_3", "LitController");
       await instance.isHydrated;
     });
   });
@@ -280,7 +286,7 @@ suite("Field Decorator", () => {
         null;
     }
 
-    const instance = new LitController("Lit_4");
+    const instance = new LitController("Lit_4", "LitController");
     await instance.isHydrated;
 
     assert.throws(() => {

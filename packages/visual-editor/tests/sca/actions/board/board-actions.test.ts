@@ -483,6 +483,146 @@ suite("Board Actions", () => {
     });
   });
 
+  suite("remix", () => {
+    const boardActions = Board;
+    const testMessages = {
+      start: "Remixing...",
+      end: "Remixed!",
+      error: "Failed to remix",
+    };
+
+    test("remixes editor graph when URL matches and returns new URL", async () => {
+      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const testGraph = makeFreshGraph();
+      testGraph.title = "My Board";
+
+      const mainGraphId = graphStore.addByDescriptor(testGraph);
+      if (!mainGraphId.success) assert.fail("Unable to create graph");
+      const editor = graphStore.edit(mainGraphId.result);
+
+      const mockBoardServer = makeMockBoardServer({
+        createUrl: "https://new.example.com/remixed.json",
+      });
+      const { controller, mockSnackbars } = makeMockController({
+        editor,
+        url: "https://example.com/board.json",
+        readOnly: false,
+      });
+
+      boardActions.bind({
+        services: {
+          graphStore,
+          googleDriveBoardServer: mockBoardServer,
+        } as unknown as AppServices,
+        controller,
+      });
+
+      const result = await boardActions.remix(
+        "https://example.com/board.json",
+        testMessages
+      );
+
+      assert.ok(result.success, "Should succeed");
+      if (result.success) {
+        assert.strictEqual(
+          result.url.href,
+          "https://new.example.com/remixed.json"
+        );
+      }
+      // Verify snackbar was shown initially
+      assert.ok(mockSnackbars.lastId, "Snackbar should have been shown");
+      // BoardServer.create was called (via saveAs)
+      assert.strictEqual(mockBoardServer.createCallCount, 1);
+    });
+
+    test("returns error when store has empty graph", async () => {
+      // Create a mock graphStore that returns an empty graph
+      const mockGraphStore = {
+        addByURL: () => ({
+          mutable: { id: "test", graph: { nodes: [], edges: [] } },
+          graphId: "",
+          moduleId: undefined,
+          updating: false,
+        }),
+        getLatest: async () => ({
+          id: "test",
+          graph: { nodes: [], edges: [] }, // Empty graph
+        }),
+      };
+
+      // No graph in editor
+      const { controller } = makeMockController({
+        editor: null,
+        url: null,
+        readOnly: false,
+      });
+
+      boardActions.bind({
+        services: {
+          graphStore: mockGraphStore,
+          googleDriveBoardServer: makeMockBoardServer({}),
+        } as unknown as AppServices,
+        controller,
+      });
+
+      // Request a URL that returns empty graph from mocked store
+      const result = await boardActions.remix(
+        "https://example.com/nonexistent.json",
+        testMessages
+      );
+
+      assert.strictEqual(result.success, false);
+      if (!result.success) {
+        assert.strictEqual(result.reason, "no-graph");
+      }
+    });
+
+    test("returns save-failed when saveAs fails", async () => {
+      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const testGraph = makeFreshGraph();
+      testGraph.title = "My Board";
+
+      const mainGraphId = graphStore.addByDescriptor(testGraph);
+      if (!mainGraphId.success) assert.fail("Unable to create graph");
+      const editor = graphStore.edit(mainGraphId.result);
+
+      // Mock boardServer that returns no URL (create fails)
+      const mockBoardServer = makeMockBoardServer({});
+      (
+        mockBoardServer as unknown as {
+          create: () => Promise<{ result: false; url: undefined }>;
+        }
+      ).create = async () => ({
+        result: false,
+        url: undefined,
+      });
+
+      const { controller } = makeMockController({
+        editor,
+        url: "https://example.com/board.json",
+        readOnly: false,
+      });
+
+      boardActions.bind({
+        services: {
+          graphStore,
+          googleDriveBoardServer: mockBoardServer,
+        } as unknown as AppServices,
+        controller,
+      });
+
+      const result = await boardActions.remix(
+        "https://example.com/board.json",
+        testMessages
+      );
+
+      assert.strictEqual(result.success, false);
+      if (!result.success) {
+        assert.strictEqual(result.reason, "save-failed");
+      }
+    });
+  });
+
   suite("load", () => {
     const boardActions = Board;
 

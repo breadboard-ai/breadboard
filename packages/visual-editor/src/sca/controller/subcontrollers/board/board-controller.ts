@@ -48,8 +48,8 @@ export class BoardController extends RootController {
   @field()
   accessor newerVersionAvailable = false;
 
-  constructor(id: string) {
-    super(id);
+  constructor(controllerId: string, persistenceId: string) {
+    super(controllerId, persistenceId);
   }
 
   /**

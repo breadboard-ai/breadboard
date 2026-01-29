@@ -20,14 +20,20 @@ suite("SnackbarController", () => {
   });
 
   test("Basics", async () => {
-    const controller = new SnackbarController("Snackbar_1");
+    const controller = new SnackbarController(
+      "Snackbar_1",
+      "SnackbarController"
+    );
     await controller.isHydrated;
 
     assert.strictEqual(controller.hydrated, true);
   });
 
   test("Add and remove snackbar", async () => {
-    const controller = new SnackbarController("Snackbar_2");
+    const controller = new SnackbarController(
+      "Snackbar_2",
+      "SnackbarController"
+    );
     await controller.isHydrated;
 
     const id = controller.snackbar("Test message", SnackType.INFORMATION);
@@ -47,7 +53,10 @@ suite("SnackbarController", () => {
   });
 
   test("Add snackbar with actions", async () => {
-    const controller = new SnackbarController("Snackbar_3");
+    const controller = new SnackbarController(
+      "Snackbar_3",
+      "SnackbarController"
+    );
     await controller.isHydrated;
 
     const actions = [{ title: "Undo", action: "undo" }];
@@ -66,7 +75,10 @@ suite("SnackbarController", () => {
   });
 
   test("Clears all snackbars", async () => {
-    const controller = new SnackbarController("Snackbar_4");
+    const controller = new SnackbarController(
+      "Snackbar_4",
+      "SnackbarController"
+    );
     await controller.isHydrated;
 
     controller.snackbar("Message 1", SnackType.ERROR);
@@ -81,7 +93,10 @@ suite("SnackbarController", () => {
   });
 
   test("replaceAll clears existing snackbars", async () => {
-    const controller = new SnackbarController("Snackbar_5");
+    const controller = new SnackbarController(
+      "Snackbar_5",
+      "SnackbarController"
+    );
     await controller.isHydrated;
 
     controller.snackbar("Message 1", SnackType.PENDING);
@@ -106,7 +121,10 @@ suite("SnackbarController", () => {
   });
 
   test("Update existing snackbar", async () => {
-    const controller = new SnackbarController("Snackbar_6");
+    const controller = new SnackbarController(
+      "Snackbar_6",
+      "SnackbarController"
+    );
     await controller.isHydrated;
 
     const id = controller.snackbar("Saving...", SnackType.PENDING);
@@ -124,7 +142,10 @@ suite("SnackbarController", () => {
   });
 
   test("Update returns false for non-existent snackbar", async () => {
-    const controller = new SnackbarController("Snackbar_7");
+    const controller = new SnackbarController(
+      "Snackbar_7",
+      "SnackbarController"
+    );
     await controller.isHydrated;
 
     const updated = controller.update(
@@ -137,7 +158,10 @@ suite("SnackbarController", () => {
   });
 
   test("Supports different snack types", async () => {
-    const controller = new SnackbarController("Snackbar_8");
+    const controller = new SnackbarController(
+      "Snackbar_8",
+      "SnackbarController"
+    );
     await controller.isHydrated;
 
     const types = [

@@ -22,14 +22,22 @@ suite("ToastController", () => {
   });
 
   test("Basics", async () => {
-    const store = new ToastController("Toast_1", DEFAULT_TIMEOUT);
+    const store = new ToastController(
+      "Toast_1",
+      "ToastController",
+      DEFAULT_TIMEOUT
+    );
     await store.isHydrated;
 
     assert.strictEqual(store.hydrated, true);
   });
 
   test("Add and remove", async () => {
-    const store = new ToastController("Toast_2", DEFAULT_TIMEOUT);
+    const store = new ToastController(
+      "Toast_2",
+      "ToastController",
+      DEFAULT_TIMEOUT
+    );
     await store.isHydrated;
 
     const id = store.toast("New message", ToastType.ERROR);
@@ -49,7 +57,11 @@ suite("ToastController", () => {
   });
 
   test("Clears all toasts", async () => {
-    const store = new ToastController("Toast_3", DEFAULT_TIMEOUT);
+    const store = new ToastController(
+      "Toast_3",
+      "ToastController",
+      DEFAULT_TIMEOUT
+    );
     await store.isHydrated;
 
     store.toast("New message", ToastType.ERROR);
@@ -61,7 +73,11 @@ suite("ToastController", () => {
   });
 
   test("Clears toasts by ID", async () => {
-    const store = new ToastController("Toast_4", DEFAULT_TIMEOUT);
+    const store = new ToastController(
+      "Toast_4",
+      "ToastController",
+      DEFAULT_TIMEOUT
+    );
     await store.isHydrated;
 
     const id = store.toast("New message", ToastType.ERROR);
@@ -73,7 +89,11 @@ suite("ToastController", () => {
   });
 
   test("Handles toasts with long titles", async () => {
-    const store = new ToastController("Toast_5", DEFAULT_TIMEOUT);
+    const store = new ToastController(
+      "Toast_5",
+      "ToastController",
+      DEFAULT_TIMEOUT
+    );
     await store.isHydrated;
 
     const originalMessage =

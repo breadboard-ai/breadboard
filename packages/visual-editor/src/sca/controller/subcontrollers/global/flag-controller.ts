@@ -285,8 +285,8 @@ export class FlagController
   }
 
   #env: RuntimeFlags;
-  constructor(id: string, env: RuntimeFlags) {
-    super(id);
+  constructor(controllerId: string, persistenceId: string, env: RuntimeFlags) {
+    super(controllerId, persistenceId);
 
     this.#env = env;
 

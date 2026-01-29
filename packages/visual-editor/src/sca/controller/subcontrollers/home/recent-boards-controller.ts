@@ -18,10 +18,11 @@ export class RecentBoardsController extends RootController {
   private accessor _migrated = false;
 
   constructor(
-    id: string,
+    controllerId: string,
+    persistenceId: string,
     private readonly maxSize = MAX_RECENT_BOARDS_SIZE
   ) {
-    super(id);
+    super(controllerId, persistenceId);
   }
 
   /**

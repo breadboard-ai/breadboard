@@ -20,44 +20,59 @@ suite("BoardController version history", () => {
   });
 
   test("starts with empty version history", async () => {
-    const controller = new BoardController("BoardTest_1");
+    const controller = new BoardController("BoardTest_1", "BoardController");
     await controller.isHydrated;
 
-    assert.strictEqual(controller.getLastSeenVersion("https://example.com/board.json"), -1);
+    assert.strictEqual(
+      controller.getLastSeenVersion("https://example.com/board.json"),
+      -1
+    );
   });
 
   test("records and retrieves version", async () => {
-    const controller = new BoardController("BoardTest_2");
+    const controller = new BoardController("BoardTest_2", "BoardController");
     await controller.isHydrated;
 
     controller.recordVersion("https://example.com/board.json", 42);
     await controller.isSettled;
 
-    assert.strictEqual(controller.getLastSeenVersion("https://example.com/board.json"), 42);
+    assert.strictEqual(
+      controller.getLastSeenVersion("https://example.com/board.json"),
+      42
+    );
   });
 
   test("tracks multiple URLs independently", async () => {
-    const controller = new BoardController("BoardTest_3");
+    const controller = new BoardController("BoardTest_3", "BoardController");
     await controller.isHydrated;
 
     controller.recordVersion("https://example.com/board1.json", 10);
     controller.recordVersion("https://example.com/board2.json", 20);
     await controller.isSettled;
 
-    assert.strictEqual(controller.getLastSeenVersion("https://example.com/board1.json"), 10);
-    assert.strictEqual(controller.getLastSeenVersion("https://example.com/board2.json"), 20);
-    assert.strictEqual(controller.getLastSeenVersion("https://example.com/unknown.json"), -1);
+    assert.strictEqual(
+      controller.getLastSeenVersion("https://example.com/board1.json"),
+      10
+    );
+    assert.strictEqual(
+      controller.getLastSeenVersion("https://example.com/board2.json"),
+      20
+    );
+    assert.strictEqual(
+      controller.getLastSeenVersion("https://example.com/unknown.json"),
+      -1
+    );
   });
 
   test("newerVersionAvailable defaults to false", async () => {
-    const controller = new BoardController("BoardTest_4");
+    const controller = new BoardController("BoardTest_4", "BoardController");
     await controller.isHydrated;
 
     assert.strictEqual(controller.newerVersionAvailable, false);
   });
 
   test("can set newerVersionAvailable", async () => {
-    const controller = new BoardController("BoardTest_5");
+    const controller = new BoardController("BoardTest_5", "BoardController");
     await controller.isHydrated;
 
     controller.newerVersionAvailable = true;
@@ -77,7 +92,10 @@ suite("BoardController edit history", () => {
   });
 
   test("starts with empty edit history", async () => {
-    const controller = new BoardController("BoardTest_EditHistory_1");
+    const controller = new BoardController(
+      "BoardTest_EditHistory_1",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const history = controller.getEditHistory("https://example.com/board.json");
@@ -85,7 +103,10 @@ suite("BoardController edit history", () => {
   });
 
   test("saves and retrieves edit history", async () => {
-    const controller = new BoardController("BoardTest_EditHistory_2");
+    const controller = new BoardController(
+      "BoardTest_EditHistory_2",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const mockHistory = [
@@ -99,12 +120,17 @@ suite("BoardController edit history", () => {
     );
     await controller.isSettled;
 
-    const retrieved = controller.getEditHistory("https://example.com/board.json");
+    const retrieved = controller.getEditHistory(
+      "https://example.com/board.json"
+    );
     assert.strictEqual(retrieved.length, 2);
   });
 
   test("tracks edit history for multiple boards independently", async () => {
-    const controller = new BoardController("BoardTest_EditHistory_3");
+    const controller = new BoardController(
+      "BoardTest_EditHistory_3",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const history1 = [{ timestamp: 1, graphId: "main", label: "Edit 1" }];
@@ -120,9 +146,15 @@ suite("BoardController edit history", () => {
     );
     await controller.isSettled;
 
-    const retrieved1 = controller.getEditHistory("https://example.com/board1.json");
-    const retrieved2 = controller.getEditHistory("https://example.com/board2.json");
-    const retrievedUnknown = controller.getEditHistory("https://example.com/unknown.json");
+    const retrieved1 = controller.getEditHistory(
+      "https://example.com/board1.json"
+    );
+    const retrieved2 = controller.getEditHistory(
+      "https://example.com/board2.json"
+    );
+    const retrievedUnknown = controller.getEditHistory(
+      "https://example.com/unknown.json"
+    );
 
     assert.strictEqual(retrieved1.length, 1);
     assert.strictEqual(retrieved2.length, 1);
@@ -130,7 +162,10 @@ suite("BoardController edit history", () => {
   });
 
   test("saveEditHistory creates a copy of the array", async () => {
-    const controller = new BoardController("BoardTest_EditHistory_4");
+    const controller = new BoardController(
+      "BoardTest_EditHistory_4",
+      "BoardController"
+    );
     await controller.isHydrated;
 
     const originalHistory = [{ timestamp: 1, graphId: "main", label: "Test" }];
@@ -145,7 +180,9 @@ suite("BoardController edit history", () => {
     originalHistory.push({ timestamp: 2, graphId: "main", label: "New" });
 
     // Retrieved history should not be affected
-    const retrieved = controller.getEditHistory("https://example.com/board.json");
+    const retrieved = controller.getEditHistory(
+      "https://example.com/board.json"
+    );
     assert.strictEqual(retrieved.length, 1);
   });
 });

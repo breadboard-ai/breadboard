@@ -14,7 +14,6 @@ import {
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { StateEvent } from "../../ui/events/events.js";
-import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { Utils } from "../../sca/utils.js";
@@ -289,7 +288,6 @@ export const CreateRoute: EventRoute<"board.create"> = {
       return false;
     }
 
-
     sca.controller.global.main.blockingAction = true;
     const result = await sca.actions.board.saveAs(
       originalEvent.detail.graph,
@@ -333,40 +331,44 @@ export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
   async do(deps) {
-    const { originalEvent, sca } = deps;
+    const { originalEvent, sca, runtime, tab, embedHandler } = deps;
+
     sca.controller.global.main.blockingAction = true;
 
-    // Immediately acknowledge the user's action with a snackbar. This will be
-    // superseded by another snackbar in the "board.create" route, but if it
-    // takes any amount of time to get the latest version of the graph from the
-    // store the user will at least have this acknowledgment.
-    sca.controller.global.snackbars.snackbar(
-      originalEvent.detail.messages.start,
-      BreadboardUI.Types.SnackType.PENDING,
-      [],
-      true,
-      undefined,
-      true // Replace existing snackbars.
+    // Remix action handles snackbar, graph resolution, and saveAs
+    const result = await sca.actions.board.remix(
+      originalEvent.detail.url,
+      originalEvent.detail.messages
     );
-
-    const graphStore = sca.services.graphStore;
-    const addResult = graphStore.addByURL(originalEvent.detail.url, [], {});
-    const graph = structuredClone(
-      (await graphStore.getLatest(addResult.mutable)).graph
-    );
-    graph.title = `${graph.title ?? "Untitled"} Remix`;
-
-    await CreateRoute.do({
-      ...deps,
-      originalEvent: new BreadboardUI.Events.StateEvent({
-        eventType: "board.create",
-        editHistoryCreator: { role: "user" },
-        graph,
-        messages: originalEvent.detail.messages,
-      }),
-    });
-
     sca.controller.global.main.blockingAction = false;
+
+    if (!result?.success) {
+      return false;
+    }
+
+    const { lite, dev } = parseUrl(window.location.href);
+
+    runtime.router.go(
+      {
+        page: "graph",
+        // Ensure we always go back to the canvas when a board is created.
+        mode: "canvas",
+        // Ensure that we correctly preserve the "lite" mode.
+        lite,
+        flow: result.url.href,
+        // Resource key not required because we know the current user
+        // created it.
+        resourceKey: undefined,
+        dev,
+        guestPrefixed: true,
+      },
+      tab?.id,
+      { role: "user" }
+    );
+    embedHandler?.sendToEmbedder({
+      type: "board_id_created",
+      id: result.url.href,
+    });
 
     return false;
   },
@@ -455,10 +457,7 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
       replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
     }
 
-    await sca.actions.graph.replace(
-      replacement,
-      originalEvent.detail.creator
-    );
+    await sca.actions.graph.replace(replacement, originalEvent.detail.creator);
 
     return false;
   },

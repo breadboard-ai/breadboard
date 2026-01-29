@@ -38,24 +38,42 @@ class Controller implements AppController {
     const runtimeFlags = flags;
 
     this.editor = {
-      graph: new Editor.Graph.GraphController("Editor_Graph"),
-      selection: new Editor.Selection.SelectionController("Editor_Selection"),
-      splitter: new Editor.Splitter.SplitterController("Editor_Splitter"),
-      sidebar: new Editor.Sidebar.SidebarController("Editor_Sidebar"),
+      graph: new Editor.Graph.GraphController(
+        "Editor_Graph",
+        "GraphController"
+      ),
+      selection: new Editor.Selection.SelectionController(
+        "Editor_Selection",
+        "SelectionController"
+      ),
+      splitter: new Editor.Splitter.SplitterController(
+        "Editor_Splitter",
+        "SplitterController"
+      ),
+      sidebar: new Editor.Sidebar.SidebarController(
+        "Editor_Sidebar",
+        "SidebarController"
+      ),
     };
 
     this.home = {
-      recent: new Home.RecentBoardsController("RecentBoards"),
+      recent: new Home.RecentBoardsController(
+        "RecentBoards",
+        "RecentBoardsController"
+      ),
     };
 
     this.global = {
-      main: new Global.GlobalController("Global"),
-      flags: new Global.FlagController("Flags", runtimeFlags),
-      debug: new Global.DebugController("Debug"),
-      feedback: new Global.FeedbackController("Feedback"),
-      toasts: new Global.ToastController("Toasts"),
-      snackbars: new Global.SnackbarController("Snackbars"),
-      consent: new Global.ConsentController("Consent"),
+      main: new Global.GlobalController("Global", "GlobalController"),
+      flags: new Global.FlagController("Flags", "FlagController", runtimeFlags),
+      debug: new Global.DebugController("Debug", "DebugController"),
+      feedback: new Global.FeedbackController("Feedback", "FeedbackController"),
+      toasts: new Global.ToastController("Toasts", "ToastController"),
+      snackbars: new Global.SnackbarController(
+        "Snackbars",
+        "SnackbarController"
+      ),
+      consent: new Global.ConsentController("Consent", "ConsentController"),
 
       // Migrations are tested independently so this block is ignored for
       // coverage reporting.
@@ -77,8 +95,8 @@ class Controller implements AppController {
     };
 
     this.board = {
-      main: new BoardController("Board")
-    }
+      main: new BoardController("Board", "BoardController"),
+    };
   }
 
   /**
