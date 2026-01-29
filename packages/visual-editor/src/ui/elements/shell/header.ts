@@ -14,8 +14,10 @@ import { classMap } from "lit/directives/class-map.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import {
   CloseEvent,
+  HideTooltipEvent,
   OverflowMenuActionEvent,
   ShareRequestedEvent,
+  ShowTooltipEvent,
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
@@ -31,6 +33,8 @@ import { hasEnabledGlobalSettings } from "./global-settings.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { Utils } from "../../../sca/utils.js";
+import { AppController } from "../../../sca/controller/controller.js";
+import { until } from "lit/directives/until.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -328,13 +332,16 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
       #experiment {
         display: none;
-        font-size: 11px;
-        line-height: 1;
-        padding: var(--bb-grid-size) var(--bb-grid-size-3);
+        font-size: 12px;
+        line-height: normal;
+        padding: 2px 6px;
         border-radius: var(--bb-grid-size-16);
         border: 1px solid light-dark(var(--n-0), var(--n-70));
         text-transform: uppercase;
-        color: light-dark(var(--n-0), var(--n-70));
+        background-color: #ffecee;
+        color: #60150f;
+        font-weight: 500;
+        font-family: Google Sans Code;
       }
 
       #status {
@@ -652,10 +659,37 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderExperimentalLabel() {
-    return html`${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
-    Strings.from("PROVIDER_NAME") !== ""
-      ? html`<span class="sans" id="experiment">Experiment</span>`
-      : nothing}`;
+    const hasOverrides = this.sca.controller.global.flags
+      .overrides()
+      .then((overrides) => {
+        if (Object.keys(overrides).length > 0) {
+          return html`<span
+            class="sans"
+            id="experiment"
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new ShowTooltipEvent(
+                  Strings.from("TEXT_EXPERIMENT_MODE"),
+                  evt.clientX,
+                  evt.clientY + 90,
+                  { status: false, isMultiLine: true }
+                )
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+            }}
+            >Experiment mode</span
+          >`;
+        } else {
+          return html`${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
+          Strings.from("PROVIDER_NAME") !== ""
+            ? html`<span class="sans" id="experiment">Experiment</span>`
+            : nothing}`;
+        }
+      });
+
+    return html`${until(hasOverrides, nothing)}`;
   }
 
   #renderStatusLabel() {
