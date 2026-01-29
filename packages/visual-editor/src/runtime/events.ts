@@ -148,13 +148,7 @@ export class RuntimeNewerSharedVersionEvent extends Event {
   }
 }
 
-export class RuntimeTabChangeEvent extends Event {
-  static eventName = "runtimetabchange" as const;
 
-  constructor() {
-    super(RuntimeTabChangeEvent.eventName, { ...eventInit });
-  }
-}
 
 export class RuntimeSelectionChangeEvent extends Event {
   static eventName = "runtimeselectionchange" as const;
@@ -233,7 +227,6 @@ type RuntimeEvents =
   | RuntimeBoardLoadErrorEvent
   | RuntimeErrorEvent
   | RuntimeBoardEditEvent
-  | RuntimeTabChangeEvent
   | RuntimeBoardRunEvent;
 
 declare global {

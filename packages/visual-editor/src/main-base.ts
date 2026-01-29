@@ -756,12 +756,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Sync project state (creates the Project object for the loaded graph)
     this.runtime.state.syncProjectState();
 
-    // Dispatch event for index-lite.ts which still uses event listeners
-    // TODO: Remove when index-lite.ts is fully migrated to signals
-    this.runtime.board.dispatchEvent(
-      new Runtime.Events.RuntimeTabChangeEvent()
-    );
-
     const tab = this.tab;
     this.#maybeShowWelcomePanel();
 
