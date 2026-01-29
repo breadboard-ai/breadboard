@@ -24,10 +24,9 @@ import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
   RuntimeConfig,
-  TabId,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
-} from "./runtime/types.js";
+} from "./runtime/types.js";;
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
@@ -67,7 +66,7 @@ import { keyboardCommands } from "./commands/commands.js";
 import { KeyboardCommandDeps } from "./commands/types.js";
 import { eventRoutes } from "./event-routing/event-routing.js";
 
-import { hash, ok } from "@breadboard-ai/utils";
+import { hash } from "@breadboard-ai/utils";
 import { MainArguments } from "./types/types.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
@@ -200,7 +199,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected runtime: Runtime.Runtime;
   protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
-  protected boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
+  // Run status now tracked by this.sca.controller.run.main
   protected lastPointerPosition = { x: 0, y: 0 };
   protected tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   protected canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
@@ -248,6 +247,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       appSubName: Strings.from("SUB_APP_NAME"),
     };
     this.sca = sca(config, args.globalConfig.flags);
+    this.sca.controller.global.debug.isHydrated.then(() => {
+      this.sca.controller.global.debug.enabled = true;
+    });
     Utils.Logging.setDebuggableAppController(this.sca.controller);
 
     // Append SCA to the config.
@@ -568,60 +570,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Note: RuntimeTabCloseEvent listener removed - stop-run logic moved to
     // before close() call in route handler
 
-    // Note: RuntimeBoardSaveStatusChangeEvent listener removed -
-    // save status now tracked by registerSaveStatusListener trigger
-    // which updates controller.editor.graph.saveStatus
-
-    this.runtime.run.addEventListener(
-      Runtime.Events.RuntimeBoardRunEvent.eventName,
-      (evt: Runtime.Events.RuntimeBoardRunEvent) => {
-        if (this.tab && evt.tabId === this.tab.id) {
-          this.requestUpdate();
-        }
-
-        switch (evt.runEvt.type) {
-          case "start": {
-            this.boardRunStatus.set(
-              evt.tabId,
-              BreadboardUI.Types.STATUS.RUNNING
-            );
-            break;
-          }
-
-          case "end": {
-            this.boardRunStatus.set(
-              evt.tabId,
-              BreadboardUI.Types.STATUS.STOPPED
-            );
-            break;
-          }
-
-          case "error": {
-            this.boardRunStatus.set(
-              evt.tabId,
-              BreadboardUI.Types.STATUS.STOPPED
-            );
-            break;
-          }
-
-          case "resume": {
-            this.boardRunStatus.set(
-              evt.tabId,
-              BreadboardUI.Types.STATUS.RUNNING
-            );
-            break;
-          }
-
-          case "pause": {
-            this.boardRunStatus.set(
-              evt.tabId,
-              BreadboardUI.Types.STATUS.PAUSED
-            );
-            break;
-          }
-        }
-      }
-    );
+    // Note: RuntimeBoardRunEvent listener removed -
+    // run status now tracked by runner event listeners
+    // set up in sca.actions.run.prepare() which updates
+    // controller.run.main.status directly
 
     this.runtime.router.addEventListener(
       Runtime.Events.RuntimeURLChangeEvent.eventName,
@@ -646,11 +598,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           // Stop any running board before closing
           const closingTabId = this.tab?.id;
           if (closingTabId) {
-            this.boardRunStatus.set(
-              closingTabId,
+            this.sca.controller.run.main.setStatus(
               BreadboardUI.Types.STATUS.STOPPED
             );
-            this.runtime.run.getAbortSignal(closingTabId)?.abort();
+            this.sca.controller.run.main.abortController?.abort();
           }
 
           this.sca.actions.board.close();
@@ -764,12 +715,22 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.runtime.shell.setPageTitle(tab.graph.title);
       }
 
-      const preparingNextRun = await this.runtime.prepareRun(
-        tab,
-        this.settings
-      );
-      if (!ok(preparingNextRun)) {
-        console.warn(preparingNextRun.$error);
+      const url = tab.graph.url;
+      if (url) {
+        this.sca.actions.run.prepare({
+          graph: tab.graph,
+          url,
+          settings: this.settings,
+          fetchWithCreds: this.runtime.fetchWithCreds,
+          flags: this.runtime.flags,
+          getProjectRunState: () => this.runtime.state.project?.run,
+          connectToProject: (runner, fileSystem, abortSignal) => {
+            const project = this.runtime.state.project;
+            if (project) {
+              project.connectHarnessRunner(runner, fileSystem, abortSignal);
+            }
+          },
+        });
       }
 
       if (tab.graph.url && tab.graphIsMine) {
@@ -963,12 +924,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   protected getRenderValues(): RenderValues {
-    let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
-    if (this.tab) {
-      tabStatus =
-        this.boardRunStatus.get(this.tab.id) ??
-        BreadboardUI.Types.STATUS.STOPPED;
-    }
+    const tabStatus = this.sca.controller.run.main.status;
 
     let themeHash = 0;
     if (

@@ -12,7 +12,7 @@ import {
   GraphMetadata,
   InputValues,
 } from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
+
 import { StateEvent } from "../../ui/events/events.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
@@ -23,7 +23,6 @@ export const RunRoute: EventRoute<"board.run"> = {
 
   async do({
     tab,
-    runtime,
     settings,
     askUserToSignInIfNeeded,
     boardServer,
@@ -41,13 +40,9 @@ export const RunRoute: EventRoute<"board.run"> = {
       return false;
     }
 
-    if (!runtime.run.hasRun(tab)) {
-      console.warn(`Unexpected missing run, preparing a run ...`);
-      const preparingRun = await runtime.prepareRun(tab, settings);
-      if (!ok(preparingRun)) {
-        console.warn(preparingRun.$error);
-        return false;
-      }
+    if (!sca.controller.run.main.hasRunner) {
+      console.warn(`Run not prepared - runner not available`);
+      return false;
     }
 
     // b/452677430 - Check for consent before running shared Opals that
@@ -82,7 +77,7 @@ export const RunRoute: EventRoute<"board.run"> = {
       }
     }
 
-    runtime.run.runBoard(tab);
+    sca.controller.run.main.start();
     return false;
   },
 };
@@ -150,7 +145,7 @@ export const TogglePinRoute: EventRoute<"board.togglepin"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, runtime, settings }) {
+  async do({ tab, runtime, sca, settings }) {
     if (!tab) {
       return false;
     }
@@ -162,27 +157,33 @@ export const StopRoute: EventRoute<"board.stop"> = {
       if (url.searchParams.has("results")) {
         url.searchParams.delete("results");
         history.pushState(null, "", url);
-
-        runtime.state.project?.resetRun();
       }
     }
 
-    const tabId = tab?.id ?? null;
-    const abortController = runtime.run.getAbortSignal(tabId);
-    if (!abortController) {
-      return false;
-    }
+    // Stop the run via controller
+    sca.controller.run.main.stop();
 
-    abortController.abort("Run stopped");
+    // Reset project run state
+    runtime.state.project?.resetRun();
 
-    await runtime.run.clearLastRun(tabId, tab?.graph.url);
-    if (!settings) {
-      console.warn(`No settings, unable to prepare next run.`);
-    } else {
-      const preparingNextRun = await runtime.prepareRun(tab, settings);
-      if (!ok(preparingNextRun)) {
-        console.warn(preparingNextRun.$error);
-      }
+    // Prepare the next run
+    const url = tab.graph.url;
+    if (url && settings) {
+      sca.actions.run.prepare({
+        graph: tab.graph,
+        url,
+        settings,
+        fetchWithCreds: runtime.fetchWithCreds,
+        flags: runtime.flags,
+        getProjectRunState: () => runtime.state.project?.run,
+        connectToProject: (runner, fileSystem, abortSignal) => {
+          runtime.state.project?.connectHarnessRunner(
+            runner,
+            fileSystem,
+            abortSignal
+          );
+        },
+      });
     }
 
     return true;
@@ -234,12 +235,12 @@ export const RestartRoute: EventRoute<"board.restart"> = {
 export const InputRoute: EventRoute<"board.input"> = {
   event: "board.input",
 
-  async do({ tab, runtime, settings, originalEvent }) {
+  async do({ tab, settings, originalEvent, sca }) {
     if (!settings || !tab) {
       return false;
     }
 
-    const runner = runtime.run.getRunner(tab.id);
+    const runner = sca.controller.run.main.runner;
     if (!runner) {
       throw new Error("Can't send input, no runner");
     }

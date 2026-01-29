@@ -12,12 +12,5 @@ export class DebugController
   extends RootController
   implements DebugControllerInterface {
   @field({ persist: "local" })
-  private accessor _enabled = false;
-
-  get enabled() {
-    return this._enabled;
-  }
-  set enabled(value: boolean) {
-    this._enabled = value;
-  }
+  accessor enabled = false;
 }

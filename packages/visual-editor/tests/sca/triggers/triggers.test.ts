@@ -55,11 +55,12 @@ suite("Triggers", () => {
       board: ["Save Trigger", "Newer Version Trigger"],
       node: ["Autoname Trigger"],
       agent: ["Graph Invalidate Trigger"],
+      run: [],
     });
     clean();
 
     // Cleaning removes the triggers and the instance.
-    assert.deepStrictEqual(list(), { agent: [], board: [], node: [] });
+    assert.deepStrictEqual(list(), { agent: [], board: [], node: [], run: [] });
 
     // Confirm that listing and cleaning do not throw in the absence of a
     // trigger instance.

@@ -6,10 +6,9 @@
 import type * as BreadboardUI from "../ui/index.js";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
-import { Run } from "./run.js";
 import { Edit } from "./edit.js";
 import { Util } from "./util.js";
-import { RuntimeConfig, Tab } from "./types.js";
+import { RuntimeConfig } from "./types.js";
 
 export * as Events from "./events.js";
 export * as Types from "./types.js";
@@ -19,8 +18,6 @@ import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
 import {
   OPAL_BACKEND_API_PREFIX,
-  Outcome,
-  RunConfig,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import {
@@ -29,9 +26,6 @@ import {
   RuntimeToastEvent,
   RuntimeUnsnackbarEvent,
 } from "./events.js";
-import { SettingsStore } from "../ui/data/settings-store.js";
-import { inputsFromSettings } from "../ui/data/inputs.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { McpClientManager } from "../mcp/index.js";
 import { FileSystem } from "@breadboard-ai/types";
@@ -40,11 +34,6 @@ import { GoogleDriveBoardServer } from "../board-server/server.js";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { AppCatalystApiClient } from "../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../ui/utils/email-prefs-manager.js";
-import { err } from "@breadboard-ai/utils";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "../data/file-system.js";
 import { ActionTracker } from "../ui/types/types.js";
 import { AppController } from "../sca/controller/controller.js";
 import { SCA } from "../sca/sca.js";
@@ -53,7 +42,6 @@ export class Runtime extends EventTarget {
   public readonly shell: Shell;
   public readonly router: Router;
   public readonly board: Board;
-  public readonly run: Run;
   public readonly edit: Edit;
   public readonly select: Select;
   public readonly state: StateManager;
@@ -95,7 +83,6 @@ export class Runtime extends EventTarget {
     this.emailPrefsManager = config.sca.services.emailPrefsManager;
     this.flowGenerator = config.sca.services.flowGenerator;
 
-    const kits = config.sca.services.kits;
     const { appName, appSubName } = config;
 
     this.shell = new Shell(appName, appSubName);
@@ -115,51 +102,10 @@ export class Runtime extends EventTarget {
       this.appController,
       config.sca
     );
-    this.run = new Run(this.__sca.services.graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();
   }
 
-  async prepareRun(tab: Tab, settings: SettingsStore): Promise<Outcome<void>> {
-    const url = tab.graph?.url;
-    if (!url) {
-      return err(`Unable to prepare run: graph does not have a URL`);
-    }
-
-    const graph = tab?.graph;
-    const runConfig: RunConfig = {
-      url,
-      runner: graph,
-      diagnostics: true,
-      kits: [], // The kits are added by the runtime.
-      loader: this.__sca.services.loader,
-      graphStore: this.__sca.services.graphStore,
-      fileSystem: this.__sca.services.graphStore.fileSystem.createRunFileSystem({
-        graphUrl: url,
-        env: envFromGraphDescriptor(
-          this.__sca.services.graphStore.fileSystem.env(),
-          graph
-        ),
-        assets: assetsFromGraphDescriptor(graph),
-      }),
-      inputs: inputsFromSettings(settings),
-      fetchWithCreds: this.fetchWithCreds,
-      getProjectRunState: () => {
-        return this.state.project?.run;
-      },
-      clientDeploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
-      flags: this.flags,
-    };
-
-    // Let the queued up updates trigger the render before actually preparing
-    // the run. This is necessary, because the main graph is being set in
-    // `bb-renderer` is actually side-effectey, but we don't have another way
-    // to account for this
-    // TODO: Remove side effectey graph-setting in `bb-renderer`.
-    await Promise.resolve();
-
-    return this.run.prepareRun(tab, runConfig);
-  }
 
   snackbar(
     snackbarId: ReturnType<typeof globalThis.crypto.randomUUID>,
