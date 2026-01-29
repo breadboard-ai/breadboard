@@ -3,14 +3,17 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
-import { customElement } from "lit/decorators.js";
+import { LitElement, html, css, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
 import { type } from "../../styles/host/type.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { ShowVideoModalEvent } from "../../events/events.js";
 
 @customElement("bb-empty-state")
 export class EmptyState extends LitElement {
+  @property({ type: Boolean, reflect: true })
+  accessor narrow = false;
+
   static styles = [
     baseColors,
     type,
@@ -27,6 +30,10 @@ export class EmptyState extends LitElement {
         height: 100%;
         pointer-events: none;
         overflow: hidden;
+      }
+
+      :host([narrow]) {
+        justify-content: center;
       }
 
       .edu-sa-beginner {
@@ -85,6 +92,11 @@ export class EmptyState extends LitElement {
         text-align: center;
       }
 
+      :host([narrow]) #headline {
+        translate: 0;
+        font-size: 28px;
+      }
+
       #tag {
         translate: 0 -3.4svh;
         font-size: min(2svw, 24px);
@@ -95,6 +107,11 @@ export class EmptyState extends LitElement {
           text-decoration: none;
           pointer-events: auto;
         }
+      }
+
+      :host([narrow]) #tag {
+        translate: 0;
+        font-size: 16px;
       }
 
       @keyframes fadeIn {
@@ -110,9 +127,11 @@ export class EmptyState extends LitElement {
   ];
 
   render() {
-    return html`<div id="top" class="message edu-sa-beginner">
-        Add a step to get started <img src="/images/arrow-up.png" />
-      </div>
+    return html`${this.narrow
+        ? nothing
+        : html`<div id="top" class="message edu-sa-beginner">
+            Add a step to get started <img src="/images/arrow-up.png" />
+          </div>`}
       <div>
         <div id="headline" class="sans-flex round w-500">
           Let&apos;s build your app
@@ -129,8 +148,11 @@ export class EmptyState extends LitElement {
           >
         </div>
       </div>
-      <div id="bottom" class="message edu-sa-beginner">
-        ... or type what you want to build <img src="/images/arrow-down.png" />
-      </div>`;
+      ${this.narrow
+        ? nothing
+        : html`<div id="bottom" class="message edu-sa-beginner">
+            ... or type what you want to build
+            <img src="/images/arrow-down.png" />
+          </div>`}`;
   }
 }

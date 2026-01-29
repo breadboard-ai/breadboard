@@ -7,6 +7,7 @@
 export { ConsentController } from './consent-controller.js';
 export { DebugController } from './debug-controller.js';
 export { FeedbackController } from './feedback-controller.js';
+export { FlowgenInputController } from "./flowgen-input-controller.js";
 export { SnackbarController } from './snackbar-controller.js';
 export { ToastController } from './toast-controller.js';
 export { FlagController } from './flag-controller.js';

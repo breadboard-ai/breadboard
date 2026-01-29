@@ -643,6 +643,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       <bb-step-list-view
         ?inert=${this.#isInert()}
         .state=${this.runtime.state.lite}
+        lite
       ></bb-step-list-view>
     `;
   }

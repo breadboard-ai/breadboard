@@ -52,6 +52,7 @@ import { Project, RendererRunState, LiteModeState } from "../../state/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
 import "../../lite/step-list-view/step-list-view.js";
+import "../../lite/prompt/prompt-view.js";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
@@ -71,6 +72,7 @@ import { emptyStyles } from "../../styles/host/colors-empty.js";
 const focusAppControllerWhenIn = ["canvas", "preview"];
 
 import "./empty-state.js";
+import "../../flow-gen/flowgen-editor-input.js";
 import { isEmpty } from "../../utils/utils.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
@@ -680,13 +682,33 @@ export class CanvasController extends SignalWatcher(LitElement) {
     `;
 
     // On narrow screens with a loaded graph, show step-list instead of full editor
+    // For empty graphs, show the empty state with flowgen input
+    // When generating, switch to step-list view to show planner thoughts
+    // While loading (no graph or liteState), show nothing to match non-narrow behavior
+    const isGenerating =
+      this.sca?.controller.global.flowgenInput.state.status === "generating";
+    const showStepListView = !graphIsEmpty || isGenerating;
+    const prompt =
+      this.graph?.metadata?.raw_intent ?? this.graph?.metadata?.intent ?? null;
     const narrowScreenContent =
-      graph && this.liteState
-        ? html`<section id="narrow-view">
-            <bb-step-list-view .state=${this.liteState}></bb-step-list-view>
-          </section>`
-        : html`<section id="content" class="welcome">
-            ${this.#maybeRenderEmptyState()}
+      !graph || !this.liteState
+        ? nothing
+        : html`<section id="narrow-view">
+            ${showStepListView
+              ? html`<bb-prompt-view
+                    .prompt=${prompt}
+                    .state=${this.liteState}
+                  ></bb-prompt-view>
+                  <bb-step-list-view
+                    .state=${this.liteState}
+                  ></bb-step-list-view>`
+              : html`<bb-empty-state .narrow=${true}></bb-empty-state>`}
+            <bb-flowgen-editor-input
+              .hasEmptyGraph=${graphIsEmpty}
+              .currentGraph=${this.graph}
+              .liteState=${this.liteState}
+              .projectState=${this.projectState}
+            ></bb-flowgen-editor-input>
           </section>`;
 
     return [

@@ -53,6 +53,7 @@ class Controller implements AppController {
       flags: new Global.FlagController("Flags", runtimeFlags),
       debug: new Global.DebugController("Debug"),
       feedback: new Global.FeedbackController("Feedback"),
+      flowgenInput: new Global.FlowgenInputController("FlowgenInput"),
       toasts: new Global.ToastController("Toasts"),
       snackbars: new Global.SnackbarController("Snackbars"),
       consent: new Global.ConsentController("Consent"),
@@ -169,6 +170,7 @@ export interface AppController extends DebuggableAppController {
     flags: Global.FlagController;
     debug: Global.DebugController;
     feedback: Global.FeedbackController;
+    flowgenInput: Global.FlowgenInputController;
     toasts: Global.ToastController;
     snackbars: Global.SnackbarController;
     consent: Global.ConsentController;

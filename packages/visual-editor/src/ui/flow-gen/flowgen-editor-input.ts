@@ -7,14 +7,14 @@
 import type { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { LitElement, type PropertyValues, css, html, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { projectStateContext } from "../contexts/project-state.js";
 import "../elements/input/expanding-textarea.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { StateEvent, UtteranceEvent } from "../events/events.js";
-import { Project } from "../state/types.js";
+import { LiteModeState, Project } from "../state/types.js";
 import * as StringsHelper from "../strings/helper.js";
 import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
@@ -24,16 +24,15 @@ import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
 import { flowGenWithTheme } from "./flowgen-with-theme.js";
 import { actionTrackerContext } from "../contexts/action-tracker-context.js";
 import { ActionTracker } from "../types/types.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { scaContext } from "../../sca/context/context.js";
+import { type SCA } from "../../sca/sca.js";
+import type { FlowgenInputStatus } from "../../sca/controller/subcontrollers/global/flowgen-input-controller.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
-type State =
-  | { status: "initial" }
-  | { status: "generating" }
-  | { status: "error"; error: unknown; suggestedIntent?: string };
-
 @customElement("bb-flowgen-editor-input")
-export class FlowgenEditorInput extends LitElement {
+export class FlowgenEditorInput extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     baseColors,
@@ -154,6 +153,9 @@ export class FlowgenEditorInput extends LitElement {
     `,
   ];
 
+  @consume({ context: scaContext })
+  accessor sca: SCA | undefined;
+
   @consume({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator | undefined;
 
@@ -166,8 +168,43 @@ export class FlowgenEditorInput extends LitElement {
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
 
-  @state()
-  accessor #state: State = { status: "initial" };
+  /**
+   * Get state from controller (signal-backed for cross-breakpoint sync).
+   */
+  get #state(): FlowgenInputStatus {
+    return (
+      this.sca?.controller.global.flowgenInput.state ?? { status: "initial" }
+    );
+  }
+
+  /**
+   * Set state on controller.
+   */
+  set #state(value: FlowgenInputStatus) {
+    this.sca?.controller.global.flowgenInput.setState(value);
+  }
+
+  /**
+   * Get input value from controller.
+   */
+  get #inputValue(): string {
+    return this.sca?.controller.global.flowgenInput.inputValue ?? "";
+  }
+
+  /**
+   * Set input value on controller.
+   */
+  set #inputValue(value: string) {
+    this.sca?.controller.global.flowgenInput.setInputValue(value);
+  }
+
+  /**
+   * Optional LiteModeState to sync generation status with step-list planner display.
+   * When provided, startGenerating()/finishGenerating() will be called to trigger
+   * planner streaming updates in narrow mode.
+   */
+  @property({ type: Object })
+  accessor liteState: LiteModeState | undefined;
 
   @property({ type: Boolean, reflect: true })
   accessor focused = false;
@@ -239,9 +276,11 @@ export class FlowgenEditorInput extends LitElement {
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
           .disabled=${isGenerating}
+          .value=${this.#inputValue}
           .placeholder=${this.hasEmptyGraph
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
+          @input=${this.#onInputSync}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}
@@ -284,13 +323,21 @@ export class FlowgenEditorInput extends LitElement {
         this.#state = { status: "initial" };
         return;
       }
-      this.#state = { status: "generating" };
 
-      this.actionTracker?.flowGenEdit(this.currentGraph?.url);
-
+      // Validate all required dependencies are available BEFORE setting generating state
       if (!this.flowGenerator) return;
       if (!this.currentGraph) return;
       if (!this.projectState) return;
+      // Check that the editor is ready (guards against race condition in narrow mode
+      // where the input may become interactive before the editor is initialized)
+      if (!this.sca?.controller.editor.graph.editor) return;
+
+      // Now we can safely start generation
+      this.#state = { status: "generating" };
+      // Notify liteState to trigger planner display in narrow mode step-list
+      this.liteState?.startGenerating();
+
+      this.actionTracker?.flowGenEdit(this.currentGraph?.url);
 
       this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
       this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
@@ -311,6 +358,7 @@ export class FlowgenEditorInput extends LitElement {
           return this.#onGenerateComplete(response.flow, response.theme);
         })
         .finally(() => {
+          this.liteState?.finishGenerating();
           this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
         });
     }
@@ -350,6 +398,17 @@ export class FlowgenEditorInput extends LitElement {
   #clearInput() {
     if (this.#descriptionInput.value) {
       this.#descriptionInput.value.value = "";
+    }
+    this.#inputValue = "";
+  }
+
+  /**
+   * Sync input value to controller on every keystroke.
+   */
+  #onInputSync() {
+    const input = this.#descriptionInput.value;
+    if (input) {
+      this.#inputValue = input.value;
     }
   }
 
