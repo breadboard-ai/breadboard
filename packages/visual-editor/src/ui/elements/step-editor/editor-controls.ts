@@ -18,6 +18,7 @@ import {
 import { parseBase64DataUrl } from "@breadboard-ai/utils";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
@@ -47,7 +48,7 @@ import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-editor-controls")
-export class EditorControls extends LitElement {
+export class EditorControls extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 

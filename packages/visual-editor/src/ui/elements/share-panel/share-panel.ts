@@ -29,6 +29,7 @@ import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
@@ -122,7 +123,7 @@ type UnmanagedAssetProblem = {
 );
 
 @customElement("bb-share-panel")
-export class SharePanel extends LitElement {
+export class SharePanel extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     buttonStyles,

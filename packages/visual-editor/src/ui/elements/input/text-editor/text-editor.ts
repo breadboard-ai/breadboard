@@ -5,6 +5,7 @@
  */
 import { Template, TemplatePart } from "@breadboard-ai/utils";
 import { css, html, LitElement } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events.js";
@@ -21,6 +22,7 @@ import { ROUTE_TOOL_PATH } from "../../../../a2/a2/tool-manager.js";
 import { scaContext } from "../../../../sca/context/context.js";
 import { consume } from "@lit/context";
 import { SCA } from "../../../../sca/sca.js";
+import { Utils } from "../../../../sca/utils.js";
 
 export function chicletHtml(
   part: TemplatePart,
@@ -129,9 +131,9 @@ export function chicletHtml(
 }
 
 @customElement("bb-text-editor")
-export class TextEditor extends LitElement {
+export class TextEditor extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
-  protected accessor sca: SCA | undefined = undefined;
+  protected accessor sca!: SCA;
 
   @property()
   set value(value: string) {
@@ -1034,7 +1036,14 @@ export class TextEditor extends LitElement {
     });
 
     const hasTarget = this.#fastAccessTarget !== null;
-    const isAgentic = this.sca?.controller.global.flags.agentMode === true;
+    let isAgentic = false;
+    if (
+      !Utils.Helpers.isHydrating(
+        () => this.sca?.controller.global.flags.agentMode
+      )
+    ) {
+      isAgentic = this.sca?.controller.global.flags.agentMode === true;
+    }
 
     this.#fastAccessRef.value.selectedIndex = 0;
     this.#fastAccessRef.value.showAssets = !hasTarget;

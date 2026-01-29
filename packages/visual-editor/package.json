@@ -22,7 +22,8 @@
     "eval:agent": "wireit",
     "eval:a2ui": "wireit",
     "eval:autoname": "wireit",
-    "eval:viewer": "wireit"
+    "eval:viewer": "wireit",
+    "lint": "wireit"
   },
   "wireit": {
     "build": {
@@ -161,6 +162,18 @@
     "eval:viewer": {
       "command": "vite dev eval/viewer",
       "files": [],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint 'src/**/*.ts'",
+      "dependencies": [
+        "<dependencies>#build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "eslint-rules/**/*.js",
+        "../../eslint.config.js"
+      ],
       "output": []
     }
   },
