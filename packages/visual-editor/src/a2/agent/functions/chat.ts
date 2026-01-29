@@ -14,6 +14,7 @@ import {
 } from "../function-definition.js";
 import {
   ChatChoice,
+  ChatChoiceLayout,
   ChatChoiceSelectionMode,
   ChatManager,
   FunctionGroup,
@@ -129,6 +130,18 @@ Message explaining what the user should choose. The content may include referenc
 "single" for choose-one (radio buttons), "multiple" for any-of (checkboxes).
 `
           ),
+          layout: z
+            .enum(["list", "row", "grid"])
+            .optional()
+            .default("list")
+            .describe(
+              tr`
+Layout hint for displaying choices:
+- "list" (default): Vertical stack, best for longer choice labels
+- "row": Horizontal inline, best for short choices like "Yes/No" or side-by-side comparisons (e.g. images)
+- "grid": Wrapping grid that adapts to available space
+`
+            ),
           ...taskIdSchema,
         },
         response: {
@@ -139,12 +152,13 @@ Message explaining what the user should choose. The content may include referenc
             ),
         },
       },
-      async ({ user_message, choices, selection_mode, task_id }) => {
+      async ({ user_message, choices, selection_mode, layout, task_id }) => {
         args.taskTreeManager.setInProgress(task_id, "");
         const choicesResponse = await args.chatManager.presentChoices(
           user_message,
           choices as ChatChoice[],
-          selection_mode as ChatChoiceSelectionMode
+          selection_mode as ChatChoiceSelectionMode,
+          layout as ChatChoiceLayout
         );
         if (!ok(choicesResponse)) return choicesResponse;
         return { selected: choicesResponse.selected };

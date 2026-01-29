@@ -142,6 +142,14 @@ export type ChatChoice = {
 
 export type ChatChoiceSelectionMode = "single" | "multiple";
 
+/**
+ * Layout options for presenting choices:
+ * - "list": Vertical stack (default) - best for longer choice labels
+ * - "row": Horizontal inline - best for short choices like "Yes/No"
+ * - "grid": Wrapping grid - adapts to available space
+ */
+export type ChatChoiceLayout = "list" | "row" | "grid";
+
 export type ChatChoicesResponse = {
   selected: string[];
 };
@@ -151,7 +159,8 @@ export type ChatManager = {
   presentChoices(
     message: string,
     choices: ChatChoice[],
-    selectionMode: ChatChoiceSelectionMode
+    selectionMode: ChatChoiceSelectionMode,
+    layout?: ChatChoiceLayout
   ): Promise<Outcome<ChatChoicesResponse>>;
 };
 

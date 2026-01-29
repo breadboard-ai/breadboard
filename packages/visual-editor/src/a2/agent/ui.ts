@@ -25,6 +25,7 @@ import { ProgressWorkItem } from "./progress-work-item.js";
 import {
   A2UIRenderer,
   ChatChoice,
+  ChatChoiceLayout,
   ChatChoicesResponse,
   ChatChoiceSelectionMode,
   ChatInputType,
@@ -33,8 +34,7 @@ import {
   VALID_INPUT_TYPES,
 } from "./types.js";
 import { getCurrentStepState } from "../a2/output.js";
-import { llmContentToA2UIComponents } from "./llm-content-to-a2ui.js";
-import { isTextCapabilityPart } from "../../data/common.js";
+import { ChoicePresenter } from "./choice-presenter.js";
 
 export { AgentUI };
 
@@ -73,6 +73,8 @@ class AgentUI implements A2UIRenderer, ChatManager {
 
   readonly #chatLog: LLMContent[] = [];
 
+  readonly #choicePresenter: ChoicePresenter;
+
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
@@ -88,6 +90,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
       );
     }
     this.progress = new ProgressWorkItem("Agent", "spark", this.#appScreen);
+    this.#choicePresenter = new ChoicePresenter(translator, this);
     if (!this.#consoleEntry) {
       console.warn(
         `Unable to find console entry for this agent. Trying to render UI will fail.`
@@ -176,294 +179,15 @@ class AgentUI implements A2UIRenderer, ChatManager {
   async presentChoices(
     message: string,
     choices: ChatChoice[],
-    selectionMode: ChatChoiceSelectionMode
+    selectionMode: ChatChoiceSelectionMode,
+    layout: ChatChoiceLayout = "list"
   ): Promise<Outcome<ChatChoicesResponse>> {
-    const surfaceId = "@choices";
-
-    // Translate pidgin strings to LLMContent
-    const messageContent = await this.translator.fromPidginString(message);
-    if (!ok(messageContent)) return messageContent;
-
-    const translatedChoices: { id: string; content: LLMContent }[] = [];
-    for (const choice of choices) {
-      const labelContent = await this.translator.fromPidginString(choice.label);
-      if (!ok(labelContent)) return labelContent;
-      translatedChoices.push({ id: choice.id, content: labelContent });
-    }
-
-    if (selectionMode === "single") {
-      return this.#presentSingleChoice(
-        messageContent,
-        translatedChoices,
-        surfaceId
-      );
-    } else {
-      return this.#presentMultipleChoice(
-        messageContent,
-        translatedChoices,
-        surfaceId
-      );
-    }
-  }
-
-  async #presentSingleChoice(
-    messageContent: LLMContent,
-    choices: { id: string; content: LLMContent }[],
-    surfaceId: string
-  ): Promise<Outcome<ChatChoicesResponse>> {
-    const allParts: v0_8.Types.ComponentInstance[] = [];
-    const topLevelIds: string[] = [];
-
-    // Convert message to components
-    const messageComponents = llmContentToA2UIComponents(messageContent, {
-      idPrefix: "message",
-    });
-    allParts.push(...messageComponents.parts);
-
-    // Wrap message components in a container if there are multiple
-    if (messageComponents.ids.length > 1) {
-      const messageContainerId = "message-container";
-      allParts.push({
-        id: messageContainerId,
-        component: {
-          Column: {
-            children: { explicitList: messageComponents.ids },
-          },
-        },
-      });
-      topLevelIds.push(messageContainerId);
-    } else if (messageComponents.ids.length === 1) {
-      topLevelIds.push(messageComponents.ids[0]);
-    }
-
-    // Build buttons for each choice
-    const buttonIds: string[] = [];
-    for (let i = 0; i < choices.length; i++) {
-      const choice = choices[i];
-      const choiceComponents = llmContentToA2UIComponents(choice.content, {
-        idPrefix: `choice-${i}`,
-      });
-      allParts.push(...choiceComponents.parts);
-
-      // Create a row container for the choice content
-      const choiceContentId = `choice-content-${i}`;
-      allParts.push({
-        id: choiceContentId,
-        component: {
-          Row: {
-            children: { explicitList: choiceComponents.ids },
-          },
-        },
-      });
-
-      // Create button wrapping the choice content
-      const buttonId = `choice-btn-${i}`;
-      allParts.push({
-        id: buttonId,
-        component: {
-          Button: {
-            child: choiceContentId,
-            action: {
-              name: "select",
-              context: [
-                {
-                  key: "choiceId",
-                  value: { literalString: choice.id },
-                },
-              ],
-            },
-          },
-        },
-      });
-      buttonIds.push(buttonId);
-    }
-
-    // Build the root column layout
-    const rootComponent: v0_8.Types.ComponentInstance = {
-      id: "root",
-      component: {
-        Column: {
-          children: {
-            explicitList: [...topLevelIds, ...buttonIds],
-          },
-          distribution: "start",
-          alignment: "stretch",
-        },
-      },
-    };
-    allParts.push(rootComponent);
-
-    const messages: v0_8.Types.ServerToClientMessage[] = [
-      {
-        surfaceUpdate: {
-          surfaceId,
-          components: allParts,
-        },
-      },
-      {
-        beginRendering: {
-          surfaceId,
-          root: "root",
-        },
-      },
-    ];
-
-    // Render the UI and await user input
-    const rendering = this.renderUserInterface(messages);
-    if (!ok(rendering)) return rendering;
-
-    const userAction = await this.awaitUserInput();
-    if (!ok(userAction)) return userAction;
-
-    // Extract the selected choice ID from the action context
-    const choiceId = userAction.userAction?.context?.choiceId;
-    if (typeof choiceId !== "string") {
-      return err("No choice was selected");
-    }
-
-    return { selected: [choiceId] };
-  }
-
-  async #presentMultipleChoice(
-    messageContent: LLMContent,
-    choices: { id: string; content: LLMContent }[],
-    surfaceId: string
-  ): Promise<Outcome<ChatChoicesResponse>> {
-    const allParts: v0_8.Types.ComponentInstance[] = [];
-    const topLevelIds: string[] = [];
-
-    // Convert message to components
-    const messageComponents = llmContentToA2UIComponents(messageContent, {
-      idPrefix: "message",
-    });
-    allParts.push(...messageComponents.parts);
-
-    // Wrap message components in a container if there are multiple
-    if (messageComponents.ids.length > 1) {
-      const messageContainerId = "message-container";
-      allParts.push({
-        id: messageContainerId,
-        component: {
-          Column: {
-            children: { explicitList: messageComponents.ids },
-          },
-        },
-      });
-      topLevelIds.push(messageContainerId);
-    } else if (messageComponents.ids.length === 1) {
-      topLevelIds.push(messageComponents.ids[0]);
-    }
-
-    // Build checkbox components for each choice
-    // Note: CheckBox uses a string label, so we extract text from the first text part
-    const checkboxIds: string[] = [];
-    for (let i = 0; i < choices.length; i++) {
-      const choice = choices[i];
-      // Extract text from LLMContent for the label
-      const textPart = choice.content.parts.find(isTextCapabilityPart);
-      const labelText = textPart?.text.trim() ?? `Choice ${choice.id}`;
-
-      const checkboxId = `choice-checkbox-${i}`;
-      allParts.push({
-        id: checkboxId,
-        component: {
-          CheckBox: {
-            label: { literalString: labelText },
-            value: { path: `/selections/${choice.id}` },
-          },
-        },
-      });
-      checkboxIds.push(checkboxId);
-    }
-
-    // Build submit button
-    const submitButtonText: v0_8.Types.ComponentInstance = {
-      id: "submit-text",
-      component: {
-        Text: {
-          text: { literalString: "Submit" },
-          usageHint: "body",
-        },
-      },
-    };
-    allParts.push(submitButtonText);
-
-    const submitButton: v0_8.Types.ComponentInstance = {
-      id: "submit-btn",
-      component: {
-        Button: {
-          child: "submit-text",
-          action: {
-            name: "submit",
-            context: choices.map((choice) => ({
-              key: choice.id,
-              value: { path: `/selections/${choice.id}` },
-            })),
-          },
-        },
-      },
-    };
-    allParts.push(submitButton);
-
-    // Build the root column layout
-    const rootComponent: v0_8.Types.ComponentInstance = {
-      id: "root",
-      component: {
-        Column: {
-          children: {
-            explicitList: [...topLevelIds, ...checkboxIds, "submit-btn"],
-          },
-          distribution: "start",
-          alignment: "stretch",
-        },
-      },
-    };
-    allParts.push(rootComponent);
-
-    // Initialize selection state in data model (all unchecked)
-    const dataInit: v0_8.Types.DataModelUpdate = {
-      surfaceId,
-      path: "/selections",
-      contents: choices.map((choice) => ({
-        key: choice.id,
-        valueBoolean: false,
-      })),
-    };
-
-    const messages: v0_8.Types.ServerToClientMessage[] = [
-      { dataModelUpdate: dataInit },
-      {
-        surfaceUpdate: {
-          surfaceId,
-          components: allParts,
-        },
-      },
-      {
-        beginRendering: {
-          surfaceId,
-          root: "root",
-        },
-      },
-    ];
-
-    // Render the UI and await user input
-    const rendering = this.renderUserInterface(messages);
-    if (!ok(rendering)) return rendering;
-
-    const userAction = await this.awaitUserInput();
-    if (!ok(userAction)) return userAction;
-
-    // Extract selected choices from the action context
-    const context = userAction.userAction?.context;
-    if (!context) {
-      return err("No selections received");
-    }
-
-    const selected = choices
-      .filter((choice) => context[choice.id] === true)
-      .map((choice) => choice.id);
-
-    return { selected };
+    return this.#choicePresenter.presentChoices(
+      message,
+      choices,
+      selectionMode,
+      layout
+    );
   }
 
   async render(
@@ -476,7 +200,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     return this.awaitUserInput();
   }
 
-  private renderUserInterface(
+  renderUserInterface(
     messages: v0_8.Types.ServerToClientMessage[]
   ): Outcome<void> {
     const workItem = this.#updateWorkItem();
@@ -490,7 +214,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     workItem.renderUserInterface();
   }
 
-  private async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
+  async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
 
