@@ -141,10 +141,14 @@ class Loop {
       const stepId = this.moduleArgs.context.currentStep?.id;
       const objectiveContent =
         llm`<objective>${extraInstruction}${objectivePidgin.text}</objective>`.asContent();
-      const { contents } = this.runStateManager.startOrResume(
-        stepId,
-        objectiveContent
-      );
+
+      // Check the enableResumeAgentRun flag
+      const runtimeFlags = await moduleArgs.context.flags?.flags();
+      const enableResumeAgentRun = runtimeFlags?.enableResumeAgentRun ?? false;
+
+      const { contents } = enableResumeAgentRun
+        ? this.runStateManager.startOrResume(stepId, objectiveContent)
+        : this.runStateManager.startFresh(stepId, objectiveContent);
 
       let terminateLoop = false;
       let result: AgentRawResult = {

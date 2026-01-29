@@ -78,6 +78,10 @@ export type RuntimeFlags = {
    * Enables "export to Drive" capability for the agent
    */
   enableGoogleDriveTools: boolean;
+  /**
+   * Enables auto-resumption of failed agent runs
+   */
+  enableResumeAgentRun: boolean;
 };
 
 /**
