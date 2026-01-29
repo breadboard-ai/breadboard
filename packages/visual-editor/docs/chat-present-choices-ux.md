@@ -220,11 +220,32 @@ optional **"None of the Above"** escape hatch.
 
 ## Rich Content in Choices
 
-Choice labels support **rich content** via "pidgin" format, which can include:
+Choice labels support **rich content** via pidgin format. Each choice label can
+contain multiple parts that are converted to UI components.
 
-- **Images**: `<file src="/vfs/image.png" />`
-- **Text**: Plain text content
-- **Mixed**: Combination of images and text
+### Supported Content Types
+
+| Type            | UI Component                |
+| --------------- | --------------------------- |
+| **Text**        | Text block                  |
+| **Images**      | Image viewer                |
+| **Videos**      | Video player                |
+| **Audio**       | Audio player                |
+| **PDFs**        | PDF viewer                  |
+| **Drive Files** | Embedded Docs/Sheets/Slides |
+
+### Layout Behavior
+
+- **Single-part content** (text only): Wrapped in a **Row** container
+- **Multi-part content** (e.g., image + text): Wrapped in a **Column** container
+  - Content stacks vertically
+  - Center-aligned horizontally
+  - Distribution starts from top
+
+When any choice has complex content:
+
+- Buttons are given **equal weight** for uniform sizing
+- **Stretch alignment** is applied to the choices container
 
 ### Example: Image + Text Choice (Single + Row)
 
@@ -241,22 +262,47 @@ Choice labels support **rich content** via "pidgin" format, which can include:
 └─────────────────────────────────────────────────────────┘
 ```
 
-When choices contain complex content (multi-part, such as image + text):
-
-- Buttons are given **equal weight** for uniform sizing
-- Content stacks vertically within each button (Column layout)
-- **Stretch alignment** is applied for visual consistency
-
 ---
 
 ## Message Area
 
-The **message** parameter appears above the choices and also supports rich
-content:
+The **user_message** parameter appears above the choices and supports the same
+rich content types as choice labels.
 
-- Can reference VFS files: `<file src="/vfs/chart.png" />`
-- Multiple content parts are stacked vertically in a container
-- Centered within the root layout
+### Supported Content Types
+
+Same as choice labels: Text, Images, Videos, Audio, PDFs, and Drive Files.
+
+### Layout Behavior
+
+- **Single-part message**: Added directly to top-level layout
+- **Multi-part message**: Wrapped in a **Column** container
+  (`message-container`)
+  - Parts stack vertically
+  - Container stretches to fit content
+
+### Example: Message with Embedded Image
+
+```
+┌─────────────────────────────────────────────────────────┐
+│   Here are the results of your analysis:                │
+│                                                         │
+│   ┌─────────────────────────────────────────────────┐   │
+│   │                                                 │   │
+│   │              [Generated Chart]                  │   │
+│   │                                                 │   │
+│   └─────────────────────────────────────────────────┘   │
+│                                                         │
+│   Which category would you like to explore?             │
+│                                                         │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │                    Category A                     │  │
+│  └───────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │                    Category B                     │  │
+│  └───────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -285,42 +331,6 @@ content:
 3. **Root Container**
    - All content is wrapped in a centered Column
    - Vertically and horizontally centered within the surface
-
-4. **Consistent Component IDs**
-   - Message: `message-*` prefix
-   - Choice content: `choice-content-{index}`
-   - Buttons: `choice-btn-{index}`
-   - Checkboxes: `choice-checkbox-{index}`
-   - Containers: `choices-container`, `message-container`
-
----
-
-## Input Parameters Reference
-
-| Parameter                 | Type   | Required | Default  | Description                                               |
-| ------------------------- | ------ | -------- | -------- | --------------------------------------------------------- |
-| `user_message`            | string | ✓        | —        | Message explaining what to choose; supports `<file>` tags |
-| `choices`                 | array  | ✓        | —        | Array of `{id, label}` objects                            |
-| `choices[].id`            | string | ✓        | —        | Unique identifier returned on selection                   |
-| `choices[].label`         | string | ✓        | —        | Display text; supports `<file>` tags                      |
-| `selection_mode`          | enum   | ✓        | —        | `"single"` or `"multiple"`                                |
-| `layout`                  | enum   |          | `"list"` | `"list"`, `"row"`, or `"grid"`                            |
-| `none_of_the_above_label` | string |          | —        | Optional escape option label (e.g., "Exit", "Skip")       |
-
----
-
-## Response Format
-
-```typescript
-{
-  selected: string[]  // Array of choice IDs
-}
-```
-
-- **Single mode**: Always returns exactly 1 element
-- **Multiple mode**: Returns 0 or more elements
-- **When "None of the Above" is selected**: Returns `"__none_of_the_above__"` as
-  the ID
 
 ---
 
@@ -359,7 +369,6 @@ to reject all presented choices.
 
 1. **Visual Distinction**: Always rendered below a divider with secondary button
    styling
-2. **Fixed ID**: Always returns `"__none_of_the_above__"` when selected
-3. **Single Mode Recommended**: Best suited for single selection; in multiple
+2. **Single Mode Recommended**: Best suited for single selection; in multiple
    mode it behaves as a regular checkbox
-4. **Common Labels**: "Exit", "Skip", "Try Again", "None apply", "Go back"
+3. **Common Labels**: "Exit", "Skip", "Try Again", "None apply", "Go back"
