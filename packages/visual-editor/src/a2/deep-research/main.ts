@@ -59,10 +59,10 @@ function systemInstruction(first: boolean): string {
 Your job is to use the provided query to produce raw research that will be later turned into a detailed research report.
 You are tasked with finding as much of relevant information as possible.
 
-You examine the conversation context so far and come up with the ${which} step to produce the report, 
+You examine the conversation context so far and come up with the ${which} step to produce the report,
 using the conversation context as the the guide of steps taken so far and the outcomes recorded.
 
-You do not ask user for feedback. You do not try to have a conversation with the user. 
+You do not ask user for feedback. You do not try to have a conversation with the user.
 You know that the user will only ask you to proceed to next step.
 
 Looking back at all that you've researched and the query/research plan, do you have enough to produce the detailed report? If so, you are done.
@@ -145,7 +145,7 @@ async function thought(
 }
 
 async function invokeOpalAdk(
-  { context, query, summarize, ...params }: ResearcherInputs,
+  { context, query, ...params }: ResearcherInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {

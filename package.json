@@ -105,6 +105,7 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
@@ -114,6 +115,7 @@
     "prettier": "^3.8.1",
     "syncpack": "^13.0.3",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.54.0",
     "wireit": "^0.15.0-pre.2"
   },
   "workspaces": [

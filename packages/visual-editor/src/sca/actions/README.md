@@ -6,13 +6,43 @@ Actions are the "verbs" of the application. They coordinate multi-step workflows
 
 ---
 
-## The Golden Rule
+## The Golden Rule (Nuanced)
 
-> **Action = Services + Controllers**
+> **Action = Cross-Cutting Logic**
 
-- If logic only touches **one Controller**: make it a Controller method
-- If logic coordinates **Services AND Controllers**: make it an Action
-- If logic only uses **Services**: consider if it belongs in the Service itself
+Actions are appropriate when logic is **cross-cutting**:
+
+- **Services + Controllers**: Using services AND mutating controller state
+- **Multiple Subcontrollers**: Accessing different parts of the controller tree
+  (e.g., `controller.editor.graph` AND `controller.global.main`)
+
+Actions are **NOT** appropriate when:
+
+- Logic only touches **one subcontroller** → make it a Controller method
+- Logic only uses **services** without state → consider if it belongs in the Service
+
+### Examples
+
+```typescript
+// ✅ ACTION: Uses services AND controllers
+async function save() {
+  const { controller, services } = bind;
+  await services.boardServer.save(controller.editor.graph.raw());
+}
+
+// ✅ ACTION: Accesses multiple subcontrollers (cross-cutting)
+function close() {
+  const { controller } = bind;
+  controller.editor.graph.resetAll();     // editor subcontroller
+  controller.global.main.loadState = "Home"; // global subcontroller
+}
+
+// ❌ AVOID: Only one subcontroller, should be a controller method
+function updateFlag() {
+  const { controller } = bind;
+  controller.global.flags.someFlag = true; // Only touches global.flags
+}
+```
 
 This prevents "action bloat" and keeps state transformation close to the state.
 
