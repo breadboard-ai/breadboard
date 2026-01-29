@@ -5,7 +5,11 @@
  */
 
 import type { HTMLTemplateResult } from "lit";
-import type { SnackbarAction, SnackType, SnackbarUUID } from "../../../../ui/types/types.js";
+import type {
+  SnackbarAction,
+  SnackType,
+  SnackbarUUID,
+} from "../../../../ui/types/types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 
@@ -34,7 +38,7 @@ type SnackbarMap = Map<SnackbarUUID, SnackbarEntry>;
  * and automatically re-renders when the state changes.
  */
 export class SnackbarController extends RootController {
-  @field()
+  @field({ deep: true })
   private accessor _snackbars: SnackbarMap = new Map();
 
   /**

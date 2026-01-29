@@ -24,7 +24,7 @@ export class BoardController extends RootController {
    * Key: Graph URL
    * Value: Version number from board server
    */
-  @field({ persist: "idb" })
+  @field({ persist: "idb", deep: true })
   private accessor sharedVersionHistory: Map<string, number> = new Map();
 
   /**

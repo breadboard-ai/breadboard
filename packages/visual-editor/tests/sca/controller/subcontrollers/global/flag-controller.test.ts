@@ -139,5 +139,10 @@ suite("FlagController", () => {
       () => String(store.enableGoogleDriveTools),
       new Error("enableGoogleDriveTools was not set by environment")
     );
+
+    assert.throws(
+      () => String(store.enableResumeAgentRun),
+      new Error("enableResumeAgentRun was not set by environment")
+    );
   });
 });

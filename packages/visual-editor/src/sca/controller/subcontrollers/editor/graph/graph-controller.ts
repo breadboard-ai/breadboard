@@ -69,7 +69,7 @@ export class GraphController extends RootController {
    * Tracks the most recent node configuration change.
    * Set by the changeNodeConfiguration action, consumed by the autoname trigger.
    */
-  @field()
+  @field({ deep: true })
   accessor lastNodeConfigChange: ConfigChangeContext | null = null;
 
   /**

@@ -61,6 +61,6 @@ export class GlobalController extends RootController {
   @field()
   accessor subscriptionCredits: number = -1;
 
-  @field()
+  @field({ deep: true })
   accessor show = new Set<UIOverlays>();
 }

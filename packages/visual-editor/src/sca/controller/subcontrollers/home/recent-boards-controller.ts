@@ -11,7 +11,7 @@ import { RootController } from "../root-controller.js";
 const MAX_RECENT_BOARDS_SIZE = 100;
 
 export class RecentBoardsController extends RootController {
-  @field({ persist: "idb" })
+  @field({ persist: "idb", deep: true })
   private accessor _boards: RecentBoard[] = [];
 
   @field({ persist: "local" })
