@@ -79,6 +79,7 @@ export async function createClientConfig(opts: {
       streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
       enableDrivePickerInLiteMode: flags.ENABLE_DRIVE_PICKER_IN_LITE_MODE,
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
+      enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
     },
   };
 }

@@ -59,6 +59,20 @@ class RunStateManager {
   }
 
   /**
+   * Starts a fresh run without attempting to resume a previous one.
+   * Used when resumability is disabled via feature flag.
+   */
+  startFresh(
+    stepId: string | undefined,
+    objectiveContent: LLMContent
+  ): StartResult {
+    if (stepId) {
+      this.#runState = this.agentContext.createRun(stepId, objectiveContent);
+    }
+    return { contents: [objectiveContent], isResuming: false };
+  }
+
+  /**
    * Tracks a content item in the current run.
    */
   pushContent(content: LLMContent): void {

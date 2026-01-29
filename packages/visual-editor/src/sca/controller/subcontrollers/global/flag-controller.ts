@@ -25,6 +25,9 @@ export class FlagController
   private accessor _enableGoogleDriveTools: boolean | null = null;
 
   @field({ persist: "idb" })
+  private accessor _enableResumeAgentRun: boolean | null = null;
+
+  @field({ persist: "idb" })
   private accessor _force2DGraph: boolean | null = null;
 
   @field({ persist: "idb" })
@@ -80,6 +83,13 @@ export class FlagController
       throw new Error("enableGoogleDriveTools was not set by environment");
     }
     return this._enableGoogleDriveTools;
+  }
+
+  get enableResumeAgentRun() {
+    if (this._enableResumeAgentRun === null) {
+      throw new Error("enableResumeAgentRun was not set by environment");
+    }
+    return this._enableResumeAgentRun;
   }
 
   get force2DGraph() {
@@ -265,6 +275,12 @@ export class FlagController
         this._enableGoogleDriveTools = value;
         return;
       }
+
+      case "enableResumeAgentRun": {
+        if (onlyIfNull && this._enableResumeAgentRun !== null) return;
+        this._enableResumeAgentRun = value;
+        return;
+      }
     }
   }
 
@@ -312,6 +328,7 @@ export class FlagController
       );
       this.#set("streamGenWebpage", env.streamGenWebpage, onlyIfNull);
       this.#set("streamPlanner", env.streamPlanner, onlyIfNull);
+      this.#set("enableResumeAgentRun", env.enableResumeAgentRun, onlyIfNull);
     });
   }
 
