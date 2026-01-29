@@ -206,6 +206,37 @@ const ToggleDebugCommand: KeyboardCommand = {
   },
 };
 
+const DownloadAgentTracesCommand: KeyboardCommand = {
+  keys: ["Cmd+Shift+x", "Ctrl+Shift+x"],
+  alwaysNotify: true,
+  messagePending: "Downloading agent traces...",
+  messageComplete: "Agent traces downloaded",
+  messageType: BreadboardUI.Events.ToastType.INFORMATION,
+
+  willHandle() {
+    return true;
+  },
+
+  async do({ sca }: KeyboardCommandDeps): Promise<void> {
+    const traces = sca.services.agentContext.exportTraces();
+    if (traces.length === 0) {
+      return;
+    }
+    const blob = new Blob([JSON.stringify(traces, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    a.download = `agent-traces-${timestamp}.log.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+};
+
 const SelectAllCommand: KeyboardCommand = {
   keys: ["Cmd+a", "Ctrl+a"],
 
@@ -576,6 +607,7 @@ export const keyboardCommands = new Map<string[], KeyboardCommand>([
     ToggleExperimentalComponentsCommand,
   ],
   [ToggleDebugCommand.keys, ToggleDebugCommand],
+  [DownloadAgentTracesCommand.keys, DownloadAgentTracesCommand],
   [UndoCommand.keys, UndoCommand],
   [RedoCommand.keys, RedoCommand],
   [DuplicateCommand.keys, DuplicateCommand],

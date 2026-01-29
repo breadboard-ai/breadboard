@@ -28,7 +28,7 @@ import {
   ParsedFileMedata,
   parseFileName,
 } from "./parse-file-name.js";
-import { OutcomeData } from "./types.js";
+import { OutcomePayload } from "../../../src/types/types.js";
 import "./ui/contexts-viewer.js";
 import "./ui/outcome-viewer.js";
 
@@ -37,11 +37,6 @@ type EvalFileData = Array<FinalChainReport | A2UIData | OutcomePayload>;
 type A2UIData = {
   type: "a2ui";
   data: v0_8.Types.ServerToClientMessage[][];
-};
-
-type OutcomePayload = {
-  type: "outcome";
-  outcome: Outcome<OutcomeData>;
 };
 
 type RenderMode = "surfaces" | "messages" | "contexts" | "outcome";

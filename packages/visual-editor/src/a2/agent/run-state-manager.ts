@@ -108,7 +108,7 @@ class RunStateManager {
     if (this.#runState) {
       this.#runState.status = "failed";
       this.#runState.error = error.$error;
-      this.#runState.endTime = performance.now();
+      this.#runState.endTime = Date.now();
       // Filter out content items containing $error parts
       this.#runState.contents = this.#runState.contents.filter(
         (content) =>
@@ -127,7 +127,7 @@ class RunStateManager {
   complete(): void {
     if (this.#runState) {
       this.#runState.status = "completed";
-      this.#runState.endTime = performance.now();
+      this.#runState.endTime = Date.now();
       this.#captureFiles();
     }
   }

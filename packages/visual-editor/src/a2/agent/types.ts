@@ -184,7 +184,9 @@ export type RunStatus = "running" | "failed" | "completed";
 export type RunState = {
   id: string;
   status: RunStatus;
+  /** Absolute timestamp when run started (Date.now()) */
   startTime: number;
+  /** Absolute timestamp when run ended (Date.now()) */
   endTime?: number;
   contents: LLMContent[];
   /** The model name used for this run */

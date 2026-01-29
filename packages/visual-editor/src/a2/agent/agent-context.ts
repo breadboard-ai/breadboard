@@ -11,6 +11,7 @@ import {
   SheetManagerConfig,
 } from "../google-drive/sheet-manager.js";
 import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
+import type { EvalFileData } from "../../types/types.js";
 
 export { AgentContext };
 export type { AgentContextConfig };
@@ -32,7 +33,7 @@ class AgentContext {
     const state: RunState = {
       id,
       status: "running",
-      startTime: performance.now(),
+      startTime: Date.now(),
       contents: [],
       lastCompleteTurnIndex: -1,
       objective,
@@ -69,12 +70,71 @@ class AgentContext {
   }
 
   /**
-   * Exports all runs as a JSON-serializable object for DevTools download.
+   * Exports all runs in EvalFileData format for eval viewer compatibility.
+   * Returns an array containing FinalChainReport entries and OutcomePayload entries.
    */
-  exportTraces(): object {
-    return {
-      exportedAt: new Date().toISOString(),
-      runs: this.getAllRuns(),
-    };
+  exportTraces(): EvalFileData {
+    const result: EvalFileData = [];
+
+    for (const run of this.getAllRuns()) {
+      // Compute metrics from contents
+      let totalThoughts = 0;
+      let totalFunctionCalls = 0;
+      let turnCount = 0;
+
+      for (const content of run.contents) {
+        if (content.role === "model") {
+          turnCount++;
+        }
+        for (const part of content.parts ?? []) {
+          if ("thought" in part && part.thought) {
+            totalThoughts++;
+          } else if ("functionCall" in part) {
+            totalFunctionCalls++;
+          }
+        }
+      }
+
+      // Extract config from requestBody (remove contents)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { contents: _, ...config } = run.requestBody ?? {};
+
+      // Add context entry
+      result.push({
+        type: "context" as const,
+        startedDateTime: new Date(run.startTime).toISOString(),
+        totalDurationMs: (run.endTime ?? Date.now()) - run.startTime,
+        turnCount,
+        totalRequestTimeMs: 0, // Not tracked
+        totalThoughts,
+        totalFunctionCalls,
+        context: run.contents,
+        config: Object.keys(config).length > 0 ? config : null,
+      });
+
+      // Add outcome entry
+      // Convert files to intermediate format (FileData[])
+      const intermediate = Object.entries(run.files).map(([path, file]) => ({
+        path,
+        content: { parts: [{ text: file.data }] } as LLMContent,
+      }));
+
+      // Get the last model response as outcomes
+      const lastModelContent = run.contents
+        .filter((c) => c.role === "model")
+        .at(-1);
+
+      result.push({
+        type: "outcome" as const,
+        outcome: {
+          success: run.status === "completed",
+          href: "",
+          outcomes: lastModelContent ?? { parts: [] },
+          intermediate: intermediate.length > 0 ? intermediate : undefined,
+        },
+      });
+    }
+
+    return result;
   }
 }
