@@ -12,7 +12,6 @@ import {
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@breadboard-ai/types";
-import { Runtime } from "./runtime.js";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { SCA } from "../sca/sca.js";
@@ -34,13 +33,11 @@ class StateManager implements RuntimeContext {
   readonly flowGenerator: FlowGenerator;
 
   constructor(
-    // Omitting state to avoid circular references
-    private readonly runtime: Omit<Runtime, "state">,
     store: MutableGraphStore,
     private readonly __sca: SCA
   ) {
     this.#store = store;
-    this.flowGenerator = this.runtime.flowGenerator;
+    this.flowGenerator = __sca.services.flowGenerator;
     this.lite = createLiteModeState(this, __sca);
   }
 
@@ -85,10 +82,10 @@ class StateManager implements RuntimeContext {
     return State.createProjectState(
       mainGraphId,
       this.#store,
-      this.runtime.fetchWithCreds,
-      this.runtime.googleDriveBoardServer,
-      this.runtime.actionTracker,
-      this.runtime.mcpClientManager,
+      this.__sca.services.fetchWithCreds,
+      this.__sca.services.googleDriveBoardServer,
+      this.__sca.services.actionTracker,
+      this.__sca.services.mcpClientManager,
       editable || undefined
     );
   }

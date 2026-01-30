@@ -17,6 +17,7 @@ import { StateEvent } from "../../ui/events/events.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { Utils } from "../../sca/utils.js";
+import { GraphUtils } from "../../utils/graph-utils.js";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -167,8 +168,8 @@ export const StopRoute: EventRoute<"board.stop"> = {
         graph: tab.graph,
         url,
         settings,
-        fetchWithCreds: runtime.fetchWithCreds,
-        flags: runtime.flags,
+        fetchWithCreds: sca.services.fetchWithCreds,
+        flags: sca.controller.global.flags,
         getProjectRunState: () => runtime.state.project?.run,
         connectToProject: (runner, fileSystem, abortSignal) => {
           runtime.state.project?.connectHarnessRunner(
@@ -399,7 +400,7 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
   event: "board.replace",
 
   async do(deps) {
-    const { tab, runtime, originalEvent, googleDriveClient, sca } = deps;
+    const { tab, originalEvent, googleDriveClient, sca } = deps;
 
     const { replacement, theme } = originalEvent.detail;
 
@@ -413,8 +414,8 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
       metadata.visual.presentation.themes[id] = theme;
       metadata.visual.presentation.theme = id;
     } else {
-      runtime.util.applyDefaultThemeInformationIfNonePresent(replacement);
-      await runtime.util.createAppPaletteIfNeeded(
+      GraphUtils.applyDefaultThemeInformationIfNonePresent(replacement);
+      await GraphUtils.createAppPaletteIfNeeded(
         replacement,
         googleDriveClient
       );

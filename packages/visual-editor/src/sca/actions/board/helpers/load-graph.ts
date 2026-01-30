@@ -94,6 +94,7 @@ export async function loadGraph(
     if (authState === "signedout") {
       return { success: false, reason: "auth-required" };
     }
+
     return { success: false, reason: "load-failed" };
   }
 

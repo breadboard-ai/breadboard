@@ -32,7 +32,6 @@ import {
   STATUS,
   SettingsStore,
   WorkspaceSelectionStateWithChangeId,
-  WorkspaceVisualChangeId,
 } from "../../types/types.js";
 import { styles as canvasControllerStyles } from "./canvas-controller.styles.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -137,8 +136,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @property({ reflect: true })
   accessor status = STATUS.RUNNING;
 
-  @property()
-  accessor visualChangeId: WorkspaceVisualChangeId | null = null;
+
 
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
@@ -350,7 +348,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         this.editorRender,
         this.selectionState,
         this.highlightState,
-        this.visualChangeId,
         this.graphTopologyUpdateId,
         this.sca.controller.global.flags,
         collapseNodesByDefault,

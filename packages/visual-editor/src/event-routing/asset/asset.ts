@@ -30,7 +30,7 @@ const ASSET_TIMEOUT = 250;
 export const AddRoute: EventRoute<"asset.add"> = {
   event: "asset.add",
 
-  async do({ runtime, tab, originalEvent, googleDriveClient }) {
+  async do({ runtime, sca, tab, originalEvent, googleDriveClient }) {
     if (!tab || !googleDriveClient) {
       return false;
     }
@@ -44,12 +44,12 @@ export const AddRoute: EventRoute<"asset.add"> = {
     let snackbarId;
     const longRunningTaskTimeout = window.setTimeout(() => {
       snackbarId = globalThis.crypto.randomUUID();
-      runtime.snackbar(
-        snackbarId,
+      sca.controller.global.snackbars.snackbar(
         "Processing assets, please wait...",
         BreadboardUI.Types.SnackType.PENDING,
         [],
         true,
+        snackbarId,
         true
       );
     }, ASSET_TIMEOUT);
@@ -77,12 +77,12 @@ export const AddRoute: EventRoute<"asset.add"> = {
 
     window.clearTimeout(longRunningTaskTimeout);
     if (snackbarId) {
-      runtime.snackbar(
-        snackbarId,
+      sca.controller.global.snackbars.snackbar(
         "Processed assets",
         BreadboardUI.Types.SnackType.INFORMATION,
         [],
         false,
+        snackbarId,
         true
       );
     }

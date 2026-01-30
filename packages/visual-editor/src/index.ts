@@ -335,7 +335,6 @@ class Main extends MainBase {
       "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
-      .visualChangeId=${this.lastVisualChangeId}
       @bbshowvideomodal=${() => {
         this.sca.controller.global.main.show.add("VideoModal");
       }}
@@ -447,7 +446,7 @@ class Main extends MainBase {
 
   #renderGlobalSettingsModal(renderValues: RenderValues) {
     return html`<bb-global-settings-modal
-      .flags=${this.runtime.flags.flags()}
+      .flags=${this.sca.controller.global.flags.flags()}
       .project=${renderValues.projectState}
       .uiState=${this.sca.controller.global.main}
       .emailPrefsManager=${this.sca.services.emailPrefsManager}
@@ -549,8 +548,8 @@ class Main extends MainBase {
                 return;
               }
               evt.target.disabled = true;
-              await this.runtime.apiClient.acceptTos(tosVersion, true);
-              this.tosStatus = await this.runtime.apiClient.checkTos();
+      await this.sca.services.apiClient.acceptTos(tosVersion, true);
+      this.tosStatus = await this.sca.services.apiClient.checkTos();
             }}
           >
             Continue
@@ -608,7 +607,7 @@ class Main extends MainBase {
       .mode=${this.sca.controller.global.main.mode}
       @bbsignout=${async () => {
         await this.sca.services.signinAdapter.signOut();
-        this.runtime.actionTracker.signOutSuccess();
+      this.sca.services.actionTracker.signOutSuccess();
         window.location.href = makeUrl({
           page: "landing",
           redirect: {
@@ -648,7 +647,7 @@ class Main extends MainBase {
       @bbsubscribercreditrefresh=${async () => {
         try {
           this.sca.controller.global.main.subscriptionCredits = -1;
-          const response = await this.runtime.apiClient.getG1Credits();
+          const response = await this.sca.services.apiClient.getG1Credits();
           this.sca.controller.global.main.subscriptionCredits =
             response.remaining_credits ?? 0;
         } catch (err) {
@@ -693,7 +692,7 @@ class Main extends MainBase {
               return;
             }
 
-            this.runtime.actionTracker.remixApp(this.tab.graph.url, "editor");
+            this.sca.services.actionTracker.remixApp(this.tab.graph.url, "editor");
             this.invokeRemixEventRouteWith(this.tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),

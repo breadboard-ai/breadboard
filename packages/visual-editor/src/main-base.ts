@@ -21,7 +21,6 @@ import * as Runtime from "./runtime/runtime.js";
 import {
   RuntimeConfig,
   WorkspaceSelectionStateWithChangeId,
-  WorkspaceVisualChangeId,
 } from "./runtime/types.js";
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
@@ -71,6 +70,7 @@ import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js"
 import { sca, SCA } from "./sca/sca.js";
 import { Utils } from "./sca/utils.js";
 import { scaContext } from "./sca/context/context.js";
+import { GraphUtils } from "./utils/graph-utils.js";
 
 export { MainBase };
 
@@ -158,7 +158,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   // References.
   protected graphStore: MutableGraphStore;
   protected selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-  protected lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   protected runtime: Runtime.Runtime;
   protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
@@ -396,7 +395,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           Utils.Logging.Formatter.verbose(`Checking subscriber status`),
           "Google One"
         );
-        const response = await this.runtime.apiClient.getG1SubscriptionStatus({
+        const response = await this.sca.services.apiClient.getG1SubscriptionStatus({
           include_credit_data: true,
         });
         this.sca.controller.global.main.subscriptionStatus = response.is_member
@@ -418,51 +417,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeShareMissingEvent.eventName,
-      () => {
-        this.sca.controller.global.main.show.add("MissingShare");
-      }
-    );
-
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeRequestSignInEvent.eventName,
-      () => this.askUserToSignInIfNeeded()
-    );
-
-    this.runtime.addEventListener(
-      Runtime.Events.RuntimeToastEvent.eventName,
-      (evt: Runtime.Events.RuntimeToastEvent) => {
-        this.sca.controller.global.toasts.toast(
-          evt.message,
-          evt.toastType,
-          evt.persistent,
-          evt.toastId
-        );
-      }
-    );
-
-    this.runtime.addEventListener(
-      Runtime.Events.RuntimeSnackbarEvent.eventName,
-      (evt: Runtime.Events.RuntimeSnackbarEvent) => {
-        this.sca.controller.global.snackbars.snackbar(
-          evt.message,
-          evt.snackType,
-          evt.actions,
-          evt.persistent,
-          evt.snackbarId,
-          evt.replaceAll
-        );
-      }
-    );
-
-    this.runtime.addEventListener(
-      Runtime.Events.RuntimeUnsnackbarEvent.eventName,
-      () => {
-        this.sca.controller.global.snackbars.unsnackbar();
-      }
-    );
-
     this.runtime.select.addEventListener(
       Runtime.Events.RuntimeSelectionChangeEvent.eventName,
       (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
@@ -481,57 +435,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     );
 
-    this.runtime.edit.addEventListener(
-      Runtime.Events.RuntimeVisualChangeEvent.eventName,
-      (evt: Runtime.Events.RuntimeVisualChangeEvent) => {
-        this.lastVisualChangeId = evt.visualChangeId;
-        this.requestUpdate();
-      }
-    );
-
-    // Note: Auto-save is now handled by registerSaveTrigger in SCA.
-    // The trigger watches for version changes and calls actions.board.save().
-
-    this.runtime.edit.addEventListener(
-      Runtime.Events.RuntimeErrorEvent.eventName,
-      (evt: Runtime.Events.RuntimeErrorEvent) => {
-        // Wait a frame so we don't end up accidentally spamming the render.
-        requestAnimationFrame(() => {
-          this.sca.controller.global.toasts.toast(
-            evt.message,
-            BreadboardUI.Events.ToastType.ERROR
-          );
-        });
-      }
-    );
-
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeBoardLoadErrorEvent.eventName,
-      () => {
-        if (this.tab) {
-          this.sca.controller.global.main.loadState = "Error";
-        }
-
-        this.sca.controller.global.snackbars.snackbar(
-          Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
-          BreadboardUI.Types.SnackType.WARNING,
-          [],
-          true,
-          globalThis.crypto.randomUUID(),
-          true
-        );
-      }
-    );
-
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeErrorEvent.eventName,
-      (evt: Runtime.Events.RuntimeErrorEvent) => {
-        this.sca.controller.global.toasts.toast(
-          evt.message,
-          BreadboardUI.Events.ToastType.ERROR
-        );
-      }
-    );
+    // Note: runtime.board and runtime.edit listeners removed - these classes
+    // are now empty EventTargets. Functionality migrated to SCA:
+    // - RuntimeShareMissingEvent: handled elsewhere
+    // - RuntimeRequestSignInEvent: handled elsewhere
+    // - RuntimeVisualChangeEvent: handled by SCA triggers
+    // - RuntimeBoardLoadErrorEvent: handled by SCA
+    // - RuntimeErrorEvent: handled by SCA
 
     // Note: RuntimeNewerSharedVersionEvent listener moved to
     // SCA trigger: Board.registerNewerVersionTrigger()
@@ -602,8 +512,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     } else {
       // Load the tab.
-      const boardUrl =
-        parsedUrl.page === "graph" ? parsedUrl.flow : undefined;
+      const boardUrl = parsedUrl.page === "graph" ? parsedUrl.flow : undefined;
       if (!boardUrl || boardUrl === this.tab?.graph.url) {
         return;
       }
@@ -634,6 +543,50 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           ),
           "Main Base"
         );
+
+        // Handle different failure reasons with appropriate UI feedback
+        switch (loadResult.reason) {
+          case "load-failed": {
+            // Check if this is a non-shared graph URL (should show MissingShare dialog)
+            const currentUrlParsed = this.sca.controller.router.parsedUrl;
+            if (
+              currentUrlParsed &&
+              "flow" in currentUrlParsed &&
+              !currentUrlParsed.shared
+            ) {
+              // Show MissingShare dialog for permission/access issues
+              this.sca.controller.global.main.show.add("MissingShare");
+              this.sca.controller.global.main.loadState = "Error";
+              // Set viewError for lite mode
+              this.runtime.state.lite.viewError = Strings.from(
+                "ERROR_UNABLE_TO_LOAD_PROJECT"
+              );
+            } else {
+              // Generic load error
+              this.sca.controller.global.main.loadState = "Error";
+              // Set viewError for lite mode
+              this.runtime.state.lite.viewError = Strings.from(
+                "ERROR_UNABLE_TO_LOAD_PROJECT"
+              );
+              this.sca.controller.global.snackbars.snackbar(
+                Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
+                BreadboardUI.Types.SnackType.WARNING,
+                [],
+                true,
+                globalThis.crypto.randomUUID(),
+                true
+              );
+            }
+            break;
+          }
+          case "invalid-url":
+            this.sca.controller.global.main.loadState = "Home";
+            break;
+          case "auth-required":
+          case "race-condition":
+            // These are handled internally or require no action
+            break;
+        }
       } else {
         await this.#handleBoardStateChanged();
       }
@@ -704,8 +657,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           graph: tab.graph,
           url,
           settings: this.settings,
-          fetchWithCreds: this.runtime.fetchWithCreds,
-          flags: this.runtime.flags,
+          fetchWithCreds: this.sca.services.fetchWithCreds,
+          flags: this.sca.controller.global.flags,
           getProjectRunState: () => this.runtime.state.project?.run,
           connectToProject: (runner, fileSystem, abortSignal) => {
             const project = this.runtime.state.project;
@@ -725,7 +678,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       this.sca.controller.global.main.loadState = "Loaded";
       this.runtime.select.refresh(
         tab.id,
-        this.runtime.util.createWorkspaceSelectionChangeId()
+        GraphUtils.createWorkspaceSelectionChangeId()
       );
     } else {
       this.sca.controller.router.clearFlowParameters();
