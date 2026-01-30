@@ -813,9 +813,6 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
   );
 
   switch (modelConstraint) {
-    case "text-flash":
-    case "text-pro":
-      return [textFunction, codeFunction];
     case "image":
       return [imageFunction];
     case "video":
@@ -824,6 +821,8 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
       return [speechFunction];
     case "music":
       return [musicFunction];
+    case "text-flash":
+    case "text-pro":
     case "none":
     default:
       return [
