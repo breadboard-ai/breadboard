@@ -384,6 +384,20 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       });
     }
 
+    // Append controlFlow tools (routing, memory) to the end of tools
+    if (this.showControlFlowTools && this.state?.controlFlow.results) {
+      for (const [id, tool] of this.state.controlFlow.results) {
+        // Apply filter if present
+        if (this.filter) {
+          const filterRe = new RegExp(this.filter, "gim");
+          if (!filterRe.test(tool.title ?? "")) {
+            continue;
+          }
+        }
+        tools.push({ ...tool, url: id });
+      }
+    }
+
     this.#items = {
       assets: this.showAssets ? assets : [],
       tools: this.showTools ? tools : [],
@@ -396,7 +410,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.tools.length +
       this.#items.components.length +
       this.#items.parameters.length +
-      (this.state?.controlFlow.results.size ?? 0) +
       (this.state?.routes.results.size ?? 0);
 
     this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
@@ -467,7 +480,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.tools.length +
       this.#items.parameters.length +
       this.#items.components.length +
-      (this.state?.controlFlow.results.size ?? 0) +
       (this.state?.routes.results.size ?? 0);
 
     switch (evt.key) {
@@ -591,18 +603,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       return;
     }
 
-    const controlFlowSize = this.state?.controlFlow.results.size ?? 0;
-    idx -= this.#items.components.length;
-    if (idx < controlFlowSize) {
-      const [id, tool] = [...this.state!.controlFlow.results][idx];
-      this.dispatchEvent(
-        new FastAccessSelectEvent(id, tool.title!, "tool", undefined, tool.id)
-      );
-      return;
-    }
-
     const routeSize = this.state?.routes.results.size ?? 0;
-    idx -= controlFlowSize;
+    idx -= this.#items.components.length;
     if (idx < routeSize) {
       const [, route] = [...this.state!.routes.results][idx];
       this.dispatchEvent(
@@ -774,7 +776,15 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               ${this.#items.tools.map((tool) => {
                 const active = idx === this.selectedIndex;
                 const globalIndex = idx;
-                const icon = iconSubstitute(tool.icon);
+                // Special handling for routing and memory tool icons
+                let icon: string | undefined;
+                if (tool.url === "control-flow/routing") {
+                  icon = "start";
+                } else if (tool.url === "function-group/use-memory") {
+                  icon = "database";
+                } else {
+                  icon = iconSubstitute(tool.icon) ?? undefined;
+                }
                 idx++;
                 return html`<li>
                   <button
@@ -788,7 +798,11 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                     }}
                   >
                     <span class="g-icon round filled">${icon}</span
-                    ><span class="title">${tool.title}</span>
+                    ><span class="title"
+                      >${tool.title}${tool.url === "control-flow/routing"
+                        ? html`...`
+                        : nothing}</span
+                    >
                   </button>
                 </li>`;
               })}
@@ -832,60 +846,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           : this.showComponents
             ? html`<div class="no-items">No steps</div>`
             : nothing}
-      </section>
-
-      <section class="group tools">
-        ${this.showControlFlowTools
-          ? html`<h3 class="sans-flex w-400 round">Utility</h3>
-              ${this.state?.controlFlow.results.size
-                ? html`<menu>
-                    ${repeat(
-                      this.state.controlFlow.results,
-                      ([id]) => id,
-                      ([id, tool]) => {
-                        const active = idx === this.selectedIndex;
-                        const globalIndex = idx;
-                        idx++;
-
-                        return html`<li>
-                          <button
-                            class=${classMap({ active })}
-                            @pointerover=${() => {
-                              this.selectedIndex = globalIndex;
-                            }}
-                            @click=${() => {
-                              this.dispatchEvent(
-                                new FastAccessSelectEvent(
-                                  id,
-                                  tool.title!,
-                                  "tool",
-                                  undefined,
-                                  tool.id
-                                )
-                              );
-                            }}
-                          >
-                            ${tool.url === "routing"
-                              ? html`<span class="g-icon filled round"
-                                  >start</span
-                                >`
-                              : tool.url === "use-memory"
-                                ? html`<span class="g-icon filled round"
-                                    >database</span
-                                  >`
-                                : nothing}
-                            <span class="title"
-                              >${tool.title}${tool.url === "routing"
-                                ? html`...`
-                                : nothing}</span
-                            >
-                          </button>
-                        </li>`;
-                      }
-                    )}
-                  </menu>`
-                : html`<div class="no-items">No utilities</div>`}`
-          : nothing}
       </section>
 
       <section class="group tools">
