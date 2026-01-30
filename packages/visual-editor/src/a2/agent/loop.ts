@@ -133,6 +133,9 @@ class Loop {
       );
       if (!ok(objectivePidgin)) return objectivePidgin;
 
+      // Set whether memory files should be exposed based on useMemory tool
+      fileSystem.setUseMemory(objectivePidgin.useMemory);
+
       if (extraInstruction) {
         extraInstruction = `${extraInstruction}\n\n`;
       }
