@@ -75,6 +75,10 @@ class Controller implements AppController {
         "Snackbars",
         "SnackbarController"
       ),
+      statusUpdates: new Global.StatusUpdatesController(
+        "StatusUpdates",
+        "StatusUpdatesController"
+      ),
       consent: new Global.ConsentController("Consent", "ConsentController"),
 
       // Migrations are tested independently so this block is ignored for
@@ -92,6 +96,9 @@ class Controller implements AppController {
         // independent of each other.
         await Migrations.recentBoardsMigration(controller.home.recent);
         await Migrations.flagsMigration(controller.global.flags, runtimeFlags);
+        await Migrations.statusUpdatesMigration(
+          controller.global.statusUpdates
+        );
       },
       /* c8 ignore end */
     };
@@ -167,7 +174,7 @@ class Controller implements AppController {
  * ```
  */
 let controller: Controller;
-export const appController = (flags?: RuntimeFlags) => {
+export const appController = (flags?: RuntimeFlags): Controller => {
   if (!controller) {
     if (!flags)
       throw new Error("App Controller must be instantiated with flags");
@@ -195,6 +202,7 @@ export interface AppController extends DebuggableAppController {
     feedback: Global.FeedbackController;
     toasts: Global.ToastController;
     snackbars: Global.SnackbarController;
+    statusUpdates: Global.StatusUpdatesController;
     consent: Global.ConsentController;
     performMigrations(): Promise<void>;
   };

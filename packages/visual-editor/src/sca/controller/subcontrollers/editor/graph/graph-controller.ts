@@ -87,6 +87,16 @@ export class GraphController extends RootController {
   accessor mainGraphId: ReturnType<typeof globalThis.crypto.randomUUID> | null =
     null;
 
+  /**
+   * The title of the graph. Updated reactively when the graph changes.
+   */
+  @field()
+  private accessor _title: string | null = null;
+
+  get title(): string | null {
+    return this._title;
+  }
+
   get editor() {
     return this._editor;
   }
@@ -102,6 +112,7 @@ export class GraphController extends RootController {
 
     this._editor = editor;
     this._graph = this._editor?.raw() ?? null;
+    this._title = this._graph?.title ?? null;
     this.lastEditError = null;
 
     if (!this._editor) return;
@@ -115,6 +126,7 @@ export class GraphController extends RootController {
   #onGraphChangeBound = this.#onGraphChange.bind(this);
   #onGraphChange(evt: GraphChangeEvent) {
     this._graph = evt.graph;
+    this._title = evt.graph?.title ?? null;
     this.lastEditError = null;
     this.version++;
   }
@@ -160,6 +172,7 @@ export class GraphController extends RootController {
     this.id = null;
     this._editor = null;
     this._graph = null;
+    this._title = null;
     this.url = null;
     this.version = 0;
     this.readOnly = false;

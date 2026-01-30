@@ -7,11 +7,7 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import type {
-  AppScreenOutput,
-  BoardServer,
-  ConformsToNodeValue,
-} from "@breadboard-ai/types";
+import type { AppScreenOutput, BoardServer } from "@breadboard-ai/types";
 import { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, LitElement, nothing } from "lit";
@@ -26,7 +22,7 @@ import {
   RuntimeConfig,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
-} from "./runtime/types.js";;
+} from "./runtime/types.js";
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
@@ -87,7 +83,6 @@ export type RenderValues = {
 };
 
 const LOADING_TIMEOUT = 1250;
-const UPDATE_HASH_KEY = "bb-main-update-hash";
 
 const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
 abstract class MainBase extends SignalWatcher(LitElement) {
@@ -158,39 +153,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @state()
   protected accessor tosStatus: CheckAppAccessResponse | null = null;
-
-  @state()
-  protected set statusUpdates(
-    values: ConformsToNodeValue<BreadboardUI.Types.VisualEditorStatusUpdate>[]
-  ) {
-    values.sort((a, b) => {
-      const aDate = new Date(a.date);
-      const bDate = new Date(b.date);
-      return bDate.getTime() - aDate.getTime();
-    });
-
-    const lastUpdateHash =
-      globalThis.localStorage.getItem(UPDATE_HASH_KEY) ?? "0";
-    const updateHash = hash(values).toString();
-    if (lastUpdateHash === updateHash) {
-      return;
-    }
-
-    globalThis.localStorage.setItem(UPDATE_HASH_KEY, updateHash);
-    this.statusUpdatesValues = values;
-
-    if (
-      values[0]?.type !== "info" &&
-      this.sca.controller.global.main.showStatusUpdateChip === null
-    ) {
-      this.sca.controller.global.main.showStatusUpdateChip = true;
-    }
-  }
-  get statusUpdates() {
-    return this.statusUpdatesValues;
-  }
-  protected statusUpdatesValues: BreadboardUI.Types.VisualEditorStatusUpdate[] =
-    [];
 
   // References.
   protected graphStore: MutableGraphStore;
@@ -325,7 +287,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       })
     );
 
-    this.runtime.shell.startTrackUpdates();
+    // Status updates polling is now handled by StatusUpdatesService in SCA
     this.runtime.router.init();
 
     this.#checkSubscriptionStatus();
@@ -484,13 +446,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     );
 
-    this.runtime.addEventListener(
-      Runtime.Events.RuntimeHostStatusUpdateEvent.eventName,
-      (evt: Runtime.Events.RuntimeHostStatusUpdateEvent) => {
-        this.statusUpdates = evt.updates;
-      }
-    );
-
     this.runtime.select.addEventListener(
       Runtime.Events.RuntimeSelectionChangeEvent.eventName,
       (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
@@ -578,7 +533,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.router.addEventListener(
       Runtime.Events.RuntimeURLChangeEvent.eventName,
       async (evt: Runtime.Events.RuntimeURLChangeEvent) => {
-
         if (evt.mode) {
           this.sca.controller.global.main.mode = evt.mode;
         }
@@ -711,9 +665,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.#maybeShowWelcomePanel();
 
     if (tab) {
-      if (tab.graph.title) {
-        this.runtime.shell.setPageTitle(tab.graph.title);
-      }
+      // Page title is now handled by the page title trigger in SCA
 
       const url = tab.graph.url;
       if (url) {
@@ -746,7 +698,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       );
     } else {
       this.runtime.router.clearFlowParameters();
-      this.runtime.shell.setPageTitle(null);
+      // Page title is now handled by the page title trigger in SCA
     }
   }
 

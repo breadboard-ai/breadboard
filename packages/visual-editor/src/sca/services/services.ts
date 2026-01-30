@@ -41,6 +41,7 @@ import { ActionTracker } from "../../ui/types/types.js";
 import { type ConsentController } from "../controller/subcontrollers/global/global.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { RunService } from "./run-service.js";
+import { StatusUpdatesService } from "./status-updates-service.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
@@ -58,6 +59,7 @@ export interface AppServices {
   mcpClientManager: McpClientManager;
   runService: RunService;
   signinAdapter: SigninAdapter;
+  statusUpdates: StatusUpdatesService;
 }
 
 let instance: AppServices | null = null;
@@ -164,6 +166,7 @@ export function services(
       mcpClientManager,
       runService: new RunService(),
       signinAdapter,
+      statusUpdates: new StatusUpdatesService(),
     } satisfies AppServices;
   }
 

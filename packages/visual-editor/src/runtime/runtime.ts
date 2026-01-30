@@ -83,9 +83,7 @@ export class Runtime extends EventTarget {
     this.emailPrefsManager = config.sca.services.emailPrefsManager;
     this.flowGenerator = config.sca.services.flowGenerator;
 
-    const { appName, appSubName } = config;
-
-    this.shell = new Shell(appName, appSubName);
+    this.shell = new Shell();
     this.board = new Board();
     this.util = Util;
     this.select = new Select();
@@ -105,7 +103,6 @@ export class Runtime extends EventTarget {
 
     this.#setupPassthruHandlers();
   }
-
 
   snackbar(
     snackbarId: ReturnType<typeof globalThis.crypto.randomUUID>,

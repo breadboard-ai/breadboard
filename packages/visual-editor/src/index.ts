@@ -175,7 +175,7 @@ class Main extends MainBase {
             this.#renderCanvasController(renderValues),
             this.#renderAppController(renderValues),
             this.#renderWelcomePanel(),
-            this.sca.controller.global.main.showStatusUpdateChip
+            this.sca.controller.global.statusUpdates.showStatusUpdateChip
               ? this.#renderStatusUpdateBar()
               : nothing,
           ]}
@@ -387,7 +387,7 @@ class Main extends MainBase {
 
   #renderStatusUpdateBar() {
     const classes: Record<string, boolean> = { "md-body-medium": true };
-    const newestUpdate = this.statusUpdates.at(0);
+    const newestUpdate = this.sca.controller.global.statusUpdates.updates.at(0);
     if (!newestUpdate) {
       return nothing;
     }
@@ -415,7 +415,7 @@ class Main extends MainBase {
       aria-role="button"
       @click=${() => {
         this.sca.controller.global.main.show.add("StatusUpdateModal");
-        this.sca.controller.global.main.showStatusUpdateChip = false;
+        this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
       }}
     >
       <div>
@@ -427,7 +427,7 @@ class Main extends MainBase {
         @click=${(evt: Event) => {
           evt.preventDefault();
           evt.stopImmediatePropagation();
-          this.sca.controller.global.main.showStatusUpdateChip = false;
+          this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
         }}
       >
         <span class="g-icon round filled">close</span>
@@ -437,10 +437,10 @@ class Main extends MainBase {
 
   #renderStatusUpdateModal() {
     return html`<bb-status-update-modal
-      .updates=${this.statusUpdates}
+      .updates=${this.sca.controller.global.statusUpdates.updates}
       @bbmodaldismissed=${() => {
         this.sca.controller.global.main.show.delete("StatusUpdateModal");
-        this.sca.controller.global.main.showStatusUpdateChip = false;
+        this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
       }}
     ></bb-status-update-modal>`;
   }
@@ -738,7 +738,7 @@ class Main extends MainBase {
 
           case "status-update": {
             this.sca.controller.global.main.show.add("StatusUpdateModal");
-            this.sca.controller.global.main.showStatusUpdateChip = false;
+            this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
             break;
           }
 
