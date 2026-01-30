@@ -6,8 +6,11 @@
 
 import type { VisualEditorStatusUpdate } from "../../ui/types/types.js";
 import type { StatusUpdatesController } from "../controller/subcontrollers/global/status-updates-controller.js";
+import * as Formatter from "../utils/logging/formatter.js";
+import { getLogger } from "../utils/logging/logger.js";
 
 const UPDATE_REFRESH_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+const LABEL = "StatusUpdatesService";
 
 /**
  * Service for fetching status updates from the server.
@@ -54,7 +57,8 @@ export class StatusUpdatesService {
       const updates = await this.#fetchUpdates();
       this.#controller?.setUpdates(updates);
     } catch (err) {
-      console.warn("StatusUpdatesService: Error fetching updates", err);
+      const logger = getLogger()
+      logger.log(Formatter.warning("Error fetching updates", err), LABEL, false);
     } finally {
       this.#timeoutId = window.setTimeout(
         () => this.#poll(),
@@ -67,9 +71,12 @@ export class StatusUpdatesService {
     const response = await fetch("/updates");
     const updates = await response.json();
     if (updates === "error") {
-      console.log("Unable to fetch updates from the server");
+      const logger = getLogger()
+      logger.log(Formatter.info("Unable to fetch updates from the server"), LABEL, false);
       return [];
     }
     return updates as VisualEditorStatusUpdate[];
   }
 }
+
+
