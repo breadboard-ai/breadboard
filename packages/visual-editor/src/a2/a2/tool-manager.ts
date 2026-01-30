@@ -29,11 +29,12 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { McpToolAdapter } from "./mcp-tool-adapter.js";
 import { ToolParamPart } from "./template.js";
 
-export { ROUTE_TOOL_PATH, ToolManager };
+export { ROUTE_TOOL_PATH, MEMORY_TOOL_PATH, ToolManager };
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
 const ROUTE_TOOL_PATH = "control-flow/routing";
+const MEMORY_TOOL_PATH = "function-group/use-memory";
 
 export type ToolHandle = {
   title?: string;
@@ -200,6 +201,10 @@ class ToolManager implements SimplifiedToolManager {
         // This is a route, so it translates to nothing when using this method,
         // and in effect ignore the route. This is because the agent loop code
         // will handle routes in its own way.
+        return "";
+      } else if (url === MEMORY_TOOL_PATH) {
+        // Memory tool: no function declarations, just a signal to enable
+        // memory functions in the agent loop.
         return "";
       } else {
         const client = new McpToolAdapter(this.caps, this.moduleArgs, url);

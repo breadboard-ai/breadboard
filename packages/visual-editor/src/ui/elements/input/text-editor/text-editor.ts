@@ -18,7 +18,10 @@ import { icons } from "../../../styles/icons.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { jsonStringify } from "../../../utils/json-stringify.js";
 import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js";
-import { ROUTE_TOOL_PATH } from "../../../../a2/a2/tool-manager.js";
+import {
+  ROUTE_TOOL_PATH,
+  MEMORY_TOOL_PATH,
+} from "../../../../a2/a2/tool-manager.js";
 import { scaContext } from "../../../../sca/context/context.js";
 import { consume } from "@lit/context";
 import { SCA } from "../../../../sca/sca.js";
@@ -68,6 +71,9 @@ export function chicletHtml(
     label.dataset.parameter = "step";
     sourceTitle = "Go to";
     metadataIcon = "start";
+  } else if (path === MEMORY_TOOL_PATH) {
+    sourceTitle = "Use Memory";
+    metadataIcon = "database";
   }
 
   label.setAttribute("contenteditable", "false");

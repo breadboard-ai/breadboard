@@ -869,7 +869,11 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                               ? html`<span class="g-icon filled round"
                                   >start</span
                                 >`
-                              : nothing}
+                              : tool.url === "use-memory"
+                                ? html`<span class="g-icon filled round"
+                                    >database</span
+                                  >`
+                                : nothing}
                             <span class="title"
                               >${tool.title}${tool.url === "routing"
                                 ? html`...`
