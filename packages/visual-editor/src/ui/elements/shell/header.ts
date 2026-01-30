@@ -30,6 +30,7 @@ import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { Utils } from "../../../sca/utils.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -729,9 +730,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
           this.dispatchEvent(new ShareRequestedEvent());
         }}
       >
-        <span class="g-icon">share</span>${Strings.from(
-          "COMMAND_COPY_APP_PREVIEW_URL"
-        )}
+        <span class="g-icon">share</span
+        >${CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
+          ? "Share"
+          : Strings.from("COMMAND_COPY_APP_PREVIEW_URL")}
       </button>`;
     }
 

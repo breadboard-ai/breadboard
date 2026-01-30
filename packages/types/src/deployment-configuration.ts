@@ -12,6 +12,7 @@ export type ClientDeploymentConfiguration = {
   BACKEND_API_ENDPOINT?: string;
   ENVIRONMENT_NAME?: string;
   ENABLE_NEW_URL_SCHEME?: boolean;
+  ENABLE_SHARING_2?: boolean;
   GOOGLE_OAUTH_TOKEN_ENDPOINT?: string;
   GOOGLE_OAUTH_AUTH_ENDPOINT?: string;
   GOOGLE_DOCS_API_ENDPOINT?: string;
