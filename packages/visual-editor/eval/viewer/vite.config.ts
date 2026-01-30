@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export default async () => {
+export default async ({ command }: { command: string }) => {
   config();
 
   const entry: Record<string, string> = {
@@ -20,6 +20,8 @@ export default async () => {
   };
 
   return {
+    // Use /breadboard/eval/ for production builds (GitHub Pages), / for dev
+    base: command === "build" ? "/breadboard/eval/" : "/",
     plugins: [
       Middleware.FileFallbackMiddleware.plugin({
         image: "public/sample.png",
