@@ -10,12 +10,12 @@ import { EventRoute } from "../types.js";
 export const ModeRoute: EventRoute<"host.modetoggle"> = {
   event: "host.modetoggle",
 
-  async do({ runtime, originalEvent }) {
+  async do({ sca, originalEvent }) {
     const current = parseUrl(window.location.href);
     if (current.page === "graph") {
       const newMode = originalEvent.detail.mode;
       if (newMode !== current.mode) {
-        runtime.router.go({ ...current, mode: newMode });
+        sca.controller.router.go({ ...current, mode: newMode });
       }
     }
     return false;

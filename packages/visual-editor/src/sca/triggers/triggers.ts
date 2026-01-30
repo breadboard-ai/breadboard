@@ -10,6 +10,7 @@ import { type AppServices } from "../services/services.js";
 import * as Agent from "./agent/agent-triggers.js";
 import * as Board from "./board/board-triggers.js";
 import * as Node from "./node/node-triggers.js";
+import * as Router from "./router/router-triggers.js";
 import * as Run from "./run/run-triggers.js";
 import * as Shell from "./shell/shell-triggers.js";
 
@@ -17,6 +18,7 @@ export interface AppTriggers {
   agent: typeof Agent;
   board: typeof Board;
   node: typeof Node;
+  router: typeof Router;
   run: typeof Run;
   shell: typeof Shell;
 }
@@ -34,6 +36,7 @@ export function triggers(
     Agent.bind({ controller, services, actions });
     Board.bind({ controller, services, actions });
     Node.bind({ controller, services, actions });
+    Router.bind({ controller, services, actions });
     Run.bind({ controller, services, actions });
     Shell.bind({ controller, services, actions });
     register();
@@ -42,6 +45,7 @@ export function triggers(
       agent: Agent,
       board: Board,
       node: Node,
+      router: Router,
       run: Run,
       shell: Shell,
     } satisfies AppTriggers;
@@ -55,6 +59,8 @@ export function register() {
   Board.registerNewerVersionTrigger();
   Board.registerSaveStatusListener();
   Node.registerAutonameTrigger();
+  Router.registerPopstateTrigger();
+  Router.registerInitTrigger();
   Shell.registerPageTitleTrigger();
 }
 

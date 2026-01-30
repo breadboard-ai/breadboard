@@ -631,7 +631,7 @@ class Main extends MainBase {
           guestPrefixed: true,
         };
         if ((await this.sca.services.signinAdapter.state) === "signedin") {
-          this.runtime.router.go(homepage);
+          this.sca.controller.router.go(homepage);
         } else {
           // Note that router.go() can't navigate to the landing page, because
           // it's a totally different entrypoint.

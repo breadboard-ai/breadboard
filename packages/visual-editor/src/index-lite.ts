@@ -442,7 +442,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     );
 
     // Set fullscreen for shared boards on initial load
-    const parsedUrl = this.runtime.router.parsedUrl;
+    const parsedUrl = this.sca.controller.router.parsedUrl;
     this.showAppFullscreen =
       (parsedUrl && "flow" in parsedUrl && parsedUrl.shared) ?? false;
 
@@ -514,7 +514,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
        * Ideally, we need some sort of lifecycle and a way to subscribe to
        * events from it
        */
-      const parsedUrl = this.runtime.router.parsedUrl;
+      const parsedUrl = this.sca.controller.router.parsedUrl;
       if (parsedUrl.page !== "graph") return;
       const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;
       if (!remixUrl) return;

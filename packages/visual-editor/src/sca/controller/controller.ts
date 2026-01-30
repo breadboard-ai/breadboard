@@ -14,6 +14,7 @@ import * as Editor from "./subcontrollers/editor/editor.js";
 import * as Home from "./subcontrollers/home/home.js";
 import * as Run from "./subcontrollers/run/run.js";
 import * as Migrations from "./migration/migrations.js";
+import { RouterController } from "./subcontrollers/router/router-controller.js";
 
 /**
  * The root application controller that organizes all domain-specific
@@ -35,6 +36,7 @@ class Controller implements AppController {
   global: AppController["global"];
   board: AppController["board"];
   run: AppController["run"];
+  router: AppController["router"];
 
   constructor(flags: RuntimeFlags) {
     const runtimeFlags = flags;
@@ -110,6 +112,8 @@ class Controller implements AppController {
     this.run = {
       main: new Run.RunController("Run", "RunController"),
     };
+
+    this.router = new RouterController();
   }
 
   /**
@@ -212,5 +216,6 @@ export interface AppController extends DebuggableAppController {
   run: {
     main: Run.RunController;
   };
+  router: RouterController;
   isHydrated: Promise<number[]>;
 }

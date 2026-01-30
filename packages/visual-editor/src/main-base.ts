@@ -43,6 +43,7 @@ import type {
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import { effect } from "signal-utils/subtle/microtask-effect";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 import {
   FlowGenerator,
@@ -174,10 +175,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected readonly logger: ReturnType<typeof Utils.Logging.getLogger> =
     Utils.Logging.getLogger();
 
-  // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
   readonly #hideTooltipBound = this.#hideTooltip.bind(this);
   readonly #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
+  #urlEffectDisposer: (() => void) | null = null;
+  #lastHandledUrl: string | null = null;
 
   static styles = mainStyles;
 
@@ -288,7 +290,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     );
 
     // Status updates polling is now handled by StatusUpdatesService in SCA
-    this.runtime.router.init();
+    // Router init is now handled by SCA trigger (registerInitTrigger)
 
     this.#checkSubscriptionStatus();
 
@@ -297,6 +299,15 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       Strings.from("APP_NAME"),
       false
     );
+
+    // Handle initial URL (replaces RuntimeURLChangeEvent from router.init())
+    this.#handleUrlChange();
+
+    // Now create the effect to watch for SUBSEQUENT URL changes (back/forward)
+    // This must come AFTER initial handling to avoid race conditions
+    this.#urlEffectDisposer = effect(() => {
+      this.#handleUrlChange();
+    });
 
     this.doPostInitWork();
   }
@@ -368,6 +379,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.removeEventListener("pointerdown", this.#hideTooltipBound);
     window.removeEventListener("keydown", this.#onKeyboardShortCut);
+
+    // Dispose URL change effect
+    if (this.#urlEffectDisposer) {
+      this.#urlEffectDisposer();
+      this.#urlEffectDisposer = null;
+    }
   }
 
   async #checkSubscriptionStatus() {
@@ -529,84 +546,98 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // run status now tracked by runner event listeners
     // set up in sca.actions.run.prepare() which updates
     // controller.run.main.status directly
+  }
 
-    this.runtime.router.addEventListener(
-      Runtime.Events.RuntimeURLChangeEvent.eventName,
-      async (evt: Runtime.Events.RuntimeURLChangeEvent) => {
-        if (evt.mode) {
-          this.sca.controller.global.main.mode = evt.mode;
-        }
-        const parsedUrl = this.runtime.router.parsedUrl;
-        const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
-        if (parsedUrl.page === "home") {
-          this.actionTracker.load("home", false);
-        } else {
-          this.actionTracker.load(this.sca.controller.global.main.mode, shared);
-        }
+  /**
+   * Reactive URL change handler (replaces RuntimeURLChangeEvent listener).
+   *
+   * This method is called by the effect created in init() and reacts to
+   * changes in the parsedUrl signal (e.g., back/forward navigation).
+   *
+   * TODO: Remove this handler when runtime.state.syncProjectState() is
+   * migrated to SCA and #handleBoardStateChanged no longer depends on Runtime.
+   */
+  async #handleUrlChange() {
+    // Reading parsedUrl registers it as a signal dependency for the effect
+    const parsedUrl = this.sca.controller.router.parsedUrl;
 
-        const urlWithoutMode = new URL(evt.url);
-        urlWithoutMode.searchParams.delete("mode");
+    // Serialize URL for deduplication - skip if we already handled this URL.
+    // This prevents race conditions when the effect fires with the same URL
+    // we just handled (e.g., during deep link initialization).
+    const currentUrl = window.location.href;
+    if (currentUrl === this.#lastHandledUrl) {
+      return;
+    }
+    this.#lastHandledUrl = currentUrl;
 
-        // Close tab, go to the home page.
-        if (parseUrl(urlWithoutMode).page === "home") {
-          // Stop any running board before closing
-          const closingTabId = this.tab?.id;
-          if (closingTabId) {
-            this.sca.controller.run.main.setStatus(
-              BreadboardUI.Types.STATUS.STOPPED
-            );
-            this.sca.controller.run.main.abortController?.abort();
-          }
+    // Update mode from URL (only graph page URLs have mode)
+    if ("mode" in parsedUrl && parsedUrl.mode) {
+      this.sca.controller.global.main.mode = parsedUrl.mode;
+    }
 
-          this.sca.actions.board.close();
-          await this.#handleBoardStateChanged();
-          return;
-        } else {
-          // Load the tab.
-          const parsedBoardUrl = parseUrl(urlWithoutMode);
-          const boardUrl =
-            parsedBoardUrl.page === "graph" ? parsedBoardUrl.flow : undefined;
-          if (!boardUrl || boardUrl === this.tab?.graph.url) {
-            return;
-          }
+    // Track action
+    const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
+    if (parsedUrl.page === "home") {
+      this.sca.services.actionTracker.load("home", false);
+    } else {
+      this.sca.services.actionTracker.load(
+        this.sca.controller.global.main.mode,
+        shared
+      );
+    }
 
-          if (urlWithoutMode) {
-            let snackbarId: BreadboardUI.Types.SnackbarUUID | undefined;
-            const loadingTimeout = setTimeout(() => {
-              snackbarId = globalThis.crypto.randomUUID();
-              this.sca.controller.global.snackbars.snackbar(
-                Strings.from("STATUS_GENERIC_LOADING"),
-                BreadboardUI.Types.SnackType.PENDING,
-                [],
-                true,
-                snackbarId,
-                true
-              );
-            }, LOADING_TIMEOUT);
-
-            this.sca.controller.global.main.loadState = "Loading";
-            const loadResult = await this.sca.actions.board.load(boardUrl, {
-              creator: evt.creator,
-              resultsFileId: evt.resultsFileId,
-            });
-            clearTimeout(loadingTimeout);
-            if (snackbarId) {
-              this.sca.controller.global.snackbars.unsnackbar(snackbarId);
-            }
-            if (!loadResult.success) {
-              this.logger.log(
-                Utils.Logging.Formatter.warning(
-                  `Failed to load board: ${loadResult.reason}`
-                ),
-                "Main Base"
-              );
-            } else {
-              await this.#handleBoardStateChanged();
-            }
-          }
-        }
+    // Close tab, go to the home page.
+    if (parsedUrl.page === "home") {
+      // Stop any running board before closing
+      const closingTabId = this.tab?.id;
+      if (closingTabId) {
+        this.sca.controller.run.main.setStatus(
+          BreadboardUI.Types.STATUS.STOPPED
+        );
+        this.sca.controller.run.main.abortController?.abort();
       }
-    );
+
+      this.sca.actions.board.close();
+      await this.#handleBoardStateChanged();
+      return;
+    } else {
+      // Load the tab.
+      const boardUrl =
+        parsedUrl.page === "graph" ? parsedUrl.flow : undefined;
+      if (!boardUrl || boardUrl === this.tab?.graph.url) {
+        return;
+      }
+
+      let snackbarId: BreadboardUI.Types.SnackbarUUID | undefined;
+      const loadingTimeout = setTimeout(() => {
+        snackbarId = globalThis.crypto.randomUUID();
+        this.sca.controller.global.snackbars.snackbar(
+          Strings.from("STATUS_GENERIC_LOADING"),
+          BreadboardUI.Types.SnackType.PENDING,
+          [],
+          true,
+          snackbarId,
+          true
+        );
+      }, LOADING_TIMEOUT);
+
+      this.sca.controller.global.main.loadState = "Loading";
+      const loadResult = await this.sca.actions.board.load(boardUrl);
+      clearTimeout(loadingTimeout);
+      if (snackbarId) {
+        this.sca.controller.global.snackbars.unsnackbar(snackbarId);
+      }
+      if (!loadResult.success) {
+        this.logger.log(
+          Utils.Logging.Formatter.warning(
+            `Failed to load board: ${loadResult.reason}`
+          ),
+          "Main Base"
+        );
+      } else {
+        await this.#handleBoardStateChanged();
+      }
+    }
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
@@ -697,7 +728,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.runtime.util.createWorkspaceSelectionChangeId()
       );
     } else {
-      this.runtime.router.clearFlowParameters();
+      this.sca.controller.router.clearFlowParameters();
       // Page title is now handled by the page title trigger in SCA
     }
   }

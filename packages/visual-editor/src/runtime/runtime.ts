@@ -97,7 +97,6 @@ export class Runtime extends EventTarget {
     this.state = new StateManager(
       this,
       this.__sca.services.graphStore,
-      this.appController,
       config.sca
     );
 
