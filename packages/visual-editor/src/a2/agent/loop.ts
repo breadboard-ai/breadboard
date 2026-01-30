@@ -147,6 +147,9 @@ class Loop {
       );
       if (!ok(objectivePidgin)) return objectivePidgin;
 
+      // Set whether memory files should be exposed based on useMemory tool
+      fileSystem.setUseMemory(objectivePidgin.useMemory);
+
       if (extraInstruction) {
         extraInstruction = `${extraInstruction}\n\n`;
       }
@@ -211,15 +214,17 @@ class Loop {
           generators,
         })
       );
-      functionGroups.push(
-        getMemoryFunctionGroup({
-          context: moduleArgs.context,
-          translator,
-          fileSystem,
-          memoryManager,
-          taskTreeManager,
-        })
-      );
+      if (objectivePidgin.useMemory) {
+        functionGroups.push(
+          getMemoryFunctionGroup({
+            context: moduleArgs.context,
+            translator,
+            fileSystem,
+            memoryManager,
+            taskTreeManager,
+          })
+        );
+      }
 
       if (uiType === "a2ui") {
         const a2uiFunctionGroup = await getA2UIFunctionGroup({

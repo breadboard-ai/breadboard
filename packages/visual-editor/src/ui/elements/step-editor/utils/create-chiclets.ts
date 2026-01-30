@@ -16,7 +16,10 @@ import {
   isLLMContentArray,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
-import { ROUTE_TOOL_PATH } from "../../../../a2/a2/tool-manager.js";
+import {
+  ROUTE_TOOL_PATH,
+  MEMORY_TOOL_PATH,
+} from "../../../../a2/a2/tool-manager.js";
 
 export function createChiclets(
   port: InspectablePort | null,
@@ -99,6 +102,9 @@ export function createChiclets(
       } else {
         targetTitle = " " + "[not set]";
       }
+    } else if (path === MEMORY_TOOL_PATH) {
+      metadataIcon = "database";
+      sourceTitle = "Use Memory";
     }
 
     chiclets.push(

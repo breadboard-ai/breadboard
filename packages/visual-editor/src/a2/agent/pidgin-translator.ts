@@ -18,6 +18,7 @@ import { AgentFileSystem } from "./file-system.js";
 import { err, ok } from "@breadboard-ai/utils";
 import {
   ROUTE_TOOL_PATH,
+  MEMORY_TOOL_PATH,
   SimplifiedToolManager,
   ToolManager,
 } from "../a2/tool-manager.js";
@@ -31,6 +32,7 @@ export { PidginTranslator };
 export type ToPidginResult = {
   text: string;
   tools: SimplifiedToolManager;
+  useMemory: boolean;
 };
 
 export type SubstitutePartsArgs = {
@@ -193,6 +195,7 @@ class PidginTranslator {
     const toolManager = new ToolManager(this.caps, this.moduleArgs);
 
     const errors: string[] = [];
+    let useMemory = false;
     const pidginContent = await template.asyncSimpleSubstitute(
       async (param) => {
         const { type } = param;
@@ -261,6 +264,9 @@ ${inner}
               }
               const routeName = this.fileSystem.addRoute(param.instance);
               return `<a href="${routeName}">${param.title}</a>`;
+            } else if (param.path === MEMORY_TOOL_PATH) {
+              useMemory = true;
+              return "Use Memory Data Store";
             } else {
               const substitute = substituteDefaultTool(param);
               if (substitute !== null) {
@@ -302,10 +308,11 @@ ${inner}
           textAsFiles,
         }),
         tools: toolManager,
+        useMemory,
       };
     }
 
-    return { text, tools: toolManager };
+    return { text, tools: toolManager, useMemory };
 
     function substituteParts({
       title,

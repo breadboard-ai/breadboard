@@ -44,6 +44,7 @@ class AgentFileSystem {
     ["", ""],
     ["/", "/"],
   ]);
+  #useMemory = true;
 
   private readonly context: NodeHandlerContext;
   private readonly memoryManager: MemoryManager | null;
@@ -52,6 +53,10 @@ class AgentFileSystem {
   constructor(args: AgentFileSystemArgs) {
     this.context = args.context;
     this.memoryManager = args.memoryManager;
+  }
+
+  setUseMemory(value: boolean) {
+    this.#useMemory = value;
   }
 
   addSystemFile(path: string, getter: SystemFileGetter) {
@@ -213,7 +218,7 @@ class AgentFileSystem {
     if (path.startsWith("/vfs/system/")) {
       return this.#getSystemFile(path);
     }
-    if (path.startsWith("/vfs/memory/")) {
+    if (path.startsWith("/vfs/memory/") && this.#useMemory) {
       return this.#getMemoryFile(path);
     }
     const file = this.#getFile(path);
@@ -225,13 +230,15 @@ class AgentFileSystem {
     const files = [...this.#files.keys()];
     const system = [...this.systemFiles.keys()];
     const memory = [];
-    const memoryMetadata = await this.memoryManager?.getSheetMetadata(
-      this.context
-    );
-    if (memoryMetadata && ok(memoryMetadata)) {
-      memory.push(
-        ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
+    if (this.#useMemory) {
+      const memoryMetadata = await this.memoryManager?.getSheetMetadata(
+        this.context
       );
+      if (memoryMetadata && ok(memoryMetadata)) {
+        memory.push(
+          ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
+        );
+      }
     }
     return [...files, ...system, ...memory].join("\n");
   }

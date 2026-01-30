@@ -434,6 +434,14 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
         },
       ]);
     }
+    tools.push([
+      `function-group/use-memory`,
+      {
+        url: "use-memory",
+        title: "Use Memory",
+        icon: "database",
+      },
+    ]);
     updateMap(this.controlFlowTools, tools);
   }
 
