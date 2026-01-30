@@ -79,12 +79,12 @@ export const RunRoute: EventRoute<"board.run"> = {
 export const LoadRoute: EventRoute<"board.load"> = {
   event: "board.load",
 
-  async do({ runtime, originalEvent, sca }) {
+  async do({ originalEvent, sca }) {
     if (Utils.Helpers.isHydrating(() => sca.controller.global.main.mode)) {
       await sca.controller.global.main.isHydrated;
     }
 
-    runtime.router.go({
+    sca.controller.router.go({
       page: "graph",
       mode: sca.controller.global.main.mode,
       flow: originalEvent.detail.url,
@@ -270,8 +270,6 @@ export const CreateRoute: EventRoute<"board.create"> = {
   event: "board.create",
 
   async do({
-    tab,
-    runtime,
     sca,
     originalEvent,
     askUserToSignInIfNeeded,
@@ -296,23 +294,19 @@ export const CreateRoute: EventRoute<"board.create"> = {
 
     const { lite, dev } = parseUrl(window.location.href);
 
-    runtime.router.go(
-      {
-        page: "graph",
-        // Ensure we always go back to the canvas when a board is created.
-        mode: "canvas",
-        // Ensure that we correctly preserve the "lite" mode.
-        lite,
-        flow: result.url.href,
-        // Resource key not required because we know the current user
-        // created it.
-        resourceKey: undefined,
-        dev,
-        guestPrefixed: true,
-      },
-      tab?.id,
-      originalEvent.detail.editHistoryCreator
-    );
+    sca.controller.router.go({
+      page: "graph",
+      // Ensure we always go back to the canvas when a board is created.
+      mode: "canvas",
+      // Ensure that we correctly preserve the "lite" mode.
+      lite,
+      flow: result.url.href,
+      // Resource key not required because we know the current user
+      // created it.
+      resourceKey: undefined,
+      dev,
+      guestPrefixed: true,
+    });
     embedHandler?.sendToEmbedder({
       type: "board_id_created",
       id: result.url.href,
@@ -326,7 +320,7 @@ export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
   async do(deps) {
-    const { originalEvent, sca, runtime, tab, embedHandler } = deps;
+    const { originalEvent, sca, embedHandler } = deps;
 
     sca.controller.global.main.blockingAction = true;
 
@@ -343,23 +337,19 @@ export const RemixRoute: EventRoute<"board.remix"> = {
 
     const { lite, dev } = parseUrl(window.location.href);
 
-    runtime.router.go(
-      {
-        page: "graph",
-        // Ensure we always go back to the canvas when a board is created.
-        mode: "canvas",
-        // Ensure that we correctly preserve the "lite" mode.
-        lite,
-        flow: result.url.href,
-        // Resource key not required because we know the current user
-        // created it.
-        resourceKey: undefined,
-        dev,
-        guestPrefixed: true,
-      },
-      tab?.id,
-      { role: "user" }
-    );
+    sca.controller.router.go({
+      page: "graph",
+      // Ensure we always go back to the canvas when a board is created.
+      mode: "canvas",
+      // Ensure that we correctly preserve the "lite" mode.
+      lite,
+      flow: result.url.href,
+      // Resource key not required because we know the current user
+      // created it.
+      resourceKey: undefined,
+      dev,
+      guestPrefixed: true,
+    });
     embedHandler?.sendToEmbedder({
       type: "board_id_created",
       id: result.url.href,
@@ -391,10 +381,10 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
       runtime.select.deselectAll(tab.id, runtime.select.generateId());
     }
 
-    if (runtime.router.parsedUrl.page === "home") return false;
+    if (sca.controller.router.parsedUrl.page === "home") return false;
 
     const { lite, dev } = parseUrl(window.location.href);
-    runtime.router.go({
+    sca.controller.router.go({
       page: "home",
       lite,
       dev,

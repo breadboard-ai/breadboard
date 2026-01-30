@@ -35,6 +35,10 @@ export function makeTestController(graph = defaultGraph): AppController {
     run: {
       main: new RunController("test-run-controller", "test"),
     },
+    router: {
+      updateFromCurrentUrl: () => { },
+      init: () => { },
+    },
   } as unknown as AppController;
 }
 

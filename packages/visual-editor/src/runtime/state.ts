@@ -15,7 +15,6 @@ import {
 import { Runtime } from "./runtime.js";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
-import { AppController } from "../sca/controller/controller.js";
 import { SCA } from "../sca/sca.js";
 
 export { StateManager };
@@ -38,12 +37,11 @@ class StateManager implements RuntimeContext {
     // Omitting state to avoid circular references
     private readonly runtime: Omit<Runtime, "state">,
     store: MutableGraphStore,
-    appController: AppController,
     private readonly __sca: SCA
   ) {
     this.#store = store;
     this.flowGenerator = this.runtime.flowGenerator;
-    this.lite = createLiteModeState(this, appController);
+    this.lite = createLiteModeState(this, __sca);
   }
 
   /**
@@ -69,7 +67,7 @@ class StateManager implements RuntimeContext {
   }
 
   get router() {
-    return this.runtime.router;
+    return this.__sca.controller.router;
   }
 
   private createProjectState(

@@ -49,6 +49,7 @@ suite("Triggers", () => {
       agent: ["Graph Invalidate Trigger"],
       run: [],
       shell: ["Page Title Trigger"],
+      router: ["Router URL Change Trigger", "Router Init Trigger"],
     });
     clean();
 
@@ -59,6 +60,7 @@ suite("Triggers", () => {
       node: [],
       run: [],
       shell: [],
+      router: [],
     });
 
     // Confirm that listing and cleaning do not throw in the absence of a
