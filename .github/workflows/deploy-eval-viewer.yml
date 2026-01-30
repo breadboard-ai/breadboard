@@ -39,13 +39,18 @@ jobs:
       - name: Build eval viewer
         run: npm run eval:viewer:build -w @breadboard-ai/visual-editor
 
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p _site/eval
+          cp -r packages/visual-editor/dist/eval-viewer/* _site/eval/
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: packages/visual-editor/dist/eval-viewer
+          path: _site
 
   deploy:
     environment:
