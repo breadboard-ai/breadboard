@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { ConsentController } from './consent-controller.js';
-export { DebugController } from './debug-controller.js';
-export { FeedbackController } from './feedback-controller.js';
-export { SnackbarController } from './snackbar-controller.js';
-export { ToastController } from './toast-controller.js';
-export { FlagController } from './flag-controller.js';
+export { ConsentController } from "./consent-controller.js";
+export { DebugController } from "./debug-controller.js";
+export { FeedbackController } from "./feedback-controller.js";
+export { SnackbarController } from "./snackbar-controller.js";
+export { StatusUpdatesController } from "./status-updates-controller.js";
+export { ToastController } from "./toast-controller.js";
+export { FlagController } from "./flag-controller.js";
 
 import {
   SubscriptionStatus,
@@ -51,9 +52,6 @@ export class GlobalController extends RootController {
 
   @field()
   accessor loadState: UILoadState = "Home";
-
-  @field()
-  accessor showStatusUpdateChip: boolean | null = null;
 
   @field()
   accessor subscriptionStatus: SubscriptionStatus = "indeterminate";

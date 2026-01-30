@@ -124,6 +124,9 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
     // Set up triggers for side effects once the controller is ready.
     controller.isHydrated.then(() => {
       Triggers.triggers(controller, services, actions);
+
+      // Start polling for status updates
+      services.statusUpdates.start(controller.global.statusUpdates);
     });
     Utils.Logging.setDebuggableAppController(instance.controller);
   }

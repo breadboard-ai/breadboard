@@ -11,7 +11,10 @@ import { RecentBoardsController } from "../../../../src/sca/controller/subcontro
 import { RecentBoardStore } from "../../../../src/data/recent-boards.js";
 import { IdbFlagManager } from "../../../../src/idb/flags/idb-flag-manager.js";
 import { defaultRuntimeFlags } from "../data/default-flags.js";
-import { FlagController } from "../../../../src/sca/controller/subcontrollers/global/global.js";
+import {
+  FlagController,
+  StatusUpdatesController,
+} from "../../../../src/sca/controller/subcontrollers/global/global.js";
 
 suite("Migrations", () => {
   test("recentBoardsMigration", async () => {
@@ -102,5 +105,58 @@ suite("Migrations", () => {
       agentMode: true,
       consistentUI: true,
     });
+  });
+
+  test("statusUpdatesMigration", async () => {
+    const UPDATE_HASH_KEY = "bb-update-hash";
+
+    // TEST 1: Put something in localStorage and migrate it.
+    globalThis.localStorage.setItem(UPDATE_HASH_KEY, "test-hash-12345");
+
+    const controller = new StatusUpdatesController(
+      "StatusUpdates_Migration",
+      "StatusUpdatesController"
+    );
+    await controller.isHydrated;
+
+    await Migrations.statusUpdatesMigration(controller);
+    await controller.isSettled;
+
+    assert.strictEqual(controller.isMigrated, true);
+    // localStorage should be cleaned up
+    assert.strictEqual(globalThis.localStorage.getItem(UPDATE_HASH_KEY), null);
+
+    // TEST 2: Check for double migration.
+    // Set a new hash in localStorage; it should not be picked up.
+    globalThis.localStorage.setItem(UPDATE_HASH_KEY, "different-hash");
+
+    await Migrations.statusUpdatesMigration(controller);
+    await controller.isSettled;
+
+    // The new hash should still be in localStorage (not removed)
+    // because the controller was already migrated so the migration didn't run
+    assert.strictEqual(
+      globalThis.localStorage.getItem(UPDATE_HASH_KEY),
+      "different-hash"
+    );
+
+    // Cleanup
+    globalThis.localStorage.removeItem(UPDATE_HASH_KEY);
+
+    // TEST 3: Migration with no existing hash.
+    const controller2 = new StatusUpdatesController(
+      "StatusUpdates_Migration_2",
+      "StatusUpdatesController"
+    );
+    await controller2.isHydrated;
+
+    // Ensure no hash in localStorage
+    assert.strictEqual(globalThis.localStorage.getItem(UPDATE_HASH_KEY), null);
+
+    await Migrations.statusUpdatesMigration(controller2);
+    await controller2.isSettled;
+
+    // Should still be marked as migrated even with no hash
+    assert.strictEqual(controller2.isMigrated, true);
   });
 });

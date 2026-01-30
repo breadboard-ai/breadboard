@@ -11,12 +11,14 @@ import * as Agent from "./agent/agent-triggers.js";
 import * as Board from "./board/board-triggers.js";
 import * as Node from "./node/node-triggers.js";
 import * as Run from "./run/run-triggers.js";
+import * as Shell from "./shell/shell-triggers.js";
 
 export interface AppTriggers {
   agent: typeof Agent;
   board: typeof Board;
   node: typeof Node;
   run: typeof Run;
+  shell: typeof Shell;
 }
 
 type TriggerKey = keyof AppTriggers;
@@ -33,6 +35,7 @@ export function triggers(
     Board.bind({ controller, services, actions });
     Node.bind({ controller, services, actions });
     Run.bind({ controller, services, actions });
+    Shell.bind({ controller, services, actions });
     register();
 
     instance = {
@@ -40,6 +43,7 @@ export function triggers(
       board: Board,
       node: Node,
       run: Run,
+      shell: Shell,
     } satisfies AppTriggers;
   }
   return instance;
@@ -51,6 +55,7 @@ export function register() {
   Board.registerNewerVersionTrigger();
   Board.registerSaveStatusListener();
   Node.registerAutonameTrigger();
+  Shell.registerPageTitleTrigger();
 }
 
 export function clean() {

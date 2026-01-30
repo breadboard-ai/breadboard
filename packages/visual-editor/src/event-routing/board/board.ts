@@ -21,13 +21,7 @@ import { Utils } from "../../sca/utils.js";
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({
-    tab,
-    settings,
-    askUserToSignInIfNeeded,
-    boardServer,
-    sca,
-  }) {
+  async do({ tab, settings, askUserToSignInIfNeeded, boardServer, sca }) {
     if (!tab) {
       console.warn(`Unable to prepare run: no Tab provided`);
       return false;
@@ -257,10 +251,10 @@ export const InputRoute: EventRoute<"board.input"> = {
 export const RenameRoute: EventRoute<"board.rename"> = {
   event: "board.rename",
 
-  async do({ runtime, originalEvent, sca }) {
+  async do({ originalEvent, sca }) {
     try {
       sca.controller.global.main.blockingAction = true;
-      runtime.shell.setPageTitle(originalEvent.detail.title);
+      // Page title is now handled by the page title trigger in SCA
       await sca.actions.graph.updateBoardTitleAndDescription(
         originalEvent.detail.title,
         originalEvent.detail.description
