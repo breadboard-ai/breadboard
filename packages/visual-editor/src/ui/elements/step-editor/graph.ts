@@ -155,9 +155,6 @@ export class Graph extends Box {
           nodeDescription.inputSchema.behavior?.includes(
             "hint-for-each-mode"
           ) ?? false;
-        graphNode.hasChatAdornment =
-          nodeDescription.inputSchema.behavior?.includes("hint-chat-mode") ??
-          false;
         graphNode.updating = ports.updating ?? false;
         graphNode.ports = ports;
         graphNode.icon = getStepIcon(metadata.icon, ports) || null;

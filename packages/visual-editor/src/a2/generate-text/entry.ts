@@ -2,12 +2,7 @@
  * @fileoverview Manages the entry point: describer, passing the inputs, etc.
  */
 
-import {
-  BehaviorSchema,
-  Capabilities,
-  LLMContent,
-  Schema,
-} from "@breadboard-ai/types";
+import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
 import { readFlags } from "../a2/settings.js";
 import { Template } from "../a2/template.js";
@@ -70,7 +65,7 @@ async function invoke({
 }
 
 async function describe(
-  { inputs: { description, "config$ask-user": chat } }: DescribeInputs,
+  { inputs: { description } }: DescribeInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
@@ -100,7 +95,6 @@ async function describe(
           description: "The specific model version to generate with",
         },
       };
-  const chatHints: BehaviorSchema[] = chat ? ["hint-chat-mode"] : [];
   const template = new Template(caps, description);
 
   return {
@@ -124,7 +118,7 @@ async function describe(
         ...chatSchema,
         ...template.schemas(),
       },
-      behavior: ["at-wireable", ...chatHints],
+      behavior: ["at-wireable"],
       ...template.requireds(),
     } satisfies Schema,
     outputSchema: {

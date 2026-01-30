@@ -18,11 +18,7 @@ export function appScreenToA2UIProcessor(
 
   const topLevelIds = [];
   const components = [];
-  for (const [name, outputData] of Object.entries(appScreenOutput.output)) {
-    const behaviors =
-      appScreenOutput.schema?.properties?.[name]?.behavior ?? [];
-    const setTextAsH1 = behaviors.includes("hint-chat-mode");
-
+  for (const [, outputData] of Object.entries(appScreenOutput.output)) {
     let toAppend = outputData;
     if (typeof outputData === "string") {
       toAppend = {
@@ -32,7 +28,6 @@ export function appScreenToA2UIProcessor(
     }
     if (isLLMContent(toAppend)) {
       const newComponents = llmContentToA2UIComponents(toAppend, {
-        textAsH1: setTextAsH1,
         wrapMediaInCard: true,
       });
       topLevelIds.push(...newComponents.ids);
@@ -40,7 +35,6 @@ export function appScreenToA2UIProcessor(
     } else if (isLLMContentArray(toAppend)) {
       for (const llmContent of toAppend) {
         const newComponents = llmContentToA2UIComponents(llmContent, {
-          textAsH1: setTextAsH1,
           wrapMediaInCard: true,
         });
         topLevelIds.push(...newComponents.ids);

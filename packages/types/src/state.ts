@@ -116,11 +116,6 @@ export type WorkItem = {
    */
   openByDefault?: boolean;
   /**
-   * If true, indicates that this work item was shown to the user as part
-   * of a chat interaction.
-   */
-  chat: boolean;
-  /**
    * Schema representing the product, if available. This is useful when
    * the WorkItem represents an input.
    */
