@@ -47,8 +47,6 @@ const LITE_MODEL_NAME = "gemini-2.5-flash-lite";
 const IMAGE_FLASH_MODEL_NAME = "gemini-2.5-flash-image";
 const IMAGE_PRO_MODEL_NAME = "gemini-3-pro-image-preview";
 
-const RETRY_SLEEP_MS = 700;
-
 export type ModelConstraint =
   | "none"
   | "text-flash"
@@ -383,31 +381,26 @@ Specify URLs in the prompt.
       if (!ok(body)) return body;
       const resolvedModel = resolveTextModel(model);
       const results: TextCapabilityPart[] = [];
-      let maxRetries = 5;
-      do {
-        const generating = await generators.streamContent(
-          resolvedModel,
-          body,
-          moduleArgs
-        );
-        if (!ok(generating)) {
-          return { error: generating.$error };
-        }
-        for await (const chunk of generating) {
-          const parts = chunk.candidates.at(0)?.content?.parts;
-          if (!parts) continue;
-          for (const part of parts) {
-            if (!part || !("text" in part)) continue;
-            if (part.thought) {
-              statusUpdater(part.text, { isThought: true });
-            } else {
-              results.push(part);
-            }
+      const generating = await generators.streamContent(
+        resolvedModel,
+        body,
+        moduleArgs
+      );
+      if (!ok(generating)) {
+        return { error: generating.$error };
+      }
+      for await (const chunk of generating) {
+        const parts = chunk.candidates.at(0)?.content?.parts;
+        if (!parts) continue;
+        for (const part of parts) {
+          if (!part || !("text" in part)) continue;
+          if (part.thought) {
+            statusUpdater(part.text, { isThought: true });
+          } else {
+            results.push(part);
           }
         }
-        if (results.length > 0) break;
-        await new Promise((resolve) => setTimeout(resolve, RETRY_SLEEP_MS));
-      } while (maxRetries-- > 0);
+      }
       statusUpdater(null);
       const textParts = mergeTextParts(results);
       if (textParts.length === 0) {
@@ -749,57 +742,51 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
       });
       if (!ok(body)) return body;
       const results: TextCapabilityPart[] = [];
-      let maxRetries = 5;
-      do {
-        const generating = await generators.streamContent(
-          CODE_GENERATION_MODEL_NAME,
-          body,
-          moduleArgs
-        );
-        if (!ok(generating)) {
-          return { error: generating.$error };
-        }
-        let lastCodeExecutionError: string | null = null;
-        for await (const chunk of generating) {
-          const parts = chunk.candidates.at(0)?.content?.parts;
-          if (!parts) continue;
-          for (const part of parts) {
-            if (!part) continue;
-            if ("text" in part) {
-              if (part.thought) {
-                statusUpdater(part.text, { isThought: true });
-              } else {
-                results.push(part);
-              }
-            } else if ("inlineData" in part) {
-              // File result
-              const file = fileSystem.add(part);
-              if (!ok(file)) {
-                return {
-                  error: `Code generation failed due to invalid file output.`,
-                };
-              }
-              results.push({ text: `<file src="${file}" />` });
-            } else if ("codeExecutionResult" in part) {
-              const { outcome, output } = part.codeExecutionResult;
-              if (outcome !== "OUTCOME_OK") {
-                lastCodeExecutionError = output;
-              } else {
-                lastCodeExecutionError = null;
-              }
+      const generating = await generators.streamContent(
+        CODE_GENERATION_MODEL_NAME,
+        body,
+        moduleArgs
+      );
+      if (!ok(generating)) {
+        return { error: generating.$error };
+      }
+      let lastCodeExecutionError: string | null = null;
+      for await (const chunk of generating) {
+        const parts = chunk.candidates.at(0)?.content?.parts;
+        if (!parts) continue;
+        for (const part of parts) {
+          if (!part) continue;
+          if ("text" in part) {
+            if (part.thought) {
+              statusUpdater(part.text, { isThought: true });
+            } else {
+              results.push(part);
+            }
+          } else if ("inlineData" in part) {
+            // File result
+            const file = fileSystem.add(part);
+            if (!ok(file)) {
+              return {
+                error: `Code generation failed due to invalid file output.`,
+              };
+            }
+            results.push({ text: `<file src="${file}" />` });
+          } else if ("codeExecutionResult" in part) {
+            const { outcome, output } = part.codeExecutionResult;
+            if (outcome !== "OUTCOME_OK") {
+              lastCodeExecutionError = output;
+            } else {
+              lastCodeExecutionError = null;
             }
           }
         }
+      }
 
-        if (lastCodeExecutionError) {
-          return {
-            error: `The code generator tried and failed with the following error:\n\n${lastCodeExecutionError}`,
-          };
-        }
-        if (results.length > 0) break;
-        console.log("WAITING TO RETRY");
-        await new Promise((resolve) => setTimeout(resolve, RETRY_SLEEP_MS));
-      } while (maxRetries-- > 0);
+      if (lastCodeExecutionError) {
+        return {
+          error: `The code generator tried and failed with the following error:\n\n${lastCodeExecutionError}`,
+        };
+      }
       statusUpdater(null);
       const textParts = mergeTextParts(results);
       if (textParts.length === 0) {

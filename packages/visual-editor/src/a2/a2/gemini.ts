@@ -51,6 +51,14 @@ function streamEndpointURL(model: string) {
   return `${GOOGLE_GENAI_API_PREFIX}/${model}:streamGenerateContent?alt=sse`;
 }
 
+/**
+ * Retry configuration for streaming operations.
+ * When a stream returns empty content, we retry up to MAX_RETRIES times
+ * with DELAY_MS pause between attempts.
+ */
+const STREAM_RETRY_DELAY_MS = 700;
+const STREAM_MAX_RETRIES = 5;
+
 const VALID_MODALITIES = ["Text", "Text and Image", "Audio"] as const;
 type ValidModalities = (typeof VALID_MODALITIES)[number];
 
@@ -134,10 +142,10 @@ export type ThinkingConfig = {
   thinkingBudget?: number;
   /**
    * Indicates the level of thinking.
-   * You can set thinking level to "low" or "high" for Gemini 3 Pro, 
+   * You can set thinking level to "low" or "high" for Gemini 3 Pro,
    * and "minimal", "low", "medium", and "high" for Gemini 3 Flash.
    */
-  thinkingLevel?: "minimal" | "low" | "medium" | "high"
+  thinkingLevel?: "minimal" | "low" | "medium" | "high";
 };
 
 export type GeminiInputs = {
@@ -268,8 +276,8 @@ export type GeminiAPIOutputs = {
 export type GeminiOutputs =
   | GeminiAPIOutputs
   | {
-    context: LLMContent[];
-  };
+      context: LLMContent[];
+    };
 
 const MODELS: readonly string[] = [
   "gemini-3-flash-preview",
@@ -745,30 +753,119 @@ async function generateContent(
   }
 }
 
+/**
+ * Checks if an array of streamed outputs contains any meaningful content.
+ * Content is considered meaningful if there's at least one non-empty part.
+ */
+function hasStreamContent(chunks: GeminiAPIOutputs[]): boolean {
+  for (const chunk of chunks) {
+    const content = chunk.candidates?.at(0)?.content;
+    if (content?.parts && content.parts.length > 0) {
+      // Check if any part has actual content (not just empty text)
+      for (const part of content.parts) {
+        if ("text" in part && part.text?.trim()) return true;
+        if ("inlineData" in part) return true;
+        if ("functionCall" in part) return true;
+        if ("codeExecutionResult" in part) return true;
+        if ("storedData" in part) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Performs a single streaming fetch and buffers all chunks.
+ * Returns an error outcome on fetch failure, or the buffered chunks.
+ */
+async function fetchStreamChunks(
+  model: string,
+  body: GeminiBody,
+  fetchWithCreds: A2ModuleArgs["fetchWithCreds"],
+  signal: AbortSignal | undefined
+): Promise<Outcome<GeminiAPIOutputs[]>> {
+  try {
+    const result = await fetchWithCreds(streamEndpointURL(model), {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    });
+    if (!result.ok) {
+      const errObject = await result.text();
+      return err(maybeExtractError(errObject), { origin: "server", model });
+    }
+    if (!result.body) {
+      return err(`No stream returned`, { origin: "server", model });
+    }
+    const chunks: GeminiAPIOutputs[] = [];
+    for await (const chunk of iteratorFromStream<GeminiAPIOutputs>(
+      result.body
+    )) {
+      chunks.push(chunk);
+    }
+    return chunks;
+  } catch (e) {
+    return err((e as Error).message, { origin: "client", model });
+  }
+}
+
+/**
+ * Streams content from Gemini with automatic retry on empty responses.
+ *
+ * When the stream completes successfully but yields no meaningful content,
+ * this function will retry up to STREAM_MAX_RETRIES times with a delay
+ * of STREAM_RETRY_DELAY_MS between attempts.
+ *
+ * This protects callers from transient empty responses without requiring
+ * each callsite to implement its own retry logic.
+ */
 async function streamGenerateContent(
   model: string,
   body: GeminiBody,
   { fetchWithCreds, context }: A2ModuleArgs
 ): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
-  try {
-    const result = await fetchWithCreds(streamEndpointURL(model), {
-      method: "POST",
-      body: JSON.stringify(body),
-      signal: context.signal,
-    });
-    if (!result.ok) {
-      // Expect non-streaming error response.
-      const errObject = await result.text();
-      return err(maybeExtractError(errObject), { origin: "server", model });
-    } else {
-      if (!result.body) {
-        return err(`No stream returned`, { origin: "server", model });
-      }
-      return iteratorFromStream(result.body);
+  let lastChunks: GeminiAPIOutputs[] = [];
+
+  for (let attempt = 0; attempt < STREAM_MAX_RETRIES; attempt++) {
+    const result = await fetchStreamChunks(
+      model,
+      body,
+      fetchWithCreds,
+      context.signal
+    );
+
+    if (!ok(result)) {
+      // Fetch error - don't retry, return immediately
+      return result;
     }
-  } catch (e) {
-    return err((e as Error).message, { origin: "client", model });
+
+    lastChunks = result;
+
+    // Check if we got meaningful content
+    if (hasStreamContent(lastChunks)) {
+      // Success! Return an async iterable that yields the buffered chunks
+      return (async function* () {
+        for (const chunk of lastChunks) {
+          yield chunk;
+        }
+      })();
+    }
+
+    // Empty response - retry after delay (unless this was the last attempt)
+    if (attempt < STREAM_MAX_RETRIES - 1) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, STREAM_RETRY_DELAY_MS)
+      );
+    }
   }
+
+  // Exhausted all retries - return whatever we got (even if empty)
+  // The caller will handle the empty content case
+  return (async function* () {
+    for (const chunk of lastChunks) {
+      yield chunk;
+    }
+  })();
 }
 
 async function invoke(
@@ -844,7 +941,8 @@ async function invoke(
 
   // All models failed, return the last error
   return (
-    lastError || err("All fallback models failed", { origin: "server", kind: "capacity" })
+    lastError ||
+    err("All fallback models failed", { origin: "server", kind: "capacity" })
   );
 }
 
@@ -862,29 +960,29 @@ async function describe({ inputs }: DescribeInputs) {
   const maybeAddSystemInstruction: Schema["properties"] =
     canHaveSystemInstruction
       ? {
-        systemInstruction: {
-          type: "object",
-          behavior: ["llm-content", "config"],
-          title: "System Instruction",
-          default: '{"role":"user","parts":[{"text":""}]}',
-          description:
-            "(Optional) Give the model additional context on what to do," +
-            "like specific rules/guidelines to adhere to or specify behavior" +
-            "separate from the provided context",
-        },
-      }
+          systemInstruction: {
+            type: "object",
+            behavior: ["llm-content", "config"],
+            title: "System Instruction",
+            default: '{"role":"user","parts":[{"text":""}]}',
+            description:
+              "(Optional) Give the model additional context on what to do," +
+              "like specific rules/guidelines to adhere to or specify behavior" +
+              "separate from the provided context",
+          },
+        }
       : {};
   const maybeAddModalities: Schema["properties"] = canHaveModalities
     ? {
-      modality: {
-        type: "string",
-        enum: [...VALID_MODALITIES],
-        title: "Output Modality",
-        behavior: ["config"],
-        description:
-          "(Optional) Tell the model what kind of output you're looking for.",
-      },
-    }
+        modality: {
+          type: "string",
+          enum: [...VALID_MODALITIES],
+          title: "Output Modality",
+          behavior: ["config"],
+          description:
+            "(Optional) Tell the model what kind of output you're looking for.",
+        },
+      }
     : {};
   return {
     inputSchema: {
