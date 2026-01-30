@@ -9,6 +9,7 @@ import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import {
   defaultLLMContent,
+  dispatchShowCustomSnackbarEvent,
   encodeBase64,
   err,
   ErrorReason,
@@ -18,6 +19,7 @@ import {
   isStoredData,
   joinContent,
   ok,
+  SnackbarAction,
   toLLMContent,
   toText,
   toTextConcat,
@@ -35,6 +37,10 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import {
+  removeVeoDailyLimitExpirationKey,
+  setVeoDailyLimitExpirationKey,
+} from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms.js";
 
@@ -249,6 +255,8 @@ async function invoke(
         });
       }
 
+      initAiCreditsLimitation();
+
       console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
 
       // 2) Call backend to generate video.
@@ -412,3 +420,59 @@ async function describe(
     },
   };
 }
+
+const showSnackWithActionButton = (message: string, action: SnackbarAction) => {
+  const showCustomSnackbarEventTimeout = setTimeout(() => {
+    clearTimeout(showCustomSnackbarEventTimeout);
+    dispatchShowCustomSnackbarEvent("", [action], "error");
+  });
+
+  throw new Error(message);
+};
+
+const initAiCreditsLimitation = () => {
+  // @TODO integrate the backend once it's ready for google user detection and if limit is reached
+  const limitReached = false;
+  const isGoogleUser = true;
+
+  if (!limitReached) {
+    removeVeoDailyLimitExpirationKey();
+    return;
+  }
+
+  if (isGoogleUser) {
+    // @TODO integrate the backend once it's ready for out of credits detection
+    const outOfCredits = false;
+    if (outOfCredits) {
+      showSnackWithActionButton(
+        "You need more AI credits to create more videos. Each video you generate uses 20 AI credits from your Google AI plan.",
+        {
+          title: "Get more AI credits",
+          action: "getMoreAiCredits",
+          callback: () => {
+            // window.open("url goes here");
+          },
+          cssClass: "long-button",
+        }
+      );
+    } else {
+      // Set expiration time of the localstorage key
+      setVeoDailyLimitExpirationKey();
+      dispatchShowCustomSnackbarEvent(
+        "You’ve reached the daily limit for creating videos. Each video you generate after that will use 20 AI credits from your Google AI plan."
+      );
+    }
+  } else {
+    showSnackWithActionButton(
+      "You’ve reached the daily limit for creating videos. If you want to create more videos, come back tomorrow, or upgrade to a Google AI plan",
+      {
+        title: "See Google AI plans",
+        action: "seeGoogleAiPlans",
+        cssClass: "long-button",
+        callback: () => {
+          // window.open("url goes here");
+        },
+      }
+    );
+  }
+};

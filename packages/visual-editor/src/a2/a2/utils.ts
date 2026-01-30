@@ -113,6 +113,14 @@ export type ErrorWithMetadata = { $error: string; metadata?: ErrorMetadata };
 
 export type NonPromise<T> = T extends Promise<unknown> ? never : T;
 
+export type SnackbarAction = {
+  title: string;
+  action: string;
+  value?: string;
+  callback?: () => Promise<void> | void;
+  cssClass?: string;
+};
+
 function ok<T>(o: Outcome<NonPromise<T>>): o is NonPromise<T> {
   return !(o && typeof o === "object" && "$error" in o);
 }
@@ -487,6 +495,29 @@ function tr(strings: TemplateStringsArray, ...values: unknown[]): string {
       return acc + str + (values[i] || "");
     }, "")
     .trim();
+}
+
+export function dispatchShowCustomSnackbarEvent(
+  message: string,
+  actions: SnackbarAction[] = [],
+  snackType: string = "info"
+) {
+  if (typeof window !== "undefined") {
+    const snackbarEvent = new CustomEvent("showCustomSnackbarEvent", {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      detail: {
+        snackbarId: globalThis.crypto.randomUUID(),
+        message,
+        snackType,
+        actions,
+        persistent: true,
+        replaceAll: false,
+      },
+    });
+    window.dispatchEvent(snackbarEvent);
+  }
 }
 
 const DOC_MIME_TYPE = "application/vnd.google-apps.document";
