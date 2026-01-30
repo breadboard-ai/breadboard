@@ -46,6 +46,7 @@ import { StatusUpdatesService } from "./status-updates-service.js";
 export interface AppServices {
   actionTracker: ActionTracker;
   agentContext: AgentContext;
+  apiClient: AppCatalystApiClient;
   autonamer: Autonamer;
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
@@ -153,6 +154,7 @@ export function services(
     instance = {
       actionTracker,
       agentContext,
+      apiClient,
       autonamer,
       emailPrefsManager,
       fetchWithCreds,

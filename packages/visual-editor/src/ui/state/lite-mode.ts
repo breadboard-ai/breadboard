@@ -160,7 +160,7 @@ class ReactiveLiteModeState implements LiteModeState {
         }
         return "loading";
       case "Error":
-        return "invalid";
+        return "error";
       case "Loaded": {
         break;
       }

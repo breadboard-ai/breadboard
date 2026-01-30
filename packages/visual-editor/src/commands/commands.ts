@@ -7,7 +7,7 @@
 import { EditSpec, GraphDescriptor } from "@breadboard-ai/types";
 import { KeyboardCommand, KeyboardCommandDeps } from "./types.js";
 import * as BreadboardUI from "../ui/index.js";
-import { MAIN_BOARD_ID } from "../runtime/util.js";
+import { GraphUtils, MAIN_BOARD_ID } from "../utils/graph-utils.js";
 import { ClipboardReader } from "../utils/clipboard-reader.js";
 import { Tab } from "../runtime/types.js";
 import { Utils } from "../sca/utils.js";
@@ -105,7 +105,7 @@ const DeleteCommand: KeyboardCommand = {
     }
 
     const graph = editor.inspect("");
-    const spec = runtime.util.generateDeleteEditSpecFrom(
+    const spec = GraphUtils.generateDeleteEditSpecFrom(
       selectionState.selectionState,
       graph
     );
@@ -160,7 +160,7 @@ const DeleteCommand: KeyboardCommand = {
 
     runtime.select.deselectAll(
       tab.id,
-      runtime.util.createWorkspaceSelectionChangeId()
+      GraphUtils.createWorkspaceSelectionChangeId()
     );
   },
 };
@@ -285,7 +285,6 @@ const CopyCommand: KeyboardCommand = {
   },
 
   async do({
-    runtime,
     selectionState,
     tab,
     originalEvent,
@@ -309,7 +308,7 @@ const CopyCommand: KeyboardCommand = {
     }
 
     const graph = editor.inspect("");
-    const board = runtime.util.generateBoardFrom(
+    const board = GraphUtils.generateBoardFrom(
       selectionState.selectionState,
       graph
     );
@@ -326,7 +325,6 @@ const CutCommand: KeyboardCommand = {
   },
 
   async do({
-    runtime,
     selectionState,
     tab,
     originalEvent,
@@ -354,12 +352,12 @@ const CutCommand: KeyboardCommand = {
     }
 
     const graph = editor.inspect("");
-    const board = runtime.util.generateBoardFrom(
+    const board = GraphUtils.generateBoardFrom(
       selectionState.selectionState,
       graph
     );
 
-    const spec = runtime.util.generateDeleteEditSpecFrom(
+    const spec = GraphUtils.generateDeleteEditSpecFrom(
       selectionState.selectionState,
       graph
     );
@@ -444,7 +442,7 @@ const PasteCommand: KeyboardCommand = {
           destGraphIds.push("");
         }
 
-        spec = runtime.util.generateAddEditSpecFromDescriptor(
+        spec = GraphUtils.generateAddEditSpecFromDescriptor(
           boardContents,
           graph,
           pointerLocation,
@@ -452,7 +450,7 @@ const PasteCommand: KeyboardCommand = {
         );
       } else if (boardUrl) {
         // 1b. Paste a URL.
-        spec = runtime.util.generateAddEditSpecFromURL(
+        spec = GraphUtils.generateAddEditSpecFromURL(
           boardUrl,
           graph,
           pointerLocation
@@ -468,7 +466,7 @@ const PasteCommand: KeyboardCommand = {
           return;
         }
 
-        spec = runtime.util.generateAddEditSpecFromDescriptor(
+        spec = GraphUtils.generateAddEditSpecFromDescriptor(
           {
             edges: [],
             nodes: [
@@ -499,12 +497,12 @@ const PasteCommand: KeyboardCommand = {
         return;
       }
 
-      await editor.edit(spec, runtime.util.createEditChangeId());
-      const workspaceSelection = runtime.util.generateSelectionFrom(spec);
+      await editor.edit(spec, GraphUtils.createEditChangeId());
+      const workspaceSelection = GraphUtils.generateSelectionFrom(spec);
 
       runtime.select.processSelections(
         tab.id,
-        runtime.util.createWorkspaceSelectionChangeId(),
+        GraphUtils.createWorkspaceSelectionChangeId(),
         workspaceSelection
       );
     }
@@ -548,7 +546,7 @@ const DuplicateCommand: KeyboardCommand = {
     }
 
     const graph = editor.inspect("");
-    const boardContents = runtime.util.generateBoardFrom(
+    const boardContents = GraphUtils.generateBoardFrom(
       selectionState.selectionState,
       graph
     );
@@ -581,7 +579,7 @@ const DuplicateCommand: KeyboardCommand = {
         destGraphIds.push("");
       }
 
-      spec = runtime.util.generateAddEditSpecFromDescriptor(
+      spec = GraphUtils.generateAddEditSpecFromDescriptor(
         boardContents,
         graph,
         pointerLocation,
@@ -589,12 +587,12 @@ const DuplicateCommand: KeyboardCommand = {
       );
     }
 
-    await editor.edit(spec, runtime.util.createEditChangeId());
-    const workspaceSelection = runtime.util.generateSelectionFrom(spec);
+    await editor.edit(spec, GraphUtils.createEditChangeId());
+    const workspaceSelection = GraphUtils.generateSelectionFrom(spec);
 
     runtime.select.processSelections(
       tab.id,
-      runtime.util.createWorkspaceSelectionChangeId(),
+      GraphUtils.createWorkspaceSelectionChangeId(),
       workspaceSelection
     );
   },

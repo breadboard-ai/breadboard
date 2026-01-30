@@ -17,7 +17,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
-import { RuntimeBoardLoadErrorEvent } from "./runtime/events.js";
 import { effect } from "signal-utils/subtle/microtask-effect";
 import { eventRoutes } from "./event-routing/event-routing.js";
 import { blankBoard } from "./ui/utils/utils.js";
@@ -432,14 +431,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     await this.sca.controller.global.performMigrations();
     await this.sca.controller.isHydrated;
 
-    this.runtime.board.addEventListener(
-      RuntimeBoardLoadErrorEvent.eventName,
-      () => {
-        this.runtime.state.lite.viewError = Strings.from(
-          "ERROR_UNABLE_TO_LOAD_PROJECT"
-        );
-      }
-    );
+    // Note: runtime.board listener for RuntimeBoardLoadErrorEvent removed
+    // - Board is now an empty EventTarget, so this never fired
 
     // Set fullscreen for shared boards on initial load
     const parsedUrl = this.sca.controller.router.parsedUrl;
@@ -519,7 +512,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;
       if (!remixUrl) return;
       await this.boardLoaded;
-      this.runtime.actionTracker.remixApp(remixUrl, "user");
+      this.sca.services.actionTracker.remixApp(remixUrl, "user");
       this.invokeRemixEventRouteWith(remixUrl);
     }
   }
