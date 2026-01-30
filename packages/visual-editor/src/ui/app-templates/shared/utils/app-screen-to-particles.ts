@@ -9,7 +9,6 @@ import { AppScreenOutput, DataPart, LLMContent } from "@breadboard-ai/types";
 import { isStoredData } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
 import {
-  BehaviorHint,
   Field,
   GroupParticle,
   Particle,
@@ -60,10 +59,7 @@ function base64toUTF8(str: string) {
   return decoder.decode(bytes);
 }
 
-function llmContentPartPresentation(
-  part: DataPart,
-  behaviors: BehaviorHint[]
-): Presentation {
+function llmContentPartPresentation(part: DataPart): Presentation {
   if (isTextCapabilityPart(part)) {
     return {
       behaviors: [],
@@ -75,7 +71,7 @@ function llmContentPartPresentation(
           fields: {
             text: {
               title: "Text part",
-              modifiers: behaviors.includes("hint-chat-mode") ? ["hero"] : [],
+              modifiers: [],
               as: "particle-viewer-text",
             },
           },
@@ -197,8 +193,7 @@ function llmContentPartPresentation(
 
 function appendToItems(
   llmContent: LLMContent,
-  group: Map<ParticleIdentifier, Particle>,
-  behaviors: BehaviorHint[]
+  group: Map<ParticleIdentifier, Particle>
 ) {
   // Remap each part to a particle and append to the group.
   for (const part of llmContent.parts) {
@@ -238,7 +233,7 @@ function appendToItems(
     }
 
     // Append the presentation information.
-    particle.presentation = llmContentPartPresentation(part, behaviors);
+    particle.presentation = llmContentPartPresentation(part);
     group.set(globalThis.crypto.randomUUID(), particle);
   }
 }
@@ -251,10 +246,7 @@ export function appScreenToParticles(
   }
 
   const group = new SignalMap<ParticleIdentifier, Particle>();
-  for (const [name, outputData] of Object.entries(appScreenOutput.output)) {
-    const behaviors =
-      appScreenOutput.schema?.properties?.[name]?.behavior ?? [];
-
+  for (const [, outputData] of Object.entries(appScreenOutput.output)) {
     let toAppend = outputData;
     if (typeof outputData === "string") {
       toAppend = {
@@ -264,10 +256,10 @@ export function appScreenToParticles(
     }
 
     if (isLLMContent(toAppend)) {
-      appendToItems(toAppend, group, behaviors);
+      appendToItems(toAppend, group);
     } else if (isLLMContentArray(toAppend)) {
       for (const llmContent of toAppend) {
-        appendToItems(llmContent, group, behaviors);
+        appendToItems(llmContent, group);
       }
     }
   }

@@ -52,8 +52,7 @@ class ReactiveWorkItem implements WorkItem {
     public readonly type: NodeTypeIdentifier,
     public readonly title: string,
     public readonly icon: string | undefined,
-    public readonly start: number,
-    public readonly chat: boolean
+    public readonly start: number
   ) {}
 
   static fromInput(
@@ -65,7 +64,7 @@ class ReactiveWorkItem implements WorkItem {
     const id = idFromPath(path);
     const { type, metadata = {} } = node; // always "input"
     const { title = "Input", icon = DEFAULT_INPUT_ICON } = metadata;
-    const item = new ReactiveWorkItem(type, title, icon, start, true);
+    const item = new ReactiveWorkItem(type, title, icon, start);
     item.schema = schema;
     return [id, item];
   }
@@ -84,18 +83,11 @@ class ReactiveWorkItem implements WorkItem {
       metadata?.description || metadata?.title || DEFAULT_OUTPUT_TITLE;
     const icon = metadata?.icon || DEFAULT_OUTPUT_ICON;
     if (particleTree) {
-      const item = new ParticleWorkItem(
-        type,
-        title,
-        icon,
-        start,
-        false, // chat = false for particles
-        particleTree
-      );
+      const item = new ParticleWorkItem(type, title, icon, start, particleTree);
       return [id, item];
     }
-    const { products, chat } = toLLMContentArray(schema as Schema, outputs);
-    const item = new ReactiveWorkItem(type, title, icon, start, chat);
+    const { products } = toLLMContentArray(schema as Schema, outputs);
+    const item = new ReactiveWorkItem(type, title, icon, start);
     for (const [name, product] of Object.entries(products)) {
       item.product.set(name, product);
     }
@@ -146,7 +138,6 @@ class ParticleWorkItem implements WorkItem {
     public readonly title: string,
     public readonly icon: string | undefined,
     public readonly start: number,
-    public readonly chat: boolean,
     private readonly particleTree: EphemeralParticleTree
   ) {}
 }

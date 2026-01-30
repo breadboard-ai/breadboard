@@ -25,7 +25,6 @@ const REPORT_STREAM_MIME_TYPE = "application/vnd.breadboard.report-stream";
 
 export type Products = {
   products: Record<string, LLMContent>;
-  chat: boolean;
   particleMode: boolean;
 };
 
@@ -64,7 +63,6 @@ function isParticleMode(schema: Schema, values: OutputValues) {
 }
 
 function toLLMContentArray(schema: Schema, values: OutputValues): Products {
-  let chat = false;
   if (!schema.properties) {
     // No schema, so let's just stringify and stuff outputs into json part.
     const products = Object.fromEntries(
@@ -72,7 +70,7 @@ function toLLMContentArray(schema: Schema, values: OutputValues): Products {
         return [name, asJson(value)];
       })
     );
-    return { products, chat, particleMode: false };
+    return { products, particleMode: false };
   }
 
   const products: Record<string, LLMContent> = {};
@@ -83,9 +81,6 @@ function toLLMContentArray(schema: Schema, values: OutputValues): Products {
         `Schema specifies property "${name}", but it wasn't supplied`
       );
       continue;
-    }
-    if (propertySchema.behavior?.includes("hint-chat-mode")) {
-      chat = true;
     }
     if (propertySchema.type === "array") {
       const items = propertySchema.items as Schema;
@@ -111,7 +106,6 @@ function toLLMContentArray(schema: Schema, values: OutputValues): Products {
         // This is particle mode, return early and discard all other values.
         return {
           products: { [name]: llmContent },
-          chat,
           particleMode: true,
         };
       }
@@ -127,7 +121,7 @@ function toLLMContentArray(schema: Schema, values: OutputValues): Products {
     // Everything else, let's stringify and stuff outputs as json part.
     products[name] = asJson(value);
   }
-  return { products, chat, particleMode: false };
+  return { products, particleMode: false };
 
   function asJson(value: unknown): LLMContent {
     return { parts: [{ json: value as JsonSerializable }] };

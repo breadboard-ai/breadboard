@@ -333,14 +333,7 @@ async function report(
   { output }: Capabilities,
   inputs: ReportInputs
 ): Promise<boolean> {
-  const {
-    actor: title,
-    category: description,
-    name,
-    details,
-    icon,
-    chat,
-  } = inputs;
+  const { actor: title, category: description, name, details, icon } = inputs;
 
   const detailsSchema: Schema =
     typeof details === "string"
@@ -357,10 +350,6 @@ async function report(
 
   if (icon) {
     detailsSchema.icon = icon;
-  }
-
-  if (chat) {
-    detailsSchema.behavior?.push("hint-chat-mode");
   }
 
   const schema: Schema = {
