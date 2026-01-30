@@ -23,6 +23,7 @@
     "eval:a2ui": "wireit",
     "eval:autoname": "wireit",
     "eval:viewer": "wireit",
+    "eval:viewer:build": "wireit",
     "lint": "wireit"
   },
   "wireit": {
@@ -156,6 +157,18 @@
       "command": "vite dev eval/viewer",
       "files": [],
       "output": []
+    },
+    "eval:viewer:build": {
+      "command": "vite build eval/viewer --outDir ../../dist/eval-viewer",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "eval/viewer/**/*"
+      ],
+      "output": [
+        "dist/eval-viewer"
+      ]
     },
     "lint": {
       "command": "eslint 'src/**/*.ts'",
