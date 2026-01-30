@@ -22,3 +22,28 @@ export function registerGraphInvalidateTrigger() {
     services.agentContext.invalidateResumableRuns();
   });
 }
+
+/**
+ * Trigger that clears all runs when the graph URL changes.
+ * This ensures runs from one graph don't persist when switching to another.
+ */
+export function registerGraphUrlChangeTrigger() {
+  let previousUrl: string | null = null;
+
+  bind.register("Graph URL Change Trigger", () => {
+    const { controller, services } = bind;
+    const { url } = controller.editor.graph;
+
+    // Skip if URL hasn't changed
+    if (url === previousUrl) {
+      return;
+    }
+
+    // Clear all runs when switching graphs (but not on initial load)
+    if (previousUrl !== null) {
+      services.agentContext.clearAllRuns();
+    }
+
+    previousUrl = url;
+  });
+}

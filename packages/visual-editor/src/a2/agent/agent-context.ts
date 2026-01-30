@@ -70,6 +70,13 @@ class AgentContext {
   }
 
   /**
+   * Clears all runs (called when switching to a different graph).
+   */
+  clearAllRuns(): void {
+    this.#runs.clear();
+  }
+
+  /**
    * Exports all runs in EvalFileData format for eval viewer compatibility.
    * Returns an array containing FinalChainReport entries and OutcomePayload entries.
    */
