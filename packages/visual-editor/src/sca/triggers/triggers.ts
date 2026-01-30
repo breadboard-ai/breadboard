@@ -55,6 +55,7 @@ export function triggers(
 
 export function register() {
   Agent.registerGraphInvalidateTrigger();
+  Agent.registerGraphUrlChangeTrigger();
   Board.registerSaveTrigger();
   Board.registerNewerVersionTrigger();
   Board.registerSaveStatusListener();

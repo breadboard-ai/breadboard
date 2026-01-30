@@ -46,7 +46,7 @@ suite("Triggers", () => {
     assert.deepStrictEqual(list(), {
       board: ["Save Trigger", "Newer Version Trigger"],
       node: ["Autoname Trigger"],
-      agent: ["Graph Invalidate Trigger"],
+      agent: ["Graph Invalidate Trigger", "Graph URL Change Trigger"],
       run: [],
       shell: ["Page Title Trigger"],
       router: ["Router URL Change Trigger", "Router Init Trigger"],

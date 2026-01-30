@@ -8,6 +8,7 @@ import assert from "node:assert";
 import { after, afterEach, before, suite, test } from "node:test";
 import {
   registerGraphInvalidateTrigger,
+  registerGraphUrlChangeTrigger,
   bind,
 } from "../../../../src/sca/triggers/agent/agent-triggers.js";
 import { appController } from "../../../../src/sca/controller/controller.js";
@@ -143,6 +144,109 @@ suite("Agent Triggers", () => {
       invalidateCalled,
       false,
       "invalidateResumableRuns() should not have been called when version is -1"
+    );
+  });
+
+  test("Graph URL change trigger clears runs when URL changes", async () => {
+    let clearAllRunsCalled = false;
+    const services = {
+      agentContext: {
+        clearAllRuns() {
+          clearAllRunsCalled = true;
+        },
+      },
+    } as AppServices;
+
+    const actions = {} as AppActions;
+
+    bind({ controller, services, actions });
+
+    // Set up initial URL.
+    controller.editor.graph.setEditor(createMockEditor());
+    controller.editor.graph.url = "http://example.com/graph1";
+
+    // Register the trigger.
+    registerGraphUrlChangeTrigger();
+    await flushEffects();
+
+    // First registration should not clear runs (initial load).
+    assert.strictEqual(
+      clearAllRunsCalled,
+      false,
+      "clearAllRuns() should not be called on initial load"
+    );
+
+    // Change to a different URL.
+    controller.editor.graph.url = "http://example.com/graph2";
+    await flushEffects();
+
+    assert.strictEqual(
+      clearAllRunsCalled,
+      true,
+      "clearAllRuns() should be called when graph URL changes"
+    );
+  });
+
+  test("Graph URL change trigger does not clear runs when URL is unchanged", async () => {
+    let clearAllRunsCallCount = 0;
+    const services = {
+      agentContext: {
+        clearAllRuns() {
+          clearAllRunsCallCount++;
+        },
+      },
+    } as AppServices;
+
+    const actions = {} as AppActions;
+
+    bind({ controller, services, actions });
+
+    controller.editor.graph.setEditor(createMockEditor());
+    controller.editor.graph.url = "http://example.com/graph1";
+
+    registerGraphUrlChangeTrigger();
+    await flushEffects();
+
+    // Set the same URL again.
+    controller.editor.graph.url = "http://example.com/graph1";
+    await flushEffects();
+
+    assert.strictEqual(
+      clearAllRunsCallCount,
+      0,
+      "clearAllRuns() should not be called when URL is unchanged"
+    );
+  });
+
+  test("Graph URL change trigger does not clear runs on first URL set", async () => {
+    let clearAllRunsCalled = false;
+    const services = {
+      agentContext: {
+        clearAllRuns() {
+          clearAllRunsCalled = true;
+        },
+      },
+    } as AppServices;
+
+    const actions = {} as AppActions;
+
+    bind({ controller, services, actions });
+
+    // Start with no URL set.
+    controller.editor.graph.setEditor(createMockEditor());
+    controller.editor.graph.url = null;
+
+    registerGraphUrlChangeTrigger();
+    await flushEffects();
+
+    // Set the first URL.
+    controller.editor.graph.url = "http://example.com/graph1";
+    await flushEffects();
+
+    assert.strictEqual(
+      clearAllRunsCalled,
+      false,
+      "clearAllRuns() should not be called on first URL set (initial load)"
     );
   });
 });
