@@ -203,3 +203,16 @@ export type RunState = {
   /** Whether this run can be resumed (set to false when graph is edited) */
   resumable: boolean;
 };
+
+/**
+ * Injectable generators for testability.
+ * Production code uses real implementations; tests inject mocks.
+ */
+export type Generators = {
+  streamContent: typeof import("../a2/gemini.js").streamGenerateContent;
+  conformBody: typeof import("../a2/gemini.js").conformGeminiBody;
+  callImage: typeof import("../a2/image-utils.js").callGeminiImage;
+  callVideo: typeof import("../video-generator/main.js").callVideoGen;
+  callAudio: typeof import("../audio-generator/main.js").callAudioGen;
+  callMusic: typeof import("../music-generator/main.js").callMusicGen;
+};

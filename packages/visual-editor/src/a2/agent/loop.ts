@@ -13,6 +13,10 @@ import {
   streamGenerateContent,
   Tool,
 } from "../a2/gemini.js";
+import { callGeminiImage } from "../a2/image-utils.js";
+import { callAudioGen } from "../audio-generator/main.js";
+import { callMusicGen } from "../music-generator/main.js";
+import { callVideoGen } from "../video-generator/main.js";
 import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { AgentFileSystem } from "./file-system.js";
@@ -32,8 +36,18 @@ import { getNoUiFunctionGroup } from "./functions/no-ui.js";
 import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
 import { TaskTreeManager } from "./task-tree-manager.js";
 import { RunStateManager } from "./run-state-manager.js";
+import { Generators } from "./types.js";
 
 export { Loop };
+
+const generators: Generators = {
+  streamContent: streamGenerateContent,
+  conformBody: conformGeminiBody,
+  callImage: callGeminiImage,
+  callVideo: callVideoGen,
+  callAudio: callAudioGen,
+  callMusic: callMusicGen,
+};
 
 export type AgentRunArgs = {
   objective: LLMContent;
@@ -194,6 +208,7 @@ class Loop {
           translator,
           modelConstraint,
           taskTreeManager,
+          generators,
         })
       );
       functionGroups.push(

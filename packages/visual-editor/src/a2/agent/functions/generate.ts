@@ -12,13 +12,7 @@ import {
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import z from "zod";
-import {
-  conformGeminiBody,
-  GenerationConfig,
-  streamGenerateContent,
-  Tool,
-} from "../../a2/gemini.js";
-import { callGeminiImage } from "../../a2/image-utils.js";
+import { GenerationConfig, Tool } from "../../a2/gemini.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { AgentFileSystem } from "../file-system.js";
 import {
@@ -34,11 +28,10 @@ import {
   toText,
   tr,
 } from "../../a2/utils.js";
-import { callVideoGen, expandVeoError } from "../../video-generator/main.js";
-import { callAudioGen, VOICES } from "../../audio-generator/main.js";
-import { callMusicGen } from "../../music-generator/main.js";
+import { expandVeoError } from "../../video-generator/main.js";
+import { VOICES } from "../../audio-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
-import { FunctionGroup } from "../types.js";
+import { FunctionGroup, Generators } from "../types.js";
 import { fileNameSchema, statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 
@@ -72,6 +65,7 @@ export type GenerateFunctionArgs = {
   translator: PidginTranslator;
   modelConstraint: ModelConstraint;
   taskTreeManager: TaskTreeManager;
+  generators: Generators;
 };
 
 const GENERATE_TEXT_FUNCTION = "generate_text";
@@ -128,6 +122,7 @@ function defineGenerateFunctions(
     translator,
     modelConstraint,
     taskTreeManager,
+    generators,
   } = args;
   const imageFunction = defineFunction(
     {
@@ -220,7 +215,7 @@ The Gemini model to use for image generation. How to choose the right model:
       const modelName =
         model == "pro" ? IMAGE_PRO_MODEL_NAME : IMAGE_FLASH_MODEL_NAME;
 
-      const generated = await callGeminiImage(
+      const generated = await generators.callImage(
         caps,
         moduleArgs,
         modelName,
@@ -379,7 +374,7 @@ Specify URLs in the prompt.
       if (tools.length === 0) tools = undefined;
       const translated = await translator.fromPidginString(prompt);
       if (!ok(translated)) return { error: translated.$error };
-      const body = await conformGeminiBody(moduleArgs, {
+      const body = await generators.conformBody(moduleArgs, {
         systemInstruction: defaultSystemInstruction(),
         contents: [translated],
         tools,
@@ -390,7 +385,7 @@ Specify URLs in the prompt.
       const results: TextCapabilityPart[] = [];
       let maxRetries = 5;
       do {
-        const generating = await streamGenerateContent(
+        const generating = await generators.streamContent(
           resolvedModel,
           body,
           moduleArgs
@@ -490,7 +485,7 @@ The following elements should be included in your prompt:
       const imageParts = await fileSystem.getMany(images || []);
       if (!ok(imageParts)) return { error: imageParts.$error };
 
-      const generating = await callVideoGen(
+      const generating = await generators.callVideo(
         caps,
         moduleArgs,
         prompt,
@@ -550,7 +545,12 @@ The following elements should be included in your prompt:
       statusUpdateCallback(status_update || "Generating Speech", {
         expectedDurationInSec: 20,
       });
-      const generating = await callAudioGen(caps, moduleArgs, text, voice);
+      const generating = await generators.callAudio(
+        caps,
+        moduleArgs,
+        text,
+        voice
+      );
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);
@@ -613,7 +613,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
       statusUpdateCallback(status_update || "Generating Music", {
         expectedDurationInSec: 30,
       });
-      const generating = await callMusicGen(caps, moduleArgs, prompt);
+      const generating = await generators.callMusic(caps, moduleArgs, prompt);
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);
@@ -735,7 +735,7 @@ connects the code generation model to real-time web content and works with all a
 
       const translated = await translator.fromPidginString(prompt);
       if (!ok(translated)) return { error: translated.$error };
-      const body = await conformGeminiBody(moduleArgs, {
+      const body = await generators.conformBody(moduleArgs, {
         systemInstruction: llm`${tr`
 
 Your job is to generate and execute code to fulfill your objective.
@@ -751,7 +751,7 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
       const results: TextCapabilityPart[] = [];
       let maxRetries = 5;
       do {
-        const generating = await streamGenerateContent(
+        const generating = await generators.streamContent(
           CODE_GENERATION_MODEL_NAME,
           body,
           moduleArgs
