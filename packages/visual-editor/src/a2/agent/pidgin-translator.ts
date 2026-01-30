@@ -266,7 +266,7 @@ ${inner}
               return `<a href="${routeName}">${param.title}</a>`;
             } else if (param.path === MEMORY_TOOL_PATH) {
               useMemory = true;
-              return "Use Memory";
+              return "Use Memory Data Store";
             } else {
               const substitute = substituteDefaultTool(param);
               if (substitute !== null) {

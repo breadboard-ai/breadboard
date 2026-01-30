@@ -37,23 +37,17 @@ export type MemoryFunctionArgs = {
 
 const instruction = tr`
 
-## Using memory
+## Using memory data store
 
-You have access to persistent memory that allows you to recall and remember data across multiple sessions.
+You have access to persistent data store that allows you to recall and remember data across multiple sessions. Use the data store when the objective contains the key phrase "Use Memory Data Store".
 
-The memory is stored in a single Google Spreadsheet. 
+The data store is stored in a single Google Spreadsheet. 
 
 You can create new sheets within this spreadsheet using "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete existing sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. You can also get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
 
-To recall, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a VFS file using the "/vfs/memory/sheet_name" path.
+To retrieve data from the data store, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a VFS file using the "/vfs/memory/sheet_name" path.
 
-To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
-
-IMPORTANT: Before using memory functions, decide if you need memory at all. Rule of thumb:
-- if the objective contains the "remember" or "recall" keywords, use memory.
-- otherwise, use the VFS file system to store intermediate results.
-
-Example: the objective is to play a game and track a score within the game. In this case, you should use the VFS file system to store the score, not memory.
+To update data in the data store, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
 `;
 
 function getMemoryFunctionGroup(args: MemoryFunctionArgs): FunctionGroup {
