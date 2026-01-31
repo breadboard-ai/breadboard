@@ -37,7 +37,6 @@ class Main extends MainBase {
     ]);
 
     this.maybeNotifyAboutPreferredUrlForDomain();
-    this.maybeNotifyAboutDesktopModality();
     this.addExperimentalToggleToWindow();
   }
 
@@ -115,26 +114,6 @@ class Main extends MainBase {
       [],
       true
     );
-  }
-
-  maybeNotifyAboutDesktopModality() {
-    if (
-      parsedUrl.page !== "graph" ||
-      !parsedUrl.shared ||
-      parsedUrl.mode !== "canvas"
-    ) {
-      return;
-    }
-
-    // There's little point in attempting to differentiate between "mobile" and
-    // "desktop" here for any number of reasons, but as a reasonable proxy we
-    // will check that there's some screen estate available to show both the
-    // editor and the app preview before we show the modal.
-    if (window.innerWidth > 1280) {
-      return;
-    }
-
-    this.sca.controller.global.main.show.add("BetterOnDesktopModal");
   }
 
   override async handleAppAccessCheckResult(
@@ -239,9 +218,6 @@ class Main extends MainBase {
         this.sca.controller.global.main.show.has("SnackbarDetailsModal")
           ? this.renderSnackbarDetailsModal()
           : nothing,
-        this.sca.controller.global.main.show.has("BetterOnDesktopModal")
-          ? this.#renderBetterOnDesktopModal()
-          : nothing,
         this.sca.controller.global.main.show.has("VideoModal")
           ? this.#renderVideoModal()
           : nothing,
@@ -335,6 +311,7 @@ class Main extends MainBase {
       "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
+      .liteState=${this.runtime.state.lite}
       @bbshowvideomodal=${() => {
         this.sca.controller.global.main.show.add("VideoModal");
       }}
@@ -366,14 +343,6 @@ class Main extends MainBase {
         this.sca.controller.global.main.show.delete("BoardEditModal");
       }}
     ></bb-edit-board-modal>`;
-  }
-
-  #renderBetterOnDesktopModal() {
-    return html`<bb-better-on-desktop-modal
-      @bbmodaldismissed=${() => {
-        this.sca.controller.global.main.show.delete("BetterOnDesktopModal");
-      }}
-    ></bb-better-on-desktop-modal>`;
   }
 
   #renderVideoModal() {
@@ -605,6 +574,7 @@ class Main extends MainBase {
         : false}
       .saveStatus=${renderValues.saveStatus}
       .mode=${this.sca.controller.global.main.mode}
+      .graphIsEmpty=${BreadboardUI.Utils.isEmpty(this.tab?.graph ?? null)}
       @bbsignout=${async () => {
         await this.sca.services.signinAdapter.signOut();
       this.sca.services.actionTracker.signOutSuccess();
@@ -753,6 +723,27 @@ class Main extends MainBase {
               Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
               BreadboardUI.Events.ToastType.INFORMATION
             );
+            break;
+          }
+
+          case "share": {
+            this.canvasControllerRef.value?.openSharePanel();
+            break;
+          }
+
+          case "remix": {
+            if (!this.tab?.graph.url) {
+              return;
+            }
+            this.sca.services.actionTracker.remixApp(
+              this.tab.graph.url,
+              "editor"
+            );
+            this.invokeRemixEventRouteWith(this.tab.graph.url, {
+              start: Strings.from("STATUS_REMIXING_PROJECT"),
+              end: Strings.from("STATUS_PROJECT_CREATED"),
+              error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+            });
             break;
           }
 

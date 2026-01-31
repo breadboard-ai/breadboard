@@ -46,6 +46,7 @@ import type * as App from "./app/app.js";
 import type * as Asset from "./asset/asset.js";
 import { BaseEventDetail } from "./base.js";
 import type * as Board from "./board/board.js";
+import type * as Flowgen from "./flowgen/flowgen.js";
 import type * as Host from "./host/host.js";
 import type * as Node from "./node/node.js";
 
@@ -90,6 +91,8 @@ export type StateEventDetailMap = EnforceEventTypeMatch<{
 
   "asset.changeedge": Asset.ChangeEdge;
   "asset.add": Asset.Add;
+
+  "flowgen.generate": Flowgen.Generate;
 
   "app.fullscreen": App.Fullscreen;
 }>;

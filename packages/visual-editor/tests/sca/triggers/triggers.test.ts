@@ -32,7 +32,8 @@ suite("Triggers", () => {
 
   test("Instantiates without error", () => {
     assert.doesNotThrow(() => {
-      triggers(makeTestController(), makeTestServices(), {} as AppActions);
+      const { controller } = makeTestController();
+      triggers(controller, makeTestServices().services, {} as AppActions);
     });
 
     assert.throws(() => {
@@ -42,7 +43,8 @@ suite("Triggers", () => {
   });
 
   test("cleans up", () => {
-    triggers(makeTestController(), makeTestServices(), {} as AppActions);
+    const { controller } = makeTestController();
+    triggers(controller, makeTestServices().services, {} as AppActions);
     assert.deepStrictEqual(list(), {
       board: ["Save Trigger", "Newer Version Trigger"],
       node: ["Autoname Trigger"],
@@ -50,6 +52,7 @@ suite("Triggers", () => {
       run: [],
       shell: ["Page Title Trigger"],
       router: ["Router URL Change Trigger", "Router Init Trigger"],
+      screenSize: [],
     });
     clean();
 
@@ -61,6 +64,7 @@ suite("Triggers", () => {
       run: [],
       shell: [],
       router: [],
+      screenSize: [],
     });
 
     // Confirm that listing and cleaning do not throw in the absence of a

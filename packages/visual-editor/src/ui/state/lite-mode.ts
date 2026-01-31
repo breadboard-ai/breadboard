@@ -59,20 +59,31 @@ class ReactiveLiteModeState implements LiteModeState {
   accessor viewError: string = "";
 
   @signal
-  accessor status: FlowGenGenerationStatus = "initial";
+  get status(): FlowGenGenerationStatus {
+    // This is a bit of a hack to allow the non-lite SCA state to drive the
+    // generation status for the step list view when used in non-lite mode.
+    // Ideally the lite-mode state just gets collapsed into SCA and this
+    // all goes away
+    const scaStatus = this.sca.controller.global.flowgenInput.state.status;
+    if (scaStatus === "generating") return "generating";
+    return this.#localStatus;
+  }
+
+  @signal
+  accessor #localStatus: FlowGenGenerationStatus = "initial";
 
   @signal
   accessor error: string | undefined;
 
   startGenerating(): void {
-    this.status = "generating";
+    this.#localStatus = "generating";
   }
 
   finishGenerating(): void {
     // Consume intent.
     this.#intent = undefined;
     this.currentExampleIntent = "";
-    this.status = "initial";
+    this.#localStatus = "initial";
   }
 
   @signal

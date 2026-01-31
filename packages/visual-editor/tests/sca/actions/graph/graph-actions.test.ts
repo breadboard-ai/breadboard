@@ -375,6 +375,214 @@ suite("Graph Actions", () => {
         assert.strictEqual(testGraph.nodes.length, 1);
         assert.strictEqual(testGraph.nodes[0].id, "new-node");
       });
+
+      suite("replaceWithTheme", () => {
+        test("applies a generated theme to the graph", async () => {
+          const changeWatcher = editorChange(graphActions);
+          const testTheme = {
+            themeColors: {
+              primary: "#ff0000",
+              secondary: "#00ff00",
+              background: "#ffffff",
+            },
+            template: "modern",
+          };
+
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [{ id: "themed-node", type: "input" }],
+              edges: [],
+              title: "Themed Graph",
+            },
+            theme: testTheme,
+            creator: { role: "assistant" },
+          });
+          testGraph = await changeWatcher;
+
+          assert.strictEqual(testGraph.title, "Themed Graph");
+
+          // Verify theme was applied
+          const presentation = testGraph.metadata?.visual?.presentation;
+          assert.ok(presentation, "Presentation metadata should exist");
+          assert.ok(presentation.theme, "Theme ID should be set");
+          assert.ok(presentation.themes, "Themes object should exist");
+
+          const appliedTheme = presentation.themes[presentation.theme];
+          assert.ok(appliedTheme, "Applied theme should exist");
+          assert.strictEqual(appliedTheme.themeColors?.["primary"], "#ff0000");
+          assert.strictEqual(appliedTheme.template, "modern");
+        });
+
+        test("generates unique theme IDs for each replacement", async () => {
+          const testTheme = {
+            themeColors: { primary: "#ff0000" },
+          };
+
+          // First replacement
+          let changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "First",
+            },
+            theme: testTheme,
+            creator: { role: "assistant" },
+          });
+          let graph1 = await changeWatcher;
+          const themeId1 = graph1.metadata?.visual?.presentation?.theme;
+
+          // Second replacement
+          changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Second",
+            },
+            theme: testTheme,
+            creator: { role: "assistant" },
+          });
+          const graph2 = await changeWatcher;
+          const themeId2 = graph2.metadata?.visual?.presentation?.theme;
+
+          assert.ok(themeId1, "First theme ID should exist");
+          assert.ok(themeId2, "Second theme ID should exist");
+          assert.notStrictEqual(
+            themeId1,
+            themeId2,
+            "Theme IDs should be unique"
+          );
+        });
+
+        test("preserves splash screen from current graph theme", async () => {
+          // First, set up a graph with a theme containing a splash screen
+          const splashScreenData = {
+            storedData: {
+              handle: "splash-handle-1",
+              mimeType: "image/png",
+            },
+          };
+
+          const initialTheme = {
+            themeColors: { primary: "#0000ff" },
+            splashScreen: splashScreenData,
+          };
+
+          let changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Initial with splash",
+            },
+            theme: initialTheme,
+            creator: { role: "user" },
+          });
+          await changeWatcher;
+
+          // Now replace with a theme that lacks a splash screen
+          changeWatcher = editorChange(graphActions);
+          const newThemeWithoutSplash = {
+            themeColors: { primary: "#ff0000" },
+            // No splashScreen
+          };
+
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Replacement without splash",
+            },
+            theme: newThemeWithoutSplash,
+            creator: { role: "assistant" },
+          });
+          testGraph = await changeWatcher;
+
+          // Verify the splash screen was preserved from the original theme
+          const presentation = testGraph.metadata?.visual?.presentation;
+          assert.ok(presentation, "Presentation should exist");
+          const appliedTheme = presentation.themes?.[presentation.theme!];
+          assert.ok(appliedTheme, "Applied theme should exist");
+          assert.deepStrictEqual(
+            appliedTheme.splashScreen,
+            splashScreenData,
+            "Splash screen should be preserved from previous theme"
+          );
+        });
+
+        test("does not overwrite splash screen when replacement has one", async () => {
+          // First, set up a graph with a theme containing a splash screen
+          const originalSplashScreen = {
+            storedData: {
+              handle: "original-handle",
+              mimeType: "image/png",
+            },
+          };
+
+          let changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Original",
+            },
+            theme: {
+              themeColors: { primary: "#0000ff" },
+              splashScreen: originalSplashScreen,
+            },
+            creator: { role: "user" },
+          });
+          await changeWatcher;
+
+          // Replace with a theme that HAS its own splash screen
+          const newSplashScreen = {
+            storedData: {
+              handle: "new-handle",
+              mimeType: "image/jpeg",
+            },
+          };
+
+          changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Replacement with its own splash",
+            },
+            theme: {
+              themeColors: { primary: "#00ff00" },
+              splashScreen: newSplashScreen,
+            },
+            creator: { role: "assistant" },
+          });
+          testGraph = await changeWatcher;
+
+          // Verify the new splash screen is used, not the old one
+          const presentation = testGraph.metadata?.visual?.presentation;
+          const appliedTheme = presentation?.themes?.[presentation?.theme!];
+          assert.deepStrictEqual(
+            appliedTheme?.splashScreen,
+            newSplashScreen,
+            "New splash screen should be used"
+          );
+        });
+
+        test("calls replace with the creator parameter", async () => {
+          const changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Creator Test",
+            },
+            creator: { role: "assistant" },
+          });
+          testGraph = await changeWatcher;
+
+          assert.strictEqual(testGraph.title, "Creator Test");
+        });
+      });
     });
   });
 });
