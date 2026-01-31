@@ -37,29 +37,8 @@ export class FlowgenInputController extends RootController {
   /**
    * The current status of the flowgen input (initial, generating, or error).
    */
-  @field()
+  @field({ deep: true })
   accessor state: FlowgenInputStatus = { status: "initial" };
-
-  constructor(
-    public readonly controllerId: string,
-    public readonly persistenceId: string
-  ) {
-    super(controllerId, persistenceId);
-  }
-
-  /**
-   * Sets the input value. Called on each input event from the textarea.
-   */
-  setInputValue(value: string): void {
-    this.inputValue = value;
-  }
-
-  /**
-   * Sets the status state (initial, generating, error).
-   */
-  setState(state: FlowgenInputStatus): void {
-    this.state = state;
-  }
 
   /**
    * Clears both the input value and resets the state to initial.

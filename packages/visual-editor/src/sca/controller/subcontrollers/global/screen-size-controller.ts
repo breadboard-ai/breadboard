@@ -24,12 +24,9 @@ export const MEDIUM_BREAKPOINT = 830;
 /**
  * Controller for managing responsive screen size state.
  *
- * This controller tracks the viewport width and categorizes it into
- * "narrow", "medium", or "wide" buckets. Components can react to the
- * `size` signal to adapt their rendering for different screen sizes.
- *
- * The controller automatically initializes media query listeners and
- * updates the `size` field when the viewport crosses breakpoint thresholds.
+ * This controller holds the viewport size category ("narrow", "medium", or "wide").
+ * The actual media query listeners are managed by the screen-size trigger,
+ * which updates this controller's `size` signal when breakpoints are crossed.
  *
  * @example
  * ```typescript
@@ -43,42 +40,9 @@ export const MEDIUM_BREAKPOINT = 830;
 export class ScreenSizeController extends RootController {
   /**
    * The current screen size category.
-   * Updates reactively when viewport width crosses breakpoints.
+   * Updated by the screen-size trigger when viewport width crosses breakpoints.
    */
   @field()
   accessor size: ScreenSize = "wide";
-
-  constructor(controllerId: string, persistenceId: string) {
-    super(controllerId, persistenceId);
-    this.#initMediaListeners();
-  }
-
-  #initMediaListeners() {
-    // Guard for SSR/test environments where window or matchMedia is not available
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-
-    const narrowQuery = window.matchMedia(
-      `(max-width: ${NARROW_BREAKPOINT}px)`
-    );
-    const mediumQuery = window.matchMedia(
-      `(max-width: ${MEDIUM_BREAKPOINT}px)`
-    );
-
-    const updateSize = () => {
-      if (narrowQuery.matches) {
-        this.size = "narrow";
-      } else if (mediumQuery.matches) {
-        this.size = "medium";
-      } else {
-        this.size = "wide";
-      }
-    };
-
-    // Set initial value
-    updateSize();
-
-    // Listen for viewport changes
-    narrowQuery.addEventListener("change", updateSize);
-    mediumQuery.addEventListener("change", updateSize);
-  }
 }
+

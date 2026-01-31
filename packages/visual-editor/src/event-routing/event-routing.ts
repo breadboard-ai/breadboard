@@ -9,6 +9,7 @@ import { EventRoute } from "./types.js";
 
 import * as Host from "./host/host.js";
 import * as Board from "./board/board.js";
+import * as Flowgen from "./flowgen/flowgen.js";
 import * as Asset from "./asset/asset.js";
 import * as Node from "./node/node.js";
 
@@ -38,6 +39,9 @@ export const eventRoutes = new Map<
   [Board.TogglePinRoute.event, Board.TogglePinRoute],
   [Board.UndoRoute.event, Board.UndoRoute],
   [Board.RedoRoute.event, Board.RedoRoute],
+
+  /** Flowgen */
+  [Flowgen.GenerateRoute.event, Flowgen.GenerateRoute],
 
   /** Node */
   [Node.ActionRoute.event, Node.ActionRoute],

@@ -17,8 +17,8 @@ describe("Run Triggers", () => {
   });
 
   test("registerRunStatusListener warns if no runner", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
 
     // Should not throw, just warn
@@ -28,8 +28,8 @@ describe("Run Triggers", () => {
   });
 
   test("registerRunStatusListener updates status on start event", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
 
     // Create a mock runner with event support
@@ -54,8 +54,8 @@ describe("Run Triggers", () => {
   });
 
   test("registerRunStatusListener updates status on resume event", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
 
     const mockRunner = new EventTarget();
@@ -77,8 +77,8 @@ describe("Run Triggers", () => {
   });
 
   test("registerRunStatusListener updates status on pause event", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
 
     const mockRunner = new EventTarget();
@@ -101,8 +101,8 @@ describe("Run Triggers", () => {
   });
 
   test("registerRunStatusListener updates status on end event", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
 
     const mockRunner = new EventTarget();
@@ -125,8 +125,8 @@ describe("Run Triggers", () => {
   });
 
   test("registerRunStatusListener updates status on error event", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
 
     const mockRunner = new EventTarget();
@@ -149,8 +149,8 @@ describe("Run Triggers", () => {
   });
 
   test("full run lifecycle: start -> pause -> resume -> end", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
 
     const mockRunner = new EventTarget();

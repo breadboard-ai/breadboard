@@ -12,7 +12,7 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { projectStateContext } from "../contexts/project-state.js";
 import "../elements/input/expanding-textarea.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
-import { UtteranceEvent } from "../events/events.js";
+import { StateEvent, UtteranceEvent } from "../events/events.js";
 import { Project } from "../state/types.js";
 import * as StringsHelper from "../strings/helper.js";
 import { baseColors } from "../styles/host/base-colors.js";
@@ -220,30 +220,28 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
    * Get state from controller (signal-backed for cross-breakpoint sync).
    */
   get #state(): FlowgenInputStatus {
-    return (
-      this.sca?.controller.global.flowgenInput.state ?? { status: "initial" }
-    );
+    return this.sca.controller.global.flowgenInput.state;
   }
 
   /**
    * Set state on controller.
    */
   set #state(value: FlowgenInputStatus) {
-    this.sca?.controller.global.flowgenInput.setState(value);
+    this.sca.controller.global.flowgenInput.state = value;
   }
 
   /**
    * Get input value from controller.
    */
   get #inputValue(): string {
-    return this.sca?.controller.global.flowgenInput.inputValue ?? "";
+    return this.sca.controller.global.flowgenInput.inputValue;
   }
 
   /**
    * Set input value on controller.
    */
   set #inputValue(value: string) {
-    this.sca?.controller.global.flowgenInput.setInputValue(value);
+    this.sca.controller.global.flowgenInput.inputValue = value;
   }
 
   @property({ type: Boolean, reflect: true })
@@ -410,13 +408,17 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
         return;
       }
 
-      // Validate all required dependencies are available BEFORE calling action
-      if (!this.sca) return;
       if (!this.projectState) return;
 
-      // Delegate to SCA action - this survives DOM changes during resize
-      // SCA action handles setting generating/initial status
-      this.sca.actions.flowgen.generate(description, this.projectState);
+      // Dispatch StateEvent - event-router handles locking/tracking,
+      // SCA action handles core logic. This survives DOM changes during resize.
+      this.dispatchEvent(
+        new StateEvent({
+          eventType: "flowgen.generate",
+          intent: description,
+          projectState: this.projectState,
+        })
+      );
     }
   }
 

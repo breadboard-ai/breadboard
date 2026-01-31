@@ -12,6 +12,7 @@ import * as Board from "./board/board-triggers.js";
 import * as Node from "./node/node-triggers.js";
 import * as Router from "./router/router-triggers.js";
 import * as Run from "./run/run-triggers.js";
+import * as ScreenSize from "./screen-size/screen-size-triggers.js";
 import * as Shell from "./shell/shell-triggers.js";
 
 export interface AppTriggers {
@@ -20,6 +21,7 @@ export interface AppTriggers {
   node: typeof Node;
   router: typeof Router;
   run: typeof Run;
+  screenSize: typeof ScreenSize;
   shell: typeof Shell;
 }
 
@@ -38,6 +40,7 @@ export function triggers(
     Node.bind({ controller, services, actions });
     Router.bind({ controller, services, actions });
     Run.bind({ controller, services, actions });
+    ScreenSize.bind({ controller, services, actions });
     Shell.bind({ controller, services, actions });
     register();
 
@@ -47,6 +50,7 @@ export function triggers(
       node: Node,
       router: Router,
       run: Run,
+      screenSize: ScreenSize,
       shell: Shell,
     } satisfies AppTriggers;
   }
@@ -62,6 +66,7 @@ export function register() {
   Node.registerAutonameTrigger();
   Router.registerPopstateTrigger();
   Router.registerInitTrigger();
+  ScreenSize.registerMediaQueryTrigger();
   Shell.registerPageTitleTrigger();
 }
 

@@ -16,7 +16,10 @@ export type GenerateResult =
   | { success: false; error: unknown; suggestedIntent?: string };
 
 /**
- * Generates a flow from a user intent using FlowGen.
+ * Core flowgen logic: generates a flow from user intent using FlowGen.
+ *
+ * NOTE: Board locking, status updates, and action tracking are handled
+ * by the event-router (flowgen.generate). This action only contains core logic.
  *
  * @param intent - The user's description/intent for the flow
  * @param projectState - The project state for theme generation (from Lit context)
@@ -25,21 +28,14 @@ export async function generate(
   intent: string,
   projectState: Project
 ): Promise<GenerateResult> {
-  const currentGraph = bind.controller.editor.graph.editor?.raw();
+  const { controller, services } = bind;
+
+  const currentGraph = controller.editor.graph.editor?.raw();
   if (!currentGraph) {
     return { success: false, error: "No active graph to edit" };
   }
 
-  const { controller, services } = bind;
   const flowgenInput = controller.global.flowgenInput;
-
-  // Lock UI and stop any running execution
-  controller.global.main.blockingAction = true;
-  controller.run.main.stop();
-  flowgenInput.setState({ status: "generating" });
-
-  // Track analytics
-  services.actionTracker?.flowGenEdit(currentGraph.url);
 
   try {
     const response = await flowGenWithTheme(
@@ -50,11 +46,11 @@ export async function generate(
     );
 
     if ("error" in response) {
-      flowgenInput.setState({
+      flowgenInput.state = {
         status: "error",
         error: response.error,
         suggestedIntent: response.suggestedIntent,
-      });
+      };
       return {
         success: false,
         error: response.error,
@@ -73,7 +69,12 @@ export async function generate(
 
     flowgenInput.clear();
     return { success: true };
-  } finally {
-    controller.global.main.blockingAction = false;
+  } catch (error) {
+    flowgenInput.state = {
+      status: "error",
+      error,
+    };
+    return { success: false, error };
   }
 }
+

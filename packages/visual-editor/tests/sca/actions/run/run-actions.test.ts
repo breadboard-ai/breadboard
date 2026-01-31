@@ -40,8 +40,8 @@ describe("Run Actions", () => {
   });
 
   test("prepare sets runner on controller", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunActions.bind({ controller, services });
 
     const config = makeMockConfig();
@@ -60,8 +60,8 @@ describe("Run Actions", () => {
   });
 
   test("prepare sets status to STOPPED (ready)", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunActions.bind({ controller, services });
 
     const config = makeMockConfig();
@@ -75,15 +75,17 @@ describe("Run Actions", () => {
   });
 
   test("runner 'start' event sets status to RUNNING", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunActions.bind({ controller, services });
 
     const config = makeMockConfig();
     RunActions.prepare(config);
 
     // Simulate runner emitting 'start' event
-    const runner = controller.run.main.runner! as unknown as { _fireEvent: (e: string) => void };
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string) => void;
+    };
     runner._fireEvent("start");
 
     assert.strictEqual(
@@ -94,8 +96,8 @@ describe("Run Actions", () => {
   });
 
   test("runner 'resume' event sets status to RUNNING", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunActions.bind({ controller, services });
 
     const config = makeMockConfig();
@@ -103,7 +105,9 @@ describe("Run Actions", () => {
 
     // Simulate paused state then resume
     controller.run.main.setStatus(STATUS.PAUSED);
-    const runner = controller.run.main.runner! as unknown as { _fireEvent: (e: string) => void };
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string) => void;
+    };
     runner._fireEvent("resume");
 
     assert.strictEqual(
@@ -114,8 +118,8 @@ describe("Run Actions", () => {
   });
 
   test("runner 'pause' event sets status to PAUSED", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunActions.bind({ controller, services });
 
     const config = makeMockConfig();
@@ -123,7 +127,9 @@ describe("Run Actions", () => {
 
     // Simulate running then pause
     controller.run.main.setStatus(STATUS.RUNNING);
-    const runner = controller.run.main.runner! as unknown as { _fireEvent: (e: string) => void };
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string) => void;
+    };
     runner._fireEvent("pause");
 
     assert.strictEqual(
@@ -134,8 +140,8 @@ describe("Run Actions", () => {
   });
 
   test("runner 'end' event sets status to STOPPED", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunActions.bind({ controller, services });
 
     const config = makeMockConfig();
@@ -143,7 +149,9 @@ describe("Run Actions", () => {
 
     // Simulate running then end
     controller.run.main.setStatus(STATUS.RUNNING);
-    const runner = controller.run.main.runner! as unknown as { _fireEvent: (e: string) => void };
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string) => void;
+    };
     runner._fireEvent("end");
 
     assert.strictEqual(
@@ -154,8 +162,8 @@ describe("Run Actions", () => {
   });
 
   test("runner 'error' event sets status to STOPPED", () => {
-    const controller = makeTestController();
-    const services = makeTestServices();
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
     RunActions.bind({ controller, services });
 
     const config = makeMockConfig();
@@ -163,7 +171,9 @@ describe("Run Actions", () => {
 
     // Simulate running then error
     controller.run.main.setStatus(STATUS.RUNNING);
-    const runner = controller.run.main.runner! as unknown as { _fireEvent: (e: string) => void };
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string) => void;
+    };
     runner._fireEvent("error");
 
     assert.strictEqual(

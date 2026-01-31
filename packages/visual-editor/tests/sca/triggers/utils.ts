@@ -4,46 +4,176 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EditableGraph } from "@breadboard-ai/types";
+import { mock } from "node:test";
+import type { EditableGraph, GraphDescriptor } from "@breadboard-ai/types";
 import { AppController } from "../../../src/sca/controller/controller.js";
 import { AppServices } from "../../../src/sca/services/services.js";
 import { RunController } from "../../../src/sca/controller/subcontrollers/run/run-controller.js";
+import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
+import type { FlowgenInputStatus } from "../../../src/sca/controller/subcontrollers/global/flowgen-input-controller.js";
+import { makeTestGraphStore } from "../../helpers/_graph-store.js";
+import { testKit } from "../../test-kit.js";
+import type { Project } from "../../../src/ui/state/types.js";
+
+/**
+ * Creates a minimal test graph descriptor.
+ */
+export function makeTestGraph(): GraphDescriptor {
+  return {
+    nodes: [],
+    edges: [],
+    url: "test://board",
+  };
+}
+
+/**
+ * Creates a mock project state for flowgen testing.
+ */
+export function makeTestProjectState(): Project {
+  return {
+    themes: {
+      generateThemeFromIntent: mock.fn(() =>
+        Promise.resolve({ error: "skipped" })
+      ),
+    },
+  } as unknown as Project;
+}
 
 const defaultGraph = {
   version: 0,
   graphIsMine: true,
 };
 
-export function makeTestController(graph = defaultGraph): AppController {
+/**
+ * Creates a mock FlowgenInputController for testing.
+ * Matches the actual controller interface: inputValue and state are directly settable,
+ * with a clear() method to reset both.
+ */
+function makeMockFlowgenInput() {
   return {
-    editor: {
-      graph,
+    inputValue: "",
+    state: { status: "initial" } as FlowgenInputStatus,
+    clear() {
+      this.inputValue = "";
+      this.state = { status: "initial" };
     },
+  };
+}
+
+/**
+ * Helper to create a graph store with editor for testing.
+ */
+export function makeTestGraphStoreWithEditor() {
+  const graphStore = makeTestGraphStore({ kits: [testKit] });
+  const testGraph: GraphDescriptor = { nodes: [], edges: [] };
+  const mainGraphId = graphStore.addByDescriptor(testGraph);
+  if (!mainGraphId.success) throw new Error("Unable to create graph");
+  const editor = graphStore.edit(mainGraphId.result);
+  if (!editor) throw new Error("Unable to edit graph");
+  return { graphStore, editor };
+}
+
+export interface TestControllerOptions {
+  /** Editor to use - if provided, creates controller with editor-backed graph */
+  editor?: ReturnType<typeof makeTestGraphStoreWithEditor>["editor"];
+  /** Custom graph for non-editor tests */
+  graph?: typeof defaultGraph;
+}
+
+/**
+ * Creates a test controller with all mocks pre-configured.
+ * Returns the controller and mocks for test access.
+ */
+export function makeTestController(options: TestControllerOptions = {}) {
+  const { editor, graph = defaultGraph } = options;
+  const flowgenInput = makeMockFlowgenInput();
+  const main = { blockingAction: false };
+  const runStop = mock.fn();
+
+  // Build the controller based on what's provided
+  const controller = {
     global: {
-      debug: {
-        enabled: true,
-      },
-      snackbars: {
-        snackbar: () => "mock-id",
-      },
+      debug: { enabled: true },
+      snackbars: { snackbar: () => "mock-id" },
+      main,
+      ...(flowgenInput && { flowgenInput }),
     },
     board: {
-      main: {
-        newerVersionAvailable: false,
-      },
+      main: { newerVersionAvailable: false },
     },
     run: {
-      main: new RunController("test-run-controller", "test"),
+      main: editor
+        ? { stop: runStop }
+        : new RunController("test-run-controller", "test"),
     },
     router: {
-      updateFromCurrentUrl: () => { },
-      init: () => { },
+      updateFromCurrentUrl: () => {},
+      init: () => {},
+    },
+    editor: {
+      graph: editor ? { editor, lastNodeConfigChange: null } : graph,
     },
   } as unknown as AppController;
+
+  return {
+    controller,
+    mocks: {
+      flowgenInput,
+      main,
+      runStop,
+    },
+  };
+}
+
+export interface TestFixturesOptions {
+  /** If true, creates a graph store with editor. Sets up controller and services accordingly. */
+  withEditor?: boolean;
+  /** Optional flow generator mock for flowgen tests */
+  flowGeneratorMock?: Partial<FlowGenerator>;
+  /** Optional agent context override */
+  agentContext?: TestServicesOptions["agentContext"];
+}
+
+/**
+ * Creates all test fixtures (controller, services, and mocks) in a single call.
+ * This is the preferred way to set up tests that need both controller and services.
+ *
+ * When `withEditor: true`, automatically creates a graph store with editor and
+ * wires up both controller and services with the appropriate dependencies.
+ */
+export function makeTestFixtures(options: TestFixturesOptions = {}) {
+  const { withEditor = false, flowGeneratorMock, agentContext } = options;
+
+  let graphStore: AppServices["graphStore"] | undefined;
+  let editor:
+    | ReturnType<typeof makeTestGraphStoreWithEditor>["editor"]
+    | undefined;
+
+  if (withEditor) {
+    const result = makeTestGraphStoreWithEditor();
+    graphStore = result.graphStore;
+    editor = result.editor;
+  }
+
+  const { controller, mocks: controllerMocks } = makeTestController({ editor });
+  const { services, mocks: serviceMocks } = makeTestServices({
+    graphStore,
+    flowGeneratorMock,
+    agentContext,
+  });
+
+  return {
+    controller,
+    services,
+    mocks: {
+      ...controllerMocks,
+      ...serviceMocks,
+    },
+  };
 }
 
 const defaultAgentContext = {
-  invalidateResumableRuns: () => { },
+  invalidateResumableRuns: () => {},
 };
 
 /**
@@ -59,28 +189,42 @@ export function createMockRunner() {
       }
       listeners[event].push(handler);
     },
-    removeEventListener: () => { },
-    start: () => { },
+    removeEventListener: () => {},
+    start: () => {},
     running: () => false,
     // Helper for tests to fire events
     _fireEvent: (event: string) => {
       if (listeners[event]) {
-        listeners[event].forEach(h => h());
+        listeners[event].forEach((h) => h());
       }
     },
   };
   return runner;
 }
 
-export function makeTestServices(
-  agentContext = defaultAgentContext
-): AppServices {
-  return {
+export interface TestServicesOptions {
+  agentContext?: typeof defaultAgentContext;
+  graphStore?: AppServices["graphStore"];
+  flowGeneratorMock?: Partial<FlowGenerator>;
+}
+
+export function makeTestServices(options: TestServicesOptions = {}) {
+  const {
+    agentContext = defaultAgentContext,
+    graphStore,
+    flowGeneratorMock,
+  } = options;
+
+  const actionTrackerMock = {
+    flowGenEdit: mock.fn(),
+  };
+
+  const services = {
     agentContext,
     // Mock googleDriveBoardServer for registerSaveStatusListener
     googleDriveBoardServer: {
-      addEventListener: () => { },
-      removeEventListener: () => { },
+      addEventListener: () => {},
+      removeEventListener: () => {},
     },
     // Mock RunService that returns a testable mock runner
     runService: {
@@ -90,17 +234,31 @@ export function makeTestServices(
         return { runner: mockRunner, abortController };
       },
     },
-    // Mock graphStore with fileSystem for run actions
-    graphStore: {
-      fileSystem: {
-        env: () => [],
-        createRunFileSystem: () => ({}),
-      },
-    } as unknown as AppServices["graphStore"],
+    // graphStore - use provided or default mock
+    graphStore:
+      graphStore ??
+      ({
+        fileSystem: {
+          env: () => [],
+          createRunFileSystem: () => ({}),
+        },
+      } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],
     kits: [],
+    // Flowgen mocks (optional)
+    ...(flowGeneratorMock && {
+      flowGenerator: flowGeneratorMock as FlowGenerator,
+      actionTracker: actionTrackerMock,
+    }),
   } as unknown as AppServices;
+
+  return {
+    services,
+    mocks: {
+      actionTracker: actionTrackerMock,
+    },
+  };
 }
 
 /**
@@ -110,8 +268,8 @@ export function makeTestServices(
 export function createMockEditor(): EditableGraph {
   return {
     raw: () => ({}),
-    addEventListener: () => { },
-    removeEventListener: () => { },
+    addEventListener: () => {},
+    removeEventListener: () => {},
   } as unknown as EditableGraph;
 }
 
