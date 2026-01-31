@@ -106,6 +106,12 @@ export class StepListView extends SignalWatcher(LitElement) {
                   #f0f4f9,
                   var(--sys-color--surface-container)
                 );
+                :host(:not([lite])) & {
+                  background: light-dark(
+                    #fff,
+                    var(--sys-color--surface-container)
+                  );
+                }
                 padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
                 list-style: none;
                 gap: var(--bb-grid-size-4);
@@ -160,7 +166,11 @@ export class StepListView extends SignalWatcher(LitElement) {
               }
 
               /* Step type colors - only when not in lite mode */
-              :host(:not([lite])) & > summary {
+              :host(:not([lite])) &:not(.generating) > summary {
+                & .step-title {
+                  color: var(--n-0);
+                }
+
                 /* Input steps (yellow) */
                 &.chat_mirror {
                   background: var(--ui-get-input);
@@ -190,23 +200,6 @@ export class StepListView extends SignalWatcher(LitElement) {
                 &.laps {
                   background: var(--ui-generate);
                   color: var(--n-0);
-                }
-
-                &.loading {
-                  /* Use n-30 gray for subtle visibility against non-lite background */
-                  --light: oklch(from var(--n-80) l c h / 50%);
-                  --dark: oklch(from var(--n-80) l c h / 80%);
-
-                  background: linear-gradient(
-                    123deg,
-                    var(--light) 0%,
-                    var(--dark) 25%,
-                    var(--light) 50%,
-                    var(--dark) 75%,
-                    var(--light) 100%
-                  );
-                  background-size: 200% 200%;
-                  animation: glide 2150ms linear infinite;
                 }
               }
 
@@ -281,7 +274,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                 margin-top: var(--bb-grid-size-2);
 
                 :host(:not([lite])) & {
-                  background: var(--light-dark-n-100);
+                  background: light-dark(var(--n-100), var(--n-0));
                 }
 
                 > p {
@@ -382,6 +375,7 @@ export class StepListView extends SignalWatcher(LitElement) {
           ?inert=${options.status === "generating"}
           class=${classMap({
             animated: options.animated === true,
+            generating: options.status === "generating",
           })}
           style=${styleMap({
             animationDelay,
@@ -425,13 +419,9 @@ export class StepListView extends SignalWatcher(LitElement) {
     };
 
     const renderPlaceholders = () => {
-      // Use first step's icon for color, or default to chat_mirror (yellow/input)
-      const firstStepIcon = this.state?.steps?.size
-        ? ([...this.state.steps.values()][0]?.icon ?? "chat_mirror")
-        : "chat_mirror";
       return html`<ul id="list">
         ${this.state?.status === "generating"
-          ? renderPlannerProgress(firstStepIcon)
+          ? renderPlannerProgress()
           : nothing}
         ${repeat(new Array(4), () => {
           return html`<li>
@@ -447,14 +437,14 @@ export class StepListView extends SignalWatcher(LitElement) {
                 status: "loading",
                 title: "",
               },
-              { status: "loading", colorClass: firstStepIcon }
+              { status: "loading" }
             )}
           </li>`;
         })}
       </ul>`;
     };
 
-    const renderPlannerProgress = (iconClass: string = "chat_mirror") => {
+    const renderPlannerProgress = () => {
       if (!this.state?.planner) {
         return nothing;
       }
@@ -467,7 +457,6 @@ export class StepListView extends SignalWatcher(LitElement) {
             "processing-generation": true,
           },
           {
-            icon: iconClass,
             label: this.state?.planner.thought,
             prompt: "",
             status: "pending",
@@ -491,7 +480,7 @@ export class StepListView extends SignalWatcher(LitElement) {
         return renderPlaceholders();
       } else if (this.state?.status === "generating") {
         return html`<ul id="list">
-          ${renderPlannerProgress("chat_mirror")}
+          ${renderPlannerProgress()}
         </ul>`;
       }
       return nothing;

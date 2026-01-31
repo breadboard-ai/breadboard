@@ -84,7 +84,7 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
         align-items: flex-start;
         justify-content: space-between;
         margin-bottom: var(--bb-grid-size-4);
-        max-height: 250px;
+        max-height: 400px;
         overflow-y: auto;
 
         > *:not(button) {

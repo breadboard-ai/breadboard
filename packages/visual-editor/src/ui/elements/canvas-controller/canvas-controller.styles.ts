@@ -89,7 +89,7 @@ export const styles = [
       & bb-prompt-view {
         flex: 0 0 auto;
         margin-bottom: var(--bb-grid-size-4);
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-0));
       }
 
       & bb-step-list-view {
