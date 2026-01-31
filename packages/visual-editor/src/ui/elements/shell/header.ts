@@ -158,13 +158,13 @@ export class VEHeader extends SignalWatcher(LitElement) {
             }
           }
 
-          & #app {
+          & #canvas {
             padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-4);
             border-radius: var(--bb-grid-size-16) var(--bb-grid-size-5)
               var(--bb-grid-size-5) var(--bb-grid-size-16);
           }
 
-          & #canvas {
+          & #app {
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
             border-radius: var(--bb-grid-size-5) var(--bb-grid-size-16)
               var(--bb-grid-size-16) var(--bb-grid-size-5);
@@ -491,25 +491,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
     if (this.graphIsEmpty) {
       return nothing;
     }
-    return html`<span
-      id="mode-toggle"
-    >
-      <button
-        id="app"
-        @click=${() => {
-          this.dispatchEvent(
-            new StateEvent({ eventType: "host.modetoggle", mode: "app" })
-          );
-        }}
-        class=${classMap({
-          "sans-flex": true,
-          round: true,
-          "w-500": true,
-          "md-body-small": true,
-          selected: this.mode === "app",
-        })}
-        >App</button
-      >
+    return html`<span id="mode-toggle">
       <button
         id="canvas"
         @click=${() => {
@@ -524,9 +506,27 @@ export class VEHeader extends SignalWatcher(LitElement) {
           "md-body-small": true,
           selected: this.mode === "canvas",
         })}
-        >Editor</button
       >
-    </button>`;
+        Editor
+      </button>
+      <button
+        id="app"
+        @click=${() => {
+          this.dispatchEvent(
+            new StateEvent({ eventType: "host.modetoggle", mode: "app" })
+          );
+        }}
+        class=${classMap({
+          "sans-flex": true,
+          round: true,
+          "w-500": true,
+          "md-body-small": true,
+          selected: this.mode === "app",
+        })}
+      >
+        App
+      </button>
+    </span>`;
   }
 
   #renderGraphItemSelect() {
@@ -573,7 +573,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           id: "duplicate",
           title: Strings.from("COMMAND_COPY_PROJECT"),
           icon: "file_copy",
-        },
+        }
       );
 
       // Version history is in the console view, so we don't currently

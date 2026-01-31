@@ -147,8 +147,10 @@ export class Gallery extends SignalWatcher(LitElement) {
           transition:
             box-shadow 0.2s cubic-bezier(0, 0, 0.3, 1),
             opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-          opacity: 0;
-          pointer-events: none;
+          @media (min-width: 620px) {
+            opacity: 0;
+            pointer-events: none;
+          }
 
           & .g-icon {
             margin-right: var(--bb-grid-size-2);
@@ -191,9 +193,12 @@ export class Gallery extends SignalWatcher(LitElement) {
 
         .overflow-pin {
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-          opacity: 0;
-          pointer-events: none;
-          opacity: 0;
+          font-variation-settings: "FILL" 0;
+          opacity: 0.3;
+          @media (min-width: 620px) {
+            opacity: 0;
+            pointer-events: none;
+          }
           right: auto;
           left: var(--bb-grid-size-4);
 
@@ -208,6 +213,9 @@ export class Gallery extends SignalWatcher(LitElement) {
         }
 
         &:hover {
+          & .overflow-pin {
+            font-variation-settings: "FILL" 1;
+          }
           & .overflow-pin,
           & .remix-button {
             opacity: 1;
