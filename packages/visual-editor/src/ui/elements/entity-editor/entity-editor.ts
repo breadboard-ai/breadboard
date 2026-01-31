@@ -11,7 +11,6 @@ import {
   InspectableGraph,
   InspectableNode,
   InspectableNodePorts,
-  JsonSerializable,
   LLMContent,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -79,7 +78,7 @@ import {
   isLLMContentArray,
   isTextCapabilityPart,
 } from "../../../data/common.js";
-import { ConnectorView } from "../../connectors/types.js";
+
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { embedderContext } from "../../contexts/embedder.js";
 import { embedState } from "../../embed/embed.js";
@@ -800,7 +799,7 @@ export class EntityEditor
   ];
 
   #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
-  #connectorPorts: Map<AssetPath, PortLike[]> = new Map();
+
   #editorRef: Ref<TextEditor> = createRef();
   #edited = false;
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -927,31 +926,18 @@ export class EntityEditor
         return;
       }
 
-      // 3) update connector configuration
-      const connector = asset.connector;
-      if (connector) {
-        const ports = this.#connectorPorts.get(assetPath) || [];
-        const { values } = this.#takePortValues(form, ports);
-        const commiting = await connector.commitEdits(
-          title,
-          values as Record<string, JsonSerializable>
-        );
-        if (!ok(commiting)) {
-          this.dispatchEvent(new ToastEvent(commiting.$error, ToastType.ERROR));
-        }
-      } else {
-        const dataPart =
-          form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
+      // 3) update asset
+      const dataPart =
+        form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
 
-        let data: LLMContent[] | undefined = undefined;
-        if (dataPart) {
-          data = [{ role: "user", parts: [dataPart] }];
-        }
+      let data: LLMContent[] | undefined = undefined;
+      if (dataPart) {
+        data = [{ role: "user", parts: [dataPart] }];
+      }
 
-        const updating = await asset.update(title, data);
-        if (!ok(updating)) {
-          this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
-        }
+      const updating = await asset.update(title, data);
+      if (!ok(updating)) {
+        this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
       }
     }
   }
@@ -1560,61 +1546,51 @@ export class EntityEditor
       return INVALID_ITEM;
     }
 
-    let value;
-    if (asset.type === "connector") {
-      const view =
-        this.projectState?.graphAssets.get(assetPath)?.connector?.view;
-      if (!view || !ok(view)) return nothing;
-      const ports = portsFromView(view);
-      this.#connectorPorts.set(assetPath, ports);
-      value = this.#renderPorts("", "", ports);
+    const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
+    const itemData = asset?.data.at(-1) ?? null;
+    const dataPart = itemData?.parts[0] ?? null;
+    const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
+    const skipOutput = isTextCapabilityPart(dataPart) || isDrawable;
+
+    const partEditor = html`<bb-llm-part-input
+      class=${classMap({ fill: skipOutput })}
+      id="asset-value"
+      @submit=${(evt: SubmitEvent) => {
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+
+        this.#submit(this.values);
+      }}
+      @input=${() => {
+        this.#edited = true;
+      }}
+      .graphUrl=${graphUrl}
+      .subType=${asset.subType}
+      .projectState=${this.projectState}
+      .dataPart=${dataPart}
+    ></bb-llm-part-input>`;
+
+    let input: HTMLTemplateResult | symbol = nothing;
+    if (skipOutput) {
+      input = html`<div class="stretch object">${partEditor}</div>`;
     } else {
-      const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
-      const itemData = asset?.data.at(-1) ?? null;
-      const dataPart = itemData?.parts[0] ?? null;
-      const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
-      const skipOutput = isTextCapabilityPart(dataPart) || isDrawable;
-
-      const partEditor = html`<bb-llm-part-input
-        class=${classMap({ fill: skipOutput })}
-        id="asset-value"
-        @submit=${(evt: SubmitEvent) => {
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-
-          this.#submit(this.values);
-        }}
-        @input=${() => {
-          this.#edited = true;
-        }}
-        .graphUrl=${graphUrl}
-        .subType=${asset.subType}
-        .projectState=${this.projectState}
-        .dataPart=${dataPart}
-      ></bb-llm-part-input>`;
-
-      let input: HTMLTemplateResult | symbol = nothing;
-      if (skipOutput) {
-        input = html`<div class="stretch object">${partEditor}</div>`;
-      } else {
-        input = partEditor;
-      }
-
-      let output: HTMLTemplateResult | symbol = nothing;
-      if (!skipOutput) {
-        output = html` <bb-llm-output
-          .value=${itemData}
-          .clamped=${false}
-          .lite=${true}
-          .showModeToggle=${false}
-          .showEntrySelector=${false}
-          .showExportControls=${false}
-          .graphUrl=${graphUrl}
-        ></bb-llm-output>`;
-      }
-
-      value = [input, output];
+      input = partEditor;
     }
+
+    let output: HTMLTemplateResult | symbol = nothing;
+    if (!skipOutput) {
+      output = html` <bb-llm-output
+        .value=${itemData}
+        .clamped=${false}
+        .lite=${true}
+        .showModeToggle=${false}
+        .showEntrySelector=${false}
+        .showExportControls=${false}
+        .graphUrl=${graphUrl}
+      ></bb-llm-output>`;
+    }
+
+    const value = [input, output];
 
     let icon: string | undefined | null = "text_fields";
     if (asset.type) {
@@ -1804,18 +1780,6 @@ function enumValue(value: SchemaEnumValue): EnumValue {
   }
 
   return enumVal;
-}
-
-function portsFromView(view: ConnectorView): PortLike[] {
-  const { schema, values } = view;
-  return Object.entries(schema.properties || {}).map(([name, schema]) => {
-    return {
-      name,
-      title: schema.title || name,
-      schema,
-      value: (values as Record<string, NodeValue>)[name],
-    } satisfies PortLike;
-  });
 }
 
 function getLLMContentPortValue(

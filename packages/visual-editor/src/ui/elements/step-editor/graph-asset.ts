@@ -5,7 +5,6 @@
  */
 
 import { AssetPath, InspectableAsset, LLMContent } from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -504,14 +503,7 @@ export class GraphAsset
   }
 
   #getPreviewValue(): LLMContent | null {
-    let context: LLMContent[] | undefined;
-    if (this.asset?.type === "connector") {
-      const preview = this.state?.connector?.preview;
-      if (!preview || !ok(preview)) return null;
-      context = preview;
-    } else {
-      context = this.asset?.data;
-    }
+    const context = this.asset?.data;
     return context?.at(-1) ?? null;
   }
 

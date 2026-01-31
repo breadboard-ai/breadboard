@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isA2 } from "../../a2/index.js";
 import {
   AssetPath,
   GraphIdentifier,
@@ -19,7 +18,6 @@ import {
   EditSpec,
   EditTransform,
   FileSystem,
-  GraphStoreEntry,
   MainGraphIdentifier,
   MutableGraphStore,
   NodeHandlerMetadata,
@@ -28,15 +26,13 @@ import {
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { ConnectorType } from "../connectors/types.js";
-import { ConnectorStateImpl } from "./connectors.js";
+
 import { GraphAssetImpl } from "./graph-asset.js";
 import { ReactiveOrganizer } from "./organizer.js";
 import { ReactiveProjectRun } from "./project-run.js";
 import { RendererStateImpl } from "./renderer.js";
 import {
   Component,
-  ConnectorState,
   GraphAsset,
   Integrations,
   Organizer,
@@ -52,6 +48,7 @@ import {
 import { IntegrationsImpl } from "./integrations.js";
 import { updateMap } from "./utils/update-map.js";
 import { McpClientManager } from "../../mcp/index.js";
+import { A2_TOOLS } from "../../a2/a2-registry.js";
 import { StepEditorImpl } from "./step-editor.js";
 import { ThemeState } from "./theme-state.js";
 import { err, ok } from "@breadboard-ai/utils";
@@ -63,20 +60,6 @@ import { Signal } from "signal-polyfill";
 export { createProjectState, ReactiveProject };
 
 const THUMBNAIL_KEY = "@@thumbnail";
-
-/**
- * Controls the filter for tools. Use it to tweak what shows up in the "Tools"
- * section of the "@" menu.
- */
-function isTool(entry: GraphStoreEntry) {
-  return (
-    !entry.updating &&
-    entry.tags?.includes("tool") &&
-    !!entry.url &&
-    entry?.tags.includes("quick-access") &&
-    isA2(entry.url)
-  );
-}
 
 function createProjectState(
   mainGraphId: MainGraphIdentifier,
@@ -105,8 +88,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly #store: MutableGraphStore;
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #boardServer: GoogleDriveBoardServer;
-  readonly #connectorInstances: Set<string> = new Set();
-  readonly #connectorMap: SignalMap<string, ConnectorType>;
 
   #graphChanged = new Signal.State({});
   readonly #editable: EditableGraph | undefined;
@@ -129,7 +110,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly organizer: Organizer;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
   readonly parameters: SignalMap<string, ParameterMetadata>;
-  readonly connectors: ConnectorState;
+
   readonly renderer: RendererState;
   readonly integrations: Integrations;
   readonly stepEditor: StepEditor;
@@ -158,8 +139,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
         this.#updateControlFlowTools();
         this.#graphChanged.set({});
       }
-      this.#updateConnectors();
-      this.#updateTools();
     });
     const graph = this.#store.get(mainGraphId)?.graph;
     if (!graph) {
@@ -170,21 +149,17 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
-    this.tools = new SignalMap();
+    this.tools = new SignalMap(A2_TOOLS);
     this.controlFlowTools = new SignalMap();
     this.components = new SignalMap();
     this.myTools = new SignalMap();
     this.parameters = new SignalMap();
-    this.#connectorMap = new SignalMap();
-    this.#updateConnectors();
-    this.connectors = new ConnectorStateImpl(this, this.#connectorMap);
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
     this.stepEditor = new StepEditorImpl(this);
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);
     this.#updateComponents();
-    this.#updateTools();
     this.#updateMyTools();
     this.#updateControlFlowTools();
     this.#updateParameters();
@@ -365,56 +340,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     updateMap(this.myTools, tools);
   }
 
-  /**
-   * Must run **after** #updateGraphAssets.
-   */
-  #updateTools() {
-    const graphs = this.#store.graphs();
-    const toolGraphEntries = graphs.filter(isTool);
-
-    const tools: [string, Tool][] = [];
-
-    for (const entry of toolGraphEntries) {
-      const tool = toTool(entry);
-      const isPartOfConnector = !!entry.mainGraph.tags?.includes("connector");
-      if (!isPartOfConnector) {
-        tools.push(tool);
-      }
-    }
-
-    // Add a tool bundle for each connector with "tools" export
-    for (const graphAsset of this.graphAssets.values()) {
-      const { path, connector, metadata: { title } = {} } = graphAsset;
-      if (!connector || !connector.type.tools) continue;
-
-      tools.push([
-        `${connector.type.url}#${path}`,
-        {
-          url: connector.type.url,
-          title: `${title} Tools`,
-          icon: connector.type.icon,
-          id: path,
-        } satisfies Tool,
-      ]);
-    }
-
-    updateMap(this.tools, tools);
-
-    function toTool(entry: GraphStoreEntry): [string, Tool] {
-      return [
-        entry.url!,
-        {
-          url: entry.url!,
-          title: entry.title,
-          description: entry.description,
-          order: entry.order || Number.MAX_SAFE_INTEGER,
-          icon: entry.icon,
-          tags: entry.tags,
-        } satisfies Tool,
-      ];
-    }
-  }
-
   #updateControlFlowTools() {
     const mutable = this.#store.get(this.#mainGraphId);
     if (!mutable) return;
@@ -519,8 +444,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     const mutable = this.#store.get(this.#mainGraphId);
     if (!mutable) return;
 
-    this.#connectorInstances.clear();
-
     const { assets = {} } = mutable.graph;
     // Special-case the thumbnail and splash so they doesn't show up.
     delete assets[THUMBNAIL_KEY];
@@ -542,48 +465,5 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       this.parameters,
       Object.entries(parameters).map(([id, parameter]) => [id, parameter])
     );
-  }
-
-  #updateConnectors() {
-    const graphs = this.#store.mainGraphs();
-    const connectors = graphs.filter(
-      (graph) =>
-        graph.tags?.includes("connector") &&
-        graph.tags?.includes("published") &&
-        graph.url
-    );
-    updateMap(
-      this.#connectorMap,
-      connectors.map((connector) => {
-        const url = connector.url!;
-        const load = connector.exportTags.includes("connector-load");
-        const save = connector.exportTags.includes("connector-save");
-        const tools = connector.exportTags.includes("connector-tools");
-        const singleton = !!connector.tags?.includes("connector-singleton");
-        const experimental = !!connector.tags?.includes("experimental");
-        return [
-          url,
-          {
-            url,
-            icon: connector.icon,
-            title: connector.title || "Unknown Connector",
-            description: connector.description,
-            singleton,
-            load,
-            save,
-            tools,
-            experimental,
-          } satisfies ConnectorType as ConnectorType,
-        ];
-      })
-    );
-  }
-
-  connectorInstanceExists(url: string): boolean {
-    return this.#connectorInstances.has(url);
-  }
-
-  addConnectorInstance(url: string): void {
-    this.#connectorInstances.add(url);
   }
 }
