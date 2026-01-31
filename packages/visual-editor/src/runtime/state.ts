@@ -71,6 +71,12 @@ class StateManager implements RuntimeContext {
     mainGraphId: MainGraphIdentifier,
     editable: EditableGraph | null
   ): State.Project | null {
+    if (!editable) {
+      console.warn(
+        `No editable graph provided for ${mainGraphId}: cannot create project state`
+      );
+      return null;
+    }
     const mutable = this.#store.get(mainGraphId);
     if (!mutable) {
       console.warn(
@@ -86,7 +92,7 @@ class StateManager implements RuntimeContext {
       this.__sca.services.googleDriveBoardServer,
       this.__sca.services.actionTracker,
       this.__sca.services.mcpClientManager,
-      editable || undefined
+      editable
     );
   }
 }

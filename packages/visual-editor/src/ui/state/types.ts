@@ -602,7 +602,7 @@ export type ProjectValues = {
   controlFlowTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
   integrations: Integrations;
-  editable: EditableGraph | undefined;
+  editable: EditableGraph;
 };
 
 export type EphemeralParticleTree = {

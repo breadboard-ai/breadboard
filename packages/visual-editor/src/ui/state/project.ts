@@ -68,7 +68,7 @@ function createProjectState(
   boardServer: GoogleDriveBoardServer,
   actionTracker: ActionTracker,
   mcpClientManager: McpClientManager,
-  editable?: EditableGraph
+  editable: EditableGraph
 ): Project {
   return new ReactiveProject(
     mainGraphId,
@@ -91,10 +91,10 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly #boardServer: GoogleDriveBoardServer;
 
   #graphChanged = new Signal.State({});
-  readonly #editable: EditableGraph | undefined;
+  readonly #editable: EditableGraph;
 
   @signal
-  get editable(): EditableGraph | undefined {
+  get editable(): EditableGraph {
     this.#graphChanged.get();
     return this.#editable;
   }
@@ -123,7 +123,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     boardServer: GoogleDriveBoardServer,
     clientManager: McpClientManager,
     private readonly actionTracker: ActionTracker,
-    editable?: EditableGraph
+    editable: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
     this.#mutable = mutable;
@@ -131,7 +131,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.#fetchWithCreds = fetchWithCreds;
     this.#boardServer = boardServer;
     this.#editable = editable;
-    editable?.addEventListener("graphchange", (e) => {
+    editable.addEventListener("graphchange", (e) => {
       if (e.visualOnly) return;
       this.#updateComponents();
       this.#updateGraphAssets();
