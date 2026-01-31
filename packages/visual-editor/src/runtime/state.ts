@@ -81,7 +81,7 @@ class StateManager implements RuntimeContext {
 
     return State.createProjectState(
       mainGraphId,
-      this.#store,
+      mutable,
       this.__sca.services.fetchWithCreds,
       this.__sca.services.googleDriveBoardServer,
       this.__sca.services.actionTracker,

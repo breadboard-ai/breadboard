@@ -18,7 +18,7 @@ import {
   EditTransform,
   FileSystem,
   MainGraphIdentifier,
-  MutableGraphStore,
+  MutableGraph,
   NodeHandlerMetadata,
   Outcome,
   PortIdentifier,
@@ -62,7 +62,7 @@ const THUMBNAIL_KEY = "@@thumbnail";
 
 function createProjectState(
   mainGraphId: MainGraphIdentifier,
-  store: MutableGraphStore,
+  mutable: MutableGraph,
   fetchWithCreds: typeof globalThis.fetch,
   boardServer: GoogleDriveBoardServer,
   actionTracker: ActionTracker,
@@ -71,7 +71,7 @@ function createProjectState(
 ): Project {
   return new ReactiveProject(
     mainGraphId,
-    store,
+    mutable,
     fetchWithCreds,
     boardServer,
     mcpClientManager,
@@ -84,7 +84,7 @@ type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
 
 class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly #mainGraphId: MainGraphIdentifier;
-  readonly #store: MutableGraphStore;
+  readonly #mutable: MutableGraph;
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #boardServer: GoogleDriveBoardServer;
 
@@ -116,7 +116,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
 
   constructor(
     mainGraphId: MainGraphIdentifier,
-    store: MutableGraphStore,
+    mutable: MutableGraph,
     fetchWithCreds: typeof globalThis.fetch,
     boardServer: GoogleDriveBoardServer,
     clientManager: McpClientManager,
@@ -124,11 +124,11 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     editable?: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
-    this.#store = store;
+    this.#mutable = mutable;
     this.#fetchWithCreds = fetchWithCreds;
     this.#boardServer = boardServer;
     this.#editable = editable;
-    store.addEventListener("update", (event) => {
+    mutable.store.addEventListener("update", (event) => {
       if (event.mainGraphId === mainGraphId) {
         this.#updateComponents();
         this.#updateGraphAssets();
@@ -138,12 +138,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
         this.#graphChanged.set({});
       }
     });
-    const graph = this.#store.get(mainGraphId)?.graph;
-    if (!graph) {
-      console.warn(
-        `No graph when initializing Project state: most things will likely not work`
-      );
-    }
+    const graph = this.#mutable.graph;
     const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
@@ -161,12 +156,18 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.#updateMyTools();
     this.#updateControlFlowTools();
 
-    this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
+    this.run = ReactiveProjectRun.createInert(
+      this.#mainGraphId,
+      this.#mutable.store
+    );
     this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
   }
 
   resetRun(): void {
-    this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
+    this.run = ReactiveProjectRun.createInert(
+      this.#mainGraphId,
+      this.#mutable.store
+    );
   }
 
   connectHarnessRunner(
@@ -179,7 +180,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       this.stepEditor,
       this.#mainGraphId,
       this.actionTracker,
-      this.#store,
+      this.#mutable.store,
       fileSystem,
       runner,
       this.#editable,
@@ -216,7 +217,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   }
 
   async persistDataParts(contents: LLMContent[]): Promise<LLMContent[]> {
-    const urlString = this.#store.get(this.#mainGraphId)?.graph.url;
+    const urlString = this.#mutable.graph.url;
     if (!urlString) {
       console.warn("Can't persist blob without graph URL");
       return contents;
@@ -242,11 +243,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     nodeId: NodeIdentifier,
     graphId: GraphIdentifier
   ): Outcome<NodeHandlerMetadata> {
-    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
-    if (!inspectable) {
-      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
-    }
-    const node = inspectable.nodeById(nodeId);
+    const node = this.#mutable.nodes.get(nodeId, graphId);
     if (!node) {
       return err(`Unable to find node with id "${nodeId}`);
     }
@@ -261,11 +258,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     nodeId: NodeIdentifier,
     graphId: GraphIdentifier
   ): Outcome<InspectableNodePorts> {
-    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
-    if (!inspectable) {
-      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
-    }
-    const node = inspectable.nodeById(nodeId);
+    const node = this.#mutable.nodes.get(nodeId, graphId);
     if (!node) {
       return err(`Unable to find node with id "${nodeId}`);
     }
@@ -276,11 +269,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     nodeId: NodeIdentifier,
     graphId: GraphIdentifier
   ): Outcome<string> {
-    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
-    if (!inspectable) {
-      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
-    }
-    const node = inspectable.nodeById(nodeId);
+    const node = this.#mutable.nodes.get(nodeId, graphId);
     if (!node) {
       return err(`Unable to find node with id "${nodeId}`);
     }
@@ -291,11 +280,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ): Outcome<{ id: PortIdentifier; title: string }> {
-    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
-    if (!inspectable) {
-      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
-    }
-    const node = inspectable.nodeById(nodeId);
+    const node = this.#mutable.nodes.get(nodeId, graphId);
     if (!node) {
       return err(`Unable to find node with id "${nodeId}`);
     }
@@ -317,10 +302,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   }
 
   #updateMyTools() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
-    const tools = Object.entries(mutable.graph.graphs || {}).map<
+    const tools = Object.entries(this.#mutable.graph.graphs || {}).map<
       [string, Tool]
     >(([graphId, descriptor]) => {
       const url = `#${graphId}`;
@@ -339,15 +321,12 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   }
 
   #updateControlFlowTools() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
     const tools: [string, Tool][] = [];
     // TODO: Make this condition a bit more robust:
     // - only show if there are other nodes besides the current node that aren't
     //   already used by an existing "Go to" chiclet.
     // - only show this for the "Agent" mode.
-    if (mutable.graph.nodes.length > 1) {
+    if (this.#mutable.graph.nodes.length > 1) {
       tools.push([
         `control-flow/routing`,
         {
@@ -369,13 +348,10 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   }
 
   #updateComponents() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
     const map = this.components;
     const toDelete = new Set(map.keys());
-    const updated = Object.entries(mutable.graphs.graphs());
-    updated.push(["", this.#store.inspect(this.#mainGraphId, "")!]);
+    const updated = Object.entries(this.#mutable.graphs.graphs());
+    updated.push(["", this.#mutable.graphs.get("")!]);
     updated.forEach(([key, value]) => {
       let currentValue = map.get(key);
       if (!currentValue) {
@@ -439,10 +415,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   }
 
   #updateGraphAssets() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
-    const { assets = {} } = mutable.graph;
+    const { assets = {} } = this.#mutable.graph;
     // Special-case the thumbnail and splash so they doesn't show up.
     delete assets[THUMBNAIL_KEY];
 
