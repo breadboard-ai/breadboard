@@ -21,7 +21,6 @@ import {
   NodeMetadata,
   NodeRunState,
   OutputValues,
-  ParameterMetadata,
   RunError,
   GraphDescriptor,
   EditableGraph,
@@ -335,7 +334,6 @@ export type FastAccess = {
   myTools: Map<string, Tool>;
   controlFlow: FilterableMap<Tool>;
   components: Map<GraphIdentifier, Components>;
-  parameters: Map<string, ParameterMetadata>;
   integrations: FilteredIntegrations;
   /**
    * Available routes for the current step.
@@ -603,7 +601,6 @@ export type ProjectValues = {
   myTools: Map<string, Tool>;
   controlFlowTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
-  parameters: Map<string, ParameterMetadata>;
   integrations: Integrations;
   editable: EditableGraph | undefined;
 };

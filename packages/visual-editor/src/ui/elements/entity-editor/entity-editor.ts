@@ -1721,7 +1721,6 @@ export class EntityEditor
           .showTools=${true}
           .showAssets=${false}
           .showComponents=${false}
-          .showParameters=${false}
           @pointerdown=${(evt: PointerEvent) => {
             evt.stopImmediatePropagation();
           }}

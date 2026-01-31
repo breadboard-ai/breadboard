@@ -11,7 +11,6 @@ import {
   InspectableNodePorts,
   LLMContent,
   NodeIdentifier,
-  ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
   EditableGraph,
@@ -109,7 +108,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly controlFlowTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
-  readonly parameters: SignalMap<string, ParameterMetadata>;
 
   readonly renderer: RendererState;
   readonly integrations: Integrations;
@@ -134,7 +132,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       if (event.mainGraphId === mainGraphId) {
         this.#updateComponents();
         this.#updateGraphAssets();
-        this.#updateParameters();
+
         this.#updateMyTools();
         this.#updateControlFlowTools();
         this.#graphChanged.set({});
@@ -153,7 +151,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.controlFlowTools = new SignalMap();
     this.components = new SignalMap();
     this.myTools = new SignalMap();
-    this.parameters = new SignalMap();
+
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
     this.stepEditor = new StepEditorImpl(this);
@@ -162,7 +160,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.#updateComponents();
     this.#updateMyTools();
     this.#updateControlFlowTools();
-    this.#updateParameters();
+
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
     this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
   }
@@ -453,17 +451,5 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     );
 
     updateMap(this.graphAssets, graphAssets);
-  }
-
-  #updateParameters() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
-    const { parameters = {} } = mutable.graph?.metadata || {};
-
-    updateMap(
-      this.parameters,
-      Object.entries(parameters).map(([id, parameter]) => [id, parameter])
-    );
   }
 }

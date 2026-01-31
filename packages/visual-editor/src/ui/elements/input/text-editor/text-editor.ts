@@ -1056,7 +1056,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
     this.#fastAccessRef.value.showTools = !hasTarget;
     this.#fastAccessRef.value.showComponents = !hasTarget;
     this.#fastAccessRef.value.showRoutes = hasTarget;
-    this.#fastAccessRef.value.showParameters = false;
     this.#fastAccessRef.value.showControlFlowTools = isAgentic && !hasTarget;
     this.#isUsingFastAccess = true;
   }
