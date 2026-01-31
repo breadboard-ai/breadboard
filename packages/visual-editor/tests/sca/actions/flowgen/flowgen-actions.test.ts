@@ -132,7 +132,7 @@ describe("Flowgen Actions", () => {
   });
 
   test("generate handles thrown errors", async () => {
-    const testError = new Error("Network failure");
+    const testError = new Error("Simulated failure for test");
     const { mocks } = setupFlowgenTest({
       oneShot: mock.fn(() => Promise.reject(testError)),
     });
@@ -152,6 +152,7 @@ describe("Flowgen Actions", () => {
     assert.deepStrictEqual(mocks.flowgenInput.state, {
       status: "error",
       error: testError,
+      suggestedIntent: undefined,
     });
   });
 });

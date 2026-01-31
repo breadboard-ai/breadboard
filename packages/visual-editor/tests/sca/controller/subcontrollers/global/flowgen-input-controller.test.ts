@@ -171,11 +171,18 @@ suite("FlowgenInputController", () => {
     const countAfterGenerating = watcher.count;
     assert.ok(countAfterGenerating > 0);
 
+    // Re-subscribe the watcher for the next transition
+    // (Signal.subtle.Watcher requires explicit re-watching after notifications)
+    watcher.watch();
+
     // Transition: generating -> error
     controller.state = { status: "error", error: "failed" };
     await controller.isSettled;
     assert.strictEqual(statusSignal.get(), "error");
     assert.ok(watcher.count > countAfterGenerating);
+
+    // Re-subscribe for the final transition
+    watcher.watch();
 
     // Transition: error -> initial via clear()
     controller.clear();
