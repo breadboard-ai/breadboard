@@ -21,6 +21,7 @@ import noOptionalChainingOnScaController from "./packages/visual-editor/eslint-r
 import effectRequiresDispose from "./packages/visual-editor/eslint-rules/effect-requires-dispose.js";
 import fieldDeepForArrays from "./packages/visual-editor/eslint-rules/field-deep-for-arrays.js";
 import noConsumeInInitializer from "./packages/visual-editor/eslint-rules/no-consume-in-initializer.js";
+import preferBindDestructure from "./packages/visual-editor/eslint-rules/prefer-bind-destructure.js";
 
 // Create local rules plugin
 const localRulesPlugin = {
@@ -36,6 +37,7 @@ const localRulesPlugin = {
     "effect-requires-dispose": effectRequiresDispose,
     "field-deep-for-arrays": fieldDeepForArrays,
     "no-consume-in-initializer": noConsumeInInitializer,
+    "prefer-bind-destructure": preferBindDestructure,
   },
 };
 
@@ -90,6 +92,7 @@ export default tseslint.config(
       "local-rules/no-optional-chaining-on-sca-controller": "warn",
       "local-rules/effect-requires-dispose": "warn",
       "local-rules/field-deep-for-arrays": "warn",
+      "local-rules/prefer-bind-destructure": "warn",
 
       // expect-type rules (requires type information)
       "expect-type/expect": "error",
