@@ -17,7 +17,8 @@ export const bind = makeTrigger();
  */
 export function registerPopstateTrigger() {
   const handler = () => {
-    bind.controller.router.updateFromCurrentUrl();
+    const { controller } = bind;
+    controller.router.updateFromCurrentUrl();
   };
 
   window.addEventListener("popstate", handler);
@@ -36,7 +37,8 @@ export function registerPopstateTrigger() {
  */
 export function registerInitTrigger() {
   // Fire immediately during registration - this is a one-time init
-  bind.controller.router.init();
+  const { controller } = bind;
+  controller.router.init();
 
   // Register with empty handler since init is synchronous and one-time
   bind.register("Router Init Trigger", () => { });
