@@ -23,6 +23,6 @@ export class Runtime extends EventTarget {
     if (!sca) throw new Error("Expected SCA");
 
     this.select = new Select();
-    this.state = new StateManager(sca.services.graphStore, sca);
+    this.state = new StateManager(sca);
   }
 }
