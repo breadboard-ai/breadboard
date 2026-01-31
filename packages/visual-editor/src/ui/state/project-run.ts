@@ -15,8 +15,6 @@ import {
   HarnessRunner,
   InspectableGraph,
   InspectableNode,
-  MainGraphIdentifier,
-  MutableGraphStore,
   NodeIdentifier,
   NodeLifecycleState,
   NodeMetadata,
@@ -81,10 +79,11 @@ function createProjectRunStateFromFinalOutput(
   if (!gettingMainGraph?.success) {
     return error(`Can't to find graph in graph store`);
   }
-  const run = ReactiveProjectRun.createInert(
-    gettingMainGraph.result,
-    graphStore
-  );
+  const inspectable = graphStore.inspect(gettingMainGraph.result, "");
+  if (!inspectable) {
+    return error(`Can't inspect graph`);
+  }
+  const run = ReactiveProjectRun.createInert(inspectable);
   const last: AppScreenOutput = {
     output,
     schema: {},
@@ -236,17 +235,16 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
   private constructor(
     private readonly stepEditor: StepEditor | undefined,
-    private readonly mainGraphId: MainGraphIdentifier,
     private readonly actionTracker: ActionTracker | undefined,
-    private readonly graphStore?: MutableGraphStore,
+    inspectable?: InspectableGraph,
     private readonly fileSystem?: FileSystem,
     private readonly runner?: HarnessRunner,
     editable?: EditableGraph,
     signal?: AbortSignal
   ) {
-    if (!graphStore) return;
+    if (!inspectable) return;
 
-    this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
+    this.#inspectable = inspectable;
     this.graph = this.#inspectable?.raw();
 
     editable?.addEventListener("graphchange", (e) => {
@@ -766,15 +764,11 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
    * This instance is useful for representing and inspecting the run that
    * hasn't yet started.
    */
-  static createInert(
-    mainGraphId: MainGraphIdentifier,
-    graphStore: MutableGraphStore
-  ) {
+  static createInert(inspectable: InspectableGraph) {
     return new ReactiveProjectRun(
       undefined,
-      mainGraphId,
       undefined,
-      graphStore,
+      inspectable,
       undefined,
       undefined,
       undefined
@@ -783,9 +777,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
   static create(
     stepEditor: StepEditor,
-    mainGraphId: MainGraphIdentifier,
     actionTracker: ActionTracker,
-    graphStore: MutableGraphStore,
+    inspectable: InspectableGraph,
     fileSystem: FileSystem,
     runner: HarnessRunner,
     editable: EditableGraph | undefined,
@@ -793,9 +786,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   ) {
     return new ReactiveProjectRun(
       stepEditor,
-      mainGraphId,
       actionTracker,
-      graphStore,
+      inspectable,
       fileSystem,
       runner,
       editable,

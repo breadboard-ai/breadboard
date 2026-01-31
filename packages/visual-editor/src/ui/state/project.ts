@@ -8,6 +8,7 @@ import {
   AssetPath,
   GraphIdentifier,
   HarnessRunner,
+  InspectableGraph,
   InspectableNodePorts,
   LLMContent,
   NodeIdentifier,
@@ -85,6 +86,7 @@ type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
 class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly #mainGraphId: MainGraphIdentifier;
   readonly #mutable: MutableGraph;
+  readonly #inspectable: InspectableGraph;
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #boardServer: GoogleDriveBoardServer;
 
@@ -125,6 +127,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   ) {
     this.#mainGraphId = mainGraphId;
     this.#mutable = mutable;
+    this.#inspectable = mutable.graphs.get("")!;
     this.#fetchWithCreds = fetchWithCreds;
     this.#boardServer = boardServer;
     this.#editable = editable;
@@ -155,18 +158,12 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.#updateMyTools();
     this.#updateControlFlowTools();
 
-    this.run = ReactiveProjectRun.createInert(
-      this.#mainGraphId,
-      this.#mutable.store
-    );
+    this.run = ReactiveProjectRun.createInert(this.#inspectable);
     this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
   }
 
   resetRun(): void {
-    this.run = ReactiveProjectRun.createInert(
-      this.#mainGraphId,
-      this.#mutable.store
-    );
+    this.run = ReactiveProjectRun.createInert(this.#inspectable);
   }
 
   connectHarnessRunner(
@@ -177,9 +174,8 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     // Intentionally reset this property with a new instance.
     this.run = ReactiveProjectRun.create(
       this.stepEditor,
-      this.#mainGraphId,
       this.actionTracker,
-      this.#mutable.store,
+      this.#inspectable,
       fileSystem,
       runner,
       this.#editable,
