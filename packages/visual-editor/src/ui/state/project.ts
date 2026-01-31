@@ -128,15 +128,14 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.#fetchWithCreds = fetchWithCreds;
     this.#boardServer = boardServer;
     this.#editable = editable;
-    mutable.store.addEventListener("update", (event) => {
-      if (event.mainGraphId === mainGraphId) {
-        this.#updateComponents();
-        this.#updateGraphAssets();
+    editable?.addEventListener("graphchange", (e) => {
+      if (e.visualOnly) return;
+      this.#updateComponents();
+      this.#updateGraphAssets();
 
-        this.#updateMyTools();
-        this.#updateControlFlowTools();
-        this.#graphChanged.set({});
-      }
+      this.#updateMyTools();
+      this.#updateControlFlowTools();
+      this.#graphChanged.set({});
     });
     const graph = this.#mutable.graph;
     const graphUrlString = graph?.url;
