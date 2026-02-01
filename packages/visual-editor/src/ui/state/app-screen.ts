@@ -80,8 +80,7 @@ class ReactiveAppScreen implements AppScreen {
 
   /**
    * Adds an output to the screen. These are the bubbled outputs, typically
-   * part of the user input interaction, and much more in the Particle
-   * future.
+   * part of the user input interaction.
    */
   addOutput(data: OutputResponse) {
     const { node, outputs, path } = data;

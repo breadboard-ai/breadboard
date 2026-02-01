@@ -53,7 +53,7 @@ export type ConsoleEntry = {
   /**
    * The final output of the step.
    */
-  output: Map<string, LLMContent /* Particle */>;
+  output: Map<string, LLMContent>;
 
   /**
    * The error message that might have occurred in this step
