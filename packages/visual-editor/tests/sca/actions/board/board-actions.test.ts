@@ -188,7 +188,7 @@ suite("Board Actions", () => {
       test("returns undefined when no URL", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.addByDescriptor(testGraph);
+        const mainGraphId = graphStore.getByDescriptor(testGraph);
         if (!mainGraphId.success) assert.fail("Unable to create graph");
         const editor = graphStore.edit(mainGraphId.result);
 
@@ -213,7 +213,7 @@ suite("Board Actions", () => {
       test("returns undefined when readOnly", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.addByDescriptor(testGraph);
+        const mainGraphId = graphStore.getByDescriptor(testGraph);
         if (!mainGraphId.success) assert.fail("Unable to create graph");
         const editor = graphStore.edit(mainGraphId.result);
 
@@ -238,7 +238,7 @@ suite("Board Actions", () => {
       test("returns undefined when board server cannot save", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.addByDescriptor(testGraph);
+        const mainGraphId = graphStore.getByDescriptor(testGraph);
         if (!mainGraphId.success) assert.fail("Unable to create graph");
         const editor = graphStore.edit(mainGraphId.result);
 
@@ -265,7 +265,7 @@ suite("Board Actions", () => {
       test("calls board server save with graph", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.addByDescriptor(testGraph);
+        const mainGraphId = graphStore.getByDescriptor(testGraph);
         if (!mainGraphId.success) assert.fail("Unable to create graph");
         const editor = graphStore.edit(mainGraphId.result);
 
@@ -295,7 +295,7 @@ suite("Board Actions", () => {
       test("shows snackbar for user-initiated save", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.addByDescriptor(testGraph);
+        const mainGraphId = graphStore.getByDescriptor(testGraph);
         if (!mainGraphId.success) assert.fail("Unable to create graph");
         const editor = graphStore.edit(mainGraphId.result);
 
@@ -329,7 +329,7 @@ suite("Board Actions", () => {
       test("returns error result when save throws", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.addByDescriptor(testGraph);
+        const mainGraphId = graphStore.getByDescriptor(testGraph);
         if (!mainGraphId.success) assert.fail("Unable to create graph");
         const editor = graphStore.edit(mainGraphId.result);
 
@@ -496,7 +496,7 @@ suite("Board Actions", () => {
       const testGraph = makeFreshGraph();
       testGraph.title = "My Board";
 
-      const mainGraphId = graphStore.addByDescriptor(testGraph);
+      const mainGraphId = graphStore.getByDescriptor(testGraph);
       if (!mainGraphId.success) assert.fail("Unable to create graph");
       const editor = graphStore.edit(mainGraphId.result);
 
@@ -582,7 +582,7 @@ suite("Board Actions", () => {
       const testGraph = makeFreshGraph();
       testGraph.title = "My Board";
 
-      const mainGraphId = graphStore.addByDescriptor(testGraph);
+      const mainGraphId = graphStore.getByDescriptor(testGraph);
       if (!mainGraphId.success) assert.fail("Unable to create graph");
       const editor = graphStore.edit(mainGraphId.result);
 

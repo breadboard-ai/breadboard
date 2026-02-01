@@ -820,7 +820,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
 
     getLatest(mutable: MutableGraph): Promise<MutableGraph>;
 
-    addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
     getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
     editByDescriptor(
       graph: GraphDescriptor,

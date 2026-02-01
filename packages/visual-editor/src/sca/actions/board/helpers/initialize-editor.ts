@@ -85,7 +85,7 @@ export function initializeEditor(
   } = options;
 
   // Add graph to store
-  const mainGraphId = graphStore.addByDescriptor(graph);
+  const mainGraphId = graphStore.getByDescriptor(graph);
   if (!mainGraphId.success) {
     throw new Error(`Unable to add graph: ${mainGraphId.error}`);
   }

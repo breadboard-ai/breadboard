@@ -32,7 +32,7 @@ describe("GraphStore.graphs", () => {
     const graphStore = makeTestGraphStore({
       kits: [testKit],
     });
-    graphStore.addByDescriptor({
+    graphStore.getByDescriptor({
       url: "https://example.com/foo",
       title: "Foo",
       nodes: [],

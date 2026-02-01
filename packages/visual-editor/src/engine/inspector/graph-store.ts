@@ -218,14 +218,6 @@ class GraphStore
     );
   }
 
-  addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
-    const getting = this.#getOrAdd(graph);
-    if (!getting.success) {
-      return getting;
-    }
-    return { success: true, result: getting.result.id };
-  }
-
   getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
     const getting = this.#getOrAdd(graph);
     if (!getting.success) {

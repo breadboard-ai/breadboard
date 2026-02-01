@@ -81,7 +81,7 @@ suite("Graph Actions", () => {
       });
 
       testGraph = makeFreshGraph();
-      const mainGraphId = graphStore.addByDescriptor(testGraph);
+      const mainGraphId = graphStore.getByDescriptor(testGraph);
       if (!mainGraphId.success) assert.fail("Unable to create graph");
       const editor = graphStore.edit(mainGraphId.result);
       if (!editor) assert.fail("Unable to edit graph");
@@ -210,11 +210,9 @@ suite("Graph Actions", () => {
       test("changeNodeConfiguration throws when node doesn't exist", async () => {
         await assert.rejects(
           async () => {
-            await graphActions.changeNodeConfiguration(
-              "nonexistent",
-              "",
-              { prompt: "test" }
-            );
+            await graphActions.changeNodeConfiguration("nonexistent", "", {
+              prompt: "test",
+            });
           },
           (err: Error) => err.message.includes("nonexistent")
         );
@@ -319,7 +317,11 @@ suite("Graph Actions", () => {
           async () => {
             await graphActions.changeAssetEdge(
               "add",
-              { assetPath: "nonexistent-asset.txt", direction: "load", nodeId: "foo" },
+              {
+                assetPath: "nonexistent-asset.txt",
+                direction: "load",
+                nodeId: "foo",
+              },
               ""
             );
           },
@@ -429,7 +431,7 @@ suite("Graph Actions", () => {
             theme: testTheme,
             creator: { role: "assistant" },
           });
-          let graph1 = await changeWatcher;
+          const graph1 = await changeWatcher;
           const themeId1 = graph1.metadata?.visual?.presentation?.theme;
 
           // Second replacement
@@ -560,7 +562,10 @@ suite("Graph Actions", () => {
 
           // Verify the new splash screen is used, not the old one
           const presentation = testGraph.metadata?.visual?.presentation;
-          const appliedTheme = presentation?.themes?.[presentation?.theme!];
+          const themeId = presentation?.theme;
+          const appliedTheme = themeId
+            ? presentation?.themes?.[themeId]
+            : undefined;
           assert.deepStrictEqual(
             appliedTheme?.splashScreen,
             newSplashScreen,
