@@ -14,7 +14,6 @@ import {
   EditableGraph,
   GraphDescriptor,
   MainGraphIdentifier,
-  MutableGraphStore,
 } from "@breadboard-ai/types";
 import {
   HTMLTemplateResult,
@@ -103,12 +102,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
   accessor graphIsMine = false;
 
   @property()
-  accessor graphStore: MutableGraphStore | null = null;
-
-  @property()
-  accessor graphStoreUpdateId: number = 0;
-
-  @property()
   accessor graphTopologyUpdateId: number = 0;
 
   @state()
@@ -138,8 +131,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   @property({ reflect: true })
   accessor status = STATUS.RUNNING;
-
-
 
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
@@ -375,10 +366,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .graph=${graph}
           .graphIsMine=${this.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-          .graphStore=${this.graphStore}
           .history=${this.history}
           .state=${this.projectState?.renderer}
-          .graphStoreUpdateId=${this.graphStoreUpdateId}
           .selectionState=${this.selectionState}
           .showAssetsInGraph=${showAssetsInGraph}
           .highlightState=${this.highlightState}
@@ -542,8 +531,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         })}
         .graph=${graph}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-        .graphStore=${this.graphStore}
-        .graphStoreUpdateId=${this.graphStoreUpdateId}
         .selectionState=${this.selectionState}
         .mainGraphId=${this.mainGraphId}
         .readOnly=${this.readOnly}

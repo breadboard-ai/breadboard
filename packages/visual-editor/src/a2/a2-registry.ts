@@ -6,7 +6,7 @@
 
 import type { Tool } from "../ui/state/types.js";
 
-export { A2_TOOLS };
+export { A2_COMPONENTS, A2_TOOLS };
 
 const BASE_URL = "embed://a2/tools.bgl.json";
 
@@ -82,4 +82,45 @@ const A2_TOOLS: [string, Tool][] = [
       icon: "code",
     },
   ],
+];
+
+/**
+ * Static registry of A2 components that appear in the component picker.
+ * These are the step types available in the editor controls.
+ */
+type A2Component = {
+  url: string;
+  title: string;
+  description: string;
+  icon: string;
+  order: number;
+  category: "input" | "generate" | "output";
+};
+
+const A2_COMPONENTS: A2Component[] = [
+  {
+    url: "embed://a2/a2.bgl.json#module:text-entry",
+    title: "User Input",
+    description:
+      "Allows asking user for input that could be then used in next steps",
+    icon: "ask-user",
+    order: 1,
+    category: "input",
+  },
+  {
+    url: "embed://a2/generate.bgl.json#module:main",
+    title: "Generate",
+    description: "Uses Gemini to generate content and call tools",
+    icon: "generative",
+    order: 1,
+    category: "generate",
+  },
+  {
+    url: "embed://a2/a2.bgl.json#module:render-outputs",
+    title: "Output",
+    description: "Renders multiple outputs into single display",
+    icon: "responsive_layout",
+    order: 100,
+    category: "output",
+  },
 ];

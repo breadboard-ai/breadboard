@@ -32,9 +32,7 @@ suite("GraphController", () => {
     });
 
     testGraph = makeFreshGraph();
-    const mainGraphId = graphStore.addByDescriptor(testGraph);
-    if (!mainGraphId.success) assert.fail("Unable to create graph");
-    editableGraph = graphStore.edit(mainGraphId.result);
+    editableGraph = graphStore.editByDescriptor(testGraph);
     if (!editableGraph) assert.fail("Unable to edit graph");
   });
 
@@ -57,9 +55,7 @@ suite("GraphController", () => {
     store.setEditor(editableGraph);
 
     // Make a new one and apply it.
-    const newId = graphStore.addByDescriptor(makeFreshGraph());
-    if (!newId.success) assert.fail("Unable to create graph");
-    const editableGraphAlt = graphStore.edit(newId.result);
+    const editableGraphAlt = graphStore.editByDescriptor(makeFreshGraph());
     if (!editableGraphAlt) assert.fail("No editable graph");
 
     // On changing the editor we should not get a graph change on the old

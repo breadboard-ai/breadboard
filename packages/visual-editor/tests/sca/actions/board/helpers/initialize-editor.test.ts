@@ -68,7 +68,9 @@ function makeMockGraphController(): Editor.Graph.GraphController {
       }
     },
     _state: state,
-  } as unknown as Editor.Graph.GraphController & { _state: Record<string, unknown> };
+  } as unknown as Editor.Graph.GraphController & {
+    _state: Record<string, unknown>;
+  };
 }
 
 function makeMockGraph(): GraphDescriptor {
@@ -81,7 +83,7 @@ function makeMockGraph(): GraphDescriptor {
 function makeMockGraphStore(): MutableGraphStore {
   const graphs = new Map<string, unknown>();
   return {
-    addByDescriptor: (graph: GraphDescriptor) => {
+    getByDescriptor: (graph: GraphDescriptor) => {
       const id = `graph-${graphs.size}`;
       graphs.set(id, graph);
       return { success: true, result: id };
@@ -150,7 +152,10 @@ suite("initialize-editor helpers", () => {
   });
 
   test("resetEditor clears controller state", () => {
-    const graphController = makeMockGraphController() as Editor.Graph.GraphController & { _state: Record<string, unknown> };
+    const graphController =
+      makeMockGraphController() as Editor.Graph.GraphController & {
+        _state: Record<string, unknown>;
+      };
 
     // Set some state
     graphController.url = "https://example.com/board.json";
@@ -164,7 +169,7 @@ suite("initialize-editor helpers", () => {
 
   test("throws when graph cannot be added", () => {
     const graphStore = {
-      addByDescriptor: () => ({ success: false, error: "Test error" }),
+      getByDescriptor: () => ({ success: false, error: "Test error" }),
     } as unknown as MutableGraphStore;
     const graphController = makeMockGraphController();
     const graph = makeMockGraph();
@@ -186,7 +191,7 @@ suite("initialize-editor helpers", () => {
 
   test("throws when editor cannot be created", () => {
     const graphStore = {
-      addByDescriptor: () => ({ success: true, result: "graph-0" }),
+      getByDescriptor: () => ({ success: true, result: "graph-0" }),
       editByDescriptor: () => null,
     } as unknown as MutableGraphStore;
     const graphController = makeMockGraphController();

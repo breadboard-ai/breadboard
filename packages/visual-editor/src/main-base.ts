@@ -8,7 +8,7 @@ import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import type { AppScreenOutput, BoardServer } from "@breadboard-ai/types";
-import { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
@@ -146,19 +146,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   @state()
   accessor graphTopologyUpdateId: number = 0;
 
-  /**
-   * Similar to graphTopologyUpdateId, but for all graphs in the graph store.
-   * This is useful for tracking all changes to all graphs, like in
-   * component/boards selectors.
-   */
-  @state()
-  accessor graphStoreUpdateId: number = 0;
-
   @state()
   protected accessor tosStatus: CheckAppAccessResponse | null = null;
 
   // References.
-  protected graphStore: MutableGraphStore;
   protected selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   protected runtime: Runtime.Runtime;
   protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
@@ -257,8 +248,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    this.graphStore = this.sca.services.graphStore;
-
     // Admin.
     const admin = new Admin(
       args,
@@ -269,10 +258,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     admin.runtime = this.runtime;
     admin.settingsHelper = this.settingsHelper;
 
-    this.graphStore.addEventListener("update", (evt) => {
+    this.sca.services.graphStore.addEventListener("update", (evt) => {
       const { mainGraphId } = evt;
       const current = this.tab?.mainGraphId;
-      this.graphStoreUpdateId++;
       if (
         !current ||
         (mainGraphId !== current && !evt.affectedGraphs.includes(current))

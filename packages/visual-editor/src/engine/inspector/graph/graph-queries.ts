@@ -4,16 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { baseURLFromString, SENTINEL_BASE_URL } from "../../loader/loader.js";
 import type {
   AssetPath,
   GraphDescriptor,
   GraphIdentifier,
-  ImportIdentifier,
   InspectableAsset,
   InspectableAssetEdge,
   InspectableEdge,
-  InspectableGraph,
   InspectableNode,
   InspectableNodeType,
   ModuleIdentifier,
@@ -119,42 +116,6 @@ class GraphQueries {
     const exports = this.#mutable.graph.exports;
     if (!exports) return new Set();
     return new Set(exports.filter((e) => !isModule(e)).map((e) => e.slice(1)));
-  }
-
-  async imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>> {
-    if (this.#graphId || !this.#mutable.graph.imports) return new Map();
-
-    const results: Map<ImportIdentifier, Outcome<InspectableGraph>> = new Map();
-    const entries = Object.entries(this.#mutable.graph.imports);
-    for (const [name, value] of entries) {
-      let outcome: Outcome<InspectableGraph> = err(
-        `Unknown error resolving import "${name}`
-      );
-      if (!value || !("url" in value)) {
-        outcome = err(`Invalid import value "${JSON.stringify(value)}`);
-      } else {
-        try {
-          const url = new URL(
-            value.url,
-            baseURLFromString(this.#mutable.graph.url) || SENTINEL_BASE_URL
-          ).href;
-          const store = this.#mutable.store;
-          const adding = store.addByURL(url, [this.#mutable.id], {});
-          const mutable = await store.getLatest(adding.mutable);
-          const inspectable = store.inspect(mutable.id, "");
-          if (!inspectable) {
-            outcome = err(`Unable to inspect graph at URL "${url}`);
-          } else {
-            outcome = inspectable;
-          }
-        } catch (e) {
-          outcome = err((e as Error).message);
-        } finally {
-          results.set(name, outcome);
-        }
-      }
-    }
-    return results;
   }
 
   assets(): Map<AssetPath, InspectableAsset> {

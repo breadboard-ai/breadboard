@@ -11,6 +11,7 @@ import { GraphUtils, MAIN_BOARD_ID } from "../utils/graph-utils.js";
 import { ClipboardReader } from "../utils/clipboard-reader.js";
 import { Tab } from "../runtime/types.js";
 import { Utils } from "../sca/utils.js";
+import { A2_COMPONENTS } from "../a2/a2-registry.js";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
@@ -456,13 +457,11 @@ const PasteCommand: KeyboardCommand = {
           pointerLocation
         );
       } else if (plainText) {
-        // Here we go looking for the Generate so that we can add it to the
-        // graph with the pasted text.
-        // TODO: Find a better way to locate Generate and populate it.
-        const maybeGenerate = sca.services.graphStore
-          .graphs()
-          .find((graph) => graph.title === "Generate");
-        if (!maybeGenerate || !maybeGenerate.url) {
+        // Use the statically registered Generate component.
+        const maybeGenerate = A2_COMPONENTS.find(
+          (component) => component.title === "Generate"
+        );
+        if (!maybeGenerate) {
           return;
         }
 

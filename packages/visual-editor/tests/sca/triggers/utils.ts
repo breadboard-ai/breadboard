@@ -66,9 +66,7 @@ function makeMockFlowgenInput() {
 export function makeTestGraphStoreWithEditor() {
   const graphStore = makeTestGraphStore({ kits: [testKit] });
   const testGraph: GraphDescriptor = { nodes: [], edges: [] };
-  const mainGraphId = graphStore.addByDescriptor(testGraph);
-  if (!mainGraphId.success) throw new Error("Unable to create graph");
-  const editor = graphStore.edit(mainGraphId.result);
+  const editor = graphStore.editByDescriptor(testGraph);
   if (!editor) throw new Error("Unable to edit graph");
   return { graphStore, editor };
 }

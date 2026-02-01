@@ -10,7 +10,6 @@ import type {
   GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
-  ImportIdentifier,
   InputValues,
   InspectableAsset,
   InspectableAssetEdge,
@@ -142,10 +141,6 @@ class Graph implements InspectableGraph {
 
   graphExports(): Set<GraphIdentifier> {
     return new GraphQueries(this.#mutable, this.#graphId).graphExports();
-  }
-
-  imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>> {
-    return new GraphQueries(this.#mutable, this.#graphId).imports();
   }
 
   assets(): Map<AssetPath, InspectableAsset> {

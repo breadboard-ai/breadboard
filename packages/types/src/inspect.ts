@@ -15,7 +15,6 @@ import {
   GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
-  ImportIdentifier,
   InputValues,
   KitDescriptor,
   Module,
@@ -361,11 +360,6 @@ export type InspectableGraph = {
    * Returns all graph exports
    */
   graphExports(): Set<GraphIdentifier>;
-  /**
-   * Returns all imports, loading and creating appropriate `InspectableGraph`
-   * instances.
-   */
-  imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>>;
   /**
    * Returns graph assets.
    */
@@ -810,28 +804,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 
-    mainGraphs(): MainGraphStoreEntry[];
-
-    graphs(): GraphStoreEntry[];
-    /**
-     * This is a hacky API. Ideally, there's a list of graph entries
-     * that is queriable and `graphs()` returns it, and this method
-     * goes onto it.
-     */
-    getEntryByDescriptor(
-      descriptor: GraphDescriptor,
-      graphId: GraphIdentifier
-    ): GraphStoreEntry | undefined;
-    /**
-     * Registers a Kit with the GraphStore.
-     * Currently, only Kits that contain Graph URL-like types
-     * are support.
-     *
-     * @param kit - the kit to register
-     * @param dependences - known dependencies to this kit
-     */
-    registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void;
-
     addByURL(
       url: string,
       dependencies: MainGraphIdentifier[],
@@ -840,22 +812,13 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
 
     getLatest(mutable: MutableGraph): Promise<MutableGraph>;
 
-    addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
     getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
     editByDescriptor(
       graph: GraphDescriptor,
       options?: EditableGraphOptions
     ): EditableGraph | undefined;
-    edit(
-      id: MainGraphIdentifier,
-      options?: EditableGraphOptions
-    ): EditableGraph | undefined;
     inspect(
       id: MainGraphIdentifier,
-      graphId: GraphIdentifier
-    ): InspectableGraph | undefined;
-    inspectSnapshot(
-      graph: GraphDescriptor,
       graphId: GraphIdentifier
     ): InspectableGraph | undefined;
   };

@@ -298,8 +298,6 @@ class Main extends MainBase {
       .editor=${this.sca.controller.editor.graph.editor}
       .graph=${this.tab?.graph ?? null}
       .graphIsMine=${this.tab?.graphIsMine ?? false}
-      .graphStore=${this.graphStore}
-      .graphStoreUpdateId=${this.graphStoreUpdateId}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
       .history=${this.sca.controller.editor.graph.editor?.history() ?? null}
       .mainGraphId=${this.tab?.mainGraphId}
@@ -517,8 +515,8 @@ class Main extends MainBase {
                 return;
               }
               evt.target.disabled = true;
-      await this.sca.services.apiClient.acceptTos(tosVersion, true);
-      this.tosStatus = await this.sca.services.apiClient.checkTos();
+              await this.sca.services.apiClient.acceptTos(tosVersion, true);
+              this.tosStatus = await this.sca.services.apiClient.checkTos();
             }}
           >
             Continue
@@ -577,7 +575,7 @@ class Main extends MainBase {
       .graphIsEmpty=${BreadboardUI.Utils.isEmpty(this.tab?.graph ?? null)}
       @bbsignout=${async () => {
         await this.sca.services.signinAdapter.signOut();
-      this.sca.services.actionTracker.signOutSuccess();
+        this.sca.services.actionTracker.signOutSuccess();
         window.location.href = makeUrl({
           page: "landing",
           redirect: {
@@ -662,7 +660,10 @@ class Main extends MainBase {
               return;
             }
 
-            this.sca.services.actionTracker.remixApp(this.tab.graph.url, "editor");
+            this.sca.services.actionTracker.remixApp(
+              this.tab.graph.url,
+              "editor"
+            );
             this.invokeRemixEventRouteWith(this.tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),
