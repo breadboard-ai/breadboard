@@ -15,25 +15,22 @@ import type {
   GraphLoaderContext,
   GraphLoaderResult,
   GraphStoreArgs,
-  GraphStoreEntry,
   GraphStoreEventTarget,
   InspectableDescriberResultTypeCache,
   InspectableGraph,
   Kit,
-  KitDescriptor,
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
   NodeHandlerContext,
-  NodeHandlerMetadata,
   Result,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { filterEmptyValues, hash, SnapshotUpdater } from "@breadboard-ai/utils";
+import { hash, SnapshotUpdater } from "@breadboard-ai/utils";
 import { Graph as GraphEditor } from "../editor/graph.js";
 import { DescribeResultTypeCache } from "./graph/describe-type-cache.js";
 import { UpdateEvent } from "./graph/event.js";
-import { createBuiltInKit } from "./graph/kits.js";
+
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import { NodeTypeDescriberManager } from "./graph/node-type-describer-manager.js";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
@@ -73,8 +70,6 @@ class GraphStore
   readonly fileSystem: FileSystem;
   readonly flags: RuntimeFlagManager;
 
-  #legacyKits: GraphStoreEntry[];
-
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
   #mutables: Map<MainGraphIdentifier, SnapshotUpdater<MutableGraph>> =
     new Map();
@@ -100,48 +95,6 @@ class GraphStore
     this.types = new DescribeResultTypeCache(
       new NodeTypeDescriberManager(this)
     );
-
-    this.#legacyKits = this.#populateLegacyKits(args.kits);
-  }
-
-  graphs(): GraphStoreEntry[] {
-    const graphs = [...this.#mutables.entries()]
-      .flatMap(([mainGraphId, snapshot]) => {
-        const mutable = snapshot.current();
-        const descriptor = mutable.graph;
-        const mainGraphMetadata = filterEmptyValues({
-          title: descriptor.title,
-          description: descriptor.description,
-          icon: descriptor.metadata?.icon,
-          url: descriptor.url,
-          tags: descriptor.metadata?.tags,
-          help: descriptor.metadata?.help,
-          id: mainGraphId,
-        });
-        const exports: GraphStoreEntry[] = [];
-        if (descriptor.exports) {
-          for (const e of descriptor.exports) {
-            const metadata = entryFromExport(mutable, e, mainGraphId);
-            exports.push({
-              mainGraph: mainGraphMetadata,
-              updating: false,
-              ...metadata,
-            });
-          }
-        } else {
-          exports.push({
-            updating: false,
-            mainGraph:
-              (mutable.legacyKitMetadata as KitDescriptor & {
-                id: MainGraphIdentifier;
-              }) || mainGraphMetadata,
-            ...mainGraphMetadata,
-          });
-        }
-        return exports;
-      })
-      .filter(Boolean) as GraphStoreEntry[];
-    return [...this.#legacyKits, ...graphs];
   }
 
   async load(
@@ -173,49 +126,6 @@ class GraphStore
         error: (e as Error).message,
       };
     }
-  }
-
-  #populateLegacyKits(kits: Kit[]) {
-    kits = [...kits, createBuiltInKit()];
-    const all = kits.flatMap((kit) =>
-      Object.entries(kit.handlers).map(([type, handler]) => {
-        let metadata: NodeHandlerMetadata =
-          "metadata" in handler ? handler.metadata || {} : {};
-        const mainGraphTags = [...(kit.tags || [])];
-        if (metadata.deprecated) {
-          mainGraphTags.push("deprecated");
-          metadata = { ...metadata };
-          delete metadata.deprecated;
-        }
-        const tags = [...(metadata.tags || []), "component"];
-        return [
-          type,
-          {
-            url: type,
-            mainGraph: filterEmptyValues({
-              title: kit.title,
-              description: kit.description,
-              tags: mainGraphTags,
-            }),
-            ...metadata,
-            tags,
-          },
-        ] as [type: string, info: GraphStoreEntry];
-      })
-    );
-    return Object.values(
-      all.reduce(
-        (collated, [type, info]) => {
-          // Intentionally do the reverse of what goes on
-          // in `handlersFromKits`: last info wins,
-          // because here, we're collecting info, rather
-          // than handlers and the last info is the one
-          // that typically has the right stuff.
-          return { ...collated, [type]: info };
-        },
-        {} as Record<string, GraphStoreEntry>
-      )
-    );
   }
 
   getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
@@ -409,52 +319,4 @@ function emptyGraph(): GraphDescriptor {
     edges: [],
     nodes: [],
   };
-}
-
-const MODULE_EXPORT_PREFIX = "#module:";
-
-function entryFromExport(
-  mutable: MutableGraph,
-  id: string,
-  mainGraphId: MainGraphIdentifier
-): (NodeHandlerMetadata & { updating: boolean }) | null {
-  const graph = mutable.graph;
-  const url = `${graph.url}${id}`;
-  const { current, updating } = mutable.store.types.get(url);
-  const {
-    title,
-    description,
-    metadata: { icon, help, tags = [], order } = {},
-  } = updating ? {} : current || {};
-  if (id.startsWith(MODULE_EXPORT_PREFIX)) {
-    const moduleId = id.slice(MODULE_EXPORT_PREFIX.length);
-    const module = graph.modules?.[moduleId];
-    if (!module) return null;
-    return filterEmptyValues({
-      title: title ?? module.metadata?.title,
-      description: description ?? module.metadata?.description,
-      icon: icon ?? module.metadata?.icon,
-      url,
-      tags: ["component", ...tags],
-      help: help ?? module.metadata?.help,
-      order,
-      id: mainGraphId,
-      updating,
-    });
-  } else {
-    const graphId = id.slice(1);
-    const descriptor = graphId ? graph.graphs?.[graphId] : graph;
-    if (!descriptor) return null;
-    return filterEmptyValues({
-      title: title ?? descriptor.title,
-      description: description ?? descriptor.description,
-      icon: icon ?? descriptor.metadata?.icon,
-      url,
-      tags: ["component", ...tags],
-      help: help ?? descriptor.metadata?.help,
-      order,
-      id: mainGraphId,
-      updating,
-    });
-  }
 }

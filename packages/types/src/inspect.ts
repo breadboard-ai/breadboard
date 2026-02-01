@@ -804,8 +804,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 
-    graphs(): GraphStoreEntry[];
-
     addByURL(
       url: string,
       dependencies: MainGraphIdentifier[],
