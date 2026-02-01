@@ -15,7 +15,6 @@ import {
   GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
-  ImportIdentifier,
   InputValues,
   KitDescriptor,
   Module,
@@ -361,11 +360,6 @@ export type InspectableGraph = {
    * Returns all graph exports
    */
   graphExports(): Set<GraphIdentifier>;
-  /**
-   * Returns all imports, loading and creating appropriate `InspectableGraph`
-   * instances.
-   */
-  imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>>;
   /**
    * Returns graph assets.
    */
