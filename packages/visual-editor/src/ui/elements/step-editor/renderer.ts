@@ -1102,10 +1102,10 @@ export class Renderer extends LitElement {
     this.camera.transform.translateSelf(
       (this.#lastBoundsForInteraction.width -
         this.#boundsForInteraction.width) *
-      0.5,
+        0.5,
       (this.#lastBoundsForInteraction.height -
         this.#boundsForInteraction.height) *
-      0.5
+        0.5
     );
   }
 
@@ -1221,9 +1221,9 @@ export class Renderer extends LitElement {
 
     const delta = Math.min(
       (this.#boundsForInteraction.width - 2 * this.graphFitPadding) /
-      bounds.width,
+        bounds.width,
       (this.#boundsForInteraction.height - 2 * this.graphFitPadding) /
-      bounds.height,
+        bounds.height,
       1
     );
 
@@ -1590,8 +1590,8 @@ export class Renderer extends LitElement {
 
           return html`<div
             @bbnodeconfigurationrequest=${(
-            evt: NodeConfigurationRequestEvent
-          ) => {
+              evt: NodeConfigurationRequestEvent
+            ) => {
               this.dispatchEvent(
                 new NodeConfigurationUpdateRequestEvent(
                   evt.nodeId,
@@ -1690,8 +1690,6 @@ export class Renderer extends LitElement {
         ${ref(this.#editorControls)}
         .graph=${this.graph}
         .graphIsMine=${this.graphIsMine}
-        .graphStore=${this.graphStore}
-        .graphStoreUpdateId=${this.graphStoreUpdateId}
         .history=${this.history}
         .mainGraphId=${this.mainGraphId}
         .showDefaultAdd=${showDefaultAdd}
