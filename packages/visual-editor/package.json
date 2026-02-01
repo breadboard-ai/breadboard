@@ -110,7 +110,9 @@
       "env": {
         "NODE_V8_COVERAGE": "./coverage/tmp"
       },
-      "files": [],
+      "files": [
+        "tests/controller-setup.js"
+      ],
       "output": [
         "lcov.info",
         "coverage/tmp",

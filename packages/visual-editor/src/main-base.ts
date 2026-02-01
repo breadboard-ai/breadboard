@@ -666,10 +666,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           fetchWithCreds: this.sca.services.fetchWithCreds,
           flags: this.sca.controller.global.flags,
           getProjectRunState: () => this.runtime.state.project?.run,
-          connectToProject: (runner, fileSystem, abortSignal) => {
+          connectToProject: (runner, abortSignal) => {
             const project = this.runtime.state.project;
             if (project) {
-              project.connectHarnessRunner(runner, fileSystem, abortSignal);
+              project.connectHarnessRunner(runner, abortSignal);
             }
           },
         });

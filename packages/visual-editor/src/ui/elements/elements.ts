@@ -37,9 +37,6 @@ export { WebcamVideoInput } from "./input/webcam/webcam-video.js";
 export { ConsoleView } from "./output/console-view/console-view.js";
 export { LLMOutput } from "./output/llm-output/llm-output.js";
 export { LLMOutputArray } from "./output/llm-output/llm-output-array.js";
-export { ParticleUpdate } from "./output/console-view/particles/update.js";
-export { ParticleLinks } from "./output/console-view/particles/links.js";
-export { ParticleView } from "./output/console-view/particle-view.js";
 export { A2UIClientView } from "./output/console-view/a2ui-client-view.js";
 export { PDFViewer } from "./output/pdf-viewer/pdf-viewer.js";
 

@@ -7,7 +7,7 @@
 import { ConsoleUpdate } from "./console-update.js";
 import { OutputValues } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
-import { Particle } from "./particles.js";
+
 import { NodeRunState } from "./run-status.js";
 import { Schema } from "./schema.js";
 
@@ -127,14 +127,10 @@ export type WorkItem = {
    *
    * Values can be:
    * - LLMContent for standard outputs
-   * - Particle for SUIP streaming
    * - SimplifiedA2UIClient for A2UI
    * - ConsoleUpdate for agent progress updates
    */
-  product: Map<
-    string,
-    LLMContent | Particle | SimplifiedA2UIClient | ConsoleUpdate
-  >;
+  product: Map<string, LLMContent | SimplifiedA2UIClient | ConsoleUpdate>;
 };
 
 /**

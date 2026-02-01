@@ -4,18 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isParticle } from "../../../../particles/index.js";
 import {
   ConsoleEntry,
   ConsoleUpdate,
   LLMContent,
-  Particle,
   SimplifiedA2UIClient,
 } from "@breadboard-ai/types";
 
 type ProductMap = Map<
   string,
-  LLMContent | Particle | SimplifiedA2UIClient | ConsoleUpdate
+  LLMContent | SimplifiedA2UIClient | ConsoleUpdate
 >;
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
@@ -31,7 +29,7 @@ import { sharedStyles } from "./shared-styles.js";
 import { hasControlPart } from "../../../../runtime/control.js";
 
 function isConsoleUpdate(
-  item: LLMContent | Particle | SimplifiedA2UIClient | ConsoleUpdate
+  item: LLMContent | SimplifiedA2UIClient | ConsoleUpdate
 ): item is ConsoleUpdate {
   return "type" in item && (item.type === "text" || item.type === "links");
 }
@@ -438,12 +436,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               </section>
             </li>`;
           }
-          // Particle
-          if (isParticle(item)) {
-            return html`<li>
-              <bb-particle-view .particle=${item}></bb-particle-view>
-            </li>`;
-          }
+
           // LLMContent (fallback)
           return html`<li class="output" data-label="Output:">
             <bb-llm-output

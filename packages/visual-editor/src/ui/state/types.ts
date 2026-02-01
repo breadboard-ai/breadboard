@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ParticleTree } from "../../particles/index.js";
 import {
   App,
   AssetMetadata,
@@ -28,7 +27,6 @@ import {
 import {
   EditSpec,
   EditTransform,
-  FileSystem,
   NodeHandlerMetadata,
   Outcome,
   PortIdentifier,
@@ -580,7 +578,6 @@ export type Project = {
   persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
   connectHarnessRunner(
     runner: HarnessRunner,
-    fileSystem: FileSystem,
     signal?: AbortSignal
   ): Outcome<void>;
 };
@@ -603,11 +600,6 @@ export type ProjectValues = {
   components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
   integrations: Integrations;
   editable: EditableGraph;
-};
-
-export type EphemeralParticleTree = {
-  tree: ParticleTree;
-  done: boolean;
 };
 
 export type EdgeRunState = {

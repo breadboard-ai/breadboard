@@ -77,7 +77,7 @@ describe("AppScreen", () => {
         timestamp: 0,
         bubbled: false,
       };
-      screen.addOutput(data, null);
+      screen.addOutput(data);
       assert.strictEqual(screen.outputs.size, 1);
       const output = screen.last;
       assert.deepStrictEqual(output?.output, { foo: "bar" });

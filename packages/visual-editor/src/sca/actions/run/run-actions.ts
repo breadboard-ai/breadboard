@@ -5,7 +5,6 @@
  */
 
 import type {
-  FileSystem,
   GraphDescriptor,
   HarnessRunner,
   RunConfig,
@@ -30,7 +29,6 @@ export const bind = makeAction();
  */
 export type ConnectToProjectCallback = (
   runner: HarnessRunner,
-  fileSystem: FileSystem,
   abortSignal: AbortSignal
 ) => void;
 
@@ -105,7 +103,8 @@ export function prepare(config: PrepareRunConfig): void {
   );
 
   // Create runner via service
-  const { runner, abortController } = services.runService.createRunner(runConfig);
+  const { runner, abortController } =
+    services.runService.createRunner(runConfig);
 
   // Register status listeners on the runner
   runner.addEventListener("start", () => {
@@ -154,7 +153,7 @@ export function prepare(config: PrepareRunConfig): void {
 
   // Connect to project if callback provided
   if (connectToProject) {
-    connectToProject(runner, fileSystem, abortController.signal);
+    connectToProject(runner, abortController.signal);
   }
 
   // Set status to stopped (ready to start)
