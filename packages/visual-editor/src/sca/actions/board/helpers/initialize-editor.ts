@@ -113,6 +113,7 @@ export function initializeEditor(
   graphController.graphIsMine = !readOnly;
   graphController.mainGraphId = mainGraphId.result;
   graphController.lastLoadedVersion = lastLoadedVersion;
+  graphController.finalOutputValues = options.finalOutputValues;
 
   return {
     success: true,

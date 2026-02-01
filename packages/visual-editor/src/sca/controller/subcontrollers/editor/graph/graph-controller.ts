@@ -12,6 +12,7 @@ import {
   GraphIdentifier,
   NodeConfiguration,
   NodeIdentifier,
+  OutputValues,
 } from "@breadboard-ai/types";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
@@ -88,6 +89,12 @@ export class GraphController extends RootController {
     null;
 
   /**
+   * Pre-loaded final output values for displaying results.
+   * Not reactive since this is set once at load time.
+   */
+  finalOutputValues: OutputValues | undefined = undefined;
+
+  /**
    * The title of the graph. Updated reactively when the graph changes.
    */
   @field()
@@ -160,6 +167,7 @@ export class GraphController extends RootController {
       subGraphId: null,
       type: 0,
       version: this.version,
+      finalOutputValues: this.finalOutputValues,
     } satisfies Tab;
   }
 
@@ -180,5 +188,6 @@ export class GraphController extends RootController {
     this.mainGraphId = null;
     this.lastLoadedVersion = 0;
     this.lastNodeConfigChange = null;
+    this.finalOutputValues = undefined;
   }
 }
