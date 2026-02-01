@@ -810,27 +810,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 
-    mainGraphs(): MainGraphStoreEntry[];
-
     graphs(): GraphStoreEntry[];
-    /**
-     * This is a hacky API. Ideally, there's a list of graph entries
-     * that is queriable and `graphs()` returns it, and this method
-     * goes onto it.
-     */
-    getEntryByDescriptor(
-      descriptor: GraphDescriptor,
-      graphId: GraphIdentifier
-    ): GraphStoreEntry | undefined;
-    /**
-     * Registers a Kit with the GraphStore.
-     * Currently, only Kits that contain Graph URL-like types
-     * are support.
-     *
-     * @param kit - the kit to register
-     * @param dependences - known dependencies to this kit
-     */
-    registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void;
 
     addByURL(
       url: string,
@@ -852,10 +832,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     ): EditableGraph | undefined;
     inspect(
       id: MainGraphIdentifier,
-      graphId: GraphIdentifier
-    ): InspectableGraph | undefined;
-    inspectSnapshot(
-      graph: GraphDescriptor,
       graphId: GraphIdentifier
     ): InspectableGraph | undefined;
   };

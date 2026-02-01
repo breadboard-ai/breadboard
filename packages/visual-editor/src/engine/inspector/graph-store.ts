@@ -9,7 +9,6 @@ import type {
   EditableGraph,
   EditableGraphOptions,
   FileSystem,
-  FileSystemEntry,
   GraphDescriptor,
   GraphIdentifier,
   GraphLoader,
@@ -20,12 +19,9 @@ import type {
   GraphStoreEventTarget,
   InspectableDescriberResultTypeCache,
   InspectableGraph,
-  InspectableGraphOptions,
   Kit,
   KitDescriptor,
   MainGraphIdentifier,
-  MainGraphStoreEntry,
-  MainGraphStoreExport,
   MutableGraph,
   MutableGraphStore,
   NodeHandlerContext,
@@ -33,12 +29,7 @@ import type {
   Result,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import {
-  filterEmptyValues,
-  graphUrlLike,
-  hash,
-  SnapshotUpdater,
-} from "@breadboard-ai/utils";
+import { filterEmptyValues, hash, SnapshotUpdater } from "@breadboard-ai/utils";
 import { Graph as GraphEditor } from "../editor/graph.js";
 import { DescribeResultTypeCache } from "./graph/describe-type-cache.js";
 import { UpdateEvent } from "./graph/event.js";
@@ -46,15 +37,9 @@ import { createBuiltInKit } from "./graph/kits.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import { NodeTypeDescriberManager } from "./graph/node-type-describer-manager.js";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
-import { createLoader } from "../loader/index.js";
 import { urlComponentsFromString } from "../loader/loader.js";
 
-export {
-  contextFromMutableGraph,
-  contextFromMutableGraphStore,
-  GraphStore,
-  makeTerribleOptions,
-};
+export { contextFromMutableGraph, contextFromMutableGraphStore, GraphStore };
 
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
   const store = mutable.store;
@@ -75,50 +60,6 @@ function contextFromMutableGraphStore(
     loader: store.loader,
     sandbox: store.sandbox,
     graphStore: store,
-  };
-}
-
-// TODO: Deprecate and remove.
-function makeTerribleOptions(
-  options: InspectableGraphOptions = {}
-): Required<InspectableGraphOptions> {
-  return {
-    kits: options.kits || [],
-    sandbox: options.sandbox || {
-      createRunnableModule() {
-        throw new Error("Non-existent sandbox: Terrible Options were used.");
-      },
-    },
-    loader: createLoader(),
-    fileSystem: {
-      read() {
-        throw new Error("Non-existent filesystem: Terrible Options were used.");
-      },
-      write() {
-        throw new Error("Non-existent filesystem: Terrible Options were used.");
-      },
-      query() {
-        throw new Error("Non-existent filesystem: Terrible Options were used.");
-      },
-      addStream() {
-        throw new Error("Non-existent filesystem: Terrible Options were used.");
-      },
-      close: function (): Promise<void> {
-        throw new Error("Non-existent filesystem: Terrible Options were used.");
-      },
-      updateRunFileSystem: function (): FileSystem {
-        throw new Error("Non-existent filesystem: Terrible Options were used.");
-      },
-      createRunFileSystem: function (): FileSystem {
-        throw new Error("Non-existent filesystem: Terrible Options were used.");
-      },
-      createModuleFileSystem: function (): FileSystem {
-        throw new Error("Non-existent filesystem: Terrible Options were used.");
-      },
-      env: function (): FileSystemEntry[] {
-        throw new Error("Non-existent filesystem: Terrible Options were used.");
-      },
-    },
   };
 }
 
@@ -161,62 +102,6 @@ class GraphStore
     );
 
     this.#legacyKits = this.#populateLegacyKits(args.kits);
-  }
-
-  getEntryByDescriptor(
-    descriptor: GraphDescriptor,
-    graphId: GraphIdentifier
-  ): GraphStoreEntry | undefined {
-    const getting = this.getOrAdd(descriptor);
-    if (!getting.success) {
-      return;
-    }
-    const mutable = getting.result;
-    const mainGraphMetadata = filterEmptyValues({
-      title: descriptor.title,
-      description: descriptor.description,
-      icon: descriptor.metadata?.icon,
-      url: descriptor.url,
-      tags: descriptor.metadata?.tags,
-      help: descriptor.metadata?.help,
-      id: mutable.id,
-    });
-    let metadata;
-    if (graphId) {
-      metadata = entryFromExport(mutable, `#${graphId}`, mutable.id);
-    } else {
-      metadata = mainGraphMetadata;
-    }
-    return {
-      updating: false,
-      mainGraph: mainGraphMetadata,
-      ...metadata,
-    };
-  }
-
-  mainGraphs(): MainGraphStoreEntry[] {
-    const graphs = [...this.#mutables.entries()].map(
-      ([mainGraphId, snapshot]) => {
-        const current = snapshot.current();
-        const updating = snapshot.updating();
-        const descriptor = current.graph;
-        const mainGraphMetadata = filterEmptyValues({
-          title: descriptor.title,
-          description: descriptor.description,
-          icon: descriptor.metadata?.icon,
-          url: descriptor.url,
-          tags: descriptor.metadata?.tags,
-          help: descriptor.metadata?.help,
-          id: mainGraphId,
-        });
-        return {
-          ...mainGraphMetadata,
-          ...getExports(current),
-          updating,
-        };
-      }
-    );
-    return graphs;
   }
 
   graphs(): GraphStoreEntry[] {
@@ -333,27 +218,8 @@ class GraphStore
     );
   }
 
-  registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void {
-    Object.keys(kit.handlers).forEach((type) => {
-      if (graphUrlLike(type)) {
-        const mutable = this.addByURL(type, dependences, {}).mutable;
-        mutable.legacyKitMetadata = filterEmptyValues({
-          url: kit.url,
-          title: kit.title,
-          description: kit.description,
-          tags: kit.tags,
-          id: mutable.id,
-        });
-      } else {
-        throw new Error(
-          `The type "${type}" is not Graph URL-like, unable to add this kit`
-        );
-      }
-    });
-  }
-
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
-    const getting = this.getOrAdd(graph);
+    const getting = this.#getOrAdd(graph);
     if (!getting.success) {
       return getting;
     }
@@ -361,7 +227,7 @@ class GraphStore
   }
 
   getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
-    const getting = this.getOrAdd(graph);
+    const getting = this.#getOrAdd(graph);
     if (!getting.success) {
       return getting;
     }
@@ -372,7 +238,7 @@ class GraphStore
     graph: GraphDescriptor,
     options: EditableGraphOptions = {}
   ): EditableGraph | undefined {
-    const result = this.getOrAdd(graph);
+    const result = this.#getOrAdd(graph);
     if (!result.success) {
       console.error(`Failed to edityByDescriptor: ${result.error}`);
       return undefined;
@@ -398,14 +264,6 @@ class GraphStore
     if (!mutable) return undefined;
 
     return mutable.graphs.get(graphId);
-  }
-
-  inspectSnapshot(
-    graph: GraphDescriptor,
-    graphId: GraphIdentifier
-  ): InspectableGraph | undefined {
-    const immutable = this.#snapshotFromGraphDescriptor(graph).current();
-    return immutable.graphs.get(graphId);
   }
 
   addByURL(
@@ -465,7 +323,7 @@ class GraphStore
     });
   }
 
-  getOrAdd(graph: GraphDescriptor): Result<MutableGraph> {
+  #getOrAdd(graph: GraphDescriptor): Result<MutableGraph> {
     let url = graph.url;
     let graphHash: number | null = null;
     if (!url) {
@@ -607,22 +465,4 @@ function entryFromExport(
       updating,
     });
   }
-}
-
-function getExports(mutable: MutableGraph): {
-  exports: MainGraphStoreExport[];
-  exportTags: string[];
-} {
-  const result: MainGraphStoreExport[] = [];
-  const tags: Set<string> = new Set();
-  const { exports = [] } = mutable.graph;
-
-  for (const id of exports) {
-    const entry = entryFromExport(mutable, id, mutable.id);
-    if (!entry) continue;
-    result.push(entry);
-    (entry.tags || []).forEach((tag) => tags.add(tag));
-  }
-
-  return { exports: result, exportTags: Array.from(tags.values()) };
 }
