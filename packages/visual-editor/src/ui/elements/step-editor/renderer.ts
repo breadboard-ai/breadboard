@@ -27,10 +27,10 @@ import {
   InspectableGraph,
   InspectableNode,
   MainGraphIdentifier,
-  MutableGraphStore,
   NodeDescriptor,
   NodeIdentifier,
 } from "@breadboard-ai/types";
+import { A2_COMPONENTS } from "../../../a2/a2-registry.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
   CreateNewAssetsEvent,
@@ -103,13 +103,7 @@ export class Renderer extends LitElement {
   accessor graph: InspectableGraph | null = null;
 
   @property()
-  accessor graphStore: MutableGraphStore | null = null;
-
-  @property()
   accessor state: RendererState | null = null;
-
-  @property()
-  accessor graphStoreUpdateId = 0;
 
   @property()
   accessor mainGraphId: MainGraphIdentifier | null = null;
@@ -525,14 +519,9 @@ export class Renderer extends LitElement {
   }
 
   #getGraphTitleByType(nodeType: string) {
-    // TODO: Move this logic to Runtime.Edit
-    let title = "Untitled item";
-    for (const graph of this.graphStore?.graphs() ?? []) {
-      if (graph.url === nodeType && graph.title) {
-        title = graph.title;
-        break;
-      }
-    }
+    // Look up title from the static A2_COMPONENTS registry
+    const component = A2_COMPONENTS.find((c) => c.url === nodeType);
+    const title = component?.title ?? "Untitled item";
 
     // Friendly names logic. Optionally appends a number to the title so that
     // the user can disambiguate between multiple steps of the same type.

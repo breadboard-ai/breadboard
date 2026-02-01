@@ -139,8 +139,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @property({ reflect: true })
   accessor status = STATUS.RUNNING;
 
-
-
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
   #themeOptions: AppTemplateAdditionalOptionsAvailable | null = null;
@@ -375,10 +373,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .graph=${graph}
           .graphIsMine=${this.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-          .graphStore=${this.graphStore}
           .history=${this.history}
           .state=${this.projectState?.renderer}
-          .graphStoreUpdateId=${this.graphStoreUpdateId}
           .selectionState=${this.selectionState}
           .showAssetsInGraph=${showAssetsInGraph}
           .highlightState=${this.highlightState}
