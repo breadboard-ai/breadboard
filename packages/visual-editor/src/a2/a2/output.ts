@@ -6,13 +6,12 @@ import {
   AppScreen,
   Capabilities,
   ConsoleEntry,
-  FileSystemReadWritePath,
   JsonSerializable,
   LLMContent,
   NodeMetadata,
   Schema,
 } from "@breadboard-ai/types";
-import { ErrorMetadata, generateId, ok } from "./utils.js";
+import { ErrorMetadata } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 type ReportInputs = {
@@ -50,8 +49,6 @@ export type Link = {
 };
 
 export { report, StreamableReporter, getCurrentStepState };
-
-const MIME_TYPE = "application/vnd.breadboard.report-stream";
 
 export type Hints = {
   /**
@@ -177,155 +174,109 @@ export type ParticleOperation =
   | ParticleUpsertOperation
   | ParticleRemoveOperation;
 
+import { ProgressWorkItem } from "../agent/progress-work-item.js";
+
 class StreamableReporter {
-  public readonly path: FileSystemReadWritePath = `/run/reporter/stream/${generateId()}`;
-  #started = false;
-  #id = 0;
+  readonly #progressWorkItem: ProgressWorkItem;
+  readonly #consoleEntry: ConsoleEntry | undefined;
 
   constructor(
-    private readonly caps: Capabilities,
+    moduleArgs: A2ModuleArgs,
     public readonly options: NodeMetadata
-  ) {}
+  ) {
+    const { consoleEntry, appScreen } = getCurrentStepState(moduleArgs);
+    this.#consoleEntry = consoleEntry;
+    this.#progressWorkItem = new ProgressWorkItem(
+      options.title ?? "Progress",
+      options.icon ?? "info",
+      appScreen
+    );
+    if (this.#consoleEntry) {
+      this.#consoleEntry.work.set(crypto.randomUUID(), this.#progressWorkItem);
+    }
+  }
 
   async start() {
-    if (this.#started) return;
-    this.#started = true;
-
-    const schema: Schema = {
-      type: "object",
-      properties: {
-        reportStream: {
-          behavior: ["llm-content"],
-          type: "object",
-        },
-      },
-    };
-    const $metadata = this.options;
-    const reportStream: LLMContent = {
-      parts: [{ fileData: { fileUri: this.path, mimeType: MIME_TYPE } }],
-    };
-    const starting = await this.report("start");
-    if (!ok(starting)) return starting;
-    return this.caps.output({ schema, $metadata, reportStream });
+    // No-op: ProgressWorkItem is created in constructor
   }
 
-  async reportLLMContent(llmContent: LLMContent) {
-    if (!this.#started) {
-      console.log("StreamableReporter not started: call `start()` first");
-      return;
+  #toLLMContent(body: unknown): LLMContent {
+    if (!body) {
+      return { parts: [{ text: "Empty content" }] };
     }
-    const data = [llmContent];
-    return this.caps.write({ path: this.path, stream: true, data });
-  }
-
-  report(json: JsonSerializable) {
-    return this.reportLLMContent({ parts: [{ json }] });
-  }
-
-  #sendOperation(op: ParticleOperation) {
-    return this.report(op);
-  }
-
-  #sendUpsert(params: ParticleUpsertOperation["params"]) {
-    return this.#sendOperation({
-      jsonrpc: "2.0",
-      method: "suip/ops/upsert",
-      params,
-    });
+    if (typeof body === "string") {
+      return { parts: [{ text: body }] };
+    }
+    if (typeof body === "object" && "parts" in body) {
+      return body as LLMContent;
+    }
+    return { parts: [{ json: body as JsonSerializable }] };
   }
 
   sendLinks(title: string, links: Link[], icon?: string) {
-    const group: SerializedGroupParticle["group"] = [
-      ["title", { text: title }],
-      [
-        "links",
-        {
-          text: JSON.stringify(links),
-          mimeType: "application/json",
-        },
-      ],
-    ];
-    if (icon) {
-      group.push(["icon", { text: icon }]);
-    }
-    return this.#sendUpsert({
-      path: ["console"],
-      id: `${this.#id++}`,
-      particle: { type: "links", group },
-    });
+    // Pass structured link data to addLinks
+    this.#progressWorkItem.addLinks(title, icon ?? "link", links);
   }
 
-  // TODO: Make this much better, this is just a temporary hack.
-  sendA2UI(title: string, body: unknown, icon?: string) {
-    const bodyParticle = {
-      text: JSON.stringify(body),
-      mimeType: "application/json",
-    };
-    const group: SerializedGroupParticle["group"] = [
-      ["title", { text: title }],
-      ["body", bodyParticle],
-    ];
-    if (icon) {
-      group.push(["icon", { text: icon }]);
+  displayA2UI(title: string, body: unknown, icon?: string) {
+    // Extract ServerToClientMessage array from the body
+    // Body is expected to be LLMContent[] where each part.json is a message
+    const messages = this.#extractA2UIMessages(body);
+    if (messages.length > 0) {
+      this.#progressWorkItem.addA2UI(messages);
+    } else {
+      // Fallback to text display if we can't parse messages
+      this.#progressWorkItem.addUpdate(
+        title,
+        icon ?? "web",
+        this.#toLLMContent(body)
+      );
     }
-    return this.#sendUpsert({
-      path: ["console"],
-      id: `${this.#id++}`,
-      particle: { type: "a2ui", group },
-    });
+  }
+
+  #extractA2UIMessages(body: unknown): unknown[] {
+    if (!Array.isArray(body)) return [];
+    const messages: unknown[] = [];
+    for (const content of body) {
+      if (
+        typeof content === "object" &&
+        content !== null &&
+        "parts" in content
+      ) {
+        const parts = (content as { parts: unknown[] }).parts;
+        for (const part of parts) {
+          if (typeof part === "object" && part !== null && "json" in part) {
+            const json = (part as { json: unknown }).json;
+            // If json is an array, flatten it (Gemini returns full array in one part)
+            if (Array.isArray(json)) {
+              messages.push(...json);
+            } else {
+              messages.push(json);
+            }
+          }
+        }
+      }
+    }
+    return messages;
   }
 
   sendUpdate(title: string, body: unknown | undefined, icon?: string) {
-    let bodyParticle;
-    if (!body) {
-      bodyParticle = { text: "Empty content" };
-    } else if (typeof body === "string") {
-      bodyParticle = { text: body };
-    } else if (typeof body === "object" && "parts" in body) {
-      bodyParticle = {
-        text: JSON.stringify(body),
-        mimeType: "application/vnd.breadboard.llm-content",
-      };
-    } else {
-      bodyParticle = {
-        text: JSON.stringify(body),
-        mimeType: "application/json",
-      };
-    }
-    const group: SerializedGroupParticle["group"] = [
-      ["title", { text: title }],
-      ["body", bodyParticle],
-    ];
-    if (icon) {
-      group.push(["icon", { text: icon }]);
-    }
-    return this.#sendUpsert({
-      path: ["console"],
-      id: `${this.#id++}`,
-      particle: { type: "update", group },
-    });
+    this.#progressWorkItem.addUpdate(
+      title,
+      icon ?? "info",
+      this.#toLLMContent(body)
+    );
   }
 
   async sendError(error: { $error: string; metadata?: ErrorMetadata }) {
-    await this.#sendUpsert({
-      path: ["console"],
-      id: `${this.#id}`,
-      particle: {
-        type: "update",
-        group: [
-          ["title", { text: "Error" }],
-          ["body", { text: error.$error }],
-          ["icon", { text: "warning" }],
-        ],
-      },
+    this.#progressWorkItem.addUpdate("Error", "warning", {
+      parts: [{ text: error.$error }],
     });
     return error;
   }
 
   close() {
-    if (!this.#started) return;
-    return this.caps.write({ path: this.path, stream: true, done: true });
-    this.#started = false;
+    this.#progressWorkItem.end = performance.now();
   }
 }
 

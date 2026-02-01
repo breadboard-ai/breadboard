@@ -8,18 +8,12 @@ import {
   Outcome,
 } from "@breadboard-ai/types";
 import { StreamableReporter } from "./output.js";
-import {
-  err,
-  ok,
-  toLLMContent,
-} from "./utils.js";
+import { err, ok, toLLMContent } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 
 const DEFAULT_OPAL_ADK_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeAgentNodeStream";
-
-
 
 type StreamChunk = {
   parts?: Array<{
@@ -38,7 +32,6 @@ export type Content = {
 export type ContentMap = {
   [key: string]: Content;
 };
-
 
 export type PlanStep = {
   stepName: string;
@@ -81,7 +74,7 @@ async function getOpalAdkBackendUrl(caps: Capabilities) {
 
 function buildStreamingRequestBody(
   content: LLMContent[],
-  node_api: string = "deep_research",
+  node_api: string = "deep_research"
 ): StreamingRequestBody {
   const contents: StreamingRequestBody["contents"] = [];
 
@@ -110,25 +103,28 @@ function buildStreamingRequestBody(
   };
 }
 
-async function executeOpalAdkStream(caps: Capabilities,
+async function executeOpalAdkStream(
+  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   params: LLMContent[],
-  opal_adk_agent: string): Promise<Outcome<LLMContent>> {
-  const reporter = new StreamableReporter(caps, {
+  opal_adk_agent: string
+): Promise<Outcome<LLMContent>> {
+  const reporter = new StreamableReporter(moduleArgs, {
     title: `Executing Opal Adk with ${opal_adk_agent}`,
     icon: "spark",
   });
   try {
     await reporter.start();
-    await reporter.sendUpdate("Preparing request", { opal_adk_agent }, "upload");
+    await reporter.sendUpdate(
+      "Preparing request",
+      { opal_adk_agent },
+      "upload"
+    );
 
     const baseUrl = await getOpalAdkBackendUrl(caps);
     const url = new URL(baseUrl);
     url.searchParams.set("alt", "sse");
-    const requestBody = buildStreamingRequestBody(
-      params,
-      opal_adk_agent,
-    );
+    const requestBody = buildStreamingRequestBody(params, opal_adk_agent);
 
     // Record model call with action tracker
     caps.write({
@@ -171,11 +167,7 @@ async function executeOpalAdkStream(caps: Capabilities,
           );
         } else if (type === "result") {
           researchResult = text;
-          await reporter.sendUpdate(
-            "Agent Thought",
-            researchResult,
-            "spark"
-          );
+          await reporter.sendUpdate("Agent Thought", researchResult, "spark");
         } else if (type === "error") {
           return reporter.sendError(err(`Generation error: ${text}`));
         }
@@ -187,7 +179,7 @@ async function executeOpalAdkStream(caps: Capabilities,
     }
 
     // Return HTML as inlineData with text/html mimeType to match legacy behavior
-    return toLLMContent(researchResult, 'model');
+    return toLLMContent(researchResult, "model");
   } catch (e) {
     return reporter.sendError(err((e as Error).message));
   } finally {

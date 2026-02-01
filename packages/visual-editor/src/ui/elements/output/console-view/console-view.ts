@@ -33,7 +33,7 @@ import { hasControlPart } from "../../../../runtime/control.js";
 function isConsoleUpdate(
   item: LLMContent | Particle | SimplifiedA2UIClient | ConsoleUpdate
 ): item is ConsoleUpdate {
-  return "type" in item && item.type === "text";
+  return "type" in item && (item.type === "text" || item.type === "links");
 }
 
 @customElement("bb-console-view")
@@ -304,6 +304,37 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           rotate: 360deg;
         }
       }
+
+      .links-list {
+        list-style: none;
+        padding: var(--bb-grid-size-2);
+        margin: 0;
+
+        & li {
+          display: flex;
+          align-items: center;
+          margin-bottom: var(--bb-grid-size-2);
+
+          a {
+            color: var(--light-dark-n-0);
+            display: flex;
+            align-items: center;
+          }
+
+          & .g-icon {
+            margin-left: var(--bb-grid-size-2);
+          }
+
+          img {
+            width: 20px;
+            height: 20px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-right: var(--bb-grid-size-2);
+            border: 1px solid var(--light-dark-n-90);
+          }
+        }
+      }
     `,
   ];
 
@@ -357,15 +388,42 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         ([, item]) => {
           // ConsoleUpdate (from ProgressWorkItem)
           if (isConsoleUpdate(item)) {
-            return html`<li class="output" data-label="${item.title}:">
-              <span class="g-icon filled round">${item.icon}</span>
-              <bb-llm-output
-                .lite=${true}
-                .clamped=${false}
-                .value=${item.body}
-                .forceDrivePlaceholder=${true}
-              ></bb-llm-output>
-            </li>`;
+            if (item.type === "text") {
+              return html`<li class="output" data-label="${item.title}:">
+                <span class="g-icon filled round">${item.icon}</span>
+                <bb-llm-output
+                  .lite=${true}
+                  .clamped=${false}
+                  .value=${item.body}
+                  .forceDrivePlaceholder=${true}
+                ></bb-llm-output>
+              </li>`;
+            }
+            if (item.type === "links") {
+              return html`<li class="output" data-label="${item.title}:">
+                <span class="g-icon filled round">${item.icon}</span>
+                <ul class="links-list">
+                  ${item.links.map(
+                    (link) => html`
+                      <li>
+                        <a
+                          target="_blank"
+                          href=${link.uri}
+                          rel="noopener"
+                          class="sans-flex w-500 round md-body-small"
+                          ><img
+                            src="https://www.google.com/s2/favicons?domain=${link.iconUri}&sz=48"
+                          /><span>${link.title}</span
+                          ><span class="g-icon inline filled round"
+                            >open_in_new</span
+                          ></a
+                        >
+                      </li>
+                    `
+                  )}
+                </ul>
+              </li>`;
+            }
           }
           // SimplifiedA2UIClient
           if ("processor" in item) {

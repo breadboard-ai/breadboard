@@ -6,11 +6,13 @@
 
 import {
   AppScreen,
+  ConsoleLink,
   ConsoleUpdate,
   DataPart,
   FunctionCallCapabilityPart,
   JsonSerializable,
   LLMContent,
+  SimplifiedA2UIClient,
   WorkItem,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
@@ -21,6 +23,7 @@ import { AgentProgressManager } from "./types.js";
 import { llm, progressFromThought } from "../a2/utils.js";
 import { StatusUpdateCallbackOptions } from "./function-definition.js";
 import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
+import { v0_8 } from "../../a2ui/index.js";
 
 export { ProgressWorkItem };
 
@@ -45,6 +48,8 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
 
   readonly chat = false;
 
+  readonly workItemId = crypto.randomUUID();
+
   readonly product: Map<string, ConsoleUpdate> = new SignalMap();
 
   #updateCounter = 0;
@@ -61,6 +66,40 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   #add(title: string, icon: string, body: LLMContent) {
     const key = `update-${this.#updateCounter++}`;
     this.product.set(key, { type: "text", title, icon, body });
+  }
+
+  /**
+   * Add an update to the progress work item.
+   * Public method for external callers like StreamableReporter.
+   */
+  addUpdate(title: string, icon: string, body: LLMContent) {
+    this.#add(title, icon, body);
+  }
+
+  /**
+   * Add links to the progress work item.
+   * Public method for external callers like StreamableReporter.
+   */
+  addLinks(title: string, icon: string, links: ConsoleLink[]) {
+    const key = `update-${this.#updateCounter++}`;
+    this.product.set(key, { type: "links", title, icon, links });
+  }
+
+  /**
+   * Add A2UI content to the progress work item.
+   * Creates a SimplifiedA2UIClient with a processor and no-op receiver.
+   * @param messages - A2UI ServerToClientMessage array (untyped from parsed JSON)
+   */
+  addA2UI(messages: unknown[]) {
+    const processor = v0_8.Data.createSignalA2UIModelProcessor();
+    processor.processMessages(messages as v0_8.Types.ServerToClientMessage[]);
+    const key = `a2ui-${this.#updateCounter++}`;
+    const client: SimplifiedA2UIClient = {
+      processor,
+      receiver: { sendMessage: () => {} }, // No-op receiver for display-only
+    };
+    // Cast to unknown first since product map type doesn't include SimplifiedA2UIClient directly
+    (this.product as Map<string, unknown>).set(key, client);
   }
 
   #addParts(title: string, icon: string, parts: DataPart[]) {

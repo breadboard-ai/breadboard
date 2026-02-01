@@ -483,7 +483,7 @@ async function callAPI(
   body: GeminiBody
 ): Promise<Outcome<GeminiAPIOutputs>> {
   const { appScreen, title } = getCurrentStepState(moduleArgs);
-  const reporter = new StreamableReporter(caps, {
+  const reporter = new StreamableReporter(moduleArgs, {
     title: `Calling ${model}`,
     icon: "spark",
   });
