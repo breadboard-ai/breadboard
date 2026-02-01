@@ -6,17 +6,16 @@
 
 import {
   AppScreen,
+  ConsoleUpdate,
   DataPart,
   FunctionCallCapabilityPart,
-  GroupParticle,
   JsonSerializable,
   LLMContent,
-  Particle,
   WorkItem,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
-import { now } from "./now.js";
 import { SignalMap } from "signal-utils/map";
+import { now } from "./now.js";
 import { GeminiBody } from "../a2/gemini.js";
 import { AgentProgressManager } from "./types.js";
 import { llm, progressFromThought } from "../a2/utils.js";
@@ -46,10 +45,9 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
 
   readonly chat = false;
 
-  readonly product: Map<string, Particle> = new SignalMap();
+  readonly product: Map<string, ConsoleUpdate> = new SignalMap();
 
-  index = 0;
-
+  #updateCounter = 0;
   #previousStatus: string | undefined;
 
   constructor(
@@ -60,15 +58,13 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     this.start = performance.now();
   }
 
-  #add(title: string, icon: string, content: unknown) {
-    return this.product.set(
-      `${this.index++}`,
-      createUpdate(title, icon, content)
-    );
+  #add(title: string, icon: string, body: LLMContent) {
+    const key = `update-${this.#updateCounter++}`;
+    this.product.set(key, { type: "text", title, icon, body });
   }
 
   #addParts(title: string, icon: string, parts: DataPart[]) {
-    return this.#add(title, icon, { parts });
+    this.#add(title, icon, { parts });
   }
 
   /**
@@ -174,29 +170,4 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     }
     this.end = performance.now();
   }
-}
-
-function createUpdate(title: string, icon: string, body: unknown) {
-  let bodyParticle;
-  if (!body) {
-    bodyParticle = { text: "Empty content" };
-  } else if (typeof body === "string") {
-    bodyParticle = { text: body };
-  } else if (typeof body === "object" && "parts" in body) {
-    bodyParticle = {
-      text: JSON.stringify(body),
-      mimeType: "application/vnd.breadboard.llm-content",
-    };
-  } else {
-    bodyParticle = {
-      text: JSON.stringify(body),
-      mimeType: "application/json",
-    };
-  }
-  const group: GroupParticle["group"] = new Map([
-    ["title", { text: title }],
-    ["body", bodyParticle],
-    ["icon", { text: icon }],
-  ]);
-  return { type: "update", group };
 }

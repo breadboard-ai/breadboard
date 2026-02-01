@@ -5,7 +5,18 @@
  */
 
 import { isParticle } from "../../../../particles/index.js";
-import { ConsoleEntry } from "@breadboard-ai/types";
+import {
+  ConsoleEntry,
+  ConsoleUpdate,
+  LLMContent,
+  Particle,
+  SimplifiedA2UIClient,
+} from "@breadboard-ai/types";
+
+type ProductMap = Map<
+  string,
+  LLMContent | Particle | SimplifiedA2UIClient | ConsoleUpdate
+>;
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -18,6 +29,12 @@ import { icons } from "../../../styles/icons.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { sharedStyles } from "./shared-styles.js";
 import { hasControlPart } from "../../../../runtime/control.js";
+
+function isConsoleUpdate(
+  item: LLMContent | Particle | SimplifiedA2UIClient | ConsoleUpdate
+): item is ConsoleUpdate {
+  return "type" in item && item.type === "text";
+}
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
@@ -215,7 +232,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             opacity: 0.3;
             cursor: default;
           }
-            
+
           &[open] > summary {
             margin-bottom: var(--bb-grid-size-3);
 
@@ -324,6 +341,63 @@ export class ConsoleView extends SignalWatcher(LitElement) {
     });
 
     return `${formatter.format(secondsValue)}s`;
+  }
+
+  #renderProducts(product: ProductMap) {
+    if (product.size === 0) {
+      return html`<div class="output" data-label="Output:">
+        <p>There are no outputs for this step's work item</p>
+      </div>`;
+    }
+
+    return html`<ul class="products">
+      ${repeat(
+        product,
+        ([key]) => key,
+        ([, item]) => {
+          // ConsoleUpdate (from ProgressWorkItem)
+          if (isConsoleUpdate(item)) {
+            return html`<li class="output" data-label="${item.title}:">
+              <span class="g-icon filled round">${item.icon}</span>
+              <bb-llm-output
+                .lite=${true}
+                .clamped=${false}
+                .value=${item.body}
+                .forceDrivePlaceholder=${true}
+              ></bb-llm-output>
+            </li>`;
+          }
+          // SimplifiedA2UIClient
+          if ("processor" in item) {
+            const { processor, receiver } = item;
+            return html`<li>
+              <section id="surfaces">
+                <bb-a2ui-client-view
+                  .processor=${processor}
+                  .receiver=${receiver}
+                >
+                </bb-a2ui-client-view>
+              </section>
+            </li>`;
+          }
+          // Particle
+          if (isParticle(item)) {
+            return html`<li>
+              <bb-particle-view .particle=${item}></bb-particle-view>
+            </li>`;
+          }
+          // LLMContent (fallback)
+          return html`<li class="output" data-label="Output:">
+            <bb-llm-output
+              .lite=${true}
+              .clamped=${false}
+              .value=${item}
+              .forceDrivePlaceholder=${true}
+            ></bb-llm-output>
+          </li>`;
+        }
+      )}
+    </ul>`;
   }
 
   #renderRun() {
@@ -474,49 +548,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
                       ${workItem.awaitingUserInput
                         ? this.#renderInput()
-                        : workItem.product.size > 0
-                          ? html`<ul class="products">
-                              ${repeat(
-                                workItem.product,
-                                ([key]) => key,
-                                ([, product]) => {
-                                  if ("processor" in product) {
-                                    const { processor, receiver } = product;
-                                    return html`<li>
-                                      <section id="surfaces">
-                                        <bb-a2ui-client-view
-                                          .processor=${processor}
-                                          .receiver=${receiver}
-                                        >
-                                        </bb-a2ui-client-view>
-                                      </section>
-                                    </li>`;
-                                  } else if (isParticle(product)) {
-                                    return html`<li>
-                                      <bb-particle-view
-                                        .particle=${product}
-                                      ></bb-particle-view>
-                                    </li>`;
-                                  }
-                                  return html`<li
-                                    class="output"
-                                    data-label="Output:"
-                                  >
-                                    <bb-llm-output
-                                      .lite=${true}
-                                      .clamped=${false}
-                                      .value=${product}
-                                      .forceDrivePlaceholder=${true}
-                                    ></bb-llm-output>
-                                  </li>`;
-                                }
-                              )}
-                            </ul>`
-                          : html`<div class="output" data-label="Output:">
-                              <p>
-                                There are no outputs for this step's work item
-                              </p>
-                            </div>`}
+                        : this.#renderProducts(workItem.product)}
                     </details>`;
                   }
                 )

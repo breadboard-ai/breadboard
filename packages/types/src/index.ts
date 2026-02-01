@@ -36,3 +36,4 @@ export {
   ConsentUIType,
 } from "./consent-manager.js";
 export type * from "./consent-manager.js";
+export type * from "./console-update.js";

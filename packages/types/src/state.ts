@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ConsoleUpdate } from "./console-update.js";
 import { OutputValues } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
 import { Particle } from "./particles.js";
@@ -124,9 +125,16 @@ export type WorkItem = {
    * Similar to the `output` of the `ConsoleEntry`, represents the work product
    * of this item.
    *
-   * The Map type represents the A2UI update.
+   * Values can be:
+   * - LLMContent for standard outputs
+   * - Particle for SUIP streaming
+   * - SimplifiedA2UIClient for A2UI
+   * - ConsoleUpdate for agent progress updates
    */
-  product: Map<string, LLMContent | Particle | SimplifiedA2UIClient>;
+  product: Map<
+    string,
+    LLMContent | Particle | SimplifiedA2UIClient | ConsoleUpdate
+  >;
 };
 
 /**
