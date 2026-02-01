@@ -13,7 +13,6 @@ import {
   InspectableNodePorts,
   LLMContent,
   MainGraphIdentifier,
-  MutableGraphStore,
   NodeIdentifier,
   NodeValue,
   Outcome,
@@ -116,12 +115,6 @@ export class EntityEditor
 
   @property()
   accessor graphTopologyUpdateId = 0;
-
-  @property()
-  accessor graphStore: MutableGraphStore | null = null;
-
-  @property()
-  accessor graphStoreUpdateId = 0;
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;

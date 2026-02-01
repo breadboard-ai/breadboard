@@ -14,7 +14,6 @@ import {
   EditableGraph,
   GraphDescriptor,
   MainGraphIdentifier,
-  MutableGraphStore,
 } from "@breadboard-ai/types";
 import {
   HTMLTemplateResult,
@@ -101,12 +100,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   @property()
   accessor graphIsMine = false;
-
-  @property()
-  accessor graphStore: MutableGraphStore | null = null;
-
-  @property()
-  accessor graphStoreUpdateId: number = 0;
 
   @property()
   accessor graphTopologyUpdateId: number = 0;
@@ -538,8 +531,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         })}
         .graph=${graph}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-        .graphStore=${this.graphStore}
-        .graphStoreUpdateId=${this.graphStoreUpdateId}
         .selectionState=${this.selectionState}
         .mainGraphId=${this.mainGraphId}
         .readOnly=${this.readOnly}
