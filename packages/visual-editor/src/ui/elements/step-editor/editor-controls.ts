@@ -495,24 +495,6 @@ export class EditorControls extends SignalWatcher(LitElement) {
         }
       }
 
-      bb-component-selector-overlay {
-        position: absolute;
-        bottom: 52px;
-        left: 50%;
-        transform: translateX(-50%) translateX(-29px);
-        z-index: 8;
-        animation: slideIn 0.2s cubic-bezier(0, 0, 0.3, 1) forwards;
-
-        &[detached="true"] {
-          position: fixed;
-          left: var(--component-library-x, 100px);
-          top: var(--component-library-y, 100px);
-          right: auto;
-          bottom: auto;
-          transform: none;
-        }
-      }
-
       #add-drive-proxy {
         display: block;
         width: 0;

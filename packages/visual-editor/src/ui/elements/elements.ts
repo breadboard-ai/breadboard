@@ -51,7 +51,6 @@ export { AccountSwitcher } from "./account/account.js";
 export { AppController } from "./app-controller/app-controller.js";
 export { AppThemeCreator } from "./app-controller/app-theme-creator.js";
 export { CanvasController } from "./canvas-controller/canvas-controller.js";
-export { ComponentSelectorOverlay } from "./component-selector/component-selector-overlay.js";
 export { EditorControls } from "./step-editor/editor-controls.js";
 export { EntityEditor } from "./entity-editor/entity-editor.js";
 export { FastAccessMenu } from "./fast-access-menu/fast-access-menu.js";
