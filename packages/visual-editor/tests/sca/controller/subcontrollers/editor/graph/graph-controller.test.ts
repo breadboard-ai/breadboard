@@ -158,6 +158,7 @@ suite("GraphController", () => {
       subGraphId: null,
       type: 0,
       version: 10,
+      finalOutputValues: undefined,
     } satisfies Tab;
 
     store.id = expected.id;

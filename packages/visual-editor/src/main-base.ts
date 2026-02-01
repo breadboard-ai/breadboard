@@ -397,9 +397,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           Utils.Logging.Formatter.verbose(`Checking subscriber status`),
           "Google One"
         );
-        const response = await this.sca.services.apiClient.getG1SubscriptionStatus({
-          include_credit_data: true,
-        });
+        const response =
+          await this.sca.services.apiClient.getG1SubscriptionStatus({
+            include_credit_data: true,
+          });
         this.sca.controller.global.main.subscriptionStatus = response.is_member
           ? "subscribed"
           : "not-subscribed";
@@ -533,7 +534,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }, LOADING_TIMEOUT);
 
       this.sca.controller.global.main.loadState = "Loading";
-      const loadResult = await this.sca.actions.board.load(boardUrl);
+      const loadResult = await this.sca.actions.board.load(boardUrl, {
+        resultsFileId:
+          parsedUrl.page === "graph" ? parsedUrl.results : undefined,
+      });
       clearTimeout(loadingTimeout);
       if (snackbarId) {
         this.sca.controller.global.snackbars.unsnackbar(snackbarId);
