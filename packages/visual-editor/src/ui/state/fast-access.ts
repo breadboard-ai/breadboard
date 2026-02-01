@@ -8,7 +8,6 @@ import {
   AssetPath,
   EditableGraph,
   GraphIdentifier,
-  ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
   Component,
@@ -92,7 +91,6 @@ class ReactiveFastAccess implements FastAccess {
     public readonly myTools: Map<string, Tool>,
     unfilteredControlFlow: Map<string, Tool>,
     private readonly allComponents: Map<GraphIdentifier, Components>,
-    public readonly parameters: Map<string, ParameterMetadata>,
     public readonly integrations: FilteredIntegrations,
     private readonly editable: EditableGraph | undefined,
     private readonly stepEditor: Omit<StepEditor, "fastAccess">

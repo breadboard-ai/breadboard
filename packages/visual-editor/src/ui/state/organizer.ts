@@ -16,7 +16,6 @@ import { RemoveAssetWithRefs } from "../transforms/remove-asset-with-refs.js";
 import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata.js";
 import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs.js";
 import {
-  ConnectorState,
   GraphAsset,
   GraphAssetDescriptor,
   Organizer,
@@ -30,13 +29,10 @@ class ReactiveOrganizer implements Organizer {
   #project: ProjectInternal;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
   readonly graphUrl: URL | null;
-  readonly connectors: ConnectorState;
-
   constructor(project: ProjectInternal) {
     this.#project = project;
     this.graphAssets = project.graphAssets;
     this.graphUrl = project.graphUrl;
-    this.connectors = project.connectors;
   }
 
   async addGraphAsset(asset: GraphAssetDescriptor): Promise<Outcome<void>> {

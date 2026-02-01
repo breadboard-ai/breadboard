@@ -21,7 +21,6 @@ import {
   NodeMetadata,
   NodeRunState,
   OutputValues,
-  ParameterMetadata,
   RunError,
   GraphDescriptor,
   EditableGraph,
@@ -35,7 +34,7 @@ import {
   PortIdentifier,
   Schema,
 } from "@breadboard-ai/types";
-import { ConnectorInstance, ConnectorType } from "../connectors/types.js";
+
 import { StateEvent } from "../events/events.js";
 import {
   AppTheme,
@@ -274,11 +273,6 @@ export type Organizer = {
     path: AssetPath,
     metadata: AssetMetadata
   ): Promise<Outcome<void>>;
-
-  /**
-   * Available connectors
-   */
-  connectors: ConnectorState;
 };
 
 export type GraphAssetDescriptor = {
@@ -289,7 +283,6 @@ export type GraphAssetDescriptor = {
 
 export type GraphAsset = GraphAssetDescriptor & {
   update(title: string, data?: LLMContent[]): Promise<Outcome<void>>;
-  connector?: ConnectorInstance;
 };
 
 export type GeneratedAssetIdentifier = string;
@@ -341,7 +334,6 @@ export type FastAccess = {
   myTools: Map<string, Tool>;
   controlFlow: FilterableMap<Tool>;
   components: Map<GraphIdentifier, Components>;
-  parameters: Map<string, ParameterMetadata>;
   integrations: FilteredIntegrations;
   /**
    * Available routes for the current step.
@@ -354,27 +346,6 @@ export type FastAccess = {
  */
 export type RendererState = {
   graphAssets: Map<AssetPath, GraphAsset>;
-};
-
-export type ConnectorState = {
-  types: Map<string, ConnectorType>;
-
-  // This double-plumbing is inelegant -- it just calls the
-  // method by the same name in Project.
-  // TODO: Make this more elegant.
-  instanceExists(url: string): boolean;
-
-  /**
-   * Starts creating a new Connector instance
-   *
-   * @param url -- URL of the connector.
-   */
-  initializeInstance(url: string | null): Promise<Outcome<void>>;
-
-  /**
-   * Cancel any pending work.
-   */
-  cancel(): Promise<void>;
 };
 
 export type UIOverlays =
@@ -574,7 +545,7 @@ export type Integrations = {
 export type Project = {
   readonly run: ProjectRun;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
-  readonly connectors: ConnectorState;
+
   readonly integrations: Integrations;
   readonly organizer: Organizer;
   readonly renderer: RendererState;
@@ -622,8 +593,6 @@ export type ProjectInternal = Project & {
     graphId: GraphIdentifier,
     id: NodeIdentifier
   ): Outcome<{ id: PortIdentifier; title: string }>;
-  connectorInstanceExists(url: string): boolean;
-  addConnectorInstance(url: string): void;
 };
 
 export type ProjectValues = {
@@ -632,9 +601,8 @@ export type ProjectValues = {
   myTools: Map<string, Tool>;
   controlFlowTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
-  parameters: Map<string, ParameterMetadata>;
   integrations: Integrations;
-  editable: EditableGraph | undefined;
+  editable: EditableGraph;
 };
 
 export type EphemeralParticleTree = {

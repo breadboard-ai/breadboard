@@ -7,11 +7,7 @@
 import { State } from "../ui/index.js";
 import { createLiteModeState } from "../ui/state/lite-mode.js";
 import { LiteModeState, Project, RuntimeContext } from "../ui/state/types.js";
-import {
-  EditableGraph,
-  MainGraphIdentifier,
-  MutableGraphStore,
-} from "@breadboard-ai/types";
+import { EditableGraph, MainGraphIdentifier } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { SCA } from "../sca/sca.js";
@@ -23,7 +19,6 @@ export { StateManager };
  */
 class StateManager implements RuntimeContext {
   #currentMainGraphId: MainGraphIdentifier | null = null;
-  #store: MutableGraphStore;
 
   @signal
   accessor project: Project | null = null;
@@ -32,11 +27,7 @@ class StateManager implements RuntimeContext {
 
   readonly flowGenerator: FlowGenerator;
 
-  constructor(
-    store: MutableGraphStore,
-    private readonly __sca: SCA
-  ) {
-    this.#store = store;
+  constructor(private readonly __sca: SCA) {
     this.flowGenerator = __sca.services.flowGenerator;
     this.lite = createLiteModeState(this, __sca);
   }
@@ -60,7 +51,7 @@ class StateManager implements RuntimeContext {
     if (mainGraphId === this.#currentMainGraphId) return;
     this.#currentMainGraphId = mainGraphId;
     const editor = this.__sca.controller.editor.graph.editor;
-    this.project = this.createProjectState(mainGraphId, editor);
+    this.project = this.createProjectState(editor);
   }
 
   get router() {
@@ -68,25 +59,19 @@ class StateManager implements RuntimeContext {
   }
 
   private createProjectState(
-    mainGraphId: MainGraphIdentifier,
     editable: EditableGraph | null
   ): State.Project | null {
-    const mutable = this.#store.get(mainGraphId);
-    if (!mutable) {
-      console.warn(
-        `No mutable graph found for ${mainGraphId}: this is an integrity problem, and will likely result in undefined behavior`
-      );
+    if (!editable) {
+      console.warn(`No editable graph provided: cannot create project state`);
       return null;
     }
 
     return State.createProjectState(
-      mainGraphId,
-      this.#store,
       this.__sca.services.fetchWithCreds,
       this.__sca.services.googleDriveBoardServer,
       this.__sca.services.actionTracker,
       this.__sca.services.mcpClientManager,
-      editable || undefined
+      editable
     );
   }
 }

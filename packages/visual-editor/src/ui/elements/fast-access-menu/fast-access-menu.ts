@@ -13,15 +13,10 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Component, FastAccess, GraphAsset, Tool } from "../../state/index.js";
-import {
-  GraphIdentifier,
-  NodeIdentifier,
-  ParameterMetadata,
-} from "@breadboard-ai/types";
+import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import {
   FastAccessDismissedEvent,
   FastAccessSelectEvent,
-  ParamCreateEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -68,9 +63,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   @property()
   accessor showComponents = true;
-
-  @property()
-  accessor showParameters = false;
 
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
@@ -130,7 +122,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       #assets,
       #tools,
       #outputs,
-      #parameters,
       section.group {
         & h3 {
           font-size: 12px;
@@ -257,35 +248,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       .integration menu button {
         --background: var(--n-90);
       }
-
-      #parameters {
-        & #create-new-param {
-          display: block;
-          white-space: nowrap;
-          max-width: 100%;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          border-radius: var(--bb-grid-size-16);
-          height: var(--bb-grid-size-7);
-          border: none;
-          background: var(--bb-icon-add) var(--n-98) 4px center / 20px 20px
-            no-repeat;
-          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
-          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-            var(--bb-font-family);
-          transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-          margin-top: var(--bb-grid-size-2);
-
-          &:not([disabled]) {
-            cursor: pointer;
-
-            &:hover,
-            &:focus {
-              background-color: var(--n-90);
-            }
-          }
-        }
-      }
     `,
   ];
 
@@ -298,8 +260,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     assets: GraphAsset[];
     tools: Tool[];
     components: Component[];
-    parameters: (ParameterMetadata & { id: string })[];
-  } = { assets: [], tools: [], components: [], parameters: [] };
+  } = { assets: [], tools: [], components: [] };
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -321,20 +282,12 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   protected willUpdate(): void {
     const graphId = this.graphId || "";
-    let assets = [...(this.state?.graphAssets.values() || [])].filter(
-      (asset) =>
-        !asset.connector ||
-        asset.connector.type.load ||
-        asset.connector.type.save
-    );
+    let assets = [...(this.state?.graphAssets.values() || [])];
     let tools = [
       ...(this.state?.tools.values() || []),
       ...(this.state?.myTools.values() || []),
     ].sort((tool1, tool2) => tool1.order! - tool2.order!);
     let components = [...(this.state?.components.get(graphId)?.values() || [])];
-    let parameters = [...(this.state?.parameters.entries() || [])].map(
-      ([id, value]) => ({ id, ...value })
-    );
 
     const { globalConfig } = this;
     if (globalConfig?.environmentName) {
@@ -377,11 +330,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         const filter = new RegExp(filterStr, "gim");
         return filter.test(component.title);
       });
-
-      parameters = parameters.filter((parameter) => {
-        const filter = new RegExp(filterStr, "gim");
-        return filter.test(parameter.title);
-      });
     }
 
     // Append controlFlow tools (routing, memory) to the end of tools
@@ -402,14 +350,12 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       assets: this.showAssets ? assets : [],
       tools: this.showTools ? tools : [],
       components: this.showComponents ? components : [],
-      parameters: this.showParameters ? parameters : [],
     };
 
     const totalSize =
       this.#items.assets.length +
       this.#items.tools.length +
       this.#items.components.length +
-      this.#items.parameters.length +
       (this.state?.routes.results.size ?? 0);
 
     this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
@@ -478,7 +424,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     const totalSize =
       this.#items.assets.length +
       this.#items.tools.length +
-      this.#items.parameters.length +
       this.#items.components.length +
       (this.state?.routes.results.size ?? 0);
 
@@ -527,29 +472,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   #emitCurrentItem() {
     let idx = this.selectedIndex;
-    const uniqueAndNew =
-      this.#items.assets.length === 0 &&
-      this.#items.components.length === 0 &&
-      this.#items.parameters.length === 0 &&
-      this.#items.tools.length === 0 &&
-      (this.state?.controlFlow.results.size ?? 0) === 0 &&
-      (this.state?.routes.results.size ?? 0) === 0 &&
-      this.filter !== "";
 
     if (idx === -1) {
-      if (this.filter && uniqueAndNew && this.showParameters) {
-        // emit.
-        const paramPath = this.filter.toLocaleLowerCase().replace(/\W/gim, "-");
-        const title = toUpperCase(this.filter)!;
-        this.dispatchEvent(
-          // TODO: Support params in subgraphs.
-          new ParamCreateEvent("", paramPath, title, "")
-        );
-
-        this.dispatchEvent(
-          new FastAccessSelectEvent(paramPath, title, "param")
-        );
-      }
       return;
     }
 
@@ -567,19 +491,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     }
 
     idx -= this.#items.assets.length;
-    if (idx < this.#items.parameters.length) {
-      const parameter = this.#items.parameters[idx];
-      this.dispatchEvent(
-        new FastAccessSelectEvent(
-          parameter.id,
-          parameter.title ?? "Untitled parameter",
-          "param"
-        )
-      );
-      return;
-    }
-
-    idx -= this.#items.parameters.length;
     if (idx < this.#items.tools.length) {
       const tool = this.#items.tools[idx];
       this.dispatchEvent(
@@ -632,13 +543,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   render() {
     let idx = 0;
-    const uniqueAndNew =
-      this.#items.assets.length === 0 &&
-      this.#items.components.length === 0 &&
-      this.#items.parameters.length === 0 &&
-      this.#items.tools.length === 0 &&
-      this.filter !== "" &&
-      this.showParameters;
 
     return html` <div ${ref(this.#itemContainerRef)}>
       <header>
@@ -722,48 +626,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             </menu>`
           : this.showAssets
             ? html`<div class="no-items">No assets</div>`
-            : nothing}
-      </section>
-
-      <section id="parameters">
-        ${this.showParameters
-          ? html`<h3 class="sans-flex w-400 round">Parameters</h3>`
-          : nothing}
-        ${this.#items.parameters.length
-          ? html` <menu>
-              ${this.#items.parameters.map((parameter) => {
-                const active = idx === this.selectedIndex;
-                const globalIndex = idx;
-                idx++;
-                return html`<li>
-                  <button
-                    class=${classMap({ active })}
-                    @pointerover=${() => {
-                      this.selectedIndex = globalIndex;
-                    }}
-                    @click=${() => {
-                      this.#emitCurrentItem();
-                    }}
-                  >
-                    <span class="title">${parameter.title}</span>
-                  </button>
-                </li>`;
-              })}
-            </menu>`
-          : this.showParameters
-            ? html`<div class="no-items">
-                No parameters
-                ${uniqueAndNew
-                  ? html`<button
-                      id="create-new-param"
-                      @click=${() => {
-                        this.#emitCurrentItem();
-                      }}
-                    >
-                      Add "${toUpperCase(this.filter)}"
-                    </button>`
-                  : nothing}
-              </div>`
             : nothing}
       </section>
 
@@ -943,11 +805,4 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         : nothing}
     </div>`;
   }
-}
-
-function toUpperCase(s: string | null) {
-  if (!s) return s;
-  const trimmed = s.trim();
-  const cap = trimmed.charAt(0).toLocaleUpperCase("en-US");
-  return `${cap}${trimmed.slice(1)}`;
 }

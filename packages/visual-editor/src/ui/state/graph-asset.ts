@@ -11,18 +11,14 @@ import {
   LLMContent,
 } from "@breadboard-ai/types";
 import { GraphAsset, ProjectInternal } from "./types.js";
-import { ConnectorInstance } from "../connectors/types.js";
-import { err, ok } from "@breadboard-ai/utils";
+import { err } from "@breadboard-ai/utils";
 import { Outcome } from "@breadboard-ai/types";
-import { configFromData } from "../connectors/util.js";
-import { ConnectorInstanceImpl } from "./connector-instance.js";
 import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs.js";
 import { UpdateAssetData } from "../transforms/update-asset-data.js";
 
 export { GraphAssetImpl };
 
 class GraphAssetImpl implements GraphAsset {
-  public readonly connector?: ConnectorInstance | undefined;
   public readonly data: LLMContent[];
   public readonly metadata?: AssetMetadata | undefined;
 
@@ -34,21 +30,6 @@ class GraphAssetImpl implements GraphAsset {
     const { data, metadata } = asset;
     this.data = data as LLMContent[];
     this.metadata = metadata;
-    if (this.metadata?.type !== "connector") return;
-
-    const config = configFromData(data);
-    if (!ok(config)) return;
-
-    const connectorType = project.connectors.types.get(config.url);
-    if (!connectorType) return;
-
-    this.connector = new ConnectorInstanceImpl(
-      connectorType,
-      path,
-      this,
-      project
-    );
-    project.addConnectorInstance(config.url);
   }
 
   async update(title: string, data: LLMContent[]): Promise<Outcome<void>> {

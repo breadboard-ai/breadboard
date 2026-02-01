@@ -41,7 +41,6 @@ class StepEditorImpl implements StepEditor {
       myTools,
       controlFlowTools,
       components,
-      parameters,
       integrations,
       editable,
     } = projectValues;
@@ -51,7 +50,6 @@ class StepEditorImpl implements StepEditor {
       myTools,
       controlFlowTools,
       components,
-      parameters,
       new FilteredIntegrationsImpl(integrations.registered),
       editable,
       this
