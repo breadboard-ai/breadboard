@@ -188,9 +188,7 @@ suite("Board Actions", () => {
       test("returns undefined when no URL", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.getByDescriptor(testGraph);
-        if (!mainGraphId.success) assert.fail("Unable to create graph");
-        const editor = graphStore.edit(mainGraphId.result);
+        const editor = graphStore.editByDescriptor(testGraph);
 
         const { controller } = makeMockController({
           editor,
@@ -213,9 +211,7 @@ suite("Board Actions", () => {
       test("returns undefined when readOnly", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.getByDescriptor(testGraph);
-        if (!mainGraphId.success) assert.fail("Unable to create graph");
-        const editor = graphStore.edit(mainGraphId.result);
+        const editor = graphStore.editByDescriptor(testGraph);
 
         const { controller } = makeMockController({
           editor,
@@ -238,9 +234,7 @@ suite("Board Actions", () => {
       test("returns undefined when board server cannot save", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.getByDescriptor(testGraph);
-        if (!mainGraphId.success) assert.fail("Unable to create graph");
-        const editor = graphStore.edit(mainGraphId.result);
+        const editor = graphStore.editByDescriptor(testGraph);
 
         const { controller } = makeMockController({
           editor,
@@ -265,9 +259,7 @@ suite("Board Actions", () => {
       test("calls board server save with graph", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.getByDescriptor(testGraph);
-        if (!mainGraphId.success) assert.fail("Unable to create graph");
-        const editor = graphStore.edit(mainGraphId.result);
+        const editor = graphStore.editByDescriptor(testGraph);
 
         const mockBoardServer = makeMockBoardServer({ canSave: true });
         const { controller } = makeMockController({
@@ -295,9 +287,7 @@ suite("Board Actions", () => {
       test("shows snackbar for user-initiated save", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.getByDescriptor(testGraph);
-        if (!mainGraphId.success) assert.fail("Unable to create graph");
-        const editor = graphStore.edit(mainGraphId.result);
+        const editor = graphStore.editByDescriptor(testGraph);
 
         const mockBoardServer = makeMockBoardServer({ canSave: true });
         const { controller, mockSnackbars } = makeMockController({
@@ -329,9 +319,7 @@ suite("Board Actions", () => {
       test("returns error result when save throws", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
         const testGraph = makeFreshGraph();
-        const mainGraphId = graphStore.getByDescriptor(testGraph);
-        if (!mainGraphId.success) assert.fail("Unable to create graph");
-        const editor = graphStore.edit(mainGraphId.result);
+        const editor = graphStore.editByDescriptor(testGraph);
 
         const mockBoardServer = makeMockBoardServer({
           canSave: true,
@@ -496,9 +484,7 @@ suite("Board Actions", () => {
       const testGraph = makeFreshGraph();
       testGraph.title = "My Board";
 
-      const mainGraphId = graphStore.getByDescriptor(testGraph);
-      if (!mainGraphId.success) assert.fail("Unable to create graph");
-      const editor = graphStore.edit(mainGraphId.result);
+      const editor = graphStore.editByDescriptor(testGraph);
 
       const mockBoardServer = makeMockBoardServer({
         createUrl: "https://new.example.com/remixed.json",
@@ -582,9 +568,7 @@ suite("Board Actions", () => {
       const testGraph = makeFreshGraph();
       testGraph.title = "My Board";
 
-      const mainGraphId = graphStore.getByDescriptor(testGraph);
-      if (!mainGraphId.success) assert.fail("Unable to create graph");
-      const editor = graphStore.edit(mainGraphId.result);
+      const editor = graphStore.editByDescriptor(testGraph);
 
       // Mock boardServer that returns no URL (create fails)
       const mockBoardServer = makeMockBoardServer({});

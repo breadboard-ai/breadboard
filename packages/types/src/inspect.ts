@@ -825,10 +825,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
       graph: GraphDescriptor,
       options?: EditableGraphOptions
     ): EditableGraph | undefined;
-    edit(
-      id: MainGraphIdentifier,
-      options?: EditableGraphOptions
-    ): EditableGraph | undefined;
     inspect(
       id: MainGraphIdentifier,
       graphId: GraphIdentifier

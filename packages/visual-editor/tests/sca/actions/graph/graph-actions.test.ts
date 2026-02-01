@@ -81,9 +81,7 @@ suite("Graph Actions", () => {
       });
 
       testGraph = makeFreshGraph();
-      const mainGraphId = graphStore.getByDescriptor(testGraph);
-      if (!mainGraphId.success) assert.fail("Unable to create graph");
-      const editor = graphStore.edit(mainGraphId.result);
+      const editor = graphStore.editByDescriptor(testGraph);
       if (!editor) assert.fail("Unable to edit graph");
 
       graphActions.bind({
