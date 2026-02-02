@@ -17,7 +17,6 @@ import * as a2ImageEditor from "./image-editor.js";
 import * as a2ImageGenerator from "./image-generator.js";
 import * as a2ImageUtils from "./image-utils.js";
 import * as a2Introducer from "./introducer.js";
-import * as a2Lists from "./lists.js";
 import * as a2MakeCode from "./make-code.js";
 import * as a2Output from "./output.js";
 import * as a2RenderOutputs from "./render-outputs.js";
@@ -47,7 +46,6 @@ export const exports = {
   "image-generator": a2ImageGenerator,
   "image-utils": a2ImageUtils,
   introducer: a2Introducer,
-  lists: a2Lists,
   "make-code": a2MakeCode,
   output: a2Output,
   "render-outputs": a2RenderOutputs,

@@ -14,7 +14,6 @@ export type EntryInputs = {
   context: LLMContent[];
   description: LLMContent;
   "p-chat": boolean;
-  "p-list": boolean;
   [key: `p-z-${string}`]: unknown;
 };
 
@@ -25,7 +24,6 @@ type Outputs = {
 async function invoke({
   context,
   "p-chat": chat,
-  "p-list": makeList,
   description,
   ...params
 }: EntryInputs): Promise<Outputs> {
@@ -38,8 +36,6 @@ async function invoke({
     context: {
       id: Math.random().toString(36).substring(2, 5),
       chat,
-      makeList,
-      listPath: [],
       context,
       userInputs: [],
       defaultModel,

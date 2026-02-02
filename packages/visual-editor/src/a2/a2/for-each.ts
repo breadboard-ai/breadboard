@@ -9,7 +9,6 @@ import { defaultSafetySettings, GeminiSchema } from "./gemini.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
 import { Params } from "./common.js";
 import { Template } from "./template.js";
-import { flattenContext } from "./lists.js";
 
 import {
   Capabilities,
@@ -189,27 +188,10 @@ async function forEach(
     })
   );
   return {
-    context: flattenContext(
-      [
-        {
-          parts: [
-            {
-              id: "for-each",
-              list: results
-                .filter((item) => !("$error" in item))
-                .map((outputs) => {
-                  const context = (outputs as { context: LLMContent[] })
-                    .context;
-                  return {
-                    content: context,
-                  };
-                }),
-            },
-          ],
-        },
-      ] satisfies LLMContent[],
-      false,
-      "\n\n"
-    ) as NodeValue,
+    context: results
+      .filter((item) => !("$error" in item))
+      .flatMap(
+        (outputs) => (outputs as { context: LLMContent[] }).context
+      ) as NodeValue,
   };
 }

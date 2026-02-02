@@ -35,8 +35,7 @@ class Runtime {
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     context: LLMContent[] | undefined,
-    public readonly toolManager: ToolManager,
-    public readonly makeList: boolean
+    public readonly toolManager: ToolManager
   ) {
     this.context = context ? [...context] : [];
     this.execute = this.#execute.bind(this);
@@ -51,8 +50,7 @@ class Runtime {
       this.moduleArgs,
       this.execute,
       this.context,
-      objective,
-      this.makeList
+      objective
     );
   }
 

@@ -4,7 +4,6 @@
 
 import { LLMContent, Schema } from "@breadboard-ai/types";
 import { type AgentContext } from "../a2/common.js";
-import { addContent } from "../a2/lists.js";
 import { isEmpty } from "../a2/utils.js";
 
 export { invoke as default, describe };
@@ -22,7 +21,7 @@ async function invoke({ context, request }: Inputs): Promise<Outputs> {
   context.userEndedChat = isEmpty(request);
   context.userInputs.push(request);
   if (!context.userEndedChat) {
-    context.work = addContent(context.work, request);
+    context.work.push(request);
   }
   return { context };
 }
