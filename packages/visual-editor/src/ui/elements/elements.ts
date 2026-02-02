@@ -8,6 +8,7 @@
 export { VEBetterOnDesktopModal } from "./shell/better-on-desktop-modal.js";
 export { VEEditBoardModal } from "./shell/edit-board.js";
 export { VEHeader } from "./shell/header.js";
+export { PublishButton } from "./shell/publish-button.js";
 export { VEModal } from "./shell/modal.js";
 export { VEMCPServersSettings } from "./shell/mcp-server-settings.js";
 export { VEConsentRequestModal } from "./shell/consent-request.js";

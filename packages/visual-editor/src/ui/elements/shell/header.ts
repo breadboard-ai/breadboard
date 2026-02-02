@@ -279,6 +279,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
             }
           }
 
+          & #publish-button {
+            display: none;
+            margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
+          }
+
           & #remix {
             position: relative;
           }
@@ -399,6 +404,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         section #right {
           #remix,
           #publish,
+          #publish-button,
           #share {
             display: flex;
           }
@@ -477,6 +483,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
       <div id="right">
         ${[
           this.#renderSaveStatusLabel(),
+          this.#renderPublishButton(),
           this.#renderSharePublishButton(),
           this.#renderRemixButton(),
           this.#renderGraphItemSelect(),
@@ -774,6 +781,14 @@ export class VEHeader extends SignalWatcher(LitElement) {
           ></bb-onboarding-tooltip>`
         : nothing}
     </button> `;
+  }
+
+  #renderPublishButton() {
+    if (!this.isMine || !CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+      return nothing;
+    }
+
+    return html`<bb-publish-button id="publish-button"></bb-publish-button>`;
   }
 
   #renderSharePublishButton() {
