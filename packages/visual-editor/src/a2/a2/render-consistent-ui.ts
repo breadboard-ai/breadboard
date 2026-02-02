@@ -208,7 +208,6 @@ async function renderConsistentUI(
       }
     }
 
-    await reporter.start();
     await reporter.displayA2UI("Generated UI", generated.all, "download");
 
     const textEncoder = new TextEncoder();

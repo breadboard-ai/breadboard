@@ -225,7 +225,6 @@ async function executeStep(
       }
     }
 
-    await reporter.start();
     await reporter.sendUpdate("Step Input", elideEncodedData(body), "upload");
     // Call the API.
     const url = await getBackendUrl(caps);

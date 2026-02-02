@@ -203,7 +203,6 @@ async function executeWebpageStream(
   const { appScreen } = getCurrentStepState(moduleArgs);
 
   try {
-    await reporter.start();
     await reporter.sendUpdate("Preparing request", { modelName }, "upload");
 
     if (appScreen) appScreen.progress = "Generating HTML";

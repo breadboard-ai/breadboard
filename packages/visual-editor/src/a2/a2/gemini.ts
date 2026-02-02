@@ -492,7 +492,6 @@ async function callAPI(
     const conformedBody = await conformBody(moduleArgs, body);
     if (!ok(conformedBody)) return conformedBody;
 
-    await reporter.start();
     await reporter.sendUpdate("Model Input", conformedBody, "upload");
     if (appScreen) {
       appScreen.progress = title;

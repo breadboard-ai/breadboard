@@ -46,7 +46,6 @@ class McpToolAdapter {
       icon: "robot_server",
     });
     try {
-      await reporter.start();
       await reporter.sendUpdate(
         "MCP Server Request",
         { listTools: {} },
@@ -95,7 +94,6 @@ class McpToolAdapter {
       icon: "robot_server",
     });
     try {
-      await reporter.start();
       await reporter.sendUpdate(
         "MCP Server Request",
         { callTool: { name, arguments: args } },

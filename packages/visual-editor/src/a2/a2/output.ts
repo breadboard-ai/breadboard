@@ -72,10 +72,6 @@ class StreamableReporter {
     }
   }
 
-  async start() {
-    // No-op: ProgressWorkItem is created in constructor
-  }
-
   #toLLMContent(body: unknown): LLMContent {
     if (!body) {
       return { parts: [{ text: "Empty content" }] };

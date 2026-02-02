@@ -114,7 +114,6 @@ async function executeOpalAdkStream(
     icon: "spark",
   });
   try {
-    await reporter.start();
     await reporter.sendUpdate(
       "Preparing request",
       { opal_adk_agent },
