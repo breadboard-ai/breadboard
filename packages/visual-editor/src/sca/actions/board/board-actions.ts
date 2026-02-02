@@ -469,12 +469,15 @@ export async function load(
     finalOutputValues,
   });
 
-  // 9. Update board controller state
+  // 9. Reset run state for new graph (clear console entries from previous graph)
+  controller.run.main.resetOutput();
+
+  // 10. Update board controller state
   if (versionInfo?.isNewer) {
     controller.board.main.newerVersionAvailable = true;
   }
 
-  // 10. Update global load state
+  // 11. Update global load state
   controller.global.main.loadState = "Loaded";
 
   logger.log(
