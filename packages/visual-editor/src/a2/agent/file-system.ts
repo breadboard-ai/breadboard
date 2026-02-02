@@ -259,6 +259,22 @@ class AgentFileSystem {
     return originalRoute;
   }
 
+  /**
+   * Finds an existing file path that has the same data handle/URI.
+   * This allows deduplication of storedData and fileData parts.
+   */
+  #findExistingByHandle(data: string): string | undefined {
+    for (const [path, descriptor] of this.#files) {
+      if (
+        (descriptor.type === "storedData" || descriptor.type === "fileData") &&
+        descriptor.data === data
+      ) {
+        return path;
+      }
+    }
+    return undefined;
+  }
+
   add(part: DataPart, fileName?: string): Outcome<string> {
     const create = (mimeType: string) => {
       if (fileName) {
@@ -280,6 +296,11 @@ class AgentFileSystem {
       return name;
     } else if ("storedData" in part) {
       const { mimeType, handle: data, resourceKey } = part.storedData;
+      // Check if a file with this handle already exists
+      const existingPath = this.#findExistingByHandle(data);
+      if (existingPath) {
+        return existingPath;
+      }
       const name = create(mimeType);
       this.#files.set(name, {
         type: "storedData",
@@ -290,6 +311,11 @@ class AgentFileSystem {
       return name;
     } else if ("fileData" in part) {
       const { mimeType, fileUri: data, resourceKey } = part.fileData;
+      // Check if a file with this URI already exists
+      const existingPath = this.#findExistingByHandle(data);
+      if (existingPath) {
+        return existingPath;
+      }
       const name = create(mimeType);
       this.#files.set(name, { type: "fileData", mimeType, data, resourceKey });
       return name;
