@@ -2,10 +2,12 @@
  * @fileoverview Gemini Model Family.
  */
 
-import { getCurrentStepState, createReporter } from "../agent/progress-work-item.js";
+import {
+  getCurrentStepState,
+  createReporter,
+} from "../agent/progress-work-item.js";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
-import { flattenContext } from "./lists.js";
 import {
   Capabilities,
   FileSystemReadWritePath,
@@ -436,23 +438,20 @@ async function conformBody(
   moduleArgs: A2ModuleArgs,
   body: GeminiBody
 ): Promise<Outcome<GeminiBody>> {
-  const preDataTransformContents = flattenContext(
-    body.contents.map((content) => {
-      if (!content.parts) {
-        return content;
-      }
-      return {
-        ...content,
-        parts: content.parts.map((part) => {
-          if ("json" in part) {
-            return { text: JSON.stringify(part.json) };
-          }
-          return part;
-        }),
-      };
-    }),
-    true
-  );
+  const preDataTransformContents = body.contents.map((content) => {
+    if (!content.parts) {
+      return content;
+    }
+    return {
+      ...content,
+      parts: content.parts.map((part) => {
+        if ("json" in part) {
+          return { text: JSON.stringify(part.json) };
+        }
+        return part;
+      }),
+    };
+  });
   const contents = await transformDataParts(
     new URL("unused://unused"), // unused
     preDataTransformContents,
@@ -554,11 +553,7 @@ async function callAPI(
         const outputs = json as GeminiAPIOutputs;
         const candidate = outputs?.candidates?.at(0);
         if (!candidate) {
-          reporter.addJson(
-            "Model Response",
-            outputs || result,
-            "warning"
-          );
+          reporter.addJson("Model Response", outputs || result, "warning");
           return reporter.addError(
             err("Unable to get a good response from Gemini", {
               origin: "server",
@@ -586,11 +581,7 @@ async function callAPI(
           if (links && links.length > 0) {
             reporter.addLinks("Grounding metadata", links, "link");
           }
-          reporter.addContent(
-            "Model Response",
-            candidate.content,
-            "download"
-          );
+          reporter.addContent("Model Response", candidate.content, "download");
           return outputs;
         }
         reporter.addJson("Model response", outputs, "warning");

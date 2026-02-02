@@ -12,7 +12,6 @@ import { type DescriberResult, type Params } from "./common.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
 import { callImageGen, promptExpander } from "./image-utils.js";
 import { ArgumentNameGenerator } from "./introducer.js";
-import { ListExpander } from "./lists.js";
 import { Template } from "./template.js";
 import { ToolManager } from "./tool-manager.js";
 import {
@@ -124,68 +123,64 @@ async function invoke(
     return substituting;
   }
 
-  const fanningOut = await new ListExpander(substituting, incomingContext).map(
-    async (instruction, context) => {
-      // If there are tools in instruction, add an extra step of preparing
-      // information via tools.
-      if (toolManager.hasTools()) {
-        const gatheringInformation = await gatheringRequest(
+  // Process single item directly (list support removed)
+  const context = [...incomingContext];
+
+  // If there are tools in instruction, add an extra step of preparing
+  // information via tools.
+  if (toolManager.hasTools()) {
+    const gatheringInformation = await gatheringRequest(
+      caps,
+      moduleArgs,
+      context,
+      substituting,
+      toolManager
+    ).invoke();
+    if (!ok(gatheringInformation)) return gatheringInformation;
+    context.push(...gatheringInformation.all);
+  }
+
+  const refImages = extractMediaData([substituting]);
+  const refText = substituting
+    ? toLLMContent(toTextConcat(extractTextData([substituting])))
+    : toLLMContent("");
+  imageContext = imageContext.concat(refImages);
+
+  let retryCount = MAX_RETRIES;
+
+  while (retryCount--) {
+    if (imageContext.length > 0) {
+      return err(
+        `References images are not supported with Imagen. For image editing or style transfer, try Gemini Image Generation.`
+      );
+    } else {
+      console.log("Step has text only, using generation API");
+      let imagePrompt: LLMContent;
+      if (disablePromptRewrite) {
+        imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
+      } else {
+        const generatingPrompt = await promptExpander(
           caps,
           moduleArgs,
           context,
-          instruction,
-          toolManager
+          refText
         ).invoke();
-        if (!ok(gatheringInformation)) return gatheringInformation;
-        context.push(...gatheringInformation.all);
+        if (!ok(generatingPrompt)) return generatingPrompt;
+        imagePrompt = generatingPrompt.last;
       }
-
-      const refImages = extractMediaData([instruction]);
-      const refText = instruction
-        ? toLLMContent(toTextConcat(extractTextData([instruction])))
-        : toLLMContent("");
-      imageContext = imageContext.concat(refImages);
-
-      let retryCount = MAX_RETRIES;
-
-      while (retryCount--) {
-        if (imageContext.length > 0) {
-          return err(
-            `References images are not supported with Imagen. For image editing or style transfer, try Gemini Image Generation.`
-          );
-        } else {
-          console.log("Step has text only, using generation API");
-          let imagePrompt: LLMContent;
-          if (disablePromptRewrite) {
-            imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
-          } else {
-            const generatingPrompt = await promptExpander(
-              caps,
-              moduleArgs,
-              context,
-              refText
-            ).invoke();
-            if (!ok(generatingPrompt)) return generatingPrompt;
-            imagePrompt = generatingPrompt.last;
-          }
-          const iPrompt = toText(imagePrompt).trim();
-          console.log("PROMPT", iPrompt);
-          const generatedImage = await callImageGen(
-            caps,
-            moduleArgs,
-            iPrompt,
-            aspectRatio
-          );
-          if (!ok(generatedImage)) return generatedImage;
-          return mergeContent(generatedImage, "model");
-        }
-      }
-      return err(`Failed to generate an image after ${MAX_RETRIES} tries.`);
+      const iPrompt = toText(imagePrompt).trim();
+      console.log("PROMPT", iPrompt);
+      const generatedImage = await callImageGen(
+        caps,
+        moduleArgs,
+        iPrompt,
+        aspectRatio
+      );
+      if (!ok(generatedImage)) return generatedImage;
+      return { context: [mergeContent(generatedImage, "model")] };
     }
-  );
-
-  if (!ok(fanningOut)) return fanningOut;
-  return { context: fanningOut };
+  }
+  return err(`Failed to generate an image after ${MAX_RETRIES} tries.`);
 }
 
 type DescribeInputs = {

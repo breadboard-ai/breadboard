@@ -42,8 +42,7 @@ Now think real hard: do you need to organize or summarize results?
     moduleArgs: A2ModuleArgs,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
-    objective: LLMContent,
-    makeList: boolean
+    objective: LLMContent
   ): Promise<Outcome<LLMContent[]>> {
     const planning = await plannerPrompt(
       caps,
@@ -124,8 +123,7 @@ and adjusting the plan if necessary.`,
         caps,
         moduleArgs,
         results,
-        objective,
-        makeList
+        objective
       ).invoke();
       if (!ok(organizing)) return organizing;
 

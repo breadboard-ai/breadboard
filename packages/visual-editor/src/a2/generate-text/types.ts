@@ -11,10 +11,6 @@ export type GenerateTextInputs = {
    */
   chat: boolean;
   /**
-   * Whether (true) or not (false) to try to turn the output into a list
-   */
-  makeList: boolean;
-  /**
    * The incoming conversation context.
    */
   context: LLMContent[];
@@ -24,10 +20,6 @@ export type GenerateTextInputs = {
    * This context is discarded at the end of interacting with the agent.
    */
   work: LLMContent[];
-  /**
-   * The index path to the currently processed list.
-   */
-  listPath: number[];
   /**
    * Agent's job description.
    */

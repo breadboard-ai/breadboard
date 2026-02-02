@@ -9,11 +9,10 @@ import {
 } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
-import { fanOutContext } from "../a2/lists.js";
 import { readSettings } from "../a2/settings.js";
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
-import { err, generateId, ok } from "../a2/utils.js";
+import { err, ok } from "../a2/utils.js";
 import { ParallelStrategist } from "./parallel-strategist.js";
 import { Runtime } from "./runtime.js";
 import { SequentialStrategist } from "./sequential-strategist.js";
@@ -39,7 +38,6 @@ type Inputs = {
   context: LLMContent[];
   plan: LLMContent;
   strategy: string;
-  "z-list": boolean;
 } & Params;
 
 type Outputs = {
@@ -58,7 +56,7 @@ function findStrategist(name?: string): Strategist | undefined {
 }
 
 async function invoke(
-  { context, plan: objective, strategy, "z-list": makeList, ...params }: Inputs,
+  { context, plan: objective, strategy, ...params }: Inputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
@@ -78,51 +76,19 @@ async function invoke(
     return err(`Unknown strategy: "${strategy}"`);
   }
 
-  const result = await fanOutContext(
-    substituting,
-    context,
-    async (objective, context, isList) => {
-      const disallowNestedLists = makeList && !isList;
-      const executor = new Runtime(
-        caps,
-        moduleArgs,
-        context,
-        toolManager,
-        disallowNestedLists
-      );
-      const executingOne = await executor.executeStrategy(
-        objective,
-        strategist
-      );
-      if (!ok(executingOne)) return executingOne;
+  // Process single item directly (list support removed)
+  const executor = new Runtime(caps, moduleArgs, context, toolManager);
+  const executingOne = await executor.executeStrategy(substituting, strategist);
+  if (!ok(executingOne)) return executingOne;
 
-      // Disallow making a list when already inside of a make list
-      if (disallowNestedLists) {
-        return {
-          role: "model",
-          parts: [
-            {
-              id: generateId(),
-              list: executingOne.map((item) => {
-                return { content: [item] };
-              }),
-            },
-          ],
-        };
-      }
+  const oneContent = {
+    role: "model",
+    parts: executingOne.flatMap((item) => {
+      return item.parts;
+    }),
+  };
 
-      const oneContent = {
-        role: "model",
-        parts: executingOne.flatMap((item) => {
-          return item.parts;
-        }),
-      };
-
-      return oneContent;
-    }
-  );
-  if (!ok(result)) return result;
-  return { context: result };
+  return { context: [oneContent] };
 }
 
 type DescribeInputs = {
