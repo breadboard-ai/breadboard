@@ -77,14 +77,14 @@ class StepListPresenter {
 
     const { controller } = this.#sca;
     const runController = controller.run.main;
-    const console = runController.console;
+    const runControllerConsole = runController.console;
     const graph = controller.editor.graph.editor?.raw() ?? null;
     const flowgenStatus = controller.global.flowgenInput.state.status;
 
     // Build the steps map
     const newSteps = new Map<string, StepListStepState>();
 
-    for (const [id, entry] of console.entries()) {
+    for (const [id, entry] of runControllerConsole.entries()) {
       const status = this.#getStatus(entry.status?.status, flowgenStatus);
       const { icon, title, tags } = entry;
 
@@ -124,9 +124,19 @@ class StepListPresenter {
     }
     switch (nodeStatus) {
       case "running":
+      case "working":
+      case "waiting":
         return "working";
       case "done":
+      case "succeeded":
         return "complete";
+      case "inactive":
+      case "ready":
+        return "ready";
+      case "failed":
+      case "skipped":
+      case "interrupted":
+        return "complete"; // Show as complete but with different styling if needed
       default:
         return "pending";
     }

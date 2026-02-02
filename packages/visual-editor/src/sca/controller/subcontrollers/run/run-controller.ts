@@ -8,6 +8,7 @@ import type {
   ConsoleEntry,
   HarnessRunner,
   NodeIdentifier,
+  NodeRunStatus,
   RunError,
   Schema,
 } from "@breadboard-ai/types";
@@ -360,5 +361,40 @@ export class RunController extends RootController {
    */
   get consoleState(): "start" | "entries" {
     return this._console.size > 0 ? "entries" : "start";
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STATIC FACTORIES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Creates a ConsoleEntry with all required fields initialized.
+   * Use this factory to ensure entries have proper default values.
+   *
+   * @param title - Display title for the step
+   * @param status - Current status (inactive, working, succeeded, failed, etc.)
+   * @param options - Optional icon and tags for the entry
+   */
+  static createConsoleEntry(
+    title: string,
+    status: NodeRunStatus,
+    options?: {
+      icon?: string;
+      tags?: string[];
+    }
+  ): ConsoleEntry {
+    return {
+      title,
+      icon: options?.icon,
+      tags: options?.tags,
+      status: { status },
+      open: false,
+      rerun: false,
+      work: new Map(),
+      output: new Map(),
+      error: null,
+      completed: status === "succeeded",
+      current: null,
+    };
   }
 }
