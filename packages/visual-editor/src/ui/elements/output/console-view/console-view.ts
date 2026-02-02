@@ -274,6 +274,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             &.photo_spark,
             &.audio_magic_eraser,
             &.text_analysis,
+            &.button_magic,
             &.generative-image-edit,
             &.generative-code,
             &.videocam_auto,

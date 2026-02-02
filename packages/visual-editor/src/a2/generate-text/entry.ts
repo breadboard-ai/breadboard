@@ -4,12 +4,10 @@
 
 import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
-import { readFlags } from "../a2/settings.js";
 import { Template } from "../a2/template.js";
 import { defaultLLMContent } from "../a2/utils.js";
 import { defaultSystemInstruction } from "./system-instruction.js";
 import type { SharedContext } from "./types.js";
-import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 
@@ -66,35 +64,31 @@ async function invoke({
 
 async function describe(
   { inputs: { description } }: DescribeInputs,
-  caps: Capabilities,
-  moduleArgs: A2ModuleArgs
+  caps: Capabilities
 ) {
-  const flags = await readFlags(moduleArgs);
-  const chatSchema: Schema["properties"] = flags?.agentMode
-    ? {}
-    : {
-        "p-chat": {
-          type: "boolean",
-          title: "Review with user",
-          behavior: ["config", "hint-preview", "hint-advanced"],
-          icon: "chat",
-          description:
-            "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
-        },
-        "b-system-instruction": {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "System Instruction",
-          description: "The system instruction for the model",
-          default: JSON.stringify(defaultSystemInstruction()),
-        },
-        "p-model-name": {
-          type: "string",
-          behavior: ["llm-content"],
-          title: "Model",
-          description: "The specific model version to generate with",
-        },
-      };
+  const chatSchema: Schema["properties"] = {
+    "p-chat": {
+      type: "boolean",
+      title: "Review with user",
+      behavior: ["config", "hint-preview", "hint-advanced"],
+      icon: "chat",
+      description:
+        "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
+    },
+    "b-system-instruction": {
+      type: "object",
+      behavior: ["llm-content", "config", "hint-advanced"],
+      title: "System Instruction",
+      description: "The system instruction for the model",
+      default: JSON.stringify(defaultSystemInstruction()),
+    },
+    "p-model-name": {
+      type: "string",
+      behavior: ["llm-content"],
+      title: "Model",
+      description: "The specific model version to generate with",
+    },
+  };
   const template = new Template(caps, description);
 
   return {

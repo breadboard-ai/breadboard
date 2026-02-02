@@ -211,6 +211,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         &[icon="photo_spark"],
         &[icon="audio_magic_eraser"],
         &[icon="text_analysis"],
+        &[icon="button_magic"],
         &[icon="generative-image-edit"],
         &[icon="generative-code"],
         &[icon="videocam_auto"],
