@@ -148,6 +148,62 @@ export function prepare(config: PrepareRunConfig): void {
     );
   });
 
+  // Register output listeners on the runner
+  runner.addEventListener("input", (event) => {
+    const { inputArguments } = event.data;
+    const schema = inputArguments?.schema || {};
+    const id = event.data.node?.id ?? "";
+    controller.run.main.setInput({ id, schema });
+  });
+
+  runner.addEventListener("error", (event) => {
+    const error = event.data?.error;
+    const message =
+      typeof error === "string"
+        ? error
+        : (error as { message?: string })?.message ?? "Unknown error";
+    controller.run.main.setError({ message });
+    controller.run.main.clearInput();
+  });
+
+  runner.addEventListener("end", () => {
+    controller.run.main.clearInput();
+  });
+
+  runner.addEventListener("graphstart", (event) => {
+    // Only reset for top-level graph
+    if (event.data.path.length === 0) {
+      controller.run.main.resetOutput();
+      controller.run.main.setEstimatedEntryCount(graph.nodes?.length ?? 0);
+    }
+  });
+
+  runner.addEventListener("nodestart", (event) => {
+    // Only handle top-level nodes
+    if (event.data.path.length > 1) return;
+
+    const nodeId = event.data.node.id;
+    const graphDescriptor = services.graphStore.getByDescriptor(graph);
+    if (!graphDescriptor?.success) return;
+
+    const inspectable = services.graphStore.inspect(graphDescriptor.result, "");
+    const node = inspectable?.nodeById(nodeId);
+    const title = node?.title() ?? nodeId;
+    const metadata = node?.currentDescribe()?.metadata ?? {};
+
+    const entry = {
+      id: nodeId,
+      title,
+      icon: metadata.icon,
+      tags: metadata.tags,
+      status: "working" as const,
+    };
+    controller.run.main.setConsoleEntry(
+      nodeId,
+      entry as unknown as import("@breadboard-ai/types").ConsoleEntry
+    );
+  });
+
   // Set on controller
   controller.run.main.setRunner(runner, abortController);
 
@@ -159,3 +215,4 @@ export function prepare(config: PrepareRunConfig): void {
   // Set status to stopped (ready to start)
   controller.run.main.setStatus(STATUS.STOPPED);
 }
+

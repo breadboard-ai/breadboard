@@ -66,6 +66,7 @@ export function register() {
   Node.registerAutonameTrigger();
   Router.registerPopstateTrigger();
   Router.registerInitTrigger();
+  Run.registerGraphSyncTrigger();
   ScreenSize.registerMediaQueryTrigger();
   Shell.registerPageTitleTrigger();
 }
