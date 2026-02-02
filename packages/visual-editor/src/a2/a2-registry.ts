@@ -99,7 +99,7 @@ type A2Component = {
 
 const A2_COMPONENTS: A2Component[] = [
   {
-    url: "embed://a2/a2.bgl.json#module:text-entry",
+    url: "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
     title: "User Input",
     description:
       "Allows asking user for input that could be then used in next steps",
