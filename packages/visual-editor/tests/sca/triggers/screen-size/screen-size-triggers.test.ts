@@ -223,7 +223,7 @@ suite("ScreenSize Triggers - Media Query", () => {
     assert.strictEqual(controller.global.screenSize.size, "wide");
   });
 
-  test("Trigger is registered and can be listed", async () => {
+  test("Triggers are registered and can be listed", async () => {
     const { mockMatchMedia } = createMockMatchMedia();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (globalThis as any).window.matchMedia = mockMatchMedia;
@@ -236,8 +236,12 @@ suite("ScreenSize Triggers - Media Query", () => {
 
     const registered = bind.list();
     assert.ok(
-      registered.includes("Screen Size Media Query Trigger"),
-      `Expected trigger to be registered, got: ${registered}`
+      registered.includes("[bridge] Screen Size Narrow Query"),
+      `Expected narrow query trigger to be registered, got: ${registered}`
+    );
+    assert.ok(
+      registered.includes("[bridge] Screen Size Medium Query"),
+      `Expected medium query trigger to be registered, got: ${registered}`
     );
   });
 });

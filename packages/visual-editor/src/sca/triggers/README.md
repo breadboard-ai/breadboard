@@ -52,6 +52,18 @@ Triggers use `signal-utils/subtle/microtask-effect` under the hood. When you cal
 
 ---
 
+### Event Bridges
+
+For native browser events (like `popstate`, `resize`, or media query changes), use `registerEventBridge()` for proper lifecycle management:
+
+```typescript
+bind.registerEventBridge("Router URL Change", window, "popstate", handler);
+```
+
+Event bridges are automatically cleaned up when `bind.clean()` is called.
+
+---
+
 ## Trigger Lifecycle
 
 ### Registration
@@ -87,7 +99,7 @@ For debugging, you can list registered triggers:
 import { list } from "./triggers/triggers.js";
 
 console.log(list());
-// { board: ["Save Trigger"], node: ["Autoname Trigger"] }
+// { board: ["[effect] Save Trigger", "[bridge] Save Status Bridge"], ... }
 ```
 
 ---

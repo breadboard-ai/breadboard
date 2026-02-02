@@ -18,8 +18,10 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-c
 import { inputsFromSettings } from "../../../ui/data/inputs.js";
 import type { SettingsStore } from "../../../ui/data/settings-store.js";
 import { STATUS } from "../../../ui/types/types.js";
+import { getStepIcon } from "../../../ui/utils/get-step-icon.js";
 import { makeAction } from "../binder.js";
 import { Utils } from "../../utils.js";
+import { RunController } from "../../controller/subcontrollers/run/run-controller.js";
 
 export const bind = makeAction();
 
@@ -174,7 +176,48 @@ export function prepare(config: PrepareRunConfig): void {
     // Only reset for top-level graph
     if (event.data.path.length === 0) {
       controller.run.main.resetOutput();
-      controller.run.main.setEstimatedEntryCount(graph.nodes?.length ?? 0);
+
+      // Use runner.plan.stages for execution-ordered iteration
+      // Flatten stages to get nodes in execution order
+      const nodeIds: string[] = [];
+      for (const stage of runner.plan?.stages ?? []) {
+        for (const planNode of stage) {
+          nodeIds.push(planNode.node.id);
+        }
+      }
+
+      controller.run.main.setEstimatedEntryCount(nodeIds.length);
+
+      // Pre-populate console with all graph nodes as "inactive" in execution order
+      const graphDescriptor = services.graphStore.getByDescriptor(graph);
+      if (graphDescriptor?.success) {
+        const inspectable = services.graphStore.inspect(graphDescriptor.result, "");
+        for (const nodeId of nodeIds) {
+          const node = inspectable?.nodeById(nodeId);
+          const title = node?.title() ?? nodeId;
+          const metadata = node?.currentDescribe()?.metadata ?? {};
+          const icon = getStepIcon(metadata.icon, node?.currentPorts());
+
+          const entry = RunController.createConsoleEntry(title, "inactive", {
+            icon,
+            tags: metadata.tags,
+          });
+          controller.run.main.setConsoleEntry(nodeId, entry);
+
+          // If metadata wasn't ready (no tags), async fetch full describe
+          if (!metadata.tags && node) {
+            node.describe().then((result) => {
+              const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
+              const resolvedIcon = getStepIcon(asyncIcon, node.currentPorts());
+              const updatedEntry = RunController.createConsoleEntry(title, "inactive", {
+                icon: resolvedIcon,
+                tags: asyncTags,
+              });
+              controller.run.main.setConsoleEntry(nodeId, updatedEntry);
+            });
+          }
+        }
+      }
     }
   });
 
@@ -191,17 +234,27 @@ export function prepare(config: PrepareRunConfig): void {
     const title = node?.title() ?? nodeId;
     const metadata = node?.currentDescribe()?.metadata ?? {};
 
-    const entry = {
-      id: nodeId,
-      title,
-      icon: metadata.icon,
+    const entry = RunController.createConsoleEntry(title, "working", {
+      icon: getStepIcon(metadata.icon, node?.currentPorts()),
       tags: metadata.tags,
-      status: "working" as const,
-    };
-    controller.run.main.setConsoleEntry(
-      nodeId,
-      entry as unknown as import("@breadboard-ai/types").ConsoleEntry
-    );
+    });
+    controller.run.main.setConsoleEntry(nodeId, entry);
+  });
+
+  // Handle nodeend - update console entry status to succeeded
+  runner.addEventListener("nodeend", (event) => {
+    // Only handle top-level nodes
+    if (event.data.path.length > 1) return;
+
+    const nodeId = event.data.node.id;
+    const existing = controller.run.main.console.get(nodeId);
+    if (existing) {
+      controller.run.main.setConsoleEntry(nodeId, {
+        ...existing,
+        status: { status: "succeeded" },
+        completed: true,
+      });
+    }
   });
 
   // Set on controller
@@ -214,5 +267,44 @@ export function prepare(config: PrepareRunConfig): void {
 
   // Set status to stopped (ready to start)
   controller.run.main.setStatus(STATUS.STOPPED);
+
+  // Pre-populate console with all graph nodes as "inactive" on initial load
+  // Use runner.plan.stages for execution-ordered iteration
+  const nodeIds: string[] = [];
+  for (const stage of runner.plan?.stages ?? []) {
+    for (const planNode of stage) {
+      nodeIds.push(planNode.node.id);
+    }
+  }
+
+  const graphDescriptor = services.graphStore.getByDescriptor(graph);
+  if (graphDescriptor?.success) {
+    const inspectable = services.graphStore.inspect(graphDescriptor.result, "");
+    for (const nodeId of nodeIds) {
+      const node = inspectable?.nodeById(nodeId);
+      const title = node?.title() ?? nodeId;
+      const metadata = node?.currentDescribe()?.metadata ?? {};
+      const icon = getStepIcon(metadata.icon, node?.currentPorts());
+
+      const entry = RunController.createConsoleEntry(title, "inactive", {
+        icon,
+        tags: metadata.tags,
+      });
+      controller.run.main.setConsoleEntry(nodeId, entry);
+
+      // If metadata wasn't ready (no tags), async fetch full describe
+      if (!metadata.tags && node) {
+        node.describe().then((result) => {
+          const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
+          const resolvedIcon = getStepIcon(asyncIcon, node.currentPorts());
+          const updatedEntry = RunController.createConsoleEntry(title, "inactive", {
+            icon: resolvedIcon,
+            tags: asyncTags,
+          });
+          controller.run.main.setConsoleEntry(nodeId, updatedEntry);
+        });
+      }
+    }
+  }
 }
 

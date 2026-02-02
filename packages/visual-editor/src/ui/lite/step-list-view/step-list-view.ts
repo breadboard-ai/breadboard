@@ -6,20 +6,39 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { consume } from "@lit/context";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
 import { LiteModeState, StepListStepState } from "../../state/index.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { hash } from "@breadboard-ai/utils";
+import type { SCA } from "../../../sca/sca.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { StepListPresenter } from "../../presenters/step-list-presenter.js";
 
 @customElement("bb-step-list-view")
 export class StepListView extends SignalWatcher(LitElement) {
   @property()
   accessor state: LiteModeState | null = null;
 
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property({ type: Boolean, reflect: true })
   accessor lite = false;
+
+  #presenter = new StepListPresenter();
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#presenter.connect(this.sca);
+  }
+
+  override disconnectedCallback(): void {
+    this.#presenter.disconnect();
+    super.disconnectedCallback();
+  }
 
   static styles = [
     Styles.HostIcons.icons,
@@ -146,14 +165,6 @@ export class StepListView extends SignalWatcher(LitElement) {
                   display: flex;
                   flex-direction: column;
                   flex: 1 1 0;
-                  min-width: 0;
-
-                  & .step-title-text,
-                  & .step-thought {
-                    overflow: hidden;
-                    white-space: nowrap;
-                    text-overflow: ellipsis;
-                  }
 
                   & .step-thought {
                     color: var(--sys-color--on-surface-variant);
@@ -362,14 +373,13 @@ export class StepListView extends SignalWatcher(LitElement) {
         options.status !== "generating"
           ? html`<h1 class="step-title w-400 md-body-small sans-flex">
               ${step.tags?.includes("input")
-                ? "Question to user:"
-                : "Prompt summary"}
+            ? "Question to user:"
+            : "Prompt summary"}
             </h1>`
           : nothing;
 
-      const animationDelay = `${
-        options.animated ? (options.animationDelay ?? 0) : 0
-      }ms`;
+      const animationDelay = `${options.animated ? (options.animationDelay ?? 0) : 0
+        }ms`;
       return html`
         <details
           ?inert=${options.status === "generating"}
@@ -385,33 +395,33 @@ export class StepListView extends SignalWatcher(LitElement) {
             <span class="marker-container">
               <span class=${classMap(markerClasses)}></span>
               ${options.status === "generating"
-                ? html`<span class="generating g-icon filled-heavy round"
+        ? html`<span class="generating g-icon filled-heavy round"
                     >pentagon</span
                   >`
-                : nothing}
+        : nothing}
             </span>
             ${step.icon && options.status !== "generating"
-              ? html`<span class="step-icon g-icon filled-heavy round"
+        ? html`<span class="step-icon g-icon filled-heavy round"
                   >${step.icon}</span
                 >`
-              : nothing}
+        : nothing}
             <span class="step-title sans md-title-medium w-500">
               <span class="step-title-text">${step.title}</span>
               ${options.status === "generating"
-                ? html`<span class="step-thought sans md-body-medium w-400"
+        ? html`<span class="step-thought sans md-body-medium w-400"
                     >${step.label}</span
                   >`
-                : nothing}
+        : nothing}
             </span>
           </summary>
           <div class="step-content sans md-body-medium w-400">
             ${title}
             <p>
               ${step.prompt && step.prompt.trim() !== ""
-                ? step.prompt
-                : step.label
-                  ? step.label
-                  : html`Not provided`}
+        ? step.prompt
+        : step.label
+          ? step.label
+          : html`Not provided`}
             </p>
           </div>
         </details>
@@ -474,7 +484,7 @@ export class StepListView extends SignalWatcher(LitElement) {
       return renderPlaceholders();
     }
 
-    const steps = this.state?.steps;
+    const steps = this.#presenter.steps;
     if (!steps || steps.size === 0) {
       if (this.state?.viewType === "loading") {
         return renderPlaceholders();
@@ -500,7 +510,7 @@ export class StepListView extends SignalWatcher(LitElement) {
             [step.status]: true,
           };
 
-          const renderPlaceholder = () => html`
+        const renderPlaceholder = () => html`
             <div class="placeholder">
               <span class="g-icon filled-heavy round pending"
                 >progress_activity<span> </span
@@ -508,14 +518,14 @@ export class StepListView extends SignalWatcher(LitElement) {
             </div>
           `;
 
-          return html`
+        return html`
             <li>
               ${step.status === "loading"
-                ? renderPlaceholder()
-                : renderStep(markerClasses, step, {
-                    animated,
-                    animationDelay: idx * 60,
-                  })}
+          ? renderPlaceholder()
+          : renderStep(markerClasses, step, {
+            animated,
+            animationDelay: idx * 60,
+          })}
             </li>
           `;
         }

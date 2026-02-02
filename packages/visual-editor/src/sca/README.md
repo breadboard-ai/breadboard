@@ -6,7 +6,7 @@ This directory contains the modern, signal-backed architecture that is gradually
 
 ---
 
-## Mental Model: The SCA Trinity
+## Mental Model: The Three Layers
 
 Think of SCA as three collaborating layers, each with a distinct responsibility:
 

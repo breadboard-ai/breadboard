@@ -478,3 +478,54 @@ suite("RunController progress tracking", () => {
     assert.strictEqual(controller.estimatedEntryCount, 0);
   });
 });
+
+/**
+ * Tests for RunController.createConsoleEntry static factory.
+ */
+suite("RunController.createConsoleEntry", () => {
+  test("creates entry with required fields", () => {
+    const entry = RunController.createConsoleEntry("Test Step", "inactive");
+
+    assert.strictEqual(entry.title, "Test Step");
+    assert.deepStrictEqual(entry.status, { status: "inactive" });
+    assert.strictEqual(entry.open, false);
+    assert.strictEqual(entry.rerun, false);
+    assert.strictEqual(entry.error, null);
+    assert.strictEqual(entry.current, null);
+    assert.ok(entry.work instanceof Map);
+    assert.ok(entry.output instanceof Map);
+  });
+
+  test("creates entry with icon and tags options", () => {
+    const entry = RunController.createConsoleEntry("Test Step", "working", {
+      icon: "step-icon",
+      tags: ["input", "user"],
+    });
+
+    assert.strictEqual(entry.icon, "step-icon");
+    assert.deepStrictEqual(entry.tags, ["input", "user"]);
+  });
+
+  test("sets completed to true for succeeded status", () => {
+    const entry = RunController.createConsoleEntry("Test Step", "succeeded");
+
+    assert.strictEqual(entry.completed, true);
+  });
+
+  test("sets completed to false for non-succeeded status", () => {
+    const inactiveEntry = RunController.createConsoleEntry("Test", "inactive");
+    const workingEntry = RunController.createConsoleEntry("Test", "working");
+    const skippedEntry = RunController.createConsoleEntry("Test", "skipped");
+
+    assert.strictEqual(inactiveEntry.completed, false);
+    assert.strictEqual(workingEntry.completed, false);
+    assert.strictEqual(skippedEntry.completed, false);
+  });
+
+  test("handles undefined options gracefully", () => {
+    const entry = RunController.createConsoleEntry("Test Step", "ready");
+
+    assert.strictEqual(entry.icon, undefined);
+    assert.strictEqual(entry.tags, undefined);
+  });
+});

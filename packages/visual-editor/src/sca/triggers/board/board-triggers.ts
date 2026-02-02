@@ -66,35 +66,38 @@ export function registerNewerVersionTrigger() {
 export function registerSaveStatusListener() {
   const { controller, services } = bind;
 
-  // TODO: This is not a trigger - it's an event listener. We should use
-  // signals instead.
-  services.googleDriveBoardServer.addEventListener(
-    "savestatuschange",
-    ({ url, status }) => {
-      const currentUrl = controller.editor.graph.url;
+  const handler = (event: { url: string; status: string }) => {
+    const { url, status } = event;
+    const currentUrl = controller.editor.graph.url;
 
-      // Only update if this is the current graph
-      if (!currentUrl || currentUrl !== url) {
-        return;
-      }
-
-      // Map BoardServerSaveEventStatus to our simplified status
-      switch (status) {
-        case "saving":
-          controller.editor.graph.saveStatus = "saving";
-          break;
-        case "idle":
-          controller.editor.graph.saveStatus = "saved";
-          break;
-        case "debouncing":
-        case "queued":
-          controller.editor.graph.saveStatus = "unsaved";
-          break;
-        default:
-          controller.editor.graph.saveStatus = "saved";
-          break;
-      }
+    // Only update if this is the current graph
+    if (!currentUrl || currentUrl !== url) {
+      return;
     }
+
+    // Map BoardServerSaveEventStatus to our simplified status
+    switch (status) {
+      case "saving":
+        controller.editor.graph.saveStatus = "saving";
+        break;
+      case "idle":
+        controller.editor.graph.saveStatus = "saved";
+        break;
+      case "debouncing":
+      case "queued":
+        controller.editor.graph.saveStatus = "unsaved";
+        break;
+      default:
+        controller.editor.graph.saveStatus = "saved";
+        break;
+    }
+  };
+
+  bind.registerEventBridge(
+    "Save Status Bridge",
+    services.googleDriveBoardServer,
+    "savestatuschange",
+    handler as unknown as EventListener
   );
 }
 

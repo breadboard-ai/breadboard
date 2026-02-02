@@ -11,18 +11,10 @@ import {
   LiteModeIntentExample,
   LiteModeState,
   RuntimeContext,
-  StepListStepState,
   LiteModePlannerState,
 } from "./types.js";
-import {
-  ConsoleEntry,
-  GraphDescriptor,
-  LLMContent,
-  NodeRunStatus,
-  TextCapabilityPart,
-} from "@breadboard-ai/types";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import { ReactiveProjectRun } from "./project-run.js";
-import { Template } from "@breadboard-ai/utils";
 import { FlowGenerator } from "../flow-gen/flow-generator.js";
 import { SCA } from "../../sca/sca.js";
 
@@ -92,37 +84,7 @@ class ReactiveLiteModeState implements LiteModeState {
     return "";
   }
 
-  @signal
-  get steps(): Map<string, StepListStepState> {
-    const run = this.context.project?.run as ReactiveProjectRun;
-    if (!run) return new Map();
-    return new Map(
-      Array.from(run.console.entries()).map(([id, entry]) => {
-        const status = getStatus(entry.status?.status, this.status);
-        const { icon, title, tags } = entry;
-        let prompt: string;
-        let label: string;
-        if (tags?.includes("input")) {
-          prompt = promptFromInput(entry);
-          label = labelFromInput(id, run.graph) || "Question from user";
-        } else {
-          prompt = promptFromIntent(id, run.graph) || "";
-          label = "Prompt";
-        }
-        return [
-          id,
-          {
-            icon,
-            title,
-            status,
-            prompt,
-            label,
-            tags,
-          } satisfies StepListStepState,
-        ];
-      })
-    );
-  }
+
 
   @signal
   accessor #intent: string | undefined;
@@ -200,70 +162,7 @@ class ReactiveLiteModeState implements LiteModeState {
   }
 }
 
-function promptFromInput(entry: ConsoleEntry) {
-  return (
-    (
-      entry.output.values().next().value?.parts.at(0) as
-        | TextCapabilityPart
-        | undefined
-    )?.text || ""
-  );
-}
 
-function promptFromIntent(
-  id: string,
-  graph: GraphDescriptor | undefined
-): string | undefined {
-  const node = graph?.nodes.find((descriptor) => descriptor.id === id);
-  if (!node) return;
-
-  const intent = node.metadata?.step_intent;
-  if (intent) return intent;
-
-  const { configuration } = node;
-  if (!configuration) return;
-
-  // Fall back to the full prompt
-  const generatePrompt = textFromLLMContent(node.configuration?.config$prompt);
-  if (generatePrompt) return generatePrompt;
-
-  return textFromLLMContent(node.configuration?.text);
-}
-
-function textFromLLMContent(o: unknown): string | undefined {
-  const c = o as LLMContent | undefined;
-  const text = (c?.parts.at(0) as TextCapabilityPart | undefined)?.text;
-  if (!text) return;
-
-  return new Template(text).preview;
-}
-
-function labelFromInput(
-  id: string,
-  graph: GraphDescriptor | undefined
-): string | undefined {
-  const configuration = graph?.nodes.find(
-    (descriptor) => descriptor.id === id
-  )?.configuration;
-  if (!configuration) return;
-
-  return textFromLLMContent(configuration.description);
-}
-
-function getStatus(
-  stepStatus: NodeRunStatus | "failed" | undefined,
-  listStatus: FlowGenGenerationStatus
-): StepListStepState["status"] {
-  if (!stepStatus || listStatus === "generating") return "pending";
-  switch (stepStatus) {
-    case "working":
-    case "waiting":
-      return "working";
-    case "ready":
-    default:
-      return "ready";
-  }
-}
 
 class PlannerState implements LiteModePlannerState {
   @signal
@@ -281,7 +180,7 @@ class PlannerState implements LiteModePlannerState {
     );
   }
 
-  constructor(private readonly flowGenerator: FlowGenerator) {}
+  constructor(private readonly flowGenerator: FlowGenerator) { }
 }
 
 function progressFromThought(thought: string | null): string | null {

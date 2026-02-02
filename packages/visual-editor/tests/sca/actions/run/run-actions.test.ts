@@ -321,7 +321,7 @@ describe("Run Actions", () => {
     assert.strictEqual(controller.run.main.input, null, "input should be cleared after end");
   });
 
-  test("runner 'graphstart' event resets output for top-level graph", () => {
+  test("runner 'graphstart' event resets and pre-populates output for top-level graph", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -347,10 +347,11 @@ describe("Run Actions", () => {
     // Top-level graph has empty path
     runner._fireEvent("graphstart", { path: [] });
 
+    // Console should now have 3 entries (one per graph node with 'inactive' status)
     assert.strictEqual(
       controller.run.main.console.size,
-      0,
-      "console should be cleared on graphstart"
+      3,
+      "console should be pre-populated with graph nodes on graphstart"
     );
     assert.strictEqual(
       controller.run.main.estimatedEntryCount,

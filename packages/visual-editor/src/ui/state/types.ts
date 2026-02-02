@@ -446,10 +446,6 @@ export type LiteModeState = {
   examples: LiteModeIntentExample[];
   currentExampleIntent: string;
 
-  /**
-   * The list of steps according to the current run plan
-   */
-  steps: Map<string, StepListStepState>;
 };
 
 /**

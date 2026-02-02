@@ -21,12 +21,7 @@ export function registerPopstateTrigger() {
     controller.router.updateFromCurrentUrl();
   };
 
-  window.addEventListener("popstate", handler);
-
-  // TODO: Implement untrigger pattern for proper cleanup.
-  // Currently no mechanism exists in the trigger system for removal.
-
-  bind.register("Router URL Change Trigger", handler);
+  bind.registerEventBridge("Router URL Change", window, "popstate", handler);
 }
 
 /**

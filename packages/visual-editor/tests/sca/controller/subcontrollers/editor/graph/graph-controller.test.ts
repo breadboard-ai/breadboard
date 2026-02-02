@@ -9,17 +9,11 @@ import { beforeEach, suite, test } from "node:test";
 import { GraphController } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import { makeTestGraphStore } from "../../../../../helpers/_graph-store.js";
 import { testKit } from "../../../../../test-kit.js";
-import { EditableGraph, GraphDescriptor } from "@breadboard-ai/types";
+import { EditableGraph } from "@breadboard-ai/types";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
 import { GraphStore } from "../../../../../../src/engine/inspector/graph-store.js";
 import { Tab } from "../../../../../../src/runtime/types.js";
-
-function makeFreshGraph(): GraphDescriptor {
-  return {
-    edges: [],
-    nodes: [{ id: "foo", type: "promptTemplate" }],
-  } satisfies GraphDescriptor;
-}
+import { makeFreshGraph } from "../../../../helpers/index.js";
 
 suite("GraphController", () => {
   let testGraph = makeFreshGraph();
