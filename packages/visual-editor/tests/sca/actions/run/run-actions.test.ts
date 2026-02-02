@@ -182,4 +182,285 @@ describe("Run Actions", () => {
       "status should be STOPPED after error event"
     );
   });
+
+  // ===== Output-related event tests =====
+
+  test("runner 'input' event sets input on controller", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Simulate input event with data
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+    runner._fireEvent("input", {
+      node: { id: "input-node-1" },
+      inputArguments: { schema: { type: "object" } },
+    });
+
+    assert.ok(controller.run.main.input, "input should be set");
+    assert.strictEqual(
+      controller.run.main.input?.id,
+      "input-node-1",
+      "input id should match"
+    );
+    assert.deepStrictEqual(
+      controller.run.main.input?.schema,
+      { type: "object" },
+      "input schema should match"
+    );
+  });
+
+  test("runner 'input' event handles missing node id", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+    runner._fireEvent("input", {
+      inputArguments: { schema: {} },
+    });
+
+    assert.ok(controller.run.main.input, "input should be set");
+    assert.strictEqual(controller.run.main.input?.id, "", "input id should be empty string");
+  });
+
+  test("runner 'error' event sets error on controller with string message", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Set input first so we can verify it's cleared
+    controller.run.main.setInput({ id: "test", schema: {} });
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+    runner._fireEvent("error", { error: "Something went wrong" });
+
+    assert.ok(controller.run.main.error, "error should be set");
+    assert.strictEqual(
+      controller.run.main.error?.message,
+      "Something went wrong",
+      "error message should match"
+    );
+    assert.strictEqual(controller.run.main.input, null, "input should be cleared");
+  });
+
+  test("runner 'error' event handles error object with message property", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+    runner._fireEvent("error", { error: { message: "Object error message" } });
+
+    assert.ok(controller.run.main.error, "error should be set");
+    assert.strictEqual(
+      controller.run.main.error?.message,
+      "Object error message",
+      "error message should match"
+    );
+  });
+
+  test("runner 'error' event handles missing error gracefully", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+    runner._fireEvent("error", {});
+
+    assert.ok(controller.run.main.error, "error should be set");
+    assert.strictEqual(
+      controller.run.main.error?.message,
+      "Unknown error",
+      "error should have fallback message"
+    );
+  });
+
+  test("runner 'end' event clears input", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Set input first
+    controller.run.main.setInput({ id: "test", schema: {} });
+    assert.ok(controller.run.main.input, "input should be set initially");
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string) => void;
+    };
+    runner._fireEvent("end");
+
+    assert.strictEqual(controller.run.main.input, null, "input should be cleared after end");
+  });
+
+  test("runner 'graphstart' event resets output for top-level graph", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Create config with 3 nodes
+    const config = makeMockConfig();
+    config.graph = {
+      edges: [],
+      nodes: [
+        { id: "node1", type: "test" },
+        { id: "node2", type: "test" },
+        { id: "node3", type: "test" },
+      ],
+    };
+    RunActions.prepare(config);
+
+    // Add some console entries to verify reset
+    controller.run.main.setConsoleEntry("existing", {} as import("@breadboard-ai/types").ConsoleEntry);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+    // Top-level graph has empty path
+    runner._fireEvent("graphstart", { path: [] });
+
+    assert.strictEqual(
+      controller.run.main.console.size,
+      0,
+      "console should be cleared on graphstart"
+    );
+    assert.strictEqual(
+      controller.run.main.estimatedEntryCount,
+      3,
+      "estimated entry count should match node count"
+    );
+  });
+
+  test("runner 'graphstart' event ignores nested graphs", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Add a console entry
+    controller.run.main.setConsoleEntry("existing", {} as import("@breadboard-ai/types").ConsoleEntry);
+    controller.run.main.setEstimatedEntryCount(5);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+    // Nested graph has non-empty path
+    runner._fireEvent("graphstart", { path: ["parent-node"] });
+
+    assert.strictEqual(
+      controller.run.main.console.size,
+      1,
+      "console should NOT be cleared for nested graph"
+    );
+    assert.strictEqual(
+      controller.run.main.estimatedEntryCount,
+      5,
+      "estimated entry count should NOT change for nested graph"
+    );
+  });
+
+  test("runner 'nodestart' event adds console entry", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    config.graph = {
+      edges: [],
+      nodes: [{ id: "test-node", type: "test" }],
+    };
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+    // Top-level node has path with single element
+    runner._fireEvent("nodestart", {
+      path: ["test-node"],
+      node: { id: "test-node", type: "test" },
+    });
+
+    assert.strictEqual(
+      controller.run.main.console.size,
+      1,
+      "console should have one entry"
+    );
+    const entry = controller.run.main.console.get("test-node");
+    assert.ok(entry, "entry should exist");
+  });
+
+  test("runner 'nodestart' event ignores nested nodes", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+    // Nested node has path with more than one element
+    runner._fireEvent("nodestart", {
+      path: ["parent-node", "test-node"],
+      node: { id: "test-node", type: "test" },
+    });
+
+    assert.strictEqual(
+      controller.run.main.console.size,
+      0,
+      "console should be empty for nested node"
+    );
+  });
+
+  test("prepare calls connectToProject callback when provided", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    let called = false;
+    let receivedRunner: unknown = null;
+    let receivedSignal: AbortSignal | null = null;
+    const config = makeMockConfig();
+    config.connectToProject = (runner, signal) => {
+      called = true;
+      receivedRunner = runner;
+      receivedSignal = signal;
+    };
+    RunActions.prepare(config);
+
+    assert.ok(called, "connectToProject should be called");
+    assert.ok(receivedRunner, "runner should be passed");
+    assert.ok(receivedSignal, "signal should be passed");
+  });
 });

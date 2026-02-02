@@ -179,9 +179,10 @@ const defaultAgentContext = {
  * This avoids the EventTarget/Event module boundary issue in tests.
  */
 export function createMockRunner() {
-  const listeners: Record<string, (() => void)[]> = {};
+  type Handler = (event: { data?: unknown }) => void;
+  const listeners: Record<string, Handler[]> = {};
   const runner = {
-    addEventListener: (event: string, handler: () => void) => {
+    addEventListener: (event: string, handler: Handler) => {
       if (!listeners[event]) {
         listeners[event] = [];
       }
@@ -190,10 +191,10 @@ export function createMockRunner() {
     removeEventListener: () => {},
     start: () => {},
     running: () => false,
-    // Helper for tests to fire events
-    _fireEvent: (event: string) => {
+    // Helper for tests to fire events with optional data
+    _fireEvent: (event: string, data?: unknown) => {
       if (listeners[event]) {
-        listeners[event].forEach((h) => h());
+        listeners[event].forEach((h) => h({ data }));
       }
     },
   };
@@ -240,6 +241,14 @@ export function makeTestServices(options: TestServicesOptions = {}) {
           env: () => [],
           createRunFileSystem: () => ({}),
         },
+        // For nodestart event handling
+        getByDescriptor: () => ({ success: true, result: {} }),
+        inspect: () => ({
+          nodeById: (id: string) => ({
+            title: () => id,
+            currentDescribe: () => ({ metadata: {} }),
+          }),
+        }),
       } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],
