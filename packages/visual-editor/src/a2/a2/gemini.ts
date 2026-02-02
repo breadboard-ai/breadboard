@@ -2,7 +2,7 @@
  * @fileoverview Gemini Model Family.
  */
 
-import { getCurrentStepState, StreamableReporter } from "./output.js";
+import { getCurrentStepState, createReporter } from "../agent/progress-work-item.js";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
 import { flattenContext } from "./lists.js";
@@ -483,7 +483,7 @@ async function callAPI(
   body: GeminiBody
 ): Promise<Outcome<GeminiAPIOutputs>> {
   const { appScreen, title } = getCurrentStepState(moduleArgs);
-  const reporter = new StreamableReporter(moduleArgs, {
+  const reporter = createReporter(moduleArgs, {
     title: `Calling ${model}`,
     icon: "spark",
   });
@@ -492,7 +492,7 @@ async function callAPI(
     const conformedBody = await conformBody(moduleArgs, body);
     if (!ok(conformedBody)) return conformedBody;
 
-    await reporter.sendUpdate("Model Input", conformedBody, "upload");
+    reporter.addJson("Model Input", conformedBody, "upload");
     if (appScreen) {
       appScreen.progress = title;
       appScreen.expectedDuration = calculateDuration(model);
@@ -519,14 +519,14 @@ async function callAPI(
         const status = result.status;
         if (!status) {
           if (errObject)
-            return reporter.sendError(
+            return reporter.addError(
               err(errObject, {
                 origin: "server",
                 model,
               })
             );
           // This is not an error response, presume fatal error.
-          return reporter.sendError({
+          return reporter.addError({
             $error,
             metadata: {
               origin: "server",
@@ -536,7 +536,7 @@ async function callAPI(
         }
         $error = maybeExtractError(errObject);
         if (NO_RETRY_CODES.includes(status)) {
-          return reporter.sendError({
+          return reporter.addError({
             $error,
             metadata: {
               origin: "server",
@@ -545,7 +545,7 @@ async function callAPI(
             },
           });
         }
-        await reporter.sendError(
+        reporter.addError(
           err(
             `Got an error ${status} response, retrying (${maxRetries - retries + 1}/${maxRetries})`
           )
@@ -554,12 +554,12 @@ async function callAPI(
         const outputs = json as GeminiAPIOutputs;
         const candidate = outputs?.candidates?.at(0);
         if (!candidate) {
-          await reporter.sendUpdate(
+          reporter.addJson(
             "Model Response",
             outputs || result,
             "warning"
           );
-          return reporter.sendError(
+          return reporter.addError(
             err("Unable to get a good response from Gemini", {
               origin: "server",
               model,
@@ -584,26 +584,26 @@ async function callAPI(
             })
             .filter((item) => item !== null);
           if (links && links.length > 0) {
-            await reporter.sendLinks("Grounding metadata", links, "link");
+            reporter.addLinks("Grounding metadata", links, "link");
           }
-          await reporter.sendUpdate(
+          reporter.addContent(
             "Model Response",
             candidate.content,
             "download"
           );
           return outputs;
         }
-        await reporter.sendUpdate("Model response", outputs, "warning");
+        reporter.addJson("Model response", outputs, "warning");
         if (
           candidate.finishReason &&
           candidate.finishReason !== "STOP" &&
           candidate.finishReason !== "MALFORMED_FUNCTION_CALL"
         ) {
-          return reporter.sendError(
+          return reporter.addError(
             errFromFinishReason(candidate.finishReason, model)
           );
         }
-        await reporter.sendError(
+        reporter.addError(
           err(
             `Did not get a useful response, retrying (${maxRetries - retries + 1}/${maxRetries})`
           )
@@ -611,14 +611,14 @@ async function callAPI(
       }
       retries--;
     }
-    return reporter.sendError({
+    return reporter.addError({
       $error,
       metadata: { origin: "server", kind: "bug" },
     });
   } catch (e) {
     return err((e as Error).message);
   } finally {
-    reporter.close();
+    reporter.finish();
   }
 }
 

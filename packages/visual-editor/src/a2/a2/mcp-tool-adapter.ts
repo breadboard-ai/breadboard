@@ -6,7 +6,7 @@
 
 import { CallToolResultContent, McpClient } from "../../mcp/index.js";
 import { LLMContent, Outcome } from "@breadboard-ai/types";
-import { StreamableReporter } from "./output.js";
+import { createReporter } from "../agent/progress-work-item.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { filterUndefined, ok } from "@breadboard-ai/utils";
 import { err, ErrorWithMetadata } from "./utils.js";
@@ -41,36 +41,28 @@ class McpToolAdapter {
   }
 
   async listTools(): Promise<Outcome<ListToolResult[]>> {
-    const reporter = new StreamableReporter(this.moduleArgs, {
+    const reporter = createReporter(this.moduleArgs, {
       title: `Asking MCP server to list tools`,
       icon: "robot_server",
     });
     try {
-      await reporter.sendUpdate(
-        "MCP Server Request",
-        { listTools: {} },
-        "upload"
-      );
+      reporter.addJson("MCP Server Request", { listTools: {} }, "upload");
 
       const client = await this.#client;
       if (!ok(client)) {
-        return reporter.sendError(client);
+        return reporter.addError(client);
       }
 
       const listingTools = await client.listTools();
       if (!ok(listingTools)) {
         if (isNotAllowed(listingTools)) {
-          return reporter.sendError(
+          return reporter.addError(
             err(`"${this.url} is not an allowed MCP Server`)
           );
         }
-        return reporter.sendError(listingTools);
+        return reporter.addError(listingTools);
       }
-      await reporter.sendUpdate(
-        "MCP Server Response",
-        listingTools,
-        "download"
-      );
+      reporter.addJson("MCP Server Response", listingTools, "download");
       // Transform to the ToolManager format.
       const list = listingTools.tools.map((item) => {
         return {
@@ -81,7 +73,7 @@ class McpToolAdapter {
       });
       return list;
     } finally {
-      await reporter.close();
+      await reporter.finish();
     }
   }
 
@@ -89,12 +81,12 @@ class McpToolAdapter {
     name: string,
     args: Record<string, unknown>
   ): Promise<Outcome<CallToolAdapterResponse>> {
-    const reporter = new StreamableReporter(this.moduleArgs, {
+    const reporter = createReporter(this.moduleArgs, {
       title: `Asking MCP server to call a tool`,
       icon: "robot_server",
     });
     try {
-      await reporter.sendUpdate(
+      reporter.addJson(
         "MCP Server Request",
         { callTool: { name, arguments: args } },
         "upload"
@@ -102,7 +94,7 @@ class McpToolAdapter {
 
       const client = await this.#client;
       if (!ok(client)) {
-        return reporter.sendError(client);
+        return reporter.addError(client);
       }
 
       const callingTool = await client.callTool({
@@ -111,14 +103,14 @@ class McpToolAdapter {
       });
       if (!ok(callingTool)) {
         if (isNotAllowed(callingTool)) {
-          return reporter.sendError(
+          return reporter.addError(
             err(`"${this.url} is not an allowed MCP Server`)
           );
         }
 
-        return reporter.sendError(callingTool);
+        return reporter.addError(callingTool);
       }
-      await reporter.sendUpdate("MCP Server Response", callingTool, "download");
+      reporter.addJson("MCP Server Response", callingTool, "download");
       if ("functionResponse" in callingTool) {
         return {
           structured_result: {
@@ -132,7 +124,7 @@ class McpToolAdapter {
       const structured_result = mcpToLLmContent(name, content);
       return filterUndefined({ structured_result, isError, saveOutputs });
     } finally {
-      await reporter.close();
+      await reporter.finish();
     }
   }
 }
