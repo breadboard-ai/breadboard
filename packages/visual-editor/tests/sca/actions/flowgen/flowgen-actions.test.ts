@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert";
-import { afterEach, beforeEach, describe, mock, test } from "node:test";
+import { afterEach, beforeEach, suite, mock, test } from "node:test";
 import * as FlowgenActions from "../../../../src/sca/actions/flowgen/flowgen-actions.js";
 import type { FlowGenerator } from "../../../../src/ui/flow-gen/flow-generator.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
@@ -36,7 +36,7 @@ function setupFlowgenTest(flowGeneratorMock: Partial<FlowGenerator>) {
   return { controller, services, mocks };
 }
 
-describe("Flowgen Actions", () => {
+suite("Flowgen Actions", () => {
   beforeEach(() => {
     setDOM();
   });
