@@ -10,7 +10,6 @@ import {
   EditableGraph,
   ErrorObject,
   ErrorResponse,
-  FileSystem,
   GraphDescriptor,
   HarnessRunner,
   InspectableGraph,
@@ -33,7 +32,6 @@ import {
   Schema,
   SimplifiedProjectRunState,
 } from "@breadboard-ai/types";
-import { type ParticleTree, ParticleTreeImpl } from "../../particles/index.js";
 
 import { err, ok } from "@breadboard-ai/utils";
 import { Signal } from "signal-polyfill";
@@ -45,11 +43,10 @@ import { getStepIcon } from "../utils/get-step-icon.js";
 import { edgeToString } from "../utils/workspace.js";
 import { ReactiveApp } from "./app.js";
 import { ReactiveAppScreen } from "./app-screen.js";
-import { getParticleStreamHandle, idFromPath } from "./common.js";
+import { idFromPath } from "./common.js";
 import { ReactiveConsoleEntry } from "./console-entry.js";
 import { ReactiveRendererRunState } from "./renderer-run-state.js";
 import {
-  EphemeralParticleTree,
   ProjectRun,
   ProjectRunStatus,
   RendererRunState,
@@ -57,7 +54,7 @@ import {
   UserInput,
 } from "./types.js";
 import { decodeError, decodeErrorData } from "./utils/decode-error.js";
-import { ParticleOperationReader } from "./utils/particle-operation-reader.js";
+
 import { ActionTracker } from "../types/types.js";
 import { computeControlState } from "../../runtime/control.js";
 
@@ -237,7 +234,6 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     private readonly stepEditor: StepEditor | undefined,
     private readonly actionTracker: ActionTracker | undefined,
     inspectable?: InspectableGraph,
-    private readonly fileSystem?: FileSystem,
     private readonly runner?: HarnessRunner,
     editable?: EditableGraph,
     signal?: AbortSignal
@@ -560,7 +556,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   }
 
   #output(event: RunOutputEvent) {
-    const { path, bubbled, node, outputs } = event.data;
+    const { path, bubbled } = event.data;
     console.debug("Project Run: Output", event);
     if (!this.current) {
       console.warn(`No current console entry for output event`, event);
@@ -577,28 +573,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       return;
     }
 
-    const { configuration = {} } = node;
-    const { schema: s = {} } = configuration;
-
-    const schema = s as Schema;
-
-    let particleTree: EphemeralParticleTree | null = null;
-    const particleStreamHandle = getParticleStreamHandle(schema, outputs);
-    if (particleStreamHandle) {
-      if (!this.fileSystem) {
-        console.warn(
-          `Particle stream "${particleStreamHandle}" provided, but file system is not available`
-        );
-      } else {
-        particleTree = new EphemeralParticleTreeImpl(
-          this.fileSystem,
-          particleStreamHandle
-        );
-      }
-    }
-
-    this.current.get(id)?.addOutput(event.data, particleTree);
-    this.app.screens.get(id)?.addOutput(event.data, particleTree);
+    this.current.get(id)?.addOutput(event.data);
+    this.app.screens.get(id)?.addOutput(event.data);
   }
 
   #error(event: RunErrorEvent) {
@@ -779,7 +755,6 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     stepEditor: StepEditor,
     actionTracker: ActionTracker,
     inspectable: InspectableGraph,
-    fileSystem: FileSystem,
     runner: HarnessRunner,
     editable: EditableGraph | undefined,
     signal?: AbortSignal
@@ -788,31 +763,10 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       stepEditor,
       actionTracker,
       inspectable,
-      fileSystem,
       runner,
       editable,
       signal
     );
-  }
-}
-
-class EphemeralParticleTreeImpl implements EphemeralParticleTree {
-  public readonly tree: ParticleTree;
-
-  @signal
-  accessor done = false;
-
-  constructor(fileSystem: FileSystem, path: string) {
-    this.tree = new ParticleTreeImpl();
-    this.#start(fileSystem, path);
-  }
-
-  async #start(fileSystem: FileSystem, path: string) {
-    const reader = new ParticleOperationReader(fileSystem, path);
-    for await (const operation of reader) {
-      this.tree.apply(operation);
-    }
-    this.done = true;
   }
 }
 

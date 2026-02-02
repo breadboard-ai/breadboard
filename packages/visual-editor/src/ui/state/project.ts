@@ -16,7 +16,6 @@ import {
   EditableGraph,
   EditSpec,
   EditTransform,
-  FileSystem,
   NodeHandlerMetadata,
   Outcome,
   PortIdentifier,
@@ -153,7 +152,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
 
   connectHarnessRunner(
     runner: HarnessRunner,
-    fileSystem: FileSystem,
     signal?: AbortSignal
   ): Outcome<void> {
     // Intentionally reset this property with a new instance.
@@ -161,7 +159,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       this.stepEditor,
       this.actionTracker,
       this.#editable.inspect(""),
-      fileSystem,
       runner,
       this.#editable,
       signal

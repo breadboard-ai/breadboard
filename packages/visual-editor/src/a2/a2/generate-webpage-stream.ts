@@ -195,7 +195,7 @@ async function executeWebpageStream(
   content: LLMContent[],
   modelName: string
 ): Promise<Outcome<LLMContent>> {
-  const reporter = new StreamableReporter(caps, {
+  const reporter = new StreamableReporter(moduleArgs, {
     title: `Generating webpage with ${modelName}`,
     icon: "web",
   });

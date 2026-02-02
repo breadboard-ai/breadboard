@@ -12,7 +12,7 @@ import {
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { isStoredData, ok, toJson } from "@breadboard-ai/utils";
+import { isStoredData, ok } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { A2UI_SCHEMA } from "./au2ui-schema.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
@@ -194,7 +194,7 @@ async function renderConsistentUI(
   });
   const generated = await prompt.invoke();
   if (!ok(generated)) return generated;
-  const reporter = new StreamableReporter(caps, {
+  const reporter = new StreamableReporter(moduleArgs, {
     title: "A2UI",
     icon: "web",
   });
@@ -209,7 +209,7 @@ async function renderConsistentUI(
     }
 
     await reporter.start();
-    await reporter.sendA2UI("Generated UI", toJson(generated.all), "download");
+    await reporter.displayA2UI("Generated UI", generated.all, "download");
 
     const textEncoder = new TextEncoder();
     const bytes = textEncoder.encode(JSON.stringify(generated.all));

@@ -18,7 +18,7 @@ import { InputResponse, OutputResponse, Schema } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { idFromPath, toLLMContentArray } from "./common.js";
-import { EphemeralParticleTree, RendererRunState } from "./types.js";
+import { RendererRunState } from "./types.js";
 import { ReactiveWorkItem } from "./work-item.js";
 import { timestamp } from "@breadboard-ai/utils";
 
@@ -142,13 +142,9 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     this.work.set(id, item);
   }
 
-  addOutput(data: OutputResponse, particleTree: EphemeralParticleTree | null) {
+  addOutput(data: OutputResponse) {
     this.work.set(
-      ...ReactiveWorkItem.fromOutput(
-        particleTree,
-        data,
-        this.#pendingTimestamp || 0
-      )
+      ...ReactiveWorkItem.fromOutput(data, this.#pendingTimestamp || 0)
     );
   }
 }

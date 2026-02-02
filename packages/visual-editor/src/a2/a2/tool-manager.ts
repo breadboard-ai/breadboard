@@ -207,7 +207,7 @@ class ToolManager implements SimplifiedToolManager {
         // memory functions in the agent loop.
         return "";
       } else {
-        const client = new McpToolAdapter(this.caps, this.moduleArgs, url);
+        const client = new McpToolAdapter(this.moduleArgs, url);
         // This is an integration. Use MCP connector.
         const tools = await client.listTools();
         if (!ok(tools)) return tools;

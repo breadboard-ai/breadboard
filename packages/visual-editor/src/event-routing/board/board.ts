@@ -165,12 +165,8 @@ export const StopRoute: EventRoute<"board.stop"> = {
         fetchWithCreds: sca.services.fetchWithCreds,
         flags: sca.controller.global.flags,
         getProjectRunState: () => runtime.state.project?.run,
-        connectToProject: (runner, fileSystem, abortSignal) => {
-          runtime.state.project?.connectHarnessRunner(
-            runner,
-            fileSystem,
-            abortSignal
-          );
+        connectToProject: (runner, abortSignal) => {
+          runtime.state.project?.connectHarnessRunner(runner, abortSignal);
         },
       });
     }
@@ -264,12 +260,7 @@ export const RenameRoute: EventRoute<"board.rename"> = {
 export const CreateRoute: EventRoute<"board.create"> = {
   event: "board.create",
 
-  async do({
-    sca,
-    originalEvent,
-    askUserToSignInIfNeeded,
-    embedHandler,
-  }) {
+  async do({ sca, originalEvent, askUserToSignInIfNeeded, embedHandler }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
       // The user didn't sign in, so hide any snackbars.
       sca.controller.global.snackbars.unsnackbar();

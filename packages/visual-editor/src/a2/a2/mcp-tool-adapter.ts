@@ -5,7 +5,7 @@
  */
 
 import { CallToolResultContent, McpClient } from "../../mcp/index.js";
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { StreamableReporter } from "./output.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { filterUndefined, ok } from "@breadboard-ai/utils";
@@ -30,8 +30,7 @@ class McpToolAdapter {
   #client: Promise<Outcome<McpClient>>;
 
   constructor(
-    private readonly caps: Capabilities,
-    moduleArgs: A2ModuleArgs,
+    private readonly moduleArgs: A2ModuleArgs,
     private readonly url: string
   ) {
     this.#client = moduleArgs.mcpClientManager.createClient(url, {
@@ -42,7 +41,7 @@ class McpToolAdapter {
   }
 
   async listTools(): Promise<Outcome<ListToolResult[]>> {
-    const reporter = new StreamableReporter(this.caps, {
+    const reporter = new StreamableReporter(this.moduleArgs, {
       title: `Asking MCP server to list tools`,
       icon: "robot_server",
     });
@@ -91,7 +90,7 @@ class McpToolAdapter {
     name: string,
     args: Record<string, unknown>
   ): Promise<Outcome<CallToolAdapterResponse>> {
-    const reporter = new StreamableReporter(this.caps, {
+    const reporter = new StreamableReporter(this.moduleArgs, {
       title: `Asking MCP server to call a tool`,
       icon: "robot_server",
     });

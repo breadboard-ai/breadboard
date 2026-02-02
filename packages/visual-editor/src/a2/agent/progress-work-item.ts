@@ -6,22 +6,24 @@
 
 import {
   AppScreen,
+  ConsoleLink,
+  ConsoleUpdate,
   DataPart,
   FunctionCallCapabilityPart,
-  GroupParticle,
   JsonSerializable,
   LLMContent,
-  Particle,
+  SimplifiedA2UIClient,
   WorkItem,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
-import { now } from "./now.js";
 import { SignalMap } from "signal-utils/map";
+import { now } from "./now.js";
 import { GeminiBody } from "../a2/gemini.js";
 import { AgentProgressManager } from "./types.js";
 import { llm, progressFromThought } from "../a2/utils.js";
 import { StatusUpdateCallbackOptions } from "./function-definition.js";
 import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
+import { v0_8 } from "../../a2ui/index.js";
 
 export { ProgressWorkItem };
 
@@ -46,10 +48,11 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
 
   readonly chat = false;
 
-  readonly product: Map<string, Particle> = new SignalMap();
+  readonly workItemId = crypto.randomUUID();
 
-  index = 0;
+  readonly product: Map<string, ConsoleUpdate> = new SignalMap();
 
+  #updateCounter = 0;
   #previousStatus: string | undefined;
 
   constructor(
@@ -60,15 +63,47 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     this.start = performance.now();
   }
 
-  #add(title: string, icon: string, content: unknown) {
-    return this.product.set(
-      `${this.index++}`,
-      createUpdate(title, icon, content)
-    );
+  #add(title: string, icon: string, body: LLMContent) {
+    const key = `update-${this.#updateCounter++}`;
+    this.product.set(key, { type: "text", title, icon, body });
+  }
+
+  /**
+   * Add an update to the progress work item.
+   * Public method for external callers like StreamableReporter.
+   */
+  addUpdate(title: string, icon: string, body: LLMContent) {
+    this.#add(title, icon, body);
+  }
+
+  /**
+   * Add links to the progress work item.
+   * Public method for external callers like StreamableReporter.
+   */
+  addLinks(title: string, icon: string, links: ConsoleLink[]) {
+    const key = `update-${this.#updateCounter++}`;
+    this.product.set(key, { type: "links", title, icon, links });
+  }
+
+  /**
+   * Add A2UI content to the progress work item.
+   * Creates a SimplifiedA2UIClient with a processor and no-op receiver.
+   * @param messages - A2UI ServerToClientMessage array (untyped from parsed JSON)
+   */
+  addA2UI(messages: unknown[]) {
+    const processor = v0_8.Data.createSignalA2UIModelProcessor();
+    processor.processMessages(messages as v0_8.Types.ServerToClientMessage[]);
+    const key = `a2ui-${this.#updateCounter++}`;
+    const client: SimplifiedA2UIClient = {
+      processor,
+      receiver: { sendMessage: () => {} }, // No-op receiver for display-only
+    };
+    // Cast to unknown first since product map type doesn't include SimplifiedA2UIClient directly
+    (this.product as Map<string, unknown>).set(key, client);
   }
 
   #addParts(title: string, icon: string, parts: DataPart[]) {
-    return this.#add(title, icon, { parts });
+    this.#add(title, icon, { parts });
   }
 
   /**
@@ -174,29 +209,4 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     }
     this.end = performance.now();
   }
-}
-
-function createUpdate(title: string, icon: string, body: unknown) {
-  let bodyParticle;
-  if (!body) {
-    bodyParticle = { text: "Empty content" };
-  } else if (typeof body === "string") {
-    bodyParticle = { text: body };
-  } else if (typeof body === "object" && "parts" in body) {
-    bodyParticle = {
-      text: JSON.stringify(body),
-      mimeType: "application/vnd.breadboard.llm-content",
-    };
-  } else {
-    bodyParticle = {
-      text: JSON.stringify(body),
-      mimeType: "application/json",
-    };
-  }
-  const group: GroupParticle["group"] = new Map([
-    ["title", { text: title }],
-    ["body", bodyParticle],
-    ["icon", { text: icon }],
-  ]);
-  return { type: "update", group };
 }

@@ -4,20 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GroupParticle, Particle } from "../../particles/index.js";
 import {
   LLMContent,
   NodeEndResponse,
   NodeTypeIdentifier,
   WorkItem,
 } from "@breadboard-ai/types";
-import { timestamp } from "@breadboard-ai/utils";
 import { InputResponse, OutputResponse, Schema } from "@breadboard-ai/types";
 import { Signal } from "signal-polyfill";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { idFromPath, toLLMContentArray } from "./common.js";
-import { EphemeralParticleTree } from "./types.js";
 
 export { ReactiveWorkItem };
 
@@ -46,7 +43,7 @@ class ReactiveWorkItem implements WorkItem {
   }
 
   schema?: Schema | undefined;
-  product: Map<string, LLMContent | Particle> = new SignalMap();
+  product: Map<string, LLMContent> = new SignalMap();
 
   constructor(
     public readonly type: NodeTypeIdentifier,
@@ -70,7 +67,6 @@ class ReactiveWorkItem implements WorkItem {
   }
 
   static fromOutput(
-    particleTree: EphemeralParticleTree | null,
     data: OutputResponse,
     start: number
   ): [string, ReactiveWorkItem] {
@@ -82,10 +78,6 @@ class ReactiveWorkItem implements WorkItem {
     const title =
       metadata?.description || metadata?.title || DEFAULT_OUTPUT_TITLE;
     const icon = metadata?.icon || DEFAULT_OUTPUT_ICON;
-    if (particleTree) {
-      const item = new ParticleWorkItem(type, title, icon, start, particleTree);
-      return [id, item];
-    }
     const { products } = toLLMContentArray(schema as Schema, outputs);
     const item = new ReactiveWorkItem(type, title, icon, start);
     for (const [name, product] of Object.entries(products)) {
@@ -101,43 +93,4 @@ class ReactiveWorkItem implements WorkItem {
       item.product.set(name, product);
     }
   }
-}
-
-class ParticleWorkItem implements WorkItem {
-  #end: number | null = null;
-
-  @signal
-  get end(): number | null {
-    if (!this.particleTree.done) return null;
-    this.#end ??= timestamp();
-    return this.#end;
-  }
-
-  set end(_v) {
-    // ignore, since we're using the "done" flag instead.
-  }
-
-  @signal
-  get elapsed(): number {
-    const end = this.end ?? now.get();
-    return end - this.start;
-  }
-
-  readonly awaitingUserInput = false;
-
-  @signal
-  get product(): Map<string, LLMContent | Particle> {
-    const consoleGroup = this.particleTree.tree.root.group.get(
-      "console"
-    ) as GroupParticle;
-    return consoleGroup?.group || new Map();
-  }
-
-  constructor(
-    public readonly type: NodeTypeIdentifier,
-    public readonly title: string,
-    public readonly icon: string | undefined,
-    public readonly start: number,
-    private readonly particleTree: EphemeralParticleTree
-  ) {}
 }
