@@ -13,16 +13,7 @@ import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
 import { testKit } from "../../../test-kit.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import type { ConfigChangeContext } from "../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
-
-function makeFreshGraph(): GraphDescriptor {
-  return {
-    edges: [],
-    nodes: [
-      { id: "foo", type: "promptTemplate" },
-      { id: "bar", type: "promptTemplate" },
-    ],
-  } satisfies GraphDescriptor;
-}
+import { makeFreshGraph } from "../../helpers/index.js";
 
 function editorChange(graphActions: typeof Graph) {
   return new Promise<GraphDescriptor>((res) => {
@@ -73,14 +64,22 @@ suite("Graph Actions", () => {
 
   suite("properly instantiated", () => {
     const graphActions = Graph;
-    let testGraph = makeFreshGraph();
+    // Graph-actions tests require 2 nodes for edge operations
+    const graphWithTwoNodes = () =>
+      makeFreshGraph({
+        nodes: [
+          { id: "foo", type: "promptTemplate" },
+          { id: "bar", type: "promptTemplate" },
+        ],
+      });
+    let testGraph = graphWithTwoNodes();
 
     beforeEach(() => {
       const graphStore = makeTestGraphStore({
         kits: [testKit],
       });
 
-      testGraph = makeFreshGraph();
+      testGraph = graphWithTwoNodes();
       const editor = graphStore.editByDescriptor(testGraph);
       if (!editor) assert.fail("Unable to edit graph");
 

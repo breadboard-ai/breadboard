@@ -11,128 +11,16 @@ import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
 import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
 import { testKit } from "../../../test-kit.js";
-import { GraphDescriptor } from "@breadboard-ai/types";
-import { SnackType, SnackbarUUID } from "../../../../src/ui/types/types.js";
-
-function makeFreshGraph(): GraphDescriptor {
-  return {
-    url: "https://example.com/board.json",
-    edges: [],
-    nodes: [{ id: "foo", type: "promptTemplate" }],
-  } satisfies GraphDescriptor;
-}
-
-/**
- * Creates a mock snackbar controller for testing.
- */
-function makeMockSnackbarController() {
-  const snackbars: Map<SnackbarUUID, { message: string; type: SnackType }> =
-    new Map();
-  let lastId: SnackbarUUID | null = null;
-
-  return {
-    snackbar: (
-      message: string,
-      type: SnackType,
-      _actions?: unknown[],
-      _persistent?: boolean,
-      _id?: SnackbarUUID,
-      _replaceAll?: boolean
-    ): SnackbarUUID => {
-      const id = _id ?? (globalThis.crypto.randomUUID() as SnackbarUUID);
-      snackbars.set(id, { message, type });
-      lastId = id;
-      return id;
-    },
-    update: (id: SnackbarUUID, message: string, type: SnackType) => {
-      snackbars.set(id, { message, type });
-      return true;
-    },
-    unsnackbar: (id?: SnackbarUUID) => {
-      if (id) {
-        snackbars.delete(id);
-      } else {
-        snackbars.clear();
-      }
-    },
-    // Test helpers
-    get entries() {
-      return snackbars;
-    },
-    get lastId() {
-      return lastId;
-    },
-  };
-}
-
-/**
- * Creates a mock GoogleDriveBoardServer for testing.
- */
-function makeMockBoardServer(options: {
-  canSave?: boolean;
-  saveResult?: { result: boolean };
-  saveShouldThrow?: boolean;
-  createUrl?: string;
-  createShouldThrow?: boolean;
-  deleteShouldThrow?: boolean;
-}) {
-  let lastSavedGraph: GraphDescriptor | null = null;
-  let saveCallCount = 0;
-  let createCallCount = 0;
-  let deleteCallCount = 0;
-
-  return {
-    canProvide: () => ({
-      save: options.canSave ?? true,
-    }),
-    save: async (
-      _url: URL,
-      graph: GraphDescriptor,
-      _userInitiated: boolean
-    ) => {
-      saveCallCount++;
-      if (options.saveShouldThrow) {
-        throw new Error("Save failed");
-      }
-      lastSavedGraph = graph;
-      return options.saveResult ?? { result: true };
-    },
-    create: async (_url: URL, _graph: GraphDescriptor) => {
-      createCallCount++;
-      if (options.createShouldThrow) {
-        throw new Error("Create failed");
-      }
-      return {
-        result: true,
-        url: options.createUrl ?? "https://new.com/board.json",
-      };
-    },
-    deepCopy: async (_url: URL, graph: GraphDescriptor) => graph,
-    delete: async (_url: URL) => {
-      deleteCallCount++;
-      if (options.deleteShouldThrow) {
-        throw new Error("Delete failed");
-      }
-      return { result: true };
-    },
-    // Test helpers
-    get lastSavedGraph() {
-      return lastSavedGraph;
-    },
-    get saveCallCount() {
-      return saveCallCount;
-    },
-    get createCallCount() {
-      return createCallCount;
-    },
-    get deleteCallCount() {
-      return deleteCallCount;
-    },
-  };
-}
+import { SnackType } from "../../../../src/ui/types/types.js";
+import {
+  makeFreshGraph,
+  makeMockSnackbarController,
+  makeMockBoardServer,
+} from "../../helpers/index.js";
 
 /**
  * Creates a mock controller with the given graph state.
+ * This is specific to board-actions tests and has a custom shape.
  */
 function makeMockController(options: {
   editor: unknown;

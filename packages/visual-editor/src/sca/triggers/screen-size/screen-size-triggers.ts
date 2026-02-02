@@ -28,26 +28,25 @@ export function registerMediaQueryTrigger() {
     return;
   }
 
+  const { controller } = bind;
+
   const narrowQuery = window.matchMedia(`(max-width: ${NARROW_BREAKPOINT}px)`);
   const mediumQuery = window.matchMedia(`(max-width: ${MEDIUM_BREAKPOINT}px)`);
 
   const updateSize = () => {
     if (narrowQuery.matches) {
-      bind.controller.global.screenSize.size = "narrow";
+      controller.global.screenSize.size = "narrow";
     } else if (mediumQuery.matches) {
-      bind.controller.global.screenSize.size = "medium";
+      controller.global.screenSize.size = "medium";
     } else {
-      bind.controller.global.screenSize.size = "wide";
+      controller.global.screenSize.size = "wide";
     }
   };
 
   // Set initial value synchronously
   updateSize();
 
-  // Listen for viewport changes
-  narrowQuery.addEventListener("change", updateSize);
-  mediumQuery.addEventListener("change", updateSize);
-
-  // Register for bookkeeping (allows bind.list() and bind.clean())
-  bind.register("Screen Size Media Query Trigger", updateSize);
+  // Register event bridges for proper cleanup
+  bind.registerEventBridge("Screen Size Narrow Query", narrowQuery, "change", updateSize);
+  bind.registerEventBridge("Screen Size Medium Query", mediumQuery, "change", updateSize);
 }

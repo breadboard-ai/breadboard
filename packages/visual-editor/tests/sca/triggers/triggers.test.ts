@@ -46,12 +46,12 @@ suite("Triggers", () => {
     const { controller } = makeTestController();
     triggers(controller, makeTestServices().services, {} as AppActions);
     assert.deepStrictEqual(list(), {
-      board: ["Save Trigger", "Newer Version Trigger"],
-      node: ["Autoname Trigger"],
-      agent: ["Graph Invalidate Trigger", "Graph URL Change Trigger"],
-      run: ["Graph Synchronization Trigger"],
-      shell: ["Page Title Trigger"],
-      router: ["Router URL Change Trigger", "Router Init Trigger"],
+      agent: ["[effect] Graph Invalidate Trigger", "[effect] Graph URL Change Trigger"],
+      board: ["[effect] Save Trigger", "[effect] Newer Version Trigger", "[bridge] Save Status Bridge"],
+      node: ["[effect] Autoname Trigger"],
+      run: ["[effect] Graph Synchronization Trigger"],
+      shell: ["[effect] Page Title Trigger"],
+      router: ["[effect] Router Init Trigger", "[bridge] Router URL Change"],
       screenSize: [],
     });
     clean();
