@@ -241,6 +241,14 @@ export function makeTestServices(options: TestServicesOptions = {}) {
           env: () => [],
           createRunFileSystem: () => ({}),
         },
+        // For nodestart event handling
+        getByDescriptor: () => ({ success: true, result: {} }),
+        inspect: () => ({
+          nodeById: (id: string) => ({
+            title: () => id,
+            currentDescribe: () => ({ metadata: {} }),
+          }),
+        }),
       } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],

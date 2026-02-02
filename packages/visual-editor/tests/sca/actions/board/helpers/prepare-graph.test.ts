@@ -10,6 +10,7 @@ import {
   validateModuleId,
   validateSubGraphId,
   renameLegacyMainBoard,
+  prepareGraph,
 } from "../../../../../src/sca/actions/board/helpers/prepare-graph.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 
@@ -100,6 +101,74 @@ suite("prepare-graph helpers", () => {
       // Should have 2 entries still - renamed one and other
       assert.strictEqual(Object.keys(graph.graphs ?? {}).length, 2);
       assert.ok("other" in (graph.graphs ?? {}));
+    });
+  });
+
+  suite("prepareGraph", () => {
+    test("resolves valid module and subgraph IDs", async () => {
+      const graph: GraphDescriptor = {
+        nodes: [],
+        edges: [],
+        modules: { myModule: { code: "" } },
+        graphs: { myGraph: { nodes: [], edges: [] } },
+      };
+
+      const result = await prepareGraph(graph, {
+        moduleId: "myModule",
+        subGraphId: "myGraph",
+      });
+
+      assert.strictEqual(result.moduleId, "myModule");
+      assert.strictEqual(result.subGraphId, "myGraph");
+      assert.strictEqual(result.graph, graph);
+    });
+
+    test("returns null for invalid module/subgraph IDs", async () => {
+      const graph: GraphDescriptor = { nodes: [], edges: [] };
+
+      const result = await prepareGraph(graph, {
+        moduleId: "nonexistent",
+        subGraphId: "nonexistent",
+      });
+
+      assert.strictEqual(result.moduleId, null);
+      assert.strictEqual(result.subGraphId, null);
+    });
+
+    test("renames legacy Main board during preparation", async () => {
+      const graph: GraphDescriptor = {
+        nodes: [],
+        edges: [],
+        graphs: { "Main board": { nodes: [], edges: [] } },
+      };
+
+      await prepareGraph(graph);
+
+      assert.ok(!("Main board" in (graph.graphs ?? {})));
+      assert.strictEqual(Object.keys(graph.graphs ?? {}).length, 1);
+    });
+
+    test("works with no options", async () => {
+      const graph: GraphDescriptor = { nodes: [], edges: [] };
+
+      const result = await prepareGraph(graph);
+
+      assert.strictEqual(result.graph, graph);
+      assert.strictEqual(result.moduleId, null);
+      assert.strictEqual(result.subGraphId, null);
+    });
+
+    test("uses main module when no moduleId provided for imperative graph", async () => {
+      const graph: GraphDescriptor = {
+        nodes: [],
+        edges: [],
+        main: "mainModule",
+        modules: { mainModule: { code: "" } },
+      };
+
+      const result = await prepareGraph(graph);
+
+      assert.strictEqual(result.moduleId, "mainModule");
     });
   });
 });
