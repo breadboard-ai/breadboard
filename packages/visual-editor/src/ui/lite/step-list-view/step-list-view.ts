@@ -203,6 +203,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                 &.photo_spark,
                 &.audio_magic_eraser,
                 &.text_analysis,
+                &.button_magic,
                 &.generative-image-edit,
                 &.generative-code,
                 &.videocam_auto,
@@ -373,13 +374,14 @@ export class StepListView extends SignalWatcher(LitElement) {
         options.status !== "generating"
           ? html`<h1 class="step-title w-400 md-body-small sans-flex">
               ${step.tags?.includes("input")
-            ? "Question to user:"
-            : "Prompt summary"}
+                ? "Question to user:"
+                : "Prompt summary"}
             </h1>`
           : nothing;
 
-      const animationDelay = `${options.animated ? (options.animationDelay ?? 0) : 0
-        }ms`;
+      const animationDelay = `${
+        options.animated ? (options.animationDelay ?? 0) : 0
+      }ms`;
       return html`
         <details
           ?inert=${options.status === "generating"}
@@ -395,33 +397,33 @@ export class StepListView extends SignalWatcher(LitElement) {
             <span class="marker-container">
               <span class=${classMap(markerClasses)}></span>
               ${options.status === "generating"
-        ? html`<span class="generating g-icon filled-heavy round"
+                ? html`<span class="generating g-icon filled-heavy round"
                     >pentagon</span
                   >`
-        : nothing}
+                : nothing}
             </span>
             ${step.icon && options.status !== "generating"
-        ? html`<span class="step-icon g-icon filled-heavy round"
+              ? html`<span class="step-icon g-icon filled-heavy round"
                   >${step.icon}</span
                 >`
-        : nothing}
+              : nothing}
             <span class="step-title sans md-title-medium w-500">
               <span class="step-title-text">${step.title}</span>
               ${options.status === "generating"
-        ? html`<span class="step-thought sans md-body-medium w-400"
+                ? html`<span class="step-thought sans md-body-medium w-400"
                     >${step.label}</span
                   >`
-        : nothing}
+                : nothing}
             </span>
           </summary>
           <div class="step-content sans md-body-medium w-400">
             ${title}
             <p>
               ${step.prompt && step.prompt.trim() !== ""
-        ? step.prompt
-        : step.label
-          ? step.label
-          : html`Not provided`}
+                ? step.prompt
+                : step.label
+                  ? step.label
+                  : html`Not provided`}
             </p>
           </div>
         </details>
@@ -510,7 +512,7 @@ export class StepListView extends SignalWatcher(LitElement) {
             [step.status]: true,
           };
 
-        const renderPlaceholder = () => html`
+          const renderPlaceholder = () => html`
             <div class="placeholder">
               <span class="g-icon filled-heavy round pending"
                 >progress_activity<span> </span
@@ -518,14 +520,14 @@ export class StepListView extends SignalWatcher(LitElement) {
             </div>
           `;
 
-        return html`
+          return html`
             <li>
               ${step.status === "loading"
-          ? renderPlaceholder()
-          : renderStep(markerClasses, step, {
-            animated,
-            animationDelay: idx * 60,
-          })}
+                ? renderPlaceholder()
+                : renderStep(markerClasses, step, {
+                    animated,
+                    animationDelay: idx * 60,
+                  })}
             </li>
           `;
         }

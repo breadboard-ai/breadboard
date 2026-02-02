@@ -191,6 +191,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host([icon="photo_spark"]),
       :host([icon="audio_magic_eraser"]),
       :host([icon="text_analysis"]),
+      :host([icon="button_magic"]),
       :host([icon="generative-image-edit"]),
       :host([icon="generative-code"]),
       :host([icon="videocam_auto"]),

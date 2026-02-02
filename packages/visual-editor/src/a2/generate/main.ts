@@ -88,9 +88,9 @@ const ALL_MODES: Mode[] = [
     id: "agent",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-    title: "Any Models",
+    title: "Agent",
     description: "Agent can use any models",
-    icon: "select_all",
+    icon: "button_magic",
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
@@ -393,14 +393,24 @@ async function invoke(
   const { current } = resolveModes(mode, flags);
 
   if (flags?.agentMode) {
-    const agentInputs: AgentInputs = {
-      "b-ui-consistent": false,
-      "b-ui-prompt": { parts: [] },
-      ...rest,
-      "b-si-instruction": current.makeInstruction(rest),
-      "b-si-constraint": current.modelConstraint,
-    };
-    return agent(agentInputs, caps, moduleArgs);
+    if (current.id === "agent") {
+      // Only "agent" mode gets full agentic behavior
+      const agentInputs: AgentInputs = {
+        "b-ui-consistent": false,
+        "b-ui-prompt": { parts: [] },
+        ...rest,
+        "b-si-instruction": current.makeInstruction(rest),
+        "b-si-constraint": current.modelConstraint,
+      };
+      return agent(agentInputs, caps, moduleArgs);
+    } else {
+      // Other modes dispatch directly to their board URLs
+      const { url: $board, type, modelName } = current;
+      if (modelName) {
+        rest["p-model-name"] = modelName;
+      }
+      return caps.invoke({ $board, ...forwardPorts(type, rest) });
+    }
   } else {
     const { url: $board, type, modelName } = current;
     const generateForEach = (flags?.generateForEach && !!useForEach) ?? false;
@@ -484,7 +494,7 @@ async function describe(
     );
     behavior.push(...(describing.inputSchema.behavior || []));
   }
-  if (flags?.agentMode) {
+  if (flags?.agentMode && current.id === "agent") {
     const agentSchema = computeAgentSchema(flags, rest);
     modeSchema = { ...modeSchema, ...agentSchema };
     behavior = [...behavior];
