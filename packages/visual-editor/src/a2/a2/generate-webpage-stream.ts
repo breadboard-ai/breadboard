@@ -13,7 +13,7 @@ import {
   Outcome,
 } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
-import { getCurrentStepState, StreamableReporter } from "./output.js";
+import { getCurrentStepState, createReporter } from "../agent/progress-work-item.js";
 import { err, ok, progressFromThought, toLLMContentInline } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
@@ -195,7 +195,7 @@ async function executeWebpageStream(
   content: LLMContent[],
   modelName: string
 ): Promise<Outcome<LLMContent>> {
-  const reporter = new StreamableReporter(moduleArgs, {
+  const reporter = createReporter(moduleArgs, {
     title: `Generating webpage with ${modelName}`,
     icon: "web",
   });
@@ -203,8 +203,7 @@ async function executeWebpageStream(
   const { appScreen } = getCurrentStepState(moduleArgs);
 
   try {
-    await reporter.start();
-    await reporter.sendUpdate("Preparing request", { modelName }, "upload");
+    reporter.addJson("Preparing request", { modelName }, "upload");
 
     if (appScreen) appScreen.progress = "Generating HTML";
 
@@ -233,13 +232,13 @@ async function executeWebpageStream(
 
     if (!response.ok) {
       const errorText = await response.text();
-      return reporter.sendError(
+      return reporter.addError(
         err(`Streaming request failed: ${response.status} ${errorText}`)
       );
     }
 
     if (!response.body) {
-      return reporter.sendError(err("No response body from streaming API"));
+      return reporter.addError(err("No response body from streaming API"));
     }
 
     // Process the SSE stream
@@ -261,37 +260,29 @@ async function executeWebpageStream(
             appScreen.expectedDuration = -1;
           }
 
-          await reporter.sendUpdate(
-            `Thinking (${thoughtCount})`,
-            text,
-            "spark"
-          );
+          reporter.addText(`Thinking (${thoughtCount})`, text, "spark");
         } else if (chunkType === "html") {
           htmlResult = text;
-          await reporter.sendUpdate(
-            "Generated HTML",
-            "HTML output ready",
-            "download"
-          );
+          reporter.addText("Generated HTML", "HTML output ready", "download");
         } else if (chunkType === "error") {
-          return reporter.sendError(err(`Generation error: ${text}`));
+          return reporter.addError(err(`Generation error: ${text}`));
         }
       }
     }
 
     if (!htmlResult) {
-      return reporter.sendError(err("No HTML content received from stream"));
+      return reporter.addError(err("No HTML content received from stream"));
     }
 
     // Return HTML as inlineData with text/html mimeType to match legacy behavior
     return toLLMContentInline("text/html", htmlResult, "model");
   } catch (e) {
-    return reporter.sendError(err((e as Error).message));
+    return reporter.addError(err((e as Error).message));
   } finally {
     if (appScreen) {
       appScreen.progress = undefined;
       appScreen.expectedDuration = -1;
     }
-    reporter.close();
+    reporter.finish();
   }
 }

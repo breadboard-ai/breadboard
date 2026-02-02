@@ -1,17 +1,13 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import {
   AppScreen,
+  ConsoleEntry,
   ConsoleLink,
   ConsoleUpdate,
   DataPart,
   FunctionCallCapabilityPart,
   JsonSerializable,
   LLMContent,
+  NodeMetadata,
   SimplifiedA2UIClient,
   WorkItem,
 } from "@breadboard-ai/types";
@@ -20,12 +16,19 @@ import { SignalMap } from "signal-utils/map";
 import { now } from "./now.js";
 import { GeminiBody } from "../a2/gemini.js";
 import { AgentProgressManager } from "./types.js";
-import { llm, progressFromThought } from "../a2/utils.js";
+import { llm, progressFromThought, ErrorMetadata } from "../a2/utils.js";
 import { StatusUpdateCallbackOptions } from "./function-definition.js";
 import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
 import { v0_8 } from "../../a2ui/index.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { ProgressWorkItem };
+export { ProgressWorkItem, createReporter, getCurrentStepState };
+
+export type Link = {
+  uri: string;
+  title: string;
+  iconUri: string;
+};
 
 class ProgressWorkItem implements WorkItem, AgentProgressManager {
   @signal
@@ -69,20 +72,50 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   }
 
   /**
-   * Add an update to the progress work item.
-   * Public method for external callers like StreamableReporter.
+   * Add JSON data to the progress work item.
+   * Wraps the data in LLMContent format internally.
    */
-  addUpdate(title: string, icon: string, body: LLMContent) {
-    this.#add(title, icon, body);
+  addJson(title: string, data: unknown, icon?: string) {
+    this.#add(title, icon ?? "info", {
+      parts: [{ json: data as JsonSerializable }],
+    });
+  }
+
+  /**
+   * Add text to the progress work item.
+   * Wraps the text in LLMContent format internally.
+   */
+  addText(title: string, text: string, icon?: string) {
+    this.#add(title, icon ?? "info", { parts: [{ text }] });
+  }
+
+  /**
+   * Add LLMContent to the progress work item.
+   */
+  addContent(title: string, body: LLMContent, icon?: string) {
+    this.#add(title, icon ?? "info", body);
+  }
+
+  /**
+   * Add an error to the progress work item.
+   * Wraps the error message in LLMContent format internally.
+   */
+  addError(error: { $error: string; metadata?: ErrorMetadata }) {
+    this.#add("Error", "warning", { parts: [{ text: error.$error }] });
+    return error;
   }
 
   /**
    * Add links to the progress work item.
-   * Public method for external callers like StreamableReporter.
    */
-  addLinks(title: string, icon: string, links: ConsoleLink[]) {
+  addLinks(title: string, links: ConsoleLink[], icon?: string) {
     const key = `update-${this.#updateCounter++}`;
-    this.product.set(key, { type: "links", title, icon, links });
+    this.product.set(key, {
+      type: "links",
+      title,
+      icon: icon ?? "link",
+      links,
+    });
   }
 
   /**
@@ -209,4 +242,47 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     }
     this.end = performance.now();
   }
+}
+
+type StepState = {
+  title: string;
+  appScreen: AppScreen | undefined;
+  consoleEntry: ConsoleEntry | undefined;
+};
+
+function getCurrentStepState(moduleArgs: A2ModuleArgs): StepState {
+  const { currentStep, getProjectRunState } = moduleArgs.context;
+  const stepId = currentStep?.id;
+  if (!stepId) {
+    return {
+      title: "",
+      appScreen: undefined,
+      consoleEntry: undefined,
+    };
+  }
+  const runState = getProjectRunState?.();
+  return {
+    title: currentStep?.metadata?.title || "",
+    appScreen: runState?.app.screens.get(stepId),
+    consoleEntry: runState?.console.get(stepId),
+  };
+}
+
+/**
+ * Creates a reporter (ProgressWorkItem) and registers it with the console.
+ */
+function createReporter(
+  moduleArgs: A2ModuleArgs,
+  options: NodeMetadata
+): ProgressWorkItem {
+  const { consoleEntry, appScreen } = getCurrentStepState(moduleArgs);
+  const reporter = new ProgressWorkItem(
+    options.title ?? "Progress",
+    options.icon ?? "info",
+    appScreen
+  );
+  if (consoleEntry) {
+    consoleEntry.work.set(crypto.randomUUID(), reporter);
+  }
+  return reporter;
 }

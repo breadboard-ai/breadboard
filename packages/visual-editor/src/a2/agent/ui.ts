@@ -32,7 +32,7 @@ import {
   ChatResponse,
   VALID_INPUT_TYPES,
 } from "./types.js";
-import { getCurrentStepState } from "../a2/output.js";
+import { getCurrentStepState } from "./progress-work-item.js";
 import { ChoicePresenter } from "./choice-presenter.js";
 
 export { AgentUI };

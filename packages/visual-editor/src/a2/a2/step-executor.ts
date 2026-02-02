@@ -12,7 +12,7 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { getCurrentStepState, StreamableReporter } from "./output.js";
+import { getCurrentStepState, createReporter } from "../agent/progress-work-item.js";
 import {
   decodeBase64,
   encodeBase64,
@@ -210,7 +210,7 @@ async function executeStep(
   const { fetchWithCreds, context } = moduleArgs;
   const model = body.planStep.options?.modelName || body.planStep.stepName;
   const { appScreen, title } = getCurrentStepState(moduleArgs);
-  const reporter = new StreamableReporter(moduleArgs, {
+  const reporter = createReporter(moduleArgs, {
     title: `Calling ${model}`,
     icon: "spark",
   });
@@ -225,8 +225,7 @@ async function executeStep(
       }
     }
 
-    await reporter.start();
-    await reporter.sendUpdate("Step Input", elideEncodedData(body), "upload");
+    reporter.addJson("Step Input", elideEncodedData(body), "upload");
     // Call the API.
     const url = await getBackendUrl(caps);
     // Record model call with action tracker.
@@ -249,11 +248,11 @@ async function executeStep(
           await fetchResponse.text(),
           model
         );
-        return reporter.sendError(err($error, metadata));
+        return reporter.addError(err($error, metadata));
       }
       response = await fetchResponse.json();
     } catch (e) {
-      return reporter.sendError(
+      return reporter.addError(
         err((e as Error).message, {
           origin: "server",
           model,
@@ -261,7 +260,7 @@ async function executeStep(
       );
     }
     if (!response) {
-      return await reporter.sendError(
+      return reporter.addError(
         err(`Request to "${model}" failed, please try again`, {
           origin: "server",
           kind: "bug",
@@ -270,11 +269,11 @@ async function executeStep(
     }
     if (response.errorMessage) {
       const errorMessage = decodeMetadata(response.errorMessage, model);
-      return await reporter.sendError(
+      return reporter.addError(
         err(errorMessage.$error, errorMessage.metadata)
       );
     }
-    await reporter.sendUpdate(
+    reporter.addJson(
       "Step Output",
       elideEncodedData(response),
       "download"
@@ -282,7 +281,7 @@ async function executeStep(
     const output_key = body.planStep.output || "";
     return parseExecutionOutput(response.executionOutputs[output_key]?.chunks);
   } finally {
-    await reporter.close();
+    await reporter.finish();
     if (appScreen) {
       appScreen.progress = undefined;
       appScreen.expectedDuration = -1;
