@@ -147,8 +147,6 @@ export class EntityEditor
   @state()
   accessor values: InputValues | undefined;
 
-
-
   static styles = [
     icons,
     baseColors,
@@ -1187,7 +1185,7 @@ export class EntityEditor
         </h1>
         <div id="type"></div>
         <div id="content">
-          ${this.#renderPorts(graphId, nodeId, inputPorts)}
+          ${this.#renderPorts(graphId, nodeId, inputPorts, node)}
         </div>
         <input type="hidden" name="graph-id" .value=${graphId} />
         <input type="hidden" name="node-id" .value=${nodeId} />
@@ -1244,7 +1242,8 @@ export class EntityEditor
     value: LLMContent | undefined,
     graphId: GraphIdentifier,
     fastAccess: boolean,
-    isReferenced: boolean
+    isReferenced: boolean,
+    agentMode: boolean
   ) {
     const portValue = getLLMContentPortValue(value, port.schema);
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
@@ -1262,6 +1261,7 @@ export class EntityEditor
       .value=${textPart.text}
       .supportsFastAccess=${fastAccess}
       .readOnly=${this.readOnly}
+      .isAgentMode=${agentMode}
       id=${port.name}
       name=${port.name}
       @keydown=${(evt: KeyboardEvent) => {
@@ -1277,7 +1277,8 @@ export class EntityEditor
   #renderPorts(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier,
-    inputPorts: PortLike[]
+    inputPorts: PortLike[],
+    node: InspectableNode
   ) {
     const hasTextEditor =
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
@@ -1306,7 +1307,8 @@ export class EntityEditor
                 isLLMContent(port.value) ? port.value : undefined,
                 graphId,
                 !advanced,
-                isReferenced
+                isReferenced,
+                isAgentMode(node, this.values)
               ),
             ];
           } else {
@@ -1327,7 +1329,8 @@ export class EntityEditor
                 : undefined,
               graphId,
               true,
-              true
+              true,
+              isAgentMode(node, this.values)
             );
           }
           break;
@@ -1933,6 +1936,19 @@ function extractModelId(ports: InspectableNodePorts): string | null {
 
 function isGenerativeNode(node: InspectableNode): boolean {
   return node.descriptor.type === "embed://a2/generate.bgl.json#module:main";
+}
+
+function isAgentMode(
+  node: InspectableNode,
+  pendingValues?: InputValues
+): boolean {
+  if (!isGenerativeNode(node)) return false;
+  // Check pending values first (for reactive updates), then fall back to persisted configuration
+  const mode =
+    pendingValues?.["generation-mode"] ??
+    node.configuration()?.["generation-mode"];
+  // undefined means "agent" mode (it's the default)
+  return mode === "agent" || mode === undefined;
 }
 
 // Returns true if LLM text part of node contains tools/assets or is absent.
