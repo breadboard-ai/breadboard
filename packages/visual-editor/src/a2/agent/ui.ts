@@ -178,13 +178,30 @@ class AgentUI implements A2UIRenderer, ChatManager {
     layout: ChatChoiceLayout = "list",
     noneOfTheAboveLabel?: string
   ): Promise<Outcome<ChatChoicesResponse>> {
-    return this.#choicePresenter.presentChoices(
+    // Add the model's message to the chat log
+    const messageContent = await this.translator.fromPidginString(message);
+    if (!ok(messageContent)) return messageContent;
+    this.#chatLog.push({ ...messageContent, role: "model" });
+
+    const response = await this.#choicePresenter.presentChoices(
       message,
       choices,
       selectionMode,
       layout,
       noneOfTheAboveLabel
     );
+    if (!ok(response)) return response;
+
+    // Build user response text from selected choice labels
+    const selectedLabels = response.selected
+      .map((id) => choices.find((c) => c.id === id)?.label ?? id)
+      .join(", ");
+    this.#chatLog.push({
+      role: "user",
+      parts: [{ text: selectedLabels }],
+    });
+
+    return response;
   }
 
   async render(
