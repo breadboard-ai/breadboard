@@ -11,7 +11,6 @@ import { err, ok, toLLMContent } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 import { ModelConstraint } from "../agent/functions/generate.js";
-import { createReporter, ProgressWorkItem } from "../agent/progress-work-item.js";
 
 const DEFAULT_OPAL_ADK_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeAgentNodeStream";
@@ -28,9 +27,23 @@ type StreamChunk = {
       };
     }>;
   };
+  chunk?: {
+    parts?: Array<{
+      text?: string;
+      partMetadata?: {
+        chunk_type?: string;
+      };
+      part_metadata?: {
+        chunk_type?: string;
+      };
+    }>;
+  };
   parts?: Array<{
     text?: string;
     partMetadata?: {
+      chunk_type?: string;
+    };
+    part_metadata?: {
       chunk_type?: string;
     };
     part_metadata?: {
@@ -62,12 +75,21 @@ type StreamingRequestPart = {
 
 type StreamingRequestBody = {
   objective?: LLMContent;
+  objective?: LLMContent;
   model_name?: string;
   invocation_id?: string;
   contents?: Array<{
     parts: StreamingRequestPart[];
     role: string;
   }>;
+  node_config?: {
+    node_api?: string;
+  };
+  agent_mode_node_config?: {
+    model_constraint?: string;
+    ui_type?: string;
+    ui_prompt?: LLMContent;
+  };
   node_config?: {
     node_api?: string;
   };
@@ -96,6 +118,61 @@ async function getOpalAdkBackendUrl(caps: Capabilities) {
   return DEFAULT_OPAL_ADK_ENDPOINT;
 }
 
+
+export interface BuildStreamingRequestBodyOptions {
+  content?: LLMContent[];
+  objective?: LLMContent;
+  modelConstraint?: string;
+  uiType?: string;
+  uiPrompt?: LLMContent;
+  node_api?: string;
+  invocation_id?: string;
+}
+
+function toProtoModelConstraint(modelConstraint: ModelConstraint): string {
+  switch (modelConstraint) {
+    case "text-pro":
+      return "MODEL_CONSTRAINT_TEXT_PRO";
+    case "text-flash":
+      return "MODEL_CONSTRAINT_TEXT_FLASH";
+    case "image":
+      return "MODEL_CONSTRAINT_IMAGE";
+    case "video":
+      return "MODEL_CONSTRAINT_VIDEO";
+    case "speech":
+      return "MODEL_CONSTRAINT_SPEECH";
+    case "music":
+      return "MODEL_CONSTRAINT_MUSIC";
+    default:
+      return "MODEL_CONSTRAINT_UNSPECIFIED";
+  }
+}
+
+function toProtoUIType(uiType: string): string {
+  switch (uiType) {
+    case "chat":
+      return "UI_TYPE_CHAT";
+    case "a2ui":
+      return "UI_TYPE_A2UI";
+    case "none":
+      return "UI_TYPE_NONE";
+    default:
+      return "UI_TYPE_UNSPECIFIED";
+  }
+}
+
+function buildStreamingRequestBody(options: BuildStreamingRequestBodyOptions): StreamingRequestBody {
+  const {
+    content = [],
+    objective,
+    modelConstraint,
+    uiType,
+    uiPrompt,
+    node_api,
+    invocation_id,
+  } = options;
+  console.log("uiType: ", uiType);
+  const contents: NonNullable<StreamingRequestBody["contents"]> = [];
 
 export interface BuildStreamingRequestBodyOptions {
   content?: LLMContent[];
@@ -196,6 +273,31 @@ function buildStreamingRequestBody(options: BuildStreamingRequestBodyOptions): S
   }
 
   return baseBody;
+  const baseBody: StreamingRequestBody = {
+    objective,
+    model_name: undefined, // model_name is not currently passed in options or used in original code, leaving undefined or could be added to options if needed
+    invocation_id,
+    contents,
+  };
+
+  if (node_api) {
+    baseBody.node_config = {
+      node_api,
+    };
+  } else {
+    baseBody.agent_mode_node_config = {};
+    if (modelConstraint !== undefined) {
+      baseBody.agent_mode_node_config.model_constraint = modelConstraint;
+    }
+    if (uiType !== undefined) {
+      baseBody.agent_mode_node_config.ui_type = toProtoUIType(uiType);
+    }
+    if (uiPrompt !== undefined) {
+      baseBody.agent_mode_node_config.ui_prompt = uiPrompt;
+    }
+  }
+
+  return baseBody;
 }
 
 
@@ -209,16 +311,29 @@ async function executeOpalAdkStream(
   uiType?: string,
   uiPrompt?: LLMContent,
   invocation_id?: string): Promise<Outcome<LLMContent>> {
-  const reporter = createReporter(moduleArgs, {
+  const reporter = new StreamableReporter(caps, {
     title: `Executing Opal Adk with ${opal_adk_agent}`,
     icon: "spark",
   });
   try {
     reporter.addJson("Preparing request", { opal_adk_agent }, "upload");
     console.log('opal_adk_agent: ', opal_adk_agent);
+    console.log('opal_adk_agent: ', opal_adk_agent);
     const baseUrl = await getOpalAdkBackendUrl(caps);
     const url = new URL(baseUrl);
     url.searchParams.set("alt", "sse");
+    let modelConstraintProtoString = (
+      modelConstraint && toProtoModelConstraint(modelConstraint)
+    ) || "MODEL_CONSTRAINT_UNSPECIFIED";
+    const requestBody = buildStreamingRequestBody({
+      content: params,
+      objective,
+      modelConstraint: modelConstraintProtoString,
+      uiType,
+      uiPrompt,
+      node_api: opal_adk_agent,
+      invocation_id,
+    });
     let modelConstraintProtoString = (
       modelConstraint && toProtoModelConstraint(modelConstraint)
     ) || "MODEL_CONSTRAINT_UNSPECIFIED";
@@ -238,6 +353,7 @@ async function executeOpalAdkStream(
       data: [],
     });
 
+    console.log("Request Body: ", requestBody);
     console.log("Request Body: ", requestBody);
     const response = await moduleArgs.fetchWithCreds(url.toString(), {
       method: "POST",
@@ -265,11 +381,11 @@ async function executeOpalAdkStream(
       if (result.thoughtCount !== undefined) {
         thoughtCount = result.thoughtCount;
       }
-      if (result.agentResult) {
-        researchResult = result.agentResult;
+      if (result.researchResult) {
+        researchResult = result.researchResult;
       }
       if (result.error) {
-        return reporter.addError(err(result.error));
+        return reporter.sendError(err(result.error));
       }
     }
 
@@ -292,11 +408,11 @@ async function executeOpalAdkStream(
  */
 export async function parseStreamChunk(
   chunk: StreamChunk,
-  reporter: ProgressWorkItem,
+  reporter: StreamableReporter,
   thoughtCount: number
 ): Promise<{
   thoughtCount?: number;
-  agentResult?: string;
+  researchResult?: string;
   error?: string;
 }> {
   if (!chunk) return {};
@@ -318,7 +434,7 @@ export async function parseStreamChunk(
 
     if (type === "thought") {
       currentThoughtCount++;
-      reporter.addText(`Thinking (${currentThoughtCount})`, text, "spark");
+      await reporter.sendUpdate(`Thinking (${currentThoughtCount})`, text, "spark");
     } else if (
       type === "result" ||
       type === "research" ||
@@ -326,9 +442,9 @@ export async function parseStreamChunk(
       type === "html"
     ) {
       agentResult = text;
-      reporter.addText(`Thought (${text})`, "spark");
+      await reporter.sendUpdate("Agent Thought", agentResult, "spark");
     } else if (type === "error") {
-      reporter.addError(err(text));
+      error = `Generation error: ${text}`;
     } else {
       console.log(`Received unknown chunk type: ${type}`);
     }

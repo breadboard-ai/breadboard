@@ -24,6 +24,7 @@ import { callVideoGen } from "../video-generator/main.js";
 import { callAudioGen } from "../audio-generator/main.js";
 import { callMusicGen } from "../music-generator/main.js";
 import { Generators } from "./types.js";
+import { executeOpalAdkStream } from "../a2/opal-adk-stream.js";
 
 export { invoke as default, computeAgentSchema, describe };
 
@@ -60,9 +61,22 @@ function computeAgentSchema(
           description: "Instructions for UI layout",
         },
       }
+        "b-ui-prompt": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "UI Layout instructions",
+          description: "Instructions for UI layout",
+        },
+      }
       : {};
   const uiConsistent: Schema["properties"] = flags?.consistentUI
     ? {
+      "b-ui-consistent": {
+        type: "boolean",
+        title: "Use A2UI",
+        behavior: ["config", "hint-advanced", "reactive"],
+      },
+    }
       "b-ui-consistent": {
         type: "boolean",
         title: "Use A2UI",
@@ -100,6 +114,7 @@ async function invokeOpalAdk(
     config$prompt: objective,
     "b-ui-consistent": enableA2UI = false,
     "b-ui-prompt": uiPrompt,
+    "b-si-constraint": modelConstraint,
     ...rest
   }: AgentInputs,
   caps: Capabilities,
@@ -156,6 +171,22 @@ async function invokeLegacy(
   });
   if (!ok(result)) return result;
   console.log("LOOP", result);
+  return toAgentOutputs(result.outcomes, result.href);
+}
+
+async function invoke(
+  inputs: AgentInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<AgentOutputs>> {
+  const flags = await moduleArgs.context.flags?.flags();
+  let opalAdkEnabled = flags?.opalAdk || false;
+
+  if (opalAdkEnabled) {
+    return invokeOpalAdk(inputs, caps, moduleArgs);
+  } else {
+    return invokeLegacy(inputs, caps, moduleArgs);
+  }
   return toAgentOutputs(result.outcomes, result.href);
 }
 
