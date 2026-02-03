@@ -193,19 +193,11 @@ describe("Run Actions", () => {
     const config = makeMockConfig();
     RunActions.prepare(config);
 
+    // Simulate input event with data
     const runner = controller.run.main.runner! as unknown as {
       _fireEvent: (e: string, data?: unknown) => void;
     };
-
-    // First fire nodestart to populate the path-to-id cache
-    runner._fireEvent("nodestart", {
-      path: [0],
-      node: { id: "parent-node", type: "test" },
-    });
-
-    // Simulate input event with data (includes path for parent lookup)
     runner._fireEvent("input", {
-      path: [0],
       node: { id: "input-node-1" },
       inputArguments: { schema: { type: "object" } },
     });
@@ -221,14 +213,9 @@ describe("Run Actions", () => {
       { type: "object" },
       "input schema should match"
     );
-
-    // Verify work item was added to parent console entry
-    const parentEntry = controller.run.main.console.get("parent-node");
-    assert.ok(parentEntry, "parent console entry should exist");
-    assert.ok(parentEntry!.work.size > 0, "work items should be added to parent");
   });
 
-  test("runner 'input' event handles missing path gracefully", () => {
+  test("runner 'input' event handles missing node id", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -239,18 +226,12 @@ describe("Run Actions", () => {
     const runner = controller.run.main.runner! as unknown as {
       _fireEvent: (e: string, data?: unknown) => void;
     };
-
-    // Input event without path should warn but not crash
-    // (path is required to find parent, so input won't be added to any console entry)
     runner._fireEvent("input", {
-      path: [999], // Path that doesn't match any nodestart
-      node: { id: "orphan-input" },
       inputArguments: { schema: {} },
     });
 
-    // Input should still be set on controller (for the floating input component)
     assert.ok(controller.run.main.input, "input should be set");
-    assert.strictEqual(controller.run.main.input?.id, "orphan-input", "input id should match");
+    assert.strictEqual(controller.run.main.input?.id, "", "input id should be empty string");
   });
 
   test("runner 'error' event sets error on controller with string message", () => {

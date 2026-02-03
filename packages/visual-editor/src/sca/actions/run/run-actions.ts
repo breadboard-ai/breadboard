@@ -152,45 +152,10 @@ export function prepare(config: PrepareRunConfig): void {
 
   // Register output listeners on the runner
   runner.addEventListener("input", (event) => {
-    const { inputArguments, path } = event.data;
+    const { inputArguments } = event.data;
     const schema = inputArguments?.schema || {};
-    const inputNodeId = event.data.node?.id ?? "";
-    controller.run.main.setInput({ id: inputNodeId, schema });
-
-    // Find the parent console entry using the path
-    // For nested nodes, this maps to the top-level parent's console entry
-    const parentId = controller.run.main.getParentIdForPath(path);
-    if (!parentId) {
-      console.warn(`No parent console entry found for input event at path ${path}`);
-      return;
-    }
-
-    const entry = controller.run.main.console.get(parentId);
-    if (!entry) {
-      console.warn(`Console entry not found for parent id "${parentId}"`);
-      return;
-    }
-
-    // Add a work item with awaitingUserInput: true
-    // This allows console-view to render the input under the step
-    const workItem = {
-      title: "Waiting for input",
-      icon: "input",
-      start: Date.now(),
-      end: null,
-      elapsed: 0,
-      awaitingUserInput: true,
-      openByDefault: true,
-      schema,
-      product: new Map(),
-    };
-    const newWork = new Map(entry.work);
-    newWork.set(`input-${inputNodeId}`, workItem);
-    controller.run.main.setConsoleEntry(parentId, {
-      ...entry,
-      work: newWork,
-      open: true,
-    });
+    const id = event.data.node?.id ?? "";
+    controller.run.main.setInput({ id, schema });
   });
 
   runner.addEventListener("error", (event) => {
@@ -261,11 +226,6 @@ export function prepare(config: PrepareRunConfig): void {
     if (event.data.path.length > 1) return;
 
     const nodeId = event.data.node.id;
-    const path = event.data.path;
-
-    // Register path-to-id mapping for finding parent console entries later
-    controller.run.main.setPathId(path, nodeId);
-
     const graphDescriptor = services.graphStore.getByDescriptor(graph);
     if (!graphDescriptor?.success) return;
 

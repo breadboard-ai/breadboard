@@ -9,20 +9,9 @@ import * as A2UI from "../../../../a2ui/index.js";
 import { isLLMContent, isLLMContentArray } from "../../../../data/common.js";
 import { llmContentToA2UIComponents } from "../../../../a2/agent/llm-content-to-a2ui.js";
 
-type AppScreenToA2UIOptions = {
-  /**
-   * If true, text content will be rendered as h1.
-   * Useful for input prompts.
-   */
-  textAsH1?: boolean;
-};
-
 export function appScreenToA2UIProcessor(
-  appScreenOutput: AppScreenOutput,
-  options: AppScreenToA2UIOptions = {}
+  appScreenOutput: AppScreenOutput
 ): A2UI.v0_8.Types.ModelProcessor | null {
-  const { textAsH1 = false } = options;
-
   if (!appScreenOutput.output) {
     return null;
   }
@@ -40,7 +29,6 @@ export function appScreenToA2UIProcessor(
     if (isLLMContent(toAppend)) {
       const newComponents = llmContentToA2UIComponents(toAppend, {
         wrapMediaInCard: true,
-        textAsH1,
       });
       topLevelIds.push(...newComponents.ids);
       components.push(...newComponents.parts);
@@ -48,7 +36,6 @@ export function appScreenToA2UIProcessor(
       for (const llmContent of toAppend) {
         const newComponents = llmContentToA2UIComponents(llmContent, {
           wrapMediaInCard: true,
-          textAsH1,
         });
         topLevelIds.push(...newComponents.ids);
         components.push(...newComponents.parts);
