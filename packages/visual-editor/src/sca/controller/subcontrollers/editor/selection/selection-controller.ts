@@ -26,6 +26,13 @@ interface Selection {
 }
 
 export class SelectionController extends RootController {
+  /**
+   * Incremented when selection changes. Used by triggers to detect
+   * selection changes without reading the full selection state.
+   */
+  @field()
+  private accessor _selectionId: number = 0;
+
   @field({ deep: true })
   private accessor _selection: Selection = {
     nodes: new Set(),
@@ -33,6 +40,18 @@ export class SelectionController extends RootController {
     assets: new Set(),
     assetEdges: new Set(),
   };
+
+  get selectionId(): number {
+    return this._selectionId;
+  }
+
+  /**
+   * Increments the selectionId without modifying selection state.
+   * Used to bridge legacy selection events to the SCA trigger system.
+   */
+  bumpSelectionId(): void {
+    this._selectionId++;
+  }
 
   get selection(): Readonly<Selection> {
     return this._selection;
@@ -48,6 +67,7 @@ export class SelectionController extends RootController {
   }
 
   clear() {
+    this._selectionId++;
     this.removeNodes();
     this.removeEdges();
     this.removeAssets();
@@ -55,10 +75,12 @@ export class SelectionController extends RootController {
   }
 
   addNode(id: NodeIdentifier) {
+    this._selectionId++;
     this._selection.nodes.add(id);
   }
 
   removeNode(id: NodeIdentifier) {
+    this._selectionId++;
     this._selection.nodes.delete(id);
   }
 
@@ -67,10 +89,12 @@ export class SelectionController extends RootController {
   }
 
   addEdge(id: EdgeIdentifier) {
+    this._selectionId++;
     this._selection.edges.add(id);
   }
 
   removeEdge(id: EdgeIdentifier) {
+    this._selectionId++;
     this._selection.edges.delete(id);
   }
 
@@ -79,10 +103,12 @@ export class SelectionController extends RootController {
   }
 
   addAsset(id: AssetIdentifier) {
+    this._selectionId++;
     this._selection.assets.add(id);
   }
 
   removeAsset(id: AssetIdentifier) {
+    this._selectionId++;
     this._selection.assets.delete(id);
   }
 
@@ -91,10 +117,12 @@ export class SelectionController extends RootController {
   }
 
   addAssetEdge(id: AssetEdgeIdentifier) {
+    this._selectionId++;
     this._selection.assetEdges.add(id);
   }
 
   removeAssetEdge(id: AssetEdgeIdentifier) {
+    this._selectionId++;
     this._selection.assetEdges.delete(id);
   }
 
@@ -103,6 +131,7 @@ export class SelectionController extends RootController {
   }
 
   selectAll(graph: InspectableGraph) {
+    this._selectionId++;
     this.clear();
     for (const node of graph.nodes()) {
       this.addNode(node.descriptor.id);

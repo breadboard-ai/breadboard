@@ -14,6 +14,7 @@ import * as Router from "./router/router-triggers.js";
 import * as Run from "./run/run-triggers.js";
 import * as ScreenSize from "./screen-size/screen-size-triggers.js";
 import * as Shell from "./shell/shell-triggers.js";
+import * as Step from "./editor/step-triggers.js";
 
 export interface AppTriggers {
   agent: typeof Agent;
@@ -23,6 +24,7 @@ export interface AppTriggers {
   run: typeof Run;
   screenSize: typeof ScreenSize;
   shell: typeof Shell;
+  step: typeof Step;
 }
 
 type TriggerKey = keyof AppTriggers;
@@ -42,6 +44,7 @@ export function triggers(
     Run.bind({ controller, services, actions });
     ScreenSize.bind({ controller, services, actions });
     Shell.bind({ controller, services, actions });
+    Step.bind({ controller, services, actions });
     register();
 
     instance = {
@@ -52,6 +55,7 @@ export function triggers(
       run: Run,
       screenSize: ScreenSize,
       shell: Shell,
+      step: Step,
     } satisfies AppTriggers;
   }
   return instance;
@@ -69,6 +73,7 @@ export function register() {
   Run.registerGraphSyncTrigger();
   ScreenSize.registerMediaQueryTrigger();
   Shell.registerPageTitleTrigger();
+  Step.registerStepAutoSaveTrigger();
 }
 
 export function clean() {

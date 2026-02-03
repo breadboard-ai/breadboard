@@ -101,6 +101,10 @@ export function makeTestController(options: TestControllerOptions = {}) {
       debug: { enabled: true },
       snackbars,
       main,
+      toasts: {
+        toast: mock.fn(),
+        untoast: mock.fn(),
+      },
       ...(flowgenInput && { flowgenInput }),
     },
     board: {
@@ -117,6 +121,18 @@ export function makeTestController(options: TestControllerOptions = {}) {
     },
     editor: {
       graph: editor ? { editor, lastNodeConfigChange: null } : graph,
+      selection: {
+        selectionId: 0,
+      },
+      sidebar: {
+        section: null,
+      },
+      step: {
+        pendingEdit: null,
+        pendingAssetEdit: null,
+        clearPendingEdit: mock.fn(),
+        clearPendingAssetEdit: mock.fn(),
+      },
     },
   } as unknown as AppController;
 
