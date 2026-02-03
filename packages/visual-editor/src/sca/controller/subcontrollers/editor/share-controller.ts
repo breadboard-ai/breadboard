@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NarrowedDriveFile } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type {
+  DriveFileId,
+  NarrowedDriveFile,
+} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { RootController } from "../root-controller.js";
 import { field } from "../../decorators/field.js";
 
@@ -14,16 +17,14 @@ export type ShareState =
   | { status: "loading" }
   | {
     status: "readonly";
-    shareableFile: { id: string; resourceKey: string | undefined };
+    shareableFile: DriveFileId;
   }
   | {
     status: "writable";
     published: true;
     publishedPermissions: gapi.client.drive.Permission[];
     granularlyShared: boolean;
-    shareableFile: {
-      id: string;
-      resourceKey: string | undefined;
+    shareableFile: DriveFileId & {
       stale: boolean;
       permissions: gapi.client.drive.Permission[];
       shareSurface: string | undefined;
@@ -36,13 +37,11 @@ export type ShareState =
     published: false;
     granularlyShared: boolean;
     shareableFile:
-    | {
-      id: string;
-      resourceKey: string | undefined;
+    | (DriveFileId & {
       stale: boolean;
       permissions: gapi.client.drive.Permission[];
       shareSurface: string | undefined;
-    }
+    })
     | undefined;
     latestVersion: string;
     userDomain: string;
@@ -52,13 +51,13 @@ export type ShareState =
     published: boolean;
     granularlyShared: boolean;
     shareableFile:
-    | { id: string; resourceKey: string | undefined; stale: boolean }
+    | (DriveFileId & { stale: boolean })
     | undefined;
     userDomain: string;
   }
   | {
     status: "granular";
-    shareableFile: { id: string };
+    shareableFile: DriveFileId;
   }
   | {
     status: "unmanaged-assets";
