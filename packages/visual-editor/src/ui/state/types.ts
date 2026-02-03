@@ -8,7 +8,6 @@ import {
   App,
   AssetMetadata,
   AssetPath,
-  ConsoleEntry,
   GraphIdentifier,
   GraphTheme,
   HarnessRunner,
@@ -23,6 +22,7 @@ import {
   RunError,
   GraphDescriptor,
   EditableGraph,
+  WorkItem,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -80,18 +80,6 @@ export type ProjectRun = {
    */
   progress: number;
   /**
-   * Console (fka Activity View)
-   */
-  console: Map<string, ConsoleEntry>;
-  // TODO: Move this under console. It should be similar to App: holds entries,
-  // rather than being a map.
-  /**
-   * The state of the console. The values are:
-   * - "start" -- at the start screen
-   * - "entries" -- showing entries
-   */
-  consoleState: "start" | "entries";
-  /**
    * Overall error message that is conveyed to the user (appears in snackbar),
    * combining multiple errors, if necessary.
    */
@@ -100,15 +88,6 @@ export type ProjectRun = {
    * The status of the run
    */
   status: ProjectRunStatus;
-  /**
-   * The current (unifinished) entries in the console
-   */
-  current: Map<string, ConsoleEntry> | null;
-  /**
-   * The user input (if any) that the run is waiting on. If `null`,
-   * the run is not currently waiting on user input.
-   */
-  input: UserInput | null;
   /**
    * Final output values. When the run is still ongoing, will be `null`.
    */
@@ -144,38 +123,88 @@ export type StepListState = {
   steps: Map<string, StepListStepState>;
 };
 
-export type StepListStepState = {
+/**
+ * Status for an individual step.
+ */
+export type StepStatus =
+  | "loading"
+  | "working"
+  | "ready"
+  | "complete"
+  | "pending";
+
+/**
+ * Base interface for step state shared between lite mode and console view.
+ */
+export interface BaseStepState {
+  /**
+   * The title of the step.
+   */
+  title: string;
   /**
    * The icon, associated with the step.
    */
   icon?: string;
   /**
-   * The title of the step
+   * The tags used for this step (e.g., "input", "generate").
    */
-  title: string;
+  tags?: string[];
+}
+
+/**
+ * State for a step in the lite mode step list view.
+ * Extends BaseStepState with simplified status and prompt info.
+ */
+export interface StepListStepState extends BaseStepState {
   /**
    * Current status of the step.
-   * - "loading" -- the step is loading (not sure if we need this)
+   * - "loading" -- the step is loading
    * - "working" -- the step is either in "working" or "waiting" state
    * - "ready" -- the step is in "ready" state
-   * - "complete" -- (not sure if we need this)
-   * - "pending" -- the step is in indeterminate state, because planner is
-   *   running
+   * - "complete" -- the step finished
+   * - "pending" -- the step is in indeterminate state (planner running)
    */
-  status: "loading" | "working" | "ready" | "complete" | "pending";
+  status: StepStatus;
   /**
-   * The prompt from step's configuration
+   * The prompt from step's configuration.
    */
   prompt: string;
   /**
-   * The text label for the prompt;
+   * The text label for the prompt.
    */
   label: string;
+}
+
+/**
+ * Extended state for console view steps.
+ * Extends BaseStepState with full detail: work items, outputs, and errors.
+ */
+export interface ConsoleStepState extends BaseStepState {
   /**
-   * The tags used for this step
+   * Current run status of the step.
    */
-  tags?: string[];
-};
+  status: NodeRunState | null;
+  /**
+   * Whether the step has completed.
+   */
+  completed: boolean;
+  /**
+   * Whether the step's details should be open by default.
+   */
+  open: boolean;
+  /**
+   * Error for this step (if any).
+   */
+  error: RunError | null;
+  /**
+   * Work items (sub-steps like inputs and outputs).
+   */
+  work: Map<string, WorkItem>;
+  /**
+   * Final output content.
+   */
+  output: Map<string, LLMContent>;
+}
 
 export type ErrorReason =
   | "child"

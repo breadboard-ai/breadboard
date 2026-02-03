@@ -10,9 +10,9 @@ import type {
   NodeIdentifier,
   NodeRunStatus,
   RunError,
-  Schema,
 } from "@breadboard-ai/types";
 import { STATUS } from "../../../../ui/types/types.js";
+import type { UserInput } from "../../../../ui/state/types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 import { SignalMap } from "signal-utils/map";
@@ -22,36 +22,6 @@ import { SignalSet } from "signal-utils/set";
  * Re-export STATUS for consumers that need it.
  */
 export { STATUS };
-
-/**
- * Represents user input request.
- */
-export type UserInput = {
-  id: NodeIdentifier;
-  schema: Schema;
-};
-
-/**
- * Status for an individual step in the step list.
- */
-export type StepStatus =
-  | "loading"
-  | "working"
-  | "ready"
-  | "complete"
-  | "pending";
-
-/**
- * State for a step in the step list view.
- */
-export interface StepListStepState {
-  icon?: string;
-  title: string;
-  status: StepStatus;
-  prompt: string;
-  label: string;
-  tags?: string[];
-}
 
 /**
  * Controller for run lifecycle, status, and output state.
@@ -127,6 +97,13 @@ export class RunController extends RootController {
   @field()
   private accessor _estimatedEntryCount: number = 0;
 
+  /**
+   * Cache mapping execution paths to top-level node IDs.
+   * Used to find which console entry an input/output event belongs to.
+   * Key is the stringified path (e.g., "0" for top-level).
+   */
+  #pathToId: Map<string, NodeIdentifier> = new Map();
+
   constructor(controllerId: string, persistenceId: string) {
     super(controllerId, persistenceId);
   }
@@ -201,6 +178,35 @@ export class RunController extends RootController {
   reset(): void {
     this._status = STATUS.STOPPED;
     this.clearRunner();
+    this.#pathToId.clear();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PATH-TO-ID CACHE METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Converts a path to its top-level key (first element only).
+   * This is used to find the parent console entry for nested events.
+   */
+  #topLevelPath(path: number[]): string {
+    return path.toSpliced(1).join(",");
+  }
+
+  /**
+   * Registers a path-to-id mapping for a top-level node.
+   * Called during nodestart for top-level nodes.
+   */
+  setPathId(path: number[], id: NodeIdentifier): void {
+    this.#pathToId.set(this.#topLevelPath(path), id);
+  }
+
+  /**
+   * Gets the parent node ID for a given path.
+   * Returns null if no mapping exists.
+   */
+  getParentIdForPath(path: number[]): NodeIdentifier | null {
+    return this.#pathToId.get(this.#topLevelPath(path)) ?? null;
   }
 
   /**

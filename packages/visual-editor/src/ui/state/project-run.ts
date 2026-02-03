@@ -6,14 +6,12 @@
 
 import {
   AppScreenOutput,
-  ConsoleEntry,
   EditableGraph,
   ErrorObject,
   ErrorResponse,
   GraphDescriptor,
   HarnessRunner,
   InspectableGraph,
-  InspectableNode,
   NodeIdentifier,
   NodeLifecycleState,
   NodeMetadata,
@@ -25,33 +23,27 @@ import {
   RunErrorEvent,
   RunGraphEndEvent,
   RunGraphStartEvent,
-  RunInputEvent,
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunOutputEvent,
-  Schema,
   SimplifiedProjectRunState,
 } from "@breadboard-ai/types";
 
 import { err, ok } from "@breadboard-ai/utils";
 import { Signal } from "signal-polyfill";
 import { signal } from "signal-utils";
-import { SignalMap } from "signal-utils/map";
 import { SignalSet } from "signal-utils/set";
 import { StateEvent } from "../events/events.js";
 import { getStepIcon } from "../utils/get-step-icon.js";
 import { edgeToString } from "../utils/workspace.js";
 import { ReactiveApp } from "./app.js";
 import { ReactiveAppScreen } from "./app-screen.js";
-import { idFromPath } from "./common.js";
-import { ReactiveConsoleEntry } from "./console-entry.js";
 import { ReactiveRendererRunState } from "./renderer-run-state.js";
 import {
   ProjectRun,
   ProjectRunStatus,
   RendererRunState,
   StepEditor,
-  UserInput,
 } from "./types.js";
 import { decodeError, decodeErrorData } from "./utils/decode-error.js";
 
@@ -100,7 +92,6 @@ function error(msg: string) {
 class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   app: ReactiveApp = new ReactiveApp(this);
 
-  console: Map<string, ConsoleEntry> = new SignalMap();
 
   #dismissedErrors = new SignalSet<NodeIdentifier>();
   #seenErrors = new Set<NodeIdentifier>();
@@ -156,18 +147,12 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   @signal
   accessor status: ProjectRunStatus = "stopped";
 
-  /**
-   * Currently active (unfinished) entries in console.
-   */
-  @signal
-  accessor current: Map<string, ReactiveConsoleEntry> | null = null;
-
   @signal
   accessor renderer: RendererRunState = new ReactiveRendererRunState();
 
   @signal
   get estimatedEntryCount() {
-    return Math.max(this.#inspectable?.nodes().length || 0, this.console.size);
+    return this.#inspectable?.nodes().length || 0;
   }
 
   @signal
@@ -183,36 +168,14 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     return completed / this.estimatedEntryCount;
   }
 
-  @signal
-  get consoleState() {
-    return this.console.size > 0 ? "entries" : "start";
-  }
-
-  @signal
-  accessor input: UserInput | null = null;
-
-  accessor inputSchemas = new SignalMap<string, Schema>();
-
-  @signal
-  get inputs(): UserInput[] | null {
-    const waiting = this.runner?.waiting;
-    if (!waiting) {
-      if (this.input) return [this.input];
-      return null;
-    }
-    return Array.from(waiting)
-      .map(([id]) => {
-        const schema = this.inputSchemas.get(id);
-        if (!schema) return null;
-        return { id, schema };
-      })
-      .filter(Boolean) as UserInput[];
-  }
 
   @signal
   accessor #inspectable: InspectableGraph | undefined;
 
   #topologyChanged = new Signal.State({});
+
+  // Path-to-id mapping for resolving parent screens for nested outputs
+  #pathToId = new Map<string, NodeIdentifier>();
 
   @signal
   get finalOutput(): OutputValues | null {
@@ -221,7 +184,6 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     return this.app.last?.last?.output || null;
   }
 
-  #idCache = new IdCache();
 
   /**
    * Not part of the public interface, but used by its children (like
@@ -265,14 +227,12 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       });
       runner.addEventListener("end", () => {
         this.status = "stopped";
-        this.current = null;
-        this.input = null;
       });
       runner.addEventListener("nodestart", this.#nodeStart.bind(this));
       runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
       runner.addEventListener("graphstart", this.#graphStart.bind(this));
       runner.addEventListener("graphend", this.#graphEnd.bind(this));
-      runner.addEventListener("input", this.#input.bind(this));
+      // Input handling is done by SCA, but output handling for app screens is here
       runner.addEventListener("output", this.#output.bind(this));
       runner.addEventListener("error", this.#error.bind(this));
       runner.addEventListener("resume", () => {
@@ -289,13 +249,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
             errorMessage: errorMessage.message,
           });
           return;
-        } else if (state === "succeeded") {
-          // Mark all pending work items as completed.
-          const entry = this.current?.get(id);
-          if (entry) {
-            entry.finalizeWorkItemInputs();
-          }
         }
+        // Note: Console entry finalization is now handled by SCA
         this.renderer.nodes.set(id, { status: state });
       });
       runner.addEventListener("edgestatechange", (e) => {
@@ -316,17 +271,9 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
     await runner.updateGraph?.(graph);
 
-    this.console.clear();
     this.renderer.nodes.clear();
-    this.input = null;
 
     runner.state?.forEach(({ state, outputs }, id) => {
-      const inspectableNode = this.#inspectable?.nodeById(id);
-      if (!inspectableNode) {
-        console.warn(`Unable to retrieve node information for node "${id}"`);
-      } else {
-        this.#setConsoleEntry(id);
-      }
       const status = toNodeRunState(
         this.actionTracker,
         state,
@@ -340,41 +287,6 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     });
   }
 
-  #setConsoleEntry(id: NodeIdentifier) {
-    const node = this.#inspectable?.nodeById(id);
-    if (!node) return;
-
-    const title = node.title();
-
-    const metadata = node.currentDescribe()?.metadata || {};
-    const { icon, tags } = metadata;
-    // Go ahead and set the entry
-    this.console.set(id, newEntry(this.renderer, node, title, tags, icon));
-    if (!tags) {
-      // .. but if there aren't tags, try using `describe()`.
-      // This is done due tue a race condition describer. Sad!
-      node.describe().then((result) => {
-        const { icon, tags } = result.metadata || {};
-        this.console.set(id, newEntry(this.renderer, node, title, tags, icon));
-      });
-    }
-
-    function newEntry(
-      runState: RendererRunState,
-      node: InspectableNode,
-      title: string,
-      tags?: string[],
-      defaultIcon?: string
-    ): ConsoleEntry {
-      const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
-      return new ReactiveConsoleEntry(
-        id,
-        runState,
-        { title, icon, tags },
-        undefined
-      );
-    }
-  }
 
   #nodeMetadata(id: NodeIdentifier): NodeMetadata {
     const node = this.#inspectable?.nodeById(id);
@@ -387,8 +299,6 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
   #abort() {
     this.status = "stopped";
-    this.current = null;
-    this.input = null;
   }
 
   #graphStart(event: RunGraphStartEvent) {
@@ -397,10 +307,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     if (pathLength > 0) return;
 
     console.debug("Project Run: Graph Start");
-    this.#idCache.clear();
     this.#fatalError = null;
-    this.current = null;
-    this.input = null; // can't be too cautious.
+    this.#pathToId.clear();
   }
 
   #graphEnd(event: RunGraphEndEvent) {
@@ -408,52 +316,33 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
     if (pathLength > 0) return;
 
-    this.input = null; // clean up just in case.
-
-    // TOOD: Do we need to do anything here?
-    console.debug("Project Run: Graph End", this.console);
+    console.debug("Project Run: Graph End");
   }
 
   #nodeStart(event: RunNodeStartEvent) {
     console.debug("Project Run: Node Start", event);
     const { path } = event.data;
 
+    // Nested nodes are handled by SCA console logic
     if (path.length > 1) {
-      const id = this.#idCache.get(path);
-      if (!ok(id)) {
-        console.warn(id.$error);
-        return;
-      }
-      this.current?.get(id)?.onNodeStart(event.data);
       return;
     }
 
     const id = event.data.node.id;
-    const node = this.#inspectable?.nodeById(id);
     const metadata = this.#nodeMetadata(id);
-    const outputSchema = node?.currentDescribe()?.outputSchema;
-    const rerun = this.console.has(id);
-    const entry = new ReactiveConsoleEntry(
-      id,
-      this.renderer,
-      metadata,
-      outputSchema
-    );
-    this.#idCache.set(path, id);
-    this.current ??= new SignalMap();
-    this.current.set(id, entry);
-    this.console.set(id, entry);
-    entry.rerun = rerun;
+
+    // Register path-to-id mapping for top-level nodes
+    // This is used to find parent screens for nested outputs
+    this.#pathToId.set(this.#topLevelPath(path), id);
 
     this.renderer.nodes.set(id, { status: "working" });
 
     const controlState = computeControlState(event.data.inputs);
     if (controlState.skip) return;
 
-    // This looks like duplication with the console logic above,
-    // but it's a hedge toward the future where screens and console entries
-    // might go out of sync.
-    // See https://github.com/breadboard-ai/breadboard/wiki/Screens
+    // Create app screen for this node
+    const node = this.#inspectable?.nodeById(id);
+    const outputSchema = node?.currentDescribe()?.outputSchema;
     const screen = new ReactiveAppScreen(metadata.title || "", outputSchema);
     this.app.screens.set(id, screen);
   }
@@ -461,125 +350,76 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   #nodeEnd(event: RunNodeEndEvent) {
     console.debug("Project Run: Node End", event);
     const { path } = event.data;
-    const pathLength = path.length;
-    const id = this.#idCache.get(path);
-    if (!ok(id)) {
-      console.warn(id.$error);
+
+    // Nested nodes are handled by SCA console logic
+    if (path.length > 1) {
       return;
     }
 
-    if (pathLength > 1) {
-      this.current?.get(id)?.onNodeEnd(event.data, {
-        completeInput: () => {
-          this.input = null;
-        },
-      });
-      return;
-    }
+    const id = event.data.node.id;
+    const nodeState = this.runner?.state?.get(id);
 
-    const entry = this.current?.get(id);
-    if (!entry) {
-      console.warn(`Node with id "${id}" not found`);
-    } else {
-      const nodeState = this.runner?.state?.get(id);
-      if (nodeState) {
-        if (nodeState.state === "failed") {
-          const errorResponse = nodeState.outputs?.$error as
-            | ErrorResponse
-            | undefined;
-          if (!errorResponse) return;
+    if (nodeState) {
+      if (nodeState.state === "failed") {
+        const errorResponse = nodeState.outputs?.$error as
+          | ErrorResponse
+          | undefined;
+        if (errorResponse) {
           const error = decodeErrorData(this.actionTracker, errorResponse);
-          entry.error = error;
           this.renderer.nodes.set(id, {
             status: "failed",
             errorMessage: error.details || error.message,
           });
-        } else if (nodeState.state === "interrupted") {
-          entry.finalizeWorkItemInputs();
-          this.app.screens.delete(id);
-        } else {
-          this.renderer.nodes.set(id, { status: "succeeded" });
         }
+      } else if (nodeState.state === "interrupted") {
+        this.app.screens.delete(id);
+      } else {
+        this.renderer.nodes.set(id, { status: "succeeded" });
       }
-      entry.finalize(event.data);
     }
+
     this.app.screens.get(id)?.finalize(event.data);
-  }
-
-  #input(event: RunInputEvent) {
-    const { path } = event.data;
-    console.debug("Project Run: Input", event);
-    if (!this.current) {
-      console.warn(`No current console entry found for input event`, event);
-      return;
-    }
-    const id = this.#idCache.get(path);
-    if (!ok(id)) {
-      console.warn(id.$error);
-      return;
-    }
-    const nodeState = this.runner?.state?.get(id)?.state;
-    if (nodeState === "interrupted") {
-      // When the input is in the "interrupted" state, we just resume running
-      // and let the input-bubbling machinery handle the abort signals.
-      this.runner?.resumeWithInputs({});
-      return;
-    }
-
-    const currentConsoleEntry = this.current.get(id);
-    if (!currentConsoleEntry) {
-      console.warn(`No current console entry found at path "${path}"`);
-      return;
-    }
-    const currentScreen = this.app.screens.get(id);
-    if (!currentScreen) {
-      console.warn(`No current screen found at path "${path}"`);
-    } else {
-      // Bump it to the bottom of the list (last item = really current);
-      this.app.screens?.delete(id);
-      this.app.screens?.set(id, currentScreen);
-    }
-    currentConsoleEntry.addInput(event.data, {
-      itemCreated: (item) => {
-        currentScreen?.markAsInput();
-        if (!item.schema) {
-          console.warn(`Schema unavailable for input, skipping`, event.data);
-          return;
-        }
-        this.input = {
-          id,
-          schema: item.schema,
-        };
-        this.inputSchemas.set(id, item.schema);
-      },
-    });
   }
 
   #output(event: RunOutputEvent) {
     const { path, bubbled } = event.data;
     console.debug("Project Run: Output", event);
-    if (!this.current) {
-      console.warn(`No current console entry for output event`, event);
-      return;
-    }
 
     // The non-bubbled outputs are not supported: they aren't found in the
     // new-style (A2-based) graphs.
     if (!bubbled) return;
 
-    const id = this.#idCache.get(path);
-    if (!ok(id)) {
-      console.warn(id.$error);
+    // Find the parent app screen using the path-to-id mapping
+    // For top-level nodes, this is the node's own ID
+    // For nested nodes, this finds the top-level parent
+    const id = this.#getParentIdForPath(path);
+    if (!id) {
+      console.warn(`No parent app screen found for output at path [${path}]`);
       return;
     }
 
-    this.current.get(id)?.addOutput(event.data);
+    // Add output to app screen for #renderOutputs()
     this.app.screens.get(id)?.addOutput(event.data);
+  }
+
+  /**
+   * Converts a path to its top-level key (first element only).
+   * This is used to find the parent app screen for nested events.
+   */
+  #topLevelPath(path: number[]): string {
+    return path.toSpliced(1).join(",");
+  }
+
+  /**
+   * Gets the parent node ID for a given path.
+   * Returns null if no mapping exists.
+   */
+  #getParentIdForPath(path: number[]): NodeIdentifier | null {
+    return this.#pathToId.get(this.#topLevelPath(path)) ?? null;
   }
 
   #error(event: RunErrorEvent) {
     const error = decodeError(this.actionTracker, event);
-    this.input = null;
     this.#fatalError = error;
   }
 
@@ -620,9 +460,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       }
       case "waiting": {
         console.log("Abort work", nodeState.state);
-        if (this.input?.id === nodeId) {
-          this.input = null;
-        }
+        // Input state is now handled by SCA
         this.renderer.nodes.set(nodeId, { status: "interrupted" });
         stop(nodeId, this.runner);
         break;
@@ -767,31 +605,6 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       editable,
       signal
     );
-  }
-}
-
-class IdCache {
-  #pathToId = new Map<string, NodeIdentifier>();
-
-  clear() {
-    this.#pathToId.clear();
-  }
-
-  #topLevel(path: number[]) {
-    return idFromPath(path.toSpliced(1));
-  }
-
-  get(path: number[]): Outcome<string> {
-    const topLevelPath = this.#topLevel(path);
-    const id = this.#pathToId.get(topLevelPath);
-    if (!id) {
-      return err(`Could not find node id for path "${topLevelPath}"`);
-    }
-    return id;
-  }
-
-  set(path: number[], id: NodeIdentifier) {
-    this.#pathToId.set(this.#topLevel(path), id);
   }
 }
 

@@ -338,7 +338,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           receiver = last.a2ui.receiver;
         } else {
           // Likely a raw LLM Content that needs to be converted to A2UI.
-          processor = appScreenToA2UIProcessor(last);
+          // If there's an active input, style text as H1 for the prompt
+          const hasActiveInput = !!this.sca?.controller.run.main.input;
+          processor = appScreenToA2UIProcessor(last, { textAsH1: hasActiveInput });
           receiver = null;
         }
 
@@ -859,10 +861,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderInput() {
-    const input = this.run?.input;
+    // Use SCA for input instead of ProjectRun
+    const input = this.sca?.controller.run.main.input;
     if (!input) {
       this.style.setProperty("--input-clearance", `0px`);
-
       return nothing;
     }
 
@@ -1077,13 +1079,17 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const shouldRenderProgress =
       this.run.app.state === "progress" &&
-      this.sca.controller.global.consent.pendingInApp.length === 0;
+      this.sca.controller.global.consent.pendingInApp.length === 0 &&
+      !this.sca.controller.run.main.input;
     let content: Array<HTMLTemplateResult | symbol> = [];
     if (this.isEmpty) {
       content = [this.#renderEmptyState()];
     } else {
       if (this.sca.controller.global.consent.pendingInApp.length > 0) {
         content = [this.#renderConsent()];
+      } else if (this.sca.controller.run.main.input) {
+        // Input state is derived directly from SCA
+        content = [this.#renderOutputs(), this.#renderInput()];
       } else {
         switch (this.run.app.state) {
           case "splash":
@@ -1095,10 +1101,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             // so this becomes a no-op here to ensure we cover all states.
             // The only thing we need to do is clean up after input
             this.style.setProperty("--input-clearance", `0px`);
-            break;
-
-          case "input":
-            content = [this.#renderOutputs(), this.#renderInput()];
             break;
 
           case "output":
