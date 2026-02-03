@@ -9,7 +9,6 @@ import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protoco
 import type {
   DriveFileId,
   GoogleDriveClient,
-  NarrowedDriveFile,
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   DRIVE_PROPERTY_IS_SHAREABLE_COPY,
@@ -30,7 +29,7 @@ import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { SignalWatcher } from "@lit-labs/signals";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
@@ -52,75 +51,13 @@ import { makeUrl } from "../../utils/urls.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { SCA } from "../../../sca/sca.js";
+import type {
+  ShareState,
+  UnmanagedAssetProblem,
+} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
-
-type State =
-  | { status: "closed" }
-  | { status: "opening" }
-  | { status: "loading" }
-  | {
-      status: "readonly";
-      shareableFile: { id: string; resourceKey: string | undefined };
-    }
-  | {
-      status: "writable";
-      published: true;
-      publishedPermissions: gapi.client.drive.Permission[];
-      granularlyShared: boolean;
-      shareableFile: {
-        id: string;
-        resourceKey: string | undefined;
-        stale: boolean;
-        permissions: gapi.client.drive.Permission[];
-        shareSurface: string | undefined;
-      };
-      latestVersion: string;
-      userDomain: string;
-    }
-  | {
-      status: "writable";
-      published: false;
-      granularlyShared: boolean;
-      shareableFile:
-        | {
-            id: string;
-            resourceKey: string | undefined;
-            stale: boolean;
-            permissions: gapi.client.drive.Permission[];
-            shareSurface: string | undefined;
-          }
-        | undefined;
-      latestVersion: string;
-      userDomain: string;
-    }
-  | {
-      status: "updating";
-      published: boolean;
-      granularlyShared: boolean;
-      shareableFile:
-        | { id: string; resourceKey: string | undefined; stale: boolean }
-        | undefined;
-      userDomain: string;
-    }
-  | {
-      status: "granular";
-      shareableFile: { id: string };
-    }
-  | {
-      status: "unmanaged-assets";
-      problems: UnmanagedAssetProblem[];
-      oldState: State;
-      closed: { promise: Promise<void>; resolve: () => void };
-    };
-
-type UnmanagedAssetProblem = {
-  asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
-} & (
-  | { problem: "cant-share" }
-  | { problem: "missing"; missing: gapi.client.drive.Permission[] }
-);
 
 @customElement("bb-share-panel")
 export class SharePanel extends SignalWatcher(LitElement) {
@@ -420,8 +357,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor graph: GraphDescriptor | undefined;
 
-  @state()
-  accessor #state: State = { status: "closed" };
+  get #state(): ShareState {
+    return this.sca.controller.editor.share.state;
+  }
+  set #state(value: ShareState) {
+    this.sca.controller.editor.share.state = value;
+  }
 
   #dialog = createRef<HTMLDialogElement>();
   #publishedSwitch = createRef<MdSwitch>();
