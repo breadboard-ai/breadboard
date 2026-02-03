@@ -36,6 +36,7 @@ function createFlags(overrides: Record<string, unknown> = {}) {
   return {
     uiType: "chat" as const,
     useMemory: false,
+    useNotebookLM: false,
     objective: { parts: [{ text: "test" }], role: "user" as const },
     params: {},
     onSuccess: mock.fn(async () => undefined) as never,

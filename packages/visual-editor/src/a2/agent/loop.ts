@@ -45,6 +45,7 @@ type LoopDeps = {
 type FunctionGroupConfiguratorFlags = {
   uiType: UIType;
   useMemory: boolean;
+  useNotebookLM: boolean;
   objective: LLMContent;
   uiPrompt?: LLMContent;
   params: Params;
@@ -157,6 +158,7 @@ class Loop {
         {
           uiType,
           useMemory: objectivePidgin.useMemory,
+          useNotebookLM: objectivePidgin.useNotebookLM,
           objective,
           uiPrompt,
           params,

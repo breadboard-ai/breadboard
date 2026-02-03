@@ -60,6 +60,16 @@ export const icons = css`
         "opsz" 48,
         "ROND" 100;
     }
+
+    /* NotebookLM uses a custom SVG icon, not a Material Symbol ligature */
+    &.notebooklm {
+      font-size: 0;
+      background: var(
+          --bb-icon-notebooklm,
+          url(/third_party/icons/notebooklm.svg)
+        )
+        center / contain no-repeat;
+    }
   }
 
   .svg-icon {

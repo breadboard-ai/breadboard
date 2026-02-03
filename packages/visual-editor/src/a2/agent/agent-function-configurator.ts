@@ -12,6 +12,7 @@ import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
 import { getGenerateFunctionGroup } from "./functions/generate.js";
 import { getSystemFunctionGroup } from "./functions/system.js";
 import { getMemoryFunctionGroup } from "./functions/memory.js";
+import { getNotebookLMFunctionGroup } from "./functions/notebooklm.js";
 import { CHAT_LOG_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
@@ -62,6 +63,15 @@ function createAgentConfigurator(
       );
     }
 
+    if (flags.useNotebookLM) {
+      groups.push(
+        getNotebookLMFunctionGroup({
+          notebookLmApiClient: moduleArgs.notebookLmApiClient,
+          taskTreeManager,
+        })
+      );
+    }
+    
     if (flags.uiType === "a2ui") {
       const a2uiFunctionGroup = await getA2UIFunctionGroup({
         caps,
