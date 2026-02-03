@@ -7,9 +7,11 @@
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import {
   diffAssetReadPermissions,
+  extractGoogleDriveFileId,
   permissionMatchesAnyOf,
 } from "@breadboard-ai/utils/google-drive/utils.js";
 import {
+  DRIVE_PROPERTY_IS_SHAREABLE_COPY,
   DRIVE_PROPERTY_LATEST_SHARED_VERSION,
   DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
   DRIVE_PROPERTY_OPAL_SHARE_SURFACE,
@@ -187,4 +189,107 @@ function getGraphFileId(graphUrl: string): string | undefined {
     console.error(`Graph file ID was empty`);
   }
   return graphFileId;
+}
+
+export interface MakeShareableCopyResult {
+  shareableCopyFileId: string;
+  shareableCopyResourceKey: string | undefined;
+  newMainVersion: string;
+}
+
+export async function makeShareableCopy(
+  graph: GraphDescriptor | undefined,
+  shareSurface: string | undefined
+): Promise<MakeShareableCopyResult> {
+  const { services } = bind;
+  const googleDriveClient = services.googleDriveClient;
+  const boardServer = services.googleDriveBoardServer;
+
+  if (!googleDriveClient) {
+    throw new Error(`No google drive client provided`);
+  }
+  if (!boardServer) {
+    throw new Error(`No board server provided`);
+  }
+  if (!(boardServer instanceof GoogleDriveBoardServer)) {
+    throw new Error(`Provided board server was not Google Drive`);
+  }
+  if (!graph) {
+    throw new Error(`Graph was not provided`);
+  }
+  if (!graph.url) {
+    throw new Error(`Graph had no URL`);
+  }
+  const mainFileId = extractGoogleDriveFileId(graph.url);
+  if (!mainFileId) {
+    throw new Error(
+      `Graph URL did not contain a Google Drive file id: ${graph.url}`
+    );
+  }
+
+  const shareableFileName = `${mainFileId}-shared.bgl.json`;
+  const shareableGraph = structuredClone(graph);
+  delete shareableGraph["url"];
+
+  const createResult = await boardServer.create(
+    // Oddly, the title of the file is extracted from a URL that is passed in,
+    // even though URLs of this form are otherwise totally invalid.
+    //
+    // TODO(aomarks) This doesn't seem to actually work. The title is in fact
+    // taken from the descriptor. So what is the purpose of passing a URL
+    // here?
+    new URL(`drive:/${shareableFileName}`),
+    shareableGraph
+  );
+  const shareableCopyFileId = extractGoogleDriveFileId(
+    createResult.url ?? ""
+  );
+  if (!shareableCopyFileId) {
+    console.error(`Unexpected create result`, createResult);
+    throw new Error(`Error creating shareable file`);
+  }
+
+  // Update the latest version property on the main file.
+  const updateMainResult = await googleDriveClient.updateFileMetadata(
+    mainFileId,
+    {
+      properties: {
+        [DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY]: shareableCopyFileId,
+      },
+    },
+    { fields: ["version"] }
+  );
+
+  // Ensure the creation of the copy has fully completed.
+  //
+  // TODO(aomarks) Move more sharing logic into board server so that this
+  // create/update coordination doesn't need to be a concern of this
+  // component.
+  await boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
+
+  const shareableCopyMetadata =
+    await googleDriveClient.updateFileMetadata(
+      shareableCopyFileId,
+      {
+        properties: {
+          [DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN]: mainFileId,
+          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: updateMainResult.version,
+          [DRIVE_PROPERTY_IS_SHAREABLE_COPY]: "true",
+          ...(shareSurface
+            ? { [DRIVE_PROPERTY_OPAL_SHARE_SURFACE]: shareSurface }
+            : {}),
+        },
+      },
+      { fields: ["resourceKey"] }
+    );
+
+  console.debug(
+    `[Sharing] Made a new shareable graph copy "${shareableCopyFileId}"` +
+    ` at version "${updateMainResult.version}".`
+  );
+  return {
+    shareableCopyFileId,
+    shareableCopyResourceKey: shareableCopyMetadata.resourceKey,
+    newMainVersion: updateMainResult.version,
+  };
 }

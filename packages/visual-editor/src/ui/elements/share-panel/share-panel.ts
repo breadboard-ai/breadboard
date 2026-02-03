@@ -11,15 +11,10 @@ import type {
   GoogleDriveClient,
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
-  DRIVE_PROPERTY_IS_SHAREABLE_COPY,
   DRIVE_PROPERTY_LATEST_SHARED_VERSION,
-  DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
-  DRIVE_PROPERTY_OPAL_SHARE_SURFACE,
-  DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import {
   diffAssetReadPermissions,
-  extractGoogleDriveFileId,
   findGoogleDriveAssetsInGraph,
   type GoogleDriveAsset,
 } from "@breadboard-ai/utils/google-drive/utils.js";
@@ -850,7 +845,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     // that's the file we need to open the granular permissions dialog with.
     const shareableCopyFileId =
       oldState.shareableFile?.id ??
-      (await this.#makeShareableCopy()).shareableCopyFileId;
+      (await this.sca.actions.share.makeShareableCopy(this.graph, this.guestConfiguration?.shareSurface)).shareableCopyFileId;
 
     this.#state = {
       status: "granular",
@@ -976,7 +971,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
     let newLatestVersion: string | undefined;
     if (!shareableFile) {
-      const copyResult = await this.#makeShareableCopy();
+      const copyResult = await this.sca.actions.share.makeShareableCopy(this.graph, this.guestConfiguration?.shareSurface);
       shareableFile = {
         id: copyResult.shareableCopyFileId,
         resourceKey: copyResult.shareableCopyResourceKey,
@@ -1227,101 +1222,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
       shareableFile,
       latestVersion: oldState.latestVersion,
       userDomain: oldState.userDomain,
-    };
-  }
-
-  async #makeShareableCopy(): Promise<{
-    shareableCopyFileId: string;
-    shareableCopyResourceKey: string | undefined;
-    newMainVersion: string;
-  }> {
-    if (!this.googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    if (!this.boardServer) {
-      throw new Error(`No board server provided`);
-    }
-    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
-      throw new Error(`Provided board server was not Google Drive`);
-    }
-    if (!this.graph) {
-      throw new Error(`Graph was not provided`);
-    }
-    if (!this.graph.url) {
-      throw new Error(`Graph had no URL`);
-    }
-    const mainFileId = extractGoogleDriveFileId(this.graph.url);
-    if (!mainFileId) {
-      throw new Error(
-        `Graph URL did not contain a Google Drive file id: ${this.graph.url}`
-      );
-    }
-
-    const shareableFileName = `${mainFileId}-shared.bgl.json`;
-    const shareableGraph = structuredClone(this.graph);
-    delete shareableGraph["url"];
-
-    const createResult = await this.boardServer.create(
-      // Oddly, the title of the file is extracted from a URL that is passed in,
-      // even though URLs of this form are otherwise totally invalid.
-      //
-      // TODO(aomarks) This doesn't seem to actually work. The title is in fact
-      // taken from the descriptor. So what is the purpose of passing a URL
-      // here?
-      new URL(`drive:/${shareableFileName}`),
-      shareableGraph
-    );
-    const shareableCopyFileId = extractGoogleDriveFileId(
-      createResult.url ?? ""
-    );
-    if (!shareableCopyFileId) {
-      console.error(`Unexpected create result`, createResult);
-      throw new Error(`Error creating shareable file`);
-    }
-
-    // Update the latest version property on the main file.
-    const updateMainResult = await this.googleDriveClient.updateFileMetadata(
-      mainFileId,
-      {
-        properties: {
-          [DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY]: shareableCopyFileId,
-        },
-      },
-      { fields: ["version"] }
-    );
-
-    // Ensure the creation of the copy has fully completed.
-    //
-    // TODO(aomarks) Move more sharing logic into board server so that this
-    // create/update coordination doesn't need to be a concern of this
-    // component.
-    await this.boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
-
-    const shareSurface = this.guestConfiguration?.shareSurface;
-    const shareableCopyMetadata =
-      await this.googleDriveClient.updateFileMetadata(
-        shareableCopyFileId,
-        {
-          properties: {
-            [DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN]: mainFileId,
-            [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: updateMainResult.version,
-            [DRIVE_PROPERTY_IS_SHAREABLE_COPY]: "true",
-            ...(shareSurface
-              ? { [DRIVE_PROPERTY_OPAL_SHARE_SURFACE]: shareSurface }
-              : {}),
-          },
-        },
-        { fields: ["resourceKey"] }
-      );
-
-    console.debug(
-      `[Sharing] Made a new shareable graph copy "${shareableCopyFileId}"` +
-      ` at version "${updateMainResult.version}".`
-    );
-    return {
-      shareableCopyFileId,
-      shareableCopyResourceKey: shareableCopyMetadata.resourceKey,
-      newMainVersion: updateMainResult.version,
     };
   }
 
