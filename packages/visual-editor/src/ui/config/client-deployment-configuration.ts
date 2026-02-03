@@ -15,7 +15,6 @@ import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deploym
  * Also add it in packages/types/src/flags.ts
  */
 const DEFAULT_FLAG_VALUES: RuntimeFlags = {
-  generateForEach: false,
   mcp: false,
   force2DGraph: false,
   gulfRenderer: false,

@@ -4,14 +4,10 @@
 
 import { ok } from "../a2/utils.js";
 import { readFlags } from "../a2/settings.js";
-import { forEach } from "../a2/for-each.js";
 import {
-  BehaviorSchema,
   Capabilities,
   InputValues,
   LLMContent,
-  Outcome,
-  OutputValues,
   RuntimeFlags,
   Schema,
 } from "@breadboard-ai/types";
@@ -31,7 +27,6 @@ export { invoke as default, describe };
 type Inputs = {
   context?: LLMContent[];
   "generation-mode"?: string;
-  "p-for-each"?: boolean;
   [PROMPT_PORT]: LLMContent;
 } & Record<string, unknown>;
 
@@ -385,7 +380,7 @@ function resolveModes(
 }
 
 async function invoke(
-  { "generation-mode": mode, "p-for-each": useForEach, ...rest }: Inputs,
+  { "generation-mode": mode, ...rest }: Inputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
@@ -413,24 +408,13 @@ async function invoke(
     }
   } else {
     const { url: $board, type, modelName } = current;
-    const generateForEach = (flags?.generateForEach && !!useForEach) ?? false;
     // Model is treated as part of the Mode, but actually maps N:1
     // on actual underlying step type.
     if (modelName) {
       console.log(`Generating with ${modelName}`);
       rest["p-model-name"] = modelName;
     }
-    if (generateForEach) {
-      return forEach(caps, moduleArgs, rest, async (prompt) => {
-        const ports = { ...rest };
-        ports[PROMPT_PORT] = prompt;
-        return caps.invoke({ $board, ...forwardPorts(type, ports) }) as Promise<
-          Outcome<OutputValues>
-        >;
-      });
-    } else {
-      return caps.invoke({ $board, ...forwardPorts(type, rest) });
-    }
+    return caps.invoke({ $board, ...forwardPorts(type, rest) });
   }
 }
 
@@ -460,29 +444,11 @@ async function describe(
   }
 
   const flags = await readFlags(moduleArgs);
-  let generateForEachSchema: Schema["properties"] = {};
-  const generateForEachBehavior: BehaviorSchema[] = [];
-  if (flags?.generateForEach && !flags.agentMode) {
-    generateForEachSchema = {
-      "p-for-each": {
-        type: "boolean",
-        title: "Generate for each input",
-        behavior: ["config", "hint-preview", "hint-advanced"],
-        icon: "summarize",
-        description:
-          "When checked, this step will try to detect a list of items as its input and run for each item in the list",
-      },
-    };
-    if (rest["p-for-each"]) {
-      generateForEachBehavior.push("hint-for-each-mode");
-    }
-  }
 
   const { current, modes } = resolveModes(mode, flags);
   const { url, type } = current;
   let modeSchema: Schema["properties"] = {};
-  let behavior: BehaviorSchema[] = [];
-  behavior = [...generateForEachBehavior];
+  let behavior: Schema["behavior"] = [];
   const describing = await caps.describe({
     url,
     inputs: rest as InputValues,
@@ -492,7 +458,7 @@ async function describe(
       type,
       describing.inputSchema.properties || modeSchema
     );
-    behavior.push(...(describing.inputSchema.behavior || []));
+    behavior = describing.inputSchema.behavior || [];
   }
   if (flags?.agentMode && current.id === "agent") {
     const agentSchema = computeAgentSchema(flags, rest);
@@ -523,7 +489,6 @@ async function describe(
           title: "Context in",
           behavior: ["main-port"],
         },
-        ...generateForEachSchema,
         ...modeSchema,
       },
       behavior,

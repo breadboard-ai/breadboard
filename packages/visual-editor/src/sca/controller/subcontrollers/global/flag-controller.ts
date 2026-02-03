@@ -31,9 +31,6 @@ export class FlagController
   private accessor _force2DGraph: boolean | null = null;
 
   @field({ persist: "idb" })
-  private accessor _generateForEach: boolean | null = null;
-
-  @field({ persist: "idb" })
   private accessor _googleOne: boolean | null = null;
 
   @field({ persist: "idb" })
@@ -96,12 +93,6 @@ export class FlagController
     if (this._force2DGraph === null)
       throw new Error("force2DGraph was not set by environment");
     return this._force2DGraph;
-  }
-
-  get generateForEach() {
-    if (this._generateForEach === null)
-      throw new Error("generateForEach was not set by environment");
-    return this._generateForEach;
   }
 
   get googleOne() {
@@ -210,12 +201,6 @@ export class FlagController
         return;
       }
 
-      case "generateForEach": {
-        if (onlyIfNull && this._generateForEach !== null) return;
-        this._generateForEach = value;
-        return;
-      }
-
       case "googleOne": {
         if (onlyIfNull && this._googleOne !== null) return;
         this._googleOne = value;
@@ -310,7 +295,6 @@ export class FlagController
         onlyIfNull
       );
       this.#set("force2DGraph", env.force2DGraph, onlyIfNull);
-      this.#set("generateForEach", env.generateForEach, onlyIfNull);
       this.#set("googleOne", env.googleOne, onlyIfNull);
       this.#set("gulfRenderer", env.gulfRenderer, onlyIfNull);
       this.#set("mcp", env.mcp, onlyIfNull);

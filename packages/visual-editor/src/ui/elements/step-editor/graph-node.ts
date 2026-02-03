@@ -88,9 +88,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   @property()
   accessor hasMainPort = false;
 
-  @property({ reflect: true, type: Boolean })
-  accessor hasForEachAdornment = false;
-
   @property({ reflect: true, type: String })
   accessor highlightType: "user" | "model" = "model";
 
@@ -266,42 +263,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           position: absolute;
           top: 100%;
           pointer-events: none;
-        }
-
-        & #fe-1 {
-          position: absolute;
-          top: calc(var(--bb-grid-size-6) + 2px);
-          left: calc(-1 * var(--bb-grid-size-3) + 1px);
-          z-index: 0;
-          height: calc(100% - var(--bb-grid-size-6) - var(--bb-grid-size-6));
-        }
-
-        & #fe-2 {
-          position: absolute;
-          top: calc(var(--bb-grid-size-12) + 2px);
-          left: calc(-1 * var(--bb-grid-size-6) + 2px);
-          z-index: 0;
-          height: calc(100% - var(--bb-grid-size-12) - var(--bb-grid-size-12));
-        }
-
-        & .for-each-adornment {
-          pointer-events: none;
-          width: 7px;
-          border-radius: calc(var(--bb-grid-size-3) + 1px) 0 0
-            calc(var(--bb-grid-size-3) + 1px);
-          outline: 2px solid transparent;
-          color: var(--light-dark-n-10);
-          position: absolute;
-          cursor: pointer;
-          background: var(--light-dark-n-90);
-
-          & header {
-            background: color-mix(in lab, var(--background), white 50%);
-            height: var(--bb-grid-size-12);
-            width: 100%;
-            padding: 0 var(--bb-grid-size-4);
-            border-radius: var(--bb-grid-size-3) var(--bb-grid-size-3) 0 0;
-          }
         }
 
         & #outline {
@@ -822,12 +783,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       transform: toCSSMatrix(this.worldTransform, this.force2D),
     };
 
-    let forEachAdornment: HTMLTemplateResult | symbol = nothing;
-    if (this.hasForEachAdornment) {
-      forEachAdornment = html`<div id="fe-1" class="for-each-adornment"></div>
-        <div id="fe-2" class="for-each-adornment"></div>`;
-    }
-
     const renderableIcon = this.icon;
 
     return html` <section
@@ -839,7 +794,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           this.dispatchEvent(new AutoFocusEditorRequest());
         }}
       >
-        ${forEachAdornment}
         <div id="outline"></div>
         <header
           class="sans-flex w-500 round"

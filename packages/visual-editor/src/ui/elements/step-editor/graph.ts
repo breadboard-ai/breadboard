@@ -142,7 +142,7 @@ export class Graph extends Box {
 
       const lastUpdateTime = this.#lastUpdateTimes.get("nodes") ?? 0;
 
-      node.describe().then((nodeDescription) => {
+      node.describe().then((_) => {
         // Ensure the most recent values before proceeding.
         if (lastUpdateTime !== this.#lastUpdateTimes.get("nodes")) {
           return;
@@ -151,10 +151,6 @@ export class Graph extends Box {
         const ports = node.currentPorts();
         const metadata = node.type().currentMetadata();
 
-        graphNode.hasForEachAdornment =
-          nodeDescription.inputSchema.behavior?.includes(
-            "hint-for-each-mode"
-          ) ?? false;
         graphNode.updating = ports.updating ?? false;
         graphNode.ports = ports;
         graphNode.icon = getStepIcon(metadata.icon, ports) || null;
