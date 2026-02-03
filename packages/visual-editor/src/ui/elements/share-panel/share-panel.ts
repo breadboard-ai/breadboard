@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type BoardServer, type GraphDescriptor } from "@breadboard-ai/types";
+import { type GraphDescriptor } from "@breadboard-ai/types";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type {
   DriveFileId,
@@ -21,7 +21,7 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { boardServerContext } from "../../contexts/board-server.js";
+
 import {
   globalConfigContext,
   type GlobalConfig,
@@ -327,9 +327,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor sca!: SCA;
 
-
-  @consume({ context: boardServerContext, subscribe: true })
-  accessor boardServer: BoardServer | undefined;
 
   @consume({ context: guestConfigurationContext })
   accessor guestConfiguration: GuestConfiguration | undefined;
