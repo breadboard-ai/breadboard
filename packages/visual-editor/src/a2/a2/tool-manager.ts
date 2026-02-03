@@ -28,6 +28,7 @@ import { err } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { McpToolAdapter } from "./mcp-tool-adapter.js";
 import { ToolParamPart } from "./template.js";
+import { A2_TOOLS } from "../a2-registry.js";
 
 export { ROUTE_TOOL_PATH, MEMORY_TOOL_PATH, ToolManager };
 
@@ -35,6 +36,11 @@ const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
 const ROUTE_TOOL_PATH = "control-flow/routing";
 const MEMORY_TOOL_PATH = "function-group/use-memory";
+
+/**
+ * Lookup map for A2 tools by URL for O(1) access.
+ */
+const A2_TOOL_MAP = new Map(A2_TOOLS);
 
 export type ToolHandle = {
   title?: string;
@@ -226,9 +232,13 @@ class ToolManager implements SimplifiedToolManager {
       }
     }
 
-    let description = (await this.caps.describe({
-      url,
-    })) as Outcome<DescriberResult>;
+    // Get description from static registry
+    const registryTool = A2_TOOL_MAP.get(url!);
+    if (!registryTool) {
+      return err(`Unknown tool: "${url}"`);
+    }
+    let description =
+      (await registryTool.describe()) as Outcome<DescriberResult>;
     let passContext = false;
     if (!ok(description)) return description;
 
@@ -290,9 +300,15 @@ class ToolManager implements SimplifiedToolManager {
     let hasInvalidTools = false;
     for (const tool of tools) {
       const url = typeof tool === "string" ? tool : tool.url;
-      const description = (await this.caps.describe({
-        url,
-      })) as Outcome<DescriberResult>;
+      // Get description from static registry
+      const registryTool = A2_TOOL_MAP.get(url);
+      if (!registryTool) {
+        this.errors.push(`Unknown tool: "${url}"`);
+        hasInvalidTools = true;
+        continue;
+      }
+      const description =
+        (await registryTool.describe()) as Outcome<DescriberResult>;
       if (!ok(description)) {
         this.errors.push(description.$error);
         // Invalid tool, skip
@@ -338,10 +354,16 @@ class ToolManager implements SimplifiedToolManager {
         args as Record<string, unknown>
       );
     } else {
-      callingTool = await this.caps.invoke({
-        $board: url,
-        ...normalizeArgs(args, [], passContext),
-      });
+      // Get invoke from static registry
+      const registryTool = A2_TOOL_MAP.get(url);
+      if (!registryTool) {
+        return err(`Unknown tool: "${url}"`);
+      }
+      callingTool = await registryTool.invoke(
+        normalizeArgs(args, [], passContext),
+        this.caps,
+        this.moduleArgs
+      );
     }
     if (!ok(callingTool)) return callingTool;
 
@@ -408,11 +430,19 @@ class ToolManager implements SimplifiedToolManager {
             name,
             args as Record<string, unknown>
           );
-        } else
-          callingTool = await this.caps.invoke({
-            $board: url,
-            ...normalizeArgs(args, context, passContext),
-          });
+        } else {
+          // Get invoke from static registry
+          const registryTool = A2_TOOL_MAP.get(url);
+          if (!registryTool) {
+            errors.push(`Unknown tool: "${url}"`);
+            continue;
+          }
+          callingTool = await registryTool.invoke(
+            normalizeArgs(args, context, passContext),
+            this.caps,
+            this.moduleArgs
+          );
+        }
         if ("$error" in callingTool) {
           errors.push(JSON.stringify(callingTool.$error));
         } else if (name === undefined) {

@@ -4,7 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Tool } from "../ui/state/types.js";
+import type { StaticTool } from "../ui/state/types.js";
+import getWeatherInvoke, {
+  describe as getWeatherDescribe,
+} from "./tools/get-weather.js";
+import searchWebInvoke, {
+  describe as searchWebDescribe,
+} from "./tools/search-web.js";
+import getWebpageInvoke, {
+  describe as getWebpageDescribe,
+} from "./tools/get-webpage.js";
+import searchMapsInvoke, {
+  describe as searchMapsDescribe,
+} from "./tools/search-maps.js";
+import searchInternalInvoke, {
+  describe as searchInternalDescribe,
+} from "./tools/search-internal.js";
+import searchEnterpriseInvoke, {
+  describe as searchEnterpriseDescribe,
+} from "./tools/search-enterprise.js";
+import codeExecutionInvoke, {
+  describe as codeExecutionDescribe,
+} from "./tools/code-execution.js";
 
 export { A2_COMPONENTS, A2_TOOLS };
 
@@ -16,7 +37,7 @@ const BASE_URL = "embed://a2/tools.bgl.json";
  * Environment-specific tools include tags that are filtered at runtime
  * by fast-access-menu based on globalConfig.environmentName.
  */
-const A2_TOOLS: [string, Tool][] = [
+const A2_TOOLS: [string, StaticTool][] = [
   [
     `${BASE_URL}#module:get-weather`,
     {
@@ -24,6 +45,8 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Get Weather",
       description: "Get weather information for a location",
       icon: "sunny",
+      invoke: getWeatherInvoke,
+      describe: getWeatherDescribe,
     },
   ],
   [
@@ -33,6 +56,8 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Search Web",
       description: "Search the web for information",
       icon: "search",
+      invoke: searchWebInvoke,
+      describe: searchWebDescribe,
     },
   ],
   [
@@ -42,6 +67,8 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Get Webpage",
       description: "Retrieve content from a webpage",
       icon: "language",
+      invoke: getWebpageInvoke,
+      describe: getWebpageDescribe,
     },
   ],
   [
@@ -51,6 +78,8 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Search Maps",
       description: "Search Google Maps for places",
       icon: "map_search",
+      invoke: searchMapsInvoke,
+      describe: searchMapsDescribe,
     },
   ],
   [
@@ -61,6 +90,8 @@ const A2_TOOLS: [string, Tool][] = [
       description: "Search internal knowledge base",
       icon: "search",
       tags: ["environment-corp"],
+      invoke: searchInternalInvoke,
+      describe: searchInternalDescribe,
     },
   ],
   [
@@ -71,6 +102,8 @@ const A2_TOOLS: [string, Tool][] = [
       description: "Search enterprise knowledge base",
       icon: "search",
       tags: ["environment-agentspace"],
+      invoke: searchEnterpriseInvoke,
+      describe: searchEnterpriseDescribe,
     },
   ],
   [
@@ -80,6 +113,8 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Code Execution",
       description: "Execute code snippets",
       icon: "code",
+      invoke: codeExecutionInvoke,
+      describe: codeExecutionDescribe,
     },
   ],
 ];
