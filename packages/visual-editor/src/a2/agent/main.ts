@@ -18,6 +18,7 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Loop } from "./loop.js";
 import type { ModelConstraint } from "./functions/generate.js";
 import { readFlags } from "../a2/settings.js";
+import { executeOpalAdkStream } from "../a2/opal-adk-stream.js";
 
 export { invoke as default, computeAgentSchema, describe };
 
@@ -40,22 +41,22 @@ function computeAgentSchema(
   const uiPromptSchema: Schema["properties"] =
     flags?.consistentUI && enableA2UI
       ? {
-          "b-ui-prompt": {
-            type: "object",
-            behavior: ["llm-content", "config", "hint-advanced"],
-            title: "UI Layout instructions",
-            description: "Instructions for UI layout",
-          },
-        }
+        "b-ui-prompt": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "UI Layout instructions",
+          description: "Instructions for UI layout",
+        },
+      }
       : {};
   const uiConsistent: Schema["properties"] = flags?.consistentUI
     ? {
-        "b-ui-consistent": {
-          type: "boolean",
-          title: "Use A2UI",
-          behavior: ["config", "hint-advanced", "reactive"],
-        },
-      }
+      "b-ui-consistent": {
+        type: "boolean",
+        title: "Use A2UI",
+        behavior: ["config", "hint-advanced", "reactive"],
+      },
+    }
     : {};
   return {
     config$prompt: {
@@ -69,7 +70,59 @@ function computeAgentSchema(
   } satisfies Schema["properties"];
 }
 
-async function invoke(
+async function toAgentOutputs(results?: LLMContent, href?: string): Promise<AgentOutputs> {
+  const context: LLMContent[] = [];
+  if (results) {
+    context.push(results);
+  }
+  if (!href || href === "/") {
+    href = "context";
+  }
+  return {
+    [href]: context,
+  };
+}
+
+async function invokeOpalAdk(
+  {
+    config$prompt: objective,
+    "b-ui-consistent": enableA2UI = false,
+    "b-ui-prompt": uiPrompt,
+    "b-si-constraint": modelConstraint,
+    ...rest
+  }: AgentInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
+  invocation_id?: string,
+
+): Promise<Outcome<AgentOutputs>> {
+  const params = Object.fromEntries(
+    Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
+  );
+
+  const uiType = enableA2UI ? "a2ui" : "chat";
+  const template = new Template(caps, objective);
+  const substituting = await template.substitute(params);
+  if (!ok(substituting)) {
+    return substituting;
+  }
+  const results = await executeOpalAdkStream(
+    caps,
+    moduleArgs,
+    "",
+    [substituting],
+    objective,
+    modelConstraint,
+    uiType,
+    uiPrompt,
+    invocation_id,
+  );
+  if (!ok(results)) return results;
+  console.log("Node Agent Result: ", results);
+  return toAgentOutputs(results);
+}
+
+async function invokeLegacy(
   {
     config$prompt: objective,
     "b-ui-consistent": enableA2UI = false,
@@ -95,15 +148,22 @@ async function invoke(
   });
   if (!ok(result)) return result;
   console.log("LOOP", result);
-  const context: LLMContent[] = [];
-  if (result.outcomes) {
-    context.push(result.outcomes);
+  return toAgentOutputs(result.outcomes, result.href);
+}
+
+async function invoke(
+  inputs: AgentInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<AgentOutputs>> {
+  const flags = await moduleArgs.context.flags?.flags();
+  let opalAdkEnabled = flags?.opalAdk || false;
+
+  if (opalAdkEnabled) {
+    return invokeOpalAdk(inputs, caps, moduleArgs);
+  } else {
+    return invokeLegacy(inputs, caps, moduleArgs);
   }
-  let route = result.href;
-  if (!route || route === "/") {
-    route = "context";
-  }
-  return { [route]: context };
 }
 
 async function describe(

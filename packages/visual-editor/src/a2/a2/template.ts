@@ -189,7 +189,7 @@ class Template {
   async #replaceParam(
     param: ParamPart,
     params: Params,
-    whenTool: ToolCallback
+    whenTool?: ToolCallback
   ): Promise<Outcome<unknown>> {
     if (isIn(param)) {
       const { title: name, path } = param;
@@ -203,7 +203,7 @@ class Template {
         return new ConnectorManager(this.caps, param).materialize();
       }
       return this.loadAsset(param);
-    } else if (isTool(param)) {
+    } else if (isTool(param) && whenTool) {
       const substituted = await whenTool(param);
       if (!ok(substituted)) return substituted;
       return substituted || param.title;
@@ -284,7 +284,7 @@ class Template {
 
   async substitute(
     params: Params,
-    whenTool: ToolCallback
+    whenTool?: ToolCallback
   ): Promise<Outcome<LLMContent>> {
     const replaced: DataPart[] = [];
     for (const part of this.#parts) {

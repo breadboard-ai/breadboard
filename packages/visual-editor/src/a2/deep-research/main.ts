@@ -162,7 +162,7 @@ async function invokeOpalAdk(
     return substituting;
   }
 
-  const results = await executeOpalAdkStream(caps, moduleArgs, [substituting], "deep_research");
+  const results = await executeOpalAdkStream(caps, moduleArgs, "deep_research", [substituting]);
   console.log("deep-research results", results)
   return {
     context: [...(context || []), results]
