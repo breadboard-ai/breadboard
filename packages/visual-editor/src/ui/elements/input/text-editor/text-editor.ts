@@ -21,6 +21,7 @@ import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
+  NOTEBOOKLM_TOOL_PATH,
 } from "../../../../a2/a2/tool-manager.js";
 import { SCA } from "../../../../sca/sca.js";
 import { consume } from "@lit/context";
@@ -75,6 +76,9 @@ export function chicletHtml(
   } else if (path === MEMORY_TOOL_PATH) {
     sourceTitle = "Use Memory";
     metadataIcon = "database";
+  } else if (path === NOTEBOOKLM_TOOL_PATH) {
+    sourceTitle = "NotebookLM";
+    metadataIcon = "notebooklm";
   }
 
   label.setAttribute("contenteditable", "false");
@@ -82,6 +86,9 @@ export function chicletHtml(
   if (metadataIcon) {
     const icon = document.createElement("span");
     icon.classList.add("g-icon", "filled", "round");
+    if (metadataIcon === "notebooklm") {
+      icon.classList.add("notebooklm");
+    }
     icon.dataset.icon = metadataIcon;
 
     label.appendChild(icon);

@@ -19,6 +19,7 @@ import {
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
+  NOTEBOOKLM_TOOL_PATH,
 } from "../../../../a2/a2/tool-manager.js";
 import { SCA } from "../../../../sca/sca.js";
 
@@ -109,6 +110,9 @@ export function createChiclets(
     } else if (path === MEMORY_TOOL_PATH) {
       metadataIcon = "database";
       sourceTitle = "Use Memory";
+    } else if (path === NOTEBOOKLM_TOOL_PATH) {
+      metadataIcon = "notebooklm";
+      sourceTitle = "NotebookLM";
     }
 
     chiclets.push(
@@ -119,7 +123,9 @@ export function createChiclets(
       >
         ${metadataIcon
           ? html`<span
-              class="g-icon filled round"
+              class="g-icon filled round ${metadataIcon === "notebooklm"
+                ? "notebooklm"
+                : ""}"
               data-icon="${metadataIcon}"
             ></span>`
           : nothing}

@@ -647,10 +647,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 const globalIndex = idx;
                 // Special handling for routing and memory tool icons
                 let icon: string | undefined;
+                let isNotebookLm = false;
                 if (tool.url === "control-flow/routing") {
                   icon = "start";
                 } else if (tool.url === "function-group/use-memory") {
                   icon = "database";
+                } else if (tool.url === "function-group/notebooklm") {
+                  isNotebookLm = true;
                 } else {
                   icon = iconSubstitute(tool.icon) ?? undefined;
                 }
@@ -658,7 +661,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 return html`<li>
                   <button
                     class=${classMap({ active })}
-                    icon=${icon}
+                    icon=${icon ?? "notebooklm"}
                     @pointerover=${() => {
                       this.selectedIndex = globalIndex;
                     }}
@@ -666,7 +669,14 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       this.#emitCurrentItem();
                     }}
                   >
-                    <span class="g-icon round filled">${icon}</span
+                    <span
+                      class=${classMap({
+                        "g-icon": true,
+                        round: true,
+                        filled: true,
+                        notebooklm: isNotebookLm,
+                      })}
+                      >${icon}</span
                     ><span class="title"
                       >${tool.title}${tool.url === "control-flow/routing"
                         ? html`...`

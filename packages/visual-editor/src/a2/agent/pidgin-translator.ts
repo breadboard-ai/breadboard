@@ -19,6 +19,7 @@ import { err, ok } from "@breadboard-ai/utils";
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
+  NOTEBOOKLM_TOOL_PATH,
   SimplifiedToolManager,
   ToolManager,
 } from "../a2/tool-manager.js";
@@ -33,6 +34,7 @@ export type ToPidginResult = {
   text: string;
   tools: SimplifiedToolManager;
   useMemory: boolean;
+  useNotebookLM: boolean;
 };
 
 export type SubstitutePartsArgs = {
@@ -196,6 +198,7 @@ class PidginTranslator {
 
     const errors: string[] = [];
     let useMemory = false;
+    let useNotebookLM = false;
     const pidginContent = await template.asyncSimpleSubstitute(
       async (param) => {
         const { type } = param;
@@ -267,6 +270,9 @@ ${inner}
             } else if (param.path === MEMORY_TOOL_PATH) {
               useMemory = true;
               return "Use Memory Data Store";
+            } else if (param.path === NOTEBOOKLM_TOOL_PATH) {
+              useNotebookLM = true;
+              return "Use NotebookLM";
             } else {
               const substitute = substituteDefaultTool(param);
               if (substitute !== null) {
@@ -309,10 +315,11 @@ ${inner}
         }),
         tools: toolManager,
         useMemory,
+        useNotebookLM,
       };
     }
 
-    return { text, tools: toolManager, useMemory };
+    return { text, tools: toolManager, useMemory, useNotebookLM };
 
     function substituteParts({
       title,
@@ -337,6 +344,16 @@ ${text}</content>`);
             values.push(text);
           }
         } else {
+          // Special handling for NotebookLM references - don't add to file system,
+          // just reference them as text that the agent can understand
+          if (
+            "storedData" in part &&
+            part.storedData.handle.startsWith("nlm:/")
+          ) {
+            const notebookId = part.storedData.handle.replace("nlm:/", "");
+            values.push(`[NotebookLM reference: ${notebookId}]`);
+            continue;
+          }
           const name = fileSystem.add(part);
           if (!ok(name)) {
             console.warn(name.$error);

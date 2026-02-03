@@ -29,6 +29,7 @@ import { getSystemFunctionGroup } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
 import { getMemoryFunctionGroup } from "./functions/memory.js";
+import { getNotebookLMFunctionGroup } from "./functions/notebooklm.js";
 import { FunctionGroup, MemoryManager, UIType } from "./types.js";
 import { CHAT_LOG_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
@@ -221,6 +222,14 @@ class Loop {
             translator,
             fileSystem,
             memoryManager,
+            taskTreeManager,
+          })
+        );
+      }
+      if (objectivePidgin.useNotebookLM) {
+        functionGroups.push(
+          getNotebookLMFunctionGroup({
+            notebookLmApiClient: moduleArgs.notebookLmApiClient,
             taskTreeManager,
           })
         );

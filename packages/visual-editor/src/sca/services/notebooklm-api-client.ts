@@ -253,6 +253,30 @@ export interface BatchUpdateNotebookPermissionsResponse {
   responses: UpdateNotebookPermissionResponse[];
 }
 
+/** Response content type for GenerateAnswer. */
+export enum ResponseContentType {
+  UNSPECIFIED = "TEXT_CONTENT_TYPE_UNSPECIFIED",
+  MARKDOWN = "MARKDOWN",
+}
+
+/** Request for GenerateAnswer RPC. */
+export interface GenerateAnswerRequest {
+  /** Resource name of the ChatSession: notebooks/{notebook_id}/chatSessions/{chat_session_id} */
+  name: string;
+  /** The query to generate an answer for. */
+  query: string;
+  /** The content type of the response. */
+  responseContentType: ResponseContentType;
+  /** Provenance information for the API call. */
+  provenance: Provenance;
+}
+
+/** Response for GenerateAnswer RPC. */
+export interface GenerateAnswerResponse {
+  /** The markdown content of the response. */
+  markdownContent?: string;
+}
+
 // =============================================================================
 // API Client
 // =============================================================================
@@ -454,5 +478,36 @@ export class NotebookLmApiClient {
     }
 
     return (await response.json()) as BatchUpdateNotebookPermissionsResponse;
+  }
+
+  /**
+   * Generates an answer to a chat query using the notebook's content.
+   * @param request - The request containing the query and chat session info
+   */
+  async generateAnswer(
+    request: GenerateAnswerRequest
+  ): Promise<GenerateAnswerResponse> {
+    // name format: "notebooks/{notebook_id}/chatSessions/{chat_session_id}"
+    const url = new URL(`v1/${request.name}:generateAnswer`, this.#apiBaseUrl);
+
+    const body: Record<string, unknown> = {
+      query: request.query,
+      responseContentType: request.responseContentType,
+      provenance: request.provenance,
+    };
+
+    const response = await this.#fetchWithCreds(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate answer: ${response.statusText}`);
+    }
+
+    return (await response.json()) as GenerateAnswerResponse;
   }
 }

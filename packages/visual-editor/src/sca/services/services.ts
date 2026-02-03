@@ -116,12 +116,18 @@ export function services(
       fetchWithCreds,
     });
 
+    const notebookLmApiClient = new NotebookLmApiClient(
+      fetchWithCreds,
+      NOTEBOOKLM_API_PREFIX
+    );
+
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,
       shell: config.shellHost,
       getConsentController,
       agentContext,
+      notebookLmApiClient,
     });
     const kits = addRunModule(sandbox, []);
     const googleDriveBoardServer = createGoogleDriveBoardServer(
@@ -152,10 +158,6 @@ export function services(
     );
     const emailPrefsManager = new EmailPrefsManager(apiClient);
     const flowGenerator = new FlowGenerator(apiClient, flags);
-    const notebookLmApiClient = new NotebookLmApiClient(
-      fetchWithCreds,
-      NOTEBOOKLM_API_PREFIX
-    );
 
     instance = {
       actionTracker,
