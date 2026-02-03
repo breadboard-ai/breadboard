@@ -16,7 +16,13 @@ import { unescape } from "./unescape.js";
 
 import { Token, Tokens, marked } from "marked";
 
-export { SimpleSlideBuilder, SlideBuilder, SLIDES_MIME_TYPE, slidesToRequests };
+export {
+  SimpleSlideBuilder,
+  SlideBuilder,
+  SLIDES_MIME_TYPE,
+  slidesToRequests,
+  type SlidesRequest,
+};
 
 const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
 
@@ -264,15 +270,19 @@ class SlideBuilder {
 
 function slidesToRequests(
   slides: Slide[],
-  imageUrls: string[]
+  imageUrls: string[],
+  insertionIndex?: number
 ): SlidesRequest[] {
   const requests: SlidesRequest[] = [];
-  slides.forEach((slide) => {
+  slides.forEach((slide, index) => {
     const request: SlidesCreateSlideRequest = {
       objectId: slide.objectId,
       slideLayoutReference: { predefinedLayout: slide.layout },
       placeholderIdMappings: mapPlaceholders(slide.objectId, slide.layout),
     };
+    if (insertionIndex !== undefined) {
+      request.insertionIndex = insertionIndex + index;
+    }
     requests.push({ createSlide: request });
     if (slide.title) {
       requests.push({
@@ -343,11 +353,17 @@ class SimpleSlideBuilder {
   #id = generateId();
 
   readonly #startIndex: number;
-  readonly #objectToDelete: string | undefined;
+  readonly #objectsToDelete: string[];
+  readonly #insertionIndex: number | undefined;
 
-  constructor(last: number = 0, objectId?: string) {
+  constructor(
+    last: number = 0,
+    objectIds: string[] | string = [],
+    insertionIndex?: number
+  ) {
     this.#startIndex = last + 1;
-    this.#objectToDelete = objectId;
+    this.#objectsToDelete = Array.isArray(objectIds) ? objectIds : [objectIds];
+    this.#insertionIndex = insertionIndex;
   }
 
   addSlide(s: SimpleSlide) {
@@ -379,14 +395,18 @@ class SimpleSlideBuilder {
 
   build(imageUrls: string[]) {
     console.log("SLIDES", this.#slides);
-    const requests = slidesToRequests(this.#slides, imageUrls);
-    if (this.#objectToDelete) {
+    const requests = slidesToRequests(
+      this.#slides,
+      imageUrls,
+      this.#insertionIndex
+    );
+    this.#objectsToDelete.forEach((objectId) => {
       requests.unshift({
         deleteObject: {
-          objectId: this.#objectToDelete,
+          objectId,
         },
       });
-    }
+    });
     return requests;
   }
 }

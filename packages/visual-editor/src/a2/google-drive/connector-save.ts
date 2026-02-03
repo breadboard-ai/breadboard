@@ -20,7 +20,11 @@ import {
 } from "./api.js";
 import { contextToRequests, DOC_MIME_TYPE } from "./docs.js";
 import { inferSheetValues, SHEETS_MIME_TYPE } from "./sheets.js";
-import { SimpleSlideBuilder, SLIDES_MIME_TYPE } from "./slides.js";
+import {
+  SimpleSlideBuilder,
+  SLIDES_MIME_TYPE,
+  SlidesRequest,
+} from "./slides.js";
 import { inferSlideStructure } from "./slides-schema.js";
 import type { ConnectorConfiguration } from "./types.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -34,6 +38,8 @@ type Inputs = {
   title?: string;
   graphId?: string;
   context?: LLMContent[];
+  slidesEditMode?: string;
+  slidesWriteMode?: string;
 };
 
 type Outputs =
@@ -49,7 +55,16 @@ function contextFromId(id: string, mimeType: string): LLMContent[] {
 }
 
 async function invoke(
-  { method, id: connectorId, context, title, graphId, info }: Inputs,
+  {
+    method,
+    id: connectorId,
+    context,
+    title,
+    graphId,
+    info,
+    slidesEditMode,
+    slidesWriteMode,
+  }: Inputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
@@ -81,6 +96,7 @@ async function invoke(
         return { context: contextFromId(id, DOC_MIME_TYPE) };
       }
       case SLIDES_MIME_TYPE: {
+        const forceNew = slidesEditMode !== "Same slide deck";
         const [gettingCollector, result] = await Promise.all([
           getCollector(
             moduleArgs,
@@ -88,20 +104,58 @@ async function invoke(
             graphId,
             title ?? "Untitled Presentation",
             SLIDES_MIME_TYPE,
-            info?.configuration?.file?.id
+            info?.configuration?.file?.id,
+            forceNew
           ),
           inferSlideStructure(caps, moduleArgs, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
-        const { id, end, last } = gettingCollector;
-        const slideBuilder = new SimpleSlideBuilder(end, last);
+        const { id, last, slides } = gettingCollector;
+
+        let insertionIndex: number | undefined;
+        let objectsToDelete: string[] = [];
+
+        if (forceNew) {
+          // If it's a new deck, we want to remove the default slide (which is 'last').
+          if (last) objectsToDelete.push(last);
+        } else {
+          // Same slide deck
+          if (slidesWriteMode === "Overwrite") {
+            objectsToDelete = slides || [];
+            insertionIndex = 0;
+          } else if (slidesWriteMode === "Prepend") {
+            insertionIndex = 0;
+          }
+          // Default is Append (insertionIndex undefined)
+        }
+
+        const slideBuilder = new SimpleSlideBuilder(
+          gettingCollector.end,
+          objectsToDelete,
+          insertionIndex
+        );
         for (const slide of result.slides) {
           slideBuilder.addSlide(slide);
         }
         const requests = slideBuilder.build([]);
-        console.log("REQUESTS", requests);
-        const updating = await updatePresentation(moduleArgs, id, { requests });
+
+        // Move delete requests to the end to avoid deleting the only slide before creating new ones.
+        const deleteRequests: SlidesRequest[] = [];
+        const otherRequests: SlidesRequest[] = [];
+        for (const request of requests) {
+          if ("deleteObject" in request) {
+            deleteRequests.push(request);
+          } else {
+            otherRequests.push(request);
+          }
+        }
+        const orderedRequests = [...otherRequests, ...deleteRequests];
+
+        console.log("REQUESTS", orderedRequests);
+        const updating = await updatePresentation(moduleArgs, id, {
+          requests: orderedRequests,
+        });
         if (!ok(updating)) return updating;
         return { context: contextFromId(id, SLIDES_MIME_TYPE) };
       }
@@ -153,6 +207,7 @@ type CollectorData = {
   end?: number;
   last?: string;
   sheetName?: string;
+  slides?: string[];
 };
 
 /**
@@ -165,25 +220,34 @@ async function getCollector(
   graphId: string,
   title: string,
   mimeType: string,
-  fileId?: string
+  fileId?: string,
+  forceNew = false
 ): Promise<Outcome<CollectorData>> {
   let id;
   if (!fileId) {
     const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
-    const findFile = await moduleArgs.shell.getDriveCollectorFile(
-      mimeType,
-      connectorId,
-      graphId
-    );
-    if (!findFile.ok) return err(findFile.error);
-    id = findFile.id;
+    let foundId: string | null = null;
+    if (!forceNew) {
+      const findFile = await moduleArgs.shell.getDriveCollectorFile(
+        mimeType,
+        connectorId,
+        graphId
+      );
+      if (!findFile.ok) return err(findFile.error);
+      foundId = findFile.id;
+    }
+
+    id = foundId;
     if (!id) {
+      const appProperties = forceNew
+        ? undefined
+        : {
+            "google-drive-connector": fileKey,
+          };
       const createdFile = await create(moduleArgs, {
         name: title,
         mimeType,
-        appProperties: {
-          "google-drive-connector": fileKey,
-        },
+        appProperties,
       });
       if (!ok(createdFile)) return createdFile;
       if (mimeType === DOC_MIME_TYPE) {
@@ -197,10 +261,14 @@ async function getCollector(
           createdFile.id
         );
         if (!ok(gettingPresenation)) return gettingPresenation;
+        const slides =
+          gettingPresenation.slides?.map((s) => s.objectId!).filter(Boolean) ||
+          [];
         return {
           id: gettingPresenation.presentationId!,
           end: 1,
-          last: gettingPresenation.slides?.at(-1)?.objectId || undefined,
+          last: slides.at(-1),
+          slides,
         };
       } else if (mimeType === SHEETS_MIME_TYPE) {
         return { id: createdFile.id, end: 1 };
@@ -217,7 +285,9 @@ async function getCollector(
     const gettingPresentation = await getPresentation(moduleArgs, id);
     if (!ok(gettingPresentation)) return gettingPresentation;
     const end = gettingPresentation.slides?.length || 0;
-    return { id, end };
+    const slides =
+      gettingPresentation.slides?.map((s) => s.objectId!).filter(Boolean) || [];
+    return { id, end, slides };
   } else if (mimeType === SHEETS_MIME_TYPE) {
     return { id, end: 1 };
   }

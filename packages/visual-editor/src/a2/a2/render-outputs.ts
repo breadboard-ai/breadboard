@@ -3,6 +3,7 @@
  */
 
 import {
+  BehaviorSchema,
   Capabilities,
   JSONPart,
   LLMContent,
@@ -148,6 +149,8 @@ type InvokeInputs = {
   "b-system-instruction"?: LLMContent;
   "b-render-model-name": string;
   "b-google-doc-title"?: string;
+  "b-slides-edit-mode"?: string;
+  "b-slides-write-mode"?: string;
 };
 
 type InvokeOutputs = {
@@ -162,6 +165,7 @@ type DescribeInputs = {
   inputs: {
     text?: LLMContent;
     "p-render-mode": string;
+    "b-slides-edit-mode"?: string;
   };
 };
 
@@ -305,7 +309,9 @@ async function saveToGoogleDrive(
   caps: Capabilities,
   content: LLMContent,
   mimeType: string,
-  title: string | undefined
+  title: string | undefined,
+  slidesEditMode?: string,
+  slidesWriteMode?: string
 ): Promise<Outcome<SaveOutput>> {
   let graphId = "";
   // Let's get the title from the graph
@@ -323,9 +329,12 @@ async function saveToGoogleDrive(
     url: "embed://a2/google-drive.bgl.json",
     configuration: { file: { mimeType } },
   });
-  return manager.save([content], { title, graphId }) as Promise<
-    Outcome<SaveOutput>
-  >;
+  return manager.save([content], {
+    title,
+    graphId,
+    slidesEditMode,
+    slidesWriteMode,
+  }) as Promise<Outcome<SaveOutput>>;
 }
 
 function paramsToContent(params: Params): LLMContent {
@@ -349,6 +358,8 @@ async function invoke(
     "b-system-instruction": systemInstruction,
     "b-render-model-name": modelType,
     "b-google-doc-title": googleDocTitle,
+    "b-slides-edit-mode": slidesEditMode,
+    "b-slides-write-mode": slidesWriteMode,
     ...params
   }: InvokeInputs,
   caps: Capabilities,
@@ -428,7 +439,9 @@ async function invoke(
         caps,
         out,
         "application/vnd.google-apps.presentation",
-        googleDocTitle
+        googleDocTitle,
+        slidesEditMode,
+        slidesWriteMode
       );
     }
     case "GoogleSheets": {
@@ -453,7 +466,10 @@ async function invoke(
   return { context: [out] };
 }
 
-function advancedSettings(renderType: RenderType): Record<string, Schema> {
+function advancedSettings(
+  renderType: RenderType,
+  slidesEditMode?: string
+): Record<string, Schema> {
   switch (renderType) {
     case "HTML":
       return {
@@ -483,15 +499,52 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
       };
     }
     case "GoogleSlides": {
-      return {
+      const sameDeck = slidesEditMode === "Same slide deck";
+      const result: Record<string, Schema> = {
         "b-google-doc-title": {
           type: "string",
-          behavior: ["config", "hint-advanced"],
+          behavior: ["config", "hint-advanced"] as BehaviorSchema[],
           title: "Google Presentation Title",
           description:
             "The title of a Google Drive Presentation that content will be saved to",
         },
+        "b-slides-edit-mode": {
+          type: "string",
+          enum: ["New slide deck", "Same slide deck"],
+          default: "New slide deck",
+          behavior: ["config", "hint-advanced", "reactive"] as BehaviorSchema[],
+          title: "Edit each time",
+          description: "Whether to create a new deck or edit an existing one",
+        },
       };
+
+      if (sameDeck) {
+        result["b-slides-write-mode"] = {
+          type: "string",
+          enum: [
+            {
+              id: "Prepend",
+              title: "Prepend",
+              description: "Add to the beginning",
+            },
+            {
+              id: "Append",
+              title: "Append",
+              description: "Add to the end",
+            },
+            {
+              id: "Overwrite",
+              title: "Overwrite",
+              description: "Replace everything",
+            },
+          ],
+          default: "Prepend",
+          behavior: ["config", "hint-advanced"] as BehaviorSchema[],
+          title: "Write mode",
+          description: "How to add content to the slide deck",
+        };
+      }
+      return result;
     }
     case "GoogleSheets": {
       return {
@@ -519,7 +572,9 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
 }
 
 async function describe(
-  { inputs: { text, "p-render-mode": renderMode } }: DescribeInputs,
+  {
+    inputs: { text, "p-render-mode": renderMode, "b-slides-edit-mode": slidesEditMode },
+  }: DescribeInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
@@ -551,7 +606,7 @@ async function describe(
           default: MANUAL_MODE,
           description: "Choose how to combine and display the outputs",
         },
-        ...advancedSettings(renderType),
+        ...advancedSettings(renderType, slidesEditMode),
         ...template.schemas(),
       },
       behavior: ["at-wireable"],
