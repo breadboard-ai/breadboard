@@ -338,7 +338,15 @@ export class SharePanel extends SignalWatcher(LitElement) {
   accessor graph: GraphDescriptor | undefined;
 
   get #state(): ShareState {
-    return this.sca.controller.editor.share.state;
+    return this.#controller.state;
+  }
+
+  get #actions() {
+    return this.sca.actions.share;
+  }
+
+  get #controller() {
+    return this.sca.controller.editor.share;
   }
 
   #dialog = createRef<HTMLDialogElement>();
@@ -348,10 +356,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
   override willUpdate(changes: PropertyValues<this>) {
     super.willUpdate(changes);
     if (changes.has("graph") && this.#state.status !== "closed") {
-      this.sca.actions.share.openPanel();
+      this.#actions.openPanel();
     }
     if (this.#state.status === "opening") {
-      this.sca.actions.share.readPublishedState(
+      this.#actions.readPublishedState(
         this.graph,
         this.#getRequiredPublishPermissions()
       );
@@ -378,11 +386,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   open(): void {
-    this.sca.actions.share.openPanel();
+    this.#actions.openPanel();
   }
 
   close(): void {
-    this.sca.actions.share.closePanel();
+    this.#actions.closePanel();
   }
 
   #renderModal() {
@@ -490,7 +498,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
   async #onClickPublishStale() {
-    await this.sca.actions.share.publishStale(this.graph);
+    await this.#actions.publishStale(this.graph);
   }
 
   #renderReadonlyModalContents() {
@@ -725,12 +733,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
     state.closed.resolve();
   }
   async #onClickFixUnmanagedAssetProblems() {
-    await this.sca.actions.share.fixUnmanagedAssetProblems();
+    await this.#actions.fixUnmanagedAssetProblems();
   }
 
   async #onClickViewSharePermissions(event: MouseEvent) {
     event.preventDefault();
-    await this.sca.actions.share.viewSharePermissions(this.graph, this.guestConfiguration?.shareSurface);
+    await this.#actions.viewSharePermissions(this.graph, this.guestConfiguration?.shareSurface);
   }
 
   #onPublishedSwitchChange() {
@@ -746,9 +754,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const selected = input.selected;
     if (selected) {
       this.actionTracker?.publishApp(this.graph.url);
-      this.sca.actions.share.publish(this.graph, this.#getRequiredPublishPermissions(), this.guestConfiguration?.shareSurface);
+      this.#actions.publish(this.graph, this.#getRequiredPublishPermissions(), this.guestConfiguration?.shareSurface);
     } else {
-      this.sca.actions.share.unpublish(this.graph);
+      this.#actions.unpublish(this.graph);
     }
   }
 
@@ -805,7 +813,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return undefined;
   }
   async #onGoogleDriveSharePanelClose() {
-    await this.sca.actions.share.onGoogleDriveSharePanelClose(this.graph);
+    await this.#actions.onGoogleDriveSharePanelClose(this.graph);
   }
 
   #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
