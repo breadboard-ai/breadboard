@@ -10,9 +10,6 @@ import type {
   DriveFileId,
   GoogleDriveClient,
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import {
-  DRIVE_PROPERTY_LATEST_SHARED_VERSION,
-} from "@breadboard-ai/utils/google-drive/operations.js";
 
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
@@ -21,7 +18,7 @@ import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { GoogleDriveBoardServer } from "../../../board-server/server.js";
+
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
@@ -503,65 +500,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   async #onClickPublishStale() {
-    const oldState = this.#state;
-    if (oldState.status !== "writable" || !oldState.shareableFile) {
-      return;
-    }
-    if (!this.googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    if (!this.boardServer) {
-      throw new Error(`No board server provided`);
-    }
-    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
-      throw new Error(`Provided board server was not Google Drive`);
-    }
-    if (!this.graph) {
-      throw new Error(`No graph`);
-    }
-
-    this.#state = {
-      status: "updating",
-      published: oldState.published,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile: oldState.shareableFile,
-      userDomain: oldState.userDomain,
-    };
-
-    const shareableFileUrl = new URL(`drive:/${oldState.shareableFile.id}`);
-    const updatedShareableGraph = structuredClone(this.graph);
-    delete updatedShareableGraph["url"];
-
-    await Promise.all([
-      // Update the contents of the shareable copy.
-      this.boardServer.ops.writeGraphToDrive(
-        shareableFileUrl,
-        updatedShareableGraph
-      ),
-      // Update the latest version property on the main file.
-      this.googleDriveClient.updateFileMetadata(oldState.shareableFile.id, {
-        properties: {
-          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: oldState.latestVersion,
-        },
-      }),
-      // Ensure all assets have the same permissions as the shareable file,
-      // since they might have been added since the last publish.
-      this.sca.actions.share.handleAssetPermissions(oldState.shareableFile.id, this.graph),
-    ]);
-
-    this.#state = {
-      ...oldState,
-      shareableFile: {
-        ...oldState.shareableFile,
-        stale: false,
-      },
-    };
-
-    console.debug(
-      `[Sharing] Updated stale shareable graph copy` +
-      ` "${oldState.shareableFile.id}" to version` +
-      ` "${oldState.latestVersion}".`
-    );
+    await this.sca.actions.share.publishStale(this.graph);
   }
 
   #renderReadonlyModalContents() {

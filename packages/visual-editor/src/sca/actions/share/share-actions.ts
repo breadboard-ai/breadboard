@@ -611,3 +611,72 @@ export async function unpublish(
     userDomain: oldState.userDomain,
   };
 }
+
+export async function publishStale(
+  graph: GraphDescriptor | undefined
+): Promise<void> {
+  const { controller, services } = bind;
+  const share = controller.editor.share;
+  const googleDriveClient = services.googleDriveClient;
+  const boardServer = services.googleDriveBoardServer;
+
+  const oldState = share.state;
+  if (oldState.status !== "writable" || !oldState.shareableFile) {
+    return;
+  }
+  if (!googleDriveClient) {
+    throw new Error(`No google drive client provided`);
+  }
+  if (!boardServer) {
+    throw new Error(`No board server provided`);
+  }
+  if (!(boardServer instanceof GoogleDriveBoardServer)) {
+    throw new Error(`Provided board server was not Google Drive`);
+  }
+  if (!graph) {
+    throw new Error(`No graph`);
+  }
+
+  share.state = {
+    status: "updating",
+    published: oldState.published,
+    granularlyShared: oldState.granularlyShared,
+    shareableFile: oldState.shareableFile,
+    userDomain: oldState.userDomain,
+  };
+
+  const shareableFileUrl = new URL(`drive:/${oldState.shareableFile.id}`);
+  const updatedShareableGraph = structuredClone(graph);
+  delete updatedShareableGraph["url"];
+
+  await Promise.all([
+    // Update the contents of the shareable copy.
+    boardServer.ops.writeGraphToDrive(
+      shareableFileUrl,
+      updatedShareableGraph
+    ),
+    // Update the latest version property on the main file.
+    googleDriveClient.updateFileMetadata(oldState.shareableFile.id, {
+      properties: {
+        [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: oldState.latestVersion,
+      },
+    }),
+    // Ensure all assets have the same permissions as the shareable file,
+    // since they might have been added since the last publish.
+    handleAssetPermissions(oldState.shareableFile.id, graph),
+  ]);
+
+  share.state = {
+    ...oldState,
+    shareableFile: {
+      ...oldState.shareableFile,
+      stale: false,
+    },
+  };
+
+  console.debug(
+    `[Sharing] Updated stale shareable graph copy` +
+    ` "${oldState.shareableFile.id}" to version` +
+    ` "${oldState.latestVersion}".`
+  );
+}
