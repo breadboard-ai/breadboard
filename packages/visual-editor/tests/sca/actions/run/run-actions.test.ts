@@ -11,6 +11,7 @@ import { STATUS } from "../../../../src/sca/controller/subcontrollers/run/run-co
 import { makeTestController, makeTestServices } from "../../triggers/utils.js";
 import type { PrepareRunConfig } from "../../../../src/sca/actions/run/run-actions.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
+import { ConsoleEntry } from "@breadboard-ai/types";
 
 /**
  * Creates a valid mock config for testing
@@ -339,7 +340,7 @@ describe("Run Actions", () => {
     RunActions.prepare(config);
 
     // Add some console entries to verify reset
-    controller.run.main.setConsoleEntry("existing", {} as import("@breadboard-ai/types").ConsoleEntry);
+    controller.run.main.setConsoleEntry("existing", {} as ConsoleEntry);
 
     const runner = controller.run.main.runner! as unknown as {
       _fireEvent: (e: string, data?: unknown) => void;
@@ -369,7 +370,7 @@ describe("Run Actions", () => {
     RunActions.prepare(config);
 
     // Add a console entry
-    controller.run.main.setConsoleEntry("existing", {} as import("@breadboard-ai/types").ConsoleEntry);
+    controller.run.main.setConsoleEntry("existing", {} as ConsoleEntry);
     controller.run.main.setEstimatedEntryCount(5);
 
     const runner = controller.run.main.runner! as unknown as {
