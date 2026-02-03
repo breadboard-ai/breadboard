@@ -67,13 +67,12 @@ describe("ReactiveApp", () => {
     assert.strictEqual(app.state, "error");
   });
 
-  it("app state does not use input (input is now handled by SCA)", () => {
+  it("switches to 'input' state when run has input", () => {
     const screen = new ReactiveAppScreen("test", undefined);
     app.screens.set("s1", screen);
 
-    // Note: Input state is now handled by SCA, not via ProjectRun.input
-    // The 'input' state is no longer reachable from ReactiveApp.state
-    assert.strictEqual(app.state, "progress");
+    mockRun.input = { id: "node1", schema: {} } as any;
+    assert.strictEqual(app.state, "input");
   });
 
   it("switches to 'output' state when all screens are complete", () => {

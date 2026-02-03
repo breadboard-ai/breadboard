@@ -261,11 +261,10 @@ function getCurrentStepState(moduleArgs: A2ModuleArgs): StepState {
     };
   }
   const runState = getProjectRunState?.();
-  // Note: Console entries are now managed by SCA, not via SimplifiedProjectRunState
   return {
     title: currentStep?.metadata?.title || "",
     appScreen: runState?.app.screens.get(stepId),
-    consoleEntry: undefined,
+    consoleEntry: runState?.console.get(stepId),
   };
 }
 

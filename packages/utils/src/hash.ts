@@ -4,24 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeValue } from "@breadboard-ai/types";
+
 /**
- * A function that computes a hash for any value.
+ * A function that computes a hash for a node value.
  * This is likely an overkill for most use cases, but when we
  * need to compare objects quickly, this function comes in handy.
  *
- * @param o - The value to hash (can be any type)
- * @returns A 32-bit unsigned integer hash
+ * @param o
+ * @returns
  */
-export function hash(o: unknown) {
+export function hash(o: NodeValue) {
   let hash = 0;
   const seenObjects = new WeakSet();
-  const stack: unknown[] = [o];
+  const stack = [o];
 
   while (stack.length) {
     const current = stack.pop();
 
     if (current && typeof current === "object") {
-      // Avoid cycles for object types that may have circular references
+      // This is probably not necessary for NodeValue,
+      // but just in case, let's avoid cycles.
       if (seenObjects.has(current)) continue;
       seenObjects.add(current);
 
