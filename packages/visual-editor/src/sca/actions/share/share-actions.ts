@@ -33,6 +33,10 @@ export async function readPublishedState(
   const googleDriveClient = services.googleDriveClient;
   const boardServer = services.googleDriveBoardServer;
 
+  if (share.state.status !== "opening") {
+    return;
+  }
+
   const graphUrl = graph.url;
   if (!graphUrl) {
     console.error(`No graph url`);
@@ -650,12 +654,36 @@ export async function fixUnmanagedAssetProblems(): Promise<void> {
 
 export function openPanel(): void {
   const { controller } = bind;
-  controller.editor.share.state = { status: "opening" };
+  const share = controller.editor.share;
+  if (share.state.status !== "closed") {
+    return;
+  }
+  share.state = { status: "opening" };
 }
 
 export function closePanel(): void {
   const { controller } = bind;
-  controller.editor.share.state = { status: "closed" };
+  const share = controller.editor.share;
+  const state = share.state;
+  const { status } = state;
+
+  if (
+    status === "closed" ||
+    status === "opening" ||
+    status === "loading" ||
+    status === "readonly" ||
+    status === "writable"
+  ) {
+    share.state = { status: "closed" };
+  } else if (
+    status === "updating" ||
+    status === "granular" ||
+    status === "unmanaged-assets"
+  ) {
+    console.warn(`[Sharing] Cannot close panel while in "${status}" state`);
+  } else {
+    console.error(`[Sharing] Unhandled state:`, state satisfies never);
+  }
 }
 
 export async function viewSharePermissions(
