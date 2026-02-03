@@ -5,8 +5,7 @@
  */
 
 import { State } from "../ui/index.js";
-import { createLiteModeState } from "../ui/state/lite-mode.js";
-import { LiteModeState, Project, RuntimeContext } from "../ui/state/types.js";
+import { Project, RuntimeContext } from "../ui/state/types.js";
 import { EditableGraph, MainGraphIdentifier } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
@@ -23,13 +22,10 @@ class StateManager implements RuntimeContext {
   @signal
   accessor project: Project | null = null;
 
-  readonly lite: LiteModeState;
-
   readonly flowGenerator: FlowGenerator;
 
   constructor(private readonly __sca: SCA) {
     this.flowGenerator = __sca.services.flowGenerator;
-    this.lite = createLiteModeState(this, __sca);
   }
 
   /**

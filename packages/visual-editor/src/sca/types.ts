@@ -147,7 +147,7 @@ export interface PendingAssetEdit {
   graphVersion: number;
   /**
    * The asset's update function - stored so trigger can call it directly.
-   * TODO: When assets are managed by SCA (Operation Smoke), this should
+   * TODO: When assets are managed by SCA , this should
    * call an AssetController or AssetAction instead of storing the function.
    */
   update: (title: string, data?: LLMContent[]) => Promise<Outcome<void>>;

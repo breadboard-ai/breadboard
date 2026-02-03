@@ -63,4 +63,11 @@ export class GlobalController extends RootController {
 
   @field({ deep: true })
   accessor show = new Set<UIOverlays>();
+
+  /**
+   * Error message to display in the current view (lite mode).
+   * Used for view-level errors like generation failures.
+   */
+  @field()
+  accessor viewError: string = "";
 }

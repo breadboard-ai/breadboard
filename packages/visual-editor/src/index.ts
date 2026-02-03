@@ -309,7 +309,6 @@ class Main extends MainBase {
       "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
-      .liteState=${this.runtime.state.lite}
       @bbshowvideomodal=${() => {
         this.sca.controller.global.main.show.add("VideoModal");
       }}
