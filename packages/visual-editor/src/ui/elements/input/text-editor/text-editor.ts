@@ -22,10 +22,6 @@ import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
 } from "../../../../a2/a2/tool-manager.js";
-import { scaContext } from "../../../../sca/context/context.js";
-import { consume } from "@lit/context";
-import { SCA } from "../../../../sca/sca.js";
-import { Utils } from "../../../../sca/utils.js";
 
 export function chicletHtml(
   part: TemplatePart,
@@ -138,9 +134,6 @@ export function chicletHtml(
 
 @customElement("bb-text-editor")
 export class TextEditor extends SignalWatcher(LitElement) {
-  @consume({ context: scaContext })
-  protected accessor sca!: SCA;
-
   @property()
   set value(value: string) {
     this.#rawValue = value;
@@ -174,6 +167,9 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
   @property()
   accessor readOnly = false;
+
+  @property({ type: Boolean })
+  accessor isAgentMode = false;
 
   static styles = [
     icons,
@@ -1042,21 +1038,14 @@ export class TextEditor extends SignalWatcher(LitElement) {
     });
 
     const hasTarget = this.#fastAccessTarget !== null;
-    let isAgentic = false;
-    if (
-      !Utils.Helpers.isHydrating(
-        () => this.sca?.controller.global.flags.agentMode
-      )
-    ) {
-      isAgentic = this.sca?.controller.global.flags.agentMode === true;
-    }
 
     this.#fastAccessRef.value.selectedIndex = 0;
     this.#fastAccessRef.value.showAssets = !hasTarget;
     this.#fastAccessRef.value.showTools = !hasTarget;
     this.#fastAccessRef.value.showComponents = !hasTarget;
     this.#fastAccessRef.value.showRoutes = hasTarget;
-    this.#fastAccessRef.value.showControlFlowTools = isAgentic && !hasTarget;
+    this.#fastAccessRef.value.showAgentModeTools =
+      this.isAgentMode && !hasTarget;
     this.#isUsingFastAccess = true;
   }
 
@@ -1228,7 +1217,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
         }}
         .graphId=${this.subGraphId}
         .nodeId=${this.nodeId}
-        .showControlFlowTools=${this.#fastAccessTarget === null}
+        .showAgentModeTools=${this.#fastAccessTarget === null}
         .showAssets=${this.#fastAccessTarget === null}
         .showTools=${this.#fastAccessTarget === null}
         .state=${this.projectState?.stepEditor.fastAccess}

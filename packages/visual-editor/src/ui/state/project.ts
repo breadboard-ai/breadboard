@@ -96,7 +96,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
 
   readonly tools: SignalMap<string, Tool>;
   readonly myTools: SignalMap<string, Tool>;
-  readonly controlFlowTools: SignalMap<string, Tool>;
+  readonly agentModeTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
 
@@ -121,7 +121,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       this.#updateGraphAssets();
 
       this.#updateMyTools();
-      this.#updateControlFlowTools();
+      this.#updateAgentModeTools();
       this.#graphChanged.set({});
     });
     const graph = editable.raw();
@@ -129,7 +129,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap(A2_TOOLS);
-    this.controlFlowTools = new SignalMap();
+    this.agentModeTools = new SignalMap();
     this.components = new SignalMap();
     this.myTools = new SignalMap();
 
@@ -140,7 +140,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.renderer = new RendererStateImpl(this.graphAssets);
     this.#updateComponents();
     this.#updateMyTools();
-    this.#updateControlFlowTools();
+    this.#updateAgentModeTools();
 
     this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
     this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
@@ -283,12 +283,8 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     updateMap(this.myTools, tools);
   }
 
-  #updateControlFlowTools() {
+  #updateAgentModeTools() {
     const tools: [string, Tool][] = [];
-    // TODO: Make this condition a bit more robust:
-    // - only show if there are other nodes besides the current node that aren't
-    //   already used by an existing "Go to" chiclet.
-    // - only show this for the "Agent" mode.
     if (this.#editable.raw().nodes.length > 1) {
       tools.push([
         `control-flow/routing`,
@@ -307,7 +303,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
         icon: "database",
       },
     ]);
-    updateMap(this.controlFlowTools, tools);
+    updateMap(this.agentModeTools, tools);
   }
 
   #updateComponents() {
