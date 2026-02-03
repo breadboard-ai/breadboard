@@ -80,7 +80,6 @@ type Mode = {
 
 const PROMPT_PORT = "config$prompt";
 const ASK_USER_PORT = "config$ask-user";
-const LIST_PORT = "config$list";
 const LIMIT_MSG = "generation has a daily limit";
 
 const ALL_MODES: Mode[] = [
@@ -97,7 +96,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "none",
@@ -116,7 +114,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
@@ -134,7 +131,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
@@ -152,7 +148,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
@@ -170,7 +165,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
@@ -188,7 +182,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
@@ -203,10 +196,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your goal here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "plan"],
-      [LIST_PORT, "z-list"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "plan"]]),
     makeInstruction: makeGoOverListInstruction,
     modelConstraint: "none",
   },
@@ -220,10 +210,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your research query here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "query"],
-      [LIST_PORT, "z-list"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "query"]]),
     makeInstruction: makeDeepResearchInstruction,
     modelConstraint: "none",
   },
