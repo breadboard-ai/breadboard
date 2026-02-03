@@ -21,7 +21,6 @@ import {
   diffAssetReadPermissions,
   extractGoogleDriveFileId,
   findGoogleDriveAssetsInGraph,
-  permissionMatchesAnyOf,
   type GoogleDriveAsset,
 } from "@breadboard-ai/utils/google-drive/utils.js";
 import { consume } from "@lit/context";
@@ -374,7 +373,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
       this.#state = { status: "opening" };
     }
     if (this.#state.status === "opening") {
-      this.#readPublishedState();
+      this.sca.actions.share.readPublishedState(
+        this.graph,
+        this.#getRequiredPublishPermissions()
+      );
     }
   }
 
@@ -567,8 +569,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
     console.debug(
       `[Sharing] Updated stale shareable graph copy` +
-        ` "${oldState.shareableFile.id}" to version` +
-        ` "${oldState.latestVersion}".`
+      ` "${oldState.shareableFile.id}" to version` +
+      ` "${oldState.latestVersion}".`
     );
   }
 
@@ -598,12 +600,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
         Publishing is disabled for all users from ${domain}.
         <br />
         ${preferredUrl
-          ? html`Please use
+        ? html`Please use
               <a href="${preferredUrl}" target="_blank"
                 >${new URL(preferredUrl).hostname}</a
               >
               to share with other ${domain} users.`
-          : nothing}
+        : nothing}
       </p>
     `;
   }
@@ -682,8 +684,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return html`
       <div id="published-switch-container">
         ${status === "updating"
-          ? html`<span class="g-icon spin spinner">progress_activity</span>`
-          : nothing}
+        ? html`<span class="g-icon spin spinner">progress_activity</span>`
+        : nothing}
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}
@@ -939,152 +941,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
     this.open();
   }
 
-  async #readPublishedState(): Promise<void> {
-    const graphUrl = this.graph?.url;
-    if (!graphUrl) {
-      console.error(`No graph url`);
-      return;
-    }
-    const thisFileId = this.#getGraphFileId();
-    if (!thisFileId) {
-      console.error(`No file id`);
-      return;
-    }
-    if (!this.googleDriveClient) {
-      console.error(`No google drive client provided`);
-      return;
-    }
-    if (!this.boardServer) {
-      console.error(`No board server provided`);
-      return;
-    }
-    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
-      console.error(`Provided board server was not Google Drive`);
-      return;
-    }
-
-    this.#state = { status: "loading" };
-
-    // Ensure any pending changes are saved so that our Drive operations will be
-    // synchronized with those changes.
-    await this.boardServer.flushSaveQueue(graphUrl);
-
-    const thisFileMetadata = await this.googleDriveClient.getFileMetadata(
-      thisFileId,
-      {
-        fields: ["resourceKey", "properties", "ownedByMe", "version"],
-        // Sometimes we are working on the featured gallery items themselves. In
-        // that case, and for all such calls in this file, we should never use
-        // the gallery proxy, because otherwise we will get responses that are
-        // (1) potentially stale because of caching, (2) missing data because
-        // we're not using the owning user's credentials (e.g. permissions get
-        // masked out and appear empty).
-        bypassProxy: true,
-      }
-    );
-
-    const thisFileIsAShareableCopy =
-      thisFileMetadata.properties?.[DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN] !==
-      undefined;
-    if (thisFileIsAShareableCopy) {
-      this.#state = {
-        status: "readonly",
-        shareableFile: {
-          id: thisFileId,
-          resourceKey: thisFileMetadata.resourceKey,
-        },
-      };
-      return;
-    }
-
-    const shareableCopyFileId =
-      thisFileMetadata.properties?.[DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY];
-
-    if (!thisFileMetadata.ownedByMe) {
-      this.#state = {
-        status: "readonly",
-        shareableFile: shareableCopyFileId
-          ? {
-              id: shareableCopyFileId,
-              resourceKey: (
-                await this.googleDriveClient.getFileMetadata(
-                  shareableCopyFileId,
-                  {
-                    fields: ["resourceKey"],
-                    bypassProxy: true,
-                  }
-                )
-              ).resourceKey,
-            }
-          : {
-              id: thisFileId,
-              resourceKey: thisFileMetadata.resourceKey,
-            },
-      };
-      return;
-    }
-
-    if (!shareableCopyFileId) {
-      this.#state = {
-        status: "writable",
-        published: false,
-        granularlyShared: false,
-        shareableFile: undefined,
-        latestVersion: thisFileMetadata.version,
-        userDomain: (await this.sca.services.signinAdapter.domain) ?? "",
-      };
-      return;
-    }
-
-    const shareableCopyFileMetadata =
-      await this.googleDriveClient.getFileMetadata(shareableCopyFileId, {
-        fields: ["resourceKey", "properties", "permissions"],
-        bypassProxy: true,
-      });
-    const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
-    const diff = diffAssetReadPermissions({
-      actual: allGraphPermissions,
-      expected: this.#getRequiredPublishPermissions(),
-    });
-
-    this.#state = {
-      status: "writable",
-      published: diff.missing.length === 0,
-      publishedPermissions: allGraphPermissions.filter((permission) =>
-        permissionMatchesAnyOf(
-          permission,
-          this.#getRequiredPublishPermissions()
-        )
-      ),
-      granularlyShared:
-        // We're granularly shared if there is any permission that is neither
-        // one of the special publish permissions, nor the owner (since there
-        // will always an owner).
-        diff.excess.find((permission) => permission.role !== "owner") !==
-        undefined,
-      shareableFile: {
-        id: shareableCopyFileId,
-        resourceKey: shareableCopyFileMetadata.resourceKey,
-        stale:
-          thisFileMetadata.version !==
-          shareableCopyFileMetadata.properties?.[
-            DRIVE_PROPERTY_LATEST_SHARED_VERSION
-          ],
-        permissions: shareableCopyFileMetadata.permissions ?? [],
-        shareSurface:
-          shareableCopyFileMetadata.properties?.[
-            DRIVE_PROPERTY_OPAL_SHARE_SURFACE
-          ],
-      },
-      latestVersion: thisFileMetadata.version,
-      userDomain: (await this.sca.services.signinAdapter.domain) ?? "",
-    };
-
-    console.debug(
-      `[Sharing] Found sharing state:` +
-        ` ${JSON.stringify(this.#state, null, 2)}`
-    );
-  }
 
   async #publish() {
     console.log(`[Sharing Panel] Publishing`);
@@ -1143,7 +999,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
     console.debug(
       `[Sharing] Added ${publishPermissions.length} publish` +
-        ` permission(s) to shareable graph copy "${shareableFile.id}".`
+      ` permission(s) to shareable graph copy "${shareableFile.id}".`
     );
 
     await this.#handleAssetPermissions(shareableFile.id);
@@ -1215,9 +1071,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
         if (!capabilities.canShare || !assetPermissions) {
           console.error(
             `[Sharing] Could not add permission to asset ` +
-              `"${asset.fileId.id}" because the current user does not have` +
-              ` sharing capability on it. Users who don't already have` +
-              ` access to this asset may not be able to run this graph.`
+            `"${asset.fileId.id}" because the current user does not have` +
+            ` sharing capability on it. Users who don't already have` +
+            ` access to this asset may not be able to run this graph.`
           );
           return;
         }
@@ -1230,8 +1086,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
         }
         console.log(
           `[Sharing Panel] Managed asset ${asset.fileId.id}` +
-            ` has ${missing.length} missing permission(s)` +
-            ` and ${excess.length} excess permission(s). Synchronizing.`,
+          ` has ${missing.length} missing permission(s)` +
+          ` and ${excess.length} excess permission(s). Synchronizing.`,
           {
             actual: assetPermissions,
             needed: graphPermissions,
@@ -1349,7 +1205,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
     console.debug(
       `[Sharing] Removing ${oldState.publishedPermissions.length} publish` +
-        ` permission(s) from shareable graph copy "${shareableFile.id}".`
+      ` permission(s) from shareable graph copy "${shareableFile.id}".`
     );
     await Promise.all(
       oldState.publishedPermissions.map(async (permission) => {
@@ -1460,32 +1316,13 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
     console.debug(
       `[Sharing] Made a new shareable graph copy "${shareableCopyFileId}"` +
-        ` at version "${updateMainResult.version}".`
+      ` at version "${updateMainResult.version}".`
     );
     return {
       shareableCopyFileId,
       shareableCopyResourceKey: shareableCopyMetadata.resourceKey,
       newMainVersion: updateMainResult.version,
     };
-  }
-
-  #getGraphFileId(): string | undefined {
-    const graphUrl = this.graph?.url;
-    if (!graphUrl) {
-      console.error("No graph URL");
-      return undefined;
-    }
-    if (!graphUrl.startsWith("drive:")) {
-      console.error(
-        `Expected "drive:" prefixed graph URL, got ${JSON.stringify(graphUrl)}`
-      );
-      return undefined;
-    }
-    const graphFileId = graphUrl.replace(/^drive:\/*/, "");
-    if (!graphFileId) {
-      console.error(`Graph file ID was empty`);
-    }
-    return graphFileId;
   }
 
   #getAssets(): GoogleDriveAsset[] {
