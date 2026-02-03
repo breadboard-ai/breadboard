@@ -541,8 +541,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
           class=${classMap({
             active: this.sideNavItem === "console",
           })}
-          .run=${this.projectState?.run}
-          .themeStyles=${themeStyles}
           .disclaimerContent=${this.graphIsMine
             ? GlobalStrings.from("LABEL_DISCLAIMER")
             : html`This content was created by another person. It may be

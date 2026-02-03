@@ -5,7 +5,6 @@
  */
 
 import {
-  ConsoleEntry,
   ConsoleUpdate,
   LLMContent,
   SimplifiedA2UIClient,
@@ -16,17 +15,21 @@ type ProductMap = Map<
   LLMContent | SimplifiedA2UIClient | ConsoleUpdate
 >;
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
-import { ProjectRun } from "../../../state/index.js";
+import { consume } from "@lit/context";
 import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { sharedStyles } from "./shared-styles.js";
 import { hasControlPart } from "../../../../runtime/control.js";
+import { ConsolePresenter, type ConsoleStepState } from "../../../presenters/console-presenter.js";
+import { scaContext } from "../../../../sca/context/context.js";
+import type { SCA } from "../../../../sca/sca.js";
+import { STATUS } from "../../../../sca/controller/subcontrollers/run/run-controller.js";
 
 function isConsoleUpdate(
   item: LLMContent | SimplifiedA2UIClient | ConsoleUpdate
@@ -36,11 +39,13 @@ function isConsoleUpdate(
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
-  @property()
-  accessor run: ProjectRun | null = null;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property()
   accessor disclaimerContent = "";
+
+  #presenter = new ConsolePresenter();
 
   static styles = [
     icons,
@@ -339,17 +344,21 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
   #openItems = new Set<string>();
   #openWorkItems = new Set<string>();
-  #currentEntries: [string, ConsoleEntry][] = [];
+  #currentEntries: [string, ConsoleStepState][] = [];
+  #lastRunStatus: STATUS | null = null;
 
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("run")) {
-      this.#openItems.clear();
-      this.#openWorkItems.clear();
-    }
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#presenter.connect(this.sca);
+  }
+
+  override disconnectedCallback(): void {
+    this.#presenter.disconnect();
+    super.disconnectedCallback();
   }
 
   #renderInput() {
-    const input = this.run?.input;
+    const input = this.sca.controller.run.main.input;
     if (!input) {
       this.style.setProperty("--input-clearance", `0px`);
       return nothing;
@@ -397,9 +406,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                   .forceDrivePlaceholder=${true}
                 ></bb-llm-output>
               </li>`;
-            }
-            if (item.type === "links") {
-              return html`<li class="output" data-label="${item.title}:">
+          }
+          if (item.type === "links") {
+            return html`<li class="output" data-label="${item.title}:">
                 <span class="g-icon filled round">${item.icon}</span>
                 <ul class="links-list">
                   ${item.links.map(
@@ -419,15 +428,15 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                         >
                       </li>
                     `
-                  )}
+            )}
                 </ul>
               </li>`;
-            }
           }
-          // SimplifiedA2UIClient
-          if ("processor" in item) {
-            const { processor, receiver } = item;
-            return html`<li>
+        }
+        // SimplifiedA2UIClient
+        if ("processor" in item) {
+          const { processor, receiver } = item;
+          return html`<li>
               <section id="surfaces">
                 <bb-a2ui-client-view
                   .processor=${processor}
@@ -436,10 +445,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                 </bb-a2ui-client-view>
               </section>
             </li>`;
-          }
+        }
 
-          // LLMContent (fallback)
-          return html`<li class="output" data-label="Output:">
+        // LLMContent (fallback)
+        return html`<li class="output" data-label="Output:">
             <bb-llm-output
               .lite=${true}
               .clamped=${false}
@@ -453,18 +462,23 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   #renderRun() {
-    if (!this.run) {
-      return nothing;
+    const runController = this.sca.controller.run.main;
+    const entries = this.#presenter.entries;
+    const currentStatus = runController.status;
+
+    // Clear open items when a new run starts
+    if (this.#lastRunStatus !== currentStatus && currentStatus === STATUS.RUNNING) {
+      this.#openItems.clear();
+      this.#openWorkItems.clear();
+    }
+    this.#lastRunStatus = currentStatus;
+
+    // Update cache from presenter (presenter handles flash prevention)
+    if (entries.size > 0) {
+      this.#currentEntries = [...entries.entries()];
     }
 
-    // 1. If the signal provides a non-empty array, we update our cache. This
-    //    way we avoid flashes of content when the console entries are reset.
-    if (this.run.console.size > 0) {
-      this.#currentEntries = [...this.run.console.entries()];
-    }
-
-    // 2. We then always use the cached version for rendering. If the signal
-    //    was empty, this will be the previous, non-empty set of entries.
+    // Use the cached version for rendering
     return html`<section id="console">
       ${repeat(
         this.#currentEntries,
@@ -474,32 +488,35 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             ((!item.completed && item.work.size === 0) ||
               (item.completed && item.output.size === 0)) &&
             !item.error;
-          const classes: Record<string, boolean> = {
-            "sans-flex": true,
-            "w-500": true,
-            round: true,
-            "md-title-medium": true,
-            empty,
-            active: !item.completed,
-          };
-          if (item.icon) {
-            classes[item.icon] = true;
-          }
+        const isOpen = item.open;
+        const classes: Record<string, boolean> = {
+          "sans-flex": true,
+          "w-500": true,
+          round: true,
+          "md-title-medium": true,
+          empty,
+          active: !item.completed,
+        };
+        if (item.icon) {
+          classes[item.icon] = true;
+        }
 
-          if (item.tags) {
-            for (const tag of item.tags) {
-              if (tag === "output") {
-                continue;
-              }
-
-              classes[tag] = true;
+        if (item.tags) {
+          for (const tag of item.tags) {
+            if (tag === "output") {
+              continue;
             }
+
+            classes[tag] = true;
           }
+        }
 
-          const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
-          const isOpen = item.open || this.#openItems.has(itemId) || isLastItem;
+        const estimatedEntryCount = this.#presenter.estimatedEntryCount;
 
-          return html`<details ?open=${isOpen} disabled>
+        const isLastItem = idx + 1 === estimatedEntryCount;
+        const shouldBeOpen = isOpen || this.#openItems.has(itemId) || isLastItem;
+
+        return html`<details ?open=${shouldBeOpen} disabled>
           <summary @click=${(evt: Event) => {
             if (
               !(
@@ -522,75 +539,73 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             }
           }} class=${classMap(classes)}>
           <span class="chevron g-icon round filled"></span>
-            <div class="step-detail">${
-              item.icon
-                ? html`<span class="g-icon step-icon round filled"
+            <div class="step-detail">${item.icon
+            ? html`<span class="g-icon step-icon round filled"
                     >${item.icon}</span
                   >`
-                : nothing
-            }
+          : nothing
+          }
               <span class="title">${item.title}</span>
             </div>
             <bb-node-run-control
                     .actionContext=${"console"}
                     .nodeId=${itemId}
-                    .runState=${item.status}
+                    .runState=${item.status ?? { status: "inactive" }}
                   ></bb-node-run-control>
           </summary>
-          ${
-            item.work.size > 0
-              ? repeat(
-                  item.work.entries(),
-                  ([key]) => key,
-                  ([workItemId, workItem]) => {
-                    const icon = iconSubstitute(workItem.icon);
+          ${item.work.size > 0
+            ? repeat(
+              item.work.entries(),
+              ([key]) => key,
+              ([workItemId, workItem]) => {
+                const icon = iconSubstitute(workItem.icon);
 
-                    const workItemClasses: Record<string, boolean> = {
-                      "w-400": true,
-                      "sans-flex": true,
-                      round: true,
-                    };
-                    if (icon) {
-                      workItemClasses[icon] = true;
-                    }
+                const workItemClasses: Record<string, boolean> = {
+                  "w-400": true,
+                  "sans-flex": true,
+                  round: true,
+                };
+                if (icon) {
+                  workItemClasses[icon] = true;
+                }
 
-                    return html` <details
+                return html` <details
                       ?open=${workItem.awaitingUserInput ||
-                      workItem.openByDefault ||
-                      this.#openWorkItems.has(workItemId)}
+                workItem.openByDefault ||
+                this.#openWorkItems.has(workItemId)}
                     >
                       <summary
                         @click=${(evt: Event) => {
-                          if (
-                            !(
-                              evt.target instanceof HTMLElement &&
-                              evt.target.parentElement instanceof
-                                HTMLDetailsElement
-                            )
-                          ) {
-                            return;
-                          }
+                  if (
+                    !(
+                      evt.target instanceof HTMLElement &&
+                      evt.target.parentElement instanceof
+                      HTMLDetailsElement
+                    )
+                  ) {
+                    return;
+                  }
 
-                          // This is at the point of clicking, which means that
-                          // immediately afterwards the state will change. That,
-                          // in turn, means that we delete from the set when the
-                          // item is open, and add it when the item is currently
-                          // closed.
-                          if (evt.target.parentElement.open) {
-                            this.#openWorkItems.delete(workItemId);
-                          } else {
-                            this.#openWorkItems.add(workItemId);
-                          }
-                        }}
+                  // This is at the point of clicking, which means that
+                  // immediately afterwards the state will change. That,
+                  // in turn, means that we delete from the set when the
+                  // item is open, and add it when the item is currently
+                  // closed.
+                  if (evt.target.parentElement.open) {
+                    this.#openWorkItems.delete(workItemId);
+                  } else {
+                    this.#openWorkItems.add(workItemId);
+                  }
+                }}
                         class=${classMap(workItemClasses)}
                       >
                         <span class="chevron g-icon round filled"></span>
                         <div class="step-detail">
                           ${icon
-                            ? html`<span class="g-icon step-icon round filled"
+                  ? html`<span class="g-icon step-icon round filled"
                                 >${icon}</span
                               >`
-                            : nothing}<span class="title"
+                  : nothing}<span class="title"
                             >${workItem.title}<span class="duration"
                               >${this.#formatToSeconds(workItem.elapsed)}</span
                             ></span
@@ -599,68 +614,70 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                       </summary>
 
                       ${workItem.awaitingUserInput
-                        ? this.#renderInput()
-                        : this.#renderProducts(workItem.product)}
+                  ? this.#renderInput()
+                  : this.#renderProducts(workItem.product)}
                     </details>`;
-                  }
-                )
-              : nothing
+              }
+            )
+          : nothing
           }
 
-          ${
-            item.completed && !item.error
-              ? item.output.size > 0
-                ? repeat(
-                    item.output.entries(),
-                    ([key]) => key,
-                    ([, item]) => {
-                      return html`<div class="output" data-label="Output:">
+          ${item.completed && !item.error
+            ? item.output.size > 0
+              ? repeat(
+                item.output.entries(),
+                ([key]) => key,
+                ([, item]) => {
+                  return html`<div class="output" data-label="Output:">
                         ${hasControlPart(item)
-                          ? `Skipped`
-                          : html` <bb-llm-output
+                    ? `Skipped`
+                    : html` <bb-llm-output
                               .lite=${true}
                               .clamped=${false}
                               .value=${item}
                               .forceDrivePlaceholder=${true}
                             ></bb-llm-output>`}
                       </div>`;
-                    }
-                  )
-                : html`<div class="output" data-label="Output:">
+                }
+              )
+            : html`<div class="output" data-label="Output:">
                     <p>There are no outputs for this step</p>
                   </div>`
-              : nothing
+          : nothing
           }
-          ${
-            item.error
-              ? html`<div class="step-error" data-label="Error:">
+          ${item.error
+            ? html`<div class="step-error" data-label="Error:">
                   <p>${item.error.message}</p>
                 </div>`
-              : nothing
+          : nothing
           }
         </details>
       </details>`;
         }
       )}
-      ${this.run.error
+      ${this.sca.controller.run.main.error
         ? html`<details class="error">
             <summary>Error</summary>
-            ${this.run.error.message}
+            ${this.sca.controller.run.main.error.message}
           </details>`
         : nothing}
     </section>`;
   }
 
   render() {
+    const runController = this.sca.controller.run.main;
+    const hasEntries = this.#presenter.entries.size > 0 || this.#currentEntries.length > 0;
+    const isRunning = runController.status === STATUS.RUNNING;
+    const isPaused = runController.status === STATUS.PAUSED;
+
     return html`<section id="container">
       ${[
         html`<bb-app-header
           .neutral=${true}
-          .replayActive=${this.run?.consoleState === "entries"}
-          .running=${this.run?.status === "running" ||
-          this.run?.status === "paused"}
+          .replayActive=${hasEntries}
+          .running=${isRunning || isPaused}
           .replayAutoStart=${true}
-          .progress=${this.run?.progress}
+          .progress=${runController.progress}
         ></bb-app-header>`,
         this.#renderRun(),
       ]}

@@ -233,6 +233,8 @@ export const InputRoute: EventRoute<"board.input"> = {
     const data = originalEvent.detail.data as InputValues;
     if (!runner.running()) {
       runner.resumeWithInputs(data);
+      // Clear the input state now that input has been submitted
+      sca.controller.run.main.clearInput();
     }
 
     return false;
