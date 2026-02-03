@@ -111,16 +111,6 @@ export type JsonSerializable =
       [K: string]: JsonSerializable;
     };
 
-export type ListPartItem = {
-  title?: string;
-  content: LLMContent[];
-};
-
-export type ListPart = {
-  list: ListPartItem[];
-  id: string;
-};
-
 export type DataPart = (
   | InlineDataCapabilityPart
   | StoredDataCapabilityPart
@@ -130,7 +120,6 @@ export type DataPart = (
   | FunctionCallCapabilityPart
   | FunctionResponseCapabilityPart
   | JSONPart
-  | ListPart
   | TextCapabilityPart
 ) & { thought?: boolean };
 

@@ -42,7 +42,6 @@ import {
   isFunctionResponseCapabilityPart,
   isInlineData,
   isJSONPart,
-  isListPart,
   isLLMContent,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
@@ -893,21 +892,6 @@ export class LLMOutput extends LitElement {
           } else if (isJSONPart(part)) {
             this.#outputLoaded();
             value = html`<bb-json-tree .json=${part.json}></bb-json-tree>`;
-          } else if (isListPart(part)) {
-            this.#outputLoaded();
-            value = html`${part.list
-              .map((item) => {
-                const content = item.content.at(-1);
-                if (!content) return nothing;
-                return html`<bb-llm-output
-                  .showExportControls=${true}
-                  .graphUrl=${this.graphUrl}
-                  .lite=${true}
-                  .clamped=${false}
-                  .value=${content}
-                ></bb-llm-output>`;
-              })
-              .filter((item) => item !== null)}`;
           } else {
             value = html`Unrecognized part`;
           }
