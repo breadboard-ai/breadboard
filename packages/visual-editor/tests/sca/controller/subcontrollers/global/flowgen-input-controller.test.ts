@@ -189,4 +189,217 @@ suite("FlowgenInputController", () => {
     await controller.isSettled;
     assert.strictEqual(statusSignal.get(), "initial");
   });
+
+  // === Phase 5A: New field tests ===
+
+  test("currentExampleIntent has initial value and is reactive", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_7"
+    );
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.currentExampleIntent, "");
+
+    const intentSignal = new Signal.Computed(
+      () => controller.currentExampleIntent
+    );
+    const watcher = new SignalWatcher(intentSignal);
+    watcher.watch();
+
+    controller.currentExampleIntent = "Create a quiz app";
+    await controller.isSettled;
+
+    assert.strictEqual(controller.currentExampleIntent, "Create a quiz app");
+    assert.ok(watcher.count > 0, "Signal watcher should have been notified");
+  });
+
+  test("plannerStatus has initial value and is reactive", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_8"
+    );
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.plannerStatus, "Creating your app");
+
+    controller.plannerStatus = "Building components...";
+    await controller.isSettled;
+
+    assert.strictEqual(controller.plannerStatus, "Building components...");
+  });
+
+  test("plannerThought has initial value and is reactive", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_9"
+    );
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.plannerThought, "Planning ...");
+
+    controller.plannerThought = "Adding input validation...";
+    await controller.isSettled;
+
+    assert.strictEqual(controller.plannerThought, "Adding input validation...");
+  });
+
+  test("examples returns FLOWGEN_EXAMPLES array", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_10"
+    );
+    await controller.isHydrated;
+
+    const examples = controller.examples;
+    assert.ok(Array.isArray(examples), "examples should be an array");
+    assert.ok(examples.length > 0, "examples should not be empty");
+    assert.ok(
+      examples.every((e) => typeof e.intent === "string"),
+      "each example should have an intent string"
+    );
+  });
+
+  test("isGenerating returns true when state is generating", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_11"
+    );
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.isGenerating, false);
+
+    controller.state = { status: "generating" };
+    await controller.isSettled;
+
+    assert.strictEqual(controller.isGenerating, true);
+
+    controller.state = { status: "initial" };
+    await controller.isSettled;
+
+    assert.strictEqual(controller.isGenerating, false);
+  });
+
+  test("startGenerating sets state to generating", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_12"
+    );
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.state.status, "initial");
+    assert.strictEqual(controller.isGenerating, false);
+
+    controller.startGenerating();
+    await controller.isSettled;
+
+    assert.strictEqual(controller.state.status, "generating");
+    assert.strictEqual(controller.isGenerating, true);
+  });
+
+  test("clear() resets all new fields including planner state", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_13"
+    );
+    await controller.isHydrated;
+
+    // Set up dirty state for all new fields
+    controller.currentExampleIntent = "Test intent";
+    controller.plannerStatus = "Building...";
+    controller.plannerThought = "Working on step 3...";
+    controller.state = { status: "generating" };
+    await controller.isSettled;
+
+    // Verify dirty state
+    assert.strictEqual(controller.currentExampleIntent, "Test intent");
+    assert.strictEqual(controller.plannerStatus, "Building...");
+    assert.strictEqual(controller.plannerThought, "Working on step 3...");
+    assert.strictEqual(controller.state.status, "generating");
+
+    // Clear all state
+    controller.clear();
+    await controller.isSettled;
+
+    // Verify all fields are reset
+    assert.strictEqual(controller.inputValue, "");
+    assert.strictEqual(controller.currentExampleIntent, "");
+    assert.strictEqual(controller.plannerStatus, "Creating your app");
+    assert.strictEqual(controller.plannerThought, "Planning ...");
+    assert.strictEqual(controller.state.status, "initial");
+  });
+
+  // === Intent and finishGenerating tests ===
+
+  test("intent returns empty when status is initial", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_14"
+    );
+    await controller.isHydrated;
+
+    controller.setIntent("Create a quiz app");
+    await controller.isSettled;
+
+    // When status is initial, intent returns empty
+    assert.strictEqual(controller.state.status, "initial");
+    assert.strictEqual(controller.intent, "");
+  });
+
+  test("intent returns value when status is generating", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_15"
+    );
+    await controller.isHydrated;
+
+    controller.setIntent("Create a quiz app");
+    controller.startGenerating();
+    await controller.isSettled;
+
+    assert.strictEqual(controller.state.status, "generating");
+    assert.strictEqual(controller.intent, "Create a quiz app");
+  });
+
+  test("intent returns value when status is error", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_16"
+    );
+    await controller.isHydrated;
+
+    controller.setIntent("Create a quiz app");
+    controller.state = { status: "error", error: "Failed" };
+    await controller.isSettled;
+
+    assert.strictEqual(controller.state.status, "error");
+    assert.strictEqual(controller.intent, "Create a quiz app");
+  });
+
+  test("finishGenerating clears intent and resets state", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_17"
+    );
+    await controller.isHydrated;
+
+    // Set up generation state
+    controller.setIntent("Create a quiz app");
+    controller.currentExampleIntent = "Example intent";
+    controller.startGenerating();
+    await controller.isSettled;
+
+    assert.strictEqual(controller.intent, "Create a quiz app");
+    assert.strictEqual(controller.currentExampleIntent, "Example intent");
+    assert.strictEqual(controller.state.status, "generating");
+
+    // Finish generation
+    controller.finishGenerating();
+    await controller.isSettled;
+
+    // Intent is cleared (returns empty since status is initial)
+    assert.strictEqual(controller.intent, "");
+    assert.strictEqual(controller.currentExampleIntent, "");
+    assert.strictEqual(controller.state.status, "initial");
+  });
 });

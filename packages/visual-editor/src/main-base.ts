@@ -551,14 +551,14 @@ abstract class MainBase extends SignalWatcher(LitElement) {
               this.sca.controller.global.main.show.add("MissingShare");
               this.sca.controller.global.main.loadState = "Error";
               // Set viewError for lite mode
-              this.runtime.state.lite.viewError = Strings.from(
+              this.sca.controller.global.main.viewError = Strings.from(
                 "ERROR_UNABLE_TO_LOAD_PROJECT"
               );
             } else {
               // Generic load error
               this.sca.controller.global.main.loadState = "Error";
               // Set viewError for lite mode
-              this.runtime.state.lite.viewError = Strings.from(
+              this.sca.controller.global.main.viewError = Strings.from(
                 "ERROR_UNABLE_TO_LOAD_PROJECT"
               );
               this.sca.controller.global.snackbars.snackbar(
