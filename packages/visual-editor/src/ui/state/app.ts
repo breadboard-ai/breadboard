@@ -19,7 +19,7 @@ class ReactiveApp implements App {
   get state() {
     if (!this.last) return "splash";
     if (this.run.error) return "error";
-    // Note: Input state is now handled by SCA
+    if (this.run.input) return "input";
     if (this.current.size === 0) return "output";
     if (
       [...this.screens.values()].some(
