@@ -18,10 +18,6 @@
  */
 export type RuntimeFlags = {
   /**
-   * Add "For each" capability to the "Generate" step.
-   */
-  generateForEach: boolean;
-  /**
    * Enable MCP support
    */
   mcp: boolean;

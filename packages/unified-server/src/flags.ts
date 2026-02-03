@@ -32,10 +32,6 @@ export const ENABLE_STREAM_GEN_WEBPAGE: boolean = getBoolean(
   "ENABLE_STREAM_GEN_WEBPAGE"
 );
 
-export const ENABLE_GENERATE_FOR_EACH: boolean = getBoolean(
-  "ENABLE_GENERATE_FOR_EACH"
-);
-
 export const ENABLE_AGENT_MODE: boolean = getBoolean("ENABLE_AGENT_MODE");
 
 export const STREAM_PLANNER: boolean = getBoolean("ENABLE_STREAM_PLANNER");

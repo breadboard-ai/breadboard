@@ -102,11 +102,6 @@ suite("FlagController", () => {
     );
 
     assert.throws(
-      () => String(store.generateForEach),
-      new Error("generateForEach was not set by environment")
-    );
-
-    assert.throws(
       () => String(store.googleOne),
       new Error("googleOne was not set by environment")
     );

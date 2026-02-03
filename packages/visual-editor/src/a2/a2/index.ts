@@ -9,7 +9,6 @@ import * as a2CombineOutputs from "./combine-outputs.js";
 import * as a2Common from "./common.js";
 import * as a2ConnectorManager from "./connector-manager.js";
 import * as a2Entry from "./entry.js";
-import * as a2ForEach from "./for-each.js";
 import * as a2Gemini from "./gemini.js";
 import * as a2GeminiPrompt from "./gemini-prompt.js";
 import * as a2HtmlGenerator from "./html-generator.js";
@@ -38,7 +37,6 @@ export const exports = {
   common: a2Common,
   "connector-manager": a2ConnectorManager,
   entry: a2Entry,
-  "for-each": a2ForEach,
   "gemini-prompt": a2GeminiPrompt,
   gemini: a2Gemini,
   "html-generator": a2HtmlGenerator,

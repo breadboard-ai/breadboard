@@ -64,7 +64,6 @@ export async function createClientConfig(opts: {
     ENABLE_SHARING_2: flags.ENABLE_SHARING_2,
     domains: flags.DOMAIN_CONFIG,
     flags: {
-      generateForEach: flags.ENABLE_GENERATE_FOR_EACH,
       mcp: flags.ENABLE_MCP,
       force2DGraph: flags.ENABLE_FORCE_2D_GRAPH,
       gulfRenderer: flags.ENABLE_GULF_RENDERER,
