@@ -62,6 +62,10 @@ class Controller implements AppController {
         "Editor_Step",
         "StepController"
       ),
+      share: new Editor.Share.ShareController(
+        "Editor_Share",
+        "ShareController"
+      ),
     };
 
     this.home = {
@@ -208,6 +212,7 @@ export interface AppController extends DebuggableAppController {
     splitter: Editor.Splitter.SplitterController;
     sidebar: Editor.Sidebar.SidebarController;
     step: Editor.Step.StepController;
+    share: Editor.Share.ShareController;
   };
   home: {
     recent: Home.RecentBoardsController;
