@@ -58,6 +58,10 @@ class Controller implements AppController {
         "Editor_Sidebar",
         "SidebarController"
       ),
+      step: new Editor.Step.StepController(
+        "Editor_Step",
+        "StepController"
+      ),
     };
 
     this.home = {
@@ -203,6 +207,7 @@ export interface AppController extends DebuggableAppController {
     selection: Editor.Selection.SelectionController;
     splitter: Editor.Splitter.SplitterController;
     sidebar: Editor.Sidebar.SidebarController;
+    step: Editor.Step.StepController;
   };
   home: {
     recent: Home.RecentBoardsController;

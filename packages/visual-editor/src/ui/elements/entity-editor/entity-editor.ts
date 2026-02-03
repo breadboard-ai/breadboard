@@ -13,7 +13,9 @@ import {
   InspectableNodePorts,
   LLMContent,
   MainGraphIdentifier,
+  NodeConfiguration,
   NodeIdentifier,
+  NodeMetadata,
   NodeValue,
   Outcome,
   Schema,
@@ -80,6 +82,8 @@ import {
 
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { embedderContext } from "../../contexts/embedder.js";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SCA } from "../../../sca/sca.js";
 import { embedState } from "../../embed/embed.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -113,8 +117,8 @@ export class EntityEditor
   @property()
   accessor graph: InspectableGraph | null = null;
 
-  @property()
-  accessor graphTopologyUpdateId = 0;
+  // NOTE: graphTopologyUpdateId was removed - autosave on selection change
+  // is now handled by the SCA step autosave trigger.
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -137,8 +141,13 @@ export class EntityEditor
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
 
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @state()
   accessor values: InputValues | undefined;
+
+
 
   static styles = [
     icons,
@@ -935,28 +944,40 @@ export class EntityEditor
     }
   }
 
-  async #emitUpdatedNodeConfiguration(
+  /**
+   * Prepares the node configuration by transforming form values.
+   * Returns the configuration, metadata, and ins for either dispatch or pendingEdit.
+   */
+  async #prepareNodeConfiguration(
     currentValues: InputValues | undefined,
     form: HTMLFormElement,
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
-  ) {
+  ): Promise<{
+    configuration: NodeConfiguration;
+    metadata: NodeMetadata;
+    ins: TemplatePart[];
+    editGraphId: GraphIdentifier;
+  } | null> {
     let targetGraph = this.graph;
     if (!targetGraph) {
-      return;
+      return null;
     }
+
+    // Note: graphId from form is MAIN_BOARD_ID for main board, but API expects ""
+    const apiGraphId = graphId === MAIN_BOARD_ID ? "" : graphId;
 
     if (graphId !== MAIN_BOARD_ID) {
       targetGraph = this.graph!.graphs()?.[graphId] ?? null;
     }
 
     if (!targetGraph) {
-      return;
+      return null;
     }
 
     const node = targetGraph.nodeById(nodeId);
     if (!node) {
-      return;
+      return null;
     }
 
     const metadata = { ...node.metadata() };
@@ -965,9 +986,7 @@ export class EntityEditor
       metadata.title = title.value;
     }
 
-    // Because the rest of the function is async and the values of the form
-    // element may change as the selection changes, let's copy the form values,
-    // so that we have a stable set of values to work with.
+    // Copy form values for stable async processing
     const formValues = this.#copyFormValues(form);
 
     const ports = (await node.ports(currentValues)).inputs.ports.filter(
@@ -981,6 +1000,26 @@ export class EntityEditor
     const { values, ins } = this.#takePortValues(formValues, ports);
     const configuration = { ...node.configuration(), ...values };
 
+    return { configuration, metadata, ins, editGraphId: apiGraphId };
+  }
+
+  async #emitUpdatedNodeConfiguration(
+    currentValues: InputValues | undefined,
+    form: HTMLFormElement,
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ) {
+    const prepared = await this.#prepareNodeConfiguration(
+      currentValues,
+      form,
+      graphId,
+      nodeId
+    );
+
+    if (!prepared) {
+      return;
+    }
+
     this.actionTracker?.editStep("manual");
 
     this.dispatchEvent(
@@ -988,9 +1027,9 @@ export class EntityEditor
         eventType: "node.change",
         id: nodeId,
         subGraphId: graphId !== MAIN_BOARD_ID ? graphId : null,
-        configurationPart: configuration,
-        metadata,
-        ins,
+        configurationPart: prepared.configuration,
+        metadata: prepared.metadata,
+        ins: prepared.ins,
       })
     );
   }
@@ -1641,22 +1680,78 @@ export class EntityEditor
       }}
       @input=${() => {
         this.#edited = true;
+        this.#setPendingEditFromForm();
       }}
     >
       ${value}
     </form>`;
   }
 
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
-    // Auto-save both when a different step is selected
-    // and when the reactive change is triggered.
-    if (
-      (changedProperties.has("graphTopologyUpdateId") ||
-        changedProperties.has("selectionState") ||
-        changedProperties.has("values")) &&
-      this.#edited
-    ) {
-      this.save();
+  // NOTE: willUpdate no longer triggers autosave. Pending edits are set
+  // directly in the @input handler on the form.
+
+  /**
+   * Sets a pending edit on the SCA controller from current form state.
+   * The step autosave trigger will apply this when selection changes.
+   * Handles both node edits (node-id/graph-id) and asset edits (asset-path).
+   */
+  async #setPendingEditFromForm(): Promise<void> {
+    if (!this.#formRef.value || !this.sca) {
+      return;
+    }
+
+    const form = this.#formRef.value;
+    const data = new FormData(form);
+
+    // Check if this is a node edit
+    const formGraphId = data.get("graph-id") as string | null;
+    const nodeId = data.get("node-id") as string | null;
+
+    if (formGraphId !== null && nodeId !== null) {
+      // Handle node edit
+      const prepared = await this.#prepareNodeConfiguration(
+        this.values,
+        form,
+        formGraphId,
+        nodeId
+      );
+
+      if (!prepared) {
+        return;
+      }
+
+      this.sca.controller.editor.step.setPendingEdit({
+        graphId: prepared.editGraphId,
+        nodeId,
+        values: prepared.configuration,
+        graphVersion: this.sca.controller.editor.graph.version,
+      });
+      return;
+    }
+
+    // Check if this is an asset edit
+    const assetPath = data.get("asset-path") as string | null;
+    if (assetPath !== null) {
+      const asset = this.projectState?.graphAssets.get(assetPath);
+      if (!asset) {
+        return;
+      }
+
+      const title = form.querySelector<HTMLInputElement>("#node-title")?.value;
+      const dataPart =
+        form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
+
+      if (!title) {
+        return;
+      }
+
+      this.sca.controller.editor.step.setPendingAssetEdit({
+        assetPath,
+        title,
+        dataPart,
+        graphVersion: this.sca.controller.editor.graph.version,
+        update: asset.update.bind(asset),
+      });
     }
   }
 
@@ -1698,6 +1793,10 @@ export class EntityEditor
   }
 
   render() {
+    // Read graph version to subscribe to graph changes via SignalWatcher.
+    // This ensures we re-render when the graph is modified (e.g., wire drag).
+    void this.sca.controller.editor.graph.version;
+
     const selectionCount = this.#calculateSelectionSize();
     if (selectionCount === 0) {
       return html`<div id="generic-status">Please select an item to edit</div>`;

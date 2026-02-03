@@ -53,6 +53,7 @@ suite("Triggers", () => {
       shell: ["[effect] Page Title Trigger"],
       router: ["[effect] Router Init Trigger", "[bridge] Router URL Change"],
       screenSize: [],
+      step: ["[effect] Step Auto Save Trigger"],
     });
     clean();
 
@@ -65,6 +66,7 @@ suite("Triggers", () => {
       shell: [],
       router: [],
       screenSize: [],
+      step: [],
     });
 
     // Confirm that listing and cleaning do not throw in the absence of a
