@@ -56,7 +56,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   accessor showTools = true;
 
   @property()
-  accessor showControlFlowTools = true;
+  accessor showAgentModeTools = true;
 
   @property()
   accessor showRoutes = false;
@@ -333,9 +333,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       });
     }
 
-    // Append controlFlow tools (routing, memory) to the end of tools
-    if (this.showControlFlowTools && this.state?.controlFlow.results) {
-      for (const [id, tool] of this.state.controlFlow.results) {
+    // Append agentMode tools (routing, memory) to the end of tools
+    if (this.showAgentModeTools && this.state?.agentMode.results) {
+      for (const [id, tool] of this.state.agentMode.results) {
         // Apply filter if present
         if (this.filter) {
           const filterRe = new RegExp(this.filter, "gim");
@@ -390,7 +390,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     }
 
     this.state.integrations.filter = filter;
-    this.state.controlFlow.filter = filter;
+    this.state.agentMode.filter = filter;
     this.state.routes.filter = filter;
   }
 

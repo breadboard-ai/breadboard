@@ -1044,7 +1044,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
     this.#fastAccessRef.value.showTools = !hasTarget;
     this.#fastAccessRef.value.showComponents = !hasTarget;
     this.#fastAccessRef.value.showRoutes = hasTarget;
-    this.#fastAccessRef.value.showControlFlowTools =
+    this.#fastAccessRef.value.showAgentModeTools =
       this.isAgentMode && !hasTarget;
     this.#isUsingFastAccess = true;
   }
@@ -1217,7 +1217,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
         }}
         .graphId=${this.subGraphId}
         .nodeId=${this.nodeId}
-        .showControlFlowTools=${this.#fastAccessTarget === null}
+        .showAgentModeTools=${this.#fastAccessTarget === null}
         .showAssets=${this.#fastAccessTarget === null}
         .showTools=${this.#fastAccessTarget === null}
         .state=${this.projectState?.stepEditor.fastAccess}

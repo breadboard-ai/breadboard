@@ -330,7 +330,7 @@ export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
-  controlFlow: FilterableMap<Tool>;
+  agentMode: FilterableMap<Tool>;
   components: Map<GraphIdentifier, Components>;
   integrations: FilteredIntegrations;
   /**
@@ -445,7 +445,6 @@ export type LiteModeState = {
 
   examples: LiteModeIntentExample[];
   currentExampleIntent: string;
-
 };
 
 /**
@@ -592,7 +591,7 @@ export type ProjectValues = {
   graphAssets: Map<AssetPath, GraphAsset>;
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
-  controlFlowTools: Map<string, Tool>;
+  agentModeTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
   integrations: Integrations;
   editable: EditableGraph;
