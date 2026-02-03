@@ -6,21 +6,21 @@
 
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import {
-  diffAssetReadPermissions,
-  extractGoogleDriveFileId,
-  findGoogleDriveAssetsInGraph,
-  permissionMatchesAnyOf,
-  type GoogleDriveAsset,
-} from "@breadboard-ai/utils/google-drive/utils.js";
-import {
   DRIVE_PROPERTY_IS_SHAREABLE_COPY,
   DRIVE_PROPERTY_LATEST_SHARED_VERSION,
   DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
   DRIVE_PROPERTY_OPAL_SHARE_SURFACE,
   DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
-import { makeAction } from "../binder.js";
+import {
+  diffAssetReadPermissions,
+  extractGoogleDriveFileId,
+  findGoogleDriveAssetsInGraph,
+  permissionMatchesAnyOf,
+  type GoogleDriveAsset,
+} from "@breadboard-ai/utils/google-drive/utils.js";
 import type { UnmanagedAssetProblem } from "../../controller/subcontrollers/editor/share-controller.js";
+import { makeAction } from "../binder.js";
 
 export const bind = makeAction();
 

@@ -8,8 +8,8 @@ import type {
   DriveFileId,
   NarrowedDriveFile,
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { RootController } from "../root-controller.js";
 import { field } from "../../decorators/field.js";
+import { RootController } from "../root-controller.js";
 
 export type ShareState =
   | { status: "closed" }

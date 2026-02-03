@@ -9,24 +9,25 @@ import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protoco
 import type {
   DriveFileId,
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-
+import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
-import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
-
+import { scaContext } from "../../../sca/context/context.js";
+import type {
+  ShareState,
+} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+import { SCA } from "../../../sca/sca.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-
 import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-
 import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -35,11 +36,6 @@ import { icons } from "../../styles/icons.js";
 import { ActionTracker } from "../../types/types.js";
 import { makeUrl } from "../../utils/urls.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
-import { scaContext } from "../../../sca/context/context.js";
-import { SCA } from "../../../sca/sca.js";
-import type {
-  ShareState,
-} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
