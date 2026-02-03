@@ -179,14 +179,19 @@ export function prepare(config: PrepareRunConfig): void {
 
       // Use runner.plan.stages for execution-ordered iteration
       // Flatten stages to get nodes in execution order
-      const nodeIds: string[] = [];
+      const nodeIds = new Set<string>();
       for (const stage of runner.plan?.stages ?? []) {
         for (const planNode of stage) {
-          nodeIds.push(planNode.node.id);
+          nodeIds.add(planNode.node.id);
         }
       }
 
-      controller.run.main.setEstimatedEntryCount(nodeIds.length);
+      // Ensure all nodes are included (even if disconnected/not in plan)
+      for (const node of graph.nodes) {
+        nodeIds.add(node.id);
+      }
+
+      controller.run.main.setEstimatedEntryCount(nodeIds.size);
 
       // Pre-populate console with all graph nodes as "inactive" in execution order
       const graphDescriptor = services.graphStore.getByDescriptor(graph);
@@ -270,11 +275,16 @@ export function prepare(config: PrepareRunConfig): void {
 
   // Pre-populate console with all graph nodes as "inactive" on initial load
   // Use runner.plan.stages for execution-ordered iteration
-  const nodeIds: string[] = [];
+  const nodeIds = new Set<string>();
   for (const stage of runner.plan?.stages ?? []) {
     for (const planNode of stage) {
-      nodeIds.push(planNode.node.id);
+      nodeIds.add(planNode.node.id);
     }
+  }
+
+  // Ensure all nodes are included (even if disconnected/not in plan)
+  for (const node of graph.nodes) {
+    nodeIds.add(node.id);
   }
 
   const graphDescriptor = services.graphStore.getByDescriptor(graph);
