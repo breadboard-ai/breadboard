@@ -104,6 +104,20 @@ export class GraphController extends RootController {
     return this._title;
   }
 
+  /**
+   * The current graph descriptor.
+   */
+  get graph() {
+    return this._graph;
+  }
+
+  /**
+   * Whether the graph is empty (has no nodes).
+   */
+  get empty() {
+    return (this._graph?.nodes?.length ?? 0) === 0;
+  }
+
   get editor() {
     return this._editor;
   }

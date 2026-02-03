@@ -9,19 +9,17 @@ import { customElement, property } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
-import { LiteModeState, StepListStepState } from "../../state/index.js";
+import { StepListStepState } from "../../state/index.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { hash } from "@breadboard-ai/utils";
 import type { SCA } from "../../../sca/sca.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { StepListPresenter } from "../../presenters/step-list-presenter.js";
+import { deriveLiteViewType } from "../../../sca/utils/lite-view-type.js";
 
 @customElement("bb-step-list-view")
 export class StepListView extends SignalWatcher(LitElement) {
-  @property()
-  accessor state: LiteModeState | null = null;
-
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
@@ -29,6 +27,24 @@ export class StepListView extends SignalWatcher(LitElement) {
   accessor lite = false;
 
   #presenter = new StepListPresenter();
+
+  /** Get viewType from SCA state */
+  get #viewType() {
+    return deriveLiteViewType(this.sca, this.sca.controller.editor.graph.empty);
+  }
+
+  /** Get generation status from SCA */
+  get #status() {
+    return this.sca.controller.global.flowgenInput.state.status;
+  }
+
+  /** Get planner state from SCA */
+  get #planner() {
+    return {
+      status: this.sca.controller.global.flowgenInput.plannerStatus,
+      thought: this.sca.controller.global.flowgenInput.plannerThought,
+    };
+  }
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -432,7 +448,7 @@ export class StepListView extends SignalWatcher(LitElement) {
 
     const renderPlaceholders = () => {
       return html`<ul id="list">
-        ${this.state?.status === "generating"
+        ${this.#status === "generating"
           ? renderPlannerProgress()
           : nothing}
         ${repeat(new Array(4), () => {
@@ -457,9 +473,6 @@ export class StepListView extends SignalWatcher(LitElement) {
     };
 
     const renderPlannerProgress = () => {
-      if (!this.state?.planner) {
-        return nothing;
-      }
       return html`<li>
         ${renderStep(
           {
@@ -469,10 +482,10 @@ export class StepListView extends SignalWatcher(LitElement) {
             "processing-generation": true,
           },
           {
-            label: this.state?.planner.thought,
+            label: this.#planner.thought,
             prompt: "",
             status: "pending",
-            title: this.state?.planner.status,
+            title: this.#planner.status,
           },
           { status: "generating" }
         )}
@@ -480,17 +493,17 @@ export class StepListView extends SignalWatcher(LitElement) {
     };
 
     if (
-      this.state?.viewType === "editor" &&
-      this.state?.status === "generating"
+      this.#viewType === "editor" &&
+      this.#status === "generating"
     ) {
       return renderPlaceholders();
     }
 
     const steps = this.#presenter.steps;
     if (!steps || steps.size === 0) {
-      if (this.state?.viewType === "loading") {
+      if (this.#viewType === "loading") {
         return renderPlaceholders();
-      } else if (this.state?.status === "generating") {
+      } else if (this.#status === "generating") {
         return html`<ul id="list">
           ${renderPlannerProgress()}
         </ul>`;

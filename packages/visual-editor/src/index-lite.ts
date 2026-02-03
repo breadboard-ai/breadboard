@@ -27,6 +27,7 @@ import { OneShotFlowGenFailureResponse } from "./ui/flow-gen/flow-generator.js";
 import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
 import { markdown } from "./ui/directives/markdown.js";
 import { type SharePanel } from "./ui/elements/elements.js";
+import { deriveLiteViewType } from "./sca/utils/lite-view-type.js";
 import {
   CheckAppAccessResult,
   GuestConfiguration,
@@ -388,6 +389,26 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   private boardLoaded: Promise<void>;
 
+  /** Get viewType from SCA state */
+  get #viewType() {
+    return deriveLiteViewType(this.sca, this.sca.controller.editor.graph.empty);
+  }
+
+  /** Get generation status from SCA */
+  get #status() {
+    return this.sca.controller.global.flowgenInput.state.status;
+  }
+
+  /** Get graph from SCA */
+  get #graph() {
+    return this.sca.controller.editor.graph.graph;
+  }
+
+  /** Get examples from SCA */
+  get #examples() {
+    return this.sca.controller.global.flowgenInput.examples;
+  }
+
   constructor(args: MainArguments) {
     super(args);
 
@@ -528,7 +549,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: "" };
     }
     let projectState = this.runtime.state.project;
-    this.runtime.state.lite.currentExampleIntent = intent;
+    this.sca.controller.global.flowgenInput.currentExampleIntent = intent;
 
     if (!projectState) {
       // Zero state: need to create the board first, then wait for load
@@ -540,7 +561,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
     }
 
-    const currentGraph = this.runtime.state.lite.graph;
+    const currentGraph = this.sca.controller.editor.graph.graph;
     if (!currentGraph) {
       return { error: "No current graph detected, exting flow generation" };
     }
@@ -567,12 +588,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     const prompt =
       this.tab?.graph.metadata?.raw_intent ??
       this.tab?.graph.metadata?.intent ??
-      this.runtime.state.lite.currentExampleIntent ??
+      this.sca.controller.global.flowgenInput.currentExampleIntent ??
       null;
 
     return html`<bb-prompt-view
       .prompt=${prompt}
-      .state=${this.runtime.state.lite}
       ?inert=${this.#isInert()}
     ></bb-prompt-view>`;
   }
@@ -599,12 +619,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderUserInput() {
     const editable =
       (this.tab?.graphIsMine ?? false) ||
-      this.runtime.state.lite.viewType !== "editor";
-    const { lite } = this.runtime.state;
+      this.#viewType !== "editor";
     return html`<bb-editor-input-lite
       ?inert=${this.#isInert()}
       .controller=${this}
-      .state=${lite}
       .editable=${editable}
       @bbsnackbar=${this.#onSnackbar}
       @bbunsnackbar=${this.#onUnSnackbar}
@@ -614,7 +632,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderMessage() {
     const editable =
       (this.tab?.graphIsMine ?? false) ||
-      this.runtime.state.lite.viewType !== "editor";
+      this.#viewType !== "editor";
     return html`<div
       ?disabled=${!editable}
       id="message"
@@ -639,7 +657,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return html`
       <bb-step-list-view
         ?inert=${this.#isInert()}
-        .state=${this.runtime.state.lite}
         lite
       ></bb-step-list-view>
     `;
@@ -684,28 +701,27 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     const renderValues = this.getRenderValues();
 
     const title =
-      this.runtime.state.lite.viewType === "editor"
+      this.#viewType === "editor"
         ? (this.tab?.graph.title ?? "Untitled app")
         : "...";
 
     const graphIsMine = this.tab?.graphIsMine ?? false;
-    const isGenerating = this.runtime.state.lite.status === "generating";
+    const isGenerating = this.#status === "generating";
     const isFreshGraph =
       isGenerating &&
-      this.runtime.state.lite.graph?.edges.length === 0 &&
-      this.runtime.state.lite.graph?.nodes.length === 0 &&
-      this.runtime.state.lite.graph?.title === "Untitled Opal app";
+      this.#graph?.edges.length === 0 &&
+      this.#graph?.nodes.length === 0 &&
+      this.#graph?.title === "Untitled Opal app";
 
     const buttons: Array<HTMLTemplateResult | symbol> = [];
-    if (this.runtime.state.lite.viewType === "editor") {
+    if (this.#viewType === "editor") {
       buttons.push(
         html`<a
           ${ref(this.#advancedEditorLink)}
           class="w-400 md-title-small sans-flex unvaried"
           id="open-advanced-editor"
           href="${this.guestConfiguration.advancedEditorOrigin ||
-          this.hostOrigin}?mode=canvas&flow=${this.runtime.state.lite.graph
-            ?.url}"
+          this.hostOrigin}?mode=canvas&flow=${this.#graph?.url}"
           target="_blank"
         >
           <span class="g-icon">open_in_new</span>Open Advanced Editor
@@ -760,7 +776,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       <bb-app-controller
         ?inert=${this.#isInert()}
         class=${classMap({ active: true })}
-        .graph=${this.runtime.state.lite.graph ?? null}
+        .graph=${this.#graph ?? null}
         .graphIsEmpty=${false}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .isMine=${this.tab?.graphIsMine ?? false}
@@ -802,12 +818,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       </h2>
       <aside id="examples" ?inert=${this.#isInert()}>
         <ul>
-          ${repeat(this.runtime.state.lite.examples, (example) => {
+          ${repeat(this.#examples, (example) => {
             return html`<li>
               <button
                 class="w-400 md-body-small sans-flex"
                 @click=${() => {
-                  this.runtime.state.lite.currentExampleIntent = example.intent;
+                  this.sca.controller.global.flowgenInput.currentExampleIntent = example.intent;
                 }}
               >
                 <span class="example-icon">
@@ -842,20 +858,21 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #isInert() {
     return (
       this.sca.controller.global.main.blockingAction ||
-      this.runtime.state.lite.status == "generating" ||
-      this.runtime.state.lite.viewType === "loading"
+      this.#status == "generating" ||
+      this.#viewType === "loading"
     );
   }
 
   render() {
-    const lite: BreadboardUI.State.LiteModeState = this.runtime.state.lite;
+    const viewType = this.#viewType;
+    const status = this.#status;
 
     let content: HTMLTemplateResult | symbol = nothing;
-    switch (lite.viewType) {
+    switch (viewType) {
       case "home":
       case "editor":
       case "loading": {
-        if (lite.viewType === "home" && lite.status !== "generating") {
+        if (viewType === "home" && status !== "generating") {
           content = this.#renderWelcomeMat();
           break;
         }
@@ -873,7 +890,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
       case "error":
         return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
-          <div id="error">${lite.viewError}</div>
+          <div id="error">${Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT")}</div>
           ${this.#renderShellUI()}
         </section>`;
       default:
@@ -885,7 +902,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         id="lite-shell"
         class=${classMap({
           full: this.showAppFullscreen || this.compactView,
-          welcome: lite.viewType === "home",
+          welcome: viewType === "home",
         })}
         @bbsnackbar=${this.#onSnackbar}
         @bbunsnackbar=${this.#onUnSnackbar}
@@ -951,21 +968,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if (evt.detail.eventType !== "host.usersignin") return false;
 
     const { result } = evt.detail;
-    const { lite } = this.runtime.state;
 
     if (result === "success") return true;
 
-    if (lite.viewType === "loading") {
-      // Happens when loading an inacessible opal
-      lite.viewError = Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT");
-    }
+    // Error case: when loading an inaccessible opal, the render method's
+    // error case will display the appropriate message
     return true;
   }
 
   #renderSharePanel() {
     return html`
       <bb-share-panel
-        .graph=${this.runtime.state.lite.graph}
+        .graph=${this.#graph}
         ${ref(this.#sharePanelRef)}
       >
       </bb-share-panel>
@@ -977,7 +991,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #onClickRemixApp() {
-    const url = this.runtime.state.lite.graph?.url;
+    const url = this.#graph?.url;
     if (!url) {
       return;
     }
