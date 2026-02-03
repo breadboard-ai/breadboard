@@ -185,13 +185,13 @@ function getGraphFileId(graphUrl: string): string | undefined {
   return graphFileId;
 }
 
-export interface MakeShareableCopyResult {
+interface MakeShareableCopyResult {
   shareableCopyFileId: string;
   shareableCopyResourceKey: string | undefined;
   newMainVersion: string;
 }
 
-export async function makeShareableCopy(
+async function makeShareableCopy(
   graph: GraphDescriptor,
   shareSurface: string | undefined
 ): Promise<MakeShareableCopyResult> {
@@ -276,7 +276,7 @@ export async function makeShareableCopy(
   };
 }
 
-export async function handleAssetPermissions(
+async function handleAssetPermissions(
   graphFileId: string,
   graph: GraphDescriptor
 ): Promise<void> {
