@@ -246,6 +246,8 @@ export async function retrieveAsBlob(
     if (url.protocol === "blob:") return true;
     // Allow drive:/ URLs
     if (url.protocol === "drive:") return true;
+    // Allow nlm:/ URLs (NotebookLM references)
+    if (url.protocol === "nlm:") return true;
     // Allow board server URLs
     if (url.href.match(/https?:\/\/[^/]+\/board\/blobs\/([a-z0-9-]+)/)) {
       return true;
@@ -275,7 +277,8 @@ export async function toStoredDataPart(
   if (isStoredData(part)) {
     if (
       part.storedData.handle.startsWith("https://") ||
-      part.storedData.handle.startsWith(".")
+      part.storedData.handle.startsWith(".") ||
+      part.storedData.handle.startsWith("nlm:/")
     ) {
       return part;
     }

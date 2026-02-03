@@ -448,6 +448,14 @@ async function conformBody(
         if ("json" in part) {
           return { text: JSON.stringify(part.json) };
         }
+        // Convert NotebookLM references to text before file transform
+        if (
+          "storedData" in part &&
+          part.storedData.handle.startsWith("nlm:/")
+        ) {
+          const notebookId = part.storedData.handle.replace("nlm:/", "");
+          return { text: `[NotebookLM reference: ${notebookId}]` };
+        }
         return part;
       }),
     };
