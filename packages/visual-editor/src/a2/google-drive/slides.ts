@@ -118,10 +118,10 @@ class SlideBuilder {
     return this.#images;
   }
 
-  build(imageUrls: string[]) {
+  build(imageUrls: string[], insertionIndex?: number) {
     this.#finalizeSlide();
     console.log("SLIDES", this.#slides);
-    const requests = slidesToRequests(this.#slides, imageUrls);
+    const requests = slidesToRequests(this.#slides, imageUrls, insertionIndex);
     if (this.#objectToDelete) {
       requests.unshift({
         deleteObject: {
@@ -264,15 +264,19 @@ class SlideBuilder {
 
 function slidesToRequests(
   slides: Slide[],
-  imageUrls: string[]
+  imageUrls: string[],
+  insertionIndex?: number
 ): SlidesRequest[] {
   const requests: SlidesRequest[] = [];
-  slides.forEach((slide) => {
+  slides.forEach((slide, index) => {
     const request: SlidesCreateSlideRequest = {
       objectId: slide.objectId,
       slideLayoutReference: { predefinedLayout: slide.layout },
       placeholderIdMappings: mapPlaceholders(slide.objectId, slide.layout),
     };
+    if (typeof insertionIndex === "number") {
+      request.insertionIndex = insertionIndex + index;
+    }
     requests.push({ createSlide: request });
     if (slide.title) {
       requests.push({
@@ -377,9 +381,9 @@ class SimpleSlideBuilder {
     }
   }
 
-  build(imageUrls: string[]) {
+  build(imageUrls: string[], insertionIndex?: number) {
     console.log("SLIDES", this.#slides);
-    const requests = slidesToRequests(this.#slides, imageUrls);
+    const requests = slidesToRequests(this.#slides, imageUrls, insertionIndex);
     if (this.#objectToDelete) {
       requests.unshift({
         deleteObject: {

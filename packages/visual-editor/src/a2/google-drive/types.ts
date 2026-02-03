@@ -4,6 +4,8 @@ export type ConnectorConfiguration = {
     id: string;
     mimeType: string;
   };
+  editEachTime?: string;
+  writeMode?: string;
 };
 
 export type SimpleSlide = {

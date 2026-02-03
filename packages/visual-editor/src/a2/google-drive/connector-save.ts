@@ -9,6 +9,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils.js";
+import { SlidesRequest } from "./api.js";
 import {
   appendSpreadsheetValues,
   create,
@@ -81,6 +82,12 @@ async function invoke(
         return { context: contextFromId(id, DOC_MIME_TYPE) };
       }
       case SLIDES_MIME_TYPE: {
+        const editEachTime =
+          info?.configuration?.editEachTime || "New slide deck";
+        const writeMode = info?.configuration?.writeMode || "Prepend";
+        const forceNew = editEachTime === "New slide deck";
+        const fileId = forceNew ? undefined : info?.configuration?.file?.id;
+
         const [gettingCollector, result] = await Promise.all([
           getCollector(
             moduleArgs,
@@ -88,18 +95,38 @@ async function invoke(
             graphId,
             title ?? "Untitled Presentation",
             SLIDES_MIME_TYPE,
-            info?.configuration?.file?.id
+            fileId,
+            forceNew
           ),
           inferSlideStructure(caps, moduleArgs, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
         const { id, end, last } = gettingCollector;
+
+        let insertionIndex: number | undefined = undefined;
+        let deleteRequests: SlidesRequest[] = [];
+        if (editEachTime === "Same slide deck") {
+          if (writeMode === "Overwrite") {
+            const presentation = await getPresentation(moduleArgs, id);
+            if (ok(presentation)) {
+              deleteRequests =
+                presentation.slides?.map((s) => ({
+                  deleteObject: { objectId: s.objectId! },
+                })) || [];
+              insertionIndex = 0;
+            }
+          } else if (writeMode === "Prepend") {
+            insertionIndex = 0;
+          }
+        }
+
         const slideBuilder = new SimpleSlideBuilder(end, last);
         for (const slide of result.slides) {
           slideBuilder.addSlide(slide);
         }
-        const requests = slideBuilder.build([]);
+        const requests = slideBuilder.build([], insertionIndex);
+        requests.push(...deleteRequests);
         console.log("REQUESTS", requests);
         const updating = await updatePresentation(moduleArgs, id, { requests });
         if (!ok(updating)) return updating;
@@ -165,18 +192,23 @@ async function getCollector(
   graphId: string,
   title: string,
   mimeType: string,
-  fileId?: string
+  fileId?: string,
+  forceNew?: boolean
 ): Promise<Outcome<CollectorData>> {
   let id;
   if (!fileId) {
+    let foundId: string | undefined;
     const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
-    const findFile = await moduleArgs.shell.getDriveCollectorFile(
-      mimeType,
-      connectorId,
-      graphId
-    );
-    if (!findFile.ok) return err(findFile.error);
-    id = findFile.id;
+    if (!forceNew) {
+      const findFile = await moduleArgs.shell.getDriveCollectorFile(
+        mimeType,
+        connectorId,
+        graphId
+      );
+      if (!findFile.ok) return err(findFile.error);
+      foundId = findFile.id || undefined;
+    }
+    id = foundId;
     if (!id) {
       const createdFile = await create(moduleArgs, {
         name: title,
