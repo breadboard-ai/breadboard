@@ -24,7 +24,8 @@ import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OneShotFlowGenFailureResponse } from "./ui/flow-gen/flow-generator.js";
-import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
+// AVAST PLANNER: Disabled flowGenWithTheme import
+// import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
 import { markdown } from "./ui/directives/markdown.js";
 import { type SharePanel } from "./ui/elements/elements.js";
 import {
@@ -35,6 +36,211 @@ import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/util
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 const REMIX_WARNING_KEY = "bb-lite-show-remix-warning";
+
+// =============================================================================
+// AVAST PLANNER EXPERIMENT
+// =============================================================================
+
+type AvastPlannerResult =
+  | { flow: GraphDescriptor; theme: GraphTheme | undefined }
+  | { error: string };
+
+// Avast Planner graph template - intent gets injected into the prompt
+function createAvastPlannerGraph(intent: string): GraphDescriptor {
+  return {
+    title: "Untitled Opal app",
+    description: "",
+    version: "0.0.1",
+    nodes: [
+      {
+        id: "e834765a-c57f-4668-8176-f746569e14e9",
+        type: "embed://a2/generate.bgl.json#module:main",
+        metadata: {
+          title: "Generate Text",
+          visual: {
+            x: 0,
+            y: 0,
+          },
+          userModified: true,
+          expected_output: [
+            {
+              type: "text",
+              description: "AI generated text based on the prompt.",
+              list: false,
+            },
+          ],
+        },
+        configuration: {
+          config$prompt: {
+            role: "user",
+            parts: [
+              {
+                text: intent, // <-- Intent injected here
+              },
+            ],
+          },
+          "generation-mode": "agent",
+        },
+      },
+    ],
+    edges: [],
+    metadata: {
+      visual: {
+        presentation: {
+          themes: {
+            "64eddf65-c73c-4d50-a465-4134d705ec30": {
+              themeColors: {
+                primaryColor: "#1a1a1a",
+                secondaryColor: "#7a7a7a",
+                backgroundColor: "#ffffff",
+                textColor: "#1a1a1a",
+                primaryTextColor: "#ffffff",
+              },
+              template: "basic",
+              isDefaultTheme: true,
+              palette: {
+                primary: {
+                  "0": "#000000",
+                  "5": "#001417",
+                  "10": "#001f24",
+                  "15": "#002b30",
+                  "20": "#00363d",
+                  "25": "#00424a",
+                  "30": "#004f58",
+                  "35": "#005b66",
+                  "40": "#006874",
+                  "50": "#008391",
+                  "60": "#00a0b0",
+                  "70": "#22bccf",
+                  "80": "#4fd8eb",
+                  "90": "#97f0ff",
+                  "95": "#d0f8ff",
+                  "98": "#edfcff",
+                  "99": "#f6feff",
+                  "100": "#ffffff",
+                },
+                secondary: {
+                  "0": "#000000",
+                  "5": "#001417",
+                  "10": "#051f23",
+                  "15": "#10292d",
+                  "20": "#1c3438",
+                  "25": "#273f43",
+                  "30": "#334b4f",
+                  "35": "#3e565b",
+                  "40": "#4a6267",
+                  "50": "#637b80",
+                  "60": "#7c959a",
+                  "70": "#96b0b4",
+                  "80": "#b1cbd0",
+                  "90": "#cde7ec",
+                  "95": "#dbf6fa",
+                  "98": "#edfcff",
+                  "99": "#f6feff",
+                  "100": "#ffffff",
+                },
+                tertiary: {
+                  "0": "#000000",
+                  "5": "#030f2c",
+                  "10": "#0e1b37",
+                  "15": "#192541",
+                  "20": "#24304d",
+                  "25": "#2f3b58",
+                  "30": "#3b4664",
+                  "35": "#465271",
+                  "40": "#525e7d",
+                  "50": "#6b7697",
+                  "60": "#8490b2",
+                  "70": "#9faace",
+                  "80": "#bac6ea",
+                  "90": "#dae2ff",
+                  "95": "#eef0ff",
+                  "98": "#faf8ff",
+                  "99": "#fefbff",
+                  "100": "#ffffff",
+                },
+                neutral: {
+                  "0": "#000000",
+                  "5": "#0e1212",
+                  "10": "#191c1d",
+                  "15": "#232627",
+                  "20": "#2e3132",
+                  "25": "#393c3d",
+                  "30": "#444748",
+                  "35": "#505354",
+                  "40": "#5c5f5f",
+                  "50": "#747878",
+                  "60": "#8e9192",
+                  "70": "#a9acac",
+                  "80": "#c4c7c7",
+                  "90": "#e1e3e3",
+                  "95": "#eff1f1",
+                  "98": "#f8fafa",
+                  "99": "#fafdfd",
+                  "100": "#ffffff",
+                },
+                neutralVariant: {
+                  "0": "#000000",
+                  "5": "#091214",
+                  "10": "#141d1f",
+                  "15": "#1e2729",
+                  "20": "#293234",
+                  "25": "#343d3f",
+                  "30": "#3f484a",
+                  "35": "#4b5456",
+                  "40": "#576062",
+                  "50": "#6f797a",
+                  "60": "#899294",
+                  "70": "#a3adaf",
+                  "80": "#bfc8ca",
+                  "90": "#dbe4e6",
+                  "95": "#e9f2f4",
+                  "98": "#f2fbfd",
+                  "99": "#f6feff",
+                  "100": "#ffffff",
+                },
+                error: {
+                  "0": "#000000",
+                  "5": "#2d0001",
+                  "10": "#410002",
+                  "15": "#540003",
+                  "20": "#690005",
+                  "25": "#7e0007",
+                  "30": "#93000a",
+                  "35": "#a80710",
+                  "40": "#ba1a1a",
+                  "50": "#de3730",
+                  "60": "#ff5449",
+                  "70": "#ff897d",
+                  "80": "#ffb4ab",
+                  "90": "#ffdad6",
+                  "95": "#ffedea",
+                  "98": "#fff8f7",
+                  "99": "#fffbff",
+                  "100": "#ffffff",
+                },
+              },
+            },
+          },
+          theme: "64eddf65-c73c-4d50-a465-4134d705ec30",
+        },
+      },
+      parameters: {},
+    },
+  };
+}
+
+async function avastPlannerGenerate(
+  intent: string
+): Promise<AvastPlannerResult> {
+  // Create the graph with the intent injected into the prompt
+  return {
+    flow: createAvastPlannerGraph(intent),
+    theme: undefined,
+  };
+}
+
+// =============================================================================
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
@@ -465,7 +671,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if (!fileId) {
       return;
     }
-    const isMine = this.sca.services.googleDriveBoardServer.isMine(new URL(url));
+    const isMine = this.sca.services.googleDriveBoardServer.isMine(
+      new URL(url)
+    );
     const isFeaturedGalleryItem =
       // This is a bit hacky and indirect, but an easy way to tell if something
       // is from the public gallery is to check if the GoogleDriveClient has
@@ -551,16 +759,15 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
     this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
 
-    const generated = await flowGenWithTheme(
-      this.flowGenerator,
-      intent,
-      currentGraph,
-      projectState
-    );
+    // AVAST PLANNER EXPERIMENT: Replacing flowGenWithTheme
+    const generated = await avastPlannerGenerate(intent);
     if ("error" in generated) {
       return generated;
     }
     await this.invokeBoardReplaceRoute(generated.flow, generated.theme);
+
+    // AVAST PLANNER: Auto-start the run after board replacement
+    this.dispatchEvent(new StateEvent({ eventType: "board.run" }));
   }
 
   #renderOriginalPrompt() {
@@ -626,12 +833,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderControls() {
     return html`<div id="controls" slot="slot-0">
-      ${[
-        this.#renderOriginalPrompt(),
-        this.#renderList(),
-        this.#renderUserInput(),
-        this.#renderMessage(),
-      ]}
+      ${[this.#renderOriginalPrompt(), this.#renderList()]}
     </div>`;
   }
 
@@ -640,6 +842,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       <bb-step-list-view
         ?inert=${this.#isInert()}
         .state=${this.runtime.state.lite}
+        .run=${this.runtime.state.project?.run}
         lite
       ></bb-step-list-view>
     `;

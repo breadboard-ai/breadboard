@@ -9,7 +9,11 @@ import { customElement, property } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
-import { LiteModeState, StepListStepState } from "../../state/index.js";
+import {
+  LiteModeState,
+  StepListStepState,
+  ProjectRun,
+} from "../../state/index.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { hash } from "@breadboard-ai/utils";
@@ -22,6 +26,10 @@ export class StepListView extends SignalWatcher(LitElement) {
   @property()
   accessor state: LiteModeState | null = null;
 
+  // AVAST PLANNER: Add run property to access project run console
+  @property()
+  accessor run: ProjectRun | null = null;
+
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
@@ -32,12 +40,19 @@ export class StepListView extends SignalWatcher(LitElement) {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#presenter.connect(this.sca);
+    this.#presenter.connect(this.sca, this.run);
   }
 
   override disconnectedCallback(): void {
     this.#presenter.disconnect();
     super.disconnectedCallback();
+  }
+
+  // AVAST PLANNER: Update presenter when run changes
+  override willUpdate(changedProperties: Map<PropertyKey, unknown>): void {
+    if (changedProperties.has("run")) {
+      this.#presenter.setRun(this.run);
+    }
   }
 
   static styles = [

@@ -20,17 +20,14 @@ import { SCA } from "../../sca/sca.js";
 
 export { createLiteModeState };
 
-function createLiteModeState(
-  context: RuntimeContext,
-  sca: SCA
-) {
+function createLiteModeState(context: RuntimeContext, sca: SCA) {
   return new ReactiveLiteModeState(context, sca);
 }
 
 const EXAMPLES: LiteModeIntentExample[] = [
   {
     intent:
-      "Help me prepare for a quiz on a given topic by creating sample questions with hints as an interactive quiz",
+      "Help me prepare for a quiz on a given topic by creating sample multiple choice questions with hints as an interactive quiz",
   },
   {
     intent:
@@ -83,8 +80,6 @@ class ReactiveLiteModeState implements LiteModeState {
     if (this.status !== "initial" && this.#intent) return this.#intent;
     return "";
   }
-
-
 
   @signal
   accessor #intent: string | undefined;
@@ -162,8 +157,6 @@ class ReactiveLiteModeState implements LiteModeState {
   }
 }
 
-
-
 class PlannerState implements LiteModePlannerState {
   @signal
   get status() {
@@ -180,7 +173,7 @@ class PlannerState implements LiteModePlannerState {
     );
   }
 
-  constructor(private readonly flowGenerator: FlowGenerator) { }
+  constructor(private readonly flowGenerator: FlowGenerator) {}
 }
 
 function progressFromThought(thought: string | null): string | null {
