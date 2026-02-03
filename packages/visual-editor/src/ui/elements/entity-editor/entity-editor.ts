@@ -853,6 +853,10 @@ export class EntityEditor
           ...this.values,
           [port.name]: value,
         };
+        // Reactive changes need to be saved immediately so the graph editor
+        // updates. Unlike regular edits (which wait for selection change),
+        // reactive controls should propagate their changes right away.
+        this.save();
       }
     };
   }
