@@ -13,11 +13,7 @@ import type {
 import {
   DRIVE_PROPERTY_LATEST_SHARED_VERSION,
 } from "@breadboard-ai/utils/google-drive/operations.js";
-import {
-  diffAssetReadPermissions,
-  findGoogleDriveAssetsInGraph,
-  type GoogleDriveAsset,
-} from "@breadboard-ai/utils/google-drive/utils.js";
+
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
@@ -47,7 +43,6 @@ import { scaContext } from "../../../sca/context/context.js";
 import { SCA } from "../../../sca/sca.js";
 import type {
   ShareState,
-  UnmanagedAssetProblem,
 } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
@@ -551,7 +546,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       }),
       // Ensure all assets have the same permissions as the shareable file,
       // since they might have been added since the last publish.
-      this.#handleAssetPermissions(oldState.shareableFile.id),
+      this.sca.actions.share.handleAssetPermissions(oldState.shareableFile.id, this.graph),
     ]);
 
     this.#state = {
@@ -931,7 +926,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     }
     const graphFileId = this.#state.shareableFile.id;
     this.#state = { status: "loading" };
-    await this.#handleAssetPermissions(graphFileId);
+    await this.sca.actions.share.handleAssetPermissions(graphFileId, this.graph);
     this.#state = { status: "opening" };
     this.open();
   }
@@ -997,7 +992,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       ` permission(s) to shareable graph copy "${shareableFile.id}".`
     );
 
-    await this.#handleAssetPermissions(shareableFile.id);
+    await this.sca.actions.share.handleAssetPermissions(shareableFile.id, this.graph);
 
     this.#state = {
       status: "writable",
@@ -1008,171 +1003,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
       latestVersion: newLatestVersion ?? oldState.latestVersion,
       userDomain: oldState.userDomain,
     };
-  }
-
-  async #handleAssetPermissions(graphFileId: string): Promise<void> {
-    const assets = this.#getAssets();
-    if (assets.length === 0) {
-      return;
-    }
-    const managedAssets: GoogleDriveAsset[] = [];
-    const unmanagedAssets: GoogleDriveAsset[] = [];
-    for (const asset of this.#getAssets()) {
-      if (asset.managed) {
-        managedAssets.push(asset);
-      } else {
-        unmanagedAssets.push(asset);
-      }
-    }
-
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    const graphPermissions =
-      (
-        await googleDriveClient.getFileMetadata(graphFileId, {
-          fields: ["permissions"],
-          bypassProxy: true,
-        })
-      ).permissions ?? [];
-    await Promise.all([
-      this.#autoSyncManagedAssetPermissions(managedAssets, graphPermissions),
-      this.#checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
-        unmanagedAssets,
-        graphPermissions
-      ),
-    ]);
-  }
-
-  async #autoSyncManagedAssetPermissions(
-    managedAssets: GoogleDriveAsset[],
-    graphPermissions: gapi.client.drive.Permission[]
-  ): Promise<void> {
-    if (managedAssets.length === 0) {
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    await Promise.all(
-      managedAssets.map(async (asset) => {
-        const { capabilities, permissions: assetPermissions } =
-          await googleDriveClient.getFileMetadata(asset.fileId, {
-            fields: ["capabilities", "permissions"],
-            bypassProxy: true,
-          });
-        if (!capabilities.canShare || !assetPermissions) {
-          console.error(
-            `[Sharing] Could not add permission to asset ` +
-            `"${asset.fileId.id}" because the current user does not have` +
-            ` sharing capability on it. Users who don't already have` +
-            ` access to this asset may not be able to run this graph.`
-          );
-          return;
-        }
-        const { missing, excess } = diffAssetReadPermissions({
-          actual: assetPermissions,
-          expected: graphPermissions,
-        });
-        if (missing.length === 0 && excess.length === 0) {
-          return;
-        }
-        console.log(
-          `[Sharing Panel] Managed asset ${asset.fileId.id}` +
-          ` has ${missing.length} missing permission(s)` +
-          ` and ${excess.length} excess permission(s). Synchronizing.`,
-          {
-            actual: assetPermissions,
-            needed: graphPermissions,
-            missing,
-            excess,
-          }
-        );
-        await Promise.all([
-          ...missing.map((permission) =>
-            googleDriveClient.createPermission(
-              asset.fileId.id,
-              { ...permission, role: "reader" },
-              { sendNotificationEmail: false }
-            )
-          ),
-          ...excess.map((permission) =>
-            googleDriveClient.deletePermission(asset.fileId.id, permission.id!)
-          ),
-        ]);
-      })
-    );
-  }
-
-  async #checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
-    unmanagedAssets: GoogleDriveAsset[],
-    graphPermissions: gapi.client.drive.Permission[]
-  ): Promise<void> {
-    if (unmanagedAssets.length === 0) {
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    const problems: UnmanagedAssetProblem[] = [];
-    await Promise.all(
-      unmanagedAssets.map(async (asset) => {
-        const assetMetadata = await googleDriveClient.getFileMetadata(
-          asset.fileId,
-          {
-            fields: [
-              "id",
-              "resourceKey",
-              "name",
-              "iconLink",
-              "capabilities",
-              "permissions",
-            ],
-            bypassProxy: true,
-          }
-        );
-        if (
-          !assetMetadata.capabilities.canShare ||
-          !assetMetadata.permissions
-        ) {
-          problems.push({ asset: assetMetadata, problem: "cant-share" });
-          return;
-        }
-        const { missing } = diffAssetReadPermissions({
-          actual: assetMetadata.permissions,
-          expected: graphPermissions,
-        });
-        if (missing.length > 0) {
-          problems.push({ asset: assetMetadata, problem: "missing", missing });
-          return;
-        }
-      })
-    );
-    if (problems.length === 0) {
-      return;
-    }
-    // TODO(aomarks) Bump es level so we can get Promise.withResolvers.
-    let closed: { promise: Promise<void>; resolve: () => void };
-    {
-      let resolve: () => void;
-      const promise = new Promise<void>((r) => (resolve = r));
-      closed = { promise, resolve: resolve! };
-    }
-    const oldState = this.#state;
-    this.#state = {
-      status: "unmanaged-assets",
-      problems,
-      oldState,
-      closed,
-    };
-    // Since the unmanaged asset dialog shows up in a few different flows, it's
-    // useful to make it so this function waits until it has been resolved.
-    // TODO(aomarks) This is a kinda weird pattern. Think about a refactor.
-    await closed.promise;
-    this.#state = oldState;
   }
 
   async #unpublish() {
@@ -1213,7 +1043,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       })
     );
 
-    await this.#handleAssetPermissions(shareableFile.id);
+    await this.sca.actions.share.handleAssetPermissions(shareableFile.id, this.graph);
 
     this.#state = {
       status: "writable",
@@ -1223,15 +1053,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
       latestVersion: oldState.latestVersion,
       userDomain: oldState.userDomain,
     };
-  }
-
-  #getAssets(): GoogleDriveAsset[] {
-    const graph = this.graph;
-    if (!graph) {
-      console.error("No graph");
-      return [];
-    }
-    return findGoogleDriveAssetsInGraph(graph);
   }
 
   #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
