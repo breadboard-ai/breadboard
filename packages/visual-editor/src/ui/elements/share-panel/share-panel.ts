@@ -358,7 +358,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     if (changes.has("graph") && this.#state.status !== "closed") {
       this.#actions.openPanel();
     }
-    if (this.#state.status === "opening") {
+    if (this.#state.status === "opening" && this.graph) {
       this.#actions.readPublishedState(
         this.graph,
         this.#getRequiredPublishPermissions()
@@ -498,6 +498,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
   async #onClickPublishStale() {
+    if (!this.graph) {
+      return;
+    }
     await this.#actions.publishStale(this.graph);
   }
 
@@ -738,6 +741,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   async #onClickViewSharePermissions(event: MouseEvent) {
     event.preventDefault();
+    if (!this.graph) {
+      return;
+    }
     await this.#actions.viewSharePermissions(this.graph, this.guestConfiguration?.shareSurface);
   }
 
@@ -813,6 +819,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return undefined;
   }
   async #onGoogleDriveSharePanelClose() {
+    if (!this.graph) {
+      return;
+    }
     await this.#actions.onGoogleDriveSharePanelClose(this.graph);
   }
 

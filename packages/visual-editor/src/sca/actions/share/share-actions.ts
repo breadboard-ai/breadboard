@@ -25,7 +25,7 @@ import type { UnmanagedAssetProblem } from "../../controller/subcontrollers/edit
 export const bind = makeAction();
 
 export async function readPublishedState(
-  graph: GraphDescriptor | undefined,
+  graph: GraphDescriptor,
   publishPermissions: gapi.client.drive.Permission[]
 ): Promise<void> {
   const { controller, services } = bind;
@@ -33,7 +33,7 @@ export async function readPublishedState(
   const googleDriveClient = services.googleDriveClient;
   const boardServer = services.googleDriveBoardServer;
 
-  const graphUrl = graph?.url;
+  const graphUrl = graph.url;
   if (!graphUrl) {
     console.error(`No graph url`);
     return;
@@ -188,16 +188,13 @@ export interface MakeShareableCopyResult {
 }
 
 export async function makeShareableCopy(
-  graph: GraphDescriptor | undefined,
+  graph: GraphDescriptor,
   shareSurface: string | undefined
 ): Promise<MakeShareableCopyResult> {
   const { services } = bind;
   const googleDriveClient = services.googleDriveClient;
   const boardServer = services.googleDriveBoardServer;
 
-  if (!graph) {
-    throw new Error(`Graph was not provided`);
-  }
   if (!graph.url) {
     throw new Error(`Graph had no URL`);
   }
@@ -277,12 +274,12 @@ export async function makeShareableCopy(
 
 export async function handleAssetPermissions(
   graphFileId: string,
-  graph: GraphDescriptor | undefined
+  graph: GraphDescriptor
 ): Promise<void> {
   const { services } = bind;
   const googleDriveClient = services.googleDriveClient;
 
-  const assets = getAssets(graph);
+  const assets = findGoogleDriveAssetsInGraph(graph);
   if (assets.length === 0) {
     return;
   }
@@ -439,16 +436,10 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
   share.state = oldState;
 }
 
-function getAssets(graph: GraphDescriptor | undefined): GoogleDriveAsset[] {
-  if (!graph) {
-    console.error("No graph");
-    return [];
-  }
-  return findGoogleDriveAssetsInGraph(graph);
-}
+
 
 export async function publish(
-  graph: GraphDescriptor | undefined,
+  graph: GraphDescriptor,
   publishPermissions: gapi.client.drive.Permission[],
   shareSurface: string | undefined
 ): Promise<void> {
@@ -523,7 +514,7 @@ export async function publish(
 }
 
 export async function unpublish(
-  graph: GraphDescriptor | undefined
+  graph: GraphDescriptor
 ): Promise<void> {
   const { controller, services } = bind;
   const share = controller.editor.share;
@@ -575,7 +566,7 @@ export async function unpublish(
 }
 
 export async function publishStale(
-  graph: GraphDescriptor | undefined
+  graph: GraphDescriptor
 ): Promise<void> {
   const { controller, services } = bind;
   const share = controller.editor.share;
@@ -585,9 +576,6 @@ export async function publishStale(
   const oldState = share.state;
   if (oldState.status !== "writable" || !oldState.shareableFile) {
     return;
-  }
-  if (!graph) {
-    throw new Error(`No graph`);
   }
 
   share.state = {
@@ -671,7 +659,7 @@ export function closePanel(): void {
 }
 
 export async function viewSharePermissions(
-  graph: GraphDescriptor | undefined,
+  graph: GraphDescriptor,
   shareSurface: string | undefined
 ): Promise<void> {
   const { controller } = bind;
@@ -681,7 +669,7 @@ export async function viewSharePermissions(
   if (oldState.status !== "writable") {
     return;
   }
-  if (!graph?.url) {
+  if (!graph.url) {
     console.error(`No graph url`);
     return;
   }
@@ -701,7 +689,7 @@ export async function viewSharePermissions(
 }
 
 export async function onGoogleDriveSharePanelClose(
-  graph: GraphDescriptor | undefined
+  graph: GraphDescriptor
 ): Promise<void> {
   const { controller } = bind;
   const share = controller.editor.share;
