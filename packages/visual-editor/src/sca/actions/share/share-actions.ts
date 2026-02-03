@@ -19,7 +19,6 @@ import {
   DRIVE_PROPERTY_OPAL_SHARE_SURFACE,
   DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
-import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 import { makeAction } from "../binder.js";
 import type { UnmanagedAssetProblem } from "../../controller/subcontrollers/editor/share-controller.js";
 
@@ -42,18 +41,6 @@ export async function readPublishedState(
   const thisFileId = getGraphFileId(graphUrl);
   if (!thisFileId) {
     console.error(`No file id`);
-    return;
-  }
-  if (!googleDriveClient) {
-    console.error(`No google drive client provided`);
-    return;
-  }
-  if (!boardServer) {
-    console.error(`No board server provided`);
-    return;
-  }
-  if (!(boardServer instanceof GoogleDriveBoardServer)) {
-    console.error(`Provided board server was not Google Drive`);
     return;
   }
 
@@ -208,15 +195,6 @@ export async function makeShareableCopy(
   const googleDriveClient = services.googleDriveClient;
   const boardServer = services.googleDriveBoardServer;
 
-  if (!googleDriveClient) {
-    throw new Error(`No google drive client provided`);
-  }
-  if (!boardServer) {
-    throw new Error(`No board server provided`);
-  }
-  if (!(boardServer instanceof GoogleDriveBoardServer)) {
-    throw new Error(`Provided board server was not Google Drive`);
-  }
   if (!graph) {
     throw new Error(`Graph was not provided`);
   }
@@ -318,9 +296,6 @@ export async function handleAssetPermissions(
     }
   }
 
-  if (!googleDriveClient) {
-    throw new Error(`No google drive client provided`);
-  }
   const graphPermissions =
     (
       await googleDriveClient.getFileMetadata(graphFileId, {
@@ -346,9 +321,6 @@ async function autoSyncManagedAssetPermissions(
   }
   const { services } = bind;
   const googleDriveClient = services.googleDriveClient;
-  if (!googleDriveClient) {
-    throw new Error(`No google drive client provided`);
-  }
   await Promise.all(
     managedAssets.map(async (asset) => {
       const { capabilities, permissions: assetPermissions } =
@@ -409,9 +381,6 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
   const { controller, services } = bind;
   const share = controller.editor.share;
   const googleDriveClient = services.googleDriveClient;
-  if (!googleDriveClient) {
-    throw new Error(`No google drive client provided`);
-  }
   const problems: UnmanagedAssetProblem[] = [];
   await Promise.all(
     unmanagedAssets.map(async (asset) => {
@@ -496,10 +465,6 @@ export async function publish(
     console.error('Expected published status to be "writable"');
     return;
   }
-  if (!googleDriveClient) {
-    console.error(`No google drive client provided`);
-    return;
-  }
 
   if (share.state.published) {
     // Already published!
@@ -572,9 +537,6 @@ export async function unpublish(
     // Already unpublished!
     return;
   }
-  if (!googleDriveClient) {
-    throw new Error(`No google drive client provided`);
-  }
   const { shareableFile } = share.state;
   const oldState = share.state;
   share.state = {
@@ -623,15 +585,6 @@ export async function publishStale(
   const oldState = share.state;
   if (oldState.status !== "writable" || !oldState.shareableFile) {
     return;
-  }
-  if (!googleDriveClient) {
-    throw new Error(`No google drive client provided`);
-  }
-  if (!boardServer) {
-    throw new Error(`No board server provided`);
-  }
-  if (!(boardServer instanceof GoogleDriveBoardServer)) {
-    throw new Error(`Provided board server was not Google Drive`);
   }
   if (!graph) {
     throw new Error(`No graph`);
@@ -688,10 +641,6 @@ export async function fixUnmanagedAssetProblems(): Promise<void> {
 
   const state = share.state;
   if (state.status !== "unmanaged-assets") {
-    return;
-  }
-  if (!googleDriveClient) {
-    console.error(`No google drive client provided`);
     return;
   }
   share.state = { status: "loading" };
