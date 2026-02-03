@@ -680,3 +680,33 @@ export async function publishStale(
     ` "${oldState.latestVersion}".`
   );
 }
+
+export async function fixUnmanagedAssetProblems(): Promise<void> {
+  const { controller, services } = bind;
+  const share = controller.editor.share;
+  const googleDriveClient = services.googleDriveClient;
+
+  const state = share.state;
+  if (state.status !== "unmanaged-assets") {
+    return;
+  }
+  if (!googleDriveClient) {
+    console.error(`No google drive client provided`);
+    return;
+  }
+  share.state = { status: "loading" };
+  await Promise.all(
+    state.problems.map(async (problem) => {
+      if (problem.problem === "missing") {
+        await Promise.all(
+          problem.missing.map((permission) =>
+            googleDriveClient.createPermission(problem.asset.id, permission, {
+              sendNotificationEmail: false,
+            })
+          )
+        );
+      }
+    })
+  );
+  state.closed.resolve();
+}

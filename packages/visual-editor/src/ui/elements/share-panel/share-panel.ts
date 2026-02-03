@@ -8,7 +8,6 @@ import { type BoardServer, type GraphDescriptor } from "@breadboard-ai/types";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type {
   DriveFileId,
-  GoogleDriveClient,
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
 import { consume } from "@lit/context";
@@ -27,7 +26,7 @@ import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+
 import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -328,8 +327,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor sca!: SCA;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient: GoogleDriveClient | undefined;
 
   @consume({ context: boardServerContext, subscribe: true })
   accessor boardServer: BoardServer | undefined;
@@ -736,30 +733,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   async #onClickFixUnmanagedAssetProblems() {
-    const state = this.#state;
-    if (state.status !== "unmanaged-assets") {
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      console.error(`No google drive client provided`);
-      return;
-    }
-    this.#state = { status: "loading" };
-    await Promise.all(
-      state.problems.map(async (problem) => {
-        if (problem.problem === "missing") {
-          await Promise.all(
-            problem.missing.map((permission) =>
-              googleDriveClient.createPermission(problem.asset.id, permission, {
-                sendNotificationEmail: false,
-              })
-            )
-          );
-        }
-      })
-    );
-    state.closed.resolve();
+    await this.sca.actions.share.fixUnmanagedAssetProblems();
   }
 
   async #onClickViewSharePermissions(event: MouseEvent) {
