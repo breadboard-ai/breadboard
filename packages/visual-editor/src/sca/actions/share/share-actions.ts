@@ -710,3 +710,59 @@ export async function fixUnmanagedAssetProblems(): Promise<void> {
   );
   state.closed.resolve();
 }
+
+export function openPanel(): void {
+  const { controller } = bind;
+  controller.editor.share.state = { status: "opening" };
+}
+
+export function closePanel(): void {
+  const { controller } = bind;
+  controller.editor.share.state = { status: "closed" };
+}
+
+export async function viewSharePermissions(
+  graph: GraphDescriptor | undefined,
+  shareSurface: string | undefined
+): Promise<void> {
+  const { controller } = bind;
+  const share = controller.editor.share;
+
+  const oldState = share.state;
+  if (oldState.status !== "writable") {
+    return;
+  }
+  if (!graph?.url) {
+    console.error(`No graph url`);
+    return;
+  }
+
+  share.state = { status: "loading" };
+
+  // We must create the shareable copy now if it doesn't already exist, since
+  // that's the file we need to open the granular permissions dialog with.
+  const shareableCopyFileId =
+    oldState.shareableFile?.id ??
+    (await makeShareableCopy(graph, shareSurface)).shareableCopyFileId;
+
+  share.state = {
+    status: "granular",
+    shareableFile: { id: shareableCopyFileId },
+  };
+}
+
+export async function onGoogleDriveSharePanelClose(
+  graph: GraphDescriptor | undefined
+): Promise<void> {
+  const { controller } = bind;
+  const share = controller.editor.share;
+
+  if (share.state.status !== "granular") {
+    return;
+  }
+  const graphFileId = share.state.shareableFile.id;
+  share.state = { status: "loading" };
+  await handleAssetPermissions(graphFileId, graph);
+  share.state = { status: "opening" };
+  openPanel();
+}

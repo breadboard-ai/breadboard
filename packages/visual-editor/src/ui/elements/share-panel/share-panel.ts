@@ -340,9 +340,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
   get #state(): ShareState {
     return this.sca.controller.editor.share.state;
   }
-  set #state(value: ShareState) {
-    this.sca.controller.editor.share.state = value;
-  }
 
   #dialog = createRef<HTMLDialogElement>();
   #publishedSwitch = createRef<MdSwitch>();
@@ -351,7 +348,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   override willUpdate(changes: PropertyValues<this>) {
     super.willUpdate(changes);
     if (changes.has("graph") && this.#state.status !== "closed") {
-      this.#state = { status: "opening" };
+      this.sca.actions.share.openPanel();
     }
     if (this.#state.status === "opening") {
       this.sca.actions.share.readPublishedState(
@@ -381,11 +378,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   open(): void {
-    this.#state = { status: "opening" };
+    this.sca.actions.share.openPanel();
   }
 
   close(): void {
-    this.#state = { status: "closed" };
+    this.sca.actions.share.closePanel();
   }
 
   #renderModal() {
@@ -492,7 +489,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
       </div>
     `;
   }
-
   async #onClickPublishStale() {
     await this.sca.actions.share.publishStale(this.graph);
   }
@@ -728,34 +724,13 @@ export class SharePanel extends SignalWatcher(LitElement) {
     }
     state.closed.resolve();
   }
-
   async #onClickFixUnmanagedAssetProblems() {
     await this.sca.actions.share.fixUnmanagedAssetProblems();
   }
 
   async #onClickViewSharePermissions(event: MouseEvent) {
     event.preventDefault();
-    if (this.#state.status !== "writable") {
-      return;
-    }
-    if (!this.graph?.url) {
-      console.error(`No graph url`);
-      return;
-    }
-
-    const oldState = this.#state;
-    this.#state = { status: "loading" };
-
-    // We must create the shareable copy now if it doesn't already exist, since
-    // that's the file we need to open the granular permissions dialog with.
-    const shareableCopyFileId =
-      oldState.shareableFile?.id ??
-      (await this.sca.actions.share.makeShareableCopy(this.graph, this.guestConfiguration?.shareSurface)).shareableCopyFileId;
-
-    this.#state = {
-      status: "granular",
-      shareableFile: { id: shareableCopyFileId },
-    };
+    await this.sca.actions.share.viewSharePermissions(this.graph, this.guestConfiguration?.shareSurface);
   }
 
   #onPublishedSwitchChange() {
@@ -829,16 +804,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     }
     return undefined;
   }
-
   async #onGoogleDriveSharePanelClose() {
-    if (this.#state.status !== "granular") {
-      return;
-    }
-    const graphFileId = this.#state.shareableFile.id;
-    this.#state = { status: "loading" };
-    await this.sca.actions.share.handleAssetPermissions(graphFileId, this.graph);
-    this.#state = { status: "opening" };
-    this.open();
+    await this.sca.actions.share.onGoogleDriveSharePanelClose(this.graph);
   }
 
   #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
