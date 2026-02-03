@@ -144,6 +144,9 @@ async function driveFileToBlob(
   const existingHandle = part.storedData.handle;
   if (existingHandle.startsWith(getBlobPrefix())) {
     return { part };
+  } else if (existingHandle.startsWith("nlm:/")) {
+    // NotebookLM references pass through as-is - no blob conversion needed
+    return { part };
   } else if (!existingHandle.startsWith("drive:/")) {
     return err(`Unknown blob URL: "${existingHandle}`);
   }
@@ -255,6 +258,13 @@ function createDataPartTansformer(
           return driveFileToGeminiFile(moduleArgs, {
             fileData: { fileUri: handle, mimeType, resourceKey },
           });
+        } else if (handle.startsWith("nlm:/")) {
+          // NotebookLM references are metadata, not convertible to file data
+          // They should be handled by generate steps that understand the nlm:/ protocol
+          return err(
+            `NotebookLM references (nlm:/) cannot be converted to file data. ` +
+              `They should be used with generate steps that support NotebookLM context.`
+          );
         } else {
           // check to see if it's a blob
           const blobId = maybeBlob(handle);

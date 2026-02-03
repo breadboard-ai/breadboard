@@ -181,6 +181,10 @@ class AgentFileSystem {
           errors.push(
             `Google Drive files may contain images and other non-textual content. Please use "${GENERATE_TEXT_FUNCTION}" to read them at full fidelity.`
           );
+        } else if (handle.startsWith("nlm:/")) {
+          errors.push(
+            `NotebookLM references are metadata and should be used with generate steps, not read as text.`
+          );
         } else {
           errors.push(
             `Reading text from file with mimeType ${mimeType} is not supported.`

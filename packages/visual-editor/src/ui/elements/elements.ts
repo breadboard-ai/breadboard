@@ -78,3 +78,6 @@ export { FlowgenInStepButton } from "../flow-gen/flowgen-in-step-button.js";
 export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
 export { GoogleDriveFileViewer } from "./google-drive/google-drive-file-viewer.js";
 export { GoogleDriveSharePanel } from "./google-drive/google-drive-share-panel.js";
+
+// NotebookLM.
+export { NotebookLmPicker } from "./notebooklm-picker/notebooklm-picker.js";

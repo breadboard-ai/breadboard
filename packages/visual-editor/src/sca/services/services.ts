@@ -14,6 +14,7 @@ import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
   GraphLoader,
+  NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
   PersistentBackend,
   RuntimeFlagManager,
@@ -41,6 +42,7 @@ import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { RunService } from "./run-service.js";
 import { StatusUpdatesService } from "./status-updates-service.js";
 import { getLogger, Formatter } from "../utils/logging/logger.js";
+import { NotebookLmApiClient } from "./notebooklm-api-client.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
@@ -56,6 +58,7 @@ export interface AppServices {
   graphStore: ReturnType<typeof createGraphStore>;
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
+  notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
   signinAdapter: SigninAdapter;
   statusUpdates: StatusUpdatesService;
@@ -153,6 +156,10 @@ export function services(
     );
     const emailPrefsManager = new EmailPrefsManager(apiClient);
     const flowGenerator = new FlowGenerator(apiClient, flags);
+    const notebookLmApiClient = new NotebookLmApiClient(
+      fetchWithCreds,
+      NOTEBOOKLM_API_PREFIX
+    );
 
     instance = {
       actionTracker,
@@ -168,6 +175,7 @@ export function services(
       graphStore,
       loader,
       mcpClientManager,
+      notebookLmApiClient,
       runService: new RunService(),
       signinAdapter,
       statusUpdates: new StatusUpdatesService(),

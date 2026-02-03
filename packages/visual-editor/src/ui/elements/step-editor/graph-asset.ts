@@ -165,6 +165,16 @@ export class GraphAsset extends Box implements DragConnectorReceiver
             margin-right: var(--bb-grid-size-2);
           }
 
+          & span.svg-icon {
+            flex: 0 0 auto;
+            width: 20px;
+            height: 20px;
+            margin-right: var(--bb-grid-size-2);
+            background-size: 20px 20px;
+            background-position: center;
+            background-repeat: no-repeat;
+          }
+
           & > * {
             pointer-events: none;
           }
@@ -347,6 +357,7 @@ export class GraphAsset extends Box implements DragConnectorReceiver
       icon = "upload";
     }
 
+    let svgIcon: string | null = null;
     if (this.asset?.subType) {
       switch (this.asset.subType) {
         case "youtube":
@@ -357,6 +368,9 @@ export class GraphAsset extends Box implements DragConnectorReceiver
           break;
         case "gdrive":
           icon = "drive";
+          break;
+        case "notebooklm":
+          svgIcon = `var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))`;
           break;
       }
     }
@@ -445,7 +459,12 @@ export class GraphAsset extends Box implements DragConnectorReceiver
             );
           }}
         >
-          <span class="g-icon filled round">${icon}</span>
+          ${svgIcon
+            ? html`<span
+                class="svg-icon"
+                style=${styleMap({ backgroundImage: svgIcon })}
+              ></span>`
+            : html`<span class="g-icon filled round">${icon}</span>`}
           <span>${this.assetTitle}</span>
           <button
             id="connection-trigger"
@@ -475,24 +494,26 @@ export class GraphAsset extends Box implements DragConnectorReceiver
             evt.stopImmediatePropagation();
           }}
         >
-          ${this.updating
-            ? html`<p class="loading">Loading asset details...</p>`
-            : nothing}
-          ${html`<div id="content-container">
-            <bb-llm-output
-              @outputsloaded=${() => {
-                this.updating = false;
-              }}
-              .value=${this.#getPreviewValue()}
-              .clamped=${false}
-              .lite=${true}
-              .showPDFControls=${false}
-              .showModeToggle=${false}
-              .showEntrySelector=${false}
-              .showExportControls=${false}
-              .graphUrl=${this.graphUrl}
-            ></bb-llm-output>
-          </div>`}
+          ${this.asset?.subType === "notebooklm"
+            ? this.#renderNotebookPreview()
+            : html`${this.updating
+                  ? html`<p class="loading">Loading asset details...</p>`
+                  : nothing}
+                <div id="content-container">
+                  <bb-llm-output
+                    @outputsloaded=${() => {
+                      this.updating = false;
+                    }}
+                    .value=${this.#getPreviewValue()}
+                    .clamped=${false}
+                    .lite=${true}
+                    .showPDFControls=${false}
+                    .showModeToggle=${false}
+                    .showEntrySelector=${false}
+                    .showExportControls=${false}
+                    .graphUrl=${this.graphUrl}
+                  ></bb-llm-output>
+                </div>`}
         </div>
       </section>
 
@@ -502,6 +523,14 @@ export class GraphAsset extends Box implements DragConnectorReceiver
   #getPreviewValue(): LLMContent | null {
     const context = this.asset?.data;
     return context?.at(-1) ?? null;
+  }
+
+  #renderNotebookPreview() {
+    // NotebookLM assets don't need async loading
+    this.updating = false;
+    return html`<div id="content-container">
+      <p class="notebook-description">NotebookLM notebook</p>
+    </div>`;
   }
 
   render() {

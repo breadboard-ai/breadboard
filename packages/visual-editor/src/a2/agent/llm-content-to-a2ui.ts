@@ -141,6 +141,15 @@ function llmContentToA2UIComponents(
             url: { literalString: part.storedData.handle },
           },
         });
+      } else if (part.storedData.handle.startsWith("nlm:/")) {
+        // NotebookLM references pass through as metadata - no visual representation
+        // The notebook ID will be consumed by generate steps as context
+        addTopLevel(generateId("notebooklm"), {
+          Text: {
+            text: { literalString: `[NotebookLM: ${part.storedData.handle}]` },
+            usageHint: "body",
+          },
+        });
       } else if (part.storedData.mimeType.startsWith("image")) {
         addMedia("Image", part.storedData.handle);
       } else if (part.storedData.mimeType.startsWith("video")) {
