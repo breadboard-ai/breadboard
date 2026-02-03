@@ -861,9 +861,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const selected = input.selected;
     if (selected) {
       this.actionTracker?.publishApp(this.graph.url);
-      this.#publish();
+      this.sca.actions.share.publish(this.graph, this.#getRequiredPublishPermissions(), this.guestConfiguration?.shareSurface);
     } else {
-      this.#unpublish();
+      this.sca.actions.share.unpublish(this.graph);
     }
   }
 
@@ -929,130 +929,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
     await this.sca.actions.share.handleAssetPermissions(graphFileId, this.graph);
     this.#state = { status: "opening" };
     this.open();
-  }
-
-
-  async #publish() {
-    console.log(`[Sharing Panel] Publishing`);
-    const publishPermissions = this.#getRequiredPublishPermissions();
-    if (publishPermissions.length === 0) {
-      console.error("No publish permissions configured");
-      return;
-    }
-    if (this.#state.status !== "writable") {
-      console.error('Expected published status to be "writable"');
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      console.error(`No google drive client provided`);
-      return;
-    }
-
-    if (this.#state.published) {
-      // Already published!
-      return;
-    }
-
-    let { shareableFile } = this.#state;
-    const oldState = this.#state;
-    this.#state = {
-      status: "updating",
-      published: true,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile,
-      userDomain: oldState.userDomain,
-    };
-
-    let newLatestVersion: string | undefined;
-    if (!shareableFile) {
-      const copyResult = await this.sca.actions.share.makeShareableCopy(this.graph, this.guestConfiguration?.shareSurface);
-      shareableFile = {
-        id: copyResult.shareableCopyFileId,
-        resourceKey: copyResult.shareableCopyResourceKey,
-        stale: false,
-        permissions: publishPermissions,
-        shareSurface: this.guestConfiguration?.shareSurface,
-      };
-      newLatestVersion = copyResult.newMainVersion;
-    }
-
-    const graphPublishPermissions = await Promise.all(
-      publishPermissions.map((permission) =>
-        googleDriveClient.createPermission(
-          shareableFile.id,
-          { ...permission, role: "reader" },
-          { sendNotificationEmail: false }
-        )
-      )
-    );
-
-    console.debug(
-      `[Sharing] Added ${publishPermissions.length} publish` +
-      ` permission(s) to shareable graph copy "${shareableFile.id}".`
-    );
-
-    await this.sca.actions.share.handleAssetPermissions(shareableFile.id, this.graph);
-
-    this.#state = {
-      status: "writable",
-      published: true,
-      publishedPermissions: graphPublishPermissions,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile,
-      latestVersion: newLatestVersion ?? oldState.latestVersion,
-      userDomain: oldState.userDomain,
-    };
-  }
-
-  async #unpublish() {
-    if (this.#state.status !== "writable") {
-      console.error('Expected published status to be "writable"');
-      return;
-    }
-    if (!this.#state.published) {
-      // Already unpublished!
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    const { shareableFile } = this.#state;
-    const oldState = this.#state;
-    this.#state = {
-      status: "updating",
-      published: false,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile,
-      userDomain: this.#state.userDomain,
-    };
-
-    console.debug(
-      `[Sharing] Removing ${oldState.publishedPermissions.length} publish` +
-      ` permission(s) from shareable graph copy "${shareableFile.id}".`
-    );
-    await Promise.all(
-      oldState.publishedPermissions.map(async (permission) => {
-        if (permission.role !== "owner") {
-          await googleDriveClient.deletePermission(
-            shareableFile.id,
-            permission.id!
-          );
-        }
-      })
-    );
-
-    await this.sca.actions.share.handleAssetPermissions(shareableFile.id, this.graph);
-
-    this.#state = {
-      status: "writable",
-      published: false,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile,
-      latestVersion: oldState.latestVersion,
-      userDomain: oldState.userDomain,
-    };
   }
 
   #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {

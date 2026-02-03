@@ -477,3 +477,137 @@ function getAssets(graph: GraphDescriptor | undefined): GoogleDriveAsset[] {
   }
   return findGoogleDriveAssetsInGraph(graph);
 }
+
+export async function publish(
+  graph: GraphDescriptor | undefined,
+  publishPermissions: gapi.client.drive.Permission[],
+  shareSurface: string | undefined
+): Promise<void> {
+  console.log(`[Sharing Panel] Publishing`);
+  const { controller, services } = bind;
+  const share = controller.editor.share;
+  const googleDriveClient = services.googleDriveClient;
+
+  if (publishPermissions.length === 0) {
+    console.error("No publish permissions configured");
+    return;
+  }
+  if (share.state.status !== "writable") {
+    console.error('Expected published status to be "writable"');
+    return;
+  }
+  if (!googleDriveClient) {
+    console.error(`No google drive client provided`);
+    return;
+  }
+
+  if (share.state.published) {
+    // Already published!
+    return;
+  }
+
+  let { shareableFile } = share.state;
+  const oldState = share.state;
+  share.state = {
+    status: "updating",
+    published: true,
+    granularlyShared: oldState.granularlyShared,
+    shareableFile,
+    userDomain: oldState.userDomain,
+  };
+
+  let newLatestVersion: string | undefined;
+  if (!shareableFile) {
+    const copyResult = await makeShareableCopy(graph, shareSurface);
+    shareableFile = {
+      id: copyResult.shareableCopyFileId,
+      resourceKey: copyResult.shareableCopyResourceKey,
+      stale: false,
+      permissions: publishPermissions,
+      shareSurface,
+    };
+    newLatestVersion = copyResult.newMainVersion;
+  }
+
+  const graphPublishPermissions = await Promise.all(
+    publishPermissions.map((permission) =>
+      googleDriveClient.createPermission(
+        shareableFile.id,
+        { ...permission, role: "reader" },
+        { sendNotificationEmail: false }
+      )
+    )
+  );
+
+  console.debug(
+    `[Sharing] Added ${publishPermissions.length} publish` +
+    ` permission(s) to shareable graph copy "${shareableFile.id}".`
+  );
+
+  await handleAssetPermissions(shareableFile.id, graph);
+
+  share.state = {
+    status: "writable",
+    published: true,
+    publishedPermissions: graphPublishPermissions,
+    granularlyShared: oldState.granularlyShared,
+    shareableFile,
+    latestVersion: newLatestVersion ?? oldState.latestVersion,
+    userDomain: oldState.userDomain,
+  };
+}
+
+export async function unpublish(
+  graph: GraphDescriptor | undefined
+): Promise<void> {
+  const { controller, services } = bind;
+  const share = controller.editor.share;
+  const googleDriveClient = services.googleDriveClient;
+
+  if (share.state.status !== "writable") {
+    console.error('Expected published status to be "writable"');
+    return;
+  }
+  if (!share.state.published) {
+    // Already unpublished!
+    return;
+  }
+  if (!googleDriveClient) {
+    throw new Error(`No google drive client provided`);
+  }
+  const { shareableFile } = share.state;
+  const oldState = share.state;
+  share.state = {
+    status: "updating",
+    published: false,
+    granularlyShared: oldState.granularlyShared,
+    shareableFile,
+    userDomain: share.state.userDomain,
+  };
+
+  console.debug(
+    `[Sharing] Removing ${oldState.publishedPermissions.length} publish` +
+    ` permission(s) from shareable graph copy "${shareableFile.id}".`
+  );
+  await Promise.all(
+    oldState.publishedPermissions.map(async (permission) => {
+      if (permission.role !== "owner") {
+        await googleDriveClient.deletePermission(
+          shareableFile.id,
+          permission.id!
+        );
+      }
+    })
+  );
+
+  await handleAssetPermissions(shareableFile.id, graph);
+
+  share.state = {
+    status: "writable",
+    published: false,
+    granularlyShared: oldState.granularlyShared,
+    shareableFile,
+    latestVersion: oldState.latestVersion,
+    userDomain: oldState.userDomain,
+  };
+}
