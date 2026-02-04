@@ -132,15 +132,14 @@ suite("app", () => {
   );
 
   testSymmetrical(
-    `${BASE_URL}/app/abc123?shared&results=def456`,
-    `${BASE_URL}/?flow=drive:/abc123&shared&results=def456&mode=app`,
+    `${BASE_URL}/app/abc123?results=def456`,
+    `${BASE_URL}/?flow=drive:/abc123&results=def456&mode=app`,
     {
       page: "graph",
       mode: "app",
       flow: "drive:/abc123",
       resourceKey: undefined,
       results: "def456",
-      shared: true,
       lite: false,
       colorScheme: undefined,
       guestPrefixed: false,
@@ -281,8 +280,8 @@ suite("landing", () => {
   );
 
   testSymmetrical(
-    `${BASE_URL}/landing/?flow=drive:/abc123&resourcekey=ghi789&shared&results=def456&mode=app`,
-    `${BASE_URL}/landing/?flow=drive:/abc123&resourcekey=ghi789&shared&results=def456&mode=app`,
+    `${BASE_URL}/landing/?flow=drive:/abc123&resourcekey=ghi789&results=def456&mode=app`,
+    `${BASE_URL}/landing/?flow=drive:/abc123&resourcekey=ghi789&results=def456&mode=app`,
     {
       page: "landing",
       redirect: {
@@ -292,7 +291,6 @@ suite("landing", () => {
         flow: "drive:/abc123",
         resourceKey: "ghi789",
         results: "def456",
-        shared: true,
         lite: false,
         colorScheme: undefined,
         guestPrefixed: true,
