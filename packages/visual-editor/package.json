@@ -15,6 +15,7 @@
     "prepack": "npm run build",
     "build": "wireit",
     "coverage": "wireit",
+    "coverage:ci": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
@@ -129,6 +130,16 @@
       ],
       "dependencies": [
         "test"
+      ]
+    },
+    "coverage:ci": {
+      "command": "mkdir -p coverage-ci && cp coverage/coverage-summary.json coverage-ci/",
+      "files": [],
+      "output": [
+        "coverage-ci/coverage-summary.json"
+      ],
+      "dependencies": [
+        "coverage"
       ]
     },
     "eval:agent": {
