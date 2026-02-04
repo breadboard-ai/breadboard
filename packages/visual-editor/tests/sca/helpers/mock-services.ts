@@ -149,6 +149,7 @@ export interface TestServicesOptions {
   >;
   googleDriveClient?: Partial<GoogleDriveClient>;
   signinAdapter?: Partial<SigninAdapter>;
+  googleDriveBoardServer?: object;
 }
 
 export function makeTestServices(options: TestServicesOptions = {}) {
@@ -159,6 +160,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     nodeMetadata = {},
     googleDriveClient,
     signinAdapter,
+    googleDriveBoardServer,
   } = options;
 
   const actionTrackerMock = {
@@ -168,16 +170,18 @@ export function makeTestServices(options: TestServicesOptions = {}) {
   const services = {
     agentContext,
     // Mock googleDriveBoardServer for registerSaveStatusListener
-    googleDriveBoardServer: {
-      addEventListener: () => { },
-      removeEventListener: () => { },
-      flushSaveQueue: async () => { },
+    googleDriveBoardServer: googleDriveBoardServer ?? {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      flushSaveQueue: async () => {},
     },
     googleDriveClient: googleDriveClient ?? {},
     signinAdapter: signinAdapter ?? {},
     // Mock RunService that returns a testable mock runner
     runService: {
-      createRunner: (config: { runner?: { nodes?: Array<{ id: string }> } }) => {
+      createRunner: (config: {
+        runner?: { nodes?: Array<{ id: string }> };
+      }) => {
         const nodes = config?.runner?.nodes ?? [];
         const mockRunner = createMockRunner(nodes);
         const abortController = new AbortController();

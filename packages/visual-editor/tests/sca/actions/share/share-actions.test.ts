@@ -62,4 +62,71 @@ describe("Share Actions", () => {
     ShareActions.closePanel();
     assert.deepEqual(share.state, { status: "closed" });
   });
+
+  test("publish", async () => {
+    const { controller } = makeTestController();
+    const createdPermissions: gapi.client.drive.Permission[] = [];
+    const { services } = makeTestServices({
+      googleDriveClient: {
+        getFileMetadata: async () => ({
+          id: "test-drive-id",
+          properties: {},
+          ownedByMe: true,
+          version: "1",
+        }),
+        copyFile: async () => ({
+          id: "shareable-copy-id",
+          resourceKey: "shareable-copy-resource-key",
+        }),
+        updateFileMetadata: async () => ({ version: "2" }),
+        createPermission: async (
+          _fileId: string,
+          permission: gapi.client.drive.Permission
+        ) => {
+          createdPermissions.push(permission);
+          return { ...permission, id: "permission-id" };
+        },
+      } as object as Partial<GoogleDriveClient>,
+      signinAdapter: {
+        domain: Promise.resolve("example.com"),
+      },
+      googleDriveBoardServer: {
+        create: async () => ({
+          result: true,
+          url: "drive://shareable-copy-id",
+        }),
+        flushSaveQueue: async () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      },
+    });
+    ShareActions.bind({ controller, services });
+    const share = controller.editor.share;
+
+    // Open and load to get to writable state
+    ShareActions.openPanel();
+    await ShareActions.readPublishedState(
+      { edges: [], nodes: [], url: "drive://test-drive-id" },
+      []
+    );
+    assert.strictEqual(share.state.status, "writable");
+    assert.strictEqual(share.state.published, false);
+
+    // Publish
+    const graph = { edges: [], nodes: [], url: "drive://test-drive-id" };
+    const publishPermissions = [{ type: "domain", domain: "example.com" }];
+    await ShareActions.publish(graph, publishPermissions, undefined);
+
+    // Verify state is now published
+    assert.strictEqual(share.state.status, "writable");
+    assert.strictEqual(share.state.published, true);
+
+    // Verify permission was created with role: "reader"
+    assert.strictEqual(createdPermissions.length, 1);
+    assert.deepEqual(createdPermissions[0], {
+      type: "domain",
+      domain: "example.com",
+      role: "reader",
+    });
+  });
 });
