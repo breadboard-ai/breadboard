@@ -129,4 +129,92 @@ describe("Share Actions", () => {
       role: "reader",
     });
   });
+
+  test("unpublish", async () => {
+    const { controller } = makeTestController();
+    const deletedPermissionIds: string[] = [];
+    const { services } = makeTestServices({
+      googleDriveClient: {
+        getFileMetadata: async () => ({
+          id: "test-drive-id",
+          properties: {},
+          ownedByMe: true,
+          version: "1",
+        }),
+        updateFileMetadata: async () => ({ version: "2" }),
+        createPermission: async (
+          _fileId: string,
+          permission: gapi.client.drive.Permission
+        ) => ({ ...permission, id: "permission-123" }),
+        deletePermission: async (_fileId: string, permissionId: string) => {
+          deletedPermissionIds.push(permissionId);
+        },
+      } as object as Partial<GoogleDriveClient>,
+      signinAdapter: {
+        domain: Promise.resolve("example.com"),
+      },
+      googleDriveBoardServer: {
+        create: async () => ({
+          result: true,
+          url: "drive://shareable-copy-id",
+        }),
+        flushSaveQueue: async () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      },
+    });
+    ShareActions.bind({ controller, services });
+    const share = controller.editor.share;
+
+    // Open, load, and publish to get to published state
+    ShareActions.openPanel();
+    await ShareActions.readPublishedState(
+      { edges: [], nodes: [], url: "drive://test-drive-id" },
+      []
+    );
+    const graph = { edges: [], nodes: [], url: "drive://test-drive-id" };
+    const publishPermissions = [{ type: "domain", domain: "example.com" }];
+    await ShareActions.publish(graph, publishPermissions, undefined);
+    assert.strictEqual(share.state.status, "writable");
+    assert.strictEqual(share.state.published, true);
+
+    // Unpublish
+    await ShareActions.unpublish(graph);
+
+    // Verify state is now unpublished
+    assert.strictEqual(share.state.status, "writable");
+    assert.strictEqual(share.state.published, false);
+
+    // Verify permission was deleted
+    assert.strictEqual(deletedPermissionIds.length, 1);
+    assert.strictEqual(deletedPermissionIds[0], "permission-123");
+  });
+
+  test("readonly when not owned by me", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices({
+      googleDriveClient: {
+        getFileMetadata: async () => ({
+          id: "test-drive-id",
+          properties: {},
+          ownedByMe: false,
+          resourceKey: "resource-key-123",
+        }),
+      } as object as Partial<GoogleDriveClient>,
+    });
+    ShareActions.bind({ controller, services });
+    const share = controller.editor.share;
+
+    ShareActions.openPanel();
+    await ShareActions.readPublishedState(
+      { edges: [], nodes: [], url: "drive://test-drive-id" },
+      []
+    );
+
+    assert.strictEqual(share.state.status, "readonly");
+    assert.deepEqual(share.state.shareableFile, {
+      id: "test-drive-id",
+      resourceKey: "resource-key-123",
+    });
+  });
 });
