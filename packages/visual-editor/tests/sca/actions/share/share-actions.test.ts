@@ -432,6 +432,10 @@ describe("Share Actions", () => {
       fileId: string;
       permission: gapi.client.drive.Permission;
     }> = [];
+    const deletedPermissions: Array<{
+      fileId: string;
+      permissionId: string;
+    }> = [];
     const { services } = makeTestServices({
       googleDriveClient: {
         getFileMetadata: async (
@@ -467,11 +471,40 @@ describe("Share Actions", () => {
             };
           }
           if (id === "managed-asset-id") {
-            // Managed asset has no permissions yet
+            // Managed asset has no permissions yet - needs domain permission added
             return {
               id: "managed-asset-id",
               capabilities: { canShare: true },
               permissions: [],
+            };
+          }
+          if (id === "cant-share-asset-id") {
+            // Managed asset that can't be shared - should be skipped
+            return {
+              id: "cant-share-asset-id",
+              capabilities: { canShare: false },
+              permissions: [],
+            };
+          }
+          if (id === "excess-perms-asset-id") {
+            // Managed asset has an extra permission that needs to be removed
+            return {
+              id: "excess-perms-asset-id",
+              capabilities: { canShare: true },
+              permissions: [
+                {
+                  id: "excess-perm-id",
+                  type: "domain",
+                  domain: "example.com",
+                  role: "reader",
+                },
+                {
+                  id: "old-perm-id",
+                  type: "user",
+                  emailAddress: "old@example.com",
+                  role: "reader",
+                },
+              ],
             };
           }
           return { id };
@@ -483,6 +516,9 @@ describe("Share Actions", () => {
         ) => {
           createdPermissions.push({ fileId, permission });
           return { id: "new-permission-id" };
+        },
+        deletePermission: async (fileId: string, permissionId: string) => {
+          deletedPermissions.push({ fileId, permissionId });
         },
       } as object as Partial<GoogleDriveClient>,
       signinAdapter: {
@@ -504,7 +540,7 @@ describe("Share Actions", () => {
     ShareActions.bind({ controller, services });
     const share = controller.editor.share;
 
-    // Graph with a managed asset
+    // Graph with multiple managed assets
     const graph = {
       edges: [],
       nodes: [],
@@ -529,6 +565,44 @@ describe("Share Actions", () => {
             type: "file" as const,
           },
         },
+        "asset-2": {
+          data: [
+            {
+              parts: [
+                {
+                  storedData: {
+                    handle: "drive:/cant-share-asset-id",
+                    mimeType: "image/png",
+                  },
+                },
+              ],
+            },
+          ],
+          metadata: {
+            managed: true,
+            title: "cant-share-asset",
+            type: "file" as const,
+          },
+        },
+        "asset-3": {
+          data: [
+            {
+              parts: [
+                {
+                  storedData: {
+                    handle: "drive:/excess-perms-asset-id",
+                    mimeType: "image/png",
+                  },
+                },
+              ],
+            },
+          ],
+          metadata: {
+            managed: true,
+            title: "excess-perms-asset",
+            type: "file" as const,
+          },
+        },
       },
     };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
@@ -542,13 +616,30 @@ describe("Share Actions", () => {
     // Publish
     await ShareActions.publish(graph, publishPermissions, undefined);
 
-    // Verify managed asset got the domain permission
+    // Verify managed-asset-id got the domain permission added
     const assetPermission = createdPermissions.find(
       (p) => p.fileId === "managed-asset-id"
     );
     assert.ok(assetPermission, "Managed asset should have received permission");
     assert.strictEqual(assetPermission.permission.type, "domain");
     assert.strictEqual(assetPermission.permission.domain, "example.com");
+
+    // Verify cant-share-asset-id did NOT receive any permissions (skipped)
+    const cantSharePermission = createdPermissions.find(
+      (p) => p.fileId === "cant-share-asset-id"
+    );
+    assert.strictEqual(
+      cantSharePermission,
+      undefined,
+      "Cant-share asset should NOT have received permission"
+    );
+
+    // Verify excess-perms-asset-id had the old permission deleted
+    const deletedPerm = deletedPermissions.find(
+      (p) => p.fileId === "excess-perms-asset-id"
+    );
+    assert.ok(deletedPerm, "Excess permission should have been deleted");
+    assert.strictEqual(deletedPerm.permissionId, "old-perm-id");
   });
 
   test("fixUnmanagedAssetProblems adds missing permissions", async () => {
