@@ -845,7 +845,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         flow: shareableGraphUrl,
         resourceKey: await shareableGraphResourceKeyPromise,
         results: resultsFileId,
-        shared: true,
         guestPrefixed: false,
       },
       this.globalConfig?.hostOrigin

@@ -84,7 +84,6 @@ export const LoadRoute: EventRoute<"board.load"> = {
       mode: sca.controller.global.main.mode,
       flow: originalEvent.detail.url,
       resourceKey: undefined,
-      shared: originalEvent.detail.shared,
       dev: parseUrl(window.location.href).dev,
       guestPrefixed: true,
     });
