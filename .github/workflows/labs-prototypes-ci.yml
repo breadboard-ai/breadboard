@@ -50,9 +50,6 @@ jobs:
       - name: Checking the code formatting
         run: npm run check:format
 
-      - name: Running tests
-        run: npm run test
-
       - name: Running coverage
         run: npm run coverage
 
