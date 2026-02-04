@@ -333,4 +333,96 @@ describe("Share Actions", () => {
     assert.strictEqual(share.state.status, "writable");
     assert.strictEqual(share.state.shareableFile?.stale, false);
   });
+
+  test("granular sharing", async () => {
+    const { controller } = makeTestController();
+    // Track the permissions on the shareable copy - starts empty
+    let shareableCopyPermissions: gapi.client.drive.Permission[] = [];
+    const { services } = makeTestServices({
+      googleDriveClient: {
+        getFileMetadata: async (fileId: string) => {
+          if (fileId === "test-drive-id") {
+            return {
+              id: "test-drive-id",
+              properties: {
+                mainToShareableCopy: "shareable-copy-id",
+              },
+              ownedByMe: true,
+              version: "1",
+            };
+          }
+          // shareable copy metadata
+          return {
+            id: "shareable-copy-id",
+            resourceKey: "shareable-resource-key",
+            properties: {},
+            permissions: shareableCopyPermissions,
+          };
+        },
+        updateFileMetadata: async () => ({ version: "1" }),
+      } as object as Partial<GoogleDriveClient>,
+      signinAdapter: {
+        domain: Promise.resolve("example.com"),
+      },
+      googleDriveBoardServer: {
+        flushSaveQueue: async () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      },
+    });
+    ShareActions.bind({ controller, services });
+    const share = controller.editor.share;
+    const graph = { edges: [], nodes: [], url: "drive:/test-drive-id" };
+    const publishPermissions = [{ type: "domain", domain: "example.com" }];
+
+    // Open and load - initially not published
+    ShareActions.openPanel();
+    await ShareActions.readPublishedState(graph, publishPermissions);
+    assert.strictEqual(share.state.status, "writable");
+    assert.strictEqual(share.state.published, false);
+    assert.strictEqual(share.state.granularlyShared, false);
+
+    // User opens granular sharing dialog
+    await ShareActions.viewSharePermissions(graph, undefined);
+    assert.deepEqual(share.state, {
+      status: "granular",
+      shareableFile: { id: "shareable-copy-id" },
+    });
+
+    // User adds individual permission
+    shareableCopyPermissions = [
+      { type: "user", emailAddress: "somebody@example.com", role: "reader" },
+    ];
+
+    // User closes granular sharing dialog
+    await ShareActions.onGoogleDriveSharePanelClose(graph);
+    await ShareActions.readPublishedState(graph, publishPermissions);
+
+    // We should now be granularly shared, but not published
+    assert.strictEqual(share.state.status, "writable");
+    assert.strictEqual(share.state.granularlyShared, true);
+    assert.strictEqual(share.state.published, false);
+
+    // User opens granular sharing again
+    await ShareActions.viewSharePermissions(graph, undefined);
+    assert.deepEqual(share.state, {
+      status: "granular",
+      shareableFile: { id: "shareable-copy-id" },
+    });
+
+    // User adds domain permission
+    shareableCopyPermissions = [
+      { type: "user", emailAddress: "somebody@example.com", role: "reader" },
+      { type: "domain", domain: "example.com", role: "reader" },
+    ];
+
+    // User closes the dialog
+    await ShareActions.onGoogleDriveSharePanelClose(graph);
+    await ShareActions.readPublishedState(graph, publishPermissions);
+
+    // We should now be granularly shared and published
+    assert.strictEqual(share.state.status, "writable");
+    assert.strictEqual(share.state.granularlyShared, true);
+    assert.strictEqual(share.state.published, true);
+  });
 });
