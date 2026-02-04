@@ -196,6 +196,10 @@ class EvalHarness {
 
     mock.restoreAll();
     autoClearingInterval.clearAllIntervals();
+
+    // Exit explicitly since module-level setInterval calls (in now.ts, work-item.ts,
+    // app-screen.ts) can't be easily cleared and would keep the process alive.
+    process.exit(0);
   }
 }
 
@@ -281,7 +285,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         Authorization: `Bearer ${this.accessToken}`,
       },
     });
-    this.requestLogger.response(entryId, response.clone());
+    await this.requestLogger.response(entryId, response.clone());
     return response;
   };
 
