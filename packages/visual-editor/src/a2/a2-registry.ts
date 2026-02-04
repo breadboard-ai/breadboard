@@ -26,6 +26,15 @@ import searchEnterpriseInvoke, {
 import codeExecutionInvoke, {
   describe as codeExecutionDescribe,
 } from "./tools/code-execution.js";
+import userInputInvoke, {
+  describe as userInputDescribe,
+} from "./a2/user-input.js";
+import renderOutputsInvoke, {
+  describe as renderOutputsDescribe,
+} from "./a2/render-outputs.js";
+import generateInvoke, {
+  describe as generateDescribe,
+} from "./generate/main.js";
 
 export { A2_COMPONENTS, A2_TOOLS };
 
@@ -123,6 +132,12 @@ const A2_TOOLS: [string, StaticTool][] = [
  * Static registry of A2 components that appear in the component picker.
  * These are the step types available in the editor controls.
  */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ComponentInvoke = (...args: any[]) => Promise<any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ComponentDescribe = (...args: any[]) => Promise<any>;
+
 type A2Component = {
   url: string;
   title: string;
@@ -130,17 +145,27 @@ type A2Component = {
   icon: string;
   order: number;
   category: "input" | "generate" | "output";
+  invoke: ComponentInvoke;
+  describe: ComponentDescribe;
+  /**
+   * Optional module URL alias. If present, requests for this component's URL
+   * should be redirected to this module URL for proper context wiring.
+   */
+  moduleUrl?: string;
 };
 
 const A2_COMPONENTS: A2Component[] = [
   {
     url: "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+    moduleUrl: "embed://a2/a2.bgl.json#module:user-input",
     title: "User Input",
     description:
       "Allows asking user for input that could be then used in next steps",
     icon: "ask-user",
     order: 1,
     category: "input",
+    invoke: userInputInvoke,
+    describe: userInputDescribe,
   },
   {
     url: "embed://a2/generate.bgl.json#module:main",
@@ -149,6 +174,8 @@ const A2_COMPONENTS: A2Component[] = [
     icon: "generative",
     order: 1,
     category: "generate",
+    invoke: generateInvoke,
+    describe: generateDescribe,
   },
   {
     url: "embed://a2/a2.bgl.json#module:render-outputs",
@@ -157,5 +184,7 @@ const A2_COMPONENTS: A2Component[] = [
     icon: "responsive_layout",
     order: 100,
     category: "output",
+    invoke: renderOutputsInvoke,
+    describe: renderOutputsDescribe,
   },
 ];

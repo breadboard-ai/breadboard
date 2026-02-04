@@ -31,6 +31,7 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 import { urlComponentsFromString } from "../engine/loader/loader.js";
 import { McpClientManager } from "../mcp/index.js";
 import { a2 } from "./a2.js";
+import { A2_COMPONENTS } from "./a2-registry.js";
 import { type ConsentController } from "../sca/controller/subcontrollers/global/global.js";
 import { AgentContext } from "./agent/agent-context.js";
 
@@ -38,6 +39,27 @@ export { createA2ModuleFactory };
 
 const URL_PREFIX = "embed://a2/";
 const URL_SUFFIX = ".bgl.json";
+
+/**
+ * Lookup a component's invoke or describe function by URL.
+ * Returns undefined if the URL doesn't match a registered component.
+ * Handles both direct URLs and module: prefixed URLs.
+ */
+function lookupComponent(
+  url: string,
+  method: "invoke" | "describe"
+): unknown | undefined {
+  // Try direct match first
+  let component = A2_COMPONENTS.find((c) => c.url === url);
+
+  // If no match, try with module: prefix (for module-based components)
+  if (!component && url.includes("#") && !url.includes("#module:")) {
+    const moduleUrl = url.replace("#", "#module:");
+    component = A2_COMPONENTS.find((c) => c.url === moduleUrl);
+  }
+  if (!component) return undefined;
+  return method === "invoke" ? component.invoke : component.describe;
+}
 
 export type A2ModuleFactoryArgs = {
   mcpClientManager: McpClientManager;
@@ -190,6 +212,12 @@ class A2Module implements RunnableModule {
   ) {}
 
   getModule(name: string, method: "invoke" | "describe"): unknown | undefined {
+    // First, try static component registry for direct dispatch
+    const url = `${URL_PREFIX}${this.dir}${URL_SUFFIX}#${name}`;
+    const staticFunc = lookupComponent(url, method);
+    if (staticFunc) return staticFunc;
+
+    // Fall back to dynamic a2 object lookup
     const exp = method === "invoke" ? "default" : "describe";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const module = (a2 as any)[this.dir]?.[name]?.[exp];
