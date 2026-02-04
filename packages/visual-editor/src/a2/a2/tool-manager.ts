@@ -196,15 +196,16 @@ class ToolManager implements SimplifiedToolManager {
       this.#hasCodeExection = true;
       return "Code Execution";
     }
+    if (url === MEMORY_TOOL_PATH) {
+      // Memory tool: no function declarations, just a signal to enable
+      // memory functions in the agent loop.
+      return "";
+    }
     if (instance) {
       if (url === ROUTE_TOOL_PATH) {
         // This is a route, so it translates to nothing when using this method,
         // and in effect ignore the route. This is because the agent loop code
         // will handle routes in its own way.
-        return "";
-      } else if (url === MEMORY_TOOL_PATH) {
-        // Memory tool: no function declarations, just a signal to enable
-        // memory functions in the agent loop.
         return "";
       } else {
         const client = new McpToolAdapter(this.moduleArgs, url);
