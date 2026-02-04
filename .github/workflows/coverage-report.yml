@@ -25,11 +25,36 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
 
     steps:
+      # Checkout main FIRST to ensure all scripts and package.json come from
+      # trusted code, not the PR artifact
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build and generate baseline coverage
+        id: baseline
+        run: |
+          npm run build
+          npm run coverage:ci
+        continue-on-error: true
+
+      # Download artifacts AFTER checkout/build to isolate them from the
+      # trusted codebase. The artifact only contains JSON data files.
       - name: Download coverage artifact
         id: download
         uses: actions/download-artifact@v4
         with:
           name: coverage-report
+          path: pr-artifact
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
@@ -44,8 +69,8 @@ jobs:
         if: steps.download.outcome == 'success'
         id: pr
         run: |
-          if [ -f pr-number.txt ]; then
-            echo "number=$(cat pr-number.txt)" >> $GITHUB_OUTPUT
+          if [ -f pr-artifact/pr-number.txt ]; then
+            echo "number=$(cat pr-artifact/pr-number.txt)" >> $GITHUB_OUTPUT
           else
             echo "::warning::PR number file not found"
             echo "number=" >> $GITHUB_OUTPUT
@@ -57,34 +82,11 @@ jobs:
           echo "::warning::No PR number found. Skipping coverage report."
           exit 0
 
-      - uses: actions/checkout@v6
-        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
-        with:
-          ref: main
-
-      - name: Use Node.js 24.x
-        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24.x
-          cache: "npm"
-
-      - name: Install dependencies
-        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
-        run: npm ci --ignore-scripts
-
-      - name: Build and generate baseline coverage
-        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
-        id: baseline
-        run: |
-          npm run build
-          npm run coverage:ci
-        continue-on-error: true
-
       - name: Generate coverage comparison
         if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && steps.baseline.outcome == 'success'
         id: coverage
-        run: node scripts/compare-coverage.js coverage-summary.json packages/visual-editor/coverage-ci/coverage-summary.json
+        # compare-coverage.js only parses JSON data, it does not execute artifact contents
+        run: node scripts/compare-coverage.js pr-artifact/coverage-summary.json packages/visual-editor/coverage-ci/coverage-summary.json
         continue-on-error: true
 
       - name: Generate fallback comment on comparison failure
@@ -96,7 +98,7 @@ jobs:
           echo "- Build failure on main branch" >> coverage-comment.md
           echo "- Missing coverage data" >> coverage-comment.md
           echo "" >> coverage-comment.md
-          if [ -f coverage-summary.json ]; then
+          if [ -f pr-artifact/coverage-summary.json ]; then
             echo "**PR Coverage data was uploaded successfully.**" >> coverage-comment.md
           fi
 
