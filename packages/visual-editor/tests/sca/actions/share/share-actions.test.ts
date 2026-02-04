@@ -550,4 +550,203 @@ describe("Share Actions", () => {
     assert.strictEqual(assetPermission.permission.type, "domain");
     assert.strictEqual(assetPermission.permission.domain, "example.com");
   });
+
+  test("fixUnmanagedAssetProblems adds missing permissions", async () => {
+    const { controller } = makeTestController();
+    const createdPermissions: Array<{
+      fileId: string;
+      permission: gapi.client.drive.Permission;
+    }> = [];
+    const { services } = makeTestServices({
+      googleDriveClient: {
+        getFileMetadata: async (
+          fileId: string | { id: string },
+          options?: { fields?: string[] }
+        ) => {
+          const id = typeof fileId === "string" ? fileId : fileId.id;
+          if (id === "test-drive-id") {
+            // Main file - no shareable copy yet
+            return {
+              id: "test-drive-id",
+              properties: {},
+              ownedByMe: true,
+              version: "1",
+            };
+          }
+          if (id === "shareable-copy-id") {
+            // If asking for permissions, return the shareable copy's permissions
+            if (options?.fields?.includes("permissions")) {
+              return {
+                permissions: [
+                  { type: "domain", domain: "example.com", role: "reader" },
+                ],
+              };
+            }
+            return {
+              id: "shareable-copy-id",
+              resourceKey: "shareable-resource-key",
+              properties: {},
+              permissions: [
+                { type: "domain", domain: "example.com", role: "reader" },
+              ],
+            };
+          }
+          if (id === "unmanaged-asset-id") {
+            // Unmanaged asset - has share capability but no permissions
+            return {
+              id: "unmanaged-asset-id",
+              name: "My Unmanaged File",
+              iconLink: "https://example.com/icon.png",
+              capabilities: { canShare: true },
+              permissions: [],
+            };
+          }
+          if (id === "cant-share-asset-id") {
+            // Unmanaged asset - cannot be shared (no canShare capability)
+            return {
+              id: "cant-share-asset-id",
+              name: "Someone Elses File",
+              iconLink: "https://example.com/icon2.png",
+              capabilities: { canShare: false },
+              permissions: [],
+            };
+          }
+          return { id };
+        },
+        updateFileMetadata: async () => ({ version: "2" }),
+        createPermission: async (
+          fileId: string,
+          permission: gapi.client.drive.Permission
+        ) => {
+          createdPermissions.push({ fileId, permission });
+          return { id: "new-permission-id" };
+        },
+      } as object as Partial<GoogleDriveClient>,
+      signinAdapter: {
+        domain: Promise.resolve("example.com"),
+      },
+      googleDriveBoardServer: {
+        flushSaveQueue: async () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        create: async () => ({
+          result: true,
+          url: "drive:/shareable-copy-id",
+        }),
+        ops: {
+          writeGraphToDrive: async () => {},
+        },
+      },
+    });
+    ShareActions.bind({ controller, services });
+    const share = controller.editor.share;
+
+    // Graph with unmanaged assets (managed: false or undefined)
+    const graph = {
+      edges: [],
+      nodes: [],
+      url: "drive:/test-drive-id",
+      assets: {
+        "asset-1": {
+          data: [
+            {
+              parts: [
+                {
+                  storedData: {
+                    handle: "drive:/unmanaged-asset-id",
+                    mimeType: "image/png",
+                  },
+                },
+              ],
+            },
+          ],
+          metadata: {
+            managed: false,
+            title: "unmanaged-asset",
+            type: "file" as const,
+          },
+        },
+        "asset-2": {
+          data: [
+            {
+              parts: [
+                {
+                  storedData: {
+                    handle: "drive:/cant-share-asset-id",
+                    mimeType: "image/png",
+                  },
+                },
+              ],
+            },
+          ],
+          metadata: {
+            managed: false,
+            title: "cant-share-asset",
+            type: "file" as const,
+          },
+        },
+      },
+    };
+    const publishPermissions = [{ type: "domain", domain: "example.com" }];
+
+    // Open and load
+    ShareActions.openPanel();
+    await ShareActions.readPublishedState(graph, publishPermissions);
+    assert.strictEqual(share.state.status, "writable");
+
+    // Start publish - this will detect the unmanaged asset and pause
+    const publishPromise = ShareActions.publish(
+      graph,
+      publishPermissions,
+      undefined
+    );
+
+    // Wait a tick for the state to transition to unmanaged-assets
+    await new Promise((r) => setTimeout(r, 10));
+    assert.strictEqual(share.state.status, "unmanaged-assets");
+
+    // Verify we have both problems - one missing, one cant-share
+    // Re-read state after assertion to get proper type narrowing
+    const unmanagedState = share.state as {
+      status: "unmanaged-assets";
+      problems: Array<{ asset: { id: string }; problem: string }>;
+    };
+    const missingProblem = unmanagedState.problems.find(
+      (p) => p.problem === "missing"
+    );
+    const cantShareProblem = unmanagedState.problems.find(
+      (p) => p.problem === "cant-share"
+    );
+    assert.ok(missingProblem, "Should have a missing permission problem");
+    assert.ok(cantShareProblem, "Should have a cant-share problem");
+    assert.strictEqual(missingProblem.asset.id, "unmanaged-asset-id");
+    assert.strictEqual(cantShareProblem.asset.id, "cant-share-asset-id");
+
+    // Fix the unmanaged asset problems
+    await ShareActions.fixUnmanagedAssetProblems();
+
+    // Wait for publish to complete
+    await publishPromise;
+
+    // Verify permission was created only on the shareable asset
+    const assetPermission = createdPermissions.find(
+      (p) => p.fileId === "unmanaged-asset-id"
+    );
+    assert.ok(
+      assetPermission,
+      "Unmanaged asset should have received permission"
+    );
+    assert.strictEqual(assetPermission.permission.type, "domain");
+    assert.strictEqual(assetPermission.permission.domain, "example.com");
+
+    // Verify cant-share asset did NOT receive any permissions
+    const cantSharePermission = createdPermissions.find(
+      (p) => p.fileId === "cant-share-asset-id"
+    );
+    assert.strictEqual(
+      cantSharePermission,
+      undefined,
+      "Cant-share asset should NOT have received permission"
+    );
+  });
 });
