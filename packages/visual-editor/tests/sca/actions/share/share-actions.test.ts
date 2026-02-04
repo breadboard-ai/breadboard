@@ -225,6 +225,52 @@ describe("Share Actions", () => {
     });
   });
 
+  test("readonly when not owned by me but has shareable copy", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices({
+      googleDriveClient: {
+        getFileMetadata: async (
+          fileId: string | { id: string },
+          _options?: { fields?: string[] }
+        ) => {
+          const id = typeof fileId === "string" ? fileId : fileId.id;
+          if (id === "test-drive-id") {
+            return {
+              id: "test-drive-id",
+              properties: {
+                mainToShareableCopy: "shareable-copy-id",
+              },
+              ownedByMe: false,
+              resourceKey: "main-resource-key",
+            };
+          }
+          if (id === "shareable-copy-id") {
+            return {
+              id: "shareable-copy-id",
+              resourceKey: "shareable-resource-key",
+            };
+          }
+          return { id };
+        },
+      } as object as Partial<GoogleDriveClient>,
+    });
+    ShareActions.bind({ controller, services });
+    const share = controller.editor.share;
+
+    ShareActions.openPanel();
+    await ShareActions.readPublishedState(
+      { edges: [], nodes: [], url: "drive:/test-drive-id" },
+      []
+    );
+
+    assert.strictEqual(share.state.status, "readonly");
+    // Should use the shareable copy's id and resourceKey, not the main file's
+    assert.deepEqual(share.state.shareableFile, {
+      id: "shareable-copy-id",
+      resourceKey: "shareable-resource-key",
+    });
+  });
+
   test("readonly when file is a shareable copy", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices({
