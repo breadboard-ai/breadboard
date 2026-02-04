@@ -82,7 +82,13 @@ export class RecentBoardsController extends RootController {
 
   setPin(url: string, pinned: boolean) {
     const index = this.#find(url);
-    if (index === -1) return;
+    if (index === -1) {
+      this.add({
+        url,
+        pinned,
+      });
+      return;
+    }
 
     this._boards[index].pinned = pinned;
   }
