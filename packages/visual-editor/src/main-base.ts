@@ -389,11 +389,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           await this.sca.services.apiClient.getG1SubscriptionStatus({
             include_credit_data: true,
           });
-        this.sca.controller.global.main.subscriptionStatus = response.is_member
+        this.sca.controller.global.main.subscriptionStatus = response.isMember
           ? "subscribed"
           : "not-subscribed";
         this.sca.controller.global.main.subscriptionCredits =
-          response.remaining_credits;
+          response.remainingCredits;
       }
     } catch (err) {
       console.warn(err);

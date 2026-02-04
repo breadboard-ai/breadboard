@@ -35,12 +35,12 @@ export interface AppCatalystG1SubscriptionStatusRequest {
 }
 
 export interface AppCatalystG1SubscriptionStatusResponse {
-  is_member: boolean;
-  remaining_credits: number;
+  isMember: boolean;
+  remainingCredits: number;
 }
 
 export interface AppCatalystG1CreditsResponse {
-  remaining_credits: number;
+  remainingCredits: number;
 }
 
 export type CheckAppAccessResponse =

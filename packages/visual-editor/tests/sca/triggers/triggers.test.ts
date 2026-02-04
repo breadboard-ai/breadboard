@@ -64,7 +64,7 @@ suite("Triggers", () => {
       node: ["[effect] Autoname Trigger"],
       run: ["[effect] Graph Synchronization Trigger"],
       shell: ["[effect] Page Title Trigger"],
-      router: ["[effect] Router Init Trigger", "[bridge] Router URL Change"],
+      router: ["[bridge] Router URL Change"],
       screenSize: [],
       step: ["[effect] Step Auto Save Trigger"],
     });

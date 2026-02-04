@@ -105,3 +105,7 @@ export function destroy() {
 
   instance = null;
 }
+
+// Re-export individual modules for direct access in tests
+export { Agent, Board, Node, Router, Run, ScreenSize, Shell, Step };
+
