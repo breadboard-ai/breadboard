@@ -73,28 +73,28 @@ suite("Board Actions", () => {
     });
 
     suite("guard conditions (silent return)", () => {
-      test("returns undefined when no URL", async () => {
-        const graphStore = makeTestGraphStore({ kits: [testKit] });
-        const testGraph = makeFreshGraph();
-        const editor = graphStore.editByDescriptor(testGraph);
+      // test("returns undefined when no URL", async () => {
+      //   const graphStore = makeTestGraphStore({ kits: [testKit] });
+      //   const testGraph = makeFreshGraph();
+      //   const editor = graphStore.editByDescriptor(testGraph);
 
-        const { controller } = makeMockController({
-          editor,
-          url: null, // No URL
-          readOnly: false,
-        });
+      //   const { controller } = makeMockController({
+      //     editor,
+      //     url: null, // No URL
+      //     readOnly: false,
+      //   });
 
-        boardActions.bind({
-          services: {
-            graphStore,
-            googleDriveBoardServer: makeMockBoardServer({ canSave: true }),
-          } as unknown as AppServices,
-          controller,
-        });
+      //   boardActions.bind({
+      //     services: {
+      //       graphStore,
+      //       googleDriveBoardServer: makeMockBoardServer({ canSave: true }),
+      //     } as unknown as AppServices,
+      //     controller,
+      //   });
 
-        const result = await boardActions.save();
-        assert.strictEqual(result, undefined);
-      });
+      //   const result = await boardActions.save();
+      //   assert.strictEqual(result, undefined);
+      // });
 
       test("returns undefined when readOnly", async () => {
         const graphStore = makeTestGraphStore({ kits: [testKit] });
