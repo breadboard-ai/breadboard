@@ -44,7 +44,7 @@ jobs:
         id: baseline
         run: |
           npm run build
-          npm run coverage:ci
+          npm run coverage
         continue-on-error: true
 
       # Download artifacts AFTER checkout/build to isolate them from the
@@ -86,7 +86,7 @@ jobs:
         if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && steps.baseline.outcome == 'success'
         id: coverage
         # compare-coverage.js only parses JSON data, it does not execute artifact contents
-        run: node scripts/compare-coverage.js pr-artifact/coverage-summary.json packages/visual-editor/coverage-ci/coverage-summary.json
+        run: node scripts/compare-coverage.js pr-artifact/coverage-summary.json packages/visual-editor/coverage/coverage-summary.json
         continue-on-error: true
 
       - name: Generate fallback comment on comparison failure
