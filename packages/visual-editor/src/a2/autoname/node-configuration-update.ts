@@ -205,7 +205,7 @@ function textFromConfiguration(
           template.simpleSubstitute((part) => {
             if (part.type == "tool") return part.title;
             if (part.type === "in") {
-              return `<file src="/vfs/file${++fileIndex}" from="${part.title}" />`;
+              return `<file src="/mnt/file${++fileIndex}" from="${part.title}" />`;
             }
             if (part.type === "asset") return `{{${part.title}}}`;
             return ``;

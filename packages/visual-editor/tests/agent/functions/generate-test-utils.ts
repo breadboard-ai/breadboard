@@ -193,7 +193,7 @@ function createMockFileSystem(
       overrides.add ??
       mock.fn((_part: DataPart, name?: string) => {
         fileCounter++;
-        return `/vfs/${name ?? `file${fileCounter}`}`;
+        return `/mnt/${name ?? `file${fileCounter}`}`;
       }),
     getMany:
       overrides.getMany ??

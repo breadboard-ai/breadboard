@@ -16,8 +16,8 @@ describe("Agent File System", () => {
       context: stubModuleArgs.context,
       memoryManager: stubMemoryManager,
     });
-    fileSystem.addSystemFile("/vfs/system/foo", () => "foo");
-    const file = await fileSystem.get("/vfs/system/foo");
+    fileSystem.addSystemFile("/mnt/system/foo", () => "foo");
+    const file = await fileSystem.get("/mnt/system/foo");
     if (!ok(file)) {
       fail(file.$error);
     }
@@ -29,13 +29,13 @@ describe("Agent File System", () => {
       context: stubModuleArgs.context,
       memoryManager: stubMemoryManager,
     });
-    fileSystem.addSystemFile("/vfs/system/foo", () => "foo");
-    const file = await fileSystem.get("/vfs/system/bar");
+    fileSystem.addSystemFile("/mnt/system/foo", () => "foo");
+    const file = await fileSystem.get("/mnt/system/bar");
     if (!ok(file)) {
       success(file.$error);
       return;
     }
-    fail(`File "/vfs/system/baz" should not have been found`);
+    fail(`File "/mnt/system/baz" should not have been found`);
   });
 
   it("handles failure to get a system file", async () => {
@@ -43,13 +43,13 @@ describe("Agent File System", () => {
       context: stubModuleArgs.context,
       memoryManager: stubMemoryManager,
     });
-    fileSystem.addSystemFile("/vfs/system/foo", () => err("Sorry"));
-    const file = await fileSystem.get("/vfs/system/foo");
+    fileSystem.addSystemFile("/mnt/system/foo", () => err("Sorry"));
+    const file = await fileSystem.get("/mnt/system/foo");
     if (!ok(file)) {
       success(file.$error);
       return;
     }
-    fail(`File "/vfs/system/foo" should not have been found`);
+    fail(`File "/mnt/system/foo" should not have been found`);
   });
 
   it("deduplicates storedData parts with same handle", () => {

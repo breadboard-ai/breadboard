@@ -38,7 +38,7 @@ function defineGoogleDriveFunctions(args: GoogleDriveFunctionsGroupArgs) {
       {
         name: "google_drive_upload_file",
         description: tr`
-Uploads a VFS file to Google Drive. Supports automatic conversion of office formats (like PPTX, DOCX, XLSX) into Google Workspace formats.
+Uploads a file to Google Drive. Supports automatic conversion of office formats (like PPTX, DOCX, XLSX) into Google Workspace formats.
 
 `,
         parameters: {
@@ -47,7 +47,7 @@ The user-friendly name of the file that will show up in Drive list
 `),
           file_path: z.string().describe(tr`
 
-The VFS path to the file to upload.
+The file path to the file to upload.
 
 `),
           convert: z
@@ -75,7 +75,7 @@ The Google Drive folder that will be the parent of this newly uploaded file`
             .string()
             .describe(
               tr`
-The VFS path that points at the generated Google Doc.
+The file path that points at the generated Google Doc.
 `
             )
             .optional(),

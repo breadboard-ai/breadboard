@@ -154,7 +154,7 @@ class AgentFileSystem {
   }
 
   async #getMemoryFile(path: string): Promise<Outcome<DataPart[]>> {
-    const sheetName = path.replace("/vfs/memory/", "");
+    const sheetName = path.replace("/mnt/memory/", "");
     const sheet = await this.memoryManager?.readSheet(this.context, {
       range: `${sheetName}!A:ZZ`,
     });
@@ -211,14 +211,14 @@ class AgentFileSystem {
 
   async get(path: string): Promise<Outcome<DataPart[]>> {
     // Do a path fix-up just in case: sometimes, Gemini decides to use
-    // "vfs/file" instead of "/vfs/file".
-    if (path.startsWith("vfs/")) {
+    // "mnt/file" instead of "/mnt/file".
+    if (path.startsWith("mnt/")) {
       path = `/${path}`;
     }
-    if (path.startsWith("/vfs/system/")) {
+    if (path.startsWith("/mnt/system/")) {
       return this.#getSystemFile(path);
     }
-    if (path.startsWith("/vfs/memory/") && this.#useMemory) {
+    if (path.startsWith("/mnt/memory/") && this.#useMemory) {
       return this.#getMemoryFile(path);
     }
     const file = this.#getFile(path);
@@ -236,7 +236,7 @@ class AgentFileSystem {
       );
       if (memoryMetadata && ok(memoryMetadata)) {
         memory.push(
-          ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
+          ...memoryMetadata.sheets.map((sheet) => `/mnt/memory/${sheet.name}`)
         );
       }
     }
@@ -351,7 +351,7 @@ class AgentFileSystem {
       const ext = mime.getExtension(mimeType);
       filename = `${name}.${ext}`;
     }
-    const path = `/vfs/${filename}`;
+    const path = `/mnt/${filename}`;
     if (overwriteWarning && this.#files.has(path)) {
       console.warn(`File "${path}" already exists, will be overwritten`);
     }
@@ -361,7 +361,7 @@ class AgentFileSystem {
   create(mimeType: string) {
     const name = this.#getName(mimeType);
     const ext = mime.getExtension(mimeType);
-    return `/vfs/${name}${++this.#fileCount}.${ext}`;
+    return `/mnt/${name}${++this.#fileCount}.${ext}`;
   }
 
   #getName(mimeType: string) {
