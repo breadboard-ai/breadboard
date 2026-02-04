@@ -7,6 +7,7 @@
 import assert from "node:assert";
 import { after, afterEach, before, suite, test } from "node:test";
 import { AppActions } from "../../../src/sca/actions/actions.js";
+import * as RunActions from "../../../src/sca/actions/run/run-actions.js";
 import {
   triggers,
   clean,
@@ -14,7 +15,7 @@ import {
   destroy,
 } from "../../../src/sca/triggers/triggers.js";
 import { makeTrigger } from "../../../src/sca/triggers/binder.js";
-import { makeTestController, makeTestServices } from "./utils.js";
+import { makeTestController, makeTestServices, flushEffects } from "./utils.js";
 import { setDOM, unsetDOM } from "../../fake-dom.js";
 
 suite("Triggers", () => {
@@ -26,14 +27,23 @@ suite("Triggers", () => {
     unsetDOM();
   });
 
-  afterEach(() => {
+  // Cleanup: must flush deferred microtasks before disposing triggers.
+  // The reactive() helper defers initial execution, so effects may still
+  // be pending when a test completes. flushEffects() ensures they run
+  // before we call destroy().
+  afterEach(async () => {
+    await flushEffects();
     destroy();
   });
 
   test("Instantiates without error", () => {
     assert.doesNotThrow(() => {
       const { controller } = makeTestController();
-      triggers(controller, makeTestServices().services, {} as AppActions);
+      const { services } = makeTestServices();
+      // Actions binder needed because triggers call actions (e.g., syncConsoleFromRunner)
+      // during their deferred execution
+      RunActions.bind({ controller, services });
+      triggers(controller, services, {} as AppActions);
     });
 
     assert.throws(() => {
@@ -44,7 +54,10 @@ suite("Triggers", () => {
 
   test("cleans up", () => {
     const { controller } = makeTestController();
-    triggers(controller, makeTestServices().services, {} as AppActions);
+    const { services } = makeTestServices();
+    // Actions binder needed because triggers call actions during deferred execution
+    RunActions.bind({ controller, services });
+    triggers(controller, services, {} as AppActions);
     assert.deepStrictEqual(list(), {
       agent: ["[effect] Graph Invalidate Trigger", "[effect] Graph URL Change Trigger"],
       board: ["[effect] Save Trigger", "[effect] Newer Version Trigger", "[bridge] Save Status Bridge"],

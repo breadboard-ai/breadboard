@@ -17,7 +17,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
-import { effect } from "signal-utils/subtle/microtask-effect";
+import { reactive } from "./sca/reactive.js";
 import { eventRoutes } from "./event-routing/event-routing.js";
 import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -455,7 +455,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     // Check fullscreen once when loadState becomes "Loaded" for the first time
     // Effect disposes itself after the initial load check
     let lastLoadState = this.sca.controller.global.main.loadState;
-    const stopFullscreenWatch = effect(() => {
+    const stopFullscreenWatch = reactive(() => {
       const currentLoadState = this.sca.controller.global.main.loadState;
       if (currentLoadState === "Loaded" && lastLoadState !== "Loaded") {
         this.#goFullScreenIfGraphIsProbablyShared();
@@ -495,7 +495,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
    */
   #waitForLoadState(): Promise<void> {
     return new Promise<void>((resolve) => {
-      const stop = effect(() => {
+      const stop = reactive(() => {
         if (this.sca.controller.global.main.loadState === "Loaded") {
           // Use queueMicrotask to ensure effect cleanup happens safely
           queueMicrotask(() => {

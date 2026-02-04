@@ -8,7 +8,7 @@ import { Signal } from "@lit-labs/signals";
 import { pending, HydratedController } from "../../types.js";
 import { PENDING_HYDRATION } from "../../utils/sentinel.js";
 import { isHydrating } from "../../utils/helpers/helpers.js";
-import { effect } from "signal-utils/subtle/microtask-effect";
+import { reactive } from "../../reactive.js";
 import { pendingStorageWrites } from "../context/writes.js";
 
 /**
@@ -92,7 +92,7 @@ export abstract class RootController implements HydratedController {
 
     this.#isHydratedPromise = new Promise((resolve) => {
       // Use an effect to watch the computed 'hydrated' signal
-      const stop = effect(() => {
+      const stop = reactive(() => {
         const status = this.hydratedInternal.get();
 
         if (status === true) {

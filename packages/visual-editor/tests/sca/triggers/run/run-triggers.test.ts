@@ -7,6 +7,7 @@
 import assert from "node:assert";
 import { afterEach, describe, test } from "node:test";
 import * as RunTriggers from "../../../../src/sca/triggers/run/run-triggers.js";
+import * as RunActions from "../../../../src/sca/actions/run/run-actions.js";
 import {
   makeTestController,
   makeTestServices,
@@ -15,7 +16,12 @@ import {
 import { AppActions } from "../../../../src/sca/actions/actions.js";
 
 describe("Run Triggers", () => {
-  afterEach(() => {
+  // Cleanup: must flush deferred microtasks before disposing triggers
+  // The reactive() helper defers initial execution, so effects may still
+  // be pending when a test completes. flushEffects() ensures they run
+  // before we call clean().
+  afterEach(async () => {
+    await flushEffects();
     RunTriggers.bind.clean();
   });
 
@@ -25,6 +31,9 @@ describe("Run Triggers", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
+    // Actions binder is needed because triggers that call actions (like
+    // syncConsoleFromRunner) access bind.controller during deferred execution
+    RunActions.bind({ controller, services });
 
     assert.doesNotThrow(() => {
       RunTriggers.registerGraphSyncTrigger();
@@ -35,6 +44,8 @@ describe("Run Triggers", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
+    // Also bind actions since the trigger calls syncConsoleFromRunner
+    RunActions.bind({ controller, services });
 
     // Set up a runner so hasRunner is true
     const mockRunner = new EventTarget();
@@ -65,6 +76,7 @@ describe("Run Triggers", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunTriggers.bind({ controller, services, actions: {} as AppActions });
+    RunActions.bind({ controller, services }); // Needed for deferred effect
 
     RunTriggers.registerGraphSyncTrigger();
 
@@ -75,3 +87,4 @@ describe("Run Triggers", () => {
     );
   });
 });
+

@@ -15,8 +15,6 @@ import type {
 import { STATUS } from "../../../../ui/types/types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
-import { SignalMap } from "signal-utils/map";
-import { SignalSet } from "signal-utils/set";
 
 /**
  * Re-export STATUS for consumers that need it.
@@ -98,7 +96,7 @@ export class RunController extends RootController {
    * Populated by OutputTrigger listening to runner events.
    */
   @field({ deep: true })
-  private accessor _console: Map<string, ConsoleEntry> = new SignalMap();
+  private accessor _console: Map<string, ConsoleEntry> = new Map();
 
   /**
    * Current input request the run is waiting for.
@@ -118,7 +116,7 @@ export class RunController extends RootController {
    * Node IDs whose errors the user has dismissed.
    */
   @field({ deep: true })
-  private accessor _dismissedErrors: Set<NodeIdentifier> = new SignalSet();
+  private accessor _dismissedErrors: Set<NodeIdentifier> = new Set();
 
   /**
    * Estimated total entries for progress calculation.
@@ -244,12 +242,26 @@ export class RunController extends RootController {
 
   /**
    * Adds or updates a console entry.
+   * Uses immutable replacement to trigger @field signal.
    *
    * @param id The node identifier
    * @param entry The console entry (with resolved metadata)
    */
   setConsoleEntry(id: string, entry: ConsoleEntry): void {
     this._console.set(id, entry);
+  }
+
+  /**
+   * Replaces the entire console with new entries.
+   * Used for bulk updates (e.g., when graph topology changes).
+   *
+   * @param entries The new console entries
+   */
+  replaceConsole(entries: Map<string, ConsoleEntry>): void {
+    this._console.clear();
+    for (const [id, entry] of entries) {
+      this._console.set(id, entry);
+    }
   }
 
   /**

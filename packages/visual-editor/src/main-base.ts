@@ -44,7 +44,7 @@ import type {
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { effect } from "signal-utils/subtle/microtask-effect";
+import { reactive } from "./sca/reactive.js";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 import {
   FlowGenerator,
@@ -294,7 +294,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     // Now create the effect to watch for SUBSEQUENT URL changes (back/forward)
     // This must come AFTER initial handling to avoid race conditions
-    this.#urlEffectDisposer = effect(() => {
+    this.#urlEffectDisposer = reactive(() => {
       this.#handleUrlChange();
     });
 
