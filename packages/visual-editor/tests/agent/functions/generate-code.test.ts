@@ -206,7 +206,7 @@ describe("generate_and_execute_code", () => {
       );
     });
 
-    it("shows 'Generating Text' when no grounding", async () => {
+    it("shows 'Generating Code' when no grounding", async () => {
       const args = createTestArgs();
       const group = getGenerateFunctionGroup(args);
       const handler = getHandler(group, "generate_and_execute_code");
@@ -215,10 +215,10 @@ describe("generate_and_execute_code", () => {
       await handler({ prompt: "Calculate something" }, statusUpdater);
 
       const calls = statusUpdater.getCalls();
-      const generatingCall = calls.find((c) => c.message === "Generating Text");
+      const generatingCall = calls.find((c) => c.message === "Generating Code");
       assertOk(
         generatingCall !== undefined,
-        "Should show 'Generating Text' status"
+        "Should show 'Generating Code' status"
       );
     });
   });
