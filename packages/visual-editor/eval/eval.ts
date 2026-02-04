@@ -82,6 +82,8 @@ function session(
  * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
  */
 class EvalHarness {
+  private imageCount = 1;
+
   constructor(private readonly args: EvalHarnessArgs) {}
 
   async session(sessionFunction: EvalHarnessSessionFunction) {
@@ -107,7 +109,7 @@ class EvalHarness {
             parts: [
               {
                 storedData: {
-                  handle: "https://example.com/fakeurl",
+                  handle: `https://example.com/fakeurl-${this.imageCount++}`,
                   mimeType: "image/png",
                 },
               },

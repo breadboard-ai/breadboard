@@ -86,7 +86,7 @@ describe("generate_speech_from_text", () => {
       const fileSystem = createMockFileSystem({
         add: mock.fn((part: DataPart) => {
           addedPart = part;
-          return "/vfs/speech.wav";
+          return "/mnt/speech.wav";
         }),
       });
 
@@ -106,7 +106,7 @@ describe("generate_speech_from_text", () => {
       }
       const successResult = result as { speech?: string };
       assertOk(successResult.speech !== undefined, "Should have speech result");
-      deepStrictEqual(successResult.speech, "/vfs/speech.wav");
+      deepStrictEqual(successResult.speech, "/mnt/speech.wav");
       assertOk(addedPart !== undefined, "Should add part to file system");
       assertOk("storedData" in addedPart, "Added part should be storedData");
     });

@@ -227,7 +227,7 @@ class SheetManager implements MemoryManager {
     const sheetDetailsPromises = metadata.sheets.map(async (sheet) => {
       const { title: name, sheetId: id } = sheet.properties;
       if (id === 0) return null;
-      const file_path = `/vfs/memory/${encodeURIComponent(name)}`;
+      const file_path = `/mnt/memory/${encodeURIComponent(name)}`;
 
       const valuesRes = await getSpreadsheetValues(
         moduleArgs,

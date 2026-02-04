@@ -91,17 +91,17 @@ A good code generator prompt will include the following components:
 
 1. Preference for the Python library to use. For example "Use the reportlab library to generate PDF"
 
-2. What to consume as input. Focus on the "what", rather than the "how". When binary files are passed as input, use the key words "use provided file". Do NOT refer to VFS paths, see below.
+2. What to consume as input. Focus on the "what", rather than the "how". When binary files are passed as input, use the key words "use provided file". Do NOT refer to file paths, see below.
 
 3. The high-level approach to solving the problem with code. If applicable, specify algorithms or techniques to use.
 
 4. What to deliver as output. Again, do not worry about the "how", instead specify the "what". For text files, use the key word "return" in the prompt. For binary files, use the key word word "save". For example, "Return the resulting number" or "Save the PDF file" or "Save all four resulting images". Do NOT ask to name the files, see below.
 
-The code generator prompt may include references to VFS files and it may output references to VFS files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to the VFS.
+The code generator prompt may include references to files and it may output references to files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to your file system.
 
-Because of this translation layer, DO NOT mention VFS or VFS references in the prompt outside of the <file> tag.
+Because of this translation layer, DO NOT mention file system paths or file references in the prompt outside of the <file> tag.
 
-For example, if you need to include  an existing file at "/vfs/text3.md" into the prompt, you can reference it as <file src="/vfs/text3.md" />. If you do not use <file> tags, the code generator will not be able to access the file.
+For example, if you need to include  an existing file at "/mnt/text3.md" into the prompt, you can reference it as <file src="/mnt/text3.md" />. If you do not use <file> tags, the code generator will not be able to access the file.
 
 For output, do not ask the code generator to name the files. It will assign its own file names names to save in the sandbox, and these will be picked up at the sandbox boundary and translated into <file> tags for you.
 `;
@@ -166,7 +166,7 @@ The Gemini model to use for image generation. How to choose the right model:
           .default("flash"),
         images: z
           .array(z.string().describe("An input image, specified as a VS path"))
-          .describe("A list of input images, specified as VFS paths"),
+          .describe("A list of input images, specified as file paths"),
         aspect_ratio: z
           .enum(["1:1", "9:16", "16:9", "4:3", "3:4"])
           .describe(`The aspect ratio for the generated images`)
@@ -184,7 +184,7 @@ The Gemini model to use for image generation. How to choose the right model:
           .optional(),
         images: z
           .array(
-            z.string().describe(`A generated image, specified as a VFS path`)
+            z.string().describe(`A generated image, specified as a file path`)
           )
           .describe(`Array of generated images`)
           .optional(),
@@ -255,7 +255,7 @@ that involve generation of text. Supports multimodal content input.`.trim(),
       parameters: {
         prompt: z.string().describe(tr`
 
-Detailed prompt to use for text generation. The prompt may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.
+Detailed prompt to use for text generation. The prompt may include references to files. For instance, if you have an existing file at "/mnt/text3.md", you can reference it as <file src="/mnt/text3.md" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.
 
 These references can point to files of any type, such as images, audio, videos, etc.
 `),
@@ -443,7 +443,7 @@ The following elements should be included in your prompt:
               .describe("A reference input image, specified as a VS path")
           )
           .describe(
-            "A list of input reference images, specified as VFS paths. Use reference images only when you need to start with a particular image."
+            "A list of input reference images, specified as file paths. Use reference images only when you need to start with a particular image."
           )
           .optional(),
         aspect_ratio: z
@@ -463,7 +463,7 @@ The following elements should be included in your prompt:
           .optional(),
         video: z
           .string()
-          .describe(`Generated video, specified as VFS path`)
+          .describe(`Generated video, specified as file path`)
           .optional(),
       },
     },
@@ -526,7 +526,7 @@ The following elements should be included in your prompt:
           .optional(),
         speech: z
           .string()
-          .describe("Generated speech as a VFS file path")
+          .describe("Generated speech as a file path")
           .optional(),
       },
     },
@@ -592,10 +592,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
             `If an error has occurred, will contain a description of the error`
           )
           .optional(),
-        music: z
-          .string()
-          .describe("Generated music as a VFS file path")
-          .optional(),
+        music: z.string().describe("Generated music as a file path").optional(),
       },
     },
     async (
@@ -670,14 +667,14 @@ Code execution works best with text and CSV files.
 
 If the code environment generates an error, the model may decide to regenerate the code output. This can happen up to 5 times.
 
-NOTE: The Python code execution environment has no access to the virtual file system (VFS), so don't use it to access or manipulate the VFS files.
+NOTE: The Python code execution environment has no access to your file system, so don't use it to access or manipulate your files.
 
         `,
       parameters: {
         prompt: z.string().describe(tr`
 Detailed prompt for the code to generate. DO NOT write Python code as the prompt. Instead DO use the natural language. This will let the code generator within this tool make the best decisions on what code to write. Your job is not to write code, but to direct the code generator.
 
-The prompt may include references to VFS files as <file> tags.
+The prompt may include references to files as <file> tags. They will be correctly marshalled across the sandbox boundary.
 `),
         search_grounding: z
           .boolean()
@@ -700,7 +697,7 @@ connects the code generation model to real-time web content and works with all a
         result: z
           .string()
           .describe(
-            "The result of code execution as text that may contain VFS path references"
+            "The result of code execution as text that may contain file path references"
           )
           .optional(),
       },

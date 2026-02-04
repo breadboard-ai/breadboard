@@ -24,11 +24,11 @@ import { PidginTranslator } from "../pidgin-translator.js";
 import { taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 
-export { getChatFunctionGroup, CHAT_LOG_VFS_PATH };
+export { getChatFunctionGroup, CHAT_LOG_PATH };
 
 const CHAT_REQUEST_USER_INPUT = "chat_request_user_input";
 const CHAT_PRESENT_CHOICES = "chat_present_choices";
-const CHAT_LOG_VFS_PATH = "/vfs/system/chat_log.json";
+const CHAT_LOG_PATH = "/mnt/system/chat_log.json";
 const NONE_OF_THE_ABOVE_ID = "__none_of_the_above__";
 
 export type ChatFunctionsArgs = {
@@ -47,7 +47,7 @@ Use the "${CHAT_REQUEST_USER_INPUT}" function for freeform text input or file up
 
 Prefer structured choices over freeform input when the answer space is bounded.
 
-The chat log is maintained automatically at the VFS file "${CHAT_LOG_VFS_PATH}".
+The chat log is maintained automatically at the file "${CHAT_LOG_PATH}".
 
 If the user input requires multiple entries, split the conversation into multiple turns. For example, if you have three questions to ask, ask them over three full conversation turns rather than in one call.
 
@@ -70,7 +70,7 @@ Requests input from user. Call this function to hold a conversatio with the user
         parameters: {
           user_message: z.string().describe(
             tr`
-Message to display to the user when requesting input. The content may include references to VFS files using <file src="/vfs/name.ext" /> tags.
+Message to display to the user when requesting input. The content may include references to files using <file src="/mnt/name.ext" /> tags.
 `
           ),
           input_type: z
@@ -111,7 +111,7 @@ Presents the user with a set of choices to select from. Use when you need the us
         parameters: {
           user_message: z.string().describe(
             tr`
-Message explaining what the user should choose. The content may include references to VFS files using <file src="/vfs/name.ext" /> tags.
+Message explaining what the user should choose. The content may include references to files using <file src="/mnt/name.ext" /> tags.
 `
           ),
           choices: z
@@ -121,7 +121,7 @@ Message explaining what the user should choose. The content may include referenc
                 label: z
                   .string()
                   .describe(
-                    `Display text for the choice. The content may include references to VFS files using <file src="/vfs/name.ext" /> tags.`
+                    `Display text for the choice. The content may include references to files using <file src="/mnt/name.ext" /> tags.`
                   ),
               })
             )
