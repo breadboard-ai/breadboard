@@ -138,7 +138,7 @@ sca/
 │
 ├── triggers/           # Reactive side effects
 │   ├── triggers.ts     # AppTriggers interface & registration
-│   ├── binder.ts       # makeTrigger() with effect management
+│   ├── binder.ts       # makeTrigger() with reactive() management
 │   ├── board/          # Board-related triggers
 │   └── node/           # Node-related triggers (autonaming)
 │

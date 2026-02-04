@@ -269,7 +269,60 @@ export function prepare(config: PrepareRunConfig): void {
   controller.run.main.setStatus(STATUS.STOPPED);
 
   // Pre-populate console with all graph nodes as "inactive" on initial load
-  // Use runner.plan.stages for execution-ordered iteration
+  syncConsoleFromRunner();
+}
+
+/**
+ * Maps a NodeLifecycleState to a NodeRunStatus for console entries.
+ * Note: NodeRunStatus excludes "failed" - failed nodes map to "succeeded"
+ * as they are complete, with error styling handled via separate error state.
+ */
+function mapLifecycleToRunStatus(
+  state: import("@breadboard-ai/types").NodeLifecycleState
+): import("@breadboard-ai/types").NodeRunStatus {
+  switch (state) {
+    case "inactive":
+      return "inactive";
+    case "ready":
+      return "ready";
+    case "working":
+    case "waiting":
+      return "working";
+    case "succeeded":
+      return "succeeded";
+    case "failed":
+      return "succeeded";
+    case "skipped":
+      return "skipped";
+    case "interrupted":
+      return "interrupted";
+    default:
+      return "inactive";
+  }
+}
+
+/**
+ * Syncs the RunController's console entries from the runner's current state.
+ *
+ * This action is called when the graph topology changes during a run (e.g.,
+ * the Planner replaces the graph via replaceWithTheme). It builds a new
+ * console Map from runner.state in execution order and uses replaceConsole
+ * for an atomic update that triggers reactivity.
+ *
+ * The trigger (registerGraphSyncTrigger) watches for graph version changes
+ * and calls this action to perform the actual sync.
+ */
+export function syncConsoleFromRunner(): void {
+  const { controller, services } = bind;
+  const runController = controller.run.main;
+  const graphController = controller.editor.graph;
+
+  const runner = runController.runner;
+  if (!runner) {
+    return;
+  }
+
+  // Get nodes in execution order from runner.plan.stages
   const nodeIds: string[] = [];
   for (const stage of runner.plan?.stages ?? []) {
     for (const planNode of stage) {
@@ -277,34 +330,62 @@ export function prepare(config: PrepareRunConfig): void {
     }
   }
 
+  // Update estimated entry count
+  runController.setEstimatedEntryCount(nodeIds.length);
+
+  // Get the current graph for node metadata
+  const graph = graphController.editor?.raw();
+  if (!graph) {
+    return;
+  }
+
   const graphDescriptor = services.graphStore.getByDescriptor(graph);
-  if (graphDescriptor?.success) {
-    const inspectable = services.graphStore.inspect(graphDescriptor.result, "");
-    for (const nodeId of nodeIds) {
-      const node = inspectable?.nodeById(nodeId);
-      const title = node?.title() ?? nodeId;
-      const metadata = node?.currentDescribe()?.metadata ?? {};
-      const icon = getStepIcon(metadata.icon, node?.currentPorts());
+  if (!graphDescriptor?.success) {
+    return;
+  }
 
-      const entry = RunController.createConsoleEntry(title, "inactive", {
-        icon,
-        tags: metadata.tags,
-      });
-      controller.run.main.setConsoleEntry(nodeId, entry);
+  const inspectable = services.graphStore.inspect(graphDescriptor.result, "");
+  if (!inspectable) {
+    return;
+  }
 
-      // If metadata wasn't ready (no tags), async fetch full describe
-      if (!metadata.tags && node) {
-        node.describe().then((result) => {
-          const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
-          const resolvedIcon = getStepIcon(asyncIcon, node.currentPorts());
-          const updatedEntry = RunController.createConsoleEntry(title, "inactive", {
-            icon: resolvedIcon,
-            tags: asyncTags,
-          });
-          controller.run.main.setConsoleEntry(nodeId, updatedEntry);
+  // Build console entries in a regular Map first
+  const newEntries = new Map<string, import("@breadboard-ai/types").ConsoleEntry>();
+
+  for (const nodeId of nodeIds) {
+    const node = inspectable.nodeById(nodeId);
+    const title = node?.title() ?? nodeId;
+    const metadata = node?.currentDescribe()?.metadata ?? {};
+    const icon = getStepIcon(metadata.icon, node?.currentPorts());
+
+    // Get the current state from runner.state (if available)
+    const nodeState = runner.state?.get(nodeId);
+    const status = nodeState
+      ? mapLifecycleToRunStatus(nodeState.state)
+      : "inactive";
+
+    const entry = RunController.createConsoleEntry(title, status, {
+      icon,
+      tags: metadata.tags,
+    });
+    newEntries.set(nodeId, entry);
+
+    // If metadata wasn't ready (no tags), async fetch full describe
+    // Note: These async updates use setConsoleEntry which triggers reactivity
+    if (!metadata.tags && node) {
+      node.describe().then((result) => {
+        const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
+        const resolvedIcon = getStepIcon(asyncIcon, node.currentPorts());
+        const updatedEntry = RunController.createConsoleEntry(title, status, {
+          icon: resolvedIcon,
+          tags: asyncTags,
         });
-      }
+        runController.setConsoleEntry(nodeId, updatedEntry);
+      });
     }
   }
-}
 
+  // Replace the console atomically with new entries
+  // This triggers @field signal due to reference change (immutable pattern)
+  runController.replaceConsole(newEntries);
+}

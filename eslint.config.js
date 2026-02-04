@@ -22,6 +22,9 @@ import effectRequiresDispose from "./packages/visual-editor/eslint-rules/effect-
 import fieldDeepForArrays from "./packages/visual-editor/eslint-rules/field-deep-for-arrays.js";
 import noConsumeInInitializer from "./packages/visual-editor/eslint-rules/no-consume-in-initializer.js";
 import preferBindDestructure from "./packages/visual-editor/eslint-rules/prefer-bind-destructure.js";
+import noSignalUtilsEffect from "./packages/visual-editor/eslint-rules/no-signal-utils-effect.js";
+import noSignalCollectionsInSca from "./packages/visual-editor/eslint-rules/no-signal-collections-in-sca.js";
+import noSignalDecoratorInSca from "./packages/visual-editor/eslint-rules/no-signal-decorator-in-sca.js";
 
 // Create local rules plugin
 const localRulesPlugin = {
@@ -38,6 +41,9 @@ const localRulesPlugin = {
     "field-deep-for-arrays": fieldDeepForArrays,
     "no-consume-in-initializer": noConsumeInInitializer,
     "prefer-bind-destructure": preferBindDestructure,
+    "no-signal-utils-effect": noSignalUtilsEffect,
+    "no-signal-collections-in-sca": noSignalCollectionsInSca,
+    "no-signal-decorator-in-sca": noSignalDecoratorInSca,
   },
 };
 
@@ -93,6 +99,9 @@ export default tseslint.config(
       "local-rules/effect-requires-dispose": "warn",
       "local-rules/field-deep-for-arrays": "warn",
       "local-rules/prefer-bind-destructure": "warn",
+      "local-rules/no-signal-utils-effect": "error",
+      "local-rules/no-signal-collections-in-sca": "error",
+      "local-rules/no-signal-decorator-in-sca": "error",
 
       // expect-type rules (requires type information)
       "expect-type/expect": "error",

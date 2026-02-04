@@ -27,7 +27,7 @@ import {
 } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
-import { effect } from "signal-utils/subtle/microtask-effect";
+import { reactive } from "../../../sca/reactive.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { StringValue } from "../types/primitives.js";
 import { AnyComponentNode, CustomNode, SurfaceID } from "../types/types.js";
@@ -99,7 +99,7 @@ export class Root extends SignalWatcher(LitElement) {
       }
 
       // This effect watches the A2UI Children signal and updates the Light DOM.
-      this.#lightDomEffectDisposer = effect(() => {
+      this.#lightDomEffectDisposer = reactive(() => {
         // 1. Read the signal to create the subscription.
         const allChildren = this.childComponents ?? null;
 
