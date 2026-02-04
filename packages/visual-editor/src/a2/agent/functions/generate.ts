@@ -334,12 +334,12 @@ Specify URLs in the prompt.
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       if (status_update) {
-        statusUpdater(status_update);
+        statusUpdater(status_update, { expectedDurationInSec: 20 });
       } else {
         if (search_grounding || maps_grounding) {
-          statusUpdater("Researching");
+          statusUpdater("Researching", { expectedDurationInSec: 30 });
         } else {
-          statusUpdater("Generating Text");
+          statusUpdater("Generating Text", { expectedDurationInSec: 20 });
         }
       }
       let tools: Tool[] | undefined = [];
@@ -714,9 +714,9 @@ connects the code generation model to real-time web content and works with all a
         statusUpdater(status_update, { expectedDurationInSec: 40 });
       } else {
         if (search_grounding) {
-          statusUpdater("Researching");
+          statusUpdater("Researching", { expectedDurationInSec: 50 });
         } else {
-          statusUpdater("Generating Text");
+          statusUpdater("Generating Code", { expectedDurationInSec: 40 });
         }
       }
       let tools: Tool[] | undefined = [];
