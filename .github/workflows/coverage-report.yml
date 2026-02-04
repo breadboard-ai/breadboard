@@ -86,7 +86,7 @@ jobs:
         if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && steps.baseline.outcome == 'success'
         id: coverage
         # compare-coverage.js only parses JSON data, it does not execute artifact contents
-        run: node scripts/compare-coverage.js pr-artifact/coverage-summary.json packages/visual-editor/coverage/coverage-summary.json
+        run: node scripts/compare-coverage.js pr-artifact/packages/visual-editor/coverage/coverage-summary.json packages/visual-editor/coverage/coverage-summary.json
         continue-on-error: true
 
       - name: Generate fallback comment on comparison failure
@@ -98,7 +98,7 @@ jobs:
           echo "- Build failure on main branch" >> coverage-comment.md
           echo "- Missing coverage data" >> coverage-comment.md
           echo "" >> coverage-comment.md
-          if [ -f pr-artifact/coverage-summary.json ]; then
+          if [ -f pr-artifact/packages/visual-editor/coverage/coverage-summary.json ]; then
             echo "**PR Coverage data was uploaded successfully.**" >> coverage-comment.md
           fi
 
@@ -112,10 +112,35 @@ jobs:
               console.log('No coverage comment file found. Skipping.');
               return;
             }
-            const comment = fs.readFileSync('coverage-comment.md', 'utf8');
-            await github.rest.issues.createComment({
+
+            const marker = '<!-- breadboard-coverage-report -->';
+            const commentBody = fs.readFileSync('coverage-comment.md', 'utf8');
+            const body = marker + '\n' + commentBody;
+            const prNumber = ${{ steps.pr.outputs.number }};
+
+            // Find existing coverage comment
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: ${{ steps.pr.outputs.number }},
-              body: comment
+              issue_number: prNumber
             });
+
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              console.log(`Updating existing comment ${existing.id}`);
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              console.log('Creating new coverage comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
