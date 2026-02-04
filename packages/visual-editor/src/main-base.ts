@@ -475,14 +475,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       this.sca.controller.global.main.mode = parsedUrl.mode;
     }
 
-    // Track action
-    const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
     if (parsedUrl.page === "home") {
-      this.sca.services.actionTracker.load("home", false);
+      this.sca.services.actionTracker.load("home");
     } else {
       this.sca.services.actionTracker.load(
-        this.sca.controller.global.main.mode,
-        shared
+        this.sca.controller.global.main.mode
       );
     }
 
@@ -540,27 +537,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         // Handle different failure reasons with appropriate UI feedback
         switch (loadResult.reason) {
           case "load-failed": {
-            // Check if this is a non-shared graph URL (should show MissingShare dialog)
             const currentUrlParsed = this.sca.controller.router.parsedUrl;
-            if (
-              currentUrlParsed &&
-              "flow" in currentUrlParsed &&
-              !currentUrlParsed.shared
-            ) {
-              // Show MissingShare dialog for permission/access issues
+            if (currentUrlParsed.page === "graph") {
               this.sca.controller.global.main.show.add("MissingShare");
-              this.sca.controller.global.main.loadState = "Error";
-              // Set viewError for lite mode
-              this.sca.controller.global.main.viewError = Strings.from(
-                "ERROR_UNABLE_TO_LOAD_PROJECT"
-              );
             } else {
-              // Generic load error
-              this.sca.controller.global.main.loadState = "Error";
-              // Set viewError for lite mode
-              this.sca.controller.global.main.viewError = Strings.from(
-                "ERROR_UNABLE_TO_LOAD_PROJECT"
-              );
               this.sca.controller.global.snackbars.snackbar(
                 Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
                 BreadboardUI.Types.SnackType.WARNING,
@@ -570,6 +550,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
                 true
               );
             }
+            this.sca.controller.global.main.loadState = "Error";
+            // Set viewError for lite mode
+            this.sca.controller.global.main.viewError = Strings.from(
+              "ERROR_UNABLE_TO_LOAD_PROJECT"
+            );
             break;
           }
           case "invalid-url":

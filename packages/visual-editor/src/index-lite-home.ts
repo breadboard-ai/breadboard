@@ -158,7 +158,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     };
     sizeDetector.addEventListener("change", reactToScreenWidth);
     reactToScreenWidth();
-    this.actionTracker.load("landing", false);
+    this.actionTracker.load("landing");
   }
 
   connectedCallback() {

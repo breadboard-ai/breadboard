@@ -452,14 +452,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     await this.sca.controller.global.performMigrations();
     await this.sca.controller.isHydrated;
 
-    // Note: runtime.board listener for RuntimeBoardLoadErrorEvent removed
-    // - Board is now an empty EventTarget, so this never fired
-
-    // Set fullscreen for shared boards on initial load
-    const parsedUrl = this.sca.controller.router.parsedUrl;
-    this.showAppFullscreen =
-      (parsedUrl && "flow" in parsedUrl && parsedUrl.shared) ?? false;
-
     // Check fullscreen once when loadState becomes "Loaded" for the first time
     // Effect disposes itself after the initial load check
     let lastLoadState = this.sca.controller.global.main.loadState;
@@ -473,7 +465,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       lastLoadState = currentLoadState;
     });
 
-    if (parsedUrl.page !== "home") return;
+    if (this.sca.controller.router.parsedUrl.page !== "home") return;
     await this.askUserToSignInIfNeeded();
   }
 

@@ -806,7 +806,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
           mode: "app",
           flow: `drive:/${state.shareableFile.id}`,
           resourceKey: state.shareableFile.resourceKey,
-          shared: true,
           guestPrefixed: false,
         },
         this.globalConfig?.hostOrigin
