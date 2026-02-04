@@ -54,7 +54,7 @@ export class Admin {
 
   get project(): Project | null {
     // Return project directly - no longer need to check tabs
-    return this.runtime.state.project;
+    return this.runtime.project;
   }
 
   #gdriveBoardServer(): GoogleDriveBoardServer {

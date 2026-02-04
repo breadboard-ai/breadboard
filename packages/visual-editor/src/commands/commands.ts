@@ -142,7 +142,7 @@ const DeleteCommand: KeyboardCommand = {
       // Then delete any selected Assets.
       if (selectionGraph.assets.size) {
         if (!projectState) {
-          projectState = runtime.state.project;
+          projectState = runtime.project;
         }
 
         if (!projectState) {

@@ -454,7 +454,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
    * This method is called by the effect created in init() and reacts to
    * changes in the parsedUrl signal (e.g., back/forward navigation).
    *
-   * TODO: Remove this handler when runtime.state.syncProjectState() is
+   * TODO: Remove this handler when runtime.syncProjectState() is
    * migrated to SCA and #handleBoardStateChanged no longer depends on Runtime.
    */
   async #handleUrlChange() {
@@ -621,7 +621,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
    */
   async #handleBoardStateChanged(): Promise<void> {
     // Sync project state (creates the Project object for the loaded graph)
-    this.runtime.state.syncProjectState();
+    this.runtime.syncProjectState();
 
     const tab = this.tab;
     this.#maybeShowWelcomePanel();
@@ -637,9 +637,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           settings: this.settings,
           fetchWithCreds: this.sca.services.fetchWithCreds,
           flags: this.sca.controller.global.flags,
-          getProjectRunState: () => this.runtime.state.project?.run,
+          getProjectRunState: () => this.runtime.project?.run,
           connectToProject: (runner, abortSignal) => {
-            const project = this.runtime.state.project;
+            const project = this.runtime.project;
             if (project) {
               project.connectHarnessRunner(runner, abortSignal);
             }
@@ -853,7 +853,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     }
 
-    const projectState = this.runtime.state.project;
+    const projectState = this.runtime.project;
 
     if (projectState && this.tab?.finalOutputValues) {
       const current = new ReactiveAppScreen("", undefined);
@@ -1023,7 +1023,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "dismiss": {
-            this.runtime.state.project?.run?.dismissError();
+            this.runtime.project?.run?.dismissError();
             break;
           }
         }

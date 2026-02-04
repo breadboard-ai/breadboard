@@ -152,7 +152,7 @@ export const StopRoute: EventRoute<"board.stop"> = {
     sca.controller.run.main.stop();
 
     // Reset project run state
-    runtime.state.project?.resetRun();
+    runtime.project?.resetRun();
 
     // Prepare the next run
     const url = tab.graph.url;
@@ -163,9 +163,9 @@ export const StopRoute: EventRoute<"board.stop"> = {
         settings,
         fetchWithCreds: sca.services.fetchWithCreds,
         flags: sca.controller.global.flags,
-        getProjectRunState: () => runtime.state.project?.run,
+        getProjectRunState: () => runtime.project?.run,
         connectToProject: (runner, abortSignal) => {
-          runtime.state.project?.connectHarnessRunner(runner, abortSignal);
+          runtime.project?.connectHarnessRunner(runner, abortSignal);
         },
       });
     }

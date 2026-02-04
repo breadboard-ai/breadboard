@@ -35,7 +35,7 @@ export const AddRoute: EventRoute<"asset.add"> = {
       return false;
     }
 
-    const projectState = runtime.state.project;
+    const projectState = runtime.project;
 
     if (!projectState) {
       return false;
