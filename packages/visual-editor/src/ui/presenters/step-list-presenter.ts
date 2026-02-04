@@ -5,7 +5,7 @@
  */
 
 import { signal } from "signal-utils";
-import { effect } from "signal-utils/subtle/microtask-effect";
+import { reactive } from "../../sca/reactive.js";
 import type { ConsoleEntry, GraphDescriptor, LLMContent, TextCapabilityPart } from "@breadboard-ai/types";
 import type { SCA } from "../../sca/sca.js";
 import type { FlowGenGenerationStatus, StepListStepState } from "../state/types.js";
@@ -51,7 +51,7 @@ class StepListPresenter {
 
     this.#sca = sca;
 
-    this.#disposeEffect = effect(() => {
+    this.#disposeEffect = reactive(() => {
       this.#updateSteps();
     });
   }

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { syncConsoleFromRunner } from "../../actions/run/run-actions.js";
 import { makeTrigger } from "../binder.js";
 
 export const bind = makeTrigger();
@@ -19,40 +20,25 @@ export const bind = makeTrigger();
  */
 
 /**
- * Reacts to graph topology changes by updating the run's estimated entry count.
+ * Reacts to graph topology changes by syncing the run state.
  *
- * ## Why This Trigger Is Necessary
- *
- * When the graph topology changes during a run (e.g., user adds/removes nodes
- * while the board is running), progress calculations need updating:
- *
- * 1. **Progress calculations** become inaccurate (node count changed)
- * 2. **Step list** may need to adjust for new nodes
+ * When the graph topology changes during a run (e.g., the Planner replaces
+ * the graph via replaceWithTheme), this trigger detects the change and
+ * calls the syncConsoleFromRunner action to update RunController.console.
  *
  * This trigger watches GraphController.version (which increments on any graph
- * change) and updates the RunController's estimated entry count.
- *
- * ## Architectural Note
- *
- * The RunController does NOT store a copy of the graph. When Triggers need
- * node metadata (e.g., to populate console entries), they access it via
- * Services.graphStore, which has the canonical graph data. This keeps
- * Controllers decoupled from Services.
+ * change) and delegates the actual work to the action.
  */
 export function registerGraphSyncTrigger(): void {
   bind.register("Graph Synchronization Trigger", () => {
     const { controller } = bind;
     const graphController = controller.editor.graph;
-    const runController = controller.run.main;
 
     // Reading `version` subscribes to graph changes
     void graphController.version;
 
-    // If there's an active run, update the estimated entry count
-    // based on the new graph topology
-    if (runController.hasRunner) {
-      const nodeCount = graphController.editor?.raw()?.nodes?.length ?? 0;
-      runController.setEstimatedEntryCount(nodeCount);
-    }
+    // Sync console from runner on every graph change
+    // The action handles checking if there's an active runner
+    syncConsoleFromRunner();
   });
 }

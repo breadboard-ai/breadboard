@@ -29,7 +29,7 @@ export default {
       recommended: false,
     },
     messages: {
-      suggestDeepForArray: "This @field has an array/Map type. Consider using @field({ deep: true }) to enable reactivity for mutations like .push() or .set().",
+      suggestDeepForArray: "This @field has an array/Map type. Consider using @field({ deep: true }) to enable reactivity for mutations like .push() or .set(). If you do not wish to have internal reactivity explicitly set {deep: false} on the field",
     },
     schema: [],
   },

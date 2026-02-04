@@ -7,7 +7,7 @@
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
 import { type AppActions } from "../actions/actions.js";
-import { effect } from "signal-utils/subtle/microtask-effect";
+import { reactive } from "../reactive.js";
 
 export type DefaultBindings = {
   controller: AppController;
@@ -103,7 +103,7 @@ export function makeTrigger<T extends DefaultBindings>(): Trigger<T> {
     get(_target, prop, receiver) {
       if (prop === "register") {
         return (name: string, cb: () => void) => {
-          disposers.set(name, effect(cb));
+          disposers.set(name, reactive(cb));
         };
       } else if (prop === "registerEventBridge") {
         return (

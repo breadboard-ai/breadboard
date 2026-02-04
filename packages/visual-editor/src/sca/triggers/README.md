@@ -42,13 +42,17 @@ export function registerAutonameTrigger() {
 }
 ```
 
-### Effect Registration
+### Reactive Effect Registration
 
-Triggers use `signal-utils/subtle/microtask-effect` under the hood. When you call `bind.register()`:
+Triggers use `reactive()` from `sca/reactive.ts` under the hood. This is a custom
+implementation that avoids bugs in `signal-utils/subtle/microtask-effect`.
 
-1. The callback is wrapped in an `effect()`
+When you call `bind.register()`:
+
+1. The callback is wrapped in `reactive()`
 2. Any signals read during execution become dependencies
 3. When dependencies change, the effect re-runs
+4. **Important:** Initial execution is deferred to a microtask (see Testing section)
 
 ---
 
@@ -212,14 +216,64 @@ bind.register("Long Running Trigger", async () => {
 
 ---
 
+## Testing Triggers
+
+Testing triggers requires understanding that `reactive()` **defers initial execution** to a microtask. This has several implications:
+
+### Flush Effects Before Cleanup
+
+Effects may still be pending when a test completes. Use `flushEffects()` in `afterEach`:
+
+```typescript
+import { flushEffects } from "./utils.js";
+
+afterEach(async () => {
+  await flushEffects(); // Wait for pending microtasks
+  MyTriggers.bind.clean();
+});
+```
+
+### Bind Dependencies Before Registering
+
+If a trigger calls actions (e.g., `syncConsoleFromRunner`), those action binders must be set up **before** the trigger is registered. Even if your test doesn't use the actions, the deferred effect will access them:
+
+```typescript
+test("trigger registers without error", () => {
+  RunTriggers.bind({ controller, services, actions: {} as AppActions });
+  // Actions binder needed because trigger's deferred effect calls actions
+  RunActions.bind({ controller, services });
+
+  RunTriggers.registerGraphSyncTrigger();
+});
+```
+
+### Testing Signal Changes
+
+To observe trigger side effects from signal changes:
+
+```typescript
+test("trigger reacts to signal change", async () => {
+  setupTrigger();
+  await flushEffects(); // Initial deferred execution
+
+  controller.some.signal = newValue;
+  await flushEffects(); // Effect reacts to change
+
+  assert.strictEqual(observed, expectedValue);
+});
+```
+
+---
+
 ## Directory Structure
 
 ```
 triggers/
 ├── triggers.ts         # AppTriggers interface, register(), clean()
-├── binder.ts           # makeTrigger() with effect management
+├── binder.ts           # makeTrigger() with reactive() management
 ├── board/
 │   └── board-triggers.ts   # Board-related triggers (save)
 └── node/
     └── node-triggers.ts    # Node-related triggers (autoname)
 ```
+
