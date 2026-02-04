@@ -14,8 +14,6 @@ import {
 
 const deploymentConfiguration = CLIENT_DEPLOYMENT_CONFIG;
 
-// Test
-
 const executeStepEndpoint: string = new URL(
   "v1beta1/executeStep",
   OPAL_BACKEND_API_PREFIX
