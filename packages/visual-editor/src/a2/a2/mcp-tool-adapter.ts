@@ -10,7 +10,8 @@ import { createReporter } from "../agent/progress-work-item.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { filterUndefined, ok } from "@breadboard-ai/utils";
 import { err, ErrorWithMetadata } from "./utils.js";
-import { DescriberResult, ExportDescriberResult } from "./common.js";
+import { DescriberResult } from "./common.js";
+import { ListToolResult } from "./connector-manager.js";
 
 export { McpToolAdapter };
 
@@ -20,12 +21,6 @@ type CallToolAdapterResponse = {
   structured_result: LLMContent;
   isError?: boolean;
   saveOutputs?: boolean;
-};
-
-export type ListToolResult = {
-  url: string;
-  description: ExportDescriberResult;
-  passContext: boolean;
 };
 
 function isNotAllowed(error: ErrorWithMetadata) {

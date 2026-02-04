@@ -301,23 +301,6 @@ export type Tool = {
   tags?: string[];
 };
 
-/**
- * A tool with statically-known invoke and describe functions.
- * Used for tools in A2_TOOLS registry that have compile-time known implementations.
- */
-export type StaticTool = Tool & {
-  /**
-   * Direct invoke function for this tool.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  invoke: (...args: any[]) => Promise<any>;
-  /**
-   * Direct describe function for this tool.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  describe: () => Promise<any>;
-};
-
 export type Component = {
   id: NodeIdentifier;
   title: string;

@@ -11,7 +11,7 @@ import {
   StoredDataCapabilityPart,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { saveToDrive } from "../google-drive/save-to-drive.js";
+import { ConnectorManager } from "./connector-manager.js";
 import { callGenWebpage } from "./html-generator.js";
 import { Template } from "./template.js";
 import {
@@ -303,7 +303,6 @@ function getPalettePrompt(colors: PaletteColors): string {
 
 async function saveToGoogleDrive(
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
   content: LLMContent,
   mimeType: string,
   title: string | undefined
@@ -320,11 +319,13 @@ async function saveToGoogleDrive(
       graphId = metadata.url?.replace("drive:/", "") || "";
     }
   }
-  return saveToDrive(
-    { context: [content], mimeType, title, graphId },
-    caps,
-    moduleArgs
-  ) as Promise<Outcome<SaveOutput>>;
+  const manager = new ConnectorManager(caps, {
+    url: "embed://a2/google-drive.bgl.json",
+    configuration: { file: { mimeType } },
+  });
+  return manager.save([content], { title, graphId }) as Promise<
+    Outcome<SaveOutput>
+  >;
 }
 
 function paramsToContent(params: Params): LLMContent {
@@ -417,7 +418,6 @@ async function invoke(
     case "GoogleDoc": {
       return saveToGoogleDrive(
         caps,
-        moduleArgs,
         out,
         "application/vnd.google-apps.document",
         googleDocTitle
@@ -426,7 +426,6 @@ async function invoke(
     case "GoogleSlides": {
       return saveToGoogleDrive(
         caps,
-        moduleArgs,
         out,
         "application/vnd.google-apps.presentation",
         googleDocTitle
@@ -435,7 +434,6 @@ async function invoke(
     case "GoogleSheets": {
       return saveToGoogleDrive(
         caps,
-        moduleArgs,
         out,
         "application/vnd.google-apps.spreadsheet",
         googleDocTitle

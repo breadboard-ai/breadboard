@@ -12,9 +12,16 @@ import {
   FileSystemReadResult,
   FileSystemWriteArguments,
   FileSystemWriteResult,
+  Outcome,
 } from "./data.js";
-import { NodeMetadata } from "./graph-descriptor.js";
+import {
+  GraphMetadata,
+  InputValues,
+  NodeMetadata,
+} from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
+import { NodeDescriberExport } from "./node-handler.js";
+import { InvokeInputs, InvokeOutputs } from "./sandbox.js";
 import { Schema } from "./schema.js";
 
 export type FetchInputs = {
@@ -102,9 +109,33 @@ export type BlobOutputs = {
   contents: LLMContent[];
 };
 
+export type DescribeInputs = {
+  url: string;
+  inputs?: InputValues;
+  inputSchema?: Schema;
+  outputSchema?: Schema;
+};
+
+export type DescribeOutputs = {
+  title?: string;
+  description?: string;
+  metadata?: GraphMetadata;
+  inputSchema: Schema;
+  outputSchema: Schema;
+  /**
+   * A way for a describer to specify multiple entry points.
+   * A common use case is a connector that offers multiple tools.
+   * For a graph that contains exports, these will match the describer
+   * results of the exports.
+   */
+  exports?: Record<string, NodeDescriberExport>;
+};
+
 export type Capabilities = {
+  invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
   input(inputs: InputInputs): Promise<InputOutputs>;
   output(inputs: OutputInputs): Promise<OutputOutputs>;
+  describe(inputs: DescribeInputs): Promise<Outcome<DescribeOutputs>>;
   query(inputs: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(inputs: FileSystemReadArguments): Promise<FileSystemReadResult>;
   write(inputs: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
