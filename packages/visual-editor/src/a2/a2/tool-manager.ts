@@ -60,8 +60,6 @@ export type CallToolsResult = {
 
 export type ConnectorHandle = {
   tools: Map<string, ToolHandle>;
-  configure?: [string, ToolHandle];
-  load?: [string, ToolHandle];
 };
 
 export type ToolDescriptor =
@@ -241,44 +239,6 @@ class ToolManager implements SimplifiedToolManager {
       (await registryTool.describe()) as Outcome<DescriberResult>;
     let passContext = false;
     if (!ok(description)) return description;
-
-    // TODO: Remove this altogether?
-    // Let's see if there are exports. If yes, let's add the exports
-    // instead of the tool.
-    if (description.exports) {
-      let connector: ConnectorHandle | null = null;
-      if (description.metadata?.tags?.includes("connector")) {
-        // This is a connector
-        connector = { tools: new Map() };
-      }
-      Object.entries(description.exports).forEach(([id, exportDescription]) => {
-        // TODO: Figure out what to do with passContext
-        const idAndHandle = this.#createToolHandle(
-          id,
-          exportDescription,
-          passContext
-        );
-        const [name, handle] = idAndHandle;
-        console.log("EXPORT DESCRIPTION", exportDescription);
-        if (connector) {
-          if (
-            exportDescription.metadata?.tags?.includes("connector-configure")
-          ) {
-            connector.configure = idAndHandle;
-            return;
-          } else if (
-            exportDescription.metadata?.tags?.includes("connector-load")
-          ) {
-            connector.load = idAndHandle;
-            return;
-          } else {
-            connector.tools.set(name, handle);
-          }
-        }
-        this.tools.set(name, handle);
-      });
-      return this.#toName(description.title);
-    }
 
     // Otherwise, let's add the tool itself.
     if (this.describerResultTransformer) {

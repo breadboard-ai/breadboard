@@ -52,10 +52,5 @@
     "a2": {
       "url": "./a2.bgl.json"
     }
-  },
-  "exports": [
-    "#module:configurator",
-    "#module:connector-save",
-    "#module:connector-load"
-  ]
+  }
 }
