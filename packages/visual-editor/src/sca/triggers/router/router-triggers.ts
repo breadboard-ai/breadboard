@@ -34,7 +34,4 @@ export function registerInitTrigger() {
   // Fire immediately during registration - this is a one-time init
   const { controller } = bind;
   controller.router.init();
-
-  // Register with empty handler since init is synchronous and one-time
-  bind.register("Router Init Trigger", () => { });
 }

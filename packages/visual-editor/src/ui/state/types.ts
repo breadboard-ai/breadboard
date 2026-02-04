@@ -21,7 +21,6 @@ import {
   NodeRunState,
   OutputValues,
   RunError,
-  GraphDescriptor,
   EditableGraph,
 } from "@breadboard-ai/types";
 import {
@@ -36,13 +35,11 @@ import {
 import { StateEvent } from "../events/events.js";
 import {
   AppTheme,
-  ParsedUrlProvider,
   VisualEditorMode,
   WorkspaceSelectionState,
 } from "../types/types.js";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
-import type { FlowGenerator } from "../flow-gen/flow-generator.js";
 
 /**
  * Represents the result of AsyncComputed signals helper.
@@ -412,66 +409,6 @@ export type LiteModeType = "loading" | "home" | "editor" | "error" | "invalid";
 
 export type LiteModeIntentExample = {
   intent: string;
-};
-
-export type LiteModePlannerState = {
-  status: string;
-  thought: string;
-};
-
-/**
- * Represents the flow gen state
- */
-export type LiteModeState = {
-  /**
-   * The various view types:
-   * - "loading" -- the Load Opal ghostie that is presented whenever
-   * an opal is loaded.
-   * - "home" -- user can create a new opal from here
-   * - "editor" -- user can run/edit opal from here
-   * - "error" -- the distinct error state for when we're neither in home nor
-   *   in editor (like, trying to load an invalid/inacessible opal)
-   * - "invalid" -- some invalid state that we don't know about
-   */
-  viewType: LiteModeType;
-
-  /**
-   * Call this to trigger the "error" view
-   */
-  viewError: string;
-
-  /**
-   * Planner bits
-   */
-  planner: LiteModePlannerState;
-
-  // FlowGen bits
-  status: FlowGenGenerationStatus;
-  error?: string;
-  startGenerating(): void;
-  finishGenerating(): void;
-
-  /**
-   * True when the underlying graph is brand new and has no nodes.
-   */
-  empty: boolean;
-  /**
-   * The current graph
-   */
-  graph: GraphDescriptor | null;
-
-  examples: LiteModeIntentExample[];
-  currentExampleIntent: string;
-};
-
-/**
- * Represents the context of the runtime. This is actually a very simplified
- * representation of the `Runtime` from visual editor.
- */
-export type RuntimeContext = {
-  readonly project: Project | null;
-  readonly router: ParsedUrlProvider;
-  readonly flowGenerator: FlowGenerator;
 };
 
 export type IntegrationState = {
