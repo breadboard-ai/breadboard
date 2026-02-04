@@ -28,6 +28,7 @@ import { err } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { McpToolAdapter } from "./mcp-tool-adapter.js";
 import { ToolParamPart } from "./template.js";
+import { A2_TOOLS } from "../a2-registry.js";
 
 export { ROUTE_TOOL_PATH, MEMORY_TOOL_PATH, ToolManager };
 
@@ -35,6 +36,11 @@ const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
 const ROUTE_TOOL_PATH = "control-flow/routing";
 const MEMORY_TOOL_PATH = "function-group/use-memory";
+
+/**
+ * Lookup map for A2 tools by URL for O(1) access.
+ */
+const A2_TOOL_MAP = new Map(A2_TOOLS);
 
 export type ToolHandle = {
   title?: string;
@@ -54,8 +60,6 @@ export type CallToolsResult = {
 
 export type ConnectorHandle = {
   tools: Map<string, ToolHandle>;
-  configure?: [string, ToolHandle];
-  load?: [string, ToolHandle];
 };
 
 export type ToolDescriptor =
@@ -226,49 +230,15 @@ class ToolManager implements SimplifiedToolManager {
       }
     }
 
-    let description = (await this.caps.describe({
-      url,
-    })) as Outcome<DescriberResult>;
+    // Get description from static registry
+    const registryTool = A2_TOOL_MAP.get(url!);
+    if (!registryTool) {
+      return err(`Unknown tool: "${url}"`);
+    }
+    let description =
+      (await registryTool.describe()) as Outcome<DescriberResult>;
     let passContext = false;
     if (!ok(description)) return description;
-
-    // TODO: Remove this altogether?
-    // Let's see if there are exports. If yes, let's add the exports
-    // instead of the tool.
-    if (description.exports) {
-      let connector: ConnectorHandle | null = null;
-      if (description.metadata?.tags?.includes("connector")) {
-        // This is a connector
-        connector = { tools: new Map() };
-      }
-      Object.entries(description.exports).forEach(([id, exportDescription]) => {
-        // TODO: Figure out what to do with passContext
-        const idAndHandle = this.#createToolHandle(
-          id,
-          exportDescription,
-          passContext
-        );
-        const [name, handle] = idAndHandle;
-        console.log("EXPORT DESCRIPTION", exportDescription);
-        if (connector) {
-          if (
-            exportDescription.metadata?.tags?.includes("connector-configure")
-          ) {
-            connector.configure = idAndHandle;
-            return;
-          } else if (
-            exportDescription.metadata?.tags?.includes("connector-load")
-          ) {
-            connector.load = idAndHandle;
-            return;
-          } else {
-            connector.tools.set(name, handle);
-          }
-        }
-        this.tools.set(name, handle);
-      });
-      return this.#toName(description.title);
-    }
 
     // Otherwise, let's add the tool itself.
     if (this.describerResultTransformer) {
@@ -290,9 +260,15 @@ class ToolManager implements SimplifiedToolManager {
     let hasInvalidTools = false;
     for (const tool of tools) {
       const url = typeof tool === "string" ? tool : tool.url;
-      const description = (await this.caps.describe({
-        url,
-      })) as Outcome<DescriberResult>;
+      // Get description from static registry
+      const registryTool = A2_TOOL_MAP.get(url);
+      if (!registryTool) {
+        this.errors.push(`Unknown tool: "${url}"`);
+        hasInvalidTools = true;
+        continue;
+      }
+      const description =
+        (await registryTool.describe()) as Outcome<DescriberResult>;
       if (!ok(description)) {
         this.errors.push(description.$error);
         // Invalid tool, skip
@@ -338,10 +314,16 @@ class ToolManager implements SimplifiedToolManager {
         args as Record<string, unknown>
       );
     } else {
-      callingTool = await this.caps.invoke({
-        $board: url,
-        ...normalizeArgs(args, [], passContext),
-      });
+      // Get invoke from static registry
+      const registryTool = A2_TOOL_MAP.get(url);
+      if (!registryTool) {
+        return err(`Unknown tool: "${url}"`);
+      }
+      callingTool = await registryTool.invoke(
+        normalizeArgs(args, [], passContext),
+        this.caps,
+        this.moduleArgs
+      );
     }
     if (!ok(callingTool)) return callingTool;
 
@@ -408,11 +390,19 @@ class ToolManager implements SimplifiedToolManager {
             name,
             args as Record<string, unknown>
           );
-        } else
-          callingTool = await this.caps.invoke({
-            $board: url,
-            ...normalizeArgs(args, context, passContext),
-          });
+        } else {
+          // Get invoke from static registry
+          const registryTool = A2_TOOL_MAP.get(url);
+          if (!registryTool) {
+            errors.push(`Unknown tool: "${url}"`);
+            continue;
+          }
+          callingTool = await registryTool.invoke(
+            normalizeArgs(args, context, passContext),
+            this.caps,
+            this.moduleArgs
+          );
+        }
         if ("$error" in callingTool) {
           errors.push(JSON.stringify(callingTool.$error));
         } else if (name === undefined) {

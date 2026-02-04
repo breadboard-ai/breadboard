@@ -6,20 +6,43 @@ import { ok } from "../a2/utils.js";
 import { readFlags } from "../a2/settings.js";
 import {
   Capabilities,
-  InputValues,
   LLMContent,
   RuntimeFlags,
   Schema,
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { makeTextInstruction } from "../generate-text/main.js";
-import { makeGoOverListInstruction } from "../go-over-list/main.js";
+import generateTextInvoke, {
+  describe as generateTextDescribe,
+  makeTextInstruction,
+} from "../generate-text/main.js";
+import goOverListInvoke, {
+  describe as goOverListDescribe,
+  makeGoOverListInstruction,
+} from "../go-over-list/main.js";
 import agent, { computeAgentSchema, type AgentInputs } from "../agent/main.js";
-import { makeDeepResearchInstruction } from "../deep-research/main.js";
-import { makeImageInstruction } from "../a2/image-generator.js";
-import { makeSpeechInstruction } from "../audio-generator/main.js";
-import { makeVideoInstruction } from "../video-generator/main.js";
-import { makeMusicInstruction } from "../music-generator/main.js";
+import deepResearchInvoke, {
+  describe as deepResearchDescribe,
+  makeDeepResearchInstruction,
+} from "../deep-research/main.js";
+import imageGeneratorInvoke, {
+  describe as imageGeneratorDescribe,
+  makeImageInstruction,
+} from "../a2/image-generator.js";
+import imageEditorInvoke, {
+  describe as imageEditorDescribe,
+} from "../a2/image-editor.js";
+import audioGeneratorInvoke, {
+  describe as audioGeneratorDescribe,
+  makeSpeechInstruction,
+} from "../audio-generator/main.js";
+import videoGeneratorInvoke, {
+  describe as videoGeneratorDescribe,
+  makeVideoInstruction,
+} from "../video-generator/main.js";
+import musicGeneratorInvoke, {
+  describe as musicGeneratorDescribe,
+  makeMusicInstruction,
+} from "../music-generator/main.js";
 import type { ModelConstraint } from "../agent/functions/generate.js";
 
 export { invoke as default, describe };
@@ -40,10 +63,22 @@ type ResolvedModes = {
   current: Mode;
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type ModuleInvoke = (
+  inputs: any,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+) => Promise<any>;
+type ModuleDescribe = (
+  inputs: any,
+  caps: Capabilities,
+  moduleArgs?: A2ModuleArgs
+) => Promise<any>;
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 type Mode = {
   id: string;
   type: string;
-  url: string;
   title: string;
   description: string;
   icon: string;
@@ -71,6 +106,14 @@ type Mode = {
    * when in this mode.
    */
   modelConstraint: ModelConstraint;
+  /**
+   * Direct invoke function for this mode.
+   */
+  invoke: ModuleInvoke;
+  /**
+   * Direct describe function for this mode.
+   */
+  describe: ModuleDescribe;
 };
 
 const PROMPT_PORT = "config$prompt";
@@ -81,7 +124,6 @@ const ALL_MODES: Mode[] = [
   {
     id: "agent",
     type: "text",
-    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Agent",
     description: "Agent can use any models",
     icon: "button_magic",
@@ -94,11 +136,12 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "none",
+    invoke: generateTextInvoke,
+    describe: generateTextDescribe,
   },
   {
     id: "text-2.0-flash",
     type: "text",
-    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.0 Flash",
     description: "Older model, use sparingly",
     hidden: true,
@@ -112,11 +155,12 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
+    invoke: generateTextInvoke,
+    describe: generateTextDescribe,
   },
   {
     id: "text-3-flash",
     type: "text",
-    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 3 Flash",
     description: "Best for everyday tasks",
     icon: "text_analysis",
@@ -129,11 +173,12 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
+    invoke: generateTextInvoke,
+    describe: generateTextDescribe,
   },
   {
     id: "text",
     type: "text",
-    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Flash",
     description: "Good model for everyday tasks",
     icon: "text_analysis",
@@ -146,11 +191,12 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
+    invoke: generateTextInvoke,
+    describe: generateTextDescribe,
   },
   {
     id: "text-2.5-pro",
     type: "text",
-    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Pro",
     description: "Good model for complex tasks",
     icon: "text_analysis",
@@ -163,11 +209,12 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
+    invoke: generateTextInvoke,
+    describe: generateTextDescribe,
   },
   {
     id: "text-3-pro",
     type: "text",
-    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 3 Pro",
     description: "Best for complex tasks",
     icon: "text_analysis",
@@ -180,11 +227,12 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
+    invoke: generateTextInvoke,
+    describe: generateTextDescribe,
   },
   {
     id: "think",
     type: "think",
-    url: "embed://a2/go-over-list.bgl.json#module:main",
     title: "Plan and Execute with Gemini 2.5 Flash",
     description: "Plans and executes complex tasks",
     icon: "spark",
@@ -194,11 +242,12 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "plan"]]),
     makeInstruction: makeGoOverListInstruction,
     modelConstraint: "none",
+    invoke: goOverListInvoke,
+    describe: goOverListDescribe,
   },
   {
     id: "deep-research",
     type: "deep-research",
-    url: "embed://a2/deep-research.bgl.json#module:main",
     title: "Deep Research with Gemini 2.5 Flash",
     description: "In-depth research on your topic",
     icon: "spark",
@@ -208,11 +257,12 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "query"]]),
     makeInstruction: makeDeepResearchInstruction,
     modelConstraint: "none",
+    invoke: deepResearchInvoke,
+    describe: deepResearchDescribe,
   },
   {
     id: "image-gen",
     type: "image-gen",
-    url: "embed://a2/a2.bgl.json#module:image-generator",
     title: "Imagen 4",
     description: "Generates images from text",
     icon: "photo_spark",
@@ -222,11 +272,12 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: false }),
     modelConstraint: "image",
+    invoke: imageGeneratorInvoke,
+    describe: imageGeneratorDescribe,
   },
   {
     id: "image",
     type: "image",
-    url: "embed://a2/a2.bgl.json#module:image-editor",
     title: "Nano Banana",
     description: "For image editing and generation",
     icon: "photo_spark",
@@ -237,11 +288,12 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: false }),
     modelConstraint: "image",
+    invoke: imageEditorInvoke,
+    describe: imageEditorDescribe,
   },
   {
     id: "image-pro",
     type: "image",
-    url: "embed://a2/a2.bgl.json#module:image-editor",
     title: "Nano Banana Pro",
     description: "For complex visuals with text",
     icon: "photo_spark",
@@ -252,11 +304,12 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: true }),
     modelConstraint: "image",
+    invoke: imageEditorInvoke,
+    describe: imageEditorDescribe,
   },
   {
     id: "audio",
     type: "audio",
-    url: "embed://a2/audio-generator.bgl.json#module:main",
     title: "AudioLM",
     description: "Generates speech from text",
     icon: "audio_magic_eraser",
@@ -266,11 +319,12 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "text"]]),
     makeInstruction: makeSpeechInstruction,
     modelConstraint: "speech",
+    invoke: audioGeneratorInvoke,
+    describe: audioGeneratorDescribe,
   },
   {
     id: "video",
     type: "video",
-    url: "embed://a2/video-generator.bgl.json#module:main",
     title: "Veo",
     description: "Generates videos from text and images",
     icon: "videocam_auto",
@@ -280,11 +334,12 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeVideoInstruction,
     modelConstraint: "video",
+    invoke: videoGeneratorInvoke,
+    describe: videoGeneratorDescribe,
   },
   {
     id: "music",
     type: "music",
-    url: "embed://a2/music-generator.bgl.json#module:main",
     title: "Lyria 2",
     description: "Generates instrumental music from text",
     icon: "audio_magic_eraser",
@@ -294,6 +349,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "text"]]),
     makeInstruction: makeMusicInstruction,
     modelConstraint: "music",
+    invoke: musicGeneratorInvoke,
+    describe: musicGeneratorDescribe,
   },
 ] as const;
 
@@ -386,22 +443,22 @@ async function invoke(
       };
       return agent(agentInputs, caps, moduleArgs);
     } else {
-      // Other modes dispatch directly to their board URLs
-      const { url: $board, type, modelName } = current;
+      // Other modes dispatch directly to their invoke functions
+      const { type, modelName } = current;
       if (modelName) {
         rest["p-model-name"] = modelName;
       }
-      return caps.invoke({ $board, ...forwardPorts(type, rest) });
+      return current.invoke(forwardPorts(type, rest), caps, moduleArgs);
     }
   } else {
-    const { url: $board, type, modelName } = current;
+    const { type, modelName } = current;
     // Model is treated as part of the Mode, but actually maps N:1
     // on actual underlying step type.
     if (modelName) {
       console.log(`Generating with ${modelName}`);
       rest["p-model-name"] = modelName;
     }
-    return caps.invoke({ $board, ...forwardPorts(type, rest) });
+    return current.invoke(forwardPorts(type, rest), caps, moduleArgs);
   }
 }
 
@@ -433,13 +490,14 @@ async function describe(
   const flags = await readFlags(moduleArgs);
 
   const { current, modes } = resolveModes(mode, flags);
-  const { url, type } = current;
+  const { type } = current;
   let modeSchema: Schema["properties"] = {};
   let behavior: Schema["behavior"] = [];
-  const describing = await caps.describe({
-    url,
-    inputs: rest as InputValues,
-  });
+  const describing = await current.describe(
+    { inputs: receivePorts(type, rest) },
+    caps,
+    moduleArgs
+  );
   if (ok(describing)) {
     modeSchema = receivePorts(
       type,
@@ -450,7 +508,6 @@ async function describe(
   if (flags?.agentMode && current.id === "agent") {
     const agentSchema = computeAgentSchema(flags, rest);
     modeSchema = { ...modeSchema, ...agentSchema };
-    behavior = [...behavior];
   }
 
   return {

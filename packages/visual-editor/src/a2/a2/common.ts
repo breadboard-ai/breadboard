@@ -2,19 +2,13 @@
  * @fileoverview Common types and code
  */
 
-import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
+import { GraphTag, LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 
 export type UserInput = LLMContent;
 
 export type Params = {
   [key: `p-z-${string}`]: unknown;
 };
-
-export type GraphTag =
-  | "connector"
-  | "connector-configure"
-  | "connector-load"
-  | "connector-save";
 
 export type ExportDescriberResult = {
   title?: string;
