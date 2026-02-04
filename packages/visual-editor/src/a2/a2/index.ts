@@ -7,6 +7,7 @@
 import * as a2AudioGenerator from "./audio-generator.js";
 import * as a2CombineOutputs from "./combine-outputs.js";
 import * as a2Common from "./common.js";
+import * as a2ConnectorManager from "./connector-manager.js";
 import * as a2Entry from "./entry.js";
 import * as a2Gemini from "./gemini.js";
 import * as a2GeminiPrompt from "./gemini-prompt.js";
@@ -34,6 +35,7 @@ export const exports = {
   "audio-generator": a2AudioGenerator,
   "combine-outputs": a2CombineOutputs,
   common: a2Common,
+  "connector-manager": a2ConnectorManager,
   entry: a2Entry,
   "gemini-prompt": a2GeminiPrompt,
   gemini: a2Gemini,
