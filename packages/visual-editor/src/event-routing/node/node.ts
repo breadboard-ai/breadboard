@@ -127,7 +127,7 @@ export const ActionRoute: EventRoute<"node.action"> = {
   async do({ runtime, sca, originalEvent }) {
     sca.controller.global.main.blockingAction = true;
     try {
-      const project = runtime.state.project;
+      const project = runtime.project;
       if (!project) {
         console.warn(`No project for "node.action"`);
         return false;

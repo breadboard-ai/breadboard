@@ -277,7 +277,7 @@ export function prepare(config: PrepareRunConfig): void {
  * Note: NodeRunStatus excludes "failed" - failed nodes map to "succeeded"
  * as they are complete, with error styling handled via separate error state.
  */
-function mapLifecycleToRunStatus(
+export function mapLifecycleToRunStatus(
   state: import("@breadboard-ai/types").NodeLifecycleState
 ): import("@breadboard-ai/types").NodeRunStatus {
   switch (state) {

@@ -540,14 +540,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if ((await this.askUserToSignInIfNeeded()) !== "success") {
       return { error: "" };
     }
-    let projectState = this.runtime.state.project;
+    let projectState = this.runtime.project;
     this.sca.controller.global.flowgenInput.currentExampleIntent = intent;
 
     if (!projectState) {
       // Zero state: need to create the board first, then wait for load
       await this.invokeBoardCreateRoute();
       await this.#waitForLoadState();
-      projectState = this.runtime.state.project;
+      projectState = this.runtime.project;
       if (!projectState) {
         return { error: `Failed to create a new opal.` };
       }

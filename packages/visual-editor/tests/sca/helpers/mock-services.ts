@@ -140,6 +140,11 @@ export interface TestServicesOptions {
   agentContext?: typeof defaultAgentContext;
   graphStore?: AppServices["graphStore"];
   flowGeneratorMock?: Partial<FlowGenerator>;
+  /** Custom metadata for mock nodes - keyed by node ID */
+  nodeMetadata?: Record<
+    string,
+    { title?: string; icon?: string; tags?: string[] }
+  >;
 }
 
 export function makeTestServices(options: TestServicesOptions = {}) {
@@ -147,6 +152,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     agentContext = defaultAgentContext,
     graphStore,
     flowGeneratorMock,
+    nodeMetadata = {},
   } = options;
 
   const actionTrackerMock = {
@@ -180,15 +186,24 @@ export function makeTestServices(options: TestServicesOptions = {}) {
         // For nodestart event handling
         getByDescriptor: () => ({ success: true, result: {} }),
         inspect: () => ({
-          nodeById: (id: string) => ({
-            title: () => id,
-            currentDescribe: () => ({ metadata: {} }),
-            currentPorts: () => ({
-              inputs: { ports: [] },
-              outputs: { ports: [] },
-            }),
-            describe: () => Promise.resolve({ metadata: {} }),
-          }),
+          nodeById: (id: string) => {
+            const meta = nodeMetadata[id] ?? {};
+            return {
+              title: () => meta.title ?? id,
+              currentDescribe: () => ({
+                metadata: { icon: meta.icon, tags: meta.tags },
+              }),
+              currentPorts: () => ({
+                inputs: { ports: [] },
+                outputs: { ports: [] },
+              }),
+              // For async describe fallback - include tags to skip this branch
+              describe: () =>
+                Promise.resolve({
+                  metadata: { icon: meta.icon, tags: meta.tags },
+                }),
+            };
+          },
         }),
       } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions
@@ -208,4 +223,3 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     },
   };
 }
-

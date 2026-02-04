@@ -616,7 +616,7 @@ class Main extends MainBase {
           this.sca.controller.global.main.subscriptionCredits = -1;
           const response = await this.sca.services.apiClient.getG1Credits();
           this.sca.controller.global.main.subscriptionCredits =
-            response.remaining_credits ?? 0;
+            response.remainingCredits ?? 0;
         } catch (err) {
           this.sca.controller.global.main.subscriptionCredits = -2;
           console.warn(err);
