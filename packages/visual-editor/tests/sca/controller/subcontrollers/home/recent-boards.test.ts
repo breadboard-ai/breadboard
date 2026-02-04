@@ -127,10 +127,9 @@ suite("RecentBoardsController", () => {
     await store.isSettled;
     assert.strictEqual(store.boards[0].pinned, false);
 
-    // Non-existent pin.
-    assert.doesNotThrow(() => {
-      store.setPin("foo", false);
-    });
+    // Non-existent pin, should be added.
+    store.setPin("foo", false);
     await store.isSettled;
+    assert.strictEqual(store.boards.length, 3);
   });
 });
