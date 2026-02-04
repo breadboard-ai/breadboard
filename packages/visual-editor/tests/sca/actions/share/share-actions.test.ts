@@ -4,11 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Asset } from "@breadboard-ai/types";
+import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import assert from "node:assert";
 import { describe, test } from "node:test";
 import * as ShareActions from "../../../../src/sca/actions/share/share-actions.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
-import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+
+function makeAsset(handle: string, managed: boolean, title: string): Asset {
+  return {
+    data: [{ parts: [{ storedData: { handle, mimeType: "image/png" } }] }],
+    metadata: { managed, title, type: "file" },
+  };
+}
 
 describe("Share Actions", () => {
   test("open -> load -> close", async () => {
@@ -592,63 +600,17 @@ describe("Share Actions", () => {
       nodes: [],
       url: "drive:/test-drive-id",
       assets: {
-        "asset-1": {
-          data: [
-            {
-              parts: [
-                {
-                  storedData: {
-                    handle: "drive:/managed-asset-id",
-                    mimeType: "image/png",
-                  },
-                },
-              ],
-            },
-          ],
-          metadata: {
-            managed: true,
-            title: "test-asset",
-            type: "file" as const,
-          },
-        },
-        "asset-2": {
-          data: [
-            {
-              parts: [
-                {
-                  storedData: {
-                    handle: "drive:/cant-share-asset-id",
-                    mimeType: "image/png",
-                  },
-                },
-              ],
-            },
-          ],
-          metadata: {
-            managed: true,
-            title: "cant-share-asset",
-            type: "file" as const,
-          },
-        },
-        "asset-3": {
-          data: [
-            {
-              parts: [
-                {
-                  storedData: {
-                    handle: "drive:/excess-perms-asset-id",
-                    mimeType: "image/png",
-                  },
-                },
-              ],
-            },
-          ],
-          metadata: {
-            managed: true,
-            title: "excess-perms-asset",
-            type: "file" as const,
-          },
-        },
+        "asset-1": makeAsset("drive:/managed-asset-id", true, "test-asset"),
+        "asset-2": makeAsset(
+          "drive:/cant-share-asset-id",
+          true,
+          "cant-share-asset"
+        ),
+        "asset-3": makeAsset(
+          "drive:/excess-perms-asset-id",
+          true,
+          "excess-perms-asset"
+        ),
       },
     };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
@@ -784,44 +746,16 @@ describe("Share Actions", () => {
       nodes: [],
       url: "drive:/test-drive-id",
       assets: {
-        "asset-1": {
-          data: [
-            {
-              parts: [
-                {
-                  storedData: {
-                    handle: "drive:/unmanaged-asset-id",
-                    mimeType: "image/png",
-                  },
-                },
-              ],
-            },
-          ],
-          metadata: {
-            managed: false,
-            title: "unmanaged-asset",
-            type: "file" as const,
-          },
-        },
-        "asset-2": {
-          data: [
-            {
-              parts: [
-                {
-                  storedData: {
-                    handle: "drive:/cant-share-asset-id",
-                    mimeType: "image/png",
-                  },
-                },
-              ],
-            },
-          ],
-          metadata: {
-            managed: false,
-            title: "cant-share-asset",
-            type: "file" as const,
-          },
-        },
+        "asset-1": makeAsset(
+          "drive:/unmanaged-asset-id",
+          false,
+          "unmanaged-asset"
+        ),
+        "asset-2": makeAsset(
+          "drive:/cant-share-asset-id",
+          false,
+          "cant-share-asset"
+        ),
       },
     };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
