@@ -85,7 +85,6 @@ export class RecentBoardsController extends RootController {
     if (index === -1) {
       this.add({
         url,
-        title: "",
         pinned,
       });
       return;
