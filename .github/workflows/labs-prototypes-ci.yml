@@ -62,9 +62,6 @@ jobs:
             echo "Stats: $STATS"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Generate CI coverage report
-        if: github.event_name == 'pull_request'
-        run: npm run coverage:ci
 
       - name: Save PR number
         if: github.event_name == 'pull_request'
@@ -76,6 +73,6 @@ jobs:
         with:
           name: coverage-report
           path: |
-            packages/visual-editor/coverage-ci/coverage-summary.json
+            packages/visual-editor/coverage/coverage-summary.json
             pr-number.txt
           retention-days: 7

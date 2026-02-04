@@ -9,7 +9,6 @@
     "update": "rm package-lock.json && npm i",
     "test": "wireit",
     "coverage": "wireit",
-    "coverage:ci": "wireit",
     "build": "wireit",
     "lint": "wireit",
     "dev": "npm run dev -w packages/unified-server --watch",
@@ -39,11 +38,6 @@
       ]
     },
     "coverage": {
-      "dependencies": [
-        "<workspaces>#<this>"
-      ]
-    },
-    "coverage:ci": {
       "dependencies": [
         "<workspaces>#<this>"
       ]
