@@ -12,6 +12,7 @@ import { makeTestGraphStore } from "../../helpers/_graph-store.js";
 import { testKit } from "../../test-kit.js";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { SigninAdapter } from "../../../src/ui/utils/signin-adapter.js";
+import type { GoogleDriveBoardServer } from "../../../src/board-server/server.js";
 
 /**
  * Shared services mocks for SCA tests.
@@ -149,7 +150,11 @@ export interface TestServicesOptions {
   >;
   googleDriveClient?: Partial<GoogleDriveClient>;
   signinAdapter?: Partial<SigninAdapter>;
-  googleDriveBoardServer?: object;
+  googleDriveBoardServer?: Partial<
+    Omit<GoogleDriveBoardServer, "ops"> & {
+      ops?: Partial<GoogleDriveBoardServer["ops"]>;
+    }
+  >;
 }
 
 export function makeTestServices(options: TestServicesOptions = {}) {

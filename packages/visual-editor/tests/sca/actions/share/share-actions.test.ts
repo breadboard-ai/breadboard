@@ -354,6 +354,7 @@ describe("Share Actions", () => {
         ops: {
           writeGraphToDrive: async (url: URL) => {
             writtenUrls.push(url.toString());
+            return { result: true };
           },
         },
       },
@@ -587,7 +588,7 @@ describe("Share Actions", () => {
           url: "drive:/shareable-copy-id",
         }),
         ops: {
-          writeGraphToDrive: async () => {},
+          writeGraphToDrive: async () => ({ result: true }),
         },
       },
     });
@@ -733,7 +734,7 @@ describe("Share Actions", () => {
           url: "drive:/shareable-copy-id",
         }),
         ops: {
-          writeGraphToDrive: async () => {},
+          writeGraphToDrive: async () => ({ result: true }),
         },
       },
     });
