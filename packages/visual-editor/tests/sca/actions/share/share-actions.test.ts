@@ -224,4 +224,35 @@ describe("Share Actions", () => {
       resourceKey: "resource-key-123",
     });
   });
+
+  test("readonly when file is a shareable copy", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices({
+      googleDriveClient: {
+        getFileMetadata: async () => ({
+          id: "shareable-copy-id",
+          properties: {
+            // This property indicates the file is a shareable copy
+            shareableCopyToMain: "main-file-id",
+          },
+          ownedByMe: true,
+          resourceKey: "shareable-resource-key",
+        }),
+      } as object as Partial<GoogleDriveClient>,
+    });
+    ShareActions.bind({ controller, services });
+    const share = controller.editor.share;
+
+    ShareActions.openPanel();
+    await ShareActions.readPublishedState(
+      { edges: [], nodes: [], url: "drive://shareable-copy-id" },
+      []
+    );
+
+    assert.strictEqual(share.state.status, "readonly");
+    assert.deepEqual(share.state.shareableFile, {
+      id: "shareable-copy-id",
+      resourceKey: "shareable-resource-key",
+    });
+  });
 });
