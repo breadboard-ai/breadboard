@@ -10,6 +10,8 @@ import { AppServices } from "../../../src/sca/services/services.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
 import { testKit } from "../../test-kit.js";
+import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type { SigninAdapter } from "../../../src/ui/utils/signin-adapter.js";
 
 /**
  * Shared services mocks for SCA tests.
@@ -145,6 +147,8 @@ export interface TestServicesOptions {
     string,
     { title?: string; icon?: string; tags?: string[] }
   >;
+  googleDriveClient?: Partial<GoogleDriveClient>;
+  signinAdapter?: Partial<SigninAdapter>;
 }
 
 export function makeTestServices(options: TestServicesOptions = {}) {
@@ -153,6 +157,8 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     graphStore,
     flowGeneratorMock,
     nodeMetadata = {},
+    googleDriveClient,
+    signinAdapter,
   } = options;
 
   const actionTrackerMock = {
@@ -165,7 +171,10 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     googleDriveBoardServer: {
       addEventListener: () => { },
       removeEventListener: () => { },
+      flushSaveQueue: async () => { },
     },
+    googleDriveClient: googleDriveClient ?? {},
+    signinAdapter: signinAdapter ?? {},
     // Mock RunService that returns a testable mock runner
     runService: {
       createRunner: (config: { runner?: { nodes?: Array<{ id: string }> } }) => {
