@@ -38,7 +38,7 @@ describe("Share Actions", () => {
 
     // Panel starts loading
     const loaded = ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive://test-drive-id" },
+      { edges: [], nodes: [], url: "drive:/test-drive-id" },
       []
     );
     assert.deepEqual(share.state, { status: "loading" });
@@ -92,7 +92,7 @@ describe("Share Actions", () => {
           createdBoards.push({ url: url.toString() });
           return {
             result: true,
-            url: "drive://shareable-copy-id",
+            url: "drive:/shareable-copy-id",
           };
         },
         flushSaveQueue: async () => {},
@@ -106,14 +106,14 @@ describe("Share Actions", () => {
     // Open and load to get to writable state
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive://test-drive-id" },
+      { edges: [], nodes: [], url: "drive:/test-drive-id" },
       []
     );
     assert.strictEqual(share.state.status, "writable");
     assert.strictEqual(share.state.published, false);
 
     // Publish
-    const graph = { edges: [], nodes: [], url: "drive://test-drive-id" };
+    const graph = { edges: [], nodes: [], url: "drive:/test-drive-id" };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
     await ShareActions.publish(graph, publishPermissions, undefined);
 
@@ -121,7 +121,7 @@ describe("Share Actions", () => {
     assert.strictEqual(createdBoards.length, 1);
     assert.strictEqual(
       createdBoards[0].url,
-      "drive://test-drive-id-shared.bgl.json"
+      "drive:/test-drive-id-shared.bgl.json"
     );
 
     // Verify state is now published
@@ -163,7 +163,7 @@ describe("Share Actions", () => {
       googleDriveBoardServer: {
         create: async () => ({
           result: true,
-          url: "drive://shareable-copy-id",
+          url: "drive:/shareable-copy-id",
         }),
         flushSaveQueue: async () => {},
         addEventListener: () => {},
@@ -176,10 +176,10 @@ describe("Share Actions", () => {
     // Open, load, and publish to get to published state
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive://test-drive-id" },
+      { edges: [], nodes: [], url: "drive:/test-drive-id" },
       []
     );
-    const graph = { edges: [], nodes: [], url: "drive://test-drive-id" };
+    const graph = { edges: [], nodes: [], url: "drive:/test-drive-id" };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
     await ShareActions.publish(graph, publishPermissions, undefined);
     assert.strictEqual(share.state.status, "writable");
@@ -214,7 +214,7 @@ describe("Share Actions", () => {
 
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive://test-drive-id" },
+      { edges: [], nodes: [], url: "drive:/test-drive-id" },
       []
     );
 
@@ -245,7 +245,7 @@ describe("Share Actions", () => {
 
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive://shareable-copy-id" },
+      { edges: [], nodes: [], url: "drive:/shareable-copy-id" },
       []
     );
 
@@ -254,5 +254,83 @@ describe("Share Actions", () => {
       id: "shareable-copy-id",
       resourceKey: "shareable-resource-key",
     });
+  });
+
+  test("publishStale updates shareable copy and clears stale flag", async () => {
+    const { controller } = makeTestController();
+    const writtenUrls: string[] = [];
+    const updatedMetadataFileIds: string[] = [];
+    const { services } = makeTestServices({
+      googleDriveClient: {
+        getFileMetadata: async (fileId: string) => {
+          if (fileId === "test-drive-id") {
+            return {
+              id: "test-drive-id",
+              properties: {
+                mainToShareableCopy: "shareable-copy-id",
+              },
+              ownedByMe: true,
+              version: "5",
+            };
+          }
+          // shareable copy metadata
+          return {
+            id: "shareable-copy-id",
+            resourceKey: "shareable-resource-key",
+            properties: {
+              latestSharedVersion: "3", // older version, so stale
+            },
+            permissions: [
+              { type: "domain", domain: "example.com", role: "reader" },
+            ],
+          };
+        },
+        updateFileMetadata: async (fileId: string) => {
+          updatedMetadataFileIds.push(fileId);
+          return { version: "5" };
+        },
+      } as object as Partial<GoogleDriveClient>,
+      signinAdapter: {
+        domain: Promise.resolve("example.com"),
+      },
+      googleDriveBoardServer: {
+        flushSaveQueue: async () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        ops: {
+          writeGraphToDrive: async (url: URL) => {
+            writtenUrls.push(url.toString());
+          },
+        },
+      },
+    });
+    ShareActions.bind({ controller, services });
+    const share = controller.editor.share;
+
+    // Open and load to get to writable state with stale shareable copy
+    ShareActions.openPanel();
+    await ShareActions.readPublishedState(
+      { edges: [], nodes: [], url: "drive:/test-drive-id" },
+      [{ type: "domain", domain: "example.com" }]
+    );
+    assert.strictEqual(share.state.status, "writable");
+    assert.strictEqual(share.state.shareableFile?.stale, true);
+
+    // Publish stale
+    const graph = { edges: [], nodes: [], url: "drive:/test-drive-id" };
+    await ShareActions.publishStale(graph);
+
+    // Verify shareable copy was updated
+    assert.deepEqual(writtenUrls, ["drive:/shareable-copy-id"]);
+
+    // Verify metadata was updated
+    assert.strictEqual(
+      updatedMetadataFileIds.includes("shareable-copy-id"),
+      true
+    );
+
+    // Verify stale flag is now false
+    assert.strictEqual(share.state.status, "writable");
+    assert.strictEqual(share.state.shareableFile?.stale, false);
   });
 });
