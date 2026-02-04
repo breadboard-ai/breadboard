@@ -66,6 +66,7 @@ describe("Share Actions", () => {
   test("publish", async () => {
     const { controller } = makeTestController();
     const createdPermissions: gapi.client.drive.Permission[] = [];
+    const createdBoards: Array<{ url: string }> = [];
     const { services } = makeTestServices({
       googleDriveClient: {
         getFileMetadata: async () => ({
@@ -73,10 +74,6 @@ describe("Share Actions", () => {
           properties: {},
           ownedByMe: true,
           version: "1",
-        }),
-        copyFile: async () => ({
-          id: "shareable-copy-id",
-          resourceKey: "shareable-copy-resource-key",
         }),
         updateFileMetadata: async () => ({ version: "2" }),
         createPermission: async (
@@ -91,10 +88,13 @@ describe("Share Actions", () => {
         domain: Promise.resolve("example.com"),
       },
       googleDriveBoardServer: {
-        create: async () => ({
-          result: true,
-          url: "drive://shareable-copy-id",
-        }),
+        create: async (url: URL) => {
+          createdBoards.push({ url: url.toString() });
+          return {
+            result: true,
+            url: "drive://shareable-copy-id",
+          };
+        },
         flushSaveQueue: async () => {},
         addEventListener: () => {},
         removeEventListener: () => {},
@@ -116,6 +116,13 @@ describe("Share Actions", () => {
     const graph = { edges: [], nodes: [], url: "drive://test-drive-id" };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
     await ShareActions.publish(graph, publishPermissions, undefined);
+
+    // Verify shareable copy was created via boardServer.create()
+    assert.strictEqual(createdBoards.length, 1);
+    assert.strictEqual(
+      createdBoards[0].url,
+      "drive://test-drive-id-shared.bgl.json"
+    );
 
     // Verify state is now published
     assert.strictEqual(share.state.status, "writable");
