@@ -72,7 +72,7 @@ const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
 /**
  * When the text is below this number, it will be simply inlined (small prompts, short outputs, etc.)
  * When the text is above this number, it will be inlined _and_ prefaced with
- * a VFS file reference.
+ * a file reference.
  */
 const MAX_INLINE_CHARACTER_LENGTH = 1000;
 

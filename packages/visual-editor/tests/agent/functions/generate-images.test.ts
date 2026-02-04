@@ -87,7 +87,7 @@ describe("generate_images", () => {
       const fileSystem = createMockFileSystem({
         add: mock.fn((_part: DataPart, name?: string) => {
           addedNames.push(name ?? "unnamed");
-          return `/vfs/${name ?? "file"}`;
+          return `/mnt/${name ?? "file"}`;
         }),
       });
 
@@ -120,7 +120,7 @@ describe("generate_images", () => {
       const fileSystem = createMockFileSystem({
         add: mock.fn((_part: DataPart, name?: string) => {
           addedNames.push(name ?? "unnamed");
-          return `/vfs/${name ?? "file"}`;
+          return `/mnt/${name ?? "file"}`;
         }),
       });
 
@@ -191,16 +191,16 @@ describe("generate_images", () => {
         {
           prompt: "Edit this",
           model: "flash",
-          images: ["/vfs/input1.png", "/vfs/input2.png"],
+          images: ["/mnt/input1.png", "/mnt/input2.png"],
           aspect_ratio: "16:9",
         },
         createMockStatusUpdater()
       );
 
-      deepStrictEqual(capturedPaths, ["/vfs/input1.png", "/vfs/input2.png"]);
+      deepStrictEqual(capturedPaths, ["/mnt/input1.png", "/mnt/input2.png"]);
     });
 
-    it("returns VFS paths for generated images", async () => {
+    it("returns file paths for generated images", async () => {
       const args = createTestArgs();
       const group = getGenerateFunctionGroup(args);
       const handler = getHandler(group, "generate_images");
@@ -222,8 +222,8 @@ describe("generate_images", () => {
         "Should have at least one image"
       );
       assertOk(
-        successResult.images[0].startsWith("/vfs/"),
-        "Images should be VFS paths"
+        successResult.images[0].startsWith("/mnt/"),
+        "Images should be file paths"
       );
     });
   });
@@ -267,7 +267,7 @@ describe("generate_images", () => {
         {
           prompt: "Edit this",
           model: "flash",
-          images: ["/vfs/missing.png"],
+          images: ["/mnt/missing.png"],
           aspect_ratio: "16:9",
         },
         createMockStatusUpdater()

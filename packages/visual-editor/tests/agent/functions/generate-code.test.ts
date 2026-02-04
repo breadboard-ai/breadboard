@@ -102,7 +102,7 @@ describe("generate_and_execute_code", () => {
       ];
 
       const fileSystem = createMockFileSystem({
-        add: mock.fn((_part: DataPart) => "/vfs/output.png"),
+        add: mock.fn((_part: DataPart) => "/mnt/output.png"),
       });
 
       const generators = createMockGenerators({
@@ -128,7 +128,7 @@ describe("generate_and_execute_code", () => {
       const successResult = result as { result?: string };
       assertOk(successResult.result !== undefined, "Should have result");
       assertOk(
-        successResult.result.includes('<file src="/vfs/output.png"'),
+        successResult.result.includes('<file src="/mnt/output.png"'),
         `Should include file tag, got: ${successResult.result}`
       );
     });

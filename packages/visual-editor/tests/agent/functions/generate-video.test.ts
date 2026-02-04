@@ -33,7 +33,7 @@ describe("generate_video", () => {
       const fileSystem = createMockFileSystem({
         add: mock.fn((part: DataPart) => {
           addedPart = part;
-          return "/vfs/video.mp4";
+          return "/mnt/video.mp4";
         }),
       });
 
@@ -53,7 +53,7 @@ describe("generate_video", () => {
       }
       const successResult = result as { video?: string };
       assertOk(successResult.video !== undefined, "Should have video result");
-      deepStrictEqual(successResult.video, "/vfs/video.mp4");
+      deepStrictEqual(successResult.video, "/mnt/video.mp4");
       assertOk(addedPart !== undefined, "Should add part to file system");
       assertOk("storedData" in addedPart, "Added part should be storedData");
     });
@@ -163,12 +163,12 @@ describe("generate_video", () => {
         {
           prompt: "Animate this",
           aspect_ratio: "16:9",
-          images: ["/vfs/frame1.png"],
+          images: ["/mnt/frame1.png"],
         },
         createMockStatusUpdater()
       );
 
-      deepStrictEqual(capturedPaths, ["/vfs/frame1.png"]);
+      deepStrictEqual(capturedPaths, ["/mnt/frame1.png"]);
     });
   });
 
@@ -237,7 +237,7 @@ describe("generate_video", () => {
         {
           prompt: "Animate this",
           aspect_ratio: "16:9",
-          images: ["/vfs/missing.png"],
+          images: ["/mnt/missing.png"],
         },
         createMockStatusUpdater()
       );

@@ -58,7 +58,7 @@ describe("generate_music_from_text", () => {
       const fileSystem = createMockFileSystem({
         add: mock.fn((part: DataPart) => {
           addedPart = part;
-          return "/vfs/music.wav";
+          return "/mnt/music.wav";
         }),
       });
 
@@ -78,7 +78,7 @@ describe("generate_music_from_text", () => {
       }
       const successResult = result as { music?: string };
       assertOk(successResult.music !== undefined, "Should have music result");
-      deepStrictEqual(successResult.music, "/vfs/music.wav");
+      deepStrictEqual(successResult.music, "/mnt/music.wav");
       assertOk(addedPart !== undefined, "Should add part to file system");
       assertOk("storedData" in addedPart, "Added part should be storedData");
     });
