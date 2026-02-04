@@ -440,8 +440,6 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
   share.state = oldState;
 }
 
-
-
 export async function publish(
   graph: GraphDescriptor,
   publishPermissions: gapi.client.drive.Permission[],
@@ -667,15 +665,11 @@ export function closePanel(): void {
   const state = share.state;
   const { status } = state;
 
-  if (
-    status === "closed" ||
-    status === "opening" ||
-    status === "loading" ||
-    status === "readonly" ||
-    status === "writable"
-  ) {
+  if (status === "closed" || status === "readonly" || status === "writable") {
     share.state = { status: "closed" };
   } else if (
+    status === "opening" ||
+    status === "loading" ||
     status === "updating" ||
     status === "granular" ||
     status === "unmanaged-assets"

@@ -133,6 +133,9 @@ export function makeTestController(options: TestControllerOptions = {}) {
         clearPendingEdit: mock.fn(),
         clearPendingAssetEdit: mock.fn(),
       },
+      share: {
+        state: { status: "closed"},
+      },
     },
   } as unknown as AppController;
 

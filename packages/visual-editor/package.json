@@ -20,6 +20,7 @@
     "build:tsc": "wireit",
     "test": "wireit",
     "test:pattern": "npm run build:tsc && node --import ./tests/controller-setup.js --test-reporter=spec --test --enable-source-maps './dist/tsc/tests/**/*.js' './dist/tsc/tests/*.js'",
+    "test:file": "wireit",
     "eval:agent": "wireit",
     "eval:a2ui": "wireit",
     "eval:autoname": "wireit",
@@ -122,6 +123,17 @@
       "dependencies": [
         "build:tsc"
       ]
+    },
+    "test:file": {
+      "#": "Template for running a specific set of test files, usage: `npm run test:file --watch -- './dist/tsc/tests/sca/actions/share/**/*.js'`",
+      "command": "node --import ./tests/controller-setup.js --test-reporter=spec --test --enable-source-maps",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "tests/controller-setup.js"
+      ],
+      "output": []
     },
     "coverage": {
       "command": "c8 --all report --reporter=html --reporter=json-summary --src=src",

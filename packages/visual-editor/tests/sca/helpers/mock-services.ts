@@ -10,6 +10,9 @@ import { AppServices } from "../../../src/sca/services/services.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
 import { testKit } from "../../test-kit.js";
+import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type { SigninAdapter } from "../../../src/ui/utils/signin-adapter.js";
+import type { GoogleDriveBoardServer } from "../../../src/board-server/server.js";
 
 /**
  * Shared services mocks for SCA tests.
@@ -145,6 +148,13 @@ export interface TestServicesOptions {
     string,
     { title?: string; icon?: string; tags?: string[] }
   >;
+  googleDriveClient?: Partial<GoogleDriveClient>;
+  signinAdapter?: Partial<SigninAdapter>;
+  googleDriveBoardServer?: Partial<
+    Omit<GoogleDriveBoardServer, "ops"> & {
+      ops?: Partial<GoogleDriveBoardServer["ops"]>;
+    }
+  >;
 }
 
 export function makeTestServices(options: TestServicesOptions = {}) {
@@ -153,6 +163,9 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     graphStore,
     flowGeneratorMock,
     nodeMetadata = {},
+    googleDriveClient,
+    signinAdapter,
+    googleDriveBoardServer,
   } = options;
 
   const actionTrackerMock = {
@@ -162,13 +175,18 @@ export function makeTestServices(options: TestServicesOptions = {}) {
   const services = {
     agentContext,
     // Mock googleDriveBoardServer for registerSaveStatusListener
-    googleDriveBoardServer: {
-      addEventListener: () => { },
-      removeEventListener: () => { },
+    googleDriveBoardServer: googleDriveBoardServer ?? {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      flushSaveQueue: async () => {},
     },
+    googleDriveClient: googleDriveClient ?? {},
+    signinAdapter: signinAdapter ?? {},
     // Mock RunService that returns a testable mock runner
     runService: {
-      createRunner: (config: { runner?: { nodes?: Array<{ id: string }> } }) => {
+      createRunner: (config: {
+        runner?: { nodes?: Array<{ id: string }> };
+      }) => {
         const nodes = config?.runner?.nodes ?? [];
         const mockRunner = createMockRunner(nodes);
         const abortController = new AbortController();
