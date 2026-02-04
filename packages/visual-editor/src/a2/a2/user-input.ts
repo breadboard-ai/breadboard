@@ -1,5 +1,7 @@
 /**
  * @fileoverview Allows asking user for input that could be then used in next steps.
+ * Consolidates text-entry.ts and text-main.ts into a single module using
+ * direct caps.input/caps.output calls.
  */
 import {
   BehaviorSchema,
@@ -9,10 +11,11 @@ import {
   Schema,
   SchemaEnumValue,
 } from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
 import { type Params } from "./common.js";
 import { report } from "./output.js";
 import { Template } from "./template.js";
-import { defaultLLMContent, llm, ok, toText } from "./utils.js";
+import { defaultLLMContent, llm, toText } from "./utils.js";
 
 export { invoke as default, describe };
 
@@ -27,42 +30,15 @@ const MODALITY: readonly string[] = [
 
 type Modality = (typeof MODALITY)[number];
 
-type TextInputs = {
+type UserInputInputs = {
   description?: LLMContent;
   "p-modality"?: Modality;
   "p-required"?: boolean;
 } & Params;
 
-type TextOutputs =
-  | {
-      toInput: Schema;
-      context: "nothing";
-    }
-  | {
-      toMain: string;
-      context: LLMContent;
-    };
-
-function toInput(
-  title: string,
-  modality: Modality | undefined,
-  required: boolean | undefined
-) {
-  const requiredBehavior: BehaviorSchema[] = required ? ["hint-required"] : [];
-  const toInput: Schema = {
-    type: "object",
-    properties: {
-      request: {
-        type: "object",
-        title,
-        behavior: ["transient", "llm-content", ...requiredBehavior],
-        examples: [defaultLLMContent()],
-        format: computeIcon(modality),
-      },
-    },
-  };
-  return toInput;
-}
+type UserInputOutputs = {
+  context: LLMContent[];
+};
 
 const ICONS: Record<Modality, string> = {
   Any: "asterisk",
@@ -105,9 +81,9 @@ async function invoke(
     "p-modality": modality,
     "p-required": required,
     ...params
-  }: TextInputs,
+  }: UserInputInputs,
   caps: Capabilities
-): Promise<Outcome<TextOutputs>> {
+): Promise<Outcome<UserInputOutputs>> {
   const template = new Template(caps, description);
   let details = llm`Please provide input`.asContent();
   if (description) {
@@ -117,6 +93,8 @@ async function invoke(
     }
     details = substituting;
   }
+
+  // Report to console
   await report(caps, {
     actor: "User Input",
     category: "Requesting Input",
@@ -125,12 +103,54 @@ async function invoke(
     icon: "input",
     chat: true,
   });
+
   const title = toText(details);
-  return { context: "nothing", toInput: toInput(title, modality, required) };
+  const requiredBehavior: BehaviorSchema[] = required ? ["hint-required"] : [];
+
+  // Output the prompt to display to user
+  await caps.output({
+    schema: {
+      type: "object",
+      properties: {
+        message: {
+          type: "object",
+          behavior: ["llm-content"],
+          title,
+        },
+      },
+    },
+    message: details,
+  });
+
+  // Request input from user
+  const response = (await caps.input({
+    schema: {
+      type: "object",
+      properties: {
+        request: {
+          type: "object",
+          title,
+          behavior: ["transient", "llm-content", ...requiredBehavior],
+          examples: [defaultLLMContent()],
+          format: computeIcon(modality),
+        },
+      },
+    },
+  })) as Outcome<{ request?: LLMContent }>;
+
+  if (!ok(response)) {
+    return response;
+  }
+
+  // Return context with the user's response
+  if (!response.request) {
+    return { context: [] };
+  }
+  return { context: [response.request] };
 }
 
 type DescribeInputs = {
-  inputs: TextInputs;
+  inputs: UserInputInputs;
 };
 
 async function describe(

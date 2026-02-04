@@ -19,6 +19,7 @@ import type {
 import { graphUrlLike } from "@breadboard-ai/utils";
 import { GraphBasedNodeHandler } from "./graph-based-node-handler.js";
 import { getGraphUrl } from "../loader/loader.js";
+import { A2_COMPONENTS } from "../../a2/a2-registry.js";
 
 // TODO: Deduplicate.
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
@@ -133,6 +134,15 @@ export async function getGraphHandler(
   if (is3pModule(type) && !allow3PModules) {
     return undefined;
   }
+
+  // Check if this is a registered A2 component with a URL alias
+  // If so, redirect to the moduleUrl so it goes through the normal loader
+  // with proper context wiring (capabilities, args, etc.)
+  const component = A2_COMPONENTS.find((c) => c.url === type);
+  if (component?.moduleUrl) {
+    type = component.moduleUrl;
+  }
+
   const nodeTypeUrl = graphUrlLike(type)
     ? getGraphUrl(type, context)
     : undefined;
