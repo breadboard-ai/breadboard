@@ -10,10 +10,9 @@ import { styleMap } from "lit/directives/style-map.js";
 import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { intersects } from "./utils/rect-intersection.js";
 import { Project } from "../../state/index.js";
-import { SignalWatcher } from "@lit-labs/signals";
 
 @customElement("bb-graph-entity")
-export class Entity extends SignalWatcher(LitElement) {
+export class Entity extends LitElement {
   boundsLabel = "";
   entities = new Map<string, Entity>();
 

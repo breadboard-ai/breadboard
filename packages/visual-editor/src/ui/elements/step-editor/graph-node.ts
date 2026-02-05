@@ -66,6 +66,11 @@ if ("CSS" in window && "registerProperty" in window.CSS) {
 }
 
 @customElement("bb-graph-node")
+// In this instance we don't need GraphNode to access any signals from SCA, but
+// rather it access it indirectly for the tools. As such we have an exception
+// to the usual lint rule that asserts a consumer of SCA as a SignalWatcher.
+// This may change in the future, but for now that's why this exception exists.
+//
 // eslint-disable-next-line local-rules/sca-consume-requires-signalwatcher
 export class GraphNode extends Box implements DragConnectorReceiver {
   @consume({ context: scaContext})
