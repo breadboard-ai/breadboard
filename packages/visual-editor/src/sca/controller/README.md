@@ -194,13 +194,20 @@ export function myAction() {
 }
 ```
 
-### From Triggers
+### From Actions and Triggers
 
 ```typescript
-export function registerMyTrigger() {
-  bind.register("My Trigger", () => {
-    const { controller } = bind;  // Injected via makeTrigger()
-    // React to controller.someSignal changes
-  });
-}
+// In actions where bind is available
+export const myAction = asAction(
+  "MyDomain.myAction",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: [() => onSomeCondition(bind)],
+  },
+  async () => {
+    const { controller } = bind;  // Injected via bind
+    controller.global.toasts.toast("Success!");
+  }
+);
 ```
+

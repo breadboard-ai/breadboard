@@ -66,7 +66,7 @@ export const RunRoute: EventRoute<"board.run"> = {
       }
     }
 
-    sca.controller.run.main.start();
+    sca.actions.run.start();
     return false;
   },
 };
@@ -149,7 +149,7 @@ export const StopRoute: EventRoute<"board.stop"> = {
     }
 
     // Stop the run via controller
-    sca.controller.run.main.stop();
+    sca.actions.run.stop();
 
     // Reset project run state
     runtime.project?.resetRun();

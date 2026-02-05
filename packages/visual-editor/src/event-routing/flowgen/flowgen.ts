@@ -19,7 +19,7 @@ export const GenerateRoute: EventRoute<"flowgen.generate"> = {
 
     // Board locking and action tracking stay in event-router (migration pattern)
     sca.controller.global.main.blockingAction = true;
-    sca.controller.run.main.stop();
+    sca.actions.run.stop();
     sca.controller.global.flowgenInput.state = { status: "generating" };
     actionTracker?.flowGenEdit(currentGraph.url);
 

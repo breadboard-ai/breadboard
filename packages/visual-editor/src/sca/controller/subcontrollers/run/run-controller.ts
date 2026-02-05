@@ -171,29 +171,6 @@ export class RunController extends RootController {
   }
 
   /**
-   * Starts the current run.
-   *
-   * @throws Error if no runner is set (programming error)
-   */
-  start(): void {
-    if (!this.runner) {
-      throw new Error("start() called without an active runner");
-    }
-    this.runner.start();
-    // Note: Status will be updated by the trigger listening to runner events
-  }
-
-  /**
-   * Stops the current run by aborting it.
-   */
-  stop(): void {
-    if (this.abortController) {
-      this.abortController.abort();
-    }
-    this._status = STATUS.STOPPED;
-  }
-
-  /**
    * Resets the run status to stopped and clears runner.
    */
   reset(): void {

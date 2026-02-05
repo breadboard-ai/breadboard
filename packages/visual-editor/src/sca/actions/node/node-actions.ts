@@ -17,6 +17,8 @@ import { UpdateNode } from "../../../ui/transforms/index.js";
 
 import { makeAction } from "../binder.js";
 import { Utils } from "../../utils.js";
+import { asAction, ActionMode } from "../../coordination.js";
+import { onNodeConfigChange } from "./triggers.js";
 
 export const bind = makeAction();
 
@@ -186,3 +188,43 @@ export async function autoname(config: AutonameConfig): Promise<void> {
     );
   }
 }
+
+// =============================================================================
+// Triggered Actions
+// =============================================================================
+
+/**
+ * Wrapper action that reads lastNodeConfigChange and calls autoname.
+ * This is the trigger-activated entry point for autonaming.
+ *
+ * **Triggers:**
+ * - `onNodeConfigChange`: Fires when a node's configuration changes
+ */
+export const autonameFromTrigger = asAction(
+  "Node.autonameFromTrigger",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: [() => onNodeConfigChange(bind)],
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const { lastNodeConfigChange } = controller.editor.graph;
+
+    // Guard: only trigger when there's a config change to process
+    if (!lastNodeConfigChange) {
+      return;
+    }
+
+    const { nodeId, graphId, configuration, titleUserModified } =
+      lastNodeConfigChange;
+
+    // Delegate to the main autoname function
+    await autoname({
+      nodeId,
+      graphId,
+      configuration,
+      titleUserModified,
+    });
+  }
+);
+

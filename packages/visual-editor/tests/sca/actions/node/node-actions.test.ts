@@ -486,4 +486,98 @@ suite("Node Actions", () => {
       controller.global.flags.flags = originalFlags;
     });
   });
+
+  suite("autonameFromTrigger", () => {
+    test("returns early when lastNodeConfigChange is null", async () => {
+      let autonameCalled = false;
+
+      const services = {
+        autonamer: {
+          async autoname() {
+            autonameCalled = true;
+            return [{ parts: [{ json: { notEnoughContext: true } }] }];
+          },
+        },
+      } as unknown as AppServices;
+
+      NodeActions.bind({ controller, services });
+      controller.editor.graph.setEditor(createMockEditor());
+      controller.editor.graph.readOnly = false;
+      controller.editor.graph.lastNodeConfigChange = null;
+
+      await NodeActions.autonameFromTrigger();
+
+      assert.strictEqual(autonameCalled, false, "autoname should not be called when no config change");
+    });
+
+    test("calls autoname with data from lastNodeConfigChange", async () => {
+      let autonameCalled = false;
+      let capturedArgs: unknown = null;
+
+      const services = {
+        autonamer: {
+          async autoname(content: unknown) {
+            autonameCalled = true;
+            capturedArgs = content;
+            return [{ parts: [{ json: { notEnoughContext: true } }] }];
+          },
+        },
+      } as unknown as AppServices;
+
+      NodeActions.bind({ controller, services });
+      controller.editor.graph.setEditor(createMockEditor());
+      controller.editor.graph.readOnly = false;
+
+      // Set up lastNodeConfigChange
+      controller.editor.graph.lastNodeConfigChange = {
+        nodeId: "test-node",
+        graphId: "",
+        configuration: { prompt: "Test prompt" },
+        titleUserModified: false,
+      };
+
+      await NodeActions.autonameFromTrigger();
+
+      assert.strictEqual(autonameCalled, true, "autoname should be called");
+      assert.ok(Array.isArray(capturedArgs), "args should be LLMContent array");
+    });
+
+    test("respects titleUserModified from lastNodeConfigChange", async () => {
+      let autonameCalled = false;
+
+      const originalFlags = controller.global.flags.flags;
+      controller.global.flags.flags = async () => ({
+        ...defaultRuntimeFlags,
+        outputTemplates: false,
+      });
+
+      const services = {
+        autonamer: {
+          async autoname() {
+            autonameCalled = true;
+            return [{ parts: [{ json: { notEnoughContext: true } }] }];
+          },
+        },
+      } as unknown as AppServices;
+
+      NodeActions.bind({ controller, services });
+      controller.editor.graph.setEditor(createMockEditor());
+      controller.editor.graph.readOnly = false;
+
+      // Set up lastNodeConfigChange with titleUserModified = true
+      controller.editor.graph.lastNodeConfigChange = {
+        nodeId: "test-node",
+        graphId: "",
+        configuration: { prompt: "Test prompt" },
+        titleUserModified: true,
+      };
+
+      await NodeActions.autonameFromTrigger();
+
+      // Should skip because outputTemplates is false AND titleUserModified is true
+      assert.strictEqual(autonameCalled, false, "autoname should not be called when user modified title");
+
+      controller.global.flags.flags = originalFlags;
+    });
+  });
 });
