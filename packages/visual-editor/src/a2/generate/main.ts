@@ -12,7 +12,11 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { makeTextInstruction } from "../generate-text/main.js";
+import {
+  makeTextInstruction,
+  makeText,
+  type MakeTextInputs,
+} from "../generate-text/main.js";
 import { makeGoOverListInstruction } from "../go-over-list/main.js";
 import agent, { computeAgentSchema, type AgentInputs } from "../agent/main.js";
 import { makeDeepResearchInstruction } from "../deep-research/main.js";
@@ -387,21 +391,31 @@ async function invoke(
       return agent(agentInputs, caps, moduleArgs);
     } else {
       // Other modes dispatch directly to their board URLs
-      const { url: $board, type, modelName } = current;
+      const { url, type, modelName } = current;
       if (modelName) {
         rest["p-model-name"] = modelName;
       }
-      return caps.invoke({ $board, ...forwardPorts(type, rest) });
+      const inputs = forwardPorts(type, rest);
+      // Short-circuit: Call makeText directly instead of graph dispatch
+      if (url.includes("generate-text.bgl.json#daf082ca")) {
+        return makeText(inputs as MakeTextInputs, caps, moduleArgs);
+      }
+      return caps.invoke({ $board: url, ...inputs });
     }
   } else {
-    const { url: $board, type, modelName } = current;
+    const { url, type, modelName } = current;
     // Model is treated as part of the Mode, but actually maps N:1
     // on actual underlying step type.
     if (modelName) {
       console.log(`Generating with ${modelName}`);
       rest["p-model-name"] = modelName;
     }
-    return caps.invoke({ $board, ...forwardPorts(type, rest) });
+    const inputs = forwardPorts(type, rest);
+    // Short-circuit: Call makeText directly instead of graph dispatch
+    if (url.includes("generate-text.bgl.json#daf082ca")) {
+      return makeText(inputs as MakeTextInputs, caps, moduleArgs);
+    }
+    return caps.invoke({ $board: url, ...inputs });
   }
 }
 

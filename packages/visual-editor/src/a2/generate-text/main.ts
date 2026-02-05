@@ -353,13 +353,14 @@ function joinUserInput(
 
 /**
  * Type for makeText inputs - mirrors EntryInputs from entry.ts
+ * Properties are optional because they come from port mapping and may have defaults.
  */
 export type MakeTextInputs = {
-  context: LLMContent[];
-  description: LLMContent;
-  "p-chat": boolean;
-  "b-system-instruction": LLMContent;
-  "p-model-name": string;
+  context?: LLMContent[];
+  description?: LLMContent;
+  "p-chat"?: boolean;
+  "b-system-instruction"?: LLMContent;
+  "p-model-name"?: string;
 } & { [key: string]: unknown }; // Params
 
 /**
@@ -370,7 +371,7 @@ async function makeText(
   inputs: MakeTextInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
-): Promise<Outcome<{ done: LLMContent[] }>> {
+): Promise<Outcome<{ context: LLMContent[] }>> {
   const {
     context: inputContext,
     description,
@@ -407,7 +408,7 @@ async function makeText(
           kind: "bug",
         });
       }
-      return done([...sharedContext.context, last]);
+      return { context: [...sharedContext.context, last] };
     }
 
     // Check for missing description
@@ -438,12 +439,12 @@ async function makeText(
           kind: "bug",
         });
       }
-      return done([previousResult]);
+      return { context: [previousResult] };
     }
 
     // If not in chat mode, we're done after first generation
     if (!gen.chat) {
-      return done([result]);
+      return { context: [result] };
     }
 
     // === CHAT MODE: Show output, get user input ===
