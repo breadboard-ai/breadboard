@@ -15,7 +15,7 @@ import { ArgumentNameGenerator } from "../a2/introducer.js";
 import { report } from "../a2/output.js";
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
-import { defaultLLMContent, err, ok } from "../a2/utils.js";
+import { defaultLLMContent, err, ok, isEmpty } from "../a2/utils.js";
 
 import { defaultSafetySettings, type GeminiInputs } from "../a2/gemini.js";
 import { GeminiPrompt, type GeminiPromptOutput } from "../a2/gemini-prompt.js";
@@ -28,7 +28,13 @@ import {
 import { filterUndefined } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { invoke as default, describe, makeTextInstruction };
+export {
+  invoke as default,
+  describe,
+  makeTextInstruction,
+  makeText,
+  GenerateText,
+};
 
 /**
  * Maximum amount of function-calling turns that we take before bailing.
@@ -305,6 +311,164 @@ async function keepChatting(
       last,
     },
   };
+}
+
+/**
+ * Gets user feedback via caps.input().
+ * This replaces the graph's `input` node.
+ */
+async function getUserFeedback(caps: Capabilities): Promise<LLMContent> {
+  const inputSchema: Schema = {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        title: "Please provide feedback",
+        description: "Provide feedback or click submit to continue",
+        behavior: ["transient", "llm-content"],
+        examples: [defaultLLMContent()],
+      },
+    },
+  };
+  const response = await caps.input({ schema: inputSchema });
+  return response.request as LLMContent;
+}
+
+/**
+ * Joins user input into the shared context.
+ * This replaces the graph's `join` module.
+ */
+function joinUserInput(
+  sharedContext: SharedContext,
+  request: LLMContent,
+  lastResult: LLMContent
+): void {
+  sharedContext.userEndedChat = isEmpty(request);
+  sharedContext.userInputs.push(request);
+  if (!sharedContext.userEndedChat) {
+    sharedContext.work.push(request);
+  }
+  sharedContext.last = lastResult;
+}
+
+/**
+ * Type for makeText inputs - mirrors EntryInputs from entry.ts
+ * Properties are optional because they come from port mapping and may have defaults.
+ */
+export type MakeTextInputs = {
+  context?: LLMContent[];
+  description?: LLMContent;
+  "p-chat"?: boolean;
+  "b-system-instruction"?: LLMContent;
+  "p-model-name"?: string;
+} & { [key: string]: unknown }; // Params
+
+/**
+ * Imperative replacement for the "Make Text" subgraph.
+ * Combines entry, main loop, and join into a single function.
+ */
+async function makeText(
+  inputs: MakeTextInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<{ context: LLMContent[] }>> {
+  const {
+    context: inputContext,
+    description,
+    "p-chat": chat,
+    "b-system-instruction": systemInstruction,
+    "p-model-name": model = "",
+    ...params
+  } = inputs;
+
+  // === ENTRY phase: Initialize SharedContext ===
+  // When chat mode is enabled, downgrade to gemini-2.5-flash because
+  // gemini-3-flash-preview doesn't handle the chat argument structure well.
+  const effectiveModel = chat ? "gemini-2.5-flash" : model;
+
+  const sharedContext: SharedContext = {
+    id: Math.random().toString(36).substring(2, 5),
+    chat: !!chat,
+    context: inputContext ?? [],
+    userInputs: [],
+    defaultModel: effectiveModel,
+    model: effectiveModel,
+    description,
+    type: "work",
+    work: [],
+    userEndedChat: false,
+    params,
+    systemInstruction,
+  };
+
+  // === MAIN LOOP: Generate + optionally chat ===
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    // Check if user ended chat on previous iteration
+    if (sharedContext.userEndedChat) {
+      const last = sharedContext.last;
+      if (!last) {
+        return err("Chat ended without any work", {
+          origin: "client",
+          kind: "bug",
+        });
+      }
+      return { context: [...sharedContext.context, last] };
+    }
+
+    // Check for missing description
+    if (!sharedContext.description) {
+      const msg = "Please provide a prompt for the step";
+      await report(caps, {
+        actor: "Text Generator",
+        name: msg,
+        category: "Runtime error",
+        details: `In order to run, I need to have an instruction.`,
+      });
+      return err(msg, { origin: "client", kind: "config" });
+    }
+
+    const gen = new GenerateText(caps, moduleArgs, sharedContext);
+    const initializing = await gen.initialize();
+    if (!ok(initializing)) return initializing;
+
+    const result = await gen.invoke(gen.description, gen.context);
+    if (!ok(result)) return result;
+
+    // If done tool was invoked, return previous result
+    if (gen.doneChatting) {
+      const previousResult = sharedContext.work.at(-2);
+      if (!previousResult) {
+        return err("Done chatting, but have nothing to pass along", {
+          origin: "client",
+          kind: "bug",
+        });
+      }
+      return { context: [previousResult] };
+    }
+
+    // If not in chat mode, we're done after first generation
+    if (!gen.chat) {
+      return { context: [result] };
+    }
+
+    // === CHAT MODE: Show output, get user input ===
+    await keepChatting(caps, sharedContext, [result]);
+
+    // Get user feedback (replaces the `input` node in the graph)
+    const request = await getUserFeedback(caps);
+
+    // === JOIN phase: Merge user input into context ===
+    joinUserInput(sharedContext, request, result);
+
+    // Update work for next iteration
+    sharedContext.work = [...sharedContext.work.slice(0, -1), result];
+    if (!sharedContext.userEndedChat) {
+      sharedContext.work.push(request);
+    }
+
+    // Loop continues...
+  }
 }
 
 async function invoke(

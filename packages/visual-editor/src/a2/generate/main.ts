@@ -12,7 +12,12 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { makeTextInstruction } from "../generate-text/main.js";
+import {
+  makeTextInstruction,
+  makeText,
+  type MakeTextInputs,
+} from "../generate-text/main.js";
+import { describe as describeGenerateText } from "../generate-text/entry.js";
 import { makeGoOverListInstruction } from "../go-over-list/main.js";
 import agent, { computeAgentSchema, type AgentInputs } from "../agent/main.js";
 import { makeDeepResearchInstruction } from "../deep-research/main.js";
@@ -366,6 +371,14 @@ function resolveModes(
   return { modes, current };
 }
 
+/**
+ * Checks if the URL is for the generate-text subgraph.
+ * Used to short-circuit graph dispatch and call makeText directly.
+ */
+function isGenerateTextUrl(url: string): boolean {
+  return url.includes("generate-text.bgl.json#daf082ca");
+}
+
 async function invoke(
   { "generation-mode": mode, ...rest }: Inputs,
   caps: Capabilities,
@@ -387,21 +400,31 @@ async function invoke(
       return agent(agentInputs, caps, moduleArgs);
     } else {
       // Other modes dispatch directly to their board URLs
-      const { url: $board, type, modelName } = current;
+      const { url, type, modelName } = current;
       if (modelName) {
         rest["p-model-name"] = modelName;
       }
-      return caps.invoke({ $board, ...forwardPorts(type, rest) });
+      const inputs = forwardPorts(type, rest);
+      // Short-circuit: Call makeText directly instead of graph dispatch
+      if (isGenerateTextUrl(url)) {
+        return makeText(inputs as MakeTextInputs, caps, moduleArgs);
+      }
+      return caps.invoke({ $board: url, ...inputs });
     }
   } else {
-    const { url: $board, type, modelName } = current;
+    const { url, type, modelName } = current;
     // Model is treated as part of the Mode, but actually maps N:1
     // on actual underlying step type.
     if (modelName) {
       console.log(`Generating with ${modelName}`);
       rest["p-model-name"] = modelName;
     }
-    return caps.invoke({ $board, ...forwardPorts(type, rest) });
+    const inputs = forwardPorts(type, rest);
+    // Short-circuit: Call makeText directly instead of graph dispatch
+    if (isGenerateTextUrl(url)) {
+      return makeText(inputs as MakeTextInputs, caps, moduleArgs);
+    }
+    return caps.invoke({ $board: url, ...inputs });
   }
 }
 
@@ -436,16 +459,31 @@ async function describe(
   const { url, type } = current;
   let modeSchema: Schema["properties"] = {};
   let behavior: Schema["behavior"] = [];
-  const describing = await caps.describe({
-    url,
-    inputs: rest as InputValues,
-  });
-  if (ok(describing)) {
+
+  // Short-circuit: Call describeGenerateText directly instead of graph dispatch
+  if (isGenerateTextUrl(url)) {
+    const transformedInputs = forwardPorts(type, rest);
+    const describing = await describeGenerateText(
+      { inputs: transformedInputs },
+      caps
+    );
     modeSchema = receivePorts(
       type,
       describing.inputSchema.properties || modeSchema
     );
     behavior = describing.inputSchema.behavior || [];
+  } else {
+    const describing = await caps.describe({
+      url,
+      inputs: rest as InputValues,
+    });
+    if (ok(describing)) {
+      modeSchema = receivePorts(
+        type,
+        describing.inputSchema.properties || modeSchema
+      );
+      behavior = describing.inputSchema.behavior || [];
+    }
   }
   if (flags?.agentMode && current.id === "agent") {
     const agentSchema = computeAgentSchema(flags, rest);
