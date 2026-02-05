@@ -402,6 +402,7 @@ async function makeText(
   };
 
   // === MAIN LOOP: Generate + optionally chat ===
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     // Check if user ended chat on previous iteration
     if (sharedContext.userEndedChat) {
