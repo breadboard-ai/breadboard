@@ -8,7 +8,10 @@ import {
   createKeepChattingTool,
   type ChatTool,
 } from "./chat-tools.js";
-import { createSystemInstruction } from "./system-instruction.js";
+import {
+  createSystemInstruction,
+  defaultSystemInstruction,
+} from "./system-instruction.js";
 import type { SharedContext } from "./types.js";
 
 import { ArgumentNameGenerator } from "../a2/introducer.js";
@@ -528,17 +531,71 @@ async function invoke(
   return done([result]);
 }
 
-async function describe() {
+/**
+ * Describe inputs for the generate-text module.
+ */
+export type DescribeInputs = {
+  inputs: Partial<{
+    context: LLMContent[];
+    description: LLMContent;
+    "p-chat": boolean;
+    "b-system-instruction": LLMContent;
+    "p-model-name": string;
+  }>;
+};
+
+async function describe(
+  { inputs: { description } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const chatSchema: Schema["properties"] = {
+    "p-chat": {
+      type: "boolean",
+      title: "Review with user",
+      behavior: ["config", "hint-preview", "hint-advanced"],
+      icon: "chat",
+      description:
+        "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
+    },
+    "b-system-instruction": {
+      type: "object",
+      behavior: ["llm-content", "config", "hint-advanced"],
+      title: "System Instruction",
+      description: "The system instruction for the model",
+      default: JSON.stringify(defaultSystemInstruction()),
+    },
+    "p-model-name": {
+      type: "string",
+      behavior: ["llm-content"],
+      title: "Model",
+      description: "The specific model version to generate with",
+    },
+  };
+  const template = new Template(caps, description);
+
   return {
     inputSchema: {
       type: "object",
       properties: {
+        description: {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-preview"],
+          title: "Prompt",
+          description:
+            "Give the model additional context on what to do, like specific rules/guidelines to adhere to or specify behavior separate from the provided context.",
+          default: defaultLLMContent(),
+        },
         context: {
           type: "array",
           items: { type: "object", behavior: ["llm-content"] },
           title: "Context in",
+          behavior: ["main-port"],
         },
+        ...chatSchema,
+        ...template.schemas(),
       },
+      behavior: ["at-wireable"],
+      ...template.requireds(),
     } satisfies Schema,
     outputSchema: {
       type: "object",
@@ -547,8 +604,15 @@ async function describe() {
           type: "array",
           items: { type: "object", behavior: ["llm-content"] },
           title: "Context out",
+          behavior: ["main-port", "hint-text"],
         },
       },
     } satisfies Schema,
+    title: "Make Text",
+    metadata: {
+      icon: "generative-text",
+      tags: ["quick-access", "generative"],
+      order: 1,
+    },
   };
 }
