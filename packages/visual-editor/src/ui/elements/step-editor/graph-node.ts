@@ -48,6 +48,9 @@ import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { NodeRunState } from "@breadboard-ai/types";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import { SCA } from "../../../sca/sca.js";
 
 // In theory we should be able to just declare @property in the CSS but that
 // doesn't seem to be panning out. So instead we declare the property globally,
@@ -63,7 +66,11 @@ if ("CSS" in window && "registerProperty" in window.CSS) {
 }
 
 @customElement("bb-graph-node")
+// eslint-disable-next-line local-rules/sca-consume-requires-signalwatcher
 export class GraphNode extends Box implements DragConnectorReceiver {
+  @consume({ context: scaContext})
+  accessor sca!: SCA;
+
   @property()
   accessor ownerGraph = "";
 
@@ -681,7 +688,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                           this.projectState,
                           this.ownerGraph !== MAIN_BOARD_ID
                             ? this.ownerGraph
-                            : ""
+                            : "",
+                          this.sca
                         )
                       );
 

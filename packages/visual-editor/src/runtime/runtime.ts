@@ -68,7 +68,8 @@ export class Runtime extends EventTarget {
       this.#sca.services.googleDriveBoardServer,
       this.#sca.services.actionTracker,
       this.#sca.services.mcpClientManager,
-      editable
+      editable,
+      this.#sca
     );
   }
 }

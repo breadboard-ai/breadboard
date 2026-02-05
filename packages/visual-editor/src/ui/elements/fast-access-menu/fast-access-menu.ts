@@ -26,6 +26,8 @@ import {
   GlobalConfig,
   globalConfigContext,
 } from "../../contexts/global-config.js";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SCA } from "../../../sca/sca.js";
 import { getStepIcon } from "../../utils/get-step-icon.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -66,6 +68,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -285,7 +290,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     const graphId = this.graphId || "";
     let assets = [...(this.state?.graphAssets.values() || [])];
     let tools = [
-      ...(this.state?.tools.values() || []),
+      ...(this.sca?.controller.editor.graph.tools.values() || []),
       ...(this.state?.myTools.values() || []),
     ].sort((tool1, tool2) => tool1.order! - tool2.order!);
     let components = [...(this.state?.components.get(graphId)?.values() || [])];

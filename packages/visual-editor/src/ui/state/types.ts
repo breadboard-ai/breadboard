@@ -325,8 +325,8 @@ export type FilterableMap<T extends TitledItem> = {
  */
 export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
-  tools: Map<string, Tool>;
-  myTools: Map<string, Tool>;
+  tools: ReadonlyMap<string, Tool>;
+  myTools: ReadonlyMap<string, Tool>;
   agentMode: FilterableMap<Tool>;
   components: Map<GraphIdentifier, Components>;
   integrations: FilteredIntegrations;
@@ -526,7 +526,6 @@ export type ProjectInternal = Project & {
 
 export type ProjectValues = {
   graphAssets: Map<AssetPath, GraphAsset>;
-  tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
   agentModeTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;

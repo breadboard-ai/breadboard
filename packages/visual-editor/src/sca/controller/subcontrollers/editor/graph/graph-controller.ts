@@ -17,6 +17,8 @@ import {
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { Tab } from "../../../../../runtime/types.js";
+import { Tool } from "../../../../../ui/state/types.js";
+import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
 
 /**
  * Context for tracking node configuration changes.
@@ -30,6 +32,12 @@ export interface ConfigChangeContext {
 }
 
 export class GraphController extends RootController {
+  /**
+   * Static registry of A2 tools. These are environment-independent
+   * and don't change based on graph content.
+   */
+  readonly tools: ReadonlyMap<string, Tool> = new Map(A2_TOOLS);
+
   @field({ deep: false })
   private accessor _editor: EditableGraph | null = null;
 

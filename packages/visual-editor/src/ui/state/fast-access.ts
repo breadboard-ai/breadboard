@@ -87,7 +87,7 @@ class ReactiveFastAccess implements FastAccess {
 
   constructor(
     public readonly graphAssets: Map<AssetPath, GraphAsset>,
-    public readonly tools: Map<string, Tool>,
+    public readonly tools: ReadonlyMap<string, Tool>,
     public readonly myTools: Map<string, Tool>,
     unfilteredAgentMode: Map<string, Tool>,
     private readonly allComponents: Map<GraphIdentifier, Components>,

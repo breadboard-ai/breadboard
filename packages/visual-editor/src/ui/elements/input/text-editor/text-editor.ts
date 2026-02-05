@@ -22,18 +22,23 @@ import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
 } from "../../../../a2/a2/tool-manager.js";
+import { SCA } from "../../../../sca/sca.js";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../../sca/context/context.js";
 
 export function chicletHtml(
   part: TemplatePart,
   projectState: Project | null,
-  subGraphId: string | null
+  subGraphId: string | null,
+  sca: SCA
 ) {
   const { type, invalid, mimeType } = part;
   const assetType = getAssetType(mimeType) ?? "";
   const { icon: srcIcon, tags: metadataTags } = expandChiclet(
     part,
     projectState,
-    subGraphId
+    subGraphId,
+    sca
   );
 
   const { title, path, instance } = part;
@@ -103,7 +108,8 @@ export function chicletHtml(
       const { icon, title } = expandChiclet(
         { path: instance, type: "in", title: "unknown" },
         projectState,
-        subGraphId
+        subGraphId,
+        sca
       );
 
       targetTitle = title;
@@ -134,13 +140,17 @@ export function chicletHtml(
 
 @customElement("bb-text-editor")
 export class TextEditor extends SignalWatcher(LitElement) {
+  @consume({context: scaContext})
+  accessor sca!: SCA;
+
   @property()
   set value(value: string) {
     this.#rawValue = value;
     this.#renderableValue = createTrustedChicletHTML(
       value,
+      this.sca,
       this.projectState,
-      this.subGraphId
+      this.subGraphId,
     );
     this.#updateEditorValue();
   }
@@ -426,6 +436,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
       (tempEl as { innerHTML: string | TrustedHTML }).innerHTML =
         createTrustedChicletHTML(
           `{${JSON.stringify(part)}}`,
+          this.sca,
           this.projectState,
           this.subGraphId
         );
@@ -908,6 +919,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
       }
     ).innerHTML = createTrustedChicletHTML(
       evt.clipboardData.getData("text"),
+      this.sca,
       this.projectState,
       this.subGraphId
     );
