@@ -53,7 +53,7 @@ export { EditorControls } from "./step-editor/editor-controls.js";
 export { EntityEditor } from "./entity-editor/entity-editor.js";
 export { FastAccessMenu } from "./fast-access-menu/fast-access-menu.js";
 export { FeedbackPanel } from "./feedback/feedback-panel.js";
-export { HomepageSearchButton } from "./welcome-panel/homepage-search-button.js";
+export { ExpandingSearchButton } from "./shared/expanding-search-button.js";
 export { JSONTree } from "./json-tree/json-tree.js";
 export { NodeRunControl } from "./shared/node-controls.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
@@ -81,3 +81,4 @@ export { GoogleDriveSharePanel } from "./google-drive/google-drive-share-panel.j
 
 // NotebookLM.
 export { NotebookLmPicker } from "./notebooklm-picker/notebooklm-picker.js";
+export { NotebookLmViewer } from "./notebooklm-viewer/notebooklm-viewer.js";

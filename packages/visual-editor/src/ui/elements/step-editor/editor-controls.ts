@@ -835,30 +835,28 @@ export class EditorControls extends SignalWatcher(LitElement) {
             id="add-notebooklm-proxy"
             ${ref(this.#addNotebookLmInputRef)}
             @bb-input-change=${(evt: InputChangeEvent) => {
-              const notebook = evt.value as NotebookPickedValue;
+              const notebooks = evt.value as NotebookPickedValue[];
 
-              this.dispatchEvent(
-                new CreateNewAssetsEvent([
-                  {
-                    path: globalThis.crypto.randomUUID(),
-                    name: notebook.preview,
-                    type: "content",
-                    subType: "notebooklm",
-                    managed: false,
-                    data: {
-                      role: "user",
-                      parts: [
-                        {
-                          storedData: {
-                            handle: `nlm:/${notebook.id}`,
-                            mimeType: "application/x-notebooklm",
-                          },
-                        },
-                      ],
+              const assets = notebooks.map((notebook) => ({
+                path: globalThis.crypto.randomUUID(),
+                name: notebook.preview,
+                type: "content" as const,
+                subType: "notebooklm" as const,
+                managed: false,
+                data: {
+                  role: "user" as const,
+                  parts: [
+                    {
+                      storedData: {
+                        handle: `nlm:/${notebook.id}`,
+                        mimeType: "application/x-notebooklm",
+                      },
                     },
-                  },
-                ])
-              );
+                  ],
+                },
+              }));
+
+              this.dispatchEvent(new CreateNewAssetsEvent(assets));
             }}
           ></bb-notebooklm-picker>
         </div> `

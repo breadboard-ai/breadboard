@@ -7,6 +7,8 @@
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import {
   InputCancelEvent,
   InputChangeEvent,
@@ -20,7 +22,11 @@ import {
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { ModalDismissedEvent } from "../../events/events.js";
+import { icons } from "../../styles/icons.js";
 import "../shell/modal.js";
+import "../notebooklm-viewer/notebooklm-viewer.js";
+import "../shared/expanding-search-button.js";
+import { ExpandingSearchButton } from "../shared/expanding-search-button.js";
 
 export type NotebookPickedValue = {
   /** A special value recognized by the "GraphPortLabel": if present, used as the preview. */
@@ -37,79 +43,87 @@ type PickerState = "idle" | "loading" | "error";
 
 @customElement("bb-notebooklm-picker")
 export class NotebookLmPicker extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-    }
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: block;
+      }
 
-    .notebook-list {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      min-width: 280px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
+      bb-modal {
+        &::part(container) {
+          width: 780px;
+          height: 600px;
+          max-height: 80%;
+          max-width: 80%;
+          display: flex;
+          flex-direction: column;
+        }
+        & > * {
+          flex-grow: 1;
+          min-height: 0;
+        }
+      }
 
-    .notebook-item {
-      display: flex;
-      align-items: center;
-      gap: var(--bb-grid-size-2);
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-      cursor: pointer;
-      border-radius: var(--bb-grid-size);
-      transition: background 0.15s ease;
-    }
+      .notebook-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: var(--bb-grid-size-3);
+        padding: var(--bb-grid-size-2);
+        overflow-y: auto;
+        grid-auto-rows: min-content;
+      }
 
-    .notebook-item:hover {
-      background: var(--light-dark-n-95);
-    }
+      .notebook-item {
+        cursor: pointer;
+        border-radius: var(--bb-grid-size-3);
+        overflow: hidden;
+        border: 2px solid transparent;
+        transition: border-color 0.15s ease;
+      }
 
-    .notebook-emoji {
-      font-size: 20px;
-      width: 24px;
-      text-align: center;
-    }
+      .notebook-item.selected {
+        border-color: var(--bb-neutral-900, #000);
+      }
 
-    .notebook-name {
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      color: var(--light-dark-n-10);
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+      .loading,
+      .error {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--bb-grid-size-6);
+        color: var(--light-dark-n-40);
+        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        min-width: 400px;
+      }
 
-    .loading,
-    .error {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--bb-grid-size-6);
-      color: var(--light-dark-n-40);
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-    }
+      .error {
+        color: var(--bb-error-color);
+      }
 
-    .error {
-      color: var(--bb-error-color);
-    }
+      .empty-state {
+        padding: var(--bb-grid-size-6);
+        text-align: center;
+        color: var(--light-dark-n-40);
+        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        min-width: 400px;
+      }
 
-    .empty-state {
-      padding: var(--bb-grid-size-6);
-      text-align: center;
-      color: var(--light-dark-n-40);
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-    }
-  `;
+      .search-container {
+        display: flex;
+        align-items: center;
+        margin-right: var(--bb-grid-size-2);
+      }
+    `,
+  ];
 
   @property({ type: Boolean })
   accessor open = false;
 
   @property()
-  accessor value: NotebookPickedValue | null = null;
+  accessor value: NotebookPickedValue[] = [];
 
   @state()
   accessor #pickerState: PickerState = "idle";
@@ -120,12 +134,23 @@ export class NotebookLmPicker extends LitElement {
   @state()
   accessor #errorMessage = "";
 
+  @state()
+  accessor #selectedNotebooks: Set<string> = new Set();
+
+  @state()
+  accessor #searchQuery = "";
+
   @consume({ context: scaContext })
   accessor sca!: SCA;
+
+  #searchRef = createRef<ExpandingSearchButton>();
 
   /** Opens the picker dialog and fetches notebooks. */
   triggerFlow() {
     this.open = true;
+    this.#selectedNotebooks = new Set();
+    this.#searchQuery = "";
+    this.#searchRef.value?.collapse();
     this.#fetchNotebooks();
   }
 
@@ -157,20 +182,58 @@ export class NotebookLmPicker extends LitElement {
 
   #handleClose() {
     this.open = false;
+    this.#selectedNotebooks = new Set();
+    this.#searchQuery = "";
+    this.#searchRef.value?.collapse();
     this.dispatchEvent(new InputCancelEvent());
   }
 
-  #handleSelectNotebook(notebook: Notebook) {
-    // Extract ID from name (format: "notebooks/{id}")
-    const id = notebook.name.replace("notebooks/", "");
-    this.value = {
-      id,
-      name: notebook.name,
-      preview: notebook.displayName || id,
-      emoji: notebook.emoji,
-    };
+  #handleConfirm() {
+    if (this.#selectedNotebooks.size === 0) {
+      return;
+    }
+    // Convert selected notebooks to NotebookPickedValue array
+    const values: NotebookPickedValue[] = this.#notebooks
+      .filter((notebook) => this.#selectedNotebooks.has(notebook.name))
+      .map((notebook) => {
+        const id = notebook.name.replace("notebooks/", "");
+        return {
+          id,
+          name: notebook.name,
+          preview: notebook.displayName || id,
+          emoji: notebook.emoji,
+        };
+      });
+
+    this.value = values;
     this.open = false;
-    this.dispatchEvent(new InputChangeEvent(this.value));
+    this.#selectedNotebooks = new Set();
+    this.dispatchEvent(new InputChangeEvent(values));
+  }
+
+  #handleToggleNotebook(notebook: Notebook) {
+    const newSelected = new Set(this.#selectedNotebooks);
+    if (newSelected.has(notebook.name)) {
+      newSelected.delete(notebook.name);
+    } else {
+      newSelected.add(notebook.name);
+    }
+    this.#selectedNotebooks = newSelected;
+  }
+
+  #handleSearchInput(evt: Event) {
+    const target = evt.target as ExpandingSearchButton;
+    this.#searchQuery = target.value;
+  }
+
+  get #filteredNotebooks(): Notebook[] {
+    if (!this.#searchQuery.trim()) {
+      return this.#notebooks;
+    }
+    const query = this.#searchQuery.toLowerCase().trim();
+    return this.#notebooks.filter((notebook) =>
+      (notebook.displayName || "").toLowerCase().includes(query)
+    );
   }
 
   override render() {
@@ -180,14 +243,27 @@ export class NotebookLmPicker extends LitElement {
 
     return html`
       <bb-modal
-        modalTitle="Select a Notebook"
+        modalTitle="Select Notebooks"
         .showCloseButton=${true}
+        .showSaveCancel=${true}
+        .saveButtonLabel=${"Add"}
+        .saveButtonDisabled=${this.#selectedNotebooks.size === 0}
         @bbmodaldismissed=${(evt: ModalDismissedEvent) => {
-          if (!evt.withSave) {
+          if (evt.withSave) {
+            this.#handleConfirm();
+          } else {
             this.#handleClose();
           }
         }}
       >
+        <div slot="header-actions" class="search-container">
+          <bb-expanding-search-button
+            ${ref(this.#searchRef)}
+            placeholder="Search notebooks..."
+            .value=${this.#searchQuery}
+            @input=${this.#handleSearchInput}
+          ></bb-expanding-search-button>
+        </div>
         ${this.#renderContent()}
       </bb-modal>
     `;
@@ -205,28 +281,38 @@ export class NotebookLmPicker extends LitElement {
   }
 
   #renderNotebookList() {
+    const notebooks = this.#filteredNotebooks;
+
     if (this.#notebooks.length === 0) {
       return html`<div class="empty-state">
         No notebooks found. Create a notebook in NotebookLM first.
       </div>`;
     }
 
+    if (notebooks.length === 0) {
+      return html`<div class="empty-state">
+        No notebooks match your search.
+      </div>`;
+    }
+
     return html`
-      <ul class="notebook-list">
-        ${this.#notebooks.map(
+      <div class="notebook-grid">
+        ${notebooks.map(
           (notebook) => html`
-            <li
-              class="notebook-item"
-              @click=${() => this.#handleSelectNotebook(notebook)}
+            <div
+              class=${classMap({
+                "notebook-item": true,
+                selected: this.#selectedNotebooks.has(notebook.name),
+              })}
+              @click=${() => this.#handleToggleNotebook(notebook)}
             >
-              <span class="notebook-emoji">${notebook.emoji || "📓"}</span>
-              <span class="notebook-name">
-                ${notebook.displayName || notebook.name}
-              </span>
-            </li>
+              <bb-notebooklm-viewer
+                .notebook=${notebook}
+              ></bb-notebooklm-viewer>
+            </div>
           `
         )}
-      </ul>
+      </div>
     `;
   }
 }

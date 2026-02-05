@@ -487,7 +487,7 @@ export const styles = [
         }
       }
 
-      & bb-homepage-search-button {
+      & bb-expanding-search-button {
         margin-right: var(--bb-grid-size-8);
       }
     }

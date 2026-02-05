@@ -4,16 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  AssetPath,
-  InspectableAsset,
-  LLMContent,
-  StoredDataCapabilityPart,
-} from "@breadboard-ai/types";
+import { AssetPath, InspectableAsset, LLMContent } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, nothing, PropertyValues } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -33,12 +28,6 @@ import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { toGridSize } from "./utils/to-grid-size.js";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
-import {
-  type Notebook,
-  OriginProductType,
-  ApplicationPlatform,
-  DeviceType,
-} from "../../../sca/services/notebooklm-api-client.js";
 
 @customElement("bb-graph-asset")
 export class GraphAsset
@@ -77,15 +66,6 @@ export class GraphAsset
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @state()
-  accessor #notebookData: Notebook | null = null;
-
-  @state()
-  accessor #notebookLoading = false;
-
-  @state()
-  accessor #notebookError: string | null = null;
 
   static styles = [
     type,
@@ -290,50 +270,6 @@ export class GraphAsset
       :host([updating]) #container #content bb-llm-output {
         clip-path: rect(0 0 0 0);
         height: 0px;
-      }
-
-      .notebook-preview {
-        display: flex;
-        flex-direction: column;
-        gap: var(--bb-grid-size-2);
-        padding: var(--bb-grid-size-4);
-        border-radius: var(--bb-grid-size-3);
-        min-height: 120px;
-      }
-
-      .notebook-preview .notebook-emoji {
-        font-size: 32px;
-        line-height: 1;
-      }
-
-      .notebook-preview .notebook-title {
-        font: 600 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-          var(--bb-font-family);
-        color: var(--light-dark-n-10);
-        margin: 0;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .notebook-preview .notebook-meta {
-        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-          var(--bb-font-family);
-        color: var(--light-dark-n-40);
-        margin: 0;
-      }
-
-      .notebook-preview.loading,
-      .notebook-preview.error {
-        align-items: center;
-        justify-content: center;
-        background: var(--light-dark-n-95);
-      }
-
-      .notebook-preview.error {
-        color: var(--bb-error-color);
       }
     `,
   ];
@@ -567,26 +503,24 @@ export class GraphAsset
             evt.stopImmediatePropagation();
           }}
         >
-          ${this.asset?.subType === "notebooklm"
-            ? this.#renderNotebookPreview()
-            : html`${this.updating
-                  ? html`<p class="loading">Loading asset details...</p>`
-                  : nothing}
-                <div id="content-container">
-                  <bb-llm-output
-                    @outputsloaded=${() => {
-                      this.updating = false;
-                    }}
-                    .value=${this.#getPreviewValue()}
-                    .clamped=${false}
-                    .lite=${true}
-                    .showPDFControls=${false}
-                    .showModeToggle=${false}
-                    .showEntrySelector=${false}
-                    .showExportControls=${false}
-                    .graphUrl=${this.graphUrl}
-                  ></bb-llm-output>
-                </div>`}
+          ${this.updating
+            ? html`<p class="loading">Loading asset details...</p>`
+            : nothing}
+          <div id="content-container">
+            <bb-llm-output
+              @outputsloaded=${() => {
+                this.updating = false;
+              }}
+              .value=${this.#getPreviewValue()}
+              .clamped=${false}
+              .lite=${true}
+              .showPDFControls=${false}
+              .showModeToggle=${false}
+              .showEntrySelector=${false}
+              .showExportControls=${false}
+              .graphUrl=${this.graphUrl}
+            ></bb-llm-output>
+          </div>
         </div>
       </section>
 
@@ -596,126 +530,6 @@ export class GraphAsset
   #getPreviewValue(): LLMContent | null {
     const context = this.asset?.data;
     return context?.at(-1) ?? null;
-  }
-
-  #getNotebookIdFromAsset(): string | null {
-    if (!this.asset) return null;
-    const data = this.asset.data;
-    if (!data || data.length === 0) return null;
-
-    // The notebook ID is stored in a storedData part with a nlm:/ handle
-    for (const content of data) {
-      for (const part of content.parts) {
-        if ("storedData" in part) {
-          const handle = (part as StoredDataCapabilityPart).storedData.handle;
-          if (handle.startsWith("nlm:/")) {
-            return handle.replace("nlm:/", "");
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  async #fetchNotebookData(): Promise<void> {
-    const notebookId = this.#getNotebookIdFromAsset();
-    if (!notebookId || !this.sca?.services?.notebookLmApiClient) {
-      return;
-    }
-
-    // Don't refetch if we already have data for this notebook
-    // Notebook.name format is "notebooks/{id}"
-    const notebookName = `notebooks/${notebookId}`;
-    if (this.#notebookData?.name === notebookName) {
-      return;
-    }
-
-    this.#notebookLoading = true;
-    this.#notebookError = null;
-
-    try {
-      const notebook = await this.sca.services.notebookLmApiClient.getNotebook({
-        name: notebookName,
-        provenance: {
-          originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
-          clientInfo: {
-            applicationPlatform: ApplicationPlatform.WEB,
-            device: DeviceType.DESKTOP,
-          },
-        },
-      });
-
-      this.#notebookData = notebook;
-    } catch (e) {
-      this.#notebookError =
-        e instanceof Error ? e.message : "Failed to load notebook";
-    } finally {
-      this.#notebookLoading = false;
-    }
-  }
-
-  #renderNotebookPreview() {
-    // Trigger fetch if we don't have data yet
-    if (!this.#notebookData && !this.#notebookLoading && !this.#notebookError) {
-      this.#fetchNotebookData();
-    }
-
-    // NotebookLM assets don't need async loading for the main content
-    this.updating = false;
-
-    if (this.#notebookLoading) {
-      return html`<div class="notebook-preview loading">
-        <p>Loading notebook details...</p>
-      </div>`;
-    }
-
-    if (this.#notebookError) {
-      return html`<div class="notebook-preview error">
-        <p>${this.#notebookError}</p>
-      </div>`;
-    }
-
-    if (!this.#notebookData) {
-      return html`<div class="notebook-preview loading">
-        <p>NotebookLM notebook</p>
-      </div>`;
-    }
-
-    // Format the date
-    const createTime = this.#notebookData.createTime
-      ? new Date(this.#notebookData.createTime).toLocaleDateString(undefined, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })
-      : "";
-
-    // Pick a background color based on the notebook emoji or title
-    const colorPalette = [
-      "#E8F0FE", // blue
-      "#FCE8E6", // red/pink
-      "#FEF7E0", // yellow
-      "#E6F4EA", // green
-      "#F3E8FD", // purple
-      "#E8EAED", // gray
-    ];
-    const emoji = this.#notebookData.emoji || "📓";
-    const colorIndex = (emoji.codePointAt(0) ?? 0) % colorPalette.length;
-    const bgColor = colorPalette[colorIndex];
-
-    return html`<div class="notebook-preview" style="background: ${bgColor}">
-      <span class="notebook-emoji">${emoji}</span>
-      <p class="notebook-title">
-        ${this.#notebookData.displayName || "Untitled notebook"}
-      </p>
-      <p class="notebook-meta">
-        ${createTime}${createTime && this.#notebookData.sourceCount
-          ? " · "
-          : ""}${this.#notebookData.sourceCount
-          ? `${this.#notebookData.sourceCount} sources`
-          : ""}
-      </p>
-    </div>`;
   }
 
   render() {
