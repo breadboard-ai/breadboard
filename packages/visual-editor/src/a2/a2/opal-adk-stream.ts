@@ -11,6 +11,7 @@ import { err, ok, toLLMContent } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 import { ModelConstraint } from "../agent/functions/generate.js";
+import { createReporter, ProgressWorkItem } from "../agent/progress-work-item.js";
 
 const DEFAULT_OPAL_ADK_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeAgentNodeStream";
@@ -208,7 +209,7 @@ async function executeOpalAdkStream(
   uiType?: string,
   uiPrompt?: LLMContent,
   invocation_id?: string): Promise<Outcome<LLMContent>> {
-  const reporter = new StreamableReporter(caps, {
+  const reporter = createReporter(moduleArgs, {
     title: `Executing Opal Adk with ${opal_adk_agent}`,
     icon: "spark",
   });
@@ -264,11 +265,11 @@ async function executeOpalAdkStream(
       if (result.thoughtCount !== undefined) {
         thoughtCount = result.thoughtCount;
       }
-      if (result.researchResult) {
-        researchResult = result.researchResult;
+      if (result.agentResult) {
+        researchResult = result.agentResult;
       }
       if (result.error) {
-        return reporter.sendError(err(result.error));
+        return reporter.addError(err(result.error));
       }
     }
 
@@ -291,11 +292,11 @@ async function executeOpalAdkStream(
  */
 export async function parseStreamChunk(
   chunk: StreamChunk,
-  reporter: StreamableReporter,
+  reporter: ProgressWorkItem,
   thoughtCount: number
 ): Promise<{
   thoughtCount?: number;
-  researchResult?: string;
+  agentResult?: string;
   error?: string;
 }> {
   if (!chunk) return {};
@@ -317,7 +318,7 @@ export async function parseStreamChunk(
 
     if (type === "thought") {
       currentThoughtCount++;
-      await reporter.sendUpdate(`Thinking (${currentThoughtCount})`, text, "spark");
+      reporter.addText(`Thinking (${currentThoughtCount})`, text, "spark");
     } else if (
       type === "result" ||
       type === "research" ||
@@ -325,9 +326,9 @@ export async function parseStreamChunk(
       type === "html"
     ) {
       agentResult = text;
-      await reporter.sendUpdate("Agent Thought", agentResult, "spark");
+      reporter.addText(`Thought (${text})`, "spark");
     } else if (type === "error") {
-      error = `Generation error: ${text}`;
+      reporter.addError(err(text));
     } else {
       console.log(`Received unknown chunk type: ${type}`);
     }
