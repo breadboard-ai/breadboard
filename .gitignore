@@ -153,3 +153,5 @@ sandbox.wasm
 **/test-storage/
 **/test-storage/local-storage
 **/test-storage/session-storage
+
+.pr-description.md

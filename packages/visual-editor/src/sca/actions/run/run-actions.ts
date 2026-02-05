@@ -37,7 +37,7 @@ export const testAction = asAction(
   "Run.test",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onDblClick()],
+    triggeredBy: () => onDblClick(),
   },
   async (): Promise<void> => {
     return new Promise((r) => setTimeout(r, 3_000));
@@ -465,7 +465,7 @@ export const syncConsoleFromTrigger = asAction(
   "Run.syncConsoleFromTrigger",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onGraphVersionForSync(bind)],
+    triggeredBy: () => onGraphVersionForSync(bind),
   },
   async (): Promise<void> => {
     // Delegate to the existing sync function

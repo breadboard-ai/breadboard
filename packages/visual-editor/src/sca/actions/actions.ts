@@ -112,7 +112,7 @@ export function activateTriggers(): () => void {
       (...args: never[]) => Promise<unknown>
     >;
 
-    if (!actionWithTriggers.triggers?.length) continue;
+    if (!actionWithTriggers.trigger) continue;
 
     actionsWithTriggers.push({
       action: actionWithTriggers,

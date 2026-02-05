@@ -48,7 +48,7 @@ export const save = asAction(
   "Board.save",
   {
     mode: ActionMode.Awaits,
-    triggeredBy: [() => onVersionChange(bind)],
+    triggeredBy: () => onVersionChange(bind),
   },
   async (
     messages?: { start: string; end: string } | null
@@ -540,7 +540,7 @@ export const showNewerVersionSnackbar = asAction(
   "Board.showNewerVersionSnackbar",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onNewerVersionAvailable(bind)],
+    triggeredBy: () => onNewerVersionAvailable(bind),
   },
   async (): Promise<void> => {
     const { controller } = bind;
@@ -570,7 +570,7 @@ export const handleSaveStatus = asAction(
   "Board.handleSaveStatus",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onSaveStatusChange(bind)],
+    triggeredBy: () => onSaveStatusChange(bind),
   },
   async (evt?: Event): Promise<void> => {
     const { controller } = bind;

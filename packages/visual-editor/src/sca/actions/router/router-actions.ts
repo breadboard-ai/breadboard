@@ -31,7 +31,7 @@ export const updateFromPopstate = asAction(
   "Router.updateFromPopstate",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onPopstate()],
+    triggeredBy: () => onPopstate(),
   },
   async (): Promise<void> => {
     const { controller } = bind;
