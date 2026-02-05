@@ -44,7 +44,6 @@ import {
 import { IntegrationsImpl } from "./integrations.js";
 import { updateMap } from "./utils/update-map.js";
 import { McpClientManager } from "../../mcp/index.js";
-import { A2_TOOLS } from "../../a2/a2-registry.js";
 import { StepEditorImpl } from "./step-editor.js";
 import { ThemeState } from "./theme-state.js";
 import { err, ok } from "@breadboard-ai/utils";
@@ -52,6 +51,7 @@ import { transformDataParts } from "../../data/common.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { ActionTracker } from "../types/types.js";
 import { Signal } from "signal-polyfill";
+import { SCA } from "../../sca/sca.js";
 
 export { createProjectState, ReactiveProject };
 
@@ -62,14 +62,16 @@ function createProjectState(
   boardServer: GoogleDriveBoardServer,
   actionTracker: ActionTracker,
   mcpClientManager: McpClientManager,
-  editable: EditableGraph
+  editable: EditableGraph,
+  sca: SCA
 ): Project {
   return new ReactiveProject(
     fetchWithCreds,
     boardServer,
     mcpClientManager,
     actionTracker,
-    editable
+    editable,
+    sca
   );
 }
 
@@ -94,7 +96,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
 
-  readonly tools: SignalMap<string, Tool>;
   readonly myTools: SignalMap<string, Tool>;
   readonly agentModeTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
@@ -110,7 +111,8 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     boardServer: GoogleDriveBoardServer,
     clientManager: McpClientManager,
     private readonly actionTracker: ActionTracker,
-    editable: EditableGraph
+    editable: EditableGraph,
+    private readonly __sca: SCA
   ) {
     this.#fetchWithCreds = fetchWithCreds;
     this.#boardServer = boardServer;
@@ -128,14 +130,13 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
-    this.tools = new SignalMap(A2_TOOLS);
     this.agentModeTools = new SignalMap();
     this.components = new SignalMap();
     this.myTools = new SignalMap();
 
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
-    this.stepEditor = new StepEditorImpl(this);
+    this.stepEditor = new StepEditorImpl(this, this.__sca);
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);
     this.#updateComponents();
