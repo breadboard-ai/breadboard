@@ -560,9 +560,21 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           case "invalid-url":
             this.sca.controller.global.main.loadState = "Home";
             break;
-          case "auth-required":
+          case "auth-required": {
+            // Prompt the user to sign in
+            const signInResult = await this.askUserToSignInIfNeeded();
+            if (signInResult === "success") {
+              // Reset URL tracking so we retry the load
+              this.#lastHandledUrl = null;
+              await this.#handleUrlChange();
+            } else {
+              // User declined to sign in - go home
+              this.sca.controller.global.main.loadState = "Home";
+            }
+            break;
+          }
           case "race-condition":
-            // These are handled internally or require no action
+            // Handled internally - no action needed
             break;
         }
       } else {

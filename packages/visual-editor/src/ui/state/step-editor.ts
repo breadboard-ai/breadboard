@@ -19,6 +19,7 @@ import {
 import { ReactiveFastAccess } from "./fast-access.js";
 import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
 import { MAIN_BOARD_ID } from "../constants/constants.js";
+import { SCA } from "../../sca/sca.js";
 
 export { StepEditorImpl };
 
@@ -34,16 +35,16 @@ class StepEditorImpl implements StepEditor {
 
   fastAccess: FastAccess;
 
-  constructor(projectValues: ProjectValues) {
+  constructor(projectValues: ProjectValues, sca: SCA) {
     const {
       graphAssets,
-      tools,
       myTools,
       agentModeTools,
       components,
       integrations,
       editable,
     } = projectValues;
+    const tools = sca.controller.editor.graph.tools;
     this.fastAccess = new ReactiveFastAccess(
       graphAssets,
       tools,
