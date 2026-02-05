@@ -329,8 +329,11 @@ class Loop {
               }
             }
             if ("functionCall" in part) {
-              ui.progress.functionCall(part);
-              functionCaller.call(part, (status, opts) =>
+              const functionDef = functionDefinitionMap.get(
+                part.functionCall.name
+              );
+              const callId = ui.progress.functionCall(part, functionDef?.icon);
+              functionCaller.call(callId, part, (status, opts) =>
                 ui.progress.functionCallUpdate(part, status, opts)
               );
             }
@@ -343,9 +346,12 @@ class Loop {
             err(`Agent unable to proceed: ${functionResults.$error}`)
           );
         }
-        ui.progress.functionResult(functionResults);
-        contents.push(functionResults);
-        this.runStateManager.pushContent(functionResults);
+        // Report each function result individually
+        for (const { callId, response } of functionResults.results) {
+          ui.progress.functionResult(callId, { parts: [response] });
+        }
+        contents.push(functionResults.combined);
+        this.runStateManager.pushContent(functionResults.combined);
         this.runStateManager.completeTurn();
       }
       return this.#finalizeResult(result);
