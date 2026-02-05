@@ -15,9 +15,9 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import {
   makeTextInstruction,
   makeText,
+  describe as describeGenerateText,
   type MakeTextInputs,
 } from "../generate-text/main.js";
-import { describe as describeGenerateText } from "../generate-text/entry.js";
 import { makeGoOverListInstruction } from "../go-over-list/main.js";
 import agent, { computeAgentSchema, type AgentInputs } from "../agent/main.js";
 import { makeDeepResearchInstruction } from "../deep-research/main.js";
