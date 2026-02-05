@@ -20,7 +20,7 @@ import { A2UIClientEventMessage } from "./a2ui/schemas.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { A2UIClient } from "./a2ui/client.js";
 import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
-import { ProgressWorkItem } from "./progress-work-item.js";
+import { ConsoleProgressManager } from "./console-progress-manager.js";
 import {
   A2UIRenderer,
   ChatChoice,
@@ -57,7 +57,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
   /**
    * Handles the console updates for various parts of agent execution
    */
-  readonly progress;
+  readonly progress: ConsoleProgressManager;
 
   /**
    * The current work item for A2UI interaction. Each interaction creates a new
@@ -85,15 +85,11 @@ class AgentUI implements A2UIRenderer, ChatManager {
         `Unable to find app screen for this agent. Trying to render UI will fail.`
       );
     }
-    this.progress = new ProgressWorkItem("Agent", "spark", this.#appScreen);
+    this.progress = new ConsoleProgressManager(
+      this.#consoleEntry,
+      this.#appScreen
+    );
     this.#choicePresenter = new ChoicePresenter(translator, this);
-    if (!this.#consoleEntry) {
-      console.warn(
-        `Unable to find console entry for this agent. Trying to render UI will fail.`
-      );
-    } else {
-      this.#consoleEntry.work.set(crypto.randomUUID(), this.progress);
-    }
   }
 
   /**
@@ -101,7 +97,10 @@ class AgentUI implements A2UIRenderer, ChatManager {
    * output. This ensures each A2UI screen appears separately in the console
    * view and the app view shows the latest screen.
    */
-  #startNewInteraction(): Outcome<A2UIClientWorkItem> {
+  #startNewInteraction(
+    title: string = "A2UI",
+    icon: string = "web"
+  ): Outcome<A2UIClientWorkItem> {
     // Finish the previous work item if it exists
     this.#currentWorkItem?.finish();
 
@@ -112,7 +111,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     const outputId = crypto.randomUUID();
 
     // Create new work item for console view
-    this.#currentWorkItem = new A2UIClientWorkItem(this.client, "A2UI", "web");
+    this.#currentWorkItem = new A2UIClientWorkItem(this.client, title, icon);
     this.#consoleEntry.work.set(outputId, this.#currentWorkItem);
 
     // Create new app screen output for app view
@@ -215,9 +214,11 @@ class AgentUI implements A2UIRenderer, ChatManager {
   }
 
   renderUserInterface(
-    messages: v0_8.Types.ServerToClientMessage[]
+    messages: v0_8.Types.ServerToClientMessage[],
+    title: string = "A2UI",
+    icon: string = "web"
   ): Outcome<void> {
-    const workItem = this.#startNewInteraction();
+    const workItem = this.#startNewInteraction(title, icon);
     if (!ok(workItem)) return workItem;
     const translation = this.translator.fromPidginMessages(messages);
     this.client.processUpdates(translation);

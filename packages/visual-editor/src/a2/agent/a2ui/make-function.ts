@@ -22,6 +22,7 @@ function makeFunction(
   return defineFunctionLoose(
     {
       name,
+      icon: "web",
       description,
       parametersJsonSchema,
       responseJsonSchema,
