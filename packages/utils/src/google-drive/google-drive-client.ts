@@ -17,6 +17,7 @@ type Permission = gapi.client.drive.Permission;
 
 export interface GoogleDriveClientOptions {
   apiBaseUrl?: Promise<string>;
+  uploadApiBaseUrl?: Promise<string>;
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
   proxyApiBaseUrl?: string;
   fetchWithCreds: typeof globalThis.fetch;
@@ -174,6 +175,7 @@ type GoogleApiAuthorization = "fetchWithCreds" | "anonymous";
 
 export class GoogleDriveClient {
   readonly #apiUrl: Promise<string>;
+  readonly #uploadApiUrl: Promise<string>;
   readonly #publicProxy:
     | {
         apiUrl: string;
@@ -187,6 +189,9 @@ export class GoogleDriveClient {
   constructor(options: GoogleDriveClientOptions) {
     this.#apiUrl =
       options.apiBaseUrl || Promise.resolve(GOOGLE_DRIVE_FILES_API_PREFIX);
+    this.#uploadApiUrl =
+      options.uploadApiBaseUrl ||
+      Promise.resolve(GOOGLE_DRIVE_UPLOAD_API_PREFIX);
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
           apiUrl: options.proxyApiBaseUrl,
@@ -460,10 +465,11 @@ export class GoogleDriveClient {
       );
     }
 
+    const uploadBase = await this.#uploadApiUrl;
     const url = new URL(
       isExistingFile
-        ? `${GOOGLE_DRIVE_UPLOAD_API_PREFIX}/${encodeURIComponent(fileId)}`
-        : GOOGLE_DRIVE_UPLOAD_API_PREFIX
+        ? `${uploadBase}/${encodeURIComponent(fileId)}`
+        : uploadBase
     );
     url.searchParams.set("uploadType", "multipart");
     if (options?.fields) {
