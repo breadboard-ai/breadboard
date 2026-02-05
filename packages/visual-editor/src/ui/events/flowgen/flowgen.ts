@@ -11,5 +11,5 @@ type Namespace = "flowgen";
 
 export interface Generate extends BaseEventDetail<`${Namespace}.generate`> {
   readonly intent: string;
-  readonly projectState: Project;
+  readonly projectState?: Project;
 }
