@@ -19,7 +19,7 @@ class ConsoleWorkItem implements WorkItem {
   readonly icon?: string;
   readonly start: number;
   readonly awaitingUserInput = false;
-  readonly openByDefault = true;
+  readonly openByDefault = false;
   readonly product: Map<string, ConsoleUpdate>;
 
   @signal
