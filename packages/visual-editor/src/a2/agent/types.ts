@@ -68,7 +68,7 @@ export type AgentProgressManager = {
    * The agent produced a function call.
    * Returns a unique ID for matching with the corresponding function result.
    */
-  functionCall(part: FunctionCallCapabilityPart): string;
+  functionCall(part: FunctionCallCapabilityPart, icon?: string): string;
 
   /**
    * The agent produced a function result.

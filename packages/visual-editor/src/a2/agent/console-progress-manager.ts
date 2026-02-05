@@ -21,6 +21,22 @@ import { ConsoleWorkItem } from "./console-work-item.js";
 export { ConsoleProgressManager };
 
 /**
+ * Friendly names for functions that don't use statusUpdateSchema.
+ * These names are used as fallback titles in the console progress UI.
+ */
+const FUNCTION_FRIENDLY_NAMES: Record<string, string> = {
+  objective_fulfilled: "Finishing up",
+  failed_to_fulfill: "Unable to proceed",
+  system_write_file: "Writing to file",
+  system_read_text_from_file: "Reading from file",
+  system_create_task_tree: "Creating task tree",
+  system_mark_completed_tasks: "Marking tasks complete",
+  chat_request_user_input: "Asking the user",
+  chat_present_choices: "Presenting choices",
+  memory_update_sheet: "Updating memory",
+};
+
+/**
  * Parsed thought with optional title and body.
  */
 type ParsedThought = {
@@ -158,20 +174,23 @@ class ConsoleProgressManager implements AgentProgressManager {
    * The agent produced a function call.
    * Returns a unique ID for matching with the corresponding function result.
    */
-  functionCall(part: FunctionCallCapabilityPart): string {
+  functionCall(part: FunctionCallCapabilityPart, icon?: string): string {
     const callId = crypto.randomUUID();
+    const effectiveIcon = icon ?? "robot_server";
     if (this.#consoleEntry) {
       const args = part.functionCall.args as Record<string, unknown>;
       const statusUpdate =
         typeof args.status_update === "string" ? args.status_update : null;
-      const itemTitle = statusUpdate ?? `Function: ${part.functionCall.name}`;
+      const friendlyName = FUNCTION_FRIENDLY_NAMES[part.functionCall.name];
+      const itemTitle =
+        statusUpdate ?? friendlyName ?? `Function: ${part.functionCall.name}`;
       const update = {
         type: "text" as const,
         title: `Calling function "${part.functionCall.name}"`,
-        icon: "robot_server",
+        icon: effectiveIcon,
         body: { parts: [part] },
       };
-      const workItem = new ConsoleWorkItem(itemTitle, "robot_server", update);
+      const workItem = new ConsoleWorkItem(itemTitle, effectiveIcon, update);
       // Don't finish yet - will be finished when result arrives
       this.#pendingCalls.set(callId, workItem);
       this.#consoleEntry.work.set(callId, workItem);

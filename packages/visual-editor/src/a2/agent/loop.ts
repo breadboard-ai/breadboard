@@ -329,7 +329,10 @@ class Loop {
               }
             }
             if ("functionCall" in part) {
-              const callId = ui.progress.functionCall(part);
+              const functionDef = functionDefinitionMap.get(
+                part.functionCall.name
+              );
+              const callId = ui.progress.functionCall(part, functionDef?.icon);
               functionCaller.call(callId, part, (status, opts) =>
                 ui.progress.functionCallUpdate(part, status, opts)
               );

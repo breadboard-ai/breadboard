@@ -64,6 +64,7 @@ function defineChatFunctions(args: ChatFunctionsArgs): FunctionDefinition[] {
     defineFunction(
       {
         name: CHAT_REQUEST_USER_INPUT,
+        icon: "chat_bubble",
         description: tr`
 Requests input from user. Call this function to hold a conversatio with the user. Each call corresponds to a conversation turn. Use only when necessary to fulfill the objective.
 `,
@@ -105,6 +106,7 @@ Unless the objective explicitly asks for a particular type of input, use the "an
     defineFunction(
       {
         name: CHAT_PRESENT_CHOICES,
+        icon: "list",
         description: tr`
 Presents the user with a set of choices to select from. Use when you need the user to make a decision from a predefined set of options. 
 `,

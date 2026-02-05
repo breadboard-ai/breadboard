@@ -217,6 +217,7 @@ function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
     defineFunction(
       {
         name: OBJECTIVE_FULFILLED_FUNCTION,
+        icon: "check_circle",
         description: `Inidicates completion of the overall objective. 
 Call only when the specified objective is entirely fulfilled`,
         parameters: {
@@ -259,6 +260,7 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: FAILED_TO_FULFILL_FUNCTION,
+        icon: "cancel",
         description: `Inidicates that the agent failed to fulfill of the overall
 objective. Call ONLY when all means of fulfilling the objective have been
 exhausted.`,
@@ -290,6 +292,7 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: LIST_FILES_FUNCTION,
+        icon: "folder",
         description: "Lists all files",
         parameters: {
           ...statusUpdateSchema,
@@ -306,6 +309,7 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: "system_write_file",
+        icon: "edit",
         description: "Writes the provided text to a file",
         parameters: {
           file_name: z.string().describe(
@@ -350,6 +354,7 @@ Use snake_case for naming. If the file does not exist, it will be created. If th
     defineFunction(
       {
         name: "system_read_text_from_file",
+        icon: "description",
         description: tr`
 
 Reads text from a file and return text as string. If the file does not contain text or is not supported, an error will be returned. Google Drive files may contain images and other non-textual content. Please use "${GENERATE_TEXT_FUNCTION}" to read them at full fidelity.
@@ -388,6 +393,7 @@ If an error has occurred, will contain a description of the error`
     defineFunctionLoose(
       {
         name: CREATE_TASK_TREE_FUNCTION,
+        icon: "task",
         description: tr`
 
 When working on a complicated problem, use this function to create a scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially.
@@ -411,6 +417,7 @@ When working on a complicated problem, use this function to create a scratch pad
     defineFunction(
       {
         name: MARK_COMPLETED_TASKS_FUNCTION,
+        icon: "task",
         description: tr`
 Mark one or more tasks defined with the "${CREATE_TASK_TREE_FUNCTION}" as complete.
 `,
