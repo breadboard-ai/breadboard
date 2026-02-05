@@ -21,7 +21,7 @@ export type EntryInputs = {
 } & Params;
 
 export type DescribeInputs = {
-  inputs: EntryInputs;
+  inputs: Partial<EntryInputs>;
 };
 
 type Outputs = {
