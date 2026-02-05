@@ -21,6 +21,27 @@ import { ConsoleWorkItem } from "./console-work-item.js";
 export { ConsoleProgressManager };
 
 /**
+ * Parsed thought with optional title and body.
+ */
+type ParsedThought = {
+  title: string | null;
+  body: string;
+};
+
+/**
+ * Parse a thought string to extract title (from **Title**) and body.
+ */
+function parseThought(text: string): ParsedThought {
+  const match = text.match(/\*\*(.+?)\*\*/);
+  if (!match) {
+    return { title: null, body: text };
+  }
+  const title = match[1];
+  const body = text.replace(match[0], "").trim();
+  return { title, body };
+}
+
+/**
  * Manages console progress updates for agent execution.
  * Creates individual WorkItems for each progress update and adds them to the
  * console entry. Also manages AppScreen updates for the app view.
@@ -40,11 +61,16 @@ class ConsoleProgressManager implements AgentProgressManager {
     this.#screen = screen;
   }
 
-  #addWorkItem(title: string, icon: string, body: LLMContent) {
+  #addWorkItem(
+    itemTitle: string,
+    productTitle: string,
+    icon: string,
+    body: LLMContent
+  ) {
     if (!this.#consoleEntry) return;
 
-    const update = { type: "text" as const, title, icon, body };
-    const workItem = new ConsoleWorkItem(title, icon, update);
+    const update = { type: "text" as const, title: productTitle, icon, body };
+    const workItem = new ConsoleWorkItem(itemTitle, icon, update);
     workItem.finish(); // Mark as done immediately
     this.#consoleEntry.work.set(crypto.randomUUID(), workItem);
   }
@@ -84,6 +110,7 @@ class ConsoleProgressManager implements AgentProgressManager {
     }
     this.#addWorkItem(
       "Generating Layouts",
+      "Generating Layouts",
       "web",
       uiPrompt ?? llm``.asContent()
     );
@@ -113,7 +140,13 @@ class ConsoleProgressManager implements AgentProgressManager {
    * The agent produced a thought.
    */
   thought(text: string) {
-    this.#addWorkItem("Thought", "spark", llm`${text}`.asContent());
+    const { title, body } = parseThought(text);
+    this.#addWorkItem(
+      title ?? "Thought",
+      "Thought",
+      "spark",
+      llm`${body}`.asContent()
+    );
     if (this.#screen) {
       this.#previousStatus = this.#screen.progress;
       this.#screen.progress = progressFromThought(text);
