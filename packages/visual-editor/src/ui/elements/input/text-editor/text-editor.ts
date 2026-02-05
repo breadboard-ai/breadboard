@@ -30,7 +30,7 @@ export function chicletHtml(
   part: TemplatePart,
   projectState: Project | null,
   subGraphId: string | null,
-  sca: SCA
+  sca?: SCA
 ) {
   const { type, invalid, mimeType } = part;
   const assetType = getAssetType(mimeType) ?? "";

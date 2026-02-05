@@ -548,23 +548,15 @@ export type RendererRunState = {
 export type StepEditor = {
   fastAccess: FastAccess;
   updateSelection(selectionState: WorkspaceSelectionState): void;
-  surface: StepEditorSurface | null;
   nodeSelection: {
     graph: GraphIdentifier;
     node: NodeIdentifier;
   } | null;
-};
-
-/**
- * Represents the step editor surface, Usually, its the actual
- * `bb-entity-editor`, but can be anything, really.
- */
-export type StepEditorSurface = {
   /**
-   * Saves current state of the surface, if necessary.
-   * Returns when save is completed.
+   * Applies any pending edits via the SCA step autosave action.
+   * Call this before actions that need the latest graph state.
    */
-  save(): Promise<Outcome<void>>;
+  applyPendingEdits(): Promise<void>;
 };
 
 export type ThemeStatus = "generating" | "uploading" | "editing" | "idle";

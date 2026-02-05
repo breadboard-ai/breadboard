@@ -586,8 +586,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   async handleUserAction(
     payload: StateEvent<"node.action">["payload"]
   ): Promise<Outcome<void>> {
-    const saving = await this.stepEditor?.surface?.save();
-    if (!ok(saving)) return saving;
+    // Apply any pending step edits before running the action
+    await this.stepEditor?.applyPendingEdits();
 
     const { nodeId, actionContext } = payload;
     if (!actionContext) {

@@ -14,7 +14,7 @@ export function expandChiclet(
   part: TemplatePart,
   projectState: Project | null,
   subGraphId: string | null,
-  sca: SCA
+  sca?: SCA
 ): { tags?: string[]; icon?: string | null; title?: string | null } {
   const { type, path, instance } = part;
 
@@ -60,7 +60,7 @@ export function expandChiclet(
           projectState.integrations.registered.get(path)?.tools.get(instance)
             ?.icon || "robot_server";
       } else {
-        const toolInfo = sca.controller.editor.graph.tools.get(path);
+        const toolInfo = sca?.controller.editor.graph.tools.get(path);
         icon = iconSubstitute(toolInfo?.icon);
       }
       break;

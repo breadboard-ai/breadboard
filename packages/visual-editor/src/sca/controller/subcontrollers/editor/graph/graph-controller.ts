@@ -154,6 +154,7 @@ export class GraphController extends RootController {
 
   #onGraphChangeBound = this.#onGraphChange.bind(this);
   #onGraphChange(evt: GraphChangeEvent) {
+    console.log(evt);
     this._graph = evt.graph;
     this._title = evt.graph?.title ?? null;
     this.lastEditError = null;
