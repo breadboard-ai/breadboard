@@ -146,7 +146,8 @@ export class ExpandingTextarea extends LitElement {
         position: absolute;
         user-select: none;
         top: 0;
-        left: 0;
+        left: var(--bb-grid-size-2);
+        right: var(--bb-grid-size-2);
         border: none;
         white-space: pre-wrap;
       }

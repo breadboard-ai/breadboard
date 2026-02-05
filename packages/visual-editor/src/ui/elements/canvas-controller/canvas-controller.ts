@@ -679,7 +679,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
               ? nothing
               : html`<bb-flowgen-editor-input
                   .hasEmptyGraph=${graphIsEmpty}
-                  .projectState=${this.projectState}
                 ></bb-flowgen-editor-input>`}
           </section>`;
 

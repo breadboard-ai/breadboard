@@ -408,10 +408,10 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
         return;
       }
 
-      if (!this.projectState) return;
-
       // Dispatch StateEvent - event-router handles locking/tracking,
       // SCA action handles core logic. This survives DOM changes during resize.
+      // Note: projectState may be undefined if context hasn't propagated yet;
+      // the event route has a fallback to runtime.project.
       this.dispatchEvent(
         new StateEvent({
           eventType: "flowgen.generate",

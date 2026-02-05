@@ -23,6 +23,9 @@ export type GenerateResult =
  *
  * @param intent - The user's description/intent for the flow
  * @param projectState - The project state for theme generation (from Lit context)
+ *
+ * TODO: projectState parameter is a temporary workaround. Project is in the
+ * process of being removed; this will need to be refactored once that happens.
  */
 export async function generate(
   intent: string,
