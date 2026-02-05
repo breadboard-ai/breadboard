@@ -27,7 +27,9 @@ const NONE_OF_THE_ABOVE_ID = "__none_of_the_above__";
  */
 type UIRenderer = {
   renderUserInterface(
-    messages: v0_8.Types.ServerToClientMessage[]
+    messages: v0_8.Types.ServerToClientMessage[],
+    title?: string,
+    icon?: string
   ): Outcome<void>;
   awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>>;
 };
@@ -351,7 +353,11 @@ class ChoicePresenter {
     ];
 
     // Render the UI and await user input
-    const rendering = this.#renderer.renderUserInterface(messages);
+    const rendering = this.#renderer.renderUserInterface(
+      messages,
+      "Presenting choices",
+      "list"
+    );
     if (!ok(rendering)) return rendering;
 
     const userAction = await this.#renderer.awaitUserInput();
@@ -541,7 +547,11 @@ class ChoicePresenter {
     ];
 
     // Render the UI and await user input
-    const rendering = this.#renderer.renderUserInterface(messages);
+    const rendering = this.#renderer.renderUserInterface(
+      messages,
+      "Presenting choices",
+      "list"
+    );
     if (!ok(rendering)) return rendering;
 
     const userAction = await this.#renderer.awaitUserInput();

@@ -32,9 +32,14 @@ const FUNCTION_FRIENDLY_NAMES: Record<string, string> = {
   system_create_task_tree: "Creating task tree",
   system_mark_completed_tasks: "Marking tasks complete",
   chat_request_user_input: "Asking the user",
-  chat_present_choices: "Presenting choices",
   memory_update_sheet: "Updating memory",
 };
+
+/**
+ * Functions that should not create a work item because
+ * they are handled by other UI mechanisms.
+ */
+const SKIP_WORK_ITEM_FUNCTIONS = new Set(["chat_present_choices"]);
 
 /**
  * Parsed thought with optional title and body.
@@ -176,6 +181,10 @@ class ConsoleProgressManager implements AgentProgressManager {
    */
   functionCall(part: FunctionCallCapabilityPart, icon?: string): string {
     const callId = crypto.randomUUID();
+    // Skip work item for functions handled by other UI mechanisms
+    if (SKIP_WORK_ITEM_FUNCTIONS.has(part.functionCall.name)) {
+      return callId;
+    }
     const effectiveIcon = icon ?? "robot_server";
     if (this.#consoleEntry) {
       const args = part.functionCall.args as Record<string, unknown>;

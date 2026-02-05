@@ -97,7 +97,10 @@ class AgentUI implements A2UIRenderer, ChatManager {
    * output. This ensures each A2UI screen appears separately in the console
    * view and the app view shows the latest screen.
    */
-  #startNewInteraction(): Outcome<A2UIClientWorkItem> {
+  #startNewInteraction(
+    title: string = "A2UI",
+    icon: string = "web"
+  ): Outcome<A2UIClientWorkItem> {
     // Finish the previous work item if it exists
     this.#currentWorkItem?.finish();
 
@@ -108,7 +111,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     const outputId = crypto.randomUUID();
 
     // Create new work item for console view
-    this.#currentWorkItem = new A2UIClientWorkItem(this.client, "A2UI", "web");
+    this.#currentWorkItem = new A2UIClientWorkItem(this.client, title, icon);
     this.#consoleEntry.work.set(outputId, this.#currentWorkItem);
 
     // Create new app screen output for app view
@@ -211,9 +214,11 @@ class AgentUI implements A2UIRenderer, ChatManager {
   }
 
   renderUserInterface(
-    messages: v0_8.Types.ServerToClientMessage[]
+    messages: v0_8.Types.ServerToClientMessage[],
+    title: string = "A2UI",
+    icon: string = "web"
   ): Outcome<void> {
-    const workItem = this.#startNewInteraction();
+    const workItem = this.#startNewInteraction(title, icon);
     if (!ok(workItem)) return workItem;
     const translation = this.translator.fromPidginMessages(messages);
     this.client.processUpdates(translation);
