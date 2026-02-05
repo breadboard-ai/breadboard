@@ -49,7 +49,7 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
-import { Project, StepEditorSurface } from "../../state/index.js";
+import { Project } from "../../state/index.js";
 import {
   ActionTracker,
   EnumValue,
@@ -110,10 +110,7 @@ const INVALID_ITEM = html`<div id="invalid-item">
 </div>`;
 
 @customElement("bb-entity-editor")
-export class EntityEditor
-  extends SignalWatcher(LitElement)
-  implements StepEditorSurface
-{
+export class EntityEditor extends SignalWatcher(LitElement) {
   @property()
   accessor graph: InspectableGraph | null = null;
 
@@ -812,17 +809,11 @@ export class EntityEditor
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("pointerdown", this.#onPointerDownBound);
-    if (this.projectState) {
-      this.projectState.stepEditor.surface = this;
-    }
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener("pointerdown", this.#onPointerDownBound);
-    if (this.projectState) {
-      this.projectState.stepEditor.surface = null;
-    }
   }
 
   #onPointerDown() {
@@ -856,7 +847,7 @@ export class EntityEditor
         // Reactive changes need to be saved immediately so the graph editor
         // updates. Unlike regular edits (which wait for selection change),
         // reactive controls should propagate their changes right away.
-        this.save();
+        this.#save();
       }
     };
   }
@@ -1273,7 +1264,7 @@ export class EntityEditor
           return;
         }
 
-        this.#submit(this.values);
+        this.#save();
       }}
     ></bb-text-editor>`;
   }
@@ -1731,6 +1722,7 @@ export class EntityEditor
         graphId: prepared.editGraphId,
         nodeId,
         values: prepared.configuration,
+        ins: prepared.ins,
         graphVersion: this.sca.controller.editor.graph.version,
       });
       return;
@@ -1766,7 +1758,7 @@ export class EntityEditor
    * Implements the StepEditorSurface interface, so that this class could
    * be used in Project state machinery.
    */
-  async save(): Promise<Outcome<void>> {
+  async #save(): Promise<Outcome<void>> {
     if (!this.#edited) {
       return;
     }
@@ -1774,6 +1766,11 @@ export class EntityEditor
     // Autosave.
     this.#edited = false;
     const submitting = this.#submit(this.values);
+
+    // Clear pending edit since we're explicitly saving
+    // This prevents the stale edit warning when clicking away
+    this.sca?.controller.editor.step.clearPendingEdit();
+    this.sca?.controller.editor.step.clearPendingAssetEdit();
 
     // Reset the node value so that we don't receive incorrect port data.
     this.values = undefined;
