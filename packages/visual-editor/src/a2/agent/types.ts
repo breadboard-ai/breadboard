@@ -6,6 +6,7 @@
 
 import type {
   FunctionCallCapabilityPart,
+  FunctionResponseCapabilityPart,
   LLMContent,
   NodeHandlerContext,
   Outcome,
@@ -35,10 +36,16 @@ export type FunctionCallerFactory = {
 
 export type FunctionCaller = {
   call(
+    callId: string,
     part: FunctionCallCapabilityPart,
     statusUpdateCallback: StatusUpdateCallback
   ): void;
-  getResults(): Promise<Outcome<LLMContent | null>>;
+  getResults(): Promise<
+    Outcome<{
+      combined: LLMContent;
+      results: { callId: string; response: FunctionResponseCapabilityPart }[];
+    } | null>
+  >;
 };
 
 export type AgentProgressManager = {
@@ -59,13 +66,16 @@ export type AgentProgressManager = {
 
   /**
    * The agent produced a function call.
+   * Returns a unique ID for matching with the corresponding function result.
    */
-  functionCall(part: FunctionCallCapabilityPart, description: string): void;
+  functionCall(part: FunctionCallCapabilityPart): string;
 
   /**
    * The agent produced a function result.
+   * @param callId - ID from the corresponding functionCall
+   * @param content - The result content
    */
-  functionResult(content: LLMContent): void;
+  functionResult(callId: string, content: LLMContent): void;
 
   /**
    * The agent finished executing.

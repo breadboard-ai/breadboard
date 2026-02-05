@@ -29,6 +29,8 @@ class ConsoleProgressManager implements AgentProgressManager {
   readonly #consoleEntry: ConsoleEntry | undefined;
   readonly #screen: AppScreen | undefined;
   #previousStatus: string | undefined;
+  #agentSession: ConsoleWorkItem | undefined;
+  #pendingCalls: Map<string, ConsoleWorkItem> = new Map();
 
   constructor(
     consoleEntry: ConsoleEntry | undefined,
@@ -43,18 +45,33 @@ class ConsoleProgressManager implements AgentProgressManager {
 
     const update = { type: "text" as const, title, icon, body };
     const workItem = new ConsoleWorkItem(title, icon, update);
+    workItem.finish(); // Mark as done immediately
     this.#consoleEntry.work.set(crypto.randomUUID(), workItem);
   }
 
   /**
    * The agent started execution.
+   * Creates the agent session WorkItem that accumulates early updates.
    */
   startAgent(objective: LLMContent) {
     if (this.#screen) {
       this.#screen.progress = StarterPhraseVendor.instance.phrase();
       this.#screen.expectedDuration = -1;
     }
-    this.#addWorkItem("Objective", "summarize", objective);
+    if (this.#consoleEntry) {
+      const update = {
+        type: "text" as const,
+        title: "Objective",
+        icon: "summarize",
+        body: objective,
+      };
+      this.#agentSession = new ConsoleWorkItem(
+        "Agent Session",
+        "spark",
+        update
+      );
+      this.#consoleEntry.work.set(crypto.randomUUID(), this.#agentSession);
+    }
   }
 
   /**
@@ -74,14 +91,22 @@ class ConsoleProgressManager implements AgentProgressManager {
 
   /**
    * The agent sent initial request.
+   * Appends to the agent session WorkItem.
    */
   sendRequest(model: string, body: GeminiBody) {
-    this.#addWorkItem("Send request", "upload", {
-      parts: [
-        { text: `Calling model: ${model}` },
-        { json: body as JsonSerializable },
-      ],
-    });
+    if (this.#agentSession) {
+      this.#agentSession.addProduct({
+        type: "text",
+        title: "Send request",
+        icon: "upload",
+        body: {
+          parts: [
+            { text: `Calling model: ${model}` },
+            { json: body as JsonSerializable },
+          ],
+        },
+      });
+    }
   }
 
   /**
@@ -98,13 +123,27 @@ class ConsoleProgressManager implements AgentProgressManager {
 
   /**
    * The agent produced a function call.
+   * Returns a unique ID for matching with the corresponding function result.
    */
-  functionCall(part: FunctionCallCapabilityPart) {
-    this.#addWorkItem(
-      `Calling function "${part.functionCall.name}"`,
-      "robot_server",
-      { parts: [part] }
-    );
+  functionCall(part: FunctionCallCapabilityPart): string {
+    const callId = crypto.randomUUID();
+    if (this.#consoleEntry) {
+      const update = {
+        type: "text" as const,
+        title: `Calling function "${part.functionCall.name}"`,
+        icon: "robot_server",
+        body: { parts: [part] },
+      };
+      const workItem = new ConsoleWorkItem(
+        `Function: ${part.functionCall.name}`,
+        "robot_server",
+        update
+      );
+      // Don't finish yet - will be finished when result arrives
+      this.#pendingCalls.set(callId, workItem);
+      this.#consoleEntry.work.set(callId, workItem);
+    }
+    return callId;
   }
 
   /**
@@ -144,18 +183,31 @@ class ConsoleProgressManager implements AgentProgressManager {
 
   /**
    * The agent produced a function result.
+   * Finds the WorkItem by callId and appends the result.
    */
-  functionResult(content: LLMContent) {
-    this.#addWorkItem("Function response", "robot_server", content);
+  functionResult(callId: string, content: LLMContent) {
+    const workItem = this.#pendingCalls.get(callId);
+    if (workItem) {
+      workItem.addProduct({
+        type: "text",
+        title: "Function response",
+        icon: "robot_server",
+        body: content,
+      });
+      workItem.finish();
+      this.#pendingCalls.delete(callId);
+    }
   }
 
   /**
    * The agent finished executing.
+   * Closes the agent session WorkItem.
    */
   finish() {
     if (this.#screen) {
       this.#screen.progress = undefined;
       this.#screen.expectedDuration = -1;
     }
+    this.#agentSession?.finish();
   }
 }

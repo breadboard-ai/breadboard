@@ -21,8 +21,13 @@ import { FunctionCaller } from "./types.js";
 
 export { FunctionCallerImpl };
 
+export type FunctionCallResult = {
+  callId: string;
+  response: FunctionResponseCapabilityPart;
+};
+
 class FunctionCallerImpl implements FunctionCaller {
-  #functionPromises: Promise<Outcome<FunctionResponseCapabilityPart>>[] = [];
+  #functionPromises: Promise<Outcome<FunctionCallResult>>[] = [];
 
   constructor(
     private readonly builtIn: Map<string, FunctionDefinition>,
@@ -66,30 +71,47 @@ class FunctionCallerImpl implements FunctionCaller {
   }
 
   call(
+    callId: string,
     part: FunctionCallCapabilityPart,
     statusUpdateCallback: StatusUpdateCallback
   ): void {
     const name = part.functionCall.name;
     if (this.builtIn.has(name)) {
       this.#functionPromises.push(
-        this.#callBuiltIn(part, statusUpdateCallback)
+        this.#callBuiltIn(part, statusUpdateCallback).then((result) =>
+          ok(result) ? { callId, response: result } : result
+        )
       );
     } else {
-      this.#functionPromises.push(this.#callCustom(part));
+      this.#functionPromises.push(
+        this.#callCustom(part).then((result) =>
+          ok(result) ? { callId, response: result } : result
+        )
+      );
     }
   }
 
-  async getResults(): Promise<Outcome<LLMContent | null>> {
+  async getResults(): Promise<
+    Outcome<{ combined: LLMContent; results: FunctionCallResult[] } | null>
+  > {
     if (this.#functionPromises.length === 0) {
       return null;
     }
     const functionResponses = await Promise.all(this.#functionPromises);
-    const errors = functionResponses
-      .map((response) => (!ok(functionResponses) ? response : null))
-      .filter((response) => response !== null);
+    const errors = functionResponses.filter(
+      (
+        response
+      ): response is Outcome<FunctionCallResult> & { $error: string } =>
+        !ok(response)
+    );
     if (errors.length > 0) {
-      return err(errors.join(","));
+      return err(errors.map((e) => e.$error).join(","));
     }
-    return { parts: functionResponses as DataPart[], role: "user" };
+    const successResults = functionResponses.filter(ok) as FunctionCallResult[];
+    const combined: LLMContent = {
+      parts: successResults.map((r) => r.response) as DataPart[],
+      role: "user",
+    };
+    return { combined, results: successResults };
   }
 }

@@ -182,13 +182,15 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
 
   /**
    * The agent produced a function call.
+   * Returns a unique ID (not used for matching in this implementation).
    */
-  functionCall(part: FunctionCallCapabilityPart) {
+  functionCall(part: FunctionCallCapabilityPart): string {
     this.#addParts(
       `Calling function "${part.functionCall.name}"`,
       "robot_server",
       [part]
     );
+    return crypto.randomUUID();
   }
 
   /**
@@ -228,7 +230,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   /**
    * The agent produced a function result.
    */
-  functionResult(content: LLMContent) {
+  functionResult(_callId: string, content: LLMContent) {
     this.#add("Function response", "robot_server", content);
   }
 

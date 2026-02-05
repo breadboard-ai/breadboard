@@ -5,33 +5,56 @@
  */
 
 import { ConsoleUpdate, WorkItem } from "@breadboard-ai/types";
+import { signal } from "signal-utils";
+import { now } from "./now.js";
 
 export { ConsoleWorkItem };
 
 /**
  * A simple WorkItem implementation for individual progress updates.
- * Each ConsoleWorkItem contains exactly one ConsoleUpdate and arrives "done"
- * (with end time already set).
+ * Can hold one or more ConsoleUpdates in its product map.
  */
 class ConsoleWorkItem implements WorkItem {
   readonly title: string;
   readonly icon?: string;
   readonly start: number;
-  readonly end: number;
   readonly awaitingUserInput = false;
   readonly openByDefault = true;
   readonly product: Map<string, ConsoleUpdate>;
 
+  @signal
+  accessor end: number | null = null;
+
+  #updateCounter = 0;
+
+  @signal
   get elapsed(): number {
-    return this.end - this.start;
+    const end = this.end ?? now.get();
+    return end - this.start;
   }
 
-  constructor(title: string, icon: string, update: ConsoleUpdate) {
-    const now = performance.now();
-    this.start = now;
-    this.end = now; // Arrives "done"
+  constructor(title: string, icon: string, update?: ConsoleUpdate) {
+    this.start = performance.now();
     this.title = title;
     this.icon = icon;
-    this.product = new Map([["content", update]]);
+    this.product = new Map();
+    if (update) {
+      this.addProduct(update);
+    }
+  }
+
+  /**
+   * Add a product to this work item.
+   */
+  addProduct(update: ConsoleUpdate) {
+    const key = `content-${this.#updateCounter++}`;
+    this.product.set(key, update);
+  }
+
+  /**
+   * Mark this work item as finished.
+   */
+  finish() {
+    this.end = performance.now();
   }
 }
