@@ -302,12 +302,10 @@ suite("Priority ordering", () => {
       {
         mode: ActionMode.Immediate,
         priority: 10,
-        triggeredBy: [
-          () => {
-            activationOrder.push("low");
-            return signalTrigger("test", () => false);
-          },
-        ],
+        triggeredBy: () => {
+          activationOrder.push("low");
+          return signalTrigger("test", () => false);
+        },
       },
       async () => {}
     );
@@ -317,12 +315,10 @@ suite("Priority ordering", () => {
       {
         mode: ActionMode.Immediate,
         priority: 100,
-        triggeredBy: [
-          () => {
-            activationOrder.push("high");
-            return signalTrigger("test", () => false);
-          },
-        ],
+        triggeredBy: () => {
+          activationOrder.push("high");
+          return signalTrigger("test", () => false);
+        },
       },
       async () => {}
     );
@@ -332,12 +328,10 @@ suite("Priority ordering", () => {
       {
         mode: ActionMode.Immediate,
         priority: 50,
-        triggeredBy: [
-          () => {
-            activationOrder.push("medium");
-            return signalTrigger("test", () => false);
-          },
-        ],
+        triggeredBy: () => {
+          activationOrder.push("medium");
+          return signalTrigger("test", () => false);
+        },
       },
       async () => {}
     );

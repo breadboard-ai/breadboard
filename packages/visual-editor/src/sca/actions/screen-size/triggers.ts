@@ -41,3 +41,13 @@ export function onMediumQueryChange(): EventTrigger | null {
   const query = window.matchMedia(`(max-width: ${MEDIUM_BREAKPOINT}px)`);
   return eventTrigger("Medium Query Change", query, "change");
 }
+
+/**
+ * Creates a combined trigger for both narrow and medium media query changes.
+ * Returns the narrow trigger as the primary (both fire on same breakpoint crossings).
+ */
+export function onScreenSizeChange(): EventTrigger | null {
+  // The narrow breakpoint trigger covers the most common case.
+  // When screen size changes, updateScreenSize checks both queries.
+  return onNarrowQueryChange();
+}

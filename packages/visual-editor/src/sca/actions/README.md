@@ -44,13 +44,45 @@ export const applyPendingEdits = asAction(
   {
     mode: ActionMode.Immediate,
     priority: 100,  // Higher = activates first
-    triggeredBy: [() => onSelectionOrSidebarChange(bind)],
+    triggeredBy: () => onSelectionOrSidebarChange(bind),
   },
   async (): Promise<void> => {
     const { controller } = bind;
     // Action implementation...
   }
 );
+```
+
+### One Trigger Per Action
+
+**Each action supports exactly one trigger.** This is a deliberate constraint that enforces a clear 1:1 relationship between triggers and actions:
+
+- ✅ **One signal trigger** watching one or more signals in its condition
+- ✅ **One event trigger** listening for a specific event
+- ❌ **Cannot mix** signal and event triggers on the same action
+
+If you need to respond to multiple signals, consolidate them into a single signal trigger's condition:
+
+```typescript
+// Correct: One trigger watching multiple signals
+export const myAction = asAction(
+  "Domain.myAction",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => signalTrigger(
+      "Selection or Sidebar Change",
+      () => {
+        const { controller } = bind;
+        // Watch both signals - fires when either changes
+        return !!(controller.editor.selection.node || controller.sidebar.active);
+      }
+    ),
+  },
+  async () => { /* ... */ }
+);
+
+// Incorrect: Can't have multiple triggers
+// triggeredBy: [trigger1, trigger2]  // ← Not supported
 ```
 
 ### ActionMode
@@ -76,14 +108,14 @@ Use priority when one action must complete before another (e.g., apply pending e
 // High priority - runs first
 export const applyPendingEdits = asAction(
   "Step.applyPendingEdits",
-  { mode: ActionMode.Immediate, priority: 100, triggeredBy: [...] },
+  { mode: ActionMode.Immediate, priority: 100, triggeredBy: () => onSelectionOrSidebarChange(bind) },
   async () => { /* ... */ }
 );
 
 // Default priority - runs after
 export const save = asAction(
   "Board.save",
-  { mode: ActionMode.Awaits, triggeredBy: [...] },
+  { mode: ActionMode.Awaits, triggeredBy: () => onVersionChange(bind) },
   async () => { /* ... */ }
 );
 ```
@@ -110,12 +142,15 @@ export function onVersionChange(bind: ActionBind): SignalTrigger {
     "Graph Version Change",
     () => {
       const { controller } = bind;
-      // Returns the value to compare — fires when it changes
-      return controller.editor.graph.version;
+      // Returns true when action should fire
+      // Condition is re-evaluated each time dependencies change
+      return controller.editor.graph.version >= 0;
     }
   );
 }
 ```
+
+> **Note:** Signal trigger conditions must return `boolean`. The reactive system tracks which signals are read during execution, and the boolean controls whether the action fires on each change.
 
 ### Example: Event Trigger
 
@@ -137,13 +172,13 @@ export const save = asAction(
   "Board.save",
   {
     mode: ActionMode.Awaits,
-    triggeredBy: [() => onVersionChange(bind)],  // Factory function
+    triggeredBy: () => onVersionChange(bind),  // Single factory function
   },
   async () => { /* save logic */ }
 );
 ```
 
-**Important**: `triggeredBy` takes factory functions `() => Trigger` to enable lazy evaluation and SSR safety.
+**Important**: `triggeredBy` takes a factory function `() => Trigger | null` to enable lazy evaluation and SSR safety (return `null` when trigger cannot be created).
 
 ---
 
@@ -155,7 +190,7 @@ export const save = asAction(
 | `board` | Board persistence | `load`, `close`, `save`, `saveAs`, `deleteBoard` |
 | `flowgen` | Flow generation | `generateFlow` |
 | `graph` | Graph mutations | `addNode`, `changeEdge`, `changeNodeConfiguration` |
-| `node` | Node operations | `autoname`, `autonameFromTrigger` |
+| `node` | Node operations | `autoname` |
 | `router` | URL handling | `updateUrl` |
 | `run` | Execution | `syncConsoleFromRunner` |
 | `screen-size` | Responsive | `updateScreenSize` |

@@ -201,10 +201,10 @@ export async function autoname(config: AutonameConfig): Promise<void> {
  * - `onNodeConfigChange`: Fires when a node's configuration changes
  */
 export const autonameFromTrigger = asAction(
-  "Node.autonameFromTrigger",
+  "Node.autoname",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onNodeConfigChange(bind)],
+    triggeredBy: () => onNodeConfigChange(bind),
   },
   async (): Promise<void> => {
     const { controller } = bind;

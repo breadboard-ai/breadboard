@@ -16,7 +16,7 @@ import {
   NARROW_BREAKPOINT,
   MEDIUM_BREAKPOINT,
 } from "../../controller/subcontrollers/global/screen-size-controller.js";
-import { onNarrowQueryChange, onMediumQueryChange } from "./triggers.js";
+import { onScreenSizeChange } from "./triggers.js";
 
 export const bind = makeAction();
 
@@ -31,22 +31,13 @@ export const bind = makeAction();
  * It's triggered by media query change events and also runs once
  * during initialization.
  *
- * **Triggers:**
- * - `onNarrowQueryChange`: Fires when narrow breakpoint crossed
- * - `onMediumQueryChange`: Fires when medium breakpoint crossed
- *
- * Note: Triggers are wrapped in a single factory that handles SSR environments
- * by returning a no-op trigger when window is unavailable.
+ * **Trigger:** `onScreenSizeChange` - Fires on narrow/medium breakpoint changes
  */
 export const updateScreenSize = asAction(
   "ScreenSize.updateScreenSize",
   {
     mode: ActionMode.Immediate,
-    // Factories may return null in SSR - filtered out in activate()
-    triggeredBy: [
-      () => onNarrowQueryChange(),
-      () => onMediumQueryChange(),
-    ],
+    triggeredBy: onScreenSizeChange,
   },
   async (): Promise<void> => {
     const { controller } = bind;

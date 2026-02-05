@@ -30,7 +30,7 @@ export const invalidateResumableRuns = asAction(
   "Agent.invalidateResumableRuns",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onGraphVersionChange(bind)],
+    triggeredBy: () => onGraphVersionChange(bind),
   },
   async (): Promise<void> => {
     const { services } = bind;
@@ -49,7 +49,7 @@ export const clearRunsOnGraphChange = asAction(
   "Agent.clearRunsOnGraphChange",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onGraphUrlChange(bind)],
+    triggeredBy: () => onGraphUrlChange(bind),
   },
   async (): Promise<void> => {
     const { services } = bind;

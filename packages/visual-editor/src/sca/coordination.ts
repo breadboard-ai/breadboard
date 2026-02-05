@@ -631,12 +631,15 @@ export interface ActionOptions {
   /** Coordination mode: Immediate, Awaits, or Exclusive */
   mode: ActionMode;
   /**
-   * Optional triggers that invoke this action automatically.
-   * Must be factory functions `() => TriggerDefinition | null` that return triggers.
-   * Factories are called lazily during activate() to avoid import-time issues.
-   * Factories may return null in SSR environments (these are filtered out).
+   * Optional trigger that invokes this action automatically.
+   * Must be a factory function `() => TriggerDefinition | null`.
+   * Factory is called lazily during activate() to avoid import-time issues.
+   * Factory may return null in SSR environments (trigger is not activated).
+   *
+   * Only one trigger per action is allowed. If you need to react to multiple
+   * signals, compose them into a single trigger that reads all relevant signals.
    */
-  triggeredBy?: TriggerFactory[];
+  triggeredBy?: TriggerFactory;
   /**
    * Optional activation priority. Higher values activate first.
    * Default is 0. Use to ensure actions that must complete before others
@@ -674,8 +677,8 @@ export type AppAction<TArgs extends unknown[] = []> = (
  * An action function that may have associated triggers.
  *
  * - Call the function directly to execute the action
- * - Call `activate()` to start listening for triggers (returns a dispose function)
- * - Access `triggers` to inspect the trigger factories
+ * - Call `activate()` to start listening for trigger (returns a dispose function)
+ * - Access `trigger` to inspect the trigger factory
  */
 export interface ActionWithTriggers<T extends AppAction<never[]>> {
   /** Execute the action directly */
@@ -684,10 +687,10 @@ export interface ActionWithTriggers<T extends AppAction<never[]>> {
   readonly actionName: string;
   /** Activation priority (higher = activates first, default 0) */
   readonly priority: number;
-  /** Start listening for triggers. Returns a dispose function. */
+  /** Start listening for trigger. Returns a dispose function. */
   activate: () => () => void;
-  /** List of trigger factories (for debugging/inspection) */
-  triggers: readonly TriggerFactory[];
+  /** The trigger factory, if any (for debugging/inspection) */
+  trigger: TriggerFactory | undefined;
 }
 
 /**
@@ -745,7 +748,7 @@ export function asAction<T extends AppAction<never[]>>(
   const normalizedOptions: ActionOptions =
     typeof options === "string" ? { mode: options } : options;
 
-  const { mode, triggeredBy = [], priority: rawPriority = 0 } = normalizedOptions;
+  const { mode, triggeredBy, priority: rawPriority = 0 } = normalizedOptions;
 
   // Clamp priority to reasonable bounds to prevent gaming
   const MIN_PRIORITY = -1000;
@@ -767,18 +770,22 @@ export function asAction<T extends AppAction<never[]>>(
   const wrapped = coordination.registerAction(name, mode, fn);
 
   // Create the ActionWithTriggers object
-  // Note: triggers are stored as factories, resolved lazily in activate()
+  // Note: trigger is stored as factory, resolved lazily in activate()
   const actionWithTriggers = Object.assign(wrapped, {
     actionName: name,
     priority,
-    triggers: triggeredBy as readonly TriggerFactory[],
+    trigger: triggeredBy,
     activate: () => {
-      // Resolve trigger factories lazily here, not at import time
-      // Filter out null results (for SSR environments)
-      const resolvedTriggers = triggeredBy
-        .map((factory) => factory())
-        .filter((t): t is TriggerDefinition => t !== null);
-      return coordination.activateTriggers(name, resolvedTriggers, wrapped);
+      // Resolve trigger factory lazily here, not at import time
+      // Return no-op if no trigger or factory returns null (SSR)
+      if (!triggeredBy) {
+        return () => {};
+      }
+      const resolvedTrigger = triggeredBy();
+      if (!resolvedTrigger) {
+        return () => {};
+      }
+      return coordination.activateTriggers(name, [resolvedTrigger], wrapped);
     },
   });
 
