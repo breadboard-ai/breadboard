@@ -595,19 +595,20 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                   if (asset.metadata?.type === "file") {
                     icon = "upload";
                   }
+                }
 
-                  if (asset.metadata?.subType) {
-                    switch (asset.metadata?.subType) {
-                      case "youtube":
-                        icon = "video_youtube";
-                        break;
-                      case "drawable":
-                        icon = "draw";
-                        break;
-                      case "gdrive":
-                        icon = "drive";
-                        break;
-                    }
+                // Override icon based on subType (e.g., youtube, drawable, gdrive)
+                if (asset.metadata?.subType) {
+                  switch (asset.metadata?.subType) {
+                    case "youtube":
+                      icon = "video_youtube";
+                      break;
+                    case "drawable":
+                      icon = "draw";
+                      break;
+                    case "gdrive":
+                      icon = "drive";
+                      break;
                   }
                 }
                 const globalIndex = idx;

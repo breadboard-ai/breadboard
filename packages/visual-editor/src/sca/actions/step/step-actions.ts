@@ -59,10 +59,6 @@ export const applyPendingEdits = asAction(
       // Clear BEFORE applying so if apply fails we don't re-trigger
       controller.editor.step.clearPendingEdit();
 
-      console.log(pendingEdit.nodeId,
-          pendingEdit.graphId,
-          pendingEdit.values);
-
       if (pendingEdit.graphVersion === currentVersion) {
         // Version matches - safe to apply
         await Graph.changeNodeConfiguration(

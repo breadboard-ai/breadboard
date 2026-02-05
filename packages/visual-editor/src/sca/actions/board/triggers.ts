@@ -40,9 +40,12 @@ export function onVersionChange(bind: ActionBind): SignalTrigger {
       const { controller } = bind;
       const { version, readOnly, editor } = controller.editor.graph;
 
-      // Return true when save should happen, false otherwise
-      // The reactive system tracks version changes automatically
-      return !readOnly && version >= 0 && !!editor;
+      // Return a unique truthy value per version so each increment fires.
+      // We use version + 1 because version 0 is falsy.
+      if (readOnly || version < 0 || !editor) {
+        return false;
+      }
+      return version + 1;
     }
   );
 }
