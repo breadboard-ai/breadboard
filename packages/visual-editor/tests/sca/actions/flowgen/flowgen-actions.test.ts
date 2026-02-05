@@ -12,9 +12,9 @@ import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import * as GraphActions from "../../../../src/sca/actions/graph/graph-actions.js";
 import {
   makeTestFixtures,
-  makeTestGraph,
+  makeFreshGraph as makeTestGraph,
   makeTestProjectState,
-} from "../../../sca/triggers/utils.js";
+} from "../../helpers/index.js";
 
 /**
  * Sets up flowgen test fixtures using the composable pattern.

@@ -7,6 +7,8 @@
 import type {
   GraphDescriptor,
   HarnessRunner,
+  NodeLifecycleState,
+  NodeRunStatus,
   RunConfig,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
@@ -20,10 +22,70 @@ import type { SettingsStore } from "../../../ui/data/settings-store.js";
 import { STATUS } from "../../../ui/types/types.js";
 import { getStepIcon } from "../../../ui/utils/get-step-icon.js";
 import { makeAction } from "../binder.js";
+import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
 import { RunController } from "../../controller/subcontrollers/run/run-controller.js";
+import { onDblClick, onGraphVersionForSync } from "./triggers.js";
 
 export const bind = makeAction();
+
+// =============================================================================
+// Coordinated Actions
+// =============================================================================
+
+export const testAction = asAction(
+  "Run.test",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: [() => onDblClick()],
+  },
+  async (): Promise<void> => {
+    return new Promise((r) => setTimeout(r, 3_000));
+  }
+);
+
+/**
+ * Starts the current run.
+ *
+ * Uses `Exclusive` mode to prevent concurrent runs.
+ *
+ * @throws Error if no runner is set (programming error)
+ */
+export const start = asAction(
+  "Run.start",
+  ActionMode.Exclusive,
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const runController = controller.run.main;
+    if (!runController.runner) {
+      throw new Error("start() called without an active runner");
+    }
+    runController.runner.start();
+    // Note: Status will be updated by the trigger listening to runner events
+  }
+);
+
+/**
+ * Stops the current run by aborting it.
+ *
+ * Uses `Immediate` mode so it can be called anytime, including during triggers.
+ */
+export const stop = asAction(
+  "Run.stop",
+  ActionMode.Immediate,
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const runController = controller.run.main;
+    if (runController.abortController) {
+      runController.abortController.abort();
+    }
+    runController.setStatus(STATUS.STOPPED);
+  }
+);
+
+// =============================================================================
+// Run Preparation
+// =============================================================================
 
 /**
  * Callback to connect the runner to the project.
@@ -277,9 +339,7 @@ export function prepare(config: PrepareRunConfig): void {
  * Note: NodeRunStatus excludes "failed" - failed nodes map to "succeeded"
  * as they are complete, with error styling handled via separate error state.
  */
-export function mapLifecycleToRunStatus(
-  state: import("@breadboard-ai/types").NodeLifecycleState
-): import("@breadboard-ai/types").NodeRunStatus {
+export function mapLifecycleToRunStatus(state: NodeLifecycleState): NodeRunStatus {
   switch (state) {
     case "inactive":
       return "inactive";
@@ -389,3 +449,27 @@ export function syncConsoleFromRunner(): void {
   // This triggers @field signal due to reference change (immutable pattern)
   runController.replaceConsole(newEntries);
 }
+
+// =============================================================================
+// Triggered Actions
+// =============================================================================
+
+/**
+ * Triggered wrapper for syncConsoleFromRunner.
+ * Fires when graph version changes to sync run console state.
+ *
+ * **Triggers:**
+ * - `onGraphVersionForSync`: Fires when graph version changes
+ */
+export const syncConsoleFromTrigger = asAction(
+  "Run.syncConsoleFromTrigger",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: [() => onGraphVersionForSync(bind)],
+  },
+  async (): Promise<void> => {
+    // Delegate to the existing sync function
+    syncConsoleFromRunner();
+  }
+);
+

@@ -96,15 +96,27 @@ Actions are **functions** that orchestrate multi-step workflows across Services 
 
 📁 See [`actions/README.md`](./actions/README.md)
 
-### 🔄 Triggers — "The Side Effects"
+### 🔄 Triggers — "The Reactive Bridge"
 
-Triggers are **reactive listeners** that perform side effects when state changes. Think of them as "automatic Actions" that react to signal updates.
+Triggers connect **reactive state changes** to **action execution**. They are defined inline with actions using the `asAction` helper's `triggeredBy` option.
 
-**Examples:**
-- Auto-save when graph is modified
-- Auto-name nodes when configuration changes
+**Trigger types:**
+- **Signal triggers** (`signalTrigger`): Fire when reactive conditions become truthy
+- **Event triggers** (`eventTrigger`): Fire on DOM/custom events
 
-📁 See [`triggers/README.md`](./triggers/README.md)
+**Example:**
+```typescript
+export const autoname = asAction(
+  "Node.autoname",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: [() => onNodeConfigChange(bind)],  // Inline trigger
+  },
+  async () => { /* action logic */ }
+);
+```
+
+📁 See [`coordination.ts`](./coordination.ts) for trigger utilities
 
 ---
 
@@ -113,21 +125,26 @@ Triggers are **reactive listeners** that perform side effects when state changes
 ```
 sca/
 ├── sca.ts              # Bootstrap: creates singleton SCA instance
+├── coordination.ts     # Trigger-action coordination system
+├── reactive.ts         # Reactive effect primitives
 ├── types.ts            # Shared type definitions
 ├── utils.ts            # Re-exports utilities
 │
 ├── actions/            # Business logic functions
 │   ├── actions.ts      # AppActions interface & factory
 │   ├── binder.ts       # makeAction() dependency injection
-│   ├── board/          # Board-related actions
-│   └── graph/          # Graph mutation actions
+│   ├── board/          # Board actions + triggers
+│   │   ├── board-actions.ts
+│   │   └── triggers.ts
+│   ├── node/           # Node actions + triggers
+│   │   ├── node-actions.ts
+│   │   └── triggers.ts
+│   └── ...             # Other action domains
 │
 ├── controller/         # Signal-backed state management
 │   ├── controller.ts   # AppController interface & factory
 │   ├── decorators/     # @field decorator implementation
-│   ├── subcontrollers/ # Domain-specific controllers
-│   ├── context/        # Pending writes tracking
-│   └── migration/      # State migration utilities
+│   └── subcontrollers/ # Domain-specific controllers
 │
 ├── context/            # Lit Context for SCA injection
 │   └── context.ts      # scaContext definition
@@ -136,16 +153,9 @@ sca/
 │   ├── services.ts     # AppServices interface & factory
 │   └── autonamer.ts    # Node autonaming service
 │
-├── triggers/           # Reactive side effects
-│   ├── triggers.ts     # AppTriggers interface & registration
-│   ├── binder.ts       # makeTrigger() with reactive() management
-│   ├── board/          # Board-related triggers
-│   └── node/           # Node-related triggers (autonaming)
-│
 └── utils/              # Helper utilities
     ├── helpers/        # isHydrating, PendingHydrationError
     ├── logging/        # Debug logging infrastructure
-    ├── sentinel.ts     # PENDING_HYDRATION symbol
     └── serialization.ts # Storage serialization
 ```
 
@@ -224,7 +234,7 @@ class MyComponent extends SignalWatcher(LitElement) {
 | Store reactive UI state | Controller with `@field` | `controller/subcontrollers/` |
 | Call external APIs or heavy processing | Service | `services/` |
 | Coordinate multiple controllers/services | Action | `actions/` |
-| React automatically to state changes | Trigger | `triggers/` |
+| React automatically to state changes | Trigger (via `asAction`) | `actions/<domain>/triggers.ts` |
 
 ---
 

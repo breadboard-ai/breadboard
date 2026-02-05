@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert";
-import { suite, test } from "node:test";
+import { suite, test, beforeEach } from "node:test";
 import * as Board from "../../../../src/sca/actions/board/board-actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
@@ -17,6 +17,7 @@ import {
   makeMockSnackbarController,
   makeMockBoardServer,
 } from "../../helpers/index.js";
+import { coordination } from "../../../../src/sca/coordination.js";
 
 /**
  * Creates a mock controller with the given graph state.
@@ -45,6 +46,11 @@ function makeMockController(options: {
 }
 
 suite("Board Actions", () => {
+  // Reset coordination state before each test to prevent stale in-progress actions
+  beforeEach(() => {
+    coordination.reset();
+  });
+
   suite("save", () => {
     const boardActions = Board;
 
@@ -587,6 +593,189 @@ suite("Board Actions", () => {
 
       assert.strictEqual(resetAllCalled, true, "Should call resetAll");
       assert.strictEqual(loadStateSet, "Home", "Should set loadState to Home");
+    });
+  });
+
+  suite("showNewerVersionSnackbar", () => {
+    test("shows snackbar and resets newerVersionAvailable flag", async () => {
+      let snackbarShown = false;
+      let snackbarMessage = "";
+      let newerVersionReset = false;
+
+      const mockController = {
+        board: {
+          main: {
+            get newerVersionAvailable() {
+              return { version: 5, url: "drive:/new" };
+            },
+            set newerVersionAvailable(val: unknown) {
+              if (val === false) {
+                newerVersionReset = true;
+              }
+            },
+          },
+        },
+        global: {
+          snackbars: {
+            snackbar: (message: string) => {
+              snackbarShown = true;
+              snackbarMessage = message;
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {} as never,
+        controller: mockController as never,
+      });
+
+      await Board.showNewerVersionSnackbar();
+
+      assert.strictEqual(snackbarShown, true, "Snackbar should be shown");
+      assert.ok(
+        snackbarMessage.includes("newer version"),
+        `Message should mention newer version, got: ${snackbarMessage}`
+      );
+      assert.strictEqual(
+        newerVersionReset,
+        true,
+        "newerVersionAvailable should be reset to false"
+      );
+    });
+  });
+
+  suite("handleSaveStatus", () => {
+    test("updates saveStatus to 'saving' when status is 'saving'", async () => {
+      let capturedStatus = "";
+
+      const mockController = {
+        editor: {
+          graph: {
+            url: "drive:/test-url",
+            set saveStatus(val: string) {
+              capturedStatus = val;
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {} as never,
+        controller: mockController as never,
+      });
+
+      await Board.handleSaveStatus({
+        url: "drive:/test-url",
+        status: "saving",
+      } as unknown as Event);
+
+      assert.strictEqual(capturedStatus, "saving", "Status should be 'saving'");
+    });
+
+    test("updates saveStatus to 'saved' when status is 'idle'", async () => {
+      let capturedStatus = "";
+
+      const mockController = {
+        editor: {
+          graph: {
+            url: "drive:/test-url",
+            set saveStatus(val: string) {
+              capturedStatus = val;
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {} as never,
+        controller: mockController as never,
+      });
+
+      await Board.handleSaveStatus({
+        url: "drive:/test-url",
+        status: "idle",
+      } as unknown as Event);
+
+      assert.strictEqual(capturedStatus, "saved", "Status should be 'saved'");
+    });
+
+    test("updates saveStatus to 'unsaved' when status is 'debouncing'", async () => {
+      let capturedStatus = "";
+
+      const mockController = {
+        editor: {
+          graph: {
+            url: "drive:/test-url",
+            set saveStatus(val: string) {
+              capturedStatus = val;
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {} as never,
+        controller: mockController as never,
+      });
+
+      await Board.handleSaveStatus({
+        url: "drive:/test-url",
+        status: "debouncing",
+      } as unknown as Event);
+
+      assert.strictEqual(capturedStatus, "unsaved", "Status should be 'unsaved'");
+    });
+
+    test("ignores event when URL does not match current graph", async () => {
+      let statusSetCount = 0;
+
+      const mockController = {
+        editor: {
+          graph: {
+            url: "drive:/current-url",
+            set saveStatus(_val: string) {
+              statusSetCount++;
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {} as never,
+        controller: mockController as never,
+      });
+
+      await Board.handleSaveStatus({
+        url: "drive:/different-url",
+        status: "saving",
+      } as unknown as Event);
+
+      assert.strictEqual(statusSetCount, 0, "Status should not be set for different URL");
+    });
+
+    test("returns early when event is undefined", async () => {
+      let statusSetCount = 0;
+
+      const mockController = {
+        editor: {
+          graph: {
+            url: "drive:/test-url",
+            set saveStatus(_val: string) {
+              statusSetCount++;
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {} as never,
+        controller: mockController as never,
+      });
+
+      await Board.handleSaveStatus(undefined);
+
+      assert.strictEqual(statusSetCount, 0, "Status should not be set when event is undefined");
     });
   });
 });

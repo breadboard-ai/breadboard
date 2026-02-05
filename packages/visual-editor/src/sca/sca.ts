@@ -67,15 +67,17 @@
  *
  * ## 4. Triggers (The "Side Effects")
  *
- * Triggers are used to react to changes in the application state and perform
- * side effects. They are registered with the application and are called when
- * the state changes.
+ * Triggers are automatic reactions to state changes that invoke Actions.
+ * They are declared alongside Actions using the `triggeredBy` property:
  *
- * Triggers are defined in the `triggers` directory and are registered with the
- * application in `app.ts`.
+ * ```typescript
+ * export const save = asAction("Board.save", {
+ *   mode: ActionMode.Awaits,
+ *   triggeredBy: [() => onVersionChange(bind)],
+ * }, async () => { ... });
+ * ```
  *
- * Triggers are best thought of as automatic Actions that are triggered by
- * changes in the application state.
+ * Triggers are activated during bootstrap via `Actions.activateTriggers()`.
  *
  * ---
  *
@@ -93,7 +95,6 @@
 import * as Services from "./services/services.js";
 import * as Controller from "./controller/controller.js";
 import * as Actions from "./actions/actions.js";
-import * as Triggers from "./triggers/triggers.js";
 import * as Utils from "./utils/utils.js";
 import { type RuntimeFlags } from "@breadboard-ai/types";
 import { RuntimeConfig } from "../runtime/types.js";
@@ -123,7 +124,12 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
 
     // Set up triggers for side effects once the controller is ready.
     controller.isHydrated.then(() => {
-      Triggers.triggers(controller, services, actions);
+      // Activate action-based triggers
+      Actions.activateTriggers();
+
+      // One-time initialization actions (no triggers, called directly)
+      actions.router.init();
+      actions.screenSize.init();
 
       // Start polling for status updates
       services.statusUpdates.start(controller.global.statusUpdates);
