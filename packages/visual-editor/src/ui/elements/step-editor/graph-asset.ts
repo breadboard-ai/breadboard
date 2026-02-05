@@ -5,7 +5,6 @@
  */
 
 import { AssetPath, InspectableAsset, LLMContent } from "@breadboard-ai/types";
-import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -27,9 +26,7 @@ import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { toGridSize } from "./utils/to-grid-size.js";
 
 @customElement("bb-graph-asset")
-export class GraphAsset
-  extends SignalWatcher(Box)
-  implements DragConnectorReceiver
+export class GraphAsset extends Box implements DragConnectorReceiver
 {
   @property()
   accessor ownerGraph = "";
