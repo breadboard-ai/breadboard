@@ -16,8 +16,8 @@ type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
 
 export interface GoogleDriveClientOptions {
-  apiBaseUrl?: Promise<string>;
-  uploadApiBaseUrl?: Promise<string>;
+  apiBaseUrl?: string | Promise<string>;
+  uploadApiBaseUrl?: string | Promise<string>;
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
   proxyApiBaseUrl?: string;
   fetchWithCreds: typeof globalThis.fetch;
@@ -185,11 +185,12 @@ export class GoogleDriveClient {
   readonly fetchWithCreds: typeof globalThis.fetch;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.#apiUrl =
-      options.apiBaseUrl || Promise.resolve(GOOGLE_DRIVE_FILES_API_PREFIX);
-    this.#uploadApiUrl =
-      options.uploadApiBaseUrl ||
-      Promise.resolve(GOOGLE_DRIVE_UPLOAD_API_PREFIX);
+    this.#apiUrl = Promise.resolve(
+      options.apiBaseUrl ?? GOOGLE_DRIVE_FILES_API_PREFIX
+    );
+    this.#uploadApiUrl = Promise.resolve(
+      options.uploadApiBaseUrl ?? GOOGLE_DRIVE_UPLOAD_API_PREFIX
+    );
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
           apiUrl: options.proxyApiBaseUrl,
