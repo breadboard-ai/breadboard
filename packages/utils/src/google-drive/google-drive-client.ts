@@ -21,7 +21,6 @@ export interface GoogleDriveClientOptions {
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
   proxyApiBaseUrl?: string;
   fetchWithCreds: typeof globalThis.fetch;
-  isTestApi: boolean;
 }
 
 export interface BaseRequestOptions {
@@ -184,7 +183,6 @@ export class GoogleDriveClient {
       }
     | undefined;
   readonly fetchWithCreds: typeof globalThis.fetch;
-  readonly isTestApi: boolean;
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiUrl =
@@ -199,7 +197,6 @@ export class GoogleDriveClient {
         }
       : undefined;
     this.fetchWithCreds = options.fetchWithCreds;
-    this.isTestApi = options.isTestApi;
   }
 
   async #fetch(
