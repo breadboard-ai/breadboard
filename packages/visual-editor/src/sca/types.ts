@@ -24,6 +24,7 @@ import {
   OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SettingsStore } from "../ui/types/types.js";
+import type { InPort } from "../ui/transforms/autowire-in-ports.js";
 
 export interface ServicesConfig {
   globalConfig: GlobalConfig;
@@ -131,6 +132,8 @@ export interface PendingEdit {
   graphId: GraphIdentifier;
   nodeId: NodeIdentifier;
   values: InputValues;
+  /** Incoming port connections (from chiclets) to autowire */
+  ins?: InPort[];
   /** Graph version when edit was captured - used to detect stale edits */
   graphVersion: number;
 }

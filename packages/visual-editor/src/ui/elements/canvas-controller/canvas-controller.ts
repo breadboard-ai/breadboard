@@ -201,14 +201,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
       );
     }
 
-    // Switching away from the editor should trigger the submit so that the user
-    // doesn't lose any changes.
-    if (
-      changedProperties.get("sideNavItem") === "editor" &&
-      this.#entityEditorRef.value
-    ) {
-      this.#entityEditorRef.value.save();
-    }
+    // NOTE: Step autosave is now handled by the SCA step autosave trigger,
+    // which fires when selection or sidebar section changes. The trigger
+    // applies pending edits captured by entity-editor's @input handler.
+
 
     // Here we decide how to handle the changing sidenav items & selections.
     // If there are no selections and we're in the editor switch out to the app

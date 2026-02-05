@@ -30,9 +30,7 @@ function createTrustedChicletHTMLImpl(
     return "";
   }
 
-  if (!sca) {
-    return "";
-  }
+
   // Explanation:
   //
   // - Untrusted strings are split into two types via a regex: "parts" that are
