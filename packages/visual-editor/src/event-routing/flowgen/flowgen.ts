@@ -9,8 +9,14 @@ import { EventRoute } from "../types.js";
 export const GenerateRoute: EventRoute<"flowgen.generate"> = {
   event: "flowgen.generate",
 
-  async do({ originalEvent, sca, actionTracker }) {
-    const { intent, projectState } = originalEvent.detail;
+  async do({ originalEvent, sca, actionTracker, runtime }) {
+    const { intent, projectState: eventProjectState } = originalEvent.detail;
+    // Fallback to runtime.project if projectState not passed (e.g., narrow view)
+    const projectState = eventProjectState ?? runtime.project;
+    if (!projectState) {
+      console.warn("Unable to generate: no project state available");
+      return false;
+    }
     const currentGraph = sca.controller.editor.graph.editor?.raw();
     if (!currentGraph) {
       console.warn("Unable to generate: no active graph");
