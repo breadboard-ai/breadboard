@@ -382,13 +382,17 @@ async function makeText(
   } = inputs;
 
   // === ENTRY phase: Initialize SharedContext ===
+  // When chat mode is enabled, downgrade to gemini-2.5-flash because
+  // gemini-3-flash-preview doesn't handle the chat argument structure well.
+  const effectiveModel = chat ? "gemini-2.5-flash" : model;
+
   const sharedContext: SharedContext = {
     id: Math.random().toString(36).substring(2, 5),
     chat: !!chat,
     context: inputContext ?? [],
     userInputs: [],
-    defaultModel: model,
-    model: model,
+    defaultModel: effectiveModel,
+    model: effectiveModel,
     description,
     type: "work",
     work: [],
