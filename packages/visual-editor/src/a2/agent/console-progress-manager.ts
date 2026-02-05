@@ -161,17 +161,17 @@ class ConsoleProgressManager implements AgentProgressManager {
   functionCall(part: FunctionCallCapabilityPart): string {
     const callId = crypto.randomUUID();
     if (this.#consoleEntry) {
+      const args = part.functionCall.args as Record<string, unknown>;
+      const statusUpdate =
+        typeof args.status_update === "string" ? args.status_update : null;
+      const itemTitle = statusUpdate ?? `Function: ${part.functionCall.name}`;
       const update = {
         type: "text" as const,
         title: `Calling function "${part.functionCall.name}"`,
         icon: "robot_server",
         body: { parts: [part] },
       };
-      const workItem = new ConsoleWorkItem(
-        `Function: ${part.functionCall.name}`,
-        "robot_server",
-        update
-      );
+      const workItem = new ConsoleWorkItem(itemTitle, "robot_server", update);
       // Don't finish yet - will be finished when result arrives
       this.#pendingCalls.set(callId, workItem);
       this.#consoleEntry.work.set(callId, workItem);
