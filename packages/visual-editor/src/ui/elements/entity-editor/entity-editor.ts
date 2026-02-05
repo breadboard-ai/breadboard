@@ -39,6 +39,7 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
@@ -184,6 +185,16 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             width: 20px;
             height: 20px;
             flex: 0 0 auto;
+          }
+
+          &.svg-icon {
+            flex: 0 0 auto;
+            width: 20px;
+            height: 20px;
+            margin-right: var(--bb-grid-size-2);
+            background-size: 20px 20px;
+            background-position: center;
+            background-repeat: no-repeat;
           }
         }
 
@@ -1646,18 +1657,28 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     const value = [input, output];
 
     let icon: string | undefined | null = "text_fields";
+    let svgIcon: string | null = null;
     if (asset.type) {
       icon = iconSubstitute(asset.type);
     }
     if (asset.subType) {
-      icon = iconSubstitute(asset.subType);
+      if (asset.subType === "notebooklm") {
+        svgIcon = `var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))`;
+      } else {
+        icon = iconSubstitute(asset.subType);
+      }
     }
 
     return html`<div class=${classMap({ asset: true })}>
       <h1 id="title">
-        ${icon
-          ? html`<span class="g-icon filled round">${icon}</span>`
-          : nothing}
+        ${svgIcon
+          ? html`<span
+              class="svg-icon"
+              style=${styleMap({ backgroundImage: svgIcon })}
+            ></span>`
+          : icon
+            ? html`<span class="g-icon filled round">${icon}</span>`
+            : nothing}
         <input
           autocomplete="off"
           id="node-title"

@@ -174,7 +174,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
 
-          bb-homepage-search-button {
+          bb-expanding-search-button {
             margin: 0 var(--bb-grid-size-6) 0 0;
           }
 

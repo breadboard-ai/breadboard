@@ -1,0 +1,296 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { consume } from "@lit/context";
+import { Task } from "@lit/task";
+import { LitElement, css, html, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { icons } from "../../styles/icons.js";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SCA } from "../../../sca/sca.js";
+import {
+  type Notebook,
+  OriginProductType,
+  ApplicationPlatform,
+  DeviceType,
+} from "../../../sca/services/notebooklm-api-client.js";
+
+/**
+ * A self-contained component for rendering NotebookLM notebook thumbnails.
+ * Fetches notebook data internally using the NotebookLM API client.
+ *
+ * Similar pattern to `bb-google-drive-file-viewer`.
+ */
+@customElement("bb-notebooklm-viewer")
+export class NotebookLmViewer extends LitElement {
+  static styles = [
+    icons,
+    css`
+      :host {
+        display: block;
+      }
+
+      .notebook-preview {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: var(--bb-grid-size-2);
+        padding: var(--bb-grid-size-4);
+        border-radius: var(--bb-grid-size-3);
+        min-height: 100px;
+      }
+
+      .external-link-button {
+        position: absolute;
+        top: var(--bb-grid-size-4);
+        right: var(--bb-grid-size-4);
+        background: var(--n-10, #1a1a1a);
+        border: none;
+        cursor: pointer;
+        padding: var(--bb-grid-size);
+        border-radius: var(--bb-grid-size-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.15s ease;
+        pointer-events: auto;
+
+        &:hover {
+          opacity: 0.8;
+        }
+
+        & > .g-icon {
+          font-size: 20px;
+          color: white;
+        }
+      }
+
+      .notebook-preview .text-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--bb-grid-size-1);
+      }
+
+      :host([displayMode="compact"]) .notebook-preview {
+        min-height: auto;
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+        flex-direction: row;
+        align-items: center;
+      }
+
+      .notebook-preview .notebook-emoji {
+        font-size: 32px;
+        line-height: 1;
+      }
+
+      :host([displayMode="compact"]) .notebook-preview .notebook-emoji {
+        font-size: 20px;
+        width: 24px;
+        text-align: center;
+      }
+
+      .notebook-preview .notebook-title {
+        font: 600 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+          var(--bb-font-family);
+        color: var(--light-dark-n-10);
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      :host([displayMode="compact"]) .notebook-preview .notebook-title {
+        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        flex: 1;
+        -webkit-line-clamp: 1;
+      }
+
+      .notebook-preview .notebook-meta {
+        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+        color: var(--light-dark-n-40);
+        margin: 0;
+      }
+
+      :host([displayMode="compact"]) .notebook-preview .notebook-meta {
+        display: none;
+      }
+
+      .notebook-preview.loading,
+      .notebook-preview.error {
+        align-items: center;
+        justify-content: center;
+        background: var(--light-dark-n-95);
+      }
+
+      .notebook-preview.error {
+        color: var(--bb-error-color);
+      }
+
+      .loading-text {
+        margin: 0;
+      }
+    `,
+  ];
+
+  /**
+   * The notebook ID (without the "notebooks/" prefix).
+   * When set, triggers an API call to fetch notebook metadata.
+   * Alternatively, set the `notebook` property directly to avoid fetching.
+   */
+  @property()
+  accessor notebookId: string | null = null;
+
+  /**
+   * Directly provide notebook data instead of fetching via notebookId.
+   * When set, the component will render immediately without an API call.
+   */
+  @property({ attribute: false })
+  accessor notebook: Notebook | null = null;
+
+  /**
+   * Display mode for the viewer.
+   * - "card": Full thumbnail with emoji, title, date, source count (default)
+   * - "compact": Inline display with emoji and title only
+   */
+  @property({ reflect: true })
+  accessor displayMode: "card" | "compact" = "card";
+
+  /**
+   * Whether to show an external link button to open in NotebookLM.
+   * Should be true for graph-asset/entity-viewer contexts, false for picker.
+   */
+  @property({ type: Boolean })
+  accessor showExternalLink = false;
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
+  readonly #loadTask = new Task(this, {
+    task: async ([notebookId, notebook]) => {
+      // If notebook data is provided directly, use it
+      if (notebook) {
+        return notebook;
+      }
+
+      if (!notebookId || !this.sca?.services?.notebookLmApiClient) {
+        return undefined;
+      }
+
+      const notebookName = `notebooks/${notebookId}`;
+
+      const fetchedNotebook =
+        await this.sca.services.notebookLmApiClient.getNotebook({
+          name: notebookName,
+          provenance: {
+            originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
+            clientInfo: {
+              applicationPlatform: ApplicationPlatform.WEB,
+              device: DeviceType.DESKTOP,
+            },
+          },
+        });
+
+      return fetchedNotebook;
+    },
+    args: () => [this.notebookId, this.notebook] as const,
+  });
+
+  override render() {
+    return this.#loadTask.render({
+      pending: () =>
+        html`<div class="notebook-preview loading">
+          <p class="loading-text">Loading notebook...</p>
+        </div>`,
+      error: (e) => {
+        this.dispatchEvent(new Event("outputsloaded"));
+        return html`<div class="notebook-preview error">
+          <p>${e instanceof Error ? e.message : "Failed to load notebook"}</p>
+        </div>`;
+      },
+      complete: (notebook) => {
+        this.dispatchEvent(new Event("outputsloaded"));
+        return this.#renderNotebook(notebook);
+      },
+    });
+  }
+
+  #renderNotebook(notebook: Notebook | undefined) {
+    if (!notebook) {
+      return html`<div class="notebook-preview loading">
+        <p class="loading-text">NotebookLM notebook</p>
+      </div>`;
+    }
+
+    // Format the date
+    const createTime = notebook.createTime
+      ? new Date(notebook.createTime).toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : "";
+
+    // Pick a background color based on the notebook emoji
+    const colorPalette = [
+      "#E8F0FE", // blue
+      "#FCE8E6", // red/pink
+      "#FEF7E0", // yellow
+      "#E6F4EA", // green
+      "#F3E8FD", // purple
+      "#E8EAED", // gray
+    ];
+    const emoji = notebook.emoji || "📓";
+    const colorIndex = (emoji.codePointAt(0) ?? 0) % colorPalette.length;
+    const bgColor = colorPalette[colorIndex];
+
+    return html`<div class="notebook-preview" style="background: ${bgColor}">
+      ${this.showExternalLink
+        ? this.#renderExternalLinkButton(notebook)
+        : nothing}
+      <span class="notebook-emoji">${emoji}</span>
+      <div class="text-content">
+        <p class="notebook-title">
+          ${notebook.displayName || "Untitled notebook"}
+        </p>
+        <p class="notebook-meta">
+          ${createTime}${createTime && notebook.sourceCount
+            ? " · "
+            : ""}${notebook.sourceCount
+            ? `${notebook.sourceCount} sources`
+            : ""}
+        </p>
+      </div>
+    </div>`;
+  }
+
+  #renderExternalLinkButton(notebook: Notebook) {
+    const notebookId = notebook.name.replace("notebooks/", "");
+    const notebookUrl = `https://notebooklm.google.com/notebook/${notebookId}`;
+    return html`
+      <button
+        class="external-link-button"
+        @click=${(e: Event) => {
+          e.stopPropagation();
+          window.open(notebookUrl, "_blank");
+        }}
+        title="Open in NotebookLM"
+      >
+        <span class="g-icon">open_in_new</span>
+      </button>
+    `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "bb-notebooklm-viewer": NotebookLmViewer;
+  }
+}

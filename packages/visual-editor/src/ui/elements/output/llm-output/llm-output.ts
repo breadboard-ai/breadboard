@@ -45,6 +45,7 @@ import {
   isLLMContent,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
+import "../../notebooklm-viewer/notebooklm-viewer.js";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -739,6 +740,14 @@ export class LLMOutput extends LitElement {
             if (!url) {
               this.#outputLoaded();
               value = html`<div>Failed to retrieve stored data</div>`;
+            } else if (url.startsWith("nlm:/")) {
+              // NotebookLM reference - extract notebook ID and render viewer
+              const notebookId = url.replace("nlm:/", "");
+              this.#outputLoaded();
+              value = html`<bb-notebooklm-viewer
+                .notebookId=${notebookId}
+                .showExternalLink=${true}
+              ></bb-notebooklm-viewer>`;
             } else {
               const fileId = partToDriveFileId(part);
               if (fileId) {

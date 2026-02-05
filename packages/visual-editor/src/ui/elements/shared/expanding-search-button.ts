@@ -4,18 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, css, LitElement } from "lit";
+import { html, css, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 
-const Strings = StringsHelper.forSection("ProjectListing");
-
-@customElement("bb-homepage-search-button")
-export class HomepageSearchButton extends LitElement {
+@customElement("bb-expanding-search-button")
+export class ExpandingSearchButton extends LitElement {
   static styles = [
     icons,
     baseColors,
@@ -41,6 +38,7 @@ export class HomepageSearchButton extends LitElement {
       }
 
       input {
+        box-sizing: border-box;
         border: 1px solid var(--light-dark-n-70);
         background: var(--light-dark-n-98);
         height: 100%;
@@ -57,6 +55,7 @@ export class HomepageSearchButton extends LitElement {
       }
 
       #search-icon {
+        width: 32px;
         margin-left: -32px;
       }
     `,
@@ -64,6 +63,12 @@ export class HomepageSearchButton extends LitElement {
 
   @property()
   accessor value = "";
+
+  @property()
+  accessor placeholder = "Search...";
+
+  @property({ type: Boolean })
+  accessor showLabel = false;
 
   @state()
   accessor #forceOpen = false;
@@ -77,7 +82,7 @@ export class HomepageSearchButton extends LitElement {
           ${ref(this.#input)}
           type="search"
           autocomplete="off"
-          .placeholder=${Strings.from("LABEL_SEARCH_BOARDS")}
+          .placeholder=${this.placeholder}
           .value=${this.value}
           @focus=${this.#onInputFocus}
           @input=${this.#onInputInput}
@@ -90,7 +95,9 @@ export class HomepageSearchButton extends LitElement {
       return html`
         <button @click=${this.#onButtonClick}>
           <span class="g-icon filled round w-500">search</span>
-          <span id="label" class="sans-flex round w-500">Search</span>
+          ${this.showLabel
+            ? html`<span id="label" class="sans-flex round w-500">Search</span>`
+            : nothing}
         </button>
       `;
     }
@@ -99,6 +106,11 @@ export class HomepageSearchButton extends LitElement {
   async focus() {
     await this.updateComplete;
     this.#input.value?.focus();
+  }
+
+  collapse() {
+    this.#forceOpen = false;
+    this.value = "";
   }
 
   async #onButtonClick() {
@@ -121,6 +133,6 @@ export class HomepageSearchButton extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bb-homepage-search-button": HomepageSearchButton;
+    "bb-expanding-search-button": ExpandingSearchButton;
   }
 }
