@@ -41,11 +41,11 @@ type Action<T> = ((deps: T) => void) & T;
  * // During bootstrap (in actions.ts)
  * bind({ controller, services });
  *
- * // In action functions
- * export function myAction() {
+ * // Define actions using asAction() from coordination.ts
+ * export const myAction = asAction("MyAction", ActionMode.Awaits, async () => {
  *   const { controller, services } = bind;
  *   // Use controller and services
- * }
+ * });
  * ```
  *
  * @returns A Proxy that acts as both setter and getter for dependencies

@@ -7,7 +7,7 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, test } from "node:test";
 import { StepListPresenter } from "../../../src/ui/presenters/step-list-presenter.js";
-import { makeTestController, makeTestServices, flushEffects } from "../../sca/triggers/utils.js";
+import { makeTestController, makeTestServices, flushEffects } from "../../sca/helpers/index.js";
 import { setDOM, unsetDOM } from "../../fake-dom.js";
 import type { SCA } from "../../../src/sca/sca.js";
 import type { ConsoleEntry, NodeRunState } from "@breadboard-ai/types";

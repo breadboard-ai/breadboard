@@ -2,11 +2,11 @@
 
 > **Cross-cutting business logic** — Functions that orchestrate Services and Controllers.
 
-Actions are the "verbs" of the application. They coordinate multi-step workflows that touch multiple services and controllers.
+Actions are the "verbs" of the application. They coordinate multi-step workflows that touch multiple services and controllers, and can be automatically triggered by reactive state changes.
 
 ---
 
-## The Golden Rule (Nuanced)
+## The Golden Rule
 
 > **Action = Cross-Cutting Logic**
 
@@ -21,157 +21,222 @@ Actions are **NOT** appropriate when:
 - Logic only touches **one subcontroller** → make it a Controller method
 - Logic only uses **services** without state → consider if it belongs in the Service
 
-### Examples
-
-```typescript
-// ✅ ACTION: Uses services AND controllers
-async function save() {
-  const { controller, services } = bind;
-  await services.boardServer.save(controller.editor.graph.raw());
-}
-
-// ✅ ACTION: Accesses multiple subcontrollers (cross-cutting)
-function close() {
-  const { controller } = bind;
-  controller.editor.graph.resetAll();     // editor subcontroller
-  controller.global.main.loadState = "Home"; // global subcontroller
-}
-
-// ❌ AVOID: Only one subcontroller, should be a controller method
-function updateFlag() {
-  const { controller } = bind;
-  controller.global.flags.someFlag = true; // Only touches global.flags
-}
-```
-
-This prevents "action bloat" and keeps state transformation close to the state.
-
 ---
 
 ## How Actions Work
 
-### The Binder Pattern
+### The `asAction` Pattern
 
-Actions use a **dependency injection pattern** via `makeAction()`. Dependencies (controller, services) are injected at bootstrap, then accessed via Proxy:
+Actions are defined using the `asAction` helper, which provides:
+- **Coordination**: Automatic ordering with other actions
+- **Triggers**: Reactive activation via `triggeredBy`
+- **Priority**: Control activation order
 
 ```typescript
-// In graph-actions.ts
-import { makeAction } from "../binder.js";
+// In step-actions.ts
+import { asAction, ActionMode } from "../../coordination.js";
+import { onSelectionOrSidebarChange } from "./triggers.js";
 
 export const bind = makeAction();
 
-export async function addNode(node: NodeDescriptor, graphId: string) {
-  const { controller, services } = bind;  // Accessed via Proxy
+export const applyPendingEdits = asAction(
+  "Step.applyPendingEdits",
+  {
+    mode: ActionMode.Immediate,
+    priority: 100,  // Higher = activates first
+    triggeredBy: [() => onSelectionOrSidebarChange(bind)],
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    // Action implementation...
+  }
+);
+```
 
-  // Use services for infrastructure
-  const store = services.graphStore;
+### ActionMode
 
-  // Mutate controller state
-  await controller.editor.graph.editor?.edit([
-    { type: "addnode", graphId, node }
-  ], `Add step: ${node.id}`);
+Actions declare their coordination behavior:
+
+| Mode | Behavior |
+|------|----------|
+| `ActionMode.Immediate` | Runs without waiting — for trigger-activated actions, pure UI updates |
+| `ActionMode.Awaits` | Waits for pending triggers — use from user events only |
+| `ActionMode.Exclusive` | Like Awaits but also prevents concurrent exclusive actions |
+
+### Priority
+
+Actions with triggers can specify an activation `priority`:
+- Higher values activate first
+- Default is `0`
+- Range: `-1000` to `1000` (clamped)
+
+Use priority when one action must complete before another (e.g., apply pending edits before autosave):
+
+```typescript
+// High priority - runs first
+export const applyPendingEdits = asAction(
+  "Step.applyPendingEdits",
+  { mode: ActionMode.Immediate, priority: 100, triggeredBy: [...] },
+  async () => { /* ... */ }
+);
+
+// Default priority - runs after
+export const save = asAction(
+  "Board.save",
+  { mode: ActionMode.Awaits, triggeredBy: [...] },
+  async () => { /* ... */ }
+);
+```
+
+---
+
+## Triggers
+
+Triggers connect **reactive state changes** to **action execution**. They are defined in companion `triggers.ts` files alongside actions.
+
+### Trigger Types
+
+| Type | Creator | Fires When |
+|------|---------|------------|
+| Signal | `signalTrigger(name, condition)` | Condition returns truthy value (and changes) |
+| Event | `eventTrigger(name, target, eventType)` | DOM/custom event fires |
+
+### Example: Signal Trigger
+
+```typescript
+// In triggers.ts
+export function onVersionChange(bind: ActionBind): SignalTrigger {
+  return signalTrigger(
+    "Graph Version Change",
+    () => {
+      const { controller } = bind;
+      // Returns the value to compare — fires when it changes
+      return controller.editor.graph.version;
+    }
+  );
 }
 ```
 
-### Registration at Bootstrap
-
-Actions are bound during SCA initialization in `sca.ts`:
+### Example: Event Trigger
 
 ```typescript
-const actions = Actions.actions(controller, services);
-// Now actions.graph.addNode() is callable
+// In triggers.ts
+export function onNarrowQueryChange(): EventTrigger | null {
+  // Return null in SSR environments
+  if (typeof window === "undefined") return null;
+
+  const query = window.matchMedia("(max-width: 800px)");
+  return eventTrigger("Narrow Query Change", query, "change");
+}
 ```
+
+### Using Triggers with Actions
+
+```typescript
+export const save = asAction(
+  "Board.save",
+  {
+    mode: ActionMode.Awaits,
+    triggeredBy: [() => onVersionChange(bind)],  // Factory function
+  },
+  async () => { /* save logic */ }
+);
+```
+
+**Important**: `triggeredBy` takes factory functions `() => Trigger` to enable lazy evaluation and SSR safety.
 
 ---
 
-## Semantic Named Actions
+## Available Action Modules
 
-**Prefer descriptive action names** over generic `edit()` calls:
-
-```typescript
-// ✅ Good: Semantic name reveals intent
-await sca.actions.graph.addNode(node, graphId);
-await sca.actions.graph.changeEdge("add", edge);
-await sca.actions.graph.moveSelectionPositions(updates);
-
-// ❌ Avoid: Generic edit hides intent
-await sca.actions.graph.edit([{ type: "addnode", ... }], "Add");
-```
-
-**Benefits:**
-- **Clarity**: Action names reflect user intent
-- **Business Logic**: Coordinate metadata, validation, grid snapping in one place
-- **Testability**: Specific actions are easier to unit test
-
----
-
-## Available Actions
-
-### Graph Actions (`sca.actions.graph`)
-
-| Action | Purpose |
-|--------|---------|
-| `addNode(node, graphId)` | Add a node to the graph |
-| `changeEdge(type, from, to?)` | Add, remove, or move an edge |
-| `changeNodeConfiguration(...)` | Update node config, trigger autonaming |
-| `moveSelectionPositions(updates)` | Move nodes/assets, handles metadata merge |
-| `changeAssetEdge(type, edge)` | Add or remove asset edge |
-| `updateBoardTitleAndDescription(...)` | Update graph metadata |
-| `undo()` / `redo()` | Edit history navigation |
-| `replace(graph, creator)` | Replace entire graph |
-
-### Board Actions (`sca.actions.board`)
-
-| Action | Purpose |
-|--------|---------|
-| `load(url, options?)` | Load a board from URL (resolves, validates, sets up graph) |
-| `close()` | Close current board and return to home state |
-| `save(messages?)` | Save current board to board server |
-| `saveAs(graph, messages)` | Save current graph as a new board |
-| `deleteBoard(url, messages)` | Delete a board from the board server |
+| Module | Domain | Key Actions |
+|--------|--------|-------------|
+| `agent` | Agent lifecycle | `invalidateResumableRuns` |
+| `board` | Board persistence | `load`, `close`, `save`, `saveAs`, `deleteBoard` |
+| `flowgen` | Flow generation | `generateFlow` |
+| `graph` | Graph mutations | `addNode`, `changeEdge`, `changeNodeConfiguration` |
+| `node` | Node operations | `autoname`, `autonameFromTrigger` |
+| `router` | URL handling | `updateUrl` |
+| `run` | Execution | `syncConsoleFromRunner` |
+| `screen-size` | Responsive | `updateScreenSize` |
+| `share` | Sharing | `shareToGoogleDrive` |
+| `shell` | Chrome/UI | `updatePageTitle` |
+| `step` | Step editing | `applyPendingEdits` |
 
 ---
 
 ## Creating a New Action
 
-### 1. Add to the appropriate domain file
+### 1. Create the action file
 
 ```typescript
-// In actions/graph/graph-actions.ts
+// actions/mydomain/mydomain-actions.ts
+import { makeAction } from "../binder.js";
+import { asAction, ActionMode } from "../../coordination.js";
 
-export async function myNewAction(param: string) {
-  const { controller, services } = bind;
+// Module-level bind
+export const bind = makeAction();
 
-  // Validate
-  if (!controller.editor.graph.editor) {
-    throw new Error("No active graph");
+// Simple action (no triggers)
+export const myAction = asAction(
+  "MyDomain.myAction",
+  ActionMode.Awaits,  // Can pass mode directly if no triggers
+  async (param: string): Promise<void> => {
+    const { controller, services } = bind;
+    // Action logic...
   }
+);
 
-  // Coordinate services
-  const result = await services.someService.doWork(param);
+// Triggered action
+export const myTriggeredAction = asAction(
+  "MyDomain.myTriggeredAction",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: [() => onSomeCondition(bind)],
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    // Reactive logic...
+  }
+);
+```
 
-  // Mutate state
-  controller.editor.graph.someSignal = result;
+### 2. Create triggers (if needed)
 
-  // Notify user
-  controller.global.toasts.toast("Done!");
+```typescript
+// actions/mydomain/triggers.ts
+import { signalTrigger, type SignalTrigger } from "../../coordination.js";
+
+type ActionBind = { controller: AppController; services: AppServices };
+
+export function onSomeCondition(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Some Condition", () => {
+    const { controller } = bind;
+    return controller.editor.someState;
+  });
 }
 ```
 
-### 2. Export from the actions module
+### 3. Register in actions.ts
 
-The action is automatically available via `sca.actions.graph.myNewAction()`.
+Add your module to `actions/actions.ts`:
 
----
+```typescript
+import * as MyDomain from "./mydomain/mydomain-actions.js";
 
-## Action vs Trigger: When to Use Each
+// In actions():
+MyDomain.bind({ controller, services });
+instance = {
+  // ... existing
+  mydomain: MyDomain,
+};
 
-| Use Case | Pattern |
-|----------|---------|
-| User-initiated workflow (button click) | **Action** |
-| Response to state change (reactive) | **Trigger** |
-| Async lifecycle notifications (Saving... → Saved!) | **Action** (direct snackbar calls) |
-| Background detection (new version available) | **Trigger** (reactive to source version signal) |
+// In activateTriggers():
+const allActions = [
+  // ... existing
+  ...Object.values(MyDomain),
+];
+```
 
 ---
 
@@ -179,46 +244,83 @@ The action is automatically available via `sca.actions.graph.myNewAction()`.
 
 ```
 actions/
-├── actions.ts          # AppActions interface & factory
-├── binder.ts           # makeAction() dependency injection
+├── actions.ts              # AppActions factory, activateTriggers()
+├── binder.ts               # makeAction() dependency injection
+├── agent/
+│   ├── agent-actions.ts
+│   └── triggers.ts
 ├── board/
-│   └── board-actions.ts    # Board lifecycle actions
-└── graph/
-    └── graph-actions.ts    # Graph mutation actions
+│   ├── board-actions.ts
+│   └── triggers.ts
+├── flowgen/
+│   └── flowgen-actions.ts
+├── graph/
+│   └── graph-actions.ts
+├── node/
+│   ├── node-actions.ts
+│   └── triggers.ts
+├── router/
+│   ├── router-actions.ts
+│   └── triggers.ts
+├── run/
+│   ├── run-actions.ts
+│   └── triggers.ts
+├── screen-size/
+│   ├── screen-size-actions.ts
+│   └── triggers.ts
+├── share/
+│   └── share-actions.ts
+├── shell/
+│   ├── shell-actions.ts
+│   └── triggers.ts
+└── step/
+    ├── step-actions.ts
+    └── triggers.ts
 ```
 
 ---
 
 ## Error Handling
 
-Actions should throw meaningful errors that can be caught by the caller:
+Actions should throw meaningful errors that callers can handle:
 
 ```typescript
-export async function editGraph(spec: EditSpec[], label: string) {
-  const { controller } = bind;
-  const { editor } = controller.editor.graph;
+export const editGraph = asAction(
+  "Graph.edit",
+  ActionMode.Awaits,
+  async (spec: EditSpec[], label: string): Promise<void> => {
+    const { controller } = bind;
+    const { editor } = controller.editor.graph;
 
-  if (!editor) {
-    throw new Error("No active graph to edit");
-  }
+    if (!editor) {
+      throw new Error("No active graph to edit");
+    }
 
-  const result = await editor.edit(spec, label);
-  if (!result.success) {
-    throw new Error(`Edit failed: ${result.error}`);
+    const result = await editor.edit(spec, label);
+    if (!result.success) {
+      throw new Error(`Edit failed: ${result.error}`);
+    }
   }
-}
+);
 ```
 
-Callers can then handle errors appropriately:
+---
+
+## Testing Actions
+
+Actions can be tested by mocking `bind`:
 
 ```typescript
-try {
-  await sca.actions.graph.addNode(node, graphId);
-  sca.controller.global.toasts.toast("Node added!");
-} catch (err) {
-  sca.controller.global.snackbars.snackbar({
-    type: "ERROR",
-    message: err.message,
-  });
-}
+import { MyActions } from "../src/sca/actions/mydomain/mydomain-actions.js";
+
+test("myAction does something", async () => {
+  const mockController = { /* ... */ };
+  const mockServices = { /* ... */ };
+
+  MyActions.bind({ controller: mockController, services: mockServices });
+
+  await MyActions.myAction("param");
+
+  assert.strictEqual(mockController.someState, expectedValue);
+});
 ```

@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert";
-import { describe, test } from "node:test";
+import { suite, test } from "node:test";
 import { RunService } from "../../../src/sca/services/run-service.js";
 import type { RunConfig } from "@breadboard-ai/types";
 
@@ -21,7 +21,7 @@ function makeMockRunConfig(): RunConfig {
   } as unknown as RunConfig;
 }
 
-describe("RunService", () => {
+suite("RunService", () => {
   test("createRunner returns runner and abortController", () => {
     const service = new RunService();
     const config = makeMockRunConfig();

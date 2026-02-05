@@ -12,7 +12,9 @@ import type {
 import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
 import { Utils } from "../../utils.js";
 import { makeAction } from "../binder.js";
+import { asAction, ActionMode } from "../../coordination.js";
 import * as Helpers from "./helpers/helpers.js";
+import { onVersionChange, onNewerVersionAvailable, onSaveStatusChange } from "./triggers.js";
 
 export const bind = makeAction();
 
@@ -33,52 +35,121 @@ const LABEL = "Board Actions";
 /**
  * Saves the current board to the board server.
  *
+ * Uses `awaits` mode to wait for pending trigger work before save.
+ *
+ * **Triggers:**
+ * - `onVersionChange`: Fires when graph version changes and save conditions are met
+ *
  * @param messages Optional messages for user acknowledgment snackbars
  * @throws Error if called without an editor (programming error)
  * @returns Promise resolving to save result, or undefined if save is not applicable
  */
-export async function save(
-  messages?: { start: string; end: string } | null
-): Promise<{ result: boolean } | undefined> {
-  const { controller, services } = bind;
-  const { editor, url, readOnly } = controller.editor.graph;
-  const logger = Utils.Logging.getLogger(controller);
-  const snackbars = controller.global.snackbars;
+export const save = asAction(
+  "Board.save",
+  {
+    mode: ActionMode.Awaits,
+    triggeredBy: [() => onVersionChange(bind)],
+  },
+  async (
+    messages?: { start: string; end: string } | null
+  ): Promise<{ result: boolean } | undefined> => {
+    const { controller, services } = bind;
+    const { editor, url, readOnly } = controller.editor.graph;
+    const logger = Utils.Logging.getLogger(controller);
+    const snackbars = controller.global.snackbars;
 
-  // Guard: These are programming errors - the trigger should check these
-  if (!editor) {
-    throw new Error("save() called without an active editor");
+    // Guard: These are programming errors - the trigger should check these
+    if (!editor) {
+      throw new Error("save() called without an active editor");
+    }
+
+    // Guard: No URL means the graph hasn't been persisted yet - bail silently
+    if (!url) {
+      return undefined;
+    }
+
+    // Guard: Read-only graphs cannot be saved - bail silently
+    if (readOnly) {
+      return undefined;
+    }
+
+    const boardServer = services.googleDriveBoardServer;
+    const boardUrl = new URL(url);
+
+    // Check if board server can save this URL - bail silently if not
+    const capabilities = boardServer.canProvide(boardUrl);
+    if (!capabilities || !capabilities.save) {
+      return undefined;
+    }
+
+    // Get the current graph from the editor
+    const graph = editor.raw();
+    if (!graph) {
+      throw new Error("save() called but editor has no graph");
+    }
+
+    // User-initiated save: show snackbar
+    let snackbarId: SnackbarUUID | undefined;
+    if (messages) {
+      snackbarId = snackbars.snackbar(
+        messages.start,
+        SnackType.PENDING,
+        [],
+        true, // persistent
+        undefined,
+        true // replaceAll
+      );
+    }
+
+    try {
+      // The board server handles debouncing/queueing internally
+      const result = await boardServer.save(boardUrl, graph, !!messages);
+
+      // Update snackbar on success
+      if (snackbarId && messages) {
+        snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
+      }
+
+      return result;
+    } catch (error) {
+      logger.log(
+        Utils.Logging.Formatter.warning(
+          `Failed to save board: ${error instanceof Error ? error.message : String(error)}`
+        ),
+        LABEL
+      );
+
+      // Update snackbar on error (if we had one)
+      if (snackbarId) {
+        snackbars.unsnackbar(snackbarId);
+      }
+
+      return { result: false };
+    }
   }
+);
 
-  // Guard: No URL means the graph hasn't been persisted yet - bail silently
-  if (!url) {
-    return undefined;
-  }
+/**
+ * Saves the current graph as a new board.
+ *
+ * Uses `awaits` mode so it can be called from other Exclusive actions like remix.
+ * Concurrency is managed by the caller (remix uses Exclusive).
+ *
+ * @param graph The graph descriptor to save
+ * @param messages Snackbar messages for user feedback
+ * @returns Promise resolving to result with new URL, or null if operation can't proceed
+ */
+export const saveAs = asAction(
+  "Board.saveAs",
+  ActionMode.Awaits,
+  async (
+    graph: GraphDescriptor,
+    messages: { start: string; end: string; error: string }
+  ): Promise<{ result: boolean; url?: URL } | null> => {
+    const { controller, services } = bind;
+    const snackbars = controller.global.snackbars;
 
-  // Guard: Read-only graphs cannot be saved - bail silently
-  if (readOnly) {
-    return undefined;
-  }
-
-  const boardServer = services.googleDriveBoardServer;
-  const boardUrl = new URL(url);
-
-  // Check if board server can save this URL - bail silently if not
-  const capabilities = boardServer.canProvide(boardUrl);
-  if (!capabilities || !capabilities.save) {
-    return undefined;
-  }
-
-  // Get the current graph from the editor
-  const graph = editor.raw();
-  if (!graph) {
-    throw new Error("save() called but editor has no graph");
-  }
-
-  // User-initiated save: show snackbar
-  let snackbarId: SnackbarUUID | undefined;
-  if (messages) {
-    snackbarId = snackbars.snackbar(
+    const snackbarId = snackbars.snackbar(
       messages.start,
       SnackType.PENDING,
       [],
@@ -86,111 +157,46 @@ export async function save(
       undefined,
       true // replaceAll
     );
-  }
 
-  try {
-    // The board server handles debouncing/queueing internally
-    const result = await boardServer.save(boardUrl, graph, !!messages);
+    const fail = { result: false, error: "Unable to save", url: undefined };
 
-    // Update snackbar on success
-    if (snackbarId && messages) {
-      snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
-    }
-
-    return result;
-  } catch (error) {
-    logger.log(
-      Utils.Logging.Formatter.warning(
-        `Failed to save board: ${error instanceof Error ? error.message : String(error)}`
-      ),
-      LABEL
-    );
-
-    // Update snackbar on error (if we had one)
-    if (snackbarId) {
-      snackbars.unsnackbar(snackbarId);
-    }
-
-    return { result: false };
-  }
-}
-
-/**
- * State to prevent concurrent saveAs operations.
- */
-let isSavingAs = false;
-
-/**
- * Saves the current graph as a new board.
- *
- * @param graph The graph descriptor to save
- * @param messages Snackbar messages for user feedback
- * @returns Promise resolving to result with new URL, or null if operation can't proceed
- */
-export async function saveAs(
-  graph: GraphDescriptor,
-  messages: { start: string; end: string; error: string }
-): Promise<{ result: boolean; url?: URL } | null> {
-  const { controller, services } = bind;
-  const snackbars = controller.global.snackbars;
-
-  // Prevent concurrent saveAs operations
-  if (isSavingAs) {
-    return null;
-  }
-
-  isSavingAs = true;
-
-  const snackbarId = snackbars.snackbar(
-    messages.start,
-    SnackType.PENDING,
-    [],
-    true, // persistent
-    undefined,
-    true // replaceAll
-  );
-
-  const fail = { result: false, error: "Unable to save", url: undefined };
-
-  const boardServer = services.googleDriveBoardServer;
-  if (!boardServer) {
-    isSavingAs = false;
-    snackbars.update(snackbarId, messages.error, SnackType.ERROR);
-    return fail;
-  }
-
-  try {
-    // A placeholder URL since create() doesn't actually use it
-    const ignoredPlaceholderUrl = new URL("http://invalid");
-
-    // Replace pointers with inline data so that copies get created when saving
-    const copiedGraph = await boardServer.deepCopy(
-      ignoredPlaceholderUrl,
-      graph
-    );
-
-    const createResult = await boardServer.create(
-      ignoredPlaceholderUrl,
-      copiedGraph
-    );
-
-    if (!createResult.url) {
-      isSavingAs = false;
+    const boardServer = services.googleDriveBoardServer;
+    if (!boardServer) {
       snackbars.update(snackbarId, messages.error, SnackType.ERROR);
       return fail;
     }
 
-    // Clear all snackbars on success (matching original behavior)
-    snackbars.unsnackbar();
+    try {
+      // A placeholder URL since create() doesn't actually use it
+      const ignoredPlaceholderUrl = new URL("http://invalid");
 
-    return { result: true, url: new URL(createResult.url) };
-  } catch {
-    return fail;
-  } finally {
-    snackbars.unsnackbar();
-    isSavingAs = false;
+      // Replace pointers with inline data so that copies get created when saving
+      const copiedGraph = await boardServer.deepCopy(
+        ignoredPlaceholderUrl,
+        graph
+      );
+
+      const createResult = await boardServer.create(
+        ignoredPlaceholderUrl,
+        copiedGraph
+      );
+
+      if (!createResult.url) {
+        snackbars.update(snackbarId, messages.error, SnackType.ERROR);
+        return fail;
+      }
+
+      // Clear all snackbars on success (matching original behavior)
+      snackbars.unsnackbar();
+
+      return { result: true, url: new URL(createResult.url) };
+    } catch {
+      return fail;
+    } finally {
+      snackbars.unsnackbar();
+    }
   }
-}
+);
 
 /**
  * Result type for the remix action.
@@ -209,117 +215,129 @@ export type RemixResult =
  * 3. Clones the graph with " Remix" appended to the title
  * 4. Saves the new graph via saveAs
  *
+ * Uses `exclusive` mode to prevent concurrent remix operations.
+ *
  * @param url The URL of the graph to remix
  * @param messages Snackbar messages for user feedback
  * @returns The save result with new URL, or an error result
  */
-export async function remix(
-  url: string,
-  messages: { start: string; end: string; error: string }
-): Promise<RemixResult> {
-  const { controller, services } = bind;
-  const graphController = controller.editor.graph;
-  const snackbars = controller.global.snackbars;
+export const remix = asAction(
+  "Board.remix",
+  ActionMode.Exclusive,
+  async (
+    url: string,
+    messages: { start: string; end: string; error: string }
+  ): Promise<RemixResult> => {
+    const { controller, services } = bind;
+    const graphController = controller.editor.graph;
+    const snackbars = controller.global.snackbars;
 
-  const logger = Utils.Logging.getLogger(controller);
-  const LABEL = "Board Actions";
+    const logger = Utils.Logging.getLogger(controller);
+    const LABEL = "Board Actions";
 
-  // Immediately acknowledge the user's action with a snackbar.
-  // This will be superseded by saveAs, but provides instant feedback.
-  snackbars.snackbar(
-    messages.start,
-    SnackType.PENDING,
-    [],
-    true,
-    undefined,
-    true // Replace existing snackbars.
-  );
+    // Immediately acknowledge the user's action with a snackbar.
+    // This will be superseded by saveAs, but provides instant feedback.
+    snackbars.snackbar(
+      messages.start,
+      SnackType.PENDING,
+      [],
+      true,
+      undefined,
+      true // Replace existing snackbars.
+    );
 
-  // Resolve the graph to remix
-  const currentGraph = graphController.editor?.raw();
-  let graph: GraphDescriptor;
+    // Resolve the graph to remix
+    const currentGraph = graphController.editor?.raw();
+    let graph: GraphDescriptor;
 
-  // First check if the currently open graph matches the remix URL.
-  // This handles the common case of remixing from the header and avoids
-  // URL mismatch issues (e.g., resourcekey param removed by loader).
-  if (currentGraph && graphController.url === url) {
-    logger.log(Utils.Logging.Formatter.verbose("Using current graph"), LABEL);
-    graph = structuredClone(currentGraph);
-  } else {
-    // Fall back to loading from the store (for gallery remixes, etc.)
-    logger.log(Utils.Logging.Formatter.verbose("Using graph store"), LABEL);
+    // First check if the currently open graph matches the remix URL.
+    // This handles the common case of remixing from the header and avoids
+    // URL mismatch issues (e.g., resourcekey param removed by loader).
+    if (currentGraph && graphController.url === url) {
+      logger.log(Utils.Logging.Formatter.verbose("Using current graph"), LABEL);
+      graph = structuredClone(currentGraph);
+    } else {
+      // Fall back to loading from the store (for gallery remixes, etc.)
+      logger.log(Utils.Logging.Formatter.verbose("Using graph store"), LABEL);
 
-    const graphStore = services.graphStore;
-    const addResult = graphStore.addByURL(url, [], {});
-    const mutable = await graphStore.getLatest(addResult.mutable);
+      const graphStore = services.graphStore;
+      const addResult = graphStore.addByURL(url, [], {});
+      const mutable = await graphStore.getLatest(addResult.mutable);
 
-    if (!mutable.graph || mutable.graph.nodes.length === 0) {
-      // Empty graph means the load failed - likely URL mismatch
-      snackbars.snackbar(
-        messages.error,
-        SnackType.ERROR,
-        [],
-        false,
-        undefined,
-        true
-      );
-      return { success: false, reason: "no-graph" };
+      if (!mutable.graph || mutable.graph.nodes.length === 0) {
+        // Empty graph means the load failed - likely URL mismatch
+        snackbars.snackbar(
+          messages.error,
+          SnackType.ERROR,
+          [],
+          false,
+          undefined,
+          true
+        );
+        return { success: false, reason: "no-graph" };
+      }
+
+      graph = structuredClone(mutable.graph);
     }
 
-    graph = structuredClone(mutable.graph);
+    // Append " Remix" to the title
+    graph.title = `${graph.title ?? "Untitled"} Remix`;
+
+    // Save as a new board
+    const saveResult = await saveAs(graph, messages);
+
+    if (!saveResult?.result || !saveResult.url) {
+      return { success: false, reason: "save-failed" };
+    }
+
+    return { success: true, url: saveResult.url };
   }
-
-  // Append " Remix" to the title
-  graph.title = `${graph.title ?? "Untitled"} Remix`;
-
-  // Save as a new board
-  const saveResult = await saveAs(graph, messages);
-
-  if (!saveResult?.result || !saveResult.url) {
-    return { success: false, reason: "save-failed" };
-  }
-
-  return { success: true, url: saveResult.url };
-}
+);
 
 /**
  * Deletes a board from the board server.
+ *
+ * Uses `exclusive` mode as this is a destructive operation.
  *
  * @param url The URL of the board to delete
  * @param messages Snackbar messages for user feedback
  * @returns Promise resolving to the delete result
  */
-export async function deleteBoard(
-  url: string,
-  messages: { start: string; end: string; error: string }
-): Promise<{ result: boolean }> {
-  const { controller, services } = bind;
-  const snackbars = controller.global.snackbars;
+export const deleteBoard = asAction(
+  "Board.deleteBoard",
+  ActionMode.Exclusive,
+  async (
+    url: string,
+    messages: { start: string; end: string; error: string }
+  ): Promise<{ result: boolean }> => {
+    const { controller, services } = bind;
+    const snackbars = controller.global.snackbars;
 
-  const snackbarId = snackbars.snackbar(
-    messages.start,
-    SnackType.PENDING,
-    [],
-    true, // persistent
-    undefined,
-    true // replaceAll
-  );
+    const snackbarId = snackbars.snackbar(
+      messages.start,
+      SnackType.PENDING,
+      [],
+      true, // persistent
+      undefined,
+      true // replaceAll
+    );
 
-  const fail = { result: false, error: "Unable to delete" };
+    const fail = { result: false, error: "Unable to delete" };
 
-  const boardServer = services.googleDriveBoardServer;
-  if (!boardServer) {
-    snackbars.update(snackbarId, messages.error, SnackType.ERROR);
-    return fail;
+    const boardServer = services.googleDriveBoardServer;
+    if (!boardServer) {
+      snackbars.update(snackbarId, messages.error, SnackType.ERROR);
+      return fail;
+    }
+
+    const result = await boardServer.delete(new URL(url));
+
+    // Update snackbar with success message
+    snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
+
+    return result;
   }
-
-  const result = await boardServer.delete(new URL(url));
-
-  // Update snackbar with success message
-  snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
-
-  return result;
-}
+);
 
 /**
  * Options for the load action.
@@ -368,126 +386,131 @@ export type LoadResult =
  * 5. Loads edit history and final output values if applicable
  * 6. Initializes the editor with the graph
  *
+ * Uses `exclusive` mode to prevent concurrent loads from racing.
+ *
  * @param url The URL of the board to load
  * @param options Optional load configuration
  * @returns Load result indicating success or failure reason
  */
-export async function load(
-  url: string,
-  options: LoadOptions = {}
-): Promise<LoadResult> {
-  const { controller, services } = bind;
-  const logger = Utils.Logging.getLogger(controller);
-  const LABEL = "Board Actions";
+export const load = asAction(
+  "Board.load",
+  ActionMode.Exclusive,
+  async (url: string, options: LoadOptions = {}): Promise<LoadResult> => {
+      const { controller, services } = bind;
+      const logger = Utils.Logging.getLogger(controller);
+      const LABEL = "Board Actions";
 
-  // Track the URL at start to detect race conditions
-  const urlAtStart = controller.editor.graph.url;
+      // Track the URL at start to detect race conditions
+      const urlAtStart = controller.editor.graph.url;
 
-  // 1. Resolve URL relative to current board
-  const resolvedUrl = Helpers.resolveUrl(url, options.baseUrl ?? null);
+      // 1. Resolve URL relative to current board
+      const resolvedUrl = Helpers.resolveUrl(url, options.baseUrl ?? null);
 
-  if (!resolvedUrl || !Helpers.canParse(resolvedUrl)) {
-    logger.log(Utils.Logging.Formatter.warning(`Invalid URL: ${url}`), LABEL);
-    return { success: false, reason: "invalid-url" };
-  }
+      if (!resolvedUrl || !Helpers.canParse(resolvedUrl)) {
+        logger.log(
+          Utils.Logging.Formatter.warning(`Invalid URL: ${url}`),
+          LABEL
+        );
+        return { success: false, reason: "invalid-url" };
+      }
 
-  // 2. Load the graph
-  const loadResult = await Helpers.loadGraph(resolvedUrl, urlAtStart, {
-    loader: services.loader,
-    signinAdapter: services.signinAdapter,
-    boardServer: services.googleDriveBoardServer,
-  });
+      // 2. Load the graph
+      const loadResult = await Helpers.loadGraph(resolvedUrl, urlAtStart, {
+        loader: services.loader,
+        signinAdapter: services.signinAdapter,
+        boardServer: services.googleDriveBoardServer,
+      });
 
-  if (!loadResult.success) {
-    logger.log(
-      Utils.Logging.Formatter.warning(`Failed to load: ${loadResult.reason}`),
-      LABEL
-    );
-    return { success: false, reason: loadResult.reason };
-  }
+      if (!loadResult.success) {
+        logger.log(
+          Utils.Logging.Formatter.warning(`Failed to load: ${loadResult.reason}`),
+          LABEL
+        );
+        return { success: false, reason: loadResult.reason };
+      }
 
-  const { graph, boardServer } = loadResult;
+      const { graph, boardServer } = loadResult;
 
-  // 3. Prepare the graph
-  const prepared = await Helpers.prepareGraph(graph, {
-    moduleId: options.moduleId,
-    subGraphId: options.subGraphId,
-    googleDriveClient: services.googleDriveClient,
-  });
+      // 3. Prepare the graph
+      const prepared = await Helpers.prepareGraph(graph, {
+        moduleId: options.moduleId,
+        subGraphId: options.subGraphId,
+        googleDriveClient: services.googleDriveClient,
+      });
 
-  // 4. Check for race condition - URL changed during async operations
-  if (controller.editor.graph.url !== urlAtStart) {
-    logger.log(
-      Utils.Logging.Formatter.info("URL changed during load, aborting"),
-      LABEL
-    );
-    return { success: false, reason: "race-condition" };
-  }
+      // 4. Check for race condition - URL changed during async operations
+      if (controller.editor.graph.url !== urlAtStart) {
+        logger.log(
+          Utils.Logging.Formatter.info("URL changed during load, aborting"),
+          LABEL
+        );
+        return { success: false, reason: "race-condition" };
+      }
 
-  // 5. Check version for shared graphs
-  const isMineCheck = (u: string | undefined) =>
-    u ? boardServer.isMine(new URL(u)) : false;
-  const versionInfo = await Helpers.checkVersion(
-    graph.url,
-    boardServer,
-    controller.board.main,
-    { isMine: isMineCheck }
-  );
+      // 5. Check version for shared graphs
+      const isMineCheck = (u: string | undefined) =>
+        u ? boardServer.isMine(new URL(u)) : false;
+      const versionInfo = await Helpers.checkVersion(
+        graph.url,
+        boardServer,
+        controller.board.main,
+        { isMine: isMineCheck }
+      );
 
-  const version = versionInfo?.version ?? -1;
-  const lastLoadedVersion = versionInfo?.lastLoadedVersion ?? -1;
+      const version = versionInfo?.version ?? -1;
+      const lastLoadedVersion = versionInfo?.lastLoadedVersion ?? -1;
 
-  // 6. Load edit history from BoardController
-  await controller.board.main.isHydrated;
-  const history = controller.board.main.getEditHistory(resolvedUrl);
+      // 6. Load edit history from BoardController
+      await controller.board.main.isHydrated;
+      const history = controller.board.main.getEditHistory(resolvedUrl);
 
-  // 7. Load results if resultsFileId provided
-  let finalOutputValues: OutputValues | undefined;
-  if (options.resultsFileId && services.googleDriveClient) {
-    const resultsResult = await Helpers.loadResults(
-      options.resultsFileId,
-      services.googleDriveClient
-    );
-    if (resultsResult.success) {
-      finalOutputValues = resultsResult.finalOutputValues;
+      // 7. Load results if resultsFileId provided
+      let finalOutputValues: OutputValues | undefined;
+      if (options.resultsFileId && services.googleDriveClient) {
+        const resultsResult = await Helpers.loadResults(
+          options.resultsFileId,
+          services.googleDriveClient
+        );
+        if (resultsResult.success) {
+          finalOutputValues = resultsResult.finalOutputValues;
+        }
+      }
+
+      // 8. Initialize the editor
+      Helpers.initializeEditor(services.graphStore, controller.editor.graph, {
+        graph: prepared.graph,
+        moduleId: prepared.moduleId,
+        subGraphId: prepared.subGraphId,
+        url: resolvedUrl,
+        readOnly: !isMineCheck(resolvedUrl),
+        version,
+        lastLoadedVersion,
+        creator: options.creator,
+        history,
+        onHistoryChanged: (h) =>
+          controller.board.main.saveEditHistory(resolvedUrl, h),
+        finalOutputValues,
+      });
+
+      // 9. Reset run state for new graph (clear console entries from previous graph)
+      controller.run.main.resetOutput();
+
+      // 10. Update board controller state
+      if (versionInfo?.isNewer) {
+        controller.board.main.newerVersionAvailable = true;
+      }
+
+      // 11. Update global load state
+      controller.global.main.loadState = "Loaded";
+
+      logger.log(
+        Utils.Logging.Formatter.info(`Loaded board: ${resolvedUrl}`),
+        LABEL
+      );
+
+      return { success: true };
     }
-  }
-
-  // 8. Initialize the editor
-  Helpers.initializeEditor(services.graphStore, controller.editor.graph, {
-    graph: prepared.graph,
-    moduleId: prepared.moduleId,
-    subGraphId: prepared.subGraphId,
-    url: resolvedUrl,
-    readOnly: !isMineCheck(resolvedUrl),
-    version,
-    lastLoadedVersion,
-    creator: options.creator,
-    history,
-    onHistoryChanged: (h) =>
-      controller.board.main.saveEditHistory(resolvedUrl, h),
-    finalOutputValues,
-  });
-
-  // 9. Reset run state for new graph (clear console entries from previous graph)
-  controller.run.main.resetOutput();
-
-  // 10. Update board controller state
-  if (versionInfo?.isNewer) {
-    controller.board.main.newerVersionAvailable = true;
-  }
-
-  // 11. Update global load state
-  controller.global.main.loadState = "Loaded";
-
-  logger.log(
-    Utils.Logging.Formatter.info(`Loaded board: ${resolvedUrl}`),
-    LABEL
-  );
-
-  return { success: true };
-}
-
+);
 /* c8 ignore stop */
 
 /**
@@ -502,3 +525,84 @@ export function close(): void {
   // Return to home state
   controller.global.main.loadState = "Home";
 }
+
+// =============================================================================
+// Triggered Actions
+// =============================================================================
+
+/**
+ * Shows a snackbar when a newer version of a shared graph is available.
+ *
+ * **Triggers:**
+ * - `onNewerVersionAvailable`: Fires when newerVersionAvailable becomes true
+ */
+export const showNewerVersionSnackbar = asAction(
+  "Board.showNewerVersionSnackbar",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: [() => onNewerVersionAvailable(bind)],
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+
+    // Show the snackbar
+    controller.global.snackbars.snackbar(
+      "A newer version of this board is available",
+      SnackType.INFORMATION,
+      [],
+      true, // persistent
+      globalThis.crypto.randomUUID() as SnackbarUUID,
+      true // replaceAll
+    );
+
+    // Reset the flag so it doesn't trigger again
+    controller.board.main.newerVersionAvailable = false;
+  }
+);
+
+/**
+ * Updates the save status when the board server reports changes.
+ *
+ * **Triggers:**
+ * - `onSaveStatusChange`: Fires on savestatuschange events from board server
+ */
+export const handleSaveStatus = asAction(
+  "Board.handleSaveStatus",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: [() => onSaveStatusChange(bind)],
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+
+    // Type assertion for the custom event
+    const event = evt as unknown as { url: string; status: string } | undefined;
+    if (!event) return;
+
+    const { url, status } = event;
+    const currentUrl = controller.editor.graph.url;
+
+    // Only update if this is the current graph
+    if (!currentUrl || currentUrl !== url) {
+      return;
+    }
+
+    // Map BoardServerSaveEventStatus to our simplified status
+    switch (status) {
+      case "saving":
+        controller.editor.graph.saveStatus = "saving";
+        break;
+      case "idle":
+        controller.editor.graph.saveStatus = "saved";
+        break;
+      case "debouncing":
+      case "queued":
+        controller.editor.graph.saveStatus = "unsaved";
+        break;
+      default:
+        controller.editor.graph.saveStatus = "saved";
+        break;
+    }
+  }
+);
+

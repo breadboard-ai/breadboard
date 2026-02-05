@@ -5,13 +5,14 @@
  */
 
 import assert from "node:assert";
-import { afterEach, beforeEach, describe, test } from "node:test";
+import { afterEach, beforeEach, suite, test } from "node:test";
 import * as RunActions from "../../../../src/sca/actions/run/run-actions.js";
 import { STATUS } from "../../../../src/sca/controller/subcontrollers/run/run-controller.js";
-import { makeTestController, makeTestServices } from "../../triggers/utils.js";
+import { makeTestController, makeTestServices } from "../../helpers/index.js";
 import type { PrepareRunConfig } from "../../../../src/sca/actions/run/run-actions.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import type { ConsoleEntry, EditableGraph, HarnessRunner } from "@breadboard-ai/types";
+import { coordination } from "../../../../src/sca/coordination.js";
 
 /**
  * Creates a valid mock config for testing
@@ -31,7 +32,7 @@ function makeMockConfig(): PrepareRunConfig {
   };
 }
 
-describe("Run Actions", () => {
+suite("Run Actions", () => {
   beforeEach(() => {
     setDOM();
   });
@@ -467,7 +468,177 @@ describe("Run Actions", () => {
   });
 });
 
-describe("mapLifecycleToRunStatus", () => {
+suite("Run.start action", () => {
+  beforeEach(() => {
+    setDOM();
+    coordination.reset();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("start calls runner.start()", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Prepare a runner
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Track if start was called on the runner
+    let startCalled = false;
+    (controller.run.main.runner as unknown as { start: () => void }).start = () => {
+      startCalled = true;
+    };
+
+    await RunActions.start();
+
+    assert.ok(startCalled, "runner.start() should be called");
+  });
+
+  test("start throws when no runner is set", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Ensure no runner is set
+    controller.run.main.runner = null;
+
+    await assert.rejects(
+      () => RunActions.start(),
+      /start\(\) called without an active runner/,
+      "should throw when no runner"
+    );
+  });
+
+  test("start uses exclusive mode (prevents concurrent calls)", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Prepare a runner
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Make the runner.start() take some time
+    let startCallCount = 0;
+    let resolveStart: () => void;
+    new Promise<void>((resolve) => {
+      resolveStart = resolve;
+    });
+
+    (controller.run.main.runner as unknown as { start: () => void }).start = () => {
+      startCallCount++;
+      // This will not resolve immediately
+    };
+
+    // Start the first call
+    const firstCall = RunActions.start();
+
+    // Start a second call immediately
+    const secondCall = RunActions.start();
+
+    // Complete the first call
+    resolveStart!();
+    await firstCall;
+    await secondCall;
+
+    // Both should complete, but they should have been serialized
+    assert.strictEqual(startCallCount, 2, "runner.start() should be called twice");
+  });
+});
+
+suite("Run.stop action", () => {
+  beforeEach(() => {
+    setDOM();
+    coordination.reset();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("stop calls abortController.abort()", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Prepare a runner to set up abortController
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Track if abort was called
+    let abortCalled = false;
+    (controller.run.main.abortController as unknown as { abort: () => void }).abort = () => {
+      abortCalled = true;
+    };
+
+    await RunActions.stop();
+
+    assert.ok(abortCalled, "abortController.abort() should be called");
+  });
+
+  test("stop sets status to STOPPED", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Prepare a runner
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Set status to RUNNING
+    controller.run.main.setStatus(STATUS.RUNNING);
+
+    await RunActions.stop();
+
+    assert.strictEqual(
+      controller.run.main.status,
+      STATUS.STOPPED,
+      "status should be STOPPED"
+    );
+  });
+
+  test("stop works when no abortController is set", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Ensure no abortController
+    controller.run.main.abortController = null;
+
+    // Should not throw
+    await assert.doesNotReject(
+      () => RunActions.stop(),
+      "should not throw when no abortController"
+    );
+  });
+
+  test("stop uses immediate mode (works during triggers)", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Enter a trigger scope
+    const done = coordination.enterTrigger("Test Trigger");
+
+    // Prepare a runner
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // This should NOT throw because stop uses immediate mode
+    await assert.doesNotReject(
+      () => RunActions.stop(),
+      "stop should work during triggers (immediate mode)"
+    );
+
+    done();
+  });
+});
+
+suite("mapLifecycleToRunStatus", () => {
   test("maps 'inactive' to 'inactive'", () => {
     assert.strictEqual(RunActions.mapLifecycleToRunStatus("inactive"), "inactive");
   });
@@ -509,7 +680,7 @@ describe("mapLifecycleToRunStatus", () => {
   });
 });
 
-describe("syncConsoleFromRunner", () => {
+suite("syncConsoleFromRunner", () => {
   beforeEach(() => {
     setDOM();
   });
