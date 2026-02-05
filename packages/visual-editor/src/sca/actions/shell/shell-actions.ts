@@ -33,7 +33,7 @@ export const updatePageTitle = asAction(
   "Shell.updatePageTitle",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onTitleChange(bind)],
+    triggeredBy: () => onTitleChange(bind),
   },
   async (): Promise<void> => {
     const { controller } = bind;

@@ -42,7 +42,7 @@ export const applyPendingEdits = asAction(
   {
     mode: ActionMode.Immediate,
     priority: 100, // High priority - must run before autosave and other actions
-    triggeredBy: [() => onSelectionOrSidebarChange(bind)],
+    triggeredBy: () => onSelectionOrSidebarChange(bind),
   },
   async (): Promise<void> => {
     const { controller } = bind;
