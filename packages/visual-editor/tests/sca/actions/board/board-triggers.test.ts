@@ -74,7 +74,7 @@ suite("Board Triggers", () => {
       assert.strictEqual(result, false, "Should return false when no editor");
     });
 
-    test("returns true when all conditions are met", () => {
+    test("returns truthy value (version + 1) when all conditions are met", () => {
       const mockBind = {
         controller: {
           editor: {
@@ -91,10 +91,11 @@ suite("Board Triggers", () => {
       const trigger = onVersionChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true when conditions met");
+      // Returns version + 1 so each increment is a unique change
+      assert.strictEqual(result, 43, "Should return version + 1 when conditions met");
     });
 
-    test("returns true when version is 0", () => {
+    test("returns truthy value (1) when version is 0", () => {
       const mockBind = {
         controller: {
           editor: {
@@ -111,7 +112,8 @@ suite("Board Triggers", () => {
       const trigger = onVersionChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true for version 0");
+      // Returns 1 (version 0 + 1) so it's truthy
+      assert.strictEqual(result, 1, "Should return 1 for version 0");
     });
 
     test("has correct trigger name", () => {

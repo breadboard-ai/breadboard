@@ -66,11 +66,11 @@ export interface SignalTrigger {
   /**
    * The condition callback. This is wrapped in a reactive effect.
    * - Signals read during execution become dependencies
-   * - Return true when the action should fire, false otherwise
-   * - The reactive system detects when dependencies change; the boolean
-   *   controls whether the action fires on that change
+   * - Return a truthy value when the action should fire, falsy otherwise
+   * - The action fires when the return value CHANGES to a truthy value
+   * - To fire on every change, return a unique value (e.g., version number)
    */
-  condition: () => boolean;
+  condition: () => unknown;
 }
 
 /**
@@ -111,15 +111,20 @@ export type TriggerFactory = () => TriggerDefinition | null;
  *
  * @example
  * ```typescript
- * const onSaveNeeded = signalTrigger("Save Needed", () => {
+ * // Fire once when condition becomes true
+ * const onEditorReady = signalTrigger("Editor Ready", () => !!editor);
+ *
+ * // Fire on every version change (return unique value per version)
+ * const onVersionChange = signalTrigger("Version Change", () => {
  *   const { version, readOnly, editor } = bind.controller.editor.graph;
- *   return !readOnly && version >= 0 && !!editor;
+ *   if (readOnly || !editor) return false;
+ *   return version + 1; // +1 because version 0 is falsy
  * });
  * ```
  */
 export function signalTrigger(
   name: string,
-  condition: () => boolean
+  condition: () => unknown
 ): SignalTrigger {
   return { type: "signal", name, condition };
 }
