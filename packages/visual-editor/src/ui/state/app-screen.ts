@@ -12,8 +12,8 @@ import {
 import { OutputResponse, Schema } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { idFromPath, isParticleMode } from "./common.js";
-import { EphemeralParticleTree } from "./types.js";
+import { idFromPath } from "./common.js";
+
 import { Signal } from "signal-polyfill";
 
 export { ReactiveAppScreen };
@@ -80,18 +80,14 @@ class ReactiveAppScreen implements AppScreen {
 
   /**
    * Adds an output to the screen. These are the bubbled outputs, typically
-   * part of the user input interaction, and much more in the Particle
-   * future.
+   * part of the user input interaction.
    */
-  addOutput(data: OutputResponse, _particleTree: EphemeralParticleTree | null) {
+  addOutput(data: OutputResponse) {
     const { node, outputs, path } = data;
     const { configuration = {} } = node;
     const { schema: s = {} } = configuration;
 
     const schema = s as Schema;
-
-    // For now, don't render particle streams: these only go to Console view.
-    if (isParticleMode(schema, outputs)) return;
 
     this.outputs.set(idFromPath(path), {
       schema,

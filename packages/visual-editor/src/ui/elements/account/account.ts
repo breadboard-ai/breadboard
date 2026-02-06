@@ -240,6 +240,7 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
     this.dispatchEvent(new OverlayDismissedEvent());
   }
 
+  #formatter = new Intl.NumberFormat(navigator.language);
   #renderCreditCount() {
     const innerRender = () => {
       if (this.sca.controller.global.main.subscriptionCredits === -2) {
@@ -253,8 +254,11 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
           >Updating...`;
       }
 
+      const credits = this.#formatter.format(
+        this.sca.controller.global.main.subscriptionCredits
+      );
       return html`<span class="g-icon circle filled-heavy round">spark</span
-        >${this.sca.controller.global.main.subscriptionCredits} AI
+        >${credits} AI
         Credit${this.sca.controller.global.main.subscriptionCredits !== 1
           ? "s"
           : ""}`;

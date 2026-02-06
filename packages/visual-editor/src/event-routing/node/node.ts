@@ -8,55 +8,34 @@ import { ok } from "@breadboard-ai/utils";
 import { EventRoute } from "../types.js";
 import * as BreadboardUI from "../../ui/index.js";
 
-export const AddWithEdgeRoute: EventRoute<"node.addwithedge"> = {
-  event: "node.addwithedge",
-
-  async do({ runtime, tab, originalEvent, sca }) {
-    if (!tab) {
-      return false;
-    }
-
-    sca.controller.global.main.blockingAction = true;
-    await runtime.edit.addNodeWithEdge(
-      tab,
-      originalEvent.detail.node,
-      originalEvent.detail.edge,
-      originalEvent.detail.subGraphId
-    );
-    sca.controller.global.main.blockingAction = false;
-
-    runtime.select.selectNodes(
-      tab.id,
-      runtime.select.generateId(),
-      originalEvent.detail.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-      [originalEvent.detail.node.id]
-    );
-
-    return false;
-  },
-};
-
 export const ChangeRoute: EventRoute<"node.change"> = {
   event: "node.change",
 
-  async do({ runtime, tab, originalEvent, sca }) {
+  async do({ runtime: _runtime, tab, originalEvent, sca }) {
+    if (tab?.readOnly) {
+      return false;
+    }
+
     sca.controller.global.main.blockingAction = true;
-    await runtime.edit.changeNodeConfigurationPart(
-      tab,
-      originalEvent.detail.id,
-      originalEvent.detail.configurationPart,
-      originalEvent.detail.subGraphId,
-      originalEvent.detail.metadata,
-      originalEvent.detail.ins
-    );
+    try {
+      await sca.actions.graph.changeNodeConfiguration(
+        originalEvent.detail.id,
+        originalEvent.detail.subGraphId ?? "",
+        originalEvent.detail.configurationPart,
+        originalEvent.detail.metadata,
+        originalEvent.detail.ins
+      );
+    } catch (error) {
+      console.warn("Failed to change node configuration", error);
+    }
     sca.controller.global.main.blockingAction = false;
 
     return false;
   },
 };
 
-export const MultiChangeRoute: EventRoute<"node.multichange"> = {
-  event: "node.multichange",
+export const AddRoute: EventRoute<"node.add"> = {
+  event: "node.add",
 
   async do({ runtime, tab, originalEvent, sca }) {
     if (!tab) {
@@ -64,27 +43,40 @@ export const MultiChangeRoute: EventRoute<"node.multichange"> = {
     }
 
     sca.controller.global.main.blockingAction = true;
-    await runtime.edit.multiEdit(
-      tab,
-      originalEvent.detail.edits,
-      originalEvent.detail.description
-    );
-    sca.controller.global.main.blockingAction = false;
+    try {
+      await sca.actions.graph.addNode(
+        originalEvent.detail.node,
+        originalEvent.detail.graphId
+      );
 
-    const additions: string[] = originalEvent.detail.edits
-      .map((edit) => (edit.type === "addnode" ? edit.node.id : null))
-      .filter((item) => item !== null);
-
-    if (additions.length === 0) {
-      return false;
+      // Select the new node
+      runtime.select.selectNodes(
+        tab.id,
+        runtime.select.generateId(),
+        originalEvent.detail.graphId || BreadboardUI.Constants.MAIN_BOARD_ID,
+        [originalEvent.detail.node.id]
+      );
+    } finally {
+      sca.controller.global.main.blockingAction = false;
     }
 
-    runtime.select.selectNodes(
-      tab.id,
-      runtime.select.generateId(),
-      originalEvent.detail.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
-      additions
-    );
+    return false;
+  },
+};
+
+export const MoveSelectionRoute: EventRoute<"node.moveselection"> = {
+  event: "node.moveselection",
+
+  async do({ originalEvent, sca }) {
+    sca.controller.global.main.blockingAction = true;
+    try {
+      await sca.actions.graph.moveSelectionPositions(
+        originalEvent.detail.updates
+      );
+    } finally {
+      sca.controller.global.main.blockingAction = false;
+    }
+
     return false;
   },
 };
@@ -92,10 +84,9 @@ export const MultiChangeRoute: EventRoute<"node.multichange"> = {
 export const ChangeEdgeRoute: EventRoute<"node.changeedge"> = {
   event: "node.changeedge",
 
-  async do({ runtime, tab, originalEvent, sca }) {
+  async do({ originalEvent, sca }) {
     sca.controller.global.main.blockingAction = true;
-    await runtime.edit.changeEdge(
-      tab,
+    await sca.actions.graph.changeEdge(
       originalEvent.detail.changeType,
       originalEvent.detail.from,
       originalEvent.detail.to,
@@ -111,18 +102,20 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
   {
     event: "node.changeedgeattachmentpoint",
 
-    async do({ runtime, tab, originalEvent, sca }) {
+  async do({ originalEvent, sca }) {
       const { graphId } = originalEvent.detail;
 
       sca.controller.global.main.blockingAction = true;
-      await runtime.edit.changeEdgeAttachmentPoint(
-        tab,
-        graphId === BreadboardUI.Constants.MAIN_BOARD_ID ? "" : graphId,
-        originalEvent.detail.edge,
-        originalEvent.detail.which,
-        originalEvent.detail.attachmentPoint
-      );
-      sca.controller.global.main.blockingAction = false;
+      try {
+        await sca.actions.graph.changeEdgeAttachmentPoint(
+          graphId === BreadboardUI.Constants.MAIN_BOARD_ID ? "" : graphId,
+          originalEvent.detail.edge,
+          originalEvent.detail.which,
+          originalEvent.detail.attachmentPoint
+        );
+      } finally {
+        sca.controller.global.main.blockingAction = false;
+      }
 
       return false;
     },
@@ -134,7 +127,7 @@ export const ActionRoute: EventRoute<"node.action"> = {
   async do({ runtime, sca, originalEvent }) {
     sca.controller.global.main.blockingAction = true;
     try {
-      const project = runtime.state.project;
+      const project = runtime.project;
       if (!project) {
         console.warn(`No project for "node.action"`);
         return false;

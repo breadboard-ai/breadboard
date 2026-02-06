@@ -4,19 +4,20 @@
 
 import { ok } from "../a2/utils.js";
 import { readFlags } from "../a2/settings.js";
-import { forEach } from "../a2/for-each.js";
 import {
-  BehaviorSchema,
   Capabilities,
   InputValues,
   LLMContent,
-  Outcome,
-  OutputValues,
   RuntimeFlags,
   Schema,
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { makeTextInstruction } from "../generate-text/main.js";
+import {
+  makeTextInstruction,
+  makeText,
+  describe as describeGenerateText,
+  type MakeTextInputs,
+} from "../generate-text/main.js";
 import { makeGoOverListInstruction } from "../go-over-list/main.js";
 import agent, { computeAgentSchema, type AgentInputs } from "../agent/main.js";
 import { makeDeepResearchInstruction } from "../deep-research/main.js";
@@ -31,7 +32,6 @@ export { invoke as default, describe };
 type Inputs = {
   context?: LLMContent[];
   "generation-mode"?: string;
-  "p-for-each"?: boolean;
   [PROMPT_PORT]: LLMContent;
 } & Record<string, unknown>;
 
@@ -80,7 +80,6 @@ type Mode = {
 
 const PROMPT_PORT = "config$prompt";
 const ASK_USER_PORT = "config$ask-user";
-const LIST_PORT = "config$list";
 const LIMIT_MSG = "generation has a daily limit";
 
 const ALL_MODES: Mode[] = [
@@ -88,16 +87,15 @@ const ALL_MODES: Mode[] = [
     id: "agent",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-    title: "Any Models",
+    title: "Agent",
     description: "Agent can use any models",
-    icon: "select_all",
+    icon: "button_magic",
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "none",
@@ -116,7 +114,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
@@ -126,7 +123,7 @@ const ALL_MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 3 Flash",
-    description: "Use for everyday tasks",
+    description: "Best for everyday tasks",
     icon: "text_analysis",
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
@@ -134,7 +131,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
@@ -144,7 +140,7 @@ const ALL_MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Flash",
-    description: "For everyday tasks, plus more",
+    description: "Good model for everyday tasks",
     icon: "text_analysis",
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
@@ -152,7 +148,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
@@ -162,7 +157,7 @@ const ALL_MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Pro",
-    description: "Best for complex tasks",
+    description: "Good model for complex tasks",
     icon: "text_analysis",
     modelName: "gemini-2.5-pro",
     promptPlaceholderText:
@@ -170,7 +165,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
@@ -180,7 +174,7 @@ const ALL_MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 3 Pro",
-    description: "Latest and greatest",
+    description: "Best for complex tasks",
     icon: "text_analysis",
     modelName: "gemini-3-pro-preview",
     promptPlaceholderText:
@@ -188,7 +182,6 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
@@ -203,10 +196,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your goal here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "plan"],
-      [LIST_PORT, "z-list"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "plan"]]),
     makeInstruction: makeGoOverListInstruction,
     modelConstraint: "none",
   },
@@ -220,10 +210,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your research query here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "query"],
-      [LIST_PORT, "z-list"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "query"]]),
     makeInstruction: makeDeepResearchInstruction,
     modelConstraint: "none",
   },
@@ -245,8 +232,8 @@ const ALL_MODES: Mode[] = [
     id: "image",
     type: "image",
     url: "embed://a2/a2.bgl.json#module:image-editor",
-    title: "Gemini 2.5 Flash Image (Nano Banana)",
-    description: "Generates images from text and images",
+    title: "Nano Banana",
+    description: "For image editing and generation",
     icon: "photo_spark",
     modelName: "ai_image_tool",
     promptPlaceholderText:
@@ -260,8 +247,8 @@ const ALL_MODES: Mode[] = [
     id: "image-pro",
     type: "image",
     url: "embed://a2/a2.bgl.json#module:image-editor",
-    title: "Gemini 3 Pro Image (Nano Banana)",
-    description: "Optimized for professional asset production",
+    title: "Nano Banana Pro",
+    description: "For complex visuals with text",
     icon: "photo_spark",
     modelName: "gemini-3-pro-image-preview",
     promptPlaceholderText:
@@ -384,8 +371,16 @@ function resolveModes(
   return { modes, current };
 }
 
+/**
+ * Checks if the URL is for the generate-text subgraph.
+ * Used to short-circuit graph dispatch and call makeText directly.
+ */
+function isGenerateTextUrl(url: string): boolean {
+  return url.includes("generate-text.bgl.json#daf082ca");
+}
+
 async function invoke(
-  { "generation-mode": mode, "p-for-each": useForEach, ...rest }: Inputs,
+  { "generation-mode": mode, ...rest }: Inputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
@@ -393,34 +388,43 @@ async function invoke(
   const { current } = resolveModes(mode, flags);
 
   if (flags?.agentMode) {
-    const agentInputs: AgentInputs = {
-      "b-ui-consistent": false,
-      "b-ui-prompt": { parts: [] },
-      ...rest,
-      "b-si-instruction": current.makeInstruction(rest),
-      "b-si-constraint": current.modelConstraint,
-    };
-    return agent(agentInputs, caps, moduleArgs);
+    if (current.id === "agent") {
+      // Only "agent" mode gets full agentic behavior
+      const agentInputs: AgentInputs = {
+        "b-ui-consistent": false,
+        "b-ui-prompt": { parts: [] },
+        ...rest,
+        "b-si-instruction": current.makeInstruction(rest),
+        "b-si-constraint": current.modelConstraint,
+      };
+      return agent(agentInputs, caps, moduleArgs);
+    } else {
+      // Other modes dispatch directly to their board URLs
+      const { url, type, modelName } = current;
+      if (modelName) {
+        rest["p-model-name"] = modelName;
+      }
+      const inputs = forwardPorts(type, rest);
+      // Short-circuit: Call makeText directly instead of graph dispatch
+      if (isGenerateTextUrl(url)) {
+        return makeText(inputs as MakeTextInputs, caps, moduleArgs);
+      }
+      return caps.invoke({ $board: url, ...inputs });
+    }
   } else {
-    const { url: $board, type, modelName } = current;
-    const generateForEach = (flags?.generateForEach && !!useForEach) ?? false;
+    const { url, type, modelName } = current;
     // Model is treated as part of the Mode, but actually maps N:1
     // on actual underlying step type.
     if (modelName) {
       console.log(`Generating with ${modelName}`);
       rest["p-model-name"] = modelName;
     }
-    if (generateForEach) {
-      return forEach(caps, moduleArgs, rest, async (prompt) => {
-        const ports = { ...rest };
-        ports[PROMPT_PORT] = prompt;
-        return caps.invoke({ $board, ...forwardPorts(type, ports) }) as Promise<
-          Outcome<OutputValues>
-        >;
-      });
-    } else {
-      return caps.invoke({ $board, ...forwardPorts(type, rest) });
+    const inputs = forwardPorts(type, rest);
+    // Short-circuit: Call makeText directly instead of graph dispatch
+    if (isGenerateTextUrl(url)) {
+      return makeText(inputs as MakeTextInputs, caps, moduleArgs);
     }
+    return caps.invoke({ $board: url, ...inputs });
   }
 }
 
@@ -450,41 +454,38 @@ async function describe(
   }
 
   const flags = await readFlags(moduleArgs);
-  let generateForEachSchema: Schema["properties"] = {};
-  const generateForEachBehavior: BehaviorSchema[] = [];
-  if (flags?.generateForEach && !flags.agentMode) {
-    generateForEachSchema = {
-      "p-for-each": {
-        type: "boolean",
-        title: "Generate for each input",
-        behavior: ["config", "hint-preview", "hint-advanced"],
-        icon: "summarize",
-        description:
-          "When checked, this step will try to detect a list of items as its input and run for each item in the list",
-      },
-    };
-    if (rest["p-for-each"]) {
-      generateForEachBehavior.push("hint-for-each-mode");
-    }
-  }
 
   const { current, modes } = resolveModes(mode, flags);
   const { url, type } = current;
   let modeSchema: Schema["properties"] = {};
-  let behavior: BehaviorSchema[] = [];
-  behavior = [...generateForEachBehavior];
-  const describing = await caps.describe({
-    url,
-    inputs: rest as InputValues,
-  });
-  if (ok(describing)) {
+  let behavior: Schema["behavior"] = [];
+
+  // Short-circuit: Call describeGenerateText directly instead of graph dispatch
+  if (isGenerateTextUrl(url)) {
+    const transformedInputs = forwardPorts(type, rest);
+    const describing = await describeGenerateText(
+      { inputs: transformedInputs },
+      caps
+    );
     modeSchema = receivePorts(
       type,
       describing.inputSchema.properties || modeSchema
     );
-    behavior.push(...(describing.inputSchema.behavior || []));
+    behavior = describing.inputSchema.behavior || [];
+  } else {
+    const describing = await caps.describe({
+      url,
+      inputs: rest as InputValues,
+    });
+    if (ok(describing)) {
+      modeSchema = receivePorts(
+        type,
+        describing.inputSchema.properties || modeSchema
+      );
+      behavior = describing.inputSchema.behavior || [];
+    }
   }
-  if (flags?.agentMode) {
+  if (flags?.agentMode && current.id === "agent") {
     const agentSchema = computeAgentSchema(flags, rest);
     modeSchema = { ...modeSchema, ...agentSchema };
     behavior = [...behavior];
@@ -513,7 +514,6 @@ async function describe(
           title: "Context in",
           behavior: ["main-port"],
         },
-        ...generateForEachSchema,
         ...modeSchema,
       },
       behavior,

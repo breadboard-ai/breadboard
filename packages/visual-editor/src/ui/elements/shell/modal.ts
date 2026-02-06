@@ -112,6 +112,8 @@ export class VEModal extends LitElement {
           left: 50%;
           translate: -50% -50%;
           box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+          min-width: 300px;
+          box-sizing: border-box;
 
           & header {
             display: flex;

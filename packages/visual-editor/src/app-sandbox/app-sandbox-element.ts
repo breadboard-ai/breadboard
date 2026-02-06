@@ -8,7 +8,7 @@ import { ConsentType, ConsentUIType } from "@breadboard-ai/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, PropertyValues } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { INTERCEPT_POPUPS_SCRIPT } from "./app-sandbox-intercept-popups.js";
 import {
@@ -48,9 +48,8 @@ export class AppSandbox extends SignalWatcher(LitElement) {
   @property() accessor srcdoc = "";
   @property() accessor graphUrl = "";
 
-  @state()
   @consume({ context: scaContext })
-  accessor sca: SCA | undefined = undefined;
+  accessor sca!: SCA;
 
   readonly #iframe = createRef<HTMLIFrameElement>();
   get #iframeContentWindow() {

@@ -276,7 +276,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | HTMLTemplateResult
       | Array<HTMLTemplateResult | symbol>
       | symbol = nothing;
-    const last = this.run.app.last?.last;
+    const lastScreen = this.run.app.last;
+    const last = lastScreen?.last;
     if (last) {
       const htmlOutput = getHTMLOutput(last);
       if (htmlOutput !== null) {
@@ -338,7 +339,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           receiver = last.a2ui.receiver;
         } else {
           // Likely a raw LLM Content that needs to be converted to A2UI.
-          processor = appScreenToA2UIProcessor(last);
+          processor = appScreenToA2UIProcessor(last, {
+            isInput: lastScreen?.type === "input",
+          });
           receiver = null;
         }
 
@@ -845,7 +848,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         flow: shareableGraphUrl,
         resourceKey: await shareableGraphResourceKeyPromise,
         results: resultsFileId,
-        shared: true,
         guestPrefixed: false,
       },
       this.globalConfig?.hostOrigin

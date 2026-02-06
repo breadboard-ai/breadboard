@@ -224,7 +224,7 @@ export class ItemSelect extends LitElement {
         box-shadow: var(--bb-elevation-5);
 
         & .heading {
-          color: light-dark(var(--n-98), var(--n-70));
+          color: light-dark(var(--n-20), var(--n-70));
           font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
             var(--bb-font-family);
           margin: var(--bb-grid-size-2) var(--bb-grid-size-3);

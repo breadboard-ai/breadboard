@@ -7,13 +7,14 @@
 import { Capabilities } from "@breadboard-ai/types/capabilities.js";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
+import { AgentContext } from "../src/a2/agent/agent-context.js";
 import { McpClientManager } from "../src/mcp/client-manager.js";
 import {
   MemoryManager,
   SheetMetadataWithFilePath,
 } from "../src/a2/agent/types.js";
 import { Outcome } from "@breadboard-ai/types";
-import { type ConsentController } from "../src/sca/controller/subcontrollers/consent-controller.js";
+import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
 
 export { stubCaps, stubModuleArgs, stubMemoryManager };
 
@@ -44,6 +45,12 @@ const stubCaps: Capabilities = {
 
 const stubModuleArgs: A2ModuleArgs = {
   mcpClientManager: {} as unknown as McpClientManager,
+  agentContext: new AgentContext({
+    shell: {} as unknown as OpalShellHostProtocol,
+    fetchWithCreds: () => {
+      throw new Error(`fetchWithCreds not implemented`);
+    },
+  }),
   fetchWithCreds: () => {
     throw new Error(`fetchWithCreds not implemented`);
   },
@@ -59,6 +66,9 @@ const stubModuleArgs: A2ModuleArgs = {
 };
 
 const stubMemoryManager: MemoryManager = {
+  createSheet: () => {
+    throw new Error(`Not implemented`);
+  },
   readSheet: () => {
     throw new Error(`Not implemented`);
   },

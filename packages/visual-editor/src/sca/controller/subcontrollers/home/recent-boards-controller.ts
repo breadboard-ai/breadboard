@@ -11,17 +11,18 @@ import { RootController } from "../root-controller.js";
 const MAX_RECENT_BOARDS_SIZE = 100;
 
 export class RecentBoardsController extends RootController {
-  @field({ persist: "idb" })
+  @field({ persist: "idb", deep: true })
   private accessor _boards: RecentBoard[] = [];
 
   @field({ persist: "local" })
   private accessor _migrated = false;
 
   constructor(
-    id: string,
+    controllerId: string,
+    persistenceId: string,
     private readonly maxSize = MAX_RECENT_BOARDS_SIZE
   ) {
-    super(id);
+    super(controllerId, persistenceId);
   }
 
   /**
@@ -81,7 +82,13 @@ export class RecentBoardsController extends RootController {
 
   setPin(url: string, pinned: boolean) {
     const index = this.#find(url);
-    if (index === -1) return;
+    if (index === -1) {
+      this.add({
+        url,
+        pinned,
+      });
+      return;
+    }
 
     this._boards[index].pinned = pinned;
   }

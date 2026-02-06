@@ -15,14 +15,18 @@
     "prepack": "npm run build",
     "build": "wireit",
     "coverage": "wireit",
+    "coverage:ci": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
-    "test:only": "wireit",
+    "test:pattern": "wireit",
+    "test:file": "wireit",
     "eval:agent": "wireit",
     "eval:a2ui": "wireit",
     "eval:autoname": "wireit",
-    "eval:viewer": "wireit"
+    "eval:viewer": "wireit",
+    "eval:viewer:build": "wireit",
+    "lint": "wireit"
   },
   "wireit": {
     "build": {
@@ -103,19 +107,14 @@
         "shell"
       ]
     },
-    "test:only": {
-      "command": "node --import ./tests/controller-setup.js --test-reporter=dot --test --test-only --enable-source-maps './dist/tsc/tests/**/*.js' './dist/tsc/tests/*.js'",
-      "files": [],
-      "dependencies": [
-        "build:tsc"
-      ]
-    },
     "test": {
       "command": "node --import ./tests/controller-setup.js --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info --test --enable-source-maps './dist/tsc/tests/**/*.js' './dist/tsc/tests/*.js'",
       "env": {
         "NODE_V8_COVERAGE": "./coverage/tmp"
       },
-      "files": [],
+      "files": [
+        "tests/controller-setup.js"
+      ],
       "output": [
         "lcov.info",
         "coverage/tmp",
@@ -125,6 +124,32 @@
         "build:tsc"
       ]
     },
+    "test:file": {
+      "#": "Template for running a specific set of test files, usage: `npm run test:file --watch -- './dist/tsc/tests/sca/actions/share/**/*.js'`",
+      "command": "node --import ./tests/controller-setup.js --test-reporter=spec --test --enable-source-maps",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "tests/controller-setup.js"
+      ],
+      "output": [
+        "test-storage"
+      ]
+    },
+    "test:pattern": {
+      "#": "Run tests matching --test-name-pattern arg, usage: `npm run test:pattern -- --test-name-pattern=\"pattern\"`",
+      "command": "node --import ./tests/controller-setup.js --test-reporter=spec --test --enable-source-maps './dist/tsc/tests/**/*.js' './dist/tsc/tests/*.js'",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "tests/controller-setup.js"
+      ],
+      "output": [
+        "test-storage"
+      ]
+    },
     "coverage": {
       "command": "c8 --all report --reporter=html --reporter=json-summary --src=src",
       "files": [
@@ -132,6 +157,16 @@
       ],
       "dependencies": [
         "test"
+      ]
+    },
+    "coverage:ci": {
+      "command": "mkdir -p coverage-ci && cp coverage/coverage-summary.json coverage-ci/",
+      "files": [],
+      "output": [
+        "coverage-ci/coverage-summary.json"
+      ],
+      "dependencies": [
+        "coverage"
       ]
     },
     "eval:agent": {
@@ -161,6 +196,30 @@
     "eval:viewer": {
       "command": "vite dev eval/viewer",
       "files": [],
+      "output": []
+    },
+    "eval:viewer:build": {
+      "command": "vite build eval/viewer --outDir ../../dist/eval-viewer",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "eval/viewer/**/*"
+      ],
+      "output": [
+        "dist/eval-viewer"
+      ]
+    },
+    "lint": {
+      "command": "eslint 'src/**/*.ts'",
+      "dependencies": [
+        "<dependencies>#build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "eslint-rules/**/*.js",
+        "../../eslint.config.js"
+      ],
       "output": []
     }
   },
@@ -201,7 +260,7 @@
     "google-auth-library": "^10.1.0",
     "jsdom": "^27.4.0",
     "node-localstorage": "^3.0.5",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.1",
     "tsx": "^4.20.6",
     "tweakpane": "^4.0.5",
     "typescript": "^5.8.3",

@@ -26,12 +26,10 @@ export const ENABLE_FORCE_2D_GRAPH: boolean = getBoolean(
   "ENABLE_FORCE_2D_GRAPH"
 );
 
+export const ENABLE_SHARING_2: boolean = getBoolean("ENABLE_SHARING_2");
+
 export const ENABLE_STREAM_GEN_WEBPAGE: boolean = getBoolean(
   "ENABLE_STREAM_GEN_WEBPAGE"
-);
-
-export const ENABLE_GENERATE_FOR_EACH: boolean = getBoolean(
-  "ENABLE_GENERATE_FOR_EACH"
 );
 
 export const ENABLE_AGENT_MODE: boolean = getBoolean("ENABLE_AGENT_MODE");
@@ -141,6 +139,8 @@ export const ENABLE_DRIVE_PICKER_IN_LITE_MODE = getBoolean(
 export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
   "ENABLE_GOOGLE_DRIVE_TOOLS"
 );
+
+export const ENABLE_RESUME_AGENT_RUN = getBoolean("ENABLE_RESUME_AGENT_RUN");
 
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {

@@ -70,7 +70,6 @@ export class NodeAddEvent extends Event {
     public readonly createAtCenter: boolean,
     public readonly x?: number,
     public readonly y?: number,
-    public readonly connectedTo?: NodeIdentifier,
     public readonly subGraphId?: GraphIdentifier
   ) {
     super(NodeAddEvent.eventName, { ...eventInit });

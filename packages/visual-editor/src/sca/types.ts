@@ -11,7 +11,12 @@ import { type BaseBladeParams } from "tweakpane";
 import {
   ConsentRequest,
   ConsentUIType,
+  DataPart,
+  GraphIdentifier,
+  InputValues,
+  LLMContent,
   NodeIdentifier,
+  Outcome,
 } from "@breadboard-ai/types";
 import { GlobalConfig } from "../ui/contexts/global-config.js";
 import {
@@ -19,6 +24,7 @@ import {
   OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SettingsStore } from "../ui/types/types.js";
+import type { InPort } from "../ui/transforms/autowire-in-ports.js";
 
 export interface ServicesConfig {
   globalConfig: GlobalConfig;
@@ -116,4 +122,36 @@ export interface DebugParams<Value> {
 export interface PendingConsent {
   request: ConsentRequest;
   askUsingUiType?: ConsentUIType;
+}
+
+/**
+ * Represents a pending edit to a node's configuration.
+ * Values should already be transformed to the proper configuration format.
+ */
+export interface PendingEdit {
+  graphId: GraphIdentifier;
+  nodeId: NodeIdentifier;
+  values: InputValues;
+  /** Incoming port connections (from chiclets) to autowire */
+  ins?: InPort[];
+  /** Graph version when edit was captured - used to detect stale edits */
+  graphVersion: number;
+}
+
+/**
+ * Represents a pending edit to an asset.
+ * Used by the step autosave trigger to save asset changes on selection change.
+ */
+export interface PendingAssetEdit {
+  assetPath: string;
+  title: string;
+  dataPart: DataPart | null | undefined;
+  /** Graph version when edit was captured - used to detect stale edits */
+  graphVersion: number;
+  /**
+   * The asset's update function - stored so trigger can call it directly.
+   * TODO: When assets are managed by SCA , this should
+   * call an AssetController or AssetAction instead of storing the function.
+   */
+  update: (title: string, data?: LLMContent[]) => Promise<Outcome<void>>;
 }

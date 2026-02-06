@@ -49,13 +49,6 @@ function shouldShowTabs(enabledTabs: Record<TabId, boolean>) {
   return countEnabledTabs(enabledTabs) > 1;
 }
 
-/**
- * Returns whether there are any enabled global settings
- */
-export function hasEnabledGlobalSettings(sca: SCA | undefined) {
-  return countEnabledTabs(getTabEnabledMap(sca)) > 0;
-}
-
 @customElement("bb-global-settings-modal")
 export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })

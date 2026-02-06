@@ -10,20 +10,18 @@ const Strings = StringsHelper.forSection("Editor");
 import {
   EditHistory,
   GraphStoreEntry,
-  GraphStoreUpdateEvent,
   InspectableGraph,
   MainGraphIdentifier,
-  MutableGraphStore,
 } from "@breadboard-ai/types";
 import { parseBase64DataUrl } from "@breadboard-ai/utils";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { until } from "lit/directives/until.js";
-import { isA2 } from "../../../a2/index.js";
+import { A2_COMPONENTS } from "../../../a2/a2-registry.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import {
   HideTooltipEvent,
@@ -47,7 +45,7 @@ import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-editor-controls")
-export class EditorControls extends LitElement {
+export class EditorControls extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
@@ -59,12 +57,6 @@ export class EditorControls extends LitElement {
 
   @property()
   accessor graph: InspectableGraph | null = null;
-
-  @property()
-  accessor graphStore: MutableGraphStore | null = null;
-
-  @property()
-  accessor graphStoreUpdateId = 0;
 
   @property()
   accessor mainGraphId: MainGraphIdentifier | null = null;
@@ -170,6 +162,10 @@ export class EditorControls extends LitElement {
             border-radius: var(--bb-grid-size) var(--bb-grid-size)
               var(--bb-grid-size-12) var(--bb-grid-size-12);
             margin: var(--bb-grid-size) 0 var(--bb-grid-size-2) 0;
+          }
+
+          &[disabled] {
+            opacity: 0.38;
           }
 
           &:not([disabled]) {
@@ -499,24 +495,6 @@ export class EditorControls extends LitElement {
         }
       }
 
-      bb-component-selector-overlay {
-        position: absolute;
-        bottom: 52px;
-        left: 50%;
-        transform: translateX(-50%) translateX(-29px);
-        z-index: 8;
-        animation: slideIn 0.2s cubic-bezier(0, 0, 0.3, 1) forwards;
-
-        &[detached="true"] {
-          position: fixed;
-          left: var(--component-library-x, 100px);
-          top: var(--component-library-y, 100px);
-          right: auto;
-          bottom: auto;
-          transform: none;
-        }
-      }
-
       #add-drive-proxy {
         display: block;
         width: 0;
@@ -548,173 +526,13 @@ export class EditorControls extends LitElement {
       );
     }
   }
-
-  #createComponentList(graphStore: MutableGraphStore, typeTag: string) {
-    const kitList: Array<{ id: string; metadata: GraphStoreEntry }> = [];
-    const graphs = graphStore.graphs();
-
-    for (const graph of graphs) {
-      const { mainGraph } = graph;
-      if (!isA2(mainGraph.url)) continue;
-
-      // Don't show items that are still updating.
-      if (graph.updating) continue;
-
-      // Skip items that don't belong in Quick Access component picker.
-      if (!graph.tags?.includes("quick-access")) continue;
-
-      // Skip items that don't aren't of specified type
-      if (!graph.tags?.includes(typeTag)) continue;
-
-      if (!graph.title) {
-        continue;
-      }
-
-      if (
-        !mainGraph.title ||
-        mainGraph.tags?.includes("deprecated") ||
-        !graph.tags?.includes("component") ||
-        graph.tags?.includes("deprecated")
-      ) {
-        continue;
-      }
-
-      if (
-        !this.showExperimentalComponents &&
-        mainGraph.tags?.includes("experimental")
-      ) {
-        continue;
-      }
-
-      if (
-        !this.showExperimentalComponents &&
-        graph.tags?.includes("experimental")
-      ) {
-        continue;
-      }
-
-      // This should not be necessary, but currently is, because the
-      // GraphStore gets polluted with graphs that are silently converted
-      // from imperative to declarative (hence "module:" URL).
-      // TODO(dglazkov): Refactor graphstore machinery to make this not
-      //                 necessary.
-      if (mainGraph.url?.startsWith("module:")) continue;
-
-      kitList.push({ id: graph.url!, metadata: graph });
-    }
-
-    kitList.sort((kit1, kit2) => {
-      const order1 = kit1.metadata.order || Number.MAX_SAFE_INTEGER;
-      const order2 = kit2.metadata.order || Number.MAX_SAFE_INTEGER;
-      if (order1 != order2) return order1 - order2;
-      return (kit1.metadata.title || "") > (kit2.metadata.title || "") ? 1 : -1;
-    });
-
-    if (typeTag === "tool") {
-      const subGraphs =
-        (this.mainGraphId
-          ? this.graphStore?.get(this.mainGraphId)?.graph.graphs
-          : {}) || {};
-      kitList.push(
-        ...Object.entries(subGraphs).map(([graphId, descriptor]) => {
-          const id = `#${graphId}`;
-          return {
-            id,
-            metadata: {
-              mainGraph: {
-                id: this.mainGraphId!,
-              },
-              updating: false,
-              title: descriptor.title,
-              ...descriptor.metadata,
-            },
-          };
-        })
-      );
-    }
-
-    if (typeTag === "modules") {
-      const modules =
-        (this.mainGraphId
-          ? this.graphStore?.inspect(this.mainGraphId, "")?.modules()
-          : {}) || {};
-
-      for (const [moduleId, module] of Object.entries(modules)) {
-        if (!module.metadata().runnable) {
-          continue;
-        }
-
-        const id = `#module:${moduleId}`;
-        kitList.push({
-          id,
-          metadata: {
-            mainGraph: {
-              id: this.mainGraphId!,
-            },
-            updating: false,
-            title: module.metadata().title,
-            icon: module.metadata().icon,
-            description: module.metadata().description,
-          },
-        });
-      }
-    }
-
-    return kitList;
-  }
-
-  #storeReady: Promise<void> = Promise.resolve();
-  willUpdate() {
-    this.#storeReady = Promise.resolve();
-    if (this.graphStore) {
-      this.#storeReady = this.sca.controller.isHydrated.then(() => {
-        return new Promise((resolve) => {
-          if (!this.graphStore) {
-            resolve();
-            return;
-          }
-
-          const awaitingUpdate = new Set<string>();
-          const onGraphUpdate = (evt: GraphStoreUpdateEvent) => {
-            if (awaitingUpdate.has(evt.mainGraphId)) {
-              awaitingUpdate.delete(evt.mainGraphId);
-            }
-
-            if (awaitingUpdate.size === 0) {
-              this.graphStore?.removeEventListener(
-                "update",
-                onGraphUpdate as EventListener
-              );
-              resolve();
-            }
-          };
-
-          this.graphStore.addEventListener("update", onGraphUpdate);
-
-          for (const graph of this.graphStore.graphs()) {
-            if (!graph.updating) {
-              continue;
-            }
-
-            awaitingUpdate.add(graph.mainGraph.id);
-          }
-
-          if (awaitingUpdate.size === 0) {
-            resolve();
-          }
-        });
-      });
-    }
-  }
-
   #handleChosenKitItem(nodeType: string) {
     let x;
     let y;
-    let nodeId;
     let subGraphId;
     const createAtCenter = true;
     this.dispatchEvent(
-      new NodeAddEvent(nodeType, createAtCenter, x, y, nodeId, subGraphId)
+      new NodeAddEvent(nodeType, createAtCenter, x, y, subGraphId)
     );
     this.hidePickers();
   }
@@ -724,293 +542,273 @@ export class EditorControls extends LitElement {
       return nothing;
     }
 
-    const mainItems = this.#storeReady.then(() => {
-      if (!this.graphStore) {
-        return html`Unable to load steps`;
+    const items: HTMLTemplateResult[] = A2_COMPONENTS.map((item) => {
+      const classes: Record<string, boolean> = {
+        "sans-flex": true,
+        "w-500": true,
+        "md-body-small": true,
+        round: true,
+      };
+      if (item.icon) {
+        classes[item.icon] = true;
       }
 
-      // TODO: Just do this in a single pass.
-      const generate = this.#createComponentList(this.graphStore, "generate");
-      const input = this.#createComponentList(this.graphStore, "input");
-      const output = this.#createComponentList(this.graphStore, "output");
+      return html`<button
+        draggable="true"
+        class=${classMap(classes)}
+        @click=${() => {
+          this.actionTracker?.addNewStep(item.title);
+          this.#handleChosenKitItem(item.url);
+        }}
+        @dragstart=${(evt: DragEvent) => {
+          this.actionTracker?.addNewStep(item.title);
+          if (!evt.dataTransfer) {
+            return;
+          }
 
-      const items: HTMLTemplateResult[] = [
-        ...input,
-        ...generate,
-        ...output,
-      ].map((item) => {
-        const classes: Record<string, boolean> = {
-          "sans-flex": true,
-          "w-500": true,
-          "md-body-small": true,
-          round: true,
-        };
-        if (item.metadata.icon) {
-          classes[item.metadata.icon] = true;
-        }
+          evt.dataTransfer.setData(DATA_TYPE, item.url);
+        }}
+      >
+        ${item.icon
+          ? html`<span class="g-icon filled round"
+              >${iconSubstitute(item.icon)}</span
+            >`
+          : nothing}
+        ${item.title}
+      </button>`;
+    });
 
-        return html`<button
-          draggable="true"
-          class=${classMap(classes)}
-          @click=${() => {
-            this.actionTracker?.addNewStep(item.metadata.title);
-            this.#handleChosenKitItem(item.id);
-          }}
-          @dragstart=${(evt: DragEvent) => {
-            this.actionTracker?.addNewStep(item.metadata.title);
-            if (!evt.dataTransfer) {
+    items.push(
+      html`<bb-item-select
+          .heading=${Strings.from("LABEL_ADD_ASSETS")}
+          .showDownArrow=${false}
+          @change=${(evt: Event) => {
+            const [select] = evt.composedPath();
+            if (!(select instanceof ItemSelect)) {
               return;
             }
 
-            evt.dataTransfer.setData(DATA_TYPE, item.id);
-          }}
-        >
-          ${item.metadata.icon
-            ? html`<span class="g-icon filled round"
-                >${iconSubstitute(item.metadata.icon)}</span
-              >`
-            : nothing}
-          ${item.metadata.title ?? "Untitled"}
-        </button>`;
-      });
-
-      items.push(
-        html`<bb-item-select
-            .heading=${Strings.from("LABEL_ADD_ASSETS")}
-            .showDownArrow=${false}
-            @change=${(evt: Event) => {
-              const [select] = evt.composedPath();
-              if (!(select instanceof ItemSelect)) {
-                return;
-              }
-
-              switch (select.value) {
-                case "text": {
-                  this.dispatchEvent(
-                    new CreateNewAssetsEvent([
-                      {
-                        path: globalThis.crypto.randomUUID(),
-                        type: "content",
-                        name: "Text",
-                        data: {
-                          role: "user",
-                          parts: [{ text: "" }],
-                        },
-                      },
-                    ])
-                  );
-                  break;
-                }
-
-                case "drawing": {
-                  this.dispatchEvent(
-                    new CreateNewAssetsEvent([
-                      {
-                        path: globalThis.crypto.randomUUID(),
-                        type: "content",
-                        subType: "drawable",
-                        name: "Drawing",
-                        data: {
-                          role: "user",
-                          parts: [
-                            { inlineData: { mimeType: "image/png", data: "" } },
-                          ],
-                        },
-                      },
-                    ])
-                  );
-                  break;
-                }
-
-                case "upload": {
-                  const f = document.createElement("input");
-                  f.type = "file";
-                  f.multiple = true;
-                  f.addEventListener("change", () => {
-                    if (!f.files) {
-                      return;
-                    }
-
-                    Promise.all(
-                      [...f.files].map((file) => {
-                        return new Promise<{
-                          name: string;
-                          mimeType: string;
-                          data: string;
-                        }>((resolve, reject) => {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            // In some cases, file.type is an empty string,
-                            // like when the OS doesn't recognize the file
-                            // extension.
-                            const part = parseBase64DataUrl(
-                              reader.result as string
-                            );
-                            if (!part) {
-                              reject(`Unable to read the files`);
-                              return;
-                            }
-                            // One of those types is Markdown, so we just look
-                            // at the extension here and flip the MIME type.
-                            if (file.name.endsWith(".md")) {
-                              part.inlineData.mimeType = "text/plain";
-                            }
-                            resolve({
-                              name: file.name,
-                              mimeType: part.inlineData.mimeType,
-                              data: part.inlineData.data,
-                            });
-                          };
-                          reader.onerror = () => reject("File read error");
-                          reader.readAsDataURL(file);
-                        });
-                      })
-                    ).then((files) => {
-                      const assets: NewAsset[] = files.map((file) => {
-                        return {
-                          path: globalThis.crypto.randomUUID(),
-                          type: "file",
-                          name: file.name,
-                          managed: true,
-                          data: {
-                            role: "user",
-                            parts: [
-                              {
-                                inlineData: {
-                                  mimeType: file.mimeType,
-                                  data: file.data,
-                                },
-                              },
-                            ],
-                          },
-                        };
-                      });
-
-                      this.dispatchEvent(new CreateNewAssetsEvent(assets));
-                    });
-                  });
-
-                  f.click();
-                  break;
-                }
-
-                case "youtube": {
-                  this.dispatchEvent(
-                    new CreateNewAssetsEvent([
-                      {
-                        path: globalThis.crypto.randomUUID(),
-                        name: "YouTube Video",
-                        type: "content",
-                        subType: "youtube",
-                        data: {
-                          role: "user",
-                          parts: [
-                            {
-                              fileData: { fileUri: "", mimeType: "video/mp4" },
-                            },
-                          ],
-                        },
-                      },
-                    ])
-                  );
-                  break;
-                }
-
-                case "gdrive": {
-                  this.#attemptGDrivePickerFlow();
-                  break;
-                }
-
-                default: {
-                  console.log("Init", select.value);
-                  break;
-                }
-              }
-            }}
-            .freezeValue=${0}
-            .transparent=${true}
-            .values=${[
-              {
-                id: "asset",
-                title: "Add Assets",
-                icon: "add_box",
-                hidden: true,
-              },
-              {
-                id: "upload",
-                title: "Upload file",
-                icon: "upload",
-              },
-              {
-                id: "gdrive",
-                title: "My Drive",
-                icon: "drive",
-              },
-              {
-                id: "youtube",
-                title: "YouTube",
-                icon: "video_youtube",
-              },
-              {
-                id: "text",
-                title: "Text",
-                icon: "text_fields",
-              },
-              {
-                id: "drawing",
-                title: "Drawing",
-                icon: "draw",
-              },
-            ]}
-          ></bb-item-select>
-          <div>
-            <bb-google-drive-file-id
-              id="add-drive-proxy"
-              ${ref(this.#addDriveInputRef)}
-              @bb-input-change=${(evt: InputChangeEvent) => {
-                const driveFile = evt.value as PickedValue;
-
+            switch (select.value) {
+              case "text": {
                 this.dispatchEvent(
                   new CreateNewAssetsEvent([
                     {
                       path: globalThis.crypto.randomUUID(),
-                      name: driveFile.preview,
                       type: "content",
-                      subType: "gdrive",
-                      managed: false,
+                      name: "Text",
+                      data: {
+                        role: "user",
+                        parts: [{ text: "" }],
+                      },
+                    },
+                  ])
+                );
+                break;
+              }
+
+              case "drawing": {
+                this.dispatchEvent(
+                  new CreateNewAssetsEvent([
+                    {
+                      path: globalThis.crypto.randomUUID(),
+                      type: "content",
+                      subType: "drawable",
+                      name: "Drawing",
+                      data: {
+                        role: "user",
+                        parts: [
+                          { inlineData: { mimeType: "image/png", data: "" } },
+                        ],
+                      },
+                    },
+                  ])
+                );
+                break;
+              }
+
+              case "upload": {
+                const f = document.createElement("input");
+                f.type = "file";
+                f.multiple = true;
+                f.addEventListener("change", () => {
+                  if (!f.files) {
+                    return;
+                  }
+
+                  Promise.all(
+                    [...f.files].map((file) => {
+                      return new Promise<{
+                        name: string;
+                        mimeType: string;
+                        data: string;
+                      }>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          // In some cases, file.type is an empty string,
+                          // like when the OS doesn't recognize the file
+                          // extension.
+                          const part = parseBase64DataUrl(
+                            reader.result as string
+                          );
+                          if (!part) {
+                            reject(`Unable to read the files`);
+                            return;
+                          }
+                          // One of those types is Markdown, so we just look
+                          // at the extension here and flip the MIME type.
+                          if (file.name.endsWith(".md")) {
+                            part.inlineData.mimeType = "text/plain";
+                          }
+                          resolve({
+                            name: file.name,
+                            mimeType: part.inlineData.mimeType,
+                            data: part.inlineData.data,
+                          });
+                        };
+                        reader.onerror = () => reject("File read error");
+                        reader.readAsDataURL(file);
+                      });
+                    })
+                  ).then((files) => {
+                    const assets: NewAsset[] = files.map((file) => {
+                      return {
+                        path: globalThis.crypto.randomUUID(),
+                        type: "file",
+                        name: file.name,
+                        managed: true,
+                        data: {
+                          role: "user",
+                          parts: [
+                            {
+                              inlineData: {
+                                mimeType: file.mimeType,
+                                data: file.data,
+                              },
+                            },
+                          ],
+                        },
+                      };
+                    });
+
+                    this.dispatchEvent(new CreateNewAssetsEvent(assets));
+                  });
+                });
+
+                f.click();
+                break;
+              }
+
+              case "youtube": {
+                this.dispatchEvent(
+                  new CreateNewAssetsEvent([
+                    {
+                      path: globalThis.crypto.randomUUID(),
+                      name: "YouTube Video",
+                      type: "content",
+                      subType: "youtube",
                       data: {
                         role: "user",
                         parts: [
                           {
-                            storedData: {
-                              handle: `drive:/${driveFile.id}`,
-                              mimeType: driveFile.mimeType,
-                              resourceKey: driveFile.resourceKey,
-                            },
+                            fileData: { fileUri: "", mimeType: "video/mp4" },
                           },
                         ],
                       },
                     },
                   ])
                 );
-              }}
-            ></bb-google-drive-file-id>
-          </div> `
-      );
+                break;
+              }
 
-      return items;
-    });
+              case "gdrive": {
+                this.#attemptGDrivePickerFlow();
+                break;
+              }
+
+              default: {
+                console.log("Init", select.value);
+                break;
+              }
+            }
+          }}
+          .freezeValue=${0}
+          .transparent=${true}
+          .values=${[
+            {
+              id: "asset",
+              title: "Add Assets",
+              icon: "add_box",
+              hidden: true,
+            },
+            {
+              id: "upload",
+              title: "Upload file",
+              icon: "upload",
+            },
+            {
+              id: "gdrive",
+              title: "My Drive",
+              icon: "drive",
+            },
+            {
+              id: "youtube",
+              title: "YouTube",
+              icon: "video_youtube",
+            },
+            {
+              id: "text",
+              title: "Text",
+              icon: "text_fields",
+            },
+            {
+              id: "drawing",
+              title: "Drawing",
+              icon: "draw",
+            },
+          ]}
+        ></bb-item-select>
+        <div>
+          <bb-google-drive-file-id
+            id="add-drive-proxy"
+            ${ref(this.#addDriveInputRef)}
+            @bb-input-change=${(evt: InputChangeEvent) => {
+              const driveFile = evt.value as PickedValue;
+
+              this.dispatchEvent(
+                new CreateNewAssetsEvent([
+                  {
+                    path: globalThis.crypto.randomUUID(),
+                    name: driveFile.preview,
+                    type: "content",
+                    subType: "gdrive",
+                    managed: false,
+                    data: {
+                      role: "user",
+                      parts: [
+                        {
+                          storedData: {
+                            handle: `drive:/${driveFile.id}`,
+                            mimeType: driveFile.mimeType,
+                            resourceKey: driveFile.resourceKey,
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ])
+              );
+            }}
+          ></bb-google-drive-file-id>
+        </div> `
+    );
 
     const topShelf = html`<div id="top-shelf">
-      <div id="items">
-        ${until(mainItems, html`<div class="loading">Loading steps...</div>`)}
-      </div>
+      <div id="items">${items}</div>
     </div>`;
 
     const shelf = html`<div id="shelf">
       <bb-flowgen-editor-input
         .hasEmptyGraph=${this.graph.raw().nodes.length === 0}
-        .currentGraph=${this.graph.raw()}
         @pointerdown=${(evt: PointerEvent) => {
           // <bb-renderer> listens for pointerdown and retains focus so that
           // after selection updates the user can do things like delete nodes

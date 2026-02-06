@@ -8,9 +8,18 @@ import { RecentBoardStore } from "../../../data/recent-boards.js";
 import { RecentBoardsController } from "../subcontrollers/home/recent-boards-controller.js";
 import { unwrap } from "../decorators/utils/wrap-unwrap.js";
 import { RecentBoard } from "../../../ui/types/types.js";
-import { FlagController } from "../subcontrollers/flag-controller.js";
+import {
+  FlagController,
+  StatusUpdatesController,
+} from "../subcontrollers/global/global.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
 import { IdbFlagManager } from "../../../idb/flags/idb-flag-manager.js";
+
+/**
+ * localStorage key for status updates hash (legacy storage).
+ * Must match the key used in main-base.ts.
+ */
+const UPDATE_HASH_KEY = "bb-update-hash";
 
 /**
  * Carries the boards over from the old RecentBoardStore to the new
@@ -56,4 +65,28 @@ export async function flagsMigration(
 
   flagController.migrate(flags);
   await flagController.isSettled;
+}
+
+/**
+ * Carries the status updates hash from raw localStorage to the new
+ * StatusUpdatesController. This ensures users don't see the "new updates"
+ * chip for updates they've already seen.
+ */
+export async function statusUpdatesMigration(
+  controller: StatusUpdatesController
+) {
+  // Wait for the controller to boot so we can check its migration status.
+  await controller.isHydrated;
+  if (controller.isMigrated) return;
+
+  const existingHash = globalThis.localStorage.getItem(UPDATE_HASH_KEY);
+  if (existingHash) {
+    controller.migrate(existingHash);
+    globalThis.localStorage.removeItem(UPDATE_HASH_KEY);
+  } else {
+    // Mark as migrated even if no hash existed
+    controller.migrate("0");
+  }
+
+  await controller.isSettled;
 }

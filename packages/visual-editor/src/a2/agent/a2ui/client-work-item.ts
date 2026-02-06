@@ -46,6 +46,10 @@ class A2UIClientWorkItem implements WorkItem {
     this.start = performance.now();
   }
 
+  finish() {
+    this.end = performance.now();
+  }
+
   renderUserInterface() {
     if (this.product.has(this.workItemId)) return;
 

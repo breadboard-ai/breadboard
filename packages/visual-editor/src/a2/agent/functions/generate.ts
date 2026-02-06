@@ -12,13 +12,7 @@ import {
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import z from "zod";
-import {
-  conformGeminiBody,
-  GenerationConfig,
-  streamGenerateContent,
-  Tool,
-} from "../../a2/gemini.js";
-import { callGeminiImage } from "../../a2/image-utils.js";
+import { GenerationConfig, Tool } from "../../a2/gemini.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { AgentFileSystem } from "../file-system.js";
 import {
@@ -34,15 +28,14 @@ import {
   toText,
   tr,
 } from "../../a2/utils.js";
-import { callVideoGen, expandVeoError } from "../../video-generator/main.js";
-import { callAudioGen, VOICES } from "../../audio-generator/main.js";
-import { callMusicGen } from "../../music-generator/main.js";
+import { expandVeoError } from "../../video-generator/main.js";
+import { VOICES } from "../../audio-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
-import { FunctionGroup } from "../types.js";
-import { statusUpdateSchema, taskIdSchema } from "./system.js";
+import { FunctionGroup, Generators } from "../types.js";
+import { fileNameSchema, statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 
-export { getGenerateFunctionGroup };
+export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 
@@ -53,8 +46,6 @@ const LITE_MODEL_NAME = "gemini-2.5-flash-lite";
 
 const IMAGE_FLASH_MODEL_NAME = "gemini-2.5-flash-image";
 const IMAGE_PRO_MODEL_NAME = "gemini-3-pro-image-preview";
-
-const RETRY_SLEEP_MS = 700;
 
 export type ModelConstraint =
   | "none"
@@ -72,6 +63,7 @@ export type GenerateFunctionArgs = {
   translator: PidginTranslator;
   modelConstraint: ModelConstraint;
   taskTreeManager: TaskTreeManager;
+  generators: Generators;
 };
 
 const GENERATE_TEXT_FUNCTION = "generate_text";
@@ -99,17 +91,17 @@ A good code generator prompt will include the following components:
 
 1. Preference for the Python library to use. For example "Use the reportlab library to generate PDF"
 
-2. What to consume as input. Focus on the "what", rather than the "how". When binary files are passed as input, use the key words "use provided file". Do NOT refer to VFS paths, see below.
+2. What to consume as input. Focus on the "what", rather than the "how". When binary files are passed as input, use the key words "use provided file". Do NOT refer to file paths, see below.
 
 3. The high-level approach to solving the problem with code. If applicable, specify algorithms or techniques to use.
 
 4. What to deliver as output. Again, do not worry about the "how", instead specify the "what". For text files, use the key word "return" in the prompt. For binary files, use the key word word "save". For example, "Return the resulting number" or "Save the PDF file" or "Save all four resulting images". Do NOT ask to name the files, see below.
 
-The code generator prompt may include references to VFS files and it may output references to VFS files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to the VFS.
+The code generator prompt may include references to files and it may output references to files. However, theses references are translated at the boundary of the sandboxed code execution environment into actual files and file handles that will be different from what you specify. The Python code execution environment has no access to your file system.
 
-Because of this translation layer, DO NOT mention VFS or VFS references in the prompt outside of the <file> tag.
+Because of this translation layer, DO NOT mention file system paths or file references in the prompt outside of the <file> tag.
 
-For example, if you need to include  an existing file at "/vfs/text3.md" into the prompt, you can reference it as <file src="/vfs/text3.md" />. If you do not use <file> tags, the code generator will not be able to access the file.
+For example, if you need to include  an existing file at "/mnt/text3.md" into the prompt, you can reference it as <file src="/mnt/text3.md" />. If you do not use <file> tags, the code generator will not be able to access the file.
 
 For output, do not ask the code generator to name the files. It will assign its own file names names to save in the sandbox, and these will be picked up at the sandbox boundary and translated into <file> tags for you.
 `;
@@ -128,10 +120,12 @@ function defineGenerateFunctions(
     translator,
     modelConstraint,
     taskTreeManager,
+    generators,
   } = args;
   const imageFunction = defineFunction(
     {
       name: "generate_images",
+      icon: "photo_spark",
       description: `Generates one or more images based on a prompt and optionally, one or more images`,
       parameters: {
         prompt: z.string()
@@ -173,11 +167,12 @@ The Gemini model to use for image generation. How to choose the right model:
           .default("flash"),
         images: z
           .array(z.string().describe("An input image, specified as a VS path"))
-          .describe("A list of input images, specified as VFS paths"),
+          .describe("A list of input images, specified as file paths"),
         aspect_ratio: z
           .enum(["1:1", "9:16", "16:9", "4:3", "3:4"])
           .describe(`The aspect ratio for the generated images`)
           .default("16:9"),
+        ...fileNameSchema,
         ...taskIdSchema,
         ...statusUpdateSchema,
       },
@@ -190,7 +185,7 @@ The Gemini model to use for image generation. How to choose the right model:
           .optional(),
         images: z
           .array(
-            z.string().describe(`A generated image, specified as a VFS path`)
+            z.string().describe(`A generated image, specified as a file path`)
           )
           .describe(`Array of generated images`)
           .optional(),
@@ -203,6 +198,7 @@ The Gemini model to use for image generation. How to choose the right model:
         status_update,
         model,
         aspect_ratio,
+        file_name,
         task_id,
       },
       statusUpdater
@@ -218,7 +214,7 @@ The Gemini model to use for image generation. How to choose the right model:
       const modelName =
         model == "pro" ? IMAGE_PRO_MODEL_NAME : IMAGE_FLASH_MODEL_NAME;
 
-      const generated = await callGeminiImage(
+      const generated = await generators.callImage(
         caps,
         moduleArgs,
         modelName,
@@ -227,10 +223,17 @@ The Gemini model to use for image generation. How to choose the right model:
         true,
         aspect_ratio
       );
-      if (!ok(generated)) return generated;
+      if (!ok(generated)) return { error: generated.$error };
       const errors: string[] = [];
-      const images = mergeContent(generated, "user")
-        .parts.map((part) => fileSystem.add(part))
+      const parts = mergeContent(generated, "user").parts;
+      const images = parts
+        .map((part, index) => {
+          const name =
+            file_name && parts.length > 1
+              ? `${file_name}_${index + 1}`
+              : file_name;
+          return fileSystem.add(part, name);
+        })
         .map((part) => {
           if (!ok(part)) {
             errors.push(part.$error);
@@ -247,13 +250,14 @@ The Gemini model to use for image generation. How to choose the right model:
   const textFunction = defineFunction(
     {
       name: GENERATE_TEXT_FUNCTION,
+      icon: "text_analysis",
       description: `
 An extremely versatile text generator, powered by Gemini. Use it for any tasks
 that involve generation of text. Supports multimodal content input.`.trim(),
       parameters: {
         prompt: z.string().describe(tr`
 
-Detailed prompt to use for text generation. The prompt may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.
+Detailed prompt to use for text generation. The prompt may include references to files. For instance, if you have an existing file at "/mnt/text3.md", you can reference it as <file src="/mnt/text3.md" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.
 
 These references can point to files of any type, such as images, audio, videos, etc.
 `),
@@ -332,12 +336,12 @@ Specify URLs in the prompt.
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       if (status_update) {
-        statusUpdater(status_update);
+        statusUpdater(status_update, { expectedDurationInSec: 20 });
       } else {
         if (search_grounding || maps_grounding) {
-          statusUpdater("Researching");
+          statusUpdater("Researching", { expectedDurationInSec: 30 });
         } else {
-          statusUpdater("Generating Text");
+          statusUpdater("Generating Text", { expectedDurationInSec: 20 });
         }
       }
       let tools: Tool[] | undefined = [];
@@ -370,7 +374,7 @@ Specify URLs in the prompt.
       if (tools.length === 0) tools = undefined;
       const translated = await translator.fromPidginString(prompt);
       if (!ok(translated)) return { error: translated.$error };
-      const body = await conformGeminiBody(moduleArgs, {
+      const body = await generators.conformBody(moduleArgs, {
         systemInstruction: defaultSystemInstruction(),
         contents: [translated],
         tools,
@@ -379,31 +383,26 @@ Specify URLs in the prompt.
       if (!ok(body)) return body;
       const resolvedModel = resolveTextModel(model);
       const results: TextCapabilityPart[] = [];
-      let maxRetries = 5;
-      do {
-        const generating = await streamGenerateContent(
-          resolvedModel,
-          body,
-          moduleArgs
-        );
-        if (!ok(generating)) {
-          return { error: generating.$error };
-        }
-        for await (const chunk of generating) {
-          const parts = chunk.candidates.at(0)?.content?.parts;
-          if (!parts) continue;
-          for (const part of parts) {
-            if (!part || !("text" in part)) continue;
-            if (part.thought) {
-              statusUpdater(part.text, { isThought: true });
-            } else {
-              results.push(part);
-            }
+      const generating = await generators.streamContent(
+        resolvedModel,
+        body,
+        moduleArgs
+      );
+      if (!ok(generating)) {
+        return { error: generating.$error };
+      }
+      for await (const chunk of generating) {
+        const parts = chunk.candidates.at(0)?.content?.parts;
+        if (!parts) continue;
+        for (const part of parts) {
+          if (!part || !("text" in part)) continue;
+          if (part.thought) {
+            statusUpdater(part.text, { isThought: true });
+          } else {
+            results.push(part);
           }
         }
-        if (results.length > 0) break;
-        await new Promise((resolve) => setTimeout(resolve, RETRY_SLEEP_MS));
-      } while (maxRetries-- > 0);
+      }
       statusUpdater(null);
       const textParts = mergeTextParts(results);
       if (textParts.length === 0) {
@@ -421,6 +420,7 @@ Specify URLs in the prompt.
   const videoFunction = defineFunction(
     {
       name: "generate_video",
+      icon: "videocam_auto",
       description:
         "Generating high-fidelity, 8-second videos featuring stunning realism and natively generated audio",
       parameters: {
@@ -446,13 +446,14 @@ The following elements should be included in your prompt:
               .describe("A reference input image, specified as a VS path")
           )
           .describe(
-            "A list of input reference images, specified as VFS paths. Use reference images only when you need to start with a particular image."
+            "A list of input reference images, specified as file paths. Use reference images only when you need to start with a particular image."
           )
           .optional(),
         aspect_ratio: z
           .enum(["16:9", "9:16"])
           .describe(`The aspect ratio of the video`)
           .default("16:9"),
+        ...fileNameSchema,
         ...taskIdSchema,
         ...statusUpdateSchema,
       },
@@ -465,12 +466,12 @@ The following elements should be included in your prompt:
           .optional(),
         video: z
           .string()
-          .describe(`Generated video, specified as VFS path`)
+          .describe(`Generated video, specified as file path`)
           .optional(),
       },
     },
     async (
-      { prompt, status_update, aspect_ratio, images, task_id },
+      { prompt, status_update, aspect_ratio, images, file_name, task_id },
       statusUpdateCallback
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
@@ -480,7 +481,7 @@ The following elements should be included in your prompt:
       const imageParts = await fileSystem.getMany(images || []);
       if (!ok(imageParts)) return { error: imageParts.$error };
 
-      const generating = await callVideoGen(
+      const generating = await generators.callVideo(
         caps,
         moduleArgs,
         prompt,
@@ -498,7 +499,7 @@ The following elements should be included in your prompt:
       if (!dataPart || !("storedData" in dataPart)) {
         return { error: `No video was generated` };
       }
-      const video = fileSystem.add(dataPart);
+      const video = fileSystem.add(dataPart, file_name);
       if (!ok(video)) {
         return { error: video.$error };
       }
@@ -508,6 +509,7 @@ The following elements should be included in your prompt:
   const speechFunction = defineFunction(
     {
       name: "generate_speech_from_text",
+      icon: "audio_magic_eraser",
       description: "Generates speech from text",
       parameters: {
         text: z.string().describe("The verbatim text to turn into speech."),
@@ -515,6 +517,7 @@ The following elements should be included in your prompt:
           .enum(VOICES)
           .default("Female (English)")
           .describe("The voice to use for speech generation"),
+        ...fileNameSchema,
         ...taskIdSchema,
         ...statusUpdateSchema,
       },
@@ -527,23 +530,31 @@ The following elements should be included in your prompt:
           .optional(),
         speech: z
           .string()
-          .describe("Generated speech as a VFS file path")
+          .describe("Generated speech as a file path")
           .optional(),
       },
     },
-    async ({ text, status_update, voice, task_id }, statusUpdateCallback) => {
+    async (
+      { text, status_update, voice, file_name, task_id },
+      statusUpdateCallback
+    ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Speech", {
         expectedDurationInSec: 20,
       });
-      const generating = await callAudioGen(caps, moduleArgs, text, voice);
+      const generating = await generators.callAudio(
+        caps,
+        moduleArgs,
+        text,
+        voice
+      );
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);
       if (!dataPart || !("storedData" in dataPart)) {
         return { error: `No speech was generated` };
       }
-      const speech = fileSystem.add(dataPart);
+      const speech = fileSystem.add(dataPart, file_name);
       if (!ok(speech)) return { error: speech.$error };
       return { speech };
     }
@@ -551,6 +562,7 @@ The following elements should be included in your prompt:
   const musicFunction = defineFunction(
     {
       name: "generate_music_from_text",
+      icon: "audio_magic_eraser",
       description: tr`
 Generates instrumental music and audio soundscapes based on the provided prompt.
 
@@ -574,6 +586,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
 `,
       parameters: {
         prompt: z.string().describe(`The prompt from which to generate music`),
+        ...fileNameSchema,
         ...taskIdSchema,
         ...statusUpdateSchema,
       },
@@ -584,25 +597,25 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
             `If an error has occurred, will contain a description of the error`
           )
           .optional(),
-        music: z
-          .string()
-          .describe("Generated music as a VFS file path")
-          .optional(),
+        music: z.string().describe("Generated music as a file path").optional(),
       },
     },
-    async ({ prompt, status_update, task_id }, statusUpdateCallback) => {
+    async (
+      { prompt, status_update, file_name, task_id },
+      statusUpdateCallback
+    ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Music", {
         expectedDurationInSec: 30,
       });
-      const generating = await callMusicGen(caps, moduleArgs, prompt);
+      const generating = await generators.callMusic(caps, moduleArgs, prompt);
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);
       if (!dataPart || !("storedData" in dataPart)) {
         return { error: `No speech was generated` };
       }
-      const music = fileSystem.add(dataPart);
+      const music = fileSystem.add(dataPart, file_name);
       if (!ok(music)) return { error: music.$error };
       return { music };
     }
@@ -610,6 +623,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
   const codeFunction = defineFunction(
     {
       name: GENERATE_AND_EXECUTE_CODE_FUNCTION,
+      icon: "code",
       description: tr`
 Generates and executes Python code, returning the result of execution.
 
@@ -659,14 +673,14 @@ Code execution works best with text and CSV files.
 
 If the code environment generates an error, the model may decide to regenerate the code output. This can happen up to 5 times.
 
-NOTE: The Python code execution environment has no access to the virtual file system (VFS), so don't use it to access or manipulate the VFS files.
+NOTE: The Python code execution environment has no access to your file system, so don't use it to access or manipulate your files.
 
         `,
       parameters: {
         prompt: z.string().describe(tr`
 Detailed prompt for the code to generate. DO NOT write Python code as the prompt. Instead DO use the natural language. This will let the code generator within this tool make the best decisions on what code to write. Your job is not to write code, but to direct the code generator.
 
-The prompt may include references to VFS files as <file> tags.
+The prompt may include references to files as <file> tags. They will be correctly marshalled across the sandbox boundary.
 `),
         search_grounding: z
           .boolean()
@@ -689,7 +703,7 @@ connects the code generation model to real-time web content and works with all a
         result: z
           .string()
           .describe(
-            "The result of code execution as text that may contain VFS path references"
+            "The result of code execution as text that may contain file path references"
           )
           .optional(),
       },
@@ -703,9 +717,9 @@ connects the code generation model to real-time web content and works with all a
         statusUpdater(status_update, { expectedDurationInSec: 40 });
       } else {
         if (search_grounding) {
-          statusUpdater("Researching");
+          statusUpdater("Researching", { expectedDurationInSec: 50 });
         } else {
-          statusUpdater("Generating Text");
+          statusUpdater("Generating Code", { expectedDurationInSec: 40 });
         }
       }
       let tools: Tool[] | undefined = [];
@@ -717,7 +731,7 @@ connects the code generation model to real-time web content and works with all a
 
       const translated = await translator.fromPidginString(prompt);
       if (!ok(translated)) return { error: translated.$error };
-      const body = await conformGeminiBody(moduleArgs, {
+      const body = await generators.conformBody(moduleArgs, {
         systemInstruction: llm`${tr`
 
 Your job is to generate and execute code to fulfill your objective.
@@ -731,57 +745,51 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
       });
       if (!ok(body)) return body;
       const results: TextCapabilityPart[] = [];
-      let maxRetries = 5;
-      do {
-        const generating = await streamGenerateContent(
-          CODE_GENERATION_MODEL_NAME,
-          body,
-          moduleArgs
-        );
-        if (!ok(generating)) {
-          return { error: generating.$error };
-        }
-        let lastCodeExecutionError: string | null = null;
-        for await (const chunk of generating) {
-          const parts = chunk.candidates.at(0)?.content?.parts;
-          if (!parts) continue;
-          for (const part of parts) {
-            if (!part) continue;
-            if ("text" in part) {
-              if (part.thought) {
-                statusUpdater(part.text, { isThought: true });
-              } else {
-                results.push(part);
-              }
-            } else if ("inlineData" in part) {
-              // File result
-              const file = fileSystem.add(part);
-              if (!ok(file)) {
-                return {
-                  error: `Code generation failed due to invalid file output.`,
-                };
-              }
-              results.push({ text: `<file src="${file}" />` });
-            } else if ("codeExecutionResult" in part) {
-              const { outcome, output } = part.codeExecutionResult;
-              if (outcome !== "OUTCOME_OK") {
-                lastCodeExecutionError = output;
-              } else {
-                lastCodeExecutionError = null;
-              }
+      const generating = await generators.streamContent(
+        CODE_GENERATION_MODEL_NAME,
+        body,
+        moduleArgs
+      );
+      if (!ok(generating)) {
+        return { error: generating.$error };
+      }
+      let lastCodeExecutionError: string | null = null;
+      for await (const chunk of generating) {
+        const parts = chunk.candidates.at(0)?.content?.parts;
+        if (!parts) continue;
+        for (const part of parts) {
+          if (!part) continue;
+          if ("text" in part) {
+            if (part.thought) {
+              statusUpdater(part.text, { isThought: true });
+            } else {
+              results.push(part);
+            }
+          } else if ("inlineData" in part) {
+            // File result
+            const file = fileSystem.add(part);
+            if (!ok(file)) {
+              return {
+                error: `Code generation failed due to invalid file output.`,
+              };
+            }
+            results.push({ text: `<file src="${file}" />` });
+          } else if ("codeExecutionResult" in part) {
+            const { outcome, output } = part.codeExecutionResult;
+            if (outcome !== "OUTCOME_OK") {
+              lastCodeExecutionError = output;
+            } else {
+              lastCodeExecutionError = null;
             }
           }
         }
+      }
 
-        if (lastCodeExecutionError) {
-          return {
-            error: `The code generator tried and failed with the following error:\n\n${lastCodeExecutionError}`,
-          };
-        }
-        if (results.length > 0) break;
-        console.log("WAITING TO RETRY");
-        await new Promise((resolve) => setTimeout(resolve, RETRY_SLEEP_MS));
-      } while (maxRetries-- > 0);
+      if (lastCodeExecutionError) {
+        return {
+          error: `The code generator tried and failed with the following error:\n\n${lastCodeExecutionError}`,
+        };
+      }
       statusUpdater(null);
       const textParts = mergeTextParts(results);
       if (textParts.length === 0) {
@@ -795,9 +803,6 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
   );
 
   switch (modelConstraint) {
-    case "text-flash":
-    case "text-pro":
-      return [textFunction, codeFunction];
     case "image":
       return [imageFunction];
     case "video":
@@ -806,6 +811,8 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
       return [speechFunction];
     case "music":
       return [musicFunction];
+    case "text-flash":
+    case "text-pro":
     case "none":
     default:
       return [

@@ -6,23 +6,36 @@
 import { LitElement, html, css, PropertyValues, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
 import * as Styles from "../../styles/styles.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
-import { LiteModeState } from "../../state/index.js";
+import type { SCA } from "../../../sca/sca.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { deriveLiteViewType } from "../../../sca/utils/lite-view-type.js";
 
 @customElement("bb-prompt-view")
 export class PromptView extends SignalWatcher(LitElement) {
   @property()
   accessor prompt: string | null = null;
 
-  @property()
-  accessor state: LiteModeState | null = null;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property({ reflect: true, attribute: true, type: Boolean })
   accessor expanded = false;
 
   @property({ reflect: true, attribute: true, type: Boolean })
   accessor overflowing = false;
+
+  /** Get viewType from SCA state */
+  get #viewType() {
+    return deriveLiteViewType(this.sca, this.sca.controller.editor.graph.empty);
+  }
+
+  /** Get generation status from SCA */
+  get #status() {
+    return this.sca.controller.global.flowgenInput.state.status;
+  }
 
   static styles = [
     Styles.HostIcons.icons,
@@ -150,7 +163,8 @@ export class PromptView extends SignalWatcher(LitElement) {
 
   render() {
     let content: HTMLTemplateResult | symbol;
-    const { viewType, status } = this.state || {};
+    const viewType = this.#viewType;
+    const status = this.#status;
     if (this.prompt && this.prompt.trim() !== "") {
       content = html`${this.prompt}`;
     } else if (viewType === "loading" || status === "generating") {

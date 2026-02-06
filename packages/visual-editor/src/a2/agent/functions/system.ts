@@ -23,9 +23,11 @@ import {
   TaskTreeManager,
 } from "../task-tree-manager.js";
 import { FunctionGroup } from "../types.js";
+import { GENERATE_TEXT_FUNCTION } from "./generate.js";
 
 export {
   FAILED_TO_FULFILL_FUNCTION,
+  fileNameSchema,
   getSystemFunctionGroup,
   statusUpdateSchema,
   taskIdSchema,
@@ -63,11 +65,22 @@ const taskIdSchema = {
     .optional(),
 } satisfies ArgsRawShape;
 
+const fileNameSchema = {
+  file_name: z
+    .string()
+    .describe(
+      tr`Optional name for the generated file (without extension). Use snake_case for naming. The system will automatically add the appropriate extension based on the file type.`
+    )
+    .optional(),
+} satisfies ArgsRawShape;
+
 const instruction = tr`
 
 You are an LLM-powered AI agent, orchestrated within an application alongside other AI agents. During this session, your job is to fulfill the objective, specified at the start of the conversation context. The objective provided by the application and is not visible to the user of the application. Similarly, the outcome you produce is delivered by the orchestration system to another agent. The outcome is also not visible to the user to the application.
 
-You are linked with other AI agents via hyperlinks. The <a href="url">title</a> syntax points at another agent. If the objective calls for it, you can transfer control to this agent. To transfer control, use the url of the agent in the  "href" parameter when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. As a result, the outcome will be transferred to that agent.
+You may receive input from other agents (their outcomes) in the form of <input source-agent="agent_name">content</input> tags. The content of the tag is the input from the agent.
+
+You are also linked with other AI agents via hyperlinks. The <a href="url">title</a> syntax points at another agent. If the objective calls for it, you can transfer control to this agent. To transfer control, use the url of the agent in the  "href" parameter when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. As a result, the outcome will be transferred to that agent.
 
 To help you orient in time, today is ${new Date().toLocaleString("en-US", {
   month: "long",
@@ -139,7 +152,7 @@ Only after you've completely fulfilled the objective call the "${OBJECTIVE_FULFI
 
 ### What to return
 
-Return outcome as a text content that can reference VFS files. They will be included as part of the outcome. For example, if you need to return multiple existing images or videos, just reference them using <file> tags in the "${OBJECTIVE_OUTCOME_PARAMETER}" parameter.
+Return outcome as a text content that can reference files. They will be included as part of the outcome. For example, if you need to return multiple existing images or videos, just reference them using <file> tags in the "${OBJECTIVE_OUTCOME_PARAMETER}" parameter.
 
 Only return what is asked for in the objective. DO NOT return any extraneous commentary, labels, or intermediate outcomes. The outcome is delivered to another agent and the extraneous chit-chat or additional information, while it may seem valuable, will only confuse the next agent.
 
@@ -151,9 +164,9 @@ Example: "evaluate multiple products for product market fit and return the verdi
 
 2. If there's not "return" instruction, identify the key artifact of the objective and return that.
 
-Example 1: "research the provided topic and generate an image of ..." -- return just a VFS file reference to the image without any extraneous text.
+Example 1: "research the provided topic and generate an image of ..." -- return just a file reference to the image without any extraneous text.
 
-Example 2: "Make a blog post writer. It ... shows the header graphic and the blog post as a final result" -- return just the header graphic as a VFS file reference and a blog post.
+Example 2: "Make a blog post writer. It ... shows the header graphic and the blog post as a final result" -- return just the header graphic as a file reference and a blog post.
 
 3. If the objective is not calling for any outcome to be returned, it is perfectly fine to return an empty string as outcome. The mere fact of calling the "${OBJECTIVE_FULFILLED_FUNCTION}" function is an outcome in itself.
 
@@ -168,13 +181,13 @@ In situations when you failed to fulfill the objective, invoke the "${FAILED_TO_
 
 ## Using Files
 
-The system you're working in uses the virtual file system (VFS). The VFS paths are always prefixed with the "/vfs/". Every VFS file path will be of the form "/vfs/[name]". Use snake_case to name files.
+The system you're working in has a virtual file system. The file paths you have access to are always prefixed with the "/mnt/". Every file path will be of the form "/mnt/[name]". Use snake_case to name files.
 
-You can use the <file src="/vfs/path" /> syntax to embed them in text.
+You can use the <file src="/mnt/path" /> syntax to embed them in text.
 
 Only reference files that you know to exist. If you aren't sure, call the "${LIST_FILES_FUNCTION}" function to confirm their existence. Do NOT make hypothetical file tags: they will cause processing errors.
 
-NOTE: The post-processing parser that reads your generated output and replaces the <file src="/vfs/path" /> with the contents of the file. Make sure that your output still makes sense after the replacement.
+NOTE: The post-processing parser that reads your generated output and replaces the <file src="/mnt/path" /> with the contents of the file. Make sure that your output still makes sense after the replacement.
 
 ### Good example
 
@@ -182,15 +195,15 @@ Evaluate the proposal below according to the provided rubric:
 
 Proposal:
 
-<file src="/vfs/proposal.md" />
+<file src="/mnt/proposal.md" />
 
 Rubric:
 
-<file src="/vfs/rubric.md" />
+<file src="/mnt/rubric.md" />
 
 ### Bad example 
 
-Evaluate proposal <file src="/vfs/proposal.md" /> according to the rubric <file src="/vfs/rubric.md" />
+Evaluate proposal <file src="/mnt/proposal.md" /> according to the rubric <file src="/mnt/rubric.md" />
 
 In the good example above, the replaced texts fit neatly under each heading. In the bad example, the replaced text is stuffed into the sentence.
 `;
@@ -204,12 +217,13 @@ function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
     defineFunction(
       {
         name: OBJECTIVE_FULFILLED_FUNCTION,
+        icon: "check_circle",
         description: `Inidicates completion of the overall objective. 
 Call only when the specified objective is entirely fulfilled`,
         parameters: {
           objective_outcome: z.string().describe(
             tr`
-Your return value: the content of the fulfilled objective. The content may include references to VFS files. For instance, if you have an existing file at "/vfs/image4.png", you can reference it as <file src="/vfs/image4.ong" /> in content. If you do not use <file> tags, the contents of this file will not be included as part of the outcome.
+Your return value: the content of the fulfilled objective. The content may include references to files. For instance, if you have an existing file at "/mnt/image4.png", you can reference it as <file src="/mnt/image4.png" /> in content. If you do not use <file> tags, the contents of this file will not be included as part of the outcome.
 
 These references can point to files of any type, such as text, audio, videos, etc. Projects can also be referenced in this way.
 
@@ -246,6 +260,7 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: FAILED_TO_FULFILL_FUNCTION,
+        icon: "cancel",
         description: `Inidicates that the agent failed to fulfill of the overall
 objective. Call ONLY when all means of fulfilling the objective have been
 exhausted.`,
@@ -277,28 +292,33 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: LIST_FILES_FUNCTION,
-        description: "Lists all VFS files",
-        parameters: {},
+        icon: "folder",
+        description: "Lists all files",
+        parameters: {
+          ...statusUpdateSchema,
+        },
         response: {
-          list: z.string().describe("List of all files as VFS paths"),
+          list: z.string().describe("List of all files as file paths"),
         },
       },
-      async () => {
+      async ({ status_update }, statusUpdate) => {
+        statusUpdate(status_update || "Getting a list of files");
         return { list: await args.fileSystem.listFiles() };
       }
     ),
     defineFunction(
       {
         name: "system_write_file",
-        description: "Writes the provided text to a VFS file",
+        icon: "edit",
+        description: "Writes the provided text to a file",
         parameters: {
           file_name: z.string().describe(
             tr`
 The name of the file without the extension.
-This is the name that will come after the "/vfs/" prefix in the VFS file path.
+This is the name that will come after the "/mnt/" prefix in the file path.
 Use snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten`
           ),
-          content: z.string().describe(`The content to write into a VFS file`),
+          content: z.string().describe(`The content to write into a file`),
           mime_type: z
             .string()
             .describe(
@@ -334,12 +354,16 @@ Use snake_case for naming. If the file does not exist, it will be created. If th
     defineFunction(
       {
         name: "system_read_text_from_file",
-        description:
-          "Reads text from a file and return text as string. If the file does not contain text, empty string will be returned",
+        icon: "description",
+        description: tr`
+
+Reads text from a file and return text as string. If the file does not contain text or is not supported, an error will be returned. Google Drive files may contain images and other non-textual content. Please use "${GENERATE_TEXT_FUNCTION}" to read them at full fidelity.
+
+`,
         parameters: {
           file_path: z.string().describe(
             tr`
-The VFS path of the file to read the text from.`
+The file path of the file to read the text from.`
           ),
         },
         response: {
@@ -369,6 +393,7 @@ If an error has occurred, will contain a description of the error`
     defineFunctionLoose(
       {
         name: CREATE_TASK_TREE_FUNCTION,
+        icon: "task",
         description: tr`
 
 When working on a complicated problem, use this function to create a scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially.
@@ -392,6 +417,7 @@ When working on a complicated problem, use this function to create a scratch pad
     defineFunction(
       {
         name: MARK_COMPLETED_TASKS_FUNCTION,
+        icon: "task",
         description: tr`
 Mark one or more tasks defined with the "${CREATE_TASK_TREE_FUNCTION}" as complete.
 `,
@@ -406,7 +432,7 @@ The "task_id" from the task tree to mark as completed`)
         response: {
           file_path: z
             .string()
-            .describe("The VFS path to the updated task tree"),
+            .describe("The file path to the updated task tree"),
         },
       },
       async ({ task_ids }) => {

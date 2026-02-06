@@ -19,7 +19,6 @@ export type * from "./loader.js";
 export type * from "./mcp.js";
 export type * from "./node-handler.js";
 export type * from "./orchestration.js";
-export type * from "./particles.js";
 export type * from "./probe.js";
 export type * from "./remote.js";
 export type * from "./result.js";
@@ -36,3 +35,4 @@ export {
   ConsentUIType,
 } from "./consent-manager.js";
 export type * from "./consent-manager.js";
+export type * from "./console-update.js";

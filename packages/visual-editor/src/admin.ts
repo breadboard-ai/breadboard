@@ -53,13 +53,13 @@ export class Admin {
   }
 
   get project(): Project | null {
-    const tab = this.runtime.board.tabs.values().next().value;
-    if (!tab) return null;
-    return this.runtime.state.project;
+    // Return project directly - no longer need to check tabs
+    return this.runtime.project;
   }
 
   #gdriveBoardServer(): GoogleDriveBoardServer {
-    return this.runtime.board.googleDriveBoardServer;
+    // Use the driveBoardServer property set on this class
+    return this.driveBoardServer!;
   }
 
   get gdrive() {

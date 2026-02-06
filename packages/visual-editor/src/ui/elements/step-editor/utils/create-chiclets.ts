@@ -16,12 +16,17 @@ import {
   isLLMContentArray,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
-import { ROUTE_TOOL_PATH } from "../../../../a2/a2/tool-manager.js";
+import {
+  ROUTE_TOOL_PATH,
+  MEMORY_TOOL_PATH,
+} from "../../../../a2/a2/tool-manager.js";
+import { SCA } from "../../../../sca/sca.js";
 
 export function createChiclets(
   port: InspectablePort | null,
   projectState: Project | null = null,
-  subGraphId: string
+  subGraphId: string,
+  sca: SCA
 ): HTMLTemplateResult[] {
   if (!port) {
     return [];
@@ -77,7 +82,8 @@ export function createChiclets(
     const { icon: srcIcon, tags: metadataTags } = expandChiclet(
       part,
       projectState,
-      subGraphId
+      subGraphId,
+      sca
     );
 
     let sourceTitle = title;
@@ -91,7 +97,8 @@ export function createChiclets(
         const { icon, title } = expandChiclet(
           { path: instance, type: "in", title: "unknown" },
           projectState,
-          subGraphId
+          subGraphId,
+          sca
         );
 
         targetIcon = icon;
@@ -99,6 +106,9 @@ export function createChiclets(
       } else {
         targetTitle = " " + "[not set]";
       }
+    } else if (path === MEMORY_TOOL_PATH) {
+      metadataIcon = "database";
+      sourceTitle = "Use Memory";
     }
 
     chiclets.push(

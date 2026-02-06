@@ -5,6 +5,7 @@
  */
 import { Template, TemplatePart } from "@breadboard-ai/utils";
 import { css, html, LitElement } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events.js";
@@ -17,19 +18,27 @@ import { icons } from "../../../styles/icons.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { jsonStringify } from "../../../utils/json-stringify.js";
 import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js";
-import { ROUTE_TOOL_PATH } from "../../../../a2/a2/tool-manager.js";
+import {
+  ROUTE_TOOL_PATH,
+  MEMORY_TOOL_PATH,
+} from "../../../../a2/a2/tool-manager.js";
+import { SCA } from "../../../../sca/sca.js";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../../sca/context/context.js";
 
 export function chicletHtml(
   part: TemplatePart,
   projectState: Project | null,
-  subGraphId: string | null
+  subGraphId: string | null,
+  sca?: SCA
 ) {
   const { type, invalid, mimeType } = part;
   const assetType = getAssetType(mimeType) ?? "";
   const { icon: srcIcon, tags: metadataTags } = expandChiclet(
     part,
     projectState,
-    subGraphId
+    subGraphId,
+    sca
   );
 
   const { title, path, instance } = part;
@@ -63,6 +72,9 @@ export function chicletHtml(
     label.dataset.parameter = "step";
     sourceTitle = "Go to";
     metadataIcon = "start";
+  } else if (path === MEMORY_TOOL_PATH) {
+    sourceTitle = "Use Memory";
+    metadataIcon = "database";
   }
 
   label.setAttribute("contenteditable", "false");
@@ -96,7 +108,8 @@ export function chicletHtml(
       const { icon, title } = expandChiclet(
         { path: instance, type: "in", title: "unknown" },
         projectState,
-        subGraphId
+        subGraphId,
+        sca
       );
 
       targetTitle = title;
@@ -126,14 +139,18 @@ export function chicletHtml(
 }
 
 @customElement("bb-text-editor")
-export class TextEditor extends LitElement {
+export class TextEditor extends SignalWatcher(LitElement) {
+  @consume({context: scaContext})
+  accessor sca!: SCA;
+
   @property()
   set value(value: string) {
     this.#rawValue = value;
     this.#renderableValue = createTrustedChicletHTML(
       value,
+      this.sca,
       this.projectState,
-      this.subGraphId
+      this.subGraphId,
     );
     this.#updateEditorValue();
   }
@@ -160,6 +177,9 @@ export class TextEditor extends LitElement {
 
   @property()
   accessor readOnly = false;
+
+  @property({ type: Boolean })
+  accessor isAgentMode = false;
 
   static styles = [
     icons,
@@ -416,6 +436,7 @@ export class TextEditor extends LitElement {
       (tempEl as { innerHTML: string | TrustedHTML }).innerHTML =
         createTrustedChicletHTML(
           `{${JSON.stringify(part)}}`,
+          this.sca,
           this.projectState,
           this.subGraphId
         );
@@ -898,6 +919,7 @@ export class TextEditor extends LitElement {
       }
     ).innerHTML = createTrustedChicletHTML(
       evt.clipboardData.getData("text"),
+      this.sca,
       this.projectState,
       this.subGraphId
     );
@@ -1034,8 +1056,8 @@ export class TextEditor extends LitElement {
     this.#fastAccessRef.value.showTools = !hasTarget;
     this.#fastAccessRef.value.showComponents = !hasTarget;
     this.#fastAccessRef.value.showRoutes = hasTarget;
-    this.#fastAccessRef.value.showParameters = false;
-    this.#fastAccessRef.value.showControlFlowTools = !hasTarget;
+    this.#fastAccessRef.value.showAgentModeTools =
+      this.isAgentMode && !hasTarget;
     this.#isUsingFastAccess = true;
   }
 
@@ -1207,7 +1229,7 @@ export class TextEditor extends LitElement {
         }}
         .graphId=${this.subGraphId}
         .nodeId=${this.nodeId}
-        .showControlFlowTools=${this.#fastAccessTarget === null}
+        .showAgentModeTools=${this.#fastAccessTarget === null}
         .showAssets=${this.#fastAccessTarget === null}
         .showTools=${this.#fastAccessTarget === null}
         .state=${this.projectState?.stepEditor.fastAccess}

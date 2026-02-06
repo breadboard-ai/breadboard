@@ -807,17 +807,49 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       );
       return { canAccess: true, accessStatus: "ACCESS_STATUS_OK" };
     }
-    const response = await fetch(
-      new URL(
-        "/v1beta1/checkAppAccess",
-        CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT
-      ),
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} error checking geo restriction`);
+
+    const checkAppAccess = async (): Promise<CheckAppAccessResult> => {
+      const response = await fetch(
+        new URL(
+          "/v1beta1/checkAppAccess",
+          CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT
+        ),
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!response.ok) {
+        throw new Error(
+          `HTTP ${response.status} error checking geo restriction`
+        );
+      }
+      return (await response.json()) as CheckAppAccessResult;
+    };
+
+    const maxAttempts = 4;
+    const maxDelay = 5000;
+    let attempts = 0;
+    let delay = 1000;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        return await checkAppAccess();
+      } catch (error) {
+        attempts++;
+        if (attempts < maxAttempts) {
+          console.log(
+            `[shell host] checkAppAccess error, retrying in ${delay}ms.`,
+            error
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay = Math.min(delay * 1.5, maxDelay);
+        } else {
+          console.log(
+            `[shell host] checkAppAccess error, too many retries.`,
+            error
+          );
+          throw error;
+        }
+      }
     }
-    return (await response.json()) as CheckAppAccessResult;
   }
 
   sendToEmbedder = async (message: BreadboardMessage): Promise<void> => {

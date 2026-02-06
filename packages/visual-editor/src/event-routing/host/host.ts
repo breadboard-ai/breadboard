@@ -10,12 +10,12 @@ import { EventRoute } from "../types.js";
 export const ModeRoute: EventRoute<"host.modetoggle"> = {
   event: "host.modetoggle",
 
-  async do({ runtime, originalEvent }) {
+  async do({ sca, originalEvent }) {
     const current = parseUrl(window.location.href);
     if (current.page === "graph") {
       const newMode = originalEvent.detail.mode;
       if (newMode !== current.mode) {
-        runtime.router.go({ ...current, mode: newMode });
+        sca.controller.router.go({ ...current, mode: newMode });
       }
     }
     return false;
@@ -63,14 +63,14 @@ export const UnlockRoute: EventRoute<"host.unlock"> = {
 export const FlagChangeRoute: EventRoute<"host.flagchange"> = {
   event: "host.flagchange",
 
-  async do({ runtime, originalEvent }) {
+  async do({ sca, originalEvent }) {
     if (typeof originalEvent.detail.value !== "undefined") {
-      await runtime.flags.override(
+      await sca.controller.global.flags.override(
         originalEvent.detail.flag,
         originalEvent.detail.value
       );
     } else {
-      await runtime.flags.clearOverride(originalEvent.detail.flag);
+      await sca.controller.global.flags.clearOverride(originalEvent.detail.flag);
     }
     return false;
   },

@@ -4,7 +4,6 @@
 
 import { Template } from "./template.js";
 import { ok } from "./utils.js";
-import { fanOutContext, flattenContext } from "./lists.js";
 import {
   Capabilities,
   LLMContent,
@@ -16,7 +15,6 @@ export { invoke as default, describe };
 
 type InvokeInputs = {
   text?: LLMContent;
-  "z-flatten-list": boolean;
 };
 
 type Outputs = {
@@ -30,7 +28,7 @@ type DescribeInputs = {
 };
 
 async function invoke(
-  { text, "z-flatten-list": flatten, ...params }: InvokeInputs,
+  { text, ...params }: InvokeInputs,
   caps: Capabilities
 ): Promise<Outcome<Outputs>> {
   const template = new Template(caps, text);
@@ -38,16 +36,8 @@ async function invoke(
   if (!ok(substituting)) {
     return substituting;
   }
-  let context = await fanOutContext(
-    substituting,
-    undefined,
-    async (instruction) => instruction
-  );
-  if (!ok(context)) return context;
-  if (flatten) {
-    context = flattenContext(context);
-  }
-  return { context };
+  // Process single item directly (list support removed)
+  return { context: [substituting] };
 }
 
 async function describe(
@@ -64,14 +54,6 @@ async function describe(
           behavior: ["llm-content", "hint-preview", "config"],
           title: "Text",
           description: "Type the @ character to select the outputs to combine",
-        },
-        "z-flatten-list": {
-          type: "boolean",
-          behavior: ["hint-preview", "config"],
-          icon: "summarize",
-          title: "Flatten the list",
-          description:
-            "When checked, the step will flatten the incoming list into a single outputs",
         },
         ...template.schemas(),
       },

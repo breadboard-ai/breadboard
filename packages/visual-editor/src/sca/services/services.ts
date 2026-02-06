@@ -27,21 +27,26 @@ import { composeFileSystemBackends } from "../../engine/file-system/composed-per
 import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
+import { AgentContext } from "../../a2/agent/agent-context.js";
 import { addRunModule } from "../../engine/add-run-module.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
 import { createA2Server } from "../../a2/index.js";
 import { createLoader } from "../../engine/loader/index.js";
 import { createGraphStore } from "../../engine/inspector/index.js";
-import { Autonamer } from "../../runtime/autonamer.js";
+import { Autonamer } from "./autonamer.js";
 import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
 import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";
 import { ActionTracker } from "../../ui/types/types.js";
-import { type ConsentController } from "../controller/subcontrollers/consent-controller.js";
+import { type ConsentController } from "../controller/subcontrollers/global/global.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
+import { RunService } from "./run-service.js";
+import { StatusUpdatesService } from "./status-updates-service.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
+  agentContext: AgentContext;
+  apiClient: AppCatalystApiClient;
   autonamer: Autonamer;
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
@@ -53,7 +58,9 @@ export interface AppServices {
   kits: Kit[];
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
+  runService: RunService;
   signinAdapter: SigninAdapter;
+  statusUpdates: StatusUpdatesService;
 }
 
 let instance: AppServices | null = null;
@@ -102,11 +109,17 @@ export function services(
       OPAL_BACKEND_API_PREFIX
     );
 
+    const agentContext = new AgentContext({
+      shell: config.shellHost,
+      fetchWithCreds,
+    });
+
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,
       shell: config.shellHost,
       getConsentController,
+      agentContext,
     });
     const kits = addRunModule(sandbox, []);
     const googleDriveBoardServer = createGoogleDriveBoardServer(
@@ -140,6 +153,8 @@ export function services(
 
     instance = {
       actionTracker,
+      agentContext,
+      apiClient,
       autonamer,
       emailPrefsManager,
       fetchWithCreds,
@@ -151,7 +166,9 @@ export function services(
       kits,
       loader,
       mcpClientManager,
+      runService: new RunService(),
       signinAdapter,
+      statusUpdates: new StatusUpdatesService(),
     } satisfies AppServices;
   }
 

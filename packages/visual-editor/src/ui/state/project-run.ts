@@ -10,13 +10,10 @@ import {
   EditableGraph,
   ErrorObject,
   ErrorResponse,
-  FileSystem,
   GraphDescriptor,
   HarnessRunner,
   InspectableGraph,
   InspectableNode,
-  MainGraphIdentifier,
-  MutableGraphStore,
   NodeIdentifier,
   NodeLifecycleState,
   NodeMetadata,
@@ -35,7 +32,6 @@ import {
   Schema,
   SimplifiedProjectRunState,
 } from "@breadboard-ai/types";
-import { type ParticleTree, ParticleTreeImpl } from "../../particles/index.js";
 
 import { err, ok } from "@breadboard-ai/utils";
 import { Signal } from "signal-polyfill";
@@ -47,11 +43,10 @@ import { getStepIcon } from "../utils/get-step-icon.js";
 import { edgeToString } from "../utils/workspace.js";
 import { ReactiveApp } from "./app.js";
 import { ReactiveAppScreen } from "./app-screen.js";
-import { getParticleStreamHandle, idFromPath } from "./common.js";
+import { idFromPath } from "./common.js";
 import { ReactiveConsoleEntry } from "./console-entry.js";
 import { ReactiveRendererRunState } from "./renderer-run-state.js";
 import {
-  EphemeralParticleTree,
   ProjectRun,
   ProjectRunStatus,
   RendererRunState,
@@ -59,7 +54,7 @@ import {
   UserInput,
 } from "./types.js";
 import { decodeError, decodeErrorData } from "./utils/decode-error.js";
-import { ParticleOperationReader } from "./utils/particle-operation-reader.js";
+
 import { ActionTracker } from "../types/types.js";
 import { computeControlState } from "../../runtime/control.js";
 
@@ -81,10 +76,11 @@ function createProjectRunStateFromFinalOutput(
   if (!gettingMainGraph?.success) {
     return error(`Can't to find graph in graph store`);
   }
-  const run = ReactiveProjectRun.createInert(
-    gettingMainGraph.result,
-    graphStore
-  );
+  const inspectable = graphStore.inspect(gettingMainGraph.result, "");
+  if (!inspectable) {
+    return error(`Can't inspect graph`);
+  }
+  const run = ReactiveProjectRun.createInert(inspectable);
   const last: AppScreenOutput = {
     output,
     schema: {},
@@ -236,17 +232,15 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
   private constructor(
     private readonly stepEditor: StepEditor | undefined,
-    private readonly mainGraphId: MainGraphIdentifier,
     private readonly actionTracker: ActionTracker | undefined,
-    private readonly graphStore?: MutableGraphStore,
-    private readonly fileSystem?: FileSystem,
+    inspectable?: InspectableGraph,
     private readonly runner?: HarnessRunner,
     editable?: EditableGraph,
     signal?: AbortSignal
   ) {
-    if (!graphStore) return;
+    if (!inspectable) return;
 
-    this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
+    this.#inspectable = inspectable;
     this.graph = this.#inspectable?.raw();
 
     editable?.addEventListener("graphchange", (e) => {
@@ -562,7 +556,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   }
 
   #output(event: RunOutputEvent) {
-    const { path, bubbled, node, outputs } = event.data;
+    const { path, bubbled } = event.data;
     console.debug("Project Run: Output", event);
     if (!this.current) {
       console.warn(`No current console entry for output event`, event);
@@ -579,28 +573,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       return;
     }
 
-    const { configuration = {} } = node;
-    const { schema: s = {} } = configuration;
-
-    const schema = s as Schema;
-
-    let particleTree: EphemeralParticleTree | null = null;
-    const particleStreamHandle = getParticleStreamHandle(schema, outputs);
-    if (particleStreamHandle) {
-      if (!this.fileSystem) {
-        console.warn(
-          `Particle stream "${particleStreamHandle}" provided, but file system is not available`
-        );
-      } else {
-        particleTree = new EphemeralParticleTreeImpl(
-          this.fileSystem,
-          particleStreamHandle
-        );
-      }
-    }
-
-    this.current.get(id)?.addOutput(event.data, particleTree);
-    this.app.screens.get(id)?.addOutput(event.data, particleTree);
+    this.current.get(id)?.addOutput(event.data);
+    this.app.screens.get(id)?.addOutput(event.data);
   }
 
   #error(event: RunErrorEvent) {
@@ -612,8 +586,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   async handleUserAction(
     payload: StateEvent<"node.action">["payload"]
   ): Promise<Outcome<void>> {
-    const saving = await this.stepEditor?.surface?.save();
-    if (!ok(saving)) return saving;
+    // Apply any pending step edits before running the action
+    await this.stepEditor?.applyPendingEdits();
 
     const { nodeId, actionContext } = payload;
     if (!actionContext) {
@@ -766,15 +740,11 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
    * This instance is useful for representing and inspecting the run that
    * hasn't yet started.
    */
-  static createInert(
-    mainGraphId: MainGraphIdentifier,
-    graphStore: MutableGraphStore
-  ) {
+  static createInert(inspectable: InspectableGraph) {
     return new ReactiveProjectRun(
       undefined,
-      mainGraphId,
       undefined,
-      graphStore,
+      inspectable,
       undefined,
       undefined,
       undefined
@@ -783,44 +753,20 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
   static create(
     stepEditor: StepEditor,
-    mainGraphId: MainGraphIdentifier,
     actionTracker: ActionTracker,
-    graphStore: MutableGraphStore,
-    fileSystem: FileSystem,
+    inspectable: InspectableGraph,
     runner: HarnessRunner,
     editable: EditableGraph | undefined,
     signal?: AbortSignal
   ) {
     return new ReactiveProjectRun(
       stepEditor,
-      mainGraphId,
       actionTracker,
-      graphStore,
-      fileSystem,
+      inspectable,
       runner,
       editable,
       signal
     );
-  }
-}
-
-class EphemeralParticleTreeImpl implements EphemeralParticleTree {
-  public readonly tree: ParticleTree;
-
-  @signal
-  accessor done = false;
-
-  constructor(fileSystem: FileSystem, path: string) {
-    this.tree = new ParticleTreeImpl();
-    this.#start(fileSystem, path);
-  }
-
-  async #start(fileSystem: FileSystem, path: string) {
-    const reader = new ParticleOperationReader(fileSystem, path);
-    for await (const operation of reader) {
-      this.tree.apply(operation);
-    }
-    this.done = true;
   }
 }
 

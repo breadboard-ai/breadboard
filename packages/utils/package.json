@@ -79,7 +79,7 @@
       "output": []
     },
     "lint": {
-      "command": "eslint . --ext .ts",
+      "command": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
       "env": {
         "FORCE_COLOR": "1"
       },
@@ -87,8 +87,9 @@
         "build:tsc"
       ],
       "files": [
-        ".eslintrc",
-        "../../.eslintrc.json"
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "../../eslint.config.js"
       ],
       "output": []
     }

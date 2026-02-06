@@ -6,19 +6,9 @@
 
 import { EventRoute } from "../types.js";
 
-import {
-  ConsentType,
-  ConsentUIType,
-  GraphMetadata,
-  InputValues,
-} from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
-import {
-  RuntimeSnackbarEvent,
-  RuntimeUnsnackbarEvent,
-} from "../../runtime/events.js";
+import { ConsentType, ConsentUIType, InputValues } from "@breadboard-ai/types";
+
 import { StateEvent } from "../../ui/events/events.js";
-import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { Utils } from "../../sca/utils.js";
@@ -26,14 +16,7 @@ import { Utils } from "../../sca/utils.js";
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({
-    tab,
-    runtime,
-    settings,
-    askUserToSignInIfNeeded,
-    boardServer,
-    sca,
-  }) {
+  async do({ tab, settings, askUserToSignInIfNeeded, boardServer, sca }) {
     if (!tab) {
       console.warn(`Unable to prepare run: no Tab provided`);
       return false;
@@ -46,19 +29,17 @@ export const RunRoute: EventRoute<"board.run"> = {
       return false;
     }
 
-    if (!runtime.run.hasRun(tab)) {
-      console.warn(`Unexpected missing run, preparing a run ...`);
-      const preparingRun = await runtime.prepareRun(tab, settings);
-      if (!ok(preparingRun)) {
-        console.warn(preparingRun.$error);
-        return false;
-      }
+    if (!sca.controller.run.main.hasRunner) {
+      console.warn(`Run not prepared - runner not available`);
+      return false;
     }
 
     // b/452677430 - Check for consent before running shared Opals that
     // use the get_webpage tool, as this could be a data exfiltration vector
-    if ((await runtime.flags.flags()).requireConsentForGetWebpage) {
-      const editor = runtime.edit.getEditor(tab);
+    if (
+      (await sca.controller.global.flags.flags()).requireConsentForGetWebpage
+    ) {
+      const editor = sca.controller.editor.graph.editor;
       const graph = editor?.inspect("");
       const url = tab.graph.url;
       const isGalleryApp =
@@ -85,7 +66,7 @@ export const RunRoute: EventRoute<"board.run"> = {
       }
     }
 
-    runtime.run.runBoard(tab);
+    sca.actions.run.start();
     return false;
   },
 };
@@ -93,17 +74,16 @@ export const RunRoute: EventRoute<"board.run"> = {
 export const LoadRoute: EventRoute<"board.load"> = {
   event: "board.load",
 
-  async do({ runtime, originalEvent, sca }) {
+  async do({ originalEvent, sca }) {
     if (Utils.Helpers.isHydrating(() => sca.controller.global.main.mode)) {
       await sca.controller.global.main.isHydrated;
     }
 
-    runtime.router.go({
+    sca.controller.router.go({
       page: "graph",
       mode: sca.controller.global.main.mode,
       flow: originalEvent.detail.url,
       resourceKey: undefined,
-      shared: originalEvent.detail.shared,
       dev: parseUrl(window.location.href).dev,
       guestPrefixed: true,
     });
@@ -115,12 +95,12 @@ export const LoadRoute: EventRoute<"board.load"> = {
 export const UndoRoute: EventRoute<"board.undo"> = {
   event: "board.undo",
 
-  async do({ runtime, tab }) {
+  async do({ tab, sca }) {
     if (tab?.readOnly || !tab?.graphIsMine) {
       return false;
     }
 
-    runtime.edit.undo(tab);
+    sca.actions.graph.undo();
     return false;
   },
 };
@@ -128,12 +108,12 @@ export const UndoRoute: EventRoute<"board.undo"> = {
 export const RedoRoute: EventRoute<"board.redo"> = {
   event: "board.redo",
 
-  async do({ runtime, tab }) {
+  async do({ sca, tab }) {
     if (tab?.readOnly || !tab?.graphIsMine) {
       return false;
     }
 
-    runtime.edit.redo(tab);
+    sca.actions.graph.redo();
     return false;
   },
 };
@@ -153,7 +133,7 @@ export const TogglePinRoute: EventRoute<"board.togglepin"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, runtime, settings }) {
+  async do({ tab, runtime, sca, settings }) {
     if (!tab) {
       return false;
     }
@@ -165,27 +145,29 @@ export const StopRoute: EventRoute<"board.stop"> = {
       if (url.searchParams.has("results")) {
         url.searchParams.delete("results");
         history.pushState(null, "", url);
-
-        runtime.state.project?.resetRun();
       }
     }
 
-    const tabId = tab?.id ?? null;
-    const abortController = runtime.run.getAbortSignal(tabId);
-    if (!abortController) {
-      return false;
-    }
+    // Stop the run via controller
+    sca.actions.run.stop();
 
-    abortController.abort("Run stopped");
+    // Reset project run state
+    runtime.project?.resetRun();
 
-    await runtime.run.clearLastRun(tabId, tab?.graph.url);
-    if (!settings) {
-      console.warn(`No settings, unable to prepare next run.`);
-    } else {
-      const preparingNextRun = await runtime.prepareRun(tab, settings);
-      if (!ok(preparingNextRun)) {
-        console.warn(preparingNextRun.$error);
-      }
+    // Prepare the next run
+    const url = tab.graph.url;
+    if (url && settings) {
+      sca.actions.run.prepare({
+        graph: tab.graph,
+        url,
+        settings,
+        fetchWithCreds: sca.services.fetchWithCreds,
+        flags: sca.controller.global.flags,
+        getProjectRunState: () => runtime.project?.run,
+        connectToProject: (runner, abortSignal) => {
+          runtime.project?.connectHarnessRunner(runner, abortSignal);
+        },
+      });
     }
 
     return true;
@@ -237,12 +219,12 @@ export const RestartRoute: EventRoute<"board.restart"> = {
 export const InputRoute: EventRoute<"board.input"> = {
   event: "board.input",
 
-  async do({ tab, runtime, settings, originalEvent }) {
+  async do({ tab, settings, originalEvent, sca }) {
     if (!settings || !tab) {
       return false;
     }
 
-    const runner = runtime.run.getRunner(tab.id);
+    const runner = sca.controller.run.main.runner;
     if (!runner) {
       throw new Error("Can't send input, no runner");
     }
@@ -259,27 +241,13 @@ export const InputRoute: EventRoute<"board.input"> = {
 export const RenameRoute: EventRoute<"board.rename"> = {
   event: "board.rename",
 
-  async do({ tab, runtime, originalEvent, sca }) {
+  async do({ originalEvent, sca }) {
     try {
       sca.controller.global.main.blockingAction = true;
-      runtime.shell.setPageTitle(originalEvent.detail.title);
-      await runtime.edit.updateBoardTitleAndDescription(
-        tab,
+      // Page title is now handled by the page title trigger in SCA
+      await sca.actions.graph.updateBoardTitleAndDescription(
         originalEvent.detail.title,
         originalEvent.detail.description
-      );
-
-      // SCA Action - currently inert.
-      await sca.actions.graph.edit(
-        [
-          {
-            type: "changegraphmetadata",
-            title: originalEvent.detail.title || undefined,
-            description: originalEvent.detail.description || undefined,
-            graphId: "",
-          },
-        ],
-        "Updating title and description"
       );
     } finally {
       sca.controller.global.main.blockingAction = false;
@@ -291,31 +259,16 @@ export const RenameRoute: EventRoute<"board.rename"> = {
 export const CreateRoute: EventRoute<"board.create"> = {
   event: "board.create",
 
-  async do({
-    tab,
-    runtime,
-    sca,
-    originalEvent,
-    askUserToSignInIfNeeded,
-    embedHandler,
-  }) {
+  async do({ sca, originalEvent, askUserToSignInIfNeeded, embedHandler }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
       // The user didn't sign in, so hide any snackbars.
-      runtime.dispatchEvent(new RuntimeUnsnackbarEvent());
+      sca.controller.global.snackbars.unsnackbar();
       return false;
     }
 
-    const boardServerName = sca.controller.global.main.boardServer;
-    const location = sca.controller.global.main.boardLocation;
-    const fileName = globalThis.crypto.randomUUID();
-
     sca.controller.global.main.blockingAction = true;
-    const result = await runtime.board.saveAs(
-      boardServerName,
-      location,
-      fileName,
+    const result = await sca.actions.board.saveAs(
       originalEvent.detail.graph,
-      originalEvent.detail.messages.start !== "",
       originalEvent.detail.messages
     );
     sca.controller.global.main.blockingAction = false;
@@ -326,23 +279,19 @@ export const CreateRoute: EventRoute<"board.create"> = {
 
     const { lite, dev } = parseUrl(window.location.href);
 
-    runtime.router.go(
-      {
-        page: "graph",
-        // Ensure we always go back to the canvas when a board is created.
-        mode: "canvas",
-        // Ensure that we correctly preserve the "lite" mode.
-        lite,
-        flow: result.url.href,
-        // Resource key not required because we know the current user
-        // created it.
-        resourceKey: undefined,
-        dev,
-        guestPrefixed: true,
-      },
-      tab?.id,
-      originalEvent.detail.editHistoryCreator
-    );
+    sca.controller.router.go({
+      page: "graph",
+      // Ensure we always go back to the canvas when a board is created.
+      mode: "canvas",
+      // Ensure that we correctly preserve the "lite" mode.
+      lite,
+      flow: result.url.href,
+      // Resource key not required because we know the current user
+      // created it.
+      resourceKey: undefined,
+      dev,
+      guestPrefixed: true,
+    });
     embedHandler?.sendToEmbedder({
       type: "board_id_created",
       id: result.url.href,
@@ -356,42 +305,40 @@ export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
   async do(deps) {
-    const { runtime, originalEvent, sca } = deps;
+    const { originalEvent, sca, embedHandler } = deps;
+
     sca.controller.global.main.blockingAction = true;
 
-    // Immediately acknowledge the user's action with a snackbar. This will be
-    // superseded by another snackbar in the "board.create" route, but if it
-    // takes any amount of time to get the latest version of the graph from the
-    // store the user will at least have this acknowledgment.
-    runtime.dispatchEvent(
-      new RuntimeSnackbarEvent(
-        globalThis.crypto.randomUUID(),
-        originalEvent.detail.messages.start,
-        BreadboardUI.Types.SnackType.PENDING,
-        [],
-        true,
-        true // Replace existing snackbars.
-      )
+    // Remix action handles snackbar, graph resolution, and saveAs
+    const result = await sca.actions.board.remix(
+      originalEvent.detail.url,
+      originalEvent.detail.messages
     );
-
-    const graphStore = runtime.board.graphStore;
-    const addResult = graphStore.addByURL(originalEvent.detail.url, [], {});
-    const graph = structuredClone(
-      (await graphStore.getLatest(addResult.mutable)).graph
-    );
-    graph.title = `${graph.title ?? "Untitled"} Remix`;
-
-    await CreateRoute.do({
-      ...deps,
-      originalEvent: new BreadboardUI.Events.StateEvent({
-        eventType: "board.create",
-        editHistoryCreator: { role: "user" },
-        graph,
-        messages: originalEvent.detail.messages,
-      }),
-    });
-
     sca.controller.global.main.blockingAction = false;
+
+    if (!result?.success) {
+      return false;
+    }
+
+    const { lite, dev } = parseUrl(window.location.href);
+
+    sca.controller.router.go({
+      page: "graph",
+      // Ensure we always go back to the canvas when a board is created.
+      mode: "canvas",
+      // Ensure that we correctly preserve the "lite" mode.
+      lite,
+      flow: result.url.href,
+      // Resource key not required because we know the current user
+      // created it.
+      resourceKey: undefined,
+      dev,
+      guestPrefixed: true,
+    });
+    embedHandler?.sendToEmbedder({
+      type: "board_id_created",
+      id: result.url.href,
+    });
 
     return false;
   },
@@ -402,14 +349,12 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
 
   async do(deps) {
     const { tab, runtime, originalEvent, sca } = deps;
-    const boardServer = runtime.board.googleDriveBoardServer;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
     }
 
     sca.controller.global.main.blockingAction = true;
-    await runtime.board.delete(
-      boardServer.name,
+    await sca.actions.board.deleteBoard(
       originalEvent.detail.url,
       originalEvent.detail.messages
     );
@@ -421,6 +366,16 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
       runtime.select.deselectAll(tab.id, runtime.select.generateId());
     }
 
+    if (sca.controller.router.parsedUrl.page === "home") return false;
+
+    const { lite, dev } = parseUrl(window.location.href);
+    sca.controller.router.go({
+      page: "home",
+      lite,
+      dev,
+      guestPrefixed: true,
+    });
+
     return false;
   },
 };
@@ -429,64 +384,16 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
   event: "board.replace",
 
   async do(deps) {
-    const { tab, runtime, originalEvent, googleDriveClient } = deps;
+    const { originalEvent, googleDriveClient, sca } = deps;
+    const { replacement, theme, creator } = originalEvent.detail;
 
-    const { replacement, theme } = originalEvent.detail;
-
-    if (theme) {
-      const metadata: GraphMetadata = (replacement.metadata ??= {});
-      metadata.visual ??= {};
-      metadata.visual.presentation ??= {};
-      metadata.visual.presentation.themes ??= {};
-
-      const id = globalThis.crypto.randomUUID();
-      metadata.visual.presentation.themes[id] = theme;
-      metadata.visual.presentation.theme = id;
-    } else {
-      runtime.util.applyDefaultThemeInformationIfNonePresent(replacement);
-      await runtime.util.createAppPaletteIfNeeded(
-        replacement,
-        googleDriveClient
-      );
-    }
-
-    // If there is a theme applied it shouldn't be possible to revert this to
-    // the default theme with a board replacement, so we protect against that
-    // here.
-    //
-    // We instead check the current graph for a splash image, and the
-    // replacement as well. If the current graph has a splash image and the
-    // replacement does not, we copy the current theme across.
-    //
-    // TODO: Remove this when the Planner persists the existing theme.
-    const currentPresentation = tab?.graph.metadata?.visual?.presentation;
-    const currentTheme = currentPresentation?.theme;
-    const currentThemes = currentPresentation?.themes;
-    const currentThemeHasSplashScreen =
-      currentTheme &&
-      currentThemes &&
-      currentThemes[currentTheme] &&
-      currentThemes[currentTheme].splashScreen;
-
-    const replacementPresentation = replacement.metadata?.visual?.presentation;
-    const replacementTheme = replacementPresentation?.theme;
-    const replacementThemes = replacementPresentation?.themes;
-    const replacementThemeHasSplashScreen =
-      replacementTheme &&
-      replacementThemes &&
-      replacementThemes[replacementTheme] &&
-      replacementThemes[replacementTheme].splashScreen;
-
-    if (currentThemeHasSplashScreen && !replacementThemeHasSplashScreen) {
-      console.log("[board replacement] Persisting existing theme");
-      replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
-    }
-
-    await runtime.edit.replaceGraph(
-      tab,
+    // Theme handling is centralized in the SCA action
+    await sca.actions.graph.replaceWithTheme({
       replacement,
-      originalEvent.detail.creator
-    );
+      theme,
+      creator,
+      googleDriveClient,
+    });
 
     return false;
   },

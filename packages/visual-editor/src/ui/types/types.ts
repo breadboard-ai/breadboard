@@ -562,7 +562,6 @@ export interface GraphUrlInit extends BaseUrlInit {
   remix?: boolean;
   resourceKey?: string | undefined;
   results?: string;
-  shared?: boolean;
   redirectFromLanding?: boolean;
 }
 
@@ -582,7 +581,7 @@ export interface OpenUrlInit extends BaseUrlInit {
 export type UserSignInResponse = "success" | "failure" | "dismissed";
 
 export interface ActionTracker {
-  load(type: "app" | "canvas" | "landing" | "home", shared: boolean): void;
+  load(type: "app" | "canvas" | "landing" | "home"): void;
   openApp(url: string, source: "gallery" | "user"): void;
   remixApp(url: string, source: "gallery" | "user" | "editor"): void;
   createNew(): void;

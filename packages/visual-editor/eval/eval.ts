@@ -11,6 +11,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import type { callGeminiImage } from "../src/a2/a2/image-utils.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
+import { AgentContext } from "../src/a2/agent/agent-context.js";
 import { McpClientManager } from "../src/mcp/index.js";
 import { autoClearingInterval } from "./auto-clearing-interval.js";
 import { collateContexts } from "./collate-context.js";
@@ -28,7 +29,7 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
 import { getAuthenticatedClient } from "./authenticate.js";
-import { type ConsentController } from "../src/sca/controller/subcontrollers/consent-controller.js";
+import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
 
 export { session };
 
@@ -81,6 +82,8 @@ function session(
  * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
  */
 class EvalHarness {
+  private imageCount = 1;
+
   constructor(private readonly args: EvalHarnessArgs) {}
 
   async session(sessionFunction: EvalHarnessSessionFunction) {
@@ -106,7 +109,7 @@ class EvalHarness {
             parts: [
               {
                 storedData: {
-                  handle: "https://example.com/fakeurl",
+                  handle: `https://example.com/fakeurl-${this.imageCount++}`,
                   mimeType: "image/png",
                 },
               },
@@ -193,6 +196,10 @@ class EvalHarness {
 
     mock.restoreAll();
     autoClearingInterval.clearAllIntervals();
+
+    // Exit explicitly since module-level setInterval calls (in now.ts, work-item.ts,
+    // app-screen.ts) can't be easily cleared and would keep the process alive.
+    process.exit(0);
   }
 }
 
@@ -284,12 +291,16 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         Authorization: `Bearer ${this.accessToken}`,
       },
     });
-    this.requestLogger.response(entryId, response.clone());
+    await this.requestLogger.response(entryId, response.clone());
     return response;
   };
 
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
+    agentContext: new AgentContext({
+      shell: {} as unknown as OpalShellHostProtocol,
+      fetchWithCreds: this.fetchWithCreds,
+    }),
     fetchWithCreds: this.fetchWithCreds,
     getConsentController() {
       return {

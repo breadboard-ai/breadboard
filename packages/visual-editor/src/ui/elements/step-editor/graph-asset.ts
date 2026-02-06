@@ -5,8 +5,6 @@
  */
 
 import { AssetPath, InspectableAsset, LLMContent } from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
-import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -28,9 +26,7 @@ import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { toGridSize } from "./utils/to-grid-size.js";
 
 @customElement("bb-graph-asset")
-export class GraphAsset
-  extends SignalWatcher(Box)
-  implements DragConnectorReceiver
+export class GraphAsset extends Box implements DragConnectorReceiver
 {
   @property()
   accessor ownerGraph = "";
@@ -504,14 +500,7 @@ export class GraphAsset
   }
 
   #getPreviewValue(): LLMContent | null {
-    let context: LLMContent[] | undefined;
-    if (this.asset?.type === "connector") {
-      const preview = this.state?.connector?.preview;
-      if (!preview || !ok(preview)) return null;
-      context = preview;
-    } else {
-      context = this.asset?.data;
-    }
+    const context = this.asset?.data;
     return context?.at(-1) ?? null;
   }
 

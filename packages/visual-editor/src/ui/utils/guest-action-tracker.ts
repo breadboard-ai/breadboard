@@ -157,9 +157,8 @@ class GuestActionTracker implements ActionTracker {
 
   // Event tracking
 
-  load(type: "app" | "canvas" | "landing" | "home", shared: boolean) {
-    const sharedSuffix = shared ? "_shared" : "";
-    this.host.trackAction(`app_load_${type}${sharedSuffix}`);
+  load(type: "app" | "canvas" | "landing" | "home") {
+    this.host.trackAction(`app_load_${type}`);
     this.incrementVisitedPages();
   }
 

@@ -79,7 +79,7 @@ const full = {
 
 suite("SelectionController", () => {
   test("Add and remove nodes", async () => {
-    const store = new SelectionController("Selection_1");
+    const store = new SelectionController("Selection_1", "SelectionController");
     await store.isHydrated;
 
     store.addNode(id0);
@@ -109,7 +109,7 @@ suite("SelectionController", () => {
   });
 
   test("Edges", async () => {
-    const store = new SelectionController("Selection_2");
+    const store = new SelectionController("Selection_2", "SelectionController");
     await store.isHydrated;
 
     store.addEdge(edge0);
@@ -140,7 +140,7 @@ suite("SelectionController", () => {
   });
 
   test("Assets", async () => {
-    const store = new SelectionController("Selection_3");
+    const store = new SelectionController("Selection_3", "SelectionController");
     await store.isHydrated;
 
     store.addAsset(asset0);
@@ -170,7 +170,7 @@ suite("SelectionController", () => {
   });
 
   test("Asset Edges", async () => {
-    const store = new SelectionController("Selection_4");
+    const store = new SelectionController("Selection_4", "SelectionController");
     await store.isHydrated;
 
     store.addAssetEdge(assetEdge0);
@@ -200,14 +200,14 @@ suite("SelectionController", () => {
   });
 
   test("Select All (Inspectable) & clear", async () => {
-    const store = new SelectionController("Selection_5");
+    const store = new SelectionController("Selection_5", "SelectionController");
     await store.isHydrated;
 
     const graphStore = makeTestGraphStore({
       kits: [testKit],
     });
 
-    const mainGraphId = graphStore.addByDescriptor(testGraph);
+    const mainGraphId = graphStore.getByDescriptor(testGraph);
     if (!mainGraphId.success) assert.fail("Unable to create graph");
     const inspectableGraph = graphStore.inspect(mainGraphId.result, "");
     if (!inspectableGraph) assert.fail("Unable to inspect graph");

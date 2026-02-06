@@ -9,25 +9,19 @@ import {
   DeepReadonly,
   FileDataPart,
   InlineDataCapabilityPart,
+  NodeHandlerContext,
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 import { toText } from "../a2/utils.js";
-import { MemoryManager } from "./types.js";
+import { FileDescriptor, MemoryManager } from "./types.js";
+import { GENERATE_TEXT_FUNCTION } from "./functions/generate.js";
 
 export { AgentFileSystem };
 
 const KNOWN_TYPES = ["audio", "video", "image", "text"];
-
-export type FileDescriptor = {
-  type: "text" | "storedData" | "inlineData" | "fileData";
-  mimeType: string;
-  data: string;
-  title?: string;
-  resourceKey?: string;
-};
 
 export type AddFilesToProjectResult = {
   existing: string[];
@@ -39,6 +33,7 @@ export type AddFilesToProjectResult = {
 export type SystemFileGetter = () => Outcome<string>;
 
 export type AgentFileSystemArgs = {
+  context: NodeHandlerContext;
   memoryManager: MemoryManager | null;
 };
 
@@ -49,12 +44,19 @@ class AgentFileSystem {
     ["", ""],
     ["/", "/"],
   ]);
+  #useMemory = true;
 
+  private readonly context: NodeHandlerContext;
   private readonly memoryManager: MemoryManager | null;
   private readonly systemFiles: Map<string, SystemFileGetter> = new Map();
 
   constructor(args: AgentFileSystemArgs) {
+    this.context = args.context;
     this.memoryManager = args.memoryManager;
+  }
+
+  setUseMemory(value: boolean) {
+    this.#useMemory = value;
   }
 
   addSystemFile(path: string, getter: SystemFileGetter) {
@@ -152,8 +154,8 @@ class AgentFileSystem {
   }
 
   async #getMemoryFile(path: string): Promise<Outcome<DataPart[]>> {
-    const sheetName = path.replace("/vfs/memory/", "");
-    const sheet = await this.memoryManager?.readSheet({
+    const sheetName = path.replace("/mnt/memory/", "");
+    const sheet = await this.memoryManager?.readSheet(this.context, {
       range: `${sheetName}!A:ZZ`,
     });
     if (!sheet) return [];
@@ -165,6 +167,25 @@ class AgentFileSystem {
   async readText(path: string): Promise<Outcome<string>> {
     const parts = await this.get(path);
     if (!ok(parts)) return parts;
+    const errors: string[] = [];
+    parts.forEach((part) => {
+      if ("storedData" in part) {
+        const { handle, mimeType } = part.storedData;
+        if (handle.startsWith("drive:/")) {
+          errors.push(
+            `Google Drive files may contain images and other non-textual content. Please use "${GENERATE_TEXT_FUNCTION}" to read them at full fidelity.`
+          );
+        } else {
+          errors.push(
+            `Reading text from file with mimeType ${mimeType} is not supported.`
+          );
+        }
+      }
+    });
+
+    if (errors.length > 0) {
+      return err(errors.join(", "));
+    }
 
     return toText({ parts });
   }
@@ -190,14 +211,14 @@ class AgentFileSystem {
 
   async get(path: string): Promise<Outcome<DataPart[]>> {
     // Do a path fix-up just in case: sometimes, Gemini decides to use
-    // "vfs/file" instead of "/vfs/file".
-    if (path.startsWith("vfs/")) {
+    // "mnt/file" instead of "/mnt/file".
+    if (path.startsWith("mnt/")) {
       path = `/${path}`;
     }
-    if (path.startsWith("/vfs/system/")) {
+    if (path.startsWith("/mnt/system/")) {
       return this.#getSystemFile(path);
     }
-    if (path.startsWith("/vfs/memory/")) {
+    if (path.startsWith("/mnt/memory/") && this.#useMemory) {
       return this.#getMemoryFile(path);
     }
     const file = this.#getFile(path);
@@ -209,11 +230,15 @@ class AgentFileSystem {
     const files = [...this.#files.keys()];
     const system = [...this.systemFiles.keys()];
     const memory = [];
-    const memoryMetadata = await this.memoryManager?.getSheetMetadata();
-    if (memoryMetadata && ok(memoryMetadata)) {
-      memory.push(
-        ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
+    if (this.#useMemory) {
+      const memoryMetadata = await this.memoryManager?.getSheetMetadata(
+        this.context
       );
+      if (memoryMetadata && ok(memoryMetadata)) {
+        memory.push(
+          ...memoryMetadata.sheets.map((sheet) => `/mnt/memory/${sheet.name}`)
+        );
+      }
     }
     return [...files, ...system, ...memory].join("\n");
   }
@@ -232,6 +257,22 @@ class AgentFileSystem {
       return err(`Route "${routeName}" not found`);
     }
     return originalRoute;
+  }
+
+  /**
+   * Finds an existing file path that has the same data handle/URI.
+   * This allows deduplication of storedData and fileData parts.
+   */
+  #findExistingByHandle(data: string): string | undefined {
+    for (const [path, descriptor] of this.#files) {
+      if (
+        (descriptor.type === "storedData" || descriptor.type === "fileData") &&
+        descriptor.data === data
+      ) {
+        return path;
+      }
+    }
+    return undefined;
   }
 
   add(part: DataPart, fileName?: string): Outcome<string> {
@@ -255,6 +296,11 @@ class AgentFileSystem {
       return name;
     } else if ("storedData" in part) {
       const { mimeType, handle: data, resourceKey } = part.storedData;
+      // Check if a file with this handle already exists
+      const existingPath = this.#findExistingByHandle(data);
+      if (existingPath) {
+        return existingPath;
+      }
       const name = create(mimeType);
       this.#files.set(name, {
         type: "storedData",
@@ -265,6 +311,11 @@ class AgentFileSystem {
       return name;
     } else if ("fileData" in part) {
       const { mimeType, fileUri: data, resourceKey } = part.fileData;
+      // Check if a file with this URI already exists
+      const existingPath = this.#findExistingByHandle(data);
+      if (existingPath) {
+        return existingPath;
+      }
       const name = create(mimeType);
       this.#files.set(name, { type: "fileData", mimeType, data, resourceKey });
       return name;
@@ -274,6 +325,18 @@ class AgentFileSystem {
 
   get files(): ReadonlyMap<string, DeepReadonly<FileDescriptor>> {
     return this.#files;
+  }
+
+  /**
+   * Restores file system state from a saved snapshot.
+   * Used for resuming failed runs.
+   */
+  restoreFrom(files: Record<string, FileDescriptor>): void {
+    this.#files.clear();
+    for (const [path, descriptor] of Object.entries(files)) {
+      this.#files.set(path, { ...descriptor });
+    }
+    this.#fileCount = this.#files.size;
   }
 
   #createNamed(
@@ -288,7 +351,7 @@ class AgentFileSystem {
       const ext = mime.getExtension(mimeType);
       filename = `${name}.${ext}`;
     }
-    const path = `/vfs/${filename}`;
+    const path = `/mnt/${filename}`;
     if (overwriteWarning && this.#files.has(path)) {
       console.warn(`File "${path}" already exists, will be overwritten`);
     }
@@ -298,7 +361,7 @@ class AgentFileSystem {
   create(mimeType: string) {
     const name = this.#getName(mimeType);
     const ext = mime.getExtension(mimeType);
-    return `/vfs/${name}${++this.#fileCount}.${ext}`;
+    return `/mnt/${name}${++this.#fileCount}.${ext}`;
   }
 
   #getName(mimeType: string) {

@@ -29,8 +29,7 @@ export type Strategist = {
     moduleArgs: A2ModuleArgs,
     singleStepExecutor: ExecuteStepFunction,
     mutableContext: LLMContent[],
-    objective: LLMContent,
-    makeList?: boolean
+    objective: LLMContent
   ): Promise<Outcome<LLMContent[]>>;
 };
 

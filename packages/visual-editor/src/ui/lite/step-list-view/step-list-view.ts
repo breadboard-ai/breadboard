@@ -6,17 +6,55 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { consume } from "@lit/context";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
-import { LiteModeState, StepListStepState } from "../../state/index.js";
+import { StepListStepState } from "../../state/index.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { hash } from "@breadboard-ai/utils";
+import type { SCA } from "../../../sca/sca.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { StepListPresenter } from "../../presenters/step-list-presenter.js";
+import { deriveLiteViewType } from "../../../sca/utils/lite-view-type.js";
 
 @customElement("bb-step-list-view")
 export class StepListView extends SignalWatcher(LitElement) {
-  @property()
-  accessor state: LiteModeState | null = null;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
+  @property({ type: Boolean, reflect: true })
+  accessor lite = false;
+
+  #presenter = new StepListPresenter();
+
+  /** Get viewType from SCA state */
+  get #viewType() {
+    return deriveLiteViewType(this.sca, this.sca.controller.editor.graph.empty);
+  }
+
+  /** Get generation status from SCA */
+  get #status() {
+    return this.sca.controller.global.flowgenInput.state.status;
+  }
+
+  /** Get planner state from SCA */
+  get #planner() {
+    return {
+      status: this.sca.controller.global.flowgenInput.plannerStatus,
+      thought: this.sca.controller.global.flowgenInput.plannerThought,
+    };
+  }
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#presenter.connect(this.sca);
+  }
+
+  override disconnectedCallback(): void {
+    this.#presenter.disconnect();
+    super.disconnectedCallback();
+  }
 
   static styles = [
     Styles.HostIcons.icons,
@@ -103,6 +141,12 @@ export class StepListView extends SignalWatcher(LitElement) {
                   #f0f4f9,
                   var(--sys-color--surface-container)
                 );
+                :host(:not([lite])) & {
+                  background: light-dark(
+                    #fff,
+                    var(--sys-color--surface-container)
+                  );
+                }
                 padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
                 list-style: none;
                 gap: var(--bb-grid-size-4);
@@ -110,6 +154,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                 cursor: pointer;
                 min-height: 48px;
 
+                /* Loading animation for lite mode (gray) */
                 &.loading {
                   --light: oklch(
                     from var(--sys-color--surface-container-high) l c h / 20%
@@ -135,6 +180,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                   padding-right: var(--bb-grid-size-4);
                   display: flex;
                   flex-direction: column;
+                  flex: 1 1 0;
 
                   & .step-thought {
                     color: var(--sys-color--on-surface-variant);
@@ -144,58 +190,98 @@ export class StepListView extends SignalWatcher(LitElement) {
                 & .step-icon {
                   flex: 0 0 auto;
                 }
+              }
 
-                & > .marker-container {
+              /* Step type colors - only when not in lite mode */
+              :host(:not([lite])) &:not(.generating) > summary {
+                & .step-title {
+                  color: var(--n-0);
+                }
+
+                /* Input steps (yellow) */
+                &.chat_mirror {
+                  background: var(--ui-get-input);
+                  color: var(--n-0);
+                }
+
+                /* Display steps (blue) */
+                &.responsive_layout,
+                &.drive_presentation,
+                &.sheets,
+                &.web,
+                &.docs {
+                  background: var(--ui-display);
+                  color: var(--n-0);
+                }
+
+                /* Generative steps (green) */
+                &.spark,
+                &.photo_spark,
+                &.audio_magic_eraser,
+                &.text_analysis,
+                &.button_magic,
+                &.generative-image-edit,
+                &.generative-code,
+                &.videocam_auto,
+                &.generative-search,
+                &.generative,
+                &.laps {
+                  background: var(--ui-generate);
+                  color: var(--n-0);
+                }
+              }
+
+              /* Marker container styles - apply to all modes */
+              & > summary > .marker-container {
+                flex: 0 0 auto;
+                position: relative;
+
+                &:has(> .marker.processing-generation) {
+                  width: 32px;
+                  height: 32px;
+                }
+
+                & > .marker {
                   flex: 0 0 auto;
-                  position: relative;
 
-                  &:has(> .marker.processing-generation) {
-                    width: 32px;
-                    height: 32px;
+                  &::before {
+                    content: "keyboard_arrow_down";
                   }
-
-                  & > .marker {
-                    flex: 0 0 auto;
+                  &.pending,
+                  &.working {
+                    animation: rotate 1s linear infinite;
 
                     &::before {
-                      content: "keyboard_arrow_down";
+                      content: "progress_activity";
                     }
-                    &.pending,
-                    &.working {
-                      animation: rotate 1s linear infinite;
+                  }
 
-                      &::before {
-                        content: "progress_activity";
-                      }
-                    }
+                  &.processing-generation {
+                    animation: none;
+                    width: 32px;
+                    height: 32px;
 
-                    &.processing-generation {
-                      animation: none;
+                    &::before {
+                      content: "";
+                      display: block;
                       width: 32px;
                       height: 32px;
-
-                      &::before {
-                        content: "";
-                        display: block;
-                        width: 32px;
-                        height: 32px;
-                        animation: rotate 1s linear infinite;
-                        background: url(/images/progress-md.svg) center center /
-                          100% 100% no-repeat;
-                        border-radius: 50%;
-                      }
+                      animation: rotate 1s linear infinite;
+                      background: url(/images/progress-md.svg) center center /
+                        100% 100% no-repeat;
+                      border-radius: 50%;
                     }
                   }
+                }
 
-                  & > .generating {
-                    flex: 0 0 auto;
-                    position: absolute;
-                    width: 20px;
-                    height: 20px;
-                    left: 6px;
-                    top: 6px;
-                    color: var(--sys-color--on-surface-variant);
-                  }
+                & > .generating {
+                  flex: 0 0 auto;
+                  position: absolute;
+                  width: 20px;
+                  height: 20px;
+                  left: 6px;
+                  top: 6px;
+                  color: var(--sys-color--on-surface-variant);
                 }
               }
 
@@ -214,6 +300,10 @@ export class StepListView extends SignalWatcher(LitElement) {
                 border: 1px solid var(--sys-color--surface-variant);
                 color: var(--sys-color--on-surface-variant);
                 margin-top: var(--bb-grid-size-2);
+
+                :host(:not([lite])) & {
+                  background: light-dark(var(--n-100), var(--n-0));
+                }
 
                 > p {
                   margin: 0;
@@ -281,13 +371,17 @@ export class StepListView extends SignalWatcher(LitElement) {
         status?: "generating" | "loading";
         animated?: boolean;
         animationDelay?: number;
+        colorClass?: string;
       }
     ) => {
       if (options.status === "loading") {
         return html`<details>
           <summary
             inert
-            class=${classMap({ loading: options.status === "loading" })}
+            class=${classMap({
+              loading: options.status === "loading",
+              [options.colorClass ?? ""]: !!options.colorClass,
+            })}
           ></summary>
         </details>`;
       }
@@ -309,12 +403,13 @@ export class StepListView extends SignalWatcher(LitElement) {
           ?inert=${options.status === "generating"}
           class=${classMap({
             animated: options.animated === true,
+            generating: options.status === "generating",
           })}
           style=${styleMap({
             animationDelay,
           })}
         >
-          <summary>
+          <summary class=${step.icon ?? ""}>
             <span class="marker-container">
               <span class=${classMap(markerClasses)}></span>
               ${options.status === "generating"
@@ -323,13 +418,13 @@ export class StepListView extends SignalWatcher(LitElement) {
                   >`
                 : nothing}
             </span>
-            ${step.icon
+            ${step.icon && options.status !== "generating"
               ? html`<span class="step-icon g-icon filled-heavy round"
                   >${step.icon}</span
                 >`
               : nothing}
-            <span class="step-title sans md-title-medium w-500"
-              >${step.title}
+            <span class="step-title sans md-title-medium w-500">
+              <span class="step-title-text">${step.title}</span>
               ${options.status === "generating"
                 ? html`<span class="step-thought sans md-body-medium w-400"
                     >${step.label}</span
@@ -353,7 +448,7 @@ export class StepListView extends SignalWatcher(LitElement) {
 
     const renderPlaceholders = () => {
       return html`<ul id="list">
-        ${this.state?.status === "generating"
+        ${this.#status === "generating"
           ? renderPlannerProgress()
           : nothing}
         ${repeat(new Array(4), () => {
@@ -378,9 +473,6 @@ export class StepListView extends SignalWatcher(LitElement) {
     };
 
     const renderPlannerProgress = () => {
-      if (!this.state?.planner) {
-        return nothing;
-      }
       return html`<li>
         ${renderStep(
           {
@@ -390,10 +482,10 @@ export class StepListView extends SignalWatcher(LitElement) {
             "processing-generation": true,
           },
           {
-            label: this.state?.planner.thought,
+            label: this.#planner.thought,
             prompt: "",
             status: "pending",
-            title: this.state?.planner.status,
+            title: this.#planner.status,
           },
           { status: "generating" }
         )}
@@ -401,17 +493,17 @@ export class StepListView extends SignalWatcher(LitElement) {
     };
 
     if (
-      this.state?.viewType === "editor" &&
-      this.state?.status === "generating"
+      this.#viewType === "editor" &&
+      this.#status === "generating"
     ) {
       return renderPlaceholders();
     }
 
-    const steps = this.state?.steps;
+    const steps = this.#presenter.steps;
     if (!steps || steps.size === 0) {
-      if (this.state?.viewType === "loading") {
+      if (this.#viewType === "loading") {
         return renderPlaceholders();
-      } else if (this.state?.status === "generating") {
+      } else if (this.#status === "generating") {
         return html`<ul id="list">
           ${renderPlannerProgress()}
         </ul>`;

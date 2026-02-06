@@ -11,11 +11,11 @@ import {
   InspectableGraph,
   InspectableNode,
   InspectableNodePorts,
-  JsonSerializable,
   LLMContent,
   MainGraphIdentifier,
-  MutableGraphStore,
+  NodeConfiguration,
   NodeIdentifier,
+  NodeMetadata,
   NodeValue,
   Outcome,
   Schema,
@@ -49,7 +49,7 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
-import { Project, StepEditorSurface } from "../../state/index.js";
+import { Project } from "../../state/index.js";
 import {
   ActionTracker,
   EnumValue,
@@ -79,9 +79,11 @@ import {
   isLLMContentArray,
   isTextCapabilityPart,
 } from "../../../data/common.js";
-import { ConnectorView } from "../../connectors/types.js";
+
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { embedderContext } from "../../contexts/embedder.js";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SCA } from "../../../sca/sca.js";
 import { embedState } from "../../embed/embed.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -108,21 +110,12 @@ const INVALID_ITEM = html`<div id="invalid-item">
 </div>`;
 
 @customElement("bb-entity-editor")
-export class EntityEditor
-  extends SignalWatcher(LitElement)
-  implements StepEditorSurface
-{
+export class EntityEditor extends SignalWatcher(LitElement) {
   @property()
   accessor graph: InspectableGraph | null = null;
 
-  @property()
-  accessor graphTopologyUpdateId = 0;
-
-  @property()
-  accessor graphStore: MutableGraphStore | null = null;
-
-  @property()
-  accessor graphStoreUpdateId = 0;
+  // NOTE: graphTopologyUpdateId was removed - autosave on selection change
+  // is now handled by the SCA step autosave trigger.
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -144,6 +137,9 @@ export class EntityEditor
 
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @state()
   accessor values: InputValues | undefined;
@@ -800,7 +796,7 @@ export class EntityEditor
   ];
 
   #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
-  #connectorPorts: Map<AssetPath, PortLike[]> = new Map();
+
   #editorRef: Ref<TextEditor> = createRef();
   #edited = false;
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -813,17 +809,11 @@ export class EntityEditor
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("pointerdown", this.#onPointerDownBound);
-    if (this.projectState) {
-      this.projectState.stepEditor.surface = this;
-    }
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener("pointerdown", this.#onPointerDownBound);
-    if (this.projectState) {
-      this.projectState.stepEditor.surface = null;
-    }
   }
 
   #onPointerDown() {
@@ -854,6 +844,10 @@ export class EntityEditor
           ...this.values,
           [port.name]: value,
         };
+        // Reactive changes need to be saved immediately so the graph editor
+        // updates. Unlike regular edits (which wait for selection change),
+        // reactive controls should propagate their changes right away.
+        this.#save();
       }
     };
   }
@@ -927,57 +921,56 @@ export class EntityEditor
         return;
       }
 
-      // 3) update connector configuration
-      const connector = asset.connector;
-      if (connector) {
-        const ports = this.#connectorPorts.get(assetPath) || [];
-        const { values } = this.#takePortValues(form, ports);
-        const commiting = await connector.commitEdits(
-          title,
-          values as Record<string, JsonSerializable>
-        );
-        if (!ok(commiting)) {
-          this.dispatchEvent(new ToastEvent(commiting.$error, ToastType.ERROR));
-        }
-      } else {
-        const dataPart =
-          form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
+      // 3) update asset
+      const dataPart =
+        form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
 
-        let data: LLMContent[] | undefined = undefined;
-        if (dataPart) {
-          data = [{ role: "user", parts: [dataPart] }];
-        }
+      let data: LLMContent[] | undefined = undefined;
+      if (dataPart) {
+        data = [{ role: "user", parts: [dataPart] }];
+      }
 
-        const updating = await asset.update(title, data);
-        if (!ok(updating)) {
-          this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
-        }
+      const updating = await asset.update(title, data);
+      if (!ok(updating)) {
+        this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
       }
     }
   }
 
-  async #emitUpdatedNodeConfiguration(
+  /**
+   * Prepares the node configuration by transforming form values.
+   * Returns the configuration, metadata, and ins for either dispatch or pendingEdit.
+   */
+  async #prepareNodeConfiguration(
     currentValues: InputValues | undefined,
     form: HTMLFormElement,
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
-  ) {
+  ): Promise<{
+    configuration: NodeConfiguration;
+    metadata: NodeMetadata;
+    ins: TemplatePart[];
+    editGraphId: GraphIdentifier;
+  } | null> {
     let targetGraph = this.graph;
     if (!targetGraph) {
-      return;
+      return null;
     }
+
+    // Note: graphId from form is MAIN_BOARD_ID for main board, but API expects ""
+    const apiGraphId = graphId === MAIN_BOARD_ID ? "" : graphId;
 
     if (graphId !== MAIN_BOARD_ID) {
       targetGraph = this.graph!.graphs()?.[graphId] ?? null;
     }
 
     if (!targetGraph) {
-      return;
+      return null;
     }
 
     const node = targetGraph.nodeById(nodeId);
     if (!node) {
-      return;
+      return null;
     }
 
     const metadata = { ...node.metadata() };
@@ -986,9 +979,7 @@ export class EntityEditor
       metadata.title = title.value;
     }
 
-    // Because the rest of the function is async and the values of the form
-    // element may change as the selection changes, let's copy the form values,
-    // so that we have a stable set of values to work with.
+    // Copy form values for stable async processing
     const formValues = this.#copyFormValues(form);
 
     const ports = (await node.ports(currentValues)).inputs.ports.filter(
@@ -1002,6 +993,26 @@ export class EntityEditor
     const { values, ins } = this.#takePortValues(formValues, ports);
     const configuration = { ...node.configuration(), ...values };
 
+    return { configuration, metadata, ins, editGraphId: apiGraphId };
+  }
+
+  async #emitUpdatedNodeConfiguration(
+    currentValues: InputValues | undefined,
+    form: HTMLFormElement,
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ) {
+    const prepared = await this.#prepareNodeConfiguration(
+      currentValues,
+      form,
+      graphId,
+      nodeId
+    );
+
+    if (!prepared) {
+      return;
+    }
+
     this.actionTracker?.editStep("manual");
 
     this.dispatchEvent(
@@ -1009,9 +1020,9 @@ export class EntityEditor
         eventType: "node.change",
         id: nodeId,
         subGraphId: graphId !== MAIN_BOARD_ID ? graphId : null,
-        configurationPart: configuration,
-        metadata,
-        ins,
+        configurationPart: prepared.configuration,
+        metadata: prepared.metadata,
+        ins: prepared.ins,
       })
     );
   }
@@ -1169,7 +1180,7 @@ export class EntityEditor
         </h1>
         <div id="type"></div>
         <div id="content">
-          ${this.#renderPorts(graphId, nodeId, inputPorts)}
+          ${this.#renderPorts(graphId, nodeId, inputPorts, node)}
         </div>
         <input type="hidden" name="graph-id" .value=${graphId} />
         <input type="hidden" name="node-id" .value=${nodeId} />
@@ -1226,7 +1237,8 @@ export class EntityEditor
     value: LLMContent | undefined,
     graphId: GraphIdentifier,
     fastAccess: boolean,
-    isReferenced: boolean
+    isReferenced: boolean,
+    agentMode: boolean
   ) {
     const portValue = getLLMContentPortValue(value, port.schema);
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
@@ -1244,6 +1256,7 @@ export class EntityEditor
       .value=${textPart.text}
       .supportsFastAccess=${fastAccess}
       .readOnly=${this.readOnly}
+      .isAgentMode=${agentMode}
       id=${port.name}
       name=${port.name}
       @keydown=${(evt: KeyboardEvent) => {
@@ -1251,7 +1264,7 @@ export class EntityEditor
           return;
         }
 
-        this.#submit(this.values);
+        this.#save();
       }}
     ></bb-text-editor>`;
   }
@@ -1259,7 +1272,8 @@ export class EntityEditor
   #renderPorts(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier,
-    inputPorts: PortLike[]
+    inputPorts: PortLike[],
+    node: InspectableNode
   ) {
     const hasTextEditor =
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
@@ -1288,7 +1302,8 @@ export class EntityEditor
                 isLLMContent(port.value) ? port.value : undefined,
                 graphId,
                 !advanced,
-                isReferenced
+                isReferenced,
+                isAgentMode(node, this.values)
               ),
             ];
           } else {
@@ -1309,7 +1324,8 @@ export class EntityEditor
                 : undefined,
               graphId,
               true,
-              true
+              true,
+              isAgentMode(node, this.values)
             );
           }
           break;
@@ -1407,8 +1423,7 @@ export class EntityEditor
         const extendedInfoOutput =
           extendedInfo && typeof extendedInfo !== "string"
             ? html`<div class="info">
-                <span class="g-icon round filled">warning</span
-                >${extendedInfo.info}
+                <span class="g-icon round">info</span>${extendedInfo.info}
               </div>`
             : nothing;
 
@@ -1561,61 +1576,51 @@ export class EntityEditor
       return INVALID_ITEM;
     }
 
-    let value;
-    if (asset.type === "connector") {
-      const view =
-        this.projectState?.graphAssets.get(assetPath)?.connector?.view;
-      if (!view || !ok(view)) return nothing;
-      const ports = portsFromView(view);
-      this.#connectorPorts.set(assetPath, ports);
-      value = this.#renderPorts("", "", ports);
+    const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
+    const itemData = asset?.data.at(-1) ?? null;
+    const dataPart = itemData?.parts[0] ?? null;
+    const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
+    const skipOutput = isTextCapabilityPart(dataPart) || isDrawable;
+
+    const partEditor = html`<bb-llm-part-input
+      class=${classMap({ fill: skipOutput })}
+      id="asset-value"
+      @submit=${(evt: SubmitEvent) => {
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+
+        this.#submit(this.values);
+      }}
+      @input=${() => {
+        this.#edited = true;
+      }}
+      .graphUrl=${graphUrl}
+      .subType=${asset.subType}
+      .projectState=${this.projectState}
+      .dataPart=${dataPart}
+    ></bb-llm-part-input>`;
+
+    let input: HTMLTemplateResult | symbol = nothing;
+    if (skipOutput) {
+      input = html`<div class="stretch object">${partEditor}</div>`;
     } else {
-      const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
-      const itemData = asset?.data.at(-1) ?? null;
-      const dataPart = itemData?.parts[0] ?? null;
-      const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
-      const skipOutput = isTextCapabilityPart(dataPart) || isDrawable;
-
-      const partEditor = html`<bb-llm-part-input
-        class=${classMap({ fill: skipOutput })}
-        id="asset-value"
-        @submit=${(evt: SubmitEvent) => {
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-
-          this.#submit(this.values);
-        }}
-        @input=${() => {
-          this.#edited = true;
-        }}
-        .graphUrl=${graphUrl}
-        .subType=${asset.subType}
-        .projectState=${this.projectState}
-        .dataPart=${dataPart}
-      ></bb-llm-part-input>`;
-
-      let input: HTMLTemplateResult | symbol = nothing;
-      if (skipOutput) {
-        input = html`<div class="stretch object">${partEditor}</div>`;
-      } else {
-        input = partEditor;
-      }
-
-      let output: HTMLTemplateResult | symbol = nothing;
-      if (!skipOutput) {
-        output = html` <bb-llm-output
-          .value=${itemData}
-          .clamped=${false}
-          .lite=${true}
-          .showModeToggle=${false}
-          .showEntrySelector=${false}
-          .showExportControls=${false}
-          .graphUrl=${graphUrl}
-        ></bb-llm-output>`;
-      }
-
-      value = [input, output];
+      input = partEditor;
     }
+
+    let output: HTMLTemplateResult | symbol = nothing;
+    if (!skipOutput) {
+      output = html` <bb-llm-output
+        .value=${itemData}
+        .clamped=${false}
+        .lite=${true}
+        .showModeToggle=${false}
+        .showEntrySelector=${false}
+        .showExportControls=${false}
+        .graphUrl=${graphUrl}
+      ></bb-llm-output>`;
+    }
+
+    const value = [input, output];
 
     let icon: string | undefined | null = "text_fields";
     if (asset.type) {
@@ -1673,22 +1678,79 @@ export class EntityEditor
       }}
       @input=${() => {
         this.#edited = true;
+        this.#setPendingEditFromForm();
       }}
     >
       ${value}
     </form>`;
   }
 
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
-    // Auto-save both when a different step is selected
-    // and when the reactive change is triggered.
-    if (
-      (changedProperties.has("graphTopologyUpdateId") ||
-        changedProperties.has("selectionState") ||
-        changedProperties.has("values")) &&
-      this.#edited
-    ) {
-      this.save();
+  // NOTE: willUpdate no longer triggers autosave. Pending edits are set
+  // directly in the @input handler on the form.
+
+  /**
+   * Sets a pending edit on the SCA controller from current form state.
+   * The step autosave trigger will apply this when selection changes.
+   * Handles both node edits (node-id/graph-id) and asset edits (asset-path).
+   */
+  async #setPendingEditFromForm(): Promise<void> {
+    if (!this.#formRef.value || !this.sca) {
+      return;
+    }
+
+    const form = this.#formRef.value;
+    const data = new FormData(form);
+
+    // Check if this is a node edit
+    const formGraphId = data.get("graph-id") as string | null;
+    const nodeId = data.get("node-id") as string | null;
+
+    if (formGraphId !== null && nodeId !== null) {
+      // Handle node edit
+      const prepared = await this.#prepareNodeConfiguration(
+        this.values,
+        form,
+        formGraphId,
+        nodeId
+      );
+
+      if (!prepared) {
+        return;
+      }
+
+      this.sca.controller.editor.step.setPendingEdit({
+        graphId: prepared.editGraphId,
+        nodeId,
+        values: prepared.configuration,
+        ins: prepared.ins,
+        graphVersion: this.sca.controller.editor.graph.version,
+      });
+      return;
+    }
+
+    // Check if this is an asset edit
+    const assetPath = data.get("asset-path") as string | null;
+    if (assetPath !== null) {
+      const asset = this.projectState?.graphAssets.get(assetPath);
+      if (!asset) {
+        return;
+      }
+
+      const title = form.querySelector<HTMLInputElement>("#node-title")?.value;
+      const dataPart =
+        form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
+
+      if (!title) {
+        return;
+      }
+
+      this.sca.controller.editor.step.setPendingAssetEdit({
+        assetPath,
+        title,
+        dataPart,
+        graphVersion: this.sca.controller.editor.graph.version,
+        update: asset.update.bind(asset),
+      });
     }
   }
 
@@ -1696,7 +1758,7 @@ export class EntityEditor
    * Implements the StepEditorSurface interface, so that this class could
    * be used in Project state machinery.
    */
-  async save(): Promise<Outcome<void>> {
+  async #save(): Promise<Outcome<void>> {
     if (!this.#edited) {
       return;
     }
@@ -1704,6 +1766,11 @@ export class EntityEditor
     // Autosave.
     this.#edited = false;
     const submitting = this.#submit(this.values);
+
+    // Clear pending edit since we're explicitly saving
+    // This prevents the stale edit warning when clicking away
+    this.sca?.controller.editor.step.clearPendingEdit();
+    this.sca?.controller.editor.step.clearPendingAssetEdit();
 
     // Reset the node value so that we don't receive incorrect port data.
     this.values = undefined;
@@ -1730,6 +1797,10 @@ export class EntityEditor
   }
 
   render() {
+    // Read graph version to subscribe to graph changes via SignalWatcher.
+    // This ensures we re-render when the graph is modified (e.g., wire drag).
+    void this.sca.controller.editor.graph.version;
+
     const selectionCount = this.#calculateSelectionSize();
     if (selectionCount === 0) {
       return html`<div id="generic-status">Please select an item to edit</div>`;
@@ -1746,7 +1817,6 @@ export class EntityEditor
           .showTools=${true}
           .showAssets=${false}
           .showComponents=${false}
-          .showParameters=${false}
           @pointerdown=${(evt: PointerEvent) => {
             evt.stopImmediatePropagation();
           }}
@@ -1805,18 +1875,6 @@ function enumValue(value: SchemaEnumValue): EnumValue {
   }
 
   return enumVal;
-}
-
-function portsFromView(view: ConnectorView): PortLike[] {
-  const { schema, values } = view;
-  return Object.entries(schema.properties || {}).map(([name, schema]) => {
-    return {
-      name,
-      title: schema.title || name,
-      schema,
-      value: (values as Record<string, NodeValue>)[name],
-    } satisfies PortLike;
-  });
 }
 
 function getLLMContentPortValue(
@@ -1879,6 +1937,19 @@ function extractModelId(ports: InspectableNodePorts): string | null {
 
 function isGenerativeNode(node: InspectableNode): boolean {
   return node.descriptor.type === "embed://a2/generate.bgl.json#module:main";
+}
+
+function isAgentMode(
+  node: InspectableNode,
+  pendingValues?: InputValues
+): boolean {
+  if (!isGenerativeNode(node)) return false;
+  // Check pending values first (for reactive updates), then fall back to persisted configuration
+  const mode =
+    pendingValues?.["generation-mode"] ??
+    node.configuration()?.["generation-mode"];
+  // undefined means "agent" mode (it's the default)
+  return mode === "agent" || mode === undefined;
 }
 
 // Returns true if LLM text part of node contains tools/assets or is absent.

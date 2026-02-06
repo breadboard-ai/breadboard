@@ -65,6 +65,20 @@
  * changes using Services and Controllers. If the value is simply to be updated
  * do it in the Controller directly. Not every change needs to be an Action.
  *
+ * ## 4. Triggers (The "Side Effects")
+ *
+ * Triggers are automatic reactions to state changes that invoke Actions.
+ * They are declared alongside Actions using the `triggeredBy` property:
+ *
+ * ```typescript
+ * export const save = asAction("Board.save", {
+ *   mode: ActionMode.Awaits,
+ *   triggeredBy: [() => onVersionChange(bind)],
+ * }, async () => { ... });
+ * ```
+ *
+ * Triggers are activated during bootstrap via `Actions.activateTriggers()`.
+ *
  * ---
  *
  * ## The Data Flow Cycle
@@ -108,6 +122,18 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
       actions,
     };
 
+    // Set up triggers for side effects once the controller is ready.
+    controller.isHydrated.then(() => {
+      // Activate action-based triggers
+      Actions.activateTriggers();
+
+      // One-time initialization actions (no triggers, called directly)
+      actions.router.init();
+      actions.screenSize.init();
+
+      // Start polling for status updates
+      services.statusUpdates.start(controller.global.statusUpdates);
+    });
     Utils.Logging.setDebuggableAppController(instance.controller);
   }
 

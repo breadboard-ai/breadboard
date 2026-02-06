@@ -30,13 +30,15 @@ These are some significant packages:
   -- contain the core runtime engine for the project and all the data
   transformation/processing code.
 
-- `packages/visual-editor` -- contains the majority of the frontend code for the project.
+- `packages/visual-editor` -- contains the majority of the frontend code for the
+  project.
 
 - `unified-server` -- contains the nodejs server, the backend of the project.
 
 ## Signals
 
-The repo is using `signal-polyfil` and `signal-utils` as its signal infrastructure.
+The repo is using `signal-polyfil` and `signal-utils` as its signal
+infrastructure.
 
 ## Coding Conventions
 
@@ -68,12 +70,25 @@ function quz() {
 
 ## Tests
 
-To write tests, use node's built-in test framework. Use the `npm run test` command within the package to run tests.
+To write tests, use node's built-in test framework. Use the `npm run test`
+command within the package to run tests.
 
 Name tests as `[name of tested file].test.ts` and place it into
 `packages/[package name]/tests/` directory. All packages are configured to pick
 up that file with `npm run test`.
 
-If you're writing a test in `packages/visual-editor/tests` and the code-to-be-tested
-contains signals, use the `packages/visual-editor/tests/signal-watcher.ts` helper
-for easy reactivity testing.
+If you're writing a test in `packages/visual-editor/tests` and the
+code-to-be-tested contains signals, use the
+`packages/visual-editor/tests/signal-watcher.ts` helper for easy reactivity
+testing.
+
+In `packages/visual-editor`, use `npm run test:pattern` to run tests with direct
+control over node's test runner flags:
+
+```bash
+# Filter tests by name pattern
+npm run test:pattern -- --test-name-pattern="ChoicePresenter"
+
+# Run only tests marked with .only
+npm run test:pattern -- --test-only
+```

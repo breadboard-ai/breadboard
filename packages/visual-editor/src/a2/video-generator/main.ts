@@ -4,7 +4,6 @@
 
 import { type DescriberResult } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
-import { ListExpander } from "../a2/lists.js";
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import {
@@ -227,45 +226,43 @@ async function invoke(
   console.log("substituting");
   console.log(substituting);
 
-  const results = await new ListExpander(substituting, context).map(
-    async (itemInstruction, itemContext) => {
-      // 1) Extract any image and text data from context (with history).
-      let imageContext = extractMediaData(itemContext);
-      const textContext = extractTextData(itemContext);
+  // Process single item directly (list support removed)
+  const itemContext = [...context];
 
-      // 3) Extract image and text data from (non-history) references.
-      const refImages = extractMediaData([itemInstruction]);
-      const refText = extractTextData([itemInstruction]);
+  // 1) Extract any image and text data from context (with history).
+  let imageContext = extractMediaData(itemContext);
+  const textContext = extractTextData(itemContext);
 
-      // 4) Combine with whatever data was extracted from context.
-      imageContext = imageContext.concat(refImages);
-      const combinedInstruction = toTextConcat(
-        joinContent(toTextConcat(refText), textContext, false)
-      );
-      if (!combinedInstruction) {
-        return err("Please provide the instruction to generate video.", {
-          kind: "config",
-          origin: "client",
-        });
-      }
+  // 3) Extract image and text data from (non-history) references.
+  const refImages = extractMediaData([substituting]);
+  const refText = extractTextData([substituting]);
 
-      console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
-
-      // 2) Call backend to generate video.
-      const content = await callVideoGen(
-        caps,
-        moduleArgs,
-        combinedInstruction,
-        imageContext,
-        disablePromptRewrite,
-        aspectRatio,
-        modelName
-      );
-      return content;
-    }
+  // 4) Combine with whatever data was extracted from context.
+  imageContext = imageContext.concat(refImages);
+  const combinedInstruction = toTextConcat(
+    joinContent(toTextConcat(refText), textContext, false)
   );
-  if (!ok(results)) return expandVeoError(results, modelName);
-  return { context: results };
+  if (!combinedInstruction) {
+    return err("Please provide the instruction to generate video.", {
+      kind: "config",
+      origin: "client",
+    });
+  }
+
+  console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
+
+  // 2) Call backend to generate video.
+  const content = await callVideoGen(
+    caps,
+    moduleArgs,
+    combinedInstruction,
+    imageContext,
+    disablePromptRewrite,
+    aspectRatio,
+    modelName
+  );
+  if (!ok(content)) return expandVeoError(content, modelName);
+  return { context: [content] };
 }
 
 type DescribeInputs = {

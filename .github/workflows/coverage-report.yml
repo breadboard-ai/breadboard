@@ -1,0 +1,146 @@
+name: Coverage Report
+
+on:
+  workflow_run:
+    workflows: ["Labs Prototypes CI"]
+    types:
+      - completed
+
+# Note: workflow_run ALWAYS runs in the context of the default branch (main),
+# not the PR branch. This is a GitHub security feature that ensures:
+# 1. The workflow code being executed is from main (trusted code)
+# 2. Secrets are available (they're not available to fork PRs in pull_request trigger)
+# 3. Write permissions can be safely granted
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    # Job-level permissions (more explicit than workflow-level)
+    permissions:
+      contents: read       # To checkout main branch
+      pull-requests: write # To post comments on the PR
+      actions: read        # To download artifacts from the triggering workflow
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      # Checkout main FIRST to ensure all scripts and package.json come from
+      # trusted code, not the PR artifact
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build and generate baseline coverage
+        id: baseline
+        run: |
+          npm run build
+          npm run coverage
+        continue-on-error: true
+
+      # Download artifacts AFTER checkout/build to isolate them from the
+      # trusted codebase. The artifact only contains JSON data files.
+      - name: Download coverage artifact
+        id: download
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: pr-artifact
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Check artifact download
+        if: steps.download.outcome == 'failure'
+        run: |
+          echo "::warning::Coverage artifact not found. Skipping coverage report."
+          exit 0
+
+      - name: Read PR number
+        if: steps.download.outcome == 'success'
+        id: pr
+        run: |
+          if [ -f pr-artifact/pr-number.txt ]; then
+            echo "number=$(cat pr-artifact/pr-number.txt)" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::PR number file not found"
+            echo "number=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip if no PR number
+        if: steps.download.outcome == 'success' && steps.pr.outputs.number == ''
+        run: |
+          echo "::warning::No PR number found. Skipping coverage report."
+          exit 0
+
+      - name: Generate coverage comparison
+        if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && steps.baseline.outcome == 'success'
+        id: coverage
+        # compare-coverage.js only parses JSON data, it does not execute artifact contents
+        run: node scripts/compare-coverage.js pr-artifact/packages/visual-editor/coverage/coverage-summary.json packages/visual-editor/coverage/coverage-summary.json
+        continue-on-error: true
+
+      - name: Generate fallback comment on comparison failure
+        if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && (steps.baseline.outcome == 'failure' || steps.coverage.outcome == 'failure')
+        run: |
+          echo "## 📊 Coverage Report" > coverage-comment.md
+          echo "" >> coverage-comment.md
+          echo "⚠️ Unable to generate coverage comparison. This may be due to:" >> coverage-comment.md
+          echo "- Build failure on main branch" >> coverage-comment.md
+          echo "- Missing coverage data" >> coverage-comment.md
+          echo "" >> coverage-comment.md
+          if [ -f pr-artifact/packages/visual-editor/coverage/coverage-summary.json ]; then
+            echo "**PR Coverage data was uploaded successfully.**" >> coverage-comment.md
+          fi
+
+      - name: Post coverage comment
+        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('coverage-comment.md')) {
+              console.log('No coverage comment file found. Skipping.');
+              return;
+            }
+
+            const marker = '<!-- breadboard-coverage-report -->';
+            const commentBody = fs.readFileSync('coverage-comment.md', 'utf8');
+            const body = marker + '\n' + commentBody;
+            const prNumber = ${{ steps.pr.outputs.number }};
+
+            // Find existing coverage comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              console.log(`Updating existing comment ${existing.id}`);
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              console.log('Creating new coverage comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }

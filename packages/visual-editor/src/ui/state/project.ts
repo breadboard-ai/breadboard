@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isA2 } from "../../a2/index.js";
 import {
   AssetPath,
   GraphIdentifier,
@@ -12,31 +11,24 @@ import {
   InspectableNodePorts,
   LLMContent,
   NodeIdentifier,
-  ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
   EditableGraph,
   EditSpec,
   EditTransform,
-  FileSystem,
-  GraphStoreEntry,
-  MainGraphIdentifier,
-  MutableGraphStore,
   NodeHandlerMetadata,
   Outcome,
   PortIdentifier,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { ConnectorType } from "../connectors/types.js";
-import { ConnectorStateImpl } from "./connectors.js";
+
 import { GraphAssetImpl } from "./graph-asset.js";
 import { ReactiveOrganizer } from "./organizer.js";
 import { ReactiveProjectRun } from "./project-run.js";
 import { RendererStateImpl } from "./renderer.js";
 import {
   Component,
-  ConnectorState,
   GraphAsset,
   Integrations,
   Organizer,
@@ -59,60 +51,41 @@ import { transformDataParts } from "../../data/common.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { ActionTracker } from "../types/types.js";
 import { Signal } from "signal-polyfill";
+import { SCA } from "../../sca/sca.js";
 
 export { createProjectState, ReactiveProject };
 
 const THUMBNAIL_KEY = "@@thumbnail";
 
-/**
- * Controls the filter for tools. Use it to tweak what shows up in the "Tools"
- * section of the "@" menu.
- */
-function isTool(entry: GraphStoreEntry) {
-  return (
-    !entry.updating &&
-    entry.tags?.includes("tool") &&
-    !!entry.url &&
-    entry?.tags.includes("quick-access") &&
-    isA2(entry.url)
-  );
-}
-
 function createProjectState(
-  mainGraphId: MainGraphIdentifier,
-  store: MutableGraphStore,
   fetchWithCreds: typeof globalThis.fetch,
   boardServer: GoogleDriveBoardServer,
   actionTracker: ActionTracker,
   mcpClientManager: McpClientManager,
-  editable?: EditableGraph
+  editable: EditableGraph,
+  sca: SCA
 ): Project {
   return new ReactiveProject(
-    mainGraphId,
-    store,
     fetchWithCreds,
     boardServer,
     mcpClientManager,
     actionTracker,
-    editable
+    editable,
+    sca
   );
 }
 
 type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
 
 class ReactiveProject implements ProjectInternal, ProjectValues {
-  readonly #mainGraphId: MainGraphIdentifier;
-  readonly #store: MutableGraphStore;
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #boardServer: GoogleDriveBoardServer;
-  readonly #connectorInstances: Set<string> = new Set();
-  readonly #connectorMap: SignalMap<string, ConnectorType>;
 
   #graphChanged = new Signal.State({});
-  readonly #editable: EditableGraph | undefined;
+  readonly #editable: EditableGraph;
 
   @signal
-  get editable(): EditableGraph | undefined {
+  get editable(): EditableGraph {
     this.#graphChanged.get();
     return this.#editable;
   }
@@ -123,91 +96,70 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
 
-  readonly tools: SignalMap<string, Tool>;
   readonly myTools: SignalMap<string, Tool>;
-  readonly controlFlowTools: SignalMap<string, Tool>;
+  readonly agentModeTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
-  readonly parameters: SignalMap<string, ParameterMetadata>;
-  readonly connectors: ConnectorState;
+
   readonly renderer: RendererState;
   readonly integrations: Integrations;
   readonly stepEditor: StepEditor;
   readonly themes: ProjectThemeState;
 
   constructor(
-    mainGraphId: MainGraphIdentifier,
-    store: MutableGraphStore,
     fetchWithCreds: typeof globalThis.fetch,
     boardServer: GoogleDriveBoardServer,
     clientManager: McpClientManager,
     private readonly actionTracker: ActionTracker,
-    editable?: EditableGraph
+    editable: EditableGraph,
+    private readonly __sca: SCA
   ) {
-    this.#mainGraphId = mainGraphId;
-    this.#store = store;
     this.#fetchWithCreds = fetchWithCreds;
     this.#boardServer = boardServer;
     this.#editable = editable;
-    store.addEventListener("update", (event) => {
-      if (event.mainGraphId === mainGraphId) {
-        this.#updateComponents();
-        this.#updateGraphAssets();
-        this.#updateParameters();
-        this.#updateMyTools();
-        this.#updateControlFlowTools();
-        this.#graphChanged.set({});
-      }
-      this.#updateConnectors();
-      this.#updateTools();
+    editable.addEventListener("graphchange", (e) => {
+      if (e.visualOnly) return;
+      this.#updateComponents();
+      this.#updateGraphAssets();
+
+      this.#updateMyTools();
+      this.#updateAgentModeTools();
+      this.#graphChanged.set({});
     });
-    const graph = this.#store.get(mainGraphId)?.graph;
-    if (!graph) {
-      console.warn(
-        `No graph when initializing Project state: most things will likely not work`
-      );
-    }
+    const graph = editable.raw();
     const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
-    this.tools = new SignalMap();
-    this.controlFlowTools = new SignalMap();
+    this.agentModeTools = new SignalMap();
     this.components = new SignalMap();
     this.myTools = new SignalMap();
-    this.parameters = new SignalMap();
-    this.#connectorMap = new SignalMap();
-    this.#updateConnectors();
-    this.connectors = new ConnectorStateImpl(this, this.#connectorMap);
+
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
-    this.stepEditor = new StepEditorImpl(this);
+    this.stepEditor = new StepEditorImpl(this, this.__sca);
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);
     this.#updateComponents();
-    this.#updateTools();
     this.#updateMyTools();
-    this.#updateControlFlowTools();
-    this.#updateParameters();
-    this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
+    this.#updateAgentModeTools();
+
+    this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
     this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
   }
 
   resetRun(): void {
-    this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
+    this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
   }
 
   connectHarnessRunner(
     runner: HarnessRunner,
-    fileSystem: FileSystem,
     signal?: AbortSignal
   ): Outcome<void> {
     // Intentionally reset this property with a new instance.
     this.run = ReactiveProjectRun.create(
       this.stepEditor,
-      this.#mainGraphId,
       this.actionTracker,
-      this.#store,
-      fileSystem,
+      this.#editable.inspect(""),
       runner,
       this.#editable,
       signal
@@ -215,35 +167,21 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   }
 
   async apply(transform: EditTransform): Promise<Outcome<void>> {
-    const editable = this.#editable;
-    if (!editable) {
-      return err(
-        `Unable to get an editable graph with id "${this.#mainGraphId}"`
-      );
-    }
-
-    const editing = await editable.apply(transform);
+    const editing = await this.#editable.apply(transform);
     if (!editing.success) {
       return err(editing.error);
     }
   }
 
   async edit(spec: EditSpec[], label: string): Promise<Outcome<void>> {
-    const editable = this.#editable;
-    if (!editable) {
-      return err(
-        `Unable to get an editable graph with id "${this.#mainGraphId}"`
-      );
-    }
-
-    const editing = await editable.edit(spec, label);
+    const editing = await this.#editable.edit(spec, label);
     if (!editing.success) {
       return err(editing.error);
     }
   }
 
   async persistDataParts(contents: LLMContent[]): Promise<LLMContent[]> {
-    const urlString = this.#store.get(this.#mainGraphId)?.graph.url;
+    const urlString = this.#editable.raw().url;
     if (!urlString) {
       console.warn("Can't persist blob without graph URL");
       return contents;
@@ -269,11 +207,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     nodeId: NodeIdentifier,
     graphId: GraphIdentifier
   ): Outcome<NodeHandlerMetadata> {
-    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
-    if (!inspectable) {
-      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
-    }
-    const node = inspectable.nodeById(nodeId);
+    const node = this.#editable.inspect(graphId).nodeById(nodeId);
     if (!node) {
       return err(`Unable to find node with id "${nodeId}`);
     }
@@ -288,11 +222,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     nodeId: NodeIdentifier,
     graphId: GraphIdentifier
   ): Outcome<InspectableNodePorts> {
-    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
-    if (!inspectable) {
-      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
-    }
-    const node = inspectable.nodeById(nodeId);
+    const node = this.#editable.inspect(graphId).nodeById(nodeId);
     if (!node) {
       return err(`Unable to find node with id "${nodeId}`);
     }
@@ -303,11 +233,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     nodeId: NodeIdentifier,
     graphId: GraphIdentifier
   ): Outcome<string> {
-    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
-    if (!inspectable) {
-      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
-    }
-    const node = inspectable.nodeById(nodeId);
+    const node = this.#editable.inspect(graphId).nodeById(nodeId);
     if (!node) {
       return err(`Unable to find node with id "${nodeId}`);
     }
@@ -318,11 +244,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ): Outcome<{ id: PortIdentifier; title: string }> {
-    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
-    if (!inspectable) {
-      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
-    }
-    const node = inspectable.nodeById(nodeId);
+    const node = this.#editable.inspect(graphId).nodeById(nodeId);
     if (!node) {
       return err(`Unable to find node with id "${nodeId}`);
     }
@@ -344,10 +266,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   }
 
   #updateMyTools() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
-    const tools = Object.entries(mutable.graph.graphs || {}).map<
+    const tools = Object.entries(this.#editable.raw().graphs || {}).map<
       [string, Tool]
     >(([graphId, descriptor]) => {
       const url = `#${graphId}`;
@@ -365,66 +284,9 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     updateMap(this.myTools, tools);
   }
 
-  /**
-   * Must run **after** #updateGraphAssets.
-   */
-  #updateTools() {
-    const graphs = this.#store.graphs();
-    const toolGraphEntries = graphs.filter(isTool);
-
+  #updateAgentModeTools() {
     const tools: [string, Tool][] = [];
-
-    for (const entry of toolGraphEntries) {
-      const tool = toTool(entry);
-      const isPartOfConnector = !!entry.mainGraph.tags?.includes("connector");
-      if (!isPartOfConnector) {
-        tools.push(tool);
-      }
-    }
-
-    // Add a tool bundle for each connector with "tools" export
-    for (const graphAsset of this.graphAssets.values()) {
-      const { path, connector, metadata: { title } = {} } = graphAsset;
-      if (!connector || !connector.type.tools) continue;
-
-      tools.push([
-        `${connector.type.url}#${path}`,
-        {
-          url: connector.type.url,
-          title: `${title} Tools`,
-          icon: connector.type.icon,
-          id: path,
-        } satisfies Tool,
-      ]);
-    }
-
-    updateMap(this.tools, tools);
-
-    function toTool(entry: GraphStoreEntry): [string, Tool] {
-      return [
-        entry.url!,
-        {
-          url: entry.url!,
-          title: entry.title,
-          description: entry.description,
-          order: entry.order || Number.MAX_SAFE_INTEGER,
-          icon: entry.icon,
-          tags: entry.tags,
-        } satisfies Tool,
-      ];
-    }
-  }
-
-  #updateControlFlowTools() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
-    const tools: [string, Tool][] = [];
-    // TODO: Make this condition a bit more robust:
-    // - only show if there are other nodes besides the current node that aren't
-    //   already used by an existing "Go to" chiclet.
-    // - only show this for the "Agent" mode.
-    if (mutable.graph.nodes.length > 1) {
+    if (this.#editable.raw().nodes.length > 1) {
       tools.push([
         `control-flow/routing`,
         {
@@ -434,17 +296,22 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
         },
       ]);
     }
-    updateMap(this.controlFlowTools, tools);
+    tools.push([
+      `function-group/use-memory`,
+      {
+        url: "use-memory",
+        title: "Use Memory",
+        icon: "database",
+      },
+    ]);
+    updateMap(this.agentModeTools, tools);
   }
 
   #updateComponents() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
     const map = this.components;
     const toDelete = new Set(map.keys());
-    const updated = Object.entries(mutable.graphs.graphs());
-    updated.push(["", this.#store.inspect(this.#mainGraphId, "")!]);
+    const updated = Object.entries(this.#editable.inspect("").graphs() || {});
+    updated.push(["", this.#editable.inspect("")]);
     updated.forEach(([key, value]) => {
       let currentValue = map.get(key);
       if (!currentValue) {
@@ -508,12 +375,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   }
 
   #updateGraphAssets() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
-    this.#connectorInstances.clear();
-
-    const { assets = {} } = mutable.graph;
+    const { assets = {} } = this.#editable.raw();
     // Special-case the thumbnail and splash so they doesn't show up.
     delete assets[THUMBNAIL_KEY];
 
@@ -522,60 +384,5 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     );
 
     updateMap(this.graphAssets, graphAssets);
-  }
-
-  #updateParameters() {
-    const mutable = this.#store.get(this.#mainGraphId);
-    if (!mutable) return;
-
-    const { parameters = {} } = mutable.graph?.metadata || {};
-
-    updateMap(
-      this.parameters,
-      Object.entries(parameters).map(([id, parameter]) => [id, parameter])
-    );
-  }
-
-  #updateConnectors() {
-    const graphs = this.#store.mainGraphs();
-    const connectors = graphs.filter(
-      (graph) =>
-        graph.tags?.includes("connector") &&
-        graph.tags?.includes("published") &&
-        graph.url
-    );
-    updateMap(
-      this.#connectorMap,
-      connectors.map((connector) => {
-        const url = connector.url!;
-        const load = connector.exportTags.includes("connector-load");
-        const save = connector.exportTags.includes("connector-save");
-        const tools = connector.exportTags.includes("connector-tools");
-        const singleton = !!connector.tags?.includes("connector-singleton");
-        const experimental = !!connector.tags?.includes("experimental");
-        return [
-          url,
-          {
-            url,
-            icon: connector.icon,
-            title: connector.title || "Unknown Connector",
-            description: connector.description,
-            singleton,
-            load,
-            save,
-            tools,
-            experimental,
-          } satisfies ConnectorType as ConnectorType,
-        ];
-      })
-    );
-  }
-
-  connectorInstanceExists(url: string): boolean {
-    return this.#connectorInstances.has(url);
-  }
-
-  addConnectorInstance(url: string): void {
-    this.#connectorInstances.add(url);
   }
 }

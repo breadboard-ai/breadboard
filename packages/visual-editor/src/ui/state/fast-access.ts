@@ -8,7 +8,6 @@ import {
   AssetPath,
   EditableGraph,
   GraphIdentifier,
-  ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
   Component,
@@ -27,7 +26,7 @@ import { willCreateCycle } from "@breadboard-ai/utils";
 export { ReactiveFastAccess };
 
 class ReactiveFastAccess implements FastAccess {
-  readonly controlFlow: FilterableMap<Tool>;
+  readonly agentMode: FilterableMap<Tool>;
   readonly routes: FilterableMap<Component>;
 
   @signal
@@ -88,16 +87,15 @@ class ReactiveFastAccess implements FastAccess {
 
   constructor(
     public readonly graphAssets: Map<AssetPath, GraphAsset>,
-    public readonly tools: Map<string, Tool>,
+    public readonly tools: ReadonlyMap<string, Tool>,
     public readonly myTools: Map<string, Tool>,
-    unfilteredControlFlow: Map<string, Tool>,
+    unfilteredAgentMode: Map<string, Tool>,
     private readonly allComponents: Map<GraphIdentifier, Components>,
-    public readonly parameters: Map<string, ParameterMetadata>,
     public readonly integrations: FilteredIntegrations,
     private readonly editable: EditableGraph | undefined,
     private readonly stepEditor: Omit<StepEditor, "fastAccess">
   ) {
-    this.controlFlow = new FilteredMap(() => unfilteredControlFlow);
+    this.agentMode = new FilteredMap(() => unfilteredAgentMode);
     this.routes = new FilteredMap(() => this.#routes);
   }
 }

@@ -8,7 +8,7 @@ import { Outcome } from "@breadboard-ai/types/data.js";
 import { ok } from "@breadboard-ai/utils";
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { OutcomeData } from "../types.js";
+import { OutcomeData } from "../../../../src/types/types.js";
 
 import "../../../../src/ui/elements/json-tree/json-tree.js";
 import "./llm-content-viewer.js";

@@ -4,8 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isParticle } from "../../../../particles/index.js";
-import { ConsoleEntry } from "@breadboard-ai/types";
+import {
+  ConsoleEntry,
+  ConsoleUpdate,
+  LLMContent,
+  SimplifiedA2UIClient,
+} from "@breadboard-ai/types";
+
+type ProductMap = Map<
+  string,
+  LLMContent | SimplifiedA2UIClient | ConsoleUpdate
+>;
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -18,6 +27,12 @@ import { icons } from "../../../styles/icons.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { sharedStyles } from "./shared-styles.js";
 import { hasControlPart } from "../../../../runtime/control.js";
+
+function isConsoleUpdate(
+  item: LLMContent | SimplifiedA2UIClient | ConsoleUpdate
+): item is ConsoleUpdate {
+  return "type" in item && (item.type === "text" || item.type === "links");
+}
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
@@ -215,7 +230,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             opacity: 0.3;
             cursor: default;
           }
-            
+
           &[open] > summary {
             margin-bottom: var(--bb-grid-size-3);
 
@@ -259,6 +274,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             &.photo_spark,
             &.audio_magic_eraser,
             &.text_analysis,
+            &.button_magic,
             &.generative-image-edit,
             &.generative-code,
             &.videocam_auto,
@@ -285,6 +301,37 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
         to {
           rotate: 360deg;
+        }
+      }
+
+      .links-list {
+        list-style: none;
+        padding: var(--bb-grid-size-2);
+        margin: 0;
+
+        & li {
+          display: flex;
+          align-items: center;
+          margin-bottom: var(--bb-grid-size-2);
+
+          a {
+            color: var(--light-dark-n-0);
+            display: flex;
+            align-items: center;
+          }
+
+          & .g-icon {
+            margin-left: var(--bb-grid-size-2);
+          }
+
+          img {
+            width: 20px;
+            height: 20px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-right: var(--bb-grid-size-2);
+            border: 1px solid var(--light-dark-n-90);
+          }
         }
       }
     `,
@@ -324,6 +371,85 @@ export class ConsoleView extends SignalWatcher(LitElement) {
     });
 
     return `${formatter.format(secondsValue)}s`;
+  }
+
+  #renderProducts(product: ProductMap) {
+    if (product.size === 0) {
+      return html`<div class="output" data-label="Output:">
+        <p>There are no outputs for this step's work item</p>
+      </div>`;
+    }
+
+    return html`<ul class="products">
+      ${repeat(
+        product,
+        ([key]) => key,
+        ([, item]) => {
+          // ConsoleUpdate (from ProgressWorkItem)
+          if (isConsoleUpdate(item)) {
+            if (item.type === "text") {
+              return html`<li class="output" data-label="${item.title}">
+                <span class="g-icon filled round">${item.icon}</span>
+                <bb-llm-output
+                  .lite=${true}
+                  .clamped=${false}
+                  .value=${item.body}
+                  .forceDrivePlaceholder=${true}
+                ></bb-llm-output>
+              </li>`;
+            }
+            if (item.type === "links") {
+              return html`<li class="output" data-label="${item.title}">
+                <span class="g-icon filled round">${item.icon}</span>
+                <ul class="links-list">
+                  ${item.links.map(
+                    (link) => html`
+                      <li>
+                        <a
+                          target="_blank"
+                          href=${link.uri}
+                          rel="noopener"
+                          class="sans-flex w-500 round md-body-small"
+                          ><img
+                            src="https://www.google.com/s2/favicons?domain=${link.iconUri}&sz=48"
+                          /><span>${link.title}</span
+                          ><span class="g-icon inline filled round"
+                            >open_in_new</span
+                          ></a
+                        >
+                      </li>
+                    `
+                  )}
+                </ul>
+              </li>`;
+            }
+          }
+          // SimplifiedA2UIClient
+          if ("processor" in item) {
+            const { processor, receiver } = item;
+            return html`<li>
+              <section id="surfaces">
+                <bb-a2ui-client-view
+                  .processor=${processor}
+                  .receiver=${receiver}
+                >
+                </bb-a2ui-client-view>
+              </section>
+            </li>`;
+          }
+
+          // LLMContent (fallback)
+          return html`<li class="output" data-label="Output">
+            <bb-llm-output
+              .lite=${true}
+              .clamped=${false}
+              .value=${item}
+              .forceDrivePlaceholder=${true}
+            ></bb-llm-output>
+          </li>`;
+        }
+      )}
+    </ul>`;
   }
 
   #renderRun() {
@@ -474,49 +600,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
                       ${workItem.awaitingUserInput
                         ? this.#renderInput()
-                        : workItem.product.size > 0
-                          ? html`<ul class="products">
-                              ${repeat(
-                                workItem.product,
-                                ([key]) => key,
-                                ([, product]) => {
-                                  if ("processor" in product) {
-                                    const { processor, receiver } = product;
-                                    return html`<li>
-                                      <section id="surfaces">
-                                        <bb-a2ui-client-view
-                                          .processor=${processor}
-                                          .receiver=${receiver}
-                                        >
-                                        </bb-a2ui-client-view>
-                                      </section>
-                                    </li>`;
-                                  } else if (isParticle(product)) {
-                                    return html`<li>
-                                      <bb-particle-view
-                                        .particle=${product}
-                                      ></bb-particle-view>
-                                    </li>`;
-                                  }
-                                  return html`<li
-                                    class="output"
-                                    data-label="Output:"
-                                  >
-                                    <bb-llm-output
-                                      .lite=${true}
-                                      .clamped=${false}
-                                      .value=${product}
-                                      .forceDrivePlaceholder=${true}
-                                    ></bb-llm-output>
-                                  </li>`;
-                                }
-                              )}
-                            </ul>`
-                          : html`<div class="output" data-label="Output:">
-                              <p>
-                                There are no outputs for this step's work item
-                              </p>
-                            </div>`}
+                        : this.#renderProducts(workItem.product)}
                     </details>`;
                   }
                 )

@@ -29,12 +29,11 @@ import {
   EnumValue,
 } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
-import { hasEnabledGlobalSettings } from "./global-settings.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { Utils } from "../../../sca/utils.js";
-import { AppController } from "../../../sca/controller/controller.js";
 import { until } from "lit/directives/until.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -49,7 +48,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
   @property()
   accessor signinAdapter: SigninAdapter | null = null;
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor hasActiveTab = false;
 
   @property()
@@ -78,6 +77,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   @property()
   accessor status: "Draft" | "Published" = "Draft";
+
+  @property({ type: Boolean })
+  accessor graphIsEmpty = true;
 
   @state()
   accessor #showAccountSwitcher = false;
@@ -159,13 +161,13 @@ export class VEHeader extends SignalWatcher(LitElement) {
             }
           }
 
-          & #app {
+          & #canvas {
             padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-4);
             border-radius: var(--bb-grid-size-16) var(--bb-grid-size-5)
               var(--bb-grid-size-5) var(--bb-grid-size-16);
           }
 
-          & #canvas {
+          & #app {
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
             border-radius: var(--bb-grid-size-5) var(--bb-grid-size-16)
               var(--bb-grid-size-16) var(--bb-grid-size-5);
@@ -190,7 +192,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
           }
 
           & #save-status-label {
-            display: none;
             font-size: 10px;
             line-height: 1;
             color: light-dark(var(--n-0), var(--n-70));
@@ -227,7 +228,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           }
 
           & #share {
-            display: flex;
+            display: none;
             align-items: center;
             background: var(--light-dark-n-100);
             border: 1px solid var(--light-dark-n-95);
@@ -279,6 +280,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
                 background: light-dark(var(--n-25), var(--n-90));
               }
             }
+          }
+
+          & #publish-button {
+            display: none;
+            margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
           }
 
           & #remix {
@@ -377,22 +383,37 @@ export class VEHeader extends SignalWatcher(LitElement) {
         }
       }
 
-      @media (min-width: 620px) {
-        section #right #save-status-label {
-          display: block;
-        }
-      }
-
-      @media (min-width: 820px) {
-        #experiment {
-          display: block;
+      @media (max-width: 620px) {
+        section {
+          #left {
+            padding-right: 0;
+          }
+          #tab-title {
+            display: none;
+          }
+          #mode-toggle {
+            left: 50%;
+          }
+          :host([hasactivetab]) & #global-item-select {
+            display: none;
+          }
+          #right #save-status-label {
+            display: none;
+          }
         }
       }
 
       @media (min-width: 830px) {
-        section #right #publish,
-        section #right #remix {
-          display: flex;
+        #experiment {
+          display: block;
+        }
+        section #right {
+          #remix,
+          #publish,
+          #publish-button,
+          #share {
+            display: flex;
+          }
         }
       }
 
@@ -468,6 +489,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
       <div id="right">
         ${[
           this.#renderSaveStatusLabel(),
+          this.#renderPublishButton(),
           this.#renderSharePublishButton(),
           this.#renderRemixButton(),
           this.#renderGraphItemSelect(),
@@ -479,25 +501,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderModeToggle() {
-    return html`<span
-      id="mode-toggle"
-    >
-      <button
-        id="app"
-        @click=${() => {
-          this.dispatchEvent(
-            new StateEvent({ eventType: "host.modetoggle", mode: "app" })
-          );
-        }}
-        class=${classMap({
-          "sans-flex": true,
-          round: true,
-          "w-500": true,
-          "md-body-small": true,
-          selected: this.mode === "app",
-        })}
-        >App</button
-      >
+    if (this.graphIsEmpty) {
+      return nothing;
+    }
+    return html`<span id="mode-toggle">
       <button
         id="canvas"
         @click=${() => {
@@ -512,16 +519,30 @@ export class VEHeader extends SignalWatcher(LitElement) {
           "md-body-small": true,
           selected: this.mode === "canvas",
         })}
-        >Editor</button
       >
-    </button>`;
+        Editor
+      </button>
+      <button
+        id="app"
+        @click=${() => {
+          this.dispatchEvent(
+            new StateEvent({ eventType: "host.modetoggle", mode: "app" })
+          );
+        }}
+        class=${classMap({
+          "sans-flex": true,
+          round: true,
+          "w-500": true,
+          "md-body-small": true,
+          selected: this.mode === "app",
+        })}
+      >
+        App
+      </button>
+    </span>`;
   }
 
   #renderGraphItemSelect() {
-    if (!this.isMine) {
-      return nothing;
-    }
-
     const options: EnumValue[] = [
       {
         id: "more",
@@ -529,39 +550,78 @@ export class VEHeader extends SignalWatcher(LitElement) {
         icon: "more_vert",
         hidden: true,
       },
-      {
-        id: "edit-title-and-description",
-        title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
-        icon: "edit",
-      },
-      {
-        id: "delete",
-        title: Strings.from("COMMAND_DELETE_PROJECT"),
-        icon: "delete",
-      },
-      {
-        id: "duplicate",
-        title: Strings.from("COMMAND_COPY_PROJECT"),
-        icon: "file_copy",
-      },
-      {
-        id: "history",
-        title: Strings.from("COMMAND_SHOW_VERSION_HISTORY"),
-        icon: "history",
-      },
     ];
 
-    if (
-      !Utils.Helpers.isHydrating(
-        () => this.sca.controller.global.main.experimentalComponents
-      ) &&
-      this.sca.controller.global.main.experimentalComponents
-    ) {
+    const screenSize = this.sca.controller.global.screenSize.size;
+    // On medium and smaller screens (≤830px), the share/remix buttons are hidden via CSS,
+    // so include those options here
+    if (screenSize !== "wide") {
+      if (!this.isMine) {
+        options.push({
+          id: "remix",
+          title: "Remix",
+          icon: "gesture",
+        });
+      }
       options.push({
-        id: "copy-board-contents",
-        title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
-        icon: "content_copy",
+        id: "share",
+        title: Strings.from("COMMAND_COPY_APP_PREVIEW_URL"),
+        icon: "share",
       });
+    }
+
+    if (this.isMine) {
+      options.push(
+        {
+          id: "edit-title-and-description",
+          title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
+          icon: "edit",
+        },
+        {
+          id: "delete",
+          title: Strings.from("COMMAND_DELETE_PROJECT"),
+          icon: "delete",
+        },
+        {
+          id: "duplicate",
+          title: Strings.from("COMMAND_COPY_PROJECT"),
+          icon: "file_copy",
+        }
+      );
+
+      // Version history is in the console view, so we don't currently
+      // have a mobile view for it
+      if (screenSize !== "narrow") {
+        options.push({
+          id: "history",
+          title: Strings.from("COMMAND_SHOW_VERSION_HISTORY"),
+          icon: "history",
+        });
+      }
+
+      if (
+        !Utils.Helpers.isHydrating(
+          () => this.sca.controller.global.main.experimentalComponents
+        ) &&
+        this.sca.controller.global.main.experimentalComponents
+      ) {
+        options.push({
+          id: "copy-board-contents",
+          title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
+          icon: "content_copy",
+        });
+      }
+    }
+
+    // On narrow screens (≤600px), the global item select is hidden via CSS,
+    // so include those options here
+    if (screenSize === "narrow") {
+      options.push(...this.#globalItemSelectOptions);
+    }
+
+    // Only show the menu if there are items beyond the hidden "more" button
+    if (options.length <= 1) {
+      return nothing;
     }
 
     return html`<bb-item-select
@@ -572,56 +632,53 @@ export class VEHeader extends SignalWatcher(LitElement) {
     ></bb-item-select>`;
   }
 
-  #renderGlobalItemSelect() {
-    const options: EnumValue[] = [
-      {
-        id: "settings",
-        title: "",
-        icon: "settings",
-        hidden: true,
-      },
-      {
-        id: "feedback",
-        title: Strings.from("COMMAND_SEND_FEEDBACK"),
-        icon: "flag",
-      },
-      {
-        id: "documentation",
-        title: Strings.from("COMMAND_DOCUMENTATION"),
-        icon: "quick_reference_all",
-      },
-      {
-        id: "status-update",
-        title: Strings.from("COMMAND_STATUS_UPDATE"),
-        icon: "bigtop_updates",
-      },
-      {
-        id: "chat",
-        title: Strings.from("COMMAND_JOIN_CHAT"),
-        svgIcon:
-          "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
-      },
-      ...(hasEnabledGlobalSettings(this.sca)
-        ? [
-            {
-              id: "show-global-settings",
-              title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
-              icon: "settings_2",
-            },
-          ]
-        : []),
-      {
-        id: "demo-video",
-        title: Strings.from("COMMAND_WATCH_DEMO_VIDEO"),
-        icon: "videocam",
-      },
-    ];
+  #globalItemSelectOptions: EnumValue[] = [
+    {
+      id: "settings",
+      title: "",
+      icon: "settings",
+      hidden: true,
+    },
+    {
+      id: "feedback",
+      title: Strings.from("COMMAND_SEND_FEEDBACK"),
+      icon: "flag",
+    },
+    {
+      id: "documentation",
+      title: Strings.from("COMMAND_DOCUMENTATION"),
+      icon: "quick_reference_all",
+    },
+    {
+      id: "status-update",
+      title: Strings.from("COMMAND_STATUS_UPDATE"),
+      icon: "bigtop_updates",
+    },
+    {
+      id: "chat",
+      title: Strings.from("COMMAND_JOIN_CHAT"),
+      svgIcon:
+        "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
+    },
+    {
+      id: "show-global-settings",
+      title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
+      icon: "settings_2",
+    },
+    {
+      id: "demo-video",
+      title: Strings.from("COMMAND_WATCH_DEMO_VIDEO"),
+      icon: "videocam",
+    },
+  ];
 
+  #renderGlobalItemSelect() {
     return html`<bb-item-select
+      id="global-item-select"
       .showDownArrow=${false}
       .freezeValue=${0}
       .transparent=${true}
-      .values=${options}
+      .values=${this.#globalItemSelectOptions}
     ></bb-item-select>`;
   }
 
@@ -759,6 +816,14 @@ export class VEHeader extends SignalWatcher(LitElement) {
     </button> `;
   }
 
+  #renderPublishButton() {
+    if (!this.isMine || !CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+      return nothing;
+    }
+
+    return html`<bb-publish-button id="publish-button"></bb-publish-button>`;
+  }
+
   #renderSharePublishButton() {
     if (this.isMine) {
       return html`<button
@@ -768,9 +833,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
           this.dispatchEvent(new ShareRequestedEvent());
         }}
       >
-        <span class="g-icon">share</span>${Strings.from(
-          "COMMAND_COPY_APP_PREVIEW_URL"
-        )}
+        <span class="g-icon">share</span
+        >${CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
+          ? "Share"
+          : Strings.from("COMMAND_COPY_APP_PREVIEW_URL")}
       </button>`;
     }
 

@@ -48,3 +48,27 @@ export type MainArguments = {
 export enum TosStatus {
   ACCEPTED = "accepted",
 }
+
+// Eval/trace types shared between agent-context and eval viewer
+
+import type { LLMContent, Outcome } from "@breadboard-ai/types";
+import type { FinalChainReport } from "../../eval/collate-context.js";
+
+export type FileData = {
+  path: string;
+  content: LLMContent;
+};
+
+export type OutcomeData = {
+  success?: boolean;
+  href?: string;
+  outcomes: LLMContent;
+  intermediate?: FileData[];
+};
+
+export type OutcomePayload = {
+  type: "outcome";
+  outcome: Outcome<OutcomeData>;
+};
+
+export type EvalFileData = Array<FinalChainReport | OutcomePayload>;

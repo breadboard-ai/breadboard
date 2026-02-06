@@ -13,6 +13,10 @@ import {
   streamGenerateContent,
   Tool,
 } from "../a2/gemini.js";
+import { callGeminiImage } from "../a2/image-utils.js";
+import { callAudioGen } from "../audio-generator/main.js";
+import { callMusicGen } from "../music-generator/main.js";
+import { callVideoGen } from "../video-generator/main.js";
 import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { AgentFileSystem } from "./file-system.js";
@@ -25,16 +29,25 @@ import { getSystemFunctionGroup } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
 import { getMemoryFunctionGroup } from "./functions/memory.js";
-import { SheetManager } from "../google-drive/sheet-manager.js";
-import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
-import { FunctionGroup, UIType } from "./types.js";
-import { CHAT_LOG_VFS_PATH, getChatFunctionGroup } from "./functions/chat.js";
+import { FunctionGroup, MemoryManager, UIType } from "./types.js";
+import { CHAT_LOG_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
 import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
 import { TaskTreeManager } from "./task-tree-manager.js";
+import { RunStateManager } from "./run-state-manager.js";
+import { Generators } from "./types.js";
 
 export { Loop };
+
+const generators: Generators = {
+  streamContent: streamGenerateContent,
+  conformBody: conformGeminiBody,
+  callImage: callGeminiImage,
+  callVideo: callVideoGen,
+  callAudio: callAudioGen,
+  callMusic: callMusicGen,
+};
 
 export type AgentRunArgs = {
   objective: LLMContent;
@@ -85,23 +98,26 @@ class Loop {
   private readonly translator: PidginTranslator;
   private readonly fileSystem: AgentFileSystem;
   private readonly ui: AgentUI;
-  private readonly memoryManager: SheetManager;
+  private readonly memoryManager: MemoryManager;
   private readonly taskTreeManager: TaskTreeManager;
+  private readonly runStateManager: RunStateManager;
 
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs
   ) {
-    this.memoryManager = new SheetManager(
-      moduleArgs,
-      memorySheetGetter(moduleArgs)
-    );
+    this.memoryManager = moduleArgs.agentContext.memoryManager;
     this.fileSystem = new AgentFileSystem({
+      context: moduleArgs.context,
       memoryManager: this.memoryManager,
     });
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
     this.taskTreeManager = new TaskTreeManager(this.fileSystem);
+    this.runStateManager = new RunStateManager(
+      moduleArgs.agentContext,
+      this.fileSystem
+    );
   }
 
   async run({
@@ -131,13 +147,25 @@ class Loop {
       );
       if (!ok(objectivePidgin)) return objectivePidgin;
 
+      // Set whether memory files should be exposed based on useMemory tool
+      fileSystem.setUseMemory(objectivePidgin.useMemory);
+
       if (extraInstruction) {
         extraInstruction = `${extraInstruction}\n\n`;
       }
 
-      const contents: LLMContent[] = [
-        llm`<objective>${extraInstruction}${objectivePidgin.text}</objective>`.asContent(),
-      ];
+      // Start or resume the run via RunStateManager
+      const stepId = this.moduleArgs.context.currentStep?.id;
+      const objectiveContent =
+        llm`<objective>${extraInstruction}${objectivePidgin.text}</objective>`.asContent();
+
+      // Check the enableResumeAgentRun flag
+      const runtimeFlags = await moduleArgs.context.flags?.flags();
+      const enableResumeAgentRun = runtimeFlags?.enableResumeAgentRun ?? false;
+
+      const { contents } = enableResumeAgentRun
+        ? this.runStateManager.startOrResume(stepId, objectiveContent)
+        : this.runStateManager.startFresh(stepId, objectiveContent);
 
       let terminateLoop = false;
       let result: AgentRawResult = {
@@ -183,16 +211,20 @@ class Loop {
           translator,
           modelConstraint,
           taskTreeManager,
+          generators,
         })
       );
-      functionGroups.push(
-        getMemoryFunctionGroup({
-          translator,
-          fileSystem,
-          memoryManager,
-          taskTreeManager,
-        })
-      );
+      if (objectivePidgin.useMemory) {
+        functionGroups.push(
+          getMemoryFunctionGroup({
+            context: moduleArgs.context,
+            translator,
+            fileSystem,
+            memoryManager,
+            taskTreeManager,
+          })
+        );
+      }
 
       if (uiType === "a2ui") {
         const a2uiFunctionGroup = await getA2UIFunctionGroup({
@@ -208,7 +240,7 @@ class Loop {
         if (!ok(a2uiFunctionGroup)) return a2uiFunctionGroup;
         functionGroups.push(a2uiFunctionGroup);
       } else if (uiType === "chat") {
-        fileSystem.addSystemFile(CHAT_LOG_VFS_PATH, () =>
+        fileSystem.addSystemFile(CHAT_LOG_PATH, () =>
           JSON.stringify(ui.chatLog)
         );
         functionGroups.push(
@@ -257,16 +289,23 @@ class Loop {
           tools,
         };
         const conformedBody = await conformGeminiBody(moduleArgs, body);
-        if (!ok(conformedBody)) return conformedBody;
+        if (!ok(conformedBody)) {
+          return this.runStateManager.fail(conformedBody);
+        }
 
         ui.progress.sendRequest(AGENT_MODEL, conformedBody);
+
+        // Capture the request body for the first request only
+        this.runStateManager.captureRequestBody(AGENT_MODEL, conformedBody);
 
         const generated = await streamGenerateContent(
           AGENT_MODEL,
           conformedBody,
           moduleArgs
         );
-        if (!ok(generated)) return generated;
+        if (!ok(generated)) {
+          return this.runStateManager.fail(generated);
+        }
         const functionCaller = new FunctionCallerImpl(
           functionDefinitionMap,
           objectivePidgin.tools
@@ -274,11 +313,12 @@ class Loop {
         for await (const chunk of generated) {
           const content = chunk.candidates?.at(0)?.content;
           if (!content) {
-            return err(
-              `Agent unable to proceed: no content in Gemini response`
+            return this.runStateManager.fail(
+              err(`Agent unable to proceed: no content in Gemini response`)
             );
           }
           contents.push(content);
+          this.runStateManager.pushContent(content);
           const parts = content.parts || [];
           for (const part of parts) {
             if (part.thought) {
@@ -289,9 +329,12 @@ class Loop {
               }
             }
             if ("functionCall" in part) {
-              ui.progress.functionCall(part);
-              functionCaller.call(part, (status, opts) =>
-                ui.progress.functionCallUpdate(part, status, opts)
+              const functionDef = functionDefinitionMap.get(
+                part.functionCall.name
+              );
+              const callId = ui.progress.functionCall(part, functionDef?.icon);
+              functionCaller.call(callId, part, (status, opts) =>
+                ui.progress.functionCallUpdate(callId, status, opts)
               );
             }
           }
@@ -299,22 +342,34 @@ class Loop {
         const functionResults = await functionCaller.getResults();
         if (!functionResults) continue;
         if (!ok(functionResults)) {
-          return err(`Agent unable to proceed: ${functionResults.$error}`);
+          return this.runStateManager.fail(
+            err(`Agent unable to proceed: ${functionResults.$error}`)
+          );
         }
-        ui.progress.functionResult(functionResults);
-        contents.push(functionResults);
+        // Report each function result individually
+        for (const { callId, response } of functionResults.results) {
+          ui.progress.functionResult(callId, { parts: [response] });
+        }
+        contents.push(functionResults.combined);
+        this.runStateManager.pushContent(functionResults.combined);
+        this.runStateManager.completeTurn();
       }
       return this.#finalizeResult(result);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      return this.runStateManager.fail(err(`Agent error: ${errorMessage}`));
     } finally {
-      ui.progress.finish();
+      ui.finish();
     }
   }
 
   async #finalizeResult(raw: AgentRawResult): Promise<Outcome<AgentResult>> {
     const { success, href, objective_outcome } = raw;
     if (!success) {
-      return err(objective_outcome);
+      return this.runStateManager.fail(err(objective_outcome));
     }
+    // Capture files for successful run
+    this.runStateManager.complete();
     const outcomes = await this.translator.fromPidginString(objective_outcome);
     if (!ok(outcomes)) return outcomes;
     const intermediateFiles = [...this.fileSystem.files.keys()];

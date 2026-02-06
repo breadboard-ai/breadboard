@@ -10,7 +10,6 @@ import {
 } from "@breadboard-ai/types";
 import { type DescriberResult } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
-import { ListExpander } from "../a2/lists.js";
 import {
   executeStep,
   type ContentMap,
@@ -104,20 +103,18 @@ async function invoke(
   console.log(text);
   console.log("substituting");
   console.log(substituting);
-  const results = await new ListExpander(substituting, context).map(
-    async (itemInstruction, itemContext) => {
-      const combinedInstruction = toTextConcat(
-        joinContent(toText(itemInstruction), itemContext, false)
-      );
-      if (!combinedInstruction) {
-        return toLLMContent("Please provide the music prompt.");
-      }
-      console.log("PROMPT: ", combinedInstruction);
-      return callMusicGen(caps, moduleArgs, combinedInstruction);
-    }
+  // Process single item directly (list support removed)
+  const itemContext = [...context];
+  const combinedInstruction = toTextConcat(
+    joinContent(toText(substituting), itemContext, false)
   );
-  if (!ok(results)) return results;
-  return { context: results };
+  if (!combinedInstruction) {
+    return { context: [toLLMContent("Please provide the music prompt.")] };
+  }
+  console.log("PROMPT: ", combinedInstruction);
+  const result = await callMusicGen(caps, moduleArgs, combinedInstruction);
+  if (!ok(result)) return result;
+  return { context: [result] };
 }
 
 type DescribeInputs = {

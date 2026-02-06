@@ -71,7 +71,7 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
       const adding = graphStore.addByURL(url, [], context);
       mutable = adding.mutable;
     } else {
-      const adding = graphStore.addByDescriptor(this.#graph.graph);
+      const adding = graphStore.getByDescriptor(this.#graph.graph);
       if (!adding.success) {
         return emptyDescriberResult();
       }

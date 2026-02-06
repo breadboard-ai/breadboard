@@ -8,6 +8,7 @@
 export { VEBetterOnDesktopModal } from "./shell/better-on-desktop-modal.js";
 export { VEEditBoardModal } from "./shell/edit-board.js";
 export { VEHeader } from "./shell/header.js";
+export { PublishButton } from "./shell/publish-button.js";
 export { VEModal } from "./shell/modal.js";
 export { VEMCPServersSettings } from "./shell/mcp-server-settings.js";
 export { VEConsentRequestModal } from "./shell/consent-request.js";
@@ -37,9 +38,6 @@ export { WebcamVideoInput } from "./input/webcam/webcam-video.js";
 export { ConsoleView } from "./output/console-view/console-view.js";
 export { LLMOutput } from "./output/llm-output/llm-output.js";
 export { LLMOutputArray } from "./output/llm-output/llm-output-array.js";
-export { ParticleUpdate } from "./output/console-view/particles/update.js";
-export { ParticleLinks } from "./output/console-view/particles/links.js";
-export { ParticleView } from "./output/console-view/particle-view.js";
 export { A2UIClientView } from "./output/console-view/a2ui-client-view.js";
 export { PDFViewer } from "./output/pdf-viewer/pdf-viewer.js";
 
@@ -51,7 +49,6 @@ export { AccountSwitcher } from "./account/account.js";
 export { AppController } from "./app-controller/app-controller.js";
 export { AppThemeCreator } from "./app-controller/app-theme-creator.js";
 export { CanvasController } from "./canvas-controller/canvas-controller.js";
-export { ComponentSelectorOverlay } from "./component-selector/component-selector-overlay.js";
 export { EditorControls } from "./step-editor/editor-controls.js";
 export { EntityEditor } from "./entity-editor/entity-editor.js";
 export { FastAccessMenu } from "./fast-access-menu/fast-access-menu.js";

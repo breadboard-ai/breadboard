@@ -13,11 +13,12 @@ import {
 } from "@breadboard-ai/types";
 import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
-import { mergeTextParts } from "../a2/utils.js";
+import { mergeTextParts, tr } from "../a2/utils.js";
 import { AgentFileSystem } from "./file-system.js";
 import { err, ok } from "@breadboard-ai/utils";
 import {
   ROUTE_TOOL_PATH,
+  MEMORY_TOOL_PATH,
   SimplifiedToolManager,
   ToolManager,
 } from "../a2/tool-manager.js";
@@ -31,6 +32,14 @@ export { PidginTranslator };
 export type ToPidginResult = {
   text: string;
   tools: SimplifiedToolManager;
+  useMemory: boolean;
+};
+
+export type SubstitutePartsArgs = {
+  title: string | undefined;
+  content: LLMContent;
+  fileSystem: AgentFileSystem;
+  textAsFiles: boolean;
 };
 
 export type PidginTextPart = {
@@ -63,7 +72,7 @@ const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
 /**
  * When the text is below this number, it will be simply inlined (small prompts, short outputs, etc.)
  * When the text is above this number, it will be inlined _and_ prefaced with
- * a VFS file reference.
+ * a file reference.
  */
 const MAX_INLINE_CHARACTER_LENGTH = 1000;
 
@@ -186,6 +195,7 @@ class PidginTranslator {
     const toolManager = new ToolManager(this.caps, this.moduleArgs);
 
     const errors: string[] = [];
+    let useMemory = false;
     const pidginContent = await template.asyncSimpleSubstitute(
       async (param) => {
         const { type } = param;
@@ -196,13 +206,21 @@ class PidginTranslator {
               errors.push(content.$error);
               return "";
             }
-            const part = content?.at(-1)?.parts.at(0);
-            if (!part) {
+            const lastContent = content?.at(-1);
+            if (!lastContent || lastContent.parts.length === 0) {
               errors.push(`Agent: Invalid asset format`);
               return "";
             }
-            const name = this.fileSystem.add(part);
-            return `<file src="${name}" />`;
+            const inner = substituteParts({
+              title: undefined,
+              content: lastContent,
+              fileSystem: this.fileSystem,
+              textAsFiles,
+            });
+            const title = param.title || "asset";
+            return tr`<asset title="${title}">
+${inner}
+</asset>`;
           }
           case "in": {
             const value = params[Template.toId(param.path)];
@@ -211,11 +229,21 @@ class PidginTranslator {
             } else if (typeof value === "string") {
               return value;
             } else if (isLLMContent(value)) {
-              return substituteParts(value, this.fileSystem, true);
+              return substituteParts({
+                title: param.title,
+                content: value,
+                fileSystem: this.fileSystem,
+                textAsFiles: true,
+              });
             } else if (isLLMContentArray(value)) {
               const last = value.at(-1);
               if (!last) return "";
-              return substituteParts(last, this.fileSystem, true);
+              return substituteParts({
+                title: param.title,
+                content: last,
+                fileSystem: this.fileSystem,
+                textAsFiles: true,
+              });
             } else {
               errors.push(
                 `Agent: Unknown param value type: "${JSON.stringify(value)}`
@@ -236,6 +264,9 @@ class PidginTranslator {
               }
               const routeName = this.fileSystem.addRoute(param.instance);
               return `<a href="${routeName}">${param.title}</a>`;
+            } else if (param.path === MEMORY_TOOL_PATH) {
+              useMemory = true;
+              return "Use Memory Data Store";
             } else {
               const substitute = substituteDefaultTool(param);
               if (substitute !== null) {
@@ -260,16 +291,35 @@ class PidginTranslator {
       return err(`Agent: ${errors.join(",")}`);
     }
 
-    return {
-      text: substituteParts(pidginContent, this.fileSystem, textAsFiles),
-      tools: toolManager,
-    };
+    const text =
+      pidginContent.parts.length === 1 && "text" in pidginContent.parts[0]
+        ? pidginContent.parts[0].text
+        : undefined;
+    if (text === undefined) {
+      console.warn(
+        `Agent: Substitution failed, expected single text part, got`,
+        pidginContent
+      );
+      return {
+        text: substituteParts({
+          title: undefined,
+          content: pidginContent,
+          fileSystem: this.fileSystem,
+          textAsFiles,
+        }),
+        tools: toolManager,
+        useMemory,
+      };
+    }
 
-    function substituteParts(
-      value: LLMContent,
-      fileSystem: AgentFileSystem,
-      textAsFiles: boolean
-    ) {
+    return { text, tools: toolManager, useMemory };
+
+    function substituteParts({
+      title,
+      content: value,
+      fileSystem,
+      textAsFiles,
+    }: SubstitutePartsArgs) {
       const values: string[] = [];
       for (const part of value.parts) {
         if ("text" in part) {
@@ -295,7 +345,14 @@ ${text}</content>`);
           values.push(`<file src="${name}" />`);
         }
       }
-      return values.join("\n");
+      const text = values.join("\n");
+      if (!title) return text;
+
+      return tr`
+<input source-agent="${title}">
+${text}
+</input>
+`;
     }
   }
 }

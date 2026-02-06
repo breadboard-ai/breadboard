@@ -29,7 +29,9 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+coverage-ci
 *.lcov
+coverage-comment.md
 
 # nyc test coverage
 .nyc_output
@@ -151,3 +153,5 @@ sandbox.wasm
 **/test-storage/
 **/test-storage/local-storage
 **/test-storage/session-storage
+
+.pr-description.md

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ParticleTree } from "../../particles/index.js";
 import {
   App,
   AssetMetadata,
@@ -21,31 +20,26 @@ import {
   NodeMetadata,
   NodeRunState,
   OutputValues,
-  ParameterMetadata,
   RunError,
-  GraphDescriptor,
   EditableGraph,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
   EditTransform,
-  FileSystem,
   NodeHandlerMetadata,
   Outcome,
   PortIdentifier,
   Schema,
 } from "@breadboard-ai/types";
-import { ConnectorInstance, ConnectorType } from "../connectors/types.js";
+
 import { StateEvent } from "../events/events.js";
 import {
   AppTheme,
-  ParsedUrlProvider,
   VisualEditorMode,
   WorkspaceSelectionState,
 } from "../types/types.js";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
-import type { FlowGenerator } from "../flow-gen/flow-generator.js";
 
 /**
  * Represents the result of AsyncComputed signals helper.
@@ -274,11 +268,6 @@ export type Organizer = {
     path: AssetPath,
     metadata: AssetMetadata
   ): Promise<Outcome<void>>;
-
-  /**
-   * Available connectors
-   */
-  connectors: ConnectorState;
 };
 
 export type GraphAssetDescriptor = {
@@ -289,7 +278,6 @@ export type GraphAssetDescriptor = {
 
 export type GraphAsset = GraphAssetDescriptor & {
   update(title: string, data?: LLMContent[]): Promise<Outcome<void>>;
-  connector?: ConnectorInstance;
 };
 
 export type GeneratedAssetIdentifier = string;
@@ -337,11 +325,10 @@ export type FilterableMap<T extends TitledItem> = {
  */
 export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
-  tools: Map<string, Tool>;
-  myTools: Map<string, Tool>;
-  controlFlow: FilterableMap<Tool>;
+  tools: ReadonlyMap<string, Tool>;
+  myTools: ReadonlyMap<string, Tool>;
+  agentMode: FilterableMap<Tool>;
   components: Map<GraphIdentifier, Components>;
-  parameters: Map<string, ParameterMetadata>;
   integrations: FilteredIntegrations;
   /**
    * Available routes for the current step.
@@ -354,27 +341,6 @@ export type FastAccess = {
  */
 export type RendererState = {
   graphAssets: Map<AssetPath, GraphAsset>;
-};
-
-export type ConnectorState = {
-  types: Map<string, ConnectorType>;
-
-  // This double-plumbing is inelegant -- it just calls the
-  // method by the same name in Project.
-  // TODO: Make this more elegant.
-  instanceExists(url: string): boolean;
-
-  /**
-   * Starts creating a new Connector instance
-   *
-   * @param url -- URL of the connector.
-   */
-  initializeInstance(url: string | null): Promise<Outcome<void>>;
-
-  /**
-   * Cancel any pending work.
-   */
-  cancel(): Promise<void>;
 };
 
 export type UIOverlays =
@@ -426,71 +392,6 @@ export type LiteModeType = "loading" | "home" | "editor" | "error" | "invalid";
 
 export type LiteModeIntentExample = {
   intent: string;
-};
-
-export type LiteModePlannerState = {
-  status: string;
-  thought: string;
-};
-
-/**
- * Represents the flow gen state
- */
-export type LiteModeState = {
-  /**
-   * The various view types:
-   * - "loading" -- the Load Opal ghostie that is presented whenever
-   * an opal is loaded.
-   * - "home" -- user can create a new opal from here
-   * - "editor" -- user can run/edit opal from here
-   * - "error" -- the distinct error state for when we're neither in home nor
-   *   in editor (like, trying to load an invalid/inacessible opal)
-   * - "invalid" -- some invalid state that we don't know about
-   */
-  viewType: LiteModeType;
-
-  /**
-   * Call this to trigger the "error" view
-   */
-  viewError: string;
-
-  /**
-   * Planner bits
-   */
-  planner: LiteModePlannerState;
-
-  // FlowGen bits
-  status: FlowGenGenerationStatus;
-  error?: string;
-  startGenerating(): void;
-  finishGenerating(): void;
-
-  /**
-   * True when the underlying graph is brand new and has no nodes.
-   */
-  empty: boolean;
-  /**
-   * The current graph
-   */
-  graph: GraphDescriptor | null;
-
-  examples: LiteModeIntentExample[];
-  currentExampleIntent: string;
-
-  /**
-   * The list of steps according to the current run plan
-   */
-  steps: Map<string, StepListStepState>;
-};
-
-/**
- * Represents the context of the runtime. This is actually a very simplified
- * representation of the `Runtime` from visual editor.
- */
-export type RuntimeContext = {
-  readonly project: Project | null;
-  readonly router: ParsedUrlProvider;
-  readonly flowGenerator: FlowGenerator;
 };
 
 export type IntegrationState = {
@@ -574,7 +475,7 @@ export type Integrations = {
 export type Project = {
   readonly run: ProjectRun;
   readonly graphAssets: Map<AssetPath, GraphAsset>;
-  readonly connectors: ConnectorState;
+
   readonly integrations: Integrations;
   readonly organizer: Organizer;
   readonly renderer: RendererState;
@@ -609,7 +510,6 @@ export type Project = {
   persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
   connectHarnessRunner(
     runner: HarnessRunner,
-    fileSystem: FileSystem,
     signal?: AbortSignal
   ): Outcome<void>;
 };
@@ -622,24 +522,15 @@ export type ProjectInternal = Project & {
     graphId: GraphIdentifier,
     id: NodeIdentifier
   ): Outcome<{ id: PortIdentifier; title: string }>;
-  connectorInstanceExists(url: string): boolean;
-  addConnectorInstance(url: string): void;
 };
 
 export type ProjectValues = {
   graphAssets: Map<AssetPath, GraphAsset>;
-  tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
-  controlFlowTools: Map<string, Tool>;
+  agentModeTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
-  parameters: Map<string, ParameterMetadata>;
   integrations: Integrations;
-  editable: EditableGraph | undefined;
-};
-
-export type EphemeralParticleTree = {
-  tree: ParticleTree;
-  done: boolean;
+  editable: EditableGraph;
 };
 
 export type EdgeRunState = {
@@ -657,23 +548,15 @@ export type RendererRunState = {
 export type StepEditor = {
   fastAccess: FastAccess;
   updateSelection(selectionState: WorkspaceSelectionState): void;
-  surface: StepEditorSurface | null;
   nodeSelection: {
     graph: GraphIdentifier;
     node: NodeIdentifier;
   } | null;
-};
-
-/**
- * Represents the step editor surface, Usually, its the actual
- * `bb-entity-editor`, but can be anything, really.
- */
-export type StepEditorSurface = {
   /**
-   * Saves current state of the surface, if necessary.
-   * Returns when save is completed.
+   * Applies any pending edits via the SCA step autosave action.
+   * Call this before actions that need the latest graph state.
    */
-  save(): Promise<Outcome<void>>;
+  applyPendingEdits(): Promise<void>;
 };
 
 export type ThemeStatus = "generating" | "uploading" | "editing" | "idle";

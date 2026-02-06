@@ -14,11 +14,11 @@ import {
   FastAccess,
   ProjectValues,
   StepEditor,
-  StepEditorSurface,
 } from "./types.js";
 import { ReactiveFastAccess } from "./fast-access.js";
 import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
 import { MAIN_BOARD_ID } from "../constants/constants.js";
+import { SCA } from "../../sca/sca.js";
 
 export { StepEditorImpl };
 
@@ -29,29 +29,27 @@ class StepEditorImpl implements StepEditor {
     node: NodeIdentifier;
   } | null = null;
 
-  @signal
-  accessor surface: StepEditorSurface | null = null;
-
   fastAccess: FastAccess;
 
-  constructor(projectValues: ProjectValues) {
+  #sca: SCA;
+
+  constructor(projectValues: ProjectValues, sca: SCA) {
+    this.#sca = sca;
     const {
       graphAssets,
-      tools,
       myTools,
-      controlFlowTools,
+      agentModeTools,
       components,
-      parameters,
       integrations,
       editable,
     } = projectValues;
+    const tools = sca.controller.editor.graph.tools;
     this.fastAccess = new ReactiveFastAccess(
       graphAssets,
       tools,
       myTools,
-      controlFlowTools,
+      agentModeTools,
       components,
-      parameters,
       new FilteredIntegrationsImpl(integrations.registered),
       editable,
       this
@@ -78,4 +76,15 @@ class StepEditorImpl implements StepEditor {
       };
     }
   }
+
+  /**
+   * Applies any pending edits via the SCA step autosave action.
+   * This is used when we need to ensure pending edits are applied
+   * before running an action (e.g., running a node), since the
+   * SCA trigger only fires on selection/sidebar changes.
+   */
+  async applyPendingEdits(): Promise<void> {
+    await this.#sca.actions.step.applyPendingEdits();
+  }
 }
+

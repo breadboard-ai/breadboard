@@ -59,7 +59,7 @@ suite("Hydration", () => {
       accessor person = { name: "default" };
     }
 
-    const h = new HydratingController("Controller");
+    const h = new HydratingController("Controller", "HydratingController");
     assert.throws(() => {
       // Accessing h.person.name before hydration should throw an Error.
       const name = h.person.name;
@@ -73,7 +73,7 @@ suite("Hydration", () => {
       accessor item = "foo";
     }
 
-    const h = new HydratingController("Controller");
+    const h = new HydratingController("Controller", "HydratingController");
     assert.throws(() => {
       // Accessing h.person.name before hydration should throw an Error.
       const name = h.item;

@@ -14,7 +14,6 @@ import {
   EditableGraph,
   GraphDescriptor,
   MainGraphIdentifier,
-  MutableGraphStore,
 } from "@breadboard-ai/types";
 import {
   HTMLTemplateResult,
@@ -32,7 +31,6 @@ import {
   STATUS,
   SettingsStore,
   WorkspaceSelectionStateWithChangeId,
-  WorkspaceVisualChangeId,
 } from "../../types/types.js";
 import { styles as canvasControllerStyles } from "./canvas-controller.styles.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -51,6 +49,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { Project, RendererRunState } from "../../state/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
+import "../../lite/step-list-view/step-list-view.js";
+import "../../lite/prompt/prompt-view.js";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
@@ -70,6 +70,7 @@ import { emptyStyles } from "../../styles/host/colors-empty.js";
 const focusAppControllerWhenIn = ["canvas", "preview"];
 
 import "./empty-state.js";
+import "../../flow-gen/flowgen-editor-input.js";
 import { isEmpty } from "../../utils/utils.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
@@ -101,12 +102,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
   accessor graphIsMine = false;
 
   @property()
-  accessor graphStore: MutableGraphStore | null = null;
-
-  @property()
-  accessor graphStoreUpdateId: number = 0;
-
-  @property()
   accessor graphTopologyUpdateId: number = 0;
 
   @state()
@@ -136,9 +131,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   @property({ reflect: true })
   accessor status = STATUS.RUNNING;
-
-  @property()
-  accessor visualChangeId: WorkspaceVisualChangeId | null = null;
 
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
@@ -209,14 +201,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
       );
     }
 
-    // Switching away from the editor should trigger the submit so that the user
-    // doesn't lose any changes.
-    if (
-      changedProperties.get("sideNavItem") === "editor" &&
-      this.#entityEditorRef.value
-    ) {
-      this.#entityEditorRef.value.save();
-    }
+    // NOTE: Step autosave is now handled by the SCA step autosave trigger,
+    // which fires when selection or sidebar section changes. The trigger
+    // applies pending edits captured by entity-editor's @input handler.
+
 
     // Here we decide how to handle the changing sidenav items & selections.
     // If there are no selections and we're in the editor switch out to the app
@@ -350,7 +338,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         this.editorRender,
         this.selectionState,
         this.highlightState,
-        this.visualChangeId,
         this.graphTopologyUpdateId,
         this.sca.controller.global.flags,
         collapseNodesByDefault,
@@ -372,10 +359,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .graph=${graph}
           .graphIsMine=${this.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-          .graphStore=${this.graphStore}
           .history=${this.history}
           .state=${this.projectState?.renderer}
-          .graphStoreUpdateId=${this.graphStoreUpdateId}
           .selectionState=${this.selectionState}
           .showAssetsInGraph=${showAssetsInGraph}
           .highlightState=${this.highlightState}
@@ -539,8 +524,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         })}
         .graph=${graph}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-        .graphStore=${this.graphStore}
-        .graphStoreUpdateId=${this.graphStoreUpdateId}
         .selectionState=${this.selectionState}
         .mainGraphId=${this.mainGraphId}
         .readOnly=${this.readOnly}
@@ -672,10 +655,42 @@ export class CanvasController extends SignalWatcher(LitElement) {
       </ui-splitter>
     `;
 
+    // On narrow screens with a loaded graph, show step-list instead of full editor
+    // For empty graphs, show the empty state with flowgen input
+    // When generating, switch to step-list view to show planner thoughts
+    // While loading (no graph), show nothing to match non-narrow behavior
+    const isGenerating =
+      this.sca?.controller.global.flowgenInput.state.status === "generating";
+    const showStepListView = !graphIsEmpty || isGenerating;
+    const prompt =
+      this.graph?.metadata?.raw_intent ?? this.graph?.metadata?.intent ?? null;
+    const narrowScreenContent =
+      !graph
+        ? nothing
+        : html`<section id="narrow-view">
+            ${showStepListView
+              ? html`<bb-prompt-view
+                    .prompt=${prompt}
+                  ></bb-prompt-view>
+                  <bb-step-list-view
+                  ></bb-step-list-view>`
+              : html`<bb-empty-state narrow></bb-empty-state>`}
+            ${this.readOnly
+              ? nothing
+              : html`<bb-flowgen-editor-input
+                  .hasEmptyGraph=${graphIsEmpty}
+                ></bb-flowgen-editor-input>`}
+          </section>`;
+
+    const screenSize = this.sca.controller.global.screenSize.size;
     return [
-      graph
-        ? html`<section id="create-view">${contentContainer}</section>`
-        : html`<section id="content" class="welcome">${graphEditor}</section>`,
+      screenSize === "narrow"
+        ? narrowScreenContent
+        : graph
+          ? html`<section id="create-view">${contentContainer}</section>`
+          : html`<section id="content" class="welcome">
+              ${graphEditor}
+            </section>`,
       html`
         <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
         </bb-share-panel>

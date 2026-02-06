@@ -31,18 +31,22 @@ export { Main };
 @customElement("bb-main")
 class Main extends MainBase {
   override async doPostInitWork() {
-    await this.sca.controller.global.performMigrations();
+    await Promise.all([
+      this.sca.controller.global.performMigrations(),
+      this.sca.controller.global.debug.isHydrated,
+    ]);
 
     this.maybeNotifyAboutPreferredUrlForDomain();
-    this.maybeNotifyAboutDesktopModality();
     this.addExperimentalToggleToWindow();
   }
 
   private addExperimentalToggleToWindow() {
-    const windowWithExperimentalFeatures = globalThis.window as unknown as {
+    const guestWindow = globalThis.window as unknown as {
       toggleExperimentalFeatures(): Promise<unknown>;
+      downloadAgentTraces(): object;
+      getAgentRuns(): unknown[];
     };
-    windowWithExperimentalFeatures.toggleExperimentalFeatures = async () => {
+    guestWindow.toggleExperimentalFeatures = async () => {
       // Ignore the call if the value is still hydrating.
       if (
         Utils.Helpers.isHydrating(
@@ -71,6 +75,24 @@ class Main extends MainBase {
 
       return this.sca.controller.global.main.experimentalComponents.valueOf();
     };
+
+    guestWindow.downloadAgentTraces = () => {
+      const traces = this.sca.services.agentContext.exportTraces();
+      const blob = new Blob([JSON.stringify(traces, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `agent-traces-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      return traces;
+    };
+
+    guestWindow.getAgentRuns = () => {
+      return this.sca.services.agentContext.getAllRuns();
+    };
   }
 
   async maybeNotifyAboutPreferredUrlForDomain() {
@@ -83,7 +105,7 @@ class Main extends MainBase {
       return;
     }
 
-    this.snackbar(
+    this.sca.controller.global.snackbars.snackbar(
       html`
         Users from ${domain} should prefer
         <a href="${url}" target="_blank">${new URL(url).hostname}</a>
@@ -92,26 +114,6 @@ class Main extends MainBase {
       [],
       true
     );
-  }
-
-  maybeNotifyAboutDesktopModality() {
-    if (
-      parsedUrl.page !== "graph" ||
-      !parsedUrl.shared ||
-      parsedUrl.mode !== "canvas"
-    ) {
-      return;
-    }
-
-    // There's little point in attempting to differentiate between "mobile" and
-    // "desktop" here for any number of reasons, but as a reasonable proxy we
-    // will check that there's some screen estate available to show both the
-    // editor and the app preview before we show the modal.
-    if (window.innerWidth > 1280) {
-      return;
-    }
-
-    this.sca.controller.global.main.show.add("BetterOnDesktopModal");
   }
 
   override async handleAppAccessCheckResult(
@@ -152,7 +154,7 @@ class Main extends MainBase {
             this.#renderCanvasController(renderValues),
             this.#renderAppController(renderValues),
             this.#renderWelcomePanel(),
-            this.sca.controller.global.main.showStatusUpdateChip
+            this.sca.controller.global.statusUpdates.showStatusUpdateChip
               ? this.#renderStatusUpdateBar()
               : nothing,
           ]}
@@ -175,7 +177,7 @@ class Main extends MainBase {
         >
       ) => this.handleRoutedEvent(evt)}
       @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
-        this.snackbar(
+        this.sca.controller.global.snackbars.snackbar(
           snackbarEvent.message,
           snackbarEvent.snackType,
           snackbarEvent.actions,
@@ -185,7 +187,7 @@ class Main extends MainBase {
         );
       }}
       @bbunsnackbar=${(evt: BreadboardUI.Events.UnsnackbarEvent) => {
-        this.unsnackbar(evt.snackbarId);
+        this.sca.controller.global.snackbars.unsnackbar(evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
         this.sca.controller.global.toasts.toast(
@@ -215,9 +217,6 @@ class Main extends MainBase {
           : nothing,
         this.sca.controller.global.main.show.has("SnackbarDetailsModal")
           ? this.renderSnackbarDetailsModal()
-          : nothing,
-        this.sca.controller.global.main.show.has("BetterOnDesktopModal")
-          ? this.#renderBetterOnDesktopModal()
           : nothing,
         this.sca.controller.global.main.show.has("VideoModal")
           ? this.#renderVideoModal()
@@ -296,13 +295,11 @@ class Main extends MainBase {
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
       .canRun=${this.sca.controller.global.main.canRunMain}
-      .editor=${this.runtime.edit.getEditor(this.tab)}
+      .editor=${this.sca.controller.editor.graph.editor}
       .graph=${this.tab?.graph ?? null}
       .graphIsMine=${this.tab?.graphIsMine ?? false}
-      .graphStore=${this.graphStore}
-      .graphStoreUpdateId=${this.graphStoreUpdateId}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .history=${this.runtime.edit.getHistory(this.tab)}
+      .history=${this.sca.controller.editor.graph.editor?.history() ?? null}
       .mainGraphId=${this.tab?.mainGraphId}
       .projectState=${renderValues.projectState}
       .readOnly=${this.tab?.readOnly ?? true}
@@ -312,7 +309,6 @@ class Main extends MainBase {
       "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
-      .visualChangeId=${this.lastVisualChangeId}
       @bbshowvideomodal=${() => {
         this.sca.controller.global.main.show.add("VideoModal");
       }}
@@ -321,13 +317,6 @@ class Main extends MainBase {
       ) => {
         this.lastPointerPosition.x = evt.x;
         this.lastPointerPosition.y = evt.y;
-      }}
-      @bbinteraction=${() => {
-        if (!this.tab) {
-          return;
-        }
-
-        this.runtime.board.clearPendingBoardSave(this.tab.id);
       }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
         const message: IterateOnPromptMessage = {
@@ -353,14 +342,6 @@ class Main extends MainBase {
     ></bb-edit-board-modal>`;
   }
 
-  #renderBetterOnDesktopModal() {
-    return html`<bb-better-on-desktop-modal
-      @bbmodaldismissed=${() => {
-        this.sca.controller.global.main.show.delete("BetterOnDesktopModal");
-      }}
-    ></bb-better-on-desktop-modal>`;
-  }
-
   #renderVideoModal() {
     return html`<bb-video-modal
       @bbmodaldismissed=${() => {
@@ -371,7 +352,7 @@ class Main extends MainBase {
 
   #renderStatusUpdateBar() {
     const classes: Record<string, boolean> = { "md-body-medium": true };
-    const newestUpdate = this.statusUpdates.at(0);
+    const newestUpdate = this.sca.controller.global.statusUpdates.updates.at(0);
     if (!newestUpdate) {
       return nothing;
     }
@@ -399,7 +380,7 @@ class Main extends MainBase {
       aria-role="button"
       @click=${() => {
         this.sca.controller.global.main.show.add("StatusUpdateModal");
-        this.sca.controller.global.main.showStatusUpdateChip = false;
+        this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
       }}
     >
       <div>
@@ -411,7 +392,7 @@ class Main extends MainBase {
         @click=${(evt: Event) => {
           evt.preventDefault();
           evt.stopImmediatePropagation();
-          this.sca.controller.global.main.showStatusUpdateChip = false;
+          this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
         }}
       >
         <span class="g-icon round filled">close</span>
@@ -421,17 +402,17 @@ class Main extends MainBase {
 
   #renderStatusUpdateModal() {
     return html`<bb-status-update-modal
-      .updates=${this.statusUpdates}
+      .updates=${this.sca.controller.global.statusUpdates.updates}
       @bbmodaldismissed=${() => {
         this.sca.controller.global.main.show.delete("StatusUpdateModal");
-        this.sca.controller.global.main.showStatusUpdateChip = false;
+        this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
       }}
     ></bb-status-update-modal>`;
   }
 
   #renderGlobalSettingsModal(renderValues: RenderValues) {
     return html`<bb-global-settings-modal
-      .flags=${this.runtime.flags.flags()}
+      .flags=${this.sca.controller.global.flags.flags()}
       .project=${renderValues.projectState}
       .uiState=${this.sca.controller.global.main}
       .emailPrefsManager=${this.sca.services.emailPrefsManager}
@@ -533,8 +514,8 @@ class Main extends MainBase {
                 return;
               }
               evt.target.disabled = true;
-              await this.runtime.apiClient.acceptTos(tosVersion, true);
-              this.tosStatus = await this.runtime.apiClient.checkTos();
+              await this.sca.services.apiClient.acceptTos(tosVersion, true);
+              this.tosStatus = await this.sca.services.apiClient.checkTos();
             }}
           >
             Continue
@@ -583,12 +564,17 @@ class Main extends MainBase {
       .url=${this.tab?.graph?.url ?? null}
       .loadState=${this.sca.controller.global.main.loadState}
       .canSave=${renderValues.canSave}
-      .isMine=${this.runtime.board.isMine(this.tab?.graph.url)}
+      .isMine=${this.tab?.graph.url
+        ? this.sca.services.googleDriveBoardServer.isMine(
+            new URL(this.tab.graph.url)
+          )
+        : false}
       .saveStatus=${renderValues.saveStatus}
       .mode=${this.sca.controller.global.main.mode}
+      .graphIsEmpty=${BreadboardUI.Utils.isEmpty(this.tab?.graph ?? null)}
       @bbsignout=${async () => {
         await this.sca.services.signinAdapter.signOut();
-        this.runtime.actionTracker.signOutSuccess();
+        this.sca.services.actionTracker.signOutSuccess();
         window.location.href = makeUrl({
           page: "landing",
           redirect: {
@@ -611,7 +597,7 @@ class Main extends MainBase {
           guestPrefixed: true,
         };
         if ((await this.sca.services.signinAdapter.state) === "signedin") {
-          this.runtime.router.go(homepage);
+          this.sca.controller.router.go(homepage);
         } else {
           // Note that router.go() can't navigate to the landing page, because
           // it's a totally different entrypoint.
@@ -628,9 +614,9 @@ class Main extends MainBase {
       @bbsubscribercreditrefresh=${async () => {
         try {
           this.sca.controller.global.main.subscriptionCredits = -1;
-          const response = await this.runtime.apiClient.getG1Credits();
+          const response = await this.sca.services.apiClient.getG1Credits();
           this.sca.controller.global.main.subscriptionCredits =
-            response.remaining_credits ?? 0;
+            response.remainingCredits ?? 0;
         } catch (err) {
           this.sca.controller.global.main.subscriptionCredits = -2;
           console.warn(err);
@@ -673,7 +659,10 @@ class Main extends MainBase {
               return;
             }
 
-            this.runtime.actionTracker.remixApp(this.tab.graph.url, "editor");
+            this.sca.services.actionTracker.remixApp(
+              this.tab.graph.url,
+              "editor"
+            );
             this.invokeRemixEventRouteWith(this.tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),
@@ -718,7 +707,7 @@ class Main extends MainBase {
 
           case "status-update": {
             this.sca.controller.global.main.show.add("StatusUpdateModal");
-            this.sca.controller.global.main.showStatusUpdateChip = false;
+            this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
             break;
           }
 
@@ -734,6 +723,27 @@ class Main extends MainBase {
               Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
               BreadboardUI.Events.ToastType.INFORMATION
             );
+            break;
+          }
+
+          case "share": {
+            this.canvasControllerRef.value?.openSharePanel();
+            break;
+          }
+
+          case "remix": {
+            if (!this.tab?.graph.url) {
+              return;
+            }
+            this.sca.services.actionTracker.remixApp(
+              this.tab.graph.url,
+              "editor"
+            );
+            this.invokeRemixEventRouteWith(this.tab.graph.url, {
+              start: Strings.from("STATUS_REMIXING_PROJECT"),
+              end: Strings.from("STATUS_PROJECT_CREATED"),
+              error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+            });
             break;
           }
 

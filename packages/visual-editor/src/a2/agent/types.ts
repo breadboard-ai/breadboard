@@ -6,16 +6,31 @@
 
 import type {
   FunctionCallCapabilityPart,
+  FunctionResponseCapabilityPart,
   LLMContent,
+  NodeHandlerContext,
   Outcome,
 } from "@breadboard-ai/types";
 import type { FunctionDeclaration, GeminiBody } from "../a2/gemini.js";
+import type { streamGenerateContent, conformGeminiBody } from "../a2/gemini.js";
+import type { callGeminiImage } from "../a2/image-utils.js";
+import type { callVideoGen } from "../video-generator/main.js";
+import type { callAudioGen } from "../audio-generator/main.js";
+import type { callMusicGen } from "../music-generator/main.js";
 import type {
   FunctionDefinition,
   StatusUpdateCallback,
 } from "./function-definition.js";
 import type { SimplifiedToolManager } from "../a2/tool-manager.js";
 import type { SpreadsheetValueRange } from "../google-drive/api.js";
+
+export type FileDescriptor = {
+  type: "text" | "storedData" | "inlineData" | "fileData";
+  mimeType: string;
+  data: string;
+  title?: string;
+  resourceKey?: string;
+};
 
 export type FunctionCallerFactory = {
   create(
@@ -26,10 +41,16 @@ export type FunctionCallerFactory = {
 
 export type FunctionCaller = {
   call(
+    callId: string,
     part: FunctionCallCapabilityPart,
     statusUpdateCallback: StatusUpdateCallback
   ): void;
-  getResults(): Promise<Outcome<LLMContent | null>>;
+  getResults(): Promise<
+    Outcome<{
+      combined: LLMContent;
+      results: { callId: string; response: FunctionResponseCapabilityPart }[];
+    } | null>
+  >;
 };
 
 export type AgentProgressManager = {
@@ -50,13 +71,16 @@ export type AgentProgressManager = {
 
   /**
    * The agent produced a function call.
+   * Returns a unique ID for matching with the corresponding function result.
    */
-  functionCall(part: FunctionCallCapabilityPart, description: string): void;
+  functionCall(part: FunctionCallCapabilityPart, icon?: string): string;
 
   /**
    * The agent produced a function result.
+   * @param callId - ID from the corresponding functionCall
+   * @param content - The result content
    */
-  functionResult(content: LLMContent): void;
+  functionResult(callId: string, content: LLMContent): void;
 
   /**
    * The agent finished executing.
@@ -95,13 +119,25 @@ export type ReadSheetOutcome = SpreadsheetValueRange | { error: string };
  * A generic type of managing memory, styled as a Google Sheet.
  */
 export type MemoryManager = {
-  getSheetMetadata(): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>>;
-  readSheet(args: { range: string }): Promise<Outcome<ReadSheetOutcome>>;
-  updateSheet(args: {
-    range: string;
-    values: string[][];
-  }): Promise<Outcome<AgentOutcome>>;
-  deleteSheet(args: { name: string }): Promise<Outcome<AgentOutcome>>;
+  createSheet(
+    context: NodeHandlerContext,
+    args: SheetMetadata
+  ): Promise<Outcome<AgentOutcome>>;
+  getSheetMetadata(
+    context: NodeHandlerContext
+  ): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>>;
+  readSheet(
+    context: NodeHandlerContext,
+    args: { range: string }
+  ): Promise<Outcome<ReadSheetOutcome>>;
+  updateSheet(
+    context: NodeHandlerContext,
+    args: { range: string; values: string[][] }
+  ): Promise<Outcome<AgentOutcome>>;
+  deleteSheet(
+    context: NodeHandlerContext,
+    args: { name: string }
+  ): Promise<Outcome<AgentOutcome>>;
 };
 
 export type UIType = "chat" | "a2ui";
@@ -114,8 +150,34 @@ export type ChatResponse = {
   input: LLMContent;
 };
 
+export type ChatChoice = {
+  id: string;
+  label: string;
+};
+
+export type ChatChoiceSelectionMode = "single" | "multiple";
+
+/**
+ * Layout options for presenting choices:
+ * - "list": Vertical stack (default) - best for longer choice labels
+ * - "row": Horizontal inline - best for short choices like "Yes/No"
+ * - "grid": Wrapping grid - adapts to available space
+ */
+export type ChatChoiceLayout = "list" | "row" | "grid";
+
+export type ChatChoicesResponse = {
+  selected: string[];
+};
+
 export type ChatManager = {
   chat(pidginString: string, inputType: string): Promise<Outcome<ChatResponse>>;
+  presentChoices(
+    message: string,
+    choices: ChatChoice[],
+    selectionMode: ChatChoiceSelectionMode,
+    layout?: ChatChoiceLayout,
+    noneOfTheAboveLabel?: string
+  ): Promise<Outcome<ChatChoicesResponse>>;
 };
 
 export type MappedDefinitions = {
@@ -125,4 +187,47 @@ export type MappedDefinitions = {
 
 export type FunctionGroup = MappedDefinitions & {
   instruction?: string;
+};
+
+/**
+ * Status of an agent loop run.
+ */
+export type RunStatus = "running" | "failed" | "completed";
+
+/**
+ * Stored state of an agent loop run, used for resume and trace download.
+ */
+export type RunState = {
+  id: string;
+  status: RunStatus;
+  /** Absolute timestamp when run started (Date.now()) */
+  startTime: number;
+  /** Absolute timestamp when run ended (Date.now()) */
+  endTime?: number;
+  contents: LLMContent[];
+  /** The model name used for this run */
+  model?: string;
+  /** The full request body sent to Gemini (captured after first request) */
+  requestBody?: GeminiBody;
+  lastCompleteTurnIndex: number;
+  error?: string;
+  /** The original objective for this run */
+  objective: LLMContent;
+  /** Files created/used during the run (from AgentFileSystem) */
+  files: Record<string, FileDescriptor>;
+  /** Whether this run can be resumed (set to false when graph is edited) */
+  resumable: boolean;
+};
+
+/**
+ * Injectable generators for testability.
+ * Production code uses real implementations; tests inject mocks.
+ */
+export type Generators = {
+  streamContent: typeof streamGenerateContent;
+  conformBody: typeof conformGeminiBody;
+  callImage: typeof callGeminiImage;
+  callVideo: typeof callVideoGen;
+  callAudio: typeof callAudioGen;
+  callMusic: typeof callMusicGen;
 };

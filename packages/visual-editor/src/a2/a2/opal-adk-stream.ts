@@ -7,19 +7,13 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { StreamableReporter } from "./output.js";
-import {
-  err,
-  ok,
-  toLLMContent,
-} from "./utils.js";
+import { createReporter } from "../agent/progress-work-item.js";
+import { err, ok, toLLMContent } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 
 const DEFAULT_OPAL_ADK_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeAgentNodeStream";
-
-
 
 type StreamChunk = {
   parts?: Array<{
@@ -38,7 +32,6 @@ export type Content = {
 export type ContentMap = {
   [key: string]: Content;
 };
-
 
 export type PlanStep = {
   stepName: string;
@@ -81,7 +74,7 @@ async function getOpalAdkBackendUrl(caps: Capabilities) {
 
 function buildStreamingRequestBody(
   content: LLMContent[],
-  node_api: string = "deep_research",
+  node_api: string = "deep_research"
 ): StreamingRequestBody {
   const contents: StreamingRequestBody["contents"] = [];
 
@@ -110,25 +103,23 @@ function buildStreamingRequestBody(
   };
 }
 
-async function executeOpalAdkStream(caps: Capabilities,
+async function executeOpalAdkStream(
+  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   params: LLMContent[],
-  opal_adk_agent: string): Promise<Outcome<LLMContent>> {
-  const reporter = new StreamableReporter(caps, {
+  opal_adk_agent: string
+): Promise<Outcome<LLMContent>> {
+  const reporter = createReporter(moduleArgs, {
     title: `Executing Opal Adk with ${opal_adk_agent}`,
     icon: "spark",
   });
   try {
-    await reporter.start();
-    await reporter.sendUpdate("Preparing request", { opal_adk_agent }, "upload");
+    reporter.addJson("Preparing request", { opal_adk_agent }, "upload");
 
     const baseUrl = await getOpalAdkBackendUrl(caps);
     const url = new URL(baseUrl);
     url.searchParams.set("alt", "sse");
-    const requestBody = buildStreamingRequestBody(
-      params,
-      opal_adk_agent,
-    );
+    const requestBody = buildStreamingRequestBody(params, opal_adk_agent);
 
     // Record model call with action tracker
     caps.write({
@@ -145,13 +136,13 @@ async function executeOpalAdkStream(caps: Capabilities,
 
     if (!response.ok) {
       const errorText = await response.text();
-      return reporter.sendError(
+      return reporter.addError(
         err(`Streaming request failed: ${response.status} ${errorText}`)
       );
     }
 
     if (!response.body) {
-      return reporter.sendError(err("No response body from streaming API"));
+      return reporter.addError(err("No response body from streaming API"));
     }
 
     // Process the SSE stream
@@ -164,33 +155,25 @@ async function executeOpalAdkStream(caps: Capabilities,
         const text = part.text || "";
         if (type === "thought") {
           thoughtCount++;
-          await reporter.sendUpdate(
-            `Thinking (${thoughtCount})`,
-            text,
-            "spark"
-          );
+          reporter.addText(`Thinking (${thoughtCount})`, text, "spark");
         } else if (type === "result") {
           researchResult = text;
-          await reporter.sendUpdate(
-            "Agent Thought",
-            researchResult,
-            "spark"
-          );
+          reporter.addText("Agent Thought", researchResult, "spark");
         } else if (type === "error") {
-          return reporter.sendError(err(`Generation error: ${text}`));
+          return reporter.addError(err(`Generation error: ${text}`));
         }
       }
     }
 
     if (!researchResult) {
-      return reporter.sendError(err("No research result received from stream"));
+      return reporter.addError(err("No research result received from stream"));
     }
 
     // Return HTML as inlineData with text/html mimeType to match legacy behavior
-    return toLLMContent(researchResult, 'model');
+    return toLLMContent(researchResult, "model");
   } catch (e) {
-    return reporter.sendError(err((e as Error).message));
+    return reporter.addError(err((e as Error).message));
   } finally {
-    reporter.close();
+    reporter.finish();
   }
 }

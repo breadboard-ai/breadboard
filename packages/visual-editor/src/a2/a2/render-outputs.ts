@@ -13,7 +13,6 @@ import {
 } from "@breadboard-ai/types";
 import { ConnectorManager } from "./connector-manager.js";
 import { callGenWebpage } from "./html-generator.js";
-import { flattenContext } from "./lists.js";
 import { Template } from "./template.js";
 import {
   err,
@@ -368,10 +367,7 @@ async function invoke(
     return substituting;
   }
 
-  const context = mergeContent(
-    flattenContext([substituting], true, "\n\n"),
-    "user"
-  );
+  const context = mergeContent([substituting], "user");
   // If the step uses one of the deprecated modes that encodes model, trust this.
   if (renderMode == FLASH_MODE) {
     modelName = "gemini-2.5-flash";

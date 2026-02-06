@@ -14,10 +14,11 @@ import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import "../../elements/input/expanding-textarea.js";
 import { SnackbarEvent, UnsnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
-import { LiteModeState } from "../../state/types.js";
 import * as StringsHelper from "../../strings/helper.js";
 import * as Styles from "../../styles/styles.js";
 import { ActionTracker, SnackType } from "../../types/types.js";
+import type { SCA } from "../../../sca/sca.js";
+import { scaContext } from "../../../sca/context/context.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -29,6 +30,9 @@ export type LiteEditInputController = {
 export class EditorInputLite extends SignalWatcher(LitElement) {
   @consume({ context: actionTrackerContext })
   accessor actionTracker!: ActionTracker;
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -94,52 +98,59 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   @property()
   accessor controller: LiteEditInputController | undefined = undefined;
 
-  @property()
-  accessor state!: LiteModeState;
-
   @property({ reflect: true, type: Boolean })
   accessor editable = false;
 
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 
+  /** Get generation status from SCA */
+  get #isGenerating() {
+    return this.sca.controller.global.flowgenInput.state.status === "generating";
+  }
+
+  /** Get current example intent from SCA */
+  get #currentExampleIntent() {
+    return this.sca.controller.global.flowgenInput.currentExampleIntent;
+  }
+
+  /** Get empty state from SCA */
+  get #empty() {
+    return this.sca.controller.editor.graph.empty;
+  }
+
+  /** Get graph URL from SCA */
+  get #graphUrl() {
+    return this.sca.controller.editor.graph.url ?? undefined;
+  }
+
   override render() {
-    const isGenerating = this.state.status === "generating";
     const iconClasses = {
       "g-icon": true,
       "filled-heavy": true,
       round: true,
-      rotate: isGenerating,
+      rotate: this.#isGenerating,
     };
     return html`
       <div id="container">
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
-          .disabled=${isGenerating || !this.editable}
+          .disabled=${this.#isGenerating || !this.editable}
           .classes=${"sans-flex w-400 md-body-large"}
           .orientation=${"vertical"}
-          .value=${this.state.currentExampleIntent}
-          .placeholder=${this.state.empty
+          .value=${this.#currentExampleIntent}
+          .placeholder=${this.#empty
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW_ALT")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}
           ><span class=${classMap(iconClasses)} slot="submit"
-            >${isGenerating ? "progress_activity" : "send"}</span
+            >${this.#isGenerating ? "progress_activity" : "send"}</span
           ></bb-expanding-textarea
         >
       </div>
     `;
   }
-
-  // TODO: Reimplement with Signals
-  // override async updated(changes: PropertyValues) {
-  //   if (changes.has("#state") && this.#state.status === "error") {
-  //     this.#descriptionInput.value?.focus();
-  //     this.highlighted = true;
-  //     setTimeout(() => (this.highlighted = false), 2500);
-  //   }
-  // }
 
   async #onInputChange() {
     const input = this.#descriptionInput.value;
@@ -150,9 +161,9 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     const description = input?.value;
     if (!description) return;
 
-    this.actionTracker?.flowGenEdit(this.state.graph?.url);
+    this.actionTracker?.flowGenEdit(this.#graphUrl);
 
-    this.state.startGenerating();
+    this.sca.controller.global.flowgenInput.startGenerating();
 
     const result = await this.controller?.generate(description);
     if (result && "error" in result) {
@@ -160,7 +171,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     } else {
       this.#clearInput();
     }
-    this.state.finishGenerating();
+    this.sca.controller.global.flowgenInput.finishGenerating();
   }
 
   #onGenerateError(error: string, suggestedIntent?: string) {
@@ -173,8 +184,11 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     console.error("Error generating board", error);
     console.error("Suggested intent", suggestedIntent);
 
-    this.state.status = "error";
-    this.state.error = error;
+    this.sca.controller.global.flowgenInput.state = {
+      status: "error",
+      error,
+      suggestedIntent,
+    };
 
     this.dispatchEvent(
       new SnackbarEvent(
