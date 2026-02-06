@@ -19,6 +19,7 @@ import type {
 import { graphUrlLike } from "@breadboard-ai/utils";
 import { GraphBasedNodeHandler } from "./graph-based-node-handler.js";
 import { getGraphUrl } from "../loader/loader.js";
+import { A2_COMPONENTS } from "../../a2/a2-registry.js";
 
 // TODO: Deduplicate.
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
@@ -86,32 +87,44 @@ export async function getHandler(
   type: NodeTypeIdentifier,
   context: NodeHandlerContext
 ): Promise<NodeHandler> {
-  if (graphUrlLike(type)) {
-    const graphHandler = await getGraphHandler(type, context);
+  // Substitute graph URL with module URL if available
+  const effectiveType = MODULE_URL_MAP.get(type) ?? type;
+  if (graphUrlLike(effectiveType)) {
+    const graphHandler = await getGraphHandler(effectiveType, context);
     if (graphHandler) {
       return graphHandler;
     }
   }
   const handlers = handlersFromKits(context.kits ?? []);
-  const kitHandler = handlers[type];
+  const kitHandler = handlers[effectiveType];
   if (kitHandler) {
     return kitHandler;
   }
   throw new Error(`No handler for node type "${type}"`);
 }
 
+/**
+ * Maps legacy graph-based component URLs to their imperative module URLs.
+ * This enables progressive migration from graph dispatch to imperative execution.
+ */
+const MODULE_URL_MAP = new Map(
+  A2_COMPONENTS.filter((c) => c.moduleUrl).map((c) => [c.url, c.moduleUrl!])
+);
+
 export async function getGraphHandlerFromMutableGraph(
   type: NodeTypeIdentifier,
   mutable: MutableGraph
 ): Promise<NodeHandlerObject | undefined> {
-  const nodeTypeUrl = graphUrlLike(type)
-    ? getGraphUrl(type, contextFromMutableGraph(mutable))
+  // Substitute graph URL with module URL if available
+  const effectiveType = MODULE_URL_MAP.get(type) ?? type;
+  const nodeTypeUrl = graphUrlLike(effectiveType)
+    ? getGraphUrl(effectiveType, contextFromMutableGraph(mutable))
     : undefined;
   if (!nodeTypeUrl) {
     return undefined;
   }
   const store = mutable.store;
-  const result = store.addByURL(type, [], {
+  const result = store.addByURL(effectiveType, [], {
     outerGraph: mutable.graph,
   });
   const latest = await store.getLatest(result.mutable);
@@ -121,7 +134,7 @@ export async function getGraphHandlerFromMutableGraph(
       subGraphId: result.graphId,
       moduleId: result.moduleId,
     },
-    type
+    type // Keep the original type for metadata association
   );
 }
 
