@@ -23,8 +23,6 @@ import * as a2Researcher from "./researcher.js";
 import * as a2Settings from "./settings.js";
 import * as a2StepExecutor from "./step-executor.js";
 import * as a2Template from "./template.js";
-import * as a2TextEntry from "./text-entry.js";
-import * as a2TextMain from "./text-main.js";
 import * as a2ToolManager from "./tool-manager.js";
 import * as a2Utils from "./utils.js";
 
@@ -51,8 +49,6 @@ export const exports = {
   settings: a2Settings,
   "step-executor": a2StepExecutor,
   template: a2Template,
-  "text-entry": a2TextEntry,
-  "text-main": a2TextMain,
   "tool-manager": a2ToolManager,
   utils: a2Utils,
 };
