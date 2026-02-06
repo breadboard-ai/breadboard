@@ -25,6 +25,6 @@ When the user asks for a PR summary, PR description, or similar:
    [How to verify the changes work]
    ```
 
-3. Keep it concise - this is for GitHub PR descriptions, not documentation.
+3. Keep it fairly short - this is for GitHub PR descriptions, not documentation.
 
 **IMPORTANT**: Never write to `packages/*/PR.md` or any other location. Always use `.pr-description.md` at the repo root.

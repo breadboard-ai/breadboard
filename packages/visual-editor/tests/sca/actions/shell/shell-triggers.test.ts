@@ -56,7 +56,11 @@ suite("Shell Triggers", () => {
       const trigger = onTitleChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, false, "Should return false when title is null");
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when title is null"
+      );
     });
 
     test("has correct trigger name", () => {

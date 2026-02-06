@@ -24,7 +24,10 @@ import {
  * Creates a trigger for the narrow media query change event.
  */
 export function onNarrowQueryChange(): EventTrigger | null {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+  if (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function"
+  ) {
     return null;
   }
   const query = window.matchMedia(`(max-width: ${NARROW_BREAKPOINT}px)`);
@@ -35,7 +38,10 @@ export function onNarrowQueryChange(): EventTrigger | null {
  * Creates a trigger for the medium media query change event.
  */
 export function onMediumQueryChange(): EventTrigger | null {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+  if (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function"
+  ) {
     return null;
   }
   const query = window.matchMedia(`(max-width: ${MEDIUM_BREAKPOINT}px)`);

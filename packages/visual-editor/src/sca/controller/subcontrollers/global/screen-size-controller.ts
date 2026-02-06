@@ -45,4 +45,3 @@ export class ScreenSizeController extends RootController {
   @field()
   accessor size: ScreenSize = "wide";
 }
-

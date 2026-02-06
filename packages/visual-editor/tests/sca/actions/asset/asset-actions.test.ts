@@ -9,7 +9,10 @@ import { suite, test } from "node:test";
 import * as Asset from "../../../../src/sca/actions/asset/asset-actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
-import { makeTestGraphStoreWithEditor, makeTestServices } from "../../helpers/index.js";
+import {
+  makeTestGraphStoreWithEditor,
+  makeTestServices,
+} from "../../helpers/index.js";
 import { GraphDescriptor, AssetPath } from "@breadboard-ai/types";
 import type { GraphAsset } from "../../../../src/ui/state/types.js";
 import { onGraphVersionChange } from "../../../../src/sca/actions/asset/triggers.js";
@@ -46,7 +49,11 @@ suite("Asset Actions", () => {
 
       await Asset.syncFromGraph();
 
-      assert.strictEqual(initialAssets.size, 0, "graphAssets should be cleared");
+      assert.strictEqual(
+        initialAssets.size,
+        0,
+        "graphAssets should be cleared"
+      );
     });
 
     test("syncs assets from graph descriptor", async () => {
@@ -90,8 +97,14 @@ suite("Asset Actions", () => {
       await Asset.syncFromGraph();
 
       assert.strictEqual(graphAssets.size, 2, "Should have 2 assets");
-      assert.ok(graphAssets.has("test-asset.txt"), "Should have test-asset.txt");
-      assert.ok(graphAssets.has("another-asset.json"), "Should have another-asset.json");
+      assert.ok(
+        graphAssets.has("test-asset.txt"),
+        "Should have test-asset.txt"
+      );
+      assert.ok(
+        graphAssets.has("another-asset.json"),
+        "Should have another-asset.json"
+      );
 
       const testAsset = graphAssets.get("test-asset.txt");
       assert.strictEqual(testAsset?.metadata?.title, "Test Asset");
@@ -273,8 +286,13 @@ suite("Asset Actions", () => {
 
       // Create mock transformer that returns data unchanged
       const mockTransformer = {
-        addEphemeralBlob: async () => ({ storedData: { handle: "blob:test", mimeType: "text/plain" } }),
-        persistPart: async (_url: URL, part: { inlineData: { data: string; mimeType: string } }) => part,
+        addEphemeralBlob: async () => ({
+          storedData: { handle: "blob:test", mimeType: "text/plain" },
+        }),
+        persistPart: async (
+          _url: URL,
+          part: { inlineData: { data: string; mimeType: string } }
+        ) => part,
         persistentToEphemeral: async (part: unknown) => part,
         toFileData: async (_url: URL, part: unknown) => part,
       };
@@ -319,8 +337,14 @@ suite("Asset Actions", () => {
         } as unknown as AppController,
       });
 
-      const newData = [{ role: "user" as const, parts: [{ text: "new content" }] }];
-      const result = await Asset.update("data-asset.txt", "Updated Title", newData);
+      const newData = [
+        { role: "user" as const, parts: [{ text: "new content" }] },
+      ];
+      const result = await Asset.update(
+        "data-asset.txt",
+        "Updated Title",
+        newData
+      );
 
       // Should return undefined (success) or void
       assert.ok(
@@ -334,8 +358,13 @@ suite("Asset Actions", () => {
 
       // Create mock transformer
       const mockTransformer = {
-        addEphemeralBlob: async () => ({ storedData: { handle: "blob:test", mimeType: "text/plain" } }),
-        persistPart: async (_url: URL, part: { inlineData: { data: string; mimeType: string } }) => part,
+        addEphemeralBlob: async () => ({
+          storedData: { handle: "blob:test", mimeType: "text/plain" },
+        }),
+        persistPart: async (
+          _url: URL,
+          part: { inlineData: { data: string; mimeType: string } }
+        ) => part,
         persistentToEphemeral: async (part: unknown) => part,
         toFileData: async (_url: URL, part: unknown) => part,
       };
@@ -407,23 +436,39 @@ suite("Asset Actions", () => {
   suite("persistDataParts", () => {
     test("returns contents unchanged when urlString is null", async () => {
       const contents = [{ role: "user" as const, parts: [{ text: "test" }] }];
-      const mockTransformer = {} as ReturnType<typeof Asset.bind.services.googleDriveBoardServer.dataPartTransformer>;
+      const mockTransformer = {} as ReturnType<
+        typeof Asset.bind.services.googleDriveBoardServer.dataPartTransformer
+      >;
 
-      const result = await Asset.persistDataParts(null, contents, mockTransformer);
+      const result = await Asset.persistDataParts(
+        null,
+        contents,
+        mockTransformer
+      );
 
-      assert.deepStrictEqual(result, contents, "Should return original contents");
+      assert.deepStrictEqual(
+        result,
+        contents,
+        "Should return original contents"
+      );
     });
 
     test("returns transformed contents on success", async () => {
-      const contents = [{ role: "user" as const, parts: [{ text: "original" }] }];
+      const contents = [
+        { role: "user" as const, parts: [{ text: "original" }] },
+      ];
 
       // Mock transformDataParts by using a transformer that returns modified data
       const mockTransformer = {
-        addEphemeralBlob: async () => ({ storedData: { handle: "blob:test", mimeType: "text/plain" } }),
+        addEphemeralBlob: async () => ({
+          storedData: { handle: "blob:test", mimeType: "text/plain" },
+        }),
         persistPart: async () => ({ text: "transformed" }),
         persistentToEphemeral: async (part: unknown) => part,
         toFileData: async (_url: URL, part: unknown) => part,
-      } as unknown as ReturnType<typeof Asset.bind.services.googleDriveBoardServer.dataPartTransformer>;
+      } as unknown as ReturnType<
+        typeof Asset.bind.services.googleDriveBoardServer.dataPartTransformer
+      >;
 
       const result = await Asset.persistDataParts(
         "https://example.com/board.json",
@@ -438,18 +483,24 @@ suite("Asset Actions", () => {
     });
 
     test("returns original contents when transform fails", async () => {
-      const contents = [{
-        role: "user" as const,
-        parts: [{ inlineData: { data: "test", mimeType: "text/plain" } }]
-      }];
+      const contents = [
+        {
+          role: "user" as const,
+          parts: [{ inlineData: { data: "test", mimeType: "text/plain" } }],
+        },
+      ];
 
       // Mock transformer that returns an error
       const mockTransformer = {
-        addEphemeralBlob: async () => ({ storedData: { handle: "blob:test", mimeType: "text/plain" } }),
+        addEphemeralBlob: async () => ({
+          storedData: { handle: "blob:test", mimeType: "text/plain" },
+        }),
         persistPart: async () => ({ $error: "Transform failed" }),
         persistentToEphemeral: async (part: unknown) => part,
         toFileData: async (_url: URL, part: unknown) => part,
-      } as unknown as ReturnType<typeof Asset.bind.services.googleDriveBoardServer.dataPartTransformer>;
+      } as unknown as ReturnType<
+        typeof Asset.bind.services.googleDriveBoardServer.dataPartTransformer
+      >;
 
       const result = await Asset.persistDataParts(
         "https://example.com/board.json",
@@ -458,20 +509,28 @@ suite("Asset Actions", () => {
       );
 
       // When transform fails, should return original contents
-      assert.deepStrictEqual(result, contents, "Should return original contents on failure");
+      assert.deepStrictEqual(
+        result,
+        contents,
+        "Should return original contents on failure"
+      );
     });
 
     test("creates URL from urlString correctly", async () => {
       const contents = [{ role: "user" as const, parts: [{ text: "test" }] }];
 
       const mockTransformer = {
-        addEphemeralBlob: async () => ({ storedData: { handle: "blob:test", mimeType: "text/plain" } }),
+        addEphemeralBlob: async () => ({
+          storedData: { handle: "blob:test", mimeType: "text/plain" },
+        }),
         persistPart: async () => {
           return { text: "test" };
         },
         persistentToEphemeral: async (part: unknown) => part,
         toFileData: async (_url: URL, part: unknown) => part,
-      } as unknown as ReturnType<typeof Asset.bind.services.googleDriveBoardServer.dataPartTransformer>;
+      } as unknown as ReturnType<
+        typeof Asset.bind.services.googleDriveBoardServer.dataPartTransformer
+      >;
 
       await Asset.persistDataParts(
         "https://example.com/path/to/board.json",
@@ -487,7 +546,10 @@ suite("Asset Actions", () => {
 
 suite("Asset Triggers", () => {
   // Minimal type for the bind object - only what onGraphVersionChange actually needs
-  type TriggerBind = { controller: { editor: { graph: { version: number } } }; services: unknown };
+  type TriggerBind = {
+    controller: { editor: { graph: { version: number } } };
+    services: unknown;
+  };
 
   suite("onGraphVersionChange", () => {
     test("returns version + 1 to handle version 0 being falsy", () => {
@@ -502,7 +564,9 @@ suite("Asset Triggers", () => {
         services: {},
       };
 
-      const trigger = onGraphVersionChange(mockBind as Parameters<typeof onGraphVersionChange>[0]);
+      const trigger = onGraphVersionChange(
+        mockBind as Parameters<typeof onGraphVersionChange>[0]
+      );
 
       // The trigger should have a name and be a signal type
       assert.strictEqual(trigger.type, "signal");
@@ -525,7 +589,9 @@ suite("Asset Triggers", () => {
         services: {},
       };
 
-      const trigger = onGraphVersionChange(mockBind as Parameters<typeof onGraphVersionChange>[0]);
+      const trigger = onGraphVersionChange(
+        mockBind as Parameters<typeof onGraphVersionChange>[0]
+      );
       const result = trigger.condition();
       assert.strictEqual(result, 6, "Version 5 should return 6");
     });
@@ -542,7 +608,9 @@ suite("Asset Triggers", () => {
         services: {},
       };
 
-      const trigger = onGraphVersionChange(mockBind as Parameters<typeof onGraphVersionChange>[0]);
+      const trigger = onGraphVersionChange(
+        mockBind as Parameters<typeof onGraphVersionChange>[0]
+      );
 
       // Initial version
       assert.strictEqual(trigger.condition(), 1);

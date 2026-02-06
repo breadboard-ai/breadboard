@@ -25,11 +25,8 @@ type ActionBind = { controller: AppController; services: AppServices };
  * Returns true when pendingGraphReplacement is truthy.
  */
 export function onPendingGraphReplacement(bind: ActionBind): SignalTrigger {
-  return signalTrigger(
-    "Pending Graph Replacement",
-    () => {
-      const { controller } = bind;
-      return !!controller.editor.graph.pendingGraphReplacement;
-    }
-  );
+  return signalTrigger("Pending Graph Replacement", () => {
+    const { controller } = bind;
+    return !!controller.editor.graph.pendingGraphReplacement;
+  });
 }

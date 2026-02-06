@@ -26,7 +26,11 @@ suite("Node Triggers", () => {
       const trigger = onNodeConfigChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true when config change exists");
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true when config change exists"
+      );
     });
 
     test("returns false when no config change", () => {
@@ -44,7 +48,11 @@ suite("Node Triggers", () => {
       const trigger = onNodeConfigChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, false, "Should return false when no config change");
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when no config change"
+      );
     });
 
     test("returns false when lastNodeConfigChange is undefined", () => {

@@ -48,7 +48,11 @@ suite("Agent Triggers", () => {
       const trigger = onGraphVersionChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, false, "Should return false when version is -1");
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when version is -1"
+      );
     });
 
     test("returns true when conditions are met", () => {
@@ -67,7 +71,11 @@ suite("Agent Triggers", () => {
       const trigger = onGraphVersionChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true when conditions met");
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true when conditions met"
+      );
     });
 
     test("returns true when version is 0", () => {
@@ -166,7 +174,11 @@ suite("Agent Triggers", () => {
       // Second call - no change
       const result = trigger.condition();
 
-      assert.strictEqual(result, false, "Should return false when URL unchanged");
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when URL unchanged"
+      );
     });
 
     test("has correct trigger name", () => {

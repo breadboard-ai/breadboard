@@ -28,13 +28,10 @@ type ActionBind = { controller: AppController; services: AppServices };
  * whenever version changes, not just when it first becomes >= 0.
  */
 export function onGraphVersionChange(bind: ActionBind): SignalTrigger {
-  return signalTrigger(
-    "Graph Version Change (Assets)",
-    () => {
-      const { controller } = bind;
-      // Return the version number itself so trigger fires on each change.
-      // Add 1 to handle version 0 (which would be falsy).
-      return controller.editor.graph.version + 1;
-    }
-  );
+  return signalTrigger("Graph Version Change (Assets)", () => {
+    const { controller } = bind;
+    // Return the version number itself so trigger fires on each change.
+    // Add 1 to handle version 0 (which would be falsy).
+    return controller.editor.graph.version + 1;
+  });
 }

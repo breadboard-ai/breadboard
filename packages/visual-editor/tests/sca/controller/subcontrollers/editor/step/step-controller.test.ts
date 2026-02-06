@@ -8,7 +8,10 @@ import assert from "node:assert";
 import { suite, test } from "node:test";
 import { StepController } from "../../../../../../src/sca/controller/subcontrollers/editor/step/step-controller.js";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
-import type { PendingEdit, PendingAssetEdit } from "../../../../../../src/sca/types.js";
+import type {
+  PendingEdit,
+  PendingAssetEdit,
+} from "../../../../../../src/sca/types.js";
 
 suite("StepController", () => {
   suite("pendingEdit", () => {

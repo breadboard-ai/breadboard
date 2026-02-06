@@ -66,7 +66,7 @@ export abstract class RootController implements HydratedController {
   constructor(
     public readonly controllerId: string,
     public readonly persistenceId: string
-  ) { }
+  ) {}
 
   public get hydrated() {
     return !isHydrating(() => this.hydratedInternal.get());

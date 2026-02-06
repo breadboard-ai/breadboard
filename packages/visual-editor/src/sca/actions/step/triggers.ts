@@ -31,30 +31,27 @@ type ActionBind = { controller: AppController; services: AppServices };
  * Returns true when there are pending edits to apply.
  */
 export function onSelectionOrSidebarChange(bind: ActionBind): SignalTrigger {
-  return signalTrigger(
-    "Selection/Sidebar Change",
-    () => {
-      const { controller } = bind;
+  return signalTrigger("Selection/Sidebar Change", () => {
+    const { controller } = bind;
 
-      // These reads register the dependencies - the trigger will
-      // re-run when these change
-      const selectionId = controller.editor.selection.selectionId;
-      const sidebarSection = controller.editor.sidebar.section;
+    // These reads register the dependencies - the trigger will
+    // re-run when these change
+    const selectionId = controller.editor.selection.selectionId;
+    const sidebarSection = controller.editor.sidebar.section;
 
-      // Prevent lint warning about unused variable
-      void selectionId;
-      void sidebarSection;
+    // Prevent lint warning about unused variable
+    void selectionId;
+    void sidebarSection;
 
-      // Read pending edits WITHOUT registering as dependency
-      const pendingEdit = Signal.subtle.untrack(() =>
-        controller.editor.step.pendingEdit
-      );
-      const pendingAssetEdit = Signal.subtle.untrack(() =>
-        controller.editor.step.pendingAssetEdit
-      );
+    // Read pending edits WITHOUT registering as dependency
+    const pendingEdit = Signal.subtle.untrack(
+      () => controller.editor.step.pendingEdit
+    );
+    const pendingAssetEdit = Signal.subtle.untrack(
+      () => controller.editor.step.pendingAssetEdit
+    );
 
-      // Return true if there are pending edits
-      return !!(pendingEdit || pendingAssetEdit);
-    }
-  );
+    // Return true if there are pending edits
+    return !!(pendingEdit || pendingAssetEdit);
+  });
 }

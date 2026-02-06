@@ -228,7 +228,7 @@ export const prepare = asAction(
       const message =
         typeof error === "string"
           ? error
-          : (error as { message?: string })?.message ?? "Unknown error";
+          : ((error as { message?: string })?.message ?? "Unknown error");
       controller.run.main.setError({ message });
       controller.run.main.clearInput();
     });
@@ -256,7 +256,10 @@ export const prepare = asAction(
         // Pre-populate console with all graph nodes as "inactive" in execution order
         const graphDescriptor = services.graphStore.getByDescriptor(graph);
         if (graphDescriptor?.success) {
-          const inspectable = services.graphStore.inspect(graphDescriptor.result, "");
+          const inspectable = services.graphStore.inspect(
+            graphDescriptor.result,
+            ""
+          );
           for (const nodeId of nodeIds) {
             const node = inspectable?.nodeById(nodeId);
             const title = node?.title() ?? nodeId;
@@ -272,12 +275,20 @@ export const prepare = asAction(
             // If metadata wasn't ready (no tags), async fetch full describe
             if (!metadata.tags && node) {
               node.describe().then((result) => {
-                const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
-                const resolvedIcon = getStepIcon(asyncIcon, node.currentPorts());
-                const updatedEntry = RunController.createConsoleEntry(title, "inactive", {
-                  icon: resolvedIcon,
-                  tags: asyncTags,
-                });
+                const { icon: asyncIcon, tags: asyncTags } =
+                  result.metadata || {};
+                const resolvedIcon = getStepIcon(
+                  asyncIcon,
+                  node.currentPorts()
+                );
+                const updatedEntry = RunController.createConsoleEntry(
+                  title,
+                  "inactive",
+                  {
+                    icon: resolvedIcon,
+                    tags: asyncTags,
+                  }
+                );
                 controller.run.main.setConsoleEntry(nodeId, updatedEntry);
               });
             }
@@ -294,7 +305,10 @@ export const prepare = asAction(
       const graphDescriptor = services.graphStore.getByDescriptor(graph);
       if (!graphDescriptor?.success) return;
 
-      const inspectable = services.graphStore.inspect(graphDescriptor.result, "");
+      const inspectable = services.graphStore.inspect(
+        graphDescriptor.result,
+        ""
+      );
       const node = inspectable?.nodeById(nodeId);
       const title = node?.title() ?? nodeId;
       const metadata = node?.currentDescribe()?.metadata ?? {};
@@ -343,7 +357,9 @@ export const prepare = asAction(
  * Note: NodeRunStatus excludes "failed" - failed nodes map to "succeeded"
  * as they are complete, with error styling handled via separate error state.
  */
-export function mapLifecycleToRunStatus(state: NodeLifecycleState): NodeRunStatus {
+export function mapLifecycleToRunStatus(
+  state: NodeLifecycleState
+): NodeRunStatus {
   switch (state) {
     case "inactive":
       return "inactive";
@@ -420,7 +436,10 @@ export const syncConsoleFromRunner = asAction(
     }
 
     // Build console entries in a regular Map first
-    const newEntries = new Map<string, import("@breadboard-ai/types").ConsoleEntry>();
+    const newEntries = new Map<
+      string,
+      import("@breadboard-ai/types").ConsoleEntry
+    >();
 
     for (const nodeId of nodeIds) {
       const node = inspectable.nodeById(nodeId);
