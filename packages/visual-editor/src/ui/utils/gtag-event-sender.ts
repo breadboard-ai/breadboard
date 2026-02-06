@@ -75,6 +75,10 @@ async function initializeAnalytics(
   }
 }
 
+function shouldSend() {
+  return !window.location.href.includes("localhost:3000");
+}
+
 class GTagEventSender {
   private readonly initialized: Promise<void> | undefined;
 
@@ -82,6 +86,7 @@ class GTagEventSender {
     measurementId: string | undefined,
     signedInCallback: () => Promise<boolean>
   ) {
+    if (!shouldSend()) return;
     if (measurementId) {
       this.initialized = initializeAnalytics(measurementId, signedInCallback);
     }
@@ -89,6 +94,7 @@ class GTagEventSender {
 
   async setProperties(properties: Record<string, string | undefined>) {
     if (!this.initialized) return;
+    if (!shouldSend()) return;
 
     await this.initialized;
     globalThis.gtag?.("set", "user_properties", properties);
@@ -96,9 +102,9 @@ class GTagEventSender {
   }
 
   async sendEvent(action: string, params?: Record<string, string | undefined>) {
-    if (!this.initialized) {
-      return;
-    }
+    if (!this.initialized) return;
+    if (!shouldSend()) return;
+
     await this.initialized;
     if (action === "sign_out_success" || action === "sign_in_success") {
       resetAnalyticsUserId();
@@ -111,6 +117,7 @@ function sendGTagEvent(
   action: string,
   params?: Record<string, string | undefined>
 ) {
+  if (!shouldSend()) return;
   if (action === "sign_out_success" || action === "sign_in_success") {
     resetAnalyticsUserId();
   }

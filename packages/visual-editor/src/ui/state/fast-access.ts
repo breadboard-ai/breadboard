@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  AssetPath,
-  GraphIdentifier,
-} from "@breadboard-ai/types";
+import { AssetPath, GraphIdentifier } from "@breadboard-ai/types";
 import {
   Component,
   Components,
@@ -50,20 +47,15 @@ class ReactiveFastAccess implements FastAccess {
     return this.sca.controller.editor.graph.myTools;
   }
 
-  /**
-   * Derives components from SCA controller.
-   */
-  private get allComponents(): ReadonlyMap<GraphIdentifier, Components> {
-    return this.sca.controller.editor.graph.components;
-  }
-
   @signal
   get #routes(): Map<string, Component> {
     const nodeSelection = this.stepEditor.nodeSelection;
     if (!nodeSelection) {
       return new Map();
     }
-    const inspectable = this.sca.controller.editor.graph.editor?.inspect(nodeSelection.graph);
+    const inspectable = this.sca.controller.editor.graph.editor?.inspect(
+      nodeSelection.graph
+    );
     if (!inspectable) {
       return new Map();
     }
@@ -89,15 +81,18 @@ class ReactiveFastAccess implements FastAccess {
 
   @signal
   get components(): ReadonlyMap<GraphIdentifier, Components> {
+    const allComponents = this.sca.controller.editor.graph.components;
     const nodeSelection = this.stepEditor.nodeSelection;
     if (!nodeSelection) {
-      return this.allComponents;
+      return allComponents;
     }
-    const inspectable = this.sca.controller.editor.graph.editor?.inspect(nodeSelection.graph);
+    const inspectable = this.sca.controller.editor.graph.editor?.inspect(
+      nodeSelection.graph
+    );
     if (!inspectable) {
-      return this.allComponents;
+      return allComponents;
     }
-    const components = this.allComponents.get(nodeSelection.graph);
+    const components = allComponents.get(nodeSelection.graph);
     if (!components) {
       return new Map();
     }
@@ -118,7 +113,9 @@ class ReactiveFastAccess implements FastAccess {
     private readonly sca: SCA,
     private readonly stepEditor: Omit<StepEditor, "fastAccess">
   ) {
-    this.agentMode = new FilteredMap(() => this.sca.controller.editor.graph.agentModeTools);
+    this.agentMode = new FilteredMap(
+      () => this.sca.controller.editor.graph.agentModeTools
+    );
     this.routes = new FilteredMap(() => this.#routes);
   }
 }
