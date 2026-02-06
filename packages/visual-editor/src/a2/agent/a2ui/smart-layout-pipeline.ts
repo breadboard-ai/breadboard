@@ -136,7 +136,8 @@ class SmartLayoutPipeline {
         surfaceSpec.exampleData as Record<string, unknown>,
         (status) => {
           console.log("Status update", status);
-        }
+        },
+        null
       );
 
       // 2c. Generate consistent UI, which will create the full payload and

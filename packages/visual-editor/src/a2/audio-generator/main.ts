@@ -13,6 +13,7 @@ import { ArgumentNameGenerator } from "../a2/introducer.js";
 import {
   type ContentMap,
   type ExecuteStepRequest,
+  type ExecuteStepArgs,
   executeStep,
 } from "../a2/step-executor.js";
 import { Template } from "../a2/template.js";
@@ -27,6 +28,7 @@ import {
   toTextConcat,
 } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 export { callAudioGen, VOICES };
 
@@ -60,7 +62,7 @@ function makeSpeechInstruction(inputs: Record<string, unknown>) {
 
 async function callAudioGen(
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   prompt: string,
   voice: VoiceOption
 ): Promise<Outcome<LLMContent>> {
@@ -96,7 +98,7 @@ async function callAudioGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body);
+  const response = await executeStep(caps, args, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
@@ -144,9 +146,14 @@ async function invoke(
     };
   }
   console.log("PROMPT: ", combinedInstruction);
+  const reporter = createReporter(moduleArgs, {
+    title: `Generating Speech`,
+    icon: "audio_magic_eraser",
+  });
+  const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
   const result = await callAudioGen(
     caps,
-    moduleArgs,
+    executeStepArgs,
     combinedInstruction,
     voice
   );

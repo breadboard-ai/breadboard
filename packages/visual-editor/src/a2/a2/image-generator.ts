@@ -11,6 +11,7 @@ import {
 import { type DescriberResult, type Params } from "./common.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
 import { callImageGen, promptExpander } from "./image-utils.js";
+import { type ExecuteStepArgs } from "./step-executor.js";
 import { ArgumentNameGenerator } from "./introducer.js";
 import { Template } from "./template.js";
 import { ToolManager } from "./tool-manager.js";
@@ -28,6 +29,7 @@ import {
   toTextConcat,
 } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 const MAKE_IMAGE_ICON = "generative-image";
 const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];
@@ -170,9 +172,14 @@ async function invoke(
       }
       const iPrompt = toText(imagePrompt).trim();
       console.log("PROMPT", iPrompt);
+      const reporter = createReporter(moduleArgs, {
+        title: `Calling image_generation`,
+        icon: "spark",
+      });
+      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
       const generatedImage = await callImageGen(
         caps,
-        moduleArgs,
+        args,
         iPrompt,
         aspectRatio
       );

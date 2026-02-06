@@ -26,6 +26,7 @@ import {
   executeStep,
   type ContentMap,
   type ExecuteStepRequest,
+  type ExecuteStepArgs,
 } from "../a2/step-executor.js";
 import {
   Capabilities,
@@ -36,6 +37,7 @@ import {
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 type Model = {
   id: string;
@@ -103,7 +105,7 @@ function makeVideoInstruction(inputs: Record<string, unknown>) {
 
 async function callVideoGen(
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   prompt: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
@@ -135,7 +137,7 @@ async function callVideoGen(
       let imageChunk;
       if (isStoredData(element)) {
         const blobStoredData = await driveFileToBlob(
-          moduleArgs,
+          args,
           element.parts.at(-1)!
         );
         if (!ok(blobStoredData)) return blobStoredData;
@@ -173,7 +175,7 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body, {
+  const response = await executeStep(caps, args, body, {
     expectedDurationInSec: 70,
   });
   if (!ok(response)) return response;
@@ -252,9 +254,14 @@ async function invoke(
   console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
 
   // 2) Call backend to generate video.
+  const reporter = createReporter(moduleArgs, {
+    title: `Generating Video`,
+    icon: "videocam_auto",
+  });
+  const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
   const content = await callVideoGen(
     caps,
-    moduleArgs,
+    executeStepArgs,
     combinedInstruction,
     imageContext,
     disablePromptRewrite,

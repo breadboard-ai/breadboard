@@ -17,6 +17,7 @@ import { llm, progressFromThought } from "../a2/utils.js";
 import { StatusUpdateCallbackOptions } from "./function-definition.js";
 import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
 import { ConsoleWorkItem } from "./console-work-item.js";
+import { ProgressReporter } from "./types.js";
 
 export { ConsoleProgressManager };
 
@@ -177,13 +178,17 @@ class ConsoleProgressManager implements AgentProgressManager {
 
   /**
    * The agent produced a function call.
-   * Returns a unique ID for matching with the corresponding function result.
+   * Returns a unique ID for matching with the corresponding function result,
+   * and a reporter for progress updates scoped to this function call.
    */
-  functionCall(part: FunctionCallCapabilityPart, icon?: string): string {
+  functionCall(
+    part: FunctionCallCapabilityPart,
+    icon?: string
+  ): { callId: string; reporter: ProgressReporter | null } {
     const callId = crypto.randomUUID();
     // Skip work item for functions handled by other UI mechanisms
     if (SKIP_WORK_ITEM_FUNCTIONS.has(part.functionCall.name)) {
-      return callId;
+      return { callId, reporter: null };
     }
     const effectiveIcon = icon ?? "robot_server";
     if (this.#consoleEntry) {
@@ -203,8 +208,9 @@ class ConsoleProgressManager implements AgentProgressManager {
       // Don't finish yet - will be finished when result arrives
       this.#pendingCalls.set(callId, workItem);
       this.#consoleEntry.work.set(callId, workItem);
+      return { callId, reporter: workItem };
     }
-    return callId;
+    return { callId, reporter: null };
   }
 
   /**

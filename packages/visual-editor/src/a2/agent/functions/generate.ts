@@ -13,6 +13,7 @@ import {
 import { ok } from "@breadboard-ai/utils";
 import z from "zod";
 import { GenerationConfig, Tool } from "../../a2/gemini.js";
+import { type ExecuteStepArgs } from "../../a2/step-executor.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { AgentFileSystem } from "../file-system.js";
 import {
@@ -34,6 +35,7 @@ import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup, Generators } from "../types.js";
 import { fileNameSchema, statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
+import { createReporter } from "../progress-work-item.js";
 
 export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
 
@@ -201,7 +203,8 @@ The Gemini model to use for image generation. How to choose the right model:
         file_name,
         task_id,
       },
-      statusUpdater
+      statusUpdater,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdater(status_update || "Generating Image(s)", {
@@ -214,9 +217,20 @@ The Gemini model to use for image generation. How to choose the right model:
       const modelName =
         model == "pro" ? IMAGE_PRO_MODEL_NAME : IMAGE_FLASH_MODEL_NAME;
 
+      // Use provided reporter if available, otherwise create one
+      const effectiveReporter =
+        reporter ??
+        createReporter(moduleArgs, {
+          title: `Generating Image(s)`,
+          icon: "photo_spark",
+        });
+      const args: ExecuteStepArgs = {
+        ...moduleArgs,
+        reporter: effectiveReporter,
+      };
       const generated = await generators.callImage(
         caps,
-        moduleArgs,
+        args,
         modelName,
         prompt,
         imageParts.map((part) => ({ parts: [part] })),
@@ -481,9 +495,14 @@ The following elements should be included in your prompt:
       const imageParts = await fileSystem.getMany(images || []);
       if (!ok(imageParts)) return { error: imageParts.$error };
 
+      const reporter = createReporter(moduleArgs, {
+        title: `Generating Video`,
+        icon: "videocam_auto",
+      });
+      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
       const generating = await generators.callVideo(
         caps,
-        moduleArgs,
+        args,
         prompt,
         imageParts.map((part) => ({ parts: [part] })),
         false,
@@ -542,12 +561,12 @@ The following elements should be included in your prompt:
       statusUpdateCallback(status_update || "Generating Speech", {
         expectedDurationInSec: 20,
       });
-      const generating = await generators.callAudio(
-        caps,
-        moduleArgs,
-        text,
-        voice
-      );
+      const reporter = createReporter(moduleArgs, {
+        title: `Generating Speech`,
+        icon: "audio_magic_eraser",
+      });
+      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+      const generating = await generators.callAudio(caps, args, text, voice);
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);
@@ -608,7 +627,12 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
       statusUpdateCallback(status_update || "Generating Music", {
         expectedDurationInSec: 30,
       });
-      const generating = await generators.callMusic(caps, moduleArgs, prompt);
+      const reporter = createReporter(moduleArgs, {
+        title: `Generating Music`,
+        icon: "audio_magic_eraser",
+      });
+      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+      const generating = await generators.callMusic(caps, args, prompt);
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);

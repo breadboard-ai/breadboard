@@ -23,6 +23,20 @@ import type {
 } from "./function-definition.js";
 import type { SimplifiedToolManager } from "../a2/tool-manager.js";
 import type { SpreadsheetValueRange } from "../google-drive/api.js";
+import type { ErrorMetadata } from "../a2/utils.js";
+
+/**
+ * Interface for reporting step execution progress.
+ * This is used by executeStep to log step input/output and errors.
+ */
+export type ProgressReporter = {
+  addJson(title: string, data: unknown, icon?: string): void;
+  addError(error: { $error: string; metadata?: ErrorMetadata }): {
+    $error: string;
+    metadata?: ErrorMetadata;
+  };
+  finish(): void;
+};
 
 export type FileDescriptor = {
   type: "text" | "storedData" | "inlineData" | "fileData";
@@ -43,7 +57,8 @@ export type FunctionCaller = {
   call(
     callId: string,
     part: FunctionCallCapabilityPart,
-    statusUpdateCallback: StatusUpdateCallback
+    statusUpdateCallback: StatusUpdateCallback,
+    reporter: ProgressReporter | null
   ): void;
   getResults(): Promise<
     Outcome<{
@@ -71,9 +86,13 @@ export type AgentProgressManager = {
 
   /**
    * The agent produced a function call.
-   * Returns a unique ID for matching with the corresponding function result.
+   * Returns a unique ID for matching with the corresponding function result,
+   * and a reporter for progress updates scoped to this function call.
    */
-  functionCall(part: FunctionCallCapabilityPart, icon?: string): string;
+  functionCall(
+    part: FunctionCallCapabilityPart,
+    icon?: string
+  ): { callId: string; reporter: ProgressReporter | null };
 
   /**
    * The agent produced a function result.
