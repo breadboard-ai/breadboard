@@ -31,12 +31,54 @@ export interface ConfigChangeContext {
   titleUserModified: boolean;
 }
 
+/**
+ * Tool definition for the "Go to" routing action.
+ * Only available when the graph has more than one node.
+ */
+const ROUTING_TOOL: Tool = {
+  url: "routing",
+  title: "Go to:",
+  icon: "spark",
+};
+
+/**
+ * Tool definition for the "Use Memory" action.
+ * Always available in agent mode.
+ */
+const MEMORY_TOOL: Tool = {
+  url: "use-memory",
+  title: "Use Memory",
+  icon: "database",
+};
+
 export class GraphController extends RootController {
   /**
    * Static registry of A2 tools. These are environment-independent
    * and don't change based on graph content.
    */
   readonly tools: ReadonlyMap<string, Tool> = new Map(A2_TOOLS);
+
+  /**
+   * Dynamic tools derived from the graph's sub-graphs.
+   * Updated reactively when the graph topology changes.
+   */
+  @field({ deep: false })
+  private accessor _myTools: Map<string, Tool> = new Map();
+
+  get myTools(): ReadonlyMap<string, Tool> {
+    return this._myTools;
+  }
+
+  /**
+   * Agent mode tools (routing, memory) derived from graph state.
+   * Updated reactively when the graph topology changes.
+   */
+  @field({ deep: false })
+  private accessor _agentModeTools: Map<string, Tool> = new Map();
+
+  get agentModeTools(): ReadonlyMap<string, Tool> {
+    return this._agentModeTools;
+  }
 
   @field({ deep: false })
   private accessor _editor: EditableGraph | null = null;
@@ -144,6 +186,10 @@ export class GraphController extends RootController {
     this._title = this._graph?.title ?? null;
     this.lastEditError = null;
 
+    // Initialize derived tools from the new graph
+    this.#updateMyTools();
+    this.#updateAgentModeTools();
+
     if (!this._editor) return;
     this._editor.addEventListener("graphchange", this.#onGraphChangeBound);
     this._editor.addEventListener(
@@ -158,6 +204,12 @@ export class GraphController extends RootController {
     this._title = evt.graph?.title ?? null;
     this.lastEditError = null;
     this.version++;
+
+    // Skip derived tools update on visual-only changes (e.g., node movement)
+    if (evt.visualOnly) return;
+
+    this.#updateMyTools();
+    this.#updateAgentModeTools();
   }
 
   #onGraphChangeRejectBound = this.#onGraphChangeReject.bind(this);
@@ -211,5 +263,47 @@ export class GraphController extends RootController {
     this.lastLoadedVersion = 0;
     this.lastNodeConfigChange = null;
     this.finalOutputValues = undefined;
+    this._myTools = new Map();
+    this._agentModeTools = new Map();
+  }
+
+  /**
+   * Rebuilds myTools from the graph's sub-graphs.
+   * Each sub-graph becomes a tool entry keyed by its URL fragment.
+   * Uses wholesale Map replacement to trigger @field reactivity.
+   */
+  #updateMyTools() {
+    this._myTools = new Map(
+      Object.entries(this._graph?.graphs || {}).map<[string, Tool]>(
+        ([graphId, descriptor]) => {
+          const url = `#${graphId}`;
+          return [
+            url,
+            {
+              url,
+              title: descriptor.title || "Untitled Tool",
+              description: descriptor.description,
+              order: Number.MAX_SAFE_INTEGER,
+              icon: "tool",
+            },
+          ];
+        }
+      )
+    );
+  }
+
+  /**
+   * Rebuilds agentModeTools based on graph state.
+   * - ROUTING_TOOL: Only included when graph has >1 node
+   * - MEMORY_TOOL: Always included
+   * Uses wholesale Map replacement to trigger @field reactivity.
+   */
+  #updateAgentModeTools() {
+    const tools: [string, Tool][] = [];
+    if ((this._graph?.nodes?.length ?? 0) > 1) {
+      tools.push([`control-flow/routing`, ROUTING_TOOL]);
+    }
+    tools.push([`function-group/use-memory`, MEMORY_TOOL]);
+    this._agentModeTools = new Map(tools);
   }
 }
