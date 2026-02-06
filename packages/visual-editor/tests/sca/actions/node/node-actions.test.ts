@@ -11,39 +11,8 @@ import { appController } from "../../../../src/sca/controller/controller.js";
 import { type AppServices } from "../../../../src/sca/services/services.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
+import { createMockEditor } from "../../helpers/mock-controller.js";
 import { EditableGraph } from "@breadboard-ai/types";
-
-/**
- * Creates a mock EditableGraph with the required methods.
- */
-function createMockEditor(options?: {
-  nodeId?: string;
-  onApply?: (transform: unknown) => void;
-  onGraphChange?: (callback: () => void) => void;
-}): EditableGraph {
-  const nodeId = options?.nodeId ?? "test-node";
-  return {
-    raw: () => ({
-      nodes: [{ id: nodeId, type: "promptTemplate" }],
-    }),
-    addEventListener: (_event: string, callback: () => void) => {
-      if (options?.onGraphChange) {
-        options.onGraphChange(callback);
-      }
-    },
-    removeEventListener: () => { },
-    inspect: () => ({
-      nodeById: (id: string) =>
-        id === nodeId
-          ? { descriptor: { type: "promptTemplate" } }
-          : undefined,
-    }),
-    apply: async (transform: unknown) => {
-      options?.onApply?.(transform);
-      return { success: true };
-    },
-  } as unknown as EditableGraph;
-}
 
 suite("Node Actions", () => {
   let controller: ReturnType<typeof appController>;

@@ -28,7 +28,6 @@ import { ReactiveOrganizer } from "./organizer.js";
 import { ReactiveProjectRun } from "./project-run.js";
 import { RendererStateImpl } from "./renderer.js";
 import {
-  Component,
   GraphAsset,
   Integrations,
   Organizer,
@@ -74,8 +73,6 @@ function createProjectState(
   );
 }
 
-type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
-
 class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #boardServer: GoogleDriveBoardServer;
@@ -96,7 +93,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
 
   readonly organizer: Organizer;
-  readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
 
   readonly renderer: RendererState;
   readonly integrations: Integrations;
@@ -116,7 +112,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.#editable = editable;
     editable.addEventListener("graphchange", (e) => {
       if (e.visualOnly) return;
-      this.#updateComponents();
       this.#updateGraphAssets();
 
       this.#graphChanged.set({});
@@ -125,14 +120,12 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
-    this.components = new SignalMap();
 
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
     this.stepEditor = new StepEditorImpl(this, this.__sca);
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);
-    this.#updateComponents();
 
     this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
     this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
@@ -254,73 +247,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     }
     result.id = firstPort.name;
     return result;
-  }
-
-  #updateComponents() {
-    const map = this.components;
-    const toDelete = new Set(map.keys());
-    const updated = Object.entries(this.#editable.inspect("").graphs() || {});
-    updated.push(["", this.#editable.inspect("")]);
-    updated.forEach(([key, value]) => {
-      let currentValue = map.get(key);
-      if (!currentValue) {
-        currentValue = new SignalMap<NodeIdentifier, Component>();
-        map.set(key, currentValue);
-      } else {
-        toDelete.delete(key);
-      }
-
-      const nodeValues: Promise<[string, Component]>[] = [];
-      for (const node of value.nodes()) {
-        const ports = node.currentPorts();
-        const metadata = node.currentDescribe()?.metadata ?? {};
-        const { tags } = metadata;
-
-        // If we already know the tags and ports, just use them.
-        if (tags && !ports.updating) {
-          nodeValues.push(
-            Promise.resolve([
-              node.descriptor.id,
-              {
-                id: node.descriptor.id,
-                title: node.title(),
-                description: node.description(),
-                ports,
-                metadata,
-              },
-            ])
-          );
-          continue;
-        }
-
-        // ... but if there aren't tags or the ports are updating, try using
-        // the full `describe()` instead.
-        nodeValues.push(
-          Promise.all([node.ports(), node.describe()]).then(
-            ([ports, description]) => {
-              return [
-                node.descriptor.id,
-                {
-                  id: node.descriptor.id,
-                  title: node.title(),
-                  description: node.description(),
-                  ports,
-                  metadata: description.metadata ?? {},
-                },
-              ];
-            }
-          )
-        );
-      }
-
-      Promise.all(nodeValues).then((nodes) => {
-        updateMap(currentValue, nodes);
-      });
-    });
-
-    [...toDelete.values()].forEach((key) => {
-      map.delete(key);
-    });
   }
 
   #updateGraphAssets() {

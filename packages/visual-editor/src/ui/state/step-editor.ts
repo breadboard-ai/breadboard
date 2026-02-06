@@ -35,11 +35,12 @@ class StepEditorImpl implements StepEditor {
 
   constructor(projectValues: ProjectValues, sca: SCA) {
     this.#sca = sca;
-    const { graphAssets, components, integrations, editable } = projectValues;
+    const { graphAssets, integrations, editable } = projectValues;
     const graphController = sca.controller.editor.graph;
     const tools = graphController.tools;
     const myTools = graphController.myTools;
     const agentModeTools = graphController.agentModeTools;
+    const components = graphController.components;
     this.fastAccess = new ReactiveFastAccess(
       graphAssets,
       tools,

@@ -60,7 +60,7 @@ class ReactiveFastAccess implements FastAccess {
   }
 
   @signal
-  get components(): Map<GraphIdentifier, Components> {
+  get components(): ReadonlyMap<GraphIdentifier, Components> {
     const nodeSelection = this.stepEditor.nodeSelection;
     if (!nodeSelection) {
       return this.allComponents;
@@ -90,7 +90,7 @@ class ReactiveFastAccess implements FastAccess {
     public readonly tools: ReadonlyMap<string, Tool>,
     public readonly myTools: ReadonlyMap<string, Tool>,
     unfilteredAgentMode: ReadonlyMap<string, Tool>,
-    private readonly allComponents: Map<GraphIdentifier, Components>,
+    private readonly allComponents: ReadonlyMap<GraphIdentifier, Components>,
     public readonly integrations: FilteredIntegrations,
     private readonly editable: EditableGraph | undefined,
     private readonly stepEditor: Omit<StepEditor, "fastAccess">

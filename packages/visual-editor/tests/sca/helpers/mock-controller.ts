@@ -151,14 +151,88 @@ export function makeTestController(options: TestControllerOptions = {}) {
 }
 
 /**
+ * Options for creating a mock EditableGraph.
+ */
+export interface MockEditorOptions {
+  /** Node ID to return from nodeById - defaults to "test-node" */
+  nodeId?: string;
+  /** Callback when apply() is called */
+  onApply?: (transform: unknown) => void;
+  /** Callback when graphchange listener is registered */
+  onGraphChange?: (callback: () => void) => void;
+  /** Custom raw graph data */
+  rawGraph?: Record<string, unknown>;
+  /** Mock nodes for testing component update paths */
+  mockNodes?: MockNode[];
+}
+
+/**
+ * Mock node for testing component update paths.
+ */
+export interface MockNode {
+  id: string;
+  type: string;
+  title?: string;
+  description?: string;
+  /** If true, ports are still updating (causes async path) */
+  portsUpdating?: boolean;
+  /** Tags in metadata (causes sync path when present with non-updating ports) */
+  tags?: string[];
+}
+
+/**
  * Creates a mock EditableGraph that has the required methods for the
  * GraphController's setEditor to work.
  */
-export function createMockEditor(): EditableGraph {
+export function createMockEditor(options?: MockEditorOptions): EditableGraph {
+  const nodeId = options?.nodeId ?? "test-node";
+  const rawGraph = options?.rawGraph ?? {
+    nodes: [{ id: nodeId, type: "promptTemplate" }],
+  };
+  const mockNodes = options?.mockNodes ?? [];
+
+  // Create mock InspectableNode objects
+  const inspectableNodes = mockNodes.map((node) => ({
+    descriptor: { id: node.id, type: node.type },
+    title: () => node.title ?? node.type,
+    description: () => node.description ?? "",
+    currentPorts: () => ({
+      inputs: { ports: [] },
+      outputs: { ports: [] },
+      updating: node.portsUpdating ?? false,
+    }),
+    currentDescribe: () => ({
+      metadata: node.tags ? { tags: node.tags } : {},
+    }),
+    ports: () =>
+      Promise.resolve({
+        inputs: { ports: [] },
+        outputs: { ports: [] },
+      }),
+    describe: () => Promise.resolve({ metadata: {} }),
+  }));
+
+  const mockInspectable = {
+    graphs: () => ({}),
+    nodes: () => inspectableNodes,
+    raw: () => rawGraph,
+    nodeById: (id: string) =>
+      id === nodeId ? { descriptor: { type: "promptTemplate" } } : undefined,
+  };
+
   return {
-    raw: () => ({}),
-    addEventListener: () => { },
-    removeEventListener: () => { },
+    raw: () => rawGraph,
+    inspect: () => mockInspectable,
+    addEventListener: (_event: string, callback: () => void) => {
+      if (options?.onGraphChange) {
+        options.onGraphChange(callback);
+      }
+    },
+    removeEventListener: () => {},
+    apply: async (transform: unknown) => {
+      options?.onApply?.(transform);
+      return { success: true };
+    },
   } as unknown as EditableGraph;
 }
 
