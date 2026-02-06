@@ -25,6 +25,8 @@ suite("Share Actions", () => {
   let fakeDriveApi: FakeGoogleDriveApi;
   let googleDriveClient: GoogleDriveClient;
   let share: Editor.Share.ShareController;
+  /** Utility to get state without TypeScript narrowing over-firing from prior assertions */
+  const getState = () => share.state;
 
   before(async () => {
     fakeDriveApi = await FakeGoogleDriveApi.start();
@@ -137,8 +139,9 @@ suite("Share Actions", () => {
       { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.published, false);
+    const unpublishedState = getState();
+    assert.strictEqual(unpublishedState.status, "writable");
+    assert.strictEqual(unpublishedState.published, false);
 
     // Publish
     const graph = { edges: [], nodes: [], url: `drive:/${createdFile.id}` };
@@ -146,18 +149,10 @@ suite("Share Actions", () => {
     await ShareActions.publish(graph, publishPermissions, undefined);
 
     // Verify state is now published
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.published, true);
-
-    // TODO A nicer way to deal with this narrowing without a cast.
-    // Verify permission was created on the shareable copy
-    // Use type assertion after status check for proper narrowing
-    const writableState = share.state as {
-      status: "writable";
-      shareableFile?: { id: string };
-    };
-    const shareableFileId = writableState.shareableFile?.id;
-    assert.ok(shareableFileId, "Shareable file ID should exist");
+    const publishedState = getState();
+    assert.strictEqual(publishedState.status, "writable");
+    assert.strictEqual(publishedState.published, true);
+    const shareableFileId = publishedState.shareableFile.id;
 
     // Get the shareable copy's metadata to verify permissions
     const shareableMetadata = await googleDriveClient.getFileMetadata(
@@ -187,16 +182,10 @@ suite("Share Actions", () => {
     const graph = { edges: [], nodes: [], url: `drive:/${createdFile.id}` };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
     await ShareActions.publish(graph, publishPermissions, undefined);
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.published, true);
-
-    // Get the shareable file ID for verification later
-    const writableState = share.state as {
-      status: "writable";
-      shareableFile?: { id: string };
-    };
-    const shareableFileId = writableState.shareableFile?.id;
-    assert.ok(shareableFileId, "Shareable file should exist");
+    const publishedState = getState();
+    assert.strictEqual(publishedState.status, "writable");
+    assert.strictEqual(publishedState.published, true);
+    const shareableFileId = publishedState.shareableFile.id;
 
     // Verify there's a permission before unpublishing
     const beforeMetadata = await googleDriveClient.getFileMetadata(
@@ -360,10 +349,11 @@ suite("Share Actions", () => {
       { edges: [], nodes: [], url: `drive:/${mainFile.id}` },
       [{ type: "domain", domain: "example.com" }]
     );
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.shareableFile?.stale, true);
+    const staleState = getState();
+    assert.strictEqual(staleState.status, "writable");
+    assert.strictEqual(staleState.shareableFile?.stale, true);
     assert.strictEqual(
-      share.state.status === "writable" ? share.state.latestVersion : undefined,
+      staleState.latestVersion,
       "5",
       "latestVersion should be 5 from main file"
     );
@@ -437,19 +427,14 @@ suite("Share Actions", () => {
     await ShareActions.readPublishedState(graph, publishPermissions);
 
     // We should now be granularly shared, but not published
-    assert.strictEqual((share.state as { status: string }).status, "writable");
-    assert.strictEqual(
-      (share.state as { granularlyShared: boolean }).granularlyShared,
-      true
-    );
-    assert.strictEqual(
-      (share.state as { published: boolean }).published,
-      false
-    );
+    const granularState1 = getState();
+    assert.strictEqual(granularState1.status, "writable");
+    assert.strictEqual(granularState1.granularlyShared, true);
+    assert.strictEqual(granularState1.published, false);
 
     // User opens granular sharing again
     await ShareActions.viewSharePermissions(graph, undefined);
-    assert.strictEqual((share.state as { status: string }).status, "granular");
+    assert.strictEqual(getState().status, "granular");
 
     // User adds domain permission
     await googleDriveClient.createPermission(
@@ -467,12 +452,10 @@ suite("Share Actions", () => {
     await ShareActions.readPublishedState(graph, publishPermissions);
 
     // We should now be granularly shared and published
-    assert.strictEqual((share.state as { status: string }).status, "writable");
-    assert.strictEqual(
-      (share.state as { granularlyShared: boolean }).granularlyShared,
-      true
-    );
-    assert.strictEqual((share.state as { published: boolean }).published, true);
+    const granularState2 = getState();
+    assert.strictEqual(granularState2.status, "writable");
+    assert.strictEqual(granularState2.granularlyShared, true);
+    assert.strictEqual(granularState2.published, true);
   });
 
   test("managed assets get permissions synced during publish", async () => {
@@ -658,10 +641,8 @@ suite("Share Actions", () => {
     assert.strictEqual(share.state.status, "unmanaged-assets");
 
     // Verify we have both problems - one missing, one cant-share
-    const unmanagedState = share.state as {
-      status: "unmanaged-assets";
-      problems: Array<{ asset: { id: string }; problem: string }>;
-    };
+    const unmanagedState = getState();
+    assert.strictEqual(unmanagedState.status, "unmanaged-assets");
     const missingProblem = unmanagedState.problems.find(
       (p) => p.problem === "missing"
     );
