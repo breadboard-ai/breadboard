@@ -34,11 +34,12 @@ import {
   ProjectThemeState,
   ProjectValues,
   RendererState,
-  StepEditor,
+  FastAccess,
 } from "./types.js";
 import { IntegrationsImpl } from "./integrations.js";
 import { McpClientManager } from "../../mcp/index.js";
-import { StepEditorImpl } from "./step-editor.js";
+import { ReactiveFastAccess } from "./fast-access.js";
+import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
 import { ThemeState } from "./theme-state.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { SCA } from "../../sca/sca.js";
@@ -77,7 +78,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
 
   readonly renderer: RendererState;
   readonly integrations: Integrations;
-  readonly stepEditor: StepEditor;
+  readonly fastAccess: FastAccess;
   readonly themes: ProjectThemeState;
 
   /**
@@ -92,7 +93,10 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     const editable = this.#editable;
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
-    this.stepEditor = new StepEditorImpl(this.integrations, this.#sca);
+    this.fastAccess = new ReactiveFastAccess(
+      new FilteredIntegrationsImpl(this.integrations.registered),
+      this.#sca
+    );
     this.renderer = new RendererStateImpl(this.graphAssets);
 
     this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
@@ -113,7 +117,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   ): Outcome<void> {
     // Intentionally reset this property with a new instance.
     this.run = ReactiveProjectRun.create(
-      this.stepEditor,
+      this.#sca,
       this.#sca.services.actionTracker,
       this.#editable.inspect(""),
       runner,

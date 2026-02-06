@@ -69,8 +69,7 @@ export function expandChiclet(
     case "asset": {
       icon = "alternate_email";
 
-      const assetInfo =
-        projectState?.stepEditor.fastAccess.graphAssets.get(path);
+      const assetInfo = sca?.controller.editor.graph.graphAssets.get(path);
       if (assetInfo?.metadata?.type) {
         icon = iconSubstitute(assetInfo.metadata.type);
       }

@@ -141,6 +141,15 @@ export class GraphController extends RootController {
   accessor readOnly = false;
 
   /**
+   * The currently selected node ID for step editing.
+   * TODO: Remove this once SelectionController is fully wired up.
+   * At that point, fast-access.ts should read from SelectionController
+   * directly.
+   */
+  @field()
+  accessor selectedNodeId: NodeIdentifier | null = null;
+
+  /**
    * The graph URL parsed as a URL object, or null if no URL.
    */
   get graphUrl(): URL | null {
@@ -259,6 +268,8 @@ export class GraphController extends RootController {
     this._graph = this._editor?.raw() ?? null;
     this._title = this._graph?.title ?? null;
     this.lastEditError = null;
+
+    // Note: version is set by initializeEditor, not here
 
     // Initialize derived data from the new graph
     this.#updateMyTools();

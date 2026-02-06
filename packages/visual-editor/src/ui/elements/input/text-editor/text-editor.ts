@@ -140,7 +140,7 @@ export function chicletHtml(
 
 @customElement("bb-text-editor")
 export class TextEditor extends SignalWatcher(LitElement) {
-  @consume({context: scaContext})
+  @consume({ context: scaContext })
   accessor sca!: SCA;
 
   @property()
@@ -150,7 +150,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
       value,
       this.sca,
       this.projectState,
-      this.subGraphId,
+      this.subGraphId
     );
     this.#updateEditorValue();
   }
@@ -1232,7 +1232,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
         .showAgentModeTools=${this.#fastAccessTarget === null}
         .showAssets=${this.#fastAccessTarget === null}
         .showTools=${this.#fastAccessTarget === null}
-        .state=${this.projectState?.stepEditor.fastAccess}
+        .state=${this.projectState?.fastAccess}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;
   }

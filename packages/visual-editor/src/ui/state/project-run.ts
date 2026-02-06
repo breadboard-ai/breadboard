@@ -50,13 +50,13 @@ import {
   ProjectRun,
   ProjectRunStatus,
   RendererRunState,
-  StepEditor,
   UserInput,
 } from "./types.js";
 import { decodeError, decodeErrorData } from "./utils/decode-error.js";
 
 import { ActionTracker } from "../types/types.js";
 import { computeControlState } from "../../runtime/control.js";
+import { SCA } from "../../sca/sca.js";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -231,7 +231,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   accessor graph: GraphDescriptor | undefined;
 
   private constructor(
-    private readonly stepEditor: StepEditor | undefined,
+    private readonly sca: SCA | undefined,
     private readonly actionTracker: ActionTracker | undefined,
     inspectable?: InspectableGraph,
     private readonly runner?: HarnessRunner,
@@ -587,7 +587,10 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     payload: StateEvent<"node.action">["payload"]
   ): Promise<Outcome<void>> {
     // Apply any pending step edits before running the action
-    await this.stepEditor?.applyPendingEdits();
+    if (this.sca) {
+      await this.sca.actions.step.applyPendingNodeEdit();
+      await this.sca.actions.step.applyPendingAssetEdit();
+    }
 
     const { nodeId, actionContext } = payload;
     if (!actionContext) {
@@ -752,7 +755,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   }
 
   static create(
-    stepEditor: StepEditor,
+    sca: SCA,
     actionTracker: ActionTracker,
     inspectable: InspectableGraph,
     runner: HarnessRunner,
@@ -760,7 +763,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     signal?: AbortSignal
   ) {
     return new ReactiveProjectRun(
-      stepEditor,
+      sca,
       actionTracker,
       inspectable,
       runner,

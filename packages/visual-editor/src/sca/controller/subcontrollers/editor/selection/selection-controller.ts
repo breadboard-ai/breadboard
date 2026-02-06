@@ -25,6 +25,11 @@ interface Selection {
   assetEdges: Set<AssetEdgeIdentifier>;
 }
 
+/**
+ * TODO: When SelectionController is fully wired up to the
+ * legacy selection system, expose selectedNodeId here instead of on
+ * GraphController. fast-access.ts should then read from here directly.
+ */
 export class SelectionController extends RootController {
   /**
    * Incremented when selection changes. Used by triggers to detect

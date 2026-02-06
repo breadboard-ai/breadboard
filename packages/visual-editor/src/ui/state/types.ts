@@ -32,11 +32,7 @@ import {
 } from "@breadboard-ai/types";
 
 import { StateEvent } from "../events/events.js";
-import {
-  AppTheme,
-  VisualEditorMode,
-  WorkspaceSelectionState,
-} from "../types/types.js";
+import { AppTheme, VisualEditorMode } from "../types/types.js";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
 
@@ -480,7 +476,7 @@ export type Project = {
   readonly integrations: Integrations;
   readonly organizer: Organizer;
   readonly renderer: RendererState;
-  readonly stepEditor: StepEditor;
+  readonly fastAccess: FastAccess;
   readonly themes: ProjectThemeState;
 
   /**
@@ -537,23 +533,6 @@ export type EdgeRunState = {
 export type RendererRunState = {
   nodes: Map<NodeIdentifier, NodeRunState>;
   edges: Map<string, EdgeRunState>;
-};
-
-/**
- * Represents the Model + Controler for the Step Editor.
- */
-export type StepEditor = {
-  fastAccess: FastAccess;
-  updateSelection(selectionState: WorkspaceSelectionState): void;
-  nodeSelection: {
-    graph: GraphIdentifier;
-    node: NodeIdentifier;
-  } | null;
-  /**
-   * Applies any pending edits via the SCA step autosave action.
-   * Call this before actions that need the latest graph state.
-   */
-  applyPendingEdits(): Promise<void>;
 };
 
 export type ThemeStatus = "generating" | "uploading" | "editing" | "idle";
