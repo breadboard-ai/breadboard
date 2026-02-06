@@ -291,6 +291,7 @@ export class AddAssetModal extends LitElement {
                 storedData: {
                   handle: `drive:/${input.value.id}`,
                   mimeType: input.value.mimeType,
+                  resourceKey: input.value.resourceKey,
                 },
               },
             ],
