@@ -153,12 +153,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
   @property()
   set value(value: string) {
     this.#rawValue = value;
-    this.#renderableValue = createTrustedChicletHTML(
-      value,
-      this.sca,
-      this.projectState,
-      this.subGraphId
-    );
+    this.#appendVirtualChiclets();
     this.#updateEditorValue();
   }
 
@@ -181,6 +176,9 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
   @property()
   accessor projectState: Project | null = null;
+
+  @property()
+  accessor virtualTools: TemplatePart[] = [];
 
   @property()
   accessor readOnly = false;
@@ -263,7 +261,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
   ];
 
   #rawValue = "";
-  #renderableValue: TrustedHTML = createTrustedChicletHTML("");
+  #virtualChiclets = "";
   #isUsingFastAccess = false;
   #showFastAccessMenuOnKeyUp = false;
   #fastAccessTarget: TemplatePart | null = null;
@@ -334,6 +332,39 @@ export class TextEditor extends SignalWatcher(LitElement) {
     }
 
     evt.stopImmediatePropagation();
+  }
+
+  #appendVirtualChiclets() {
+    if (!this.virtualTools || this.virtualTools.length === 0) {
+      this.#virtualChiclets = "";
+      console.log("No virtual tools");
+      return;
+    }
+    console.log("Virtual tools: ", this.virtualTools);
+
+    // Parse existing tools from the raw value to avoid duplicates
+    const existingTools = new Set<string>();
+    const valueTemplate = new Template(this.#rawValue);
+    for (const placeholder of valueTemplate.placeholders) {
+      if (isTemplatePart(placeholder) && placeholder.path) {
+        existingTools.add(placeholder.path);
+      }
+    }
+
+    // Filter out virtual tools that already exist in the template
+    const uniqueVirtualTools = this.virtualTools.filter(
+      (tool) => !existingTools.has(tool.path)
+    );
+
+    // Generate a template string with JSON parts for each virtual tool
+    // This will be appended to the raw value and processed together
+    let templateString = "";
+    for (const tool of uniqueVirtualTools) {
+      // Create a JSON template part that will be parsed by createTrustedChicletHTML
+      templateString += `{{${JSON.stringify(tool)}}}`;
+    }
+
+    this.#virtualChiclets = templateString;
   }
 
   #onGlobalPointerDown() {
@@ -1094,11 +1125,21 @@ export class TextEditor extends SignalWatcher(LitElement) {
       return;
     }
 
+    // Combine the raw value with virtual chiclets template string,
+    // then process through createTrustedChicletHTML to get TrustedHTML
+    const combinedTemplateString = this.#rawValue + this.#virtualChiclets;
+    const trustedHTML = createTrustedChicletHTML(
+      combinedTemplateString,
+      this.sca,
+      this.projectState,
+      this.subGraphId
+    );
+
     (
       this.#editorRef.value as {
         innerHTML: string | TrustedHTML;
       }
-    ).innerHTML = this.#renderableValue;
+    ).innerHTML = trustedHTML;
     this.#ensureAllChicletsHaveSpace();
     this.#togglePlaceholder();
   }

@@ -124,7 +124,8 @@ export function services(
 
     const notebookLmApiClient = new NotebookLmApiClient(
       fetchWithCreds,
-      NOTEBOOKLM_API_PREFIX
+      NOTEBOOKLM_API_PREFIX,
+      OPAL_BACKEND_API_PREFIX
     );
 
     const sandbox = createA2ModuleFactory({

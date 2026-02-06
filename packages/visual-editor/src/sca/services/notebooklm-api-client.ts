@@ -288,10 +288,16 @@ export interface GenerateAnswerResponse {
 export class NotebookLmApiClient {
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #apiBaseUrl: string;
+  readonly #backendApiBaseUrl: string | undefined;
 
-  constructor(fetchWithCreds: typeof globalThis.fetch, apiBaseUrl: string) {
+  constructor(
+    fetchWithCreds: typeof globalThis.fetch,
+    apiBaseUrl: string,
+    backendApiBaseUrl?: string
+  ) {
     this.#fetchWithCreds = fetchWithCreds;
     this.#apiBaseUrl = apiBaseUrl;
+    this.#backendApiBaseUrl = backendApiBaseUrl;
   }
 
   /**
@@ -410,18 +416,21 @@ export class NotebookLmApiClient {
     request: RetrieveRelevantChunksRequest
   ): Promise<RetrieveRelevantChunksResponse> {
     // name format: "notebooks/{notebook_id}"
-    const url = new URL(
-      `v1/${request.name}:retrieveRelevantChunks`,
-      this.#apiBaseUrl
-    );
+    const url = this.#backendApiBaseUrl
+      ? new URL(`v1beta1/nlmRetrieveRelevantChunks`, this.#backendApiBaseUrl)
+      : new URL(`v1/${request.name}:retrieveRelevantChunks`, this.#apiBaseUrl);
 
     const body: Record<string, unknown> = {
       query: request.query,
-      provenance: request.provenance,
     };
+    if (this.#backendApiBaseUrl) {
+      body["notebook"] = request.name;
+    } else {
+      body["provenance"] = request.provenance;
+    }
 
     if (request.contextTokenBudget !== undefined) {
-      body.contextTokenBudget = request.contextTokenBudget;
+      body["contextTokenBudget"] = request.contextTokenBudget;
     }
 
     const response = await this.#fetchWithCreds(url, {

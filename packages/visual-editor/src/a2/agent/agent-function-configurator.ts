@@ -63,15 +63,17 @@ function createAgentConfigurator(
       );
     }
 
-    if (flags.useNotebookLM) {
+    const runtimeFlags = await moduleArgs.context.flags?.flags();
+    if (flags.useNotebookLM && runtimeFlags?.enableNotebookLm) {
       groups.push(
         getNotebookLMFunctionGroup({
           notebookLmApiClient: moduleArgs.notebookLmApiClient,
+          fileSystem: deps.fileSystem,
           taskTreeManager,
         })
       );
     }
-    
+
     if (flags.uiType === "a2ui") {
       const a2uiFunctionGroup = await getA2UIFunctionGroup({
         caps,

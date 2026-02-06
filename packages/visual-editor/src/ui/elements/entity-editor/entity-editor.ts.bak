@@ -50,7 +50,7 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
-import { Project } from "../../state/index.js";
+import { Project, StepEditorSurface } from "../../state/index.js";
 import {
   ActionTracker,
   EnumValue,
@@ -64,9 +64,7 @@ import {
   isConfigurableBehavior,
   isLLMContentBehavior,
 } from "../../utils/index.js";
-import { isCtrlCommand } from "../../utils/is-ctrl-command.js";
-import { hasNotebookLMAsset } from "../../../data/common.js";
-import { NOTEBOOKLM_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
+import { isCtrlCommand } from "../../utils/is-ctrl-command.js";\nimport { hasNotebookLMAsset } from "../../data/common.js";\nimport { NOTEBOOKLM_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
 import {
   FastAccessMenu,
   ItemSelect,
@@ -113,7 +111,10 @@ const INVALID_ITEM = html`<div id="invalid-item">
 </div>`;
 
 @customElement("bb-entity-editor")
-export class EntityEditor extends SignalWatcher(LitElement) {
+export class EntityEditor
+  extends SignalWatcher(LitElement)
+  implements StepEditorSurface
+{
   @property()
   accessor graph: InspectableGraph | null = null;
 
@@ -451,22 +452,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
               & input {
                 display: none;
-              }
-            }
-
-            &.string:not(:has(.item-select-container)) {
-              & label {
-                display: flex;
-                flex-direction: column;
-                align-items: stretch;
-                gap: var(--bb-grid-size);
-                width: 100%;
-              }
-
-              & input {
-                border: 1px solid var(--light-dark-n-80);
-                width: 100%;
-                box-sizing: border-box;
               }
             }
 
@@ -838,11 +823,17 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("pointerdown", this.#onPointerDownBound);
+    if (this.projectState) {
+      this.projectState.stepEditor.surface = this;
+    }
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener("pointerdown", this.#onPointerDownBound);
+    if (this.projectState) {
+      this.projectState.stepEditor.surface = null;
+    }
   }
 
   #onPointerDown() {
@@ -876,7 +867,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         // Reactive changes need to be saved immediately so the graph editor
         // updates. Unlike regular edits (which wait for selection change),
         // reactive controls should propagate their changes right away.
-        this.#save();
+        this.save();
       }
     };
   }
@@ -934,7 +925,14 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     if (assetPath !== null) {
       // When "asset-path" is submitted, we know that this is a an asset.
 
-      // 1) get title
+      // 1) Get the right asset
+      const asset = this.projectState?.graphAssets.get(assetPath);
+      if (!asset) {
+        console.warn(`Unable to commit edits to asset "${assetPath}`);
+        return;
+      }
+
+      // 2) get title
       const title = form.querySelector<HTMLInputElement>("#node-title")?.value;
       if (!title) {
         console.warn(
@@ -943,29 +941,19 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         return;
       }
 
-      // 2) update asset using Asset action
+      // 3) update asset
       const dataPart =
         form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
 
-      let assetData: LLMContent[] | undefined = undefined;
+      let data: LLMContent[] | undefined = undefined;
       if (dataPart) {
-        assetData = [{ role: "user", parts: [dataPart] }];
+        data = [{ role: "user", parts: [dataPart] }];
       }
 
-      const updating = await this.sca.actions.asset.update(
-        assetPath,
-        title,
-        assetData
-      );
+      const updating = await asset.update(title, data);
       if (!ok(updating)) {
         this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
       }
-
-      // The direct apply above incremented the graph version, so any
-      // pendingAssetEdit captured earlier (via @input) is now stale.
-      // Clear it to prevent a false "edits were discarded" warning.
-      this.#edited = false;
-      this.sca.controller.editor.step.clearPendingAssetEdit();
     }
   }
 
@@ -1307,7 +1295,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           return;
         }
 
-        this.#save();
+        this.#submit(this.values);
       }}
     ></bb-text-editor>`;
   }
@@ -1443,11 +1431,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           value = html`<label
             class=${classMap({ slim: isControllerBehavior(port.schema) })}
             >${!isControllerBehavior(port.schema) ? html`${port.title}: ` : ""}
-            <input
-              type="text"
-              name=${port.name}
-              .value=${port.value ?? ""}
-              placeholder=${port.schema.description ?? ""}
+            <input type="text" name=${port.name} .value=${port.value ?? ""}
           /></label>`;
           break;
         }
@@ -1779,7 +1763,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         graphId: prepared.editGraphId,
         nodeId,
         values: prepared.configuration,
-        ins: prepared.ins,
         graphVersion: this.sca.controller.editor.graph.version,
       });
       return;
@@ -1806,6 +1789,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         title,
         dataPart,
         graphVersion: this.sca.controller.editor.graph.version,
+        update: asset.update.bind(asset),
       });
     }
   }
@@ -1814,7 +1798,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
    * Implements the StepEditorSurface interface, so that this class could
    * be used in Project state machinery.
    */
-  async #save(): Promise<Outcome<void>> {
+  async save(): Promise<Outcome<void>> {
     if (!this.#edited) {
       return;
     }
@@ -1822,11 +1806,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Autosave.
     this.#edited = false;
     const submitting = this.#submit(this.values);
-
-    // Clear pending edit since we're explicitly saving
-    // This prevents the stale edit warning when clicking away
-    this.sca?.controller.editor.step.clearPendingEdit();
-    this.sca?.controller.editor.step.clearPendingAssetEdit();
 
     // Reset the node value so that we don't receive incorrect port data.
     this.values = undefined;
@@ -1899,7 +1878,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           }}
           .graphId=${null}
           .nodeId=${null}
-          .state=${this.projectState?.fastAccess}
+          .state=${this.projectState?.stepEditor.fastAccess}
         ></bb-fast-access-menu>
         <div ${ref(this.#proxyRef)} id="proxy"></div>`,
     ];

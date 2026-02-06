@@ -776,12 +776,16 @@ export class EditorControls extends SignalWatcher(LitElement) {
               title: "My Drive",
               icon: "drive",
             },
-            {
-              id: "notebooklm",
-              title: "NotebookLM",
-              svgIcon:
-                "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
-            },
+            ...(this.sca.controller.global.flags.enableNotebookLm
+              ? [
+                  {
+                    id: "notebooklm",
+                    title: "NotebookLM",
+                    svgIcon:
+                      "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
+                  },
+                ]
+              : []),
             {
               id: "youtube",
               title: "YouTube",

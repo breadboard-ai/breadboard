@@ -25,7 +25,11 @@ import {
 } from "../a2/tool-manager.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { v0_8 } from "../../a2ui/index.js";
-import { isLLMContent, isLLMContentArray } from "../../data/common.js";
+import {
+  hasNotebookLMAsset,
+  isLLMContent,
+  isLLMContentArray,
+} from "../../data/common.js";
 import { substituteDefaultTool } from "./substitute-default-tool.js";
 
 export { PidginTranslator };
@@ -232,6 +236,10 @@ ${inner}
             } else if (typeof value === "string") {
               return value;
             } else if (isLLMContent(value)) {
+              // Check if input contains NotebookLM assets
+              if (hasNotebookLMAsset(value)) {
+                useNotebookLM = true;
+              }
               return substituteParts({
                 title: param.title,
                 content: value,
@@ -241,6 +249,10 @@ ${inner}
             } else if (isLLMContentArray(value)) {
               const last = value.at(-1);
               if (!last) return "";
+              // Check if input contains NotebookLM assets
+              if (hasNotebookLMAsset(last)) {
+                useNotebookLM = true;
+              }
               return substituteParts({
                 title: param.title,
                 content: last,
