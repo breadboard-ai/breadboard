@@ -526,8 +526,6 @@ export type ProjectInternal = Project & {
 
 export type ProjectValues = {
   graphAssets: Map<AssetPath, GraphAsset>;
-  myTools: Map<string, Tool>;
-  agentModeTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
   integrations: Integrations;
   editable: EditableGraph;
