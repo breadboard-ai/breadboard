@@ -388,7 +388,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           // ConsoleUpdate (from ProgressWorkItem)
           if (isConsoleUpdate(item)) {
             if (item.type === "text") {
-              return html`<li class="output" data-label="${item.title}:">
+              return html`<li class="output" data-label="${item.title}">
                 <span class="g-icon filled round">${item.icon}</span>
                 <bb-llm-output
                   .lite=${true}
@@ -399,7 +399,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               </li>`;
             }
             if (item.type === "links") {
-              return html`<li class="output" data-label="${item.title}:">
+              return html`<li class="output" data-label="${item.title}">
                 <span class="g-icon filled round">${item.icon}</span>
                 <ul class="links-list">
                   ${item.links.map(
@@ -439,7 +439,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           }
 
           // LLMContent (fallback)
-          return html`<li class="output" data-label="Output:">
+          return html`<li class="output" data-label="Output">
             <bb-llm-output
               .lite=${true}
               .clamped=${false}

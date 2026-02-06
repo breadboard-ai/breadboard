@@ -7,6 +7,7 @@
 import { ConsoleUpdate, WorkItem } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { now } from "./now.js";
+import { SignalMap } from "signal-utils/map";
 
 export { ConsoleWorkItem };
 
@@ -20,7 +21,7 @@ class ConsoleWorkItem implements WorkItem {
   readonly start: number;
   readonly awaitingUserInput = false;
   readonly openByDefault = false;
-  readonly product: Map<string, ConsoleUpdate>;
+  readonly product: Map<string, ConsoleUpdate> = new SignalMap();
 
   @signal
   accessor end: number | null = null;
@@ -37,7 +38,6 @@ class ConsoleWorkItem implements WorkItem {
     this.start = performance.now();
     this.title = title;
     this.icon = icon;
-    this.product = new Map();
     if (update) {
       this.addProduct(update);
     }
