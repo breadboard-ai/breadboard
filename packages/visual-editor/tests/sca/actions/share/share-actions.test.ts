@@ -10,6 +10,7 @@ import assert from "node:assert";
 import { after, before, beforeEach, suite, test } from "node:test";
 import { GoogleDriveBoardServer } from "../../../../src/board-server/server.js";
 import * as ShareActions from "../../../../src/sca/actions/share/share-actions.js";
+import type * as Editor from "../../../../src/sca/controller/subcontrollers/editor/editor.js";
 import { FakeGoogleDriveApi } from "../../helpers/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
 
@@ -23,26 +24,34 @@ function makeAsset(handle: string, managed: boolean, title: string): Asset {
 suite("Share Actions", () => {
   let fakeDriveApi: FakeGoogleDriveApi;
   let googleDriveClient: GoogleDriveClient;
-  let googleDriveBoardServer: GoogleDriveBoardServer;
+  let share: Editor.Share.ShareController;
 
   before(async () => {
     fakeDriveApi = await FakeGoogleDriveApi.start();
+  });
+
+  after(async () => {
+    await fakeDriveApi.stop();
+  });
+
+  beforeEach(() => {
+    fakeDriveApi.reset();
     googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: fakeDriveApi.filesApiUrl,
       uploadApiBaseUrl: fakeDriveApi.uploadApiUrl,
       fetchWithCreds: globalThis.fetch,
     });
-    googleDriveBoardServer = new GoogleDriveBoardServer(
+    const googleDriveBoardServer = new GoogleDriveBoardServer(
       "FakeGoogleDrive",
       { state: Promise.resolve("signedin") },
       googleDriveClient,
       [{ type: "domain", domain: "example.com", role: "reader" }],
       "Breadboard",
-      // findUserOpalFolder stub - returns a folder ID
+      // findUserOpalFolder stub
       async () => ({ ok: true, id: "fake-folder-id" }),
-      // listUserOpals stub - returns empty list
+      // listUserOpals stub
       async () => ({ ok: true as const, files: [] }),
-      // Mock gallery graph collection - no browser APIs needed
+      // GalleryGraphCollection stub
       {
         loading: false,
         loaded: Promise.resolve(),
@@ -51,7 +60,7 @@ suite("Share Actions", () => {
         entries: () => [][Symbol.iterator](),
         has: () => false,
       },
-      // Mock user graph collection - no browser APIs needed
+      // UserGraphCollection stub
       {
         loading: false,
         loaded: Promise.resolve(),
@@ -63,22 +72,6 @@ suite("Share Actions", () => {
         delete: () => false,
       }
     );
-  });
-
-  after(async () => {
-    await fakeDriveApi.stop();
-  });
-
-  beforeEach(() => {
-    fakeDriveApi.reset();
-  });
-
-  test("open -> load -> close", async () => {
-    const createdFile = await googleDriveClient.createFile(
-      new Blob(["{}"], { type: "application/json" }),
-      { name: "test-board.bgl.json", mimeType: "application/json" }
-    );
-
     const { controller } = makeTestController();
     const { services } = makeTestServices({
       googleDriveClient,
@@ -88,7 +81,14 @@ suite("Share Actions", () => {
       googleDriveBoardServer,
     });
     ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
+    share = controller.editor.share;
+  });
+
+  test("open -> load -> close", async () => {
+    const createdFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "test-board.bgl.json", mimeType: "application/json" }
+    );
 
     // Panel is initially closed
     assert.deepEqual(share.state, { status: "closed" });
@@ -130,17 +130,6 @@ suite("Share Actions", () => {
       new Blob(["{}"], { type: "application/json" }),
       { name: "test-board.bgl.json", mimeType: "application/json" }
     );
-
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
 
     // Open and load to get to writable state
     ShareActions.openPanel();
@@ -188,17 +177,6 @@ suite("Share Actions", () => {
       new Blob(["{}"], { type: "application/json" }),
       { name: "test-board.bgl.json", mimeType: "application/json" }
     );
-
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
 
     // Open, load, and publish to get to published state
     ShareActions.openPanel();
@@ -257,14 +235,6 @@ suite("Share Actions", () => {
     );
     fakeDriveApi.forceSetFileMetadata(createdFile.id, { ownedByMe: false });
 
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient,
-      googleDriveBoardServer,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
-
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
       { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
@@ -302,14 +272,6 @@ suite("Share Actions", () => {
       properties: { mainToShareableCopy: shareableCopy.id },
     });
 
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient,
-      googleDriveBoardServer,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
-
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
       { edges: [], nodes: [], url: `drive:/${mainFile.id}` },
@@ -338,14 +300,6 @@ suite("Share Actions", () => {
         properties: { shareableCopyToMain: "main-file-id" },
       }
     );
-
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient,
-      googleDriveBoardServer,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
 
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
@@ -400,17 +354,6 @@ suite("Share Actions", () => {
     });
     fakeDriveApi.createFileGeneratesResourceKey(true);
 
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
-
     // Open and load to get to writable state with stale shareable copy
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
@@ -463,16 +406,6 @@ suite("Share Actions", () => {
       properties: { mainToShareableCopy: shareableCopy.id },
     });
 
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
     const graph = { edges: [], nodes: [], url: `drive:/${mainFile.id}` };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
@@ -586,17 +519,6 @@ suite("Share Actions", () => {
       capabilities: { canShare: true },
     });
 
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
-
     // Graph with multiple managed assets
     const graph = {
       edges: [],
@@ -635,7 +557,10 @@ suite("Share Actions", () => {
     const addedPerm = managedAssetMeta.permissions?.find(
       (p) => p.type === "domain" && p.domain === "example.com"
     );
-    assert.ok(addedPerm, "Managed asset should have received domain permission");
+    assert.ok(
+      addedPerm,
+      "Managed asset should have received domain permission"
+    );
 
     // Verify cant-share asset still has no permissions (skipped)
     const cantShareMeta = await googleDriveClient.getFileMetadata(
@@ -695,17 +620,6 @@ suite("Share Actions", () => {
       iconLink: "https://example.com/icon2.png",
       capabilities: { canShare: false },
     });
-
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
 
     // Graph with unmanaged assets (managed: false or undefined)
     const graph = {
@@ -773,7 +687,10 @@ suite("Share Actions", () => {
     const addedPerm = unmanagedMeta.permissions?.find(
       (p) => p.type === "domain" && p.domain === "example.com"
     );
-    assert.ok(addedPerm, "Unmanaged asset should have received domain permission");
+    assert.ok(
+      addedPerm,
+      "Unmanaged asset should have received domain permission"
+    );
 
     // Verify cant-share asset still has no domain permissions
     const cantShareMeta = await googleDriveClient.getFileMetadata(
