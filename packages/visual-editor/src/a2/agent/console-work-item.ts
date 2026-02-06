@@ -41,8 +41,13 @@ class ConsoleWorkItem implements WorkItem, ProgressReporter {
     return end - this.start;
   }
 
-  constructor(title: string, icon: string, update?: ConsoleUpdate) {
-    this.start = performance.now();
+  constructor(
+    title: string,
+    icon: string,
+    update?: ConsoleUpdate,
+    start?: number
+  ) {
+    this.start = start ?? performance.now();
     this.title = title;
     this.icon = icon;
     if (update) {

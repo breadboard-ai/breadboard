@@ -65,6 +65,7 @@ function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
       {
         name: MEMORY_CREATE_SHEET_FUNCTION,
         icon: "table_chart",
+        title: "Creating a new memory sheet",
         description: "Creates a new memory sheet",
         parameters: {
           name: z.string().describe(tr`The name of the sheet. Use snake_case for
@@ -88,6 +89,7 @@ An array of strings representing the column headers (e.g., ['Name', 'Status']).`
       {
         name: MEMORY_READ_SHEET_FUNCTION,
         icon: "table_chart",
+        title: "Reading memory",
         description: tr`
 Reads values from a specific memory range (e.g. Scores!A1:B3)`,
         parameters: {
@@ -150,6 +152,7 @@ provided when the "output_format" is set to "json"`
     defineFunction(
       {
         name: MEMORY_UPDATE_SHEET_FUNCTION,
+        title: "Updating memory",
         icon: "table_chart",
         description: tr`
 Overwrites a specific memory range with new data. Used for editing specific rows.
@@ -198,6 +201,7 @@ The 2D array of data to write.
       {
         name: MEMORY_DELETE_SHEET_FUNCTION,
         icon: "table_chart",
+        title: "Deleting a memory sheet",
         description: tr`
 Deletes a specific memory sheet`,
         parameters: {
@@ -215,6 +219,7 @@ Deletes a specific memory sheet`,
       {
         name: MEMORY_GET_METADATA_FUNCTION,
         icon: "table_chart",
+        title: "Reading memory metadata",
         description: tr`
 Returns the names and header rows of all memory sheets.`,
         parameters: {

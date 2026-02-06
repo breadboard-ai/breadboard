@@ -38,6 +38,7 @@ function defineGoogleDriveFunctions(args: GoogleDriveFunctionsGroupArgs) {
       {
         name: "google_drive_upload_file",
         icon: "cloud_upload",
+        title: "Uploading a File to Google Drive",
         description: tr`
 Uploads a file to Google Drive. Supports automatic conversion of office formats (like PPTX, DOCX, XLSX) into Google Workspace formats.
 
@@ -142,6 +143,7 @@ If an error has occurred, will contain a description of the error
       {
         name: "google_drive_create_folder",
         icon: "folder",
+        title: "Creating a Folder in Google Drive",
         description: tr`
 Creates a new Google Drive folder.
 `,
