@@ -73,6 +73,7 @@ class ConsoleProgressManager implements AgentProgressManager {
   #previousStatus: string | undefined;
   #agentSession: ConsoleWorkItem | undefined;
   #pendingCalls: Map<string, ConsoleWorkItem> = new Map();
+  #lastTimestamp: number = performance.now();
 
   constructor(
     consoleEntry: ConsoleEntry | undefined,
@@ -86,12 +87,18 @@ class ConsoleProgressManager implements AgentProgressManager {
     itemTitle: string,
     productTitle: string,
     icon: string,
-    body: LLMContent
+    body: LLMContent,
+    start?: number
   ) {
     if (!this.#consoleEntry) return;
 
     const update = { type: "text" as const, title: productTitle, icon, body };
-    const workItem = new ConsoleWorkItem(toTitleCase(itemTitle), icon, update);
+    const workItem = new ConsoleWorkItem(
+      toTitleCase(itemTitle),
+      icon,
+      update,
+      start
+    );
     workItem.finish(); // Mark as done immediately
     this.#consoleEntry.work.set(crypto.randomUUID(), workItem);
   }
@@ -155,6 +162,7 @@ class ConsoleProgressManager implements AgentProgressManager {
         },
       });
     }
+    this.#lastTimestamp = performance.now();
   }
 
   /**
@@ -162,11 +170,14 @@ class ConsoleProgressManager implements AgentProgressManager {
    */
   thought(text: string) {
     const { title, body } = parseThought(text);
+    const start = this.#lastTimestamp;
+    this.#lastTimestamp = performance.now();
     this.#addWorkItem(
       title ?? "Thought",
       "Thought",
       "spark",
-      llm`${body}`.asContent()
+      llm`${body}`.asContent(),
+      start
     );
     if (this.#screen) {
       this.#previousStatus = this.#screen.progress;
