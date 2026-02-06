@@ -636,9 +636,12 @@ suite("Share Actions", () => {
       undefined
     );
 
-    // Wait a tick for the state to transition to unmanaged-assets
-    await new Promise((r) => setTimeout(r, 10));
-    assert.strictEqual(share.state.status, "unmanaged-assets");
+    // Wait for the state to transition to unmanaged-assets (polling to avoid race condition)
+    for (let i = 0; i < 100; i++) {
+      if (getState().status === "unmanaged-assets") break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    assert.strictEqual(getState().status, "unmanaged-assets");
 
     // Verify we have both problems - one missing, one cant-share
     const unmanagedState = getState();
