@@ -64,6 +64,20 @@ function parseThought(text: string): ParsedThought {
 }
 
 /**
+ * Trim trailing ellipsis ("...") from a string.
+ */
+function trimEllipsis(text: string): string {
+  return text.replace(/\.{3}$/, "");
+}
+
+/**
+ * Convert a string to Title Case.
+ */
+function toTitleCase(text: string): string {
+  return text.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
  * Manages console progress updates for agent execution.
  * Creates individual WorkItems for each progress update and adds them to the
  * console entry. Also manages AppScreen updates for the app view.
@@ -92,7 +106,7 @@ class ConsoleProgressManager implements AgentProgressManager {
     if (!this.#consoleEntry) return;
 
     const update = { type: "text" as const, title: productTitle, icon, body };
-    const workItem = new ConsoleWorkItem(itemTitle, icon, update);
+    const workItem = new ConsoleWorkItem(toTitleCase(itemTitle), icon, update);
     workItem.finish(); // Mark as done immediately
     this.#consoleEntry.work.set(crypto.randomUUID(), workItem);
   }
@@ -196,15 +210,20 @@ class ConsoleProgressManager implements AgentProgressManager {
       const statusUpdate =
         typeof args.status_update === "string" ? args.status_update : null;
       const friendlyName = FUNCTION_FRIENDLY_NAMES[part.functionCall.name];
-      const itemTitle =
-        statusUpdate ?? friendlyName ?? `Function: ${part.functionCall.name}`;
+      const itemTitle = trimEllipsis(
+        statusUpdate ?? friendlyName ?? `Function: ${part.functionCall.name}`
+      );
       const update = {
         type: "text" as const,
         title: `Calling function "${part.functionCall.name}"`,
         icon: effectiveIcon,
         body: { parts: [part] },
       };
-      const workItem = new ConsoleWorkItem(itemTitle, effectiveIcon, update);
+      const workItem = new ConsoleWorkItem(
+        toTitleCase(itemTitle),
+        effectiveIcon,
+        update
+      );
       // Don't finish yet - will be finished when result arrives
       this.#pendingCalls.set(callId, workItem);
       this.#consoleEntry.work.set(callId, workItem);
@@ -251,7 +270,7 @@ class ConsoleProgressManager implements AgentProgressManager {
         this.#screen.expectedDuration = -1;
       } else {
         // Remove the occasional ellipsis from the status
-        status = status.replace(/\.+$/, "");
+        status = trimEllipsis(status);
         if (options?.expectedDurationInSec) {
           this.#screen.expectedDuration = options.expectedDurationInSec;
         } else {
