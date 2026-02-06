@@ -7,6 +7,7 @@
 import { BoardServer } from "@breadboard-ai/types";
 import { bgl as a2Bgl } from "./a2/index.js";
 import { bgl as agentBgl } from "./agent/index.js";
+import { bgl as askUserBgl } from "./ask-user/index.js";
 import { bgl as audioGeneratorBgl } from "./audio-generator/index.js";
 import { bgl as autonameBgl } from "./autoname/index.js";
 import { bgl as deepResearchBgl } from "./deep-research/index.js";
@@ -38,6 +39,7 @@ function createA2Server(): BoardServer {
     new Map([
       ["a2", a2Bgl],
       ["agent", agentBgl],
+      ["ask-user", askUserBgl],
       ["audio-generator", audioGeneratorBgl],
       ["autoname", autonameBgl],
       ["generate", generateBgl],

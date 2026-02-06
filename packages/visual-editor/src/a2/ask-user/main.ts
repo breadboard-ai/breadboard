@@ -1,6 +1,8 @@
 /**
- * @fileoverview Allows asking user for input that could be then used in next steps.
+ * @fileoverview Imperative implementation of the Ask User step.
+ * Combines the logic of text-entry.ts and text-main.ts into a single function.
  */
+
 import {
   BehaviorSchema,
   Capabilities,
@@ -9,12 +11,12 @@ import {
   Schema,
   SchemaEnumValue,
 } from "@breadboard-ai/types";
-import { type Params } from "./common.js";
-import { report } from "./output.js";
-import { Template } from "./template.js";
-import { defaultLLMContent, llm, ok, toText } from "./utils.js";
+import { type Params } from "../a2/common.js";
+import { report } from "../a2/output.js";
+import { Template } from "../a2/template.js";
+import { defaultLLMContent, llm, ok, toText } from "../a2/utils.js";
 
-export { invoke as default, describe };
+export { invoke as default, describe, askUser };
 
 const MODALITY: readonly string[] = [
   "Any",
@@ -27,42 +29,15 @@ const MODALITY: readonly string[] = [
 
 type Modality = (typeof MODALITY)[number];
 
-type TextInputs = {
+type AskUserInputs = {
   description?: LLMContent;
   "p-modality"?: Modality;
   "p-required"?: boolean;
 } & Params;
 
-type TextOutputs =
-  | {
-      toInput: Schema;
-      context: "nothing";
-    }
-  | {
-      toMain: string;
-      context: LLMContent;
-    };
-
-function toInput(
-  title: string,
-  modality: Modality | undefined,
-  required: boolean | undefined
-) {
-  const requiredBehavior: BehaviorSchema[] = required ? ["hint-required"] : [];
-  const toInput: Schema = {
-    type: "object",
-    properties: {
-      request: {
-        type: "object",
-        title,
-        behavior: ["transient", "llm-content", ...requiredBehavior],
-        examples: [defaultLLMContent()],
-        format: computeIcon(modality),
-      },
-    },
-  };
-  return toInput;
-}
+type AskUserOutputs = {
+  context: LLMContent[];
+};
 
 const ICONS: Record<Modality, string> = {
   Any: "asterisk",
@@ -99,15 +74,46 @@ function combineModalities(modalities: readonly string[]): SchemaEnumValue[] {
   return schemaEnum;
 }
 
-async function invoke(
-  {
+/**
+ * Creates the input schema for the user input request.
+ */
+function createInputSchema(
+  title: string,
+  modality: Modality | undefined,
+  required: boolean | undefined
+): Schema {
+  const requiredBehavior: BehaviorSchema[] = required ? ["hint-required"] : [];
+  return {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        title,
+        behavior: ["transient", "llm-content", ...requiredBehavior],
+        examples: [defaultLLMContent()],
+        format: computeIcon(modality),
+      },
+    },
+  };
+}
+
+/**
+ * Imperative replacement for the Ask User subgraph.
+ * Combines text-entry module (report + schema creation) and text-main module
+ * (input handling) into a single function.
+ */
+async function askUser(
+  inputs: AskUserInputs,
+  caps: Capabilities
+): Promise<Outcome<AskUserOutputs>> {
+  const {
     description,
     "p-modality": modality,
     "p-required": required,
     ...params
-  }: TextInputs,
-  caps: Capabilities
-): Promise<Outcome<TextOutputs>> {
+  } = inputs;
+
+  // === text-entry phase: Build prompt and report status ===
   const template = new Template(caps, description);
   let details = llm`Please provide input`.asContent();
   if (description) {
@@ -117,6 +123,7 @@ async function invoke(
     }
     details = substituting;
   }
+
   await report(caps, {
     actor: "User Input",
     category: "Requesting Input",
@@ -125,12 +132,36 @@ async function invoke(
     icon: "input",
     chat: true,
   });
+
   const title = toText(details);
-  return { context: "nothing", toInput: toInput(title, modality, required) };
+  const inputSchema = createInputSchema(title, modality, required);
+
+  // === input phase: Get user input ===
+  const response = await caps.input({ schema: inputSchema });
+  const request = response.request as LLMContent | undefined;
+
+  // === text-main phase: Return context ===
+  if (!request) {
+    // No input provided - return empty context
+    return { context: [] };
+  }
+
+  return { context: [request] };
+}
+
+/**
+ * Legacy invoke function for graph-based execution compatibility.
+ * Delegates to askUser for imperative execution.
+ */
+async function invoke(
+  inputs: AskUserInputs,
+  caps: Capabilities
+): Promise<Outcome<AskUserOutputs>> {
+  return askUser(inputs, caps);
 }
 
 type DescribeInputs = {
-  inputs: TextInputs;
+  inputs: AskUserInputs;
 };
 
 async function describe(
