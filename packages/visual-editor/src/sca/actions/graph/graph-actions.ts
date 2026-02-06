@@ -31,7 +31,10 @@ import {
 } from "../../../ui/transforms/index.js";
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 import type { SelectionPositionUpdate } from "../../../ui/events/node/node.js";
-import type { AssetEdge, EdgeAttachmentPoint } from "../../../ui/types/types.js";
+import type {
+  AssetEdge,
+  EdgeAttachmentPoint,
+} from "../../../ui/types/types.js";
 
 export const bind = makeAction();
 
@@ -300,7 +303,12 @@ export const changeEdgeAttachmentPoint = asAction(
     which: "from" | "to",
     attachmentPoint: EdgeAttachmentPoint
   ): Promise<void> => {
-    const transform = new ChangeEdgeAttachmentPoint(graphId, edge, which, attachmentPoint);
+    const transform = new ChangeEdgeAttachmentPoint(
+      graphId,
+      edge,
+      which,
+      attachmentPoint
+    );
     await applyInternal(transform);
   }
 );
@@ -311,7 +319,10 @@ export const changeEdgeAttachmentPoint = asAction(
 export const replace = asAction(
   "Graph.replace",
   { mode: ActionMode.Immediate },
-  async (replacement: GraphDescriptor, creator: EditHistoryCreator): Promise<void> => {
+  async (
+    replacement: GraphDescriptor,
+    creator: EditHistoryCreator
+  ): Promise<void> => {
     await editInternal(
       [{ type: "replacegraph", replacement, creator }],
       "Replace graph"
@@ -389,7 +400,8 @@ export const replaceWithTheme = asAction(
         currentThemes[currentTheme] &&
         currentThemes[currentTheme].splashScreen;
 
-      const replacementPresentation = replacement.metadata?.visual?.presentation;
+      const replacementPresentation =
+        replacement.metadata?.visual?.presentation;
       const replacementTheme = replacementPresentation?.theme;
       const replacementThemes = replacementPresentation?.themes;
       const replacementThemeHasSplashScreen =

@@ -57,8 +57,12 @@ export class StatusUpdatesService {
       const updates = await this.#fetchUpdates();
       this.#controller?.setUpdates(updates);
     } catch (err) {
-      const logger = getLogger()
-      logger.log(Formatter.warning("Error fetching updates", err), LABEL, false);
+      const logger = getLogger();
+      logger.log(
+        Formatter.warning("Error fetching updates", err),
+        LABEL,
+        false
+      );
     } finally {
       this.#timeoutId = window.setTimeout(
         () => this.#poll(),
@@ -71,12 +75,14 @@ export class StatusUpdatesService {
     const response = await fetch("/updates");
     const updates = await response.json();
     if (updates === "error") {
-      const logger = getLogger()
-      logger.log(Formatter.info("Unable to fetch updates from the server"), LABEL, false);
+      const logger = getLogger();
+      logger.log(
+        Formatter.info("Unable to fetch updates from the server"),
+        LABEL,
+        false
+      );
       return [];
     }
     return updates as VisualEditorStatusUpdate[];
   }
 }
-
-

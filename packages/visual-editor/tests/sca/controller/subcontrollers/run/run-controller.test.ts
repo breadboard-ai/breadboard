@@ -370,7 +370,9 @@ suite("RunController progress tracking", () => {
 
     // Add more entries than estimate
     for (let i = 0; i < 8; i++) {
-      controller.setConsoleEntry(`node-${i}`, { id: `node-${i}` } as unknown as ConsoleEntry);
+      controller.setConsoleEntry(`node-${i}`, {
+        id: `node-${i}`,
+      } as unknown as ConsoleEntry);
     }
     await controller.isSettled;
 
@@ -390,8 +392,12 @@ suite("RunController progress tracking", () => {
     await controller.isHydrated;
 
     controller.setEstimatedEntryCount(10);
-    controller.setConsoleEntry("node-1", { id: "node-1" } as unknown as ConsoleEntry);
-    controller.setConsoleEntry("node-2", { id: "node-2" } as unknown as ConsoleEntry);
+    controller.setConsoleEntry("node-1", {
+      id: "node-1",
+    } as unknown as ConsoleEntry);
+    controller.setConsoleEntry("node-2", {
+      id: "node-2",
+    } as unknown as ConsoleEntry);
     await controller.isSettled;
 
     assert.strictEqual(controller.progress, 0.2); // 2/10

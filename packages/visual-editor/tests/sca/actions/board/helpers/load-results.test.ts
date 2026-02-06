@@ -26,10 +26,7 @@ suite("load-results helpers", () => {
       }),
     };
 
-    const result = await loadResults(
-      "file-id-123",
-      mockClient as never
-    );
+    const result = await loadResults("file-id-123", mockClient as never);
 
     assert.strictEqual(result.success, true);
     if (result.success) {
@@ -44,10 +41,7 @@ suite("load-results helpers", () => {
       }),
     };
 
-    const result = await loadResults(
-      "file-id-123",
-      mockClient as never
-    );
+    const result = await loadResults("file-id-123", mockClient as never);
 
     assert.strictEqual(result.success, false);
     if (!result.success) {
@@ -62,10 +56,7 @@ suite("load-results helpers", () => {
       },
     };
 
-    const result = await loadResults(
-      "file-id-123",
-      mockClient as never
-    );
+    const result = await loadResults("file-id-123", mockClient as never);
 
     assert.strictEqual(result.success, false);
     if (!result.success) {
@@ -73,4 +64,3 @@ suite("load-results helpers", () => {
     }
   });
 });
-

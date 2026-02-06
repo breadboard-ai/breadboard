@@ -289,7 +289,11 @@ suite("RouterController", () => {
 
   test("parsedUrl handles new URL scheme with guestPrefixed", async () => {
     // New URL scheme with /_app prefix: /_app/app/{driveId}
-    window.history.pushState(null, "", "http://localhost/_app/app/guestdrive123");
+    window.history.pushState(
+      null,
+      "",
+      "http://localhost/_app/app/guestdrive123"
+    );
     const controller = new RouterController();
     await controller.isHydrated;
 

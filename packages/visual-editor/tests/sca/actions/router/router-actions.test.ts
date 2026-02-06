@@ -31,7 +31,11 @@ suite("Router Actions", () => {
 
       await routerActions.updateFromPopstate();
 
-      assert.strictEqual(updateCalled, true, "updateFromCurrentUrl should be called");
+      assert.strictEqual(
+        updateCalled,
+        true,
+        "updateFromCurrentUrl should be called"
+      );
     });
   });
 

@@ -82,7 +82,11 @@ suite("Actions", () => {
       // Activate triggers
       const dispose = activateTriggers();
 
-      assert.strictEqual(typeof dispose, "function", "Should return a function");
+      assert.strictEqual(
+        typeof dispose,
+        "function",
+        "Should return a function"
+      );
 
       // Cleanup
       dispose();
@@ -246,9 +250,8 @@ suite("Priority ordering", () => {
   });
 
   test("asAction clamps priority to bounds", async () => {
-    const { asAction, ActionMode } = await import(
-      "../../../src/sca/coordination.js"
-    );
+    const { asAction, ActionMode } =
+      await import("../../../src/sca/coordination.js");
 
     // Test high priority gets clamped
     const highAction = asAction(
@@ -276,9 +279,8 @@ suite("Priority ordering", () => {
   });
 
   test("asAction defaults priority to 0", async () => {
-    const { asAction, ActionMode } = await import(
-      "../../../src/sca/coordination.js"
-    );
+    const { asAction, ActionMode } =
+      await import("../../../src/sca/coordination.js");
 
     const action = asAction(
       "Test.defaultPriority",
@@ -289,9 +291,8 @@ suite("Priority ordering", () => {
   });
 
   test("activateTriggers sorts by priority (higher first)", async () => {
-    const { asAction, ActionMode, signalTrigger } = await import(
-      "../../../src/sca/coordination.js"
-    );
+    const { asAction, ActionMode, signalTrigger } =
+      await import("../../../src/sca/coordination.js");
 
     const activationOrder: string[] = [];
 

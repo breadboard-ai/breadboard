@@ -724,7 +724,11 @@ suite("Board Actions", () => {
         status: "debouncing",
       } as unknown as Event);
 
-      assert.strictEqual(capturedStatus, "unsaved", "Status should be 'unsaved'");
+      assert.strictEqual(
+        capturedStatus,
+        "unsaved",
+        "Status should be 'unsaved'"
+      );
     });
 
     test("ignores event when URL does not match current graph", async () => {
@@ -751,7 +755,11 @@ suite("Board Actions", () => {
         status: "saving",
       } as unknown as Event);
 
-      assert.strictEqual(statusSetCount, 0, "Status should not be set for different URL");
+      assert.strictEqual(
+        statusSetCount,
+        0,
+        "Status should not be set for different URL"
+      );
     });
 
     test("returns early when event is undefined", async () => {
@@ -775,7 +783,11 @@ suite("Board Actions", () => {
 
       await Board.handleSaveStatus(undefined);
 
-      assert.strictEqual(statusSetCount, 0, "Status should not be set when event is undefined");
+      assert.strictEqual(
+        statusSetCount,
+        0,
+        "Status should not be set when event is undefined"
+      );
     });
   });
 });

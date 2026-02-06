@@ -51,7 +51,11 @@ suite("Board Triggers", () => {
       const trigger = onVersionChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, false, "Should return false when version is -1");
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when version is -1"
+      );
     });
 
     test("returns false when editor is not available", () => {
@@ -92,7 +96,11 @@ suite("Board Triggers", () => {
       const result = trigger.condition();
 
       // Returns version + 1 so each increment is a unique change
-      assert.strictEqual(result, 43, "Should return version + 1 when conditions met");
+      assert.strictEqual(
+        result,
+        43,
+        "Should return version + 1 when conditions met"
+      );
     });
 
     test("returns truthy value (1) when version is 0", () => {
@@ -118,7 +126,9 @@ suite("Board Triggers", () => {
 
     test("has correct trigger name", () => {
       const mockBind = {
-        controller: { editor: { graph: { version: 1, readOnly: false, editor: {} } } },
+        controller: {
+          editor: { graph: { version: 1, readOnly: false, editor: {} } },
+        },
         services: {},
       };
 
@@ -144,7 +154,11 @@ suite("Board Triggers", () => {
       const trigger = onNewerVersionAvailable(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true when newer version exists");
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true when newer version exists"
+      );
     });
 
     test("returns false when no newer version", () => {
@@ -162,7 +176,11 @@ suite("Board Triggers", () => {
       const trigger = onNewerVersionAvailable(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, false, "Should return false when no newer version");
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when no newer version"
+      );
     });
 
     test("has correct trigger name", () => {

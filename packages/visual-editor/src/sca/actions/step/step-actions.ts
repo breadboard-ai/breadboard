@@ -143,14 +143,18 @@ export const applyPendingAssetEdit = asAction(
     // Get current asset to check metadata
     const asset = graphController.graphAssets.get(pendingAssetEdit.assetPath);
     if (!asset?.metadata) {
-      console.warn(`Graph asset "${pendingAssetEdit.assetPath}" has no metadata, can't update`);
+      console.warn(
+        `Graph asset "${pendingAssetEdit.assetPath}" has no metadata, can't update`
+      );
       return;
     }
 
     const metadata = { ...asset.metadata, title: pendingAssetEdit.title };
 
     // Apply the update to refs
-    let result = await editor.apply(new UpdateAssetWithRefs(pendingAssetEdit.assetPath, metadata));
+    let result = await editor.apply(
+      new UpdateAssetWithRefs(pendingAssetEdit.assetPath, metadata)
+    );
     if (!result.success) {
       console.warn(`Failed to update asset refs: ${result.error}`);
       return;
@@ -158,7 +162,9 @@ export const applyPendingAssetEdit = asAction(
 
     // If data provided, persist and apply asset data update
     if (pendingAssetEdit.dataPart) {
-      const data: LLMContent[] = [{ role: "user", parts: [pendingAssetEdit.dataPart] }];
+      const data: LLMContent[] = [
+        { role: "user", parts: [pendingAssetEdit.dataPart] },
+      ];
       const persistedData = await persistDataParts(
         graphController.url,
         data,

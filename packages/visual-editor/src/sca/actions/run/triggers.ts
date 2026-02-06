@@ -34,12 +34,9 @@ export function onDblClick(): EventTrigger {
  * Used to sync run console state when graph topology changes during a run.
  */
 export function onGraphVersionForSync(bind: ActionBind): SignalTrigger {
-  return signalTrigger(
-    "Graph Version (Sync)",
-    () => {
-      const { controller } = bind;
-      // Return true when version is valid - reactive system tracks changes
-      return controller.editor.graph.version >= 0;
-    }
-  );
+  return signalTrigger("Graph Version (Sync)", () => {
+    const { controller } = bind;
+    // Return true when version is valid - reactive system tracks changes
+    return controller.editor.graph.version >= 0;
+  });
 }

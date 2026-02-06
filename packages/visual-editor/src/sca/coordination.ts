@@ -764,10 +764,10 @@ export function asAction<T extends AppAction<never[]>>(
     logger.log(
       Utils.Logging.Formatter.warning(
         `Action "${name}" priority ${rawPriority} clamped to ${priority}. ` +
-        `Use values between ${MIN_PRIORITY} and ${MAX_PRIORITY}.`
+          `Use values between ${MIN_PRIORITY} and ${MAX_PRIORITY}.`
       ),
       LABEL,
-      true  // Always show (not verbose)
+      true // Always show (not verbose)
     );
   }
 
@@ -796,5 +796,3 @@ export function asAction<T extends AppAction<never[]>>(
 
   return actionWithTriggers as unknown as ActionWithTriggers<T>;
 }
-
-

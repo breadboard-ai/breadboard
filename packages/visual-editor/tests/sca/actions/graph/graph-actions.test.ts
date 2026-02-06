@@ -594,7 +594,10 @@ suite("Graph Actions", () => {
 
 suite("Graph Triggers", () => {
   // Minimal type for the bind object - only what onPendingGraphReplacement needs
-  type TriggerBind = { controller: { editor: { graph: { pendingGraphReplacement: unknown } } }; services: unknown };
+  type TriggerBind = {
+    controller: { editor: { graph: { pendingGraphReplacement: unknown } } };
+    services: unknown;
+  };
 
   suite("onPendingGraphReplacement", () => {
     test("returns true when pendingGraphReplacement is set", () => {
@@ -612,13 +615,19 @@ suite("Graph Triggers", () => {
         services: {},
       };
 
-      const trigger = onPendingGraphReplacement(mockBind as Parameters<typeof onPendingGraphReplacement>[0]);
+      const trigger = onPendingGraphReplacement(
+        mockBind as Parameters<typeof onPendingGraphReplacement>[0]
+      );
 
       assert.strictEqual(trigger.type, "signal");
       assert.strictEqual(trigger.name, "Pending Graph Replacement");
 
       const result = trigger.condition();
-      assert.strictEqual(result, true, "Should return true when replacement is pending");
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true when replacement is pending"
+      );
     });
 
     test("returns false when pendingGraphReplacement is null/undefined", () => {
@@ -633,10 +642,16 @@ suite("Graph Triggers", () => {
         services: {},
       };
 
-      const trigger = onPendingGraphReplacement(mockBind as Parameters<typeof onPendingGraphReplacement>[0]);
+      const trigger = onPendingGraphReplacement(
+        mockBind as Parameters<typeof onPendingGraphReplacement>[0]
+      );
 
       const result = trigger.condition();
-      assert.strictEqual(result, false, "Should return false when replacement is null");
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when replacement is null"
+      );
     });
   });
 });

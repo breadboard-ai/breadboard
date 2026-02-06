@@ -98,21 +98,18 @@ export const readPublishedState = asAction(
         status: "readonly",
         shareableFile: shareableCopyFileId
           ? {
-            id: shareableCopyFileId,
-            resourceKey: (
-              await googleDriveClient.getFileMetadata(
-                shareableCopyFileId,
-                {
+              id: shareableCopyFileId,
+              resourceKey: (
+                await googleDriveClient.getFileMetadata(shareableCopyFileId, {
                   fields: ["resourceKey"],
                   bypassProxy: true,
-                }
-              )
-            ).resourceKey,
-          }
+                })
+              ).resourceKey,
+            }
           : {
-            id: thisFileId,
-            resourceKey: thisFileMetadata.resourceKey,
-          },
+              id: thisFileId,
+              resourceKey: thisFileMetadata.resourceKey,
+            },
       };
       return;
     }
@@ -129,11 +126,13 @@ export const readPublishedState = asAction(
       return;
     }
 
-    const shareableCopyFileMetadata =
-      await googleDriveClient.getFileMetadata(shareableCopyFileId, {
+    const shareableCopyFileMetadata = await googleDriveClient.getFileMetadata(
+      shareableCopyFileId,
+      {
         fields: ["resourceKey", "properties", "permissions"],
         bypassProxy: true,
-      });
+      }
+    );
     const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
     const diff = diffAssetReadPermissions({
       actual: allGraphPermissions,
@@ -144,10 +143,7 @@ export const readPublishedState = asAction(
       status: "writable",
       published: diff.missing.length === 0,
       publishedPermissions: allGraphPermissions.filter((permission) =>
-        permissionMatchesAnyOf(
-          permission,
-          publishPermissions
-        )
+        permissionMatchesAnyOf(permission, publishPermissions)
       ),
       granularlyShared:
         // We're granularly shared if there is any permission that is neither
@@ -161,12 +157,12 @@ export const readPublishedState = asAction(
         stale:
           thisFileMetadata.version !==
           shareableCopyFileMetadata.properties?.[
-          DRIVE_PROPERTY_LATEST_SHARED_VERSION
+            DRIVE_PROPERTY_LATEST_SHARED_VERSION
           ],
         permissions: shareableCopyFileMetadata.permissions ?? [],
         shareSurface:
           shareableCopyFileMetadata.properties?.[
-          DRIVE_PROPERTY_OPAL_SHARE_SURFACE
+            DRIVE_PROPERTY_OPAL_SHARE_SURFACE
           ],
       },
       latestVersion: thisFileMetadata.version,
@@ -175,7 +171,7 @@ export const readPublishedState = asAction(
 
     console.debug(
       `[Sharing] Found sharing state:` +
-      ` ${JSON.stringify(share.state, null, 2)}`
+        ` ${JSON.stringify(share.state, null, 2)}`
     );
   }
 );
@@ -236,9 +232,7 @@ async function makeShareableCopy(
     new URL(`drive:/${shareableFileName}`),
     shareableGraph
   );
-  const shareableCopyFileId = extractGoogleDriveFileId(
-    createResult.url ?? ""
-  );
+  const shareableCopyFileId = extractGoogleDriveFileId(createResult.url ?? "");
   if (!shareableCopyFileId) {
     console.error(`Unexpected create result`, createResult);
     throw new Error(`Error creating shareable file`);
@@ -262,25 +256,24 @@ async function makeShareableCopy(
   // component.
   await boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
 
-  const shareableCopyMetadata =
-    await googleDriveClient.updateFileMetadata(
-      shareableCopyFileId,
-      {
-        properties: {
-          [DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN]: mainFileId,
-          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: updateMainResult.version,
-          [DRIVE_PROPERTY_IS_SHAREABLE_COPY]: "true",
-          ...(shareSurface
-            ? { [DRIVE_PROPERTY_OPAL_SHARE_SURFACE]: shareSurface }
-            : {}),
-        },
+  const shareableCopyMetadata = await googleDriveClient.updateFileMetadata(
+    shareableCopyFileId,
+    {
+      properties: {
+        [DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN]: mainFileId,
+        [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: updateMainResult.version,
+        [DRIVE_PROPERTY_IS_SHAREABLE_COPY]: "true",
+        ...(shareSurface
+          ? { [DRIVE_PROPERTY_OPAL_SHARE_SURFACE]: shareSurface }
+          : {}),
       },
-      { fields: ["resourceKey"] }
-    );
+    },
+    { fields: ["resourceKey"] }
+  );
 
   console.debug(
     `[Sharing] Made a new shareable graph copy "${shareableCopyFileId}"` +
-    ` at version "${updateMainResult.version}".`
+      ` at version "${updateMainResult.version}".`
   );
   return {
     shareableCopyFileId,
@@ -345,9 +338,9 @@ async function autoSyncManagedAssetPermissions(
       if (!capabilities.canShare || !assetPermissions) {
         console.error(
           `[Sharing] Could not add permission to asset ` +
-          `"${asset.fileId.id}" because the current user does not have` +
-          ` sharing capability on it. Users who don't already have` +
-          ` access to this asset may not be able to run this graph.`
+            `"${asset.fileId.id}" because the current user does not have` +
+            ` sharing capability on it. Users who don't already have` +
+            ` access to this asset may not be able to run this graph.`
         );
         return;
       }
@@ -360,8 +353,8 @@ async function autoSyncManagedAssetPermissions(
       }
       console.log(
         `[Sharing Panel] Managed asset ${asset.fileId.id}` +
-        ` has ${missing.length} missing permission(s)` +
-        ` and ${excess.length} excess permission(s). Synchronizing.`,
+          ` has ${missing.length} missing permission(s)` +
+          ` and ${excess.length} excess permission(s). Synchronizing.`,
         {
           actual: assetPermissions,
           needed: graphPermissions,
@@ -412,10 +405,7 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
           bypassProxy: true,
         }
       );
-      if (
-        !assetMetadata.capabilities.canShare ||
-        !assetMetadata.permissions
-      ) {
+      if (!assetMetadata.capabilities.canShare || !assetMetadata.permissions) {
         problems.push({ asset: assetMetadata, problem: "cant-share" });
         return;
       }
@@ -519,7 +509,7 @@ export const publish = asAction(
 
     console.debug(
       `[Sharing] Added ${publishPermissions.length} publish` +
-      ` permission(s) to shareable graph copy "${shareableFile.id}".`
+        ` permission(s) to shareable graph copy "${shareableFile.id}".`
     );
 
     await handleAssetPermissions(shareableFile.id, graph);
@@ -564,7 +554,7 @@ export const unpublish = asAction(
 
     console.debug(
       `[Sharing] Removing ${oldState.publishedPermissions.length} publish` +
-      ` permission(s) from shareable graph copy "${shareableFile.id}".`
+        ` permission(s) from shareable graph copy "${shareableFile.id}".`
     );
     await Promise.all(
       oldState.publishedPermissions.map(async (permission) => {
@@ -643,8 +633,8 @@ export const publishStale = asAction(
 
     console.debug(
       `[Sharing] Updated stale shareable graph copy` +
-      ` "${oldState.shareableFile.id}" to version` +
-      ` "${oldState.latestVersion}".`
+        ` "${oldState.shareableFile.id}" to version` +
+        ` "${oldState.latestVersion}".`
     );
   }
 );

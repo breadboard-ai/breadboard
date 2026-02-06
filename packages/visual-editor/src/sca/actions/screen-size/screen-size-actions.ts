@@ -43,12 +43,19 @@ export const updateScreenSize = asAction(
     const { controller } = bind;
 
     // Guard for SSR/test environments
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
       return;
     }
 
-    const narrowQuery = window.matchMedia(`(max-width: ${NARROW_BREAKPOINT}px)`);
-    const mediumQuery = window.matchMedia(`(max-width: ${MEDIUM_BREAKPOINT}px)`);
+    const narrowQuery = window.matchMedia(
+      `(max-width: ${NARROW_BREAKPOINT}px)`
+    );
+    const mediumQuery = window.matchMedia(
+      `(max-width: ${MEDIUM_BREAKPOINT}px)`
+    );
 
     if (narrowQuery.matches) {
       controller.global.screenSize.size = "narrow";

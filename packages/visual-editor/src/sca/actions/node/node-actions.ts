@@ -109,7 +109,8 @@ export const autoname = asAction(
       return;
     }
 
-    const { nodeId, graphId, configuration, titleUserModified } = effectiveConfig;
+    const { nodeId, graphId, configuration, titleUserModified } =
+      effectiveConfig;
     const { autonamer } = services;
     const flags = await controller.global.flags.flags();
 
@@ -152,7 +153,9 @@ export const autoname = asAction(
 
     if (graphChanged) {
       logger.log(
-        Utils.Logging.Formatter.verbose("Results discarded due to graph change"),
+        Utils.Logging.Formatter.verbose(
+          "Results discarded due to graph change"
+        ),
         LABEL
       );
       return;
@@ -179,7 +182,10 @@ export const autoname = asAction(
 
     if ("notEnoughContext" in result) {
       logger.log(
-        Utils.Logging.Formatter.verbose("Not enough context to autoname", nodeId),
+        Utils.Logging.Formatter.verbose(
+          "Not enough context to autoname",
+          nodeId
+        ),
         LABEL
       );
       return;
@@ -203,7 +209,10 @@ export const autoname = asAction(
 
     if (!applying.success) {
       logger.log(
-        Utils.Logging.Formatter.warning("Failed to apply autoname", applying.error),
+        Utils.Logging.Formatter.warning(
+          "Failed to apply autoname",
+          applying.error
+        ),
         LABEL
       );
     }

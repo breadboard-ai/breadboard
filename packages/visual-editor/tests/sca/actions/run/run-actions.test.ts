@@ -11,7 +11,11 @@ import { STATUS } from "../../../../src/sca/controller/subcontrollers/run/run-co
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
 import type { PrepareRunConfig } from "../../../../src/sca/actions/run/run-actions.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
-import type { ConsoleEntry, EditableGraph, HarnessRunner } from "@breadboard-ai/types";
+import type {
+  ConsoleEntry,
+  EditableGraph,
+  HarnessRunner,
+} from "@breadboard-ai/types";
 import { coordination } from "../../../../src/sca/coordination.js";
 
 /**
@@ -233,7 +237,11 @@ suite("Run Actions", () => {
     });
 
     assert.ok(controller.run.main.input, "input should be set");
-    assert.strictEqual(controller.run.main.input?.id, "", "input id should be empty string");
+    assert.strictEqual(
+      controller.run.main.input?.id,
+      "",
+      "input id should be empty string"
+    );
   });
 
   test("runner 'error' event sets error on controller with string message", () => {
@@ -258,7 +266,11 @@ suite("Run Actions", () => {
       "Something went wrong",
       "error message should match"
     );
-    assert.strictEqual(controller.run.main.input, null, "input should be cleared");
+    assert.strictEqual(
+      controller.run.main.input,
+      null,
+      "input should be cleared"
+    );
   });
 
   test("runner 'error' event handles error object with message property", () => {
@@ -320,7 +332,11 @@ suite("Run Actions", () => {
     };
     runner._fireEvent("end");
 
-    assert.strictEqual(controller.run.main.input, null, "input should be cleared after end");
+    assert.strictEqual(
+      controller.run.main.input,
+      null,
+      "input should be cleared after end"
+    );
   });
 
   test("runner 'graphstart' event resets and pre-populates output for top-level graph", () => {
@@ -489,9 +505,10 @@ suite("Run.start action", () => {
 
     // Track if start was called on the runner
     let startCalled = false;
-    (controller.run.main.runner as unknown as { start: () => void }).start = () => {
-      startCalled = true;
-    };
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {
+        startCalled = true;
+      };
 
     await RunActions.start();
 
@@ -529,10 +546,11 @@ suite("Run.start action", () => {
       resolveStart = resolve;
     });
 
-    (controller.run.main.runner as unknown as { start: () => void }).start = () => {
-      startCallCount++;
-      // This will not resolve immediately
-    };
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {
+        startCallCount++;
+        // This will not resolve immediately
+      };
 
     // Start the first call
     const firstCall = RunActions.start();
@@ -546,7 +564,11 @@ suite("Run.start action", () => {
     await secondCall;
 
     // Both should complete, but they should have been serialized
-    assert.strictEqual(startCallCount, 2, "runner.start() should be called twice");
+    assert.strictEqual(
+      startCallCount,
+      2,
+      "runner.start() should be called twice"
+    );
   });
 });
 
@@ -571,7 +593,9 @@ suite("Run.stop action", () => {
 
     // Track if abort was called
     let abortCalled = false;
-    (controller.run.main.abortController as unknown as { abort: () => void }).abort = () => {
+    (
+      controller.run.main.abortController as unknown as { abort: () => void }
+    ).abort = () => {
       abortCalled = true;
     };
 
@@ -759,7 +783,11 @@ suite("syncConsoleFromRunner", () => {
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
-    assert.strictEqual(entry.status?.status, "working", "status should be 'working'");
+    assert.strictEqual(
+      entry.status?.status,
+      "working",
+      "status should be 'working'"
+    );
   });
 
   test("defaults to 'inactive' when node has no state", () => {
@@ -790,7 +818,11 @@ suite("syncConsoleFromRunner", () => {
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
-    assert.strictEqual(entry.status?.status, "inactive", "status should default to 'inactive'");
+    assert.strictEqual(
+      entry.status?.status,
+      "inactive",
+      "status should default to 'inactive'"
+    );
   });
 
   test("returns early when no graph editor", () => {
@@ -837,7 +869,9 @@ suite("syncConsoleFromRunner", () => {
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
     // GraphStore returns failure
-    (services.graphStore as unknown as { getByDescriptor: () => unknown }).getByDescriptor = () => ({ success: false });
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: false });
 
     assert.doesNotThrow(() => {
       RunActions.syncConsoleFromRunner();
@@ -872,14 +906,21 @@ suite("syncConsoleFromRunner", () => {
       nodeById: () => undefined, // Node not found
     };
 
-    (services.graphStore as unknown as { getByDescriptor: () => unknown }).getByDescriptor = () => ({ success: true, result: {} });
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect = () => mockInspectable;
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => mockInspectable;
 
     RunActions.syncConsoleFromRunner();
 
     const entry = controller.run.main.console.get("missing-node");
     assert.ok(entry, "entry should exist");
-    assert.strictEqual(entry.title, "missing-node", "title should fallback to nodeId");
+    assert.strictEqual(
+      entry.title,
+      "missing-node",
+      "title should fallback to nodeId"
+    );
   });
 
   test("handles empty plan gracefully", () => {
@@ -900,8 +941,11 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    (services.graphStore as unknown as { getByDescriptor: () => unknown }).getByDescriptor = () => ({ success: true, result: {} });
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect = () => ({ nodeById: () => undefined });
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => ({ nodeById: () => undefined });
 
     assert.doesNotThrow(() => {
       RunActions.syncConsoleFromRunner();
@@ -929,10 +973,7 @@ suite("mapLifecycleToRunStatus", () => {
   });
 
   test("maps 'ready' to 'ready'", () => {
-    assert.strictEqual(
-      RunActions.mapLifecycleToRunStatus("ready"),
-      "ready"
-    );
+    assert.strictEqual(RunActions.mapLifecycleToRunStatus("ready"), "ready");
   });
 
   test("maps 'working' to 'working'", () => {
@@ -1029,7 +1070,11 @@ suite("runner nodeend event", () => {
 
     const entry = controller.run.main.console.get("test-node");
     assert.ok(entry, "entry should exist");
-    assert.strictEqual(entry.status?.status, "succeeded", "status should be succeeded");
+    assert.strictEqual(
+      entry.status?.status,
+      "succeeded",
+      "status should be succeeded"
+    );
     assert.strictEqual(entry.completed, true, "completed should be true");
   });
 
@@ -1061,8 +1106,16 @@ suite("runner nodeend event", () => {
 
     const entry = controller.run.main.console.get("nested-node");
     assert.ok(entry, "entry should exist");
-    assert.strictEqual(entry.status?.status, "working", "status should still be working");
-    assert.strictEqual(entry.completed, false, "completed should still be false");
+    assert.strictEqual(
+      entry.status?.status,
+      "working",
+      "status should still be working"
+    );
+    assert.strictEqual(
+      entry.completed,
+      false,
+      "completed should still be false"
+    );
   });
 
   test("does nothing if node is not in console", () => {
@@ -1144,20 +1197,27 @@ suite("syncConsoleFromRunner async describe", () => {
     const mockInspectable = {
       nodeById: () => mockNode,
     };
-    (services.graphStore as unknown as { getByDescriptor: () => unknown }).getByDescriptor = () => ({ success: true, result: {} });
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect = () => mockInspectable;
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => mockInspectable;
 
     RunActions.syncConsoleFromRunner();
 
     // Wait for async describe to complete
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     assert.strictEqual(describeCalled, true, "describe should be called async");
 
     // Verify the entry was updated with async metadata
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
-    assert.deepStrictEqual(entry.tags, ["async-tag"], "tags should be updated from async describe");
+    assert.deepStrictEqual(
+      entry.tags,
+      ["async-tag"],
+      "tags should be updated from async describe"
+    );
   });
 
   test("skips async describe when metadata already has tags", async () => {
@@ -1191,15 +1251,22 @@ suite("syncConsoleFromRunner async describe", () => {
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
     const mockInspectable = { nodeById: () => mockNode };
-    (services.graphStore as unknown as { getByDescriptor: () => unknown }).getByDescriptor = () => ({ success: true, result: {} });
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect = () => mockInspectable;
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => mockInspectable;
 
     RunActions.syncConsoleFromRunner();
 
     // Wait a bit to ensure async would have been called
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
-    assert.strictEqual(describeCalled, false, "describe should NOT be called when tags already exist");
+    assert.strictEqual(
+      describeCalled,
+      false,
+      "describe should NOT be called when tags already exist"
+    );
   });
 
   test("skips async describe when node is null", async () => {
@@ -1222,8 +1289,11 @@ suite("syncConsoleFromRunner async describe", () => {
 
     // Mock nodeById to return null
     const mockInspectable = { nodeById: () => null };
-    (services.graphStore as unknown as { getByDescriptor: () => unknown }).getByDescriptor = () => ({ success: true, result: {} });
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect = () => mockInspectable;
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => mockInspectable;
 
     // Should not throw
     assert.doesNotThrow(() => {
@@ -1235,4 +1305,3 @@ suite("syncConsoleFromRunner async describe", () => {
     assert.ok(entry, "entry should exist even without node");
   });
 });
-

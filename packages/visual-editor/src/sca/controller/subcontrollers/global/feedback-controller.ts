@@ -72,7 +72,7 @@ export class FeedbackController extends RootController {
     if (!productId) {
       console.error(
         `No GOOGLE_FEEDBACK_PRODUCT_ID was set` +
-        ` in the client deployment configuration.`
+          ` in the client deployment configuration.`
       );
       return;
     }
@@ -80,7 +80,7 @@ export class FeedbackController extends RootController {
     if (!bucket) {
       console.error(
         `No GOOGLE_FEEDBACK_BUCKET was set` +
-        ` in the client deployment configuration.`
+          ` in the client deployment configuration.`
       );
       return;
     }

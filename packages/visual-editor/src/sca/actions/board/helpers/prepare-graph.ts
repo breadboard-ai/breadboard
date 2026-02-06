@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
+import type {
+  GraphDescriptor,
+  GraphIdentifier,
+  ModuleIdentifier,
+} from "@breadboard-ai/types";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   applyDefaultThemeInformationIfNonePresent,
@@ -53,7 +57,10 @@ export function validateModuleId(
   }
 
   // Confirm the module exists
-  if (resolvedModuleId && (!graph.modules || !graph.modules[resolvedModuleId])) {
+  if (
+    resolvedModuleId &&
+    (!graph.modules || !graph.modules[resolvedModuleId])
+  ) {
     return null;
   }
 

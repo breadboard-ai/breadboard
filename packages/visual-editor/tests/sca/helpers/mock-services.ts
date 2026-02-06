@@ -19,7 +19,7 @@ import type { GoogleDriveBoardServer } from "../../../src/board-server/server.js
  */
 
 const defaultAgentContext = {
-  invalidateResumableRuns: () => { },
+  invalidateResumableRuns: () => {},
 };
 
 /**
@@ -50,15 +50,15 @@ export function createMockRunner(
       }
       listeners[event].push(handler);
     },
-    removeEventListener: () => { },
-    start: () => { },
+    removeEventListener: () => {},
+    start: () => {},
     running: () => false,
     // Plan property for graphstart pre-population
     plan:
       nodes.length > 0
         ? {
-          stages: [nodes.map((n) => ({ node: n }))],
-        }
+            stages: [nodes.map((n) => ({ node: n }))],
+          }
         : undefined,
     // Helper for tests to fire events with optional data
     _fireEvent: (event: string, data?: unknown) => {
@@ -121,8 +121,8 @@ export function makeMockBoardServer(options: {
       return { result: true };
     },
     // For event bridge support
-    addEventListener: () => { },
-    removeEventListener: () => { },
+    addEventListener: () => {},
+    removeEventListener: () => {},
     // Test helpers
     get lastSavedGraph() {
       return lastSavedGraph;

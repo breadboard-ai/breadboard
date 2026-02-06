@@ -21,7 +21,12 @@ import {
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { Tab } from "../../../../../runtime/types.js";
-import { Tool, Component, Components, GraphAsset } from "../../../../../ui/state/types.js";
+import {
+  Tool,
+  Component,
+  Components,
+  GraphAsset,
+} from "../../../../../ui/state/types.js";
 import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
 
 /**
@@ -465,8 +470,6 @@ export class GraphController extends RootController {
     }
 
     // Initialize with empty maps for each graph (will be updated when promises resolve)
-    this._components = new Map(
-      graphs.map(([graphId]) => [graphId, new Map()])
-    );
+    this._components = new Map(graphs.map(([graphId]) => [graphId, new Map()]));
   }
 }

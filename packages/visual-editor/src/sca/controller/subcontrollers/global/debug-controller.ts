@@ -10,7 +10,8 @@ import { RootController } from "../root-controller.js";
 
 export class DebugController
   extends RootController
-  implements DebugControllerInterface {
+  implements DebugControllerInterface
+{
   @field({ persist: "local" })
   accessor enabled = false;
 }

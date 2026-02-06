@@ -31,7 +31,11 @@ suite("Agent Actions", () => {
 
       await agentActions.invalidateResumableRuns();
 
-      assert.strictEqual(invalidateCalled, true, "invalidateResumableRuns should be called");
+      assert.strictEqual(
+        invalidateCalled,
+        true,
+        "invalidateResumableRuns should be called"
+      );
     });
   });
 
