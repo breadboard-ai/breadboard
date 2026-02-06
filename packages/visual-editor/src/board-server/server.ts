@@ -14,6 +14,8 @@ import {
   type DataPartTransformer,
   type GraphDescriptor,
   type GraphProviderCapabilities,
+  type ImmutableGraphCollection,
+  type MutableGraphCollection,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import {
@@ -83,8 +85,8 @@ class GoogleDriveBoardServer
     }
   >();
 
-  readonly galleryGraphs: DriveGalleryGraphCollection;
-  readonly userGraphs: DriveUserGraphCollection;
+  readonly galleryGraphs: ImmutableGraphCollection;
+  readonly userGraphs: MutableGraphCollection;
 
   constructor(
     public readonly name: string,
@@ -93,7 +95,10 @@ class GoogleDriveBoardServer
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
     findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"],
-    listUserOpals: OpalShellHostProtocol["listUserOpals"]
+    listUserOpals: OpalShellHostProtocol["listUserOpals"],
+    // Optional graph collections for testing - if not provided, creates real ones
+    galleryGraphs?: ImmutableGraphCollection,
+    userGraphs?: MutableGraphCollection
   ) {
     super();
 
@@ -116,11 +121,13 @@ class GoogleDriveBoardServer
 
     this.capabilities = configuration.capabilities;
     this.#googleDriveClient = googleDriveClient;
-    this.galleryGraphs = new DriveGalleryGraphCollection(
-      signInInfo,
-      googleDriveClient.fetchWithCreds
-    );
-    this.userGraphs = new DriveUserGraphCollection(listUserOpals);
+    this.galleryGraphs =
+      galleryGraphs ??
+      new DriveGalleryGraphCollection(
+        signInInfo,
+        googleDriveClient.fetchWithCreds
+      );
+    this.userGraphs = userGraphs ?? new DriveUserGraphCollection(listUserOpals);
   }
 
   #saving = new Map<string, SaveDebouncer>();
