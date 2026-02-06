@@ -50,7 +50,7 @@
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
-    "@google/genai": "^1.27.0",
+    "@google/genai": "^1.38.0",
     "dotenv": "^17.2.3"
   }
 }
