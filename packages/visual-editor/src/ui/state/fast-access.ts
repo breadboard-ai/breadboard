@@ -6,7 +6,6 @@
 
 import {
   AssetPath,
-  EditableGraph,
   GraphIdentifier,
 } from "@breadboard-ai/types";
 import {
@@ -22,6 +21,7 @@ import {
 import { FilteredMap } from "./utils/filtered-map.js";
 import { signal } from "signal-utils";
 import { willCreateCycle } from "@breadboard-ai/utils";
+import { SCA } from "../../sca/sca.js";
 
 export { ReactiveFastAccess };
 
@@ -29,13 +29,41 @@ class ReactiveFastAccess implements FastAccess {
   readonly agentMode: FilterableMap<Tool>;
   readonly routes: FilterableMap<Component>;
 
+  /**
+   * Derives graphAssets from SCA controller.
+   */
+  get graphAssets(): Map<AssetPath, GraphAsset> {
+    return this.sca.controller.editor.graph.graphAssets;
+  }
+
+  /**
+   * Derives tools from SCA controller.
+   */
+  get tools(): ReadonlyMap<string, Tool> {
+    return this.sca.controller.editor.graph.tools;
+  }
+
+  /**
+   * Derives myTools from SCA controller.
+   */
+  get myTools(): ReadonlyMap<string, Tool> {
+    return this.sca.controller.editor.graph.myTools;
+  }
+
+  /**
+   * Derives components from SCA controller.
+   */
+  private get allComponents(): ReadonlyMap<GraphIdentifier, Components> {
+    return this.sca.controller.editor.graph.components;
+  }
+
   @signal
   get #routes(): Map<string, Component> {
     const nodeSelection = this.stepEditor.nodeSelection;
     if (!nodeSelection) {
       return new Map();
     }
-    const inspectable = this.editable?.inspect(nodeSelection.graph);
+    const inspectable = this.sca.controller.editor.graph.editor?.inspect(nodeSelection.graph);
     if (!inspectable) {
       return new Map();
     }
@@ -65,7 +93,7 @@ class ReactiveFastAccess implements FastAccess {
     if (!nodeSelection) {
       return this.allComponents;
     }
-    const inspectable = this.editable?.inspect(nodeSelection.graph);
+    const inspectable = this.sca.controller.editor.graph.editor?.inspect(nodeSelection.graph);
     if (!inspectable) {
       return this.allComponents;
     }
@@ -86,16 +114,11 @@ class ReactiveFastAccess implements FastAccess {
   }
 
   constructor(
-    public readonly graphAssets: Map<AssetPath, GraphAsset>,
-    public readonly tools: ReadonlyMap<string, Tool>,
-    public readonly myTools: ReadonlyMap<string, Tool>,
-    unfilteredAgentMode: ReadonlyMap<string, Tool>,
-    private readonly allComponents: ReadonlyMap<GraphIdentifier, Components>,
     public readonly integrations: FilteredIntegrations,
-    private readonly editable: EditableGraph | undefined,
+    private readonly sca: SCA,
     private readonly stepEditor: Omit<StepEditor, "fastAccess">
   ) {
-    this.agentMode = new FilteredMap(() => unfilteredAgentMode);
+    this.agentMode = new FilteredMap(() => this.sca.controller.editor.graph.agentModeTools);
     this.routes = new FilteredMap(() => this.#routes);
   }
 }

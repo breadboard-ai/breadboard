@@ -21,7 +21,6 @@ import {
   NodeRunState,
   OutputValues,
   RunError,
-  EditableGraph,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -276,9 +275,11 @@ export type GraphAssetDescriptor = {
   path: AssetPath;
 };
 
-export type GraphAsset = GraphAssetDescriptor & {
-  update(title: string, data?: LLMContent[]): Promise<Outcome<void>>;
-};
+/**
+ * Graph asset data type.
+ * Note: Asset updates are handled by the Asset.updateAsset action.
+ */
+export type GraphAsset = GraphAssetDescriptor;
 
 export type GeneratedAssetIdentifier = string;
 
@@ -527,7 +528,6 @@ export type ProjectInternal = Project & {
 export type ProjectValues = {
   graphAssets: Map<AssetPath, GraphAsset>;
   integrations: Integrations;
-  editable: EditableGraph;
 };
 
 export type EdgeRunState = {

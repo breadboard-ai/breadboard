@@ -14,9 +14,7 @@ import {
   DataPart,
   GraphIdentifier,
   InputValues,
-  LLMContent,
   NodeIdentifier,
-  Outcome,
 } from "@breadboard-ai/types";
 import { GlobalConfig } from "../ui/contexts/global-config.js";
 import {
@@ -141,6 +139,7 @@ export interface PendingEdit {
 /**
  * Represents a pending edit to an asset.
  * Used by the step autosave trigger to save asset changes on selection change.
+ * Asset updates are handled by the Asset.updateAsset action.
  */
 export interface PendingAssetEdit {
   assetPath: string;
@@ -148,10 +147,4 @@ export interface PendingAssetEdit {
   dataPart: DataPart | null | undefined;
   /** Graph version when edit was captured - used to detect stale edits */
   graphVersion: number;
-  /**
-   * The asset's update function - stored so trigger can call it directly.
-   * TODO: When assets are managed by SCA , this should
-   * call an AssetController or AssetAction instead of storing the function.
-   */
-  update: (title: string, data?: LLMContent[]) => Promise<Outcome<void>>;
 }

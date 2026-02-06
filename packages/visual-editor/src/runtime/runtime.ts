@@ -64,8 +64,6 @@ export class Runtime extends EventTarget {
     }
 
     return State.createProjectState(
-      this.#sca.services.fetchWithCreds,
-      this.#sca.services.googleDriveBoardServer,
       this.#sca.services.actionTracker,
       this.#sca.services.mcpClientManager,
       editable,
