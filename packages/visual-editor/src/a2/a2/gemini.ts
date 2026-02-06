@@ -744,118 +744,140 @@ async function generateContent(
 }
 
 /**
- * Checks if an array of streamed outputs contains any meaningful content.
- * Content is considered meaningful if there's at least one non-empty part.
+ * Checks if a single chunk contains any meaningful content.
  */
-function hasStreamContent(chunks: GeminiAPIOutputs[]): boolean {
-  for (const chunk of chunks) {
-    const content = chunk.candidates?.at(0)?.content;
-    if (content?.parts && content.parts.length > 0) {
-      // Check if any part has actual content (not just empty text)
-      for (const part of content.parts) {
-        if ("text" in part && part.text?.trim()) return true;
-        if ("inlineData" in part) return true;
-        if ("functionCall" in part) return true;
-        if ("codeExecutionResult" in part) return true;
-        if ("storedData" in part) return true;
-      }
-    }
+function hasChunkContent(chunk: GeminiAPIOutputs): boolean {
+  const content = chunk.candidates?.at(0)?.content;
+  if (!content?.parts || content.parts.length === 0) return false;
+  for (const part of content.parts) {
+    if ("text" in part && part.text?.trim()) return true;
+    if ("inlineData" in part) return true;
+    if ("functionCall" in part) return true;
+    if ("codeExecutionResult" in part) return true;
+    if ("storedData" in part) return true;
   }
   return false;
 }
 
 /**
- * Performs a single streaming fetch and buffers all chunks.
- * Returns an error outcome on fetch failure, or the buffered chunks.
+ * Checks if an array of streamed outputs contains any meaningful content.
  */
-async function fetchStreamChunks(
-  model: string,
-  body: GeminiBody,
-  fetchWithCreds: A2ModuleArgs["fetchWithCreds"],
-  signal: AbortSignal | undefined
-): Promise<Outcome<GeminiAPIOutputs[]>> {
-  try {
-    const result = await fetchWithCreds(streamEndpointURL(model), {
-      method: "POST",
-      body: JSON.stringify(body),
-      signal,
-    });
-    if (!result.ok) {
-      const errObject = await result.text();
-      return err(maybeExtractError(errObject), { origin: "server", model });
-    }
-    if (!result.body) {
-      return err(`No stream returned`, { origin: "server", model });
-    }
-    const chunks: GeminiAPIOutputs[] = [];
-    for await (const chunk of iteratorFromStream<GeminiAPIOutputs>(
-      result.body
-    )) {
-      chunks.push(chunk);
-    }
-    return chunks;
-  } catch (e) {
-    return err((e as Error).message, { origin: "client", model });
-  }
+function hasStreamContent(chunks: GeminiAPIOutputs[]): boolean {
+  return chunks.some(hasChunkContent);
 }
 
 /**
  * Streams content from Gemini with automatic retry on empty responses.
  *
- * When the stream completes successfully but yields no meaningful content,
- * this function will retry up to STREAM_MAX_RETRIES times with a delay
- * of STREAM_RETRY_DELAY_MS between attempts.
+ * This implementation provides real-time streaming while preserving retry logic:
+ * 1. Fetches the stream and peeks at the first chunk
+ * 2. If the first chunk has content, yields chunks in real-time as they arrive
+ * 3. If the first chunk is empty, buffers the rest to check if retry is needed
  *
- * This protects callers from transient empty responses without requiring
- * each callsite to implement its own retry logic.
+ * This approach ensures thoughts and other streaming content appear immediately
+ * in the UI, while still protecting against transient empty responses.
  */
 async function streamGenerateContent(
   model: string,
   body: GeminiBody,
   { fetchWithCreds, context }: A2ModuleArgs
 ): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
-  let lastChunks: GeminiAPIOutputs[] = [];
-
   for (let attempt = 0; attempt < STREAM_MAX_RETRIES; attempt++) {
-    const result = await fetchStreamChunks(
-      model,
-      body,
-      fetchWithCreds,
-      context.signal
-    );
+    try {
+      const result = await fetchWithCreds(streamEndpointURL(model), {
+        method: "POST",
+        body: JSON.stringify(body),
+        signal: context.signal,
+      });
 
-    if (!ok(result)) {
-      // Fetch error - don't retry, return immediately
-      return result;
-    }
+      if (!result.ok) {
+        const errObject = await result.text();
+        return err(maybeExtractError(errObject), { origin: "server", model });
+      }
 
-    lastChunks = result;
+      if (!result.body) {
+        return err(`No stream returned`, { origin: "server", model });
+      }
 
-    // Check if we got meaningful content
-    if (hasStreamContent(lastChunks)) {
-      // Success! Return an async iterable that yields the buffered chunks
+      // Create an async iterator from the stream
+      const streamIterator = iteratorFromStream<GeminiAPIOutputs>(result.body)[
+        Symbol.asyncIterator
+      ]();
+
+      // Peek at the first chunk
+      const firstResult = await streamIterator.next();
+
+      if (firstResult.done) {
+        // Empty stream - retry
+        if (attempt < STREAM_MAX_RETRIES - 1) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, STREAM_RETRY_DELAY_MS)
+          );
+          continue;
+        }
+        // Exhausted retries, return empty iterator
+        return (async function* () {})();
+      }
+
+      const firstChunk = firstResult.value;
+
+      // If first chunk has meaningful content, stream in real-time
+      if (hasChunkContent(firstChunk)) {
+        return (async function* () {
+          yield firstChunk;
+          for await (const chunk of {
+            [Symbol.asyncIterator]: () => streamIterator,
+          }) {
+            yield chunk;
+          }
+        })();
+      }
+
+      // First chunk is empty - buffer the rest to check if we should retry
+      const bufferedChunks: GeminiAPIOutputs[] = [firstChunk];
+      for await (const chunk of {
+        [Symbol.asyncIterator]: () => streamIterator,
+      }) {
+        bufferedChunks.push(chunk);
+        // Check each chunk as it arrives - if we find content, switch to streaming
+        if (hasChunkContent(chunk)) {
+          // Found content! Return an iterator that yields buffered + remaining
+          return (async function* () {
+            for (const buffered of bufferedChunks) {
+              yield buffered;
+            }
+            for await (const remaining of {
+              [Symbol.asyncIterator]: () => streamIterator,
+            }) {
+              yield remaining;
+            }
+          })();
+        }
+      }
+
+      // All chunks were empty - check if we should retry
+      if (!hasStreamContent(bufferedChunks)) {
+        if (attempt < STREAM_MAX_RETRIES - 1) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, STREAM_RETRY_DELAY_MS)
+          );
+          continue;
+        }
+      }
+
+      // Return whatever we got (even if empty)
       return (async function* () {
-        for (const chunk of lastChunks) {
+        for (const chunk of bufferedChunks) {
           yield chunk;
         }
       })();
-    }
-
-    // Empty response - retry after delay (unless this was the last attempt)
-    if (attempt < STREAM_MAX_RETRIES - 1) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, STREAM_RETRY_DELAY_MS)
-      );
+    } catch (e) {
+      return err((e as Error).message, { origin: "client", model });
     }
   }
 
-  // Exhausted all retries - return whatever we got (even if empty)
-  // The caller will handle the empty content case
-  return (async function* () {
-    for (const chunk of lastChunks) {
-      yield chunk;
-    }
-  })();
+  // Should never reach here, but return empty iterator just in case
+  return (async function* () {})();
 }
 
 async function invoke(
