@@ -13,6 +13,7 @@ import { ArgumentNameGenerator } from "../a2/introducer.js";
 import {
   type ContentMap,
   type ExecuteStepRequest,
+  type ExecuteStepArgs,
   executeStep,
 } from "../a2/step-executor.js";
 import { Template } from "../a2/template.js";
@@ -27,6 +28,7 @@ import {
   toTextConcat,
 } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 export { callAudioGen, VOICES };
 
@@ -96,7 +98,12 @@ async function callAudioGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body);
+  const reporter = createReporter(moduleArgs, {
+    title: `Calling tts`,
+    icon: "spark",
+  });
+  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+  const response = await executeStep(caps, args, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;

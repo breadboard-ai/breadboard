@@ -14,6 +14,7 @@ import {
   executeStep,
   type ContentMap,
   type ExecuteStepRequest,
+  type ExecuteStepArgs,
 } from "../a2/step-executor.js";
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
@@ -27,6 +28,7 @@ import {
   toTextConcat,
 } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];
@@ -68,7 +70,12 @@ async function callMusicGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body);
+  const reporter = createReporter(moduleArgs, {
+    title: `Calling generate_music`,
+    icon: "spark",
+  });
+  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+  const response = await executeStep(caps, args, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;

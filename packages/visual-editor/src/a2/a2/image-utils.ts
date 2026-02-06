@@ -12,6 +12,7 @@ import { GeminiPrompt } from "./gemini-prompt.js";
 import {
   type ContentMap,
   type ExecuteStepRequest,
+  type ExecuteStepArgs,
   executeStep,
 } from "./step-executor.js";
 import {
@@ -25,6 +26,7 @@ import {
 } from "./utils.js";
 import { driveFileToBlob, toGcsAwareChunk } from "./data-transforms.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 export { callGeminiImage, callImageGen, promptExpander };
 
@@ -107,7 +109,12 @@ async function callGeminiImage(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body, {
+  const reporter = createReporter(moduleArgs, {
+    title: `Calling ${API_NAME}`,
+    icon: "spark",
+  });
+  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+  const response = await executeStep(caps, args, body, {
     expectedDurationInSec: 50,
   });
   if (!ok(response)) return response;
@@ -149,7 +156,12 @@ async function callImageGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body, {
+  const reporter = createReporter(moduleArgs, {
+    title: `Calling image_generation`,
+    icon: "spark",
+  });
+  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+  const response = await executeStep(caps, args, body, {
     expectedDurationInSec: 50,
   });
   if (!ok(response)) return response;

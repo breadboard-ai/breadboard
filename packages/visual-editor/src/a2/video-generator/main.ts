@@ -26,6 +26,7 @@ import {
   executeStep,
   type ContentMap,
   type ExecuteStepRequest,
+  type ExecuteStepArgs,
 } from "../a2/step-executor.js";
 import {
   Capabilities,
@@ -36,6 +37,7 @@ import {
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 type Model = {
   id: string;
@@ -173,7 +175,12 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body, {
+  const reporter = createReporter(moduleArgs, {
+    title: `Calling generate_video`,
+    icon: "spark",
+  });
+  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+  const response = await executeStep(caps, args, body, {
     expectedDurationInSec: 70,
   });
   if (!ok(response)) return response;
