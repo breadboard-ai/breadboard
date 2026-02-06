@@ -382,13 +382,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   #formatToSeconds(milliseconds: number) {
-    const secondsValue = milliseconds / 1_000;
-    const formatter = new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    });
-
-    return `${formatter.format(secondsValue)}s`;
+    const seconds = milliseconds / 1_000;
+    const rounded = Math.round(seconds * 2) / 2;
+    return `${rounded.toFixed(1)}s`;
   }
 
   #renderProducts(product: ProductMap) {
