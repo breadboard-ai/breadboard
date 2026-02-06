@@ -14,6 +14,7 @@ import { testKit } from "../../../test-kit.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import type { ConfigChangeContext } from "../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import { makeFreshGraph } from "../../helpers/index.js";
+import { onPendingGraphReplacement } from "../../../../src/sca/actions/graph/triggers.js";
 
 function editorChange(graphActions: typeof Graph) {
   return new Promise<GraphDescriptor>((res) => {
@@ -90,6 +91,8 @@ suite("Graph Actions", () => {
             graph: {
               editor,
               lastNodeConfigChange: null,
+              pendingGraphReplacement: null,
+              clearPendingGraphReplacement: () => {},
             },
           },
         } as AppController,
@@ -585,6 +588,55 @@ suite("Graph Actions", () => {
           assert.strictEqual(testGraph.title, "Creator Test");
         });
       });
+    });
+  });
+});
+
+suite("Graph Triggers", () => {
+  // Minimal type for the bind object - only what onPendingGraphReplacement needs
+  type TriggerBind = { controller: { editor: { graph: { pendingGraphReplacement: unknown } } }; services: unknown };
+
+  suite("onPendingGraphReplacement", () => {
+    test("returns true when pendingGraphReplacement is set", () => {
+      const mockBind: TriggerBind = {
+        controller: {
+          editor: {
+            graph: {
+              pendingGraphReplacement: {
+                replacement: { edges: [], nodes: [] },
+                creator: { role: "user" },
+              },
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onPendingGraphReplacement(mockBind as Parameters<typeof onPendingGraphReplacement>[0]);
+
+      assert.strictEqual(trigger.type, "signal");
+      assert.strictEqual(trigger.name, "Pending Graph Replacement");
+
+      const result = trigger.condition();
+      assert.strictEqual(result, true, "Should return true when replacement is pending");
+    });
+
+    test("returns false when pendingGraphReplacement is null/undefined", () => {
+      const mockBind: TriggerBind = {
+        controller: {
+          editor: {
+            graph: {
+              pendingGraphReplacement: null,
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onPendingGraphReplacement(mockBind as Parameters<typeof onPendingGraphReplacement>[0]);
+
+      const result = trigger.condition();
+      assert.strictEqual(result, false, "Should return false when replacement is null");
     });
   });
 });

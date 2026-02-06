@@ -5,11 +5,14 @@
  */
 
 import {
+  AssetPath,
   EditableGraph,
+  EditHistoryCreator,
   GraphChangeEvent,
   GraphChangeRejectEvent,
   GraphDescriptor,
   GraphIdentifier,
+  GraphTheme,
   InspectableGraph,
   NodeConfiguration,
   NodeIdentifier,
@@ -18,7 +21,7 @@ import {
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { Tab } from "../../../../../runtime/types.js";
-import { Tool, Component, Components } from "../../../../../ui/state/types.js";
+import { Tool, Component, Components, GraphAsset } from "../../../../../ui/state/types.js";
 import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
 
 /**
@@ -30,6 +33,19 @@ export interface ConfigChangeContext {
   graphId: GraphIdentifier;
   configuration: NodeConfiguration;
   titleUserModified: boolean;
+}
+
+/**
+ * Pending graph replacement request.
+ * Set by actions (e.g., flowgen), consumed by the Graph.replaceWithTheme trigger.
+ */
+export interface PendingGraphReplacement {
+  /** The replacement graph (will be mutated to apply theme) */
+  replacement: GraphDescriptor;
+  /** Optional theme to apply to the graph */
+  theme?: GraphTheme;
+  /** Edit history creator info */
+  creator: EditHistoryCreator;
 }
 
 /**
@@ -119,6 +135,13 @@ export class GraphController extends RootController {
   @field()
   accessor readOnly = false;
 
+  /**
+   * The graph URL parsed as a URL object, or null if no URL.
+   */
+  get graphUrl(): URL | null {
+    return this.url ? new URL(this.url) : null;
+  }
+
   @field()
   accessor lastEditError: string | null = null;
 
@@ -130,11 +153,44 @@ export class GraphController extends RootController {
   accessor saveStatus: "saved" | "saving" | "unsaved" | "error" = "saved";
 
   /**
+   * Graph assets (files/documents attached to the graph).
+   * Updated reactively when the graph changes.
+   */
+  @field({ deep: false })
+  private accessor _graphAssets: Map<AssetPath, GraphAsset> = new Map();
+
+  get graphAssets(): Map<AssetPath, GraphAsset> {
+    return this._graphAssets;
+  }
+
+  /**
+   * Sets the graph assets. Called by the Asset.syncFromGraph action.
+   */
+  setGraphAssets(assets: Map<AssetPath, GraphAsset>) {
+    this._graphAssets = assets;
+  }
+
+  /**
    * Tracks the most recent node configuration change.
    * Set by the changeNodeConfiguration action, consumed by the autoname trigger.
    */
   @field({ deep: true })
   accessor lastNodeConfigChange: ConfigChangeContext | null = null;
+
+  /**
+   * Pending graph replacement request.
+   * Set by actions (e.g., flowgen), consumed by the replaceWithTheme trigger.
+   * Contains all options needed to perform the replacement.
+   */
+  @field({ deep: false })
+  accessor pendingGraphReplacement: PendingGraphReplacement | null = null;
+
+  /**
+   * Clears the pending graph replacement after processing.
+   */
+  clearPendingGraphReplacement() {
+    this.pendingGraphReplacement = null;
+  }
 
   /**
    * Here for migrations.
@@ -199,10 +255,11 @@ export class GraphController extends RootController {
     this._title = this._graph?.title ?? null;
     this.lastEditError = null;
 
-    // Initialize derived tools from the new graph
+    // Initialize derived data from the new graph
     this.#updateMyTools();
     this.#updateAgentModeTools();
     this.#updateComponents();
+    // Note: graphAssets sync is handled by Asset.syncFromGraph action
 
     if (!this._editor) return;
     this._editor.addEventListener("graphchange", this.#onGraphChangeBound);
@@ -225,6 +282,7 @@ export class GraphController extends RootController {
     this.#updateMyTools();
     this.#updateAgentModeTools();
     this.#updateComponents();
+    // Note: graphAssets sync is handled by Asset.syncFromGraph action
   }
 
   #onGraphChangeRejectBound = this.#onGraphChangeReject.bind(this);

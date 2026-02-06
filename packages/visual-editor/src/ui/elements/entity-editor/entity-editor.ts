@@ -905,14 +905,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     if (assetPath !== null) {
       // When "asset-path" is submitted, we know that this is a an asset.
 
-      // 1) Get the right asset
-      const asset = this.projectState?.graphAssets.get(assetPath);
-      if (!asset) {
-        console.warn(`Unable to commit edits to asset "${assetPath}`);
-        return;
-      }
-
-      // 2) get title
+      // 1) get title
       const title = form.querySelector<HTMLInputElement>("#node-title")?.value;
       if (!title) {
         console.warn(
@@ -921,16 +914,16 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         return;
       }
 
-      // 3) update asset
+      // 2) update asset using Asset action
       const dataPart =
         form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
 
-      let data: LLMContent[] | undefined = undefined;
+      let assetData: LLMContent[] | undefined = undefined;
       if (dataPart) {
-        data = [{ role: "user", parts: [dataPart] }];
+        assetData = [{ role: "user", parts: [dataPart] }];
       }
 
-      const updating = await asset.update(title, data);
+      const updating = await this.sca.actions.asset.update(assetPath, title, assetData);
       if (!ok(updating)) {
         this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
       }
@@ -1749,7 +1742,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         title,
         dataPart,
         graphVersion: this.sca.controller.editor.graph.version,
-        update: asset.update.bind(asset),
       });
     }
   }

@@ -516,15 +516,19 @@ export const load = asAction(
 /**
  * Closes the current board and returns to the home state.
  */
-export function close(): void {
-  const { controller } = bind;
+export const close = asAction(
+  "Board.close",
+  { mode: ActionMode.Immediate },
+  async (): Promise<void> => {
+    const { controller } = bind;
 
-  // Reset the graph controller state
-  controller.editor.graph.resetAll();
+    // Reset the graph controller state
+    controller.editor.graph.resetAll();
 
-  // Return to home state
-  controller.global.main.loadState = "Home";
-}
+    // Return to home state
+    controller.global.main.loadState = "Home";
+  }
+);
 
 // =============================================================================
 // Triggered Actions

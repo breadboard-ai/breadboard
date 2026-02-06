@@ -21,6 +21,8 @@ import {
 } from "@breadboard-ai/types";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { makeAction } from "../binder.js";
+import { asAction, ActionMode } from "../../coordination.js";
+import { onPendingGraphReplacement } from "./triggers.js";
 import {
   ChangeAssetEdge,
   ChangeEdge,
@@ -30,7 +32,7 @@ import {
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 import type { SelectionPositionUpdate } from "../../../ui/events/node/node.js";
 import type { AssetEdge, EdgeAttachmentPoint } from "../../../ui/types/types.js";
-import { GraphUtils } from "../../../utils/graph-utils.js";
+
 export const bind = makeAction();
 
 /**
@@ -43,9 +45,11 @@ export const bind = makeAction();
  * stable reference on which we can listen to legacy events. However, the aim is
  * to remove events in favor of Signals, which, when complete, will mean that
  * edits can get a fresh editor from the graphStore service here.
- *
- *
  */
+
+// =============================================================================
+// Internal Helpers
+// =============================================================================
 
 /**
  * Runs a generic edit.
@@ -88,182 +92,232 @@ async function applyInternal(transform: EditTransform) {
   throw new Error(result.error);
 }
 
-export async function undo() {
-  const { controller } = bind;
-  const history = controller.editor.graph.editor?.history();
-  if (!history || !history.canUndo()) return;
-  return history.undo();
-}
+// =============================================================================
+// Actions
+// =============================================================================
 
-export async function redo() {
-  const { controller } = bind;
-  const history = controller.editor.graph.editor?.history();
-  if (!history || !history.canRedo()) return;
-  return history.redo();
-}
+/**
+ * Undoes the last edit operation.
+ */
+export const undo = asAction(
+  "Graph.undo",
+  { mode: ActionMode.Immediate },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const history = controller.editor.graph.editor?.history();
+    if (!history || !history.canUndo()) return;
+    await history.undo();
+  }
+);
 
-export async function updateBoardTitleAndDescription(
-  title: string | null,
-  description: string | null
-) {
-  return editInternal(
-    [
-      {
-        type: "changegraphmetadata",
-        title: title ?? undefined,
-        description: description ?? undefined,
-        graphId: "",
-      },
-    ],
-    "Updating title and description"
-  );
-}
+/**
+ * Redoes the last undone edit operation.
+ */
+export const redo = asAction(
+  "Graph.redo",
+  { mode: ActionMode.Immediate },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const history = controller.editor.graph.editor?.history();
+    if (!history || !history.canRedo()) return;
+    await history.redo();
+  }
+);
 
-export async function changeEdge(
-  changeType: "add" | "remove" | "move",
-  from: Edge,
-  to?: Edge,
-  subGraphId: string | null = null
-) {
-  const graphId = subGraphId ?? "";
-  const transform = new ChangeEdge(changeType, graphId, from, to);
-  return applyInternal(transform);
-}
+/**
+ * Updates the board's title and description.
+ */
+export const updateBoardTitleAndDescription = asAction(
+  "Graph.updateBoardTitleAndDescription",
+  { mode: ActionMode.Immediate },
+  async (title: string | null, description: string | null): Promise<void> => {
+    await editInternal(
+      [
+        {
+          type: "changegraphmetadata",
+          title: title ?? undefined,
+          description: description ?? undefined,
+          graphId: "",
+        },
+      ],
+      "Updating title and description"
+    );
+  }
+);
+
+/**
+ * Changes an edge (add, remove, or move).
+ */
+export const changeEdge = asAction(
+  "Graph.changeEdge",
+  { mode: ActionMode.Immediate },
+  async (
+    changeType: "add" | "remove" | "move",
+    from: Edge,
+    to?: Edge,
+    subGraphId: string | null = null
+  ): Promise<void> => {
+    const graphId = subGraphId ?? "";
+    const transform = new ChangeEdge(changeType, graphId, from, to);
+    await applyInternal(transform);
+  }
+);
 
 /**
  * Changes a node's configuration and sets the lastNodeConfigChange signal
  * to trigger autonaming as a side effect.
  */
-export async function changeNodeConfiguration(
-  id: NodeIdentifier,
-  graphId: GraphIdentifier,
-  configurationPart: NodeConfiguration,
-  metadata: NodeMetadata | null = null,
-  portsToAutowire: InPort[] | null = null
-) {
-  const updateNodeTransform = new UpdateNode(
-    id,
-    graphId,
-    configurationPart,
-    metadata,
-    portsToAutowire
-  );
+export const changeNodeConfiguration = asAction(
+  "Graph.changeNodeConfiguration",
+  { mode: ActionMode.Immediate },
+  async (
+    id: NodeIdentifier,
+    graphId: GraphIdentifier,
+    configurationPart: NodeConfiguration,
+    metadata: NodeMetadata | null = null,
+    portsToAutowire: InPort[] | null = null
+  ): Promise<void> => {
+    const updateNodeTransform = new UpdateNode(
+      id,
+      graphId,
+      configurationPart,
+      metadata,
+      portsToAutowire
+    );
 
-  await applyInternal(updateNodeTransform);
+    await applyInternal(updateNodeTransform);
 
-  const { controller } = bind;
+    const { controller } = bind;
 
-  // Set the signal so the autoname trigger can react.
-  controller.editor.graph.lastNodeConfigChange = {
-    nodeId: id,
-    graphId,
-    configuration: configurationPart,
-    titleUserModified: updateNodeTransform.titleUserModified,
-  };
-}
+    // Set the signal so the autoname trigger can react.
+    controller.editor.graph.lastNodeConfigChange = {
+      nodeId: id,
+      graphId,
+      configuration: configurationPart,
+      titleUserModified: updateNodeTransform.titleUserModified,
+    };
+  }
+);
 
 /**
  * Adds a single node to the graph.
  */
-export function addNode(node: NodeDescriptor, graphId: GraphIdentifier) {
-  return editInternal(
-    [{ type: "addnode", graphId, node }],
-    `Add step: ${node.metadata?.title ?? node.id}`
-  );
-}
+export const addNode = asAction(
+  "Graph.addNode",
+  { mode: ActionMode.Immediate },
+  async (node: NodeDescriptor, graphId: GraphIdentifier): Promise<void> => {
+    await editInternal(
+      [{ type: "addnode", graphId, node }],
+      `Add step: ${node.metadata?.title ?? node.id}`
+    );
+  }
+);
 
 /**
  * Updates the positions of selected nodes and assets.
  */
-export function moveSelectionPositions(updates: SelectionPositionUpdate[]) {
-  const { controller } = bind;
-  const { editor } = controller.editor.graph;
-  if (!editor) {
-    throw new Error("No active graph to edit");
-  }
-
-  const edits: EditSpec[] = [];
-
-  for (const update of updates) {
-    if (update.type === "node") {
-      // Fetch existing metadata from editor, merge visual coordinates
-      const inspector = editor.inspect(update.graphId);
-      const node = inspector.nodeById(update.id);
-      const existingMetadata = node?.metadata() ?? {};
-      const existingVisual = (existingMetadata.visual ?? {}) as Record<
-        string,
-        unknown
-      >;
-      const metadata: NodeMetadata = {
-        ...existingMetadata,
-        visual: { ...existingVisual, x: update.x, y: update.y },
-      };
-      edits.push({
-        type: "changemetadata",
-        id: update.id,
-        graphId: update.graphId,
-        metadata,
-      });
-    } else {
-      // Asset position update
-      const graph = editor.raw();
-      const asset = graph.assets?.[update.id];
-      if (!asset?.metadata) {
-        continue;
-      }
-      const metadata: AssetMetadata = {
-        ...asset.metadata,
-        visual: { x: update.x, y: update.y },
-      };
-      edits.push({
-        type: "changeassetmetadata",
-        path: update.id,
-        metadata,
-      });
+export const moveSelectionPositions = asAction(
+  "Graph.moveSelectionPositions",
+  { mode: ActionMode.Immediate },
+  async (updates: SelectionPositionUpdate[]): Promise<void> => {
+    const { controller } = bind;
+    const { editor } = controller.editor.graph;
+    if (!editor) {
+      throw new Error("No active graph to edit");
     }
-  }
 
-  return editInternal(edits, "Update selection position");
-}
+    const edits: EditSpec[] = [];
+
+    for (const update of updates) {
+      if (update.type === "node") {
+        // Fetch existing metadata from editor, merge visual coordinates
+        const inspector = editor.inspect(update.graphId);
+        const node = inspector.nodeById(update.id);
+        const existingMetadata = node?.metadata() ?? {};
+        const existingVisual = (existingMetadata.visual ?? {}) as Record<
+          string,
+          unknown
+        >;
+        const metadata: NodeMetadata = {
+          ...existingMetadata,
+          visual: { ...existingVisual, x: update.x, y: update.y },
+        };
+        edits.push({
+          type: "changemetadata",
+          id: update.id,
+          graphId: update.graphId,
+          metadata,
+        });
+      } else {
+        // Asset position update
+        const graph = editor.raw();
+        const asset = graph.assets?.[update.id];
+        if (!asset?.metadata) {
+          continue;
+        }
+        const metadata: AssetMetadata = {
+          ...asset.metadata,
+          visual: { x: update.x, y: update.y },
+        };
+        edits.push({
+          type: "changeassetmetadata",
+          path: update.id,
+          metadata,
+        });
+      }
+    }
+
+    await editInternal(edits, "Update selection position");
+  }
+);
 
 /**
  * Changes an asset edge (add or remove).
  */
-export function changeAssetEdge(
-  changeType: "add" | "remove",
-  edge: AssetEdge,
-  subGraphId: string | null = null
-) {
-  const graphId = subGraphId ?? "";
-  const transform = new ChangeAssetEdge(changeType, graphId, edge);
-  return applyInternal(transform);
-}
+export const changeAssetEdge = asAction(
+  "Graph.changeAssetEdge",
+  { mode: ActionMode.Immediate },
+  async (
+    changeType: "add" | "remove",
+    edge: AssetEdge,
+    subGraphId: string | null = null
+  ): Promise<void> => {
+    const graphId = subGraphId ?? "";
+    const transform = new ChangeAssetEdge(changeType, graphId, edge);
+    await applyInternal(transform);
+  }
+);
 
 /**
  * Changes an edge attachment point.
  */
-export function changeEdgeAttachmentPoint(
-  graphId: GraphIdentifier,
-  edge: Edge,
-  which: "from" | "to",
-  attachmentPoint: EdgeAttachmentPoint
-) {
-  const transform = new ChangeEdgeAttachmentPoint(graphId, edge, which, attachmentPoint);
-  return applyInternal(transform);
-}
+export const changeEdgeAttachmentPoint = asAction(
+  "Graph.changeEdgeAttachmentPoint",
+  { mode: ActionMode.Immediate },
+  async (
+    graphId: GraphIdentifier,
+    edge: Edge,
+    which: "from" | "to",
+    attachmentPoint: EdgeAttachmentPoint
+  ): Promise<void> => {
+    const transform = new ChangeEdgeAttachmentPoint(graphId, edge, which, attachmentPoint);
+    await applyInternal(transform);
+  }
+);
 
 /**
  * Replaces the entire graph with a new graph descriptor.
  */
-export function replace(
-  replacement: GraphDescriptor,
-  creator: EditHistoryCreator
-) {
-  return editInternal(
-    [{ type: "replacegraph", replacement, creator }],
-    "Replace graph"
-  );
-}
+export const replace = asAction(
+  "Graph.replace",
+  { mode: ActionMode.Immediate },
+  async (replacement: GraphDescriptor, creator: EditHistoryCreator): Promise<void> => {
+    await editInternal(
+      [{ type: "replacegraph", replacement, creator }],
+      "Replace graph"
+    );
+  }
+);
 
 export interface ReplaceWithThemeOptions {
   /** The replacement graph (will be mutated to apply theme) */
@@ -283,55 +337,74 @@ export interface ReplaceWithThemeOptions {
  * 1. Applying a generated theme if provided
  * 2. Falling back to default theme application if no theme (requires googleDriveClient)
  * 3. Preserving splash screen from current graph's theme if replacement lacks one
+ *
+ * **Triggered** by setting `controller.editor.graph.pendingGraphReplacement`.
+ * Can also be called directly with options for non-triggered usage.
  */
-export async function replaceWithTheme(options: ReplaceWithThemeOptions) {
-  const { replacement, theme, creator, googleDriveClient } = options;
-  const { controller } = bind;
+export const replaceWithTheme = asAction(
+  "Graph.replaceWithTheme",
+  {
+    mode: ActionMode.Awaits,
+    triggeredBy: () => onPendingGraphReplacement(bind),
+  },
+  async (options?: ReplaceWithThemeOptions): Promise<void> => {
+    const { controller } = bind;
 
-  // 1. Apply theme or defaults
-  if (theme) {
-    const metadata: GraphMetadata = (replacement.metadata ??= {});
-    metadata.visual ??= {};
-    metadata.visual.presentation ??= {};
-    metadata.visual.presentation.themes ??= {};
+    // When triggered (no options), read from controller state
+    const pendingReplacement = controller.editor.graph.pendingGraphReplacement;
+    const effectiveOptions = options ?? pendingReplacement;
 
-    const id = globalThis.crypto.randomUUID();
-    metadata.visual.presentation.themes[id] = theme;
-    metadata.visual.presentation.theme = id;
-  } else if (googleDriveClient) {
-    // Apply defaults only when no theme is provided
-    GraphUtils.applyDefaultThemeInformationIfNonePresent(replacement);
-    await GraphUtils.createAppPaletteIfNeeded(replacement, googleDriveClient);
-  }
+    // Clear pending BEFORE applying (so if apply fails we don't re-trigger)
+    controller.editor.graph.clearPendingGraphReplacement();
 
-  // 2. Preserve splash screen from current theme if replacement doesn't have one
-  // TODO: Remove this when the Planner persists the existing theme.
-  const currentGraph = controller.editor.graph.editor?.raw();
-  if (currentGraph) {
-    const currentPresentation = currentGraph.metadata?.visual?.presentation;
-    const currentTheme = currentPresentation?.theme;
-    const currentThemes = currentPresentation?.themes;
-    const currentThemeHasSplashScreen =
-      currentTheme &&
-      currentThemes &&
-      currentThemes[currentTheme] &&
-      currentThemes[currentTheme].splashScreen;
-
-    const replacementPresentation = replacement.metadata?.visual?.presentation;
-    const replacementTheme = replacementPresentation?.theme;
-    const replacementThemes = replacementPresentation?.themes;
-    const replacementThemeHasSplashScreen =
-      replacementTheme &&
-      replacementThemes &&
-      replacementThemes[replacementTheme] &&
-      replacementThemes[replacementTheme].splashScreen;
-
-    if (currentThemeHasSplashScreen && !replacementThemeHasSplashScreen) {
-      console.log("[graph replacement] Persisting existing theme");
-      replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
+    // Guard: no options from either source
+    if (!effectiveOptions) {
+      return;
     }
-  }
 
-  // 3. Replace the graph
-  return replace(replacement, creator);
-}
+    const { replacement, theme, creator } = effectiveOptions;
+
+    // 1. Apply theme if provided
+    if (theme) {
+      const metadata: GraphMetadata = (replacement.metadata ??= {});
+      metadata.visual ??= {};
+      metadata.visual.presentation ??= {};
+      metadata.visual.presentation.themes ??= {};
+
+      const id = globalThis.crypto.randomUUID();
+      metadata.visual.presentation.themes[id] = theme;
+      metadata.visual.presentation.theme = id;
+    }
+
+    // 2. Preserve splash screen from current theme if replacement doesn't have one
+    // TODO: Remove this when the Planner persists the existing theme.
+    const currentGraph = controller.editor.graph.editor?.raw();
+    if (currentGraph) {
+      const currentPresentation = currentGraph.metadata?.visual?.presentation;
+      const currentTheme = currentPresentation?.theme;
+      const currentThemes = currentPresentation?.themes;
+      const currentThemeHasSplashScreen =
+        currentTheme &&
+        currentThemes &&
+        currentThemes[currentTheme] &&
+        currentThemes[currentTheme].splashScreen;
+
+      const replacementPresentation = replacement.metadata?.visual?.presentation;
+      const replacementTheme = replacementPresentation?.theme;
+      const replacementThemes = replacementPresentation?.themes;
+      const replacementThemeHasSplashScreen =
+        replacementTheme &&
+        replacementThemes &&
+        replacementThemes[replacementTheme] &&
+        replacementThemes[replacementTheme].splashScreen;
+
+      if (currentThemeHasSplashScreen && !replacementThemeHasSplashScreen) {
+        console.log("[graph replacement] Persisting existing theme");
+        replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
+      }
+    }
+
+    // 3. Replace the graph
+    await replace(replacement, creator);
+  }
+);

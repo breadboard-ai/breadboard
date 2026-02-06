@@ -456,8 +456,8 @@ suite("Node Actions", () => {
     });
   });
 
-  suite("autonameFromTrigger", () => {
-    test("returns early when lastNodeConfigChange is null", async () => {
+  suite("autoname (triggered path)", () => {
+    test("returns early when lastNodeConfigChange is null and no config provided", async () => {
       let autonameCalled = false;
 
       const services = {
@@ -474,12 +474,13 @@ suite("Node Actions", () => {
       controller.editor.graph.readOnly = false;
       controller.editor.graph.lastNodeConfigChange = null;
 
-      await NodeActions.autonameFromTrigger();
+      // Call without arguments - simulates triggered path
+      await NodeActions.autoname();
 
       assert.strictEqual(autonameCalled, false, "autoname should not be called when no config change");
     });
 
-    test("calls autoname with data from lastNodeConfigChange", async () => {
+    test("calls autoname service with data from lastNodeConfigChange", async () => {
       let autonameCalled = false;
       let capturedArgs: unknown = null;
 
@@ -505,7 +506,8 @@ suite("Node Actions", () => {
         titleUserModified: false,
       };
 
-      await NodeActions.autonameFromTrigger();
+      // Call without arguments - simulates triggered path
+      await NodeActions.autoname();
 
       assert.strictEqual(autonameCalled, true, "autoname should be called");
       assert.ok(Array.isArray(capturedArgs), "args should be LLMContent array");
@@ -541,7 +543,8 @@ suite("Node Actions", () => {
         titleUserModified: true,
       };
 
-      await NodeActions.autonameFromTrigger();
+      // Call without arguments - simulates triggered path
+      await NodeActions.autoname();
 
       // Should skip because outputTemplates is false AND titleUserModified is true
       assert.strictEqual(autonameCalled, false, "autoname should not be called when user modified title");
