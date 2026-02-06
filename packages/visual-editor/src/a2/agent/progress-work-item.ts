@@ -3,8 +3,6 @@ import {
   ConsoleEntry,
   ConsoleLink,
   ConsoleUpdate,
-  DataPart,
-  FunctionCallCapabilityPart,
   JsonSerializable,
   LLMContent,
   NodeMetadata,
@@ -14,11 +12,7 @@ import {
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { now } from "./now.js";
-import { GeminiBody } from "../a2/gemini.js";
-import { AgentProgressManager } from "./types.js";
-import { llm, progressFromThought, ErrorMetadata } from "../a2/utils.js";
-import { StatusUpdateCallbackOptions } from "./function-definition.js";
-import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
+import type { ErrorMetadata } from "../a2/utils.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
@@ -30,7 +24,7 @@ export type Link = {
   iconUri: string;
 };
 
-class ProgressWorkItem implements WorkItem, AgentProgressManager {
+class ProgressWorkItem implements WorkItem {
   @signal
   accessor end: number | null = null;
 
@@ -56,7 +50,6 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   readonly product: Map<string, ConsoleUpdate> = new SignalMap();
 
   #updateCounter = 0;
-  #previousStatus: string | undefined;
 
   constructor(
     public readonly title: string,
@@ -133,105 +126,6 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     };
     // Cast to unknown first since product map type doesn't include SimplifiedA2UIClient directly
     (this.product as Map<string, unknown>).set(key, client);
-  }
-
-  #addParts(title: string, icon: string, parts: DataPart[]) {
-    this.#add(title, icon, { parts });
-  }
-
-  /**
-   * The agent started execution.
-   */
-  startAgent(objective: LLMContent) {
-    if (this.screen) {
-      this.screen.progress = StarterPhraseVendor.instance.phrase();
-      this.screen.expectedDuration = -1;
-    }
-    this.#add("Objective", "summarize", objective);
-  }
-
-  generatingLayouts(uiPrompt: LLMContent | undefined) {
-    if (this.screen) {
-      this.screen.progress = "Generating layouts";
-      this.screen.expectedDuration = 70;
-    }
-    this.#add("Generating Layouts", "web", uiPrompt ?? llm``.asContent());
-  }
-
-  /**
-   * The agent sent initial request.
-   */
-  sendRequest(model: string, body: GeminiBody) {
-    this.#addParts("Send request", "upload", [
-      { text: `Calling model: ${model}` },
-      { json: body as JsonSerializable },
-    ]);
-  }
-
-  /**
-   * The agent produced a thought.
-   */
-  thought(text: string) {
-    this.#add("Thought", "spark", llm`${text}`.asContent());
-    if (this.screen) {
-      this.#previousStatus = this.screen.progress;
-      this.screen.progress = progressFromThought(text);
-      this.screen.expectedDuration = -1;
-    }
-  }
-
-  /**
-   * The agent produced a function call.
-   * Returns a unique ID (not used for matching in this implementation).
-   */
-  functionCall(part: FunctionCallCapabilityPart): string {
-    this.#addParts(
-      `Calling function "${part.functionCall.name}"`,
-      "robot_server",
-      [part]
-    );
-    return crypto.randomUUID();
-  }
-
-  /**
-   * The agent function call produced an update
-   */
-  functionCallUpdate(
-    _part: FunctionCallCapabilityPart,
-    status: string | null,
-    options?: StatusUpdateCallbackOptions
-  ) {
-    if (options?.isThought) {
-      if (!status) return;
-      this.thought(status);
-    } else {
-      if (!this.screen) return;
-
-      if (status == null) {
-        if (this.#previousStatus) {
-          this.screen.progress = this.#previousStatus;
-        }
-        this.screen.expectedDuration = -1;
-      } else {
-        // Remove the occasional ellipsis from the status
-        status = status.replace(/\.+$/, "");
-        if (options?.expectedDurationInSec) {
-          this.screen.expectedDuration = options.expectedDurationInSec;
-        } else {
-          this.screen.expectedDuration = -1;
-        }
-
-        this.#previousStatus = this.screen.progress;
-        this.screen.progress = status;
-      }
-    }
-  }
-
-  /**
-   * The agent produced a function result.
-   */
-  functionResult(_callId: string, content: LLMContent) {
-    this.#add("Function response", "robot_server", content);
   }
 
   /**
