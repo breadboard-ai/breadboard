@@ -923,7 +923,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         assetData = [{ role: "user", parts: [dataPart] }];
       }
 
-      const updating = await this.sca.actions.asset.update(assetPath, title, assetData);
+      const updating = await this.sca.actions.asset.update(
+        assetPath,
+        title,
+        assetData
+      );
       if (!ok(updating)) {
         this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
       }
@@ -1835,7 +1839,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           }}
           .graphId=${null}
           .nodeId=${null}
-          .state=${this.projectState?.stepEditor.fastAccess}
+          .state=${this.projectState?.fastAccess}
         ></bb-fast-access-menu>
         <div ${ref(this.#proxyRef)} id="proxy"></div>`,
     ];

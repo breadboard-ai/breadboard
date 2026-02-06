@@ -125,8 +125,9 @@ suite("initialize-editor helpers", () => {
     assert.ok(result.mainGraphId);
 
     // Verify controller state was set
+    // Note: version is input (5) + 1 for the trigger bump = 6
     assert.strictEqual(graphController.url, "https://example.com/board.json");
-    assert.strictEqual(graphController.version, 5);
+    assert.strictEqual(graphController.version, 6);
     assert.strictEqual(graphController.readOnly, false);
     assert.strictEqual(graphController.graphIsMine, true); // !readOnly
     assert.strictEqual(graphController.lastLoadedVersion, 3);

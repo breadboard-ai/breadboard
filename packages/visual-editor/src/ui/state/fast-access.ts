@@ -12,7 +12,6 @@ import {
   FilterableMap,
   FilteredIntegrations,
   GraphAsset,
-  StepEditor,
   Tool,
 } from "./types.js";
 import { FilteredMap } from "./utils/filtered-map.js";
@@ -49,17 +48,15 @@ class ReactiveFastAccess implements FastAccess {
 
   @signal
   get #routes(): Map<string, Component> {
-    const nodeSelection = this.stepEditor.nodeSelection;
-    if (!nodeSelection) {
+    const selectedNodeId = this.sca.controller.editor.graph.selectedNodeId;
+    if (!selectedNodeId) {
       return new Map();
     }
-    const inspectable = this.sca.controller.editor.graph.editor?.inspect(
-      nodeSelection.graph
-    );
+    const inspectable = this.sca.controller.editor.graph.editor?.inspect("");
     if (!inspectable) {
       return new Map();
     }
-    const node = inspectable.nodeById(nodeSelection.node);
+    const node = inspectable.nodeById(selectedNodeId);
     if (!node) {
       return new Map();
     }
@@ -82,17 +79,16 @@ class ReactiveFastAccess implements FastAccess {
   @signal
   get components(): ReadonlyMap<GraphIdentifier, Components> {
     const allComponents = this.sca.controller.editor.graph.components;
-    const nodeSelection = this.stepEditor.nodeSelection;
-    if (!nodeSelection) {
+    const selectedNodeId = this.sca.controller.editor.graph.selectedNodeId;
+
+    if (!selectedNodeId) {
       return allComponents;
     }
-    const inspectable = this.sca.controller.editor.graph.editor?.inspect(
-      nodeSelection.graph
-    );
+    const inspectable = this.sca.controller.editor.graph.editor?.inspect("");
     if (!inspectable) {
       return allComponents;
     }
-    const components = allComponents.get(nodeSelection.graph);
+    const components = allComponents.get("");
     if (!components) {
       return new Map();
     }
@@ -100,18 +96,17 @@ class ReactiveFastAccess implements FastAccess {
     const graph = inspectable.raw();
 
     const validComponents = [...components].filter(
-      ([id]) => !willCreateCycle({ to: nodeSelection.node, from: id }, graph)
+      ([id]) => !willCreateCycle({ to: selectedNodeId, from: id }, graph)
     );
 
     return new Map<GraphIdentifier, Components>([
-      [nodeSelection.graph, new Map(validComponents)],
+      ["", new Map(validComponents)],
     ]);
   }
 
   constructor(
     public readonly integrations: FilteredIntegrations,
-    private readonly sca: SCA,
-    private readonly stepEditor: Omit<StepEditor, "fastAccess">
+    private readonly sca: SCA
   ) {
     this.agentMode = new FilteredMap(
       () => this.sca.controller.editor.graph.agentModeTools
