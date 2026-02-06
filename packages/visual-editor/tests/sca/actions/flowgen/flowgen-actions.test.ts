@@ -155,4 +155,35 @@ suite("Flowgen Actions", () => {
       suggestedIntent: undefined,
     });
   });
+
+  test("generate catch block handles unexpected synchronous errors", async () => {
+    // We want to force a throw in the try block *outside* of flowGenWithTheme
+    // since flowGenWithTheme catches its own promise rejections
+    const testError = new Error("Simulated runtime error");
+    const { mocks } = setupFlowgenTest({
+      oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
+    });
+
+    // Make clear() throw an error to hit the outer catch block
+    mocks.flowgenInput.clear = () => {
+      throw testError;
+    };
+
+    const result = await FlowgenActions.generate(
+      "test intent",
+      makeTestProjectState()
+    );
+
+    assert.strictEqual(result.success, false);
+    assert.strictEqual(
+      (result as { success: false; error: unknown }).error,
+      testError
+    );
+
+    // Check that error state was set from the catch block
+    assert.deepStrictEqual(mocks.flowgenInput.state, {
+      status: "error",
+      error: testError,
+    });
+  });
 });

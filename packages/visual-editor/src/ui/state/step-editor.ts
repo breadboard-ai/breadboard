@@ -12,7 +12,7 @@ import { signal } from "signal-utils";
 import { WorkspaceSelectionState } from "../types/types.js";
 import {
   FastAccess,
-  ProjectValues,
+  Integrations,
   StepEditor,
 } from "./types.js";
 import { ReactiveFastAccess } from "./fast-access.js";
@@ -33,22 +33,11 @@ class StepEditorImpl implements StepEditor {
 
   #sca: SCA;
 
-  constructor(projectValues: ProjectValues, sca: SCA) {
+  constructor(integrations: Integrations, sca: SCA) {
     this.#sca = sca;
-    const { graphAssets, integrations, editable } = projectValues;
-    const graphController = sca.controller.editor.graph;
-    const tools = graphController.tools;
-    const myTools = graphController.myTools;
-    const agentModeTools = graphController.agentModeTools;
-    const components = graphController.components;
     this.fastAccess = new ReactiveFastAccess(
-      graphAssets,
-      tools,
-      myTools,
-      agentModeTools,
-      components,
       new FilteredIntegrationsImpl(integrations.registered),
-      editable,
+      sca,
       this
     );
   }
@@ -75,13 +64,13 @@ class StepEditorImpl implements StepEditor {
   }
 
   /**
-   * Applies any pending edits via the SCA step autosave action.
+   * Applies any pending edits via the SCA step autosave actions.
    * This is used when we need to ensure pending edits are applied
    * before running an action (e.g., running a node), since the
-   * SCA trigger only fires on selection/sidebar changes.
+   * SCA triggers only fire on selection/sidebar changes.
    */
   async applyPendingEdits(): Promise<void> {
-    await this.#sca.actions.step.applyPendingEdits();
+    await this.#sca.actions.step.applyPendingNodeEdit();
+    await this.#sca.actions.step.applyPendingAssetEdit();
   }
 }
-

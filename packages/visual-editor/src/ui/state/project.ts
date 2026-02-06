@@ -21,9 +21,7 @@ import {
   PortIdentifier,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
-import { SignalMap } from "signal-utils/map";
 
-import { GraphAssetImpl } from "./graph-asset.js";
 import { ReactiveOrganizer } from "./organizer.js";
 import { ReactiveProjectRun } from "./project-run.js";
 import { RendererStateImpl } from "./renderer.js";
@@ -40,32 +38,23 @@ import {
   StepEditor,
 } from "./types.js";
 import { IntegrationsImpl } from "./integrations.js";
-import { updateMap } from "./utils/update-map.js";
 import { McpClientManager } from "../../mcp/index.js";
 import { StepEditorImpl } from "./step-editor.js";
 import { ThemeState } from "./theme-state.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { transformDataParts } from "../../data/common.js";
-import { GoogleDriveBoardServer } from "../../board-server/server.js";
-import { ActionTracker } from "../types/types.js";
-import { Signal } from "signal-polyfill";
 import { SCA } from "../../sca/sca.js";
+import { ActionTracker } from "../types/types.js";
+import { transformDataParts } from "../../data/common.js";
 
 export { createProjectState, ReactiveProject };
 
-const THUMBNAIL_KEY = "@@thumbnail";
-
 function createProjectState(
-  fetchWithCreds: typeof globalThis.fetch,
-  boardServer: GoogleDriveBoardServer,
   actionTracker: ActionTracker,
   mcpClientManager: McpClientManager,
   editable: EditableGraph,
   sca: SCA
 ): Project {
   return new ReactiveProject(
-    fetchWithCreds,
-    boardServer,
     mcpClientManager,
     actionTracker,
     editable,
@@ -74,23 +63,25 @@ function createProjectState(
 }
 
 class ReactiveProject implements ProjectInternal, ProjectValues {
-  readonly #fetchWithCreds: typeof globalThis.fetch;
-  readonly #boardServer: GoogleDriveBoardServer;
 
-  #graphChanged = new Signal.State({});
   readonly #editable: EditableGraph;
-
-  @signal
-  get editable(): EditableGraph {
-    this.#graphChanged.get();
-    return this.#editable;
-  }
 
   @signal
   accessor run: ProjectRun;
 
-  readonly graphUrl: URL | null;
-  readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
+  /**
+   * Delegates to GraphController.graphUrl
+   */
+  get graphUrl(): URL | null {
+    return this.__sca.controller.editor.graph.graphUrl;
+  }
+
+  /**
+   * Delegates to GraphController.graphAssets
+   */
+  get graphAssets(): Map<AssetPath, GraphAsset> {
+    return this.__sca.controller.editor.graph.graphAssets;
+  }
 
   readonly organizer: Organizer;
 
@@ -100,35 +91,20 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly themes: ProjectThemeState;
 
   constructor(
-    fetchWithCreds: typeof globalThis.fetch,
-    boardServer: GoogleDriveBoardServer,
     clientManager: McpClientManager,
     private readonly actionTracker: ActionTracker,
     editable: EditableGraph,
     private readonly __sca: SCA
   ) {
-    this.#fetchWithCreds = fetchWithCreds;
-    this.#boardServer = boardServer;
     this.#editable = editable;
-    editable.addEventListener("graphchange", (e) => {
-      if (e.visualOnly) return;
-      this.#updateGraphAssets();
-
-      this.#graphChanged.set({});
-    });
-    const graph = editable.raw();
-    const graphUrlString = graph?.url;
-    this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
-    this.graphAssets = new SignalMap();
 
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
-    this.stepEditor = new StepEditorImpl(this, this.__sca);
-    this.#updateGraphAssets();
+    this.stepEditor = new StepEditorImpl(this.integrations, this.__sca);
     this.renderer = new RendererStateImpl(this.graphAssets);
 
     this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
-    this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
+    this.themes = new ThemeState(this.__sca.services.fetchWithCreds, editable, this);
   }
 
   resetRun(): void {
@@ -177,7 +153,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       url,
       contents,
       "persistent",
-      this.#boardServer.dataPartTransformer()
+      this.__sca.services.googleDriveBoardServer.dataPartTransformer()
     );
     if (!ok(transformed)) {
       console.warn(`Failed to persist a blob: "${transformed.$error}"`);
@@ -247,17 +223,5 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     }
     result.id = firstPort.name;
     return result;
-  }
-
-  #updateGraphAssets() {
-    const { assets = {} } = this.#editable.raw();
-    // Special-case the thumbnail and splash so they doesn't show up.
-    delete assets[THUMBNAIL_KEY];
-
-    const graphAssets = Object.entries(assets).map<[string, GraphAsset]>(
-      ([path, asset]) => [path, new GraphAssetImpl(this, path, asset)]
-    );
-
-    updateMap(this.graphAssets, graphAssets);
   }
 }
