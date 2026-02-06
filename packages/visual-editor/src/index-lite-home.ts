@@ -119,7 +119,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: opalShell.fetchWithCreds,
-      isTestApi: !!mainArgs.guestConfiguration.isTestApi,
     });
     const googleDrivePublishPermissions =
       this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];

@@ -16,11 +16,11 @@ type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
 
 export interface GoogleDriveClientOptions {
-  apiBaseUrl?: Promise<string>;
+  apiBaseUrl?: string | Promise<string>;
+  uploadApiBaseUrl?: string | Promise<string>;
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
   proxyApiBaseUrl?: string;
   fetchWithCreds: typeof globalThis.fetch;
-  isTestApi: boolean;
 }
 
 export interface BaseRequestOptions {
@@ -174,6 +174,7 @@ type GoogleApiAuthorization = "fetchWithCreds" | "anonymous";
 
 export class GoogleDriveClient {
   readonly #apiUrl: Promise<string>;
+  readonly #uploadApiUrl: Promise<string>;
   readonly #publicProxy:
     | {
         apiUrl: string;
@@ -182,11 +183,14 @@ export class GoogleDriveClient {
       }
     | undefined;
   readonly fetchWithCreds: typeof globalThis.fetch;
-  readonly isTestApi: boolean;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.#apiUrl =
-      options.apiBaseUrl || Promise.resolve(GOOGLE_DRIVE_FILES_API_PREFIX);
+    this.#apiUrl = Promise.resolve(
+      options.apiBaseUrl ?? GOOGLE_DRIVE_FILES_API_PREFIX
+    );
+    this.#uploadApiUrl = Promise.resolve(
+      options.uploadApiBaseUrl ?? GOOGLE_DRIVE_UPLOAD_API_PREFIX
+    );
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
           apiUrl: options.proxyApiBaseUrl,
@@ -194,7 +198,6 @@ export class GoogleDriveClient {
         }
       : undefined;
     this.fetchWithCreds = options.fetchWithCreds;
-    this.isTestApi = options.isTestApi;
   }
 
   async #fetch(
@@ -460,10 +463,11 @@ export class GoogleDriveClient {
       );
     }
 
+    const uploadBase = await this.#uploadApiUrl;
     const url = new URL(
       isExistingFile
-        ? `${GOOGLE_DRIVE_UPLOAD_API_PREFIX}/${encodeURIComponent(fileId)}`
-        : GOOGLE_DRIVE_UPLOAD_API_PREFIX
+        ? `${uploadBase}/${encodeURIComponent(fileId)}`
+        : uploadBase
     );
     url.searchParams.set("uploadType", "multipart");
     if (options?.fields) {

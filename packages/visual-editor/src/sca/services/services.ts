@@ -87,7 +87,6 @@ export function services(
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: fetchWithCreds,
-      isTestApi: !!config.guestConfig?.isTestApi,
     });
 
     const fileSystem = createFileSystem({
