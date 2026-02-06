@@ -28,6 +28,7 @@ import { err } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { McpToolAdapter } from "./mcp-tool-adapter.js";
 import { ToolParamPart } from "./template.js";
+import { A2_TOOL_MAP } from "../a2-registry.js";
 
 export { ROUTE_TOOL_PATH, MEMORY_TOOL_PATH, ToolManager };
 
@@ -227,9 +228,16 @@ class ToolManager implements SimplifiedToolManager {
       }
     }
 
-    let description = (await this.caps.describe({
-      url,
-    })) as Outcome<DescriberResult>;
+    // Use static describe function if available in A2_TOOL_MAP
+    const a2Tool = A2_TOOL_MAP.get(url);
+    let description: Outcome<DescriberResult>;
+    if (a2Tool) {
+      description = (await a2Tool.describe()) as Outcome<DescriberResult>;
+    } else {
+      description = (await this.caps.describe({
+        url,
+      })) as Outcome<DescriberResult>;
+    }
     let passContext = false;
     if (!ok(description)) return description;
 
@@ -291,9 +299,16 @@ class ToolManager implements SimplifiedToolManager {
     let hasInvalidTools = false;
     for (const tool of tools) {
       const url = typeof tool === "string" ? tool : tool.url;
-      const description = (await this.caps.describe({
-        url,
-      })) as Outcome<DescriberResult>;
+      // Use static describe function if available in A2_TOOL_MAP
+      const a2Tool = A2_TOOL_MAP.get(url);
+      let description: Outcome<DescriberResult>;
+      if (a2Tool) {
+        description = (await a2Tool.describe()) as Outcome<DescriberResult>;
+      } else {
+        description = (await this.caps.describe({
+          url,
+        })) as Outcome<DescriberResult>;
+      }
       if (!ok(description)) {
         this.errors.push(description.$error);
         // Invalid tool, skip
@@ -339,10 +354,20 @@ class ToolManager implements SimplifiedToolManager {
         args as Record<string, unknown>
       );
     } else {
-      callingTool = await this.caps.invoke({
-        $board: url,
-        ...normalizeArgs(args, [], passContext),
-      });
+      // Use static invoke function if available in A2_TOOL_MAP
+      const a2Tool = A2_TOOL_MAP.get(url);
+      if (a2Tool) {
+        callingTool = await a2Tool.invoke(
+          normalizeArgs(args, [], passContext),
+          this.caps,
+          this.moduleArgs
+        );
+      } else {
+        callingTool = await this.caps.invoke({
+          $board: url,
+          ...normalizeArgs(args, [], passContext),
+        });
+      }
     }
     if (!ok(callingTool)) return callingTool;
 
@@ -409,11 +434,22 @@ class ToolManager implements SimplifiedToolManager {
             name,
             args as Record<string, unknown>
           );
-        } else
-          callingTool = await this.caps.invoke({
-            $board: url,
-            ...normalizeArgs(args, context, passContext),
-          });
+        } else {
+          // Use static invoke function if available in A2_TOOL_MAP
+          const a2Tool = A2_TOOL_MAP.get(url);
+          if (a2Tool) {
+            callingTool = await a2Tool.invoke(
+              normalizeArgs(args, context, passContext),
+              this.caps,
+              this.moduleArgs
+            );
+          } else {
+            callingTool = await this.caps.invoke({
+              $board: url,
+              ...normalizeArgs(args, context, passContext),
+            });
+          }
+        }
         if ("$error" in callingTool) {
           errors.push(JSON.stringify(callingTool.$error));
         } else if (name === undefined) {

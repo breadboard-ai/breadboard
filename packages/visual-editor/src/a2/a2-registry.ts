@@ -20,7 +20,7 @@ import * as askUserMain from "./ask-user/main.js";
 import * as generateMain from "./generate/main.js";
 import * as renderOutputs from "./a2/render-outputs.js";
 
-export { A2_COMPONENTS, A2_TOOLS };
+export { A2_COMPONENTS, A2_TOOLS, A2_TOOL_MAP };
 
 /**
  * Generic function types for describe and invoke methods.
@@ -126,6 +126,11 @@ const A2_TOOLS: [string, A2Tool][] = [
     },
   ],
 ];
+
+/**
+ * Map of tool URLs to A2Tool objects for efficient lookup.
+ */
+const A2_TOOL_MAP: ReadonlyMap<string, A2Tool> = new Map(A2_TOOLS);
 
 /**
  * Static registry of A2 components that appear in the component picker.
