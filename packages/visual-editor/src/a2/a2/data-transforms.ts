@@ -250,10 +250,10 @@ function createDataPartTansformer(
         }
       } else {
         // part is StoredDataCapabilityPart
-        const { handle, mimeType } = part.storedData;
+        const { handle, mimeType, resourceKey } = part.storedData;
         if (handle.startsWith(DRIVE_URL_PREFIX)) {
           return driveFileToGeminiFile(moduleArgs, {
-            fileData: { fileUri: handle, mimeType },
+            fileData: { fileUri: handle, mimeType, resourceKey },
           });
         } else {
           // check to see if it's a blob
