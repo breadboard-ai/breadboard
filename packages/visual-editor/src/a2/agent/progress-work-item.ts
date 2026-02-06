@@ -15,8 +15,10 @@ import { now } from "./now.js";
 import type { ErrorMetadata } from "../a2/utils.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import type { ProgressReporter } from "./types.js";
 
 export { ProgressWorkItem, createReporter, getCurrentStepState };
+export type { ProgressReporter };
 
 export type Link = {
   uri: string;

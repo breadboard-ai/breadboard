@@ -3,6 +3,7 @@
  */
 
 export { executeStep, executeTool, parseExecutionOutput };
+export type { ExecuteStepArgs };
 
 import {
   Capabilities,
@@ -12,7 +13,11 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { getCurrentStepState, createReporter } from "../agent/progress-work-item.js";
+import {
+  getCurrentStepState,
+  createReporter,
+  type ProgressReporter,
+} from "../agent/progress-work-item.js";
 import {
   decodeBase64,
   encodeBase64,
@@ -156,16 +161,24 @@ async function executeTool<
       ];
     })
   );
-  const response = await executeStep(caps, moduleArgs, {
-    planStep: {
-      stepName: api,
-      modelApi: api,
-      output: "data",
-      inputParameters,
-      isListOutput: false,
-    },
-    execution_inputs,
+  const reporter = createReporter(moduleArgs, {
+    title: `Calling ${api}`,
+    icon: "spark",
   });
+  const response = await executeStep(
+    caps,
+    { ...moduleArgs, reporter },
+    {
+      planStep: {
+        stepName: api,
+        modelApi: api,
+        output: "data",
+        inputParameters,
+        isListOutput: false,
+      },
+      execution_inputs,
+    }
+  );
   if (!ok(response)) return response;
 
   const {
@@ -201,19 +214,20 @@ type ProgressUpdateOptions = {
   expectedDurationInSec?: number;
 };
 
+/**
+ * Args for executeStep - A2ModuleArgs augmented with a reporter.
+ */
+type ExecuteStepArgs = A2ModuleArgs & { reporter: ProgressReporter };
+
 async function executeStep(
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   body: ExecuteStepRequest,
   progressUpdateOptions?: ProgressUpdateOptions
 ): Promise<Outcome<ExecutionOutput>> {
-  const { fetchWithCreds, context } = moduleArgs;
+  const { fetchWithCreds, context, reporter } = args;
   const model = body.planStep.options?.modelName || body.planStep.stepName;
-  const { appScreen, title } = getCurrentStepState(moduleArgs);
-  const reporter = createReporter(moduleArgs, {
-    title: `Calling ${model}`,
-    icon: "spark",
-  });
+  const { appScreen, title } = getCurrentStepState(args);
   try {
     if (appScreen) {
       appScreen.progress = progressUpdateOptions?.message || title;
@@ -269,19 +283,13 @@ async function executeStep(
     }
     if (response.errorMessage) {
       const errorMessage = decodeMetadata(response.errorMessage, model);
-      return reporter.addError(
-        err(errorMessage.$error, errorMessage.metadata)
-      );
+      return reporter.addError(err(errorMessage.$error, errorMessage.metadata));
     }
-    reporter.addJson(
-      "Step Output",
-      elideEncodedData(response),
-      "download"
-    );
+    reporter.addJson("Step Output", elideEncodedData(response), "download");
     const output_key = body.planStep.output || "";
     return parseExecutionOutput(response.executionOutputs[output_key]?.chunks);
   } finally {
-    await reporter.finish();
+    reporter.finish();
     if (appScreen) {
       appScreen.progress = undefined;
       appScreen.expectedDuration = -1;

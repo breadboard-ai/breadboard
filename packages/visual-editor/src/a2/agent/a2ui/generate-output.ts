@@ -66,9 +66,13 @@ ${commonInstruction}`.asContent();
   const parameters = parseJson<Record<string, unknown>>(generating);
   if (!ok(parameters)) return parameters;
 
-  return fn.handler(parameters, (status) => {
-    console.log("Status update", status);
-  });
+  return fn.handler(
+    parameters,
+    (status) => {
+      console.log("Status update", status);
+    },
+    null
+  );
 }
 
 async function generateOutputViaFunction(
@@ -107,7 +111,11 @@ ${commonInstruction}`.asContent();
     return err(`No function call produced`);
   }
 
-  return fn.handler(functionCall.args as Record<string, unknown>, (status) => {
-    console.log("Status update", status);
-  });
+  return fn.handler(
+    functionCall.args as Record<string, unknown>,
+    (status) => {
+      console.log("Status update", status);
+    },
+    null
+  );
 }
