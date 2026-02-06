@@ -39,7 +39,6 @@ import {
   ProjectValues,
   RendererState,
   StepEditor,
-  Tool,
 } from "./types.js";
 import { IntegrationsImpl } from "./integrations.js";
 import { updateMap } from "./utils/update-map.js";
@@ -96,8 +95,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly graphUrl: URL | null;
   readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
 
-  readonly myTools: SignalMap<string, Tool>;
-  readonly agentModeTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
 
@@ -122,17 +119,13 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       this.#updateComponents();
       this.#updateGraphAssets();
 
-      this.#updateMyTools();
-      this.#updateAgentModeTools();
       this.#graphChanged.set({});
     });
     const graph = editable.raw();
     const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
-    this.agentModeTools = new SignalMap();
     this.components = new SignalMap();
-    this.myTools = new SignalMap();
 
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
@@ -140,8 +133,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);
     this.#updateComponents();
-    this.#updateMyTools();
-    this.#updateAgentModeTools();
 
     this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
     this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
@@ -263,48 +254,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     }
     result.id = firstPort.name;
     return result;
-  }
-
-  #updateMyTools() {
-    const tools = Object.entries(this.#editable.raw().graphs || {}).map<
-      [string, Tool]
-    >(([graphId, descriptor]) => {
-      const url = `#${graphId}`;
-      return [
-        url,
-        {
-          url,
-          title: descriptor.title || "Untitled Tool",
-          description: descriptor.description,
-          order: Number.MAX_SAFE_INTEGER,
-          icon: "tool",
-        },
-      ];
-    });
-    updateMap(this.myTools, tools);
-  }
-
-  #updateAgentModeTools() {
-    const tools: [string, Tool][] = [];
-    if (this.#editable.raw().nodes.length > 1) {
-      tools.push([
-        `control-flow/routing`,
-        {
-          url: "routing",
-          title: "Go to:",
-          icon: "spark",
-        },
-      ]);
-    }
-    tools.push([
-      `function-group/use-memory`,
-      {
-        url: "use-memory",
-        title: "Use Memory",
-        icon: "database",
-      },
-    ]);
-    updateMap(this.agentModeTools, tools);
   }
 
   #updateComponents() {
