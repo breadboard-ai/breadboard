@@ -199,8 +199,12 @@ export class ShowTooltipEvent extends Event {
     public readonly message: string,
     public readonly x: number,
     public readonly y: number,
-    public readonly extendedOptions: { status: { title: string } | false } = {
+    public readonly extendedOptions: {
+      status: { title: string } | false;
+      isMultiLine?: boolean;
+    } = {
       status: false,
+      isMultiLine: false,
     }
   ) {
     super(ShowTooltipEvent.eventName, { ...eventInit });
