@@ -183,6 +183,13 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               min-width: 0;
             }
 
+            &.code {
+              font-family: var(
+                --bb-font-family-flex,
+                var(--default-font-family)
+              );
+            }
+
             & .title {
               display: flex;
               align-items: center;
@@ -204,7 +211,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               & .duration {
                 flex-shrink: 0;
                 color: light-dark(var(--n-70), var(--n-80));
-                margin-left: var(--bb-grid-size);
+                margin-left: auto;
+                padding-left: var(--bb-grid-size);
               }
             }
 
