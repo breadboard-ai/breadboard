@@ -25,8 +25,8 @@ export { ConsoleProgressManager };
  * These names are used as fallback titles in the console progress UI.
  */
 const FUNCTION_FRIENDLY_NAMES: Record<string, string> = {
-  objective_fulfilled: "Finishing up",
-  failed_to_fulfill: "Unable to proceed",
+  system_objective_fulfilled: "Returning final outcome",
+  system_failed_to_fulfill: "Unable to proceed",
   system_write_file: "Writing to file",
   system_read_text_from_file: "Reading from file",
   system_create_task_tree: "Creating task tree",
@@ -114,7 +114,7 @@ class ConsoleProgressManager implements AgentProgressManager {
       };
       this.#agentSession = new ConsoleWorkItem(
         "Agent Session",
-        "spark",
+        "button_magic",
         update
       );
       this.#consoleEntry.work.set(crypto.randomUUID(), this.#agentSession);
@@ -209,16 +209,32 @@ class ConsoleProgressManager implements AgentProgressManager {
 
   /**
    * The agent function call produced an update.
-   * This only updates the screen progress, does not create a WorkItem.
+   * If it's a thought, adds it as a product to the function's work item.
+   * Otherwise, updates the screen progress.
    */
   functionCallUpdate(
-    _part: FunctionCallCapabilityPart,
+    callId: string,
     status: string | null,
     options?: StatusUpdateCallbackOptions
   ) {
     if (options?.isThought) {
       if (!status) return;
-      this.thought(status);
+      const workItem = this.#pendingCalls.get(callId);
+      if (workItem) {
+        const { title, body } = parseThought(status);
+        workItem.addProduct({
+          type: "text",
+          title: title ?? "Thought",
+          icon: "spark",
+          body: llm`${body}`.asContent(),
+        });
+      }
+      // Also update the screen progress
+      if (this.#screen) {
+        this.#previousStatus = this.#screen.progress;
+        this.#screen.progress = progressFromThought(status);
+        this.#screen.expectedDuration = -1;
+      }
     } else {
       if (!this.#screen) return;
 
