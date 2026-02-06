@@ -91,7 +91,8 @@ export type AgentProgressManager = {
    */
   functionCall(
     part: FunctionCallCapabilityPart,
-    icon?: string
+    icon?: string,
+    title?: string
   ): { callId: string; reporter: ProgressReporter | null };
 
   /**

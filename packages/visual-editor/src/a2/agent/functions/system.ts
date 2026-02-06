@@ -217,6 +217,7 @@ function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
     defineFunction(
       {
         name: OBJECTIVE_FULFILLED_FUNCTION,
+        title: "Returning final outcome",
         icon: "check_circle",
         description: `Inidicates completion of the overall objective. 
 Call only when the specified objective is entirely fulfilled`,
@@ -260,6 +261,7 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: FAILED_TO_FULFILL_FUNCTION,
+        title: "Unable to proceed",
         icon: "cancel",
         description: `Inidicates that the agent failed to fulfill of the overall
 objective. Call ONLY when all means of fulfilling the objective have been
@@ -309,6 +311,7 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: "system_write_file",
+        title: "Writing to file",
         icon: "edit",
         description: "Writes the provided text to a file",
         parameters: {
@@ -354,6 +357,7 @@ Use snake_case for naming. If the file does not exist, it will be created. If th
     defineFunction(
       {
         name: "system_read_text_from_file",
+        title: "Reading from file",
         icon: "description",
         description: tr`
 
@@ -393,6 +397,7 @@ If an error has occurred, will contain a description of the error`
     defineFunctionLoose(
       {
         name: CREATE_TASK_TREE_FUNCTION,
+        title: "Creating task tree",
         icon: "task",
         description: tr`
 
@@ -417,6 +422,7 @@ When working on a complicated problem, use this function to create a scratch pad
     defineFunction(
       {
         name: MARK_COMPLETED_TASKS_FUNCTION,
+        title: "Marking tasks complete",
         icon: "task",
         description: tr`
 Mark one or more tasks defined with the "${CREATE_TASK_TREE_FUNCTION}" as complete.

@@ -128,6 +128,7 @@ function defineGenerateFunctions(
     {
       name: "generate_images",
       icon: "photo_spark",
+      title: "Generating Image(s)",
       description: `Generates one or more images based on a prompt and optionally, one or more images`,
       parameters: {
         prompt: z.string()
@@ -265,6 +266,7 @@ The Gemini model to use for image generation. How to choose the right model:
     {
       name: GENERATE_TEXT_FUNCTION,
       icon: "text_analysis",
+      title: "Generating Text",
       description: `
 An extremely versatile text generator, powered by Gemini. Use it for any tasks
 that involve generation of text. Supports multimodal content input.`.trim(),
@@ -435,6 +437,7 @@ Specify URLs in the prompt.
     {
       name: "generate_video",
       icon: "videocam_auto",
+      title: "Generating Video",
       description:
         "Generating high-fidelity, 8-second videos featuring stunning realism and natively generated audio",
       parameters: {
@@ -529,6 +532,7 @@ The following elements should be included in your prompt:
     {
       name: "generate_speech_from_text",
       icon: "audio_magic_eraser",
+      title: "Generating Speech",
       description: "Generates speech from text",
       parameters: {
         text: z.string().describe("The verbatim text to turn into speech."),
@@ -582,6 +586,7 @@ The following elements should be included in your prompt:
     {
       name: "generate_music_from_text",
       icon: "audio_magic_eraser",
+      title: "Generating Music",
       description: tr`
 Generates instrumental music and audio soundscapes based on the provided prompt.
 
@@ -648,6 +653,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
     {
       name: GENERATE_AND_EXECUTE_CODE_FUNCTION,
       icon: "code",
+      title: "Generating and Executing Code",
       description: tr`
 Generates and executes Python code, returning the result of execution.
 
