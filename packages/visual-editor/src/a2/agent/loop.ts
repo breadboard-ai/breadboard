@@ -334,7 +334,8 @@ class Loop {
               );
               const { callId, reporter } = ui.progress.functionCall(
                 part,
-                functionDef?.icon
+                functionDef?.icon,
+                functionDef?.title
               );
               functionCaller.call(
                 callId,

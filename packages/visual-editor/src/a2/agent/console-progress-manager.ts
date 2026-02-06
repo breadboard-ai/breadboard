@@ -22,21 +22,6 @@ import { ProgressReporter } from "./types.js";
 export { ConsoleProgressManager };
 
 /**
- * Friendly names for functions that don't use statusUpdateSchema.
- * These names are used as fallback titles in the console progress UI.
- */
-const FUNCTION_FRIENDLY_NAMES: Record<string, string> = {
-  system_objective_fulfilled: "Returning final outcome",
-  system_failed_to_fulfill: "Unable to proceed",
-  system_write_file: "Writing to file",
-  system_read_text_from_file: "Reading from file",
-  system_create_task_tree: "Creating task tree",
-  system_mark_completed_tasks: "Marking tasks complete",
-  chat_request_user_input: "Asking the user",
-  memory_update_sheet: "Updating memory",
-};
-
-/**
  * Functions that should not create a work item because
  * they are handled by other UI mechanisms.
  */
@@ -197,7 +182,8 @@ class ConsoleProgressManager implements AgentProgressManager {
    */
   functionCall(
     part: FunctionCallCapabilityPart,
-    icon?: string
+    icon?: string,
+    title?: string
   ): { callId: string; reporter: ProgressReporter | null } {
     const callId = crypto.randomUUID();
     // Skip work item for functions handled by other UI mechanisms
@@ -209,9 +195,8 @@ class ConsoleProgressManager implements AgentProgressManager {
       const args = part.functionCall.args as Record<string, unknown>;
       const statusUpdate =
         typeof args.status_update === "string" ? args.status_update : null;
-      const friendlyName = FUNCTION_FRIENDLY_NAMES[part.functionCall.name];
       const itemTitle = trimEllipsis(
-        statusUpdate ?? friendlyName ?? `Function: ${part.functionCall.name}`
+        statusUpdate ?? title ?? `Function: ${part.functionCall.name}`
       );
       const update = {
         type: "text" as const,

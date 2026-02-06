@@ -150,6 +150,7 @@ provided when the "output_format" is set to "json"`
     defineFunction(
       {
         name: MEMORY_UPDATE_SHEET_FUNCTION,
+        title: "Updating memory",
         icon: "table_chart",
         description: tr`
 Overwrites a specific memory range with new data. Used for editing specific rows.
