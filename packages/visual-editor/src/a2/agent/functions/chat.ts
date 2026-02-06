@@ -107,6 +107,7 @@ Unless the objective explicitly asks for a particular type of input, use the "an
     defineFunction(
       {
         name: CHAT_PRESENT_CHOICES,
+        title: "Presenting Choices to the User",
         icon: "list",
         description: tr`
 Presents the user with a set of choices to select from. Use when you need the user to make a decision from a predefined set of options. 
