@@ -30,8 +30,17 @@ type ActionBind = { controller: AppController; services: AppServices };
 export function onGraphVersionChange(bind: ActionBind): SignalTrigger {
   return signalTrigger("Graph Version Change (Assets)", () => {
     const { controller } = bind;
-    // Return the version number itself so trigger fires on each change.
-    // Add 1 to handle version 0 (which would be falsy).
-    return controller.editor.graph.version + 1;
+    const graphController = controller.editor.graph;
+    const graph = graphController.graph;
+    const version = graphController.version;
+
+    // Skip if no graph loaded
+    if (!graph) {
+      return false;
+    }
+
+    // Return version + 1 (a UNIQUE truthy value) so coordination fires the action.
+    // The coordination system tracks previousValue and only fires when this changes.
+    return version + 1;
   });
 }

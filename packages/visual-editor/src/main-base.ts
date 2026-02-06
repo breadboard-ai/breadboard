@@ -415,6 +415,18 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         // This bridges the legacy selection system to the SCA trigger.
         this.sca.controller.editor.selection.bumpSelectionId();
 
+        // TODO: Remove once SelectionController is fully wired up.
+        // This sets the selectedNodeId for fast-access filtering.
+        const candidate = [...evt.selectionState.graphs].find(
+          ([, graph]) => graph.nodes.size > 0
+        );
+        if (candidate && candidate[1].nodes.size === 1) {
+          const [, graph] = candidate;
+          this.sca.controller.editor.graph.selectedNodeId = [...graph.nodes][0];
+        } else {
+          this.sca.controller.editor.graph.selectedNodeId = null;
+        }
+
         this.selectionState = {
           selectionChangeId: evt.selectionChangeId,
           selectionState: evt.selectionState,

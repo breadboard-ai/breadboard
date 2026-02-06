@@ -547,7 +547,7 @@ suite("Asset Actions", () => {
 suite("Asset Triggers", () => {
   // Minimal type for the bind object - only what onGraphVersionChange actually needs
   type TriggerBind = {
-    controller: { editor: { graph: { version: number } } };
+    controller: { editor: { graph: { version: number; graph: unknown } } };
     services: unknown;
   };
 
@@ -558,6 +558,7 @@ suite("Asset Triggers", () => {
           editor: {
             graph: {
               version: 0,
+              graph: { nodes: [], edges: [] }, // Must have a graph to pass the !graph check
             },
           },
         },
@@ -583,6 +584,7 @@ suite("Asset Triggers", () => {
           editor: {
             graph: {
               version: 5,
+              graph: { nodes: [], edges: [] },
             },
           },
         },
@@ -602,6 +604,7 @@ suite("Asset Triggers", () => {
           editor: {
             graph: {
               version: 0,
+              graph: { nodes: [], edges: [] },
             },
           },
         },
@@ -622,6 +625,57 @@ suite("Asset Triggers", () => {
       // Another increment
       mockBind.controller.editor.graph.version = 10;
       assert.strictEqual(trigger.condition(), 11);
+    });
+
+    test("returns same value for same version (coordination handles deduplication)", () => {
+      const mockBind: TriggerBind = {
+        controller: {
+          editor: {
+            graph: {
+              version: 5,
+              graph: { nodes: [], edges: [] },
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphVersionChange(
+        mockBind as Parameters<typeof onGraphVersionChange>[0]
+      );
+
+      // Trigger always returns version + 1 when graph exists.
+      // The coordination system is responsible for detecting value changes.
+      assert.strictEqual(trigger.condition(), 6);
+      assert.strictEqual(
+        trigger.condition(),
+        6,
+        "Same version returns same value"
+      );
+    });
+
+    test("returns false when no graph loaded", () => {
+      const mockBind: TriggerBind = {
+        controller: {
+          editor: {
+            graph: {
+              version: 5,
+              graph: null, // No graph loaded
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphVersionChange(
+        mockBind as Parameters<typeof onGraphVersionChange>[0]
+      );
+
+      assert.strictEqual(
+        trigger.condition(),
+        false,
+        "Should return false when no graph"
+      );
     });
   });
 });
