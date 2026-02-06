@@ -228,16 +228,12 @@ class ToolManager implements SimplifiedToolManager {
       }
     }
 
-    // Use static describe function if available in A2_TOOL_MAP
+    // Use static describe function from A2_TOOL_MAP
     const a2Tool = A2_TOOL_MAP.get(url);
-    let description: Outcome<DescriberResult>;
-    if (a2Tool) {
-      description = (await a2Tool.describe()) as Outcome<DescriberResult>;
-    } else {
-      description = (await this.caps.describe({
-        url,
-      })) as Outcome<DescriberResult>;
+    if (!a2Tool) {
+      return err(`Unknown tool: "${url}"`);
     }
+    let description = (await a2Tool.describe()) as Outcome<DescriberResult>;
     let passContext = false;
     if (!ok(description)) return description;
 
@@ -299,16 +295,14 @@ class ToolManager implements SimplifiedToolManager {
     let hasInvalidTools = false;
     for (const tool of tools) {
       const url = typeof tool === "string" ? tool : tool.url;
-      // Use static describe function if available in A2_TOOL_MAP
+      // Use static describe function from A2_TOOL_MAP
       const a2Tool = A2_TOOL_MAP.get(url);
-      let description: Outcome<DescriberResult>;
-      if (a2Tool) {
-        description = (await a2Tool.describe()) as Outcome<DescriberResult>;
-      } else {
-        description = (await this.caps.describe({
-          url,
-        })) as Outcome<DescriberResult>;
+      if (!a2Tool) {
+        this.errors.push(`Unknown tool: "${url}"`);
+        hasInvalidTools = true;
+        continue;
       }
+      const description = (await a2Tool.describe()) as Outcome<DescriberResult>;
       if (!ok(description)) {
         this.errors.push(description.$error);
         // Invalid tool, skip
@@ -354,20 +348,16 @@ class ToolManager implements SimplifiedToolManager {
         args as Record<string, unknown>
       );
     } else {
-      // Use static invoke function if available in A2_TOOL_MAP
+      // Use static invoke function from A2_TOOL_MAP
       const a2Tool = A2_TOOL_MAP.get(url);
-      if (a2Tool) {
-        callingTool = await a2Tool.invoke(
-          normalizeArgs(args, [], passContext),
-          this.caps,
-          this.moduleArgs
-        );
-      } else {
-        callingTool = await this.caps.invoke({
-          $board: url,
-          ...normalizeArgs(args, [], passContext),
-        });
+      if (!a2Tool) {
+        return err(`Unknown tool: "${url}"`);
       }
+      callingTool = await a2Tool.invoke(
+        normalizeArgs(args, [], passContext),
+        this.caps,
+        this.moduleArgs
+      );
     }
     if (!ok(callingTool)) return callingTool;
 
@@ -435,20 +425,17 @@ class ToolManager implements SimplifiedToolManager {
             args as Record<string, unknown>
           );
         } else {
-          // Use static invoke function if available in A2_TOOL_MAP
+          // Use static invoke function from A2_TOOL_MAP
           const a2Tool = A2_TOOL_MAP.get(url);
-          if (a2Tool) {
-            callingTool = await a2Tool.invoke(
-              normalizeArgs(args, context, passContext),
-              this.caps,
-              this.moduleArgs
-            );
-          } else {
-            callingTool = await this.caps.invoke({
-              $board: url,
-              ...normalizeArgs(args, context, passContext),
-            });
+          if (!a2Tool) {
+            errors.push(`Unknown tool: "${url}"`);
+            continue;
           }
+          callingTool = await a2Tool.invoke(
+            normalizeArgs(args, context, passContext),
+            this.caps,
+            this.moduleArgs
+          );
         }
         if ("$error" in callingTool) {
           errors.push(JSON.stringify(callingTool.$error));
