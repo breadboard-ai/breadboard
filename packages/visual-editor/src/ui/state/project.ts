@@ -13,7 +13,6 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import {
-  EditableGraph,
   EditSpec,
   EditTransform,
   NodeHandlerMetadata,
@@ -43,28 +42,19 @@ import { StepEditorImpl } from "./step-editor.js";
 import { ThemeState } from "./theme-state.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { SCA } from "../../sca/sca.js";
-import { ActionTracker } from "../types/types.js";
 import { transformDataParts } from "../../data/common.js";
 
 export { createProjectState, ReactiveProject };
 
 function createProjectState(
-  actionTracker: ActionTracker,
   mcpClientManager: McpClientManager,
-  editable: EditableGraph,
   sca: SCA
 ): Project {
-  return new ReactiveProject(
-    mcpClientManager,
-    actionTracker,
-    editable,
-    sca
-  );
+  return new ReactiveProject(mcpClientManager, sca);
 }
 
 class ReactiveProject implements ProjectInternal, ProjectValues {
-
-  readonly #editable: EditableGraph;
+  readonly #sca: SCA;
 
   @signal
   accessor run: ProjectRun;
@@ -73,14 +63,14 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
    * Delegates to GraphController.graphUrl
    */
   get graphUrl(): URL | null {
-    return this.__sca.controller.editor.graph.graphUrl;
+    return this.#sca.controller.editor.graph.graphUrl;
   }
 
   /**
    * Delegates to GraphController.graphAssets
    */
   get graphAssets(): Map<AssetPath, GraphAsset> {
-    return this.__sca.controller.editor.graph.graphAssets;
+    return this.#sca.controller.editor.graph.graphAssets;
   }
 
   readonly organizer: Organizer;
@@ -90,21 +80,27 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly stepEditor: StepEditor;
   readonly themes: ProjectThemeState;
 
-  constructor(
-    clientManager: McpClientManager,
-    private readonly actionTracker: ActionTracker,
-    editable: EditableGraph,
-    private readonly __sca: SCA
-  ) {
-    this.#editable = editable;
+  /**
+   * Derives editable from SCA controller.
+   */
+  get #editable() {
+    return this.#sca.controller.editor.graph.editor!;
+  }
 
+  constructor(clientManager: McpClientManager, sca: SCA) {
+    this.#sca = sca;
+    const editable = this.#editable;
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
-    this.stepEditor = new StepEditorImpl(this.integrations, this.__sca);
+    this.stepEditor = new StepEditorImpl(this.integrations, this.#sca);
     this.renderer = new RendererStateImpl(this.graphAssets);
 
     this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
-    this.themes = new ThemeState(this.__sca.services.fetchWithCreds, editable, this);
+    this.themes = new ThemeState(
+      this.#sca.services.fetchWithCreds,
+      editable,
+      this
+    );
   }
 
   resetRun(): void {
@@ -118,7 +114,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     // Intentionally reset this property with a new instance.
     this.run = ReactiveProjectRun.create(
       this.stepEditor,
-      this.actionTracker,
+      this.#sca.services.actionTracker,
       this.#editable.inspect(""),
       runner,
       this.#editable,
@@ -153,7 +149,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       url,
       contents,
       "persistent",
-      this.__sca.services.googleDriveBoardServer.dataPartTransformer()
+      this.#sca.services.googleDriveBoardServer.dataPartTransformer()
     );
     if (!ok(transformed)) {
       console.warn(`Failed to persist a blob: "${transformed.$error}"`);

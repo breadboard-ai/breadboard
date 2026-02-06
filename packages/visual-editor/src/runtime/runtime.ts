@@ -12,7 +12,7 @@ export * as Types from "./types.js";
 import { Select } from "./select.js";
 import { State } from "../ui/index.js";
 import { Project } from "../ui/state/types.js";
-import { EditableGraph, MainGraphIdentifier } from "@breadboard-ai/types";
+import { MainGraphIdentifier } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SCA } from "../sca/sca.js";
 
@@ -53,20 +53,17 @@ export class Runtime extends EventTarget {
     const mainGraphId = tab.mainGraphId;
     if (mainGraphId === this.#currentMainGraphId) return;
     this.#currentMainGraphId = mainGraphId;
-    const editor = this.#sca.controller.editor.graph.editor;
-    this.project = this.#createProjectState(editor);
+    this.project = this.#createProjectState();
   }
 
-  #createProjectState(editable: EditableGraph | null): State.Project | null {
-    if (!editable) {
+  #createProjectState(): State.Project | null {
+    if (!this.#sca.controller.editor.graph.editor) {
       console.warn(`No editable graph provided: cannot create project state`);
       return null;
     }
 
     return State.createProjectState(
-      this.#sca.services.actionTracker,
       this.#sca.services.mcpClientManager,
-      editable,
       this.#sca
     );
   }
