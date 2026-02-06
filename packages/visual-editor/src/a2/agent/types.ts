@@ -12,6 +12,11 @@ import type {
   Outcome,
 } from "@breadboard-ai/types";
 import type { FunctionDeclaration, GeminiBody } from "../a2/gemini.js";
+import type { streamGenerateContent, conformGeminiBody } from "../a2/gemini.js";
+import type { callGeminiImage } from "../a2/image-utils.js";
+import type { callVideoGen } from "../video-generator/main.js";
+import type { callAudioGen } from "../audio-generator/main.js";
+import type { callMusicGen } from "../music-generator/main.js";
 import type {
   FunctionDefinition,
   StatusUpdateCallback,
@@ -219,10 +224,10 @@ export type RunState = {
  * Production code uses real implementations; tests inject mocks.
  */
 export type Generators = {
-  streamContent: typeof import("../a2/gemini.js").streamGenerateContent;
-  conformBody: typeof import("../a2/gemini.js").conformGeminiBody;
-  callImage: typeof import("../a2/image-utils.js").callGeminiImage;
-  callVideo: typeof import("../video-generator/main.js").callVideoGen;
-  callAudio: typeof import("../audio-generator/main.js").callAudioGen;
-  callMusic: typeof import("../music-generator/main.js").callMusicGen;
+  streamContent: typeof streamGenerateContent;
+  conformBody: typeof conformGeminiBody;
+  callImage: typeof callGeminiImage;
+  callVideo: typeof callVideoGen;
+  callAudio: typeof callAudioGen;
+  callMusic: typeof callMusicGen;
 };

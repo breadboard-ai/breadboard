@@ -334,7 +334,7 @@ class Loop {
               );
               const callId = ui.progress.functionCall(part, functionDef?.icon);
               functionCaller.call(callId, part, (status, opts) =>
-                ui.progress.functionCallUpdate(part, status, opts)
+                ui.progress.functionCallUpdate(callId, status, opts)
               );
             }
           }
