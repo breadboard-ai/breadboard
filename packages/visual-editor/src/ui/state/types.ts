@@ -328,7 +328,7 @@ export type FastAccess = {
   tools: ReadonlyMap<string, Tool>;
   myTools: ReadonlyMap<string, Tool>;
   agentMode: FilterableMap<Tool>;
-  components: Map<GraphIdentifier, Components>;
+  components: ReadonlyMap<GraphIdentifier, Components>;
   integrations: FilteredIntegrations;
   /**
    * Available routes for the current step.
@@ -526,7 +526,6 @@ export type ProjectInternal = Project & {
 
 export type ProjectValues = {
   graphAssets: Map<AssetPath, GraphAsset>;
-  components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
   integrations: Integrations;
   editable: EditableGraph;
 };

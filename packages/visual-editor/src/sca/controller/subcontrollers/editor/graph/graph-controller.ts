@@ -10,6 +10,7 @@ import {
   GraphChangeRejectEvent,
   GraphDescriptor,
   GraphIdentifier,
+  InspectableGraph,
   NodeConfiguration,
   NodeIdentifier,
   OutputValues,
@@ -17,7 +18,7 @@ import {
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { Tab } from "../../../../../runtime/types.js";
-import { Tool } from "../../../../../ui/state/types.js";
+import { Tool, Component, Components } from "../../../../../ui/state/types.js";
 import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
 
 /**
@@ -78,6 +79,18 @@ export class GraphController extends RootController {
 
   get agentModeTools(): ReadonlyMap<string, Tool> {
     return this._agentModeTools;
+  }
+
+  /**
+   * Components (nodes) available in each graph, keyed by graph ID.
+   * Updated reactively when the graph topology changes.
+   * Uses async port/metadata fetching with signal propagation on resolve.
+   */
+  @field({ deep: false })
+  private accessor _components: Map<GraphIdentifier, Components> = new Map();
+
+  get components(): ReadonlyMap<GraphIdentifier, Components> {
+    return this._components;
   }
 
   @field({ deep: false })
@@ -189,6 +202,7 @@ export class GraphController extends RootController {
     // Initialize derived tools from the new graph
     this.#updateMyTools();
     this.#updateAgentModeTools();
+    this.#updateComponents();
 
     if (!this._editor) return;
     this._editor.addEventListener("graphchange", this.#onGraphChangeBound);
@@ -210,6 +224,7 @@ export class GraphController extends RootController {
 
     this.#updateMyTools();
     this.#updateAgentModeTools();
+    this.#updateComponents();
   }
 
   #onGraphChangeRejectBound = this.#onGraphChangeReject.bind(this);
@@ -265,6 +280,7 @@ export class GraphController extends RootController {
     this.finalOutputValues = undefined;
     this._myTools = new Map();
     this._agentModeTools = new Map();
+    this._components = new Map();
   }
 
   /**
@@ -305,5 +321,94 @@ export class GraphController extends RootController {
     }
     tools.push([`function-group/use-memory`, MEMORY_TOOL]);
     this._agentModeTools = new Map(tools);
+  }
+
+  /**
+   * Rebuilds components from inspectable graph nodes.
+   * Iterates all graphs (main + sub-graphs) and derives component info.
+   * Uses async port/metadata fetching with wholesale Map replacement on resolve.
+   * Includes a version guard to prevent stale async updates from overwriting
+   * fresher data when multiple updates overlap.
+   */
+  #componentsUpdateGeneration = 0;
+  #updateComponents() {
+    if (!this._editor) {
+      this._components = new Map();
+      return;
+    }
+
+    // Increment generation to track this update cycle
+    const currentGeneration = ++this.#componentsUpdateGeneration;
+
+    const inspectable = this._editor.inspect("");
+    const graphs: [GraphIdentifier, InspectableGraph][] = Object.entries(
+      inspectable.graphs() || {}
+    );
+    graphs.push(["", inspectable]);
+
+    for (const [graphId, graphInspectable] of graphs) {
+      const nodeValues: Promise<[string, Component]>[] = [];
+
+      for (const node of graphInspectable.nodes()) {
+        const ports = node.currentPorts();
+        const metadata = node.currentDescribe()?.metadata ?? {};
+        const { tags } = metadata;
+
+        // If we already know the tags and ports, just use them.
+        if (tags && !ports.updating) {
+          nodeValues.push(
+            Promise.resolve([
+              node.descriptor.id,
+              {
+                id: node.descriptor.id,
+                title: node.title(),
+                description: node.description(),
+                ports,
+                metadata,
+              },
+            ])
+          );
+          continue;
+        }
+
+        // ... but if there aren't tags or the ports are updating, try using
+        // the full `describe()` instead.
+        nodeValues.push(
+          Promise.all([node.ports(), node.describe()]).then(
+            ([ports, description]) => {
+              return [
+                node.descriptor.id,
+                {
+                  id: node.descriptor.id,
+                  title: node.title(),
+                  description: node.description(),
+                  ports,
+                  metadata: description.metadata ?? {},
+                },
+              ];
+            }
+          )
+        );
+      }
+
+      // When all node values resolve, update the components for this graph
+      // Guard against stale updates - only apply if we're still in the same update cycle
+      Promise.all(nodeValues).then((nodes) => {
+        if (currentGeneration !== this.#componentsUpdateGeneration) {
+          return; // A newer update is in progress, discard this stale result
+        }
+        const graphComponents = new Map<NodeIdentifier, Component>(nodes);
+        // Create a new Map to trigger reactivity
+        this._components = new Map([
+          ...this._components,
+          [graphId, graphComponents],
+        ]);
+      });
+    }
+
+    // Initialize with empty maps for each graph (will be updated when promises resolve)
+    this._components = new Map(
+      graphs.map(([graphId]) => [graphId, new Map()])
+    );
   }
 }
