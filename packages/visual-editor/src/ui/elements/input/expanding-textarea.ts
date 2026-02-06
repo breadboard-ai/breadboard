@@ -84,6 +84,12 @@ export class ExpandingTextarea extends LitElement {
         display: flex;
         align-items: center;
         --line-height: 24px;
+
+        &:has(textarea:valid) #submit {
+          ::slotted(span) {
+            color: var(--light-dark-n-0) !important;
+          }
+        }
       }
 
       :host([orientation="vertical"]) {
@@ -163,21 +169,12 @@ export class ExpandingTextarea extends LitElement {
         background: none;
         border: none;
         color: var(--light-dark-n-30);
-        opacity: 0.5;
         padding: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: -4px;
-        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-
-        &:not([disabled]) {
-          cursor: pointer;
-
-          &:hover {
-            opacity: 1;
-          }
-        }
+        cursor: pointer;
       }
 
       :host([ispopulated]) #submit {
@@ -248,6 +245,7 @@ export class ExpandingTextarea extends LitElement {
             .disabled=${this.disabled}
             @input=${this.#onInput}
             @keydown=${this.#onKeydown}
+            required
           ></textarea>
           <div
             id="measure"
