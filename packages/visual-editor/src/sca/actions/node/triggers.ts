@@ -25,12 +25,9 @@ type ActionBind = { controller: AppController; services: AppServices };
  * Returns true when lastNodeConfigChange is truthy.
  */
 export function onNodeConfigChange(bind: ActionBind): SignalTrigger {
-  return signalTrigger(
-    "Node Config Change",
-    () => {
-      const { controller } = bind;
-      // Return true when there's a config change - reactive system tracks the value
-      return !!controller.editor.graph.lastNodeConfigChange;
-    }
-  );
+  return signalTrigger("Node Config Change", () => {
+    const { controller } = bind;
+    // Return true when there's a config change - reactive system tracks the value
+    return !!controller.editor.graph.lastNodeConfigChange;
+  });
 }

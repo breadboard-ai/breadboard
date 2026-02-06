@@ -43,7 +43,11 @@ suite("Run Triggers", () => {
       const trigger = onGraphVersionForSync(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, false, "Should return false for invalid version");
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false for invalid version"
+      );
     });
 
     test("has correct trigger name", () => {

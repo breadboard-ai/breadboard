@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, BoardServer, GraphLoader } from "@breadboard-ai/types";
+import type {
+  GraphDescriptor,
+  BoardServer,
+  GraphLoader,
+} from "@breadboard-ai/types";
 import type { SigninAdapter } from "../../../../ui/utils/signin-adapter.js";
 import { canParse, addResourceKeyIfPresent } from "./resolve-url.js";
 

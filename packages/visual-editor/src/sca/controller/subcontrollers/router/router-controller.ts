@@ -40,7 +40,8 @@ import { RootController } from "../root-controller.js";
  */
 export class RouterController
   extends RootController
-  implements ParsedUrlProvider {
+  implements ParsedUrlProvider
+{
   @field()
   private accessor _parsedUrl: MakeUrlInit;
 

@@ -48,7 +48,11 @@ suite("Screen Size Triggers", () => {
 
       const result = onNarrowQueryChange();
 
-      assert.strictEqual(result, null, "Should return null when matchMedia is not a function");
+      assert.strictEqual(
+        result,
+        null,
+        "Should return null when matchMedia is not a function"
+      );
     });
 
     test("returns event trigger with correct configuration", () => {
@@ -104,7 +108,11 @@ suite("Screen Size Triggers", () => {
 
       const result = onMediumQueryChange();
 
-      assert.strictEqual(result, null, "Should return null when matchMedia is missing");
+      assert.strictEqual(
+        result,
+        null,
+        "Should return null when matchMedia is missing"
+      );
     });
 
     test("returns event trigger with correct configuration", () => {

@@ -24,14 +24,14 @@ class StepController extends RootController {
    * Note: No deep: true - we replace the whole object, and deep proxies
    * can't be structuredClone'd (causes DataCloneError in history).
    */
-  @field({deep: false})
+  @field({ deep: false })
   private accessor _pendingEdit: PendingEdit | null = null;
 
   /**
    * The current pending asset edit.
    * Set by entity-editor when asset form values change.
    */
-  @field({deep: false})
+  @field({ deep: false })
   private accessor _pendingAssetEdit: PendingAssetEdit | null = null;
 
   get pendingEdit(): PendingEdit | null {

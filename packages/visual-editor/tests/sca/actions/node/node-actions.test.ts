@@ -55,7 +55,11 @@ suite("Node Actions", () => {
         titleUserModified: false,
       });
 
-      assert.strictEqual(autonameCalled, false, "autonamer should not be called when readOnly");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autonamer should not be called when readOnly"
+      );
     });
 
     test("returns early when editor is null", async () => {
@@ -80,7 +84,11 @@ suite("Node Actions", () => {
         titleUserModified: false,
       });
 
-      assert.strictEqual(autonameCalled, false, "autonamer should not be called when no editor");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autonamer should not be called when no editor"
+      );
     });
 
     test("skips when outputTemplates disabled AND title user-modified", async () => {
@@ -111,7 +119,11 @@ suite("Node Actions", () => {
         titleUserModified: true,
       });
 
-      assert.strictEqual(autonameCalled, false, "autonamer should not be called");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autonamer should not be called"
+      );
 
       // Restore
       controller.global.flags.flags = originalFlags;
@@ -169,7 +181,11 @@ suite("Node Actions", () => {
         titleUserModified: false,
       });
 
-      assert.strictEqual(autonameCalled, false, "autonamer should not be called when node not found");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autonamer should not be called when node not found"
+      );
     });
 
     test("handles autoname error gracefully", async () => {
@@ -350,7 +366,11 @@ suite("Node Actions", () => {
         titleUserModified: false,
       });
 
-      assert.strictEqual(appliedTransform, false, "should NOT apply transform when graph changed");
+      assert.strictEqual(
+        appliedTransform,
+        false,
+        "should NOT apply transform when graph changed"
+      );
     });
 
     test("strips trailing period from description", async () => {
@@ -477,7 +497,11 @@ suite("Node Actions", () => {
       // Call without arguments - simulates triggered path
       await NodeActions.autoname();
 
-      assert.strictEqual(autonameCalled, false, "autoname should not be called when no config change");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autoname should not be called when no config change"
+      );
     });
 
     test("calls autoname service with data from lastNodeConfigChange", async () => {
@@ -547,7 +571,11 @@ suite("Node Actions", () => {
       await NodeActions.autoname();
 
       // Should skip because outputTemplates is false AND titleUserModified is true
-      assert.strictEqual(autonameCalled, false, "autoname should not be called when user modified title");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autoname should not be called when user modified title"
+      );
 
       controller.global.flags.flags = originalFlags;
     });

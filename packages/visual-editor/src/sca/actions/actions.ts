@@ -140,7 +140,7 @@ export function activateTriggers(): () => void {
       activationOrder.join("\n - ")
     ),
     LABEL,
-    true  // Always show (not verbose)
+    true // Always show (not verbose)
   );
 
   // Activate in sorted order
@@ -171,4 +171,17 @@ export function cleanActions(): void {
 }
 
 // Re-export individual modules for direct access in tests
-export { Agent, Asset, Board, Flowgen, Graph, Node, Router, Run, ScreenSize, Share, Shell, Step };
+export {
+  Agent,
+  Asset,
+  Board,
+  Flowgen,
+  Graph,
+  Node,
+  Router,
+  Run,
+  ScreenSize,
+  Share,
+  Shell,
+  Step,
+};

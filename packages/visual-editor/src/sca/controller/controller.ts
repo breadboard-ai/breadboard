@@ -58,10 +58,7 @@ class Controller implements AppController {
         "Editor_Sidebar",
         "SidebarController"
       ),
-      step: new Editor.Step.StepController(
-        "Editor_Step",
-        "StepController"
-      ),
+      step: new Editor.Step.StepController("Editor_Step", "StepController"),
       share: new Editor.Share.ShareController(
         "Editor_Share",
         "ShareController"

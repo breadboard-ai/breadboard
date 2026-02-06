@@ -116,8 +116,8 @@ export function makeTestController(options: TestControllerOptions = {}) {
         : new RunController("test-run-controller", "test"),
     },
     router: {
-      updateFromCurrentUrl: () => { },
-      init: () => { },
+      updateFromCurrentUrl: () => {},
+      init: () => {},
     },
     editor: {
       graph: editor ? { editor, lastNodeConfigChange: null } : graph,
@@ -134,7 +134,7 @@ export function makeTestController(options: TestControllerOptions = {}) {
         clearPendingAssetEdit: mock.fn(),
       },
       share: {
-        state: { status: "closed"},
+        state: { status: "closed" },
       },
     },
   } as unknown as AppController;

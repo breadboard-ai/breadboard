@@ -14,7 +14,11 @@ import { Utils } from "../../utils.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import * as Helpers from "./helpers/helpers.js";
-import { onVersionChange, onNewerVersionAvailable, onSaveStatusChange } from "./triggers.js";
+import {
+  onVersionChange,
+  onNewerVersionAvailable,
+  onSaveStatusChange,
+} from "./triggers.js";
 
 export const bind = makeAction();
 
@@ -361,13 +365,13 @@ export interface LoadOptions {
 export type LoadResult =
   | { success: true }
   | {
-    success: false;
-    reason:
-    | "invalid-url"
-    | "auth-required"
-    | "load-failed"
-    | "race-condition";
-  };
+      success: false;
+      reason:
+        | "invalid-url"
+        | "auth-required"
+        | "load-failed"
+        | "race-condition";
+    };
 
 // The helpers used for the function below are tested, but to test the function
 // itself we need to mock the controller and services, which is a lot of mocks
@@ -396,120 +400,117 @@ export const load = asAction(
   "Board.load",
   ActionMode.Exclusive,
   async (url: string, options: LoadOptions = {}): Promise<LoadResult> => {
-      const { controller, services } = bind;
-      const logger = Utils.Logging.getLogger(controller);
-      const LABEL = "Board Actions";
+    const { controller, services } = bind;
+    const logger = Utils.Logging.getLogger(controller);
+    const LABEL = "Board Actions";
 
-      // Track the URL at start to detect race conditions
-      const urlAtStart = controller.editor.graph.url;
+    // Track the URL at start to detect race conditions
+    const urlAtStart = controller.editor.graph.url;
 
-      // 1. Resolve URL relative to current board
-      const resolvedUrl = Helpers.resolveUrl(url, options.baseUrl ?? null);
+    // 1. Resolve URL relative to current board
+    const resolvedUrl = Helpers.resolveUrl(url, options.baseUrl ?? null);
 
-      if (!resolvedUrl || !Helpers.canParse(resolvedUrl)) {
-        logger.log(
-          Utils.Logging.Formatter.warning(`Invalid URL: ${url}`),
-          LABEL
-        );
-        return { success: false, reason: "invalid-url" };
-      }
+    if (!resolvedUrl || !Helpers.canParse(resolvedUrl)) {
+      logger.log(Utils.Logging.Formatter.warning(`Invalid URL: ${url}`), LABEL);
+      return { success: false, reason: "invalid-url" };
+    }
 
-      // 2. Load the graph
-      const loadResult = await Helpers.loadGraph(resolvedUrl, urlAtStart, {
-        loader: services.loader,
-        signinAdapter: services.signinAdapter,
-        boardServer: services.googleDriveBoardServer,
-      });
+    // 2. Load the graph
+    const loadResult = await Helpers.loadGraph(resolvedUrl, urlAtStart, {
+      loader: services.loader,
+      signinAdapter: services.signinAdapter,
+      boardServer: services.googleDriveBoardServer,
+    });
 
-      if (!loadResult.success) {
-        logger.log(
-          Utils.Logging.Formatter.warning(`Failed to load: ${loadResult.reason}`),
-          LABEL
-        );
-        return { success: false, reason: loadResult.reason };
-      }
-
-      const { graph, boardServer } = loadResult;
-
-      // 3. Prepare the graph
-      const prepared = await Helpers.prepareGraph(graph, {
-        moduleId: options.moduleId,
-        subGraphId: options.subGraphId,
-        googleDriveClient: services.googleDriveClient,
-      });
-
-      // 4. Check for race condition - URL changed during async operations
-      if (controller.editor.graph.url !== urlAtStart) {
-        logger.log(
-          Utils.Logging.Formatter.info("URL changed during load, aborting"),
-          LABEL
-        );
-        return { success: false, reason: "race-condition" };
-      }
-
-      // 5. Check version for shared graphs
-      const isMineCheck = (u: string | undefined) =>
-        u ? boardServer.isMine(new URL(u)) : false;
-      const versionInfo = await Helpers.checkVersion(
-        graph.url,
-        boardServer,
-        controller.board.main,
-        { isMine: isMineCheck }
-      );
-
-      const version = versionInfo?.version ?? -1;
-      const lastLoadedVersion = versionInfo?.lastLoadedVersion ?? -1;
-
-      // 6. Load edit history from BoardController
-      await controller.board.main.isHydrated;
-      const history = controller.board.main.getEditHistory(resolvedUrl);
-
-      // 7. Load results if resultsFileId provided
-      let finalOutputValues: OutputValues | undefined;
-      if (options.resultsFileId && services.googleDriveClient) {
-        const resultsResult = await Helpers.loadResults(
-          options.resultsFileId,
-          services.googleDriveClient
-        );
-        if (resultsResult.success) {
-          finalOutputValues = resultsResult.finalOutputValues;
-        }
-      }
-
-      // 8. Initialize the editor
-      Helpers.initializeEditor(services.graphStore, controller.editor.graph, {
-        graph: prepared.graph,
-        moduleId: prepared.moduleId,
-        subGraphId: prepared.subGraphId,
-        url: resolvedUrl,
-        readOnly: !isMineCheck(resolvedUrl),
-        version,
-        lastLoadedVersion,
-        creator: options.creator,
-        history,
-        onHistoryChanged: (h) =>
-          controller.board.main.saveEditHistory(resolvedUrl, h),
-        finalOutputValues,
-      });
-
-      // 9. Reset run state for new graph (clear console entries from previous graph)
-      controller.run.main.resetOutput();
-
-      // 10. Update board controller state
-      if (versionInfo?.isNewer) {
-        controller.board.main.newerVersionAvailable = true;
-      }
-
-      // 11. Update global load state
-      controller.global.main.loadState = "Loaded";
-
+    if (!loadResult.success) {
       logger.log(
-        Utils.Logging.Formatter.info(`Loaded board: ${resolvedUrl}`),
+        Utils.Logging.Formatter.warning(`Failed to load: ${loadResult.reason}`),
         LABEL
       );
-
-      return { success: true };
+      return { success: false, reason: loadResult.reason };
     }
+
+    const { graph, boardServer } = loadResult;
+
+    // 3. Prepare the graph
+    const prepared = await Helpers.prepareGraph(graph, {
+      moduleId: options.moduleId,
+      subGraphId: options.subGraphId,
+      googleDriveClient: services.googleDriveClient,
+    });
+
+    // 4. Check for race condition - URL changed during async operations
+    if (controller.editor.graph.url !== urlAtStart) {
+      logger.log(
+        Utils.Logging.Formatter.info("URL changed during load, aborting"),
+        LABEL
+      );
+      return { success: false, reason: "race-condition" };
+    }
+
+    // 5. Check version for shared graphs
+    const isMineCheck = (u: string | undefined) =>
+      u ? boardServer.isMine(new URL(u)) : false;
+    const versionInfo = await Helpers.checkVersion(
+      graph.url,
+      boardServer,
+      controller.board.main,
+      { isMine: isMineCheck }
+    );
+
+    const version = versionInfo?.version ?? -1;
+    const lastLoadedVersion = versionInfo?.lastLoadedVersion ?? -1;
+
+    // 6. Load edit history from BoardController
+    await controller.board.main.isHydrated;
+    const history = controller.board.main.getEditHistory(resolvedUrl);
+
+    // 7. Load results if resultsFileId provided
+    let finalOutputValues: OutputValues | undefined;
+    if (options.resultsFileId && services.googleDriveClient) {
+      const resultsResult = await Helpers.loadResults(
+        options.resultsFileId,
+        services.googleDriveClient
+      );
+      if (resultsResult.success) {
+        finalOutputValues = resultsResult.finalOutputValues;
+      }
+    }
+
+    // 8. Initialize the editor
+    Helpers.initializeEditor(services.graphStore, controller.editor.graph, {
+      graph: prepared.graph,
+      moduleId: prepared.moduleId,
+      subGraphId: prepared.subGraphId,
+      url: resolvedUrl,
+      readOnly: !isMineCheck(resolvedUrl),
+      version,
+      lastLoadedVersion,
+      creator: options.creator,
+      history,
+      onHistoryChanged: (h) =>
+        controller.board.main.saveEditHistory(resolvedUrl, h),
+      finalOutputValues,
+    });
+
+    // 9. Reset run state for new graph (clear console entries from previous graph)
+    controller.run.main.resetOutput();
+
+    // 10. Update board controller state
+    if (versionInfo?.isNewer) {
+      controller.board.main.newerVersionAvailable = true;
+    }
+
+    // 11. Update global load state
+    controller.global.main.loadState = "Loaded";
+
+    logger.log(
+      Utils.Logging.Formatter.info(`Loaded board: ${resolvedUrl}`),
+      LABEL
+    );
+
+    return { success: true };
+  }
 );
 /* c8 ignore stop */
 
@@ -609,4 +610,3 @@ export const handleSaveStatus = asAction(
     }
   }
 );
-

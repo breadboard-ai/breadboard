@@ -119,7 +119,11 @@ suite("Step Actions", () => {
 
       assert.strictEqual(clearCalled, true, "Pending edit should be cleared");
       assert.strictEqual(toastShown, true, "Toast should be shown");
-      assert.strictEqual(toastType, ToastType.WARNING, "Toast should be a warning");
+      assert.strictEqual(
+        toastType,
+        ToastType.WARNING,
+        "Toast should be a warning"
+      );
       assert.ok(
         toastMessage.includes("discarded"),
         `Toast message should mention discarding, got: ${toastMessage}`
@@ -174,7 +178,13 @@ suite("Step Actions", () => {
           graph: {
             version: 5, // Matches
             graphAssets: new Map([
-              ["test/asset.txt", { path: "test/asset.txt", metadata: { title: "Old Title", type: "content" } }],
+              [
+                "test/asset.txt",
+                {
+                  path: "test/asset.txt",
+                  metadata: { title: "Old Title", type: "content" },
+                },
+              ],
             ]),
             editor: {
               apply: async () => ({ success: true }),
@@ -199,7 +209,11 @@ suite("Step Actions", () => {
 
       await stepActions.applyPendingAssetEdit();
 
-      assert.strictEqual(clearPendingAssetEditCalled, true, "clearPendingAssetEdit should be called when version matches");
+      assert.strictEqual(
+        clearPendingAssetEditCalled,
+        true,
+        "clearPendingAssetEdit should be called when version matches"
+      );
     });
 
     test("shows warning toast and discards asset edit when version mismatches", async () => {
@@ -239,9 +253,17 @@ suite("Step Actions", () => {
 
       await stepActions.applyPendingAssetEdit();
 
-      assert.strictEqual(clearCalled, true, "Pending asset edit should be cleared");
+      assert.strictEqual(
+        clearCalled,
+        true,
+        "Pending asset edit should be cleared"
+      );
       assert.strictEqual(toastShown, true, "Toast should be shown");
-      assert.strictEqual(toastType, ToastType.WARNING, "Toast should be a warning");
+      assert.strictEqual(
+        toastType,
+        ToastType.WARNING,
+        "Toast should be a warning"
+      );
     });
 
     test("does nothing when no pending asset edit", async () => {
@@ -317,9 +339,13 @@ suite("Step Actions", () => {
 
       console.warn = originalWarn;
 
-      assert.strictEqual(clearCalled, true, "Pending edit should still be cleared");
+      assert.strictEqual(
+        clearCalled,
+        true,
+        "Pending edit should still be cleared"
+      );
       assert.ok(
-        consoleWarnings.some(w => w.includes("no metadata")),
+        consoleWarnings.some((w) => w.includes("no metadata")),
         `Should warn about missing metadata, got: ${consoleWarnings.join(", ")}`
       );
     });
@@ -372,9 +398,13 @@ suite("Step Actions", () => {
 
       console.warn = originalWarn;
 
-      assert.strictEqual(clearCalled, true, "Pending edit should still be cleared");
+      assert.strictEqual(
+        clearCalled,
+        true,
+        "Pending edit should still be cleared"
+      );
       assert.ok(
-        consoleWarnings.some(w => w.includes("no metadata")),
+        consoleWarnings.some((w) => w.includes("no metadata")),
         `Should warn about missing metadata, got: ${consoleWarnings.join(", ")}`
       );
     });
@@ -401,10 +431,19 @@ suite("Step Actions", () => {
           graph: {
             version: 5,
             graphAssets: new Map([
-              ["test/asset.txt", { path: "test/asset.txt", metadata: { title: "Old", type: "content" } }],
+              [
+                "test/asset.txt",
+                {
+                  path: "test/asset.txt",
+                  metadata: { title: "Old", type: "content" },
+                },
+              ],
             ]),
             editor: {
-              apply: async () => ({ success: false, error: "Refs update failed" }),
+              apply: async () => ({
+                success: false,
+                error: "Refs update failed",
+              }),
             },
           },
         },
@@ -426,7 +465,7 @@ suite("Step Actions", () => {
 
       assert.strictEqual(clearCalled, true, "Pending edit should be cleared");
       assert.ok(
-        consoleWarnings.some(w => w.includes("Failed to update asset refs")),
+        consoleWarnings.some((w) => w.includes("Failed to update asset refs")),
         `Should warn about refs failure, got: ${consoleWarnings.join(", ")}`
       );
     });
@@ -436,7 +475,9 @@ suite("Step Actions", () => {
       let clearCalled = false;
 
       const mockTransformer = {
-        addEphemeralBlob: async () => ({ storedData: { handle: "blob:test", mimeType: "text/plain" } }),
+        addEphemeralBlob: async () => ({
+          storedData: { handle: "blob:test", mimeType: "text/plain" },
+        }),
         persistPart: async (_url: URL, part: unknown) => part,
         persistentToEphemeral: async (part: unknown) => part,
         toFileData: async (_url: URL, part: unknown) => part,
@@ -459,7 +500,13 @@ suite("Step Actions", () => {
             version: 5,
             url: "https://example.com/board.json",
             graphAssets: new Map([
-              ["test/asset.txt", { path: "test/asset.txt", metadata: { title: "Old", type: "content" } }],
+              [
+                "test/asset.txt",
+                {
+                  path: "test/asset.txt",
+                  metadata: { title: "Old", type: "content" },
+                },
+              ],
             ]),
             editor: {
               apply: async () => {
@@ -488,7 +535,11 @@ suite("Step Actions", () => {
       await stepActions.applyPendingAssetEdit();
 
       assert.strictEqual(clearCalled, true, "Pending edit should be cleared");
-      assert.strictEqual(applyCallCount, 2, "Should call apply twice: once for refs, once for data");
+      assert.strictEqual(
+        applyCallCount,
+        2,
+        "Should call apply twice: once for refs, once for data"
+      );
     });
 
     test("warns when UpdateAssetData fails", async () => {
@@ -498,7 +549,9 @@ suite("Step Actions", () => {
       console.warn = (msg: string) => consoleWarnings.push(msg);
 
       const mockTransformer = {
-        addEphemeralBlob: async () => ({ storedData: { handle: "blob:test", mimeType: "text/plain" } }),
+        addEphemeralBlob: async () => ({
+          storedData: { handle: "blob:test", mimeType: "text/plain" },
+        }),
         persistPart: async (_url: URL, part: unknown) => part,
         persistentToEphemeral: async (part: unknown) => part,
         toFileData: async (_url: URL, part: unknown) => part,
@@ -519,7 +572,13 @@ suite("Step Actions", () => {
             version: 5,
             url: "https://example.com/board.json",
             graphAssets: new Map([
-              ["test/asset.txt", { path: "test/asset.txt", metadata: { title: "Old", type: "content" } }],
+              [
+                "test/asset.txt",
+                {
+                  path: "test/asset.txt",
+                  metadata: { title: "Old", type: "content" },
+                },
+              ],
             ]),
             editor: {
               apply: async () => {
@@ -554,10 +613,9 @@ suite("Step Actions", () => {
 
       assert.strictEqual(applyCallCount, 2, "Should call apply twice");
       assert.ok(
-        consoleWarnings.some(w => w.includes("Failed to update asset data")),
+        consoleWarnings.some((w) => w.includes("Failed to update asset data")),
         `Should warn about data update failure, got: ${consoleWarnings.join(", ")}`
       );
     });
   });
 });
-

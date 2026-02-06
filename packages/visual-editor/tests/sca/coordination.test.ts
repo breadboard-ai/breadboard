@@ -7,10 +7,7 @@
 import { suite, it, beforeEach, mock } from "node:test";
 import assert from "node:assert";
 
-import {
-  coordination,
-  ActionMode,
-} from "../../src/sca/coordination.js";
+import { coordination, ActionMode } from "../../src/sca/coordination.js";
 
 /** Helper to yield to the microtask queue */
 const microtask = () => new Promise<void>((resolve) => queueMicrotask(resolve));
@@ -27,7 +24,9 @@ suite("CoordinationRegistry", () => {
   suite("Trigger Lifecycle", () => {
     it("enterTrigger adds to active list", () => {
       const done = coordination.enterTrigger("Test Trigger");
-      assert.deepStrictEqual(coordination.listActiveTriggers(), ["Test Trigger"]);
+      assert.deepStrictEqual(coordination.listActiveTriggers(), [
+        "Test Trigger",
+      ]);
       done();
     });
 
@@ -92,7 +91,11 @@ suite("CoordinationRegistry", () => {
   suite("Action Registration", () => {
     it("register returns callable function", async () => {
       const mockFn = mock.fn(async () => "result");
-      const action = coordination.registerAction("Test.action", ActionMode.Immediate, mockFn);
+      const action = coordination.registerAction(
+        "Test.action",
+        ActionMode.Immediate,
+        mockFn
+      );
 
       const result = await action();
       assert.strictEqual(result, "result");
@@ -100,16 +103,29 @@ suite("CoordinationRegistry", () => {
     });
 
     it("registered actions appear in list()", () => {
-      coordination.registerAction("Action.one", ActionMode.Immediate, async () => {});
-      coordination.registerAction("Action.two", ActionMode.Awaits, async () => {});
-      coordination.registerAction("Action.three", ActionMode.Exclusive, async () => {});
+      coordination.registerAction(
+        "Action.one",
+        ActionMode.Immediate,
+        async () => {}
+      );
+      coordination.registerAction(
+        "Action.two",
+        ActionMode.Awaits,
+        async () => {}
+      );
+      coordination.registerAction(
+        "Action.three",
+        ActionMode.Exclusive,
+        async () => {}
+      );
 
       const actions = coordination.listRegisteredActions();
       assert.strictEqual(actions.length, 3);
-      assert.deepStrictEqual(
-        actions.map((a) => a.name).sort(),
-        ["Action.one", "Action.three", "Action.two"]
-      );
+      assert.deepStrictEqual(actions.map((a) => a.name).sort(), [
+        "Action.one",
+        "Action.three",
+        "Action.two",
+      ]);
     });
 
     it("immediate mode executes without waiting", async () => {
@@ -125,14 +141,20 @@ suite("CoordinationRegistry", () => {
 
       // Immediate action runs even with active trigger
       const mockFn = mock.fn(async () => "immediate-result");
-      const action = coordination.registerAction("Test.immediate", ActionMode.Immediate, mockFn);
+      const action = coordination.registerAction(
+        "Test.immediate",
+        ActionMode.Immediate,
+        mockFn
+      );
 
       const result = await action();
       assert.strictEqual(result, "immediate-result");
       assert.strictEqual(mockFn.mock.callCount(), 1);
 
       // Trigger is still active but action completed
-      assert.deepStrictEqual(coordination.listActiveTriggers(), ["Blocking Trigger"]);
+      assert.deepStrictEqual(coordination.listActiveTriggers(), [
+        "Blocking Trigger",
+      ]);
 
       // Cleanup
       doneFn();
@@ -140,9 +162,13 @@ suite("CoordinationRegistry", () => {
 
     it("awaits mode waits when triggers are active", async () => {
       // Create an awaits action
-      const action = coordination.registerAction("Test.awaits", ActionMode.Awaits, async () => {
-        return "awaits-result";
-      });
+      const action = coordination.registerAction(
+        "Test.awaits",
+        ActionMode.Awaits,
+        async () => {
+          return "awaits-result";
+        }
+      );
 
       // Start trigger
       const done = coordination.enterTrigger("Save Trigger");
@@ -201,9 +227,13 @@ suite("CoordinationRegistry", () => {
 
   suite("Trigger-Action Coordination", () => {
     it("awaits action waits when trigger is pre-existing", async () => {
-      const action = coordination.registerAction("Test.action", ActionMode.Awaits, async () => {
-        return "done";
-      });
+      const action = coordination.registerAction(
+        "Test.action",
+        ActionMode.Awaits,
+        async () => {
+          return "done";
+        }
+      );
 
       // Start trigger
       const done = coordination.enterTrigger("Pre-existing Trigger");
@@ -222,13 +252,17 @@ suite("CoordinationRegistry", () => {
 
     it("awaits action does NOT wait for trigger started after it", async () => {
       // Create action first
-      const action = coordination.registerAction("Test.action", ActionMode.Awaits, async () => {
-        // Start a trigger during action execution
-        const done = coordination.enterTrigger("Later Trigger");
-        await new Promise((r) => setTimeout(r, 10));
-        done();
-        return "done";
-      });
+      const action = coordination.registerAction(
+        "Test.action",
+        ActionMode.Awaits,
+        async () => {
+          // Start a trigger during action execution
+          const done = coordination.enterTrigger("Later Trigger");
+          await new Promise((r) => setTimeout(r, 10));
+          done();
+          return "done";
+        }
+      );
 
       // No triggers active when action starts
       const result = await action();
@@ -236,9 +270,13 @@ suite("CoordinationRegistry", () => {
     });
 
     it("awaits action waits for all active triggers", async () => {
-      const action = coordination.registerAction("Test.action", ActionMode.Awaits, async () => {
-        return "done";
-      });
+      const action = coordination.registerAction(
+        "Test.action",
+        ActionMode.Awaits,
+        async () => {
+          return "done";
+        }
+      );
 
       // Start multiple triggers
       const done1 = coordination.enterTrigger("Trigger 1");
@@ -268,14 +306,20 @@ suite("CoordinationRegistry", () => {
 
       const doneFn = await triggerWork();
 
-      const action = coordination.registerAction("Test.immediate", ActionMode.Immediate, async () => {
-        // Should run even with active trigger
-        return "immediate-done";
-      });
+      const action = coordination.registerAction(
+        "Test.immediate",
+        ActionMode.Immediate,
+        async () => {
+          // Should run even with active trigger
+          return "immediate-done";
+        }
+      );
 
       const result = await action();
       assert.strictEqual(result, "immediate-done");
-      assert.deepStrictEqual(coordination.listActiveTriggers(), ["Active Trigger"]);
+      assert.deepStrictEqual(coordination.listActiveTriggers(), [
+        "Active Trigger",
+      ]);
 
       doneFn();
     });
@@ -316,20 +360,32 @@ suite("CoordinationRegistry", () => {
     it("queued exclusive actions run in order", async () => {
       const order: number[] = [];
 
-      const action1 = coordination.registerAction("Exclusive.1", ActionMode.Exclusive, async () => {
-        await new Promise((r) => setTimeout(r, 30));
-        order.push(1);
-      });
+      const action1 = coordination.registerAction(
+        "Exclusive.1",
+        ActionMode.Exclusive,
+        async () => {
+          await new Promise((r) => setTimeout(r, 30));
+          order.push(1);
+        }
+      );
 
-      const action2 = coordination.registerAction("Exclusive.2", ActionMode.Exclusive, async () => {
-        await new Promise((r) => setTimeout(r, 10));
-        order.push(2);
-      });
+      const action2 = coordination.registerAction(
+        "Exclusive.2",
+        ActionMode.Exclusive,
+        async () => {
+          await new Promise((r) => setTimeout(r, 10));
+          order.push(2);
+        }
+      );
 
-      const action3 = coordination.registerAction("Exclusive.3", ActionMode.Exclusive, async () => {
-        await new Promise((r) => setTimeout(r, 5));
-        order.push(3);
-      });
+      const action3 = coordination.registerAction(
+        "Exclusive.3",
+        ActionMode.Exclusive,
+        async () => {
+          await new Promise((r) => setTimeout(r, 5));
+          order.push(3);
+        }
+      );
 
       // Start all at once - they should run in sequence
       await Promise.all([action1(), action2(), action3()]);
@@ -365,7 +421,11 @@ suite("CoordinationRegistry", () => {
       await exclusivePromise;
 
       // Immediate should have run during exclusive
-      assert.deepStrictEqual(events, ["exclusive-start", ActionMode.Immediate, "exclusive-end"]);
+      assert.deepStrictEqual(events, [
+        "exclusive-start",
+        ActionMode.Immediate,
+        "exclusive-end",
+      ]);
     });
   });
 
@@ -385,9 +445,13 @@ suite("CoordinationRegistry", () => {
     it("call stack updates on action entry/exit", async () => {
       const stacks: string[][] = [];
 
-      const action = coordination.registerAction("Test.action", ActionMode.Immediate, async () => {
-        stacks.push([...coordination.getCallStack()]);
-      });
+      const action = coordination.registerAction(
+        "Test.action",
+        ActionMode.Immediate,
+        async () => {
+          stacks.push([...coordination.getCallStack()]);
+        }
+      );
 
       await action();
       stacks.push([...coordination.getCallStack()]);
@@ -429,7 +493,6 @@ suite("CoordinationRegistry", () => {
     });
   });
 
-
   // =========================================================================
   // Trigger-Action Conflict Detection
   // =========================================================================
@@ -443,9 +506,13 @@ suite("CoordinationRegistry", () => {
     });
 
     it("awaits action waits while trigger is active", async () => {
-      const action = coordination.registerAction("Conflict.action", ActionMode.Awaits, async () => {
-        return "waited successfully";
-      });
+      const action = coordination.registerAction(
+        "Conflict.action",
+        ActionMode.Awaits,
+        async () => {
+          return "waited successfully";
+        }
+      );
 
       const done = coordination.enterTrigger("Active Trigger");
 
@@ -462,9 +529,13 @@ suite("CoordinationRegistry", () => {
     });
 
     it("exclusive action waits while trigger is active", async () => {
-      const action = coordination.registerAction("Exclusive.conflict", ActionMode.Exclusive, async () => {
-        return "waited";
-      });
+      const action = coordination.registerAction(
+        "Exclusive.conflict",
+        ActionMode.Exclusive,
+        async () => {
+          return "waited";
+        }
+      );
 
       const done = coordination.enterTrigger("Background Trigger");
 
@@ -482,14 +553,18 @@ suite("CoordinationRegistry", () => {
 
     it("cycle detection throws when same action re-enters", async () => {
       let callCount = 0;
-      const action = coordination.registerAction("Cyclic.action", ActionMode.Awaits, async () => {
-        callCount++;
-        if (callCount === 1) {
-          // First call tries to call itself again
-          await action();
+      const action = coordination.registerAction(
+        "Cyclic.action",
+        ActionMode.Awaits,
+        async () => {
+          callCount++;
+          if (callCount === 1) {
+            // First call tries to call itself again
+            await action();
+          }
+          return "done";
         }
-        return "done";
-      });
+      );
 
       // Should throw with cycle detection error
       await assert.rejects(
@@ -504,9 +579,13 @@ suite("CoordinationRegistry", () => {
     });
 
     it("awaits action works when no triggers are active", async () => {
-      const action = coordination.registerAction("NoConflict.action", ActionMode.Awaits, async () => {
-        return "success";
-      });
+      const action = coordination.registerAction(
+        "NoConflict.action",
+        ActionMode.Awaits,
+        async () => {
+          return "success";
+        }
+      );
 
       // No triggers active
       const result = await action();
@@ -514,9 +593,13 @@ suite("CoordinationRegistry", () => {
     });
 
     it("awaits action works after trigger completes", async () => {
-      const action = coordination.registerAction("AfterTrigger.action", ActionMode.Awaits, async () => {
-        return "success";
-      });
+      const action = coordination.registerAction(
+        "AfterTrigger.action",
+        ActionMode.Awaits,
+        async () => {
+          return "success";
+        }
+      );
 
       // Start and complete trigger
       const done = coordination.enterTrigger("Quick Trigger");
@@ -528,9 +611,13 @@ suite("CoordinationRegistry", () => {
     });
 
     it("immediate mode works while trigger is active", async () => {
-      const action = coordination.registerAction("Immediate.ok", ActionMode.Immediate, async () => {
-        return "immediate success";
-      });
+      const action = coordination.registerAction(
+        "Immediate.ok",
+        ActionMode.Immediate,
+        async () => {
+          return "immediate success";
+        }
+      );
 
       const done = coordination.enterTrigger("Active Trigger");
 
@@ -542,15 +629,18 @@ suite("CoordinationRegistry", () => {
     });
 
     it("immediate mode works when no triggers active", async () => {
-      const action = coordination.registerAction("Immediate.noTrigger", ActionMode.Immediate, async () => {
-        return "immediate result";
-      });
+      const action = coordination.registerAction(
+        "Immediate.noTrigger",
+        ActionMode.Immediate,
+        async () => {
+          return "immediate result";
+        }
+      );
 
       const result = await action();
       assert.strictEqual(result, "immediate result");
     });
   });
-
 
   // =========================================================================
   // Edge Cases
@@ -558,9 +648,13 @@ suite("CoordinationRegistry", () => {
 
   suite("Edge Cases", () => {
     it("action called with no active triggers proceeds immediately", async () => {
-      const action = coordination.registerAction("Test.action", ActionMode.Awaits, async () => {
-        return ActionMode.Immediate;
-      });
+      const action = coordination.registerAction(
+        "Test.action",
+        ActionMode.Awaits,
+        async () => {
+          return ActionMode.Immediate;
+        }
+      );
 
       const result = await action();
       assert.strictEqual(result, ActionMode.Immediate);
@@ -582,9 +676,13 @@ suite("CoordinationRegistry", () => {
     });
 
     it("action that throws still removed from call stack", async () => {
-      const action = coordination.registerAction("Throwing.action", ActionMode.Immediate, async () => {
-        throw new Error("Action error");
-      });
+      const action = coordination.registerAction(
+        "Throwing.action",
+        ActionMode.Immediate,
+        async () => {
+          throw new Error("Action error");
+        }
+      );
 
       await assert.rejects(() => action(), { message: "Action error" });
 
@@ -601,9 +699,13 @@ suite("CoordinationRegistry", () => {
         }
       );
 
-      const action2 = coordination.registerAction("Next.exclusive", ActionMode.Exclusive, async () => {
-        return "success";
-      });
+      const action2 = coordination.registerAction(
+        "Next.exclusive",
+        ActionMode.Exclusive,
+        async () => {
+          return "success";
+        }
+      );
 
       // First action fails
       await assert.rejects(() => action1());
@@ -616,7 +718,11 @@ suite("CoordinationRegistry", () => {
     it("reset() clears all state", async () => {
       coordination.enterTrigger("Trigger 1");
       coordination.enterTrigger("Trigger 2");
-      coordination.registerAction("Action 1", ActionMode.Immediate, async () => {});
+      coordination.registerAction(
+        "Action 1",
+        ActionMode.Immediate,
+        async () => {}
+      );
 
       coordination.reset();
 

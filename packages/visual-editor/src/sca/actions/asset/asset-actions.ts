@@ -130,7 +130,9 @@ export const update = asAction(
 export async function persistDataParts(
   urlString: string | null,
   contents: LLMContent[],
-  transformer: ReturnType<typeof bind.services.googleDriveBoardServer.dataPartTransformer>
+  transformer: ReturnType<
+    typeof bind.services.googleDriveBoardServer.dataPartTransformer
+  >
 ): Promise<LLMContent[]> {
   if (!urlString) {
     console.warn("Can't persist blob without graph URL");
