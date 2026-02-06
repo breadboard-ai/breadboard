@@ -11,6 +11,7 @@ import { Project } from "../../../state/index.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { getAssetType } from "../../../utils/mime-type.js";
 import {
+  hasNotebookLMAsset,
   isInlineData,
   isLLMContent,
   isLLMContentArray,
@@ -73,7 +74,24 @@ export function createChiclets(
   }
 
   const chiclets: HTMLTemplateResult[] = [];
+
+  // Check if input value contains NotebookLM assets and add chiclet if found
+  // IMPORTANT: Must check port.value (the original LLMContent) before it's transformed
+  // to a string via valStr, otherwise StoredData parts with nlm:/ assets are lost
+  if (hasNotebookLMAsset(port.value)) {
+    chiclets.push(
+      html`<label class="chiclet tool">
+        <span
+          class="g-icon filled round notebooklm"
+          data-icon="notebooklm"
+        ></span>
+        <span>NotebookLM</span>
+      </label>`
+    );
+  }
+
   const template = new Template(valStr);
+
   template.placeholders.forEach((part) => {
     const { type, path, title, invalid, mimeType, instance } = part;
     const assetType = getAssetType(mimeType) ?? "";

@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { err } from "@breadboard-ai/utils";
+import { DataPart } from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
 import z from "zod";
 import { tr } from "../../a2/utils.js";
 import {
@@ -12,6 +13,7 @@ import {
   FunctionDefinition,
   mapDefinitions,
 } from "../function-definition.js";
+import { AgentFileSystem } from "../file-system.js";
 import { FunctionGroup } from "../types.js";
 import { statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
@@ -36,6 +38,7 @@ const NOTEBOOKLM_GENERATE_ANSWER_FUNCTION = "notebooklm_generate_answer";
 export type NotebookLMFunctionArgs = {
   notebookLmApiClient: NotebookLmApiClient;
   taskTreeManager: TaskTreeManager;
+  fileSystem: AgentFileSystem;
 };
 
 const instruction = tr`
@@ -45,39 +48,20 @@ const instruction = tr`
 You have access to NotebookLM notebooks as knowledge sources. When the objective
 references a NotebookLM notebook (indicated by an nlm:/ reference), you can:
 
-1. Use "${NOTEBOOKLM_RETRIEVE_CHUNKS_FUNCTION}" to retrieve relevant information 
-   based on a query.
-
-2. Use "${NOTEBOOKLM_GENERATE_ANSWER_FUNCTION}" to generate a comprehensive answer 
+1. Use "${NOTEBOOKLM_GENERATE_ANSWER_FUNCTION}" to generate a comprehensive answer 
    to a question using the notebook's AI chat functionality. This is useful when 
    you need the notebook to synthesize information and provide a direct answer.
+
+2. Use "${NOTEBOOKLM_RETRIEVE_CHUNKS_FUNCTION}" to retrieve relevant source
+   material from the notebook (text, images, or audio) based on a query. This is
+   useful when you want to retrieve source documents/content, not jsut get a
+   summary (use this like a RAG system for the notebook content).  Each
+   retrieval is limited to a token budget, so it may be useful to make multiple
+   more narrow queries if you need more information.
 
 The nlm:/ reference format is "nlm:/{notebook_id}" where "{notebook_id}" is the 
 ID you should pass to the function (without the "nlm:/" prefix).
 `;
-
-// Schema for a content piece (text, image, or audio)
-const contentPieceSchema = z
-  .object({
-    text: z.string().optional().describe("Text content"),
-    image: z
-      .object({
-        url: z.string().optional().describe("URL to the image"),
-        data: z.string().optional().describe("Base64 encoded image data"),
-        mime_type: z.string().optional().describe("MIME type of the image"),
-      })
-      .optional()
-      .describe("Image reference"),
-    audio: z
-      .object({
-        url: z.string().optional().describe("URL to the audio"),
-        data: z.string().optional().describe("Base64 encoded audio data"),
-        mime_type: z.string().optional().describe("MIME type of the audio"),
-      })
-      .optional()
-      .describe("Audio reference"),
-  })
-  .describe("A piece of content (text, image, or audio)");
 
 function getNotebookLMFunctionGroup(
   args: NotebookLMFunctionArgs
@@ -89,46 +73,81 @@ function getNotebookLMFunctionGroup(
 }
 
 /**
- * Converts a ContentPiece from the API response to a serializable format.
+ * Converts ContentPieces from the API response to text content and file paths.
+ * Text is returned as strings, media is stored in the file system and paths are returned.
  */
-function formatContentPiece(piece: ContentPiece): {
-  text?: string;
-  image?: { url?: string; data?: string; mime_type?: string };
-  audio?: { url?: string; data?: string; mime_type?: string };
+function processContentPieces(
+  pieces: ContentPiece[],
+  fileSystem: AgentFileSystem
+): {
+  textContent: string[];
+  mediaPaths: string[];
+  errors: string[];
 } {
-  const result: {
-    text?: string;
-    image?: { url?: string; data?: string; mime_type?: string };
-    audio?: { url?: string; data?: string; mime_type?: string };
-  } = {};
+  const textContent: string[] = [];
+  const mediaPaths: string[] = [];
+  const errors: string[] = [];
 
-  if (piece.text !== undefined) {
-    result.text = piece.text;
+  const addToFileSystem = (part: DataPart): void => {
+    const path = fileSystem.add(part);
+    if (ok(path)) {
+      mediaPaths.push(path);
+    } else {
+      errors.push(path.$error);
+    }
+  };
+
+  for (const piece of pieces) {
+    if (piece.text !== undefined) {
+      textContent.push(piece.text);
+    }
+
+    if (piece.image) {
+      const mimeType = piece.image.mimeType ?? "image/png";
+      if (piece.image.blobId) {
+        const handle = new URL(
+          `/board/blobs/${piece.image.blobId}`,
+          window.location.href
+        ).href;
+        addToFileSystem({
+          storedData: { handle, mimeType },
+        });
+      } else if (piece.image.url) {
+        addToFileSystem({
+          fileData: { fileUri: piece.image.url, mimeType },
+        });
+      } else if (piece.image.data) {
+        addToFileSystem({ inlineData: { data: piece.image.data, mimeType } });
+      }
+    }
+
+    if (piece.audio) {
+      const mimeType = piece.audio.mimeType ?? "audio/mpeg";
+      if (piece.audio.blobId) {
+        const handle = new URL(
+          `/board/blobs/${piece.audio.blobId}`,
+          window.location.href
+        ).href;
+        addToFileSystem({
+          storedData: { handle, mimeType },
+        });
+      } else if (piece.audio.url) {
+        addToFileSystem({
+          fileData: { fileUri: piece.audio.url, mimeType },
+        });
+      } else if (piece.audio.data) {
+        addToFileSystem({ inlineData: { data: piece.audio.data, mimeType } });
+      }
+    }
   }
 
-  if (piece.image) {
-    result.image = {
-      url: piece.image.url ?? piece.image.blobId,
-      data: piece.image.data,
-      mime_type: piece.image.mimeType,
-    };
-  }
-
-  if (piece.audio) {
-    result.audio = {
-      url: piece.audio.url ?? piece.audio.blobId,
-      data: piece.audio.data,
-      mime_type: piece.audio.mimeType,
-    };
-  }
-
-  return result;
+  return { textContent, mediaPaths, errors };
 }
 
 function defineNotebookLMFunctions(
   args: NotebookLMFunctionArgs
 ): FunctionDefinition[] {
-  const { notebookLmApiClient, taskTreeManager } = args;
+  const { notebookLmApiClient, taskTreeManager, fileSystem } = args;
 
   return [
     defineFunction(
@@ -165,10 +184,14 @@ specific about what information you're looking for.`
                   .string()
                   .optional()
                   .describe("Timestamp when the source was created"),
-                content: z
-                  .array(contentPieceSchema)
+                text_content: z
+                  .array(z.string())
+                  .describe("The text content from the chunk"),
+                media_paths: z
+                  .array(z.string())
+                  .optional()
                   .describe(
-                    "The content pieces from the chunk (may include text, images, or audio)"
+                    "File paths for multimodal content (images, audio) stored in the agent file system"
                   ),
               })
             )
@@ -183,7 +206,8 @@ specific about what information you're looking for.`
             await notebookLmApiClient.retrieveRelevantChunks({
               name: `notebooks/${notebook_id}`,
               query,
-              contextTokenBudget: 1000,
+              // TODO: decide what to do about budget
+              // contextTokenBudget: 1000000,
               provenance: {
                 originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
                 clientInfo: {
@@ -193,16 +217,28 @@ specific about what information you're looking for.`
               },
             });
 
-          // Format the response for LLM consumption, including multimodal content
+          // Format the response for LLM consumption
+          // Store media in file system and return paths so Gemini can reference them
+          const allErrors: string[] = [];
           const chunks = response.sourceContexts.flatMap(
             (sourceContext: SourceContext) =>
-              sourceContext.chunks.map((chunk) => ({
-                source_name: sourceContext.sourceName,
-                source_display_name: sourceContext.source?.displayName,
-                source_create_time: sourceContext.source?.createTime,
-                content: chunk.content.pieces.map(formatContentPiece),
-              }))
+              sourceContext.chunks.map((chunk) => {
+                const { textContent, mediaPaths, errors } =
+                  processContentPieces(chunk.content?.pieces ?? [], fileSystem);
+                allErrors.push(...errors);
+                return {
+                  source_name: sourceContext.sourceName,
+                  source_display_name: sourceContext.source?.displayName,
+                  source_create_time: sourceContext.source?.createTime,
+                  text_content: textContent,
+                  media_paths: mediaPaths.length > 0 ? mediaPaths : undefined,
+                };
+              })
           );
+
+          if (allErrors.length > 0) {
+            return err(`Failed to store media: ${allErrors.join(", ")}`);
+          }
 
           return { chunks };
         } catch (error) {
@@ -216,19 +252,19 @@ specific about what information you're looking for.`
       {
         name: NOTEBOOKLM_GENERATE_ANSWER_FUNCTION,
         icon: "notebooklm",
-        description: tr`Generates an answer to a question using a NotebookLM notebook's 
-chat functionality. The notebook's AI will synthesize information from its sources 
-to provide a comprehensive answer. Use this when you need a direct answer rather 
-than raw chunks of content.`,
+        description: tr`Generates an answer to a question using a NotebookLM notebook's
+    chat functionality. The notebook's AI will synthesize information from its sources
+    to provide a comprehensive answer. Use this when you need a direct answer rather
+    than raw chunks of content.`,
         parameters: {
           notebook_id: z.string().describe(
-            tr`The NotebookLM notebook ID. Extract this from the nlm:/ reference 
-by removing the "nlm:/" prefix. For example, if the reference is 
-"nlm:/abc123", pass "abc123" as the notebook_id.`
+            tr`The NotebookLM notebook ID. Extract this from the nlm:/ reference
+    by removing the "nlm:/" prefix. For example, if the reference is
+    "nlm:/abc123", pass "abc123" as the notebook_id.`
           ),
           query: z.string().describe(
-            tr`The question to ask the notebook. Be specific about what 
-information you're looking for.`
+            tr`The question to ask the notebook. Be specific about what
+    information you're looking for.`
           ),
           ...taskIdSchema,
           ...statusUpdateSchema,

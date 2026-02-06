@@ -100,6 +100,29 @@ export function isLLMContentArray(
   );
 }
 
+/**
+ * Checks if a value contains any NotebookLM assets (nlm:/ protocol).
+ * Supports single LLMContent, LLMContent arrays, or unknown values.
+ */
+export function hasNotebookLMAsset(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+
+  const contents = isLLMContentArray(value)
+    ? value
+    : isLLMContent(value)
+      ? [value]
+      : [];
+
+  for (const content of contents) {
+    for (const part of content.parts) {
+      if (isStoredData(part) && part.storedData.handle?.startsWith("nlm:/")) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 export function isMetadataEntry(nodeValue: LLMContent) {
   return nodeValue.role === "$metadata";
 }

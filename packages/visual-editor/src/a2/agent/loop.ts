@@ -227,12 +227,16 @@ class Loop {
         );
       }
       if (objectivePidgin.useNotebookLM) {
-        functionGroups.push(
-          getNotebookLMFunctionGroup({
-            notebookLmApiClient: moduleArgs.notebookLmApiClient,
-            taskTreeManager,
-          })
-        );
+        const enableNotebookLm = runtimeFlags?.enableNotebookLm ?? false;
+        if (enableNotebookLm) {
+          functionGroups.push(
+            getNotebookLMFunctionGroup({
+              notebookLmApiClient: moduleArgs.notebookLmApiClient,
+              taskTreeManager,
+              fileSystem,
+            })
+          );
+        }
       }
 
       if (uiType === "a2ui") {

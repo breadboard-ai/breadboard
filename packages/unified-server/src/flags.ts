@@ -142,6 +142,8 @@ export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
 
 export const ENABLE_RESUME_AGENT_RUN = getBoolean("ENABLE_RESUME_AGENT_RUN");
 
+export const ENABLE_NOTEBOOK_LM = getBoolean("ENABLE_NOTEBOOK_LM");
+
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
   return process.env[flagName] ?? "";

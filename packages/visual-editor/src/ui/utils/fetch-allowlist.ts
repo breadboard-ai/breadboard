@@ -45,6 +45,7 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
     shouldAddAccessTokenToJsonBody: (url: string) =>
       url.endsWith("/uploadGeminiFile") ||
       url.endsWith("/uploadBlobFile") ||
+      url.endsWith("/nlmRetrieveRelevantChunks") ||
       url.includes("/generateWebpageStream"),
   },
   {
