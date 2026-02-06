@@ -62,7 +62,7 @@ function makeSpeechInstruction(inputs: Record<string, unknown>) {
 
 async function callAudioGen(
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   prompt: string,
   voice: VoiceOption
 ): Promise<Outcome<LLMContent>> {
@@ -98,11 +98,6 @@ async function callAudioGen(
     },
     execution_inputs: executionInputs,
   };
-  const reporter = createReporter(moduleArgs, {
-    title: `Calling tts`,
-    icon: "spark",
-  });
-  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
   const response = await executeStep(caps, args, body);
   if (!ok(response)) return response;
 
@@ -151,9 +146,14 @@ async function invoke(
     };
   }
   console.log("PROMPT: ", combinedInstruction);
+  const reporter = createReporter(moduleArgs, {
+    title: `Generating Speech`,
+    icon: "audio_magic_eraser",
+  });
+  const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
   const result = await callAudioGen(
     caps,
-    moduleArgs,
+    executeStepArgs,
     combinedInstruction,
     voice
   );

@@ -105,7 +105,7 @@ function makeVideoInstruction(inputs: Record<string, unknown>) {
 
 async function callVideoGen(
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   prompt: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
@@ -137,7 +137,7 @@ async function callVideoGen(
       let imageChunk;
       if (isStoredData(element)) {
         const blobStoredData = await driveFileToBlob(
-          moduleArgs,
+          args,
           element.parts.at(-1)!
         );
         if (!ok(blobStoredData)) return blobStoredData;
@@ -175,11 +175,6 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   };
-  const reporter = createReporter(moduleArgs, {
-    title: `Calling generate_video`,
-    icon: "spark",
-  });
-  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
   const response = await executeStep(caps, args, body, {
     expectedDurationInSec: 70,
   });
@@ -259,9 +254,14 @@ async function invoke(
   console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
 
   // 2) Call backend to generate video.
+  const reporter = createReporter(moduleArgs, {
+    title: `Generating Video`,
+    icon: "videocam_auto",
+  });
+  const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
   const content = await callVideoGen(
     caps,
-    moduleArgs,
+    executeStepArgs,
     combinedInstruction,
     imageContext,
     disablePromptRewrite,

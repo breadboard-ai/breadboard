@@ -26,7 +26,6 @@ import {
 } from "./utils.js";
 import { driveFileToBlob, toGcsAwareChunk } from "./data-transforms.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { createReporter } from "../agent/progress-work-item.js";
 
 export { callGeminiImage, callImageGen, promptExpander };
 
@@ -36,7 +35,7 @@ const API_NAME = "ai_image_tool";
 
 async function callGeminiImage(
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   modelName: string,
   instruction: string,
   imageContent: LLMContent[],
@@ -47,10 +46,7 @@ async function callGeminiImage(
   for (const element of imageContent) {
     let inlineChunk: InlineDataCapabilityPart["inlineData"] | null | "";
     if (isStoredData(element)) {
-      const blobStoredData = await driveFileToBlob(
-        moduleArgs,
-        element.parts.at(-1)!
-      );
+      const blobStoredData = await driveFileToBlob(args, element.parts.at(-1)!);
       if (!ok(blobStoredData)) return blobStoredData;
       imageChunks.push(toGcsAwareChunk(blobStoredData));
     } else {
@@ -109,11 +105,6 @@ async function callGeminiImage(
     },
     execution_inputs: executionInputs,
   };
-  const reporter = createReporter(moduleArgs, {
-    title: `Calling ${API_NAME}`,
-    icon: "spark",
-  });
-  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
   const response = await executeStep(caps, args, body, {
     expectedDurationInSec: 50,
   });
@@ -124,7 +115,7 @@ async function callGeminiImage(
 
 async function callImageGen(
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   imageInstruction: string,
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
@@ -156,11 +147,6 @@ async function callImageGen(
     },
     execution_inputs: executionInputs,
   };
-  const reporter = createReporter(moduleArgs, {
-    title: `Calling image_generation`,
-    icon: "spark",
-  });
-  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
   const response = await executeStep(caps, args, body, {
     expectedDurationInSec: 50,
   });
