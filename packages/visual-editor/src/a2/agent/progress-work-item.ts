@@ -15,6 +15,7 @@ import { now } from "./now.js";
 import type { ErrorMetadata } from "../a2/utils.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import type { ProgressReporter } from "./types.js";
 
 export { ProgressWorkItem, createReporter, getCurrentStepState };
 export type { ProgressReporter };
@@ -23,19 +24,6 @@ export type Link = {
   uri: string;
   title: string;
   iconUri: string;
-};
-
-/**
- * Interface for reporting step execution progress.
- * This is used by executeStep to log step input/output and errors.
- */
-type ProgressReporter = {
-  addJson(title: string, data: unknown, icon?: string): void;
-  addError(error: { $error: string; metadata?: ErrorMetadata }): {
-    $error: string;
-    metadata?: ErrorMetadata;
-  };
-  finish(): void;
 };
 
 class ProgressWorkItem implements WorkItem {

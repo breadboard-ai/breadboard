@@ -10,6 +10,7 @@ import { Outcome, Schema } from "@breadboard-ai/types";
 import { z, ZodObject, ZodType } from "zod";
 import { FunctionDeclaration, GeminiSchema } from "../a2/gemini.js";
 import { MappedDefinitions } from "./types.js";
+import type { ProgressReporter } from "./types.js";
 
 export {
   defineFunction,
@@ -62,7 +63,8 @@ export type Handler<
   TResponse extends ArgsRawShape,
 > = (
   args: z.infer<ZodObject<TParams>>,
-  statusUpdateCallback: StatusUpdateCallback
+  statusUpdateCallback: StatusUpdateCallback,
+  reporter: ProgressReporter | null
 ) => Promise<Outcome<z.infer<ZodObject<TResponse>>>>;
 
 type TypedFunctionDefinition<

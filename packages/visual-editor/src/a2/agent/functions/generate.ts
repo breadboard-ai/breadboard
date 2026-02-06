@@ -203,7 +203,8 @@ The Gemini model to use for image generation. How to choose the right model:
         file_name,
         task_id,
       },
-      statusUpdater
+      statusUpdater,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdater(status_update || "Generating Image(s)", {
@@ -216,11 +217,17 @@ The Gemini model to use for image generation. How to choose the right model:
       const modelName =
         model == "pro" ? IMAGE_PRO_MODEL_NAME : IMAGE_FLASH_MODEL_NAME;
 
-      const reporter = createReporter(moduleArgs, {
-        title: `Generating Image(s)`,
-        icon: "photo_spark",
-      });
-      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+      // Use provided reporter if available, otherwise create one
+      const effectiveReporter =
+        reporter ??
+        createReporter(moduleArgs, {
+          title: `Generating Image(s)`,
+          icon: "photo_spark",
+        });
+      const args: ExecuteStepArgs = {
+        ...moduleArgs,
+        reporter: effectiveReporter,
+      };
       const generated = await generators.callImage(
         caps,
         args,
