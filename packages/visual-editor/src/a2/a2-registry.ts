@@ -95,6 +95,11 @@ type A2Component = {
   icon: string;
   order: number;
   category: "input" | "generate" | "output";
+  /**
+   * If set, this module URL will be used instead of graph-based execution.
+   * This allows short-circuiting the graph dispatch and calling the module directly.
+   */
+  moduleUrl?: string;
 };
 
 const A2_COMPONENTS: A2Component[] = [
@@ -106,6 +111,7 @@ const A2_COMPONENTS: A2Component[] = [
     icon: "ask-user",
     order: 1,
     category: "input",
+    moduleUrl: "embed://a2/ask-user.bgl.json#module:main",
   },
   {
     url: "embed://a2/generate.bgl.json#module:main",
