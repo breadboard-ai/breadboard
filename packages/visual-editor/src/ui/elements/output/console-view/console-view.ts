@@ -180,19 +180,29 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               align-items: center;
               justify-content: center;
               flex: 1;
+              min-width: 0;
             }
 
             & .title {
               display: flex;
               align-items: center;
               flex: 1 1 auto;
+              min-width: 0;
+
+              & .title-text {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
 
               & .g-icon {
+                flex-shrink: 0;
                 margin-left: var(--bb-grid-size);
                 animation: rotate 1s linear forwards infinite;
               }
 
               & .duration {
+                flex-shrink: 0;
                 color: light-dark(var(--n-70), var(--n-80));
                 margin-left: var(--bb-grid-size);
               }
@@ -591,7 +601,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                 >${icon}</span
                               >`
                             : nothing}<span class="title"
-                            >${workItem.title}<span class="duration"
+                            ><span class="title-text">${workItem.title}</span
+                            ><span class="duration"
                               >${this.#formatToSeconds(workItem.elapsed)}</span
                             ></span
                           >
