@@ -20,6 +20,7 @@ import {
 } from "@breadboard-ai/utils";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
+import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -785,8 +786,7 @@ export class EditorControls extends SignalWatcher(LitElement) {
                   {
                     id: "notebooklm",
                     title: "NotebookLM",
-                    svgIcon:
-                      "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
+                    icon: notebookLmIcon,
                   },
                 ]
               : []),

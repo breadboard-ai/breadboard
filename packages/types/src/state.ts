@@ -124,11 +124,6 @@ export type WorkItem = {
   title: string;
   icon?: string;
   /**
-   * Optional SVG icon for custom icons (like third-party service icons)
-   * that aren't part of the Material symbols set.
-   */
-  svgIcon?: string;
-  /**
    * Start time for the work item.
    */
   start: number;

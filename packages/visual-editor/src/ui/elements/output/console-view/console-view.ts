@@ -20,7 +20,7 @@ import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
-import { styleMap } from "lit/directives/style-map.js";
+
 import { ProjectRun } from "../../../state/index.js";
 import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
@@ -569,25 +569,18 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                   ([key]) => key,
                   ([workItemId, workItem]) => {
                     const icon = iconSubstitute(workItem.icon);
-                    const svgIcon = workItem.svgIcon;
 
                     const workItemClasses: Record<string, boolean> = {
                       "w-400": true,
                       "sans-flex": true,
                       round: true,
                     };
-                    if (icon) {
+                    if (typeof icon === "string" && icon) {
                       workItemClasses[icon] = true;
                     }
 
-                    // Render either svgIcon (as background-image) or g-icon
                     const renderStepIcon = () => {
-                      if (svgIcon) {
-                        return html`<span
-                          class="step-icon svg-icon"
-                          style=${styleMap({ backgroundImage: svgIcon })}
-                        ></span>`;
-                      } else if (icon) {
+                      if (icon) {
                         return html`<span class="g-icon step-icon round filled"
                           >${icon}</span
                         >`;

@@ -16,6 +16,7 @@ import {
 import { AgentFileSystem } from "../file-system.js";
 import { FunctionGroup } from "../types.js";
 import { statusUpdateSchema, taskIdSchema } from "./system.js";
+import { notebookLmIcon } from "../../../ui/styles/svg-icons.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 import {
   ApplicationPlatform,
@@ -140,8 +141,7 @@ function defineNotebookLMFunctions(
     defineFunction(
       {
         name: NOTEBOOKLM_RETRIEVE_CHUNKS_FUNCTION,
-        svgIcon:
-          "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
+        icon: notebookLmIcon,
         description: tr`Retrieves relevant source data from a NotebookLM notebook 
 based on a query. Use this to query knowledge stored in NotebookLM notebooks.`,
         parameters: {
@@ -239,8 +239,7 @@ specific about what information you're looking for.`
     defineFunction(
       {
         name: NOTEBOOKLM_GENERATE_ANSWER_FUNCTION,
-        svgIcon:
-          "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
+        icon: notebookLmIcon,
         description: tr`Generates an answer to a question using a NotebookLM notebook's
     chat functionality. The notebook's AI will synthesize information from its sources
     to provide a comprehensive answer. Use this when you need a direct answer rather

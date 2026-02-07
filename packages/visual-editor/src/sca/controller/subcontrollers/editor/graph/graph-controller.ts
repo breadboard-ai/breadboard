@@ -19,6 +19,7 @@ import {
   OutputValues,
 } from "@breadboard-ai/types";
 import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
+import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { Tab } from "../../../../../runtime/types.js";
@@ -81,7 +82,7 @@ const MEMORY_TOOL: Tool = {
 const NOTEBOOKLM_TOOL: Tool = {
   url: "notebooklm",
   title: "NotebookLM",
-  svgIcon: "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
+  icon: notebookLmIcon,
 };
 
 export class GraphController extends RootController {

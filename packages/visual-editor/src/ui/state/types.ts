@@ -287,12 +287,7 @@ export type Tool = {
   url: string;
   title?: string;
   description?: string;
-  icon?: string;
-  /**
-   * CSS variable name for SVG icon (e.g., "notebooklm").
-   * Used when the icon is not available as a ligature in the icon font.
-   */
-  svgIcon?: string;
+  icon?: string | HTMLTemplateResult;
   /**
    * The identifier of the tool. This is useful in cases when URL points at a
    * tool server, not the actual tool.

@@ -6,6 +6,7 @@
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { OverflowAction } from "../../../types/types.js";
+import { notebookLmIcon } from "../../../styles/svg-icons.js";
 import { styleMap } from "lit/directives/style-map.js";
 import {
   AddAssetRequestEvent,
@@ -156,11 +157,9 @@ export class AddAssetButton extends LitElement {
 
       if (this.supportedActions.notebooklm && this.showNotebookLm) {
         actions.push({
-          icon: "",
+          icon: notebookLmIcon,
           name: "notebooklm",
           title: "NotebookLM",
-          svgIcon:
-            "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
         });
       }
 
