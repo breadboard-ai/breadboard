@@ -24,12 +24,16 @@ export class AddAssetButton extends LitElement {
   accessor showGDrive = false;
 
   @property()
+  accessor showNotebookLm = false;
+
+  @property()
   accessor supportedActions = {
     upload: true,
     youtube: true,
     drawable: true,
     gdrive: true,
     webcamVideo: true,
+    notebooklm: true,
   };
 
   @property()
@@ -147,6 +151,16 @@ export class AddAssetButton extends LitElement {
           icon: "videocam",
           name: "webcam-video",
           title: "Add a Webcam Video",
+        });
+      }
+
+      if (this.supportedActions.notebooklm && this.showNotebookLm) {
+        actions.push({
+          icon: "",
+          name: "notebooklm",
+          title: "NotebookLM",
+          svgIcon:
+            "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
         });
       }
 

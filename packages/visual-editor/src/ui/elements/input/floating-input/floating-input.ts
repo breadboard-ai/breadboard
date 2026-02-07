@@ -43,10 +43,15 @@ import {
   isTextCapabilityPart,
 } from "../../../../data/common.js";
 import { parseUrl } from "../../../utils/urls.js";
-import { createRef, ref } from "lit/directives/ref.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../../../sca/context/context.js";
 import { type SCA } from "../../../../sca/sca.js";
+import { NOTEBOOKLM_MIMETYPE, toNotebookLmUrl } from "@breadboard-ai/utils";
+import { NotebookLmPicker } from "../../notebooklm-picker/notebooklm-picker.js";
+import type { NotebookPickedValue } from "../../notebooklm-picker/notebooklm-picker.js";
+import { InputChangeEvent } from "../../../plugins/input-plugin.js";
+import "../../notebooklm-picker/notebooklm-picker.js";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -59,6 +64,7 @@ interface SupportedActions {
     drawable: boolean;
     gdrive: boolean;
     webcamVideo: boolean;
+    notebooklm: boolean;
   };
 }
 
@@ -241,6 +247,7 @@ export class FloatingInput extends SignalWatcher(LitElement) {
   ];
 
   readonly #reportingButton = createRef<HTMLButtonElement>();
+  #addNotebookLmInputRef: Ref<NotebookLmPicker> = createRef();
   #addAssetType: string | null = null;
   #allowedMimeTypes: string | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
@@ -262,6 +269,18 @@ export class FloatingInput extends SignalWatcher(LitElement) {
     this.#resizeObserver.disconnect();
   }
 
+  #attemptNotebookLMPickerFlow() {
+    if (!this.#addNotebookLmInputRef.value) {
+      return;
+    }
+
+    try {
+      this.#addNotebookLmInputRef.value.triggerFlow();
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+
   #determineSupportedActions(props: [string, Schema][]): SupportedActions {
     const supportedActions: SupportedActions = {
       allowAddAssets: false,
@@ -274,6 +293,7 @@ export class FloatingInput extends SignalWatcher(LitElement) {
         drawable: false,
         gdrive: false,
         webcamVideo: false,
+        notebooklm: false,
       },
     };
 
@@ -335,6 +355,7 @@ export class FloatingInput extends SignalWatcher(LitElement) {
           supportedActions.actions.drawable = true;
           supportedActions.actions.gdrive = true;
           supportedActions.actions.webcamVideo = true;
+          supportedActions.actions.notebooklm = true;
           return supportedActions;
         }
       }
@@ -349,6 +370,7 @@ export class FloatingInput extends SignalWatcher(LitElement) {
     supportedActions.actions.drawable = true;
     supportedActions.actions.gdrive = true;
     supportedActions.actions.webcamVideo = true;
+    supportedActions.actions.notebooklm = true;
 
     return supportedActions;
   }
@@ -502,11 +524,39 @@ export class FloatingInput extends SignalWatcher(LitElement) {
     return true;
   }
 
+  #renderNotebookLmPicker() {
+    return html`<bb-notebooklm-picker
+      ${ref(this.#addNotebookLmInputRef)}
+      @bb-input-change=${(evt: InputChangeEvent) => {
+        if (!this.assetShelf) {
+          return;
+        }
+
+        const notebooks = evt.value as NotebookPickedValue[];
+        for (const notebook of notebooks) {
+          const asset: LLMContent = {
+            role: "user",
+            parts: [
+              {
+                storedData: {
+                  handle: toNotebookLmUrl(notebook.id),
+                  mimeType: NOTEBOOKLM_MIMETYPE,
+                },
+              },
+            ],
+          };
+          this.assetShelf.addAsset(asset);
+        }
+      }}
+    ></bb-notebooklm-picker>`;
+  }
+
   render() {
     let inputContents: HTMLTemplateResult | symbol = nothing;
     const showGDrive =
       !parsedUrl.lite ||
       !!this.sca.controller.global.flags?.enableDrivePickerInLiteMode;
+    const showNotebookLm = !!this.sca.controller.global.flags?.enableNotebookLm;
     if (this.schema) {
       const props = Object.entries(this.schema.properties ?? {});
       const supportedActions = this.#determineSupportedActions(props);
@@ -514,6 +564,10 @@ export class FloatingInput extends SignalWatcher(LitElement) {
         ${supportedActions.allowAddAssets
           ? html`<bb-add-asset-button
               @bbaddassetrequest=${(evt: AddAssetRequestEvent) => {
+                if (evt.assetType === "notebooklm") {
+                  this.#attemptNotebookLMPickerFlow();
+                  return;
+                }
                 this.showAddAssetModal = true;
                 this.#addAssetType = evt.assetType;
                 this.#allowedMimeTypes = evt.allowedMimeTypes;
@@ -522,6 +576,7 @@ export class FloatingInput extends SignalWatcher(LitElement) {
               .supportedActions=${supportedActions.actions}
               .allowedUploadMimeTypes=${supportedActions.allowedUploadMimeTypes}
               .showGDrive=${showGDrive}
+              .showNotebookLm=${showNotebookLm}
             ></bb-add-asset-button>`
           : nothing}
         ${repeat(props, ([name, schema]) => {
@@ -641,6 +696,7 @@ export class FloatingInput extends SignalWatcher(LitElement) {
         </section>
       </section>`,
       addAssetModal,
+      this.#renderNotebookLmPicker(),
       this.disclaimerContent
         ? html`<p id="disclaimer">${this.disclaimerContent}</p>`
         : nothing,

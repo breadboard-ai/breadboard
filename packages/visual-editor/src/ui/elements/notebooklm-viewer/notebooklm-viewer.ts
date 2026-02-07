@@ -75,11 +75,14 @@ export class NotebookLmViewer extends LitElement {
         gap: var(--bb-grid-size-1);
       }
 
-      :host([displayMode="compact"]) .notebook-preview {
+      :host([displayMode="thumbnail"]) .notebook-preview {
         min-height: auto;
-        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-        flex-direction: row;
-        align-items: center;
+        height: 100%;
+        padding: var(--bb-grid-size-2);
+        justify-content: flex-start;
+        align-items: flex-start;
+        gap: var(--bb-grid-size);
+        box-sizing: border-box;
       }
 
       .notebook-preview .notebook-emoji {
@@ -87,9 +90,9 @@ export class NotebookLmViewer extends LitElement {
         line-height: 1;
       }
 
-      :host([displayMode="compact"]) .notebook-preview .notebook-emoji {
-        font-size: 20px;
-        width: 24px;
+      :host([displayMode="thumbnail"]) .notebook-preview .notebook-emoji {
+        font-size: 24px;
+        width: 28px;
         text-align: center;
       }
 
@@ -105,11 +108,11 @@ export class NotebookLmViewer extends LitElement {
         text-overflow: ellipsis;
       }
 
-      :host([displayMode="compact"]) .notebook-preview .notebook-title {
-        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+      :host([displayMode="thumbnail"]) .notebook-preview .notebook-title {
+        font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
-        flex: 1;
-        -webkit-line-clamp: 1;
+        text-align: left;
+        -webkit-line-clamp: 2;
       }
 
       .notebook-preview .notebook-meta {
@@ -119,8 +122,12 @@ export class NotebookLmViewer extends LitElement {
         margin: 0;
       }
 
-      :host([displayMode="compact"]) .notebook-preview .notebook-meta {
+      :host([displayMode="thumbnail"]) .notebook-preview .notebook-meta {
         display: none;
+      }
+
+      :host([displayMode="thumbnail"]) .notebook-preview .text-content {
+        align-items: flex-start;
       }
 
       .notebook-preview.loading,
@@ -158,10 +165,10 @@ export class NotebookLmViewer extends LitElement {
   /**
    * Display mode for the viewer.
    * - "card": Full thumbnail with emoji, title, date, source count (default)
-   * - "compact": Inline display with emoji and title only
+   * - "thumbnail": Compact centered display for small tiles (e.g. asset shelf)
    */
   @property({ reflect: true })
-  accessor displayMode: "card" | "compact" = "card";
+  accessor displayMode: "card" | "thumbnail" = "card";
 
   /**
    * Whether to show an external link button to open in NotebookLM.
@@ -240,12 +247,12 @@ export class NotebookLmViewer extends LitElement {
 
     // Pick a background color based on the notebook emoji
     const colorPalette = [
-      "#E8F0FE", // blue
-      "#FCE8E6", // red/pink
-      "#FEF7E0", // yellow
-      "#E6F4EA", // green
-      "#F3E8FD", // purple
-      "#E8EAED", // gray
+      "light-dark(#E8F0FE, #1A2744)", // blue
+      "light-dark(#FCE8E6, #3D2222)", // red/pink
+      "light-dark(#FEF7E0, #3A3118)", // yellow
+      "light-dark(#E6F4EA, #1C3326)", // green
+      "light-dark(#F3E8FD, #2E1F42)", // purple
+      "light-dark(#E8EAED, #2A2D30)", // gray
     ];
     const emoji = notebook.emoji || "📓";
     const colorIndex = (emoji.codePointAt(0) ?? 0) % colorPalette.length;
