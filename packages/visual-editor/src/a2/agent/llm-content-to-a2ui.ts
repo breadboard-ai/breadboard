@@ -147,7 +147,7 @@ function llmContentToA2UIComponents(
         // The notebook ID will be consumed by generate steps as context
         addTopLevel(generateId("notebooklm"), {
           Text: {
-            text: { literalString: `[NotebookLM: ${part.storedData.handle}]` },
+            text: { literalString: part.storedData.handle },
             usageHint: "body",
           },
         });

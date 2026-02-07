@@ -450,7 +450,7 @@ async function conformBody(
         }
         // Convert NotebookLM references to text before file transform
         if ("storedData" in part && isNotebookLmUrl(part.storedData.handle)) {
-          return { text: `[NotebookLM reference: ${part.storedData.handle}]` };
+          return { text: part.storedData.handle };
         }
         return part;
       }),

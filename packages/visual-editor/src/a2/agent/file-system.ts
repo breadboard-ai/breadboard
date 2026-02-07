@@ -13,7 +13,7 @@ import {
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { err, ok, isNotebookLmUrl } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 import { toText } from "../a2/utils.js";
 import { FileDescriptor, MemoryManager } from "./types.js";
@@ -180,10 +180,6 @@ class AgentFileSystem {
         if (handle.startsWith("drive:/")) {
           errors.push(
             `Google Drive files may contain images and other non-textual content. Please use "${GENERATE_TEXT_FUNCTION}" to read them at full fidelity.`
-          );
-        } else if (isNotebookLmUrl(handle)) {
-          errors.push(
-            `NotebookLM references are metadata and should be used with generate steps, not read as text.`
           );
         } else {
           errors.push(
