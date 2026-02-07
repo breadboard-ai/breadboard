@@ -56,6 +56,7 @@ class ProgressWorkItem implements WorkItem {
   constructor(
     public readonly title: string,
     public readonly icon: string,
+    public readonly svgIcon: string | undefined,
     private readonly screen: AppScreen | undefined
   ) {
     this.start = performance.now();
@@ -177,6 +178,7 @@ function createReporter(
   const reporter = new ProgressWorkItem(
     options.title ?? "Progress",
     options.icon ?? "info",
+    options.svgIcon,
     appScreen
   );
   if (consoleEntry) {

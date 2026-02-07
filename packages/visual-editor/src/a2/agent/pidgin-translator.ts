@@ -30,7 +30,6 @@ import {
   Template as UtilsTemplate,
   NOTEBOOKLM_MIMETYPE,
   isNotebookLmUrl,
-  parseNotebookLmId,
 } from "@breadboard-ai/utils";
 import { substituteDefaultTool } from "./substitute-default-tool.js";
 
@@ -231,6 +230,10 @@ class PidginTranslator {
         const { type } = param;
         switch (type) {
           case "asset": {
+            // Check if this asset is a NotebookLM reference
+            if (param.mimeType === NOTEBOOKLM_MIMETYPE) {
+              useNotebookLM = true;
+            }
             const content = await template.loadAsset(param);
             if (!ok(content)) {
               errors.push(content.$error);
@@ -382,8 +385,7 @@ ${text}</content>`);
           // Special handling for NotebookLM references - don't add to file system,
           // just reference them as text that the agent can understand
           if ("storedData" in part && isNotebookLmUrl(part.storedData.handle)) {
-            const notebookId = parseNotebookLmId(part.storedData.handle) ?? "";
-            values.push(`[NotebookLM reference: ${notebookId}]`);
+            values.push(`[NotebookLM reference: ${part.storedData.handle}]`);
             continue;
           }
           const name = fileSystem.add(part);

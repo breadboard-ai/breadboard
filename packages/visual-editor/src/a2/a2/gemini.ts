@@ -18,11 +18,7 @@ import {
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { createDataPartTansformer } from "./data-transforms.js";
-import {
-  iteratorFromStream,
-  isNotebookLmUrl,
-  parseNotebookLmId,
-} from "@breadboard-ai/utils";
+import { iteratorFromStream, isNotebookLmUrl } from "@breadboard-ai/utils";
 import { transformDataParts } from "../../data/common.js";
 
 export {
@@ -454,8 +450,7 @@ async function conformBody(
         }
         // Convert NotebookLM references to text before file transform
         if ("storedData" in part && isNotebookLmUrl(part.storedData.handle)) {
-          const notebookId = parseNotebookLmId(part.storedData.handle) ?? "";
-          return { text: `[NotebookLM reference: ${notebookId}]` };
+          return { text: `[NotebookLM reference: ${part.storedData.handle}]` };
         }
         return part;
       }),
