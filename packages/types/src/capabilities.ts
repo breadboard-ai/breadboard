@@ -92,15 +92,6 @@ export type InputInputs = {
 
 export type InputOutputs = Record<string, unknown>;
 
-export type OutputInputs = {
-  $metadata?: NodeMetadata;
-  schema?: Schema;
-} & Record<string, unknown>;
-
-export type OutputOutputs = {
-  delivered: boolean;
-};
-
 export type BlobInputs = {
   contents: LLMContent[];
   transform: "persistent-temporary";
@@ -134,7 +125,6 @@ export type DescribeOutputs = {
 export type Capabilities = {
   invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
   input(inputs: InputInputs): Promise<InputOutputs>;
-  output(inputs: OutputInputs): Promise<OutputOutputs>;
   describe(inputs: DescribeInputs): Promise<Outcome<DescribeOutputs>>;
   query(inputs: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(inputs: FileSystemReadArguments): Promise<FileSystemReadResult>;

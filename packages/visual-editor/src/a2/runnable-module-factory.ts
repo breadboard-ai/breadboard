@@ -109,7 +109,6 @@ export type CallableCapability = (inputs: Values) => Promise<Values | void>;
 export type CallableCapabilities = {
   invoke: CallableCapability;
   input: CallableCapability;
-  output: CallableCapability;
   describe: CallableCapability;
   query: CallableCapability;
   read: CallableCapability;
@@ -126,9 +125,8 @@ async function invokeCapability(
   if (!capability) {
     return { $error: `Capability "${name}" is not avaialble` };
   }
-  const isOutput = name === "output";
   const metadata = inputs.$metadata;
-  if (metadata && !isOutput) {
+  if (metadata) {
     delete inputs.$metadata;
   }
   const path =
@@ -157,7 +155,6 @@ async function invokeCapability(
 const CAPABILITY_NAMES: (keyof CallableCapabilities)[] = [
   "invoke",
   "input",
-  "output",
   "describe",
   "query",
   "read",

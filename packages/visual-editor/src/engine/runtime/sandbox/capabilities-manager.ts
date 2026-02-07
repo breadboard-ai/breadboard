@@ -15,7 +15,7 @@ import {
   TraversalResult,
 } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
-import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
+import { bubbleUpInputsIfNeeded } from "../bubble.js";
 import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
 import { invokeDescriber } from "./invoke-describer.js";
 import {
@@ -107,34 +107,6 @@ function createInputHandler(context: NodeHandlerContext) {
   }) as Capability;
 }
 
-function createOutputHandler(context: NodeHandlerContext) {
-  return (async (allInputs: InputValues, invocationPath: number[]) => {
-    const schema = allInputs.schema as Schema;
-    const descriptor: NodeDescriptor = {
-      id: "output-from-run-module",
-      type: "output",
-      configuration: {
-        schema: {
-          ...schema,
-          behavior: ["bubble"],
-        } satisfies Schema,
-      },
-    };
-    const { $metadata, ...inputs } = allInputs;
-    const metadata = $metadata as NodeMetadata | undefined;
-    if (metadata) {
-      descriptor.metadata = metadata;
-    }
-    const delivered = await bubbleUpOutputsIfNeeded(
-      inputs,
-      descriptor,
-      context,
-      invocationPath
-    );
-    return { delivered };
-  }) as Capability;
-}
-
 type DescribeInputs = {
   url: string;
   inputs?: InputValues;
@@ -211,7 +183,6 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
         return {
           invoke: createInvokeHandler(this.context),
           input: createInputHandler(this.context),
-          output: createOutputHandler(this.context),
           describe: createDescribeHandler(this.context),
           query: fs.query(),
           read: fs.read(),
