@@ -38,7 +38,7 @@ until all tasks are indepedent`;
     const plan = getPlan(planning.last);
     if (!ok(plan)) return plan;
 
-    await report(caps, {
+    await report(moduleArgs, {
       actor: "Planner",
       category: `Creating a plan`,
       name: "Here's my list",

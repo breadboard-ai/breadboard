@@ -2,7 +2,14 @@
  * @fileoverview Provides an output helper.
  */
 
-import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
+import {
+  LLMContent,
+  OutputValues,
+  Schema,
+  WorkItem,
+} from "@breadboard-ai/types";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { getCurrentStepState } from "../agent/progress-work-item.js";
 
 type ReportInputs = {
   /**
@@ -34,10 +41,7 @@ type ReportInputs = {
 
 export { report };
 
-async function report(
-  { output }: Capabilities,
-  inputs: ReportInputs
-): Promise<boolean> {
+function report(moduleArgs: A2ModuleArgs, inputs: ReportInputs): void {
   const { actor: title, category: description, name, details, icon } = inputs;
 
   const detailsSchema: Schema =
@@ -64,14 +68,31 @@ async function report(
     },
   };
 
-  const { delivered } = await output({
-    $metadata: {
-      title,
-      description,
-      icon,
-    },
+  const { appScreen, consoleEntry } = getCurrentStepState(moduleArgs);
+  const outputId = crypto.randomUUID();
+
+  // Add to app screen outputs directly
+  appScreen?.outputs.set(outputId, {
     schema,
-    details,
+    output: { details } as OutputValues,
   });
-  return delivered;
+
+  // Add to console entry as a work item
+  if (consoleEntry) {
+    const product: WorkItem["product"] = new Map();
+    if (typeof details === "string") {
+      product.set("details", { parts: [{ text: details }] });
+    } else {
+      product.set("details", details);
+    }
+    consoleEntry.work.set(outputId, {
+      title: `${title}: ${description}`,
+      icon,
+      start: 0,
+      end: 0,
+      elapsed: 0,
+      awaitingUserInput: false,
+      product,
+    });
+  }
 }

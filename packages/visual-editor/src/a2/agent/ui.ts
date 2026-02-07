@@ -11,6 +11,9 @@ import {
   DeepReadonly,
   LLMContent,
   Outcome,
+  OutputValues,
+  Schema,
+  WorkItem,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator.js";
@@ -128,6 +131,33 @@ class AgentUI implements A2UIRenderer, ChatManager {
     return this.#chatLog;
   }
 
+  #addChatOutput(message: LLMContent): void {
+    const outputId = crypto.randomUUID();
+    const schema = {
+      properties: { message: { type: "object", behavior: ["llm-content"] } },
+    } satisfies Schema;
+
+    // Add to app screen outputs directly
+    this.#appScreen?.outputs.set(outputId, {
+      schema,
+      output: { message } as OutputValues,
+    });
+
+    // Add to console entry as a work item
+    if (this.#consoleEntry) {
+      const product: WorkItem["product"] = new Map();
+      product.set("message", message);
+      this.#consoleEntry.work.set(outputId, {
+        title: "Response",
+        start: 0,
+        end: 0,
+        elapsed: 0,
+        awaitingUserInput: false,
+        product,
+      });
+    }
+  }
+
   async chat(
     pidginString: string,
     inputType: string
@@ -140,12 +170,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     const message = await this.translator.fromPidginString(pidginString);
     if (!ok(message)) return message;
     this.#chatLog.push({ ...message, role: "model" });
-    await this.caps.output({
-      schema: {
-        properties: { message: { type: "object", behavior: ["llm-content"] } },
-      },
-      message,
-    });
+    this.#addChatOutput(message);
     const response = (await this.caps.input({
       schema: {
         properties: {
