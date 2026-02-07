@@ -7,11 +7,12 @@
 import { AssetPath, InspectableAsset, LLMContent } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, nothing, PropertyValues } from "lit";
+import { css, html, HTMLTemplateResult, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
+import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { DragConnectorStartEvent } from "../../events/events.js";
 import { GraphAsset as GraphAssetState } from "../../state/types.js";
@@ -361,12 +362,11 @@ export class GraphAsset
       transform: toCSSMatrix(this.worldTransform, this.force2D),
     };
 
-    let icon = "text_fields";
+    let icon: string | HTMLTemplateResult = "text_fields";
     if (this.asset?.type === "file") {
       icon = "upload";
     }
 
-    let svgIcon: string | null = null;
     if (this.asset?.subType) {
       switch (this.asset.subType) {
         case "youtube":
@@ -379,7 +379,7 @@ export class GraphAsset
           icon = "drive";
           break;
         case "notebooklm":
-          svgIcon = `var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))`;
+          icon = notebookLmIcon;
           break;
       }
     }
@@ -468,12 +468,7 @@ export class GraphAsset
             );
           }}
         >
-          ${svgIcon
-            ? html`<span
-                class="svg-icon"
-                style=${styleMap({ backgroundImage: svgIcon })}
-              ></span>`
-            : html`<span class="g-icon filled round">${icon}</span>`}
+          <span class="g-icon filled round">${icon}</span>
           <span>${this.assetTitle}</span>
           <button
             id="connection-trigger"

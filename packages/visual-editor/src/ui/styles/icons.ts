@@ -61,23 +61,10 @@ export const icons = css`
         "ROND" 100;
     }
 
-    /* NotebookLM uses a custom SVG icon, not a Material Symbol ligature */
-    &.notebooklm {
-      font-size: 0;
-      background: var(
-          --bb-icon-notebooklm,
-          url(/third_party/icons/notebooklm.svg)
-        )
-        center / contain no-repeat;
+    & > svg {
+      width: 1em;
+      height: 1em;
+      fill: currentColor;
     }
-  }
-
-  .svg-icon {
-    width: 20px;
-    height: 20px;
-    display: inline-block;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 20px 20px;
   }
 `;

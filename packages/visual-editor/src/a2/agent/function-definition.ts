@@ -8,6 +8,7 @@
 
 import { Outcome, Schema } from "@breadboard-ai/types";
 import { z, ZodObject, ZodType } from "zod";
+import type { HTMLTemplateResult } from "lit";
 import { FunctionDeclaration, GeminiSchema } from "../a2/gemini.js";
 import { MappedDefinitions } from "./types.js";
 import type { ProgressReporter } from "./types.js";
@@ -27,8 +28,7 @@ export type ZodFunctionDefinition<
   name: string;
   title?: string;
   description: string;
-  icon?: string;
-  svgIcon?: string;
+  icon?: string | HTMLTemplateResult;
   parameters: TParams;
   response?: TResponse;
 };
@@ -74,8 +74,7 @@ type TypedFunctionDefinition<
   TResponse extends ArgsRawShape,
 > = FunctionDeclaration & {
   title?: string;
-  icon?: string;
-  svgIcon?: string;
+  icon?: string | HTMLTemplateResult;
   handler: Handler<TParams, TResponse>;
 };
 
@@ -88,8 +87,7 @@ function defineFunction<
   definition: ZodFunctionDefinition<TParams, TResponse>,
   handler: Handler<TParams, TResponse>
 ): TypedFunctionDefinition<TParams, TResponse> {
-  const { parameters, response, name, title, description, icon, svgIcon } =
-    definition;
+  const { parameters, response, name, title, description, icon } = definition;
   // Convert Zod schemas to JSON Schema
   const parametersJsonSchema = z.object(parameters).toJSONSchema();
   const result: TypedFunctionDefinition<TParams, TResponse> = {
@@ -97,7 +95,6 @@ function defineFunction<
     title,
     description,
     icon,
-    svgIcon,
     parametersJsonSchema,
     handler,
   };
@@ -150,13 +147,8 @@ function mapDefinitions(functions: FunctionDefinition[]): MappedDefinitions {
     item,
   ]);
   const declarations = functions.map(
-    ({
-      handler: _handler,
-      icon: _icon,
-      title: _title,
-      svgIcon: _svgIcon,
-      ...rest
-    }) => rest as FunctionDeclaration
+    ({ handler: _handler, icon: _icon, title: _title, ...rest }) =>
+      rest as FunctionDeclaration
   );
 
   return { definitions, declarations };
