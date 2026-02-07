@@ -384,6 +384,7 @@ export class RunController extends RootController {
       error: null,
       completed: status === "succeeded",
       current: null,
+      addOutput() {},
     };
   }
 }

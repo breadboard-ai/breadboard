@@ -2,12 +2,7 @@
  * @fileoverview Provides an output helper.
  */
 
-import {
-  LLMContent,
-  OutputValues,
-  Schema,
-  WorkItem,
-} from "@breadboard-ai/types";
+import { LLMContent, OutputResponse, Schema } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { getCurrentStepState } from "../agent/progress-work-item.js";
 
@@ -66,33 +61,26 @@ function report(moduleArgs: A2ModuleArgs, inputs: ReportInputs): void {
     properties: {
       details: detailsSchema,
     },
+    behavior: ["bubble"],
   };
 
   const { appScreen, consoleEntry } = getCurrentStepState(moduleArgs);
-  const outputId = crypto.randomUUID();
 
-  // Add to app screen outputs directly
-  appScreen?.outputs.set(outputId, {
-    schema,
-    output: { details } as OutputValues,
-  });
+  const data: OutputResponse = {
+    node: {
+      id: "output-from-report",
+      type: "output",
+      configuration: { schema },
+      metadata: { title, description, icon },
+    },
+    outputs: { details } as OutputResponse["outputs"],
+    // Random path: no real invocation path exists since we bypass graph
+    // traversal. Used by idFromPath() as a unique map key.
+    path: [Math.floor(Math.random() * 1e9)],
+    bubbled: true,
+    timestamp: performance.now(),
+  };
 
-  // Add to console entry as a work item
-  if (consoleEntry) {
-    const product: WorkItem["product"] = new Map();
-    if (typeof details === "string") {
-      product.set("details", { parts: [{ text: details }] });
-    } else {
-      product.set("details", details);
-    }
-    consoleEntry.work.set(outputId, {
-      title: `${title}: ${description}`,
-      icon,
-      start: 0,
-      end: 0,
-      elapsed: 0,
-      awaitingUserInput: false,
-      product,
-    });
-  }
+  appScreen?.addOutput(data);
+  consoleEntry?.addOutput(data);
 }
