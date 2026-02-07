@@ -7,7 +7,11 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, test } from "node:test";
 import { StepListPresenter } from "../../../src/ui/presenters/step-list-presenter.js";
-import { makeTestController, makeTestServices, flushEffects } from "../../sca/helpers/index.js";
+import {
+  makeTestController,
+  makeTestServices,
+  flushEffects,
+} from "../../sca/helpers/index.js";
 import { setDOM, unsetDOM } from "../../fake-dom.js";
 import type { SCA } from "../../../src/sca/sca.js";
 import type { ConsoleEntry, NodeRunState } from "@breadboard-ai/types";
@@ -40,6 +44,7 @@ function mockConsoleEntry(overrides: Partial<ConsoleEntry> = {}): ConsoleEntry {
     error: null,
     completed: false,
     current: null,
+    addOutput() {},
     ...overrides,
   };
 }
@@ -55,7 +60,11 @@ describe("StepListPresenter", () => {
 
   test("initializes with empty steps", () => {
     const presenter = new StepListPresenter();
-    assert.strictEqual(presenter.steps.size, 0, "should start with empty steps");
+    assert.strictEqual(
+      presenter.steps.size,
+      0,
+      "should start with empty steps"
+    );
   });
 
   test("connect starts watching SCA state", async () => {
@@ -66,7 +75,11 @@ describe("StepListPresenter", () => {
     await flushEffects();
 
     // The presenter is now connected - steps derived from console
-    assert.strictEqual(presenter.steps.size, 0, "should have no steps when console is empty");
+    assert.strictEqual(
+      presenter.steps.size,
+      0,
+      "should have no steps when console is empty"
+    );
 
     presenter.disconnect();
   });
@@ -80,7 +93,11 @@ describe("StepListPresenter", () => {
 
     presenter.disconnect();
 
-    assert.strictEqual(presenter.steps.size, 0, "should clear steps on disconnect");
+    assert.strictEqual(
+      presenter.steps.size,
+      0,
+      "should clear steps on disconnect"
+    );
   });
 
   test("derives steps from console entries", async () => {

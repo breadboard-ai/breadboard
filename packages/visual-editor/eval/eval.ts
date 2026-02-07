@@ -261,10 +261,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
     input() {
       throw new Error(`Not implemented`);
     },
-    async output(data) {
-      console.log(data.$metadata?.title);
-      return { delivered: true };
-    },
     describe() {
       throw new Error(`Not implemented`);
     },
@@ -335,6 +331,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
                 error: null,
                 completed: false,
                 current: null,
+                addOutput() {},
               },
             ],
           ]),
@@ -352,6 +349,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
                   type: "progress",
                   outputs: new Map(),
                   last: null,
+                  addOutput() {},
                 },
               ],
             ]),

@@ -37,7 +37,6 @@ export type Capability = (
 export type CapabilitySpec = {
   invoke?: Capability;
   input?: Capability;
-  output?: Capability;
   describe?: Capability;
   query?: Capability;
   read?: Capability;

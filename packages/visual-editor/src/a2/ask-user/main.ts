@@ -15,6 +15,7 @@ import { type Params } from "../a2/common.js";
 import { report } from "../a2/output.js";
 import { Template } from "../a2/template.js";
 import { defaultLLMContent, llm, ok, toText } from "../a2/utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe, askUser };
 
@@ -104,7 +105,8 @@ function createInputSchema(
  */
 async function askUser(
   inputs: AskUserInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AskUserOutputs>> {
   const {
     description,
@@ -124,7 +126,7 @@ async function askUser(
     details = substituting;
   }
 
-  await report(caps, {
+  await report(moduleArgs, {
     actor: "User Input",
     category: "Requesting Input",
     name: "",
@@ -155,9 +157,10 @@ async function askUser(
  */
 async function invoke(
   inputs: AskUserInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AskUserOutputs>> {
-  return askUser(inputs, caps);
+  return askUser(inputs, caps, moduleArgs);
 }
 
 type DescribeInputs = {
