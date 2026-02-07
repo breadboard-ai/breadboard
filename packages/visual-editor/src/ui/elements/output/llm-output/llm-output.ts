@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type { DataPart, LLMContent } from "@breadboard-ai/types";
-import { isStoredData, Template } from "@breadboard-ai/utils";
+import {
+  isStoredData,
+  Template,
+  isNotebookLmUrl,
+  parseNotebookLmId,
+} from "@breadboard-ai/utils";
 import {
   HTMLTemplateResult,
   LitElement,
@@ -740,9 +745,9 @@ export class LLMOutput extends LitElement {
             if (!url) {
               this.#outputLoaded();
               value = html`<div>Failed to retrieve stored data</div>`;
-            } else if (url.startsWith("nlm:/")) {
+            } else if (isNotebookLmUrl(url)) {
               // NotebookLM reference - extract notebook ID and render viewer
-              const notebookId = url.replace("nlm:/", "");
+              const notebookId = parseNotebookLmId(url) ?? "";
               this.#outputLoaded();
               value = html`<bb-notebooklm-viewer
                 .notebookId=${notebookId}

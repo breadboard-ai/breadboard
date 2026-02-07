@@ -46,7 +46,8 @@ const instruction = tr`
 ## Using NotebookLM
 
 You have access to NotebookLM notebooks as knowledge sources. When the objective
-references a NotebookLM notebook (indicated by an nlm:/ reference), you can:
+references a NotebookLM notebook (indicated by a URL like
+https://notebooklm.google.com/notebook/{notebook_id}), you can:
 
 1. Use "${NOTEBOOKLM_GENERATE_ANSWER_FUNCTION}" to generate a comprehensive answer 
    to a question using the notebook's AI chat functionality. This is useful when 
@@ -59,8 +60,8 @@ references a NotebookLM notebook (indicated by an nlm:/ reference), you can:
    retrieval is limited to a token budget, so it may be useful to make multiple
    more narrow queries if you need more information.
 
-The nlm:/ reference format is "nlm:/{notebook_id}" where "{notebook_id}" is the 
-ID you should pass to the function (without the "nlm:/" prefix).
+The URL format is "https://notebooklm.google.com/notebook/{notebook_id}" where 
+"{notebook_id}" is the ID you should pass to the function.
 `;
 
 function getNotebookLMFunctionGroup(
@@ -158,9 +159,9 @@ function defineNotebookLMFunctions(
 based on a query. Use this to query knowledge stored in NotebookLM notebooks.`,
         parameters: {
           notebook_id: z.string().describe(
-            tr`The NotebookLM notebook ID. Extract this from the nlm:/ reference 
-by removing the "nlm:/" prefix. For example, if the reference is 
-"nlm:/abc123", pass "abc123" as the notebook_id.`
+            tr`The NotebookLM notebook ID. Extract this from the NotebookLM URL by 
+taking the ID after "https://notebooklm.google.com/notebook/". For example, if the 
+URL is "https://notebooklm.google.com/notebook/abc123", pass "abc123" as the notebook_id.`
           ),
           query: z.string().describe(
             tr`The query to search for relevant content in the notebook. Be 
@@ -258,9 +259,9 @@ specific about what information you're looking for.`
     than raw chunks of content.`,
         parameters: {
           notebook_id: z.string().describe(
-            tr`The NotebookLM notebook ID. Extract this from the nlm:/ reference
-    by removing the "nlm:/" prefix. For example, if the reference is
-    "nlm:/abc123", pass "abc123" as the notebook_id.`
+            tr`The NotebookLM notebook ID. Extract this from the NotebookLM URL by
+    taking the ID after "https://notebooklm.google.com/notebook/". For example, if the
+    URL is "https://notebooklm.google.com/notebook/abc123", pass "abc123" as the notebook_id.`
           ),
           query: z.string().describe(
             tr`The question to ask the notebook. Be specific about what

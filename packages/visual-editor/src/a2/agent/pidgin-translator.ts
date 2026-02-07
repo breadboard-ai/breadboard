@@ -29,6 +29,8 @@ import { isLLMContent, isLLMContentArray } from "../../data/common.js";
 import {
   Template as UtilsTemplate,
   NOTEBOOKLM_MIMETYPE,
+  isNotebookLmUrl,
+  parseNotebookLmId,
 } from "@breadboard-ai/utils";
 import { substituteDefaultTool } from "./substitute-default-tool.js";
 
@@ -379,11 +381,8 @@ ${text}</content>`);
         } else {
           // Special handling for NotebookLM references - don't add to file system,
           // just reference them as text that the agent can understand
-          if (
-            "storedData" in part &&
-            part.storedData.handle.startsWith("nlm:/")
-          ) {
-            const notebookId = part.storedData.handle.replace("nlm:/", "");
+          if ("storedData" in part && isNotebookLmUrl(part.storedData.handle)) {
+            const notebookId = parseNotebookLmId(part.storedData.handle) ?? "";
             values.push(`[NotebookLM reference: ${notebookId}]`);
             continue;
           }
