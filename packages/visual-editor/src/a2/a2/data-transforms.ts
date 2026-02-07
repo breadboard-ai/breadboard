@@ -258,13 +258,6 @@ function createDataPartTansformer(
           return driveFileToGeminiFile(moduleArgs, {
             fileData: { fileUri: handle, mimeType, resourceKey },
           });
-        } else if (isNotebookLmUrl(handle)) {
-          // NotebookLM references are metadata, not convertible to file data
-          // They should be handled by generate steps that understand NotebookLM URLs
-          return err(
-            `NotebookLM references cannot be converted to file data. ` +
-              `They should be used with generate steps that support NotebookLM context.`
-          );
         } else {
           // check to see if it's a blob
           const blobId = maybeBlob(handle);

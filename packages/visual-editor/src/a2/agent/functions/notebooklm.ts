@@ -19,8 +19,10 @@ import { statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 import {
   ApplicationPlatform,
+  AudioReference,
   ContentPiece,
   DeviceType,
+  ImageReference,
   NotebookLmApiClient,
   OriginProductType,
   ResponseContentType,
@@ -55,9 +57,9 @@ https://notebooklm.google.com/notebook/{notebook_id}), you can:
 
 2. Use "${NOTEBOOKLM_RETRIEVE_CHUNKS_FUNCTION}" to retrieve relevant source
    material from the notebook (text, images, or audio) based on a query. This is
-   useful when you want to retrieve source documents/content, not jsut get a
+   useful when you want to retrieve source documents/content, not just get a
    summary (use this like a RAG system for the notebook content).  Each
-   retrieval is limited to a token budget, so it may be useful to make multiple
+   retrieval is limited to a token budget, so it may be necessary to make multiple
    more narrow queries if you need more information.
 
 The URL format is "https://notebooklm.google.com/notebook/{notebook_id}" where 
@@ -103,43 +105,27 @@ function processContentPieces(
       textContent.push(piece.text);
     }
 
-    if (piece.image) {
-      const mimeType = piece.image.mimeType ?? "image/png";
-      if (piece.image.blobId) {
+    const addMediaRef = (
+      ref: ImageReference | AudioReference | undefined,
+      defaultMimeType: string
+    ): void => {
+      if (!ref) return;
+      const mimeType = ref.mimeType ?? defaultMimeType;
+      if (ref.blobId) {
         const handle = new URL(
-          `/board/blobs/${piece.image.blobId}`,
+          `/board/blobs/${ref.blobId}`,
           window.location.href
         ).href;
-        addToFileSystem({
-          storedData: { handle, mimeType },
-        });
-      } else if (piece.image.url) {
-        addToFileSystem({
-          fileData: { fileUri: piece.image.url, mimeType },
-        });
-      } else if (piece.image.data) {
-        addToFileSystem({ inlineData: { data: piece.image.data, mimeType } });
+        addToFileSystem({ storedData: { handle, mimeType } });
+      } else if (ref.url) {
+        addToFileSystem({ fileData: { fileUri: ref.url, mimeType } });
+      } else if (ref.data) {
+        addToFileSystem({ inlineData: { data: ref.data, mimeType } });
       }
-    }
+    };
 
-    if (piece.audio) {
-      const mimeType = piece.audio.mimeType ?? "audio/mpeg";
-      if (piece.audio.blobId) {
-        const handle = new URL(
-          `/board/blobs/${piece.audio.blobId}`,
-          window.location.href
-        ).href;
-        addToFileSystem({
-          storedData: { handle, mimeType },
-        });
-      } else if (piece.audio.url) {
-        addToFileSystem({
-          fileData: { fileUri: piece.audio.url, mimeType },
-        });
-      } else if (piece.audio.data) {
-        addToFileSystem({ inlineData: { data: piece.audio.data, mimeType } });
-      }
-    }
+    addMediaRef(piece.image, "image/png");
+    addMediaRef(piece.audio, "audio/mpeg");
   }
 
   return { textContent, mediaPaths, errors };

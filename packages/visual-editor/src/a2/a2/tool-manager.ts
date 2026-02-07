@@ -199,14 +199,7 @@ class ToolManager implements SimplifiedToolManager {
     }
     // Handle function-group tools that don't require describe/load.
     // These are handled in pidgin-translator and loop.ts directly.
-    if (url === MEMORY_TOOL_PATH) {
-      // Memory tool: no function declarations, just a signal to enable
-      // memory functions in the agent loop.
-      return "";
-    }
-    if (url === NOTEBOOKLM_TOOL_PATH) {
-      // NotebookLM tool: no function declarations, just a signal to enable
-      // NotebookLM functions in the agent loop.
+    if (url === MEMORY_TOOL_PATH || url === NOTEBOOKLM_TOOL_PATH) {
       return "";
     }
     if (instance) {
