@@ -19,7 +19,12 @@ import type {
 import { graphUrlLike } from "@breadboard-ai/utils";
 import { GraphBasedNodeHandler } from "./graph-based-node-handler.js";
 import { getGraphUrl } from "../loader/loader.js";
-import { A2_COMPONENTS } from "../../a2/a2-registry.js";
+import { A2_COMPONENTS, A2_COMPONENT_MAP } from "../../a2/a2-registry.js";
+import {
+  A2ModuleFactory,
+  createCallableCapabilities,
+} from "../../a2/runnable-module-factory.js";
+import { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
 
 // TODO: Deduplicate.
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
@@ -87,6 +92,29 @@ export async function getHandler(
   type: NodeTypeIdentifier,
   context: NodeHandlerContext
 ): Promise<NodeHandler> {
+  // Static dispatch for A2 components - bypasses graph-based handlers
+  const component = A2_COMPONENT_MAP.get(type);
+  if (component && context.sandbox) {
+    const factory = context.sandbox as A2ModuleFactory;
+    const capsManager = new CapabilitiesManagerImpl(context);
+    const caps = createCallableCapabilities(capsManager.createSpec());
+    return {
+      invoke: async (inputs, invokeContext) =>
+        component.invoke(inputs, caps, factory.createModuleArgs(invokeContext)),
+      describe: async (inputs, inputSchema, outputSchema, describerContext) =>
+        component.describe(
+          {
+            inputs: inputs ?? {},
+            inputSchema,
+            outputSchema,
+            asType: describerContext?.asType,
+          },
+          caps,
+          factory.createModuleArgs(describerContext ?? context)
+        ),
+    };
+  }
+
   // Substitute graph URL with module URL if available
   const effectiveType = MODULE_URL_MAP.get(type) ?? type;
   if (graphUrlLike(effectiveType)) {
