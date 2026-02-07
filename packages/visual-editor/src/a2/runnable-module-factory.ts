@@ -34,7 +34,7 @@ import { a2 } from "./a2.js";
 import { type ConsentController } from "../sca/controller/subcontrollers/global/global.js";
 import { AgentContext } from "./agent/agent-context.js";
 
-export { createA2ModuleFactory };
+export { createA2ModuleFactory, A2ModuleFactory, createCallableCapabilities };
 
 const URL_PREFIX = "embed://a2/";
 const URL_SUFFIX = ".bgl.json";
@@ -59,6 +59,14 @@ function createA2ModuleFactory(
 
 class A2ModuleFactory implements RunnableModuleFactory {
   constructor(private readonly args: A2ModuleFactoryArgs) {}
+
+  /**
+   * Creates A2ModuleArgs from NodeHandlerContext.
+   * Used for static component dispatch to bypass graph-based handlers.
+   */
+  createModuleArgs(context: NodeHandlerContext): A2ModuleArgs {
+    return { ...this.args, context };
+  }
 
   getDir(url?: string): Outcome<string> {
     if (!url) {
