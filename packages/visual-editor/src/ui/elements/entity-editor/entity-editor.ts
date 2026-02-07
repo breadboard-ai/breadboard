@@ -65,8 +65,6 @@ import {
   isLLMContentBehavior,
 } from "../../utils/index.js";
 import { isCtrlCommand } from "../../utils/is-ctrl-command.js";
-import { hasNotebookLMAsset } from "../../../data/common.js";
-import { NOTEBOOKLM_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
 import {
   FastAccessMenu,
   ItemSelect,
@@ -1256,16 +1254,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       return html`Invalid value`;
     }
 
-    // Check if the port value contains NotebookLM assets and add as virtual tool if so
-    const virtualTools: TemplatePart[] = [];
-    if (hasNotebookLMAsset(port.value)) {
-      virtualTools.push({
-        path: NOTEBOOKLM_TOOL_PATH,
-        type: "tool",
-        title: "NotebookLM",
-      });
-    }
-
     // Note that projectState and subGraphId must be set before value since
     // value depends on the projectState & subGraphId to expand on chiclet
     // metadata.
@@ -1274,7 +1262,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
       .value=${textPart.text}
-      .virtualTools=${virtualTools}
       .supportsFastAccess=${fastAccess}
       .readOnly=${this.readOnly}
       .isAgentMode=${agentMode}

@@ -24,7 +24,7 @@ import {
   type Tool,
 } from "./gemini.js";
 import { addUserTurn, ok } from "./utils.js";
-import { err } from "@breadboard-ai/utils";
+import { err, NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { McpToolAdapter } from "./mcp-tool-adapter.js";
 import { ToolParamPart } from "./template.js";
@@ -36,7 +36,6 @@ const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
 const ROUTE_TOOL_PATH = "control-flow/routing";
 const MEMORY_TOOL_PATH = "function-group/use-memory";
-const NOTEBOOKLM_TOOL_PATH = "function-group/notebooklm";
 
 export type ToolHandle = {
   title?: string;

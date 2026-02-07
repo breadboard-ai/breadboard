@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { Template };
+export {
+  Template,
+  NOTEBOOKLM_MIMETYPE,
+  NOTEBOOKLM_TOOL_PATH,
+  NOTEBOOKLM_TOOL_TITLE,
+};
 
 export type TemplatePartType = "in" | "asset" | "tool" | "param";
 
@@ -55,6 +60,11 @@ export function isTemplatePart(o: unknown): o is TemplatePart {
   if (!o || typeof o !== "object") return false;
   return "type" in o && "path" in o && "title" in o;
 }
+
+// Virtual tool constants - assets with these mimetypes trigger virtual tool inclusion
+const NOTEBOOKLM_MIMETYPE = "application/x-notebooklm";
+const NOTEBOOKLM_TOOL_PATH = "function-group/notebooklm";
+const NOTEBOOKLM_TOOL_TITLE = "NotebookLM";
 
 function splitToParts(value: string): ParsedTemplate {
   const parts: ParsedTemplate = [];
@@ -121,8 +131,31 @@ class Template {
     return this.#parsed.find((part) => typeof part !== "string");
   }
 
-  get placeholders() {
-    return this.#parsed.filter((part) => typeof part !== "string");
+  get placeholders(): TemplatePart[] {
+    const explicit = this.#parsed.filter(
+      (part): part is TemplatePart => typeof part !== "string"
+    );
+
+    // Add implicit tools based on asset mimetypes
+    const implicitTools: TemplatePart[] = [];
+
+    // Check for NotebookLM assets -> add NotebookLM tool if present
+    const hasNlmAsset = explicit.some(
+      (p) => p.type === "asset" && p.mimeType === NOTEBOOKLM_MIMETYPE
+    );
+    const hasNlmTool = explicit.some(
+      (p) => p.type === "tool" && p.path === NOTEBOOKLM_TOOL_PATH
+    );
+
+    if (hasNlmAsset && !hasNlmTool) {
+      implicitTools.push({
+        type: "tool",
+        path: NOTEBOOKLM_TOOL_PATH,
+        title: NOTEBOOKLM_TOOL_TITLE,
+      });
+    }
+
+    return [...explicit, ...implicitTools];
   }
 
   get preview() {
