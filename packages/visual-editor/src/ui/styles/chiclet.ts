@@ -66,11 +66,8 @@ export const styles = [
             display: block;
             width: 16px;
             height: 16px;
-            background: var(
-                --bb-icon-notebooklm,
-                url(/third_party/icons/notebooklm.svg)
-              )
-              center / contain no-repeat;
+            background: url(/third_party/icons/notebooklm.svg) center / contain
+              no-repeat;
           }
         }
 
