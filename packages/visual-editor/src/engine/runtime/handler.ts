@@ -96,11 +96,11 @@ export async function getHandler(
   const component = A2_COMPONENT_MAP.get(type);
   if (component && context.sandbox) {
     const factory = context.sandbox as A2ModuleFactory;
-    const moduleArgs = factory.createModuleArgs(context);
     const capsManager = new CapabilitiesManagerImpl(context);
     const caps = createCallableCapabilities(capsManager.createSpec());
     return {
-      invoke: async (inputs) => component.invoke(inputs, caps, moduleArgs),
+      invoke: async (inputs, invokeContext) =>
+        component.invoke(inputs, caps, factory.createModuleArgs(invokeContext)),
       describe: async (inputs, inputSchema, outputSchema, describerContext) =>
         component.describe(
           {
@@ -110,7 +110,7 @@ export async function getHandler(
             asType: describerContext?.asType,
           },
           caps,
-          moduleArgs
+          factory.createModuleArgs(describerContext ?? context)
         ),
     };
   }
