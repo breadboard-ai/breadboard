@@ -748,15 +748,7 @@ async function generateContent(
  */
 function hasChunkContent(chunk: GeminiAPIOutputs): boolean {
   const content = chunk.candidates?.at(0)?.content;
-  if (!content?.parts || content.parts.length === 0) return false;
-  for (const part of content.parts) {
-    if ("text" in part && part.text?.trim()) return true;
-    if ("inlineData" in part) return true;
-    if ("functionCall" in part) return true;
-    if ("codeExecutionResult" in part) return true;
-    if ("storedData" in part) return true;
-  }
-  return false;
+  return !!content?.parts && content.parts.length > 0;
 }
 
 /**
@@ -833,14 +825,16 @@ async function streamGenerateContent(
         })();
       }
 
-      // First chunk is empty - buffer the rest to check if we should retry
+      // First chunk is empty - buffer until we find content or exhaust the stream.
+      // IMPORTANT: We use manual .next() instead of for-await because
+      // break/return from for-await calls .return() on the iterator,
+      // which closes it and silently discards remaining chunks.
       const bufferedChunks: GeminiAPIOutputs[] = [firstChunk];
-      for await (const chunk of {
-        [Symbol.asyncIterator]: () => streamIterator,
-      }) {
-        bufferedChunks.push(chunk);
+      let nextResult = await streamIterator.next();
+      while (!nextResult.done) {
+        bufferedChunks.push(nextResult.value);
         // Check each chunk as it arrives - if we find content, switch to streaming
-        if (hasChunkContent(chunk)) {
+        if (hasChunkContent(nextResult.value)) {
           // Found content! Return an iterator that yields buffered + remaining
           return (async function* () {
             for (const buffered of bufferedChunks) {
@@ -853,6 +847,7 @@ async function streamGenerateContent(
             }
           })();
         }
+        nextResult = await streamIterator.next();
       }
 
       // All chunks were empty - check if we should retry
