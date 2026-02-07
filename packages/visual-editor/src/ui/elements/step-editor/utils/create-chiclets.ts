@@ -5,13 +5,16 @@
  */
 
 import { InspectablePort } from "@breadboard-ai/types";
-import { isStoredData, Template } from "@breadboard-ai/utils";
+import {
+  isStoredData,
+  Template,
+  NOTEBOOKLM_TOOL_PATH,
+} from "@breadboard-ai/utils";
 import { html, HTMLTemplateResult, nothing } from "lit";
 import { Project } from "../../../state/index.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { getAssetType } from "../../../utils/mime-type.js";
 import {
-  hasNotebookLMAsset,
   isInlineData,
   isLLMContent,
   isLLMContentArray,
@@ -20,7 +23,6 @@ import {
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
-  NOTEBOOKLM_TOOL_PATH,
 } from "../../../../a2/a2/tool-manager.js";
 import { SCA } from "../../../../sca/sca.js";
 
@@ -74,21 +76,6 @@ export function createChiclets(
   }
 
   const chiclets: HTMLTemplateResult[] = [];
-
-  // Check if input value contains NotebookLM assets and add chiclet if found
-  // IMPORTANT: Must check port.value (the original LLMContent) before it's transformed
-  // to a string via valStr, otherwise StoredData parts with nlm:/ assets are lost
-  if (hasNotebookLMAsset(port.value)) {
-    chiclets.push(
-      html`<label class="chiclet tool">
-        <span
-          class="g-icon filled round notebooklm"
-          data-icon="notebooklm"
-        ></span>
-        <span>NotebookLM</span>
-      </label>`
-    );
-  }
 
   const template = new Template(valStr);
 

@@ -20,6 +20,7 @@ import {
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { styleMap } from "lit/directives/style-map.js";
 import { getAssetType, getMimeType } from "../../utils/mime-type.js";
 import { consume } from "@lit/context";
 import {
@@ -686,13 +687,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 const globalIndex = idx;
                 // Special handling for routing and memory tool icons
                 let icon: string | undefined;
-                let isNotebookLm = false;
+                let svgIcon: string | undefined;
                 if (tool.url === "control-flow/routing") {
                   icon = "start";
                 } else if (tool.url === "function-group/use-memory") {
                   icon = "database";
-                } else if (tool.url === "function-group/notebooklm") {
-                  isNotebookLm = true;
+                } else if (tool.svgIcon) {
+                  svgIcon = tool.svgIcon;
                 } else {
                   icon = iconSubstitute(tool.icon) ?? undefined;
                 }
@@ -708,15 +709,16 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       this.#emitCurrentItem();
                     }}
                   >
-                    <span
-                      class=${classMap({
-                        "g-icon": true,
-                        round: true,
-                        filled: true,
-                        notebooklm: isNotebookLm,
-                      })}
-                      >${icon}</span
-                    ><span class="title"
+                    ${svgIcon
+                      ? html`<span
+                          class="svg-icon"
+                          style=${styleMap({
+                            backgroundImage: svgIcon,
+                            marginRight: "var(--bb-grid-size-2)",
+                          })}
+                        ></span>`
+                      : html`<span class="g-icon filled round">${icon}</span>`}
+                    <span class="title"
                       >${tool.title}${tool.url === "control-flow/routing"
                         ? html`...`
                         : nothing}</span

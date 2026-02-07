@@ -25,11 +25,11 @@ import {
 } from "../a2/tool-manager.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { v0_8 } from "../../a2ui/index.js";
+import { isLLMContent, isLLMContentArray } from "../../data/common.js";
 import {
-  hasNotebookLMAsset,
-  isLLMContent,
-  isLLMContentArray,
-} from "../../data/common.js";
+  Template as UtilsTemplate,
+  NOTEBOOKLM_MIMETYPE,
+} from "@breadboard-ai/utils";
 import { substituteDefaultTool } from "./substitute-default-tool.js";
 
 export { PidginTranslator };
@@ -74,6 +74,27 @@ const SPLIT_REGEX =
 
 const FILE_PARSE_REGEX = /<file\s+src\s*=\s*"([^"]*)"\s*\/>/;
 const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
+
+/**
+ * Checks if LLMContent contains NotebookLM assets by parsing text parts
+ * via Template placeholders.
+ */
+function hasNlmAssetInContent(content: LLMContent): boolean {
+  for (const part of content.parts) {
+    if ("text" in part) {
+      const template = new UtilsTemplate(part.text);
+      for (const placeholder of template.placeholders) {
+        if (
+          placeholder.type === "asset" &&
+          placeholder.mimeType === NOTEBOOKLM_MIMETYPE
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
 
 /**
  * When the text is below this number, it will be simply inlined (small prompts, short outputs, etc.)
@@ -236,8 +257,8 @@ ${inner}
             } else if (typeof value === "string") {
               return value;
             } else if (isLLMContent(value)) {
-              // Check if input contains NotebookLM assets
-              if (hasNotebookLMAsset(value)) {
+              // Check if input text contains NotebookLM assets via template placeholders
+              if (hasNlmAssetInContent(value)) {
                 useNotebookLM = true;
               }
               return substituteParts({
@@ -249,8 +270,8 @@ ${inner}
             } else if (isLLMContentArray(value)) {
               const last = value.at(-1);
               if (!last) return "";
-              // Check if input contains NotebookLM assets
-              if (hasNotebookLMAsset(last)) {
+              // Check if input text contains NotebookLM assets via template placeholders
+              if (hasNlmAssetInContent(last)) {
                 useNotebookLM = true;
               }
               return substituteParts({

@@ -13,7 +13,7 @@ import {
   InspectableGraph,
   MainGraphIdentifier,
 } from "@breadboard-ai/types";
-import { parseBase64DataUrl } from "@breadboard-ai/utils";
+import { parseBase64DataUrl, NOTEBOOKLM_MIMETYPE } from "@breadboard-ai/utils";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -853,7 +853,7 @@ export class EditorControls extends SignalWatcher(LitElement) {
                     {
                       storedData: {
                         handle: `nlm:/${notebook.id}`,
-                        mimeType: "application/x-notebooklm",
+                        mimeType: NOTEBOOKLM_MIMETYPE,
                       },
                     },
                   ],
