@@ -59,7 +59,7 @@ export class NotebookLmPicker extends LitElement {
           display: flex;
           flex-direction: column;
         }
-        & > * {
+        & > :not([slot="header-actions"]) {
           flex-grow: 1;
           min-height: 0;
         }
@@ -83,7 +83,7 @@ export class NotebookLmPicker extends LitElement {
       }
 
       .notebook-item.selected {
-        border-color: var(--bb-neutral-900, #000);
+        border-color: light-dark(var(--n-0, #000), var(--n-100, #fff));
       }
 
       .loading,

@@ -354,7 +354,12 @@ export class OverflowMenu extends LitElement {
           ?disabled=${(action.name !== "settings" && this.disabled) ||
           action.disabled}
         >
-          <span class="g-icon filled round"></span>
+          ${action.svgIcon
+            ? html`<span
+                class="g-icon"
+                style="font-size: 0; width: 20px; height: 20px; background: ${action.svgIcon} center / contain no-repeat;"
+              ></span>`
+            : html`<span class="g-icon filled round"></span>`}
           ${action.title}
         </button>
 

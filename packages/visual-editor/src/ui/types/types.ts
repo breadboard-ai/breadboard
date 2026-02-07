@@ -240,6 +240,7 @@ export interface OverflowAction {
   title: string;
   name: string;
   icon: string;
+  svgIcon?: string;
   disabled?: boolean;
   value?: string;
   secondaryAction?: string;
