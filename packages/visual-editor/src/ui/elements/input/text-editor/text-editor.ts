@@ -77,7 +77,7 @@ export function chicletHtml(
     sourceTitle = "Use Memory";
     metadataIcon = "database";
   } else if (path === NOTEBOOKLM_TOOL_PATH) {
-    sourceTitle = "NotebookLM";
+    sourceTitle = "Use NotebookLM";
     metadataIcon = "notebooklm";
   }
 

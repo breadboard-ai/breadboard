@@ -175,16 +175,6 @@ export class GraphAsset
             margin-right: var(--bb-grid-size-2);
           }
 
-          & span.svg-icon {
-            flex: 0 0 auto;
-            width: 20px;
-            height: 20px;
-            margin-right: var(--bb-grid-size-2);
-            background-size: 20px 20px;
-            background-position: center;
-            background-repeat: no-repeat;
-          }
-
           & > * {
             pointer-events: none;
           }

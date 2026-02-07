@@ -117,7 +117,7 @@ export function createChiclets(
       sourceTitle = "Use Memory";
     } else if (path === NOTEBOOKLM_TOOL_PATH) {
       metadataIcon = "notebooklm";
-      sourceTitle = "NotebookLM";
+      sourceTitle = "Use NotebookLM";
     }
 
     chiclets.push(

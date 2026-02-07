@@ -383,9 +383,9 @@ ${text}</content>`);
           }
         } else {
           // Special handling for NotebookLM references - don't add to file system,
-          // just reference them as text that the agent can understand
+          // just reference them as text URL the agent can understand
           if ("storedData" in part && isNotebookLmUrl(part.storedData.handle)) {
-            values.push(`[NotebookLM reference: ${part.storedData.handle}]`);
+            values.push(part.storedData.handle);
             continue;
           }
           const name = fileSystem.add(part);

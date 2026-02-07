@@ -234,16 +234,6 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               }
             }
 
-            & .svg-icon {
-              width: 20px;
-              height: 20px;
-              flex: 0 0 auto;
-              margin-right: var(--bb-grid-size-2);
-              background-size: contain;
-              background-repeat: no-repeat;
-              background-position: center;
-            }
-
             &.active {
               &.g-icon.details-status {
                 animation: rotate 1s linear forwards infinite;
@@ -579,15 +569,6 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                       workItemClasses[icon] = true;
                     }
 
-                    const renderStepIcon = () => {
-                      if (icon) {
-                        return html`<span class="g-icon step-icon round filled"
-                          >${icon}</span
-                        >`;
-                      }
-                      return nothing;
-                    };
-
                     return html` <details
                       ?open=${workItem.awaitingUserInput ||
                       workItem.openByDefault ||
@@ -620,7 +601,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                       >
                         <span class="chevron g-icon round filled"></span>
                         <div class="step-detail">
-                          ${renderStepIcon()}<span class="title"
+                          ${icon
+                            ? html`<span class="g-icon step-icon round filled"
+                                >${icon}</span
+                              >`
+                            : nothing}<span class="title"
                             ><span class="title-text">${workItem.title}</span
                             ><span class="duration"
                               >${this.#formatToSeconds(workItem.elapsed)}</span

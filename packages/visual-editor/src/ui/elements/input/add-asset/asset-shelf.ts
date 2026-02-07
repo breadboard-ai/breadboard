@@ -24,6 +24,7 @@ import {
 } from "../../../../data/common.js";
 import { NOTEBOOKLM_MIMETYPE, parseNotebookLmId } from "@breadboard-ai/utils";
 import "../../notebooklm-viewer/notebooklm-viewer.js";
+import { notebookLmIcon } from "../../../styles/svg-icons.js";
 
 @customElement("bb-asset-shelf")
 export class AssetShelf extends LitElement {
@@ -175,8 +176,7 @@ export class AssetShelf extends LitElement {
 
   render() {
     return html`${repeat(this.#assets, (asset) => {
-      let assetIcon = "upload";
-      let assetSvgIcon: string | null = null;
+      let assetIcon: string | HTMLTemplateResult = "upload";
       let assetTypeLabel = "Upload";
       return asset.parts.map((part) => {
         let value: HTMLTemplateResult | symbol = nothing;
@@ -254,8 +254,8 @@ export class AssetShelf extends LitElement {
           isStoredData(part) &&
           part.storedData.mimeType === NOTEBOOKLM_MIMETYPE
         ) {
-          assetSvgIcon = "notebooklm";
-          assetTypeLabel = "NotebookLM";
+          assetIcon = notebookLmIcon;
+          assetTypeLabel = "ReferenceNotebookLM";
           const notebookId = parseNotebookLmId(part.storedData.handle);
           value = html`<bb-notebooklm-viewer
             .notebookId=${notebookId ?? null}
@@ -274,9 +274,7 @@ export class AssetShelf extends LitElement {
           </button>
           ${value}
           <span class="scrim">
-            <span class="g-icon${assetSvgIcon ? ` ${assetSvgIcon}` : ""}"
-              >${assetSvgIcon ? "" : assetIcon}</span
-            >
+            <span class="g-icon">${assetIcon}</span>
             <span class="info">${assetTypeLabel}</span>
           </span>
         </div>`;
