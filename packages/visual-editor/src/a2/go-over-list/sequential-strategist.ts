@@ -35,7 +35,7 @@ All tasks in the plan will be executed in sequence, building on each other.`;
     const plan = getPlan(planning.last);
     if (!ok(plan)) return plan;
 
-    await report(caps, {
+    await report(moduleArgs, {
       actor: "Planner",
       category: `Creating a list`,
       name: "Here's my list",
@@ -48,7 +48,7 @@ I will now go over the list in order.`,
 
     const results: LLMContent[] = [];
     for (const task of plan.todo) {
-      await report(caps, {
+      await report(moduleArgs, {
         actor: "Worker",
         category: "Working on a list item",
         name: "Item",

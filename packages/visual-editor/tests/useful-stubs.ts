@@ -25,10 +25,6 @@ const stubCaps: Capabilities = {
   input() {
     throw new Error(`Not implemented`);
   },
-  async output(data) {
-    console.log(data.$metadata?.title);
-    return { delivered: true };
-  },
   describe() {
     throw new Error(`Not implemented`);
   },

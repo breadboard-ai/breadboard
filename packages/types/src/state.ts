@@ -7,7 +7,7 @@
 import { ConsoleUpdate } from "./console-update.js";
 import { OutputValues } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
-
+import { OutputResponse } from "./remote.js";
 import { NodeRunState } from "./run-status.js";
 import { Schema } from "./schema.js";
 
@@ -69,6 +69,11 @@ export type ConsoleEntry = {
    * A convenient pointer at the last work item.
    */
   current: WorkItem | null;
+
+  /**
+   * Adds an output to this console entry.
+   */
+  addOutput(data: OutputResponse): void;
 };
 
 export type A2UIServerReceiver = {
@@ -216,6 +221,11 @@ export type AppScreen = {
    * The last output for the screen
    */
   last: AppScreenOutput | null;
+
+  /**
+   * Adds an output to this screen.
+   */
+  addOutput(data: OutputResponse): void;
 };
 
 /**
