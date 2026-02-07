@@ -9,6 +9,9 @@ export {
   NOTEBOOKLM_MIMETYPE,
   NOTEBOOKLM_TOOL_PATH,
   NOTEBOOKLM_TOOL_TITLE,
+  toNotebookLmUrl,
+  parseNotebookLmId,
+  isNotebookLmUrl,
 };
 
 export type TemplatePartType = "in" | "asset" | "tool" | "param";
@@ -61,10 +64,28 @@ export function isTemplatePart(o: unknown): o is TemplatePart {
   return "type" in o && "path" in o && "title" in o;
 }
 
-// Virtual tool constants - assets with these mimetypes trigger virtual tool inclusion
 const NOTEBOOKLM_MIMETYPE = "application/x-notebooklm";
 const NOTEBOOKLM_TOOL_PATH = "function-group/notebooklm";
 const NOTEBOOKLM_TOOL_TITLE = "NotebookLM";
+
+/** Converts a notebook ID to its full NotebookLM URL */
+function toNotebookLmUrl(id: string): string {
+  return `https://notebooklm.google.com/notebook/${id}`;
+}
+
+/** Parses a NotebookLM URL and returns the notebook ID, or undefined if not a valid NLM URL */
+function parseNotebookLmId(url: string): string | undefined {
+  const prefix = "https://notebooklm.google.com/notebook/";
+  if (url.startsWith(prefix)) {
+    return url.slice(prefix.length);
+  }
+  return undefined;
+}
+
+/** Checks if a URL is a NotebookLM URL */
+function isNotebookLmUrl(url: string): boolean {
+  return url.startsWith("https://notebooklm.google.com/notebook/");
+}
 
 function splitToParts(value: string): ParsedTemplate {
   const parts: ParsedTemplate = [];

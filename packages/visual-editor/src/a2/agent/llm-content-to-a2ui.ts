@@ -12,6 +12,7 @@ import {
   isStoredData,
   isTextCapabilityPart,
 } from "../../data/common.js";
+import { isNotebookLmUrl } from "@breadboard-ai/utils";
 
 export { llmContentToA2UIComponents, type ConvertedLLMContent };
 
@@ -141,7 +142,7 @@ function llmContentToA2UIComponents(
             url: { literalString: part.storedData.handle },
           },
         });
-      } else if (part.storedData.handle.startsWith("nlm:/")) {
+      } else if (isNotebookLmUrl(part.storedData.handle)) {
         // NotebookLM references pass through as metadata - no visual representation
         // The notebook ID will be consumed by generate steps as context
         addTopLevel(generateId("notebooklm"), {

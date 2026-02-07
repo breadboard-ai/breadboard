@@ -75,12 +75,12 @@ export type RuntimeFlags = {
    */
   enableGoogleDriveTools: boolean;
   /**
-   * Whether to turn on resume support for agent runs.
+   * Enables auto-resumption of failed agent runs
    */
   enableResumeAgentRun: boolean;
 
   /**
-   * Whether NotebookLM features are enabled.
+   * Enables NotebookLM integration
    */
   enableNotebookLm: boolean;
 };
