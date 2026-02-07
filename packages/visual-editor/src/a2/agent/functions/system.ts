@@ -37,7 +37,7 @@ export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
   translator: PidginTranslator;
   taskTreeManager: TaskTreeManager;
-  successCallback(href: string, pidginString: string): Outcome<void>;
+  successCallback(href: string, pidginString: string): Promise<Outcome<void>>;
   failureCallback(message: string): void;
 };
 
@@ -251,7 +251,10 @@ If the objective specifies other agent URLs using the
         },
       },
       async ({ objective_outcome, href }) => {
-        const result = args.successCallback(href || "/", objective_outcome);
+        const result = await args.successCallback(
+          href || "/",
+          objective_outcome
+        );
         if (!ok(result)) {
           return { error: result.$error };
         }

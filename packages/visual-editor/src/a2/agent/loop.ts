@@ -58,12 +58,6 @@ export type AgentRunArgs = {
   modelConstraint?: ModelConstraint;
 };
 
-export type AgentRawResult = {
-  success: boolean;
-  href: string;
-  objective_outcome: string;
-};
-
 export type AgentResult = {
   /**
    * Whether or not agent succeeded in fulfilling the objective.
@@ -168,11 +162,7 @@ class Loop {
         : this.runStateManager.startFresh(stepId, objectiveContent);
 
       let terminateLoop = false;
-      let result: AgentRawResult = {
-        success: false,
-        href: "",
-        objective_outcome: "",
-      };
+      let finalResult: Outcome<AgentResult> | null = null;
 
       const functionGroups: FunctionGroup[] = [];
 
@@ -183,21 +173,41 @@ class Loop {
           taskTreeManager,
           failureCallback: (objective_outcome: string) => {
             terminateLoop = true;
-            result = {
-              success: false,
-              href: "/",
-              objective_outcome,
-            };
+            finalResult = this.runStateManager.fail(err(objective_outcome));
           },
-          successCallback: (href, objective_outcome) => {
+          successCallback: async (href, objective_outcome) => {
             const originalRoute = fileSystem.getOriginalRoute(href);
             if (!ok(originalRoute)) return originalRoute;
 
+            const outcomes =
+              await translator.fromPidginString(objective_outcome);
+            if (!ok(outcomes)) return outcomes;
+
+            const intermediateFiles = [...fileSystem.files.keys()];
+            const errors: string[] = [];
+            const intermediate = (
+              await Promise.all(
+                intermediateFiles.map(async (file) => {
+                  const content = await translator.fromPidginFiles([file]);
+                  if (!ok(content)) {
+                    errors.push(content.$error);
+                    return [];
+                  }
+                  return { path: file, content };
+                })
+              )
+            ).flat();
+            if (errors.length > 0) {
+              return err(errors.join(","));
+            }
+
+            this.runStateManager.complete();
             terminateLoop = true;
-            result = {
+            finalResult = {
               success: true,
               href: originalRoute,
-              objective_outcome,
+              outcomes,
+              intermediate,
             };
           },
         })
@@ -362,41 +372,12 @@ class Loop {
         this.runStateManager.pushContent(functionResults.combined);
         this.runStateManager.completeTurn();
       }
-      return this.#finalizeResult(result);
+      return finalResult!;
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
       return this.runStateManager.fail(err(`Agent error: ${errorMessage}`));
     } finally {
       ui.finish();
     }
-  }
-
-  async #finalizeResult(raw: AgentRawResult): Promise<Outcome<AgentResult>> {
-    const { success, href, objective_outcome } = raw;
-    if (!success) {
-      return this.runStateManager.fail(err(objective_outcome));
-    }
-    // Capture files for successful run
-    this.runStateManager.complete();
-    const outcomes = await this.translator.fromPidginString(objective_outcome);
-    if (!ok(outcomes)) return outcomes;
-    const intermediateFiles = [...this.fileSystem.files.keys()];
-    const errors: string[] = [];
-    const intermediate = (
-      await Promise.all(
-        intermediateFiles.map(async (file) => {
-          const content = await this.translator.fromPidginFiles([file]);
-          if (!ok(content)) {
-            errors.push(content.$error);
-            return [];
-          }
-          return { path: file, content };
-        })
-      )
-    ).flat();
-    if (errors.length > 0) {
-      return err(errors.join(","));
-    }
-    return { success, href, outcomes, intermediate };
   }
 }
