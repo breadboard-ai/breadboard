@@ -88,7 +88,13 @@ Unless the objective explicitly asks for a particular type of input, use the "an
           ...taskIdSchema,
         },
         response: {
-          user_input: z.string().describe(`Response from the user`),
+          user_input: z.string().describe(`Response from the user`).optional(),
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
         },
       },
       async ({ user_message, input_type, task_id }) => {
@@ -97,10 +103,10 @@ Unless the objective explicitly asks for a particular type of input, use the "an
           user_message,
           input_type
         );
-        if (!ok(chatResponse)) return chatResponse;
+        if (!ok(chatResponse)) return { error: chatResponse.$error };
         const { input } = chatResponse;
         const pidgin = await args.translator.toPidgin(input, {}, true);
-        if (!ok(pidgin)) return pidgin;
+        if (!ok(pidgin)) return { error: pidgin.$error };
         return { user_input: pidgin.text };
       }
     ),
@@ -160,7 +166,14 @@ Layout hint for displaying choices:
             .array(z.string())
             .describe(
               `Array of selected choice IDs. For "single" mode, this will have exactly one element.`
-            ),
+            )
+            .optional(),
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
         },
       },
       async ({
@@ -179,7 +192,7 @@ Layout hint for displaying choices:
           layout as ChatChoiceLayout,
           none_of_the_above_label
         );
-        if (!ok(choicesResponse)) return choicesResponse;
+        if (!ok(choicesResponse)) return { error: choicesResponse.$error };
         return { selected: choicesResponse.selected };
       }
     ),
