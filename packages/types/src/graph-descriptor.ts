@@ -197,6 +197,11 @@ export type NodeMetadata = {
    */
   icon?: string;
   /**
+   * An optional SVG icon for custom icons (like third-party service icons)
+   * that aren't part of the Material symbols set.
+   */
+  svgIcon?: string;
+  /**
    * If true, the title/description have been modified by the user.
    */
   userModified?: boolean;

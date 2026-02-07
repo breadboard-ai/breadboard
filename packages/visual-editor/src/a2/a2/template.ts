@@ -43,6 +43,7 @@ export type AssetParamPart = {
   type: "asset";
   path: string;
   title: string;
+  mimeType?: string;
 };
 
 export type ParameterParamPart = {

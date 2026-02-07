@@ -152,12 +152,15 @@ class Template {
     return this.#parsed.find((part) => typeof part !== "string");
   }
 
-  get placeholders(): TemplatePart[] {
-    const explicit = this.#parsed.filter(
+  get #explicitPlaceholders(): TemplatePart[] {
+    return this.#parsed.filter(
       (part): part is TemplatePart => typeof part !== "string"
     );
+  }
 
-    // Add implicit tools based on asset mimetypes
+  get #implicitTools(): TemplatePart[] {
+    const explicit = this.#explicitPlaceholders;
+
     const implicitTools: TemplatePart[] = [];
 
     // Check for NotebookLM assets -> add NotebookLM tool if present
@@ -176,11 +179,16 @@ class Template {
       });
     }
 
-    return [...explicit, ...implicitTools];
+    return implicitTools;
+  }
+
+  get placeholders(): TemplatePart[] {
+    return [...this.#explicitPlaceholders, ...this.#implicitTools];
   }
 
   get preview() {
-    return this.#parsed
+    const parts = [...this.#parsed, ...this.#implicitTools];
+    return parts
       .map((part) => (typeof part === "string" ? part : part.title))
       .join("")
       .trim();

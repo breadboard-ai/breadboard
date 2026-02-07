@@ -154,7 +154,8 @@ function defineNotebookLMFunctions(
     defineFunction(
       {
         name: NOTEBOOKLM_RETRIEVE_CHUNKS_FUNCTION,
-        icon: "notebooklm",
+        svgIcon:
+          "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
         description: tr`Retrieves relevant source data from a NotebookLM notebook 
 based on a query. Use this to query knowledge stored in NotebookLM notebooks.`,
         parameters: {
@@ -208,7 +209,7 @@ specific about what information you're looking for.`
               name: `notebooks/${notebook_id}`,
               query,
               // TODO: decide what to do about budget
-              // contextTokenBudget: 1000000,
+              contextTokenBudget: 1000000,
               provenance: {
                 originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
                 clientInfo: {
@@ -252,7 +253,8 @@ specific about what information you're looking for.`
     defineFunction(
       {
         name: NOTEBOOKLM_GENERATE_ANSWER_FUNCTION,
-        icon: "notebooklm",
+        svgIcon:
+          "var(--bb-icon-notebooklm, url(/third_party/icons/notebooklm.svg))",
         description: tr`Generates an answer to a question using a NotebookLM notebook's
     chat functionality. The notebook's AI will synthesize information from its sources
     to provide a comprehensive answer. Use this when you need a direct answer rather
