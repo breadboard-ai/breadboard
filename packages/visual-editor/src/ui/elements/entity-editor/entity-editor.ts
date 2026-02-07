@@ -186,16 +186,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             height: 20px;
             flex: 0 0 auto;
           }
-
-          &.svg-icon {
-            flex: 0 0 auto;
-            width: 20px;
-            height: 20px;
-            margin-right: var(--bb-grid-size-2);
-            background-size: 20px 20px;
-            background-position: center;
-            background-repeat: no-repeat;
-          }
         }
 
         & input {

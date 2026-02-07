@@ -81,7 +81,7 @@ const MEMORY_TOOL: Tool = {
  */
 const NOTEBOOKLM_TOOL: Tool = {
   url: "notebooklm",
-  title: "NotebookLM",
+  title: "Use NotebookLM",
   icon: notebookLmIcon,
 };
 

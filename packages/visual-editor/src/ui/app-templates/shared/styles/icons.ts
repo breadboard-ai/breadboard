@@ -486,8 +486,6 @@ export default css`
       --bb-icon-generative-inverted: var(--bb-add-icon-generative-inverted);
 
       --bb-icon-discord: url(/styles/landing/images/third_party/discord-logo.svg);
-
-      --bb-icon-notebooklm: url(/third_party/icons/notebooklm.svg);
     }
   }
 

@@ -20,7 +20,6 @@ import {
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-
 import { getAssetType, getMimeType } from "../../utils/mime-type.js";
 import { consume } from "@lit/context";
 import {
@@ -708,8 +707,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       this.#emitCurrentItem();
                     }}
                   >
-                    <span class="g-icon filled round">${icon}</span>
-                    <span class="title"
+                    <span class="g-icon round filled">${icon}</span
+                    ><span class="title"
                       >${tool.title}${tool.url === "control-flow/routing"
                         ? html`...`
                         : nothing}</span

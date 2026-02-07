@@ -334,15 +334,17 @@ export class OverflowMenu extends LitElement {
 
   render() {
     return html`${map(this.actions, (action) => {
+      const actionIconClasses =
+        typeof action.icon === "string" ? { [action.icon]: true } : {};
+      const actionIcon =
+        typeof action.icon === "string" ? nothing : action.icon;
       return html`<div
         class=${classMap({
           ["with-secondary-action"]: action.secondaryAction !== undefined,
         })}
       >
         <button
-          class=${classMap({
-            ...(typeof action.icon === "string" ? { [action.icon]: true } : {}),
-          })}
+          class=${classMap(actionIconClasses)}
           @click=${(evt: PointerEvent) => {
             this.dispatchEvent(
               new OverflowMenuActionEvent(
@@ -356,7 +358,7 @@ export class OverflowMenu extends LitElement {
           ?disabled=${(action.name !== "settings" && this.disabled) ||
           action.disabled}
         >
-          <span class="g-icon filled round">${action.icon}</span>
+          <span class="g-icon filled round">${actionIcon}</span>
           ${action.title}
         </button>
 
