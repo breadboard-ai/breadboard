@@ -13,20 +13,29 @@ session({ name: "Agent" }, async (session) => {
     await import("../../../src/a2/agent/agent-function-configurator.js");
   const { streamGenerateContent, conformGeminiBody } =
     await import("../../../src/a2/a2/gemini.js");
-  const { callGeminiImage } = await import("../../../src/a2/a2/image-utils.js");
-  const { callVideoGen } =
-    await import("../../../src/a2/video-generator/main.js");
-  const { callAudioGen } =
-    await import("../../../src/a2/audio-generator/main.js");
-  const { callMusicGen } =
-    await import("../../../src/a2/music-generator/main.js");
+  let imageCount = 1;
+  let videoCount = 1;
+  let audioCount = 1;
+  let musicCount = 1;
+
+  const fakeContent = (type: string, mimeType: string, count: number) => ({
+    parts: [
+      {
+        storedData: {
+          handle: `https://example.com/fake-${type}-${count}`,
+          mimeType,
+        },
+      },
+    ],
+  });
+
   const generators = {
     streamContent: streamGenerateContent,
     conformBody: conformGeminiBody,
-    callImage: callGeminiImage,
-    callVideo: callVideoGen,
-    callAudio: callAudioGen,
-    callMusic: callMusicGen,
+    callImage: async () => [fakeContent("image", "image/png", imageCount++)],
+    callVideo: async () => fakeContent("video", "video/mp4", videoCount++),
+    callAudio: async () => fakeContent("audio", "audio/mp3", audioCount++),
+    callMusic: async () => fakeContent("music", "audio/mp3", musicCount++),
   };
 
   async function evalObjective(filename: string, only = false) {
