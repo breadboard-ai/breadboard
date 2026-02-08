@@ -63,7 +63,6 @@ export type GenerateFunctionArgs = {
   caps: Capabilities;
   moduleArgs: A2ModuleArgs;
   translator: PidginTranslator;
-  modelConstraint: ModelConstraint;
   taskTreeManager: TaskTreeManager;
   generators: Generators;
 };
@@ -120,7 +119,6 @@ function defineGenerateFunctions(
     caps,
     moduleArgs,
     translator,
-    modelConstraint,
     taskTreeManager,
     generators,
   } = args;
@@ -832,28 +830,14 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
     }
   );
 
-  switch (modelConstraint) {
-    case "image":
-      return [imageFunction];
-    case "video":
-      return [videoFunction];
-    case "speech":
-      return [speechFunction];
-    case "music":
-      return [musicFunction];
-    case "text-flash":
-    case "text-pro":
-    case "none":
-    default:
-      return [
-        imageFunction,
-        textFunction,
-        videoFunction,
-        speechFunction,
-        musicFunction,
-        codeFunction,
-      ];
-  }
+  return [
+    imageFunction,
+    textFunction,
+    videoFunction,
+    speechFunction,
+    musicFunction,
+    codeFunction,
+  ];
 }
 
 function resolveTextModel(model: "pro" | "lite" | "flash"): string {

@@ -287,7 +287,6 @@ function createTestArgs(
     caps: overrides.caps ?? stubCaps,
     moduleArgs: overrides.moduleArgs ?? stubModuleArgs,
     translator: overrides.translator ?? createMockTranslator(),
-    modelConstraint: overrides.modelConstraint ?? "none",
     taskTreeManager: overrides.taskTreeManager ?? createMockTaskTreeManager(),
     generators: overrides.generators ?? createMockGenerators(),
   };

@@ -13,40 +13,20 @@ import {
   streamGenerateContent,
   Tool,
 } from "../a2/gemini.js";
-import { callGeminiImage } from "../a2/image-utils.js";
-import { callAudioGen } from "../audio-generator/main.js";
-import { callMusicGen } from "../music-generator/main.js";
-import { callVideoGen } from "../video-generator/main.js";
 import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { AgentFileSystem } from "./file-system.js";
 import { FunctionCallerImpl } from "./function-caller.js";
-import {
-  getGenerateFunctionGroup,
-  ModelConstraint,
-} from "./functions/generate.js";
-import { getSystemFunctionGroup } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
-import { getMemoryFunctionGroup } from "./functions/memory.js";
-import { FunctionGroup, MemoryManager, UIType } from "./types.js";
-import { CHAT_LOG_PATH, getChatFunctionGroup } from "./functions/chat.js";
-import { getA2UIFunctionGroup } from "./functions/a2ui.js";
-import { getNoUiFunctionGroup } from "./functions/no-ui.js";
-import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
-import { TaskTreeManager } from "./task-tree-manager.js";
+import { FunctionGroup, UIType } from "./types.js";
 import { RunStateManager } from "./run-state-manager.js";
-import { Generators } from "./types.js";
 
 export { Loop };
-
-const generators: Generators = {
-  streamContent: streamGenerateContent,
-  conformBody: conformGeminiBody,
-  callImage: callGeminiImage,
-  callVideo: callVideoGen,
-  callAudio: callAudioGen,
-  callMusic: callMusicGen,
+export type {
+  LoopDeps,
+  FunctionGroupConfigurator,
+  FunctionGroupConfiguratorFlags,
 };
 
 export type AgentRunArgs = {
@@ -54,9 +34,28 @@ export type AgentRunArgs = {
   params: Params;
   uiType?: UIType;
   uiPrompt?: LLMContent;
-  extraInstruction?: string;
-  modelConstraint?: ModelConstraint;
 };
+
+type LoopDeps = {
+  fileSystem: AgentFileSystem;
+  translator: PidginTranslator;
+  ui: AgentUI;
+};
+
+type FunctionGroupConfiguratorFlags = {
+  uiType: UIType;
+  useMemory: boolean;
+  objective: LLMContent;
+  uiPrompt?: LLMContent;
+  params: Params;
+  onSuccess: (href: string, pidginString: string) => Promise<Outcome<void>>;
+  onFailure: (message: string) => void;
+};
+
+type FunctionGroupConfigurator = (
+  deps: LoopDeps,
+  flags: FunctionGroupConfiguratorFlags
+) => Promise<Outcome<FunctionGroup[]>>;
 
 export type AgentResult = {
   /**
@@ -92,22 +91,19 @@ class Loop {
   private readonly translator: PidginTranslator;
   private readonly fileSystem: AgentFileSystem;
   private readonly ui: AgentUI;
-  private readonly memoryManager: MemoryManager;
-  private readonly taskTreeManager: TaskTreeManager;
   private readonly runStateManager: RunStateManager;
 
   constructor(
-    private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleArgs
+    caps: Capabilities,
+    private readonly moduleArgs: A2ModuleArgs,
+    private readonly configureFn: FunctionGroupConfigurator
   ) {
-    this.memoryManager = moduleArgs.agentContext.memoryManager;
     this.fileSystem = new AgentFileSystem({
       context: moduleArgs.context,
-      memoryManager: this.memoryManager,
+      memoryManager: moduleArgs.agentContext.memoryManager,
     });
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
-    this.taskTreeManager = new TaskTreeManager(this.fileSystem);
     this.runStateManager = new RunStateManager(
       moduleArgs.agentContext,
       this.fileSystem
@@ -119,18 +115,8 @@ class Loop {
     params,
     uiPrompt,
     uiType = "chat",
-    extraInstruction = "",
-    modelConstraint = "none",
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
-    const {
-      caps,
-      moduleArgs,
-      fileSystem,
-      translator,
-      ui,
-      memoryManager,
-      taskTreeManager,
-    } = this;
+    const { moduleArgs, fileSystem, translator, ui } = this;
 
     ui.progress.startAgent(objective);
     try {
@@ -144,14 +130,10 @@ class Loop {
       // Set whether memory files should be exposed based on useMemory tool
       fileSystem.setUseMemory(objectivePidgin.useMemory);
 
-      if (extraInstruction) {
-        extraInstruction = `${extraInstruction}\n\n`;
-      }
-
       // Start or resume the run via RunStateManager
       const stepId = this.moduleArgs.context.currentStep?.id;
       const objectiveContent =
-        llm`<objective>${extraInstruction}${objectivePidgin.text}</objective>`.asContent();
+        llm`<objective>${objectivePidgin.text}</objective>`.asContent();
 
       // Check the enableResumeAgentRun flag
       const runtimeFlags = await moduleArgs.context.flags?.flags();
@@ -164,18 +146,19 @@ class Loop {
       let terminateLoop = false;
       let finalResult: Outcome<AgentResult> | null = null;
 
-      const functionGroups: FunctionGroup[] = [];
-
-      functionGroups.push(
-        getSystemFunctionGroup({
+      const functionGroupsResult = await this.configureFn(
+        {
           fileSystem,
           translator,
-          taskTreeManager,
-          failureCallback: (objective_outcome: string) => {
-            terminateLoop = true;
-            finalResult = this.runStateManager.fail(err(objective_outcome));
-          },
-          successCallback: async (href, objective_outcome) => {
+          ui,
+        },
+        {
+          uiType,
+          useMemory: objectivePidgin.useMemory,
+          objective,
+          uiPrompt,
+          params,
+          onSuccess: async (href, objective_outcome) => {
             const originalRoute = fileSystem.getOriginalRoute(href);
             if (!ok(originalRoute)) return originalRoute;
 
@@ -210,62 +193,14 @@ class Loop {
               intermediate,
             };
           },
-        })
+          onFailure: (objective_outcome: string) => {
+            terminateLoop = true;
+            finalResult = this.runStateManager.fail(err(objective_outcome));
+          },
+        }
       );
-
-      functionGroups.push(
-        getGenerateFunctionGroup({
-          fileSystem,
-          caps,
-          moduleArgs,
-          translator,
-          modelConstraint,
-          taskTreeManager,
-          generators,
-        })
-      );
-      if (objectivePidgin.useMemory) {
-        functionGroups.push(
-          getMemoryFunctionGroup({
-            context: moduleArgs.context,
-            translator,
-            fileSystem,
-            memoryManager,
-            taskTreeManager,
-          })
-        );
-      }
-
-      if (uiType === "a2ui") {
-        const a2uiFunctionGroup = await getA2UIFunctionGroup({
-          caps,
-          moduleArgs,
-          fileSystem,
-          translator,
-          ui,
-          uiPrompt,
-          objective,
-          params,
-        });
-        if (!ok(a2uiFunctionGroup)) return a2uiFunctionGroup;
-        functionGroups.push(a2uiFunctionGroup);
-      } else if (uiType === "chat") {
-        fileSystem.addSystemFile(CHAT_LOG_PATH, () =>
-          JSON.stringify(ui.chatLog)
-        );
-        functionGroups.push(
-          getChatFunctionGroup({ chatManager: ui, translator, taskTreeManager })
-        );
-      } else {
-        functionGroups.push(getNoUiFunctionGroup());
-      }
-
-      const enableGoogleDriveTools = await moduleArgs.context.flags?.flags();
-      if (enableGoogleDriveTools) {
-        functionGroups.push(
-          getGoogleDriveFunctionGroup({ fileSystem, moduleArgs })
-        );
-      }
+      if (!ok(functionGroupsResult)) return functionGroupsResult;
+      const functionGroups = functionGroupsResult;
 
       const objectiveTools = objectivePidgin.tools.list().at(0);
       const tools: Tool[] = [
