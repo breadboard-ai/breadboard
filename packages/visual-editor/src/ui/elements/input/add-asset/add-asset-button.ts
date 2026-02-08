@@ -6,6 +6,7 @@
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { OverflowAction } from "../../../types/types.js";
+import { notebookLmIcon } from "../../../styles/svg-icons.js";
 import { styleMap } from "lit/directives/style-map.js";
 import {
   AddAssetRequestEvent,
@@ -24,12 +25,16 @@ export class AddAssetButton extends LitElement {
   accessor showGDrive = false;
 
   @property()
+  accessor showNotebookLm = false;
+
+  @property()
   accessor supportedActions = {
     upload: true,
     youtube: true,
     drawable: true,
     gdrive: true,
     webcamVideo: true,
+    notebooklm: true,
   };
 
   @property()
@@ -147,6 +152,14 @@ export class AddAssetButton extends LitElement {
           icon: "videocam",
           name: "webcam-video",
           title: "Add a Webcam Video",
+        });
+      }
+
+      if (this.supportedActions.notebooklm && this.showNotebookLm) {
+        actions.push({
+          icon: notebookLmIcon,
+          name: "notebooklm",
+          title: "NotebookLM",
         });
       }
 

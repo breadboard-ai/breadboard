@@ -8,6 +8,7 @@
 
 import { Outcome, Schema } from "@breadboard-ai/types";
 import { z, ZodObject, ZodType } from "zod";
+import type { HTMLTemplateResult } from "lit";
 import { FunctionDeclaration, GeminiSchema } from "../a2/gemini.js";
 import { MappedDefinitions } from "./types.js";
 import type { ProgressReporter } from "./types.js";
@@ -27,7 +28,7 @@ export type ZodFunctionDefinition<
   name: string;
   title?: string;
   description: string;
-  icon: string;
+  icon?: string | HTMLTemplateResult;
   parameters: TParams;
   response?: TResponse;
 };
@@ -73,7 +74,7 @@ type TypedFunctionDefinition<
   TResponse extends ArgsRawShape,
 > = FunctionDeclaration & {
   title?: string;
-  icon: string;
+  icon?: string | HTMLTemplateResult;
   handler: Handler<TParams, TResponse>;
 };
 

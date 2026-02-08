@@ -20,7 +20,11 @@ import { icons } from "../../../styles/icons.js";
 import {
   isFileDataCapabilityPart,
   isInlineData,
+  isStoredData,
 } from "../../../../data/common.js";
+import { NOTEBOOKLM_MIMETYPE, parseNotebookLmId } from "@breadboard-ai/utils";
+import "../../notebooklm-viewer/notebooklm-viewer.js";
+import { notebookLmIcon } from "../../../styles/svg-icons.js";
 
 @customElement("bb-asset-shelf")
 export class AssetShelf extends LitElement {
@@ -172,7 +176,7 @@ export class AssetShelf extends LitElement {
 
   render() {
     return html`${repeat(this.#assets, (asset) => {
-      let assetIcon = "upload";
+      let assetIcon: string | HTMLTemplateResult = "upload";
       let assetTypeLabel = "Upload";
       return asset.parts.map((part) => {
         let value: HTMLTemplateResult | symbol = nothing;
@@ -246,6 +250,17 @@ export class AssetShelf extends LitElement {
               }
             }
           }
+        } else if (
+          isStoredData(part) &&
+          part.storedData.mimeType === NOTEBOOKLM_MIMETYPE
+        ) {
+          assetIcon = notebookLmIcon;
+          assetTypeLabel = "ReferenceNotebookLM";
+          const notebookId = parseNotebookLmId(part.storedData.handle);
+          value = html`<bb-notebooklm-viewer
+            .notebookId=${notebookId ?? null}
+            displayMode="thumbnail"
+          ></bb-notebooklm-viewer>`;
         }
 
         return html` <div class="value">

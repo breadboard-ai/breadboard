@@ -12,6 +12,7 @@ import {
   isStoredData,
   isTextCapabilityPart,
 } from "../../data/common.js";
+import { isNotebookLmUrl } from "@breadboard-ai/utils";
 
 export { llmContentToA2UIComponents, type ConvertedLLMContent };
 
@@ -134,6 +135,15 @@ function llmContentToA2UIComponents(
           "a2ui-custom-google-drive": {
             fileUri: { literalString: part.storedData.handle },
             resourceKey: { literalString: part.storedData.resourceKey },
+          },
+        });
+      } else if (isNotebookLmUrl(part.storedData.handle)) {
+        // NotebookLM references pass through as metadata - no visual representation
+        // The notebook ID will be consumed by generate steps as context
+        addTopLevel(generateId("notebooklm"), {
+          Text: {
+            text: { literalString: part.storedData.handle },
+            usageHint: "body",
           },
         });
       } else if (part.storedData.mimeType.startsWith("image")) {

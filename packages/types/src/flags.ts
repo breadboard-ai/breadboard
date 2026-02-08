@@ -78,6 +78,11 @@ export type RuntimeFlags = {
    * Enables auto-resumption of failed agent runs
    */
   enableResumeAgentRun: boolean;
+
+  /**
+   * Enables NotebookLM integration
+   */
+  enableNotebookLm: boolean;
 };
 
 /**

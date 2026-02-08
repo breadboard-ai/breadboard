@@ -152,6 +152,11 @@ suite("FlagController", () => {
     );
 
     assert.throws(
+      () => String(store.enableNotebookLm),
+      new Error("enableNotebookLm was not set by environment")
+    );
+
+    assert.throws(
       () => String(store.enableResumeAgentRun),
       new Error("enableResumeAgentRun was not set by environment")
     );

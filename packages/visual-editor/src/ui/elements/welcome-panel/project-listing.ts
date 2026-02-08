@@ -24,8 +24,8 @@ import { icons } from "../../styles/icons.js";
 import { ActionTracker } from "../../types/types.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
-import "./homepage-search-button.js";
-import { HomepageSearchButton } from "./homepage-search-button.js";
+import "../shared/expanding-search-button.js";
+import { ExpandingSearchButton } from "../shared/expanding-search-button.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
@@ -318,7 +318,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             }
           }
 
-          & bb-homepage-search-button {
+          & bb-expanding-search-button {
             display: none;
           }
 
@@ -434,11 +434,12 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
             <div id="buttons">
               ${userGraphs.size > this.pageSize
-                ? html`<bb-homepage-search-button
+                ? html`<bb-expanding-search-button
+                    showLabel
                     @input=${(evt: InputEvent) => {
                       const inputs = evt.composedPath();
                       const input = inputs.find(
-                        (el) => el instanceof HomepageSearchButton
+                        (el) => el instanceof ExpandingSearchButton
                       );
                       if (!input) {
                         return;
@@ -446,7 +447,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
                       this.userFilter = input.value;
                     }}
-                  ></bb-homepage-search-button>`
+                  ></bb-expanding-search-button>`
                 : nothing}
               ${userHasAnyGraphs
                 ? this.#renderInlineCreateNewButton()
@@ -564,11 +565,12 @@ export class ProjectListing extends SignalWatcher(LitElement) {
           <h2 class="gallery-title md-headline-small sans-flex w-400 round">
             ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
           </h2>
-          <bb-homepage-search-button
+          <bb-expanding-search-button
+            showLabel
             @input=${(evt: InputEvent) => {
               const inputs = evt.composedPath();
               const input = inputs.find(
-                (el) => el instanceof HomepageSearchButton
+                (el) => el instanceof ExpandingSearchButton
               );
               if (!input) {
                 return;
@@ -576,7 +578,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
               this.featuredFilter = input.value;
             }}
-          ></bb-homepage-search-button>
+          ></bb-expanding-search-button>
         </section>
 
         ${sampleItems.length === 0

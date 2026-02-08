@@ -13,9 +13,14 @@ import {
   InspectableGraph,
   MainGraphIdentifier,
 } from "@breadboard-ai/types";
-import { parseBase64DataUrl } from "@breadboard-ai/utils";
+import {
+  parseBase64DataUrl,
+  NOTEBOOKLM_MIMETYPE,
+  toNotebookLmUrl,
+} from "@breadboard-ai/utils";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
+import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -37,8 +42,13 @@ import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
 import { ActionTracker, NewAsset } from "../../types/types.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
-import { GoogleDriveFileId, ItemSelect } from "../elements.js";
+import {
+  GoogleDriveFileId,
+  ItemSelect,
+  NotebookLmPicker,
+} from "../elements.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
+import type { NotebookPickedValue } from "../notebooklm-picker/notebooklm-picker.js";
 import { DATA_TYPE } from "./constants.js";
 import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
 import { scaContext } from "../../../sca/context/context.js";
@@ -507,6 +517,7 @@ export class EditorControls extends SignalWatcher(LitElement) {
   ];
 
   #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
+  #addNotebookLmInputRef: Ref<NotebookLmPicker> = createRef();
 
   hidePickers() {
     this.showComponentPicker = false;
@@ -523,6 +534,21 @@ export class EditorControls extends SignalWatcher(LitElement) {
       console.warn(err);
       this.dispatchEvent(
         new ToastEvent("Unable to load Google Drive", ToastType.ERROR)
+      );
+    }
+  }
+
+  #attemptNotebookLMPickerFlow() {
+    if (!this.#addNotebookLmInputRef.value) {
+      return;
+    }
+
+    try {
+      this.#addNotebookLmInputRef.value.triggerFlow();
+    } catch (err) {
+      console.warn(err);
+      this.dispatchEvent(
+        new ToastEvent("Unable to load NotebookLM", ToastType.ERROR)
       );
     }
   }
@@ -725,6 +751,11 @@ export class EditorControls extends SignalWatcher(LitElement) {
                 break;
               }
 
+              case "notebooklm": {
+                this.#attemptNotebookLMPickerFlow();
+                break;
+              }
+
               default: {
                 console.log("Init", select.value);
                 break;
@@ -750,6 +781,15 @@ export class EditorControls extends SignalWatcher(LitElement) {
               title: "My Drive",
               icon: "drive",
             },
+            ...(this.sca.controller.global.flags.enableNotebookLm
+              ? [
+                  {
+                    id: "notebooklm",
+                    title: "NotebookLM",
+                    icon: notebookLmIcon,
+                  },
+                ]
+              : []),
             {
               id: "youtube",
               title: "YouTube",
@@ -799,6 +839,34 @@ export class EditorControls extends SignalWatcher(LitElement) {
               );
             }}
           ></bb-google-drive-file-id>
+          <bb-notebooklm-picker
+            id="add-notebooklm-proxy"
+            ${ref(this.#addNotebookLmInputRef)}
+            @bb-input-change=${(evt: InputChangeEvent) => {
+              const notebooks = evt.value as NotebookPickedValue[];
+
+              const assets = notebooks.map((notebook) => ({
+                path: globalThis.crypto.randomUUID(),
+                name: notebook.preview,
+                type: "content" as const,
+                subType: "notebooklm" as const,
+                managed: false,
+                data: {
+                  role: "user" as const,
+                  parts: [
+                    {
+                      storedData: {
+                        handle: toNotebookLmUrl(notebook.id),
+                        mimeType: NOTEBOOKLM_MIMETYPE,
+                      },
+                    },
+                  ],
+                },
+              }));
+
+              this.dispatchEvent(new CreateNewAssetsEvent(assets));
+            }}
+          ></bb-notebooklm-picker>
         </div> `
     );
 

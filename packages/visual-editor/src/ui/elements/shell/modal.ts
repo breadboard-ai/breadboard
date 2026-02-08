@@ -34,6 +34,9 @@ export class VEModal extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor showSaveCancel = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor saveButtonDisabled = false;
+
   @property()
   accessor saveButtonLabel = "Save";
 
@@ -171,6 +174,11 @@ export class VEModal extends LitElement {
 
               color: var(--light-dark-n-100);
               padding: 0 var(--bb-grid-size-4);
+
+              &[disabled] {
+                opacity: 0.4;
+                cursor: default;
+              }
             }
           }
         }
@@ -291,6 +299,7 @@ export class VEModal extends LitElement {
                     : nothing}
                   ${this.modalTitle}
                 </h1>
+                <slot name="header-actions"></slot>
                 ${this.showCloseButton
                   ? html`<button
                       id="close"
@@ -320,6 +329,7 @@ export class VEModal extends LitElement {
               <button
                 id="save"
                 class="cursor"
+                ?disabled=${this.saveButtonDisabled}
                 @click=${() => {
                   this.#close(true);
                 }}

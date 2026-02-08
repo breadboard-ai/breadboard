@@ -18,6 +18,8 @@ import {
   NodeIdentifier,
   OutputValues,
 } from "@breadboard-ai/types";
+import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
+import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { Tab } from "../../../../../runtime/types.js";
@@ -71,6 +73,16 @@ const MEMORY_TOOL: Tool = {
   url: "use-memory",
   title: "Use Memory",
   icon: "database",
+};
+
+/**
+ * Tool definition for the "NotebookLM" action.
+ * Always available in agent mode.
+ */
+const NOTEBOOKLM_TOOL: Tool = {
+  url: "notebooklm",
+  title: "Use NotebookLM",
+  icon: notebookLmIcon,
 };
 
 export class GraphController extends RootController {
@@ -386,6 +398,7 @@ export class GraphController extends RootController {
    * Rebuilds agentModeTools based on graph state.
    * - ROUTING_TOOL: Only included when graph has >1 node
    * - MEMORY_TOOL: Always included
+   * - NOTEBOOKLM_TOOL: Always included
    * Uses wholesale Map replacement to trigger @field reactivity.
    */
   #updateAgentModeTools() {
@@ -394,6 +407,7 @@ export class GraphController extends RootController {
       tools.push([`control-flow/routing`, ROUTING_TOOL]);
     }
     tools.push([`function-group/use-memory`, MEMORY_TOOL]);
+    tools.push([NOTEBOOKLM_TOOL_PATH, NOTEBOOKLM_TOOL]);
     this._agentModeTools = new Map(tools);
   }
 

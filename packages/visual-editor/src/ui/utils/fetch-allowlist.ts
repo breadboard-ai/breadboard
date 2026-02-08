@@ -45,6 +45,7 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
     shouldAddAccessTokenToJsonBody: (url: string) =>
       url.endsWith("/uploadGeminiFile") ||
       url.endsWith("/uploadBlobFile") ||
+      url.endsWith("/nlmRetrieveRelevantChunks") ||
       url.includes("/generateWebpageStream"),
   },
   {
@@ -98,6 +99,12 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
   {
     canonicalPrefix: new URL(CANONICAL.GOOGLE_GMAIL_API_PREFIX),
     scopes: GMAIL_SCOPES,
+    // Not currently configurable
+    remapOrigin: undefined,
+  },
+  {
+    canonicalPrefix: new URL(CANONICAL.NOTEBOOKLM_API_PREFIX),
+    scopes: GENAI_SCOPES,
     // Not currently configurable
     remapOrigin: undefined,
   },

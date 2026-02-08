@@ -15,6 +15,7 @@ import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
   GraphLoader,
   Kit,
+  NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
   PersistentBackend,
   RuntimeFlagManager,
@@ -42,6 +43,7 @@ import { type ConsentController } from "../controller/subcontrollers/global/glob
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { RunService } from "./run-service.js";
 import { StatusUpdatesService } from "./status-updates-service.js";
+import { NotebookLmApiClient } from "./notebooklm-api-client.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
@@ -58,6 +60,7 @@ export interface AppServices {
   kits: Kit[];
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
+  notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
   signinAdapter: SigninAdapter;
   statusUpdates: StatusUpdatesService;
@@ -113,12 +116,19 @@ export function services(
       fetchWithCreds,
     });
 
+    const notebookLmApiClient = new NotebookLmApiClient(
+      fetchWithCreds,
+      NOTEBOOKLM_API_PREFIX,
+      OPAL_BACKEND_API_PREFIX
+    );
+
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,
       shell: config.shellHost,
       getConsentController,
       agentContext,
+      notebookLmApiClient,
     });
     const kits = addRunModule(sandbox, []);
     const googleDriveBoardServer = createGoogleDriveBoardServer(
@@ -165,6 +175,7 @@ export function services(
       kits,
       loader,
       mcpClientManager,
+      notebookLmApiClient,
       runService: new RunService(),
       signinAdapter,
       statusUpdates: new StatusUpdatesService(),

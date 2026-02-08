@@ -9,6 +9,7 @@ const Strings = StringsHelper.forSection("Global");
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { discordIcon } from "../../styles/svg-icons.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
@@ -175,7 +176,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
 
-          bb-homepage-search-button {
+          bb-expanding-search-button {
             margin: 0 var(--bb-grid-size-6) 0 0;
           }
 
@@ -651,8 +652,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
     {
       id: "chat",
       title: Strings.from("COMMAND_JOIN_CHAT"),
-      svgIcon:
-        "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
+      icon: discordIcon,
     },
     {
       id: "show-global-settings",

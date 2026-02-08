@@ -13,7 +13,7 @@ import {
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { err, ok, isNotebookLmUrl } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { isFileDataCapabilityPart } from "../../data/common.js";
 
@@ -143,6 +143,9 @@ async function driveFileToBlob(
 ): Promise<Outcome<BlobStoredData>> {
   const existingHandle = part.storedData.handle;
   if (existingHandle.startsWith(getBlobPrefix())) {
+    return { part };
+  } else if (isNotebookLmUrl(existingHandle)) {
+    // NotebookLM references pass through as-is - no blob conversion needed
     return { part };
   } else if (!existingHandle.startsWith("drive:/")) {
     return err(`Unknown blob URL: "${existingHandle}`);
