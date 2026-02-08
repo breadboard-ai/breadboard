@@ -53,6 +53,7 @@ export enum TosStatus {
 
 import type { LLMContent, Outcome } from "@breadboard-ai/types";
 import type { FinalChainReport } from "../../eval/collate-context.js";
+import type { v0_8 } from "../a2ui/index.js";
 
 export type FileData = {
   path: string;
@@ -71,4 +72,9 @@ export type OutcomePayload = {
   outcome: Outcome<OutcomeData>;
 };
 
-export type EvalFileData = Array<FinalChainReport | OutcomePayload>;
+export type A2UIData = {
+  type: "a2ui";
+  data: v0_8.Types.ServerToClientMessage[][];
+};
+
+export type EvalFileData = Array<FinalChainReport | A2UIData | OutcomePayload>;

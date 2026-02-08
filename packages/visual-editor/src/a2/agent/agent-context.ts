@@ -11,7 +11,7 @@ import {
   SheetManagerConfig,
 } from "../google-drive/sheet-manager.js";
 import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
-import type { EvalFileData } from "../../types/types.js";
+import type { A2UIData, EvalFileData } from "../../types/types.js";
 
 export { AgentContext };
 export type { AgentContextConfig };
@@ -39,6 +39,7 @@ class AgentContext {
       objective,
       files: {},
       resumable: true,
+      a2uiSurfaces: [],
     };
     this.#runs.set(id, state);
     return state;
@@ -140,6 +141,14 @@ class AgentContext {
           intermediate: intermediate.length > 0 ? intermediate : undefined,
         },
       });
+
+      // Add A2UI surfaces if any were rendered during this run
+      if (run.a2uiSurfaces.length > 0) {
+        result.push({
+          type: "a2ui" as const,
+          data: run.a2uiSurfaces,
+        } satisfies A2UIData);
+      }
     }
 
     return result;

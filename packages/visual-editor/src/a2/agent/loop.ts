@@ -108,6 +108,8 @@ class Loop {
       moduleArgs.agentContext,
       this.fileSystem
     );
+    this.ui.onA2UIRender = (messages) =>
+      this.runStateManager.pushA2UISurface(messages);
   }
 
   async run({

@@ -7,6 +7,7 @@
 import { LLMContent } from "@breadboard-ai/types";
 import { GeminiBody } from "../a2/gemini.js";
 import { RunState } from "./types.js";
+import type { ServerToClientMessage } from "../../a2ui/0.8/types/types.js";
 import { AgentFileSystem } from "./file-system.js";
 import { AgentContext } from "./agent-context.js";
 
@@ -97,6 +98,15 @@ class RunStateManager {
     if (this.#runState && !this.#runState.requestBody) {
       this.#runState.model = model;
       this.#runState.requestBody = body;
+    }
+  }
+
+  /**
+   * Appends a rendered A2UI surface (message array) to the current run.
+   */
+  pushA2UISurface(messages: ServerToClientMessage[]): void {
+    if (this.#runState) {
+      this.#runState.a2uiSurfaces.push(messages);
     }
   }
 
