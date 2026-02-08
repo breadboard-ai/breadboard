@@ -29,7 +29,7 @@ export class A2UICustomHTML extends A2UI.v0_8.UI.Root {
       }
 
       bb-app-sandbox::part(iframe) {
-        height: 100svh;
+        height: 700px;
       }
     `,
   ];
