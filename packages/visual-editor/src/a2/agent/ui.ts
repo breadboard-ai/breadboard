@@ -238,6 +238,12 @@ class AgentUI implements A2UIRenderer, ChatManager {
     return this.awaitUserInput();
   }
 
+  #onA2UIRender?: (messages: v0_8.Types.ServerToClientMessage[]) => void;
+
+  set onA2UIRender(cb: (messages: v0_8.Types.ServerToClientMessage[]) => void) {
+    this.#onA2UIRender = cb;
+  }
+
   renderUserInterface(
     messages: v0_8.Types.ServerToClientMessage[],
     title: string = "A2UI",
@@ -247,6 +253,8 @@ class AgentUI implements A2UIRenderer, ChatManager {
     if (!ok(workItem)) return workItem;
     const translation = this.translator.fromPidginMessages(messages);
     this.client.processUpdates(translation);
+
+    this.#onA2UIRender?.(messages);
 
     workItem.renderUserInterface();
   }
