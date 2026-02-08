@@ -63,14 +63,14 @@ class AgentFileSystem {
     this.systemFiles.set(path, getter);
   }
 
-  overwrite(name: string, data: string, mimeType: string): string {
-    const path = this.#createNamed(name, mimeType, false);
+  overwrite(name: string, data: string): string {
+    const { path, mimeType } = this.#createNamed(name, false);
     this.#files.set(path, { data, mimeType, type: "text" });
     return path;
   }
 
-  write(name: string, data: string, mimeType: string): string {
-    const path = this.#createNamed(name, mimeType, true);
+  write(name: string, data: string): string {
+    const { path, mimeType } = this.#createNamed(name, true);
     if (mimeType === "text/html") {
       this.#files.set(path, { data, mimeType, type: "inlineData" });
     } else {
@@ -282,8 +282,7 @@ class AgentFileSystem {
   add(part: DataPart, fileName?: string): Outcome<string> {
     const create = (mimeType: string) => {
       if (fileName) {
-        const withoutExtension = fileName.replace(/\.[^/.]+$/, "");
-        return this.#createNamed(withoutExtension, mimeType, true);
+        return this.#createNamed(fileName, true).path;
       }
       return this.create(mimeType);
     };
@@ -345,21 +344,16 @@ class AgentFileSystem {
 
   #createNamed(
     name: string,
-    mimeType: string,
     overwriteWarning: boolean
-  ): string {
-    let filename;
-    if (name.includes(".")) {
-      filename = name;
-    } else {
-      const ext = mime.getExtension(mimeType);
-      filename = `${name}.${ext}`;
-    }
+  ): { path: string; mimeType: string } {
+    const ext = name.includes(".") ? name.split(".").pop() : undefined;
+    const mimeType = (ext && mime.getType(ext)) || "text/plain";
+    const filename = ext ? name : `${name}.txt`;
     const path = `/mnt/${filename}`;
     if (overwriteWarning && this.#files.has(path)) {
       console.warn(`File "${path}" already exists, will be overwritten`);
     }
-    return path;
+    return { path, mimeType };
   }
 
   create(mimeType: string) {

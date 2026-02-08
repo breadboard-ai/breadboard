@@ -152,4 +152,76 @@ describe("Agent File System", () => {
     strictEqual(path1 !== path2, true);
     strictEqual(fileSystem.files.size, 2);
   });
+
+  it("write infers mime type from .md extension", () => {
+    const fileSystem = new AgentFileSystem({
+      context: stubModuleArgs.context,
+      memoryManager: stubMemoryManager,
+    });
+
+    const path = fileSystem.write("report.md", "# Hello");
+    strictEqual(path, "/mnt/report.md");
+
+    const file = fileSystem.files.get(path);
+    success(file);
+    strictEqual(file!.mimeType, "text/markdown");
+    strictEqual(file!.type, "text");
+  });
+
+  it("write stores text/html as inlineData", () => {
+    const fileSystem = new AgentFileSystem({
+      context: stubModuleArgs.context,
+      memoryManager: stubMemoryManager,
+    });
+
+    const path = fileSystem.write("page.html", "<h1>Hi</h1>");
+    strictEqual(path, "/mnt/page.html");
+
+    const file = fileSystem.files.get(path);
+    success(file);
+    strictEqual(file!.mimeType, "text/html");
+    strictEqual(file!.type, "inlineData");
+  });
+
+  it("write infers mime type from .csv extension", () => {
+    const fileSystem = new AgentFileSystem({
+      context: stubModuleArgs.context,
+      memoryManager: stubMemoryManager,
+    });
+
+    const path = fileSystem.write("data.csv", "a,b,c");
+    strictEqual(path, "/mnt/data.csv");
+
+    const file = fileSystem.files.get(path);
+    success(file);
+    strictEqual(file!.mimeType, "text/csv");
+  });
+
+  it("write falls back to text/plain for names without extension", () => {
+    const fileSystem = new AgentFileSystem({
+      context: stubModuleArgs.context,
+      memoryManager: stubMemoryManager,
+    });
+
+    const path = fileSystem.write("notes", "some text");
+    strictEqual(path, "/mnt/notes.txt");
+
+    const file = fileSystem.files.get(path);
+    success(file);
+    strictEqual(file!.mimeType, "text/plain");
+  });
+
+  it("overwrite infers mime type from .json extension", () => {
+    const fileSystem = new AgentFileSystem({
+      context: stubModuleArgs.context,
+      memoryManager: stubMemoryManager,
+    });
+
+    const path = fileSystem.overwrite("config.json", '{"key": "value"}');
+    strictEqual(path, "/mnt/config.json");
+
+    const file = fileSystem.files.get(path);
+    success(file);
+    strictEqual(file!.mimeType, "application/json");
+  });
 });
