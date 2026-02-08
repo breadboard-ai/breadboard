@@ -6,15 +6,6 @@
 
 export { Template };
 
-export {
-  NOTEBOOKLM_MIMETYPE,
-  NOTEBOOKLM_TOOL_PATH,
-  NOTEBOOKLM_TOOL_TITLE,
-  toNotebookLmUrl,
-  parseNotebookLmId,
-  isNotebookLmUrl,
-} from "./notebooklm.js";
-
 import {
   NOTEBOOKLM_MIMETYPE,
   NOTEBOOKLM_TOOL_PATH,
