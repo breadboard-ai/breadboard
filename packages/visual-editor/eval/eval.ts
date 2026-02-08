@@ -9,7 +9,6 @@ import { mkdir, writeFile } from "fs/promises";
 import { mock } from "node:test";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import type { callGeminiImage } from "../src/a2/a2/image-utils.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
 import { AgentContext } from "../src/a2/agent/agent-context.js";
 import { McpClientManager } from "../src/mcp/index.js";
@@ -82,8 +81,6 @@ function session(
  * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
  */
 class EvalHarness {
-  private imageCount = 1;
-
   constructor(private readonly args: EvalHarnessArgs) {}
 
   async session(sessionFunction: EvalHarnessSessionFunction) {
@@ -99,25 +96,6 @@ class EvalHarness {
     } as Window;
 
     mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
-
-    mockFunction<typeof callGeminiImage>(
-      "../src/a2/a2/image-utils.js",
-      "callGeminiImage",
-      async () => {
-        return [
-          {
-            parts: [
-              {
-                storedData: {
-                  handle: `https://example.com/fakeurl-${this.imageCount++}`,
-                  mimeType: "image/png",
-                },
-              },
-            ],
-          },
-        ];
-      }
-    );
 
     const runEvalFn = async (
       evalName: string,
@@ -201,22 +179,6 @@ class EvalHarness {
     // app-screen.ts) can't be easily cleared and would keep the process alive.
     process.exit(0);
   }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyFunction = (...args: any[]) => any;
-
-function mockFunction<T extends AnyFunction>(
-  moduleSpecifier: string,
-  functionName: string,
-  implementation?: T
-) {
-  const resolvedPath = import.meta.resolve(moduleSpecifier);
-  const mocked = mock.fn(implementation);
-
-  mock.module(resolvedPath, { namedExports: { [functionName]: mocked } });
-
-  return mocked;
 }
 
 async function ensureDir(dir: string) {
