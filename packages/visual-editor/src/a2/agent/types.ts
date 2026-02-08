@@ -24,6 +24,7 @@ import type {
 import type { SimplifiedToolManager } from "../a2/tool-manager.js";
 import type { SpreadsheetValueRange } from "../google-drive/api.js";
 import type { ErrorMetadata } from "../a2/utils.js";
+import type { ServerToClientMessage } from "../../a2ui/0.8/types/types.js";
 
 /**
  * Interface for reporting step execution progress.
@@ -237,6 +238,8 @@ export type RunState = {
   files: Record<string, FileDescriptor>;
   /** Whether this run can be resumed (set to false when graph is edited) */
   resumable: boolean;
+  /** A2UI surfaces rendered during the run (one entry per renderUserInterface call) */
+  a2uiSurfaces: ServerToClientMessage[][];
 };
 
 /**
