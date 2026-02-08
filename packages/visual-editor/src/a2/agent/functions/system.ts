@@ -320,17 +320,12 @@ If the objective specifies other agent URLs using the
         parameters: {
           file_name: z.string().describe(
             tr`
-The name of the file without the extension.
+The name of the file with the extension.
 This is the name that will come after the "/mnt/" prefix in the file path.
-Use snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten`
+Use snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten.
+Examples: "report.md", "data.csv", "notes.txt", "config.json", "index.html"`
           ),
           content: z.string().describe(`The content to write into a file`),
-          mime_type: z
-            .string()
-            .describe(
-              `The text MIME type of the content, such as "text/plain", "application/json", "text/csv", etc.`
-            )
-            .default("text/plain"),
         },
         response: {
           file_path: z
@@ -343,7 +338,7 @@ Use snake_case for naming. If the file does not exist, it will be created. If th
             .optional(),
         },
       },
-      async ({ file_name, content, mime_type }) => {
+      async ({ file_name, content }) => {
         const translatedContent =
           await args.translator.fromPidginString(content);
         if (!ok(translatedContent)) {
@@ -351,8 +346,7 @@ Use snake_case for naming. If the file does not exist, it will be created. If th
         }
         const file_path = args.fileSystem.write(
           file_name,
-          toText(translatedContent),
-          mime_type
+          toText(translatedContent)
         );
         return { file_path };
       }
