@@ -16,18 +16,30 @@ import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Loop } from "./loop.js";
-import type { ModelConstraint } from "./functions/generate.js";
+import { createAgentConfigurator } from "./agent-function-configurator.js";
 import { readFlags } from "../a2/settings.js";
-import { executeOpalAdkStream } from "../a2/opal-adk-stream.js";
+import { conformGeminiBody, streamGenerateContent } from "../a2/gemini.js";
+import { callGeminiImage } from "../a2/image-utils.js";
+import { callVideoGen } from "../video-generator/main.js";
+import { callAudioGen } from "../audio-generator/main.js";
+import { callMusicGen } from "../music-generator/main.js";
+import { Generators } from "./types.js";
 
 export { invoke as default, computeAgentSchema, describe };
+
+const generators: Generators = {
+  streamContent: streamGenerateContent,
+  conformBody: conformGeminiBody,
+  callImage: callGeminiImage,
+  callVideo: callVideoGen,
+  callAudio: callAudioGen,
+  callMusic: callMusicGen,
+};
 
 export type AgentInputs = {
   config$prompt: LLMContent;
   "b-ui-consistent": boolean;
   "b-ui-prompt": LLMContent;
-  "b-si-instruction"?: string;
-  "b-si-constraint": ModelConstraint;
 } & Params;
 
 type AgentOutputs = {
@@ -88,7 +100,6 @@ async function invokeOpalAdk(
     config$prompt: objective,
     "b-ui-consistent": enableA2UI = false,
     "b-ui-prompt": uiPrompt,
-    "b-si-constraint": modelConstraint,
     ...rest
   }: AgentInputs,
   caps: Capabilities,
@@ -127,8 +138,6 @@ async function invokeLegacy(
     config$prompt: objective,
     "b-ui-consistent": enableA2UI = false,
     "b-ui-prompt": uiPrompt,
-    "b-si-instruction": extraInstruction,
-    "b-si-constraint": modelConstraint,
     ...rest
   }: AgentInputs,
   caps: Capabilities,
@@ -137,14 +146,13 @@ async function invokeLegacy(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const loop = new Loop(caps, moduleArgs);
+  const configureFn = createAgentConfigurator(caps, moduleArgs, generators);
+  const loop = new Loop(caps, moduleArgs, configureFn);
   const result = await loop.run({
     objective,
     params,
-    extraInstruction,
     uiType: enableA2UI ? "a2ui" : "chat",
     uiPrompt,
-    modelConstraint,
   });
   if (!ok(result)) return result;
   console.log("LOOP", result);

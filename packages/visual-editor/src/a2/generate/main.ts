@@ -394,8 +394,6 @@ async function invoke(
         "b-ui-consistent": false,
         "b-ui-prompt": { parts: [] },
         ...rest,
-        "b-si-instruction": current.makeInstruction(rest),
-        "b-si-constraint": current.modelConstraint,
       };
       return agent(agentInputs, caps, moduleArgs);
     } else {
