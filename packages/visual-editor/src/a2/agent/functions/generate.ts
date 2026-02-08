@@ -487,7 +487,8 @@ The following elements should be included in your prompt:
     },
     async (
       { prompt, status_update, aspect_ratio, images, file_name, task_id },
-      statusUpdateCallback
+      statusUpdateCallback,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Video", {
@@ -496,11 +497,16 @@ The following elements should be included in your prompt:
       const imageParts = await fileSystem.getMany(images || []);
       if (!ok(imageParts)) return { error: imageParts.$error };
 
-      const reporter = createReporter(moduleArgs, {
-        title: `Generating Video`,
-        icon: "videocam_auto",
-      });
-      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+      const effectiveReporter =
+        reporter ??
+        createReporter(moduleArgs, {
+          title: `Generating Video`,
+          icon: "videocam_auto",
+        });
+      const args: ExecuteStepArgs = {
+        ...moduleArgs,
+        reporter: effectiveReporter,
+      };
       const generating = await generators.callVideo(
         caps,
         args,
@@ -557,17 +563,23 @@ The following elements should be included in your prompt:
     },
     async (
       { text, status_update, voice, file_name, task_id },
-      statusUpdateCallback
+      statusUpdateCallback,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Speech", {
         expectedDurationInSec: 20,
       });
-      const reporter = createReporter(moduleArgs, {
-        title: `Generating Speech`,
-        icon: "audio_magic_eraser",
-      });
-      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+      const effectiveReporter =
+        reporter ??
+        createReporter(moduleArgs, {
+          title: `Generating Speech`,
+          icon: "audio_magic_eraser",
+        });
+      const args: ExecuteStepArgs = {
+        ...moduleArgs,
+        reporter: effectiveReporter,
+      };
       const generating = await generators.callAudio(caps, args, text, voice);
       if (!ok(generating)) return { error: generating.$error };
 
@@ -624,17 +636,23 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
     },
     async (
       { prompt, status_update, file_name, task_id },
-      statusUpdateCallback
+      statusUpdateCallback,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Music", {
         expectedDurationInSec: 30,
       });
-      const reporter = createReporter(moduleArgs, {
-        title: `Generating Music`,
-        icon: "audio_magic_eraser",
-      });
-      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+      const effectiveReporter =
+        reporter ??
+        createReporter(moduleArgs, {
+          title: `Generating Music`,
+          icon: "audio_magic_eraser",
+        });
+      const args: ExecuteStepArgs = {
+        ...moduleArgs,
+        reporter: effectiveReporter,
+      };
       const generating = await generators.callMusic(caps, args, prompt);
       if (!ok(generating)) return { error: generating.$error };
 
