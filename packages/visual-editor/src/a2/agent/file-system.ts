@@ -71,7 +71,11 @@ class AgentFileSystem {
 
   write(name: string, data: string, mimeType: string): string {
     const path = this.#createNamed(name, mimeType, true);
-    this.#files.set(path, { data, mimeType, type: "text" });
+    if (mimeType === "text/html") {
+      this.#files.set(path, { data, mimeType, type: "inlineData" });
+    } else {
+      this.#files.set(path, { data, mimeType, type: "text" });
+    }
     return path;
   }
 

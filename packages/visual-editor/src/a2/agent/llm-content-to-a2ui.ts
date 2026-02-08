@@ -136,6 +136,12 @@ function llmContentToA2UIComponents(
             resourceKey: { literalString: part.storedData.resourceKey },
           },
         });
+      } else if (part.storedData.mimeType === "text/html") {
+        addTopLevel(generateId("html"), {
+          "a2ui-custom-html": {
+            url: { literalString: part.storedData.handle },
+          },
+        });
       } else if (part.storedData.mimeType.startsWith("image")) {
         addMedia("Image", part.storedData.handle);
       } else if (part.storedData.mimeType.startsWith("video")) {
@@ -146,7 +152,13 @@ function llmContentToA2UIComponents(
         addMedia("a2ui-custom-pdf-viewer", part.storedData.handle);
       }
     } else if (isInlineData(part)) {
-      if (part.inlineData.mimeType === "text/plain") {
+      if (part.inlineData.mimeType === "text/html") {
+        addTopLevel(generateId("html"), {
+          "a2ui-custom-html": {
+            srcdoc: { literalString: part.inlineData.data },
+          },
+        });
+      } else if (part.inlineData.mimeType === "text/plain") {
         addTopLevel(generateId("text"), {
           Text: {
             text: { literalString: base64toUTF8(part.inlineData.data) },
