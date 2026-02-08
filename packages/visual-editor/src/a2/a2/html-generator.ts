@@ -13,6 +13,7 @@ import { executeWebpageStream } from "./generate-webpage-stream.js";
 import { encodeBase64, err, mergeContent, ok } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { createReporter } from "../agent/progress-work-item.js";
+import { isInlineData } from "../../data/common.js";
 
 export { callGenWebpage };
 
@@ -134,6 +135,16 @@ async function callGenWebpage(
   renderMode: string,
   modelName: string
 ): Promise<Outcome<LLMContent>> {
+  // If the content already contains HTML inlineData, pass it through
+  // without invoking webpage generation.
+  for (const item of content) {
+    for (const part of item.parts) {
+      if (isInlineData(part) && part.inlineData.mimeType === "text/html") {
+        return { role: "model", parts: [part] };
+      }
+    }
+  }
+
   const flags = await moduleArgs.context.flags?.flags();
   const useStreaming = flags?.streamGenWebpage ?? false;
 
