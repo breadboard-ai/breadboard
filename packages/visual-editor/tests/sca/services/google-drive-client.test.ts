@@ -34,7 +34,6 @@ suite("GoogleDriveClient", () => {
     fakeApi.reset();
   });
 
-
   suite("createFile", () => {
     test("returns file with fAkE- prefixed ID", async () => {
       const result = await client.createFile(
@@ -211,7 +210,10 @@ suite("GoogleDriveClient", () => {
       const fetched = await client.getFileMetadata(preGeneratedId!, {
         fields: ["id", "name"],
       });
-      assert.deepStrictEqual(fetched, { id: preGeneratedId, name: "pre-id-file.txt" });
+      assert.deepStrictEqual(fetched, {
+        id: preGeneratedId,
+        name: "pre-id-file.txt",
+      });
     });
   });
 
@@ -316,10 +318,7 @@ suite("GoogleDriveClient", () => {
 
       await client.deleteFile(file.id!);
 
-      await assert.rejects(
-        () => client.getFileMetadata(file.id!),
-        /404/
-      );
+      await assert.rejects(() => client.getFileMetadata(file.id!), /404/);
     });
 
     test("throws 404 for non-existent file", async () => {
@@ -376,15 +375,12 @@ suite("GoogleDriveClient", () => {
     });
 
     test("throws 404 for non-existent file", async () => {
-      await assert.rejects(
-        async () => {
-          const response = await client.getFileMedia("non-existent-file-id");
-          if (!response.ok) {
-            throw new Error(`${response.status}`);
-          }
-        },
-        /404/
-      );
+      await assert.rejects(async () => {
+        const response = await client.getFileMedia("non-existent-file-id");
+        if (!response.ok) {
+          throw new Error(`${response.status}`);
+        }
+      }, /404/);
     });
   });
 
@@ -428,7 +424,9 @@ suite("GoogleDriveClient", () => {
       // Create a Google Docs file (simulated)
       const docContent = JSON.stringify({ title: "My Doc", body: "Content" });
       const file = await client.createFile(
-        new Blob([docContent], { type: "application/vnd.google-apps.document" }),
+        new Blob([docContent], {
+          type: "application/vnd.google-apps.document",
+        }),
         {
           name: "test.gdoc",
           mimeType: "application/vnd.google-apps.document",

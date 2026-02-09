@@ -166,7 +166,9 @@ export class FakeGoogleDriveApi {
     const proxyPrefix = "/proxy";
     const originalUrl = req.url ?? "";
     const hasProxyPrefix = originalUrl.startsWith(proxyPrefix + "/");
-    const routingUrl = hasProxyPrefix ? originalUrl.slice(proxyPrefix.length) : originalUrl;
+    const routingUrl = hasProxyPrefix
+      ? originalUrl.slice(proxyPrefix.length)
+      : originalUrl;
 
     this.requests.push({
       method: req.method ?? "GET",
@@ -178,7 +180,9 @@ export class FakeGoogleDriveApi {
     const url = new URL(routingUrl, `http://${this.#host}:${this.#port}`);
 
     // /drive/v3/files
-    const filesMatch = new URLPattern({ pathname: "/drive/v3/files" }).test(url);
+    const filesMatch = new URLPattern({ pathname: "/drive/v3/files" }).test(
+      url
+    );
     if (filesMatch) {
       if (req.method === "GET") {
         return this.#handleListFiles(url, res);
@@ -317,7 +321,11 @@ export class FakeGoogleDriveApi {
     for (let i = 0; i < count; i++) {
       ids.push(this.#generateFakeFileId());
     }
-    this.#jsonResponse(res, { ids, kind: "drive#generatedIds", space: "drive" });
+    this.#jsonResponse(res, {
+      ids,
+      kind: "drive#generatedIds",
+      space: "drive",
+    });
   }
 
   // /drive/v3/files/:fileId
@@ -647,11 +655,7 @@ export class FakeGoogleDriveApi {
     res.end(JSON.stringify({ error: { message, code } }));
   }
 
-  #generateFakeId(
-    prefix: string,
-    length: number,
-    alphabet: string
-  ): string {
+  #generateFakeId(prefix: string, length: number, alphabet: string): string {
     const remainingLength = length - prefix.length;
     let id = prefix;
     for (let i = 0; i < remainingLength; i++) {
