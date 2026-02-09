@@ -6,6 +6,8 @@
 
 import "dotenv/config";
 
+import { readFileSync } from "node:fs";
+
 import type {
   DomainConfiguration,
   GoogleDrivePermission,
@@ -100,7 +102,7 @@ export const SERVER_URL: string = getString("SERVER_URL");
 
 export const SURVEY_MODE = getSurveyMode("SURVEY_MODE");
 
-export const SURVEY_API_KEY = getString("SURVEY_API_KEY");
+export const SURVEY_API_KEY = getSecret("SURVEY_API_KEY");
 
 export const SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID = getString(
   "SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID"
@@ -203,4 +205,19 @@ function getSurveyMode(flagName: string): "on" | "off" | "test" {
     return "off";
   }
   throw new Error(`Invalid survey mode ${value}`);
+}
+
+/**
+ * Get the value of the given flag as a secret string.
+ *
+ * If the value is a file:// URI (e.g. "file:///path/to/secret"), the secret
+ * is read from that file. Otherwise, the raw value is returned.
+ */
+function getSecret(flagName: string): string {
+  const value = getString(flagName);
+  if (value.startsWith("file://")) {
+    const filePath = new URL(value).pathname;
+    return readFileSync(filePath, "utf-8").trim();
+  }
+  return value;
 }

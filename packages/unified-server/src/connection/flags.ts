@@ -1,5 +1,7 @@
 import "dotenv/config";
 
+import { readFileSync } from "node:fs";
+
 export type SameSite = "Lax" | "None" | "Strict";
 
 export const ALLOWED_ORIGINS: string[] = getStringList("ALLOWED_ORIGINS", {
@@ -10,7 +12,7 @@ export const OAUTH_CLIENT: string = getString("OAUTH_CLIENT");
 
 export const OAUTH_SCOPES: string[] = getStringList("OAUTH_SCOPES");
 
-export const OAUTH_SECRET: string = getString("OAUTH_SECRET");
+export const OAUTH_SECRET: string = getSecret("OAUTH_SECRET");
 
 export const OAUTH_FETCH_COMMAND: string = getString("OAUTH_FETCH_COMMAND");
 
@@ -53,4 +55,19 @@ function getSameSite(flagName: string, opts: { default: SameSite }): SameSite {
     throw Error(`Invalid ${flagName} value: ${flagValue}`);
   }
   return flagValue as SameSite;
+}
+
+/**
+ * Get the value of the given flag as a secret string.
+ *
+ * If the value is a file:// URI (e.g. "file:///path/to/secret"), the secret
+ * is read from that file. Otherwise, the raw value is returned.
+ */
+function getSecret(flagName: string): string {
+  const value = getString(flagName);
+  if (value.startsWith("file://")) {
+    const filePath = new URL(value).pathname;
+    return readFileSync(filePath, "utf-8").trim();
+  }
+  return value;
 }
