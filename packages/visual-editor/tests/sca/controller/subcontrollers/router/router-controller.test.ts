@@ -7,6 +7,7 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, suite, test } from "node:test";
 import { RouterController } from "../../../../../src/sca/controller/subcontrollers/router/router-controller.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../../../../src/ui/config/client-deployment-configuration.js";
 import { setDOM, unsetDOM } from "../../../../fake-dom.js";
 import { SignalWatcher } from "../../../../signal-watcher.js";
 import { Signal } from "signal-polyfill";
@@ -322,6 +323,44 @@ suite("RouterController", () => {
       assert.strictEqual(controller.parsedUrl.flow, "drive:/somefile");
       assert.strictEqual(controller.parsedUrl.lite, true);
       assert.strictEqual(controller.parsedUrl.colorScheme, "dark");
+    }
+  });
+
+  test("falls back to home and sets urlError for invalid flow ID", async () => {
+    // Enable new URL scheme so makeUrl validates Drive IDs
+    const original = structuredClone(
+      CLIENT_DEPLOYMENT_CONFIG.ENABLE_NEW_URL_SCHEME
+    );
+    (
+      CLIENT_DEPLOYMENT_CONFIG as Record<string, unknown>
+    ).ENABLE_NEW_URL_SCHEME = true;
+
+    try {
+      // Simulate a URL with an unsupported flow ID (not a Drive URL)
+      window.history.pushState(null, "", "http://localhost/?flow=foo&mode=app");
+      const controller = new RouterController();
+      await controller.isHydrated;
+
+      // Should NOT throw — falls back to home
+      assert.strictEqual(controller.parsedUrl.page, "home");
+
+      // urlError should capture the original error message
+      assert.ok(controller.urlError, "urlError should be set");
+      assert.ok(
+        controller.urlError!.includes("foo"),
+        "urlError should mention the invalid flow ID"
+      );
+
+      // Browser URL should be reset to the origin
+      assert.strictEqual(
+        window.location.href,
+        "http://localhost/",
+        "URL should be reset to origin"
+      );
+    } finally {
+      (
+        CLIENT_DEPLOYMENT_CONFIG as Record<string, unknown>
+      ).ENABLE_NEW_URL_SCHEME = original;
     }
   });
 });

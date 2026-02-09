@@ -45,6 +45,9 @@ export class RouterController
   @field()
   private accessor _parsedUrl: MakeUrlInit;
 
+  @field()
+  accessor urlError: string | null = null;
+
   constructor() {
     super("Router", "router");
 
@@ -54,13 +57,21 @@ export class RouterController
       parsed.redirectFromLanding = false;
     }
 
-    // Canonicalize URL if needed
-    const canonicalized = makeUrl(parsed);
-    if (window.location.href !== canonicalized) {
-      window.history.replaceState(null, "", canonicalized);
+    // Canonicalize URL if needed. If the URL contains an unsupported flow ID
+    // (e.g. `?flow=foo`), makeUrl will throw. In that case, fall back to home
+    // and record the error so the UI can display a snackbar.
+    try {
+      const canonicalized = makeUrl(parsed);
+      if (window.location.href !== canonicalized) {
+        window.history.replaceState(null, "", canonicalized);
+      }
+      this._parsedUrl = parsed;
+    } catch (e) {
+      const home = parseUrl(new URL(window.location.origin));
+      window.history.replaceState(null, "", window.location.origin);
+      this._parsedUrl = home;
+      this.urlError = e instanceof Error ? e.message : String(e);
     }
-
-    this._parsedUrl = parsed;
   }
 
   /**
