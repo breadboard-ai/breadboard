@@ -5,7 +5,6 @@ import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { executeOpalAdkStream } from "../a2/opal-adk-stream.js";
 import invokeGemini, {
   type GeminiInputs,
   type Tool,
@@ -15,6 +14,7 @@ import { ArgumentNameGenerator } from "../a2/introducer.js";
 import { report } from "../a2/output.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils.js";
+import { OpalAdkStream } from "../a2/opal-adk-stream.js";
 
 export { invoke as default, describe, makeDeepResearchInstruction };
 
@@ -161,14 +161,10 @@ async function invokeOpalAdk(
   if (!ok(substituting)) {
     return substituting;
   }
-
-  const results = await executeOpalAdkStream(
-    caps,
-    moduleArgs,
-    [substituting],
-    "deep_research"
-  );
-  console.log("deep-research results", results);
+  const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
+  const results = await opalAdkStream
+    .executeOpalAdkStream("deep_research", [substituting]);
+  console.log("deep-research results", results)
   return {
     context: [...(context || []), results],
   };

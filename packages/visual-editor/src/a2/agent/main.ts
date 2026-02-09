@@ -24,7 +24,7 @@ import { callVideoGen } from "../video-generator/main.js";
 import { callAudioGen } from "../audio-generator/main.js";
 import { callMusicGen } from "../music-generator/main.js";
 import { Generators } from "./types.js";
-import { executeOpalAdkStream } from "../a2/opal-adk-stream.js";
+import { OpalAdkStream } from "../a2/opal-adk-stream.js";
 
 export { invoke as default, computeAgentSchema, describe };
 
@@ -111,7 +111,7 @@ async function toAgentOutputs(results?: LLMContent, href?: string): Promise<Agen
 
 async function invokeOpalAdk(
   {
-    config$prompt: objective,
+    config$prompt: prompt_template,
     "b-ui-consistent": enableA2UI = false,
     "b-ui-prompt": uiPrompt,
     "b-si-constraint": modelConstraint,
@@ -125,19 +125,17 @@ async function invokeOpalAdk(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-
+  const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
   const uiType = enableA2UI ? "a2ui" : "chat";
-  const template = new Template(caps, objective);
-  const substituting = await template.substitute(params);
-  if (!ok(substituting)) {
-    return substituting;
+  const template = new Template(caps, prompt_template);
+  const completed_prompt = await template.substitute(params);
+  if (!ok(completed_prompt)) {
+    return completed_prompt;
   }
-  const results = await executeOpalAdkStream(
-    caps,
-    moduleArgs,
+  console.log("substitutine: ", completed_prompt);
+  const results = await opalAdkStream.executeOpalAdkStream(
     "",
-    [substituting],
-    objective,
+    [completed_prompt],
     modelConstraint,
     uiType,
     uiPrompt,
