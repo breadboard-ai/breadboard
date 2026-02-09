@@ -178,8 +178,7 @@ export const prepare = asAction(
       controller.run.main.setStatus(STATUS.RUNNING);
       logger.log(
         Utils.Logging.Formatter.verbose(`Runner started for ${url}`),
-        LABEL,
-        false
+        LABEL
       );
     });
 

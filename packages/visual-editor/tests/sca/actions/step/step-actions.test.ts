@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { suite, test, beforeEach, afterEach } from "node:test";
+import { suite, test, beforeEach, afterEach, mock } from "node:test";
 import assert from "node:assert";
 import { coordination } from "../../../../src/sca/coordination.js";
 import * as stepActions from "../../../../src/sca/actions/step/step-actions.js";
@@ -295,9 +295,7 @@ suite("Step Actions", () => {
 
     test("warns and returns when asset is not found in graphAssets", async () => {
       let clearCalled = false;
-      const consoleWarnings: string[] = [];
-      const originalWarn = console.warn;
-      console.warn = (msg: string) => consoleWarnings.push(msg);
+      const warnMock = mock.method(console, "warn");
 
       const mockController = {
         editor: {
@@ -337,24 +335,22 @@ suite("Step Actions", () => {
 
       await stepActions.applyPendingAssetEdit();
 
-      console.warn = originalWarn;
-
       assert.strictEqual(
         clearCalled,
         true,
         "Pending edit should still be cleared"
       );
       assert.ok(
-        consoleWarnings.some((w) => w.includes("no metadata")),
-        `Should warn about missing metadata, got: ${consoleWarnings.join(", ")}`
+        warnMock.mock.calls.some((c) =>
+          c.arguments.some((a) => String(a).includes("no metadata"))
+        ),
+        `Should warn about missing metadata`
       );
     });
 
     test("warns and returns when asset has no metadata", async () => {
       let clearCalled = false;
-      const consoleWarnings: string[] = [];
-      const originalWarn = console.warn;
-      console.warn = (msg: string) => consoleWarnings.push(msg);
+      const warnMock = mock.method(console, "warn");
 
       const mockController = {
         editor: {
@@ -396,24 +392,22 @@ suite("Step Actions", () => {
 
       await stepActions.applyPendingAssetEdit();
 
-      console.warn = originalWarn;
-
       assert.strictEqual(
         clearCalled,
         true,
         "Pending edit should still be cleared"
       );
       assert.ok(
-        consoleWarnings.some((w) => w.includes("no metadata")),
-        `Should warn about missing metadata, got: ${consoleWarnings.join(", ")}`
+        warnMock.mock.calls.some((c) =>
+          c.arguments.some((a) => String(a).includes("no metadata"))
+        ),
+        `Should warn about missing metadata`
       );
     });
 
     test("warns and returns when UpdateAssetWithRefs fails", async () => {
       let clearCalled = false;
-      const consoleWarnings: string[] = [];
-      const originalWarn = console.warn;
-      console.warn = (msg: string) => consoleWarnings.push(msg);
+      const warnMock = mock.method(console, "warn");
 
       const mockController = {
         editor: {
@@ -461,12 +455,14 @@ suite("Step Actions", () => {
 
       await stepActions.applyPendingAssetEdit();
 
-      console.warn = originalWarn;
-
       assert.strictEqual(clearCalled, true, "Pending edit should be cleared");
       assert.ok(
-        consoleWarnings.some((w) => w.includes("Failed to update asset refs")),
-        `Should warn about refs failure, got: ${consoleWarnings.join(", ")}`
+        warnMock.mock.calls.some((c) =>
+          c.arguments.some((a) =>
+            String(a).includes("Failed to update asset refs")
+          )
+        ),
+        `Should warn about refs failure`
       );
     });
 
@@ -544,9 +540,7 @@ suite("Step Actions", () => {
 
     test("warns when UpdateAssetData fails", async () => {
       let applyCallCount = 0;
-      const consoleWarnings: string[] = [];
-      const originalWarn = console.warn;
-      console.warn = (msg: string) => consoleWarnings.push(msg);
+      const warnMock = mock.method(console, "warn");
 
       const mockTransformer = {
         addEphemeralBlob: async () => ({
@@ -609,12 +603,14 @@ suite("Step Actions", () => {
 
       await stepActions.applyPendingAssetEdit();
 
-      console.warn = originalWarn;
-
       assert.strictEqual(applyCallCount, 2, "Should call apply twice");
       assert.ok(
-        consoleWarnings.some((w) => w.includes("Failed to update asset data")),
-        `Should warn about data update failure, got: ${consoleWarnings.join(", ")}`
+        warnMock.mock.calls.some((c) =>
+          c.arguments.some((a) =>
+            String(a).includes("Failed to update asset refs")
+          )
+        ),
+        `Should warn about data update failure`
       );
     });
   });

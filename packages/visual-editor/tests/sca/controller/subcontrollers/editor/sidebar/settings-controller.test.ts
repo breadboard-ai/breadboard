@@ -5,18 +5,10 @@
  */
 
 import assert from "node:assert";
-import { before, suite, test } from "node:test";
+import { suite, test } from "node:test";
 import { SidebarController } from "../../../../../../src/sca/controller/subcontrollers/editor/sidebar/sidebar-controller.js";
-import {
-  setDebuggableAppController,
-  stubAppController,
-} from "../../../../../../src/sca/utils/logging/logger.js";
 
 suite("SidebarController", () => {
-  before(() => {
-    setDebuggableAppController(stubAppController);
-  });
-
   test("Basics", async () => {
     const store = new SidebarController("Settings_1", "SidebarController");
     await store.isHydrated;

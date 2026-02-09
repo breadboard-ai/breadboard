@@ -6,25 +6,7 @@
 
 import assert from "node:assert";
 import { suite, test, mock, beforeEach, afterEach } from "node:test";
-import {
-  getLogger,
-  setDebuggableAppController,
-} from "../../../../../src/sca/utils/logging/logger.js";
-
-const logConfig = {
-  global: {
-    debug: {
-      enabled: false,
-      errors: true,
-      info: true,
-      verbose: true,
-      warnings: true,
-      setLogDefault() {
-        // Stubbed.
-      },
-    },
-  },
-};
+import { getLogger } from "../../../../../src/sca/utils/logging/logger.js";
 
 suite("Logger", () => {
   let debugMock: ReturnType<(typeof mock)["method"]>;
@@ -37,32 +19,14 @@ suite("Logger", () => {
     infoMock = mock.method(console, "info");
     warnMock = mock.method(console, "warn");
     errorMock = mock.method(console, "error");
-
-    setDebuggableAppController(logConfig);
   });
 
   afterEach(() => {
     mock.restoreAll();
   });
 
-  test("does not log when disabled", async () => {
+  test("always logs (DevTools handles filtering)", async () => {
     const logger = getLogger();
-    logConfig.global.debug.enabled = false;
-
-    logger.log({ type: "info", args: ["Info"] });
-    logger.log({ type: "warning", args: ["Warning"] });
-    logger.log({ type: "error", args: ["Error"] });
-    logger.log({ type: "verbose", args: ["Verbose"] });
-
-    assert.strictEqual(debugMock.mock.callCount(), 0);
-    assert.strictEqual(infoMock.mock.callCount(), 0);
-    assert.strictEqual(warnMock.mock.callCount(), 0);
-    assert.strictEqual(errorMock.mock.callCount(), 0);
-  });
-
-  test("logs when enabled", async () => {
-    const logger = getLogger();
-    logConfig.global.debug.enabled = true;
 
     logger.log({ type: "info", args: ["Info"] });
     logger.log({ type: "warning", args: ["Warning"] });
@@ -77,32 +41,13 @@ suite("Logger", () => {
 
   test("logs a set/get name", async () => {
     const logger = getLogger();
-    logConfig.global.debug.enabled = true;
 
-    logger.logItem("info", "get", "Item", false, "Info");
+    logger.logItem("info", "get", "Item", "Info");
 
     assert.strictEqual(
       infoMock.mock.calls[0].arguments[0],
       "[\x1B[104;97m Item:get \x1B[m]"
     );
     assert.strictEqual(infoMock.mock.calls[0].arguments[1], "Info");
-  });
-
-  test("warns if there is no controller", async () => {
-    const logger = getLogger();
-
-    setDebuggableAppController(null);
-
-    logger.log({ type: "info", args: ["Info"] });
-
-    assert.strictEqual(
-      warnMock.mock.calls[0].arguments[0],
-      "Logger called without app controller"
-    );
-
-    assert.strictEqual(debugMock.mock.callCount(), 0);
-    assert.strictEqual(infoMock.mock.callCount(), 1);
-    assert.strictEqual(warnMock.mock.callCount(), 1);
-    assert.strictEqual(errorMock.mock.callCount(), 0);
   });
 });

@@ -246,8 +246,7 @@ class CoordinationRegistry {
 
     this.#logger.log(
       Utils.Logging.Formatter.verbose("Trigger entered:", name),
-      LABEL,
-      false
+      LABEL
     );
 
     // Return a function that marks the trigger as complete
@@ -268,8 +267,7 @@ class CoordinationRegistry {
 
     this.#logger.log(
       Utils.Logging.Formatter.verbose("Trigger exited:", name),
-      LABEL,
-      false
+      LABEL
     );
   }
 
@@ -325,8 +323,7 @@ class CoordinationRegistry {
         inProgressActions: this.listInProgressActions(),
         callStack: [...this.#callStack],
       }),
-      LABEL,
-      false
+      LABEL
     );
 
     // Awaits mode: cycle detection - throw if same action already in progress
@@ -377,8 +374,7 @@ class CoordinationRegistry {
           Utils.Logging.Formatter.verbose(
             `${name} waiting for ${existingInProgressPromises.length} in-progress action(s)`
           ),
-          LABEL,
-          false
+          LABEL
         );
 
         // Start a timeout warning for potential deadlocks
@@ -389,8 +385,7 @@ class CoordinationRegistry {
                 `Waiting for: ${this.listInProgressActions().join(", ")}\n` +
                 `This may indicate nested Exclusive actions. Consider using ActionMode.Awaits instead.`
             ),
-            LABEL,
-            false // force visible
+            LABEL
           );
         }, 10_000);
 
@@ -408,8 +403,7 @@ class CoordinationRegistry {
             `${name} waiting for active triggers:`,
             this.listActiveTriggers()
           ),
-          LABEL,
-          false
+          LABEL
         );
         await this.#waitForTriggers(name);
       }
@@ -442,8 +436,7 @@ class CoordinationRegistry {
         Utils.Logging.Formatter.verbose(
           `${actionName} waiting for ${promises.length} trigger(s)`
         ),
-        LABEL,
-        false
+        LABEL
       );
       await Promise.all(promises);
     }
@@ -545,8 +538,7 @@ class CoordinationRegistry {
                   `Trigger ${trigger.name} -> ${actionName} failed:`,
                   err
                 ),
-                LABEL,
-                false
+                LABEL
               );
             });
           } else {
@@ -559,8 +551,7 @@ class CoordinationRegistry {
           Utils.Logging.Formatter.verbose(
             `Activated signal trigger: ${trigger.name} -> ${actionName}`
           ),
-          LABEL,
-          false
+          LABEL
         );
       } else if (trigger.type === "event") {
         // Event trigger: add event listener
@@ -579,8 +570,7 @@ class CoordinationRegistry {
                 `Trigger ${trigger.name} -> ${actionName} failed:`,
                 err
               ),
-              LABEL,
-              false
+              LABEL
             );
           }
         };
@@ -594,8 +584,7 @@ class CoordinationRegistry {
           Utils.Logging.Formatter.verbose(
             `Activated event trigger: ${trigger.name} (${trigger.eventType}) -> ${actionName}`
           ),
-          LABEL,
-          false
+          LABEL
         );
       }
     }
@@ -609,8 +598,7 @@ class CoordinationRegistry {
         Utils.Logging.Formatter.verbose(
           `Deactivated triggers for: ${actionName}`
         ),
-        LABEL,
-        false
+        LABEL
       );
     };
   }
@@ -766,8 +754,7 @@ export function asAction<T extends AppAction<never[]>>(
         `Action "${name}" priority ${rawPriority} clamped to ${priority}. ` +
           `Use values between ${MIN_PRIORITY} and ${MAX_PRIORITY}.`
       ),
-      LABEL,
-      true // Always show (not verbose)
+      LABEL
     );
   }
 

@@ -22,6 +22,7 @@ import {
 import type { UnmanagedAssetProblem } from "../../controller/subcontrollers/editor/share-controller.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
+import { Utils } from "../../utils.js";
 
 export const bind = makeAction();
 
@@ -37,6 +38,8 @@ export const readPublishedState = asAction(
     publishPermissions: gapi.client.drive.Permission[]
   ): Promise<void> => {
     const { controller, services } = bind;
+    const LABEL = "Share.readPublishedState";
+    const logger = Utils.Logging.getLogger(controller);
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
     const boardServer = services.googleDriveBoardServer;
@@ -47,12 +50,12 @@ export const readPublishedState = asAction(
 
     const graphUrl = graph.url;
     if (!graphUrl) {
-      console.error(`No graph url`);
+      logger.log(Utils.Logging.Formatter.error("No graph url"), LABEL);
       return;
     }
     const thisFileId = getGraphFileId(graphUrl);
     if (!thisFileId) {
-      console.error(`No file id`);
+      logger.log(Utils.Logging.Formatter.error("No file id"), LABEL);
       return;
     }
 
@@ -169,9 +172,12 @@ export const readPublishedState = asAction(
       userDomain: (await services.signinAdapter.domain) ?? "",
     };
 
-    console.debug(
-      `[Sharing] Found sharing state:` +
-        ` ${JSON.stringify(share.state, null, 2)}`
+    logger.log(
+      Utils.Logging.Formatter.verbose(
+        "Found sharing state:",
+        JSON.stringify(share.state, null, 2)
+      ),
+      LABEL
     );
   }
 );
@@ -181,15 +187,20 @@ export const readPublishedState = asAction(
 // =============================================================================
 
 function getGraphFileId(graphUrl: string): string | undefined {
+  const logger = Utils.Logging.getLogger();
+  const LABEL = "Share.getGraphFileId";
   if (!graphUrl.startsWith("drive:")) {
-    console.error(
-      `Expected "drive:" prefixed graph URL, got ${JSON.stringify(graphUrl)}`
+    logger.log(
+      Utils.Logging.Formatter.error(
+        `Expected "drive:" prefixed graph URL, got ${JSON.stringify(graphUrl)}`
+      ),
+      LABEL
     );
     return undefined;
   }
   const graphFileId = graphUrl.replace(/^drive:\/*/, "");
   if (!graphFileId) {
-    console.error(`Graph file ID was empty`);
+    logger.log(Utils.Logging.Formatter.error("Graph file ID was empty"), LABEL);
   }
   return graphFileId;
 }
@@ -234,7 +245,10 @@ async function makeShareableCopy(
   );
   const shareableCopyFileId = extractGoogleDriveFileId(createResult.url ?? "");
   if (!shareableCopyFileId) {
-    console.error(`Unexpected create result`, createResult);
+    Utils.Logging.getLogger().log(
+      Utils.Logging.Formatter.error("Unexpected create result", createResult),
+      "Share.makeShareableCopy"
+    );
     throw new Error(`Error creating shareable file`);
   }
 
@@ -271,9 +285,12 @@ async function makeShareableCopy(
     { fields: ["resourceKey"] }
   );
 
-  console.debug(
-    `[Sharing] Made a new shareable graph copy "${shareableCopyFileId}"` +
-      ` at version "${updateMainResult.version}".`
+  Utils.Logging.getLogger().log(
+    Utils.Logging.Formatter.verbose(
+      `Made a new shareable graph copy "${shareableCopyFileId}"` +
+        ` at version "${updateMainResult.version}".`
+    ),
+    "Share.makeShareableCopy"
   );
   return {
     shareableCopyFileId,
@@ -336,11 +353,14 @@ async function autoSyncManagedAssetPermissions(
           bypassProxy: true,
         });
       if (!capabilities.canShare || !assetPermissions) {
-        console.error(
-          `[Sharing] Could not add permission to asset ` +
-            `"${asset.fileId.id}" because the current user does not have` +
-            ` sharing capability on it. Users who don't already have` +
-            ` access to this asset may not be able to run this graph.`
+        Utils.Logging.getLogger().log(
+          Utils.Logging.Formatter.error(
+            `Could not add permission to asset ` +
+              `"${asset.fileId.id}" because the current user does not have` +
+              ` sharing capability on it. Users who don't already have` +
+              ` access to this asset may not be able to run this graph.`
+          ),
+          "Share.autoSyncManagedAssetPermissions"
         );
         return;
       }
@@ -351,16 +371,19 @@ async function autoSyncManagedAssetPermissions(
       if (missing.length === 0 && excess.length === 0) {
         return;
       }
-      console.log(
-        `[Sharing Panel] Managed asset ${asset.fileId.id}` +
-          ` has ${missing.length} missing permission(s)` +
-          ` and ${excess.length} excess permission(s). Synchronizing.`,
-        {
-          actual: assetPermissions,
-          needed: graphPermissions,
-          missing,
-          excess,
-        }
+      Utils.Logging.getLogger().log(
+        Utils.Logging.Formatter.verbose(
+          `Managed asset ${asset.fileId.id}` +
+            ` has ${missing.length} missing permission(s)` +
+            ` and ${excess.length} excess permission(s). Synchronizing.`,
+          {
+            actual: assetPermissions,
+            needed: graphPermissions,
+            missing,
+            excess,
+          }
+        ),
+        "Share.autoSyncManagedAssetPermissions"
       );
       await Promise.all([
         ...missing.map((permission) =>
@@ -455,17 +478,27 @@ export const publish = asAction(
     publishPermissions: gapi.client.drive.Permission[],
     shareSurface: string | undefined
   ): Promise<void> => {
-    console.log(`[Sharing Panel] Publishing`);
     const { controller, services } = bind;
+    const LABEL = "Share.publish";
+    const logger = Utils.Logging.getLogger(controller);
+    logger.log(Utils.Logging.Formatter.verbose("Publishing"), LABEL);
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
 
     if (publishPermissions.length === 0) {
-      console.error("No publish permissions configured");
+      logger.log(
+        Utils.Logging.Formatter.error("No publish permissions configured"),
+        LABEL
+      );
       return;
     }
     if (share.state.status !== "writable") {
-      console.error('Expected published status to be "writable"');
+      logger.log(
+        Utils.Logging.Formatter.error(
+          'Expected published status to be "writable"'
+        ),
+        LABEL
+      );
       return;
     }
 
@@ -507,9 +540,12 @@ export const publish = asAction(
       )
     );
 
-    console.debug(
-      `[Sharing] Added ${publishPermissions.length} publish` +
-        ` permission(s) to shareable graph copy "${shareableFile.id}".`
+    logger.log(
+      Utils.Logging.Formatter.verbose(
+        `Added ${publishPermissions.length} publish` +
+          ` permission(s) to shareable graph copy "${shareableFile.id}".`
+      ),
+      LABEL
     );
 
     await handleAssetPermissions(shareableFile.id, graph);
@@ -534,8 +570,15 @@ export const unpublish = asAction(
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
 
+    const LABEL = "Share.unpublish";
+    const logger = Utils.Logging.getLogger(controller);
     if (share.state.status !== "writable") {
-      console.error('Expected published status to be "writable"');
+      logger.log(
+        Utils.Logging.Formatter.error(
+          'Expected published status to be "writable"'
+        ),
+        LABEL
+      );
       return;
     }
     if (!share.state.published) {
@@ -552,9 +595,12 @@ export const unpublish = asAction(
       userDomain: share.state.userDomain,
     };
 
-    console.debug(
-      `[Sharing] Removing ${oldState.publishedPermissions.length} publish` +
-        ` permission(s) from shareable graph copy "${shareableFile.id}".`
+    logger.log(
+      Utils.Logging.Formatter.verbose(
+        `Removing ${oldState.publishedPermissions.length} publish` +
+          ` permission(s) from shareable graph copy "${shareableFile.id}".`
+      ),
+      LABEL
     );
     await Promise.all(
       oldState.publishedPermissions.map(async (permission) => {
@@ -631,10 +677,13 @@ export const publishStale = asAction(
       },
     };
 
-    console.debug(
-      `[Sharing] Updated stale shareable graph copy` +
-        ` "${oldState.shareableFile.id}" to version` +
-        ` "${oldState.latestVersion}".`
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Updated stale shareable graph copy` +
+          ` "${oldState.shareableFile.id}" to version` +
+          ` "${oldState.latestVersion}".`
+      ),
+      "Share.publishStale"
     );
   }
 );
@@ -700,9 +749,20 @@ export const closePanel = asAction(
       status === "granular" ||
       status === "unmanaged-assets"
     ) {
-      console.warn(`[Sharing] Cannot close panel while in "${status}" state`);
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.warning(
+          `Cannot close panel while in "${status}" state`
+        ),
+        "Share.closePanel"
+      );
     } else {
-      console.error(`[Sharing] Unhandled state:`, state satisfies never);
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.error(
+          "Unhandled state:",
+          state satisfies never
+        ),
+        "Share.closePanel"
+      );
     }
   }
 );
@@ -722,7 +782,10 @@ export const viewSharePermissions = asAction(
       return;
     }
     if (!graph.url) {
-      console.error(`No graph url`);
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.error("No graph url"),
+        "Share.viewSharePermissions"
+      );
       return;
     }
 

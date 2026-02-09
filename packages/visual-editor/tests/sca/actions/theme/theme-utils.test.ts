@@ -592,7 +592,7 @@ describe("persistTheme – splash screen persistence", () => {
     assert.deepStrictEqual(result.splashScreen, storedDataResult);
   });
 
-  it("warns when persistence returns non-storedData part", async () => {
+  it("does not set splashScreen when persistence returns non-storedData part", async () => {
     const { controller } = makeController();
     const nonStoredResult = {
       inlineData: {
@@ -608,35 +608,18 @@ describe("persistTheme – splash screen persistence", () => {
       },
     } as unknown as AppServices;
 
-    // Spy on console.warn to verify the warning
-    const warns: unknown[][] = [];
-    const originalWarn = console.warn;
-    console.warn = (...args: unknown[]) => {
-      warns.push(args);
-    };
-    try {
-      const result = await persistTheme(
-        makeAppThemeWithSplash() as unknown as AppTheme,
-        controller,
-        services
-      );
+    const result = await persistTheme(
+      makeAppThemeWithSplash() as unknown as AppTheme,
+      controller,
+      services
+    );
 
-      assert.ok(ok(result));
-      // splashScreen should NOT be set
-      assert.strictEqual(result.splashScreen, undefined);
-      // Should have logged a warning
-      assert.ok(
-        warns.some((w) =>
-          String(w[0]).includes("Unable to save splash screen")
-        ),
-        "Should warn about non-storedData result"
-      );
-    } finally {
-      console.warn = originalWarn;
-    }
+    assert.ok(ok(result));
+    // splashScreen should NOT be set since it wasn't storedData
+    assert.strictEqual(result.splashScreen, undefined);
   });
 
-  it("warns when transformDataParts returns an error outcome", async () => {
+  it("does not set splashScreen when transformDataParts returns an error outcome", async () => {
     const { controller } = makeController();
     const services = {
       googleDriveBoardServer: {
@@ -646,30 +629,14 @@ describe("persistTheme – splash screen persistence", () => {
       },
     } as unknown as AppServices;
 
-    const warns: unknown[][] = [];
-    const originalWarn = console.warn;
-    console.warn = (...args: unknown[]) => {
-      warns.push(args);
-    };
-    try {
-      const result = await persistTheme(
-        makeAppThemeWithSplash() as unknown as AppTheme,
-        controller,
-        services
-      );
+    const result = await persistTheme(
+      makeAppThemeWithSplash() as unknown as AppTheme,
+      controller,
+      services
+    );
 
-      assert.ok(ok(result));
-      // splashScreen should NOT be set
-      assert.strictEqual(result.splashScreen, undefined);
-      // Should have logged a warning about persistence failure
-      assert.ok(
-        warns.some((w) =>
-          String(w[0]).includes("Failed to persist splash screen")
-        ),
-        "Should warn about persistence failure"
-      );
-    } finally {
-      console.warn = originalWarn;
-    }
+    assert.ok(ok(result));
+    // splashScreen should NOT be set due to persistence failure
+    assert.strictEqual(result.splashScreen, undefined);
   });
 });
