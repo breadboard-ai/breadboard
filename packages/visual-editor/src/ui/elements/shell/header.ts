@@ -29,7 +29,6 @@ import {
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
-import { Utils } from "../../../sca/utils.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
@@ -593,18 +592,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
         });
       }
 
-      if (
-        !Utils.Helpers.isHydrating(
-          () => this.sca.controller.global.main.experimentalComponents
-        ) &&
-        this.sca.controller.global.main.experimentalComponents
-      ) {
-        options.push({
-          id: "copy-board-contents",
-          title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
-          icon: "content_copy",
-        });
-      }
+      options.push({
+        id: "copy-board-contents",
+        title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
+        icon: "content_copy",
+      });
     }
 
     // On narrow screens (≤600px), the global item select is hidden via CSS,
