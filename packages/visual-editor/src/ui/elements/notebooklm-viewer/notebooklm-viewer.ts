@@ -17,6 +17,7 @@ import {
   ApplicationPlatform,
   DeviceType,
 } from "../../../sca/services/notebooklm-api-client.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 /**
  * A self-contained component for rendering NotebookLM notebook thumbnails.
@@ -25,7 +26,7 @@ import {
  * Similar pattern to `bb-google-drive-file-viewer`.
  */
 @customElement("bb-notebooklm-viewer")
-export class NotebookLmViewer extends LitElement {
+export class NotebookLmViewer extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     css`
