@@ -86,10 +86,6 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
  *   createInputHandler -> bubbleUpInputsIfNeeded -> createBubbleHandler
  *   -> context.requestInput -> RequestedInputsManager -> InputStageResult
  *   -> PlanRunner event loop -> ReactiveProjectRun.#input()
- *
- * TODO(follow-on): Consider adding orchestrator state notification
- * (setWaiting/setWorking) to this path. Currently the node stays
- * in "working" state during the input wait.
  */
 function createInputHandler(context: NodeHandlerContext) {
   return (async (allInputs: InputValues) => {

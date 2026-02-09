@@ -444,6 +444,9 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     // Tell the console entry to create its WorkItem.
     this.current?.get(id)?.activateInput();
 
+    // Mark the node as waiting for input.
+    this.renderer.nodes.set(id, { status: "waiting" });
+
     // Set the reactive input signal so the UI shows the input form.
     this.input = { id, schema };
   }
@@ -470,6 +473,9 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     // Remove from pending set.
     this.#pendingInputNodeIds.delete(id);
     this.inputSchemas.delete(id);
+
+    // Mark the node as working again.
+    this.renderer.nodes.set(id, { status: "working" });
 
     // Resolve the pending Promise in the console entry.
     entry.resolveInput(values);

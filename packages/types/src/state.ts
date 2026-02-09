@@ -81,13 +81,6 @@ export type ConsoleEntry = {
    *
    * This is the direct-access path used by A2 modules via caps.input().
    * It bypasses the old event-based bubbling machinery entirely.
-   *
-   * TODO(follow-on): Currently, the orchestrator state remains "working"
-   * during the input wait. We may want to add a notification mechanism
-   * to set the orchestrator to "waiting" state during input requests.
-   * The UI already handles this via the `input` signal on ProjectRun,
-   * so the visual distinction is covered, but the orchestrator state
-   * may matter for other consumers.
    */
   requestInput(schema: Schema): Promise<OutputValues>;
 
