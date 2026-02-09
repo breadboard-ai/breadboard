@@ -6,9 +6,7 @@
 
 import { type GraphDescriptor } from "@breadboard-ai/types";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
-import type {
-  DriveFileId,
-} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
@@ -17,9 +15,7 @@ import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
-import type {
-  ShareState,
-} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+import type { ShareState } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
@@ -323,7 +319,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor sca!: SCA;
 
-
   @consume({ context: guestConfigurationContext })
   accessor guestConfiguration: GuestConfiguration | undefined;
 
@@ -526,12 +521,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
         Publishing is disabled for all users from ${domain}.
         <br />
         ${preferredUrl
-        ? html`Please use
+          ? html`Please use
               <a href="${preferredUrl}" target="_blank"
                 >${new URL(preferredUrl).hostname}</a
               >
               to share with other ${domain} users.`
-        : nothing}
+          : nothing}
       </p>
     `;
   }
@@ -610,8 +605,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return html`
       <div id="published-switch-container">
         ${status === "updating"
-        ? html`<span class="g-icon spin spinner">progress_activity</span>`
-        : nothing}
+          ? html`<span class="g-icon spin spinner">progress_activity</span>`
+          : nothing}
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}
@@ -740,7 +735,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
     if (!this.graph) {
       return;
     }
-    await this.#actions.viewSharePermissions(this.graph, this.guestConfiguration?.shareSurface);
+    await this.#actions.viewSharePermissions(
+      this.graph,
+      this.guestConfiguration?.shareSurface
+    );
   }
 
   #onPublishedSwitchChange() {
@@ -756,7 +754,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const selected = input.selected;
     if (selected) {
       this.actionTracker?.publishApp(this.graph.url);
-      this.#actions.publish(this.graph, this.#getRequiredPublishPermissions(), this.guestConfiguration?.shareSurface);
+      this.#actions.publish(
+        this.graph,
+        this.#getRequiredPublishPermissions(),
+        this.guestConfiguration?.shareSurface
+      );
     } else {
       this.#actions.unpublish(this.graph);
     }
