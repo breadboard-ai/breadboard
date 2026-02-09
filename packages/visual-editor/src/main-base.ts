@@ -207,6 +207,22 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       this.sca.controller.global.debug.enabled = true;
     });
 
+    // If the router encountered an invalid URL (e.g. unsupported flow ID),
+    // show a warning snackbar once the controllers are hydrated.
+    if (this.sca.controller.router.urlError) {
+      this.sca.controller.isHydrated.then(() => {
+        this.sca.controller.global.snackbars.snackbar(
+          Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
+          BreadboardUI.Types.SnackType.WARNING,
+          [],
+          true,
+          globalThis.crypto.randomUUID(),
+          true
+        );
+        this.sca.controller.router.urlError = null;
+      });
+    }
+
     // Append SCA to the config.
     config.sca = this.sca;
     this.runtime = new Runtime.Runtime(config);
