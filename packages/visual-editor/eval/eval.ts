@@ -294,6 +294,13 @@ class EvalRun implements EvalHarnessRuntimeArgs {
                 completed: false,
                 current: null,
                 addOutput() {},
+                requestInput() {
+                  return Promise.reject(
+                    new Error("Input not supported in eval")
+                  );
+                },
+                activateInput() {},
+                resolveInput() {},
               },
             ],
           ]),

@@ -5,17 +5,13 @@
  */
 
 import {
-  GraphInlineMetadata,
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
-  NodeMetadata,
   OutputValues,
   Schema,
-  TraversalResult,
 } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
-import { bubbleUpInputsIfNeeded } from "../bubble.js";
 import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
 import { invokeDescriber } from "./invoke-describer.js";
 import {
@@ -78,32 +74,35 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
   return { ...o, $error, ...m };
 }
 
+/**
+ * Creates the input capability handler for A2 modules.
+ *
+ * Uses the direct-access path via getProjectRunState() to call
+ * consoleEntry.requestInput(schema), which creates a WorkItem,
+ * sets the reactive `input` signal on the parent run, and returns
+ * a Promise that resolves when the user provides values.
+ *
+ * This replaces the old 6-layer bubbling chain:
+ *   createInputHandler -> bubbleUpInputsIfNeeded -> createBubbleHandler
+ *   -> context.requestInput -> RequestedInputsManager -> InputStageResult
+ *   -> PlanRunner event loop -> ReactiveProjectRun.#input()
+ *
+ * TODO(follow-on): Consider adding orchestrator state notification
+ * (setWaiting/setWorking) to this path. Currently the node stays
+ * in "working" state during the input wait.
+ */
 function createInputHandler(context: NodeHandlerContext) {
-  return (async (allInputs: InputValues, invocationPath: number[]) => {
-    const { schema, $metadata } = allInputs;
-    const graphMetadata: GraphInlineMetadata = {};
-    const descriptor: NodeDescriptor = {
-      id: "input-from-run-module",
-      type: "input",
-      configuration: {
-        schema: {
-          ...(schema as Schema),
-          behavior: ["bubble"],
-        } satisfies Schema,
-      },
-    };
-    if ($metadata) {
-      descriptor.metadata = $metadata as NodeMetadata;
+  return (async (allInputs: InputValues) => {
+    const { schema } = allInputs;
+    const runState = context.getProjectRunState?.();
+    const nodeId = context.currentStep?.id;
+    const entry = nodeId && runState?.console.get(nodeId);
+    if (!entry) {
+      return err(
+        `Unable to request input: no console entry found for node "${nodeId}"`
+      );
     }
-    const result = { inputs: { schema } } as unknown as TraversalResult;
-    await bubbleUpInputsIfNeeded(
-      graphMetadata,
-      context,
-      descriptor,
-      result,
-      invocationPath
-    );
-    return result.outputs;
+    return entry.requestInput(schema as Schema);
   }) as Capability;
 }
 

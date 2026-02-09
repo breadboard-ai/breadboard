@@ -25,7 +25,6 @@ import {
   RunErrorEvent,
   RunGraphEndEvent,
   RunGraphStartEvent,
-  RunInputEvent,
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunOutputEvent,
@@ -44,7 +43,10 @@ import { edgeToString } from "../utils/workspace.js";
 import { ReactiveApp } from "./app.js";
 import { ReactiveAppScreen } from "./app-screen.js";
 import { idFromPath } from "./common.js";
-import { ReactiveConsoleEntry } from "./console-entry.js";
+import {
+  OnInputRequestedCallback,
+  ReactiveConsoleEntry,
+} from "./console-entry.js";
 import { ReactiveRendererRunState } from "./renderer-run-state.js";
 import {
   ProjectRun,
@@ -193,15 +195,20 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
   accessor inputSchemas = new SignalMap<string, Schema>();
 
+  /**
+   * Set of node IDs that currently have pending input requests.
+   * Used to support multiple concurrent input requests from parallel nodes.
+   */
+  #pendingInputNodeIds = new SignalSet<NodeIdentifier>();
+
   @signal
   get inputs(): UserInput[] | null {
-    const waiting = this.runner?.waiting;
-    if (!waiting) {
-      if (this.input) return [this.input];
+    // Build the full list from all pending input requests.
+    if (this.#pendingInputNodeIds.size === 0) {
       return null;
     }
-    return Array.from(waiting)
-      .map(([id]) => {
+    return Array.from(this.#pendingInputNodeIds)
+      .map((id) => {
         const schema = this.inputSchemas.get(id);
         if (!schema) return null;
         return { id, schema };
@@ -272,7 +279,6 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
       runner.addEventListener("graphstart", this.#graphStart.bind(this));
       runner.addEventListener("graphend", this.#graphEnd.bind(this));
-      runner.addEventListener("input", this.#input.bind(this));
       runner.addEventListener("output", this.#output.bind(this));
       runner.addEventListener("error", this.#error.bind(this));
       runner.addEventListener("resume", () => {
@@ -349,13 +355,20 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     const metadata = node.currentDescribe()?.metadata || {};
     const { icon, tags } = metadata;
     // Go ahead and set the entry
-    this.console.set(id, newEntry(this.renderer, node, title, tags, icon));
+    const onInputRequested = this.#handleInputRequested.bind(this);
+    this.console.set(
+      id,
+      newEntry(this.renderer, node, title, tags, icon, onInputRequested)
+    );
     if (!tags) {
       // .. but if there aren't tags, try using `describe()`.
       // This is done due tue a race condition describer. Sad!
       node.describe().then((result) => {
         const { icon, tags } = result.metadata || {};
-        this.console.set(id, newEntry(this.renderer, node, title, tags, icon));
+        this.console.set(
+          id,
+          newEntry(this.renderer, node, title, tags, icon, onInputRequested)
+        );
       });
     }
 
@@ -364,14 +377,16 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       node: InspectableNode,
       title: string,
       tags?: string[],
-      defaultIcon?: string
+      defaultIcon?: string,
+      onInputRequested?: OnInputRequestedCallback
     ): ConsoleEntry {
       const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
       return new ReactiveConsoleEntry(
         id,
         runState,
         { title, icon, tags },
-        undefined
+        undefined,
+        onInputRequested
       );
     }
   }
@@ -389,6 +404,88 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     this.status = "stopped";
     this.current = null;
     this.input = null;
+    this.#pendingInputNodeIds.clear();
+  }
+
+  /**
+   * Called by ReactiveConsoleEntry.requestInput() to notify the parent run
+   * that an input has been requested via the direct-access path.
+   *
+   * If no input is currently active, activates this one immediately
+   * (creates its WorkItem, bumps its app screen). Otherwise, queues it
+   * silently — the entry and screen stay in their normal "working" state
+   * until provideInput() advances the queue.
+   */
+  #handleInputRequested(id: NodeIdentifier, schema: Schema) {
+    // Track this as a pending input request.
+    this.#pendingInputNodeIds.add(id);
+    this.inputSchemas.set(id, schema);
+
+    // Only activate if there isn't an active input already.
+    if (!this.input) {
+      this.#activateInputEntry(id, schema);
+    }
+  }
+
+  /**
+   * Activates a pending input entry: creates its WorkItem, bumps its
+   * app screen, and sets the reactive `input` signal.
+   */
+  #activateInputEntry(id: NodeIdentifier, schema: Schema) {
+    // Update the app screen to reflect that this node is requesting input.
+    const currentScreen = this.app.screens.get(id);
+    if (currentScreen) {
+      // Bump it to the bottom of the list (last item = really current).
+      this.app.screens.delete(id);
+      this.app.screens.set(id, currentScreen);
+      currentScreen.markAsInput();
+    }
+
+    // Tell the console entry to create its WorkItem.
+    this.current?.get(id)?.activateInput();
+
+    // Set the reactive input signal so the UI shows the input form.
+    this.input = { id, schema };
+  }
+
+  /**
+   * Resolves a pending direct-access input request with user-provided values.
+   * Called by InputRoute when the user submits input.
+   *
+   * After resolving, advances to the next queued input (if any) by
+   * activating its entry.
+   */
+  provideInput(values: OutputValues) {
+    if (!this.input) {
+      console.warn("provideInput called but no pending input request");
+      return;
+    }
+    const { id } = this.input;
+    const entry = this.current?.get(id);
+    if (!entry) {
+      console.warn(`provideInput: no console entry found for node "${id}"`);
+      return;
+    }
+
+    // Remove from pending set.
+    this.#pendingInputNodeIds.delete(id);
+    this.inputSchemas.delete(id);
+
+    // Resolve the pending Promise in the console entry.
+    entry.resolveInput(values);
+
+    // Advance to the next pending input (if any), or clear.
+    const nextId = this.#pendingInputNodeIds.values().next().value;
+    if (nextId) {
+      const nextSchema = this.inputSchemas.get(nextId);
+      if (nextSchema) {
+        this.#activateInputEntry(nextId, nextSchema);
+      } else {
+        this.input = null;
+      }
+    } else {
+      this.input = null;
+    }
   }
 
   #graphStart(event: RunGraphStartEvent) {
@@ -437,7 +534,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       id,
       this.renderer,
       metadata,
-      outputSchema
+      outputSchema,
+      this.#handleInputRequested.bind(this)
     );
     this.#idCache.set(path, id);
     this.current ??= new SignalMap();
@@ -504,55 +602,6 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       entry.finalize(event.data);
     }
     this.app.screens.get(id)?.finalize(event.data);
-  }
-
-  #input(event: RunInputEvent) {
-    const { path } = event.data;
-    console.debug("Project Run: Input", event);
-    if (!this.current) {
-      console.warn(`No current console entry found for input event`, event);
-      return;
-    }
-    const id = this.#idCache.get(path);
-    if (!ok(id)) {
-      console.warn(id.$error);
-      return;
-    }
-    const nodeState = this.runner?.state?.get(id)?.state;
-    if (nodeState === "interrupted") {
-      // When the input is in the "interrupted" state, we just resume running
-      // and let the input-bubbling machinery handle the abort signals.
-      this.runner?.resumeWithInputs({});
-      return;
-    }
-
-    const currentConsoleEntry = this.current.get(id);
-    if (!currentConsoleEntry) {
-      console.warn(`No current console entry found at path "${path}"`);
-      return;
-    }
-    const currentScreen = this.app.screens.get(id);
-    if (!currentScreen) {
-      console.warn(`No current screen found at path "${path}"`);
-    } else {
-      // Bump it to the bottom of the list (last item = really current);
-      this.app.screens?.delete(id);
-      this.app.screens?.set(id, currentScreen);
-    }
-    currentConsoleEntry.addInput(event.data, {
-      itemCreated: (item) => {
-        currentScreen?.markAsInput();
-        if (!item.schema) {
-          console.warn(`Schema unavailable for input, skipping`, event.data);
-          return;
-        }
-        this.input = {
-          id,
-          schema: item.schema,
-        };
-        this.inputSchemas.set(id, item.schema);
-      },
-    });
   }
 
   #output(event: RunOutputEvent) {

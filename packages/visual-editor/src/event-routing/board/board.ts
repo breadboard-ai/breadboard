@@ -219,19 +219,21 @@ export const RestartRoute: EventRoute<"board.restart"> = {
 export const InputRoute: EventRoute<"board.input"> = {
   event: "board.input",
 
-  async do({ tab, settings, originalEvent, sca }) {
+  async do({ tab, settings, originalEvent, runtime }) {
     if (!settings || !tab) {
       return false;
     }
 
-    const runner = sca.controller.run.main.runner;
-    if (!runner) {
-      throw new Error("Can't send input, no runner");
-    }
-
     const data = originalEvent.detail.data as InputValues;
-    if (!runner.running()) {
-      runner.resumeWithInputs(data);
+
+    // Direct path: resolve the pending Promise in the console entry.
+    // This replaces the old flow where we called runner.resumeWithInputs()
+    // and the data flowed back through the PlanRunner event loop.
+    const projectRun = runtime.project?.run;
+    if (projectRun && "provideInput" in projectRun) {
+      (
+        projectRun as unknown as { provideInput(values: InputValues): void }
+      ).provideInput(data);
     }
 
     return false;

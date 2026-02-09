@@ -11,6 +11,7 @@ import {
   NodeIdentifier,
   NodeMetadata,
   NodeStartResponse,
+  OutputValues,
   RunError,
   WorkItem,
 } from "@breadboard-ai/types";
@@ -31,6 +32,15 @@ export type OnNodeEndCallbacks = {
 export type AddInputCallbacks = {
   itemCreated: (item: WorkItem) => void;
 };
+
+/**
+ * Callback that the console entry uses to notify the parent run
+ * when an input is requested via the direct-access path.
+ */
+export type OnInputRequestedCallback = (
+  id: NodeIdentifier,
+  schema: Schema
+) => void;
 
 class ReactiveConsoleEntry implements ConsoleEntry {
   title: string;
@@ -65,12 +75,16 @@ class ReactiveConsoleEntry implements ConsoleEntry {
 
   #pendingTimestamp: number | null = null;
   #outputSchema: Schema | undefined;
+  #onInputRequested: OnInputRequestedCallback | undefined;
+  #pendingInputResolve: ((values: OutputValues) => void) | null = null;
+  #pendingInputSchema: Schema | null = null;
 
   constructor(
     private readonly id: NodeIdentifier,
     private readonly rendererRunState: RendererRunState,
     { title, icon, tags }: NodeMetadata,
-    outputSchema: Schema | undefined
+    outputSchema: Schema | undefined,
+    onInputRequested?: OnInputRequestedCallback
   ) {
     if (!title) {
       console.warn(
@@ -81,6 +95,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     this.icon = icon;
     this.tags = tags;
     this.#outputSchema = outputSchema;
+    this.#onInputRequested = onInputRequested;
   }
 
   onNodeStart(data: NodeStartResponse) {
@@ -146,5 +161,52 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     this.work.set(
       ...ReactiveWorkItem.fromOutput(data, this.#pendingTimestamp || 0)
     );
+  }
+
+  /**
+   * Registers an input request. Stores the resolve function and schema,
+   * then notifies the parent run. The parent run decides when to
+   * activate this input (create its WorkItem) by calling activateInput().
+   *
+   * This two-phase approach ensures that only the "active" input has
+   * a visible WorkItem, while queued inputs remain invisible until
+   * their turn.
+   */
+  requestInput(schema: Schema): Promise<OutputValues> {
+    return new Promise((resolve) => {
+      this.#pendingInputResolve = resolve;
+      this.#pendingInputSchema = schema;
+
+      // Notify the parent run. It decides whether to activate now or queue.
+      this.#onInputRequested?.(this.id, schema);
+    });
+  }
+
+  /**
+   * Makes this input request visible by creating a WorkItem.
+   * Called by the parent run when this input becomes the active one.
+   */
+  activateInput(): void {
+    if (!this.#pendingInputSchema) return;
+
+    const workId = crypto.randomUUID();
+    const item = new ReactiveWorkItem(
+      "input",
+      "Input",
+      "chat_mirror",
+      this.#pendingTimestamp || performance.now()
+    );
+    item.schema = this.#pendingInputSchema;
+    this.work.set(workId, item);
+  }
+
+  /**
+   * Resolves a pending input request with user-provided values.
+   */
+  resolveInput(values: OutputValues): void {
+    const resolve = this.#pendingInputResolve;
+    this.#pendingInputResolve = null;
+    this.#pendingInputSchema = null;
+    resolve?.(values);
   }
 }

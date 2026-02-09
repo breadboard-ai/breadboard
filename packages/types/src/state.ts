@@ -74,6 +74,35 @@ export type ConsoleEntry = {
    * Adds an output to this console entry.
    */
   addOutput(data: OutputResponse): void;
+
+  /**
+   * Requests input from the user. Creates a WorkItem, updates the UI state,
+   * and returns a Promise that resolves when the user provides values.
+   *
+   * This is the direct-access path used by A2 modules via caps.input().
+   * It bypasses the old event-based bubbling machinery entirely.
+   *
+   * TODO(follow-on): Currently, the orchestrator state remains "working"
+   * during the input wait. We may want to add a notification mechanism
+   * to set the orchestrator to "waiting" state during input requests.
+   * The UI already handles this via the `input` signal on ProjectRun,
+   * so the visual distinction is covered, but the orchestrator state
+   * may matter for other consumers.
+   */
+  requestInput(schema: Schema): Promise<OutputValues>;
+
+  /**
+   * Makes a pending input request visible by creating its WorkItem.
+   * Called by the parent run when this input becomes the "active" one
+   * (i.e., it's at the head of the queue).
+   */
+  activateInput(): void;
+
+  /**
+   * Resolves a pending input request with user-provided values.
+   * Called by the parent ProjectRun when the user submits input.
+   */
+  resolveInput(values: OutputValues): void;
 };
 
 export type A2UIServerReceiver = {
