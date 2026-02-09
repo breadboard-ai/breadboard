@@ -32,6 +32,9 @@ import { icons } from "../../styles/icons.js";
 import { ActionTracker } from "../../types/types.js";
 import { makeUrl } from "../../utils/urls.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
+import type { VisibilityLevel } from "./share-visibility-selector.js";
+import "./share-visibility-selector.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -411,7 +414,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
       return this.#renderLoading();
     }
     if (status === "writable" || status === "updating") {
-      return this.#renderModifiableModalContents();
+      return CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
+        ? this.#renderWritableContentsV2()
+        : this.#renderWritableContentsV1();
     }
     if (status === "readonly") {
       return this.#renderReadonlyModalContents();
@@ -454,7 +459,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return undefined;
   }
 
-  #renderModifiableModalContents() {
+  #renderWritableContentsV1() {
     return [
       this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
       html`
@@ -467,6 +472,17 @@ export class SharePanel extends SignalWatcher(LitElement) {
         ? this.#renderAppLink()
         : nothing,
       this.#renderGranularSharingLink(),
+      this.#renderAdvisory(),
+    ];
+  }
+
+  #renderWritableContentsV2() {
+    return [
+      this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
+      this.#renderVisibilityDropdown(),
+      this.#isShared && this.#state.status !== "updating"
+        ? this.#renderAppLink()
+        : nothing,
       this.#renderAdvisory(),
     ];
   }
@@ -587,6 +603,29 @@ export class SharePanel extends SignalWatcher(LitElement) {
         >.
       </p>
     `;
+  }
+
+  #renderVisibilityDropdown() {
+    return html`<bb-share-visibility-selector
+      .value=${this.#computedVisibility}
+    ></bb-share-visibility-selector>`;
+  }
+
+  get #computedVisibility(): VisibilityLevel {
+    const state = this.#state;
+    if (
+      (state.status === "writable" || state.status === "updating") &&
+      state.published
+    ) {
+      return "anyone";
+    }
+    if (
+      (state.status === "writable" || state.status === "updating") &&
+      state.granularlyShared
+    ) {
+      return "restricted";
+    }
+    return "only-you";
   }
 
   #renderPublishedSwitch() {
