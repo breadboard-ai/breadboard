@@ -14,6 +14,20 @@ import type { AddressInfo } from "net";
 
 type DriveFile = gapi.client.drive.File;
 
+interface FakeGoogleDriveApiSession {
+  files: Map<string, { metadata: DriveFile; data?: Uint8Array }>;
+  requests: Array<{
+    method: string;
+    url: string;
+    body?: string;
+    wasProxied: boolean;
+  }>;
+  generatesResourceKey: boolean;
+  nextListFileIds: string[];
+  listFilesIterators: Map<string, DriveFile[]>;
+  nextIteratorId: number;
+}
+
 /**
  * An HTTP server that mimics the Google Drive API using in-memory storage.
  *
@@ -49,25 +63,25 @@ export class FakeGoogleDriveApi {
   readonly #server: ReturnType<typeof createServer>;
   readonly #host: string;
   readonly #port: number;
-  readonly #files = new Map<
-    string,
-    { metadata: DriveFile; data?: Uint8Array }
-  >();
+  #session: FakeGoogleDriveApiSession = FakeGoogleDriveApi.#freshSession();
 
   /**
    * Tracks all requests made to the fake API since creation or last `reset()`.
    */
-  readonly requests: Array<{
-    method: string;
-    url: string;
-    body?: string;
-    wasProxied: boolean;
-  }> = [];
+  get requests(): FakeGoogleDriveApiSession["requests"] {
+    return this.#session.requests;
+  }
 
-  #generatesResourceKey = false;
-  #nextListFileIds: string[] = [];
-  #listFilesIterators = new Map<string, DriveFile[]>();
-  #nextIteratorId = 0;
+  static #freshSession(): FakeGoogleDriveApiSession {
+    return {
+      files: new Map(),
+      requests: [],
+      generatesResourceKey: false,
+      nextListFileIds: [],
+      listFilesIterators: new Map(),
+      nextIteratorId: 0,
+    };
+  }
 
   private constructor(
     server: ReturnType<typeof createServer>,
@@ -131,12 +145,7 @@ export class FakeGoogleDriveApi {
    * Clear all configured data and request tracking.
    */
   reset(): void {
-    this.#files.clear();
-    this.requests.length = 0;
-    this.#generatesResourceKey = false;
-    this.#nextListFileIds = [];
-    this.#listFilesIterators.clear();
-    this.#nextIteratorId = 0;
+    this.#session = FakeGoogleDriveApi.#freshSession();
   }
 
   /**
@@ -146,7 +155,7 @@ export class FakeGoogleDriveApi {
    * such as setting `ownedByMe: false`.
    */
   forceSetFileMetadata(fileId: string, metadata: Partial<DriveFile>): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
     if (!file) {
       throw new Error(`File not found: ${fileId}`);
     }
@@ -159,7 +168,7 @@ export class FakeGoogleDriveApi {
    * until disabled. Resets to `false` when `reset()` is called.
    */
   createFileGeneratesResourceKey(generates: boolean): void {
-    this.#generatesResourceKey = generates;
+    this.#session.generatesResourceKey = generates;
   }
 
   /**
@@ -171,13 +180,13 @@ export class FakeGoogleDriveApi {
    */
   setMatchingFilesForNextListRequest(fileIds: string[]): void {
     for (const id of fileIds) {
-      if (!this.#files.has(id)) {
+      if (!this.#session.files.has(id)) {
         throw new Error(
           `setMatchingFilesForNextListRequest: file ${id} not found in fake store`
         );
       }
     }
-    this.#nextListFileIds = [...fileIds];
+    this.#session.nextListFileIds = [...fileIds];
   }
 
   async #routeRequest(
@@ -196,7 +205,7 @@ export class FakeGoogleDriveApi {
       ? originalUrl.slice(proxyPrefix.length)
       : originalUrl;
 
-    this.requests.push({
+    this.#session.requests.push({
       method: req.method ?? "GET",
       url: originalUrl,
       body: new TextDecoder().decode(body) || undefined,
@@ -320,17 +329,17 @@ export class FakeGoogleDriveApi {
     let offset: number;
     if (pageTokenParam) {
       [id, offset] = this.#parsePageToken(pageTokenParam);
-      const stored = this.#listFilesIterators.get(id);
+      const stored = this.#session.listFilesIterators.get(id);
       if (!stored) {
         this.#errorResponse(res, 400, `Invalid pageToken: ${pageTokenParam}`);
         return;
       }
       files = stored;
     } else {
-      const ids = this.#nextListFileIds;
-      this.#nextListFileIds = [];
+      const ids = this.#session.nextListFileIds;
+      this.#session.nextListFileIds = [];
       files = ids.map((id) => {
-        const file = this.#files.get(id);
+        const file = this.#session.files.get(id);
         if (!file) {
           throw new Error(
             `listFiles: file ${id} was configured but no longer exists in fake store`
@@ -338,8 +347,8 @@ export class FakeGoogleDriveApi {
         }
         return file.metadata;
       });
-      id = String(this.#nextIteratorId++);
-      this.#listFilesIterators.set(id, files);
+      id = String(this.#session.nextIteratorId++);
+      this.#session.listFilesIterators.set(id, files);
       offset = 0;
     }
 
@@ -350,7 +359,7 @@ export class FakeGoogleDriveApi {
     if (nextOffset < files.length) {
       response.nextPageToken = `${id}:${nextOffset}`;
     } else {
-      this.#listFilesIterators.delete(id);
+      this.#session.listFilesIterators.delete(id);
     }
     this.#jsonResponse(res, response);
   }
@@ -376,7 +385,7 @@ export class FakeGoogleDriveApi {
       properties: {},
       ...metadata,
     };
-    this.#files.set(newFileId, { metadata: fileMetadata });
+    this.#session.files.set(newFileId, { metadata: fileMetadata });
 
     const response = this.#filterFields(fileMetadata, url);
     this.#jsonResponse(res, response);
@@ -399,7 +408,7 @@ export class FakeGoogleDriveApi {
 
   // /drive/v3/files/:fileId
   #handleGetFileMetadata(fileId: string, url: URL, res: ServerResponse): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
 
     if (!file) {
       this.#errorResponse(res, 404, `File not found: ${fileId}`);
@@ -423,7 +432,7 @@ export class FakeGoogleDriveApi {
   }
 
   #handleGetFileMedia(fileId: string, res: ServerResponse): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
 
     if (!file) {
       this.#errorResponse(res, 404, `File not found: ${fileId}`);
@@ -441,7 +450,7 @@ export class FakeGoogleDriveApi {
     url: URL,
     res: ServerResponse
   ): void {
-    const existingFile = this.#files.get(fileId);
+    const existingFile = this.#session.files.get(fileId);
     if (!existingFile) {
       this.#errorResponse(res, 404, "File not found");
       return;
@@ -461,20 +470,23 @@ export class FakeGoogleDriveApi {
       version: String(currentVersion + 1),
     };
 
-    this.#files.set(fileId, { ...existingFile, metadata: updatedMetadata });
+    this.#session.files.set(fileId, {
+      ...existingFile,
+      metadata: updatedMetadata,
+    });
     const response = this.#filterFields(updatedMetadata, url);
 
     this.#jsonResponse(res, response);
   }
 
   #handleDeleteFile(fileId: string, res: ServerResponse): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
     if (!file) {
       this.#errorResponse(res, 404, "File not found");
       return;
     }
 
-    this.#files.delete(fileId);
+    this.#session.files.delete(fileId);
 
     // Google Drive returns empty response for delete
     res.writeHead(204);
@@ -488,7 +500,7 @@ export class FakeGoogleDriveApi {
     url: URL,
     res: ServerResponse
   ): void {
-    const sourceFile = this.#files.get(fileId);
+    const sourceFile = this.#session.files.get(fileId);
 
     if (!sourceFile) {
       this.#errorResponse(res, 404, `File not found: ${fileId}`);
@@ -506,7 +518,7 @@ export class FakeGoogleDriveApi {
       id: newFileId,
       version: "1",
     };
-    this.#files.set(newFileId, {
+    this.#session.files.set(newFileId, {
       metadata: copiedFileMetadata,
       data: sourceFile.data,
     });
@@ -523,7 +535,7 @@ export class FakeGoogleDriveApi {
       return;
     }
 
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
 
     if (!file) {
       this.#errorResponse(res, 404, `File not found: ${fileId}`);
@@ -545,7 +557,7 @@ export class FakeGoogleDriveApi {
     body: Uint8Array,
     res: ServerResponse
   ): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
     if (!file) {
       this.#errorResponse(res, 404, "File not found");
       return;
@@ -573,7 +585,7 @@ export class FakeGoogleDriveApi {
     permissionId: string,
     res: ServerResponse
   ): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
     if (!file) {
       this.#errorResponse(res, 404, "File not found");
       return;
@@ -617,12 +629,12 @@ export class FakeGoogleDriveApi {
       version: "1",
       properties: {},
       permissions: [],
-      ...(this.#generatesResourceKey && {
+      ...(this.#session.generatesResourceKey && {
         resourceKey: this.#generateFakeResourceKey(),
       }),
       ...metadata,
     };
-    this.#files.set(fileId, { metadata: fileMetadata, data });
+    this.#session.files.set(fileId, { metadata: fileMetadata, data });
     const response = this.#filterFields(fileMetadata, url);
 
     this.#jsonResponse(res, response);
@@ -638,7 +650,7 @@ export class FakeGoogleDriveApi {
   ): Promise<void> {
     const { metadata, data } = await this.#parseMultipartBody(body, headers);
 
-    const existingFile = this.#files.get(fileId);
+    const existingFile = this.#session.files.get(fileId);
     if (!existingFile) {
       this.#errorResponse(res, 404, "File not found");
       return;
@@ -655,7 +667,7 @@ export class FakeGoogleDriveApi {
       id: fileId,
     };
 
-    this.#files.set(fileId, { metadata: updatedMetadata, data });
+    this.#session.files.set(fileId, { metadata: updatedMetadata, data });
 
     const response = this.#filterFields(updatedMetadata, url);
 
