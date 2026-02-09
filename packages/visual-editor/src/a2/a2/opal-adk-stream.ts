@@ -60,12 +60,12 @@ export type PlanStep = {
 };
 
 export interface BuildStreamingRequestBodyOptions {
-  completed_prompt: LLMContent;
+  completedPrompt: LLMContent;
   modelConstraint?: string;
   uiType?: string;
   uiPrompt?: LLMContent;
-  node_api?: string;
-  invocation_id?: string;
+  nodeApi?: string;
+  invocationId?: string;
 }
 
 type StreamingRequestPart = {
@@ -162,21 +162,21 @@ class OpalAdkStream {
 
   buildStreamingRequestBody(options: BuildStreamingRequestBodyOptions): StreamingRequestBody {
     const {
-      completed_prompt,
+      completedPrompt,
       modelConstraint,
       uiType,
       uiPrompt,
-      node_api,
-      invocation_id,
+      nodeApi,
+      invocationId,
     } = options;
     console.log("uiType: ", uiType);
     const contents: NonNullable<StreamingRequestBody["contents"]> = [];
 
     let textCount = 0;
-    if (!completed_prompt.parts) {
+    if (!completedPrompt.parts) {
       console.error("opal-adk-stream: Missing required prompt.")
     };
-    for (const part of completed_prompt.parts) {
+    for (const part of completedPrompt.parts) {
       if ("text" in part) {
         textCount++;
         contents.push({
@@ -191,30 +191,32 @@ class OpalAdkStream {
       }
     }
 
-  const baseBody: StreamingRequestBody = {
-    objective,
-    model_name: undefined, // model_name is not currently passed in options or used in original code, leaving undefined or could be added to options if needed
-    invocation_id,
-    contents,
-  };
-
-  if (node_api) {
-    baseBody.node_config = {
-      node_api,
+    const baseBody: StreamingRequestBody = {
+      objective: completedPrompt,
+      model_name: undefined,
+      contents,
     };
-  } else {
-    baseBody.agent_mode_node_config = {};
-    if (modelConstraint !== undefined) {
-      baseBody.agent_mode_node_config.model_constraint = modelConstraint;
-    }
-    if (uiType !== undefined) {
-      baseBody.agent_mode_node_config.ui_type = this.toProtoUIType(uiType);
-    }
-    if (uiPrompt !== undefined) {
-      baseBody.agent_mode_node_config.ui_prompt = uiPrompt;
-    }
-  }
 
+    if (nodeApi) {
+      baseBody.node_config = {
+        nodeApi,
+      };
+    } else {
+      baseBody.agent_mode_node_config = {};
+      if (modelConstraint !== undefined) {
+        baseBody.agent_mode_node_config.model_constraint = modelConstraint;
+      }
+      if (uiType !== undefined) {
+        baseBody.agent_mode_node_config.ui_type = this.toProtoUIType(uiType);
+      }
+      if (uiPrompt !== undefined) {
+        baseBody.agent_mode_node_config.ui_prompt = uiPrompt;
+      }
+    }
+
+    if (invocationId !== undefined) {
+      baseBody.invocation_id = invocationId
+    }
   return baseBody;
 }
  
@@ -225,15 +227,17 @@ class OpalAdkStream {
     modelConstraint?: ModelConstraint,
     uiType?: string,
     uiPrompt?: LLMContent,
-    invocation_id?: string): Promise<Outcome<LLMContent>> {
+    invocationId?: string): Promise<Outcome<LLMContent>> {
     const ui = this.ui;
-    
+
     if (!params || params.length === 0) {
       return err("opal-adk-stream: No params provided");
-    }``
+    } ``
+    if (modelConstraint === undefined) {
+      modelConstraint = "none";
+    }
     ui.progress.startAgent(toLLMContent("Starting Opal ADK Agent."))
     try {
-      ui.progress.addJson("Preparing request", { opal_adk_agent }, "upload");
       const baseUrl = await this.getOpalAdkBackendUrl(this.caps);
       const url = new URL(baseUrl);
       url.searchParams.set("alt", "sse");
@@ -241,12 +245,12 @@ class OpalAdkStream {
         modelConstraint && this.toProtoModelConstraint(modelConstraint)
       ) || "MODEL_CONSTRAINT_UNSPECIFIED";
       const requestBody = this.buildStreamingRequestBody({
-        completed_prompt: params[0],
+        completedPrompt: params[0],
         modelConstraint: modelConstraintProtoString,
         uiType,
         uiPrompt,
-        node_api: opal_adk_agent,
-        invocation_id,
+        nodeApi: opal_adk_agent,
+        invocationId,
       });
 
       // Record model call with action tracker
@@ -255,7 +259,7 @@ class OpalAdkStream {
         data: [],
       });
 
-      console.log("Request Body: ", requestBody);
+      ui.progress.sendOpalAdkRequest(modelConstraintProtoString, requestBody)
       const response = await this.moduleArgs.fetchWithCreds(url.toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -266,13 +270,15 @@ class OpalAdkStream {
       console.log("response: ", response);
       if (!response.ok) {
         const errorText = await response.text();
-        return ui.progress.addError(
-          err(`Streaming request failed: ${response.status} ${errorText}`)
-        );
+        const error = err(`Streaming request failed: ${response.status} ${errorText}`);
+        console.error(error);
+        return error;
       }
 
       if (!response.body) {
-        return ui.progress.addError(err("No response body from streaming API"));
+        const error = err("No response body from streaming API");
+        console.error(error);
+        return error;
       }
 
       // Process the SSE stream
@@ -291,18 +297,24 @@ class OpalAdkStream {
           agentResult += result.thought;
         }
         if (result.error) {
-          return ui.progress.addError(err(result.error));
+          const error = err(result.error);
+          console.error(error);
+          return error;
         }
       }
 
       if (!agentResult) {
-        return ui.progress.addError(err("No research result received from stream"));
+        const error = err("No agent result received from stream.");
+        console.error(error);
+        return error;
       }
 
       // Return HTML as inlineData with text/html mimeType to match legacy behavior
       return toLLMContent(agentResult, "model");
     } catch (e) {
-      return ui.progress.addError(err((e as Error).message));
+      const error = err((e as Error).message);
+      console.error(error);
+      return error;
     } finally {
       ui.finish();
     }
@@ -349,9 +361,8 @@ class OpalAdkStream {
         type === "html"
       ) {
         agentResult = (agentResult ? agentResult + "\n" : "") + text;
-        ui.progress.addText("Result", text, "spark");
       } else if (type === "error") {
-        ui.progress.addError(err(text));
+        console.error(err(text));
       } else {
         console.log(`Received unknown chunk type: ${type}`);
       }

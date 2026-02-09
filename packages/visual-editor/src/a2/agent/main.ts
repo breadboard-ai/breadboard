@@ -114,7 +114,6 @@ async function invokeOpalAdk(
     config$prompt: prompt_template,
     "b-ui-consistent": enableA2UI = false,
     "b-ui-prompt": uiPrompt,
-    "b-si-constraint": modelConstraint,
     ...rest
   }: AgentInputs,
   caps: Capabilities,
@@ -134,9 +133,9 @@ async function invokeOpalAdk(
   }
   console.log("substitutine: ", completed_prompt);
   const results = await opalAdkStream.executeOpalAdkStream(
-    "",
+    "node_agent",
     [completed_prompt],
-    modelConstraint,
+    "none",
     uiType,
     uiPrompt,
     invocation_id,
