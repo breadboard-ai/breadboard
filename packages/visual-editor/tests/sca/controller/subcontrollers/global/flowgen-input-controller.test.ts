@@ -329,7 +329,7 @@ suite("FlowgenInputController", () => {
     assert.strictEqual(controller.state.status, "initial");
   });
 
-  // === Intent and finishGenerating tests ===
+  // === Intent and clear() tests ===
 
   test("intent returns empty when status is initial", async () => {
     const controller = new FlowgenInputController(
@@ -376,7 +376,7 @@ suite("FlowgenInputController", () => {
     assert.strictEqual(controller.intent, "Create a quiz app");
   });
 
-  test("finishGenerating clears intent and resets state", async () => {
+  test("clear() clears intent and resets state after generating", async () => {
     const controller = new FlowgenInputController(
       "FlowgenInput",
       "FlowgenInput_17"
@@ -393,8 +393,8 @@ suite("FlowgenInputController", () => {
     assert.strictEqual(controller.currentExampleIntent, "Example intent");
     assert.strictEqual(controller.state.status, "generating");
 
-    // Finish generation
-    controller.finishGenerating();
+    // Clear all state (this is what replaceWithTheme calls after graph replacement)
+    controller.clear();
     await controller.isSettled;
 
     // Intent is cleared (returns empty since status is initial)

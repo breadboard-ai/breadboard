@@ -105,7 +105,9 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
 
   /** Get generation status from SCA */
   get #isGenerating() {
-    return this.sca.controller.global.flowgenInput.state.status === "generating";
+    return (
+      this.sca.controller.global.flowgenInput.state.status === "generating"
+    );
   }
 
   /** Get current example intent from SCA */
@@ -171,7 +173,10 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     } else {
       this.#clearInput();
     }
-    this.sca.controller.global.flowgenInput.finishGenerating();
+    // Note: don't call finishGenerating() here — the flowgen state is cleared
+    // by Graph.replaceWithTheme AFTER the graph replacement is applied.
+    // Clearing here would reset isGenerating to false while the graph is still
+    // empty, causing a flash to the "home" view.
   }
 
   #onGenerateError(error: string, suggestedIntent?: string) {

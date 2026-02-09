@@ -27,6 +27,8 @@ import noSignalCollectionsInSca from "./packages/visual-editor/eslint-rules/no-s
 import noSignalDecoratorInSca from "./packages/visual-editor/eslint-rules/no-signal-decorator-in-sca.js";
 import actionExportsUseAsaction from "./packages/visual-editor/eslint-rules/action-exports-use-asaction.js";
 import noCrossActionImports from "./packages/visual-editor/eslint-rules/no-cross-action-imports.js";
+import noDynamicImportsInSca from "./packages/visual-editor/eslint-rules/no-dynamic-imports-in-sca.js";
+import noDirectScaImports from "./packages/visual-editor/eslint-rules/no-direct-sca-imports.js";
 
 // Create local rules plugin
 const localRulesPlugin = {
@@ -48,6 +50,8 @@ const localRulesPlugin = {
     "no-signal-decorator-in-sca": noSignalDecoratorInSca,
     "action-exports-use-asaction": actionExportsUseAsaction,
     "no-cross-action-imports": noCrossActionImports,
+    "no-dynamic-imports-in-sca": noDynamicImportsInSca,
+    "no-direct-sca-imports": noDirectScaImports,
   },
 };
 
@@ -108,6 +112,8 @@ export default tseslint.config(
       "local-rules/no-signal-decorator-in-sca": "error",
       "local-rules/action-exports-use-asaction": "warn",
       "local-rules/no-cross-action-imports": "error",
+      "local-rules/no-dynamic-imports-in-sca": "error",
+      "local-rules/no-direct-sca-imports": "error",
 
       // expect-type rules (requires type information)
       "expect-type/expect": "error",

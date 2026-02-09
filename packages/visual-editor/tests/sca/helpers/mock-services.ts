@@ -179,7 +179,9 @@ export function makeTestServices(options: TestServicesOptions = {}) {
       addEventListener: () => {},
       removeEventListener: () => {},
       flushSaveQueue: async () => {},
+      dataPartTransformer: () => ({}),
     },
+    fetchWithCreds: mock.fn(async () => new Response("{}", { status: 200 })),
     googleDriveClient: googleDriveClient ?? {},
     signinAdapter: signinAdapter ?? {},
     // Mock RunService that returns a testable mock runner

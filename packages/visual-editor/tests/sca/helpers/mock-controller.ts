@@ -136,6 +136,9 @@ export function makeTestController(options: TestControllerOptions = {}) {
       share: {
         state: { status: "closed" },
       },
+      theme: {
+        status: "idle" as string,
+      },
     },
   } as unknown as AppController;
 

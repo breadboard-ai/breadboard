@@ -9,14 +9,8 @@ import { EventRoute } from "../types.js";
 export const GenerateRoute: EventRoute<"flowgen.generate"> = {
   event: "flowgen.generate",
 
-  async do({ originalEvent, sca, actionTracker, runtime }) {
-    const { intent, projectState: eventProjectState } = originalEvent.detail;
-    // Fallback to runtime.project if projectState not passed (e.g., narrow view)
-    const projectState = eventProjectState ?? runtime.project;
-    if (!projectState) {
-      console.warn("Unable to generate: no project state available");
-      return false;
-    }
+  async do({ originalEvent, sca, actionTracker }) {
+    const { intent } = originalEvent.detail;
     const currentGraph = sca.controller.editor.graph.editor?.raw();
     if (!currentGraph) {
       console.warn("Unable to generate: no active graph");
@@ -31,7 +25,7 @@ export const GenerateRoute: EventRoute<"flowgen.generate"> = {
 
     try {
       // Delegate core logic to SCA action
-      await sca.actions.flowgen.generate(intent, projectState);
+      await sca.actions.flowgen.generate(intent);
     } finally {
       sca.controller.global.main.blockingAction = false;
     }

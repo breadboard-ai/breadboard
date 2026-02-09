@@ -62,6 +62,9 @@ export function deriveLiteViewType(
       return "invalid";
   }
 
-  if (isGraphEmpty) return "home";
+  // During flowgen generation the graph may be empty (nodes haven't been
+  // created yet), but we still want to show the editor view so the user
+  // sees the generation progress UI.
+  if (isGraphEmpty && !isGenerating) return "home";
   return "editor";
 }
