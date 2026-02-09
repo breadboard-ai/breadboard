@@ -205,7 +205,7 @@ class OpalAdkStream {
     // node will be for legacy execution.
     if (nodeApi && nodeApi !== NODE_AGENT_KEY) {
       baseBody.node_config = {
-        nodeApi,
+        node_api: nodeApi,
       };
     } else {
       baseBody.agent_mode_node_config = {};

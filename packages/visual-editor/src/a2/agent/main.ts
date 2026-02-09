@@ -61,22 +61,9 @@ function computeAgentSchema(
           description: "Instructions for UI layout",
         },
       }
-        "b-ui-prompt": {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "UI Layout instructions",
-          description: "Instructions for UI layout",
-        },
-      }
       : {};
   const uiConsistent: Schema["properties"] = flags?.consistentUI
     ? {
-      "b-ui-consistent": {
-        type: "boolean",
-        title: "Use A2UI",
-        behavior: ["config", "hint-advanced", "reactive"],
-      },
-    }
       "b-ui-consistent": {
         type: "boolean",
         title: "Use A2UI",
@@ -168,22 +155,6 @@ async function invokeLegacy(
   });
   if (!ok(result)) return result;
   console.log("LOOP", result);
-  return toAgentOutputs(result.outcomes, result.href);
-}
-
-async function invoke(
-  inputs: AgentInputs,
-  caps: Capabilities,
-  moduleArgs: A2ModuleArgs
-): Promise<Outcome<AgentOutputs>> {
-  const flags = await moduleArgs.context.flags?.flags();
-  let opalAdkEnabled = flags?.opalAdk || false;
-
-  if (opalAdkEnabled) {
-    return invokeOpalAdk(inputs, caps, moduleArgs);
-  } else {
-    return invokeLegacy(inputs, caps, moduleArgs);
-  }
   return toAgentOutputs(result.outcomes, result.href);
 }
 
