@@ -37,7 +37,9 @@ type DriveFile = gapi.client.drive.File;
  * ```
  *
  * Notes:
- * - `listFiles` always returns an empty array (query parsing not implemented).
+ * - `listFiles` returns files configured via
+ *   `setMatchingFilesForNextListRequest()` (defaults to empty array, resets
+ *   after each `listFiles` call).
  * - All generated IDs have a `fAkE-` prefix to distinguish from real IDs.
  * - Call `reset()` in `beforeEach` to clear files, permissions, and requests.
  * - The `requests` array tracks all API calls; use it to assert request details
@@ -63,6 +65,9 @@ export class FakeGoogleDriveApi {
   }> = [];
 
   #generatesResourceKey = false;
+  #nextListFilesResult: DriveFile[] = [];
+  #listFilesIterators = new Map<string, DriveFile[]>();
+  #nextIteratorId = 0;
 
   private constructor(
     server: ReturnType<typeof createServer>,
@@ -129,6 +134,9 @@ export class FakeGoogleDriveApi {
     this.#files.clear();
     this.requests.length = 0;
     this.#generatesResourceKey = false;
+    this.#nextListFilesResult = [];
+    this.#listFilesIterators.clear();
+    this.#nextIteratorId = 0;
   }
 
   /**
@@ -152,6 +160,25 @@ export class FakeGoogleDriveApi {
    */
   createFileGeneratesResourceKey(generates: boolean): void {
     this.#generatesResourceKey = generates;
+  }
+
+  /**
+   * Configure which files the next `listFiles` call should return. All file IDs
+   * must already exist in the fake (throws otherwise). The configured result is
+   * consumed by the next `listFiles` call and then resets to empty, so
+   * subsequent calls return nothing unless re-configured. Also resets when
+   * `reset()` is called.
+   */
+  setMatchingFilesForNextListRequest(fileIds: string[]): void {
+    this.#nextListFilesResult = fileIds.map((id) => {
+      const file = this.#files.get(id);
+      if (!file) {
+        throw new Error(
+          `setMatchingFilesForNextListRequest: file ${id} not found in fake store`
+        );
+      }
+      return file.metadata;
+    });
   }
 
   async #routeRequest(
@@ -284,11 +311,45 @@ export class FakeGoogleDriveApi {
       this.#errorResponse(res, 400, "Missing required 'q' parameter");
       return;
     }
-    console.warn(
-      `[FakeGoogleDriveApi] listFiles called with query "${query}". ` +
-        `Query language is not implemented; returning empty array.`
-    );
-    this.#jsonResponse(res, { files: [] });
+
+    const pageSize = Number(url.searchParams.get("pageSize")) || undefined;
+    const pageTokenParam = url.searchParams.get("pageToken");
+
+    // Resolve the file list and offset from the token, or claim a new result.
+    let files: DriveFile[];
+    let id: string;
+    let offset: number;
+    if (pageTokenParam) {
+      [id, offset] = this.#parsePageToken(pageTokenParam);
+      const stored = this.#listFilesIterators.get(id);
+      if (!stored) {
+        this.#errorResponse(res, 400, `Invalid pageToken: ${pageTokenParam}`);
+        return;
+      }
+      files = stored;
+    } else {
+      files = this.#nextListFilesResult;
+      this.#nextListFilesResult = [];
+      id = String(this.#nextIteratorId++);
+      this.#listFilesIterators.set(id, files);
+      offset = 0;
+    }
+
+    // Return all or a page.
+    const slice = pageSize ? files.slice(offset, offset + pageSize) : files;
+    const nextOffset = offset + (pageSize ?? files.length);
+    const response: Record<string, unknown> = { files: slice };
+    if (nextOffset < files.length) {
+      response.nextPageToken = `${id}:${nextOffset}`;
+    } else {
+      this.#listFilesIterators.delete(id);
+    }
+    this.#jsonResponse(res, response);
+  }
+
+  #parsePageToken(token: string): [id: string, offset: number] {
+    const sep = token.indexOf(":");
+    return [token.slice(0, sep), parseInt(token.slice(sep + 1), 10)];
   }
 
   #handleCreateFileMetadata(

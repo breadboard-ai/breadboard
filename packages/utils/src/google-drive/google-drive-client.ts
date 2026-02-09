@@ -69,7 +69,6 @@ export interface ListFilesOptions extends BaseWithFileFields {
     dir: "asc" | "desc";
   }>;
   pageSize?: number;
-  pageToken?: string;
 }
 
 export interface ListFilesResponse<T extends File> {
@@ -78,6 +77,8 @@ export interface ListFilesResponse<T extends File> {
   kind: "drive#fileList";
   nextPageToken?: string;
 }
+
+export type ListFilesResult<T extends File> = { files: T[] };
 
 export type CopyFileOptions = BaseWithFileFields;
 
@@ -577,18 +578,18 @@ export class GoogleDriveClient {
   async listFiles<const T extends ListFilesOptions>(
     query: string,
     options?: T
-  ): Promise<ListFilesResponse<NarrowedDriveFileFromOptions<T>>> {
+  ): Promise<ListFilesResult<NarrowedDriveFileFromOptions<T>>> {
     // TODO(aomarks) Make this an async iterator.
     const url = new URL(await this.#apiUrl);
     url.searchParams.set("q", query);
     if (options?.pageSize) {
       url.searchParams.set("pageSize", String(options.pageSize));
     }
-    if (options?.pageToken) {
-      url.searchParams.set("pageToken", options.pageToken);
-    }
     if (options?.fields) {
-      url.searchParams.set("fields", `files(${options.fields.join(",")})`);
+      url.searchParams.set(
+        "fields",
+        `nextPageToken,files(${options.fields.join(",")})`
+      );
     }
     if (options?.orderBy?.length) {
       url.searchParams.set(
@@ -596,14 +597,28 @@ export class GoogleDriveClient {
         options.orderBy.map(({ field, dir }) => `${field} ${dir}`).join(",")
       );
     }
-    const response = await this.#fetch(url, { signal: options?.signal });
-    if (!response.ok) {
-      throw new Error(
-        `Google Drive listFiles ${response.status} error: ` +
-          (await response.text())
-      );
-    }
-    return await response.json();
+
+    const allFiles: NarrowedDriveFileFromOptions<T>[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      if (pageToken) {
+        url.searchParams.set("pageToken", pageToken);
+      }
+      const response = await this.#fetch(url, { signal: options?.signal });
+      if (!response.ok) {
+        throw new Error(
+          `Google Drive listFiles ${response.status} error: ` +
+            (await response.text())
+        );
+      }
+      const page: ListFilesResponse<NarrowedDriveFileFromOptions<T>> =
+        await response.json();
+      allFiles.push(...page.files);
+      pageToken = page.nextPageToken;
+    } while (pageToken);
+
+    return { files: allFiles };
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create */
