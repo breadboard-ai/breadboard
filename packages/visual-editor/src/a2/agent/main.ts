@@ -164,7 +164,7 @@ async function invoke(
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
   const flags = await moduleArgs.context.flags?.flags();
-  let opalAdkEnabled = flags?.opalAdk || false;
+  const opalAdkEnabled = flags?.opalAdk || false;
 
   if (opalAdkEnabled) {
     return invokeOpalAdk(inputs, caps, moduleArgs);

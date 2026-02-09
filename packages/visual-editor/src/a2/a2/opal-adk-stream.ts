@@ -238,7 +238,7 @@ class OpalAdkStream {
 
     if (!params || params.length === 0) {
       return err("opal-adk-stream: No params provided");
-    } ``
+    } 
     if (modelConstraint === undefined) {
       modelConstraint = "none";
     }
@@ -253,7 +253,7 @@ class OpalAdkStream {
       const baseUrl = await this.getOpalAdkBackendUrl(this.caps);
       const url = new URL(baseUrl);
       url.searchParams.set("alt", "sse");
-      let modelConstraintProtoString = (
+      const modelConstraintProtoString = (
         modelConstraint && this.toProtoModelConstraint(modelConstraint)
       ) || "MODEL_CONSTRAINT_UNSPECIFIED";
       const requestBody = this.buildStreamingRequestBody({
