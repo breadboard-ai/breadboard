@@ -107,6 +107,7 @@ class Controller implements AppController {
       async performMigrations() {
         const controller = appController();
         if (!controller) {
+          // eslint-disable-next-line no-console -- bootstrap: controller may not exist
           console.warn("Unable to complete migrations; no controller instance");
         }
 

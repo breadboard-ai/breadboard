@@ -16,6 +16,7 @@
 
 import type { AssetPath, LLMContent, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
+import { getLogger, Formatter } from "../../utils/logging/logger.js";
 
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
@@ -153,7 +154,10 @@ export async function persistDataParts(
   >
 ): Promise<LLMContent[]> {
   if (!urlString) {
-    console.warn("Can't persist blob without graph URL");
+    getLogger().log(
+      Formatter.warning("Can't persist blob without graph URL"),
+      "Asset.persistDataParts"
+    );
     return contents;
   }
 
@@ -166,7 +170,10 @@ export async function persistDataParts(
     transformer
   );
   if (!ok(transformed)) {
-    console.warn(`Failed to persist a blob: "${transformed.$error}"`);
+    getLogger().log(
+      Formatter.warning(`Failed to persist a blob: "${transformed.$error}"`),
+      "Asset.persistDataParts"
+    );
     return contents;
   }
 

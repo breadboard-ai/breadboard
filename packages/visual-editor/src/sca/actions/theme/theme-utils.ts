@@ -19,6 +19,7 @@ import { AppTheme } from "../../../ui/types/types.js";
 import { isInlineData, transformDataParts } from "../../../data/common.js";
 import type { AppController } from "../../controller/controller.js";
 import type { AppServices } from "../../services/services.js";
+import { Utils } from "../../utils.js";
 
 export { generateImage, persistTheme };
 
@@ -64,7 +65,13 @@ async function generateImage(
       }[];
     };
     if (!response.ok) {
-      console.warn(`Theme generation failed with this error`, result);
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.warning(
+          "Theme generation failed with this error",
+          result
+        ),
+        "Theme.generateImage"
+      );
       return err(`Unable to generate theme`);
     }
     const content = result.candidates.at(0)?.content;
@@ -104,7 +111,10 @@ async function generateImage(
       splashScreen,
     };
   } catch (e) {
-    console.warn(e);
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.warning(e),
+      "Theme.generateImage"
+    );
     return err("Invalid color scheme generated");
   } finally {
     controller.editor.theme.status = "idle";
@@ -162,11 +172,20 @@ async function persistTheme(
           if (isStoredData(splashScreen)) {
             graphTheme.splashScreen = splashScreen;
           } else {
-            console.warn("Unable to save splash screen", splashScreen);
+            Utils.Logging.getLogger(controller).log(
+              Utils.Logging.Formatter.warning(
+                "Unable to save splash screen",
+                splashScreen
+              ),
+              "Theme.persistTheme"
+            );
           }
         } else {
-          console.warn(
-            `Failed to persist splash screen: "${persisted.$error}"`
+          Utils.Logging.getLogger(controller).log(
+            Utils.Logging.Formatter.warning(
+              `Failed to persist splash screen: "${persisted.$error}"`
+            ),
+            "Theme.persistTheme"
           );
         }
       }

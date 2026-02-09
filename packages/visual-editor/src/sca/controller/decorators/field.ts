@@ -172,6 +172,7 @@ export function field<Value extends PrimitiveValue>(
             // finished. This is made available through the RootController.
             const write = store
               .set(name, dataToStore as Value)
+              // eslint-disable-next-line no-console -- storage write error handler
               .catch(console.error);
             const writes = pendingStorageWrites.get(this) ?? [];
             writes.push(write);

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable no-console -- This IS the Logger implementation */
+
 import { DebuggableAppController, DebugLog } from "../../types.js";
 export * as Formatter from "./formatter.js";
 
