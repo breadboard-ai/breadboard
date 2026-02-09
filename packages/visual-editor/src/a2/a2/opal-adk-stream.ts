@@ -18,6 +18,10 @@ import { MemoryManager } from "../agent/types.js";
 const DEFAULT_OPAL_ADK_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeAgentNodeStream";
 
+const NODE_AGENT_KEY = "node_agent";
+const DEEP_RESEARCH_KEY = "deep_research";
+const VALID_NODE_KEYS = [NODE_AGENT_KEY, DEEP_RESEARCH_KEY];
+
 type StreamChunk = {
   chunk?: {
     parts?: Array<{
@@ -50,7 +54,7 @@ export type ContentMap = {
   [key: string]: Content;
 };
 
-export { OpalAdkStream }
+export { OpalAdkStream, NODE_AGENT_KEY, DEEP_RESEARCH_KEY }
 
 export type PlanStep = {
   stepName: string;
@@ -197,7 +201,9 @@ class OpalAdkStream {
       contents,
     };
 
-    if (nodeApi) {
+    // 'node-agent' is specifically for agent mode while any other 
+    // node will be for legacy execution.
+    if (nodeApi && nodeApi !== NODE_AGENT_KEY) {
       baseBody.node_config = {
         nodeApi,
       };
@@ -222,7 +228,7 @@ class OpalAdkStream {
  
 
   async executeOpalAdkStream(
-    opal_adk_agent?: string,
+    opalAdkAgent?: string,
     params?: LLMContent[],
     modelConstraint?: ModelConstraint,
     uiType?: string,
@@ -235,6 +241,12 @@ class OpalAdkStream {
     } ``
     if (modelConstraint === undefined) {
       modelConstraint = "none";
+    }
+    if (opalAdkAgent && !VALID_NODE_KEYS.includes(opalAdkAgent)) {
+      const error = err(`opal-adk-stream: Invalid node key: ${opalAdkAgent}, ` +
+        `valid keys are: ${ VALID_NODE_KEYS.join(", ") }`);
+      console.error(error);
+      return error;
     }
     ui.progress.startAgent(toLLMContent("Starting Opal ADK Agent."))
     try {
@@ -249,13 +261,13 @@ class OpalAdkStream {
         modelConstraint: modelConstraintProtoString,
         uiType,
         uiPrompt,
-        nodeApi: opal_adk_agent,
+        nodeApi: opalAdkAgent,
         invocationId,
       });
 
       // Record model call with action tracker
       this.caps.write({
-        path: `/mnt/track/call_${opal_adk_agent}` as FileSystemReadWritePath,
+        path: `/ mnt / track / call_${ opalAdkAgent }` as FileSystemReadWritePath,
         data: [],
       });
 
@@ -270,7 +282,7 @@ class OpalAdkStream {
       console.log("response: ", response);
       if (!response.ok) {
         const errorText = await response.text();
-        const error = err(`Streaming request failed: ${response.status} ${errorText}`);
+        const error = err(`Streaming request failed: ${ response.status } ${ errorText }`);
         console.error(error);
         return error;
       }
@@ -364,7 +376,7 @@ class OpalAdkStream {
       } else if (type === "error") {
         console.error(err(text));
       } else {
-        console.log(`Received unknown chunk type: ${type}`);
+        console.log(`Received unknown chunk type: ${ type }`);
       }
     }
 

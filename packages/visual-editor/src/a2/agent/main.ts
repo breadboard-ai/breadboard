@@ -24,7 +24,7 @@ import { callVideoGen } from "../video-generator/main.js";
 import { callAudioGen } from "../audio-generator/main.js";
 import { callMusicGen } from "../music-generator/main.js";
 import { Generators } from "./types.js";
-import { OpalAdkStream } from "../a2/opal-adk-stream.js";
+import { OpalAdkStream, NODE_AGENT_KEY } from "../a2/opal-adk-stream.js";
 
 export { invoke as default, computeAgentSchema, describe };
 
@@ -133,7 +133,7 @@ async function invokeOpalAdk(
   }
   console.log("substitutine: ", completed_prompt);
   const results = await opalAdkStream.executeOpalAdkStream(
-    "node_agent",
+    NODE_AGENT_KEY,
     [completed_prompt],
     "none",
     uiType,

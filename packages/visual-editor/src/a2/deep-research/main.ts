@@ -14,7 +14,7 @@ import { ArgumentNameGenerator } from "../a2/introducer.js";
 import { report } from "../a2/output.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils.js";
-import { OpalAdkStream } from "../a2/opal-adk-stream.js";
+import { OpalAdkStream, DEEP_RESEARCH_KEY } from "../a2/opal-adk-stream.js";
 
 export { invoke as default, describe, makeDeepResearchInstruction };
 
@@ -163,7 +163,7 @@ async function invokeOpalAdk(
   }
   const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
   const results = await opalAdkStream
-    .executeOpalAdkStream("deep_research", [substituting]);
+    .executeOpalAdkStream(DEEP_RESEARCH_KEY, [substituting]);
   console.log("deep-research results", results)
   return {
     context: [...(context || []), results],
