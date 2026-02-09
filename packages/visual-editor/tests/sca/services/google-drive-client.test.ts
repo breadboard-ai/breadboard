@@ -34,7 +34,6 @@ suite("GoogleDriveClient", () => {
     fakeApi.reset();
   });
 
-
   suite("createFile", () => {
     test("returns file with fAkE- prefixed ID", async () => {
       const result = await client.createFile(
@@ -211,7 +210,10 @@ suite("GoogleDriveClient", () => {
       const fetched = await client.getFileMetadata(preGeneratedId!, {
         fields: ["id", "name"],
       });
-      assert.deepStrictEqual(fetched, { id: preGeneratedId, name: "pre-id-file.txt" });
+      assert.deepStrictEqual(fetched, {
+        id: preGeneratedId,
+        name: "pre-id-file.txt",
+      });
     });
   });
 
@@ -316,10 +318,7 @@ suite("GoogleDriveClient", () => {
 
       await client.deleteFile(file.id!);
 
-      await assert.rejects(
-        () => client.getFileMetadata(file.id!),
-        /404/
-      );
+      await assert.rejects(() => client.getFileMetadata(file.id!), /404/);
     });
 
     test("throws 404 for non-existent file", async () => {
@@ -376,15 +375,12 @@ suite("GoogleDriveClient", () => {
     });
 
     test("throws 404 for non-existent file", async () => {
-      await assert.rejects(
-        async () => {
-          const response = await client.getFileMedia("non-existent-file-id");
-          if (!response.ok) {
-            throw new Error(`${response.status}`);
-          }
-        },
-        /404/
-      );
+      await assert.rejects(async () => {
+        const response = await client.getFileMedia("non-existent-file-id");
+        if (!response.ok) {
+          throw new Error(`${response.status}`);
+        }
+      }, /404/);
     });
   });
 
@@ -428,7 +424,9 @@ suite("GoogleDriveClient", () => {
       // Create a Google Docs file (simulated)
       const docContent = JSON.stringify({ title: "My Doc", body: "Content" });
       const file = await client.createFile(
-        new Blob([docContent], { type: "application/vnd.google-apps.document" }),
+        new Blob([docContent], {
+          type: "application/vnd.google-apps.document",
+        }),
         {
           name: "test.gdoc",
           mimeType: "application/vnd.google-apps.document",
@@ -457,9 +455,72 @@ suite("GoogleDriveClient", () => {
   });
 
   suite("listFiles", () => {
-    test("returns empty files array for any query", async () => {
-      const result = await client.listFiles("'root' in parents");
-      assert.deepStrictEqual(result, { files: [] });
+    test("returns configured files", async () => {
+      const a = await client.createFileMetadata(
+        { name: "a.json", mimeType: "application/json" },
+        { fields: ["id"] }
+      );
+      const b = await client.createFileMetadata(
+        { name: "b.json", mimeType: "application/json" },
+        { fields: ["id"] }
+      );
+      fakeApi.setMatchingFilesForNextListRequest([a.id, b.id]);
+
+      const result = await client.listFiles("not a real query");
+
+      assert.strictEqual(result.files.length, 2);
+      assert.strictEqual(result.files[0]!.name, "a.json");
+      assert.strictEqual(result.files[1]!.name, "b.json");
+    });
+
+    test("returns empty array by default", async () => {
+      const result = await client.listFiles("not a real query");
+      assert.deepStrictEqual(result.files, []);
+    });
+
+    test("iterates through all pages automatically", async () => {
+      const names = ["a.json", "b.json", "c.json", "d.json", "e.json"];
+      const ids: string[] = [];
+      for (const name of names) {
+        const file = await client.createFileMetadata(
+          { name, mimeType: "application/json" },
+          { fields: ["id"] }
+        );
+        ids.push(file.id);
+      }
+      fakeApi.setMatchingFilesForNextListRequest(ids);
+
+      // Use a pageSize of 2 so pagination triggers multiple pages
+      const result = await client.listFiles("not a real query", {
+        pageSize: 2,
+      });
+
+      // All 5 files should be returned despite the small page size
+      assert.strictEqual(result.files.length, 5);
+      const returnedNames = result.files.map((f) => f.name);
+      assert.deepStrictEqual(returnedNames, names);
+    });
+
+    test("result resets after being claimed", async () => {
+      const file = await client.createFileMetadata(
+        { name: "once.json", mimeType: "application/json" },
+        { fields: ["id"] }
+      );
+      fakeApi.setMatchingFilesForNextListRequest([file.id]);
+
+      const first = await client.listFiles("not a real query");
+      assert.strictEqual(first.files.length, 1);
+
+      // Second call without re-configuring should return empty
+      const second = await client.listFiles("not a real query");
+      assert.deepStrictEqual(second.files, []);
+    });
+
+    test("throws when configuring non-existent file", () => {
+      assert.throws(
+        () => fakeApi.setMatchingFilesForNextListRequest(["does-not-exist"]),
+        /not found in fake store/
+      );
     });
 
     test("throws error for empty query", async () => {

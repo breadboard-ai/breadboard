@@ -14,6 +14,20 @@ import type { AddressInfo } from "net";
 
 type DriveFile = gapi.client.drive.File;
 
+interface FakeGoogleDriveApiSession {
+  files: Map<string, { metadata: DriveFile; data?: Uint8Array }>;
+  requests: Array<{
+    method: string;
+    url: string;
+    body?: string;
+    wasProxied: boolean;
+  }>;
+  generatesResourceKey: boolean;
+  nextListFileIds: string[];
+  listFilesIterators: Map<string, DriveFile[]>;
+  nextIteratorId: number;
+}
+
 /**
  * An HTTP server that mimics the Google Drive API using in-memory storage.
  *
@@ -37,7 +51,9 @@ type DriveFile = gapi.client.drive.File;
  * ```
  *
  * Notes:
- * - `listFiles` always returns an empty array (query parsing not implemented).
+ * - `listFiles` returns files configured via
+ *   `setMatchingFilesForNextListRequest()` (defaults to empty array, resets
+ *   after each `listFiles` call).
  * - All generated IDs have a `fAkE-` prefix to distinguish from real IDs.
  * - Call `reset()` in `beforeEach` to clear files, permissions, and requests.
  * - The `requests` array tracks all API calls; use it to assert request details
@@ -47,22 +63,25 @@ export class FakeGoogleDriveApi {
   readonly #server: ReturnType<typeof createServer>;
   readonly #host: string;
   readonly #port: number;
-  readonly #files = new Map<
-    string,
-    { metadata: DriveFile; data?: Uint8Array }
-  >();
+  #session: FakeGoogleDriveApiSession = FakeGoogleDriveApi.#freshSession();
 
   /**
    * Tracks all requests made to the fake API since creation or last `reset()`.
    */
-  readonly requests: Array<{
-    method: string;
-    url: string;
-    body?: string;
-    wasProxied: boolean;
-  }> = [];
+  get requests(): FakeGoogleDriveApiSession["requests"] {
+    return this.#session.requests;
+  }
 
-  #generatesResourceKey = false;
+  static #freshSession(): FakeGoogleDriveApiSession {
+    return {
+      files: new Map(),
+      requests: [],
+      generatesResourceKey: false,
+      nextListFileIds: [],
+      listFilesIterators: new Map(),
+      nextIteratorId: 0,
+    };
+  }
 
   private constructor(
     server: ReturnType<typeof createServer>,
@@ -126,9 +145,7 @@ export class FakeGoogleDriveApi {
    * Clear all configured data and request tracking.
    */
   reset(): void {
-    this.#files.clear();
-    this.requests.length = 0;
-    this.#generatesResourceKey = false;
+    this.#session = FakeGoogleDriveApi.#freshSession();
   }
 
   /**
@@ -138,7 +155,7 @@ export class FakeGoogleDriveApi {
    * such as setting `ownedByMe: false`.
    */
   forceSetFileMetadata(fileId: string, metadata: Partial<DriveFile>): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
     if (!file) {
       throw new Error(`File not found: ${fileId}`);
     }
@@ -151,7 +168,25 @@ export class FakeGoogleDriveApi {
    * until disabled. Resets to `false` when `reset()` is called.
    */
   createFileGeneratesResourceKey(generates: boolean): void {
-    this.#generatesResourceKey = generates;
+    this.#session.generatesResourceKey = generates;
+  }
+
+  /**
+   * Configure which files the next `listFiles` call should return. All file IDs
+   * must already exist in the fake (throws otherwise). The configured result is
+   * consumed by the next `listFiles` call and then resets to empty, so
+   * subsequent calls return nothing unless re-configured. Also resets when
+   * `reset()` is called.
+   */
+  setMatchingFilesForNextListRequest(fileIds: string[]): void {
+    for (const id of fileIds) {
+      if (!this.#session.files.has(id)) {
+        throw new Error(
+          `setMatchingFilesForNextListRequest: file ${id} not found in fake store`
+        );
+      }
+    }
+    this.#session.nextListFileIds = [...fileIds];
   }
 
   async #routeRequest(
@@ -166,9 +201,11 @@ export class FakeGoogleDriveApi {
     const proxyPrefix = "/proxy";
     const originalUrl = req.url ?? "";
     const hasProxyPrefix = originalUrl.startsWith(proxyPrefix + "/");
-    const routingUrl = hasProxyPrefix ? originalUrl.slice(proxyPrefix.length) : originalUrl;
+    const routingUrl = hasProxyPrefix
+      ? originalUrl.slice(proxyPrefix.length)
+      : originalUrl;
 
-    this.requests.push({
+    this.#session.requests.push({
       method: req.method ?? "GET",
       url: originalUrl,
       body: new TextDecoder().decode(body) || undefined,
@@ -178,7 +215,9 @@ export class FakeGoogleDriveApi {
     const url = new URL(routingUrl, `http://${this.#host}:${this.#port}`);
 
     // /drive/v3/files
-    const filesMatch = new URLPattern({ pathname: "/drive/v3/files" }).test(url);
+    const filesMatch = new URLPattern({ pathname: "/drive/v3/files" }).test(
+      url
+    );
     if (filesMatch) {
       if (req.method === "GET") {
         return this.#handleListFiles(url, res);
@@ -280,11 +319,54 @@ export class FakeGoogleDriveApi {
       this.#errorResponse(res, 400, "Missing required 'q' parameter");
       return;
     }
-    console.warn(
-      `[FakeGoogleDriveApi] listFiles called with query "${query}". ` +
-        `Query language is not implemented; returning empty array.`
-    );
-    this.#jsonResponse(res, { files: [] });
+
+    const pageSize = Number(url.searchParams.get("pageSize")) || undefined;
+    const pageTokenParam = url.searchParams.get("pageToken");
+
+    // Resolve the file list and offset from the token, or claim a new result.
+    let files: DriveFile[];
+    let id: string;
+    let offset: number;
+    if (pageTokenParam) {
+      [id, offset] = this.#parsePageToken(pageTokenParam);
+      const stored = this.#session.listFilesIterators.get(id);
+      if (!stored) {
+        this.#errorResponse(res, 400, `Invalid pageToken: ${pageTokenParam}`);
+        return;
+      }
+      files = stored;
+    } else {
+      const ids = this.#session.nextListFileIds;
+      this.#session.nextListFileIds = [];
+      files = ids.map((id) => {
+        const file = this.#session.files.get(id);
+        if (!file) {
+          throw new Error(
+            `listFiles: file ${id} was configured but no longer exists in fake store`
+          );
+        }
+        return file.metadata;
+      });
+      id = String(this.#session.nextIteratorId++);
+      this.#session.listFilesIterators.set(id, files);
+      offset = 0;
+    }
+
+    // Return all or a page.
+    const slice = pageSize ? files.slice(offset, offset + pageSize) : files;
+    const nextOffset = offset + (pageSize ?? files.length);
+    const response: Record<string, unknown> = { files: slice };
+    if (nextOffset < files.length) {
+      response.nextPageToken = `${id}:${nextOffset}`;
+    } else {
+      this.#session.listFilesIterators.delete(id);
+    }
+    this.#jsonResponse(res, response);
+  }
+
+  #parsePageToken(token: string): [id: string, offset: number] {
+    const sep = token.indexOf(":");
+    return [token.slice(0, sep), parseInt(token.slice(sep + 1), 10)];
   }
 
   #handleCreateFileMetadata(
@@ -303,7 +385,7 @@ export class FakeGoogleDriveApi {
       properties: {},
       ...metadata,
     };
-    this.#files.set(newFileId, { metadata: fileMetadata });
+    this.#session.files.set(newFileId, { metadata: fileMetadata });
 
     const response = this.#filterFields(fileMetadata, url);
     this.#jsonResponse(res, response);
@@ -317,12 +399,16 @@ export class FakeGoogleDriveApi {
     for (let i = 0; i < count; i++) {
       ids.push(this.#generateFakeFileId());
     }
-    this.#jsonResponse(res, { ids, kind: "drive#generatedIds", space: "drive" });
+    this.#jsonResponse(res, {
+      ids,
+      kind: "drive#generatedIds",
+      space: "drive",
+    });
   }
 
   // /drive/v3/files/:fileId
   #handleGetFileMetadata(fileId: string, url: URL, res: ServerResponse): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
 
     if (!file) {
       this.#errorResponse(res, 404, `File not found: ${fileId}`);
@@ -346,7 +432,7 @@ export class FakeGoogleDriveApi {
   }
 
   #handleGetFileMedia(fileId: string, res: ServerResponse): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
 
     if (!file) {
       this.#errorResponse(res, 404, `File not found: ${fileId}`);
@@ -364,7 +450,7 @@ export class FakeGoogleDriveApi {
     url: URL,
     res: ServerResponse
   ): void {
-    const existingFile = this.#files.get(fileId);
+    const existingFile = this.#session.files.get(fileId);
     if (!existingFile) {
       this.#errorResponse(res, 404, "File not found");
       return;
@@ -384,20 +470,23 @@ export class FakeGoogleDriveApi {
       version: String(currentVersion + 1),
     };
 
-    this.#files.set(fileId, { ...existingFile, metadata: updatedMetadata });
+    this.#session.files.set(fileId, {
+      ...existingFile,
+      metadata: updatedMetadata,
+    });
     const response = this.#filterFields(updatedMetadata, url);
 
     this.#jsonResponse(res, response);
   }
 
   #handleDeleteFile(fileId: string, res: ServerResponse): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
     if (!file) {
       this.#errorResponse(res, 404, "File not found");
       return;
     }
 
-    this.#files.delete(fileId);
+    this.#session.files.delete(fileId);
 
     // Google Drive returns empty response for delete
     res.writeHead(204);
@@ -411,7 +500,7 @@ export class FakeGoogleDriveApi {
     url: URL,
     res: ServerResponse
   ): void {
-    const sourceFile = this.#files.get(fileId);
+    const sourceFile = this.#session.files.get(fileId);
 
     if (!sourceFile) {
       this.#errorResponse(res, 404, `File not found: ${fileId}`);
@@ -429,7 +518,7 @@ export class FakeGoogleDriveApi {
       id: newFileId,
       version: "1",
     };
-    this.#files.set(newFileId, {
+    this.#session.files.set(newFileId, {
       metadata: copiedFileMetadata,
       data: sourceFile.data,
     });
@@ -446,7 +535,7 @@ export class FakeGoogleDriveApi {
       return;
     }
 
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
 
     if (!file) {
       this.#errorResponse(res, 404, `File not found: ${fileId}`);
@@ -468,7 +557,7 @@ export class FakeGoogleDriveApi {
     body: Uint8Array,
     res: ServerResponse
   ): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
     if (!file) {
       this.#errorResponse(res, 404, "File not found");
       return;
@@ -496,7 +585,7 @@ export class FakeGoogleDriveApi {
     permissionId: string,
     res: ServerResponse
   ): void {
-    const file = this.#files.get(fileId);
+    const file = this.#session.files.get(fileId);
     if (!file) {
       this.#errorResponse(res, 404, "File not found");
       return;
@@ -540,12 +629,12 @@ export class FakeGoogleDriveApi {
       version: "1",
       properties: {},
       permissions: [],
-      ...(this.#generatesResourceKey && {
+      ...(this.#session.generatesResourceKey && {
         resourceKey: this.#generateFakeResourceKey(),
       }),
       ...metadata,
     };
-    this.#files.set(fileId, { metadata: fileMetadata, data });
+    this.#session.files.set(fileId, { metadata: fileMetadata, data });
     const response = this.#filterFields(fileMetadata, url);
 
     this.#jsonResponse(res, response);
@@ -561,7 +650,7 @@ export class FakeGoogleDriveApi {
   ): Promise<void> {
     const { metadata, data } = await this.#parseMultipartBody(body, headers);
 
-    const existingFile = this.#files.get(fileId);
+    const existingFile = this.#session.files.get(fileId);
     if (!existingFile) {
       this.#errorResponse(res, 404, "File not found");
       return;
@@ -578,7 +667,7 @@ export class FakeGoogleDriveApi {
       id: fileId,
     };
 
-    this.#files.set(fileId, { metadata: updatedMetadata, data });
+    this.#session.files.set(fileId, { metadata: updatedMetadata, data });
 
     const response = this.#filterFields(updatedMetadata, url);
 
@@ -647,11 +736,7 @@ export class FakeGoogleDriveApi {
     res.end(JSON.stringify({ error: { message, code } }));
   }
 
-  #generateFakeId(
-    prefix: string,
-    length: number,
-    alphabet: string
-  ): string {
+  #generateFakeId(prefix: string, length: number, alphabet: string): string {
     const remainingLength = length - prefix.length;
     let id = prefix;
     for (let i = 0; i < remainingLength; i++) {

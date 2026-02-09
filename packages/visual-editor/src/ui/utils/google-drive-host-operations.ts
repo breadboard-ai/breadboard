@@ -4,14 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types/canonical-endpoints.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type {
   FindUserOpalFolderResult,
   GetDriveCollectorFileResult,
-  ListDriveFileItem,
   ListUserOpalsResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { fetchWithRetry } from "@breadboard-ai/utils/fetch-with-retry.js";
 
 export { findUserOpalFolder, listUserOpals, getDriveCollectorFile };
 
@@ -42,40 +40,20 @@ const DOC_MIME_TYPE = "application/vnd.google-apps.document";
 const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
 const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
 
-type DriveErrorResponse = {
-  error: {
-    message: string;
-  };
-};
-
-type DriveFileItem = {
-  mimeType: string;
-} & ListDriveFileItem;
-
-type DriveListFilesResponse =
-  | {
-      files: DriveFileItem[];
-    }
-  | DriveErrorResponse;
-
 async function findUserOpalFolder(
   args: FindUserOpalFolderArgs
 ): Promise<FindUserOpalFolderResult> {
   const { userFolderName, fetchWithCreds } = args;
+  const googleDriveClient = new GoogleDriveClient({ fetchWithCreds });
   const query = `name=${quote(userFolderName)}
   and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"
   and trashed=false`;
 
-  const url = new URL(GOOGLE_DRIVE_FILES_API_PREFIX);
-  url.searchParams.set("q", query);
-  url.searchParams.set("fields", "files(id, mimeType)");
-  url.searchParams.set("orderBy", "createdTime desc");
-
   try {
-    const response = await listFiles(url, fetchWithCreds);
-    if ("error" in response) {
-      return { ok: false, error: response.error.message };
-    }
+    const response = await googleDriveClient.listFiles(query, {
+      fields: ["id", "mimeType"],
+      orderBy: [{ field: "createdTime", dir: "desc" }],
+    });
     // This shouldn't be required based on the query above, but for some reason
     // the TestGaia drive endpoint doesn't seem to respect the mimeType query
     const files = response.files.filter(
@@ -107,14 +85,7 @@ async function listUserOpals(
   args: ListUserOpalsArgs
 ): Promise<ListUserOpalsResult> {
   const { isTestApi, fetchWithCreds } = args;
-  const fields = [
-    "id",
-    "name",
-    "modifiedTime",
-    "properties",
-    "appProperties",
-    "isAppAuthorized",
-  ];
+  const googleDriveClient = new GoogleDriveClient({ fetchWithCreds });
   const query = `mimeType = ${quote(GRAPH_MIME_TYPE)}
 and trashed = false
 and not properties has {
@@ -123,28 +94,39 @@ and not properties has {
 }
 and 'me' in owners
   `;
-  const url = new URL(GOOGLE_DRIVE_FILES_API_PREFIX);
-  url.searchParams.set("q", query);
-  url.searchParams.set("fields", `files(${fields.join(",")})`);
-  url.searchParams.set("orderBy", "modifiedTime desc");
 
   try {
-    const response = await listFiles(url, fetchWithCreds);
-    if ("error" in response) {
-      return { ok: false, error: response.error.message };
-    }
-    const files = response.files.filter(
-      (file) =>
-        // Filter down to graphs created by whatever the current OAuth app is.
-        // Otherwise, graphs from different OAuth apps will appear in this list
-        // too, and if they are selected, we won't be able to edit them. Note
-        // there is no way to do this in the query itself.
-        file.isAppAuthorized ||
-        // Note when running on testGaia, isAppAuthorized seems to always be false
-        // so just allow all files in that case (they should all be from the test
-        // client anyway)
-        isTestApi
-    );
+    const response = await googleDriveClient.listFiles(query, {
+      fields: [
+        "id",
+        "name",
+        "modifiedTime",
+        "properties",
+        "appProperties",
+        "isAppAuthorized",
+      ],
+      orderBy: [{ field: "modifiedTime", dir: "desc" }],
+    });
+    const files = response.files
+      .filter(
+        (file) =>
+          // Filter down to graphs created by whatever the current OAuth app is.
+          // Otherwise, graphs from different OAuth apps will appear in this list
+          // too, and if they are selected, we won't be able to edit them. Note
+          // there is no way to do this in the query itself.
+          file.isAppAuthorized ||
+          // Note when running on testGaia, isAppAuthorized seems to always be false
+          // so just allow all files in that case (they should all be from the test
+          // client anyway)
+          isTestApi
+      )
+      .map((file) => ({
+        ...file,
+        // properties and appProperties are always optional from the Drive API
+        // (even when requested), but ListDriveFileItem declares them required.
+        properties: file.properties ?? {},
+        appProperties: file.appProperties ?? {},
+      }));
 
     return { ok: true, files };
   } catch (e) {
@@ -160,16 +142,12 @@ async function getDriveCollectorFile(
   args: GetDriveCollectorFileArgs
 ): Promise<GetDriveCollectorFileResult> {
   const { mimeType, connectorId, graphId, fetchWithCreds } = args;
+  const googleDriveClient = new GoogleDriveClient({ fetchWithCreds });
   const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
   const query = `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`;
-  const url = new URL(GOOGLE_DRIVE_FILES_API_PREFIX);
-  url.searchParams.set("q", query);
 
   try {
-    const response = await listFiles(url, fetchWithCreds);
-    if ("error" in response) {
-      return { ok: false, error: response.error.message };
-    }
+    const response = await googleDriveClient.listFiles(query);
     const files = response.files;
     if (files.length > 0) {
       return { ok: true, id: files[0]!.id };
@@ -194,20 +172,4 @@ function getTypeKey(mimeType: string) {
 
 function quote(value: string) {
   return `'${value.replace(/'/g, "\\'")}'`;
-}
-
-/**
- * Lists files in a Google Drive folder.
- *
- * @param accessToken The access token to use for authentication.
- * @param url The URL to list files from.
- * @returns A promise that resolves to a list of files.
- */
-function listFiles(
-  url: URL,
-  fetchWithCreds: typeof globalThis.fetch
-): Promise<DriveListFilesResponse> {
-  return fetchWithRetry(fetchWithCreds, url).then((r) =>
-    r.json()
-  ) as Promise<DriveListFilesResponse>;
 }
