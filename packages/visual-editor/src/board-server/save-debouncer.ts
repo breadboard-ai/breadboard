@@ -7,6 +7,7 @@
 import type { GraphDescriptor, Outcome } from "@breadboard-ai/types";
 import type { DriveOperations } from "@breadboard-ai/utils/google-drive/operations.js";
 import { err } from "@breadboard-ai/utils";
+import { getLogger, Formatter } from "../sca/utils/logging/logger.js";
 
 export { SaveDebouncer };
 
@@ -23,12 +24,14 @@ export type DebouncerCallbacks = {
 };
 
 const DEFAULT_DEBOUNCE_DELAY = 1_500;
+const LABEL = "Drive Save";
 
 class SaveDebouncer {
   #timer: NodeJS.Timeout | number | null = null;
   #latest: GraphDescriptor | null = null;
   #state: SaveDebouncerState = { status: "idle" };
   #saveOperationInProgress = false;
+  #logger = getLogger();
 
   constructor(
     private readonly ops: DriveOperations,
@@ -71,8 +74,9 @@ class SaveDebouncer {
     this.#latest = structuredClone(descriptor);
     this.cancelPendingSave();
     if (this.#state.status === "saving") {
-      console.log(
-        "Drive Save: Already saving. Queued latest data to save after."
+      this.#logger.log(
+        Formatter.verbose("Already saving. Queued latest data to save after."),
+        LABEL
       );
       this.#setState(
         { status: "queued", previousSaved: this.#state.saved },
@@ -88,7 +92,10 @@ class SaveDebouncer {
   }
 
   #debounce(url: URL) {
-    console.log(`Drive Save: Setting debounce timer for ${this.delay} ms`);
+    getLogger().log(
+      Formatter.verbose(`Setting debounce timer for ${this.delay} ms`),
+      LABEL
+    );
     this.#setState({ status: "debouncing", url }, url);
     this.#timer = setTimeout(() => {
       this.#timer = null;
@@ -105,13 +112,23 @@ class SaveDebouncer {
     this.#setState({ status: "saving", saved: promise }, url);
     const descriptor = this.#latest;
     this.#latest = null;
-    console.log("Drive Save: Performing actual save to drive");
-    console.time(`Drive Save: writing "${url.href}"`);
+    this.#logger.log(
+      Formatter.verbose("Performing actual save to drive"),
+      LABEL
+    );
+    const startTime = performance.now();
     const writing = await this.ops.writeGraphToDrive(url, descriptor);
-    console.timeEnd(`Drive Save: writing "${url.href}"`);
+    const elapsed = (performance.now() - startTime).toFixed(1);
+    this.#logger.log(
+      Formatter.verbose(`Writing "${url.href}" took ${elapsed}ms`),
+      LABEL
+    );
     this.#saveOperationInProgress = false;
     if (!writing.result) {
-      console.warn(`Drive Save: save failed: ${writing.error}`);
+      this.#logger.log(
+        Formatter.warning(`Save failed: ${writing.error}`),
+        LABEL
+      );
       // TODO: Introduce error status and learn to recover from errors.
       this.#setState({ status: "idle" }, url);
       resolve();
@@ -123,7 +140,7 @@ class SaveDebouncer {
       this.cancelPendingSave();
       this.#debounce(url);
     } else {
-      console.log("Drive Save: save finished successfully");
+      this.#logger.log(Formatter.verbose("Save finished successfully"), LABEL);
       this.#setState({ status: "idle" }, url);
     }
     resolve();

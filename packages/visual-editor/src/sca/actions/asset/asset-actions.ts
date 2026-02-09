@@ -98,22 +98,40 @@ export const update = asAction(
 
     const metadata = { ...asset.metadata, title };
 
-    // Apply the update to refs
-    let result = await editor.apply(new UpdateAssetWithRefs(path, metadata));
-    if (!result.success) {
-      return err(result.error);
-    }
-
-    // If data provided, persist and apply asset data update
+    // Persist data BEFORE applying any transforms.
+    // This prevents a flicker where UpdateAssetWithRefs bumps the graph
+    // version (triggering syncFromGraph with old data) while persist is
+    // still in-flight.
+    let persistedData: LLMContent[] | undefined;
     if (data) {
-      const persistedData = await persistDataParts(
+      persistedData = await persistDataParts(
         graphController.url,
         data,
         services.googleDriveBoardServer.dataPartTransformer()
       );
+    }
 
-      result = await editor.apply(
+    // When data is provided, apply UpdateAssetData FIRST so that the
+    // graph descriptor has the new data before any syncFromGraph fires.
+    // This avoids a flicker where the old drawing data briefly appears.
+    if (persistedData) {
+      let result = await editor.apply(
         new UpdateAssetData(path, metadata, persistedData)
+      );
+      if (!result.success) {
+        return err(result.error);
+      }
+
+      // Now update refs (node configs referencing the asset title).
+      // syncFromGraph will fire again but data is already correct.
+      result = await editor.apply(new UpdateAssetWithRefs(path, metadata));
+      if (!result.success) {
+        return err(result.error);
+      }
+    } else {
+      // Title-only update, no data change
+      const result = await editor.apply(
+        new UpdateAssetWithRefs(path, metadata)
       );
       if (!result.success) {
         return err(result.error);
