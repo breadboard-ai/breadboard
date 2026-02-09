@@ -13,7 +13,6 @@ import * as GraphActions from "../../../../src/sca/actions/graph/graph-actions.j
 import {
   makeTestFixtures,
   makeFreshGraph as makeTestGraph,
-  makeTestProjectState,
 } from "../../helpers/index.js";
 
 /**
@@ -55,10 +54,7 @@ suite("Flowgen Actions", () => {
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
-    const result = await FlowgenActions.generate(
-      "test intent",
-      makeTestProjectState()
-    );
+    const result = await FlowgenActions.generate("test intent");
 
     assert.deepStrictEqual(result, { success: true });
   });
@@ -73,10 +69,7 @@ suite("Flowgen Actions", () => {
       ),
     });
 
-    const result = await FlowgenActions.generate(
-      "test intent",
-      makeTestProjectState()
-    );
+    const result = await FlowgenActions.generate("test intent");
 
     assert.deepStrictEqual(result, {
       success: false,
@@ -92,23 +85,21 @@ suite("Flowgen Actions", () => {
     });
   });
 
-  test("generate clears input on success", async () => {
-    const { mocks } = setupFlowgenTest({
+  test("generate sets pendingGraphReplacement on success", async () => {
+    const { controller } = setupFlowgenTest({
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
-    mocks.flowgenInput.inputValue = "some input";
 
-    await FlowgenActions.generate("test intent", makeTestProjectState());
+    await FlowgenActions.generate("test intent");
 
-    assert.strictEqual(
-      mocks.flowgenInput.inputValue,
-      "",
-      "input should be cleared"
-    );
+    // Verify pendingGraphReplacement was set (replaceWithTheme will apply it)
+    const pending = controller.editor.graph.pendingGraphReplacement;
+    assert.ok(pending, "pendingGraphReplacement should be set");
+    assert.ok(pending!.replacement, "should have a replacement graph");
     assert.deepStrictEqual(
-      mocks.flowgenInput.state,
-      { status: "initial" },
-      "state should be initial"
+      pending!.creator,
+      { role: "assistant" },
+      "creator should be assistant"
     );
   });
 
@@ -120,10 +111,7 @@ suite("Flowgen Actions", () => {
 
     FlowgenActions.bind({ controller, services });
 
-    const result = await FlowgenActions.generate(
-      "test intent",
-      makeTestProjectState()
-    );
+    const result = await FlowgenActions.generate("test intent");
 
     assert.deepStrictEqual(result, {
       success: false,
@@ -137,10 +125,7 @@ suite("Flowgen Actions", () => {
       oneShot: mock.fn(() => Promise.reject(testError)),
     });
 
-    const result = await FlowgenActions.generate(
-      "test intent",
-      makeTestProjectState()
-    );
+    const result = await FlowgenActions.generate("test intent");
 
     assert.strictEqual(result.success, false);
     assert.strictEqual(
@@ -156,34 +141,8 @@ suite("Flowgen Actions", () => {
     });
   });
 
-  test("generate catch block handles unexpected synchronous errors", async () => {
-    // We want to force a throw in the try block *outside* of flowGenWithTheme
-    // since flowGenWithTheme catches its own promise rejections
-    const testError = new Error("Simulated runtime error");
-    const { mocks } = setupFlowgenTest({
-      oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
-    });
-
-    // Make clear() throw an error to hit the outer catch block
-    mocks.flowgenInput.clear = () => {
-      throw testError;
-    };
-
-    const result = await FlowgenActions.generate(
-      "test intent",
-      makeTestProjectState()
-    );
-
-    assert.strictEqual(result.success, false);
-    assert.strictEqual(
-      (result as { success: false; error: unknown }).error,
-      testError
-    );
-
-    // Check that error state was set from the catch block
-    assert.deepStrictEqual(mocks.flowgenInput.state, {
-      status: "error",
-      error: testError,
-    });
-  });
+  // Note: The old "generate catch block handles unexpected synchronous errors"
+  // test was removed because flowgenInput.clear() is no longer called in generate.
+  // It was moved to Graph.replaceWithTheme to prevent a UI flash between
+  // generation completing and the graph replacement being applied.
 });

@@ -10,7 +10,6 @@ import {
   AssetPath,
   ConsoleEntry,
   GraphIdentifier,
-  GraphTheme,
   HarnessRunner,
   InspectableNodePorts,
   LLMContent,
@@ -32,7 +31,7 @@ import {
 } from "@breadboard-ai/types";
 
 import { StateEvent } from "../events/events.js";
-import { AppTheme, VisualEditorMode } from "../types/types.js";
+import { VisualEditorMode } from "../types/types.js";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
 
@@ -477,7 +476,6 @@ export type Project = {
   readonly organizer: Organizer;
   readonly renderer: RendererState;
   readonly fastAccess: FastAccess;
-  readonly themes: ProjectThemeState;
 
   /**
    * Resets the current run.
@@ -535,63 +533,9 @@ export type RendererRunState = {
   edges: Map<string, EdgeRunState>;
 };
 
-export type ThemeStatus = "generating" | "uploading" | "editing" | "idle";
-
 export type ThemePromptArgs = {
   random: boolean;
   title: string;
   description?: string;
   userInstruction?: string;
-};
-
-/**
- * Represents the model-controller for the project's themes.
- */
-export type ProjectThemeState = {
-  /**
-   * Reports the current status of the theming machinery. Aside from "idle",
-   * all other statuses are blocking -- calls to mutating functions will fail
-   * silently.
-   *
-   * Valid status values:
-   * - "generating" -- an image is currently being generated for the theme
-   * - "uploading" -- an image is currently being uploaded to Drive
-   * - "editing" -- theme is currently being edited.
-   * - "idle" -- the machinery is idle and ready for operation.
-   */
-  readonly status: ThemeStatus;
-  /**
-   * Adds provided theme to the list of available themes and sets it
-   * as current.
-   */
-  addTheme(theme: AppTheme): Promise<Outcome<void>>;
-
-  /**
-   * Generates a new theme based on the intent and sets it as current
-   */
-  generateThemeFromIntent(
-    intent: string,
-    abortSignal?: AbortSignal
-  ): Promise<Outcome<GraphTheme>>;
-
-  setTheme(theme: GraphTheme): Promise<Outcome<void>>;
-
-  /**
-   * Generates a new theme to the list of available themes and sets it
-   * as current.
-   */
-  generateTheme(
-    args: ThemePromptArgs,
-    signal: AbortSignal
-  ): Promise<Outcome<void>>;
-
-  /**
-   * Deletes a theme with a given ID
-   */
-  deleteTheme(id: string): Promise<Outcome<void>>;
-
-  /**
-   * Sets the current them to a given ID
-   */
-  setCurrent(id: string): Promise<Outcome<void>>;
 };

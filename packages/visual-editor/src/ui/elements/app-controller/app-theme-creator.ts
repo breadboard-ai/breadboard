@@ -29,7 +29,6 @@ import { repeat } from "lit/directives/repeat.js";
 import { until } from "lit/directives/until.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { OverlayDismissedEvent, SnackbarEvent } from "../../events/events.js";
-import { Project } from "../../state/types.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
@@ -49,9 +48,6 @@ const MAX_UPLOAD_SIZE = 5_242_880; // 5MB.
 export class AppThemeCreator extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @property()
-  accessor projectState: Project | null = null;
 
   @property()
   accessor graph: GraphDescriptor | null = null;
@@ -485,15 +481,9 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       }
 
       try {
-        if (!this.projectState) {
-          throw new Error(
-            "Unable to generate theme: project is not initialized"
-          );
-        }
-
         const splashScreen = await convertImageToInlineData(images[0]);
         const appTheme = await this.#convertImageToTheme(splashScreen);
-        const adding = await this.projectState.themes.addTheme(appTheme);
+        const adding = await this.sca.actions.theme.add(appTheme);
         if (!ok(adding)) {
           throw new Error(adding.$error);
         }
@@ -541,11 +531,8 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       this.#generating = true;
       this.#generatingRandom = random;
       this.#abortController = new AbortController();
-      if (!this.projectState) {
-        throw new Error("Unable to generate theme: project is not initialized");
-      }
       this.sca.controller.global.main.blockingAction = true;
-      const newTheme = await this.projectState.themes.generateTheme(
+      const newTheme = await this.sca.actions.theme.generate(
         {
           random,
           title: this.graph?.title ?? "Untitled Application",
@@ -591,12 +578,15 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
     const url = theme.isDefaultTheme
       ? undefined
       : theme.splashScreen?.storedData?.handle;
+    // Only show a loading spinner if the theme actually has an image to load.
+    // For the default theme (no splash screen), show the fallback icon directly.
+    const showLoader = !theme.isDefaultTheme && !!url;
     return await renderThumbnail(
       url,
       this.googleDriveClient!,
       {},
       "Theme thumbnail",
-      true
+      showLoader
     );
   }
 
@@ -678,13 +668,13 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                   return;
                 }
 
-                if (this.projectState?.themes?.status !== "idle") {
+                if (this.sca.controller.editor.theme.status !== "idle") {
                   return;
                 }
 
                 this.sca.controller.global.main.blockingAction = true;
 
-                const deleting = await this.projectState.themes.deleteTheme(
+                const deleting = await this.sca.actions.theme.deleteTheme(
                   this.theme
                 );
                 this.sca.controller.global.main.blockingAction = false;
@@ -716,13 +706,13 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                     class=${classMap({ selected: id === this.theme })}
                     ${this.theme === id ? ref(this.#selectedThemeRef) : nothing}
                     @click=${() => {
-                      if (this.projectState?.themes.status !== "idle") {
+                      if (this.sca.controller.editor.theme.status !== "idle") {
                         return;
                       }
 
                       this.#changed = true;
                       this.sca.controller.global.main.blockingAction = true;
-                      this.projectState.themes.setCurrent(id);
+                      this.sca.actions.theme.setCurrent(id);
                       this.sca.controller.global.main.blockingAction = false;
                     }}
                   >

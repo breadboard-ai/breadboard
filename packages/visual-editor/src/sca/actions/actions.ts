@@ -18,6 +18,7 @@ import * as ScreenSize from "./screen-size/screen-size-actions.js";
 import * as Share from "./share/share-actions.js";
 import * as Shell from "./shell/shell-actions.js";
 import * as Step from "./step/step-actions.js";
+import * as Theme from "./theme/theme-actions.js";
 import type { ActionWithTriggers } from "../coordination.js";
 import { Utils } from "../utils.js";
 
@@ -34,6 +35,7 @@ export interface AppActions {
   share: typeof Share;
   shell: typeof Shell;
   step: typeof Step;
+  theme: typeof Theme;
 }
 
 let instance: AppActions | null = null;
@@ -53,6 +55,7 @@ export function actions(controller: AppController, services: AppServices) {
     Share.bind({ controller, services });
     Shell.bind({ controller, services });
     Step.bind({ controller, services });
+    Theme.bind({ controller, services });
     instance = {
       agent: Agent,
       asset: Asset,
@@ -66,6 +69,7 @@ export function actions(controller: AppController, services: AppServices) {
       share: Share,
       shell: Shell,
       step: Step,
+      theme: Theme,
     } satisfies AppActions;
   }
   return instance;
@@ -99,6 +103,7 @@ export function activateTriggers(): () => void {
     ...Object.values(Share),
     ...Object.values(Shell),
     ...Object.values(Step),
+    ...Object.values(Theme),
   ];
 
   // Filter to actions with triggers and extract metadata
@@ -184,4 +189,5 @@ export {
   Share,
   Shell,
   Step,
+  Theme,
 };

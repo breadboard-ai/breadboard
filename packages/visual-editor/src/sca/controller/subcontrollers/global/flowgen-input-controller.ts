@@ -127,16 +127,6 @@ export class FlowgenInputController extends RootController {
   }
 
   /**
-   * Finish generation and clear transient state.
-   * Called after successful generation.
-   */
-  finishGenerating() {
-    this.#intentValue = undefined;
-    this.currentExampleIntent = "";
-    this.state = { status: "initial" };
-  }
-
-  /**
    * Clears all input state and resets to initial.
    * Called after successful generation or when starting fresh.
    */

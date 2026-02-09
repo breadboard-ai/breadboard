@@ -63,6 +63,10 @@ class Controller implements AppController {
         "Editor_Share",
         "ShareController"
       ),
+      theme: new Editor.Theme.ThemeController(
+        "Editor_Theme",
+        "ThemeController"
+      ),
     };
 
     this.home = {
@@ -210,6 +214,7 @@ export interface AppController extends DebuggableAppController {
     sidebar: Editor.Sidebar.SidebarController;
     step: Editor.Step.StepController;
     share: Editor.Share.ShareController;
+    theme: Editor.Theme.ThemeController;
   };
   home: {
     recent: Home.RecentBoardsController;
