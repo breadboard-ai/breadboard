@@ -35,6 +35,7 @@ import type {
   AssetEdge,
   EdgeAttachmentPoint,
 } from "../../../ui/types/types.js";
+import { Utils } from "../../utils.js";
 
 export const bind = makeAction();
 
@@ -411,7 +412,11 @@ export const replaceWithTheme = asAction(
         replacementThemes[replacementTheme].splashScreen;
 
       if (currentThemeHasSplashScreen && !replacementThemeHasSplashScreen) {
-        console.log("[graph replacement] Persisting existing theme");
+        const logger = Utils.Logging.getLogger(controller);
+        logger.log(
+          Utils.Logging.Formatter.verbose("Persisting existing theme"),
+          "Graph.replaceWithTheme"
+        );
         replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
       }
     }

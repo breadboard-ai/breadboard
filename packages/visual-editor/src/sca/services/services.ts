@@ -42,6 +42,7 @@ import { type ConsentController } from "../controller/subcontrollers/global/glob
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { RunService } from "./run-service.js";
 import { StatusUpdatesService } from "./status-updates-service.js";
+import { getLogger, Formatter } from "../utils/logging/logger.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
@@ -87,6 +88,14 @@ export function services(
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: fetchWithCreds,
+      log(level, ...args) {
+        const logger = getLogger();
+        const msg =
+          level === "warning"
+            ? Formatter.warning(...args)
+            : Formatter.verbose(...args);
+        logger.log(msg, "Google Drive");
+      },
     });
 
     const fileSystem = createFileSystem({

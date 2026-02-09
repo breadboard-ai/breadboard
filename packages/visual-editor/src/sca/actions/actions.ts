@@ -144,8 +144,7 @@ export function activateTriggers(): () => void {
       "Trigger activation order:\n -",
       activationOrder.join("\n - ")
     ),
-    LABEL,
-    true // Always show (not verbose)
+    LABEL
   );
 
   // Activate in sorted order

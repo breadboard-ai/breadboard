@@ -3,7 +3,6 @@
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { setDebuggableAppController } from "../utils/logging/logger.js";
 import { DebuggableAppController, HydratedController } from "../types.js";
 import { BoardController } from "./subcontrollers/board/board-controller.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
@@ -107,6 +106,7 @@ class Controller implements AppController {
       async performMigrations() {
         const controller = appController();
         if (!controller) {
+          // eslint-disable-next-line no-console -- bootstrap: controller may not exist
           console.warn("Unable to complete migrations; no controller instance");
         }
 
@@ -200,7 +200,6 @@ export const appController = (flags?: RuntimeFlags): Controller => {
     if (!flags)
       throw new Error("App Controller must be instantiated with flags");
     controller = new Controller(flags);
-    setDebuggableAppController(controller);
   }
 
   return controller;

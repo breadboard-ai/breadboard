@@ -22,6 +22,7 @@ import { UpdateNode } from "../../../ui/transforms/index.js";
 import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
 import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
 import { persistDataParts } from "../asset/asset-actions.js";
+import { Utils } from "../../utils.js";
 
 export const bind = makeAction();
 
@@ -114,6 +115,8 @@ export const applyPendingAssetEdit = asAction(
   },
   async (): Promise<void> => {
     const { controller, services } = bind;
+    const LABEL = "Step.applyPendingAssetEdit";
+    const logger = Utils.Logging.getLogger(controller);
 
     const pendingAssetEdit = controller.editor.step.pendingAssetEdit;
     if (!pendingAssetEdit) {
@@ -143,39 +146,71 @@ export const applyPendingAssetEdit = asAction(
     // Get current asset to check metadata
     const asset = graphController.graphAssets.get(pendingAssetEdit.assetPath);
     if (!asset?.metadata) {
-      console.warn(
-        `Graph asset "${pendingAssetEdit.assetPath}" has no metadata, can't update`
+      logger.log(
+        Utils.Logging.Formatter.warning(
+          `Graph asset "${pendingAssetEdit.assetPath}" has no metadata, can't update`
+        ),
+        LABEL
       );
       return;
     }
 
     const metadata = { ...asset.metadata, title: pendingAssetEdit.title };
 
-    // Apply the update to refs
-    let result = await editor.apply(
-      new UpdateAssetWithRefs(pendingAssetEdit.assetPath, metadata)
-    );
-    if (!result.success) {
-      console.warn(`Failed to update asset refs: ${result.error}`);
-      return;
-    }
-
-    // If data provided, persist and apply asset data update
+    // Persist data BEFORE applying any transforms to avoid flicker
+    // where syncFromGraph fires with old data.
+    let persistedData: LLMContent[] | undefined;
     if (pendingAssetEdit.dataPart) {
       const data: LLMContent[] = [
         { role: "user", parts: [pendingAssetEdit.dataPart] },
       ];
-      const persistedData = await persistDataParts(
+      persistedData = await persistDataParts(
         graphController.url,
         data,
         services.googleDriveBoardServer.dataPartTransformer()
       );
+    }
 
-      result = await editor.apply(
+    // When data is provided, apply UpdateAssetData FIRST so that the
+    // graph descriptor has the new data before any syncFromGraph fires.
+    if (persistedData) {
+      let result = await editor.apply(
         new UpdateAssetData(pendingAssetEdit.assetPath, metadata, persistedData)
       );
       if (!result.success) {
-        console.warn(`Failed to update asset data: ${result.error}`);
+        logger.log(
+          Utils.Logging.Formatter.warning(
+            `Failed to update asset data: ${result.error}`
+          ),
+          LABEL
+        );
+        return;
+      }
+
+      result = await editor.apply(
+        new UpdateAssetWithRefs(pendingAssetEdit.assetPath, metadata)
+      );
+      if (!result.success) {
+        logger.log(
+          Utils.Logging.Formatter.warning(
+            `Failed to update asset refs: ${result.error}`
+          ),
+          LABEL
+        );
+        return;
+      }
+    } else {
+      // No data change, just update refs
+      const result = await editor.apply(
+        new UpdateAssetWithRefs(pendingAssetEdit.assetPath, metadata)
+      );
+      if (!result.success) {
+        logger.log(
+          Utils.Logging.Formatter.warning(
+            `Failed to update asset refs: ${result.error}`
+          ),
+          LABEL
+        );
         return;
       }
     }

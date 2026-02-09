@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { getLogger, Formatter } from "../../../utils/logging/logger.js";
+
 /**
  * Checks if a URL can be parsed, handling older browsers that don't have URL.canParse().
  *
@@ -49,7 +51,13 @@ export function resolveUrl(
       const resolved = new URL(boardUrl, base);
       return resolved.href;
     } catch {
-      console.warn("Unable to parse URL from current board:", currentUrl);
+      getLogger().log(
+        Formatter.warning(
+          "Unable to parse URL from current board:",
+          currentUrl
+        ),
+        "resolveUrl"
+      );
     }
   }
 

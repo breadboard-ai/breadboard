@@ -931,6 +931,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       if (!ok(updating)) {
         this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
       }
+
+      // The direct apply above incremented the graph version, so any
+      // pendingAssetEdit captured earlier (via @input) is now stale.
+      // Clear it to prevent a false "edits were discarded" warning.
+      this.#edited = false;
+      this.sca.controller.editor.step.clearPendingAssetEdit();
     }
   }
 

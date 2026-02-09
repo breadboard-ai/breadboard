@@ -206,7 +206,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.sca.controller.global.debug.isHydrated.then(() => {
       this.sca.controller.global.debug.enabled = true;
     });
-    Utils.Logging.setDebuggableAppController(this.sca.controller);
 
     // Append SCA to the config.
     config.sca = this.sca;
@@ -285,8 +284,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.logger.log(
       Utils.Logging.Formatter.info("Visual Editor Initialized"),
-      Strings.from("APP_NAME"),
-      false
+      Strings.from("APP_NAME")
     );
 
     // Handle initial URL (replaces RuntimeURLChangeEvent from router.init())

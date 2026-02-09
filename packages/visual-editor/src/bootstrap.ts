@@ -123,8 +123,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
           "No googleDrive.publishPermissions were configured." +
             " Publishing with Google Drive will not be supported."
         ),
-        "Bootstrap",
-        false /* checkDebuggableAppControllerStatus */
+        "Bootstrap"
       );
     }
 
@@ -162,8 +161,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       Utils.Logging.Formatter.info(
         `Visual Editor: Version ${pkg.default.version}; Commit ${GIT_HASH}]`
       ),
-      Strings.from("APP_NAME"),
-      false
+      Strings.from("APP_NAME")
     );
   } else {
     // Prevent endless looping.

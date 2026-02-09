@@ -9,6 +9,7 @@ import { GlobalConfig } from "../../../../ui/contexts/global-config.js";
 import { createTrustedFeedbackURL } from "../../../../ui/trusted-types/feedback-url.js";
 import { field } from "../../decorators/field.js";
 import type { TrustedScriptURL } from "trusted-types/lib/index.js";
+import { Utils } from "../../../utils.js";
 
 type UserFeedbackApi = {
   startFeedback(
@@ -60,27 +61,37 @@ export class FeedbackController extends RootController {
   accessor status: FeedbackStatus = "closed";
 
   async open(globalConfig: GlobalConfig) {
+    const LABEL = "Feedback.open";
+    const logger = Utils.Logging.getLogger();
+
     if (this.status !== "closed") {
       return;
     }
 
     if (!globalConfig) {
-      console.error(`No environment was provided.`);
+      logger.log(
+        Utils.Logging.Formatter.error("No environment was provided."),
+        LABEL
+      );
       return;
     }
     const productId = globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID;
     if (!productId) {
-      console.error(
-        `No GOOGLE_FEEDBACK_PRODUCT_ID was set` +
-          ` in the client deployment configuration.`
+      logger.log(
+        Utils.Logging.Formatter.error(
+          "No GOOGLE_FEEDBACK_PRODUCT_ID was set in the client deployment configuration."
+        ),
+        LABEL
       );
       return;
     }
     const bucket = globalConfig.GOOGLE_FEEDBACK_BUCKET;
     if (!bucket) {
-      console.error(
-        `No GOOGLE_FEEDBACK_BUCKET was set` +
-          ` in the client deployment configuration.`
+      logger.log(
+        Utils.Logging.Formatter.error(
+          "No GOOGLE_FEEDBACK_BUCKET was set in the client deployment configuration."
+        ),
+        LABEL
       );
       return;
     }
@@ -93,7 +104,13 @@ export class FeedbackController extends RootController {
       api = await loadGoogleFeedbackApi();
     } catch (e) {
       /* c8 ignore next 4 */
-      console.error(`Error loading Google Feedback script: ${e}`);
+      logger.log(
+        Utils.Logging.Formatter.error(
+          "Error loading Google Feedback script:",
+          e
+        ),
+        LABEL
+      );
       this.status = "closed";
       return;
     }

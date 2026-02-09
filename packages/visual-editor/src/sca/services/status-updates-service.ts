@@ -58,11 +58,7 @@ export class StatusUpdatesService {
       this.#controller?.setUpdates(updates);
     } catch (err) {
       const logger = getLogger();
-      logger.log(
-        Formatter.warning("Error fetching updates", err),
-        LABEL,
-        false
-      );
+      logger.log(Formatter.warning("Error fetching updates", err), LABEL);
     } finally {
       this.#timeoutId = window.setTimeout(
         () => this.#poll(),
@@ -78,8 +74,7 @@ export class StatusUpdatesService {
       const logger = getLogger();
       logger.log(
         Formatter.info("Unable to fetch updates from the server"),
-        LABEL,
-        false
+        LABEL
       );
       return [];
     }

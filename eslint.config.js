@@ -120,6 +120,16 @@ export default tseslint.config(
     },
   },
 
+  // No console in SCA — use Logger instead.
+  // Legitimate uses should be marked with eslint-disable + a reason comment.
+  // CI enforces this as an error via --max-warnings=0.
+  {
+    files: ["packages/visual-editor/src/sca/**/*.ts"],
+    rules: {
+      "no-console": "warn",
+    },
+  },
+
   // JavaScript files configuration
   {
     files: ["**/*.js", "**/*.mjs", "**/*.cjs"],

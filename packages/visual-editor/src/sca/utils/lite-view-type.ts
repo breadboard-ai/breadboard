@@ -6,6 +6,7 @@
 
 import type { SCA } from "../sca.js";
 import type { LiteModeType } from "../../ui/state/types.js";
+import { Utils } from "../utils.js";
 
 /**
  * Derives the current lite mode view type from SCA state.
@@ -44,7 +45,10 @@ export function deriveLiteViewType(
       if (parsedUrl.page === "graph" && parsedUrl.flow) {
         return "loading";
       }
-      console.warn("Invalid Home URL state", parsedUrl);
+      Utils.Logging.getLogger(sca.controller).log(
+        Utils.Logging.Formatter.warning("Invalid Home URL state", parsedUrl),
+        "deriveLiteViewType"
+      );
       return "invalid";
     }
     case "Loading":
@@ -58,7 +62,10 @@ export function deriveLiteViewType(
       break;
     }
     default:
-      console.warn("Unknown UI load state", loadState);
+      Utils.Logging.getLogger(sca.controller).log(
+        Utils.Logging.Formatter.warning("Unknown UI load state", loadState),
+        "deriveLiteViewType"
+      );
       return "invalid";
   }
 

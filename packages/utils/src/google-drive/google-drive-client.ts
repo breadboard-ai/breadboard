@@ -15,12 +15,16 @@ import { fetchWithRetry } from "../fetch-with-retry.js";
 type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
 
+export type LogLevel = "verbose" | "warning";
+
 export interface GoogleDriveClientOptions {
   apiBaseUrl?: string | Promise<string>;
   uploadApiBaseUrl?: string | Promise<string>;
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
   proxyApiBaseUrl?: string;
   fetchWithCreds: typeof globalThis.fetch;
+  /** Optional logging callback. When provided, all log output routes here. */
+  log?: (level: LogLevel, ...args: unknown[]) => void;
 }
 
 export interface BaseRequestOptions {
@@ -183,6 +187,7 @@ export class GoogleDriveClient {
       }
     | undefined;
   readonly fetchWithCreds: typeof globalThis.fetch;
+  readonly #log: (level: LogLevel, ...args: unknown[]) => void;
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiUrl = Promise.resolve(
@@ -198,6 +203,7 @@ export class GoogleDriveClient {
         }
       : undefined;
     this.fetchWithCreds = options.fetchWithCreds;
+    this.#log = options.log ?? (() => {});
   }
 
   async #fetch(
@@ -401,7 +407,7 @@ export class GoogleDriveClient {
       options
     );
     const fileId = (file as File).id;
-    console.log(`[Google Drive] Created file`, {
+    this.#log("verbose", `Created file`, {
       id: fileId,
       open: fileId ? `http://drive.google.com/open?id=${fileId}` : null,
       name: metadata?.name,
@@ -437,7 +443,7 @@ export class GoogleDriveClient {
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
     const result = this.#uploadFileMultipart(fileId, data, metadata, options);
-    console.log(`[Google Drive] Updated file`, {
+    this.#log("verbose", `Updated file`, {
       id: fileId,
       open: `http://drive.google.com/open?id=${fileId}`,
       name: metadata?.name,
@@ -457,8 +463,9 @@ export class GoogleDriveClient {
     const isExistingFile = !!fileId;
     const isBlob = typeof data !== "string";
     if (isBlob && metadata?.mimeType && data.type !== metadata.mimeType) {
-      console.warn(
-        `[Google Drive] blob had type ${JSON.stringify(data.type)}` +
+      this.#log(
+        "warning",
+        `Blob had type ${JSON.stringify(data.type)}` +
           ` while metadata had type ${JSON.stringify(metadata.mimeType)}.`
       );
     }
@@ -624,9 +631,7 @@ export class GoogleDriveClient {
       );
     }
     const result = (await response.json()) as Permission;
-    console.debug(
-      `[Google Drive Client] Created permission ${result.id} on file ${fileId}`
-    );
+    this.#log("verbose", `Created permission ${result.id} on file ${fileId}`);
     return result;
   }
 
@@ -651,9 +656,9 @@ export class GoogleDriveClient {
           (await response.text())
       );
     }
-    console.debug(
-      `[Google Drive Client] Deleted permission ${permissionId}` +
-        ` from file ${fileId}`
+    this.#log(
+      "verbose",
+      `Deleted permission ${permissionId} from file ${fileId}`
     );
   }
 

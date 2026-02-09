@@ -59,7 +59,6 @@ async function initializeOpalShellGuest() {
   } = {};
 
   const logger = Utils.Logging.getLogger();
-  const checkForDebugStatus = false;
 
   // Establish MessageChannel.
   window.addEventListener("message", (event) => {
@@ -76,8 +75,7 @@ async function initializeOpalShellGuest() {
           "Received establish MessageChannel request from",
           event.origin
         ),
-        label,
-        checkForDebugStatus
+        label
       );
 
       if (boxedState.value) {
@@ -85,8 +83,7 @@ async function initializeOpalShellGuest() {
           Utils.Logging.Formatter.info(
             "Discarding previous guest, iframe must have navigated"
           ),
-          label,
-          checkForDebugStatus
+          label
         );
         boxedState.value.guest[comlink.releaseProxy]();
         boxedState.value.port.close();
@@ -104,23 +101,17 @@ async function initializeOpalShellGuest() {
         Utils.Logging.Formatter.info(
           "Sending establish MessageChannel response"
         ),
-        label,
-        checkForDebugStatus
+        label
       );
       const port = event.ports[0];
       port.postMessage({ type: SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE });
 
       // Initialize bi-directional comlink APIs
-      logger.log(
-        Utils.Logging.Formatter.info("Exposing host API"),
-        label,
-        checkForDebugStatus
-      );
+      logger.log(Utils.Logging.Formatter.info("Exposing host API"), label);
       comlink.expose(shellHost satisfies OpalShellHostProtocol, port);
       logger.log(
         Utils.Logging.Formatter.info("Connecting to guest API"),
-        label,
-        checkForDebugStatus
+        label
       );
 
       const guest = comlink.wrap<OpalShellGuestProtocol>(port);

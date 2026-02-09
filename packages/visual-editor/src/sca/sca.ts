@@ -95,7 +95,6 @@
 import * as Services from "./services/services.js";
 import * as Controller from "./controller/controller.js";
 import * as Actions from "./actions/actions.js";
-import * as Utils from "./utils/utils.js";
 import { type RuntimeFlags } from "@breadboard-ai/types";
 import { RuntimeConfig } from "../runtime/types.js";
 
@@ -134,7 +133,6 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
       // Start polling for status updates
       services.statusUpdates.start(controller.global.statusUpdates);
     });
-    Utils.Logging.setDebuggableAppController(instance.controller);
   }
 
   return instance;

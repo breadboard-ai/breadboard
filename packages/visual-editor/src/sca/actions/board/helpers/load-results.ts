@@ -6,6 +6,7 @@
 
 import type { OutputValues } from "@breadboard-ai/types";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { getLogger, Formatter } from "../../../utils/logging/logger.js";
 
 /**
  * Structure of run results stored in Google Drive.
@@ -36,7 +37,10 @@ export async function loadResults(
   googleDriveClient: GoogleDriveClient | undefined
 ): Promise<LoadResultsResult> {
   if (!googleDriveClient) {
-    console.error("No GoogleDriveClient provided. Cannot fetch results.");
+    getLogger().log(
+      Formatter.error("No GoogleDriveClient provided. Cannot fetch results."),
+      "loadResults"
+    );
     return { success: false, reason: "no-client" };
   }
 
@@ -53,7 +57,10 @@ export async function loadResults(
       finalOutputValues: runResults.finalOutputValues,
     };
   } catch (error) {
-    console.error("Failed to load run results:", error);
+    getLogger().log(
+      Formatter.error("Failed to load run results:", error),
+      "loadResults"
+    );
     return { success: false, reason: "load-failed" };
   }
 }

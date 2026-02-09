@@ -5,19 +5,11 @@
  */
 
 import assert from "node:assert";
-import { before, mock, suite, test } from "node:test";
+import { mock, suite, test } from "node:test";
 import { debug } from "../../../../src/sca/controller/decorators/debug.js";
 import { RootController } from "../../../../src/sca/controller/subcontrollers/root-controller.js";
-import {
-  setDebuggableAppController,
-  stubAppController,
-} from "../../../../src/sca/utils/logging/logger.js";
 
 suite("Debug Decorator", () => {
-  before(() => {
-    setDebuggableAppController(stubAppController);
-  });
-
   test("should work", async () => {
     class DebugTestController extends RootController {
       @debug() get name() {
