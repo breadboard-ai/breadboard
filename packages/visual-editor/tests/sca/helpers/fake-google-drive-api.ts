@@ -65,7 +65,7 @@ export class FakeGoogleDriveApi {
   }> = [];
 
   #generatesResourceKey = false;
-  #nextListFilesResult: DriveFile[] = [];
+  #nextListFileIds: string[] = [];
   #listFilesIterators = new Map<string, DriveFile[]>();
   #nextIteratorId = 0;
 
@@ -134,7 +134,7 @@ export class FakeGoogleDriveApi {
     this.#files.clear();
     this.requests.length = 0;
     this.#generatesResourceKey = false;
-    this.#nextListFilesResult = [];
+    this.#nextListFileIds = [];
     this.#listFilesIterators.clear();
     this.#nextIteratorId = 0;
   }
@@ -170,15 +170,14 @@ export class FakeGoogleDriveApi {
    * `reset()` is called.
    */
   setMatchingFilesForNextListRequest(fileIds: string[]): void {
-    this.#nextListFilesResult = fileIds.map((id) => {
-      const file = this.#files.get(id);
-      if (!file) {
+    for (const id of fileIds) {
+      if (!this.#files.has(id)) {
         throw new Error(
           `setMatchingFilesForNextListRequest: file ${id} not found in fake store`
         );
       }
-      return file.metadata;
-    });
+    }
+    this.#nextListFileIds = [...fileIds];
   }
 
   async #routeRequest(
@@ -328,8 +327,17 @@ export class FakeGoogleDriveApi {
       }
       files = stored;
     } else {
-      files = this.#nextListFilesResult;
-      this.#nextListFilesResult = [];
+      const ids = this.#nextListFileIds;
+      this.#nextListFileIds = [];
+      files = ids.map((id) => {
+        const file = this.#files.get(id);
+        if (!file) {
+          throw new Error(
+            `listFiles: file ${id} was configured but no longer exists in fake store`
+          );
+        }
+        return file.metadata;
+      });
       id = String(this.#nextIteratorId++);
       this.#listFilesIterators.set(id, files);
       offset = 0;
