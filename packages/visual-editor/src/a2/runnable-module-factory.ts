@@ -108,7 +108,6 @@ export type CallableCapability = (inputs: Values) => Promise<Values | void>;
 
 export type CallableCapabilities = {
   invoke: CallableCapability;
-  input: CallableCapability;
   describe: CallableCapability;
   query: CallableCapability;
   read: CallableCapability;
@@ -154,7 +153,6 @@ async function invokeCapability(
 
 const CAPABILITY_NAMES: (keyof CallableCapabilities)[] = [
   "invoke",
-  "input",
   "describe",
   "query",
   "read",

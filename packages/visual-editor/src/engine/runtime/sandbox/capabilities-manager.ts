@@ -74,34 +74,6 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
   return { ...o, $error, ...m };
 }
 
-/**
- * Creates the input capability handler for A2 modules.
- *
- * Uses the direct-access path via getProjectRunState() to call
- * consoleEntry.requestInput(schema), which creates a WorkItem,
- * sets the reactive `input` signal on the parent run, and returns
- * a Promise that resolves when the user provides values.
- *
- * This replaces the old 6-layer bubbling chain:
- *   createInputHandler -> bubbleUpInputsIfNeeded -> createBubbleHandler
- *   -> context.requestInput -> RequestedInputsManager -> InputStageResult
- *   -> PlanRunner event loop -> ReactiveProjectRun.#input()
- */
-function createInputHandler(context: NodeHandlerContext) {
-  return (async (allInputs: InputValues) => {
-    const { schema } = allInputs;
-    const runState = context.getProjectRunState?.();
-    const nodeId = context.currentStep?.id;
-    const entry = nodeId && runState?.console.get(nodeId);
-    if (!entry) {
-      return err(
-        `Unable to request input: no console entry found for node "${nodeId}"`
-      );
-    }
-    return entry.requestInput(schema as Schema);
-  }) as Capability;
-}
-
 type DescribeInputs = {
   url: string;
   inputs?: InputValues;
@@ -177,7 +149,6 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
         const fs = new FileSystemHandlerFactory(this.context.fileSystem);
         return {
           invoke: createInvokeHandler(this.context),
-          input: createInputHandler(this.context),
           describe: createDescribeHandler(this.context),
           query: fs.query(),
           read: fs.read(),
@@ -200,18 +171,11 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
     if (this.#dummies) return this.#dummies;
 
     this.#dummies = Object.fromEntries(
-      [
-        "invoke",
-        "input",
-        "output",
-        "describe",
-        "query",
-        "read",
-        "write",
-        "blob",
-      ].map((name) => {
-        return [name, () => ({ $error: "Capability not available" })];
-      })
+      ["invoke", "output", "describe", "query", "read", "write", "blob"].map(
+        (name) => {
+          return [name, () => ({ $error: "Capability not available" })];
+        }
+      )
     );
     return this.#dummies;
   }

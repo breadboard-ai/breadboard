@@ -220,9 +220,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
     invoke() {
       throw new Error(`Not implemented`);
     },
-    input() {
-      throw new Error(`Not implemented`);
-    },
     describe() {
       throw new Error(`Not implemented`);
     },
