@@ -418,5 +418,12 @@ export const replaceWithTheme = asAction(
 
     // 3. Replace the graph
     await replace(replacement, creator);
+
+    // 4. Clear flowgenInput now that the graph is populated. This is done
+    // here (not in the generate action) to prevent a flash: the generate
+    // action sets pendingGraphReplacement and this trigger fires async.
+    // If flowgenInput were cleared in generate, there'd be a render cycle
+    // where isGenerating=false but the graph is still empty → shows "home".
+    controller.global?.flowgenInput?.clear();
   }
 );

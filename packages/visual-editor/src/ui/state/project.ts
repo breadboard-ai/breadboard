@@ -31,7 +31,6 @@ import {
   Project,
   ProjectInternal,
   ProjectRun,
-  ProjectThemeState,
   ProjectValues,
   RendererState,
   FastAccess,
@@ -40,7 +39,6 @@ import { IntegrationsImpl } from "./integrations.js";
 import { McpClientManager } from "../../mcp/index.js";
 import { ReactiveFastAccess } from "./fast-access.js";
 import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
-import { ThemeState } from "./theme-state.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { SCA } from "../../sca/sca.js";
 import { transformDataParts } from "../../data/common.js";
@@ -79,7 +77,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   readonly renderer: RendererState;
   readonly integrations: Integrations;
   readonly fastAccess: FastAccess;
-  readonly themes: ProjectThemeState;
 
   /**
    * Derives editable from SCA controller.
@@ -100,11 +97,6 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     this.renderer = new RendererStateImpl(this.graphAssets);
 
     this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
-    this.themes = new ThemeState(
-      this.#sca.services.fetchWithCreds,
-      editable,
-      this
-    );
   }
 
   resetRun(): void {
