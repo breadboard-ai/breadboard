@@ -16,6 +16,7 @@ import { report } from "../a2/output.js";
 import { Template } from "../a2/template.js";
 import { defaultLLMContent, llm, ok, toText } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { requestInput } from "../request-input.js";
 
 export { invoke as default, describe, askUser };
 
@@ -139,8 +140,13 @@ async function askUser(
   const inputSchema = createInputSchema(title, modality, required);
 
   // === input phase: Get user input ===
-  const response = await caps.input({ schema: inputSchema });
-  const request = response.request as LLMContent | undefined;
+  const response = await requestInput(moduleArgs, inputSchema);
+  if (!ok(response)) {
+    return response;
+  }
+  const request = (response as Record<string, unknown>).request as
+    | LLMContent
+    | undefined;
 
   // === text-main phase: Return context ===
   if (!request) {

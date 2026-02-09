@@ -6,7 +6,6 @@
 
 import {
   AppScreen,
-  Capabilities,
   ConsoleEntry,
   DeepReadonly,
   LLMContent,
@@ -37,6 +36,7 @@ import {
 } from "./types.js";
 import { getCurrentStepState } from "./progress-work-item.js";
 import { ChoicePresenter } from "./choice-presenter.js";
+import { requestInput } from "../request-input.js";
 
 export { AgentUI };
 
@@ -75,7 +75,6 @@ class AgentUI implements A2UIRenderer, ChatManager {
   readonly #choicePresenter: ChoicePresenter;
 
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     private readonly translator: PidginTranslator
   ) {
@@ -171,20 +170,19 @@ class AgentUI implements A2UIRenderer, ChatManager {
     if (!ok(message)) return message;
     this.#chatLog.push({ ...message, role: "model" });
     this.#addChatOutput(message);
-    const response = (await this.caps.input({
-      schema: {
-        properties: {
-          input: {
-            type: "object",
-            behavior: ["transient", "llm-content", "hint-required"],
-            format: computeFormat(typedInputType),
-          },
+    const response = await requestInput(this.moduleArgs, {
+      properties: {
+        input: {
+          type: "object",
+          behavior: ["transient", "llm-content", "hint-required"],
+          format: computeFormat(typedInputType),
         },
       },
-    })) as Outcome<ChatResponse>;
+    });
     if (!ok(response)) return response;
-    this.#chatLog.push({ ...response.input, role: "user" });
-    return response;
+    const chatResponse = response as ChatResponse;
+    this.#chatLog.push({ ...chatResponse.input, role: "user" });
+    return chatResponse;
   }
 
   /**
