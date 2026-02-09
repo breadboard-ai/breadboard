@@ -220,9 +220,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
     invoke() {
       throw new Error(`Not implemented`);
     },
-    input() {
-      throw new Error(`Not implemented`);
-    },
     describe() {
       throw new Error(`Not implemented`);
     },
@@ -294,6 +291,13 @@ class EvalRun implements EvalHarnessRuntimeArgs {
                 completed: false,
                 current: null,
                 addOutput() {},
+                requestInput() {
+                  return Promise.reject(
+                    new Error("Input not supported in eval")
+                  );
+                },
+                activateInput() {},
+                resolveInput() {},
               },
             ],
           ]),

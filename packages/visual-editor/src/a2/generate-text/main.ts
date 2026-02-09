@@ -30,6 +30,7 @@ import {
 } from "@breadboard-ai/types";
 import { filterUndefined } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { requestInput } from "../request-input.js";
 
 export {
   invoke as default,
@@ -305,10 +306,10 @@ async function keepChatting(
 }
 
 /**
- * Gets user feedback via caps.input().
+ * Gets user feedback via direct input request.
  * This replaces the graph's `input` node.
  */
-async function getUserFeedback(caps: Capabilities): Promise<LLMContent> {
+async function getUserFeedback(moduleArgs: A2ModuleArgs): Promise<LLMContent> {
   const inputSchema: Schema = {
     type: "object",
     properties: {
@@ -321,8 +322,11 @@ async function getUserFeedback(caps: Capabilities): Promise<LLMContent> {
       },
     },
   };
-  const response = await caps.input({ schema: inputSchema });
-  return response.request as LLMContent;
+  const response = await requestInput(moduleArgs, inputSchema);
+  if (!ok(response)) {
+    return { parts: [{ text: "" }], role: "user" } as LLMContent;
+  }
+  return (response as Record<string, unknown>).request as LLMContent;
 }
 
 /**
@@ -447,7 +451,7 @@ async function makeText(
     await keepChatting(moduleArgs, sharedContext, [result]);
 
     // Get user feedback (replaces the `input` node in the graph)
-    const request = await getUserFeedback(caps);
+    const request = await getUserFeedback(moduleArgs);
 
     // === JOIN phase: Merge user input into context ===
     joinUserInput(sharedContext, request, result);

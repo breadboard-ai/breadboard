@@ -5,17 +5,13 @@
  */
 
 import {
-  GraphInlineMetadata,
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
-  NodeMetadata,
   OutputValues,
   Schema,
-  TraversalResult,
 } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
-import { bubbleUpInputsIfNeeded } from "../bubble.js";
 import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
 import { invokeDescriber } from "./invoke-describer.js";
 import {
@@ -76,35 +72,6 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
   }
 
   return { ...o, $error, ...m };
-}
-
-function createInputHandler(context: NodeHandlerContext) {
-  return (async (allInputs: InputValues, invocationPath: number[]) => {
-    const { schema, $metadata } = allInputs;
-    const graphMetadata: GraphInlineMetadata = {};
-    const descriptor: NodeDescriptor = {
-      id: "input-from-run-module",
-      type: "input",
-      configuration: {
-        schema: {
-          ...(schema as Schema),
-          behavior: ["bubble"],
-        } satisfies Schema,
-      },
-    };
-    if ($metadata) {
-      descriptor.metadata = $metadata as NodeMetadata;
-    }
-    const result = { inputs: { schema } } as unknown as TraversalResult;
-    await bubbleUpInputsIfNeeded(
-      graphMetadata,
-      context,
-      descriptor,
-      result,
-      invocationPath
-    );
-    return result.outputs;
-  }) as Capability;
 }
 
 type DescribeInputs = {
@@ -182,7 +149,6 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
         const fs = new FileSystemHandlerFactory(this.context.fileSystem);
         return {
           invoke: createInvokeHandler(this.context),
-          input: createInputHandler(this.context),
           describe: createDescribeHandler(this.context),
           query: fs.query(),
           read: fs.read(),
@@ -205,18 +171,11 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
     if (this.#dummies) return this.#dummies;
 
     this.#dummies = Object.fromEntries(
-      [
-        "invoke",
-        "input",
-        "output",
-        "describe",
-        "query",
-        "read",
-        "write",
-        "blob",
-      ].map((name) => {
-        return [name, () => ({ $error: "Capability not available" })];
-      })
+      ["invoke", "output", "describe", "query", "read", "write", "blob"].map(
+        (name) => {
+          return [name, () => ({ $error: "Capability not available" })];
+        }
+      )
     );
     return this.#dummies;
   }

@@ -22,9 +22,6 @@ const stubCaps: Capabilities = {
   invoke() {
     throw new Error(`Not implemented`);
   },
-  input() {
-    throw new Error(`Not implemented`);
-  },
   describe() {
     throw new Error(`Not implemented`);
   },

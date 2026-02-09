@@ -45,6 +45,11 @@ function mockConsoleEntry(overrides: Partial<ConsoleEntry> = {}): ConsoleEntry {
     completed: false,
     current: null,
     addOutput() {},
+    requestInput() {
+      return Promise.reject(new Error("Input not supported in test"));
+    },
+    activateInput() {},
+    resolveInput() {},
     ...overrides,
   };
 }
