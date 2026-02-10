@@ -417,6 +417,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
    * until provideInput() advances the queue.
    */
   #handleInputRequested(id: NodeIdentifier, schema: Schema) {
+    console.log(`handleInputRequested: id=${id}`);
     // Track this as a pending input request.
     this.#pendingInputNodeIds.add(id);
     this.inputSchemas.set(id, schema);
@@ -424,6 +425,34 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     // Only activate if there isn't an active input already.
     if (!this.input) {
       this.#activateInputEntry(id, schema);
+    }
+  }
+
+  /**
+   * Cleans up all input-related state when a node is stopped.
+   * Aborts the pending input promise, removes the node from the queue,
+   * and advances to the next queued input if this was the active one.
+   */
+  #cleanupStoppedInput(id: NodeIdentifier) {
+    const entry = this.current?.get(id);
+    if (entry) {
+      entry.abortInput();
+    }
+    this.#pendingInputNodeIds.delete(id);
+    this.inputSchemas.delete(id);
+    this.app.screens.delete(id);
+    if (this.input?.id === id) {
+      const nextId = this.#pendingInputNodeIds.values().next().value;
+      if (nextId) {
+        const nextSchema = this.inputSchemas.get(nextId);
+        if (nextSchema) {
+          this.#activateInputEntry(nextId, nextSchema);
+        } else {
+          this.input = null;
+        }
+      } else {
+        this.input = null;
+      }
     }
   }
 
@@ -673,14 +702,13 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       case "working": {
         console.log("Abort work", nodeState.state);
         this.renderer.nodes.set(nodeId, { status: "interrupted" });
+        this.#cleanupStoppedInput(nodeId);
         stop(nodeId, this.runner);
         break;
       }
       case "waiting": {
         console.log("Abort work", nodeState.state);
-        if (this.input?.id === nodeId) {
-          this.input = null;
-        }
+        this.#cleanupStoppedInput(nodeId);
         this.renderer.nodes.set(nodeId, { status: "interrupted" });
         stop(nodeId, this.runner);
         break;

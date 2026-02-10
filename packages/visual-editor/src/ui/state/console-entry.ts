@@ -209,4 +209,12 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     this.#pendingInputSchema = null;
     resolve?.(values);
   }
+
+  /**
+   * Aborts a pending input request by resolving it with an error.
+   * This unsticks the handler so that runTask() can complete.
+   */
+  abortInput(): void {
+    this.resolveInput({ $error: "Interrupted" } as OutputValues);
+  }
 }
