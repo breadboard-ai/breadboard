@@ -217,12 +217,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
   readonly requestLogger = new Logger();
 
   readonly caps: Capabilities = {
-    invoke() {
-      throw new Error(`Not implemented`);
-    },
-    describe() {
-      throw new Error(`Not implemented`);
-    },
     query() {
       throw new Error(`Not implemented`);
     },
