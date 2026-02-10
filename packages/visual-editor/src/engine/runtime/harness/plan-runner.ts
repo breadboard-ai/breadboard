@@ -9,9 +9,7 @@ import {
   FileSystemEntry,
   GraphDescriptor,
   HarnessRunner,
-  InputValues,
   NodeConfiguration,
-  NodeDescriptor,
   NodeHandlerContext,
   NodeIdentifier,
   NodeLifecycleState,
@@ -25,7 +23,6 @@ import {
   RunConfig,
   RunEventTarget,
   Task,
-  TraversalResult,
 } from "@breadboard-ai/types";
 
 import { err, ok, timestamp } from "@breadboard-ai/utils";
@@ -100,10 +97,6 @@ class PlanRunner
         if (!this.#orchestrator.working) {
           this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
         }
-      },
-      () => {
-        // Kick the run loop to pick up new tasks after a node is stopped.
-        this.#controller?.run();
       },
       (event: Event) => {
         this.dispatchEvent(event);
@@ -272,7 +265,7 @@ class InternalRunStateController {
   #stopControllers: Map<NodeIdentifier, AbortController> = new Map();
   #running = false;
 
-  context: Promise<NodeHandlerContext>;
+  context: NodeHandlerContext;
 
   index: number = 0;
 
@@ -282,7 +275,6 @@ class InternalRunStateController {
     private orchestrator: Orchestrator,
     public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
     public readonly pause: () => void,
-    public readonly resume: () => void,
     public readonly dispatch: (event: Event) => void
   ) {
     this.context = this.initializeNodeHandlerContext();
@@ -302,33 +294,8 @@ class InternalRunStateController {
     return error;
   }
 
-  fromTask(
-    descriptor: NodeDescriptor,
-    inputs: InputValues,
-    config: NodeConfiguration
-  ): TraversalResult {
-    // This is probably wrong, dig in later.
-    return {
-      descriptor,
-      inputs: { ...config, ...inputs },
-      missingInputs: [],
-      current: { from: "", to: "" },
-      opportunities: [],
-      newOpportunities: [],
-      partialOutputs: {},
-      state: {
-        state: new Map(),
-        constants: new Map(),
-        wireOutputs: () => {},
-        getAvailableInputs: () => ({}),
-        useInputs: () => {},
-      },
-      skip: false,
-    };
-  }
-
   async runTask(task: Task): Promise<TaskStatus> {
-    const context = await this.context;
+    const context = this.context;
 
     const id = task.node.id;
 
@@ -386,11 +353,8 @@ class InternalRunStateController {
         outputs = augmentWithSkipOutputs(
           nodeConfiguration,
           await invoker.invokeNode(
-            this.fromTask(
-              task.node,
-              controlState.adjustedInputs,
-              nodeConfiguration
-            ),
+            task.node,
+            { ...nodeConfiguration, ...controlState.adjustedInputs },
             path
           )
         );
@@ -401,10 +365,6 @@ class InternalRunStateController {
           console.warn(interrupting.$error);
         }
       } else {
-        const working = this.orchestrator.setWorking(task.node.id);
-        if (!ok(working)) {
-          console.warn(working.$error);
-        }
         const providing = this.orchestrator.provideOutputs(
           task.node.id,
           outputs
@@ -427,8 +387,8 @@ class InternalRunStateController {
     return "success";
   }
 
-  async preamble(): Promise<NodeHandlerContext> {
-    const context = await this.context;
+  preamble(): NodeHandlerContext {
+    const context = this.context;
     if (this.orchestrator.progress !== "initial") return context;
     this.dispatch(
       new GraphStartEvent({
@@ -467,16 +427,6 @@ class InternalRunStateController {
     if (stopController) return stopController;
 
     stopController = new AbortController();
-    stopController.signal.addEventListener("abort", () => {
-      // Find first waiting step. Because of the way asyncGen queues, this will
-      // always be the first step that is actually waiting on input.
-      const [waitingId] =
-        this.orchestrator.allWaiting.find(
-          ([, nodeState]) => nodeState.state === "waiting"
-        ) || [];
-      if (waitingId !== id) return;
-      this.resume();
-    });
     this.#stopControllers.set(id, stopController);
     return stopController;
   }
@@ -552,7 +502,7 @@ class InternalRunStateController {
     this.orchestrator.setInterrupted(id);
   }
 
-  initializeNodeHandlerContext(): Promise<NodeHandlerContext> {
+  initializeNodeHandlerContext(): NodeHandlerContext {
     const kits = this.config.kits;
 
     const {
@@ -580,7 +530,7 @@ class InternalRunStateController {
       });
     });
 
-    return Promise.resolve({
+    return {
       probe,
       kits,
       loader,
@@ -593,12 +543,12 @@ class InternalRunStateController {
       getProjectRunState,
       clientDeploymentConfiguration,
       flags,
-    });
+    };
   }
 
   update(orchestrator: Orchestrator) {
-    const oldOrchestartor = this.orchestrator;
-    orchestrator.update(oldOrchestartor);
+    const oldOrchestrator = this.orchestrator;
+    orchestrator.update(oldOrchestrator);
     this.orchestrator = orchestrator;
   }
 }
