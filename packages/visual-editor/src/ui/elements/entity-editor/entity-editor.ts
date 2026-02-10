@@ -441,6 +441,22 @@ export class EntityEditor extends SignalWatcher(LitElement) {
               }
             }
 
+            &.string:not(:has(.item-select-container)) {
+              & label {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--bb-grid-size);
+                width: 100%;
+              }
+
+              & input {
+                border: 1px solid var(--light-dark-n-80);
+                width: 100%;
+                box-sizing: border-box;
+              }
+            }
+
             label {
               &:not(.slim) {
                 margin-right: var(--bb-grid-size-2);
@@ -1403,7 +1419,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           value = html`<label
             class=${classMap({ slim: isControllerBehavior(port.schema) })}
             >${!isControllerBehavior(port.schema) ? html`${port.title}: ` : ""}
-            <input type="text" name=${port.name} .value=${port.value ?? ""}
+            <input
+              type="text"
+              name=${port.name}
+              .value=${port.value ?? ""}
+              placeholder=${port.schema.description ?? ""}
           /></label>`;
           break;
         }
