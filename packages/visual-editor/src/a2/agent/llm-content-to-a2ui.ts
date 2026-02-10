@@ -114,9 +114,8 @@ function llmContentToA2UIComponents(
 
   for (const part of content.parts) {
     if (isTextCapabilityPart(part)) {
-      let text = part.text.trim();
+      const text = part.text.trim();
       if (text === "") continue;
-      if (textAsH1) text = `# ${text}`;
 
       addTopLevel(generateId("text"), {
         Text: {
