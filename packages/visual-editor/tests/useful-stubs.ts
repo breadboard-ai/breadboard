@@ -19,12 +19,6 @@ import { type ConsentController } from "../src/sca/controller/subcontrollers/glo
 export { stubCaps, stubModuleArgs, stubMemoryManager };
 
 const stubCaps: Capabilities = {
-  invoke() {
-    throw new Error(`Not implemented`);
-  },
-  describe() {
-    throw new Error(`Not implemented`);
-  },
   query() {
     throw new Error(`Not implemented`);
   },
