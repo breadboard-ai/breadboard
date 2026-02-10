@@ -264,15 +264,19 @@ class SlideBuilder {
 
 function slidesToRequests(
   slides: Slide[],
-  imageUrls: string[]
+  imageUrls: string[],
+  insertionIndex?: number
 ): SlidesRequest[] {
   const requests: SlidesRequest[] = [];
-  slides.forEach((slide) => {
+  slides.forEach((slide, i) => {
     const request: SlidesCreateSlideRequest = {
       objectId: slide.objectId,
       slideLayoutReference: { predefinedLayout: slide.layout },
       placeholderIdMappings: mapPlaceholders(slide.objectId, slide.layout),
     };
+    if (insertionIndex !== undefined) {
+      request.insertionIndex = insertionIndex + i;
+    }
     requests.push({ createSlide: request });
     if (slide.title) {
       requests.push({
@@ -344,10 +348,19 @@ class SimpleSlideBuilder {
 
   readonly #startIndex: number;
   readonly #objectToDelete: string | undefined;
+  readonly #insertionIndex: number | undefined;
+  readonly #deleteSlideIds: string[];
 
-  constructor(last: number = 0, objectId?: string) {
+  constructor(
+    last: number = 0,
+    objectId?: string,
+    insertionIndex?: number,
+    deleteSlideIds: string[] = []
+  ) {
     this.#startIndex = last + 1;
     this.#objectToDelete = objectId;
+    this.#insertionIndex = insertionIndex;
+    this.#deleteSlideIds = deleteSlideIds;
   }
 
   addSlide(s: SimpleSlide) {
@@ -379,7 +392,19 @@ class SimpleSlideBuilder {
 
   build(imageUrls: string[]) {
     console.log("SLIDES", this.#slides);
-    const requests = slidesToRequests(this.#slides, imageUrls);
+    const requests = slidesToRequests(
+      this.#slides,
+      imageUrls,
+      this.#insertionIndex
+    );
+    // Delete slides for overwrite mode
+    for (const slideId of this.#deleteSlideIds) {
+      requests.unshift({
+        deleteObject: {
+          objectId: slideId,
+        },
+      });
+    }
     if (this.#objectToDelete) {
       requests.unshift({
         deleteObject: {
