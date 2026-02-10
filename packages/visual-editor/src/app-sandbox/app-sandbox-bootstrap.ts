@@ -6,6 +6,7 @@
 
 import {
   type AppSandboxReadyMessage,
+  isAppSandboxOnDemandCallbackMessage,
   isAppSandboxRequestOpenPopupMessage,
   isAppSandboxSrcDocMessage,
 } from "./app-sandbox-protocol.js";
@@ -32,7 +33,8 @@ window.addEventListener("message", (event) => {
     iframe.srcdoc = srcdoc;
   } else if (
     isFromIframe(event) &&
-    isAppSandboxRequestOpenPopupMessage(event.data)
+    (isAppSandboxRequestOpenPopupMessage(event.data) ||
+      isAppSandboxOnDemandCallbackMessage(event.data))
   ) {
     console.debug(
       `[app-sandbox-bootstrap] Forwarding "${event.data.type}" message`

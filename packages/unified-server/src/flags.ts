@@ -152,6 +152,8 @@ export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
 
 export const ENABLE_RESUME_AGENT_RUN = getBoolean("ENABLE_RESUME_AGENT_RUN");
 
+export const ENABLE_ON_DEMAND_UI = getBoolean("ENABLE_ON_DEMAND_UI");
+
 function getDomainConfig(
   flagName: string
 ): Record<string, DomainConfiguration> {

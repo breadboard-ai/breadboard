@@ -5,26 +5,7 @@
  */
 
 import { AppSandboxRequestOpenPopupMessage } from "./app-sandbox-protocol.js";
-
-const toFunctionString = (
-  fn: (...unknown: []) => unknown,
-  replacements?: [string, string][]
-) => {
-  let str = fn.toString();
-  if (replacements) {
-    for (const [key, value] of replacements) {
-      // Note this doesn't provide any kind of automatic escaping or quoting,
-      // it's just raw string substitution.
-      str = str.replaceAll(key, value);
-    }
-  }
-  return str;
-};
-
-const scriptifyFunction = (
-  fn: (...unknown: []) => unknown,
-  replacements?: [string, string][]
-) => `<script>( ${toFunctionString(fn, replacements)} )();</script>`;
+import { scriptifyFunction } from "./app-sandbox-scriptify.js";
 
 // This script will be run in the AppCat-generated iframe, and will intercept
 // any popups that are opened by the app to post back to Opal to request opening

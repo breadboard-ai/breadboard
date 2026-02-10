@@ -23,7 +23,9 @@ class ReactiveApp implements App {
     if (this.current.size === 0) return "output";
     if (
       [...this.screens.values()].some(
-        (screen) => screen.last?.a2ui && screen.status === "interactive"
+        (screen) =>
+          (screen.last?.a2ui || screen.last?.onDemandUI) &&
+          screen.status === "interactive"
       )
     ) {
       return "interactive";

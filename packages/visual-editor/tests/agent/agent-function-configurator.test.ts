@@ -40,6 +40,7 @@ function createFlags(overrides: Record<string, unknown> = {}) {
     params: {},
     onSuccess: mock.fn(async () => undefined) as never,
     onFailure: mock.fn() as never,
+    registerTool: mock.fn() as never,
     ...overrides,
   };
 }

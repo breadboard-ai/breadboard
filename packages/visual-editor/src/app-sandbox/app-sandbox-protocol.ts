@@ -48,3 +48,19 @@ export function isAppSandboxRequestOpenPopupMessage(
       "app-sandbox-request-open-popup"
   );
 }
+
+export type AppSandboxOnDemandCallbackMessage = {
+  type: "app-sandbox-on-demand-callback";
+  result: Record<string, unknown>;
+};
+
+export function isAppSandboxOnDemandCallbackMessage(
+  data: unknown
+): data is AppSandboxOnDemandCallbackMessage {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    (data as Partial<AppSandboxOnDemandCallbackMessage>).type ===
+      "app-sandbox-on-demand-callback"
+  );
+}

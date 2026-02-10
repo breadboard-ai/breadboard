@@ -16,6 +16,7 @@ import {
 import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { AgentFileSystem } from "./file-system.js";
+import { FunctionDefinition, mapDefinitions } from "./function-definition.js";
 import { FunctionCallerImpl } from "./function-caller.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
@@ -50,6 +51,7 @@ type FunctionGroupConfiguratorFlags = {
   params: Params;
   onSuccess: (href: string, pidginString: string) => Promise<Outcome<void>>;
   onFailure: (message: string) => void;
+  registerTool: (definition: FunctionDefinition) => void;
 };
 
 type FunctionGroupConfigurator = (
@@ -140,6 +142,7 @@ class Loop {
       // Check the enableResumeAgentRun flag
       const runtimeFlags = await moduleArgs.context.flags?.flags();
       const enableResumeAgentRun = runtimeFlags?.enableResumeAgentRun ?? false;
+      const onDemandUI = runtimeFlags?.onDemandUI ?? false;
 
       const { contents } = enableResumeAgentRun
         ? this.runStateManager.startOrResume(stepId, objectiveContent)
@@ -148,6 +151,15 @@ class Loop {
       let terminateLoop = false;
       let finalResult: Outcome<AgentResult> | null = null;
 
+      // Mutable ref for dynamic tool registration. Populated after
+      // tools/functionDefinitionMap are built, but the closure is
+      // captured by function handlers during configureFn.
+      const toolRegistration = {
+        register: (_def: FunctionDefinition) => {
+          // No-op until populated below.
+        },
+      };
+
       const functionGroupsResult = await this.configureFn(
         {
           fileSystem,
@@ -155,7 +167,7 @@ class Loop {
           ui,
         },
         {
-          uiType,
+          uiType: onDemandUI ? "onDemand" : uiType,
           useMemory: objectivePidgin.useMemory,
           objective,
           uiPrompt,
@@ -199,6 +211,7 @@ class Loop {
             terminateLoop = true;
             finalResult = this.runStateManager.fail(err(objective_outcome));
           },
+          registerTool: (def) => toolRegistration.register(def),
         }
       );
       if (!ok(functionGroupsResult)) return functionGroupsResult;
@@ -217,6 +230,16 @@ class Loop {
       const functionDefinitionMap = new Map([
         ...functionGroups.flatMap((group) => group.definitions),
       ]);
+
+      // Now that tools and functionDefinitionMap exist, wire up the
+      // real registration implementation.
+      toolRegistration.register = (def: FunctionDefinition) => {
+        const mapped = mapDefinitions([def]);
+        tools[0].functionDeclarations!.push(...mapped.declarations);
+        for (const [name, definition] of mapped.definitions) {
+          functionDefinitionMap.set(name, definition);
+        }
+      };
 
       while (!terminateLoop) {
         const body: GeminiBody = {

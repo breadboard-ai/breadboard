@@ -282,10 +282,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (last) {
       const htmlOutput = getHTMLOutput(last);
       if (htmlOutput !== null) {
+        const onDemand = last.onDemandUI;
         activityContents = html`
           <bb-app-sandbox
             .srcdoc=${htmlOutput}
             .graphUrl=${this.graph?.url ?? ""}
+            .onDemandInfo=${onDemand}
           ></bb-app-sandbox>
         `;
       } else if (

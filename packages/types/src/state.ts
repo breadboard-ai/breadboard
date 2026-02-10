@@ -267,4 +267,24 @@ export type AppScreenOutput = {
    * A2UI client. Only present on the app outputs that are A2UI-backed
    */
   a2ui?: SimplifiedA2UIClient;
+  /**
+   * On-demand UI data. Present when the output is a dynamically generated
+   * HTML UI that accepts input and produces output via a callback.
+   */
+  onDemandUI?: OnDemandUI;
+};
+
+/**
+ * Carries the input data and callback for a dynamically generated UI.
+ */
+export type OnDemandUI = {
+  /**
+   * Input data to pass to the rendered UI's `renderUI(input, callback)`.
+   */
+  input: Record<string, unknown>;
+  /**
+   * Called by the rendered UI when the user completes the interaction.
+   * Resolves the agent function handler's pending promise.
+   */
+  callback: (result: Record<string, unknown>) => void;
 };

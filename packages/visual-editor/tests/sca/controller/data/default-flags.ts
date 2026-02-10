@@ -22,4 +22,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   streamPlanner: false,
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
+  onDemandUI: false,
 };

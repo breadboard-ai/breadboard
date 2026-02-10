@@ -78,6 +78,10 @@ export type RuntimeFlags = {
    * Enables auto-resumption of failed agent runs
    */
   enableResumeAgentRun: boolean;
+  /**
+   * Enables on-demand UI mode
+   */
+  onDemandUI: boolean;
 };
 
 /**

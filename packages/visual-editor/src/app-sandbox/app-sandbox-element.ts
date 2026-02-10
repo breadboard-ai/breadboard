@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ConsentType, ConsentUIType } from "@breadboard-ai/types";
+import { ConsentType, ConsentUIType, OnDemandUI } from "@breadboard-ai/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, PropertyValues } from "lit";
@@ -13,10 +13,13 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { INTERCEPT_POPUPS_SCRIPT } from "./app-sandbox-intercept-popups.js";
 import {
   type AppSandboxSrcDocMessage,
+  type AppSandboxOnDemandCallbackMessage,
   isAppSandboxReadyMessage,
   type AppSandboxRequestOpenPopupMessage,
   isAppSandboxRequestOpenPopupMessage,
+  isAppSandboxOnDemandCallbackMessage,
 } from "./app-sandbox-protocol.js";
+import { buildOnDemandScript } from "./app-sandbox-on-demand.js";
 import { scaContext } from "../sca/context/context.js";
 import { SCA } from "../sca/sca.js";
 
@@ -47,6 +50,7 @@ import { SCA } from "../sca/sca.js";
 export class AppSandbox extends SignalWatcher(LitElement) {
   @property() accessor srcdoc = "";
   @property() accessor graphUrl = "";
+  @property({ attribute: false }) accessor onDemandInfo: OnDemandUI | undefined;
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
@@ -84,7 +88,10 @@ export class AppSandbox extends SignalWatcher(LitElement) {
   }
 
   override updated(changes: PropertyValues<this>) {
-    if (changes.has("srcdoc") && this.#iframeContentWindow) {
+    if (
+      (changes.has("srcdoc") || changes.has("onDemandInfo")) &&
+      this.#iframeContentWindow
+    ) {
       console.debug("[app-sandbox-element] Sending updated srcdoc");
       this.#sendSrcdocToIframe();
     }
@@ -96,10 +103,13 @@ export class AppSandbox extends SignalWatcher(LitElement) {
   }
 
   #sendSrcdocToIframe() {
+    const onDemandScript = this.onDemandInfo
+      ? buildOnDemandScript(this.onDemandInfo)
+      : "";
     this.#iframeContentWindow?.postMessage(
       {
         type: "app-sandbox-srcdoc",
-        srcdoc: INTERCEPT_POPUPS_SCRIPT + this.srcdoc,
+        srcdoc: INTERCEPT_POPUPS_SCRIPT + this.srcdoc + onDemandScript,
       } satisfies AppSandboxSrcDocMessage,
       window.location.origin
     );
@@ -119,6 +129,8 @@ export class AppSandbox extends SignalWatcher(LitElement) {
         this.#sendSrcdocToIframe();
       } else if (isAppSandboxRequestOpenPopupMessage(event.data)) {
         this.#onIframeRequestOpenPopup(event.data);
+      } else if (isAppSandboxOnDemandCallbackMessage(event.data)) {
+        this.#onIframeOnDemandCallback(event.data);
       }
     }
   };
@@ -137,6 +149,16 @@ export class AppSandbox extends SignalWatcher(LitElement) {
     );
     if (allow) {
       window.open(url, "_blank", "noreferrer");
+    }
+  }
+
+  #onIframeOnDemandCallback({ result }: AppSandboxOnDemandCallbackMessage) {
+    if (this.onDemandInfo) {
+      console.debug(
+        "[app-sandbox-element] Received on-demand callback, resolving",
+        result
+      );
+      this.onDemandInfo.callback(result);
     }
   }
 }

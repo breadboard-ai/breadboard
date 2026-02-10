@@ -15,6 +15,7 @@ import { getMemoryFunctionGroup } from "./functions/memory.js";
 import { CHAT_LOG_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
+import { getOnDemandUIFunctionGroup } from "./functions/on-demand-ui.js";
 import { TaskTreeManager } from "./task-tree-manager.js";
 import { Generators } from "./types.js";
 
@@ -75,6 +76,8 @@ function createAgentConfigurator(
       });
       if (!ok(a2uiFunctionGroup)) return a2uiFunctionGroup;
       groups.push(a2uiFunctionGroup);
+    } else if (flags.uiType === "onDemand") {
+      groups.push(getOnDemandUIFunctionGroup(moduleArgs, flags.registerTool));
     } else if (flags.uiType === "chat") {
       deps.fileSystem.addSystemFile(CHAT_LOG_PATH, () =>
         JSON.stringify(deps.ui.chatLog)

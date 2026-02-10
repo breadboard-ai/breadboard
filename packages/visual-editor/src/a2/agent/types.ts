@@ -161,7 +161,7 @@ export type MemoryManager = {
   ): Promise<Outcome<AgentOutcome>>;
 };
 
-export type UIType = "chat" | "a2ui";
+export type UIType = "chat" | "a2ui" | "onDemand";
 
 export const VALID_INPUT_TYPES = ["any", "text", "file-upload"] as const;
 

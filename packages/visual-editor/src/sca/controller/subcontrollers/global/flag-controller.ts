@@ -31,6 +31,9 @@ export class FlagController
   private accessor _force2DGraph: boolean | null = null;
 
   @field({ persist: "idb" })
+  private accessor _onDemandUI: boolean | null = null;
+
+  @field({ persist: "idb" })
   private accessor _googleOne: boolean | null = null;
 
   @field({ persist: "idb" })
@@ -93,6 +96,12 @@ export class FlagController
     if (this._force2DGraph === null)
       throw new Error("force2DGraph was not set by environment");
     return this._force2DGraph;
+  }
+
+  get onDemandUI() {
+    if (this._onDemandUI === null)
+      throw new Error("onDemandUI was not set by environment");
+    return this._onDemandUI;
   }
 
   get googleOne() {
@@ -266,6 +275,12 @@ export class FlagController
         this._enableResumeAgentRun = value;
         return;
       }
+
+      case "onDemandUI": {
+        if (onlyIfNull && this._onDemandUI !== null) return;
+        this._onDemandUI = value;
+        return;
+      }
     }
   }
 
@@ -313,6 +328,7 @@ export class FlagController
       this.#set("streamGenWebpage", env.streamGenWebpage, onlyIfNull);
       this.#set("streamPlanner", env.streamPlanner, onlyIfNull);
       this.#set("enableResumeAgentRun", env.enableResumeAgentRun, onlyIfNull);
+      this.#set("onDemandUI", env.onDemandUI, onlyIfNull);
     });
   }
 

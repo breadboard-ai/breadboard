@@ -80,6 +80,7 @@ export async function createClientConfig(opts: {
       enableDrivePickerInLiteMode: flags.ENABLE_DRIVE_PICKER_IN_LITE_MODE,
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
       enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
+      onDemandUI: flags.ENABLE_ON_DEMAND_UI,
     },
   };
 }
