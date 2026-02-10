@@ -411,13 +411,30 @@ function receivePorts<T extends Record<string, unknown>>(
   return translate(ports, reverseMap);
 }
 
+const AGENT_MODE_ALIASES = new Map([["text", "text-3-flash"]]);
+
+const AGENT_MODES_WITH_ALIASES = [
+  ...AGENT_MODES,
+  ...(Array.from(AGENT_MODE_ALIASES.entries())
+    .map(([from, to]) => {
+      const target = modeMap.get(to);
+      if (!target) return null;
+      return { ...target, id: from, hidden: true } as Mode;
+    })
+    .filter(Boolean) as Mode[]),
+];
+
 function resolveModes(
   modeId: string | undefined,
   flags: Readonly<RuntimeFlags> | undefined
 ): ResolvedModes {
-  const modes = flags?.agentMode ? AGENT_MODES : PRE_AGENT_MODES;
+  const agentMode = flags?.agentMode;
+  const modes = agentMode ? AGENT_MODES_WITH_ALIASES : PRE_AGENT_MODES;
   const defaultMode = modes[0];
-  const current = modeMap.get(modeId || defaultMode.id) || defaultMode;
+  const resolvedId = agentMode
+    ? AGENT_MODE_ALIASES.get(modeId || "") || modeId
+    : modeId;
+  const current = modeMap.get(resolvedId || defaultMode.id) || defaultMode;
   return { modes, current };
 }
 
