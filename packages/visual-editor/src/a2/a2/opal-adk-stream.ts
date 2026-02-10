@@ -13,6 +13,7 @@ import { PidginTranslator } from "../agent/pidgin-translator.js";
 import { AgentUI } from "../agent/ui.js";
 import { AgentFileSystem } from "../agent/file-system.js";
 import { MemoryManager } from "../agent/types.js";
+import { session } from "../../../eval/eval.js";
 
 const OPAL_ADK_ENDPOINT = new URL(
   "v1beta1/executeAgentNodeStream",
@@ -200,9 +201,7 @@ class OpalAdkStream {
     modelConstraint?: ModelConstraint,
     uiType?: string,
     uiPrompt?: LLMContent,
-    invocationId?: string,
-    sessionId?: string
-  ): Promise<Outcome<LLMContent>> {
+    invocationId?: string): Promise<Outcome<LLMContent>> {
     const ui = this.ui;
 
     if (!params || params.length === 0) {
@@ -230,7 +229,6 @@ class OpalAdkStream {
         uiPrompt,
         nodeApi: opalAdkAgent,
         invocationId,
-        sessionId,
       });
 
       ui.progress.sendOpalAdkRequest("", requestBody);
