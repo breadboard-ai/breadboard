@@ -421,9 +421,14 @@ export class Splitter extends LitElement {
 
   protected willUpdate(
     changedProperties:
-      | PropertyValueMap<{ direction: Direction }>
+      | PropertyValueMap<{ direction: Direction, split: Array<number> }>
       | Map<PropertyKey, unknown>
   ): void {
+    if (this.split && changedProperties.get('split') !== this.split) {
+      this.#setAndStore();
+      return;
+    }
+
     if (!changedProperties.has("direction")) {
       return;
     }
