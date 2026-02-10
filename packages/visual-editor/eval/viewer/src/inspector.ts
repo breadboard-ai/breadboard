@@ -9,7 +9,12 @@ import { provide } from "@lit/context";
 import { LitElement, PropertyValues, css, html, nothing, unsafeCSS } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { theme as uiTheme } from "./theme/theme.js";
+import { theme as uiTheme } from "../../../src/ui/a2ui-theme/a2ui-theme.js";
+import {
+  palette,
+  uiColorMapping,
+} from "../../../src/ui/styles/host/base-colors.js";
+import * as Theme from "../../../src/theme/index.js";
 import "./ui/ui.js";
 
 import { FileSystemPath, Outcome } from "@breadboard-ai/types";
@@ -40,6 +45,9 @@ const RENDER_MODE_KEY = "eval-inspector-render-mode";
 export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   @provide({ context: UI.Context.themeContext })
   accessor theme: v0_8.Types.Theme = uiTheme;
+
+  @signal
+  accessor #colorScheme: "light" | "dark" = "light";
 
   @state()
   accessor #ready = true;
@@ -100,6 +108,31 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     super.connectedCallback();
     window.addEventListener("popstate", this.#onPopState);
     this.#restoreFromUrl();
+    this.#applyPaletteStyles();
+    this.#applyColorScheme();
+  }
+
+  #applyPaletteStyles() {
+    // Generate palette CSS vars the same way the app view does (base-colors.ts).
+    const styles = Theme.createThemeStyles(palette, uiColorMapping);
+    const originalStyles = Theme.createThemeStyles(
+      palette,
+      uiColorMapping,
+      "original-"
+    );
+    for (const [key, value] of Object.entries({
+      ...styles,
+      ...originalStyles,
+    })) {
+      this.style.setProperty(key, value);
+    }
+  }
+
+  #applyColorScheme() {
+    document.documentElement.style.setProperty(
+      "color-scheme",
+      this.#colorScheme
+    );
   }
 
   disconnectedCallback(): void {
@@ -232,7 +265,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             align-items: center;
             background: none;
             border: none;
-            color: var(--light-dark-n-100);
+            color: var(--text-color);
             padding: 0;
           }
 
@@ -269,7 +302,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
             border-radius: var(--bb-grid-size-2);
             border: 1px solid var(--primary);
-            color: var(--light-dark-n-100);
+            color: var(--text-color);
             padding: 0;
           }
 
@@ -348,7 +381,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                   );
                   border: none;
                   border-radius: var(--bb-grid-size-2);
-                  color: var(--light-dark-n-100);
+                  color: var(--text-color);
                   padding: var(--bb-grid-size-2);
                   font-family: var(--font-family-mono);
                   text-align: left;
@@ -458,14 +491,23 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
           & #surfaces {
             background: var(--light-dark-n-100);
+            color: var(--light-dark-n-0);
 
-            & #surface-select {
+            & #surface-overlay {
               position: absolute;
               top: 10px;
               left: 10px;
-              padding: var(--bb-grid-size-2);
-              border: 1px solid var(--primary);
-              border-radius: var(--bb-grid-size-2);
+              display: flex;
+              gap: var(--bb-grid-size-2);
+              z-index: 1;
+
+              & select {
+                padding: var(--bb-grid-size-2);
+                border: 1px solid var(--primary);
+                border-radius: var(--bb-grid-size-2);
+                background: var(--light-dark-n-100);
+                color: var(--light-dark-n-0);
+              }
             }
           }
 
@@ -577,6 +619,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   }
 
   async #loadFile(path: string) {
+    this.#selectedSurface = 0;
     this.#processor.clearSurfaces();
     const data = await this.#fileSystem.read(path as FileSystemPath);
     if (!ok(data)) {
@@ -677,33 +720,52 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
     if (this.renderMode === "surfaces") {
       return html`<section id="surfaces">
-        ${this.#surfaces
-          ? html`<select
-              @change=${(evt: Event) => {
-                if (!(evt.target instanceof HTMLSelectElement)) {
-                  return;
-                }
+        <div id="surface-overlay">
+          ${this.#surfaces
+            ? html`<select
+                @change=${(evt: Event) => {
+                  if (!(evt.target instanceof HTMLSelectElement)) {
+                    return;
+                  }
 
-                this.#selectedSurface = evt.target.selectedIndex;
-                this.#updateUrl();
-                this.#processor.clearSurfaces();
+                  this.#selectedSurface = evt.target.selectedIndex;
+                  this.#updateUrl();
+                  this.#processor.clearSurfaces();
 
-                const selectedSurface = this.#surfaces?.at(
-                  this.#selectedSurface
-                );
-                if (!selectedSurface) {
-                  return;
-                }
+                  const selectedSurface = this.#surfaces?.at(
+                    this.#selectedSurface
+                  );
+                  if (!selectedSurface) {
+                    return;
+                  }
 
-                this.#processor.processMessages(selectedSurface);
-              }}
-              id="surface-select"
-            >
-              ${map(this.#surfaces, (_, idx) => {
-                return html`<option>Surface ${idx + 1}</option>`;
-              })}
-            </select>`
-          : nothing}
+                  this.#processor.processMessages(selectedSurface);
+                }}
+                id="surface-select"
+              >
+                ${map(this.#surfaces, (_, idx) => {
+                  return html`<option>Surface ${idx + 1}</option>`;
+                })}
+              </select>`
+            : nothing}
+          <select
+            id="theme-select"
+            @change=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLSelectElement)) {
+                return;
+              }
+              this.#colorScheme = evt.target.value as "light" | "dark";
+              this.#applyColorScheme();
+            }}
+          >
+            <option value="light" ?selected=${this.#colorScheme === "light"}>
+              ☀️ Light
+            </option>
+            <option value="dark" ?selected=${this.#colorScheme === "dark"}>
+              🌙 Dark
+            </option>
+          </select>
+        </div>
         ${map(this.#processor.getSurfaces(), ([surfaceId, surface]) => {
           return html`<a2ui-surface
               .surfaceId=${surfaceId}
