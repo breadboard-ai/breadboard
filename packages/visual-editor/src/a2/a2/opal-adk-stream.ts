@@ -2,7 +2,6 @@ export type { StreamingRequestBody, StreamChunk };
 
 import {
   Capabilities,
-  FileSystemReadWritePath,
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
@@ -132,25 +131,6 @@ class OpalAdkStream {
     return DEFAULT_OPAL_ADK_ENDPOINT;
   }
 
-  toProtoModelConstraint(modelConstraint: ModelConstraint): string {
-    switch (modelConstraint) {
-      case "text-pro":
-        return "MODEL_CONSTRAINT_TEXT_PRO";
-      case "text-flash":
-        return "MODEL_CONSTRAINT_TEXT_FLASH";
-      case "image":
-        return "MODEL_CONSTRAINT_IMAGE";
-      case "video":
-        return "MODEL_CONSTRAINT_VIDEO";
-      case "speech":
-        return "MODEL_CONSTRAINT_SPEECH";
-      case "music":
-        return "MODEL_CONSTRAINT_MUSIC";
-      default:
-        return "MODEL_CONSTRAINT_UNSPECIFIED";
-    }
-  }
-
   toProtoUIType(uiType: string): string {
     switch (uiType) {
       case "chat":
@@ -167,7 +147,6 @@ class OpalAdkStream {
   buildStreamingRequestBody(options: BuildStreamingRequestBodyOptions): StreamingRequestBody {
     const {
       completedPrompt,
-      modelConstraint,
       uiType,
       uiPrompt,
       nodeApi,
@@ -209,9 +188,6 @@ class OpalAdkStream {
       };
     } else {
       baseBody.agent_mode_node_config = {};
-      if (modelConstraint !== undefined) {
-        baseBody.agent_mode_node_config.model_constraint = modelConstraint;
-      }
       if (uiType !== undefined) {
         baseBody.agent_mode_node_config.ui_type = this.toProtoUIType(uiType);
       }
@@ -253,25 +229,15 @@ class OpalAdkStream {
       const baseUrl = await this.getOpalAdkBackendUrl(this.caps);
       const url = new URL(baseUrl);
       url.searchParams.set("alt", "sse");
-      const modelConstraintProtoString = (
-        modelConstraint && this.toProtoModelConstraint(modelConstraint)
-      ) || "MODEL_CONSTRAINT_UNSPECIFIED";
       const requestBody = this.buildStreamingRequestBody({
         completedPrompt: params[0],
-        modelConstraint: modelConstraintProtoString,
         uiType,
         uiPrompt,
         nodeApi: opalAdkAgent,
         invocationId,
       });
 
-      // Record model call with action tracker
-      this.caps.write({
-        path: `/ mnt / track / call_${ opalAdkAgent }` as FileSystemReadWritePath,
-        data: [],
-      });
-
-      ui.progress.sendOpalAdkRequest(modelConstraintProtoString, requestBody)
+      ui.progress.sendOpalAdkRequest("", requestBody)
       const response = await this.moduleArgs.fetchWithCreds(url.toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
