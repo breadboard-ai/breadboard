@@ -12,7 +12,6 @@ import {
   GraphEndProbeData,
   GraphStartProbeData,
   HarnessRunResult,
-  InputResponse,
   InputValues,
   NodeEndResponse,
   NodeIdentifier,
@@ -25,7 +24,6 @@ import {
   RunErrorEvent,
   RunGraphEndEvent,
   RunGraphStartEvent,
-  RunInputEvent,
   RunLifecycleEvent,
   RunNextEvent,
   RunNodeEndEvent,
@@ -48,17 +46,6 @@ export class PendingEvent extends Event {
 
   constructor(public data: { timestamp: number }) {
     super(PendingEvent.eventName, { ...opts });
-  }
-}
-
-export class InputEvent extends Event implements RunInputEvent {
-  static readonly eventName = "input";
-
-  constructor(
-    public readonly running: boolean,
-    public data: InputResponse
-  ) {
-    super(InputEvent.eventName, { ...opts });
   }
 }
 

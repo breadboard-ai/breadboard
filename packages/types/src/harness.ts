@@ -299,13 +299,6 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
   start(): Promise<void>;
 
   /**
-   * Resumes the running of the board.
-   *
-   * @param inputs -- input values to provide to the runner.
-   */
-  resumeWithInputs(inputs: InputValues): Promise<void>;
-
-  /**
    * For new runtime only: the current plan for the run.
    */
   plan: DeepReadonly<OrchestrationPlan>;

@@ -214,14 +214,6 @@ export const prepare = asAction(
       );
     });
 
-    // Register output listeners on the runner
-    runner.addEventListener("input", (event) => {
-      const { inputArguments } = event.data;
-      const schema = inputArguments?.schema || {};
-      const id = event.data.node?.id ?? "";
-      controller.run.main.setInput({ id, schema });
-    });
-
     runner.addEventListener("error", (event) => {
       const error = event.data?.error;
       const message =

@@ -41,7 +41,6 @@ import {
   EndEvent,
   GraphEndEvent,
   GraphStartEvent,
-  InputEvent,
   NextEvent,
   NodeEndEvent,
   NodeStartEvent,
@@ -79,52 +78,34 @@ class PlanRunner
 
   readonly config: RunConfig;
   #run: AsyncGenerator<AnyClientRunResult, void, unknown> | null = null;
-  #pendingResult: HarnessRunResult | null = null;
   #inRun = false;
-  #resumeWith: InputValues | undefined;
 
   running() {
-    return !!this.#run && !this.#pendingResult;
+    return !!this.#run;
   }
 
   start(): Promise<void> {
     return this.run();
   }
 
-  resumeWithInputs(inputs: InputValues): Promise<void> {
-    return this.run(inputs);
-  }
-
-  private async run(
-    inputs?: InputValues,
-    interactiveMode = false
-  ): Promise<void> {
+  private async run(interactiveMode = false): Promise<void> {
     if (this.#inRun) {
-      if (!inputs) {
-        // This is a situation when the "Start" button is clicked on a run
-        // while we're paused. This may happen when the first step is
-        // interrupted.
-        await this.#controller?.restart();
-        return;
-      }
-      this.#resumeWith = inputs;
+      // This is a situation when the "Start" button is clicked on a run
+      // while we're paused. This may happen when the first step is
+      // interrupted.
+      await this.#controller?.restart();
       return;
     }
     this.#inRun = true;
     try {
       const eventArgs = {
-        inputs,
         timestamp: timestamp(),
       };
       const starting = !this.#run;
 
       if (!this.#run) {
         this.#run = this.getGenerator(interactiveMode);
-      } else if (this.#pendingResult) {
-        this.#pendingResult.reply({ inputs: inputs ?? {} });
-        inputs = undefined;
       }
-      this.#pendingResult = null;
 
       this.dispatchEvent(
         starting ? new StartEvent(eventArgs) : new ResumeEvent(eventArgs)
@@ -139,38 +120,10 @@ class PlanRunner
         this.dispatchEvent(new NextEvent(result.value));
         if (result.done) {
           this.#run = null;
-          this.#pendingResult = null;
           return;
         }
-        const { type, data, reply } = result.value;
+        const { type, data } = result.value;
         switch (type) {
-          case "input": {
-            if (inputs) {
-              // When there are inputs to consume, consume them and
-              // continue the run.
-              this.dispatchEvent(new InputEvent(true, data));
-              reply({ inputs });
-              inputs = undefined;
-            } else {
-              // When there are no inputs to consume, pause the run
-              // and wait for the next input.
-              this.#pendingResult = result.value;
-              this.dispatchEvent(new InputEvent(false, data));
-              if (this.#resumeWith) {
-                reply({ inputs: this.#resumeWith });
-                this.#pendingResult = null;
-                this.#resumeWith = undefined;
-              } else {
-                this.dispatchEvent(
-                  new PauseEvent(false, {
-                    timestamp: timestamp(),
-                  })
-                );
-                return;
-              }
-            }
-            break;
-          }
           case "error": {
             this.dispatchEvent(new RunnerErrorEvent(data));
             break;
@@ -311,7 +264,7 @@ class PlanRunner
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
     if (!this.#controller) {
       // First, activate the run
-      this.run(undefined, true);
+      this.run(true);
     }
     if (!this.#orchestrator.working) {
       this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
@@ -340,7 +293,7 @@ class PlanRunner
 
     if (!this.#controller || !this.running()) {
       // If not already running, start a run in interactive mode
-      this.run(undefined, true);
+      this.run(true);
     } else if (!this.#orchestrator.working) {
       this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
     }
@@ -373,13 +326,13 @@ class PlanRunner
             );
           }
         },
-        (inputs) => {
+        () => {
           // Do not restart the run when it's already running. Because this
           // runner may run tasks in parallel, we may have situations where
           // the `resume` is issued multiple times. In this case, we'll run
           // into the case when the runner has already been restarted.
           if (this.running()) return;
-          this.run(inputs);
+          this.run();
         },
         next
       );
@@ -424,7 +377,7 @@ class InternalRunStateController {
     private orchestrator: Orchestrator,
     public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
     public readonly pause: () => void,
-    public readonly resume: (inputs?: InputValues) => void,
+    public readonly resume: () => void,
     public readonly callback: (data: HarnessRunResult) => Promise<void>
   ) {
     this.context = this.initializeNodeHandlerContext(callback);
@@ -629,7 +582,7 @@ class InternalRunStateController {
           ([, nodeState]) => nodeState.state === "waiting"
         ) || [];
       if (waitingId !== id) return;
-      this.resume({});
+      this.resume();
     });
     this.#stopControllers.set(id, stopController);
     return stopController;

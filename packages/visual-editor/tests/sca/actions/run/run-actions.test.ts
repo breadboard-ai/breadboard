@@ -189,60 +189,7 @@ suite("Run Actions", () => {
     );
   });
 
-  // ===== Output-related event tests =====
-
-  test("runner 'input' event sets input on controller", () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
-
-    const config = makeMockConfig();
-    RunActions.prepare(config);
-
-    // Simulate input event with data
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-    runner._fireEvent("input", {
-      node: { id: "input-node-1" },
-      inputArguments: { schema: { type: "object" } },
-    });
-
-    assert.ok(controller.run.main.input, "input should be set");
-    assert.strictEqual(
-      controller.run.main.input?.id,
-      "input-node-1",
-      "input id should match"
-    );
-    assert.deepStrictEqual(
-      controller.run.main.input?.schema,
-      { type: "object" },
-      "input schema should match"
-    );
-  });
-
-  test("runner 'input' event handles missing node id", () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
-
-    const config = makeMockConfig();
-    RunActions.prepare(config);
-
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-    runner._fireEvent("input", {
-      inputArguments: { schema: {} },
-    });
-
-    assert.ok(controller.run.main.input, "input should be set");
-    assert.strictEqual(
-      controller.run.main.input?.id,
-      "",
-      "input id should be empty string"
-    );
-  });
+  // ===== Error-related event tests =====
 
   test("runner 'error' event sets error on controller with string message", () => {
     const { controller } = makeTestController();
