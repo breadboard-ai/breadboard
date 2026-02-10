@@ -119,14 +119,8 @@ export class Text extends Root {
         align-self: normal;
       }
 
-      ol,
-      ul {
-        margin: var(--a2ui-spacing-2) 0;
-        padding-left: var(--a2ui-spacing-5, 20px);
-      }
-
-      li + li {
-        margin-top: var(--a2ui-spacing-1, 4px);
+      li {
+        margin-bottom: var(--a2ui-spacing-3);
       }
 
       p {
