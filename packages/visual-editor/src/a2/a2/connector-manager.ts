@@ -2,13 +2,10 @@
  * @fileoverview Manages connectors.
  */
 
-import { err, ok, isLLMContentArray } from "./utils.js";
+import { err, ok } from "./utils.js";
 import type { ExportDescriberResult, ToolOutput } from "./common.js";
 import {
   Capabilities,
-  DescribeOutputs,
-  FileSystemPath,
-  GraphTag,
   JsonSerializable,
   LLMContent,
   Outcome,
@@ -16,9 +13,7 @@ import {
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { ConnectorManager, createConfigurator };
-
-type InvokeOutputs = Parameters<Capabilities["invoke"]>[0];
+export { createConfigurator };
 
 type InitializeInput = {
   stage: "initialize";
@@ -109,6 +104,29 @@ export type Configurator<
     caps: Capabilities,
     input: PreviewInput<C>
   ) => Promise<Outcome<PreviewOutput>>;
+};
+
+export type ConnectorInfo<
+  C extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
+> = {
+  url: string;
+  configuration: C;
+};
+
+export type ListMethodOutput = {
+  list: ListToolResult[];
+};
+
+export type ListToolResult = {
+  url: string;
+  description: ExportDescriberResult;
+  passContext: boolean;
+};
+
+export type InvokeMethodOutput = ToolOutput;
+
+export type CanSaveMethodOutput = {
+  canSave: boolean;
 };
 
 export type ToolHandler<
@@ -214,210 +232,4 @@ function createConfiguratorInvoke<
     }
     return err(`Unknown stage: ${inputs["stage"]}`);
   };
-}
-
-type ConnectorConfig = {
-  path: string;
-  instance?: string;
-};
-
-export type ConnectorInfo<
-  C extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
-> = {
-  /**
-   * The URL of the connector
-   */
-  url: string;
-  /**
-   * The configuration of the connector
-   */
-  configuration: C;
-};
-
-type InvocationArgs = {
-  $board: string;
-  id: string;
-  info: ConnectorInfo;
-};
-
-type LoadOutput = {
-  context?: LLMContent[];
-};
-
-export type ListMethodOutput = {
-  list: ListToolResult[];
-};
-
-export type ListToolResult = {
-  url: string;
-  description: ExportDescriberResult;
-  passContext: boolean;
-};
-
-export type InvokeMethodOutput = ToolOutput;
-
-export type CanSaveMethodOutput = {
-  canSave: boolean;
-};
-
-type ConnectorManagerState = {
-  info: ConnectorInfo;
-  describeOutputs: DescribeOutputs;
-};
-
-type NodeDescriptor = {
-  id: string;
-};
-
-class ConnectorManager {
-  constructor(
-    private readonly caps: Capabilities,
-    public readonly part: ConnectorConfig | ConnectorInfo
-  ) {}
-
-  #state: ConnectorManagerState | null = null;
-
-  async title(): Promise<Outcome<string>> {
-    const state = await this.#getState();
-    if (!ok(state)) return state;
-
-    return state.info.url;
-  }
-
-  async #getConnectorInfo(): Promise<Outcome<ConnectorInfo>> {
-    if ("url" in this.part) {
-      return this.part;
-    }
-    const path: FileSystemPath = `/assets/${this.part.path}`;
-
-    const reading = await this.caps.read({ path });
-    if (!ok(reading)) return reading;
-
-    return getConnectorInfo(reading.data);
-  }
-
-  async #getConnectorId(): Promise<Outcome<string>> {
-    if ("url" in this.part) {
-      const reading = await this.caps.read({ path: "/env/descriptor" });
-      if (!ok(reading)) return reading;
-
-      const descriptor = getNodeDescriptor(reading.data);
-      if (!ok(descriptor)) return descriptor;
-      return descriptor.id;
-    }
-    return getConnectorId(this.part);
-  }
-
-  async #getState(): Promise<Outcome<ConnectorManagerState>> {
-    if (this.#state) return this.#state;
-
-    const info = await this.#getConnectorInfo();
-    if (!ok(info)) return info;
-
-    const describing = await this.caps.describe({ url: info.url });
-    if (!ok(describing)) return describing;
-    this.#state = { info, describeOutputs: describing };
-    return this.#state;
-  }
-
-  async #getInvocationArgs(tag: string): Promise<Outcome<InvocationArgs>> {
-    const state = await this.#getState();
-    if (!ok(state)) return state;
-
-    const url = getExportUrl(tag, state.describeOutputs);
-    if (!ok(url)) return url;
-
-    const id = await this.#getConnectorId();
-    if (!ok(id)) return id;
-
-    return { $board: url, id, info: state.info };
-  }
-
-  async materialize(): Promise<Outcome<unknown>> {
-    const args = await this.#getInvocationArgs("connector-load");
-    if (!ok(args)) return args;
-
-    const invoking = await this.caps.invoke(args);
-    if (!ok(invoking)) return invoking;
-
-    const output = invoking as LoadOutput;
-    if (output && output.context && isLLMContentArray(output.context)) {
-      return output.context;
-    }
-    return err(`Invalid return value from connector load`);
-  }
-
-  async schemaProperties(): Promise<Record<string, Schema>> {
-    const args = await this.#getInvocationArgs("connector-save");
-
-    if (!ok(args)) return {};
-
-    const describing = await this.caps.describe({ url: args.$board });
-    if (!ok(describing)) return {};
-
-    const props = describing.inputSchema.properties;
-    if (!props || Object.keys(props).length === 0) return {};
-
-    delete props.context;
-    delete props.id;
-    delete props.info;
-
-    return props;
-  }
-
-  async save(
-    context: LLMContent[],
-    options: Record<string, unknown>
-  ): Promise<InvokeOutputs> {
-    const args = await this.#getInvocationArgs("connector-save");
-    if (!ok(args)) return args;
-
-    return this.caps.invoke({
-      ...args,
-      context,
-      ...options,
-      method: "save",
-    });
-  }
-
-  static isConnector(part: ConnectorConfig) {
-    return part.path.startsWith("connectors/");
-  }
-}
-
-function getConnectorId(part: ConnectorConfig): Outcome<string> {
-  const id = part.path.split("/").at(-1);
-  if (!id) return err(`Invalid connector path: ${part.path}`);
-  return id;
-}
-
-function getExportUrl(tag: string, result: DescribeOutputs): Outcome<string> {
-  const exports = result.exports;
-  if (!exports) return err(`Invalid connector structure: must have exports`);
-  const assetExport = Object.entries(exports).find(([_url, e]) =>
-    e.metadata?.tags?.includes(tag as GraphTag)
-  );
-  if (!assetExport)
-    return err(
-      `Invalid connector structure: must have export tagged as "${tag}"`
-    );
-  return assetExport[0];
-}
-
-function getConnectorInfo(
-  data: LLMContent[] | undefined
-): Outcome<ConnectorInfo> {
-  const part = data?.at(-1)?.parts.at(0);
-  if (!part) return err(`Invalid asset structure`);
-  if (!("json" in part)) return err(`Invalid connector info structure`);
-  return part.json as ConnectorInfo;
-}
-
-function getNodeDescriptor(
-  data: LLMContent[] | undefined
-): Outcome<NodeDescriptor> {
-  const part = data?.at(-1)?.parts.at(0);
-  if (!part) return err(`Invalid asset structure`);
-  if (!("json" in part)) return err(`Invalid file structure`);
-  return part.json as NodeDescriptor;
 }
