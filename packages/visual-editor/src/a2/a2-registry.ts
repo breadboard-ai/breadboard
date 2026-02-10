@@ -19,6 +19,7 @@ import * as toolsCodeExecution from "./tools/code-execution.js";
 import * as askUserMain from "./ask-user/main.js";
 import * as generateMain from "./generate/main.js";
 import * as renderOutputs from "./a2/render-outputs.js";
+import * as uiMain from "./ui/main.js";
 
 export { A2_COMPONENTS, A2_TOOLS, A2_TOOL_MAP, A2_COMPONENT_MAP };
 export type { A2Component };
@@ -165,6 +166,16 @@ const A2_COMPONENTS: A2Component[] = [
     moduleUrl: "embed://a2/ask-user.bgl.json#module:main",
     describe: askUserMain.describe,
     invoke: askUserMain.default,
+  },
+  {
+    url: "embed://a2/ui.bgl.json#module:main",
+    title: "UI",
+    description: "Stores on-demand UI data for reification in the graph",
+    icon: "web",
+    order: 2,
+    category: "input",
+    describe: uiMain.describe,
+    invoke: uiMain.default,
   },
   {
     url: "embed://a2/generate.bgl.json#module:main",

@@ -1,0 +1,29 @@
+{
+  "title": "UI",
+  "description": "Stores on-demand UI data (HTML, schemas, function name) for reification in the graph",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-ui",
+        "text": "Intentionally Left Blank - Imperative Module",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 531,
+            "y": 374,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "tags": ["published", "tool", "component"],
+    "icon": "web"
+  },
+  "graphs": {},
+  "modules": {},
+  "exports": ["#module:main"]
+}

@@ -8,6 +8,7 @@ import { html, css, PropertyValues, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
+import { guard } from "lit/directives/guard.js";
 import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { Box } from "./box.js";
 import {
@@ -43,6 +44,8 @@ import {
   ShowTooltipEvent,
 } from "../../events/events.js";
 import { createChiclets } from "./utils/create-chiclets.js";
+
+import "../../../app-sandbox/app-sandbox-element.js";
 import { icons } from "../../styles/icons.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
@@ -73,7 +76,7 @@ if ("CSS" in window && "registerProperty" in window.CSS) {
 //
 // eslint-disable-next-line local-rules/sca-consume-requires-signalwatcher
 export class GraphNode extends Box implements DragConnectorReceiver {
-  @consume({ context: scaContext})
+  @consume({ context: scaContext })
   accessor sca!: SCA;
 
   @property()
@@ -111,6 +114,12 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   @property()
   accessor behavior: BehaviorSchema[] = [];
+
+  @property()
+  accessor uiPreviewHtml: string | null = null;
+
+  @property()
+  accessor uiPreviewInput: Record<string, unknown> | null = null;
 
   @property()
   set ports(ports: InspectableNodePorts | null) {
@@ -384,6 +393,21 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           pointer-events: none;
           z-index: 3;
 
+          & .ui-preview {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            border-radius: var(--bb-grid-size-2);
+            position: relative;
+            pointer-events: none;
+
+            & bb-app-sandbox::part(iframe) {
+              width: 100%;
+              height: 200px;
+              border: none;
+            }
+          }
+
           p {
             margin: 0 0 var(--bb-grid-size-2) 0;
 
@@ -649,6 +673,29 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   removeHighlight(): void {
     this.highlighted = false;
+  }
+
+  #renderUIPreview() {
+    if (!this.uiPreviewHtml) {
+      return nothing;
+    }
+
+    return html`<div class="ui-preview">
+      ${guard(
+        [this.uiPreviewHtml, this.uiPreviewInput],
+        () => html`
+          <bb-app-sandbox
+            .srcdoc=${this.uiPreviewHtml!}
+            .onDemandInfo=${this.uiPreviewInput
+              ? {
+                  input: this.uiPreviewInput,
+                  callback: () => {},
+                }
+              : undefined}
+          ></bb-app-sandbox>
+        `
+      )}
+    </div>`;
   }
 
   #renderPorts() {
@@ -959,7 +1006,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         >
           ${this.updating
             ? html`<p class="loading">Loading step details...</p>`
-            : this.#renderPorts()}
+            : this.uiPreviewHtml
+              ? this.#renderUIPreview()
+              : this.#renderPorts()}
         </div>
         ${this.#maybeRenderRunStatus()}
       </section>

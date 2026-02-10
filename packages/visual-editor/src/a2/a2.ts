@@ -16,6 +16,7 @@ import { exports as googleDriveExports } from "./google-drive/index.js";
 import { exports as musicGeneratorExports } from "./music-generator/index.js";
 import { exports as toolsExports } from "./tools/index.js";
 import { exports as videoGeneratorExports } from "./video-generator/index.js";
+import { exports as uiExports } from "./ui/index.js";
 import { exports as autonameExports } from "./autoname/index.js";
 
 export const a2 = {
@@ -32,4 +33,5 @@ export const a2 = {
   "video-generator": videoGeneratorExports,
   "music-generator": musicGeneratorExports,
   "deep-research": deepResearchExports,
+  ui: uiExports,
 };

@@ -180,6 +180,26 @@ export class Graph extends Box {
 
       graphNode.showBounds = this.showBounds;
       graphNode.boundsLabel = node.title();
+
+      // If this is a UI node, set up the app-sandbox preview
+      const config = node.descriptor.configuration;
+      if (
+        node.descriptor.type === "embed://a2/ui.bgl.json#module:main" &&
+        config
+      ) {
+        const htmlCode = config["html-code"];
+        if (typeof htmlCode === "string" && htmlCode) {
+          graphNode.uiPreviewHtml = htmlCode;
+          const dummyInputStr = config["dummy-input"];
+          if (typeof dummyInputStr === "string") {
+            try {
+              graphNode.uiPreviewInput = JSON.parse(dummyInputStr);
+            } catch {
+              // Ignore invalid JSON
+            }
+          }
+        }
+      }
     }
 
     // Remove stale nodes.
