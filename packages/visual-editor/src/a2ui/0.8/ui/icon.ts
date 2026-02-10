@@ -18,10 +18,7 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { classMap } from "lit/directives/class-map.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-icon")
 export class Icon extends Root {
@@ -29,7 +26,6 @@ export class Icon extends Root {
   accessor name: StringValue | null = null;
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -86,13 +82,6 @@ export class Icon extends Root {
   }
 
   render() {
-    return html`<section
-      class=${classMap(this.theme.components.Icon)}
-      style=${this.theme.additionalStyles?.Icon
-        ? styleMap(this.theme.additionalStyles?.Icon)
-        : nothing}
-    >
-      ${this.#renderIcon()}
-    </section>`;
+    return html`<section>${this.#renderIcon()}</section>`;
   }
 }

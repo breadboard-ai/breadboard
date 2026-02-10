@@ -18,10 +18,7 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { classMap } from "lit/directives/class-map.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-audioplayer")
 export class Audio extends Root {
@@ -32,7 +29,6 @@ export class Audio extends Root {
    * at least 225px by 55px to render correctly.
    */
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -44,6 +40,7 @@ export class Audio extends Root {
         min-height: 55px;
         overflow: auto;
         min-width: 225px;
+        padding: var(--a2ui-audio-padding, 0);
       }
 
       audio {
@@ -88,13 +85,6 @@ export class Audio extends Root {
   }
 
   render() {
-    return html`<section
-      class=${classMap(this.theme.components.AudioPlayer)}
-      style=${this.theme.additionalStyles?.AudioPlayer
-        ? styleMap(this.theme.additionalStyles?.AudioPlayer)
-        : nothing}
-    >
-      ${this.#renderAudio()}
-    </section>`;
+    return html`<section>${this.#renderAudio()}</section>`;
   }
 }

@@ -20,10 +20,6 @@ import { Root } from "./root.js";
 import { repeat } from "lit/directives/repeat.js";
 import { StringValue } from "../types/primitives.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { classMap } from "lit/directives/class-map.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
-import { Styles } from "../index.js";
 
 @customElement("a2ui-tabs")
 export class Tabs extends Root {
@@ -34,13 +30,48 @@ export class Tabs extends Root {
   accessor selected = 0;
 
   static styles = [
-    structuralStyles,
     css`
       :host {
         display: block;
         flex: var(--weight);
         min-height: 0;
         overflow: auto;
+      }
+
+      section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--a2ui-spacing-2);
+      }
+
+      #buttons {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: var(--a2ui-spacing-4);
+      }
+
+      #buttons button {
+        font-family: var(--a2ui-font-family-flex);
+        font-variation-settings: "ROND" 100;
+        font-weight: 400;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 20px;
+        padding: 0;
+        transition: opacity var(--a2ui-transition-speed) ease;
+      }
+
+      #buttons button:hover {
+        opacity: 0.8;
+      }
+
+      #buttons button:disabled {
+        opacity: 1;
+        font-weight: 500;
+        cursor: default;
       }
     `,
   ];
@@ -66,10 +97,7 @@ export class Tabs extends Root {
       return nothing;
     }
 
-    return html`<div
-      id="buttons"
-      class=${classMap(this.theme.components.Tabs.element)}
-    >
+    return html`<div id="buttons">
       ${repeat(this.titles, (title, idx) => {
         let titleString = "";
         if ("literalString" in title && title.literalString) {
@@ -94,19 +122,8 @@ export class Tabs extends Root {
           titleString = textValue;
         }
 
-        let classes;
-        if (this.selected === idx) {
-          classes = Styles.merge(
-            this.theme.components.Tabs.controls.all,
-            this.theme.components.Tabs.controls.selected
-          );
-        } else {
-          classes = { ...this.theme.components.Tabs.controls.all };
-        }
-
         return html`<button
           ?disabled=${this.selected === idx}
-          class=${classMap(classes)}
           @click=${() => {
             this.selected = idx;
           }}
@@ -122,13 +139,6 @@ export class Tabs extends Root {
   }
 
   render() {
-    return html`<section
-      class=${classMap(this.theme.components.Tabs.container)}
-      style=${this.theme.additionalStyles?.Tabs
-        ? styleMap(this.theme.additionalStyles?.Tabs)
-        : nothing}
-    >
-      ${[this.#renderTabs(), this.#renderSlot()]}
-    </section>`;
+    return html`<section>${[this.#renderTabs(), this.#renderSlot()]}</section>`;
   }
 }

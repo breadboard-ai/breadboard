@@ -14,17 +14,13 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { Root } from "./root.js";
-import { classMap } from "lit/directives/class-map.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-card")
 export class Card extends Root {
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -42,6 +38,9 @@ export class Card extends Root {
         width: 100%;
         min-height: 0;
         overflow: auto;
+        border-radius: var(--a2ui-card-radius, var(--a2ui-border-radius-xl));
+        background: var(--a2ui-card-bg, var(--a2ui-color-surface));
+        padding: var(--a2ui-card-padding, var(--a2ui-spacing-6));
 
         ::slotted(*) {
           height: 100%;
@@ -52,12 +51,7 @@ export class Card extends Root {
   ];
 
   render() {
-    return html` <section
-      class=${classMap(this.theme.components.Card)}
-      style=${this.theme.additionalStyles?.Card
-        ? styleMap(this.theme.additionalStyles?.Card)
-        : nothing}
-    >
+    return html` <section>
       <slot></slot>
     </section>`;
   }

@@ -18,10 +18,7 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue, BooleanValue } from "../types/primitives.js";
-import { classMap } from "lit/directives/class-map.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-checkbox")
 export class Checkbox extends Root {
@@ -32,7 +29,6 @@ export class Checkbox extends Root {
   accessor label: StringValue | null = null;
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -45,14 +41,26 @@ export class Checkbox extends Root {
         overflow: auto;
       }
 
-      input {
-        display: block;
-        width: 100%;
+      section {
+        display: inline-flex;
+        align-items: center;
       }
 
-      .description {
+      input[type="checkbox"] {
+        margin: 0;
+        margin-right: var(--a2ui-spacing-2);
+        padding: var(--a2ui-spacing-2);
+        border-radius: var(--a2ui-border-radius-full);
+        border: var(--a2ui-border-width) solid var(--a2ui-color-border);
+      }
+
+      label {
+        font-family: var(--a2ui-font-family-flex);
+        font-variation-settings: "ROND" 100;
+        font-weight: 400;
+        flex: 1;
         font-size: 14px;
-        margin-bottom: 4px;
+        line-height: 20px;
       }
     `,
   ];
@@ -79,14 +87,8 @@ export class Checkbox extends Root {
   }
 
   #renderField(value: boolean | number) {
-    return html` <section
-      class=${classMap(this.theme.components.CheckBox.container)}
-      style=${this.theme.additionalStyles?.CheckBox
-        ? styleMap(this.theme.additionalStyles?.CheckBox)
-        : nothing}
-    >
+    return html` <section>
       <input
-        class=${classMap(this.theme.components.CheckBox.element)}
         autocomplete="off"
         @change=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
@@ -99,9 +101,7 @@ export class Checkbox extends Root {
         type="checkbox"
         .checked=${value}
       />
-      <label class=${classMap(this.theme.components.CheckBox.label)} for="data"
-        >${this.label?.literalString}</label
-      >
+      <label for="data">${this.label?.literalString}</label>
     </section>`;
   }
 

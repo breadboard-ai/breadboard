@@ -14,14 +14,11 @@
  limitations under the License.
  */
 
-import { html, css, PropertyValues, nothing } from "lit";
+import { html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { classMap } from "lit/directives/class-map.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 import { extractStringValue } from "./utils/utils.js";
 
 @customElement("a2ui-multiplechoice")
@@ -36,7 +33,6 @@ export class MultipleChoice extends Root {
   accessor selections: StringValue | string[] = [];
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -49,11 +45,36 @@ export class MultipleChoice extends Root {
         overflow: auto;
       }
 
-      select {
-        width: 100%;
+      section {
+        display: flex;
+        flex-direction: row;
+        gap: var(--a2ui-spacing-2);
+        padding: var(--a2ui-spacing-4);
+        border-radius: var(--a2ui-border-radius);
+        margin: var(--a2ui-spacing-2) 0;
+        border: var(--a2ui-border-width) solid var(--a2ui-color-border);
       }
 
-      .description {
+      label {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex: 0 0 auto;
+        font-family: var(--a2ui-font-family);
+        font-style: normal;
+        font-weight: 400;
+        margin: 0;
+        font-size: 14px;
+        line-height: 20px;
+        align-self: normal;
+      }
+
+      select {
+        width: 100%;
+        padding: var(--a2ui-spacing-2);
+        border-radius: var(--a2ui-border-radius);
+        margin: var(--a2ui-spacing-2) 0;
+        border: var(--a2ui-border-width) solid var(--a2ui-color-border);
       }
     `,
   ];
@@ -102,21 +123,11 @@ export class MultipleChoice extends Root {
   }
 
   render() {
-    return html`<section class=${classMap(
-      this.theme.components.MultipleChoice.container
-    )}>
-      <label class=${classMap(
-        this.theme.components.MultipleChoice.label
-      )} for="data">${this.description ?? "Select an item"}</div>
+    return html`<section>
+      <label for="data">${this.description ?? "Select an item"}</label>
       <select
         name="data"
         id="data"
-        class=${classMap(this.theme.components.MultipleChoice.element)}
-        style=${
-          this.theme.additionalStyles?.MultipleChoice
-            ? styleMap(this.theme.additionalStyles?.MultipleChoice)
-            : nothing
-        }
         @change=${(evt: Event) => {
           if (!(evt.target instanceof HTMLSelectElement)) {
             return;

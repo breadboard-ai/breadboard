@@ -14,13 +14,10 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
-import { classMap } from "lit/directives/class-map.js";
 import { ResolvedColumn } from "../types/types.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-column")
 export class Column extends Root {
@@ -31,7 +28,6 @@ export class Column extends Root {
   accessor distribution: ResolvedColumn["distribution"] = "start";
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -47,6 +43,8 @@ export class Column extends Root {
         flex-direction: column;
         min-width: 100%;
         height: 100%;
+        gap: var(--a2ui-column-gap, var(--a2ui-spacing-4));
+        padding: var(--a2ui-column-padding, var(--a2ui-spacing-3));
       }
 
       :host([alignment="start"]) section {
@@ -92,12 +90,7 @@ export class Column extends Root {
   ];
 
   render() {
-    return html`<section
-      class=${classMap(this.theme.components.Column)}
-      style=${this.theme.additionalStyles?.Column
-        ? styleMap(this.theme.additionalStyles?.Column)
-        : nothing}
-    >
+    return html`<section>
       <slot></slot>
     </section>`;
   }

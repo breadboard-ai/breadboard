@@ -7,7 +7,6 @@
 import * as A2UI from "../../../../a2ui/index.js";
 import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { unsafeCSS } from "lit";
 import { Task } from "@lit/task";
 
 @customElement("a2ui-custom-pdf-viewer")
@@ -19,7 +18,6 @@ export class A2UICustomPDFViewer extends A2UI.v0_8.UI.Root {
   accessor url: A2UI.v0_8.Primitives.StringValue | null = null;
 
   static styles = [
-    unsafeCSS(A2UI.v0_8.Styles.structuralStyles),
     css`
       :host {
         display: block;
@@ -107,8 +105,6 @@ export class A2UICustomPDFViewer extends A2UI.v0_8.UI.Root {
   }
 
   render() {
-    return html`<section class="layout-el-cv layout-w-100 layout-h-100">
-      ${this.#renderPDF()}
-    </section>`;
+    return html`<section>${this.#renderPDF()}</section>`;
   }
 }

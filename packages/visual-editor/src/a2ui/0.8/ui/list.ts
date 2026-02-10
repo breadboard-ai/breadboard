@@ -14,12 +14,9 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
-import { classMap } from "lit/directives/class-map.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-list")
 export class List extends Root {
@@ -27,7 +24,6 @@ export class List extends Root {
   accessor direction: "vertical" | "horizontal" = "vertical";
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -38,6 +34,11 @@ export class List extends Root {
         flex: var(--weight);
         min-height: 0;
         overflow: auto;
+      }
+
+      section {
+        gap: var(--a2ui-list-gap, var(--a2ui-spacing-4));
+        padding: var(--a2ui-list-padding, var(--a2ui-spacing-2));
       }
 
       :host([direction="vertical"]) section {
@@ -60,12 +61,7 @@ export class List extends Root {
   ];
 
   render() {
-    return html`<section
-      class=${classMap(this.theme.components.List)}
-      style=${this.theme.additionalStyles?.List
-        ? styleMap(this.theme.additionalStyles?.List)
-        : nothing}
-    >
+    return html`<section>
       <slot></slot>
     </section>`;
   }

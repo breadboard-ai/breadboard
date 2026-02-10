@@ -6,10 +6,14 @@
 
 import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
-import { LitElement, PropertyValues, css, html, nothing, unsafeCSS } from "lit";
+import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { theme as uiTheme } from "../../../src/ui/a2ui-theme/a2ui-theme.js";
+import {
+  theme as uiTheme,
+  applyTokens,
+} from "../../../src/ui/a2ui-theme/a2ui-theme.js";
+import { icons } from "../../../src/ui/styles/icons.js";
 import {
   palette as defaultPalette,
   uiColorMapping,
@@ -113,6 +117,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     this.#restoreFromUrl();
     this.#applyPaletteStyles();
     this.#applyColorScheme();
+    applyTokens(this, this.theme.tokens);
   }
 
   #applyPaletteStyles() {
@@ -202,7 +207,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     window.history.pushState({}, "", url);
   }
   static styles = [
-    unsafeCSS(v0_8.Styles.structuralStyles),
+    icons,
     css`
       * {
         box-sizing: border-box;
@@ -556,6 +561,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             display: block;
             font-family: var(--font-family-mono);
             line-height: 1.5;
+            white-space: pre;
 
             & button {
               position: absolute;
