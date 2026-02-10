@@ -11,7 +11,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { theme as uiTheme } from "../../../src/ui/a2ui-theme/a2ui-theme.js";
 import {
-  palette,
+  palette as defaultPalette,
   uiColorMapping,
 } from "../../../src/ui/styles/host/base-colors.js";
 import * as Theme from "../../../src/theme/index.js";
@@ -48,6 +48,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   @signal
   accessor #colorScheme: "light" | "dark" = "light";
+
+  @signal
+  accessor #baseColor: string = localStorage.getItem("eval-base-color") || "";
 
   @state()
   accessor #ready = true;
@@ -113,10 +116,12 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   }
 
   #applyPaletteStyles() {
-    // Generate palette CSS vars the same way the app view does (base-colors.ts).
-    const styles = Theme.createThemeStyles(palette, uiColorMapping);
+    const activePalette = this.#baseColor
+      ? Theme.generatePaletteFromColor(this.#baseColor)
+      : defaultPalette;
+    const styles = Theme.createThemeStyles(activePalette, uiColorMapping);
     const originalStyles = Theme.createThemeStyles(
-      palette,
+      activePalette,
       uiColorMapping,
       "original-"
     );
@@ -501,13 +506,43 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               gap: var(--bb-grid-size-2);
               z-index: 1;
 
-              & select {
+              & select,
+              & input[type="color"] {
                 padding: var(--bb-grid-size-2);
                 border: 1px solid var(--primary);
                 border-radius: var(--bb-grid-size-2);
                 background: var(--light-dark-n-100);
                 color: var(--light-dark-n-0);
+                height: 100%;
               }
+
+              & input[type="color"] {
+                width: 60px;
+                cursor: pointer;
+              }
+            }
+
+            #color-picker::-webkit-color-swatch-wrapper {
+              padding: 0;
+              border: none;
+              width: 40px;
+              height: 18px;
+            }
+
+            #color-picker::-webkit-color-swatch {
+              padding: 0;
+              border: none;
+              border-radius: var(--bb-grid-size);
+              width: 40px;
+              height: 18px;
+            }
+
+            #color-picker::-moz-color-swatch {
+              padding: 0;
+              border: none;
+              border-radius: var(--bb-grid-size);
+              width: 40px;
+              height: 18px;
             }
           }
 
@@ -765,6 +800,20 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               🌙 Dark
             </option>
           </select>
+          <input
+            type="color"
+            id="color-picker"
+            .value=${this.#baseColor || "#6750a4"}
+            title="Base theme color"
+            @input=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLInputElement)) {
+                return;
+              }
+              this.#baseColor = evt.target.value;
+              localStorage.setItem("eval-base-color", this.#baseColor);
+              this.#applyPaletteStyles();
+            }}
+          />
         </div>
         ${map(this.#processor.getSurfaces(), ([surfaceId, surface]) => {
           return html`<a2ui-surface
