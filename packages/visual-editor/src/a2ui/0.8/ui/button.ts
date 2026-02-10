@@ -20,10 +20,26 @@ import { Root } from "./root.js";
 import { StateEvent } from "../events/events.js";
 import { Action } from "../types/components.js";
 
+export { Button };
+
+function detectMedia(el: Element): boolean {
+  if (el instanceof Root && el.isMedia) return true;
+  for (const child of el.children) {
+    if (detectMedia(child)) return true;
+  }
+  return false;
+}
+
 @customElement("a2ui-button")
-export class Button extends Root {
+class Button extends Root {
   @property()
   accessor action: Action | null = null;
+
+  @property({ reflect: true, type: Boolean })
+  accessor primary = false;
+
+  @property({ reflect: true, type: Boolean, attribute: "has-media" })
+  accessor hasMedia = false;
 
   static styles = [
     css`
@@ -43,26 +59,26 @@ export class Button extends Root {
         font-style: normal;
         font-weight: 500;
         padding: 0;
-        border-radius: var(--a2ui-button-radius, var(--a2ui-border-radius-lg));
+        border-radius: var(--a2ui-button-radius, 20px);
         border: none;
-        background: var(--a2ui-button-bg, var(--a2ui-color-primary));
-        color: var(--a2ui-button-color, var(--a2ui-color-on-primary));
+        background: var(--a2ui-button-bg, var(--light-dark-n-100));
+        color: var(--a2ui-button-color, light-dark(var(--p-20), var(--n-100)));
         cursor: pointer;
-        transition: opacity var(--a2ui-transition-speed) ease;
         overflow: hidden;
+        position: relative;
+        transition: background var(--a2ui-transition-speed) ease;
 
         /* Override text colors for slotted children (e.g. Text) */
         --a2ui-color-on-surface: var(
           --a2ui-button-color,
-          var(--a2ui-color-on-primary)
+          light-dark(var(--p-20), var(--n-100))
         );
         --a2ui-color-secondary: var(
           --a2ui-button-color,
-          var(--a2ui-color-on-primary)
+          light-dark(var(--p-20), var(--n-100))
         );
 
-        /* Child component padding — text gets padding, media is full-bleed.
-           All overridable via theme's Button overrides. */
+        /* Child component padding — text gets padding, media is full-bleed. */
         --a2ui-text-padding: var(
           --a2ui-button-text-padding,
           var(--a2ui-spacing-4)
@@ -70,13 +86,87 @@ export class Button extends Root {
         --a2ui-image-padding: var(--a2ui-button-image-padding, 0);
         --a2ui-video-padding: var(--a2ui-button-video-padding, 0);
         --a2ui-audio-padding: var(--a2ui-button-audio-padding, 0);
+
+        /* Media inside buttons loses its border-radius. */
+        --a2ui-image-radius: var(--a2ui-button-image-radius, 0);
+        --a2ui-video-radius: var(--a2ui-button-video-radius, 0);
+
+        /* Layout children pack tight — individual elements handle spacing. */
+        --a2ui-column-gap: var(--a2ui-button-column-gap, 0);
+        --a2ui-row-gap: var(--a2ui-button-row-gap, 0);
       }
 
-      button:hover {
-        opacity: var(--a2ui-hover-opacity);
+      button::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        border: var(--a2ui-button-border, none);
+        pointer-events: none;
+        transition: border var(--a2ui-transition-speed) ease;
+      }
+
+      button:hover::after {
+        border: var(--a2ui-button-hover-border, none);
+      }
+
+      /* Media buttons get a border by default (overridable via tokens). */
+      :host([has-media]) button::after {
+        border: var(--a2ui-button-border, 1px solid var(--n-60));
+      }
+
+      :host([has-media]) button:hover::after {
+        border: var(
+          --a2ui-button-hover-border,
+          2px solid var(--light-dark-n-0)
+        );
+      }
+
+      :host([primary]) button {
+        background: var(--a2ui-button-bg, var(--light-dark-n-0));
+        color: var(--a2ui-button-color, var(--light-dark-n-100));
+
+        --a2ui-color-on-surface: var(
+          --a2ui-button-color,
+          var(--light-dark-n-100)
+        );
+        --a2ui-color-secondary: var(
+          --a2ui-button-color,
+          var(--light-dark-n-100)
+        );
+      }
+
+      /* Non-media hover: background change. */
+      :host(:not([has-media])) button:hover {
+        background: var(--a2ui-button-hover-bg, var(--light-dark-s-98));
+      }
+
+      :host([primary]:not([has-media])) button:hover {
+        background: var(--a2ui-button-hover-bg, var(--light-dark-n-15));
       }
     `,
   ];
+
+  #mediaObserver: MutationObserver | null = null;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.#mediaObserver = new MutationObserver(() => this.#checkMedia());
+    this.#mediaObserver.observe(this, { childList: true, subtree: true });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#mediaObserver?.disconnect();
+    this.#mediaObserver = null;
+  }
+
+  #checkMedia() {
+    const hasMedia = detectMedia(this);
+    if (hasMedia !== this.hasMedia) {
+      this.hasMedia = hasMedia;
+    }
+  }
 
   render() {
     return html`<button

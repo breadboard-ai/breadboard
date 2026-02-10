@@ -25,6 +25,8 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
   @property()
   accessor url: A2UI.v0_8.Primitives.StringValue | null = null;
 
+  override accessor isMedia = true;
+
   static styles = [
     css`
       :host {

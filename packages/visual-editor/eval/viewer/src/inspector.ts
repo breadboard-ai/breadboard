@@ -19,6 +19,7 @@ import {
   uiColorMapping,
 } from "../../../src/ui/styles/host/base-colors.js";
 import * as Theme from "../../../src/theme/index.js";
+import "../../../src/ui/app-templates/basic/a2ui-custom-elements/index.js";
 import "./ui/ui.js";
 
 import { FileSystemPath, Outcome } from "@breadboard-ai/types";
@@ -371,14 +372,19 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               flex-direction: column;
               gap: var(--bb-grid-size-2);
 
+              & h2 {
+                margin: var(--bb-grid-size-2) 0;
+              }
+
               li {
                 width: 100%;
                 overflow: auto;
+                margin-bottom: var(--bb-grid-size-2);
 
                 h2 {
                   font-size: 12px;
                   font-weight: normal;
-                  margin: 0;
+                  margin: 0 0 var(--bb-grid-size-2) 0;
                 }
 
                 ul {
@@ -500,7 +506,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           }
 
           & #surfaces {
-            background: var(--light-dark-n-100);
+            background: light-dark(var(--s-90), var(--p-30));
             color: var(--light-dark-n-0);
 
             & #surface-overlay {
@@ -826,6 +832,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               .surfaceId=${surfaceId}
               .surface=${surface}
               .processor=${this.#processor}
+              .enableCustomElements=${true}
               ></a2-uisurface>`;
         })}
       </section>`;

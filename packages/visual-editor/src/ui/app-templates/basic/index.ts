@@ -24,11 +24,7 @@ import {
 } from "../../types/types.js";
 
 // Custom Elements for the App.
-import "./a2ui-custom-elements/a2ui-custom-pdf-viewer.js";
-import "./a2ui-custom-elements/a2ui-custom-media-container.js";
-import "./a2ui-custom-elements/a2ui-custom-video.js";
-import "./a2ui-custom-elements/a2ui-custom-google-drive.js";
-import "./a2ui-custom-elements/a2ui-custom-html.js";
+import "./a2ui-custom-elements/index.js";
 import "./header/header.js";
 
 import { SignalWatcher } from "@lit-labs/signals";

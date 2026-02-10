@@ -45,6 +45,9 @@ const tokens: ThemeTokens = {
   // Behavior
   "--a2ui-hover-opacity": "0.95",
   "--a2ui-transition-speed": "0.2s",
+
+  // Button
+  "--a2ui-button-radius": "var(--a2ui-border-radius-lg)",
 };
 
 export const theme: v0_8.Types.Theme = {
@@ -53,7 +56,6 @@ export const theme: v0_8.Types.Theme = {
     Button: {
       "--a2ui-button-bg": "var(--a2ui-color-primary)",
       "--a2ui-button-color": "var(--a2ui-color-on-primary)",
-      "--a2ui-button-radius": "var(--a2ui-border-radius-lg)",
     },
     Card: {
       "--a2ui-card-bg": "var(--a2ui-color-surface)",

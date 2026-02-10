@@ -44,7 +44,6 @@ export class Column extends Root {
         min-width: 100%;
         height: 100%;
         gap: var(--a2ui-column-gap, var(--a2ui-spacing-4));
-        padding: var(--a2ui-column-padding, var(--a2ui-spacing-3));
       }
 
       :host([alignment="start"]) section {

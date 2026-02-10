@@ -63,6 +63,9 @@ export class Root extends SignalWatcher(LitElement) {
   @property()
   accessor enableCustomElements = false;
 
+  @property({ attribute: false })
+  accessor isMedia = false;
+
   @property()
   set weight(weight: string | number) {
     this.#weight = weight;
@@ -221,6 +224,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath ?? ""}
             .usageHint=${node.properties.usageHint}
             .enableCustomElements=${this.enableCustomElements}
+            .isMedia=${true}
           ></a2ui-image>`;
         }
 
@@ -251,6 +255,7 @@ export class Root extends SignalWatcher(LitElement) {
             .url=${node.properties.url ?? null}
             .dataContextPath=${node.dataContextPath ?? ""}
             .enableCustomElements=${this.enableCustomElements}
+            .isMedia=${true}
           ></a2ui-audioplayer>`;
         }
 
@@ -265,6 +270,7 @@ export class Root extends SignalWatcher(LitElement) {
             .surfaceId=${this.surfaceId}
             .dataContextPath=${node.dataContextPath ?? ""}
             .action=${node.properties.action}
+            .primary=${node.properties.primary ?? false}
             .childComponents=${[node.properties.child]}
             .enableCustomElements=${this.enableCustomElements}
           ></a2ui-button>`;
@@ -405,6 +411,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath}
             .url=${node.properties.url}
             .enableCustomElements=${this.enableCustomElements}
+            .isMedia=${true}
           ></a2ui-video>`;
         }
 

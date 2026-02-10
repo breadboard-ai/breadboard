@@ -57,9 +57,9 @@ export class Audio extends Root {
 
     if (this.url && typeof this.url === "object") {
       if ("literalString" in this.url) {
-        return html`<audio controls src=${this.url.literalString} />`;
+        return html`<audio controls download src=${this.url.literalString} />`;
       } else if ("literal" in this.url) {
-        return html`<audio controls src=${this.url.literal} />`;
+        return html`<audio controls download src=${this.url.literal} />`;
       } else if (this.url && "path" in this.url && this.url.path) {
         if (!this.processor || !this.component) {
           return html`(no processor)`;
@@ -77,7 +77,7 @@ export class Audio extends Root {
         if (typeof audioUrl !== "string") {
           return html`Invalid audio URL`;
         }
-        return html`<audio controls src=${audioUrl} />`;
+        return html`<audio controls download src=${audioUrl} />`;
       }
     }
 
