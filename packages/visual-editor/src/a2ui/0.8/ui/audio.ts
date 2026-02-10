@@ -18,8 +18,14 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { A2UIModelProcessor } from "../data/model-processor.js";
+import { extractStringValue } from "./utils/utils.js";
 
+/**
+ * Audio player component.
+ *
+ * Resolves its source URL from a `StringValue` using `extractStringValue`
+ * and renders a native `<audio>` element with controls.
+ */
 @customElement("a2ui-audioplayer")
 export class Audio extends Root {
   @property()
@@ -51,37 +57,18 @@ export class Audio extends Root {
   ];
 
   #renderAudio() {
-    if (!this.url) {
+    const audioUrl = extractStringValue(
+      this.url,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
+
+    if (!audioUrl) {
       return nothing;
     }
 
-    if (this.url && typeof this.url === "object") {
-      if ("literalString" in this.url) {
-        return html`<audio controls download src=${this.url.literalString} />`;
-      } else if ("literal" in this.url) {
-        return html`<audio controls download src=${this.url.literal} />`;
-      } else if (this.url && "path" in this.url && this.url.path) {
-        if (!this.processor || !this.component) {
-          return html`(no processor)`;
-        }
-
-        const audioUrl = this.processor.getData(
-          this.component,
-          this.url.path,
-          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-        );
-        if (!audioUrl) {
-          return html`Invalid audio URL`;
-        }
-
-        if (typeof audioUrl !== "string") {
-          return html`Invalid audio URL`;
-        }
-        return html`<audio controls download src=${audioUrl} />`;
-      }
-    }
-
-    return html``;
+    return html`<audio controls download src=${audioUrl} />`;
   }
 
   render() {

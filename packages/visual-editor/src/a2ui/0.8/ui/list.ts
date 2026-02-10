@@ -18,6 +18,12 @@ import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 
+/**
+ * List layout container.
+ *
+ * Arranges children in either a `vertical` or `horizontal` direction.
+ * Direction is reflected as an attribute for CSS-based styling.
+ */
 @customElement("a2ui-list")
 export class List extends Root {
   @property({ reflect: true, type: String })

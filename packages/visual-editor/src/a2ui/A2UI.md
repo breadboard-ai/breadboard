@@ -507,49 +507,16 @@ allows any component to resolve data bindings at any point in the tree.
 
 ## 9. Known Inconsistencies and Improvement Opportunities
 
-### 9.1 Text Resolves Data inline; Other Components Use Utils
+All previously identified inconsistencies have been resolved:
 
-`Text` resolves its `StringValue` directly in `#renderText()` with inline logic,
-while `Image` also resolves inline. Meanwhile, the custom element example uses
-`extractStringValue()` from `ui/utils/utils.ts`. The recommendation is to
-consolidate data binding resolution through the utility functions for
-consistency.
-
-### 9.2 `.model` vs `.processor` on Text
-
-In `renderComponentTree`, the `Text` case passes both `.model=${this.processor}`
-and `.processor=${this.processor}`. The `.model` property is not declared on
-`Text` or `Root` — this appears to be dead code and should be removed.
-
-### 9.3 Inconsistent `dataContextPath` Defaults
-
-Some components in the render switch default `dataContextPath` to `""`:
-
-```ts
-.dataContextPath=${node.dataContextPath ?? ""}
-```
-
-Others pass it through without a default:
-
-```ts
-.dataContextPath=${node.dataContextPath}
-```
-
-This could cause subtle issues if a component expects a string but receives
-`undefined`. A consistent default policy would improve reliability.
-
-### 9.4 The Image `section` Has `object-fit: cover`
-
-In `image.ts`, the `<section>` element has `object-fit: cover`, which has no
-effect on a `<section>` (it only applies to replaced elements like `<img>` and
-`<video>`). The `object-fit` should be on the `img` rule instead.
-
-### 9.5 Two `UserAction` Types
-
-There are two `UserAction` interfaces — one in `types/types.ts` and one in
-`types/client-event.ts`. They have slightly different shapes (the types.ts
-version has `actionName` while client-event.ts has `name`; client-event.ts has
-`surfaceId` while types.ts does not). This duplication could cause confusion.
+- **Inline data resolution**: All components now use the shared
+  `extractStringValue()`, `extractNumberValue()`, and `extractBooleanValue()`
+  helpers from `ui/utils/utils.ts`.
+- **Dead `.model` property**: Removed from the Text case in `renderComponentTree`.
+- **Inconsistent `dataContextPath` defaults**: All normalized to `?? ""`.
+- **`object-fit: cover` on `<section>`**: Moved to the `<img>` rule.
+- **Duplicate `UserAction` type**: Removed the stale copy from `types/types.ts`.
+  The canonical definition lives in `types/client-event.ts`.
 
 ---
 
@@ -609,5 +576,5 @@ a2ui/
         │   ├── markdown.ts     # Markdown rendering directive
         │   └── sanitizer.ts    # HTML sanitization
         └── utils/
-            └── utils.ts        # extractStringValue(), extractNumberValue()
+            └── utils.ts        # extractStringValue(), extractNumberValue(), extractBooleanValue()
 ```

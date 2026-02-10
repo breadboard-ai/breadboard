@@ -19,8 +19,8 @@ import { customElement, property } from "lit/decorators.js";
 import { markdown } from "./directives/directives.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { A2UIModelProcessor } from "../data/model-processor.js";
 import { ResolvedText } from "../types/types.js";
+import { extractStringValue } from "./utils/utils.js";
 
 /**
  * Renders text content with markdown support.
@@ -119,6 +119,16 @@ export class Text extends Root {
         align-self: normal;
       }
 
+      ol,
+      ul {
+        margin: var(--a2ui-spacing-2) 0;
+        padding-left: var(--a2ui-spacing-5, 20px);
+      }
+
+      li + li {
+        margin-top: var(--a2ui-spacing-1, 4px);
+      }
+
       p {
         white-space: pre-line;
       }
@@ -172,59 +182,41 @@ export class Text extends Root {
   ];
 
   #renderText() {
-    if (this.text && typeof this.text === "object") {
-      if ("literalString" in this.text && this.text.literalString) {
-        return html`${markdown(this.text.literalString)}`;
-      } else if ("literal" in this.text && this.text.literal !== undefined) {
-        return html`${markdown(this.text.literal)}`;
-      } else if (
-        this.text &&
-        "path" in this.text &&
-        this.text.path !== undefined
-      ) {
-        if (!this.processor || !this.component) {
-          return html`(no model)`;
-        }
+    let text = extractStringValue(
+      this.text,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
 
-        const textValue = this.processor.getData(
-          this.component,
-          this.text.path,
-          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-        );
-
-        if (textValue === null || textValue === undefined) {
-          return html``;
-        }
-
-        let markdownText = textValue.toString();
-        switch (this.usageHint) {
-          case "h1":
-            markdownText = `# ${markdownText}`;
-            break;
-          case "h2":
-            markdownText = `## ${markdownText}`;
-            break;
-          case "h3":
-            markdownText = `### ${markdownText}`;
-            break;
-          case "h4":
-            markdownText = `#### ${markdownText}`;
-            break;
-          case "h5":
-            markdownText = `##### ${markdownText}`;
-            break;
-          case "caption":
-            markdownText = `*${markdownText}*`;
-            break;
-          default:
-            break; // Body.
-        }
-
-        return html`${markdown(markdownText)}`;
-      }
+    if (!text) {
+      return html``;
     }
 
-    return html``;
+    switch (this.usageHint) {
+      case "h1":
+        text = `# ${text}`;
+        break;
+      case "h2":
+        text = `## ${text}`;
+        break;
+      case "h3":
+        text = `### ${text}`;
+        break;
+      case "h4":
+        text = `#### ${text}`;
+        break;
+      case "h5":
+        text = `##### ${text}`;
+        break;
+      case "caption":
+        text = `*${text}*`;
+        break;
+      default:
+        break; // Body.
+    }
+
+    return html`${markdown(text)}`;
   }
 
   render() {

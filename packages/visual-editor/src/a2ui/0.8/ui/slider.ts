@@ -14,14 +14,21 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { NumberValue, StringValue } from "../types/primitives.js";
 import { ResolvedTextField } from "../types/types.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { extractNumberValue } from "./utils/utils.js";
+import { extractNumberValue, extractStringValue } from "./utils/utils.js";
 
+/**
+ * Range slider component with two-way data binding.
+ *
+ * Resolves its value from a `NumberValue` and writes changes back via
+ * `processor.setData()`. Uses `extractNumberValue` for both the slider
+ * position and the display readout.
+ */
 @customElement("a2ui-slider")
 export class Slider extends Root {
   @property()
@@ -88,9 +95,16 @@ export class Slider extends Root {
     );
   }
 
-  #renderField(value: string | number) {
+  #renderField(value: number) {
+    const label = extractStringValue(
+      this.label,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
+
     return html`<section>
-      <label for="data"> ${this.label?.literalString ?? ""} </label>
+      <label for="data"> ${label} </label>
       <input
         autocomplete="off"
         @input=${(evt: Event) => {
@@ -121,34 +135,13 @@ export class Slider extends Root {
   }
 
   render() {
-    if (this.value && typeof this.value === "object") {
-      if ("literalNumber" in this.value && this.value.literalNumber) {
-        return this.#renderField(this.value.literalNumber);
-      } else if ("literal" in this.value && this.value.literal !== undefined) {
-        return this.#renderField(this.value.literal);
-      } else if (this.value && "path" in this.value && this.value.path) {
-        if (!this.processor || !this.component) {
-          return html`(no processor)`;
-        }
+    const value = extractNumberValue(
+      this.value,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
 
-        const textValue = this.processor.getData(
-          this.component,
-          this.value.path,
-          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-        );
-
-        if (textValue === null) {
-          return html`Invalid value`;
-        }
-
-        if (typeof textValue !== "string" && typeof textValue !== "number") {
-          return html`Invalid value`;
-        }
-
-        return this.#renderField(textValue);
-      }
-    }
-
-    return nothing;
+    return this.#renderField(value);
   }
 }

@@ -18,6 +18,13 @@ import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { Root } from "./root.js";
 
+/**
+ * Card container component.
+ *
+ * Provides a rounded, padded surface for grouping child components.
+ * Renders children into its light DOM via the inherited Root behavior,
+ * then projects them through a shadow DOM slot.
+ */
 @customElement("a2ui-card")
 export class Card extends Root {
   static styles = [

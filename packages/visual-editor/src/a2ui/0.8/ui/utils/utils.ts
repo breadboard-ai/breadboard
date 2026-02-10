@@ -15,7 +15,11 @@
  */
 
 import { A2UIModelProcessor } from "../../data/model-processor.js";
-import { NumberValue, type StringValue } from "../../types/primitives.js";
+import {
+  BooleanValue,
+  NumberValue,
+  type StringValue,
+} from "../../types/primitives.js";
 import { type AnyComponentNode } from "../../types/types.js";
 
 /**
@@ -105,4 +109,48 @@ export function extractNumberValue(
   }
 
   return 0;
+}
+
+/**
+ * Resolves a `BooleanValue` to a concrete boolean.
+ *
+ * Handles `literalBoolean` / `literal` (direct) and `path` (data-bound) cases.
+ * When the bound value is a string, coerces `"true"` → `true` and everything
+ * else → `false`. Returns `false` for null/missing/unresolvable values.
+ */
+export function extractBooleanValue(
+  val: BooleanValue | null,
+  component: AnyComponentNode | null,
+  processor: A2UIModelProcessor | null,
+  surfaceId: string | null
+): boolean {
+  if (val !== null && typeof val === "object") {
+    if ("literalBoolean" in val) {
+      return val.literalBoolean ?? false;
+    } else if ("literal" in val && val.literal !== undefined) {
+      return val.literal ?? false;
+    } else if (val && "path" in val && val.path) {
+      if (!processor || !component) {
+        return false;
+      }
+
+      const boolValue = processor.getData(
+        component,
+        val.path,
+        surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
+      );
+
+      if (typeof boolValue === "boolean") {
+        return boolValue;
+      }
+
+      if (typeof boolValue === "string") {
+        return boolValue === "true";
+      }
+
+      return false;
+    }
+  }
+
+  return false;
 }

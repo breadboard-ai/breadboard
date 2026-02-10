@@ -70,32 +70,6 @@ export type Theme = {
   overrides?: Partial<Record<string, Record<string, string>>>;
 };
 
-/**
- * Represents a user-initiated action, sent from the client to the server.
- */
-export interface UserAction {
-  /**
-   * The name of the action, taken from the component's `action.action`
-   * property.
-   */
-  actionName: string;
-  /**
-   * The `id` of the component that triggered the event.
-   */
-  sourceComponentId: string;
-  /**
-   * An ISO 8601 timestamp of when the event occurred.
-   */
-  timestamp: string;
-  /**
-   * A JSON object containing the key-value pairs from the component's
-   * `action.context`, after resolving all data bindings.
-   */
-  context?: {
-    [k: string]: unknown;
-  };
-}
-
 /** A recursive type for any valid JSON-like value in the data model. */
 export type DataValue =
   | string
