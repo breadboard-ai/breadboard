@@ -7,36 +7,21 @@
 import type {
   InputValues,
   Kit,
-  MutableGraph,
   NodeHandler,
   NodeHandlerContext,
   NodeHandlerFunction,
-  NodeHandlerObject,
   NodeHandlers,
   NodeTypeIdentifier,
   OutputValues,
 } from "@breadboard-ai/types";
 import { graphUrlLike } from "@breadboard-ai/utils";
 import { GraphBasedNodeHandler } from "./graph-based-node-handler.js";
-import { getGraphUrl } from "../loader/loader.js";
-import { A2_COMPONENTS, A2_COMPONENT_MAP } from "../../a2/a2-registry.js";
+import { A2_COMPONENT_MAP } from "../../a2/a2-registry.js";
 import {
   A2ModuleFactory,
   createCallableCapabilities,
 } from "../../a2/runnable-module-factory.js";
 import { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
-
-// TODO: Deduplicate.
-function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
-  const store = mutable.store;
-  return {
-    kits: [...store.kits],
-    loader: store.loader,
-    sandbox: store.sandbox,
-    graphStore: store,
-    outerGraph: mutable.graph,
-  };
-}
 
 const getHandlerFunction = (handler: NodeHandler): NodeHandlerFunction => {
   if ("invoke" in handler && handler.invoke) return handler.invoke;
@@ -75,8 +60,8 @@ export const handlersFromKits = (kits: Kit[]): NodeHandlers => {
 /**
  * The single entry point for getting a handler for a node type.
  * The handler can be one of the two types:
- * - A graph-based handler, where the `type` is actually a
- *   URL-like string that points to a graph.
+ * - An A2 component handler, where the `type` is matched
+ *   against the A2_COMPONENT_MAP for static dispatch.
  * - A kit-based handler, where the `type` is a string that
  *   corresponds to a node type in a kit.
  *
@@ -115,92 +100,19 @@ export async function getHandler(
     };
   }
 
-  // Substitute graph URL with module URL if available
-  const effectiveType = MODULE_URL_MAP.get(type) ?? type;
-  if (graphUrlLike(effectiveType)) {
-    const graphHandler = await getGraphHandler(effectiveType, context);
-    if (graphHandler) {
-      return graphHandler;
-    }
-  }
   const handlers = handlersFromKits(context.kits ?? []);
-  const kitHandler = handlers[effectiveType];
+  const kitHandler = handlers[type];
   if (kitHandler) {
     return kitHandler;
   }
+  // Fallback for URL-like types (graph-based components)
+  // used by the inspector for describe/metadata.
+  // Note: invoke() will throw since graph-based execution is removed.
+  if (graphUrlLike(type) && context.graphStore) {
+    const loadResult = await context.graphStore.load(type, context);
+    if (loadResult.success) {
+      return new GraphBasedNodeHandler(loadResult, type);
+    }
+  }
   throw new Error(`No handler for node type "${type}"`);
-}
-
-/**
- * Maps legacy graph-based component URLs to their imperative module URLs.
- * This enables progressive migration from graph dispatch to imperative execution.
- */
-const MODULE_URL_MAP = new Map(
-  A2_COMPONENTS.filter((c) => c.moduleUrl).map((c) => [c.url, c.moduleUrl!])
-);
-
-export async function getGraphHandlerFromMutableGraph(
-  type: NodeTypeIdentifier,
-  mutable: MutableGraph
-): Promise<NodeHandlerObject | undefined> {
-  // Substitute graph URL with module URL if available
-  const effectiveType = MODULE_URL_MAP.get(type) ?? type;
-  const nodeTypeUrl = graphUrlLike(effectiveType)
-    ? getGraphUrl(effectiveType, contextFromMutableGraph(mutable))
-    : undefined;
-  if (!nodeTypeUrl) {
-    return undefined;
-  }
-  const store = mutable.store;
-  const result = store.addByURL(effectiveType, [], {
-    outerGraph: mutable.graph,
-  });
-  const latest = await store.getLatest(result.mutable);
-  return new GraphBasedNodeHandler(
-    {
-      graph: latest.graph,
-      subGraphId: result.graphId,
-      moduleId: result.moduleId,
-    },
-    type // Keep the original type for metadata association
-  );
-}
-
-export async function getGraphHandler(
-  type: NodeTypeIdentifier,
-  context: NodeHandlerContext,
-  allow3PModules = false
-): Promise<NodeHandlerObject | undefined> {
-  if (is3pModule(type) && !allow3PModules) {
-    return undefined;
-  }
-  const nodeTypeUrl = graphUrlLike(type)
-    ? getGraphUrl(type, context)
-    : undefined;
-  if (!nodeTypeUrl) {
-    return undefined;
-  }
-  const { graphStore } = context;
-  if (!graphStore) {
-    throw new Error(
-      `Cannot load graph for type "${type}" without a graph store.`
-    );
-  }
-
-  const loadResult = await graphStore.load(type, context);
-  if (!loadResult.success) {
-    throw new Error(
-      `Loading graph for type "${type}" failed: ${loadResult.error}`
-    );
-  }
-  return new GraphBasedNodeHandler(loadResult, type);
-}
-
-/**
- * This is a somewhat hacky module invocation filter.
- * TODO: Instead of hard-coding the type, plumb the invocationFilter from
- * the configuration here.
- */
-function is3pModule(type: NodeTypeIdentifier) {
-  return !type.startsWith("embed://");
 }

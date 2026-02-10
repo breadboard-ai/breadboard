@@ -16,13 +16,18 @@ import {
   NodeTypeIdentifier,
   Schema,
 } from "@breadboard-ai/types";
-import { emptyDescriberResult, filterEmptyValues } from "@breadboard-ai/utils";
-import { invokeGraph } from "./run/invoke-graph.js";
+import {
+  emptyDescriberResult,
+  filterEmptyValues,
+  graphUrlLike,
+} from "@breadboard-ai/utils";
+import { getGraphUrl } from "../loader/loader.js";
 import { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
 import { invokeDescriber } from "./sandbox/invoke-describer.js";
 
 export {
   describerResultToNodeHandlerMetadata,
+  getGraphHandlerFromMutableGraph,
   GraphBasedNodeHandler,
   toNodeHandlerMetadata,
 };
@@ -38,16 +43,10 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
     this.describe = this.describe.bind(this);
   }
 
-  async invoke(inputs: InputValues, context: NodeHandlerContext) {
-    const base = context.board?.url && new URL(context.board?.url);
-    const invocationContext = base
-      ? {
-          ...context,
-          base,
-        }
-      : { ...context };
-
-    return await invokeGraph(this.#graph, inputs, invocationContext);
+  async invoke(_inputs: InputValues, _context: NodeHandlerContext) {
+    throw new Error(
+      `Graph-based component execution is no longer supported for type "${this.#type}"`
+    );
   }
 
   async describe(
@@ -170,4 +169,40 @@ function toNodeHandlerMetadata(
       updating,
     });
   }
+}
+
+function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
+  const store = mutable.store;
+  return {
+    kits: [...store.kits],
+    loader: store.loader,
+    sandbox: store.sandbox,
+    graphStore: store,
+    outerGraph: mutable.graph,
+  };
+}
+
+async function getGraphHandlerFromMutableGraph(
+  type: NodeTypeIdentifier,
+  mutable: MutableGraph
+): Promise<NodeHandlerObject | undefined> {
+  const nodeTypeUrl = graphUrlLike(type)
+    ? getGraphUrl(type, contextFromMutableGraph(mutable))
+    : undefined;
+  if (!nodeTypeUrl) {
+    return undefined;
+  }
+  const store = mutable.store;
+  const result = store.addByURL(type, [], {
+    outerGraph: mutable.graph,
+  });
+  const latest = await store.getLatest(result.mutable);
+  return new GraphBasedNodeHandler(
+    {
+      graph: latest.graph,
+      subGraphId: result.graphId,
+      moduleId: result.moduleId,
+    },
+    type
+  );
 }

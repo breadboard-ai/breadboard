@@ -9,7 +9,6 @@ import {
   invokeDescriber,
   invokeMainDescriber,
 } from "../../runtime/legacy.js";
-import { invokeGraph } from "../../runtime/run/invoke-graph.js";
 import type {
   GraphDescriber,
   GraphIdentifier,
@@ -177,88 +176,47 @@ class GraphDescriberManager implements GraphDescriber {
     // invoke graph
     try {
       const { sandbox } = this.mutable.store;
-      if (sandbox && customDescriber.startsWith("module:")) {
-        const { inputSchema, outputSchema } =
-          await this.#describeWithStaticAnalysis();
-
-        const moduleId = customDescriber.slice("module:".length);
-
-        let result;
-        if (this.handle.main() === moduleId) {
-          result = await invokeMainDescriber(
-            context || {},
-            this.mutable,
-            this.mutable.graph,
-            inputs,
-            inputSchema,
-            outputSchema,
-            new CapabilitiesManagerImpl(context),
-            context?.asType || false
-          );
-        } else {
-          result = await invokeDescriber(
-            context || {},
-            moduleId,
-            this.mutable,
-            this.mutable.graph,
-            inputs,
-            inputSchema,
-            outputSchema,
-            new CapabilitiesManagerImpl(context),
-            context?.asType || false
-          );
-        }
-        if (result) {
-          return result;
-        }
-        if (result === false) {
-          return err("Custom describer could not provide results.");
-        }
+      if (!sandbox || !customDescriber.startsWith("module:")) {
+        return err(
+          `Graph-based describers are no longer supported: ${customDescriber}`
+        );
       }
-      const base = this.handle.url();
-
-      const loader = this.mutable.store.loader;
-
-      // try loading the describer graph.
-      const loadResult = await loader.load(customDescriber, {
-        base,
-        board: this.handle.graph(),
-        outerGraph: this.handle.graph(),
-      });
-      if (!loadResult.success) {
-        const error = `Could not load custom describer graph ${customDescriber}: ${loadResult.error}`;
-        console.warn(error);
-        return err(error);
-      }
-      const { inputSchema: $inputSchema, outputSchema: $outputSchema } =
+      const { inputSchema, outputSchema } =
         await this.#describeWithStaticAnalysis();
-      // Remove the artifacts of the describer from the input/output schemas.
-      // TODO: The right fix here is for static describer to not include
-      // describer outputs.
-      // delete $outputSchema.properties?.inputSchema;
-      // delete $outputSchema.properties?.outputSchema;
-      const result = (await invokeGraph(
-        loadResult,
-        { ...inputs, $inputSchema, $outputSchema },
-        {
-          base,
-          kits: [...this.mutable.store.kits],
-          loader,
-        }
-      )) as NodeDescriberResult;
-      if ("$error" in result) {
-        const message = `Error while invoking graph's custom describer`;
-        console.warn(message, result.$error);
-        return err(`${message}: ${JSON.stringify(result.$error)}`);
+
+      const moduleId = customDescriber.slice("module:".length);
+
+      let result;
+      if (this.handle.main() === moduleId) {
+        result = await invokeMainDescriber(
+          context || {},
+          this.mutable,
+          this.mutable.graph,
+          inputs,
+          inputSchema,
+          outputSchema,
+          new CapabilitiesManagerImpl(context),
+          context?.asType || false
+        );
+      } else {
+        result = await invokeDescriber(
+          context || {},
+          moduleId,
+          this.mutable,
+          this.mutable.graph,
+          inputs,
+          inputSchema,
+          outputSchema,
+          new CapabilitiesManagerImpl(context),
+          context?.asType || false
+        );
       }
-      if (!result.inputSchema || !result.outputSchema) {
-        const message = `Custom describer did not return input/output schemas`;
-        console.warn(message, result);
-        return err(`${message}: ${JSON.stringify(result)}`);
+      if (result) {
+        return result;
       }
-      return result;
+      return err("Custom describer could not provide results.");
     } catch (e) {
-      const message = `Error while invoking graph's custom describer`;
+      const message = `Error while invoking custom describer`;
       console.warn(message, e);
       return err(`${message}: ${JSON.stringify(e)}`);
     }

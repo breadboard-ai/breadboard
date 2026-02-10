@@ -753,6 +753,7 @@ class InternalRunStateController {
       base,
       signal,
       graphStore,
+      sandbox: graphStore?.sandbox,
       fetchWithCreds,
       getProjectRunState,
       clientDeploymentConfiguration,

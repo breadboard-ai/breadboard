@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getGraphDescriptor } from "../src/engine/loader/capability.js";
-import { invokeGraph } from "../src/engine/runtime/run/invoke-graph.js";
-import { InputValues, Kit, OutputValues } from "@breadboard-ai/types";
+import { InputValues, Kit } from "@breadboard-ai/types";
 
 // A simplest possible re-implementation of some nodes to be used in tests
 // in tests/bgl/*.
@@ -16,26 +14,10 @@ export const testKit: Kit = {
   url: import.meta.url,
   handlers: {
     invoke: {
-      invoke: async (inputs, context) => {
-        const { $board, ...args } = inputs;
-        if (!$board) {
-          throw new Error("No board provided for the `invoke` handler");
-        }
-        const graph = await getGraphDescriptor($board, context);
-        if (!graph.success) {
-          throw new Error(
-            "Unable to get graph descriptor from the board in `invoke` handler"
-          );
-        }
-        const base = context.board?.url && new URL(context.board?.url);
-        const invocationContext = base
-          ? {
-              ...context,
-              base,
-            }
-          : { ...context };
-
-        return invokeGraph(graph, args, invocationContext);
+      invoke: async () => {
+        throw new Error(
+          "Graph-based `invoke` handler is no longer supported in tests"
+        );
       },
     },
     map: {
@@ -43,45 +25,10 @@ export const testKit: Kit = {
         title: "Map",
         tags: ["experimental"],
       },
-      invoke: async (inputs, context) => {
-        const { board, list = [] } = inputs;
-        if (!board) {
-          throw new Error("No board provided for the `map` handler");
-        }
-        const graph = await getGraphDescriptor(board, context);
-        if (!graph.success) {
-          throw new Error(
-            "Unable to get graph descriptor from the board in `map` handler"
-          );
-        }
-        let listArray;
-        if (typeof list === "string") {
-          listArray = JSON.parse(list);
-        } else {
-          listArray = list;
-        }
-        if (!Array.isArray(listArray)) {
-          throw new Error(
-            "In `map` handler, `list` port value is not an array"
-          );
-        }
-        const base = context.board?.url && new URL(context.board?.url);
-        const result = await Promise.all(
-          listArray.map(async (item, index) => {
-            const newContext = {
-              ...context,
-              base: base || context?.base,
-              invocationPath: [...(context?.invocationPath || []), index],
-            };
-            const outputs = await invokeGraph(
-              graph,
-              { item, index, list },
-              newContext
-            );
-            return outputs;
-          })
+      invoke: async () => {
+        throw new Error(
+          "Graph-based `map` handler is no longer supported in tests"
         );
-        return { list: result } as OutputValues;
       },
     },
     promptTemplate: {
