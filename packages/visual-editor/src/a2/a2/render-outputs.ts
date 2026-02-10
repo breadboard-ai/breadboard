@@ -562,8 +562,7 @@ function advancedSettings(
         type: "string",
         behavior: ["config", "hint-advanced"],
         title: "Slide deck name",
-        description:
-          "The title of a Google Drive Presentation that content will be saved to",
+        description: "Title of slide deck",
       };
       return settings;
     }
