@@ -21,6 +21,13 @@ import { StringValue } from "../types/primitives.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { ResolvedImage } from "../types/types.js";
 
+/**
+ * Renders an image from a URL (literal or data-bound).
+ *
+ * Supports `usageHint` for semantic styling variants. The parent sets
+ * `isMedia = true` in the render switch, allowing containers like Button
+ * to detect image children.
+ */
 @customElement("a2ui-image")
 export class Image extends Root {
   @property()
@@ -47,7 +54,6 @@ export class Image extends Root {
         border-radius: var(--a2ui-image-radius, 20px);
         width: 100%;
         height: 100%;
-        object-fit: cover;
       }
 
       img {
@@ -55,6 +61,7 @@ export class Image extends Root {
         width: 100%;
         height: auto;
         border-radius: inherit;
+        object-fit: cover;
       }
     `,
   ];

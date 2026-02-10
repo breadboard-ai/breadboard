@@ -32,10 +32,23 @@ type EnforceEventTypeMatch<T extends Record<string, BaseEventDetail<string>>> =
       : never;
   };
 
+/**
+ * Maps event type strings to their corresponding detail types.
+ *
+ * The `EnforceEventTypeMatch` wrapper ensures that each entry's `eventType`
+ * field matches its key — a compile-time guard against mismatched events.
+ */
 export type StateEventDetailMap = EnforceEventTypeMatch<{
   "a2ui.action": A2UI.A2UIAction;
 }>;
 
+/**
+ * Typed custom event for A2UI user interactions.
+ *
+ * Dispatched by interactive components (e.g. Button) and registered globally
+ * on `HTMLElementEventMap` as `"a2uiaction"`. The event bubbles, is composed
+ * (crosses shadow boundaries), and is cancelable.
+ */
 export class StateEvent<
   T extends keyof StateEventDetailMap,
 > extends CustomEvent<StateEventDetailMap[T]> {

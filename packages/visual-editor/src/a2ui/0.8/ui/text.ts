@@ -22,6 +22,14 @@ import { StringValue } from "../types/primitives.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { ResolvedText } from "../types/types.js";
 
+/**
+ * Renders text content with markdown support.
+ *
+ * Resolves its `text` property (a `StringValue`) from either a literal value
+ * or a data binding path, then passes it through the `markdown` directive for
+ * rendering. The `usageHint` property controls typographic styling via
+ * host-attribute selectors (h1–h5, caption, body).
+ */
 @customElement("a2ui-text")
 export class Text extends Root {
   @property()

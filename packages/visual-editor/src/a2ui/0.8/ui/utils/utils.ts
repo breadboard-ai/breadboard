@@ -18,6 +18,16 @@ import { A2UIModelProcessor } from "../../data/model-processor.js";
 import { NumberValue, type StringValue } from "../../types/primitives.js";
 import { type AnyComponentNode } from "../../types/types.js";
 
+/**
+ * Resolves a `StringValue` to a concrete string.
+ *
+ * Handles three cases:
+ * - `literalString` / `literal`: returns the hardcoded string directly.
+ * - `path`: resolves the data binding via `processor.getData()`.
+ *
+ * This is the recommended way to resolve `StringValue` in components and
+ * custom elements, rather than inlining the resolution logic.
+ */
 export function extractStringValue(
   val: StringValue | null,
   component: AnyComponentNode | null,
@@ -51,6 +61,12 @@ export function extractStringValue(
   return "";
 }
 
+/**
+ * Resolves a `NumberValue` to a concrete number.
+ *
+ * Handles `literalNumber` / `literal` (direct) and `path` (data-bound) cases.
+ * Returns `0` for null/missing values and `-1` for unresolvable paths.
+ */
 export function extractNumberValue(
   val: NumberValue | null,
   component: AnyComponentNode | null,
