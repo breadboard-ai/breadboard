@@ -19,8 +19,15 @@ import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { repeat } from "lit/directives/repeat.js";
 import { StringValue } from "../types/primitives.js";
-import { A2UIModelProcessor } from "../data/model-processor.js";
+import { extractStringValue } from "./utils/utils.js";
 
+/**
+ * Tab container component.
+ *
+ * Renders a row of tab buttons from `titles` and shows the child
+ * corresponding to `selected` index via named slot projection.
+ * Tab title strings are resolved via `extractStringValue`.
+ */
 @customElement("a2ui-tabs")
 export class Tabs extends Root {
   @property()
@@ -99,28 +106,12 @@ export class Tabs extends Root {
 
     return html`<div id="buttons">
       ${repeat(this.titles, (title, idx) => {
-        let titleString = "";
-        if ("literalString" in title && title.literalString) {
-          titleString = title.literalString;
-        } else if ("literal" in title && title.literal !== undefined) {
-          titleString = title.literal;
-        } else if (title && "path" in title && title.path) {
-          if (!this.processor || !this.component) {
-            return html`(no model)`;
-          }
-
-          const textValue = this.processor.getData(
-            this.component,
-            title.path,
-            this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-          );
-
-          if (typeof textValue !== "string") {
-            return html`(invalid)`;
-          }
-
-          titleString = textValue;
-        }
+        const titleString = extractStringValue(
+          title,
+          this.component,
+          this.processor,
+          this.surfaceId
+        );
 
         return html`<button
           ?disabled=${this.selected === idx}

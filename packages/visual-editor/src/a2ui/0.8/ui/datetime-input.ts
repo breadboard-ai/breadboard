@@ -14,12 +14,20 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
+import { extractStringValue } from "./utils/utils.js";
 
+/**
+ * Date/time input component with two-way data binding.
+ *
+ * Supports date-only, time-only, or combined datetime-local input modes.
+ * Resolves its value from a `StringValue` and writes changes back via
+ * `processor.setData()`.
+ */
 @customElement("a2ui-datetimeinput")
 export class DateTimeInput extends Root {
   @property()
@@ -157,29 +165,13 @@ export class DateTimeInput extends Root {
   }
 
   render() {
-    if (this.value && typeof this.value === "object") {
-      if ("literalString" in this.value && this.value.literalString) {
-        return this.#renderField(this.value.literalString);
-      } else if ("literal" in this.value && this.value.literal !== undefined) {
-        return this.#renderField(this.value.literal);
-      } else if (this.value && "path" in this.value && this.value.path) {
-        if (!this.processor || !this.component) {
-          return html`(no model)`;
-        }
+    const value = extractStringValue(
+      this.value,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
 
-        const textValue = this.processor.getData(
-          this.component,
-          this.value.path,
-          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-        );
-        if (typeof textValue !== "string") {
-          return html`(invalid)`;
-        }
-
-        return this.#renderField(textValue);
-      }
-    }
-
-    return nothing;
+    return this.#renderField(value);
   }
 }

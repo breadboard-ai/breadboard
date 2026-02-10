@@ -14,12 +14,19 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue, BooleanValue } from "../types/primitives.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
+import { extractBooleanValue, extractStringValue } from "./utils/utils.js";
 
+/**
+ * Checkbox component with two-way data binding.
+ *
+ * Resolves its checked state from a `BooleanValue` and writes changes back
+ * via `processor.setData()`. The label is resolved from a `StringValue`.
+ */
 @customElement("a2ui-checkbox")
 export class Checkbox extends Root {
   @property()
@@ -86,7 +93,14 @@ export class Checkbox extends Root {
     );
   }
 
-  #renderField(value: boolean | number) {
+  #renderField(value: boolean) {
+    const label = extractStringValue(
+      this.label,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
+
     return html` <section>
       <input
         autocomplete="off"
@@ -101,43 +115,18 @@ export class Checkbox extends Root {
         type="checkbox"
         .checked=${value}
       />
-      <label for="data">${this.label?.literalString}</label>
+      <label for="data">${label}</label>
     </section>`;
   }
 
   render() {
-    if (this.value && typeof this.value === "object") {
-      if ("literalBoolean" in this.value && this.value.literalBoolean) {
-        return this.#renderField(this.value.literalBoolean);
-      } else if ("literal" in this.value && this.value.literal !== undefined) {
-        return this.#renderField(this.value.literal);
-      } else if (this.value && "path" in this.value && this.value.path) {
-        if (!this.processor || !this.component) {
-          return html`(no model)`;
-        }
+    const checked = extractBooleanValue(
+      this.value,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
 
-        const textValue = this.processor.getData(
-          this.component,
-          this.value.path,
-          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-        );
-
-        if (typeof textValue === "boolean") {
-          return this.#renderField(textValue);
-        }
-
-        if (textValue === null) {
-          return html`Invalid label`;
-        }
-
-        if (textValue !== "true" && textValue !== "false") {
-          return html`Invalid label`;
-        }
-
-        return this.#renderField(textValue === "true");
-      }
-    }
-
-    return nothing;
+    return this.#renderField(checked);
   }
 }

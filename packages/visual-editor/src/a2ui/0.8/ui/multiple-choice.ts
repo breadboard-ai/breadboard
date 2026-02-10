@@ -21,6 +21,13 @@ import { StringValue } from "../types/primitives.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { extractStringValue } from "./utils/utils.js";
 
+/**
+ * Multiple choice selector component.
+ *
+ * Renders a set of radio-button options from `options` with an optional
+ * `description`. Resolves option values via `extractStringValue` and
+ * writes the selected value back via `processor.setData()`.
+ */
 @customElement("a2ui-multiplechoice")
 export class MultipleChoice extends Root {
   @property()

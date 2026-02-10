@@ -56,6 +56,9 @@ export const TOKENS = {
   // Behavior
   hoverOpacity: "--a2ui-hover-opacity",
   transitionSpeed: "--a2ui-transition-speed",
+
+  // Button
+  buttonRadius: "--a2ui-button-radius",
 } as const;
 
 /** The values for each token. Keys match the property names in TOKENS. */

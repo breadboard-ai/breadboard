@@ -19,6 +19,16 @@ import { customElement, query, state } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { ref } from "lit/directives/ref.js";
 
+/**
+ * Modal dialog component.
+ *
+ * Renders in two modes: (1) when closed, shows only the `entry` slot
+ * (the clickable trigger); (2) when open, renders a native `<dialog>` with
+ * `showModal()`. Clicking the backdrop or the close button dismisses it.
+ *
+ * The component uses the Lit `ref` directive to call `showModal()` after
+ * the `<dialog>` element is inserted into the DOM.
+ */
 @customElement("a2ui-modal")
 export class Modal extends Root {
   static styles = [

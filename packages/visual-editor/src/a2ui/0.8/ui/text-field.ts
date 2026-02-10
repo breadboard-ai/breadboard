@@ -22,6 +22,13 @@ import { ResolvedTextField } from "../types/types.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { extractStringValue } from "./utils/utils.js";
 
+/**
+ * Text input component with two-way data binding.
+ *
+ * Resolves its value and label from `StringValue` using `extractStringValue`.
+ * Supports `number` and `text` input types via the `inputType` property.
+ * Writes changes back via `processor.setData()`.
+ */
 @customElement("a2ui-textfield")
 export class TextField extends Root {
   @property()

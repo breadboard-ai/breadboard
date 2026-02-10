@@ -19,6 +19,13 @@ import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { ResolvedRow } from "../types/types.js";
 
+/**
+ * Horizontal flex layout container.
+ *
+ * Arranges children in a row with configurable `alignment` (cross-axis)
+ * and `distribution` (main-axis). Gap is controlled by the
+ * `--a2ui-row-gap` token (default: `--a2ui-spacing-4`).
+ */
 @customElement("a2ui-row")
 export class Row extends Root {
   @property({ reflect: true, type: String })
