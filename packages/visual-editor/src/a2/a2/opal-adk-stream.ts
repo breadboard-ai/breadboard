@@ -110,7 +110,7 @@ class OpalAdkStream {
       memoryManager: this.memoryManager,
     });
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
-    this.ui = new AgentUI(caps, moduleArgs, this.translator);
+    this.ui = new AgentUI(moduleArgs, this.translator);
   }
 
   async getOpalAdkBackendUrl(caps: Capabilities) {
