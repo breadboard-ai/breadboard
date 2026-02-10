@@ -20,10 +20,26 @@ export { createPlan };
  * strongly connected component is represented with a single node
  * that has a "folded" tag.
  */
-function createPlan(graph: GraphDescriptor): OrchestrationPlan {
-  const { nodes, edges } = graph;
+// UI nodes are inert and should not be part of the execution plan.
+const UI_NODE_TYPE = "embed://a2/ui.bgl.json#module:main";
 
-  if (!nodes || nodes.length === 0) {
+function createPlan(graph: GraphDescriptor): OrchestrationPlan {
+  const { nodes: allNodes, edges: allEdges } = graph;
+
+  if (!allNodes || allNodes.length === 0) {
+    return { stages: [] };
+  }
+
+  // Filter out UI nodes — they are inert and should not be executed.
+  const uiNodeIds = new Set(
+    allNodes.filter((n) => n.type === UI_NODE_TYPE).map((n) => n.id)
+  );
+  const nodes = allNodes.filter((n) => !uiNodeIds.has(n.id));
+  const edges = (allEdges ?? []).filter(
+    (e) => !uiNodeIds.has(e.from) && !uiNodeIds.has(e.to)
+  );
+
+  if (nodes.length === 0) {
     return { stages: [] };
   }
 

@@ -40,6 +40,7 @@ Important notes about generated code:
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 \`\`\`
+* The code will run in an inframe sandbox, so do not use any sandbox-restricted APIs including form submission
 * There should be exactly one function added to the window called \`renderUI(input, callback)\` which should render the inputs (you may make the type accepted for input and the type of the arguments for the callback be whatever necessary to complete the intent)
 * Avoid using JSX syntax, only use pure JS (e.g. call React.createElement or similar)
 

@@ -767,6 +767,10 @@ export class Graph extends Box {
 
   highlightActivity(runState: RendererRunState | null) {
     for (const node of this.#nodes) {
+      // UI nodes are inert — skip run-state highlighting.
+      if (node.descriptor.type === "embed://a2/ui.bgl.json#module:main") {
+        continue;
+      }
       const id = node.descriptor.id;
       const graphNode = this.entities.get(id) as GraphNode;
       if (!graphNode) {

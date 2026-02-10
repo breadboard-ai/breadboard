@@ -383,4 +383,79 @@ describe("createPlan function", () => {
       assert.equal(transformNode.upstream[0].in, "text");
     });
   });
+
+  describe("UI node filtering", () => {
+    const UI_NODE_TYPE = "embed://a2/ui.bgl.json#module:main";
+
+    it("should exclude a standalone UI node from the plan", () => {
+      const graph: GraphDescriptor = {
+        nodes: [{ id: "ui1", type: UI_NODE_TYPE }],
+        edges: [],
+      };
+      const result = createPlan(graph);
+      assert.deepEqual(result, { stages: [] });
+    });
+
+    it("should exclude UI node connected to a step", () => {
+      const graph: GraphDescriptor = {
+        nodes: [
+          { id: "ui1", type: UI_NODE_TYPE },
+          { id: "step1", type: "process" },
+        ],
+        edges: [{ from: "ui1", to: "step1", out: "context", in: "context" }],
+      };
+      const result = createPlan(graph);
+
+      assert.equal(result.stages.length, 1);
+      assert.equal(result.stages[0].length, 1);
+      assert.equal(result.stages[0][0].node.id, "step1");
+    });
+
+    it("should exclude UI node without affecting the rest of a chain", () => {
+      const graph: GraphDescriptor = {
+        nodes: [
+          { id: "ui1", type: UI_NODE_TYPE },
+          { id: "step1", type: "process" },
+          { id: "step2", type: "output" },
+        ],
+        edges: [
+          { from: "ui1", to: "step1", out: "context", in: "context" },
+          { from: "step1", to: "step2", out: "result", in: "final" },
+        ],
+      };
+      const result = createPlan(graph);
+
+      assert.equal(result.stages.length, 2);
+      assert.equal(result.stages[0][0].node.id, "step1");
+      assert.equal(result.stages[1][0].node.id, "step2");
+
+      // The UI edge should not appear in step1's upstream
+      assert.equal(result.stages[0][0].upstream.length, 0);
+    });
+
+    it("should not include UI nodes in any stage of a complex graph", () => {
+      const graph: GraphDescriptor = {
+        nodes: [
+          { id: "input", type: "input" },
+          { id: "ui1", type: UI_NODE_TYPE },
+          { id: "step1", type: "process" },
+          { id: "output", type: "output" },
+        ],
+        edges: [
+          { from: "input", to: "step1", out: "data", in: "input" },
+          { from: "ui1", to: "step1", out: "context", in: "context" },
+          { from: "step1", to: "output", out: "result", in: "final" },
+        ],
+      };
+      const result = createPlan(graph);
+
+      const allNodeIds = result.stages.flatMap((stage) =>
+        stage.map((info) => info.node.id)
+      );
+      assert.ok(!allNodeIds.includes("ui1"));
+      assert.ok(allNodeIds.includes("input"));
+      assert.ok(allNodeIds.includes("step1"));
+      assert.ok(allNodeIds.includes("output"));
+    });
+  });
 });
