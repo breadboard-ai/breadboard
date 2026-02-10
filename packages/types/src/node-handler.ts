@@ -336,32 +336,6 @@ export interface NodeHandlerContext {
   readonly loader?: GraphLoader;
   readonly outerGraph?: GraphDescriptor;
   readonly probe?: Probe;
-  /**
-   * Allows a step to request inputs mid-run (aka "bubbling inputs")
-   *
-   * @param schema - the schema of an object describing requested properties
-   * @param node - information about the node that requested properties
-   * @param path - path to the node that requested properties
-   * @param state - the curren run state
-   * @returns
-   */
-  readonly requestInput?: (
-    schema: Schema,
-    node: NodeDescriptor,
-    path: number[]
-  ) => Promise<OutputValues | undefined>;
-  /**
-   * Provide output directly to the user. This will bypass the normal output
-   * flow and will not be passed as outputs.
-   * @param output - The values to provide
-   * @param schema - The schema to use for the output
-   * @returns - Promise that resolves when the output is provided
-   */
-  readonly provideOutput?: (
-    outputs: OutputValues,
-    descriptor: NodeDescriptor,
-    path: number[]
-  ) => Promise<void>;
   readonly invocationPath?: number[];
   /**
    * The `AbortSignal` that can be used to stop the board run.

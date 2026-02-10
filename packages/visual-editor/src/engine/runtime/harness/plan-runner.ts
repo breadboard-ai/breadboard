@@ -53,7 +53,7 @@ import {
   StartEvent,
 } from "./events.js";
 
-import { fromProbe, fromRunnerResult } from "./local.js";
+import { fromProbe } from "./local.js";
 import { isLLMContentArray } from "../../../data/common.js";
 import {
   augmentWithSkipOutputs,
@@ -513,23 +513,7 @@ class InternalRunStateController {
         currentStep: task.node,
         currentGraph: this.graph,
       },
-      { graph: this.graph },
-      async (result) => {
-        const harnessResult = fromRunnerResult(result);
-        if (harnessResult.type === "input" && harnessResult.data.bubbled) {
-          this.orchestrator.setWaiting(task.node.id);
-          return this.callback({
-            ...harnessResult,
-            reply: async (inputs) => {
-              if (!signal.aborted) {
-                this.orchestrator.setWorking(task.node.id);
-              }
-              return harnessResult.reply(inputs);
-            },
-          });
-        }
-        return this.callback(harnessResult);
-      }
+      { graph: this.graph }
     );
     const nodeConfiguration = getLatestConfig(
       task.node.id,
@@ -753,6 +737,7 @@ class InternalRunStateController {
       base,
       signal,
       graphStore,
+      sandbox: graphStore?.sandbox,
       fetchWithCreds,
       getProjectRunState,
       clientDeploymentConfiguration,
