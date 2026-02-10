@@ -13,7 +13,6 @@ import { PidginTranslator } from "../agent/pidgin-translator.js";
 import { AgentUI } from "../agent/ui.js";
 import { AgentFileSystem } from "../agent/file-system.js";
 import { MemoryManager } from "../agent/types.js";
-import { session } from "../../../eval/eval.js";
 
 const OPAL_ADK_ENDPOINT = new URL(
   "v1beta1/executeAgentNodeStream",
