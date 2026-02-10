@@ -8,11 +8,6 @@
 // but really don't want to in the long run
 
 // Move to `invoke` (or something) package.
-export {
-  describerResultToNodeHandlerMetadata,
-  getGraphHandlerFromMutableGraph,
-} from "./graph-based-node-handler.js";
-// Move to `invoke` (or something) package.
 export { getHandler } from "./handler.js";
 // Move `GraphDescriberManager` to `runtime` package
 export { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";

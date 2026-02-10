@@ -20,7 +20,7 @@ import type {
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import { graphUrlLike } from "@breadboard-ai/utils";
-import { GraphNodeType } from "./graph-node-type.js";
+import { A2NodeType } from "./a2-node-type.js";
 import { portsFromHandler } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 
@@ -120,21 +120,18 @@ const collectKits = (
       };
       return {
         descriptor,
-        nodeTypes: collectNodeTypes(kit.handlers, mutable),
+        nodeTypes: collectNodeTypes(kit.handlers),
       };
     }),
   ];
 };
 
-const collectNodeTypes = (
-  handlers: NodeHandlers,
-  mutable: MutableGraph
-): InspectableNodeType[] => {
+const collectNodeTypes = (handlers: NodeHandlers): InspectableNodeType[] => {
   return Object.entries(handlers)
     .sort()
     .map(([type, handler]) => {
       if (graphUrlLike(type)) {
-        return new GraphNodeType(type, mutable);
+        return new A2NodeType(type);
       }
       return new KitNodeType(type, handler);
     });

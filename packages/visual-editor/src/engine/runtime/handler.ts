@@ -14,8 +14,6 @@ import type {
   NodeTypeIdentifier,
   OutputValues,
 } from "@breadboard-ai/types";
-import { graphUrlLike } from "@breadboard-ai/utils";
-import { GraphBasedNodeHandler } from "./graph-based-node-handler.js";
 import { A2_COMPONENT_MAP } from "../../a2/a2-registry.js";
 import {
   A2ModuleFactory,
@@ -104,15 +102,6 @@ export async function getHandler(
   const kitHandler = handlers[type];
   if (kitHandler) {
     return kitHandler;
-  }
-  // Fallback for URL-like types (graph-based components)
-  // used by the inspector for describe/metadata.
-  // Note: invoke() will throw since graph-based execution is removed.
-  if (graphUrlLike(type) && context.graphStore) {
-    const loadResult = await context.graphStore.load(type, context);
-    if (loadResult.success) {
-      return new GraphBasedNodeHandler(loadResult, type);
-    }
   }
   throw new Error(`No handler for node type "${type}"`);
 }
