@@ -18,6 +18,7 @@ import { StatusUpdateCallbackOptions } from "./function-definition.js";
 import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
 import { ConsoleWorkItem } from "./console-work-item.js";
 import { ProgressReporter } from "./types.js";
+import { StreamingRequestBody } from "../a2/opal-adk-stream.js";
 
 export { ConsoleProgressManager };
 
@@ -144,11 +145,19 @@ class ConsoleProgressManager implements AgentProgressManager {
     );
   }
 
+  sendOpalAdkRequest(model: string, body: StreamingRequestBody) {
+    this.sendRequestCommon(model, body as JsonSerializable);
+  }
+
   /**
    * The agent sent initial request.
    * Appends to the agent session WorkItem.
    */
   sendRequest(model: string, body: GeminiBody) {
+    this.sendRequestCommon(model, body as JsonSerializable);
+  }
+
+  private sendRequestCommon(model: string, body: JsonSerializable) {
     if (this.#agentSession) {
       this.#agentSession.addProduct({
         type: "text",
@@ -157,7 +166,7 @@ class ConsoleProgressManager implements AgentProgressManager {
         body: {
           parts: [
             { text: `Calling model: ${model}` },
-            { json: body as JsonSerializable },
+            { json: body },
           ],
         },
       });

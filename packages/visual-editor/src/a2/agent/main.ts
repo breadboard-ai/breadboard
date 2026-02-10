@@ -24,6 +24,7 @@ import { callVideoGen } from "../video-generator/main.js";
 import { callAudioGen } from "../audio-generator/main.js";
 import { callMusicGen } from "../music-generator/main.js";
 import { Generators } from "./types.js";
+import { invokeAgentAdk } from "./agent-adk.js";
 
 export { invoke as default, computeAgentSchema, describe };
 
@@ -42,7 +43,7 @@ export type AgentInputs = {
   "b-ui-prompt": LLMContent;
 } & Params;
 
-type AgentOutputs = {
+export type AgentOutputs = {
   [key: string]: LLMContent[];
 };
 
@@ -53,22 +54,22 @@ function computeAgentSchema(
   const uiPromptSchema: Schema["properties"] =
     flags?.consistentUI && enableA2UI
       ? {
-          "b-ui-prompt": {
-            type: "object",
-            behavior: ["llm-content", "config", "hint-advanced"],
-            title: "UI Layout instructions",
-            description: "Instructions for UI layout",
-          },
-        }
+        "b-ui-prompt": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "UI Layout instructions",
+          description: "Instructions for UI layout",
+        },
+      }
       : {};
   const uiConsistent: Schema["properties"] = flags?.consistentUI
     ? {
-        "b-ui-consistent": {
-          type: "boolean",
-          title: "Use A2UI",
-          behavior: ["config", "hint-advanced", "reactive"],
-        },
-      }
+      "b-ui-consistent": {
+        type: "boolean",
+        title: "Use A2UI",
+        behavior: ["config", "hint-advanced", "reactive"],
+      },
+    }
     : {};
   return {
     config$prompt: {
@@ -82,7 +83,20 @@ function computeAgentSchema(
   } satisfies Schema["properties"];
 }
 
-async function invoke(
+export async function toAgentOutputs(results?: LLMContent, href?: string): Promise<AgentOutputs> {
+  const context: LLMContent[] = [];
+  if (results) {
+    context.push(results);
+  }
+  if (!href || href === "/") {
+    href = "context";
+  }
+  return {
+    [href]: context,
+  };
+}
+
+async function invokeAgent(
   {
     config$prompt: objective,
     "b-ui-consistent": enableA2UI = false,
@@ -105,15 +119,22 @@ async function invoke(
   });
   if (!ok(result)) return result;
   console.log("LOOP", result);
-  const context: LLMContent[] = [];
-  if (result.outcomes) {
-    context.push(result.outcomes);
+  return toAgentOutputs(result.outcomes, result.href);
+}
+
+async function invoke(
+  inputs: AgentInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<AgentOutputs>> {
+  const flags = await moduleArgs.context.flags?.flags();
+  const opalAdkEnabled = flags?.opalAdk || false;
+
+  if (opalAdkEnabled) {
+    return invokeAgentAdk(inputs, caps, moduleArgs);
+  } else {
+    return invokeAgent(inputs, caps, moduleArgs);
   }
-  let route = result.href;
-  if (!route || route === "/") {
-    route = "context";
-  }
-  return { [route]: context };
 }
 
 async function describe(
