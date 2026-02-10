@@ -13,6 +13,7 @@ import { PidginTranslator } from "../agent/pidgin-translator.js";
 import { AgentUI } from "../agent/ui.js";
 import { AgentFileSystem } from "../agent/file-system.js";
 import { MemoryManager } from "../agent/types.js";
+import { session } from "../../../eval/eval.js";
 
 const DEFAULT_OPAL_ADK_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeAgentNodeStream";
@@ -69,6 +70,7 @@ export interface BuildStreamingRequestBodyOptions {
   uiPrompt?: LLMContent;
   nodeApi?: string;
   invocationId?: string;
+  sessionId?: string;
 }
 
 type StreamingRequestPart = {
@@ -77,6 +79,7 @@ type StreamingRequestPart = {
 };
 
 type StreamingRequestBody = {
+  session_id?: string;
   objective?: LLMContent;
   model_name?: string;
   invocation_id?: string;
@@ -151,6 +154,7 @@ class OpalAdkStream {
       uiPrompt,
       nodeApi,
       invocationId,
+      sessionId,
     } = options;
     console.log("uiType: ", uiType);
     const contents: NonNullable<StreamingRequestBody["contents"]> = [];
@@ -196,6 +200,10 @@ class OpalAdkStream {
       }
     }
 
+    if (sessionId !== undefined) {
+      baseBody.session_id = sessionId;
+    }
+
     if (invocationId !== undefined) {
       baseBody.invocation_id = invocationId
     }
@@ -209,7 +217,8 @@ class OpalAdkStream {
     modelConstraint?: ModelConstraint,
     uiType?: string,
     uiPrompt?: LLMContent,
-    invocationId?: string): Promise<Outcome<LLMContent>> {
+    invocationId?: string,
+    sessionId?: string): Promise<Outcome<LLMContent>> {
     const ui = this.ui;
 
     if (!params || params.length === 0) {
@@ -235,6 +244,7 @@ class OpalAdkStream {
         uiPrompt,
         nodeApi: opalAdkAgent,
         invocationId,
+        sessionId
       });
 
       ui.progress.sendOpalAdkRequest("", requestBody)
