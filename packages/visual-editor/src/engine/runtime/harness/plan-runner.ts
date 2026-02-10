@@ -9,9 +9,7 @@ import {
   FileSystemEntry,
   GraphDescriptor,
   HarnessRunner,
-  InputValues,
   NodeConfiguration,
-  NodeDescriptor,
   NodeHandlerContext,
   NodeIdentifier,
   NodeLifecycleState,
@@ -25,7 +23,6 @@ import {
   RunConfig,
   RunEventTarget,
   Task,
-  TraversalResult,
 } from "@breadboard-ai/types";
 
 import { err, ok, timestamp } from "@breadboard-ai/utils";
@@ -297,31 +294,6 @@ class InternalRunStateController {
     return error;
   }
 
-  fromTask(
-    descriptor: NodeDescriptor,
-    inputs: InputValues,
-    config: NodeConfiguration
-  ): TraversalResult {
-    // This is probably wrong, dig in later.
-    return {
-      descriptor,
-      inputs: { ...config, ...inputs },
-      missingInputs: [],
-      current: { from: "", to: "" },
-      opportunities: [],
-      newOpportunities: [],
-      partialOutputs: {},
-      state: {
-        state: new Map(),
-        constants: new Map(),
-        wireOutputs: () => {},
-        getAvailableInputs: () => ({}),
-        useInputs: () => {},
-      },
-      skip: false,
-    };
-  }
-
   async runTask(task: Task): Promise<TaskStatus> {
     const context = this.context;
 
@@ -381,11 +353,8 @@ class InternalRunStateController {
         outputs = augmentWithSkipOutputs(
           nodeConfiguration,
           await invoker.invokeNode(
-            this.fromTask(
-              task.node,
-              controlState.adjustedInputs,
-              nodeConfiguration
-            ),
+            task.node,
+            { ...nodeConfiguration, ...controlState.adjustedInputs },
             path
           )
         );

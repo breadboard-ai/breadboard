@@ -8,10 +8,10 @@ import type {
   GraphToRun,
   InputValues,
   JsonSerializable,
+  NodeDescriptor,
   NodeHandlerContext,
   OutputValues,
   RunArguments,
-  TraversalResult,
 } from "@breadboard-ai/types";
 import { FileSystemEntry } from "@breadboard-ai/types";
 
@@ -22,26 +22,16 @@ import { resolveBoardCapabilitiesInInputs } from "../../loader/capability.js";
 export class NodeInvoker {
   #graph: GraphToRun;
   #context: NodeHandlerContext;
-  #initialInputs?: InputValues;
 
   constructor(args: RunArguments, graph: GraphToRun) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { inputs, start, stopAfter, ...context } = args;
     this.#graph = graph;
     this.#context = context;
-    this.#initialInputs = inputs;
-  }
-
-  #adjustInputs(result: TraversalResult) {
-    const { inputs, current } = result;
-    if (current.from === "$entry") {
-      return { ...inputs, ...this.#initialInputs };
-    }
-    return inputs;
   }
 
   #updateEnvDescriptor(
-    result: TraversalResult,
+    descriptor: NodeDescriptor,
     context: NodeHandlerContext
   ): FileSystemEntry[] {
     const currentEnv = context.fileSystem?.env() || [];
@@ -50,15 +40,15 @@ export class NodeInvoker {
       ...currentEnv,
       {
         path: `/env/descriptor`,
-        data: [{ parts: [{ json: result.descriptor as JsonSerializable }] }],
+        data: [{ parts: [{ json: descriptor as JsonSerializable }] }],
       },
     ];
   }
 
-  #updateStepInfo(result: TraversalResult, context: NodeHandlerContext) {
+  #updateStepInfo(descriptor: NodeDescriptor, context: NodeHandlerContext) {
     const fileSystem = context.fileSystem?.createModuleFileSystem({
       graphUrl: this.#graph.graph.url!,
-      env: this.#updateEnvDescriptor(result, context),
+      env: this.#updateEnvDescriptor(descriptor, context),
     });
     return {
       ...context,
@@ -66,10 +56,11 @@ export class NodeInvoker {
     };
   }
 
-  async invokeNode(result: TraversalResult, invocationPath: number[]) {
-    const { descriptor } = result;
-    const inputs = this.#adjustInputs(result);
-
+  async invokeNode(
+    descriptor: NodeDescriptor,
+    inputs: InputValues,
+    invocationPath: number[]
+  ) {
     const { kits = [], base = SENTINEL_BASE_URL } = this.#context;
     let outputs: OutputValues | undefined = undefined;
 
@@ -96,7 +87,7 @@ export class NodeInvoker {
 
     // only for top-level steps, update env with the current step
     if (invocationPath.length === 1) {
-      newContext = this.#updateStepInfo(result, newContext);
+      newContext = this.#updateStepInfo(descriptor, newContext);
     }
 
     outputs = (await callHandler(
