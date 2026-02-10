@@ -7,17 +7,15 @@
 import type {
   GraphToRun,
   InputValues,
-  JsonSerializable,
   NodeDescriptor,
   NodeHandlerContext,
   OutputValues,
   RunArguments,
 } from "@breadboard-ai/types";
-import { FileSystemEntry } from "@breadboard-ai/types";
 
-import { callHandler, getHandler } from "../handler.js";
-import { resolveGraph, SENTINEL_BASE_URL } from "../../loader/loader.js";
 import { resolveBoardCapabilitiesInInputs } from "../../loader/capability.js";
+import { resolveGraph, SENTINEL_BASE_URL } from "../../loader/loader.js";
+import { callHandler, getHandler } from "../handler.js";
 
 export class NodeInvoker {
   #graph: GraphToRun;
@@ -30,25 +28,9 @@ export class NodeInvoker {
     this.#context = context;
   }
 
-  #updateEnvDescriptor(
-    descriptor: NodeDescriptor,
-    context: NodeHandlerContext
-  ): FileSystemEntry[] {
-    const currentEnv = context.fileSystem?.env() || [];
-
-    return [
-      ...currentEnv,
-      {
-        path: `/env/descriptor`,
-        data: [{ parts: [{ json: descriptor as JsonSerializable }] }],
-      },
-    ];
-  }
-
-  #updateStepInfo(descriptor: NodeDescriptor, context: NodeHandlerContext) {
+  #updateStepInfo(context: NodeHandlerContext) {
     const fileSystem = context.fileSystem?.createModuleFileSystem({
       graphUrl: this.#graph.graph.url!,
-      env: this.#updateEnvDescriptor(descriptor, context),
     });
     return {
       ...context,
@@ -87,7 +69,7 @@ export class NodeInvoker {
 
     // only for top-level steps, update env with the current step
     if (invocationPath.length === 1) {
-      newContext = this.#updateStepInfo(descriptor, newContext);
+      newContext = this.#updateStepInfo(newContext);
     }
 
     outputs = (await callHandler(
