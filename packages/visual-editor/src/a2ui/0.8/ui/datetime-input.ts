@@ -18,10 +18,7 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { classMap } from "lit/directives/class-map.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-datetimeinput")
 export class DateTimeInput extends Root {
@@ -38,7 +35,6 @@ export class DateTimeInput extends Root {
   accessor enableTime = true;
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -53,10 +49,12 @@ export class DateTimeInput extends Root {
 
       input {
         display: block;
-        border-radius: 8px;
-        padding: 8px;
-        border: 1px solid #ccc;
         width: 100%;
+        padding: var(--a2ui-spacing-2) var(--a2ui-spacing-3);
+        border-radius: var(--a2ui-input-radius, var(--a2ui-border-radius-full));
+        border: var(--a2ui-border-width) solid var(--a2ui-color-border);
+        font-family: var(--a2ui-font-family);
+        color: var(--a2ui-color-on-surface);
       }
     `,
   ];
@@ -83,20 +81,10 @@ export class DateTimeInput extends Root {
   }
 
   #renderField(value: string) {
-    return html`<section
-      class=${classMap(this.theme.components.DateTimeInput.container)}
-    >
-      <label
-        for="data"
-        class=${classMap(this.theme.components.DateTimeInput.label)}
-        >${this.#getPlaceholderText()}</label
-      >
+    return html`<section>
+      <label for="data">${this.#getPlaceholderText()}</label>
       <input
         autocomplete="off"
-        class=${classMap(this.theme.components.DateTimeInput.element)}
-        style=${this.theme.additionalStyles?.DateTimeInput
-          ? styleMap(this.theme.additionalStyles?.DateTimeInput)
-          : nothing}
         @input=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;

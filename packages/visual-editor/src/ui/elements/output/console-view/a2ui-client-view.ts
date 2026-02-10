@@ -14,7 +14,10 @@ import { A2UIServerReceiver } from "@breadboard-ai/types";
 
 import { v0_8 } from "../../../../a2ui/index.js";
 import * as A2UI from "../../../../a2ui/0.8/ui/ui.js";
-import { theme as uiTheme } from "../../../a2ui-theme/a2ui-theme.js";
+import {
+  theme as uiTheme,
+  applyTokens,
+} from "../../../a2ui-theme/a2ui-theme.js";
 
 import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
@@ -24,6 +27,11 @@ import { sharedStyles } from "./shared-styles.js";
 export class A2UIClientView extends SignalWatcher(LitElement) {
   @provide({ context: A2UI.Context.themeContext })
   accessor theme: v0_8.Types.Theme = uiTheme;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    applyTokens(this, this.theme.tokens);
+  }
 
   @property()
   accessor processor: v0_8.Types.ModelProcessor | null = null;

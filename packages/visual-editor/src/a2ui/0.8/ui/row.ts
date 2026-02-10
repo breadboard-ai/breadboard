@@ -14,13 +14,10 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
-import { classMap } from "lit/directives/class-map.js";
 import { ResolvedRow } from "../types/types.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-row")
 export class Row extends Root {
@@ -31,7 +28,6 @@ export class Row extends Root {
   accessor distribution: ResolvedRow["distribution"] = "start";
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -47,6 +43,7 @@ export class Row extends Root {
         flex-direction: row;
         width: 100%;
         min-height: 100%;
+        gap: var(--a2ui-row-gap, var(--a2ui-spacing-4));
       }
 
       :host([alignment="start"]) section {
@@ -92,12 +89,7 @@ export class Row extends Root {
   ];
 
   render() {
-    return html`<section
-      class=${classMap(this.theme.components.Row)}
-      style=${this.theme.additionalStyles?.Row
-        ? styleMap(this.theme.additionalStyles?.Row)
-        : nothing}
-    >
+    return html`<section>
       <slot></slot>
     </section>`;
   }

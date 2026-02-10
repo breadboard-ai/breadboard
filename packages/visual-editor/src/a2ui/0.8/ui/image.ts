@@ -18,12 +18,8 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { classMap } from "lit/directives/class-map.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 import { ResolvedImage } from "../types/types.js";
-import { Styles } from "../index.js";
 
 @customElement("a2ui-image")
 export class Image extends Root {
@@ -34,7 +30,6 @@ export class Image extends Root {
   accessor usageHint: ResolvedImage["usageHint"] | null = null;
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -45,12 +40,21 @@ export class Image extends Root {
         flex: var(--weight);
         min-height: 0;
         overflow: auto;
+        padding: var(--a2ui-image-padding, 0);
+      }
+
+      section {
+        border-radius: var(--a2ui-image-radius, 20px);
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
 
       img {
         display: block;
         width: 100%;
         height: auto;
+        border-radius: inherit;
       }
     `,
   ];
@@ -96,18 +100,6 @@ export class Image extends Root {
   }
 
   render() {
-    const classes = Styles.merge(
-      this.theme.components.Image.all,
-      this.usageHint ? this.theme.components.Image[this.usageHint] : {}
-    );
-
-    return html`<section
-      class=${classMap(classes)}
-      style=${this.theme.additionalStyles?.Image
-        ? styleMap(this.theme.additionalStyles?.Image)
-        : nothing}
-    >
-      ${this.#renderImage()}
-    </section>`;
+    return html`<section>${this.#renderImage()}</section>`;
   }
 }

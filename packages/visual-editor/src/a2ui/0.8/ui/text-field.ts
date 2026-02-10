@@ -18,12 +18,9 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { classMap } from "lit/directives/class-map.js";
 import { ResolvedTextField } from "../types/types.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { styleMap } from "lit/directives/style-map.js";
 import { extractStringValue } from "./utils/utils.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-textfield")
 export class TextField extends Root {
@@ -37,7 +34,6 @@ export class TextField extends Root {
   accessor inputType: ResolvedTextField["type"] | null = null;
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -48,14 +44,34 @@ export class TextField extends Root {
         flex: var(--weight);
       }
 
-      input {
-        display: block;
+      section {
+        font-size: 14px;
+        line-height: 20px;
         width: 100%;
+        gap: var(--a2ui-spacing-2);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
       }
 
       label {
         display: block;
         margin-bottom: 4px;
+        flex: 0 0 auto;
+      }
+
+      input {
+        display: block;
+        width: 100%;
+        font-size: 14px;
+        line-height: 20px;
+        padding: var(--a2ui-spacing-2) var(--a2ui-spacing-3);
+        border-radius: var(--a2ui-input-radius, var(--a2ui-border-radius-full));
+        border: var(--a2ui-border-width) solid
+          var(--a2ui-input-border-color, var(--a2ui-color-border));
+        background: var(--a2ui-input-bg, var(--a2ui-color-surface));
+        color: var(--a2ui-color-on-surface);
+        font-family: var(--a2ui-font-family);
       }
     `,
   ];
@@ -80,22 +96,12 @@ export class TextField extends Root {
   }
 
   #renderField(value: string | number, label: string) {
-    return html` <section
-      class=${classMap(this.theme.components.TextField.container)}
-    >
+    return html` <section>
       ${label && label !== ""
-        ? html`<label
-            class=${classMap(this.theme.components.TextField.label)}
-            for="data"
-            >${label}</label
-          >`
+        ? html`<label for="data">${label}</label>`
         : nothing}
       <input
         autocomplete="off"
-        class=${classMap(this.theme.components.TextField.element)}
-        style=${this.theme.additionalStyles?.TextField
-          ? styleMap(this.theme.additionalStyles?.TextField)
-          : nothing}
         @input=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;

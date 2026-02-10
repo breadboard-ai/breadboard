@@ -20,9 +20,6 @@ import { Root } from "./root.js";
 import { NumberValue, StringValue } from "../types/primitives.js";
 import { ResolvedTextField } from "../types/types.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { classMap } from "lit/directives/class-map.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 import { extractNumberValue } from "./utils/utils.js";
 
 @customElement("a2ui-slider")
@@ -43,7 +40,6 @@ export class Slider extends Root {
   accessor inputType: ResolvedTextField["type"] | null = null;
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -54,12 +50,19 @@ export class Slider extends Root {
         flex: var(--weight);
       }
 
+      section {
+        display: flex;
+        flex-direction: row;
+        gap: var(--a2ui-spacing-2);
+        padding: var(--a2ui-spacing-4);
+        border-radius: var(--a2ui-border-radius);
+        margin: var(--a2ui-spacing-2) 0;
+        border: var(--a2ui-border-width) solid var(--a2ui-color-border);
+      }
+
       input {
         display: block;
         width: 100%;
-      }
-
-      .description {
       }
     `,
   ];
@@ -86,18 +89,10 @@ export class Slider extends Root {
   }
 
   #renderField(value: string | number) {
-    return html`<section
-      class=${classMap(this.theme.components.Slider.container)}
-    >
-      <label class=${classMap(this.theme.components.Slider.label)} for="data">
-        ${this.label?.literalString ?? ""}
-      </label>
+    return html`<section>
+      <label for="data"> ${this.label?.literalString ?? ""} </label>
       <input
         autocomplete="off"
-        class=${classMap(this.theme.components.Slider.element)}
-        style=${this.theme.additionalStyles?.Slider
-          ? styleMap(this.theme.additionalStyles?.Slider)
-          : nothing}
         @input=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;
@@ -112,7 +107,7 @@ export class Slider extends Root {
         min=${this.minValue ?? "0"}
         max=${this.maxValue ?? "0"}
       />
-      <span class=${classMap(this.theme.components.Slider.label)}
+      <span
         >${this.value
           ? extractNumberValue(
               this.value,

@@ -14,14 +14,11 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StateEvent } from "../events/events.js";
-import { classMap } from "lit/directives/class-map.js";
 import { Action } from "../types/components.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 
 @customElement("a2ui-button")
 export class Button extends Root {
@@ -29,23 +26,60 @@ export class Button extends Root {
   accessor action: Action | null = null;
 
   static styles = [
-    structuralStyles,
     css`
+      * {
+        box-sizing: border-box;
+      }
+
       :host {
-        display: block;
+        display: flex;
         flex: var(--weight);
         min-height: 0;
         overflow: auto;
+      }
+
+      button {
+        font-family: var(--a2ui-font-family-flex);
+        font-style: normal;
+        font-weight: 500;
+        padding: 0;
+        border-radius: var(--a2ui-button-radius, var(--a2ui-border-radius-lg));
+        border: none;
+        background: var(--a2ui-button-bg, var(--a2ui-color-primary));
+        color: var(--a2ui-button-color, var(--a2ui-color-on-primary));
+        cursor: pointer;
+        transition: opacity var(--a2ui-transition-speed) ease;
+        overflow: hidden;
+
+        /* Override text colors for slotted children (e.g. Text) */
+        --a2ui-color-on-surface: var(
+          --a2ui-button-color,
+          var(--a2ui-color-on-primary)
+        );
+        --a2ui-color-secondary: var(
+          --a2ui-button-color,
+          var(--a2ui-color-on-primary)
+        );
+
+        /* Child component padding — text gets padding, media is full-bleed.
+           All overridable via theme's Button overrides. */
+        --a2ui-text-padding: var(
+          --a2ui-button-text-padding,
+          var(--a2ui-spacing-4)
+        );
+        --a2ui-image-padding: var(--a2ui-button-image-padding, 0);
+        --a2ui-video-padding: var(--a2ui-button-video-padding, 0);
+        --a2ui-audio-padding: var(--a2ui-button-audio-padding, 0);
+      }
+
+      button:hover {
+        opacity: var(--a2ui-hover-opacity);
       }
     `,
   ];
 
   render() {
     return html`<button
-      class=${classMap(this.theme.components.Button)}
-      style=${this.theme.additionalStyles?.Button
-        ? styleMap(this.theme.additionalStyles?.Button)
-        : nothing}
       @click=${() => {
         if (!this.action) {
           return;

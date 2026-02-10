@@ -7,7 +7,6 @@
 import * as A2UI from "../../../../a2ui/index.js";
 import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { unsafeCSS } from "lit";
 import { until } from "lit/directives/until.js";
 import { nothing } from "lit";
 
@@ -22,7 +21,6 @@ export class A2UICustomHTML extends A2UI.v0_8.UI.Root {
   accessor url: A2UI.v0_8.Primitives.StringValue | null = null;
 
   static styles = [
-    unsafeCSS(A2UI.v0_8.Styles.structuralStyles),
     css`
       :host {
         display: block;
