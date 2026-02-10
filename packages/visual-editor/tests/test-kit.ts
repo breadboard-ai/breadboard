@@ -5,7 +5,7 @@
  */
 
 import { getGraphDescriptor } from "../src/engine/loader/capability.js";
-import { invokeGraph } from "../src/engine/runtime/legacy.js";
+import { invokeGraph } from "../src/engine/runtime/run/invoke-graph.js";
 import { InputValues, Kit, OutputValues } from "@breadboard-ai/types";
 
 // A simplest possible re-implementation of some nodes to be used in tests

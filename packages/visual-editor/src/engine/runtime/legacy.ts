@@ -15,7 +15,6 @@ export {
   getHandler,
   getGraphHandler,
 } from "./handler.js";
-export { invokeGraph } from "./run/invoke-graph.js";
 // Move `GraphDescriberManager` to `runtime` package
 export { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
 // Move `GraphDescriberManager` to `runtime` package

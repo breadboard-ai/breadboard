@@ -7,9 +7,9 @@
 import {
   CapabilitiesManagerImpl,
   invokeDescriber,
-  invokeGraph,
   invokeMainDescriber,
 } from "../../runtime/legacy.js";
+import { invokeGraph } from "../../runtime/run/invoke-graph.js";
 import type {
   GraphDescriber,
   GraphIdentifier,
