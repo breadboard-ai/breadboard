@@ -5,12 +5,10 @@
  */
 
 import {
-  AnyClientRunResult,
   BreakpointSpec,
   FileSystemEntry,
   GraphDescriptor,
   HarnessRunner,
-  HarnessRunResult,
   InputValues,
   NodeConfiguration,
   NodeDescriptor,
@@ -23,13 +21,14 @@ import {
   Outcome,
   PlanNodeInfo,
   Probe,
+  ProbeMessage,
   RunConfig,
   RunEventTarget,
   Task,
   TraversalResult,
 } from "@breadboard-ai/types";
 
-import { asyncGen, err, ok, timestamp } from "@breadboard-ai/utils";
+import { err, ok, timestamp } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { NodeInvoker } from "../run/node-invoker.js";
@@ -41,19 +40,14 @@ import {
   EndEvent,
   GraphEndEvent,
   GraphStartEvent,
-  InputEvent,
-  NextEvent,
   NodeEndEvent,
   NodeStartEvent,
-  OutputEvent,
   PauseEvent,
   ResumeEvent,
   RunnerErrorEvent,
   SkipEvent,
   StartEvent,
 } from "./events.js";
-
-import { fromProbe } from "./local.js";
 import { isLLMContentArray } from "../../../data/common.js";
 import {
   augmentWithSkipOutputs,
@@ -78,136 +72,43 @@ class PlanRunner
   #controller: InternalRunStateController | null = null;
 
   readonly config: RunConfig;
-  #run: AsyncGenerator<AnyClientRunResult, void, unknown> | null = null;
-  #pendingResult: HarnessRunResult | null = null;
-  #inRun = false;
-  #resumeWith: InputValues | undefined;
 
   running() {
-    return !!this.#run && !this.#pendingResult;
+    return !!this.#controller;
   }
 
-  start(): Promise<void> {
-    return this.run();
-  }
-
-  resumeWithInputs(inputs: InputValues): Promise<void> {
-    return this.run(inputs);
-  }
-
-  private async run(
-    inputs?: InputValues,
-    interactiveMode = false
-  ): Promise<void> {
-    if (this.#inRun) {
-      if (!inputs) {
-        // This is a situation when the "Start" button is clicked on a run
-        // while we're paused. This may happen when the first step is
-        // interrupted.
-        await this.#controller?.restart();
-        return;
-      }
-      this.#resumeWith = inputs;
+  async start(): Promise<void> {
+    if (this.#controller) {
+      // Already running — restart at current stage (e.g., "Start" clicked
+      // while paused at a breakpoint).
+      await this.#controller.restart();
       return;
     }
-    this.#inRun = true;
-    try {
-      const eventArgs = {
-        inputs,
-        timestamp: timestamp(),
-      };
-      const starting = !this.#run;
+    this.#createController();
+    this.dispatchEvent(new StartEvent({ timestamp: timestamp() }));
+    await this.#controller!.run();
+  }
 
-      if (!this.#run) {
-        this.#run = this.getGenerator(interactiveMode);
-      } else if (this.#pendingResult) {
-        this.#pendingResult.reply({ inputs: inputs ?? {} });
-        inputs = undefined;
-      }
-      this.#pendingResult = null;
-
-      this.dispatchEvent(
-        starting ? new StartEvent(eventArgs) : new ResumeEvent(eventArgs)
-      );
-
-      for (;;) {
-        console.assert(
-          this.#run,
-          "Expected run to exist. If not, we might be having a re-entrant run."
-        );
-        const result = await this.#run.next();
-        this.dispatchEvent(new NextEvent(result.value));
-        if (result.done) {
-          this.#run = null;
-          this.#pendingResult = null;
-          return;
+  #createController() {
+    if (this.#controller) return;
+    this.#controller = new InternalRunStateController(
+      this.config,
+      this.config.runner!,
+      this.#orchestrator,
+      this.breakpoints,
+      () => {
+        if (!this.#orchestrator.working) {
+          this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
         }
-        const { type, data, reply } = result.value;
-        switch (type) {
-          case "input": {
-            if (inputs) {
-              // When there are inputs to consume, consume them and
-              // continue the run.
-              this.dispatchEvent(new InputEvent(true, data));
-              reply({ inputs });
-              inputs = undefined;
-            } else {
-              // When there are no inputs to consume, pause the run
-              // and wait for the next input.
-              this.#pendingResult = result.value;
-              this.dispatchEvent(new InputEvent(false, data));
-              if (this.#resumeWith) {
-                reply({ inputs: this.#resumeWith });
-                this.#pendingResult = null;
-                this.#resumeWith = undefined;
-              } else {
-                this.dispatchEvent(
-                  new PauseEvent(false, {
-                    timestamp: timestamp(),
-                  })
-                );
-                return;
-              }
-            }
-            break;
-          }
-          case "error": {
-            this.dispatchEvent(new RunnerErrorEvent(data));
-            break;
-          }
-          case "end": {
-            this.dispatchEvent(new EndEvent(data));
-            break;
-          }
-          case "skip": {
-            this.dispatchEvent(new SkipEvent(data));
-            break;
-          }
-          case "graphstart": {
-            this.dispatchEvent(new GraphStartEvent(data));
-            break;
-          }
-          case "graphend": {
-            this.dispatchEvent(new GraphEndEvent(data));
-            break;
-          }
-          case "nodestart": {
-            this.dispatchEvent(new NodeStartEvent(data, result.value.result));
-            break;
-          }
-          case "nodeend": {
-            this.dispatchEvent(new NodeEndEvent(data));
-            break;
-          }
-          case "output": {
-            this.dispatchEvent(new OutputEvent(data));
-            break;
-          }
-        }
+      },
+      () => {
+        // Kick the run loop to pick up new tasks after a node is stopped.
+        this.#controller?.run();
+      },
+      (event: Event) => {
+        this.dispatchEvent(event);
       }
-    } finally {
-      this.#inRun = false;
-    }
+    );
   }
 
   @signal
@@ -310,8 +211,7 @@ class PlanRunner
 
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
     if (!this.#controller) {
-      // First, activate the run
-      this.run(undefined, true);
+      this.#createController();
     }
     if (!this.#orchestrator.working) {
       this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
@@ -339,8 +239,7 @@ class PlanRunner
     }
 
     if (!this.#controller || !this.running()) {
-      // If not already running, start a run in interactive mode
-      this.run(undefined, true);
+      this.#createController();
     } else if (!this.#orchestrator.working) {
       this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
     }
@@ -353,48 +252,6 @@ class PlanRunner
       this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
     }
     return outcome;
-  }
-
-  protected async *getGenerator(
-    interactiveMode = false
-  ): AsyncGenerator<HarnessRunResult, void, unknown> {
-    this.#controller = null;
-
-    yield* asyncGen<HarnessRunResult>(async (next) => {
-      this.#controller = new InternalRunStateController(
-        this.config,
-        this.config.runner!,
-        this.#orchestrator,
-        this.breakpoints,
-        () => {
-          if (!this.#orchestrator.working) {
-            this.dispatchEvent(
-              new PauseEvent(false, { timestamp: timestamp() })
-            );
-          }
-        },
-        (inputs) => {
-          // Do not restart the run when it's already running. Because this
-          // runner may run tasks in parallel, we may have situations where
-          // the `resume` is issued multiple times. In this case, we'll run
-          // into the case when the runner has already been restarted.
-          if (this.running()) return;
-          this.run(inputs);
-        },
-        next
-      );
-      if (!interactiveMode) {
-        // Start the first run.
-        await this.#controller.run();
-      }
-      // Return a promise that never resolves, since plan runner can run
-      // nodes even after the first run completes.
-      return new Promise((resolve) => {
-        this.config.signal?.addEventListener("abort", () => {
-          resolve();
-        });
-      });
-    });
   }
 
   async updateGraph(graph: GraphDescriptor) {
@@ -413,6 +270,7 @@ type TaskStatus = "breakpoint" | "success";
 
 class InternalRunStateController {
   #stopControllers: Map<NodeIdentifier, AbortController> = new Map();
+  #running = false;
 
   context: Promise<NodeHandlerContext>;
 
@@ -424,25 +282,23 @@ class InternalRunStateController {
     private orchestrator: Orchestrator,
     public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
     public readonly pause: () => void,
-    public readonly resume: (inputs?: InputValues) => void,
-    public readonly callback: (data: HarnessRunResult) => Promise<void>
+    public readonly resume: () => void,
+    public readonly dispatch: (event: Event) => void
   ) {
-    this.context = this.initializeNodeHandlerContext(callback);
+    this.context = this.initializeNodeHandlerContext();
   }
 
   path(): number[] {
     return [this.index++];
   }
 
-  async error(error: { $error: string }): Promise<{ $error: string }> {
-    await this.callback({
-      type: "error",
-      data: {
+  error(error: { $error: string }): { $error: string } {
+    this.dispatch(
+      new RunnerErrorEvent({
         error: error.$error,
         timestamp: timestamp(),
-      },
-      reply: async () => {},
-    });
+      })
+    );
     return error;
   }
 
@@ -485,16 +341,14 @@ class InternalRunStateController {
     }
 
     const path = this.path();
-    await this.callback({
-      type: "nodestart",
-      data: {
+    this.dispatch(
+      new NodeStartEvent({
         node: task.node,
         inputs: task.inputs,
         path,
         timestamp: timestamp(),
-      },
-      reply: async () => {},
-    });
+      })
+    );
     const working = this.orchestrator.setWorking(task.node.id);
     if (!ok(working)) {
       console.warn(working.$error);
@@ -560,60 +414,52 @@ class InternalRunStateController {
         }
       }
     }
-    await this.callback({
-      type: "nodeend",
-      data: {
+    this.dispatch(
+      new NodeEndEvent({
         node: task.node,
         inputs: task.inputs,
         outputs,
         path,
         newOpportunities: [],
         timestamp: timestamp(),
-      },
-      reply: async () => {},
-    });
+      })
+    );
     return "success";
   }
 
   async preamble(): Promise<NodeHandlerContext> {
     const context = await this.context;
     if (this.orchestrator.progress !== "initial") return context;
-    await this.callback({
-      type: "graphstart",
-      data: {
+    this.dispatch(
+      new GraphStartEvent({
         graph: this.graph,
         graphId: "",
         path: [],
         timestamp: timestamp(),
-      },
-      reply: async () => {},
-    });
+      })
+    );
     return context;
   }
 
-  async postamble() {
+  postamble() {
     if (this.orchestrator.progress !== "finished") return;
     if (this.orchestrator.failed) {
       this.pause();
       return;
     }
 
-    await this.callback({
-      type: "graphend",
-      data: {
+    this.dispatch(
+      new GraphEndEvent({
         path: [],
         timestamp: timestamp(),
-      },
-      reply: async () => {},
-    });
+      })
+    );
 
-    await this.callback({
-      type: "end",
-      data: {
+    this.dispatch(
+      new EndEvent({
         timestamp: timestamp(),
-      },
-      reply: async () => {},
-    });
+      })
+    );
   }
 
   #getOrCreateStopController(id: NodeIdentifier) {
@@ -629,38 +475,44 @@ class InternalRunStateController {
           ([, nodeState]) => nodeState.state === "waiting"
         ) || [];
       if (waitingId !== id) return;
-      this.resume({});
+      this.resume();
     });
     this.#stopControllers.set(id, stopController);
     return stopController;
   }
 
   async run() {
-    for (;;) {
-      if (this.orchestrator.progress === "finished") break;
+    if (this.#running) return;
+    this.#running = true;
+    try {
+      for (;;) {
+        if (this.orchestrator.progress === "finished") break;
 
-      const tasks = this.orchestrator.currentTasks();
-      if (!ok(tasks)) {
-        await this.error(tasks);
-        return;
-      }
-      if (tasks.length === 0) return;
+        const tasks = this.orchestrator.currentTasks();
+        if (!ok(tasks)) {
+          this.error(tasks);
+          return;
+        }
+        if (tasks.length === 0) return;
 
-      let breakpoint = false;
-      await Promise.all(
-        tasks.map(async (task) => {
-          const status = await this.runTask(task);
-          if (status === "breakpoint") {
-            breakpoint = true;
-          }
-        })
-      );
-      if (breakpoint) {
-        this.pause();
-        return;
+        let breakpoint = false;
+        await Promise.all(
+          tasks.map(async (task) => {
+            const status = await this.runTask(task);
+            if (status === "breakpoint") {
+              breakpoint = true;
+            }
+          })
+        );
+        if (breakpoint) {
+          this.pause();
+          return;
+        }
       }
+      this.postamble();
+    } finally {
+      this.#running = false;
     }
-    await this.postamble();
   }
 
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
@@ -700,9 +552,7 @@ class InternalRunStateController {
     this.orchestrator.setInterrupted(id);
   }
 
-  async initializeNodeHandlerContext(
-    next: (data: HarnessRunResult) => Promise<void>
-  ): Promise<NodeHandlerContext> {
+  initializeNodeHandlerContext(): Promise<NodeHandlerContext> {
     const kits = this.config.kits;
 
     const {
@@ -717,9 +567,10 @@ class InternalRunStateController {
       flags,
     } = this.config;
 
+    const dispatch = this.dispatch;
     const probe: Probe = {
-      async report(message) {
-        next(fromProbe(message));
+      async report(message: ProbeMessage) {
+        dispatchProbeMessage(dispatch, message);
       },
     };
 
@@ -729,7 +580,7 @@ class InternalRunStateController {
       });
     });
 
-    return {
+    return Promise.resolve({
       probe,
       kits,
       loader,
@@ -742,13 +593,36 @@ class InternalRunStateController {
       getProjectRunState,
       clientDeploymentConfiguration,
       flags,
-    };
+    });
   }
 
   update(orchestrator: Orchestrator) {
     const oldOrchestartor = this.orchestrator;
     orchestrator.update(oldOrchestartor);
     this.orchestrator = orchestrator;
+  }
+}
+
+function dispatchProbeMessage(
+  dispatch: (event: Event) => void,
+  message: ProbeMessage
+) {
+  switch (message.type) {
+    case "nodestart":
+      dispatch(new NodeStartEvent(structuredClone(message.data)));
+      break;
+    case "nodeend":
+      dispatch(new NodeEndEvent(structuredClone(message.data)));
+      break;
+    case "graphstart":
+      dispatch(new GraphStartEvent(structuredClone(message.data)));
+      break;
+    case "graphend":
+      dispatch(new GraphEndEvent(structuredClone(message.data)));
+      break;
+    case "skip":
+      dispatch(new SkipEvent(structuredClone(message.data)));
+      break;
   }
 }
 

@@ -201,8 +201,6 @@ export type RunEventMap = {
   start: RunLifecycleEvent;
   pause: RunLifecycleEvent;
   resume: RunLifecycleEvent;
-  next: RunNextEvent;
-  input: RunInputEvent;
   output: RunOutputEvent;
   error: RunErrorEvent;
   skip: RunSkipEvent;
@@ -218,15 +216,6 @@ export type RunEventMap = {
 export type RunLifecycleEvent = Event & {
   running: boolean;
   data: { timestamp: number; inputs?: InputValues };
-};
-
-export type RunNextEvent = Event & {
-  data: HarnessRunResult | void;
-};
-
-export type RunInputEvent = Event & {
-  data: InputResponse;
-  running: boolean;
 };
 
 export type RunOutputEvent = Event & {
@@ -297,13 +286,6 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * Starts a run
    */
   start(): Promise<void>;
-
-  /**
-   * Resumes the running of the board.
-   *
-   * @param inputs -- input values to provide to the runner.
-   */
-  resumeWithInputs(inputs: InputValues): Promise<void>;
 
   /**
    * For new runtime only: the current plan for the run.
