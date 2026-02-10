@@ -344,42 +344,18 @@ export class NotebookLmApiClient {
     // Add provenance as query params with dot notation
     this.#appendProvenanceParams(url, request.provenance);
 
-    try {
-      const response = await this.#fetchWithCreds(url, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-        },
-      });
+    const response = await this.#fetchWithCreds(url, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to list notebooks: ${response.statusText}`);
-      }
-
-      return (await response.json()) as ListNotebooksResponse;
-    } catch (err) {
-      // DO NOT SUBMIT: Remove this fallback once real API is available
-      console.warn("NotebookLM API unavailable, using dummy data:", err);
-      return {
-        notebooks: [
-          {
-            name: "notebooks/dummy-notebook-1",
-            displayName: "My Research Notes",
-            emoji: "📚",
-          },
-          {
-            name: "notebooks/dummy-notebook-2",
-            displayName: "Project Ideas",
-            emoji: "💡",
-          },
-          {
-            name: "notebooks/dummy-notebook-3",
-            displayName: "Meeting Notes",
-            emoji: "📝",
-          },
-        ],
-      };
+    if (!response.ok) {
+      throw new Error(`Failed to list notebooks: ${response.statusText}`);
     }
+
+    return (await response.json()) as ListNotebooksResponse;
   }
 
   /**
