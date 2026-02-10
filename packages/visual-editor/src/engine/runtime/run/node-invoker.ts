@@ -14,30 +14,19 @@ import type {
   TraversalResult,
 } from "@breadboard-ai/types";
 import { FileSystemEntry } from "@breadboard-ai/types";
-import { createOutputProvider, RequestedInputsManager } from "../bubble.js";
+
 import { callHandler, getHandler } from "../handler.js";
-import { RunResult } from "../run.js";
 import { resolveGraph, SENTINEL_BASE_URL } from "../../loader/loader.js";
 import { resolveBoardCapabilitiesInInputs } from "../../loader/capability.js";
 
-type ResultSupplier = (result: RunResult) => Promise<void>;
-
 export class NodeInvoker {
-  #requestedInputs: RequestedInputsManager;
-  #resultSupplier: ResultSupplier;
   #graph: GraphToRun;
   #context: NodeHandlerContext;
   #initialInputs?: InputValues;
 
-  constructor(
-    args: RunArguments,
-    graph: GraphToRun,
-    next: (result: RunResult) => Promise<void>
-  ) {
+  constructor(args: RunArguments, graph: GraphToRun) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { inputs, start, stopAfter, ...context } = args;
-    this.#requestedInputs = new RequestedInputsManager(args);
-    this.#resultSupplier = next;
     this.#graph = graph;
     this.#context = context;
     this.#initialInputs = inputs;
@@ -81,11 +70,6 @@ export class NodeInvoker {
     const { descriptor } = result;
     const inputs = this.#adjustInputs(result);
 
-    const requestInput = this.#requestedInputs.createHandler(
-      this.#resultSupplier,
-      result
-    );
-
     const { kits = [], base = SENTINEL_BASE_URL } = this.#context;
     let outputs: OutputValues | undefined = undefined;
 
@@ -107,12 +91,6 @@ export class NodeInvoker {
       outerGraph,
       base,
       kits,
-      requestInput,
-      provideOutput: createOutputProvider(
-        this.#resultSupplier,
-        result,
-        this.#context
-      ),
       invocationPath,
     };
 
