@@ -9,6 +9,7 @@ import type { EditableGraph } from "@breadboard-ai/types";
 import { AppController } from "../../../src/sca/controller/controller.js";
 import { RunController } from "../../../src/sca/controller/subcontrollers/run/run-controller.js";
 import type { FlowgenInputStatus } from "../../../src/sca/controller/subcontrollers/global/flowgen-input-controller.js";
+import { ShareController } from "../../../src/sca/controller/subcontrollers/editor/share-controller.js";
 import { SnackType, SnackbarUUID } from "../../../src/ui/types/types.js";
 
 /**
@@ -133,9 +134,13 @@ export function makeTestController(options: TestControllerOptions = {}) {
         clearPendingEdit: mock.fn(),
         clearPendingAssetEdit: mock.fn(),
       },
-      share: {
-        state: { status: "closed" },
-      },
+      // NOTE(aomarks): I'm instantiating the real ShareController here, so that
+      // tests see the real defaults, and can call the real methods. I wonder if
+      // we should do the same for all controllers? That would give us better
+      // test coverage and eliminate the need to configure mock controller
+      // behaviors in tests, since we'd be testing the real behavior of
+      // controllers directly.
+      share: new ShareController("test-share", "test"),
       theme: {
         status: "idle" as string,
       },
