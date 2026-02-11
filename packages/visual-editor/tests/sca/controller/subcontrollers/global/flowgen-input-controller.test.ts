@@ -417,42 +417,4 @@ suite("FlowgenInputController", () => {
 
     assert.strictEqual(controller.seenConfirmationDialog, true);
   });
-
-  test("pendingEdit has initial value and is reactive", async () => {
-    const controller = new FlowgenInputController(
-      "FlowgenInput",
-      "FlowgenInput_19"
-    );
-    await controller.isHydrated;
-
-    assert.strictEqual(controller.pendingEdit, null);
-
-    const edit = {
-      description: "Test edit",
-      graph: { nodes: [], edges: [] },
-    };
-    controller.pendingEdit = edit;
-    await controller.isSettled;
-
-    assert.deepStrictEqual(controller.pendingEdit, edit);
-  });
-
-  test("clear() resets pendingEdit", async () => {
-    const controller = new FlowgenInputController(
-      "FlowgenInput",
-      "FlowgenInput_20"
-    );
-    await controller.isHydrated;
-
-    controller.pendingEdit = {
-      description: "Test edit",
-      graph: { nodes: [], edges: [] },
-    };
-    await controller.isSettled;
-
-    controller.clear();
-    await controller.isSettled;
-
-    assert.strictEqual(controller.pendingEdit, null);
-  });
 });

@@ -245,21 +245,9 @@ export class FlowgenInStepButton extends LitElement {
           ) => {
             this.#showConfirmation = false;
             if (evt.detail.confirmed) {
-              // Set localStorage flag to indicate user has confirmed
-              globalThis.localStorage.setItem(
-                "opal-suggested-edit-confirmed",
-                "true"
-              );
-              this.sca.controller.global.flowgenInput.seenConfirmationDialog = true;
-
-              const pendingEdit =
-                this.sca.controller.global.flowgenInput.pendingEdit;
-              if (pendingEdit) {
-                this.#proceedWithEdit(
-                  pendingEdit.description,
-                  pendingEdit.graph
-                );
-                this.sca.controller.global.flowgenInput.pendingEdit = null;
+              const description = this.#descriptionInput.value?.value;
+              if (description && this.currentGraph) {
+                this.#proceedWithEdit(description, this.currentGraph);
               }
             }
           }}
@@ -436,12 +424,8 @@ export class FlowgenInStepButton extends LitElement {
       const graphIsEmpty = isEmpty(this.currentGraph ?? null);
 
       if (!seenConfirmationDialog && !graphIsEmpty) {
-        // Store the pending edit and trigger the confirmation modal
-        this.sca.controller.global.flowgenInput.pendingEdit = {
-          description,
-          graph: this.currentGraph,
-        };
         this.#showConfirmation = true;
+
         return;
       }
 
