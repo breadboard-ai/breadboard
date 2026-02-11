@@ -125,6 +125,8 @@ export const readPublishedState = asAction(
     if (!shareableCopyFileId) {
       share.panel = "writable";
       share.access = "writable";
+      share.published = false;
+      share.granularlyShared = false;
       share.state = {
         status: "writable",
         published: false,
@@ -151,6 +153,15 @@ export const readPublishedState = asAction(
 
     share.panel = "writable";
     share.access = "writable";
+    share.published = diff.missing.length === 0;
+    share.granularlyShared =
+      diff.excess.find((permission) => permission.role !== "owner") !==
+      undefined;
+    share.stale =
+      thisFileMetadata.version !==
+      shareableCopyFileMetadata.properties?.[
+        DRIVE_PROPERTY_LATEST_SHARED_VERSION
+      ];
     share.state = {
       status: "writable",
       published: diff.missing.length === 0,
@@ -522,6 +533,7 @@ export const publish = asAction(
     let { shareableFile } = share.state;
     const oldState = share.state;
     share.panel = "updating";
+    share.published = true;
     share.state = {
       status: "updating",
       published: true,
@@ -564,6 +576,7 @@ export const publish = asAction(
     await handleAssetPermissions(shareableFile.id, graph);
 
     share.panel = "writable";
+    share.published = true;
     share.state = {
       status: "writable",
       published: true,
@@ -602,6 +615,7 @@ export const unpublish = asAction(
     const { shareableFile } = share.state;
     const oldState = share.state;
     share.panel = "updating";
+    share.published = false;
     share.state = {
       status: "updating",
       published: false,
@@ -631,6 +645,7 @@ export const unpublish = asAction(
     await handleAssetPermissions(shareableFile.id, graph);
 
     share.panel = "writable";
+    share.published = false;
     share.state = {
       status: "writable",
       published: false,
@@ -657,6 +672,8 @@ export const publishStale = asAction(
     }
 
     share.panel = "updating";
+    share.published = oldState.published;
+    share.granularlyShared = oldState.granularlyShared;
     share.state = {
       status: "updating",
       published: oldState.published,
@@ -687,6 +704,7 @@ export const publishStale = asAction(
     ]);
 
     share.panel = "writable";
+    share.stale = false;
     share.state = {
       ...oldState,
       shareableFile: {

@@ -142,6 +142,7 @@ suite("Share Actions", () => {
     const unpublishedState = getState();
     assert.strictEqual(unpublishedState.status, "writable");
     assert.strictEqual(unpublishedState.published, false);
+    assert.strictEqual(share.published, false);
 
     // Publish
     const graph = { edges: [], nodes: [], url: `drive:/${createdFile.id}` };
@@ -154,6 +155,7 @@ suite("Share Actions", () => {
 
     // Verify intermediate updating state
     assert.strictEqual(share.panel, "updating");
+    assert.strictEqual(share.published, true);
     assert.strictEqual(share.state.status, "updating");
 
     await publishPromise;
@@ -162,6 +164,7 @@ suite("Share Actions", () => {
     const publishedState = getState();
     assert.strictEqual(publishedState.status, "writable");
     assert.strictEqual(publishedState.published, true);
+    assert.strictEqual(share.published, true);
     const shareableFileId = publishedState.shareableFile.id;
 
     // Get the shareable copy's metadata to verify permissions
@@ -243,6 +246,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.state.published, false);
+    assert.strictEqual(share.published, false);
 
     // Verify permission was deleted from the shareable copy
     const afterMetadata = await googleDriveClient.getFileMetadata(
@@ -401,6 +405,7 @@ suite("Share Actions", () => {
     const staleState = getState();
     assert.strictEqual(staleState.status, "writable");
     assert.strictEqual(staleState.shareableFile?.stale, true);
+    assert.strictEqual(share.stale, true);
     assert.strictEqual(
       staleState.latestVersion,
       "5",
@@ -443,6 +448,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.state.shareableFile?.stale, false);
+    assert.strictEqual(share.stale, false);
   });
 
   test("granular sharing", async () => {
@@ -473,7 +479,9 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.state.published, false);
+    assert.strictEqual(share.published, false);
     assert.strictEqual(share.state.granularlyShared, false);
+    assert.strictEqual(share.granularlyShared, false);
 
     // User opens granular sharing dialog
     await ShareActions.viewSharePermissions(graph, undefined);
@@ -500,7 +508,9 @@ suite("Share Actions", () => {
     const granularState1 = getState();
     assert.strictEqual(granularState1.status, "writable");
     assert.strictEqual(granularState1.granularlyShared, true);
+    assert.strictEqual(share.granularlyShared, true);
     assert.strictEqual(granularState1.published, false);
+    assert.strictEqual(share.published, false);
 
     // User opens granular sharing again
     await ShareActions.viewSharePermissions(graph, undefined);
@@ -525,7 +535,9 @@ suite("Share Actions", () => {
     const granularState2 = getState();
     assert.strictEqual(granularState2.status, "writable");
     assert.strictEqual(granularState2.granularlyShared, true);
+    assert.strictEqual(share.granularlyShared, true);
     assert.strictEqual(granularState2.published, true);
+    assert.strictEqual(share.published, true);
   });
 
   test("managed assets get permissions synced during publish", async () => {
@@ -600,6 +612,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.state.published, false);
+    assert.strictEqual(share.published, false);
 
     // Publish
     await ShareActions.publish(graph, publishPermissions, undefined);

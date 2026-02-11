@@ -89,5 +89,14 @@ export class ShareController extends RootController {
   accessor access: "unknown" | "readonly" | "writable" = "unknown";
 
   @field()
+  accessor published = false;
+
+  @field()
+  accessor stale = false;
+
+  @field()
+  accessor granularlyShared = false;
+
+  @field()
   accessor state: ShareState = { status: "closed" };
 }
