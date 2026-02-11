@@ -228,6 +228,9 @@ export class FlowgenInStepButton extends LitElement {
 
   readonly #descriptionInput = createRef<HTMLInputElement>();
 
+  // Store pending edit parameters when waiting for confirmation
+  #pendingEdit: { description: string; graph: GraphDescriptor } | null = null;
+
   render() {
     switch (this.#state.status) {
       case "closed": {
@@ -392,14 +395,64 @@ export class FlowgenInStepButton extends LitElement {
         );
         return;
       }
+
+      // Check if this is the first time the user is making a suggested edit
+      const hasConfirmed = globalThis.localStorage.getItem(
+        "opal-suggested-edit-confirmed"
+      );
+
+      if (!hasConfirmed) {
+        // Store the pending edit and trigger the confirmation modal
+        this.#pendingEdit = {
+          description,
+          graph: this.currentGraph,
+        };
+        this.dispatchEvent(
+          new CustomEvent("bbrequestglobaleditconfirmation", {
+            bubbles: true,
+            composed: true,
+          })
+        );
+        // Listen for confirmation
+        const handleConfirmation = () => {
+          window.removeEventListener(
+            "bbglobaleditconfirmed",
+            handleConfirmation
+          );
+          if (this.#pendingEdit) {
+            this.#proceedWithEdit(
+              this.#pendingEdit.description,
+              this.#pendingEdit.graph
+            );
+            this.#pendingEdit = null;
+          }
+        };
+        window.addEventListener("bbglobaleditconfirmed", handleConfirmation);
+        return;
+      }
+
+      // User has already confirmed, proceed directly
+      this.#proceedWithEdit(description, this.currentGraph);
+    }
+  }
+
+  #proceedWithEdit(description: string, graph: GraphDescriptor) {
+    if (this.#state.status === "closed") {
+      // Reopen the panel if it was closed
+      const abort = new AbortController();
+      this.#state = {
+        status: "generating",
+        abort,
+      };
+    } else {
       this.#state = {
         status: "generating",
         abort: this.#state.abort,
       };
-      void this.#editBoard(description, this.currentGraph)
-        .then((graph) => this.#onEditComplete(graph))
-        .catch((error) => this.#onEditError(error));
     }
+    void this.#editBoard(description, graph)
+      .then((graph) => this.#onEditComplete(graph))
+      .catch((error) => this.#onEditError(error));
   }
 
   async #editBoard(
