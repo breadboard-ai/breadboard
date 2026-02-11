@@ -352,22 +352,18 @@ const ALL_MODES: Mode[] = [
   },
 ] as const;
 
-const AGENT_MODE_IDS = [
-  "agent",
-  "text-3-flash",
-  "text-3-pro",
-  "image",
-  "image-pro",
-  "audio",
-  "video",
-  "music",
-];
+// Modes only available in agent mode (hidden when agentMode is off)
+const AGENT_ONLY_IDS = new Set(["agent"]);
 
-const AGENT_MODES = ALL_MODES.filter(({ id }) => AGENT_MODE_IDS.includes(id));
-
-const PRE_AGENT_MODES = ALL_MODES.filter(({ id }) => id !== "agent");
-
-const modeMap = new Map(ALL_MODES.map((mode) => [mode.id, mode]));
+// Modes NOT available in agent mode (hidden when agentMode is on)
+const NON_AGENT_IDS = new Set([
+  "text-2.0-flash",
+  "text",
+  "text-2.5-pro",
+  "think",
+  "deep-research",
+  "image-gen",
+]);
 
 // Maps the prompt port to various names of the other ports.
 const portMapForward = new Map<string, Map<string, string>>(
@@ -411,30 +407,20 @@ function receivePorts<T extends Record<string, unknown>>(
   return translate(ports, reverseMap);
 }
 
-const AGENT_MODE_ALIASES = new Map([["text", "text-3-flash"]]);
-
-const AGENT_MODES_WITH_ALIASES = [
-  ...AGENT_MODES,
-  ...(Array.from(AGENT_MODE_ALIASES.entries())
-    .map(([from, to]) => {
-      const target = modeMap.get(to);
-      if (!target) return null;
-      return { ...target, id: from, hidden: true } as Mode;
-    })
-    .filter(Boolean) as Mode[]),
-];
-
 function resolveModes(
   modeId: string | undefined,
   flags: Readonly<RuntimeFlags> | undefined
 ): ResolvedModes {
   const agentMode = flags?.agentMode;
-  const modes = agentMode ? AGENT_MODES_WITH_ALIASES : PRE_AGENT_MODES;
-  const defaultMode = modes[0];
-  const resolvedId = agentMode
-    ? AGENT_MODE_ALIASES.get(modeId || "") || modeId
-    : modeId;
-  const current = modeMap.get(resolvedId || defaultMode.id) || defaultMode;
+  const modes = ALL_MODES.map((mode) => ({
+    ...mode,
+    hidden:
+      mode.hidden ||
+      (agentMode ? NON_AGENT_IDS.has(mode.id) : AGENT_ONLY_IDS.has(mode.id)),
+  }));
+  const defaultMode = modes.find((m) => !m.hidden) || modes[0];
+  const current =
+    modes.find((m) => m.id === (modeId || defaultMode.id)) || defaultMode;
   return { modes, current };
 }
 
