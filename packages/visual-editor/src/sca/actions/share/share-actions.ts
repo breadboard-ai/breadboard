@@ -167,12 +167,13 @@ export const readPublishedState = asAction(
       shareableCopyFileMetadata.properties?.[
         DRIVE_PROPERTY_LATEST_SHARED_VERSION
       ];
+    share.publishedPermissions = allGraphPermissions.filter((permission) =>
+      permissionMatchesAnyOf(permission, publishPermissions)
+    );
     share.state = {
       status: "writable",
       published: diff.missing.length === 0,
-      publishedPermissions: allGraphPermissions.filter((permission) =>
-        permissionMatchesAnyOf(permission, publishPermissions)
-      ),
+      publishedPermissions: share.publishedPermissions,
       granularlyShared:
         // We're granularly shared if there is any permission that is neither
         // one of the special publish permissions, nor the owner (since there
@@ -598,6 +599,7 @@ export const publish = asAction(
       shareableFile,
       latestVersion: newLatestVersion ?? oldState.latestVersion,
     };
+    share.publishedPermissions = graphPublishPermissions;
     share.latestVersion = newLatestVersion ?? oldState.latestVersion;
   }
 );
@@ -638,13 +640,13 @@ export const unpublish = asAction(
 
     logger.log(
       Utils.Logging.Formatter.verbose(
-        `Removing ${oldState.publishedPermissions.length} publish` +
+        `Removing ${share.publishedPermissions.length} publish` +
           ` permission(s) from shareable graph copy "${shareableFile.id}".`
       ),
       LABEL
     );
     await Promise.all(
-      oldState.publishedPermissions.map(async (permission) => {
+      share.publishedPermissions.map(async (permission) => {
         if (permission.role !== "owner") {
           await googleDriveClient.deletePermission(
             shareableFile.id,

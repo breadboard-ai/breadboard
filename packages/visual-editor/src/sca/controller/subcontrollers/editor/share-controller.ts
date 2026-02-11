@@ -104,5 +104,8 @@ export class ShareController extends RootController {
   accessor latestVersion = "";
 
   @field()
+  accessor publishedPermissions: gapi.client.drive.Permission[] = [];
+
+  @field()
   accessor state: ShareState = { status: "closed" };
 }
