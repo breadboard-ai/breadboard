@@ -47,25 +47,18 @@ export enum TextContentType {
 
 /** Origin product types for provenance. */
 export enum OriginProductType {
+  // TODO(b/483555629): Switch to GOOGLE_LABS_OPAL once it's available.
   GOOGLE_NOTEBOOKLM_EVALS = "GOOGLE_NOTEBOOKLM_EVALS",
 }
 
 /** Application platform types. */
 export enum ApplicationPlatform {
-  UNSPECIFIED = "APPLICATION_PLATFORM_UNSPECIFIED",
   WEB = "WEB",
-  NATIVE = "NATIVE",
-  BACKEND = "BACKEND",
 }
 
 /** Device types. */
 export enum DeviceType {
-  UNSPECIFIED = "DEVICE_UNSPECIFIED",
-  MOBILE_ANDROID = "MOBILE_ANDROID",
-  MOBILE_IOS = "MOBILE_IOS",
   DESKTOP = "DESKTOP",
-  DESKTOP_ANDROID = "DESKTOP_ANDROID",
-  OTHER = "OTHER",
 }
 
 // =============================================================================
