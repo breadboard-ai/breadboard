@@ -498,6 +498,7 @@ async function describe(
   if (flags?.agentMode && current.id === "agent") {
     // Agent mode has its own schema; skip text-generation describe entirely.
     modeSchema = computeAgentSchema(flags, rest);
+    behavior = ["at-wireable"];
   } else {
     const transformedInputs = forwardPorts(type, rest);
     const describing = await current.describe(
