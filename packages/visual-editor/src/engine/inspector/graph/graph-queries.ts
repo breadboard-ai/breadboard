@@ -94,10 +94,6 @@ class GraphQueries {
   }
 
   typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
-    const knownNodeType = this.#mutable.kits.getType(id);
-    if (knownNodeType) {
-      return knownNodeType;
-    }
     if (!graphUrlLike(id)) {
       return undefined;
     }

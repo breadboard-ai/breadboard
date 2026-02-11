@@ -132,7 +132,7 @@ class MutableGraphImpl implements MutableGraph {
     );
     this.modules = new ModuleCache();
     this.describe = new DescribeResultCache(new NodeDescriberManager(this));
-    this.kits = new KitCache(this);
+    this.kits = new KitCache();
     this.graphs = new GraphCache((id) => new Graph(id, this));
     this.ports = new PortCache();
     this.graphs.rebuild(graph);
