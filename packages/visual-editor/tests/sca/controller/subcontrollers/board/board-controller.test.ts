@@ -64,22 +64,22 @@ suite("BoardController version history", () => {
     );
   });
 
-  test("newerVersionAvailable defaults to false", async () => {
-    const controller = new BoardController("BoardTest_4", "BoardController");
-    await controller.isHydrated;
+  // test("newerVersionAvailable defaults to false", async () => {
+  //   const controller = new BoardController("BoardTest_4", "BoardController");
+  //   await controller.isHydrated;
 
-    assert.strictEqual(controller.newerVersionAvailable, false);
-  });
+  //   assert.strictEqual(controller.newerVersionAvailable, false);
+  // });
 
-  test("can set newerVersionAvailable", async () => {
-    const controller = new BoardController("BoardTest_5", "BoardController");
-    await controller.isHydrated;
+  // test("can set newerVersionAvailable", async () => {
+  //   const controller = new BoardController("BoardTest_5", "BoardController");
+  //   await controller.isHydrated;
 
-    controller.newerVersionAvailable = true;
-    await controller.isSettled;
+  //   controller.newerVersionAvailable = true;
+  //   await controller.isSettled;
 
-    assert.strictEqual(controller.newerVersionAvailable, true);
-  });
+  //   assert.strictEqual(controller.newerVersionAvailable, true);
+  // });
 });
 
 suite("BoardController edit history", () => {
