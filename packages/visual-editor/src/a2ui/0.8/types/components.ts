@@ -182,7 +182,7 @@ export interface MultipleChoice {
     literalArray?: string[];
   };
   options?: {
-    label: {
+    label?: {
       /**
        * A data binding reference to a location in the data model (e.g., '/user/name').
        */
@@ -193,6 +193,12 @@ export interface MultipleChoice {
       literalString?: string;
     };
     value: string;
+    /**
+     * An optional reference to a component instance by its unique ID.
+     * When provided, the option renders this component as its content
+     * instead of the text label.
+     */
+    child?: string;
   }[];
   maxAllowedSelections?: number;
 }
