@@ -208,6 +208,45 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
       section.tools menu button {
         --background: var(--n-90);
+
+        &.generative,
+        &[icon="spark"],
+        &[icon="photo_spark"],
+        &[icon="audio_magic_eraser"],
+        &[icon="text_analysis"],
+        &[icon="button_magic"],
+        &[icon="generative-image-edit"],
+        &[icon="generative-code"],
+        &[icon="videocam_auto"],
+        &[icon="generative-search"],
+        &[icon="generative"],
+        &[icon="select_all"],
+        &[icon="laps"] {
+          --background: var(--ui-generate);
+        }
+
+        &.module {
+          --background: var(--ui-generate);
+        }
+
+        &.input,
+        &.output,
+        &.core,
+        &[icon="input"],
+        &[icon="ask-user"],
+        &[icon="chat_mirror"] {
+          --background: var(--ui-get-input);
+        }
+
+        &[icon="output"],
+        &[icon="docs"],
+        &[icon="drive_presentation"],
+        &[icon="sheets"],
+        &[icon="code"],
+        &[icon="web"],
+        &[icon="responsive_layout"] {
+          --background: var(--ui-display);
+        }
       }
 
       #outputs menu button {
@@ -719,7 +758,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
       <section class="group tools">
         ${this.showRoutes
-          ? html`<h3 class="sans-flex w-400 round">Routes</h3>
+          ? html`<h3 class="sans-flex w-400 round">Steps</h3>
               ${this.state?.routes.results.size
                 ? html`<menu>
                     ${repeat(
@@ -733,6 +772,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
                         return html`<li>
                           <button
+                            icon=${icon}
                             class=${classMap({ active })}
                             @pointerover=${() => {
                               this.selectedIndex = globalIndex;

@@ -1021,6 +1021,11 @@ export class TextEditor extends SignalWatcher(LitElement) {
     const containerBounds = this.getBoundingClientRect();
     const proxyBounds = this.#proxyRef.value.getBoundingClientRect();
     let top = Math.round(bounds.top - proxyBounds.top);
+    // When targeting a chiclet (routes/steps mode), shift the menu down
+    // to keep the triggering chip visible above.
+    if (this.#fastAccessTarget !== null) {
+      top += Math.round(bounds.height) + 4;
+    }
     let left = Math.round(bounds.left - proxyBounds.left);
 
     // If the fast access menu is about to go off the right, bring it back.
