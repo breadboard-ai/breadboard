@@ -59,6 +59,16 @@ export const styles = [
           &.down-arrow {
             margin-left: var(--bb-grid-size-2);
           }
+
+          /* NotebookLM uses a custom SVG icon, not a Material Symbol ligature */
+          &[data-icon="notebooklm"]::after {
+            content: "";
+            display: block;
+            width: 16px;
+            height: 16px;
+            background: url(/third_party/icons/notebooklm.svg) center / contain
+              no-repeat;
+          }
         }
 
         &.visible-after {

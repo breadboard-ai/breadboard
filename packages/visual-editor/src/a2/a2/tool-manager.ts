@@ -24,13 +24,13 @@ import {
   type Tool,
 } from "./gemini.js";
 import { addUserTurn, ok } from "./utils.js";
-import { err } from "@breadboard-ai/utils";
+import { err, NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { McpToolAdapter } from "./mcp-tool-adapter.js";
 import { ToolParamPart } from "./template.js";
 import { A2_TOOL_MAP } from "../a2-registry.js";
 
-export { ROUTE_TOOL_PATH, MEMORY_TOOL_PATH, ToolManager };
+export { ROUTE_TOOL_PATH, MEMORY_TOOL_PATH, NOTEBOOKLM_TOOL_PATH, ToolManager };
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
@@ -197,9 +197,9 @@ class ToolManager implements SimplifiedToolManager {
       this.#hasCodeExection = true;
       return "Code Execution";
     }
-    if (url === MEMORY_TOOL_PATH) {
-      // Memory tool: no function declarations, just a signal to enable
-      // memory functions in the agent loop.
+    // Handle function-group tools that don't require describe/load.
+    // These are handled in pidgin-translator and loop.ts directly.
+    if (url === MEMORY_TOOL_PATH || url === NOTEBOOKLM_TOOL_PATH) {
       return "";
     }
     if (instance) {

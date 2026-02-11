@@ -258,6 +258,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         },
       } as Partial<ConsentController> as ConsentController;
     },
+    notebookLmApiClient: {} as never,
 
     context: {
       currentGraph: {

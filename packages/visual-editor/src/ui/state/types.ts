@@ -287,7 +287,7 @@ export type Tool = {
   url: string;
   title?: string;
   description?: string;
-  icon?: string;
+  icon?: string | HTMLTemplateResult;
   /**
    * The identifier of the tool. This is useful in cases when URL points at a
    * tool server, not the actual tool.

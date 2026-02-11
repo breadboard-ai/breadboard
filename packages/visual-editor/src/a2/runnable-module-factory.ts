@@ -33,6 +33,7 @@ import { McpClientManager } from "../mcp/index.js";
 import { a2 } from "./a2.js";
 import { type ConsentController } from "../sca/controller/subcontrollers/global/global.js";
 import { AgentContext } from "./agent/agent-context.js";
+import { NotebookLmApiClient } from "../sca/services/notebooklm-api-client.js";
 
 export { createA2ModuleFactory, A2ModuleFactory, createCallableCapabilities };
 
@@ -45,6 +46,7 @@ export type A2ModuleFactoryArgs = {
   shell: OpalShellHostProtocol;
   getConsentController: () => ConsentController;
   agentContext: AgentContext;
+  notebookLmApiClient: NotebookLmApiClient;
 };
 
 export type A2ModuleArgs = A2ModuleFactoryArgs & {

@@ -18,7 +18,7 @@ import {
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { createDataPartTansformer } from "./data-transforms.js";
-import { iteratorFromStream } from "@breadboard-ai/utils";
+import { iteratorFromStream, isNotebookLmUrl } from "@breadboard-ai/utils";
 import { transformDataParts } from "../../data/common.js";
 
 export {
@@ -447,6 +447,10 @@ async function conformBody(
       parts: content.parts.map((part) => {
         if ("json" in part) {
           return { text: JSON.stringify(part.json) };
+        }
+        // Convert NotebookLM references to text before file transform
+        if ("storedData" in part && isNotebookLmUrl(part.storedData.handle)) {
+          return { text: part.storedData.handle };
         }
         return part;
       }),

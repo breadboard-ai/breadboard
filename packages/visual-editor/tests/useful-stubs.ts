@@ -50,6 +50,7 @@ const stubModuleArgs: A2ModuleArgs = {
       },
     } as Partial<ConsentController> as ConsentController;
   },
+  notebookLmApiClient: {} as never,
 };
 
 const stubMemoryManager: MemoryManager = {

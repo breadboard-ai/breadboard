@@ -20,6 +20,7 @@ import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
+
 import { ProjectRun } from "../../../state/index.js";
 import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
@@ -564,7 +565,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                       "sans-flex": true,
                       round: true,
                     };
-                    if (icon) {
+                    if (typeof icon === "string" && icon) {
                       workItemClasses[icon] = true;
                     }
 

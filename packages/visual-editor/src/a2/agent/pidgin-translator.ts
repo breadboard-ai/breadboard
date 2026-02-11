@@ -19,12 +19,18 @@ import { err, ok } from "@breadboard-ai/utils";
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
+  NOTEBOOKLM_TOOL_PATH,
   SimplifiedToolManager,
   ToolManager,
 } from "../a2/tool-manager.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { isLLMContent, isLLMContentArray } from "../../data/common.js";
+import {
+  Template as UtilsTemplate,
+  NOTEBOOKLM_MIMETYPE,
+  isNotebookLmUrl,
+} from "@breadboard-ai/utils";
 import { substituteDefaultTool } from "./substitute-default-tool.js";
 
 export { PidginTranslator };
@@ -33,6 +39,7 @@ export type ToPidginResult = {
   text: string;
   tools: SimplifiedToolManager;
   useMemory: boolean;
+  useNotebookLM: boolean;
 };
 
 export type SubstitutePartsArgs = {
@@ -68,6 +75,27 @@ const SPLIT_REGEX =
 
 const FILE_PARSE_REGEX = /<file\s+src\s*=\s*"([^"]*)"\s*\/>/;
 const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
+
+/**
+ * Checks if LLMContent contains NotebookLM assets by parsing text parts
+ * via Template placeholders.
+ */
+function hasNlmAssetInContent(content: LLMContent): boolean {
+  for (const part of content.parts) {
+    if ("text" in part) {
+      const template = new UtilsTemplate(part.text);
+      for (const placeholder of template.placeholders) {
+        if (
+          placeholder.type === "asset" &&
+          placeholder.mimeType === NOTEBOOKLM_MIMETYPE
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
 
 /**
  * When the text is below this number, it will be simply inlined (small prompts, short outputs, etc.)
@@ -196,11 +224,16 @@ class PidginTranslator {
 
     const errors: string[] = [];
     let useMemory = false;
+    let useNotebookLM = false;
     const pidginContent = await template.asyncSimpleSubstitute(
       async (param) => {
         const { type } = param;
         switch (type) {
           case "asset": {
+            // Check if this asset is a NotebookLM reference
+            if (param.mimeType === NOTEBOOKLM_MIMETYPE) {
+              useNotebookLM = true;
+            }
             const content = await template.loadAsset(param);
             if (!ok(content)) {
               errors.push(content.$error);
@@ -229,6 +262,10 @@ ${inner}
             } else if (typeof value === "string") {
               return value;
             } else if (isLLMContent(value)) {
+              // Check if input text contains NotebookLM assets via template placeholders
+              if (hasNlmAssetInContent(value)) {
+                useNotebookLM = true;
+              }
               return substituteParts({
                 title: param.title,
                 content: value,
@@ -238,6 +275,10 @@ ${inner}
             } else if (isLLMContentArray(value)) {
               const last = value.at(-1);
               if (!last) return "";
+              // Check if input text contains NotebookLM assets via template placeholders
+              if (hasNlmAssetInContent(last)) {
+                useNotebookLM = true;
+              }
               return substituteParts({
                 title: param.title,
                 content: last,
@@ -267,6 +308,9 @@ ${inner}
             } else if (param.path === MEMORY_TOOL_PATH) {
               useMemory = true;
               return "Use Memory Data Store";
+            } else if (param.path === NOTEBOOKLM_TOOL_PATH) {
+              useNotebookLM = true;
+              return "Use NotebookLM";
             } else {
               const substitute = substituteDefaultTool(param);
               if (substitute !== null) {
@@ -309,10 +353,11 @@ ${inner}
         }),
         tools: toolManager,
         useMemory,
+        useNotebookLM,
       };
     }
 
-    return { text, tools: toolManager, useMemory };
+    return { text, tools: toolManager, useMemory, useNotebookLM };
 
     function substituteParts({
       title,
@@ -337,6 +382,12 @@ ${text}</content>`);
             values.push(text);
           }
         } else {
+          // Special handling for NotebookLM references - don't add to file system,
+          // just reference them as text URL the agent can understand
+          if ("storedData" in part && isNotebookLmUrl(part.storedData.handle)) {
+            values.push(part.storedData.handle);
+            continue;
+          }
           const name = fileSystem.add(part);
           if (!ok(name)) {
             console.warn(name.$error);

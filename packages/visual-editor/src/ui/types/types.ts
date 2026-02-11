@@ -239,7 +239,7 @@ export interface Command {
 export interface OverflowAction {
   title: string;
   name: string;
-  icon: string;
+  icon: string | HTMLTemplateResult;
   disabled?: boolean;
   value?: string;
   secondaryAction?: string;
@@ -418,8 +418,7 @@ export interface AssetEdge {
 export type EnumValue = {
   title: string;
   id: string;
-  icon?: string;
-  svgIcon?: string;
+  icon?: string | HTMLTemplateResult;
   description?: string;
   tag?: string; // Typically used for keyboard shortcuts.
   hidden?: boolean;

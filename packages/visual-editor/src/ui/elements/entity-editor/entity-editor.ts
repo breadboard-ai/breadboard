@@ -39,6 +39,7 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
@@ -1645,12 +1646,16 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
     const value = [input, output];
 
-    let icon: string | undefined | null = "text_fields";
+    let icon: string | HTMLTemplateResult | undefined | null = "text_fields";
     if (asset.type) {
       icon = iconSubstitute(asset.type);
     }
     if (asset.subType) {
-      icon = iconSubstitute(asset.subType);
+      if (asset.subType === "notebooklm") {
+        icon = notebookLmIcon;
+      } else {
+        icon = iconSubstitute(asset.subType);
+      }
     }
 
     return html`<div class=${classMap({ asset: true })}>

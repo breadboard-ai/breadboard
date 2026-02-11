@@ -36,6 +36,7 @@ function createFlags(overrides: Record<string, unknown> = {}) {
   return {
     uiType: "chat" as const,
     useMemory: false,
+    useNotebookLM: false,
     objective: { parts: [{ text: "test" }], role: "user" as const },
     params: {},
     onSuccess: mock.fn(async () => undefined) as never,
@@ -128,6 +129,82 @@ describe("createAgentConfigurator", () => {
           "memory_create_sheet"
         ),
         "Should not include memory group"
+      );
+    });
+  });
+
+  describe("NotebookLM group", () => {
+    function createModuleArgsWithFlags(enableNotebookLm: boolean) {
+      return {
+        ...stubModuleArgs,
+        context: {
+          ...stubModuleArgs.context,
+          flags: {
+            async flags() {
+              return { enableNotebookLm };
+            },
+          },
+        },
+      } as typeof stubModuleArgs;
+    }
+
+    it("includes NLM group when useNotebookLM and runtime flag are both true", async () => {
+      const moduleArgs = createModuleArgsWithFlags(true);
+      const configureFn = createAgentConfigurator(
+        stubCaps,
+        moduleArgs,
+        createMockGenerators()
+      );
+      const result = await configureFn(
+        createMockDeps(),
+        createFlags({ useNotebookLM: true })
+      );
+      assert(
+        hasFunction(
+          result as { definitions: [string, unknown][] }[],
+          "notebooklm_retrieve_relevant_chunks"
+        ),
+        "Should include NLM group (notebooklm_retrieve_relevant_chunks)"
+      );
+    });
+
+    it("excludes NLM group when runtime flag is false", async () => {
+      const moduleArgs = createModuleArgsWithFlags(false);
+      const configureFn = createAgentConfigurator(
+        stubCaps,
+        moduleArgs,
+        createMockGenerators()
+      );
+      const result = await configureFn(
+        createMockDeps(),
+        createFlags({ useNotebookLM: true })
+      );
+      assert(
+        !hasFunction(
+          result as { definitions: [string, unknown][] }[],
+          "notebooklm_retrieve_relevant_chunks"
+        ),
+        "Should not include NLM group when runtime flag is disabled"
+      );
+    });
+
+    it("excludes NLM group when useNotebookLM is false", async () => {
+      const moduleArgs = createModuleArgsWithFlags(true);
+      const configureFn = createAgentConfigurator(
+        stubCaps,
+        moduleArgs,
+        createMockGenerators()
+      );
+      const result = await configureFn(
+        createMockDeps(),
+        createFlags({ useNotebookLM: false })
+      );
+      assert(
+        !hasFunction(
+          result as { definitions: [string, unknown][] }[],
+          "notebooklm_retrieve_relevant_chunks"
+        ),
+        "Should not include NLM group when useNotebookLM is false"
       );
     });
   });
