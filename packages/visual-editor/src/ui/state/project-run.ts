@@ -503,6 +503,12 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     this.#pendingInputNodeIds.delete(id);
     this.inputSchemas.delete(id);
 
+    // Reset the screen type back to "progress" now that input is collected.
+    const screen = this.app.screens.get(id);
+    if (screen) {
+      screen.type = "progress";
+    }
+
     // Mark the node as working again.
     this.renderer.nodes.set(id, { status: "working" });
 

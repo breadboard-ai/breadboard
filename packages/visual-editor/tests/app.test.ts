@@ -139,6 +139,41 @@ describe("ReactiveApp", () => {
 
     assert.strictEqual(app.last, s2);
   });
+  it("screen remains visible after input type is reset and finalized", () => {
+    const screen = new ReactiveAppScreen("agent-step", undefined);
+    app.screens.set("s1", screen);
+
+    // Simulate markAsInput() during input request
+    screen.markAsInput();
+    assert.strictEqual(screen.type, "input");
+
+    // Simulate provideInput() resetting the type
+    screen.type = "progress";
+    assert.strictEqual(screen.type, "progress");
+
+    // Simulate finalize() on node end
+    screen.status = "complete";
+
+    // The screen should still be visible via `last`
+    assert.strictEqual(app.last, screen);
+    // And app state should be "output" (all screens complete, none filtered)
+    assert.strictEqual(app.state, "output");
+  });
+
+  it("input screen is hidden from last when type is NOT reset", () => {
+    const screen = new ReactiveAppScreen("agent-step", undefined);
+    app.screens.set("s1", screen);
+
+    // Mark as input but never reset
+    screen.markAsInput();
+    screen.status = "complete";
+
+    // The screen should be filtered out by `last` (this is the bug scenario)
+    assert.strictEqual(app.last, null);
+    // With no last, state falls to "splash"
+    assert.strictEqual(app.state, "splash");
+  });
+
   describe("Reactivity", () => {
     it("updates 'state' when screens change", () => {
       const computed = new Signal.Computed(() => app.state);
