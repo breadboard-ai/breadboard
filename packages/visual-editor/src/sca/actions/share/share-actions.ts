@@ -30,21 +30,21 @@ export const bind = makeAction();
 // Actions
 // =============================================================================
 
-export const readPublishedState = asAction(
-  "Share.readPublishedState",
+export const open = asAction(
+  "Share.open",
   { mode: ActionMode.Immediate },
   async (
     graph: GraphDescriptor,
     publishPermissions: gapi.client.drive.Permission[]
   ): Promise<void> => {
     const { controller, services } = bind;
-    const LABEL = "Share.readPublishedState";
+    const LABEL = "Share.open";
     const logger = Utils.Logging.getLogger(controller);
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
     const boardServer = services.googleDriveBoardServer;
 
-    if (share.panel !== "opening") {
+    if (share.panel !== "closed") {
       return;
     }
 
@@ -671,19 +671,6 @@ export const dismissUnmanagedAssetProblems = asAction(
   }
 );
 
-export const openPanel = asAction(
-  "Share.openPanel",
-  { mode: ActionMode.Immediate },
-  async (): Promise<void> => {
-    const { controller } = bind;
-    const share = controller.editor.share;
-    if (share.panel !== "closed") {
-      return;
-    }
-    share.panel = "opening";
-  }
-);
-
 export const closePanel = asAction(
   "Share.closePanel",
   { mode: ActionMode.Immediate },
@@ -695,7 +682,6 @@ export const closePanel = asAction(
     if (panel === "closed" || panel === "readonly" || panel === "writable") {
       share.panel = "closed";
     } else if (
-      panel === "opening" ||
       panel === "loading" ||
       panel === "updating" ||
       panel === "granular" ||
@@ -756,7 +742,10 @@ export const viewSharePermissions = asAction(
 export const onGoogleDriveSharePanelClose = asAction(
   "Share.onGoogleDriveSharePanelClose",
   { mode: ActionMode.Immediate },
-  async (graph: GraphDescriptor): Promise<void> => {
+  async (
+    graph: GraphDescriptor,
+    publishPermissions: gapi.client.drive.Permission[]
+  ): Promise<void> => {
     const { controller } = bind;
     const share = controller.editor.share;
 
@@ -766,7 +755,7 @@ export const onGoogleDriveSharePanelClose = asAction(
     const graphFileId = share.shareableFile.id;
     share.panel = "loading";
     await handleAssetPermissions(graphFileId, graph);
-    share.panel = "opening";
-    await openPanel();
+    share.panel = "closed";
+    await open(graph, publishPermissions);
   }
 );

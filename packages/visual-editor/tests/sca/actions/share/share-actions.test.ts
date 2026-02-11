@@ -99,17 +99,11 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "closed");
 
     // User opens panel
-    ShareActions.openPanel();
-    assert.strictEqual(share.panel, "opening");
-
-    // Panel starts loading
-    const loaded = ShareActions.readPublishedState(
+    const loaded = ShareActions.open(
       { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
     assert.strictEqual(share.panel, "loading");
-
-    // Can't close while loading
     ShareActions.closePanel();
     assert.strictEqual(share.panel, "loading");
 
@@ -135,8 +129,7 @@ suite("Share Actions", () => {
     );
 
     // Open and load to get to writable state
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
+    await ShareActions.open(
       { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
@@ -232,8 +225,7 @@ suite("Share Actions", () => {
     const blockedShare = controller.editor.share;
 
     // Open and load
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    await ShareActions.open(graph, publishPermissions);
 
     // Verify publicPublishingAllowed is false
     assert.strictEqual(blockedShare.publicPublishingAllowed, false);
@@ -253,8 +245,7 @@ suite("Share Actions", () => {
     );
 
     // Open, load, and publish to get to published state
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
+    await ShareActions.open(
       { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
@@ -304,8 +295,7 @@ suite("Share Actions", () => {
     );
     fakeDriveApi.forceSetFileMetadata(createdFile.id, { ownedByMe: false });
 
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
+    await ShareActions.open(
       { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
@@ -339,8 +329,7 @@ suite("Share Actions", () => {
       properties: { mainToShareableCopy: shareableCopy.id },
     });
 
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
+    await ShareActions.open(
       { edges: [], nodes: [], url: `drive:/${mainFile.id}` },
       []
     );
@@ -366,8 +355,7 @@ suite("Share Actions", () => {
       }
     );
 
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
+    await ShareActions.open(
       { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
@@ -418,8 +406,7 @@ suite("Share Actions", () => {
     fakeDriveApi.createFileGeneratesResourceKey(true);
 
     // Open and load to get to writable state with stale shareable copy
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
+    await ShareActions.open(
       { edges: [], nodes: [], url: `drive:/${mainFile.id}` },
       [{ type: "domain", domain: "example.com" }]
     );
@@ -486,8 +473,7 @@ suite("Share Actions", () => {
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load - initially not published
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    await ShareActions.open(graph, publishPermissions);
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.published, false);
@@ -510,8 +496,7 @@ suite("Share Actions", () => {
     );
 
     // User closes granular sharing dialog
-    await ShareActions.onGoogleDriveSharePanelClose(graph);
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    await ShareActions.onGoogleDriveSharePanelClose(graph, publishPermissions);
 
     // We should now be granularly shared, but not published
     assert.strictEqual(share.panel, "writable");
@@ -534,8 +519,7 @@ suite("Share Actions", () => {
     );
 
     // User closes the dialog
-    await ShareActions.onGoogleDriveSharePanelClose(graph);
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    await ShareActions.onGoogleDriveSharePanelClose(graph, publishPermissions);
 
     // We should now be granularly shared and published
     assert.strictEqual(share.panel, "writable");
@@ -609,8 +593,7 @@ suite("Share Actions", () => {
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    await ShareActions.open(graph, publishPermissions);
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.published, false);
@@ -711,8 +694,7 @@ suite("Share Actions", () => {
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    await ShareActions.open(graph, publishPermissions);
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
 

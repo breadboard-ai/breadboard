@@ -11,7 +11,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
-import { css, html, LitElement, nothing, type PropertyValues } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
@@ -347,22 +347,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
   #publishedSwitch = createRef<MdSwitch>();
   #googleDriveSharePanel = createRef<GoogleDriveSharePanel>();
 
-  override willUpdate(changes: PropertyValues<this>) {
-    super.willUpdate(changes);
-    if (changes.has("graph") && this.#panel !== "closed") {
-      this.#actions.openPanel();
-    }
-    if (this.#panel === "opening" && this.graph) {
-      this.#actions.readPublishedState(
-        this.graph,
-        this.#getRequiredPublishPermissions()
-      );
-    }
-  }
-
   override render() {
     const panel = this.#panel;
-    if (panel === "closed" || panel === "opening") {
+    if (panel === "closed") {
       return nothing;
     } else if (panel === "granular") {
       return this.#renderGranularSharingModal();
@@ -380,7 +367,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   open(): void {
-    this.#actions.openPanel();
+    if (!this.graph) {
+      return;
+    }
+    this.#actions.open(this.graph, this.#getRequiredPublishPermissions());
   }
 
   close(): void {
@@ -841,7 +831,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
     if (!this.graph) {
       return;
     }
-    await this.#actions.onGoogleDriveSharePanelClose(this.graph);
+    await this.#actions.onGoogleDriveSharePanelClose(
+      this.graph,
+      this.#getRequiredPublishPermissions()
+    );
   }
 
   #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
