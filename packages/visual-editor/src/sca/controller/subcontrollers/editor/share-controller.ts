@@ -53,13 +53,13 @@ export class ShareController extends RootController {
   @field()
   accessor latestVersion = "";
 
-  @field()
+  @field({ deep: false })
   accessor publishedPermissions: gapi.client.drive.Permission[] = [];
 
   @field()
   accessor shareableFile: DriveFileId | null = null;
 
-  @field()
+  @field({ deep: false })
   accessor unmanagedAssetProblems: UnmanagedAssetProblem[] = [];
 
   #resolveUnmanagedAssets?: () => void;
