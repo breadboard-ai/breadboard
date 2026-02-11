@@ -210,6 +210,44 @@ suite("Share Actions", () => {
     );
   });
 
+  test("publish blocked by domain config", async () => {
+    const createdFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "test-board.bgl.json", mimeType: "application/json" }
+    );
+    const graph = { edges: [], nodes: [], url: `drive:/${createdFile.id}` };
+    const publishPermissions = [{ type: "domain", domain: "example.com" }];
+
+    // Re-bind with domain config that disallows public publishing
+    const { controller } = makeTestController();
+    const { services } = makeTestServices({
+      googleDriveClient,
+      signinAdapter: {
+        domain: Promise.resolve("example.com"),
+      },
+      globalConfig: {
+        domains: {
+          "example.com": { disallowPublicPublishing: true },
+        },
+      },
+    });
+    ShareActions.bind({ controller, services });
+    const blockedShare = controller.editor.share;
+
+    // Open and load
+    ShareActions.openPanel();
+    await ShareActions.readPublishedState(graph, publishPermissions);
+
+    // Verify publicPublishingAllowed is false
+    assert.strictEqual(blockedShare.publicPublishingAllowed, false);
+    assert.strictEqual(blockedShare.state.status, "writable");
+
+    // Attempt to publish — should be a no-op
+    await ShareActions.publish(graph, publishPermissions, undefined);
+    assert.strictEqual(blockedShare.state.status, "writable");
+    assert.strictEqual(blockedShare.published, false);
+  });
+
   test("unpublish", async () => {
     // Create a file for publishing
     const createdFile = await googleDriveClient.createFile(

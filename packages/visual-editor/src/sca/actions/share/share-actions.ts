@@ -62,6 +62,10 @@ export const readPublishedState = asAction(
     share.panel = "loading";
     share.state = { status: "loading" };
     share.userDomain = (await services.signinAdapter.domain) ?? "";
+    share.publicPublishingAllowed = !(
+      services.globalConfig.domains?.[share.userDomain]
+        ?.disallowPublicPublishing ?? false
+    );
 
     // Ensure any pending changes are saved so that our Drive operations will be
     // synchronized with those changes.
@@ -510,6 +514,15 @@ export const publish = asAction(
     if (publishPermissions.length === 0) {
       logger.log(
         Utils.Logging.Formatter.error("No publish permissions configured"),
+        LABEL
+      );
+      return;
+    }
+    if (!share.publicPublishingAllowed) {
+      logger.log(
+        Utils.Logging.Formatter.error(
+          "Public publishing is disallowed for this domain"
+        ),
         LABEL
       );
       return;

@@ -98,5 +98,8 @@ export class ShareController extends RootController {
   accessor userDomain = "";
 
   @field()
+  accessor publicPublishingAllowed = true;
+
+  @field()
   accessor state: ShareState = { status: "closed" };
 }
