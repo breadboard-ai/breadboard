@@ -125,10 +125,7 @@ export const readPublishedState = asAction(
     if (!shareableCopyFileId) {
       share.panel = "writable";
       share.access = "writable";
-      share.published = false;
-      share.granularlyShared = false;
       share.latestVersion = thisFileMetadata.version;
-      share.shareableFile = null;
       return;
     }
 
