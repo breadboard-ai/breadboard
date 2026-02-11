@@ -60,7 +60,7 @@ export const readPublishedState = asAction(
     }
 
     share.panel = "loading";
-    share.state = { status: "loading" };
+
     share.userDomain = (await services.signinAdapter.domain) ?? "";
     share.publicPublishingAllowed = !(
       services.globalConfig.domains?.[share.userDomain]
@@ -95,10 +95,6 @@ export const readPublishedState = asAction(
         id: thisFileId,
         resourceKey: thisFileMetadata.resourceKey,
       };
-      share.state = {
-        status: "readonly",
-        shareableFile: share.shareableFile,
-      };
       return;
     }
 
@@ -122,10 +118,7 @@ export const readPublishedState = asAction(
             id: thisFileId,
             resourceKey: thisFileMetadata.resourceKey,
           };
-      share.state = {
-        status: "readonly",
-        shareableFile: share.shareableFile,
-      };
+
       return;
     }
 
@@ -136,13 +129,6 @@ export const readPublishedState = asAction(
       share.granularlyShared = false;
       share.latestVersion = thisFileMetadata.version;
       share.shareableFile = null;
-      share.state = {
-        status: "writable",
-        published: false,
-        granularlyShared: false,
-        shareableFile: undefined,
-        latestVersion: thisFileMetadata.version,
-      };
       return;
     }
 
@@ -162,6 +148,9 @@ export const readPublishedState = asAction(
     share.panel = "writable";
     share.access = "writable";
     share.published = diff.missing.length === 0;
+    // We're granularly shared if there is any permission that is neither
+    // one of the special publish permissions, nor the owner (since there
+    // will always be an owner).
     share.granularlyShared =
       diff.excess.find((permission) => permission.role !== "owner") !==
       undefined;
@@ -176,39 +165,8 @@ export const readPublishedState = asAction(
     share.shareableFile = {
       id: shareableCopyFileId,
       resourceKey: shareableCopyFileMetadata.resourceKey,
-      stale:
-        thisFileMetadata.version !==
-        shareableCopyFileMetadata.properties?.[
-          DRIVE_PROPERTY_LATEST_SHARED_VERSION
-        ],
-      permissions: shareableCopyFileMetadata.permissions ?? [],
-      shareSurface:
-        shareableCopyFileMetadata.properties?.[
-          DRIVE_PROPERTY_OPAL_SHARE_SURFACE
-        ],
-    };
-    share.state = {
-      status: "writable",
-      published: diff.missing.length === 0,
-      publishedPermissions: share.publishedPermissions,
-      granularlyShared:
-        // We're granularly shared if there is any permission that is neither
-        // one of the special publish permissions, nor the owner (since there
-        // will always an owner).
-        diff.excess.find((permission) => permission.role !== "owner") !==
-        undefined,
-      shareableFile: share.shareableFile as any,
-      latestVersion: thisFileMetadata.version,
     };
     share.latestVersion = thisFileMetadata.version;
-
-    logger.log(
-      Utils.Logging.Formatter.verbose(
-        "Found sharing state:",
-        JSON.stringify(share.state, null, 2)
-      ),
-      LABEL
-    );
   }
 );
 
@@ -478,15 +436,7 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
   share.unmanagedAssetProblems = problems;
   const previousPanel = share.panel;
   share.panel = "unmanaged-assets";
-  share.state = {
-    status: "unmanaged-assets",
-    problems,
-    oldState: share.state,
-    closed: {
-      promise: Promise.resolve(),
-      resolve: () => {},
-    },
-  };
+
   // Wait for the user to dismiss the unmanaged-assets dialog.
   await share.waitForUnmanagedAssetsResolution();
   share.panel = previousPanel;
@@ -528,7 +478,7 @@ export const publish = asAction(
       );
       return;
     }
-    if (share.state.status !== "writable") {
+    if (share.access !== "writable") {
       logger.log(
         Utils.Logging.Formatter.error(
           'Expected published status to be "writable"'
@@ -538,20 +488,13 @@ export const publish = asAction(
       return;
     }
 
-    if (share.state.published) {
+    if (share.published) {
       // Already published!
       return;
     }
 
-    const oldState = share.state;
     share.panel = "updating";
     share.published = true;
-    share.state = {
-      status: "updating",
-      published: true,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile: share.shareableFile as any,
-    };
 
     let newLatestVersion: string | undefined;
     if (!share.shareableFile) {
@@ -559,9 +502,6 @@ export const publish = asAction(
       share.shareableFile = {
         id: copyResult.shareableCopyFileId,
         resourceKey: copyResult.shareableCopyResourceKey,
-        stale: false,
-        permissions: publishPermissions,
-        shareSurface,
       };
       newLatestVersion = copyResult.newMainVersion;
     }
@@ -588,16 +528,8 @@ export const publish = asAction(
 
     share.panel = "writable";
     share.published = true;
-    share.state = {
-      status: "writable",
-      published: true,
-      publishedPermissions: graphPublishPermissions,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile: share.shareableFile as any,
-      latestVersion: newLatestVersion ?? oldState.latestVersion,
-    };
     share.publishedPermissions = graphPublishPermissions;
-    share.latestVersion = newLatestVersion ?? oldState.latestVersion;
+    share.latestVersion = newLatestVersion ?? share.latestVersion;
   }
 );
 
@@ -611,7 +543,7 @@ export const unpublish = asAction(
 
     const LABEL = "Share.unpublish";
     const logger = Utils.Logging.getLogger(controller);
-    if (share.state.status !== "writable") {
+    if (share.access !== "writable") {
       logger.log(
         Utils.Logging.Formatter.error(
           'Expected published status to be "writable"'
@@ -620,19 +552,12 @@ export const unpublish = asAction(
       );
       return;
     }
-    if (!share.state.published) {
+    if (!share.published) {
       // Already unpublished!
       return;
     }
-    const oldState = share.state;
     share.panel = "updating";
     share.published = false;
-    share.state = {
-      status: "updating",
-      published: false,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile: share.shareableFile as any,
-    };
 
     logger.log(
       Utils.Logging.Formatter.verbose(
@@ -656,14 +581,6 @@ export const unpublish = asAction(
 
     share.panel = "writable";
     share.published = false;
-    share.state = {
-      status: "writable",
-      published: false,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile: share.shareableFile as any,
-      latestVersion: oldState.latestVersion,
-    };
-    share.latestVersion = oldState.latestVersion;
   }
 );
 
@@ -676,20 +593,11 @@ export const publishStale = asAction(
     const googleDriveClient = services.googleDriveClient;
     const boardServer = services.googleDriveBoardServer;
 
-    const oldState = share.state;
-    if (oldState.status !== "writable" || !share.shareableFile) {
+    if (share.access !== "writable" || !share.shareableFile) {
       return;
     }
 
     share.panel = "updating";
-    share.published = oldState.published;
-    share.granularlyShared = oldState.granularlyShared;
-    share.state = {
-      status: "updating",
-      published: oldState.published,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile: share.shareableFile as any,
-    };
 
     const shareableFileUrl = new URL(`drive:/${share.shareableFile.id}`);
     const updatedShareableGraph = structuredClone(graph);
@@ -714,11 +622,6 @@ export const publishStale = asAction(
 
     share.panel = "writable";
     share.stale = false;
-    share.shareableFile = { ...share.shareableFile, stale: false };
-    share.state = {
-      ...oldState,
-      shareableFile: share.shareableFile as any,
-    };
 
     Utils.Logging.getLogger(controller).log(
       Utils.Logging.Formatter.verbose(
@@ -743,7 +646,7 @@ export const fixUnmanagedAssetProblems = asAction(
       return;
     }
     share.panel = "loading";
-    share.state = { status: "loading" };
+
     await Promise.all(
       share.unmanagedAssetProblems.map(async (problem) => {
         if (problem.problem === "missing") {
@@ -777,11 +680,10 @@ export const openPanel = asAction(
   async (): Promise<void> => {
     const { controller } = bind;
     const share = controller.editor.share;
-    if (share.state.status !== "closed") {
+    if (share.panel !== "closed") {
       return;
     }
     share.panel = "opening";
-    share.state = { status: "opening" };
   }
 );
 
@@ -791,30 +693,28 @@ export const closePanel = asAction(
   async (): Promise<void> => {
     const { controller } = bind;
     const share = controller.editor.share;
-    const state = share.state;
-    const { status } = state;
+    const panel = share.panel;
 
-    if (status === "closed" || status === "readonly" || status === "writable") {
+    if (panel === "closed" || panel === "readonly" || panel === "writable") {
       share.panel = "closed";
-      share.state = { status: "closed" };
     } else if (
-      status === "opening" ||
-      status === "loading" ||
-      status === "updating" ||
-      status === "granular" ||
-      status === "unmanaged-assets"
+      panel === "opening" ||
+      panel === "loading" ||
+      panel === "updating" ||
+      panel === "granular" ||
+      panel === "unmanaged-assets"
     ) {
       Utils.Logging.getLogger(controller).log(
         Utils.Logging.Formatter.warning(
-          `Cannot close panel while in "${status}" state`
+          `Cannot close panel while in "${panel}" state`
         ),
         "Share.closePanel"
       );
     } else {
       Utils.Logging.getLogger(controller).log(
         Utils.Logging.Formatter.error(
-          "Unhandled state:",
-          state satisfies never
+          "Unhandled panel:",
+          panel satisfies never
         ),
         "Share.closePanel"
       );
@@ -832,8 +732,7 @@ export const viewSharePermissions = asAction(
     const { controller } = bind;
     const share = controller.editor.share;
 
-    const oldState = share.state;
-    if (oldState.status !== "writable") {
+    if (share.access !== "writable") {
       return;
     }
     if (!graph.url) {
@@ -845,7 +744,6 @@ export const viewSharePermissions = asAction(
     }
 
     share.panel = "loading";
-    share.state = { status: "loading" };
 
     // We must create the shareable copy now if it doesn't already exist, since
     // that's the file we need to open the granular permissions dialog with.
@@ -855,10 +753,6 @@ export const viewSharePermissions = asAction(
 
     share.panel = "granular";
     share.shareableFile = { id: shareableCopyFileId };
-    share.state = {
-      status: "granular",
-      shareableFile: share.shareableFile,
-    };
   }
 );
 
@@ -869,15 +763,13 @@ export const onGoogleDriveSharePanelClose = asAction(
     const { controller } = bind;
     const share = controller.editor.share;
 
-    if (share.state.status !== "granular" || !share.shareableFile) {
+    if (share.panel !== "granular" || !share.shareableFile) {
       return;
     }
     const graphFileId = share.shareableFile.id;
     share.panel = "loading";
-    share.state = { status: "loading" };
     await handleAssetPermissions(graphFileId, graph);
     share.panel = "opening";
-    share.state = { status: "opening" };
     await openPanel();
   }
 );

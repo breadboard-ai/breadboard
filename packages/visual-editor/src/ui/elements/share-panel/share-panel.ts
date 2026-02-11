@@ -15,10 +15,7 @@ import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
-import type {
-  SharePanelStatus,
-  ShareState,
-} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+import type { SharePanelStatus } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
@@ -334,10 +331,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor graph: GraphDescriptor | undefined;
 
-  get #state(): ShareState {
-    return this.#controller.state;
-  }
-
   get #panel(): SharePanelStatus {
     return this.#controller.panel;
   }
@@ -451,10 +444,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       return true;
     }
     if (panel === "writable" || panel === "updating") {
-      const state = this.#state;
-      if (state.status === "writable" || state.status === "updating") {
-        return state.published || state.granularlyShared;
-      }
+      return this.#controller.published || this.#controller.granularlyShared;
     }
     return undefined;
   }
@@ -462,10 +452,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   get #isStale(): boolean | undefined {
     const panel = this.#panel;
     if (panel === "writable" || panel === "updating") {
-      const state = this.#state;
-      if (state.status === "writable" || state.status === "updating") {
-        return state.shareableFile?.stale ?? false;
-      }
+      return this.#controller.stale;
     }
     return undefined;
   }
@@ -527,8 +514,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderDisallowedPublishingNotice() {
-    const state = this.#state;
-    if (state.status !== "writable" && state.status !== "updating") {
+    const panel = this.#panel;
+    if (panel !== "writable" && panel !== "updating") {
       return nothing;
     }
     const domain = this.#controller.userDomain;
@@ -621,32 +608,21 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   get #computedVisibility(): VisibilityLevel {
-    const state = this.#state;
-    if (
-      (state.status === "writable" || state.status === "updating") &&
-      state.published
-    ) {
+    if (this.#controller.published) {
       return "anyone";
     }
-    if (
-      (state.status === "writable" || state.status === "updating") &&
-      state.granularlyShared
-    ) {
+    if (this.#controller.granularlyShared) {
       return "restricted";
     }
     return "only-you";
   }
 
   #renderPublishedSwitch() {
-    const state = this.#state;
     const panel = this.#panel;
     if (panel !== "writable" && panel !== "updating") {
       return nothing;
     }
-    if (state.status !== "writable" && state.status !== "updating") {
-      return nothing;
-    }
-    const published = state.published;
+    const published = this.#controller.published;
     const domain = this.#controller.userDomain;
     const { disallowPublicPublishing } =
       this.globalConfig?.domains?.[domain] ?? {};
@@ -671,28 +647,28 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderGranularSharingModal() {
-    const state = this.#state;
-    if (state.status !== "granular") {
+    const panel = this.#panel;
+    if (panel !== "granular" || !this.#controller.shareableFile) {
       return nothing;
     }
     return html`
       <bb-google-drive-share-panel
         ${ref(this.#googleDriveSharePanel)}
-        .fileIds=${[state.shareableFile.id]}
+        .fileIds=${[this.#controller.shareableFile.id]}
         @close=${this.#onGoogleDriveSharePanelClose}
       ></bb-google-drive-share-panel>
     `;
   }
 
   #renderUnmanagedAssetsModalContents() {
-    const state = this.#state;
-    if (state.status !== "unmanaged-assets") {
+    const problems = this.#controller.unmanagedAssetProblems;
+    if (problems.length === 0) {
       return nothing;
     }
 
     const parts = [];
 
-    const missingProblems = state.problems.filter(
+    const missingProblems = problems.filter(
       ({ problem }) => problem === "missing"
     );
     if (missingProblems.length > 0) {
@@ -713,7 +689,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       `);
     }
 
-    const cantShareProblems = state.problems.filter(
+    const cantShareProblems = problems.filter(
       ({ problem }) => problem === "cant-share"
     );
     if (cantShareProblems.length > 0) {
@@ -831,12 +807,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   get #appUrl(): string | undefined {
-    const state = this.#state;
+    const panel = this.#panel;
+    const shareableFile = this.#controller.shareableFile;
     if (
-      (state.status === "writable" ||
-        state.status === "updating" ||
-        state.status === "readonly") &&
-      state.shareableFile
+      (panel === "writable" || panel === "updating" || panel === "readonly") &&
+      shareableFile
     ) {
       const shareSurface = this.guestConfiguration?.shareSurface;
       const shareSurfaceUrlTemplate =
@@ -845,16 +820,16 @@ export class SharePanel extends SignalWatcher(LitElement) {
       if (shareSurfaceUrlTemplate) {
         return makeShareLinkFromTemplate({
           urlTemplate: shareSurfaceUrlTemplate,
-          fileId: state.shareableFile.id,
-          resourceKey: state.shareableFile.resourceKey,
+          fileId: shareableFile.id,
+          resourceKey: shareableFile.resourceKey,
         });
       }
       return makeUrl(
         {
           page: "graph",
           mode: "app",
-          flow: `drive:/${state.shareableFile.id}`,
-          resourceKey: state.shareableFile.resourceKey,
+          flow: `drive:/${shareableFile.id}`,
+          resourceKey: shareableFile.resourceKey,
           guestPrefixed: false,
         },
         this.globalConfig?.hostOrigin
