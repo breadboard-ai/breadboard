@@ -86,5 +86,8 @@ export class ShareController extends RootController {
   accessor panel: SharePanelStatus = "closed";
 
   @field()
+  accessor access: "unknown" | "readonly" | "writable" = "unknown";
+
+  @field()
   accessor state: ShareState = { status: "closed" };
 }

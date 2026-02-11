@@ -85,6 +85,7 @@ export const readPublishedState = asAction(
       undefined;
     if (thisFileIsAShareableCopy) {
       share.panel = "readonly";
+      share.access = "readonly";
       share.state = {
         status: "readonly",
         shareableFile: {
@@ -100,6 +101,7 @@ export const readPublishedState = asAction(
 
     if (!thisFileMetadata.ownedByMe) {
       share.panel = "readonly";
+      share.access = "readonly";
       share.state = {
         status: "readonly",
         shareableFile: shareableCopyFileId
@@ -122,6 +124,7 @@ export const readPublishedState = asAction(
 
     if (!shareableCopyFileId) {
       share.panel = "writable";
+      share.access = "writable";
       share.state = {
         status: "writable",
         published: false,
@@ -147,6 +150,7 @@ export const readPublishedState = asAction(
     });
 
     share.panel = "writable";
+    share.access = "writable";
     share.state = {
       status: "writable",
       published: diff.missing.length === 0,
