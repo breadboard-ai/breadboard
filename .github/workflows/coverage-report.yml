@@ -41,21 +41,23 @@ jobs:
           node-version: 24.x
           cache: "npm"
 
-      # Look up the PR associated with the triggering commit using the
-      # GitHub commits API. This works for ALL PR types including fork PRs.
+      # Look up the PR using the pulls list API filtered by head branch.
+      # This works for ALL PR types including fork PRs and survives squash
+      # merges (unlike /commits/{sha}/pulls, which fails when the original
+      # head SHA isn't in the default branch after squash).
       #
       # Why not use github.event.workflow_run.pull_requests[0]?
       # That field is EMPTY for fork PRs (cross-repo PRs) as a GitHub
       # security measure. Since the team primarily works from personal
-      # forks, we use the commits API instead, which reliably returns
-      # PR info for any commit that's part of a pull request.
-      - name: Get PR info from commit
+      # forks, we query the pulls API with the fork owner + branch instead.
+      - name: Get PR info from branch
         id: pr-info
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          HEAD_SHA='${{ github.event.workflow_run.head_sha }}'
-          API_URL="repos/${{ github.repository }}/commits/${HEAD_SHA}/pulls"
+          FORK_OWNER='${{ github.event.workflow_run.head_repository.owner.login }}'
+          FORK_BRANCH='${{ github.event.workflow_run.head_branch }}'
+          API_URL="repos/${{ github.repository }}/pulls?state=all&head=${FORK_OWNER}:${FORK_BRANCH}&sort=updated&direction=desc&per_page=1"
           PR_NUMBER=$(gh api "$API_URL" --jq '.[0].number // empty')
 
           if [ -n "$PR_NUMBER" ]; then
@@ -69,7 +71,7 @@ jobs:
               echo "sha=" >> $GITHUB_OUTPUT
             fi
           else
-            echo "::warning::No PR found for commit ${HEAD_SHA}"
+            echo "::warning::No PR found for ${FORK_OWNER}:${FORK_BRANCH}"
             echo "number=" >> $GITHUB_OUTPUT
             echo "sha=" >> $GITHUB_OUTPUT
           fi

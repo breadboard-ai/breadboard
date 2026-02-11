@@ -101,9 +101,82 @@ function validateCoverageJson(json) {
 }
 
 /**
- * Reads and validates a coverage JSON file.
+ * Extracts per-file coverage data from the full JSON.
+ * Returns a Map of relative file path → lines.pct.
+ * Skips the "total" key.
+ * @param {Record<string, unknown>} json
+ * @returns {Map<string, number>}
+ */
+function extractPerFileLineCoverage(json) {
+  const result = new Map();
+  for (const [key, value] of Object.entries(json)) {
+    if (key === "total") continue;
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      "lines" in value &&
+      isValidMetric(value.lines)
+    ) {
+      // Shorten absolute paths to relative paths from src/
+      const srcIndex = key.indexOf("/src/");
+      const shortPath = srcIndex !== -1 ? key.slice(srcIndex + 1) : key;
+      result.set(shortPath, value.lines.pct);
+    }
+  }
+  return result;
+}
+
+/**
+ * Finds files where line coverage degraded between baseline and PR.
+ * @param {Map<string, number>} prFiles
+ * @param {Map<string, number>} baseFiles
+ * @returns {{ file: string, prPct: number, basePct: number, delta: number }[]}
+ */
+function findDegradedFiles(prFiles, baseFiles) {
+  const degraded = [];
+  for (const [file, prPct] of prFiles) {
+    const basePct = baseFiles.get(file);
+    if (basePct !== undefined && prPct < basePct) {
+      degraded.push({ file, prPct, basePct, delta: prPct - basePct });
+    }
+  }
+  // Sort by largest drop first.
+  degraded.sort((a, b) => a.delta - b.delta);
+  return degraded;
+}
+
+/**
+ * Generates a collapsible markdown section for degraded files.
+ * @param {{ file: string, prPct: number, basePct: number, delta: number }[]} degraded
+ * @returns {string}
+ */
+function formatDegradedFiles(degraded) {
+  if (degraded.length === 0) return "";
+
+  const capped = degraded.slice(0, 10);
+  const hasMore = degraded.length > 10;
+
+  let md = `\n<details>\n`;
+  md += `<summary>🔴 ${degraded.length} file${degraded.length === 1 ? "" : "s"} with reduced line coverage</summary>\n\n`;
+  md += `| File | PR | Main | Delta |\n`;
+  md += `|------|---:|-----:|-------|\n`;
+  for (const { file, prPct, basePct, delta } of capped) {
+    const basename = file.split("/").pop();
+    md += `| \`${basename}\` | ${prPct.toFixed(2)}% | ${basePct.toFixed(2)}% | 🔴 ${delta.toFixed(2)}% |\n`;
+  }
+  if (hasMore) {
+    md += `\n_…and ${degraded.length - 10} more._\n`;
+  }
+  md += `\n</details>\n`;
+  return md;
+}
+
+/**
+ * Reads and parses a coverage JSON file.
+ * Returns { totals, json } where totals is the validated total metrics
+ * and json is the full parsed object (for per-file comparison).
  * @param {string} path
- * @returns {{ lines: number, functions: number, branches: number } | null}
+ * @returns {{ totals: { lines: number, functions: number, branches: number }, json: Record<string, unknown> } | null}
  */
 function readCoverage(path) {
   if (!existsSync(path)) {
@@ -133,7 +206,7 @@ function readCoverage(path) {
     return null;
   }
 
-  return result.data;
+  return { totals: result.data, json };
 }
 
 function formatDelta(pr, base) {
@@ -158,13 +231,16 @@ if (!prPath) {
   process.exit(1);
 }
 
-const prCoverage = readCoverage(prPath);
-const baseCoverage = readCoverage(basePath);
+const prResult = readCoverage(prPath);
+const baseResult = readCoverage(basePath);
 
-if (!prCoverage) {
+if (!prResult) {
   console.error("❌ Could not read PR coverage data");
   process.exit(1);
 }
+
+const prCoverage = prResult.totals;
+const baseCoverage = baseResult?.totals ?? null;
 
 let comment = `## 📊 Coverage Report\n\n`;
 
@@ -178,6 +254,30 @@ comment += `|--------|---:|-----:|-------|\n`;
 comment += `${formatRow("Lines", prCoverage.lines, baseCoverage?.lines ?? null)}\n`;
 comment += `${formatRow("Functions", prCoverage.functions, baseCoverage?.functions ?? null)}\n`;
 comment += `${formatRow("Branches", prCoverage.branches, baseCoverage?.branches ?? null)}\n`;
+
+// Append per-file degradation details when both datasets are available.
+if (baseResult) {
+  const prFiles = extractPerFileLineCoverage(prResult.json);
+  const baseFiles = extractPerFileLineCoverage(baseResult.json);
+  const degraded = findDegradedFiles(prFiles, baseFiles);
+  comment += formatDegradedFiles(degraded);
+}
+
+// Celebrate when overall line coverage increases.
+if (baseCoverage && prCoverage.lines > baseCoverage.lines) {
+  const celebrations = [
+    "🎉 Coverage is up!",
+    "🚀 Lines covered went up with this change.",
+    "💪 Net positive on coverage.",
+    "⭐ Test coverage improved.",
+    "🏆 Coverage going in the right direction.",
+    "🌟 More lines covered than before.",
+    "🎯 Coverage is trending up.",
+    "✨ More coverage, fewer surprises.",
+  ];
+  const message = celebrations[Math.floor(Math.random() * celebrations.length)];
+  comment += `\n${message}\n`;
+}
 
 writeFileSync("coverage-comment.md", comment);
 console.log("✅ Coverage comment written to coverage-comment.md");
