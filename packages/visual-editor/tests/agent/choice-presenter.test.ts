@@ -568,8 +568,8 @@ describe("ChoicePresenter", () => {
         "Should include multiple-choice component"
       );
       assert(
-        column.children.explicitList.includes("submit-btn"),
-        "Should include submit button"
+        column.children.explicitList.includes("button-row"),
+        "Should include button row"
       );
     });
 
@@ -641,121 +641,151 @@ describe("ChoicePresenter", () => {
   });
 
   describe("presentChoices - none_of_the_above_label", () => {
-    describe("single selection mode", () => {
-      it("includes none_of_the_above as an option when noneOfTheAboveLabel is provided", async () => {
-        const mockRenderer = createMockRenderer({ selections: ["a"] });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+    it("creates a non-primary Button when noneOfTheAboveLabel is provided", async () => {
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
-        await presenter.presentChoices(
-          "Pick one:",
-          [{ id: "a", label: "Option A" }],
-          "single",
-          "list",
-          "Skip"
-        );
+      await presenter.presentChoices(
+        "Pick one:",
+        [{ id: "a", label: "Option A" }],
+        "single",
+        "list",
+        "Skip"
+      );
 
-        const multipleChoice = findComponent(
-          mockRenderer.capturedMessages,
-          "multiple-choice"
-        );
-        assert(
-          multipleChoice !== undefined,
-          "MultipleChoice component should exist"
-        );
-        const mc = getMultipleChoiceProps(multipleChoice!);
-        deepStrictEqual(mc.options.length, 2);
-        deepStrictEqual(mc.options[1].value, "__none_of_the_above__");
-        deepStrictEqual(mc.options[1].label?.literalString, "Skip");
-      });
+      // The "none of the above" should NOT be in the MultipleChoice options
+      const multipleChoice = findComponent(
+        mockRenderer.capturedMessages,
+        "multiple-choice"
+      );
+      assert(
+        multipleChoice !== undefined,
+        "MultipleChoice component should exist"
+      );
+      const mc = getMultipleChoiceProps(multipleChoice!);
+      deepStrictEqual(
+        mc.options.length,
+        1,
+        "MultipleChoice should only have the real options"
+      );
 
-      it("returns __none_of_the_above__ ID when none option is selected", async () => {
-        const mockRenderer = createMockRenderer({
-          selections: ["__none_of_the_above__"],
-        });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+      // It should be a separate Button component
+      const noneBtn = findComponent(
+        mockRenderer.capturedMessages,
+        "none-of-the-above-btn"
+      );
+      assert(noneBtn !== undefined, "None-of-the-above button should exist");
+      assert(
+        noneBtn?.component && "Button" in noneBtn.component,
+        "Should be a Button"
+      );
 
-        const result = await presenter.presentChoices(
-          "Pick one:",
-          [{ id: "a", label: "Option A" }],
-          "single",
-          "list",
-          "Exit"
-        );
-
-        if (!ok(result)) {
-          fail(`Expected success, got error: ${result.$error}`);
+      const btnProps = (
+        noneBtn!.component as {
+          Button: {
+            primary: boolean;
+            action: {
+              name: string;
+              context: { key: string; value: { literalString: string } }[];
+            };
+          };
         }
-        deepStrictEqual(result.selected, ["__none_of_the_above__"]);
-      });
+      ).Button;
+      deepStrictEqual(btnProps.primary, false, "Should be non-primary");
+      deepStrictEqual(btnProps.action.name, "submit");
+      deepStrictEqual(
+        btnProps.action.context[0].value.literalString,
+        JSON.stringify(["__none_of_the_above__"])
+      );
 
-      it("does not include none option when noneOfTheAboveLabel is not provided", async () => {
-        const mockRenderer = createMockRenderer({ selections: ["a"] });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-        await presenter.presentChoices(
-          "Pick one:",
-          [{ id: "a", label: "Option A" }],
-          "single"
-        );
-
-        const multipleChoice = findComponent(
-          mockRenderer.capturedMessages,
-          "multiple-choice"
-        );
-        const mc = getMultipleChoiceProps(multipleChoice!);
-        deepStrictEqual(mc.options.length, 1);
-      });
+      // Verify the text child has the label
+      const noneText = findComponent(
+        mockRenderer.capturedMessages,
+        "none-of-the-above-text"
+      );
+      assert(noneText !== undefined, "None-of-the-above text should exist");
+      const textProps = (
+        noneText!.component as {
+          Text: { text: { literalString: string } };
+        }
+      ).Text;
+      deepStrictEqual(textProps.text.literalString, "Skip");
     });
 
-    describe("multiple selection mode", () => {
-      it("includes none_of_the_above as an option when noneOfTheAboveLabel is provided", async () => {
-        const mockRenderer = createMockRenderer({
-          selections: [],
-        });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-        await presenter.presentChoices(
-          "Select all:",
-          [{ id: "a", label: "Option A" }],
-          "multiple",
-          "list",
-          "None apply"
-        );
-
-        // Verify MultipleChoice includes the none-of-the-above option
-        const multipleChoice = findComponent(
-          mockRenderer.capturedMessages,
-          "multiple-choice"
-        );
-        assert(
-          multipleChoice !== undefined,
-          "MultipleChoice component should exist"
-        );
-        const mc = getMultipleChoiceProps(multipleChoice!);
-        deepStrictEqual(mc.options.length, 2);
-        deepStrictEqual(mc.options[1].value, "__none_of_the_above__");
-        deepStrictEqual(mc.options[1].label?.literalString, "None apply");
+    it("returns __none_of_the_above__ ID when none button is clicked", async () => {
+      const mockRenderer = createMockRenderer({
+        selections: ["__none_of_the_above__"],
       });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
-      it("includes __none_of_the_above__ in selections when checked", async () => {
-        const mockRenderer = createMockRenderer({
-          selections: ["a", "__none_of_the_above__"],
-        });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+      const result = await presenter.presentChoices(
+        "Pick one:",
+        [{ id: "a", label: "Option A" }],
+        "single",
+        "list",
+        "Exit"
+      );
 
-        const result = await presenter.presentChoices(
-          "Select all:",
-          [{ id: "a", label: "Option A" }],
-          "multiple",
-          "list",
-          "None apply"
-        );
+      if (!ok(result)) {
+        fail(`Expected success, got error: ${result.$error}`);
+      }
+      deepStrictEqual(result.selected, ["__none_of_the_above__"]);
+    });
 
-        if (!ok(result)) {
-          fail(`Expected success, got error: ${result.$error}`);
+    it("does not create none button when noneOfTheAboveLabel is not provided", async () => {
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+      await presenter.presentChoices(
+        "Pick one:",
+        [{ id: "a", label: "Option A" }],
+        "single"
+      );
+
+      const noneBtn = findComponent(
+        mockRenderer.capturedMessages,
+        "none-of-the-above-btn"
+      );
+      deepStrictEqual(noneBtn, undefined, "None button should not exist");
+
+      const multipleChoice = findComponent(
+        mockRenderer.capturedMessages,
+        "multiple-choice"
+      );
+      const mc = getMultipleChoiceProps(multipleChoice!);
+      deepStrictEqual(mc.options.length, 1);
+    });
+
+    it("includes none-of-the-above-btn in root layout", async () => {
+      const mockRenderer = createMockRenderer({ selections: [] });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+      await presenter.presentChoices(
+        "Select:",
+        [{ id: "a", label: "Option A" }],
+        "multiple",
+        "list",
+        "None apply"
+      );
+
+      const buttonRow = findComponent(
+        mockRenderer.capturedMessages,
+        "button-row"
+      );
+      assert(buttonRow !== undefined, "Button row should exist");
+      const row = (
+        buttonRow!.component as {
+          Row: { children: { explicitList: string[] } };
         }
-        deepStrictEqual(result.selected, ["a", "__none_of_the_above__"]);
-      });
+      ).Row;
+      assert(
+        row.children.explicitList.includes("none-of-the-above-btn"),
+        "Button row should include none-of-the-above button"
+      );
+      assert(
+        row.children.explicitList.includes("submit-btn"),
+        "Button row should include submit button"
+      );
     });
   });
 });
