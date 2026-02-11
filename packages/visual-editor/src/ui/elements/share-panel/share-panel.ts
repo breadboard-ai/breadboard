@@ -771,11 +771,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   async #onClickDismissUnmanagedAssetProblems() {
-    const state = this.#state;
-    if (state.status !== "unmanaged-assets") {
-      return;
-    }
-    state.closed.resolve();
+    await this.#actions.dismissUnmanagedAssetProblems();
   }
   async #onClickFixUnmanagedAssetProblems() {
     await this.#actions.fixUnmanagedAssetProblems();

@@ -116,5 +116,25 @@ export class ShareController extends RootController {
     | null = null;
 
   @field()
+  accessor unmanagedAssetProblems: UnmanagedAssetProblem[] = [];
+
+  #resolveUnmanagedAssets?: () => void;
+
+  /**
+   * Creates a promise that blocks until the unmanaged-assets dialog is
+   * resolved (via dismiss or fix).
+   */
+  waitForUnmanagedAssetsResolution(): Promise<void> {
+    const { promise, resolve } = Promise.withResolvers<void>();
+    this.#resolveUnmanagedAssets = resolve;
+    return promise;
+  }
+
+  /** Resolves the unmanaged-assets dialog promise. */
+  resolveUnmanagedAssets() {
+    this.#resolveUnmanagedAssets?.();
+  }
+
+  @field()
   accessor state: ShareState = { status: "closed" };
 }

@@ -475,28 +475,22 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
   if (problems.length === 0) {
     return;
   }
-  // TODO(aomarks) Bump es level so we can get Promise.withResolvers.
-  let closed: { promise: Promise<void>; resolve: () => void };
-  {
-    let resolve: () => void;
-    const promise = new Promise<void>((r) => (resolve = r));
-    closed = { promise, resolve: resolve! };
-  }
-  const oldPanel = share.panel;
-  const oldState = share.state;
+  share.unmanagedAssetProblems = problems;
+  const previousPanel = share.panel;
   share.panel = "unmanaged-assets";
   share.state = {
     status: "unmanaged-assets",
     problems,
-    oldState,
-    closed,
+    oldState: share.state,
+    closed: {
+      promise: Promise.resolve(),
+      resolve: () => {},
+    },
   };
-  // Since the unmanaged asset dialog shows up in a few different flows, it's
-  // useful to make it so this function waits until it has been resolved.
-  // TODO(aomarks) This is a kinda weird pattern. Think about a refactor.
-  await closed.promise;
-  share.panel = oldPanel;
-  share.state = oldState;
+  // Wait for the user to dismiss the unmanaged-assets dialog.
+  await share.waitForUnmanagedAssetsResolution();
+  share.panel = previousPanel;
+  share.unmanagedAssetProblems = [];
 }
 
 // =============================================================================
@@ -745,14 +739,13 @@ export const fixUnmanagedAssetProblems = asAction(
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
 
-    const state = share.state;
-    if (state.status !== "unmanaged-assets") {
+    if (share.unmanagedAssetProblems.length === 0) {
       return;
     }
     share.panel = "loading";
     share.state = { status: "loading" };
     await Promise.all(
-      state.problems.map(async (problem) => {
+      share.unmanagedAssetProblems.map(async (problem) => {
         if (problem.problem === "missing") {
           await Promise.all(
             problem.missing.map((permission) =>
@@ -764,7 +757,17 @@ export const fixUnmanagedAssetProblems = asAction(
         }
       })
     );
-    state.closed.resolve();
+    share.resolveUnmanagedAssets();
+  }
+);
+
+export const dismissUnmanagedAssetProblems = asAction(
+  "Share.dismissUnmanagedAssetProblems",
+  { mode: ActionMode.Immediate },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const share = controller.editor.share;
+    share.resolveUnmanagedAssets();
   }
 );
 
