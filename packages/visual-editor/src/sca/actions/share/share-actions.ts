@@ -91,12 +91,13 @@ export const readPublishedState = asAction(
     if (thisFileIsAShareableCopy) {
       share.panel = "readonly";
       share.access = "readonly";
+      share.shareableFile = {
+        id: thisFileId,
+        resourceKey: thisFileMetadata.resourceKey,
+      };
       share.state = {
         status: "readonly",
-        shareableFile: {
-          id: thisFileId,
-          resourceKey: thisFileMetadata.resourceKey,
-        },
+        shareableFile: share.shareableFile,
       };
       return;
     }
@@ -107,22 +108,23 @@ export const readPublishedState = asAction(
     if (!thisFileMetadata.ownedByMe) {
       share.panel = "readonly";
       share.access = "readonly";
+      share.shareableFile = shareableCopyFileId
+        ? {
+            id: shareableCopyFileId,
+            resourceKey: (
+              await googleDriveClient.getFileMetadata(shareableCopyFileId, {
+                fields: ["resourceKey"],
+                bypassProxy: true,
+              })
+            ).resourceKey,
+          }
+        : {
+            id: thisFileId,
+            resourceKey: thisFileMetadata.resourceKey,
+          };
       share.state = {
         status: "readonly",
-        shareableFile: shareableCopyFileId
-          ? {
-              id: shareableCopyFileId,
-              resourceKey: (
-                await googleDriveClient.getFileMetadata(shareableCopyFileId, {
-                  fields: ["resourceKey"],
-                  bypassProxy: true,
-                })
-              ).resourceKey,
-            }
-          : {
-              id: thisFileId,
-              resourceKey: thisFileMetadata.resourceKey,
-            },
+        shareableFile: share.shareableFile,
       };
       return;
     }
@@ -133,6 +135,7 @@ export const readPublishedState = asAction(
       share.published = false;
       share.granularlyShared = false;
       share.latestVersion = thisFileMetadata.version;
+      share.shareableFile = null;
       share.state = {
         status: "writable",
         published: false,
@@ -170,6 +173,20 @@ export const readPublishedState = asAction(
     share.publishedPermissions = allGraphPermissions.filter((permission) =>
       permissionMatchesAnyOf(permission, publishPermissions)
     );
+    share.shareableFile = {
+      id: shareableCopyFileId,
+      resourceKey: shareableCopyFileMetadata.resourceKey,
+      stale:
+        thisFileMetadata.version !==
+        shareableCopyFileMetadata.properties?.[
+          DRIVE_PROPERTY_LATEST_SHARED_VERSION
+        ],
+      permissions: shareableCopyFileMetadata.permissions ?? [],
+      shareSurface:
+        shareableCopyFileMetadata.properties?.[
+          DRIVE_PROPERTY_OPAL_SHARE_SURFACE
+        ],
+    };
     share.state = {
       status: "writable",
       published: diff.missing.length === 0,
@@ -180,20 +197,7 @@ export const readPublishedState = asAction(
         // will always an owner).
         diff.excess.find((permission) => permission.role !== "owner") !==
         undefined,
-      shareableFile: {
-        id: shareableCopyFileId,
-        resourceKey: shareableCopyFileMetadata.resourceKey,
-        stale:
-          thisFileMetadata.version !==
-          shareableCopyFileMetadata.properties?.[
-            DRIVE_PROPERTY_LATEST_SHARED_VERSION
-          ],
-        permissions: shareableCopyFileMetadata.permissions ?? [],
-        shareSurface:
-          shareableCopyFileMetadata.properties?.[
-            DRIVE_PROPERTY_OPAL_SHARE_SURFACE
-          ],
-      },
+      shareableFile: share.shareableFile as any,
       latestVersion: thisFileMetadata.version,
     };
     share.latestVersion = thisFileMetadata.version;
@@ -545,7 +549,6 @@ export const publish = asAction(
       return;
     }
 
-    let { shareableFile } = share.state;
     const oldState = share.state;
     share.panel = "updating";
     share.published = true;
@@ -553,13 +556,13 @@ export const publish = asAction(
       status: "updating",
       published: true,
       granularlyShared: oldState.granularlyShared,
-      shareableFile,
+      shareableFile: share.shareableFile as any,
     };
 
     let newLatestVersion: string | undefined;
-    if (!shareableFile) {
+    if (!share.shareableFile) {
       const copyResult = await makeShareableCopy(graph, shareSurface);
-      shareableFile = {
+      share.shareableFile = {
         id: copyResult.shareableCopyFileId,
         resourceKey: copyResult.shareableCopyResourceKey,
         stale: false,
@@ -572,7 +575,7 @@ export const publish = asAction(
     const graphPublishPermissions = await Promise.all(
       publishPermissions.map((permission) =>
         googleDriveClient.createPermission(
-          shareableFile.id,
+          share.shareableFile!.id,
           { ...permission, role: "reader" },
           { sendNotificationEmail: false }
         )
@@ -582,12 +585,12 @@ export const publish = asAction(
     logger.log(
       Utils.Logging.Formatter.verbose(
         `Added ${publishPermissions.length} publish` +
-          ` permission(s) to shareable graph copy "${shareableFile.id}".`
+          ` permission(s) to shareable graph copy "${share.shareableFile!.id}".`
       ),
       LABEL
     );
 
-    await handleAssetPermissions(shareableFile.id, graph);
+    await handleAssetPermissions(share.shareableFile!.id, graph);
 
     share.panel = "writable";
     share.published = true;
@@ -596,7 +599,7 @@ export const publish = asAction(
       published: true,
       publishedPermissions: graphPublishPermissions,
       granularlyShared: oldState.granularlyShared,
-      shareableFile,
+      shareableFile: share.shareableFile as any,
       latestVersion: newLatestVersion ?? oldState.latestVersion,
     };
     share.publishedPermissions = graphPublishPermissions;
@@ -627,7 +630,6 @@ export const unpublish = asAction(
       // Already unpublished!
       return;
     }
-    const { shareableFile } = share.state;
     const oldState = share.state;
     share.panel = "updating";
     share.published = false;
@@ -635,13 +637,13 @@ export const unpublish = asAction(
       status: "updating",
       published: false,
       granularlyShared: oldState.granularlyShared,
-      shareableFile,
+      shareableFile: share.shareableFile as any,
     };
 
     logger.log(
       Utils.Logging.Formatter.verbose(
         `Removing ${share.publishedPermissions.length} publish` +
-          ` permission(s) from shareable graph copy "${shareableFile.id}".`
+          ` permission(s) from shareable graph copy "${share.shareableFile!.id}".`
       ),
       LABEL
     );
@@ -649,14 +651,14 @@ export const unpublish = asAction(
       share.publishedPermissions.map(async (permission) => {
         if (permission.role !== "owner") {
           await googleDriveClient.deletePermission(
-            shareableFile.id,
+            share.shareableFile!.id,
             permission.id!
           );
         }
       })
     );
 
-    await handleAssetPermissions(shareableFile.id, graph);
+    await handleAssetPermissions(share.shareableFile!.id, graph);
 
     share.panel = "writable";
     share.published = false;
@@ -664,7 +666,7 @@ export const unpublish = asAction(
       status: "writable",
       published: false,
       granularlyShared: oldState.granularlyShared,
-      shareableFile,
+      shareableFile: share.shareableFile as any,
       latestVersion: oldState.latestVersion,
     };
     share.latestVersion = oldState.latestVersion;
@@ -681,7 +683,7 @@ export const publishStale = asAction(
     const boardServer = services.googleDriveBoardServer;
 
     const oldState = share.state;
-    if (oldState.status !== "writable" || !oldState.shareableFile) {
+    if (oldState.status !== "writable" || !share.shareableFile) {
       return;
     }
 
@@ -692,10 +694,10 @@ export const publishStale = asAction(
       status: "updating",
       published: oldState.published,
       granularlyShared: oldState.granularlyShared,
-      shareableFile: oldState.shareableFile,
+      shareableFile: share.shareableFile as any,
     };
 
-    const shareableFileUrl = new URL(`drive:/${oldState.shareableFile.id}`);
+    const shareableFileUrl = new URL(`drive:/${share.shareableFile.id}`);
     const updatedShareableGraph = structuredClone(graph);
     delete updatedShareableGraph["url"];
 
@@ -706,31 +708,29 @@ export const publishStale = asAction(
         updatedShareableGraph
       ),
       // Update the latest version property on the main file.
-      googleDriveClient.updateFileMetadata(oldState.shareableFile.id, {
+      googleDriveClient.updateFileMetadata(share.shareableFile.id, {
         properties: {
-          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: oldState.latestVersion,
+          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: share.latestVersion,
         },
       }),
       // Ensure all assets have the same permissions as the shareable file,
       // since they might have been added since the last publish.
-      handleAssetPermissions(oldState.shareableFile.id, graph),
+      handleAssetPermissions(share.shareableFile.id, graph),
     ]);
 
     share.panel = "writable";
     share.stale = false;
+    share.shareableFile = { ...share.shareableFile, stale: false };
     share.state = {
       ...oldState,
-      shareableFile: {
-        ...oldState.shareableFile,
-        stale: false,
-      },
+      shareableFile: share.shareableFile as any,
     };
 
     Utils.Logging.getLogger(controller).log(
       Utils.Logging.Formatter.verbose(
         `Updated stale shareable graph copy` +
-          ` "${oldState.shareableFile.id}" to version` +
-          ` "${oldState.latestVersion}".`
+          ` "${share.shareableFile!.id}" to version` +
+          ` "${share.latestVersion}".`
       ),
       "Share.publishStale"
     );
@@ -847,13 +847,14 @@ export const viewSharePermissions = asAction(
     // We must create the shareable copy now if it doesn't already exist, since
     // that's the file we need to open the granular permissions dialog with.
     const shareableCopyFileId =
-      oldState.shareableFile?.id ??
+      share.shareableFile?.id ??
       (await makeShareableCopy(graph, shareSurface)).shareableCopyFileId;
 
     share.panel = "granular";
+    share.shareableFile = { id: shareableCopyFileId };
     share.state = {
       status: "granular",
-      shareableFile: { id: shareableCopyFileId },
+      shareableFile: share.shareableFile,
     };
   }
 );
@@ -865,10 +866,10 @@ export const onGoogleDriveSharePanelClose = asAction(
     const { controller } = bind;
     const share = controller.editor.share;
 
-    if (share.state.status !== "granular") {
+    if (share.state.status !== "granular" || !share.shareableFile) {
       return;
     }
-    const graphFileId = share.state.shareableFile.id;
+    const graphFileId = share.shareableFile.id;
     share.panel = "loading";
     share.state = { status: "loading" };
     await handleAssetPermissions(graphFileId, graph);

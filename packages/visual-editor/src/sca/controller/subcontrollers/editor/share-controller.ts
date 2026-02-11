@@ -107,5 +107,14 @@ export class ShareController extends RootController {
   accessor publishedPermissions: gapi.client.drive.Permission[] = [];
 
   @field()
+  accessor shareableFile:
+    | (DriveFileId & {
+        stale?: boolean;
+        permissions?: gapi.client.drive.Permission[];
+        shareSurface?: string;
+      })
+    | null = null;
+
+  @field()
   accessor state: ShareState = { status: "closed" };
 }
