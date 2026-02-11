@@ -44,7 +44,7 @@ export const readPublishedState = asAction(
     const googleDriveClient = services.googleDriveClient;
     const boardServer = services.googleDriveBoardServer;
 
-    if (share.state.status !== "opening") {
+    if (share.panel !== "opening") {
       return;
     }
 
@@ -59,6 +59,7 @@ export const readPublishedState = asAction(
       return;
     }
 
+    share.panel = "loading";
     share.state = { status: "loading" };
 
     // Ensure any pending changes are saved so that our Drive operations will be
@@ -83,6 +84,7 @@ export const readPublishedState = asAction(
       thisFileMetadata.properties?.[DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN] !==
       undefined;
     if (thisFileIsAShareableCopy) {
+      share.panel = "readonly";
       share.state = {
         status: "readonly",
         shareableFile: {
@@ -97,6 +99,7 @@ export const readPublishedState = asAction(
       thisFileMetadata.properties?.[DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY];
 
     if (!thisFileMetadata.ownedByMe) {
+      share.panel = "readonly";
       share.state = {
         status: "readonly",
         shareableFile: shareableCopyFileId
@@ -118,6 +121,7 @@ export const readPublishedState = asAction(
     }
 
     if (!shareableCopyFileId) {
+      share.panel = "writable";
       share.state = {
         status: "writable",
         published: false,
@@ -142,6 +146,7 @@ export const readPublishedState = asAction(
       expected: publishPermissions,
     });
 
+    share.panel = "writable";
     share.state = {
       status: "writable",
       published: diff.missing.length === 0,
@@ -452,7 +457,9 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
     const promise = new Promise<void>((r) => (resolve = r));
     closed = { promise, resolve: resolve! };
   }
+  const oldPanel = share.panel;
   const oldState = share.state;
+  share.panel = "unmanaged-assets";
   share.state = {
     status: "unmanaged-assets",
     problems,
@@ -463,6 +470,7 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
   // useful to make it so this function waits until it has been resolved.
   // TODO(aomarks) This is a kinda weird pattern. Think about a refactor.
   await closed.promise;
+  share.panel = oldPanel;
   share.state = oldState;
 }
 
@@ -509,6 +517,7 @@ export const publish = asAction(
 
     let { shareableFile } = share.state;
     const oldState = share.state;
+    share.panel = "updating";
     share.state = {
       status: "updating",
       published: true,
@@ -550,6 +559,7 @@ export const publish = asAction(
 
     await handleAssetPermissions(shareableFile.id, graph);
 
+    share.panel = "writable";
     share.state = {
       status: "writable",
       published: true,
@@ -587,6 +597,7 @@ export const unpublish = asAction(
     }
     const { shareableFile } = share.state;
     const oldState = share.state;
+    share.panel = "updating";
     share.state = {
       status: "updating",
       published: false,
@@ -615,6 +626,7 @@ export const unpublish = asAction(
 
     await handleAssetPermissions(shareableFile.id, graph);
 
+    share.panel = "writable";
     share.state = {
       status: "writable",
       published: false,
@@ -640,6 +652,7 @@ export const publishStale = asAction(
       return;
     }
 
+    share.panel = "updating";
     share.state = {
       status: "updating",
       published: oldState.published,
@@ -669,6 +682,7 @@ export const publishStale = asAction(
       handleAssetPermissions(oldState.shareableFile.id, graph),
     ]);
 
+    share.panel = "writable";
     share.state = {
       ...oldState,
       shareableFile: {
@@ -700,6 +714,7 @@ export const fixUnmanagedAssetProblems = asAction(
     if (state.status !== "unmanaged-assets") {
       return;
     }
+    share.panel = "loading";
     share.state = { status: "loading" };
     await Promise.all(
       state.problems.map(async (problem) => {
@@ -727,6 +742,7 @@ export const openPanel = asAction(
     if (share.state.status !== "closed") {
       return;
     }
+    share.panel = "opening";
     share.state = { status: "opening" };
   }
 );
@@ -741,6 +757,7 @@ export const closePanel = asAction(
     const { status } = state;
 
     if (status === "closed" || status === "readonly" || status === "writable") {
+      share.panel = "closed";
       share.state = { status: "closed" };
     } else if (
       status === "opening" ||
@@ -789,6 +806,7 @@ export const viewSharePermissions = asAction(
       return;
     }
 
+    share.panel = "loading";
     share.state = { status: "loading" };
 
     // We must create the shareable copy now if it doesn't already exist, since
@@ -797,6 +815,7 @@ export const viewSharePermissions = asAction(
       oldState.shareableFile?.id ??
       (await makeShareableCopy(graph, shareSurface)).shareableCopyFileId;
 
+    share.panel = "granular";
     share.state = {
       status: "granular",
       shareableFile: { id: shareableCopyFileId },
@@ -815,8 +834,10 @@ export const onGoogleDriveSharePanelClose = asAction(
       return;
     }
     const graphFileId = share.state.shareableFile.id;
+    share.panel = "loading";
     share.state = { status: "loading" };
     await handleAssetPermissions(graphFileId, graph);
+    share.panel = "opening";
     share.state = { status: "opening" };
     await openPanel();
   }

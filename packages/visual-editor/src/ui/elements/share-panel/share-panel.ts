@@ -15,7 +15,10 @@ import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
-import type { ShareState } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+import type {
+  SharePanelStatus,
+  ShareState,
+} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
@@ -335,6 +338,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return this.#controller.state;
   }
 
+  get #panel(): SharePanelStatus {
+    return this.#controller.panel;
+  }
+
   get #actions() {
     return this.sca.actions.share;
   }
@@ -349,10 +356,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   override willUpdate(changes: PropertyValues<this>) {
     super.willUpdate(changes);
-    if (changes.has("graph") && this.#state.status !== "closed") {
+    if (changes.has("graph") && this.#panel !== "closed") {
       this.#actions.openPanel();
     }
-    if (this.#state.status === "opening" && this.graph) {
+    if (this.#panel === "opening" && this.graph) {
       this.#actions.readPublishedState(
         this.graph,
         this.#getRequiredPublishPermissions()
@@ -361,10 +368,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   override render() {
-    const { status } = this.#state;
-    if (status === "closed" || status === "opening") {
+    const panel = this.#panel;
+    if (panel === "closed" || panel === "opening") {
       return nothing;
-    } else if (status === "granular") {
+    } else if (panel === "granular") {
       return this.#renderGranularSharingModal();
     } else {
       return this.#renderModal();
@@ -372,9 +379,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   override updated() {
-    if (this.#state.status === "granular") {
+    if (this.#panel === "granular") {
       this.#googleDriveSharePanel.value?.open();
-    } else if (this.#state.status !== "closed") {
+    } else if (this.#panel !== "closed") {
       this.#dialog.value?.showModal();
     }
   }
@@ -409,19 +416,19 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderModalContents() {
-    const { status } = this.#state;
-    if (status === "loading") {
+    const panel = this.#panel;
+    if (panel === "loading") {
       return this.#renderLoading();
     }
-    if (status === "writable" || status === "updating") {
+    if (panel === "writable" || panel === "updating") {
       return CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
         ? this.#renderWritableContentsV2()
         : this.#renderWritableContentsV1();
     }
-    if (status === "readonly") {
+    if (panel === "readonly") {
       return this.#renderReadonlyModalContents();
     }
-    if (status === "unmanaged-assets") {
+    if (panel === "unmanaged-assets") {
       return this.#renderUnmanagedAssetsModalContents();
     }
   }
@@ -436,25 +443,29 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   get #isShared(): boolean | undefined {
-    const state = this.#state;
-    const { status } = state;
-    if (status === "readonly") {
+    const panel = this.#panel;
+    if (panel === "readonly") {
       // If we're readonly, then we're not the owner. And if we're not the
       // owner, and yet here we are, then it must be shared with us one way or
       // the other.
       return true;
     }
-    if (status === "writable" || status === "updating") {
-      return state.published || state.granularlyShared;
+    if (panel === "writable" || panel === "updating") {
+      const state = this.#state;
+      if (state.status === "writable" || state.status === "updating") {
+        return state.published || state.granularlyShared;
+      }
     }
     return undefined;
   }
 
   get #isStale(): boolean | undefined {
-    const state = this.#state;
-    const { status } = state;
-    if (status === "writable" || status === "updating") {
-      return state.shareableFile?.stale ?? false;
+    const panel = this.#panel;
+    if (panel === "writable" || panel === "updating") {
+      const state = this.#state;
+      if (state.status === "writable" || state.status === "updating") {
+        return state.shareableFile?.stale ?? false;
+      }
     }
     return undefined;
   }
@@ -468,7 +479,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      this.#isShared && this.#state.status !== "updating"
+      this.#isShared && this.#panel !== "updating"
         ? this.#renderAppLink()
         : nothing,
       this.#renderGranularSharingLink(),
@@ -480,7 +491,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return [
       this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
       this.#renderVisibilityDropdown(),
-      this.#isShared && this.#state.status !== "updating"
+      this.#isShared && this.#panel !== "updating"
         ? this.#renderAppLink()
         : nothing,
       this.#renderAdvisory(),
@@ -496,7 +507,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </p>
         <button
           class="bb-button-text"
-          .disabled=${this.#state.status !== "writable"}
+          .disabled=${this.#panel !== "writable"}
           @click=${this.#onClickPublishStale}
         >
           Update
@@ -516,13 +527,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderDisallowedPublishingNotice() {
-    if (
-      this.#state.status !== "writable" &&
-      this.#state.status !== "updating"
-    ) {
+    const state = this.#state;
+    if (state.status !== "writable" && state.status !== "updating") {
       return nothing;
     }
-    const domain = this.#state.userDomain;
+    const domain = state.userDomain;
     if (!domain) {
       return nothing;
     }
@@ -579,7 +588,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         id="granular-sharing-link"
         href=""
         @click=${this.#onClickViewSharePermissions}
-        ?disabled=${this.#state.status !== "writable"}
+        ?disabled=${this.#panel !== "writable"}
       >
         View Share Permissions
       </a>
@@ -629,21 +638,23 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderPublishedSwitch() {
-    const { status } = this.#state;
-    if (status !== "writable" && status !== "updating") {
+    const state = this.#state;
+    const panel = this.#panel;
+    if (panel !== "writable" && panel !== "updating") {
       return nothing;
     }
-    const published =
-      (status === "writable" || status === "updating") && this.#state.published;
-
-    const domain = this.#state.userDomain;
+    if (state.status !== "writable" && state.status !== "updating") {
+      return nothing;
+    }
+    const published = state.published;
+    const domain = state.userDomain;
     const { disallowPublicPublishing } =
       this.globalConfig?.domains?.[domain] ?? {};
 
-    const disabled = disallowPublicPublishing || status === "updating";
+    const disabled = disallowPublicPublishing || panel === "updating";
     return html`
       <div id="published-switch-container">
-        ${status === "updating"
+        ${panel === "updating"
           ? html`<span class="g-icon spin spinner">progress_activity</span>`
           : nothing}
         <md-switch
@@ -660,13 +671,14 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderGranularSharingModal() {
-    if (this.#state.status !== "granular") {
+    const state = this.#state;
+    if (state.status !== "granular") {
       return nothing;
     }
     return html`
       <bb-google-drive-share-panel
         ${ref(this.#googleDriveSharePanel)}
-        .fileIds=${[this.#state.shareableFile.id]}
+        .fileIds=${[state.shareableFile.id]}
         @close=${this.#onGoogleDriveSharePanelClose}
       ></bb-google-drive-share-panel>
     `;

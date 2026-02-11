@@ -71,7 +71,20 @@ export type UnmanagedAssetProblem = {
   | { problem: "missing"; missing: gapi.client.drive.Permission[] }
 );
 
+export type SharePanelStatus =
+  | "closed"
+  | "opening"
+  | "loading"
+  | "readonly"
+  | "writable"
+  | "updating"
+  | "granular"
+  | "unmanaged-assets";
+
 export class ShareController extends RootController {
+  @field()
+  accessor panel: SharePanelStatus = "closed";
+
   @field()
   accessor state: ShareState = { status: "closed" };
 }
