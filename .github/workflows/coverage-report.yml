@@ -121,11 +121,25 @@ jobs:
         if: steps.download.outcome == 'success' && steps.pr-info.outputs.number == ''
         run: exit 0
 
+      # upload-artifact flattens directory structure when uploading a single
+      # file vs multiple files, so we locate it dynamically to be safe.
+      - name: Locate PR coverage file
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != ''
+        id: pr-coverage
+        run: |
+          PR_COV=$(find pr-artifact -name coverage-summary.json -type f | head -1)
+          if [ -n "$PR_COV" ]; then
+            echo "path=$PR_COV" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::coverage-summary.json not found in artifact"
+            echo "path=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Generate coverage comparison
-        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && steps.baseline.outcome == 'success'
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && steps.baseline.outcome == 'success' && steps.pr-coverage.outputs.path != ''
         id: coverage
         # compare-coverage.js only parses JSON data, it does not execute artifact contents
-        run: node scripts/compare-coverage.js pr-artifact/packages/visual-editor/coverage/coverage-summary.json packages/visual-editor/coverage/coverage-summary.json
+        run: node scripts/compare-coverage.js ${{ steps.pr-coverage.outputs.path }} packages/visual-editor/coverage/coverage-summary.json
         continue-on-error: true
 
       - name: Generate fallback comment on comparison failure
@@ -137,7 +151,7 @@ jobs:
           echo "- Build failure on main branch" >> coverage-comment.md
           echo "- Missing coverage data" >> coverage-comment.md
           echo "" >> coverage-comment.md
-          if [ -f pr-artifact/packages/visual-editor/coverage/coverage-summary.json ]; then
+          if [ -n "${{ steps.pr-coverage.outputs.path }}" ]; then
             echo "**PR Coverage data was uploaded successfully.**" >> coverage-comment.md
           fi
 
