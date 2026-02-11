@@ -916,6 +916,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         graphId,
         nodeId
       );
+      // The direct apply above incremented the graph version, so any
+      // pendingEdit captured earlier (via @input) is now stale.
+      // Clear it to prevent a false "edits were discarded" warning.
+      this.#edited = false;
+      this.sca?.controller.editor.step.clearPendingEdit();
       return;
     }
     const assetPath = data.get("asset-path") as string | null;
