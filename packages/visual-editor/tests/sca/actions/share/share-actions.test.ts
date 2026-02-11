@@ -6,12 +6,16 @@
 
 import type { Asset } from "@breadboard-ai/types";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import assert from "node:assert";
 import { after, before, beforeEach, suite, test } from "node:test";
 import { GoogleDriveBoardServer } from "../../../../src/board-server/server.js";
 import * as ShareActions from "../../../../src/sca/actions/share/share-actions.js";
 import type * as Editor from "../../../../src/sca/controller/subcontrollers/editor/editor.js";
-import type { SharePanelStatus } from "../../../../src/sca/controller/subcontrollers/editor/share-controller.js";
+import {
+  ShareController,
+  type SharePanelStatus,
+} from "../../../../src/sca/controller/subcontrollers/editor/share-controller.js";
 import { FakeGoogleDriveApi } from "../../helpers/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
 
@@ -770,5 +774,46 @@ suite("Share Actions", () => {
       undefined,
       "Cant-share asset should NOT have received domain permission"
     );
+  });
+
+  test("reset() restores all fields to their defaults", () => {
+    const share = new ShareController("test", "test");
+
+    // Dirty every field
+    share.panel = "writable";
+    share.access = "writable";
+    share.published = true;
+    share.stale = true;
+    share.granularlyShared = true;
+    share.userDomain = "example.com";
+    share.publicPublishingAllowed = false;
+    share.latestVersion = "42";
+    share.publishedPermissions = [{ type: "anyone", role: "reader" }];
+    share.shareableFile = "file-id" as unknown as DriveFileId;
+    share.unmanagedAssetProblems = [
+      {
+        asset: {
+          id: "a",
+          resourceKey: "k",
+          name: "n",
+          iconLink: "i",
+        },
+        problem: "cant-share",
+      },
+    ];
+
+    share.reset();
+
+    assert.strictEqual(share.panel, "closed");
+    assert.strictEqual(share.access, "unknown");
+    assert.strictEqual(share.published, false);
+    assert.strictEqual(share.stale, false);
+    assert.strictEqual(share.granularlyShared, false);
+    assert.strictEqual(share.userDomain, "");
+    assert.strictEqual(share.publicPublishingAllowed, true);
+    assert.strictEqual(share.latestVersion, "");
+    assert.deepStrictEqual(share.publishedPermissions, []);
+    assert.strictEqual(share.shareableFile, null);
+    assert.deepStrictEqual(share.unmanagedAssetProblems, []);
   });
 });

@@ -495,6 +495,7 @@ export const load = asAction(
 
     // 9. Reset run state for new graph (clear console entries from previous graph)
     controller.run.main.resetOutput();
+    controller.editor.share.reset();
 
     // 10. Update board controller state
     if (versionInfo?.isNewer) {

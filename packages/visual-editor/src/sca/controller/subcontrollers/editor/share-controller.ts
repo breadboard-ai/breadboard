@@ -62,6 +62,31 @@ export class ShareController extends RootController {
   @field({ deep: false })
   accessor unmanagedAssetProblems: UnmanagedAssetProblem[] = [];
 
+  /**
+   * Resets all fields to their defaults. Called when loading a new opal.
+   *
+   * TODO: Ideally Board.load would instantiate a new ShareController instead
+   * of calling reset(), so new fields can't be accidentally missed. There
+   * isn't currently an idiomatic SCA pattern for swapping controller instances.
+   *
+   * NOTE: These values must match the accessor initializers above. The
+   * `@field()` decorator requires inline initializers, so we can't share a
+   * single source of defaults. The reset() unit test guards against drift.
+   */
+  reset() {
+    this.panel = "closed";
+    this.access = "unknown";
+    this.published = false;
+    this.stale = false;
+    this.granularlyShared = false;
+    this.userDomain = "";
+    this.publicPublishingAllowed = true;
+    this.latestVersion = "";
+    this.publishedPermissions = [];
+    this.shareableFile = null;
+    this.unmanagedAssetProblems = [];
+  }
+
   #resolveUnmanagedAssets?: () => void;
 
   /**
