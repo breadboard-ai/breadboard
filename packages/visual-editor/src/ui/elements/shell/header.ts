@@ -711,14 +711,18 @@ export class VEHeader extends SignalWatcher(LitElement) {
     const hasOverrides = this.sca.controller.global.flags
       .overrides()
       .then((overrides) => {
-        if (Object.keys(overrides).length > 0) {
+        const count = Object.keys(overrides).length;
+        if (count > 0) {
           return html`<span
             class="sans"
             id="experiment"
             @pointerover=${(evt: PointerEvent) => {
               this.dispatchEvent(
                 new ShowTooltipEvent(
-                  Strings.from("TEXT_EXPERIMENT_MODE"),
+                  Strings.from("TEXT_EXPERIMENT_MODE").replace(
+                    "{{count}}",
+                    count.toString()
+                  ),
                   evt.clientX,
                   evt.clientY + 90,
                   { status: false, isMultiLine: true }
