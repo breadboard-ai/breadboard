@@ -30,7 +30,6 @@ import {
   RunOutputEvent,
   RunSkipEvent,
   SkipProbeMessage,
-  TraversalResult,
 } from "@breadboard-ai/types";
 
 const opts = {
@@ -105,10 +104,7 @@ export class NodeStartEvent extends Event implements RunNodeStartEvent {
   static readonly eventName = "nodestart";
   readonly running = true;
 
-  constructor(
-    public data: NodeStartResponse,
-    public result?: TraversalResult
-  ) {
+  constructor(public data: NodeStartResponse) {
     super(NodeStartEvent.eventName, { ...opts });
   }
 }

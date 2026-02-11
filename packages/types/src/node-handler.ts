@@ -32,7 +32,6 @@ import { Probe } from "./probe.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
-import { TraversalResult } from "./traversal.js";
 
 export type ErrorCapability = Capability & {
   readonly kind: "error";
@@ -274,12 +273,6 @@ export interface BreadboardRunResult {
    * This property is only available when `ResultRunType` is `output`.
    */
   get outputs(): OutputValues;
-  /**
-   * Current state of the underlying graph traversal.
-   * This property is useful for saving and restoring the state of
-   * graph traversal.
-   */
-  get state(): TraversalResult;
   /**
    * The invocation id of the current node. This is useful for tracking
    * the node within the run, similar to an "index" property in map/forEach.

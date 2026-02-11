@@ -42,7 +42,6 @@ import {
   OutputResponse,
 } from "./remote.js";
 import { SimplifiedProjectRunState } from "./state.js";
-import { TraversalResult } from "./traversal.js";
 import {
   TypedEventTarget,
   TypedEventTargetType,
@@ -250,7 +249,6 @@ export type RunGraphEndEvent = Event & {
 
 export type RunNodeStartEvent = Event & {
   data: NodeStartResponse;
-  result?: TraversalResult;
   running: true;
 };
 
