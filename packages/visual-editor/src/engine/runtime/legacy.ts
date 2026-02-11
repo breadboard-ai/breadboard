@@ -16,5 +16,3 @@ export {
   invokeDescriber,
   invokeMainDescriber,
 } from "./sandbox/invoke-describer.js";
-// Leave as is?
-export { GraphRepresentationImpl } from "./traversal/representation.js";

@@ -850,29 +850,6 @@ export type InspectablePortCache = {
   ): InspectableNodePorts | undefined;
 };
 
-export type GraphRepresentation = {
-  start?: NodeIdentifier;
-  /**
-   * Tails: a map of all outgoing edges, keyed by node id.
-   */
-  tails: Map<NodeIdentifier, Edge[]>;
-
-  /**
-   * Heads: a map of all incoming edges, keyed by node id.
-   */
-  heads: Map<NodeIdentifier, Edge[]>;
-
-  /**
-   * Nodes: a map of all nodes, keyed by node id.
-   */
-  nodes: Map<NodeIdentifier, NodeDescriptor>;
-
-  /**
-   * Entries: a list of all nodes that have no incoming edges.
-   */
-  entries: NodeIdentifier[];
-};
-
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
@@ -889,7 +866,7 @@ export type MutableGraph = {
   readonly describe: InspectableDescriberResultCache;
   readonly kits: InspectableKitCache;
   readonly ports: InspectablePortCache;
-  readonly representation: GraphRepresentation;
+  readonly entries: NodeIdentifier[];
 
   update(
     graph: GraphDescriptor,

@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphRepresentationImpl } from "../../runtime/legacy.js";
 import type {
   AffectedNode,
   GraphDescriptor,
   GraphIdentifier,
-  GraphRepresentation,
   InspectableDescriberResultCache,
   InspectableEdgeCache,
   InspectableGraphCache,
@@ -22,11 +20,12 @@ import type {
   ModuleIdentifier,
   MutableGraph,
   MutableGraphStore,
+  NodeIdentifier,
 } from "@breadboard-ai/types";
 import { isImperativeGraph, toDeclarativeGraph } from "@breadboard-ai/utils";
 import { DescribeResultCache } from "./describe-cache.js";
 import { EdgeCache } from "./edge-cache.js";
-import { Edge } from "./edge.js";
+import { Edge as InspectableEdge } from "./edge.js";
 import { UpdateEvent } from "./event.js";
 import { GraphCache } from "./graph-cache.js";
 import { Graph } from "./graph.js";
@@ -53,7 +52,7 @@ class MutableGraphImpl implements MutableGraph {
   describe!: InspectableDescriberResultCache;
   kits!: InspectableKitCache;
   ports!: InspectablePortCache;
-  representation!: GraphRepresentation;
+  entries!: NodeIdentifier[];
 
   constructor(graph: GraphDescriptor, store: MutableGraphStore) {
     this.store = store;
@@ -101,7 +100,7 @@ class MutableGraphImpl implements MutableGraph {
         new UpdateEvent(this.id, "", "", [], topologyChange)
       );
     }
-    this.representation = new GraphRepresentationImpl(graph);
+    this.entries = findEntries(graph);
     this.graph = graph;
   }
 
@@ -121,7 +120,7 @@ class MutableGraphImpl implements MutableGraph {
     if (isImperativeGraph(graph)) {
       graph = toDeclarativeGraph(graph);
     }
-    this.representation = new GraphRepresentationImpl(graph);
+    this.entries = findEntries(graph);
     this.graph = graph;
     this.nodes = new NodeCache((descriptor, graphId) => {
       const graph = graphId ? this.graphs.get(graphId) : this;
@@ -133,7 +132,7 @@ class MutableGraphImpl implements MutableGraph {
       return new Node(descriptor, this, graphId);
     });
     this.edges = new EdgeCache(
-      (edge, graphId) => new Edge(this, edge, graphId)
+      (edge, graphId) => new InspectableEdge(this, edge, graphId)
     );
     this.modules = new ModuleCache();
     this.describe = new DescribeResultCache(new NodeDescriberManager(this));
@@ -146,4 +145,42 @@ class MutableGraphImpl implements MutableGraph {
     this.modules.rebuild(graph);
     this.kits.rebuild(graph);
   }
+}
+
+function findEntries(graph: GraphDescriptor): NodeIdentifier[] {
+  const incomingEdges = new Set<NodeIdentifier>();
+  const outgoingEdges = new Set<NodeIdentifier>();
+
+  for (const edge of graph.edges) {
+    incomingEdges.add(edge.to);
+    outgoingEdges.add(edge.from);
+  }
+
+  const entries = graph.nodes.filter((node) => !incomingEdges.has(node.id));
+
+  if (entries.length === 0) return [];
+
+  const standalone: NodeIdentifier[] = [];
+  const connected: NodeIdentifier[] = [];
+  let onlyStandalone = true;
+
+  for (const node of entries) {
+    if (outgoingEdges.has(node.id)) {
+      onlyStandalone = false;
+      connected.push(node.id);
+    } else {
+      standalone.push(node.id);
+    }
+  }
+
+  if (standalone.length === 0) return entries.map((n) => n.id);
+
+  const start = standalone.find(
+    (id) => graph.nodes.find((n) => n.id === id)?.metadata?.start
+  );
+  if (start) return [start];
+
+  if (onlyStandalone) return [standalone[0]];
+
+  return connected;
 }
