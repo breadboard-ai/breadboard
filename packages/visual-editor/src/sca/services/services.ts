@@ -6,6 +6,7 @@
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { RuntimeConfig } from "../../runtime/types.js";
+import type { GlobalConfig } from "../../ui/contexts/global-config.js";
 import {
   createActionTracker,
   createActionTrackerBackend,
@@ -49,6 +50,7 @@ export interface AppServices {
   agentContext: AgentContext;
   apiClient: AppCatalystApiClient;
   autonamer: Autonamer;
+  globalConfig: GlobalConfig;
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
   fileSystem: ReturnType<typeof createFileSystem>;
@@ -169,6 +171,7 @@ export function services(
       agentContext,
       apiClient,
       autonamer,
+      globalConfig: config.globalConfig,
       emailPrefsManager,
       fetchWithCreds,
       fileSystem,

@@ -7,6 +7,7 @@
 import { mock } from "node:test";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { AppServices } from "../../../src/sca/services/services.js";
+import type { GlobalConfig } from "../../../src/ui/contexts/global-config.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
@@ -154,6 +155,7 @@ export interface TestServicesOptions {
       ops?: Partial<GoogleDriveBoardServer["ops"]>;
     }
   >;
+  globalConfig?: Partial<GlobalConfig>;
 }
 
 export function makeTestServices(options: TestServicesOptions = {}) {
@@ -165,6 +167,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     googleDriveClient,
     signinAdapter,
     googleDriveBoardServer,
+    globalConfig = {},
   } = options;
 
   const actionTrackerMock = {
@@ -182,6 +185,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     },
     fetchWithCreds: mock.fn(async () => new Response("{}", { status: 200 })),
     googleDriveClient: googleDriveClient ?? {},
+    globalConfig,
     signinAdapter: signinAdapter ?? {},
     // Mock RunService that returns a testable mock runner
     runService: {
