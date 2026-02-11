@@ -22,7 +22,6 @@ import type {
   MutableGraphStore,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { isImperativeGraph, toDeclarativeGraph } from "@breadboard-ai/utils";
 import { DescribeResultCache } from "./describe-cache.js";
 import { EdgeCache } from "./edge-cache.js";
 import { Edge as InspectableEdge } from "./edge.js";
@@ -117,9 +116,6 @@ class MutableGraphImpl implements MutableGraph {
   }
 
   rebuild(graph: GraphDescriptor) {
-    if (isImperativeGraph(graph)) {
-      graph = toDeclarativeGraph(graph);
-    }
     this.entries = findEntries(graph);
     this.graph = graph;
     this.nodes = new NodeCache((descriptor, graphId) => {

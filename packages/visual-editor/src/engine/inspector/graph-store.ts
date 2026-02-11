@@ -41,7 +41,7 @@ export { contextFromMutableGraph, contextFromMutableGraphStore, GraphStore };
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
   const store = mutable.store;
   return {
-    kits: [...store.kits],
+    kits: [],
     loader: store.loader,
     sandbox: store.sandbox,
     graphStore: store,
@@ -53,7 +53,7 @@ function contextFromMutableGraphStore(
   store: MutableGraphStore
 ): NodeHandlerContext {
   return {
-    kits: [...store.kits],
+    kits: [],
     loader: store.loader,
     sandbox: store.sandbox,
     graphStore: store,

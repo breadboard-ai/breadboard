@@ -14,7 +14,6 @@ import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
   GraphLoader,
-  Kit,
   OPAL_BACKEND_API_PREFIX,
   PersistentBackend,
   RuntimeFlagManager,
@@ -28,7 +27,6 @@ import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
-import { addRunModule } from "../../engine/add-run-module.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
 import { createA2Server } from "../../a2/index.js";
 import { createLoader } from "../../engine/loader/index.js";
@@ -56,7 +54,6 @@ export interface AppServices {
   googleDriveBoardServer: GoogleDriveBoardServer;
   googleDriveClient: GoogleDriveClient;
   graphStore: ReturnType<typeof createGraphStore>;
-  kits: Kit[];
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
   runService: RunService;
@@ -129,7 +126,6 @@ export function services(
       getConsentController,
       agentContext,
     });
-    const kits = addRunModule(sandbox, []);
     const googleDriveBoardServer = createGoogleDriveBoardServer(
       signinAdapter,
       googleDriveClient,
@@ -139,7 +135,7 @@ export function services(
     const a2Server = createA2Server();
     const loader = createLoader([googleDriveBoardServer, a2Server]);
     const graphStoreArgs = {
-      kits,
+      kits: [] as [],
       loader,
       sandbox,
       fileSystem,
@@ -171,7 +167,6 @@ export function services(
       googleDriveBoardServer,
       googleDriveClient,
       graphStore,
-      kits,
       loader,
       mcpClientManager,
       runService: new RunService(),

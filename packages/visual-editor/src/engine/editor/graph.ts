@@ -26,12 +26,7 @@ import type {
   SingleEditResult,
 } from "@breadboard-ai/types";
 import { ModuleIdentifier } from "@breadboard-ai/types";
-import {
-  isImperativeGraph,
-  PromiseQueue,
-  toDeclarativeGraph,
-  toImperativeGraph,
-} from "@breadboard-ai/utils";
+import { PromiseQueue } from "@breadboard-ai/utils";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { GraphEditHistory } from "./history.js";
@@ -56,14 +51,6 @@ import { ReplaceGraph } from "./operations/replace-graph.js";
 import { ToggleExport } from "./operations/toggle-export.js";
 import { UpsertInteration } from "./operations/upsert-integration.js";
 import { RemoveIntegration } from "./operations/remove-integration.js";
-
-const validImperativeEdits: EditSpec["type"][] = [
-  "addmodule",
-  "changegraphmetadata",
-  "removemodule",
-  "changemodule",
-  "toggleexport",
-];
 
 const operations = new Map<EditSpec["type"], EditOperation>([
   ["addnode", new AddNode()],
@@ -94,17 +81,10 @@ export class Graph implements EditableGraph {
   #graph: GraphDescriptor;
   #eventTarget: EventTarget = new EventTarget();
   #history: GraphEditHistory;
-  #imperativeMain: string | null = null;
   #edits: PromiseQueue<EditResult> = new PromiseQueue();
 
   constructor(mutable: MutableGraph, options: EditableGraphOptions) {
-    const graph = mutable.graph;
-    if (isImperativeGraph(graph)) {
-      this.#imperativeMain = graph.main;
-      this.#graph = toDeclarativeGraph(graph);
-    } else {
-      this.#graph = graph;
-    }
+    this.#graph = mutable.graph;
     this.#mutable = mutable;
     this.#history = new GraphEditHistory({
       graph: () => {
@@ -210,13 +190,6 @@ export class Graph implements EditableGraph {
     this.#eventTarget.removeEventListener(eventName, listener);
   }
 
-  #shouldDiscardEdit(edit: EditSpec) {
-    if (this.#imperativeMain) {
-      return !validImperativeEdits.includes(edit.type);
-    }
-    return false;
-  }
-
   async #singleEdit(
     edit: EditSpec,
     context: EditOperationContext
@@ -255,9 +228,7 @@ export class Graph implements EditableGraph {
   }
 
   raw() {
-    return this.#imperativeMain
-      ? toImperativeGraph(this.#imperativeMain, this.#graph)
-      : this.#graph;
+    return this.#graph;
   }
 
   inspect(id: GraphIdentifier) {
@@ -302,9 +273,6 @@ export class Graph implements EditableGraph {
       if (error) return { success: false, error };
       label = editLabel;
       for (const edit of edits) {
-        if (this.#shouldDiscardEdit(edit)) {
-          continue;
-        }
         const result = await this.#singleEdit(edit, context);
         log.push({ edit: edit.type, result });
         if (!result.success) {

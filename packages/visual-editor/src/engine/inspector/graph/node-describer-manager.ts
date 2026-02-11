@@ -132,7 +132,6 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
       return describeOutput(options);
     }
 
-    const kits = [...this.mutable.store.kits];
     const describer = await this.#getDescriber(type);
     const asWired = NodeDescriberManager.asWired(
       options.incoming,
@@ -146,7 +145,7 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
     const context: NodeDescriberContext = {
       outerGraph: graph,
       loader,
-      kits,
+      kits: [],
       sandbox: this.mutable.store.sandbox,
       graphStore: this.mutable.store,
       fileSystem: this.mutable.store.fileSystem.createRunFileSystem({

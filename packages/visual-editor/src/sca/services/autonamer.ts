@@ -5,11 +5,7 @@
  */
 
 import { CapabilitiesManagerImpl } from "../../engine/runtime/legacy.js";
-import type {
-  Kit,
-  MutableGraph,
-  NodeHandlerContext,
-} from "@breadboard-ai/types";
+import type { MutableGraph, NodeHandlerContext } from "@breadboard-ai/types";
 import {
   FileSystem,
   GraphDescriptor,
@@ -27,11 +23,10 @@ import { createFileSystemBackend } from "../../idb/index.js";
 export { Autonamer };
 
 class Autonamer {
-  #kits: Kit[];
   #fileSystem: FileSystem;
 
   constructor(
-    args: GraphStoreArgs,
+    _args: GraphStoreArgs,
     fileSystem: FileSystem | undefined,
     private readonly moduleFactory: RunnableModuleFactory
   ) {
@@ -40,7 +35,6 @@ class Autonamer {
       local: createFileSystemBackend(createEphemeralBlobStore()),
       mnt: composeFileSystemBackends(new Map()),
     });
-    this.#kits = args.kits;
   }
 
   async autoname(
@@ -48,7 +42,7 @@ class Autonamer {
     signal: AbortSignal
   ): Promise<Outcome<LLMContent[]>> {
     const context: NodeHandlerContext = {
-      kits: this.#kits,
+      kits: [],
       fileSystem: this.#fileSystem,
       signal,
     };
