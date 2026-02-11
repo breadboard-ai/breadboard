@@ -10,13 +10,13 @@ import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { icons } from "../../styles/icons.js";
 import { scaContext } from "../../../sca/context/context.js";
-import type { SCA } from "../../../sca/sca.js";
 import {
+  type SCA,
   type Notebook,
   OriginProductType,
   ApplicationPlatform,
   DeviceType,
-} from "../../../sca/services/notebooklm-api-client.js";
+} from "../../../sca/sca.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
 /**

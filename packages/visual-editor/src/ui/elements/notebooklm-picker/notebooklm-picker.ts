@@ -13,20 +13,21 @@ import {
   InputCancelEvent,
   InputChangeEvent,
 } from "../../plugins/input-plugin.js";
+import { scaContext } from "../../../sca/context/context.js";
 import {
-  Notebook,
+  type SCA,
+  type Notebook,
   OriginProductType,
   ApplicationPlatform,
   DeviceType,
-} from "../../../sca/services/notebooklm-api-client.js";
-import { scaContext } from "../../../sca/context/context.js";
-import { type SCA } from "../../../sca/sca.js";
+} from "../../../sca/sca.js";
 import { ModalDismissedEvent } from "../../events/events.js";
 import { icons } from "../../styles/icons.js";
 import "../shell/modal.js";
 import "../notebooklm-viewer/notebooklm-viewer.js";
 import "../shared/expanding-search-button.js";
 import { ExpandingSearchButton } from "../shared/expanding-search-button.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 export type NotebookPickedValue = {
   /** A special value recognized by the "GraphPortLabel": if present, used as the preview. */
@@ -42,7 +43,7 @@ export type NotebookPickedValue = {
 type PickerState = "idle" | "loading" | "error";
 
 @customElement("bb-notebooklm-picker")
-export class NotebookLmPicker extends LitElement {
+export class NotebookLmPicker extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     css`
