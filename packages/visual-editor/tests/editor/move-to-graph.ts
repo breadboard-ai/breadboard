@@ -42,12 +42,12 @@ describe("Move-to-graph transform", async () => {
         { type: "addgraph", graph: testSubGraph(), id: "foo" },
         {
           type: "addnode",
-          node: { id: "node10", type: "foo" },
+          node: { id: "node10", type: "test:foo" },
           graphId: "foo",
         },
         {
           type: "addnode",
-          node: { id: "node11", type: "foo" },
+          node: { id: "node11", type: "test:foo" },
           graphId: "foo",
         },
         {
@@ -78,12 +78,12 @@ describe("Move-to-graph transform", async () => {
         { type: "addgraph", graph: testSubGraph(), id: "bar" },
         {
           type: "addnode",
-          node: { id: "node10", type: "foo" },
+          node: { id: "node10", type: "test:foo" },
           graphId: "foo",
         },
         {
           type: "addnode",
-          node: { id: "node11", type: "foo" },
+          node: { id: "node11", type: "test:foo" },
           graphId: "foo",
         },
         {

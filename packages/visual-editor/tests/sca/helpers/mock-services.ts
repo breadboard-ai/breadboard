@@ -9,7 +9,6 @@ import type { GraphDescriptor } from "@breadboard-ai/types";
 import { AppServices } from "../../../src/sca/services/services.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
-import { testKit } from "../../test-kit.js";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { SigninAdapter } from "../../../src/ui/utils/signin-adapter.js";
 import type { GoogleDriveBoardServer } from "../../../src/board-server/server.js";
@@ -26,7 +25,7 @@ const defaultAgentContext = {
  * Helper to create a graph store with editor for testing.
  */
 export function makeTestGraphStoreWithEditor() {
-  const graphStore = makeTestGraphStore({ kits: [testKit] });
+  const graphStore = makeTestGraphStore();
   const testGraph: GraphDescriptor = { nodes: [], edges: [] };
   const editor = graphStore.editByDescriptor(testGraph);
   if (!editor) throw new Error("Unable to edit graph");
@@ -228,7 +227,6 @@ export function makeTestServices(options: TestServicesOptions = {}) {
       } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],
-    kits: [],
     // Flowgen mocks (optional)
     ...(flowGeneratorMock && {
       flowGenerator: flowGeneratorMock as FlowGenerator,

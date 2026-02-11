@@ -153,7 +153,6 @@ export const prepare = asAction(
       url,
       runner: graph,
       diagnostics: true,
-      kits: services.kits,
       loader: services.loader,
       graphStore: services.graphStore,
       fileSystem,

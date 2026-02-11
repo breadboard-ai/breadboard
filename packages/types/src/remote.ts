@@ -19,7 +19,6 @@ import {
   SkipProbeMessage,
 } from "./probe.js";
 import { Schema } from "./schema.js";
-import { TraversalResult } from "./traversal.js";
 
 /**
  * Sent by the runner to supply outputs.
@@ -243,7 +242,6 @@ type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
   ? {
       type: ResponseMessage[0];
       data: ResponseMessage[1];
-      result?: TraversalResult;
     } & ReplyFunction
   : never;
 

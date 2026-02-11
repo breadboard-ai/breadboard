@@ -26,7 +26,7 @@ export type * from "./run-status.js";
 export type { Sandbox } from "./sandbox.js";
 export type * from "./schema.js";
 export type * from "./state.js";
-export type * from "./traversal.js";
+
 export type * from "./typed-event-target.js";
 export type * from "./uuid.js";
 export {

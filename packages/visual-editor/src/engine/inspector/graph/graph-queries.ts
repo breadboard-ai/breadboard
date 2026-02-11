@@ -75,7 +75,7 @@ class GraphQueries {
 
   isStart(id: NodeIdentifier): boolean {
     if (this.#graphId) return false;
-    return id === this.#mutable.representation.entries.at(0);
+    return id === this.#mutable.entries.at(0);
   }
 
   nodeById(id: NodeIdentifier) {
@@ -94,10 +94,6 @@ class GraphQueries {
   }
 
   typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
-    const knownNodeType = this.#mutable.kits.getType(id);
-    if (knownNodeType) {
-      return knownNodeType;
-    }
     if (!graphUrlLike(id)) {
       return undefined;
     }

@@ -32,7 +32,6 @@ import { Probe } from "./probe.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
-import { TraversalResult } from "./traversal.js";
 
 export type ErrorCapability = Capability & {
   readonly kind: "error";
@@ -118,10 +117,7 @@ export type NodeDescriberContext = {
    * Information about the wires currently connected to this node.
    */
   wires: NodeDescriberWires;
-  /**
-   * Kits that are available in the context of the node.
-   */
-  kits?: Kit[];
+
   /**
    * JS Sandbox that will be used to run the module describers.
    */
@@ -275,12 +271,6 @@ export interface BreadboardRunResult {
    */
   get outputs(): OutputValues;
   /**
-   * Current state of the underlying graph traversal.
-   * This property is useful for saving and restoring the state of
-   * graph traversal.
-   */
-  get state(): TraversalResult;
-  /**
    * The invocation id of the current node. This is useful for tracking
    * the node within the run, similar to an "index" property in map/forEach.
    * @deprecated Use `path` instead.
@@ -327,7 +317,7 @@ export type ErrorResponse = {
 export interface NodeHandlerContext {
   readonly board?: GraphDescriptor;
   readonly descriptor?: NodeDescriptor;
-  readonly kits?: Kit[];
+
   readonly base?: URL;
   /**
    * The loader that can be used to load graphs.

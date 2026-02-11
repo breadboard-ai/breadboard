@@ -59,7 +59,6 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
       return describeOutput({});
     }
 
-    const kits = [...this.store.kits];
     const describer = await this.#getDescriber(type);
     const asWired = NodeDescriberManager.asWired();
     if (!describer) {
@@ -76,7 +75,6 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
     const context: NodeDescriberContext = {
       outerGraph,
       loader,
-      kits,
       sandbox: this.store.sandbox,
       graphStore: this.store,
       fileSystem: this.store.fileSystem.createRunFileSystem({

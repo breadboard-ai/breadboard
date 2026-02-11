@@ -31,12 +31,7 @@ import {
 } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
 import { GraphLoader, GraphLoaderContext } from "./loader.js";
-import {
-  Kit,
-  NodeDescriberResult,
-  NodeHandlerContext,
-  NodeHandlerMetadata,
-} from "./node-handler.js";
+import { NodeDescriberResult, NodeHandlerMetadata } from "./node-handler.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
 import {
@@ -315,14 +310,6 @@ export type InspectableGraph = {
    */
   entries(): InspectableNode[];
   /**
-   * Returns the API of the graph. This function is designed to match the
-   * output of the `NodeDescriberFunction`.
-   */
-  describe(
-    inputs?: InputValues,
-    context?: NodeHandlerContext
-  ): Promise<NodeDescriberResult>;
-  /**
    * Returns the subgraphs that are embedded in this graph or `undefined` if
    * this is already a subgraph
    */
@@ -411,11 +398,6 @@ export type InspectableAssetEdgeDirection = "load" | "save";
  * Options to supply to the `inspectableGraph` function.
  */
 export type InspectableGraphOptions = {
-  /**
-   * Optional, a list of kits to use when inspecting the graph. If not
-   * supplied, the graph will be inspected without any kits.
-   */
-  kits?: Kit[];
   /**
    * The loader to use when loading boards.
    */
@@ -736,12 +718,6 @@ export type InspectableDescriberResultCache = {
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
 
-export type InspectableKitCache = {
-  getType(id: NodeTypeIdentifier): InspectableNodeType | undefined;
-  addType(id: NodeTypeIdentifier, type: InspectableNodeType): void;
-  rebuild(graph: GraphDescriptor): void;
-};
-
 export type InspectableGraphCache = {
   add(id: GraphIdentifier): void;
   get(id: GraphIdentifier): InspectableGraph | undefined;
@@ -795,7 +771,6 @@ export type AddResult = {
 
 export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
   GraphLoader & {
-    readonly kits: readonly Kit[];
     readonly sandbox: RunnableModuleFactory;
     readonly loader: GraphLoader;
     readonly fileSystem: FileSystem;
@@ -850,29 +825,6 @@ export type InspectablePortCache = {
   ): InspectableNodePorts | undefined;
 };
 
-export type GraphRepresentation = {
-  start?: NodeIdentifier;
-  /**
-   * Tails: a map of all outgoing edges, keyed by node id.
-   */
-  tails: Map<NodeIdentifier, Edge[]>;
-
-  /**
-   * Heads: a map of all incoming edges, keyed by node id.
-   */
-  heads: Map<NodeIdentifier, Edge[]>;
-
-  /**
-   * Nodes: a map of all nodes, keyed by node id.
-   */
-  nodes: Map<NodeIdentifier, NodeDescriptor>;
-
-  /**
-   * Entries: a list of all nodes that have no incoming edges.
-   */
-  entries: NodeIdentifier[];
-};
-
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
@@ -887,9 +839,9 @@ export type MutableGraph = {
   readonly edges: InspectableEdgeCache;
   readonly modules: InspectableModuleCache;
   readonly describe: InspectableDescriberResultCache;
-  readonly kits: InspectableKitCache;
+
   readonly ports: InspectablePortCache;
-  readonly representation: GraphRepresentation;
+  readonly entries: NodeIdentifier[];
 
   update(
     graph: GraphDescriptor,
@@ -904,17 +856,3 @@ export type MutableGraph = {
 
   rebuild(graph: GraphDescriptor): void;
 };
-
-export type GraphDescriber = {
-  describe(
-    inputs?: InputValues,
-    inputSchema?: Schema,
-    outputSchema?: Schema,
-    context?: NodeHandlerContext
-  ): Promise<NodeDescriberResult>;
-};
-
-export type GraphDescriberFactory = (
-  graphId: GraphIdentifier,
-  mutable: MutableGraph
-) => Outcome<GraphDescriber>;

@@ -30,7 +30,7 @@ export function makeFreshGraph(options?: {
   return {
     url: options?.url ?? "test://board",
     edges: [],
-    nodes: options?.nodes ?? [{ id: "foo", type: "promptTemplate" }],
+    nodes: options?.nodes ?? [{ id: "foo", type: "test:promptTemplate" }],
     ...(options?.title && { title: options.title }),
   };
 }

@@ -42,7 +42,6 @@ import {
   OutputResponse,
 } from "./remote.js";
 import { SimplifiedProjectRunState } from "./state.js";
-import { TraversalResult } from "./traversal.js";
 import {
   TypedEventTarget,
   TypedEventTargetType,
@@ -128,10 +127,7 @@ export type RunConfig = {
    * Otherwise, defaults to invoking module's URL.
    */
   base?: URL;
-  /**
-   * The kits to use by the runtime.
-   */
-  kits: Kit[];
+
   /**
    * The loader to use when loading boards.
    */
@@ -250,7 +246,6 @@ export type RunGraphEndEvent = Event & {
 
 export type RunNodeStartEvent = Event & {
   data: NodeStartResponse;
-  result?: TraversalResult;
   running: true;
 };
 

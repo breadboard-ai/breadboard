@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isImperativeGraph, toDeclarativeGraph } from "@breadboard-ai/utils";
 import type {
   GraphDescriptor,
   GraphIdentifier,
-  ModuleIdentifier,
   Result,
 } from "@breadboard-ai/types";
 
@@ -16,24 +14,14 @@ export { GraphDescriptorHandle };
 
 class GraphDescriptorHandle {
   #graph: GraphDescriptor;
-  #imperativeMain: ModuleIdentifier | undefined;
   #url: URL | undefined;
 
   private constructor(
     graph: GraphDescriptor,
     public readonly graphId: GraphIdentifier
   ) {
-    if (isImperativeGraph(graph)) {
-      const { main } = graph;
-      graph = toDeclarativeGraph(graph);
-      this.#imperativeMain = main;
-    }
     this.#graph = graph;
     this.#url = maybeURL(graph.url);
-  }
-
-  main() {
-    return this.#imperativeMain;
   }
 
   url() {
@@ -55,7 +43,7 @@ class GraphDescriptorHandle {
     if (graphId && !graph.graphs?.[graphId]) {
       return {
         success: false,
-        error: `Unable to create a valid GraphDEscriptorHandle: subgraph "${graphId}" is not in the graph.`,
+        error: `Unable to create a valid GraphDescriptorHandle: subgraph "${graphId}" is not in the graph.`,
       };
     }
     return { success: true, result: new GraphDescriptorHandle(graph, graphId) };

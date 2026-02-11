@@ -503,8 +503,6 @@ class InternalRunStateController {
   }
 
   initializeNodeHandlerContext(): NodeHandlerContext {
-    const kits = this.config.kits;
-
     const {
       loader,
       fileSystem,
@@ -532,7 +530,6 @@ class InternalRunStateController {
 
     return {
       probe,
-      kits,
       loader,
       fileSystem,
       base,
