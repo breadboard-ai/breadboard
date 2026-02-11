@@ -65,15 +65,11 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
     if (!node) {
       return emptyResult();
     }
-    const result = await this.getLatestDescription(
-      node.descriptor.type,
-      graphId,
-      {
-        incoming: node.incoming(),
-        outgoing: node.outgoing(),
-        inputs: { ...node.configuration() },
-      }
-    );
+    const result = await this.getLatestDescription(node.descriptor.type, {
+      incoming: node.incoming(),
+      outgoing: node.outgoing(),
+      inputs: { ...node.configuration() },
+    });
     return result;
   }
 
@@ -125,7 +121,6 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
 
   async getLatestDescription(
     type: NodeTypeIdentifier,
-    graphId: GraphIdentifier,
     options: NodeTypeDescriberOptions = {}
   ) {
     // The schema of an input or an output is defined by their
@@ -148,20 +143,16 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
     }
     const loader = this.mutable.store.loader || createLoader();
     const graph = this.mutable.graph;
-    const outerGraph = graphId ? graph : graph;
     const context: NodeDescriberContext = {
-      outerGraph,
+      outerGraph: graph,
       loader,
       kits,
       sandbox: this.mutable.store.sandbox,
       graphStore: this.mutable.store,
       fileSystem: this.mutable.store.fileSystem.createRunFileSystem({
-        graphUrl: outerGraph.url!,
-        env: envFromGraphDescriptor(
-          this.mutable.store.fileSystem.env(),
-          outerGraph
-        ),
-        assets: assetsFromGraphDescriptor(outerGraph),
+        graphUrl: graph.url!,
+        env: envFromGraphDescriptor(this.mutable.store.fileSystem.env(), graph),
+        assets: assetsFromGraphDescriptor(graph),
       }),
       flags: this.mutable.store.flags,
       wires: {
@@ -188,9 +179,9 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
       },
       asType: !!options?.asType,
     };
-    if (outerGraph.url) {
+    if (graph.url) {
       try {
-        context.base = new URL(outerGraph.url);
+        context.base = new URL(graph.url);
       } catch {
         // Ignore invalid URLs
       }
