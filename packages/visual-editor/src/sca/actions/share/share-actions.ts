@@ -132,6 +132,7 @@ export const readPublishedState = asAction(
       share.access = "writable";
       share.published = false;
       share.granularlyShared = false;
+      share.latestVersion = thisFileMetadata.version;
       share.state = {
         status: "writable",
         published: false,
@@ -194,6 +195,7 @@ export const readPublishedState = asAction(
       },
       latestVersion: thisFileMetadata.version,
     };
+    share.latestVersion = thisFileMetadata.version;
 
     logger.log(
       Utils.Logging.Formatter.verbose(
@@ -596,6 +598,7 @@ export const publish = asAction(
       shareableFile,
       latestVersion: newLatestVersion ?? oldState.latestVersion,
     };
+    share.latestVersion = newLatestVersion ?? oldState.latestVersion;
   }
 );
 
@@ -662,6 +665,7 @@ export const unpublish = asAction(
       shareableFile,
       latestVersion: oldState.latestVersion,
     };
+    share.latestVersion = oldState.latestVersion;
   }
 );
 

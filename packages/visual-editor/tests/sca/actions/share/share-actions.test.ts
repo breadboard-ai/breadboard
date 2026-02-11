@@ -120,6 +120,7 @@ suite("Share Actions", () => {
       shareableFile: undefined,
     });
     assert.strictEqual(share.userDomain, "example.com");
+    assert.strictEqual(share.latestVersion, "1");
 
     // User closes panel
     ShareActions.closePanel();
@@ -449,6 +450,7 @@ suite("Share Actions", () => {
       "5",
       "latestVersion should be 5 from main file"
     );
+    assert.strictEqual(share.latestVersion, "5");
 
     // Publish stale with a graph that has identifiable content
     const graph = {
