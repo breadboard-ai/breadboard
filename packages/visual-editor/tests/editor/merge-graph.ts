@@ -15,7 +15,11 @@ describe("Merging graphs", async () => {
     const addingSubgraph = await editor.edit(
       [
         { type: "addgraph", graph: testSubGraph(), id: "foo" },
-        { type: "addnode", node: { type: "foo", id: "node1" }, graphId: "foo" },
+        {
+          type: "addnode",
+          node: { type: "test:foo", id: "node1" },
+          graphId: "foo",
+        },
       ],
       ""
     );

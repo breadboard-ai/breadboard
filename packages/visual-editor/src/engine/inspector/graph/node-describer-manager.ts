@@ -145,7 +145,6 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
     const context: NodeDescriberContext = {
       outerGraph: graph,
       loader,
-      kits: [],
       sandbox: this.mutable.store.sandbox,
       graphStore: this.mutable.store,
       fileSystem: this.mutable.store.fileSystem.createRunFileSystem({

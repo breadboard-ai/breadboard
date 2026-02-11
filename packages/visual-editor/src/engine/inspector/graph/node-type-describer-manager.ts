@@ -75,7 +75,6 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
     const context: NodeDescriberContext = {
       outerGraph,
       loader,
-      kits: [],
       sandbox: this.store.sandbox,
       graphStore: this.store,
       fileSystem: this.store.fileSystem.createRunFileSystem({

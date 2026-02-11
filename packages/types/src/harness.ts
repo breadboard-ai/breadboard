@@ -127,10 +127,7 @@ export type RunConfig = {
    * Otherwise, defaults to invoking module's URL.
    */
   base?: URL;
-  /**
-   * The kits to use by the runtime.
-   */
-  kits: Kit[];
+
   /**
    * The loader to use when loading boards.
    */

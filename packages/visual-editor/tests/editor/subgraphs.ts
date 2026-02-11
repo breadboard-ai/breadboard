@@ -89,7 +89,7 @@ describe("Sub-graph editing operations", async () => {
 
       ok(nodeAddition.success);
       const addedNode = graph.raw().graphs?.foo?.nodes[0];
-      deepStrictEqual(addedNode, { id: "bar", type: "bar" });
+      deepStrictEqual(addedNode, { id: "bar", type: "test:bar" });
     }
 
     {
@@ -161,7 +161,11 @@ describe("Sub-graph editing operations", async () => {
     }
 
     function addNode(id: string): EditSpec {
-      return { type: "addnode", graphId: "foo", node: { id, type: "bar" } };
+      return {
+        type: "addnode",
+        graphId: "foo",
+        node: { id, type: "test:bar" },
+      };
     }
 
     function addEdge(from: string, to: string): EditSpec {

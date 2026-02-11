@@ -31,11 +31,7 @@ import {
 } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
 import { GraphLoader, GraphLoaderContext } from "./loader.js";
-import {
-  Kit,
-  NodeDescriberResult,
-  NodeHandlerMetadata,
-} from "./node-handler.js";
+import { NodeDescriberResult, NodeHandlerMetadata } from "./node-handler.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
 import {
@@ -403,11 +399,6 @@ export type InspectableAssetEdgeDirection = "load" | "save";
  */
 export type InspectableGraphOptions = {
   /**
-   * Optional, a list of kits to use when inspecting the graph. If not
-   * supplied, the graph will be inspected without any kits.
-   */
-  kits?: Kit[];
-  /**
    * The loader to use when loading boards.
    */
   loader?: GraphLoader;
@@ -727,12 +718,6 @@ export type InspectableDescriberResultCache = {
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
 
-export type InspectableKitCache = {
-  getType(id: NodeTypeIdentifier): InspectableNodeType | undefined;
-  addType(id: NodeTypeIdentifier, type: InspectableNodeType): void;
-  rebuild(graph: GraphDescriptor): void;
-};
-
 export type InspectableGraphCache = {
   add(id: GraphIdentifier): void;
   get(id: GraphIdentifier): InspectableGraph | undefined;
@@ -786,7 +771,6 @@ export type AddResult = {
 
 export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
   GraphLoader & {
-    readonly kits: readonly Kit[];
     readonly sandbox: RunnableModuleFactory;
     readonly loader: GraphLoader;
     readonly fileSystem: FileSystem;
@@ -855,7 +839,7 @@ export type MutableGraph = {
   readonly edges: InspectableEdgeCache;
   readonly modules: InspectableModuleCache;
   readonly describe: InspectableDescriberResultCache;
-  readonly kits: InspectableKitCache;
+
   readonly ports: InspectablePortCache;
   readonly entries: NodeIdentifier[];
 

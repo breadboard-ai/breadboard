@@ -8,7 +8,6 @@ import assert from "node:assert";
 import { beforeEach, suite, test } from "node:test";
 import { GraphController } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import { makeTestGraphStore } from "../../../../../helpers/_graph-store.js";
-import { testKit } from "../../../../../test-kit.js";
 import { EditableGraph } from "@breadboard-ai/types";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
 import { GraphStore } from "../../../../../../src/engine/inspector/graph-store.js";
@@ -22,9 +21,7 @@ suite("GraphController", () => {
   let graphStore: GraphStore;
 
   beforeEach(() => {
-    graphStore = makeTestGraphStore({
-      kits: [testKit],
-    });
+    graphStore = makeTestGraphStore();
 
     testGraph = makeFreshGraph();
     editableGraph = graphStore.editByDescriptor(testGraph);
@@ -68,7 +65,7 @@ suite("GraphController", () => {
         {
           type: "addnode",
           graphId: "",
-          node: { id: "foobar", type: "secrets" },
+          node: { id: "foobar", type: "test:secrets" },
         },
       ],
       "Add node"
@@ -95,7 +92,7 @@ suite("GraphController", () => {
         {
           type: "addnode",
           graphId: "",
-          node: { id: "foo", type: "secrets" },
+          node: { id: "foo", type: "test:secrets" },
         },
       ],
       "Add node"
@@ -114,7 +111,7 @@ suite("GraphController", () => {
         {
           type: "addnode",
           graphId: "",
-          node: { id: "foobar", type: "secrets" },
+          node: { id: "foobar", type: "test:secrets" },
         },
       ],
       "Add node"
@@ -360,7 +357,7 @@ suite("GraphController", () => {
         {
           type: "addnode",
           graphId: "",
-          node: { id: "second-node", type: "secrets" },
+          node: { id: "second-node", type: "test:secrets" },
         },
       ],
       "Add second node"
@@ -485,7 +482,7 @@ suite("GraphController", () => {
         {
           type: "addnode",
           graphId: "",
-          node: { id: "new-node", type: "secrets" },
+          node: { id: "new-node", type: "test:secrets" },
         },
       ],
       "Add new node for components test"

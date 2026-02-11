@@ -42,7 +42,6 @@ class Autonamer {
     signal: AbortSignal
   ): Promise<Outcome<LLMContent[]>> {
     const context: NodeHandlerContext = {
-      kits: [],
       fileSystem: this.#fileSystem,
       signal,
     };

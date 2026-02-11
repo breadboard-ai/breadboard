@@ -10,7 +10,6 @@ import * as Graph from "../../../../src/sca/actions/graph/graph-actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
 import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
-import { testKit } from "../../../test-kit.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import type { ConfigChangeContext } from "../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import { makeFreshGraph } from "../../helpers/index.js";
@@ -31,9 +30,7 @@ suite("Graph Actions", () => {
     const graphActions = Graph;
 
     beforeEach(() => {
-      const graphStore = makeTestGraphStore({
-        kits: [testKit],
-      });
+      const graphStore = makeTestGraphStore();
 
       graphActions.bind({
         services: { graphStore } as unknown as AppServices,
@@ -69,16 +66,14 @@ suite("Graph Actions", () => {
     const graphWithTwoNodes = () =>
       makeFreshGraph({
         nodes: [
-          { id: "foo", type: "promptTemplate" },
-          { id: "bar", type: "promptTemplate" },
+          { id: "foo", type: "test:promptTemplate" },
+          { id: "bar", type: "test:promptTemplate" },
         ],
       });
     let testGraph = graphWithTwoNodes();
 
     beforeEach(() => {
-      const graphStore = makeTestGraphStore({
-        kits: [testKit],
-      });
+      const graphStore = makeTestGraphStore();
 
       testGraph = graphWithTwoNodes();
       const editor = graphStore.editByDescriptor(testGraph);
@@ -225,7 +220,7 @@ suite("Graph Actions", () => {
         await graphActions.addNode(
           {
             id: "new-node",
-            type: "promptTemplate",
+            type: "test:promptTemplate",
             metadata: { title: "New Node" },
           },
           ""
@@ -235,7 +230,7 @@ suite("Graph Actions", () => {
         assert.strictEqual(testGraph.nodes.length, 3);
         const newNode = testGraph.nodes.find((n) => n.id === "new-node");
         assert.ok(newNode, "New node should exist");
-        assert.strictEqual(newNode.type, "promptTemplate");
+        assert.strictEqual(newNode.type, "test:promptTemplate");
         assert.strictEqual(newNode.metadata?.title, "New Node");
       });
 

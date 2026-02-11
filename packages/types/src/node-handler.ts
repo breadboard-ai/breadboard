@@ -117,10 +117,7 @@ export type NodeDescriberContext = {
    * Information about the wires currently connected to this node.
    */
   wires: NodeDescriberWires;
-  /**
-   * Kits that are available in the context of the node.
-   */
-  kits?: Kit[];
+
   /**
    * JS Sandbox that will be used to run the module describers.
    */
@@ -320,7 +317,7 @@ export type ErrorResponse = {
 export interface NodeHandlerContext {
   readonly board?: GraphDescriptor;
   readonly descriptor?: NodeDescriptor;
-  readonly kits?: Kit[];
+
   readonly base?: URL;
   /**
    * The loader that can be used to load graphs.

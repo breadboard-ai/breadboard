@@ -15,7 +15,6 @@ export { makeTestGraphStore };
 
 function makeTestGraphStore(options: InspectableGraphOptions = {}) {
   return new GraphStore({
-    kits: options.kits || [],
     fileSystem: makeFs(),
     sandbox: options.sandbox || {
       createRunnableModule() {

@@ -135,7 +135,6 @@ export function services(
     const a2Server = createA2Server();
     const loader = createLoader([googleDriveBoardServer, a2Server]);
     const graphStoreArgs = {
-      kits: [] as [],
       loader,
       sandbox,
       fileSystem,

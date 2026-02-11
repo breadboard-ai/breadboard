@@ -43,7 +43,7 @@ export class NodeInvoker {
     inputs: InputValues,
     invocationPath: number[]
   ) {
-    const { kits = [], base = SENTINEL_BASE_URL } = this.#context;
+    const { base = SENTINEL_BASE_URL } = this.#context;
     let outputs: OutputValues | undefined = undefined;
 
     const outerGraph = this.#graph.graph;
@@ -63,7 +63,6 @@ export class NodeInvoker {
       // TODO: Make this more elegant.
       outerGraph,
       base,
-      kits,
       invocationPath,
     };
 
