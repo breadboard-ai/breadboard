@@ -30,6 +30,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: main
+          # Fetch enough history so we can checkout the base SHA commit.
+          # If the base SHA is too old, the baseline step will fall back
+          # gracefully via continue-on-error.
+          fetch-depth: 100
 
       - name: Use Node.js 24.x
         uses: actions/setup-node@v4
@@ -37,18 +41,8 @@ jobs:
           node-version: 24.x
           cache: "npm"
 
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Build and generate baseline coverage
-        id: baseline
-        run: |
-          npm run build
-          npm run coverage
-        continue-on-error: true
-
-      # Download artifacts AFTER checkout/build to isolate them from the
-      # trusted codebase. The artifact only contains JSON data files.
+      # Download artifacts early so we can read the base SHA before building.
+      # The artifact only contains JSON data files and plain text metadata.
       - name: Download coverage artifact
         id: download
         uses: actions/download-artifact@v7
@@ -81,6 +75,36 @@ jobs:
         run: |
           echo "::warning::No PR number found. Skipping coverage report."
           exit 0
+
+      - name: Read base SHA
+        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
+        id: base-sha
+        run: |
+          if [ -f pr-artifact/base-sha.txt ]; then
+            echo "sha=$(cat pr-artifact/base-sha.txt)" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::Base SHA file not found, using HEAD of main"
+            echo "sha=" >> $GITHUB_OUTPUT
+          fi
+
+      # Checkout the exact main commit from when the PR was opened/updated.
+      # This avoids the automerge race where main already contains the PR
+      # changes by the time this workflow runs.
+      - name: Checkout baseline commit
+        if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && steps.base-sha.outputs.sha != ''
+        run: git checkout ${{ steps.base-sha.outputs.sha }}
+
+      - name: Install dependencies
+        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
+        run: npm ci --ignore-scripts
+
+      - name: Build and generate baseline coverage
+        id: baseline
+        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
+        run: |
+          npm run build
+          npm run coverage
+        continue-on-error: true
 
       - name: Generate coverage comparison
         if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && steps.baseline.outcome == 'success'
