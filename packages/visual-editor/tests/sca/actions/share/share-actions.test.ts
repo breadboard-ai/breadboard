@@ -164,6 +164,37 @@ suite("Share Actions", () => {
     assert.strictEqual(shareableMetadata.permissions[0].type, "domain");
     assert.strictEqual(shareableMetadata.permissions[0].domain, "example.com");
     assert.strictEqual(shareableMetadata.permissions[0].role, "reader");
+
+    // Verify shareable copy app properties
+    const shareableCopyProps = await googleDriveClient.getFileMetadata(
+      shareableFileId,
+      { fields: ["properties"] }
+    );
+    assert.strictEqual(
+      shareableCopyProps.properties?.shareableCopyToMain,
+      createdFile.id,
+      "Shareable copy should point back to the main file"
+    );
+    assert.strictEqual(
+      shareableCopyProps.properties?.isShareableCopy,
+      "true",
+      "Shareable copy should be marked as a shareable copy"
+    );
+    assert.ok(
+      shareableCopyProps.properties?.latestSharedVersion,
+      "Shareable copy should have latestSharedVersion set"
+    );
+
+    // Verify main file has mainToShareableCopy pointing to the shareable copy
+    const mainFileProps = await googleDriveClient.getFileMetadata(
+      createdFile.id,
+      { fields: ["properties"] }
+    );
+    assert.strictEqual(
+      mainFileProps.properties?.mainToShareableCopy,
+      shareableFileId,
+      "Main file should point to the shareable copy"
+    );
   });
 
   test("unpublish", async () => {
@@ -358,8 +389,12 @@ suite("Share Actions", () => {
       "latestVersion should be 5 from main file"
     );
 
-    // Publish stale
-    const graph = { edges: [], nodes: [], url: `drive:/${mainFile.id}` };
+    // Publish stale with a graph that has identifiable content
+    const graph = {
+      edges: [],
+      nodes: [{ id: "updated-node", type: "test" }],
+      url: `drive:/${mainFile.id}`,
+    };
     await ShareActions.publishStale(graph);
 
     // Verify shareable copy was updated - check the latestSharedVersion property
@@ -371,6 +406,18 @@ suite("Share Actions", () => {
       updatedShareable.properties?.latestSharedVersion,
       "5",
       "Shareable copy should be updated to latest version"
+    );
+
+    // Verify file content was actually updated on the shareable copy
+    const shareableContent = await googleDriveClient.getFileMedia(
+      shareableFile.id
+    );
+    const shareableGraph = await shareableContent.json();
+    assert.ok(
+      shareableGraph.nodes?.some(
+        (n: { id: string }) => n.id === "updated-node"
+      ),
+      "Shareable copy content should contain the updated graph nodes"
     );
 
     // Verify stale flag is now false
