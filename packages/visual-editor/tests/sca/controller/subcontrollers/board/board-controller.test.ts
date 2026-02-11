@@ -71,15 +71,15 @@ suite("BoardController version history", () => {
   //   assert.strictEqual(controller.newerVersionAvailable, false);
   // });
 
-  // test("can set newerVersionAvailable", async () => {
-  //   const controller = new BoardController("BoardTest_5", "BoardController");
-  //   await controller.isHydrated;
+  test("can set newerVersionAvailable", async () => {
+    const controller = new BoardController("BoardTest_5", "BoardController");
+    await controller.isHydrated;
 
-  //   controller.newerVersionAvailable = true;
-  //   await controller.isSettled;
+    controller.newerVersionAvailable = true;
+    await controller.isSettled;
 
-  //   assert.strictEqual(controller.newerVersionAvailable, true);
-  // });
+    assert.strictEqual(controller.newerVersionAvailable, true);
+  });
 });
 
 suite("BoardController edit history", () => {
