@@ -7,7 +7,6 @@
 import {
   GraphDescriptor,
   InputValues,
-  ModuleIdentifier,
   MutableGraph,
   NodeDescriberResult,
   NodeHandlerContext,
@@ -16,62 +15,7 @@ import {
 import { filterEmptyValues, ok } from "@breadboard-ai/utils";
 import { CapabilitiesManager } from "@breadboard-ai/types/sandbox.js";
 
-export { invokeDescriber, invokeMainDescriber };
-
-async function invokeDescriber(
-  context: NodeHandlerContext,
-  moduleId: ModuleIdentifier,
-  mutable: MutableGraph,
-  graph: GraphDescriptor,
-  inputs: InputValues,
-  inputSchema?: Schema,
-  outputSchema?: Schema,
-  capabilities?: CapabilitiesManager,
-  asType?: boolean
-): Promise<NodeDescriberResult | undefined> {
-  const declarations = graph.modules;
-  if (!declarations) {
-    return;
-  }
-  const module = await mutable.store.sandbox.createRunnableModule(
-    mutable,
-    graph,
-    context,
-    capabilities
-  );
-  if (!ok(module)) return;
-
-  try {
-    const result = (await module.describe(moduleId, {
-      inputs,
-      inputSchema,
-      outputSchema,
-      asType,
-    })) as NodeDescriberResult;
-    const moduleData = declarations[moduleId]!;
-    const metadata: Omit<NodeDescriberResult, "inputSchema" | "outputSchema"> =
-      filterEmptyValues({
-        title: result.title ?? moduleData.metadata?.title,
-        description: result.description ?? moduleData.metadata?.description,
-        metadata: filterEmptyValues({
-          icon: result.metadata?.icon ?? moduleData.metadata?.icon,
-          help: result.metadata?.help ?? moduleData.metadata?.help,
-          tags: result.metadata?.tags ?? moduleData.metadata?.tags,
-        }),
-      });
-    return {
-      ...metadata,
-      ...result,
-    };
-  } catch (e) {
-    // swallow the error. It's okay that some modules don't have
-    // custom describers.
-    console.warn(
-      `Unable to invoke describer for "${moduleId}"`,
-      (e as Error).message
-    );
-  }
-}
+export { invokeMainDescriber };
 
 async function invokeMainDescriber(
   context: NodeHandlerContext,

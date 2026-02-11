@@ -34,7 +34,6 @@ import { GraphLoader, GraphLoaderContext } from "./loader.js";
 import {
   Kit,
   NodeDescriberResult,
-  NodeHandlerContext,
   NodeHandlerMetadata,
 } from "./node-handler.js";
 import { RunnableModuleFactory } from "./sandbox.js";
@@ -314,14 +313,6 @@ export type InspectableGraph = {
    * Returns a list of entry nodes for the graph.
    */
   entries(): InspectableNode[];
-  /**
-   * Returns the API of the graph. This function is designed to match the
-   * output of the `NodeDescriberFunction`.
-   */
-  describe(
-    inputs?: InputValues,
-    context?: NodeHandlerContext
-  ): Promise<NodeDescriberResult>;
   /**
    * Returns the subgraphs that are embedded in this graph or `undefined` if
    * this is already a subgraph
@@ -881,17 +872,3 @@ export type MutableGraph = {
 
   rebuild(graph: GraphDescriptor): void;
 };
-
-export type GraphDescriber = {
-  describe(
-    inputs?: InputValues,
-    inputSchema?: Schema,
-    outputSchema?: Schema,
-    context?: NodeHandlerContext
-  ): Promise<NodeDescriberResult>;
-};
-
-export type GraphDescriberFactory = (
-  graphId: GraphIdentifier,
-  mutable: MutableGraph
-) => Outcome<GraphDescriber>;

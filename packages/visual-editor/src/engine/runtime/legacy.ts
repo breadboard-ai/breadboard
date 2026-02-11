@@ -9,10 +9,5 @@
 
 // Move to `invoke` (or something) package.
 export { getHandler } from "./handler.js";
-// Move `GraphDescriberManager` to `runtime` package
 export { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
-// Move `GraphDescriberManager` to `runtime` package
-export {
-  invokeDescriber,
-  invokeMainDescriber,
-} from "./sandbox/invoke-describer.js";
+export { invokeMainDescriber } from "./sandbox/invoke-describer.js";
