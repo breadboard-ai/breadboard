@@ -80,28 +80,25 @@ jobs:
           echo "::warning::No PR number found. Skipping coverage report."
           exit 0
 
-      - name: Read base SHA
+      # Fetch the base SHA from the GitHub API rather than the artifact,
+      # so that no artifact data flows into the git checkout / build steps.
+      - name: Get baseline commit SHA
         if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
         id: base-sha
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -f pr-artifact/base-sha.txt ]; then
-            SHA=$(cat pr-artifact/base-sha.txt)
-            # Validate SHA format to prevent injection from artifact content
-            if [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
-              echo "sha=$SHA" >> $GITHUB_OUTPUT
-            else
-              echo "::warning::Invalid base SHA format, using HEAD of main"
-              echo "sha=" >> $GITHUB_OUTPUT
-            fi
+          SHA=$(gh api "repos/${{ github.repository }}/pulls/${{ steps.pr.outputs.number }}" --jq '.base.sha')
+          if [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "sha=$SHA" >> $GITHUB_OUTPUT
           else
-            echo "::warning::Base SHA file not found, using HEAD of main"
+            echo "::warning::Could not determine base SHA, using HEAD of main"
             echo "sha=" >> $GITHUB_OUTPUT
           fi
 
       # Checkout the exact main commit from when the PR was opened/updated.
       # This avoids the automerge race where main already contains the PR
-      # changes by the time this workflow runs. The SHA is validated above
-      # as a 40-char hex string, so it can only reference an existing commit.
+      # changes by the time this workflow runs.
       - name: Checkout baseline commit
         if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && steps.base-sha.outputs.sha != ''
         run: git checkout ${{ steps.base-sha.outputs.sha }}

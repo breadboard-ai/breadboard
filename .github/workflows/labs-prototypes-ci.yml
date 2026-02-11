@@ -63,11 +63,9 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
 
-      - name: Save PR metadata
+      - name: Save PR number
         if: github.event_name == 'pull_request'
-        run: |
-          echo "${{ github.event.pull_request.number }}" > pr-number.txt
-          echo "${{ github.event.pull_request.base.sha }}" > base-sha.txt
+        run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
 
       - name: Upload coverage artifact
         if: github.event_name == 'pull_request'
@@ -77,5 +75,4 @@ jobs:
           path: |
             packages/visual-editor/coverage/coverage-summary.json
             pr-number.txt
-            base-sha.txt
           retention-days: 7
