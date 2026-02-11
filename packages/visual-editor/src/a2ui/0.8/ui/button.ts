@@ -142,6 +142,13 @@ class Button extends Root {
         );
       }
 
+      /* Non-media buttons: fixed height + side padding. */
+      :host(:not([has-media])) button {
+        height: var(--a2ui-button-height, 40px);
+        padding: var(--a2ui-button-padding, 0 16px);
+        --a2ui-text-padding: 0;
+      }
+
       /* Non-media hover: background change. */
       :host(:not([has-media])) button:hover {
         background: var(--a2ui-button-hover-bg, var(--light-dark-s-98));

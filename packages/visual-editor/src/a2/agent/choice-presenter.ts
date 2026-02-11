@@ -171,11 +171,40 @@ class ChoicePresenter {
       });
     }
 
-    // Include "none of the above" as an option if provided.
+    // Include "none of the above" as a non-primary button if provided.
     if (noneOfTheAboveLabel) {
-      multipleChoiceOptions.push({
-        label: { literalString: noneOfTheAboveLabel },
-        value: NONE_OF_THE_ABOVE_ID,
+      const noneTextId = "none-of-the-above-text";
+      const noneBtnId = "none-of-the-above-btn";
+
+      allParts.push({
+        id: noneTextId,
+        component: {
+          Text: {
+            text: { literalString: noneOfTheAboveLabel },
+            usageHint: "body",
+          },
+        },
+      });
+
+      allParts.push({
+        id: noneBtnId,
+        component: {
+          Button: {
+            child: noneTextId,
+            primary: false,
+            action: {
+              name: "submit",
+              context: [
+                {
+                  key: "selections",
+                  value: {
+                    literalString: JSON.stringify([NONE_OF_THE_ABOVE_ID]),
+                  },
+                },
+              ],
+            },
+          },
+        },
       });
     }
 
@@ -210,6 +239,7 @@ class ChoicePresenter {
       component: {
         Button: {
           child: "submit-text",
+          primary: true,
           action: {
             name: "submit",
             context: [
@@ -224,17 +254,35 @@ class ChoicePresenter {
     };
     allParts.push(submitButton);
 
-    // Build the root column layout (message, multiple choice, submit button)
+    // Build a row for the action buttons (optional none-of-the-above + submit)
+    const buttonRowChildren: string[] = [];
+    if (noneOfTheAboveLabel) {
+      buttonRowChildren.push("none-of-the-above-btn");
+    }
+    buttonRowChildren.push("submit-btn");
+
+    allParts.push({
+      id: "button-row",
+      weight: 1,
+      component: {
+        Row: {
+          children: { explicitList: buttonRowChildren },
+          distribution: "end",
+        },
+      },
+    });
+
+    // Build the root column layout (message, multiple choice, button row)
     const rootComponent: v0_8.Types.ComponentInstance = {
       id: "root",
       weight: 1,
       component: {
         Column: {
           children: {
-            explicitList: [...topLevelIds, "submit-btn"],
+            explicitList: [...topLevelIds, "button-row"],
           },
           distribution: "center",
-          alignment: "center",
+          alignment: "stretch",
         },
       },
     };
