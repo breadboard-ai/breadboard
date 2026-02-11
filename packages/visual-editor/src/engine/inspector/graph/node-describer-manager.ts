@@ -5,7 +5,7 @@
  */
 
 import { createLoader } from "../../loader/index.js";
-import { getHandler, invokeMainDescriber } from "../../runtime/legacy.js";
+import { getHandler } from "../../runtime/legacy.js";
 import type {
   DescribeResultCacheArgs,
   GraphIdentifier,
@@ -22,7 +22,7 @@ import type {
 import { SchemaDiffer } from "@breadboard-ai/utils";
 import { contextFromMutableGraph } from "../graph-store.js";
 import { UpdateEvent } from "./event.js";
-import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
+
 import {
   describeInput,
   describeOutput,
@@ -128,68 +128,12 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
     graphId: GraphIdentifier,
     options: NodeTypeDescriberOptions = {}
   ) {
-    const gettingHandle = GraphDescriptorHandle.create(
-      this.mutable.graph,
-      graphId
-    );
-    if (!gettingHandle.success) {
-      throw new Error(gettingHandle.error);
-    }
-    const handle = gettingHandle.result;
     // The schema of an input or an output is defined by their
     // configuration schema or their incoming/outgoing edges.
     if (type === "input") {
-      if (handle.main()) {
-        if (!this.mutable.store.sandbox) {
-          throw new Error(
-            "Sandbox not supplied, won't be able to describe this graph correctly"
-          );
-        }
-        const result = await invokeMainDescriber(
-          {},
-          this.mutable,
-          handle.graph(),
-          options.inputs!,
-          {},
-          {}
-        );
-        if (result)
-          return describeInput({
-            inputs: {
-              schema: result.inputSchema,
-            },
-            incoming: options?.incoming,
-            outgoing: options?.outgoing,
-          });
-        return describeInput(options);
-      }
       return describeInput(options);
     }
     if (type === "output") {
-      if (handle.main()) {
-        if (!this.mutable.store.sandbox) {
-          throw new Error(
-            "Sandbox not supplied, won't be able to describe this graph correctly"
-          );
-        }
-        const result = await invokeMainDescriber(
-          {},
-          this.mutable,
-          handle.graph(),
-          options.inputs!,
-          {},
-          {}
-        );
-        if (result)
-          return describeOutput({
-            inputs: {
-              schema: result.outputSchema,
-            },
-            incoming: options?.incoming,
-            outgoing: options?.outgoing,
-          });
-        return describeInput(options);
-      }
       return describeOutput(options);
     }
 
@@ -203,19 +147,21 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
       return asWired;
     }
     const loader = this.mutable.store.loader || createLoader();
+    const graph = this.mutable.graph;
+    const outerGraph = graphId ? graph : graph;
     const context: NodeDescriberContext = {
-      outerGraph: handle.outerGraph(),
+      outerGraph,
       loader,
       kits,
       sandbox: this.mutable.store.sandbox,
       graphStore: this.mutable.store,
       fileSystem: this.mutable.store.fileSystem.createRunFileSystem({
-        graphUrl: handle.outerGraph().url!,
+        graphUrl: outerGraph.url!,
         env: envFromGraphDescriptor(
           this.mutable.store.fileSystem.env(),
-          handle.outerGraph()
+          outerGraph
         ),
-        assets: assetsFromGraphDescriptor(handle.outerGraph()),
+        assets: assetsFromGraphDescriptor(outerGraph),
       }),
       flags: this.mutable.store.flags,
       wires: {
@@ -242,8 +188,12 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
       },
       asType: !!options?.asType,
     };
-    if (handle.url()) {
-      context.base = handle.url();
+    if (outerGraph.url) {
+      try {
+        context.base = new URL(outerGraph.url);
+      } catch {
+        // Ignore invalid URLs
+      }
     }
     try {
       return describer(

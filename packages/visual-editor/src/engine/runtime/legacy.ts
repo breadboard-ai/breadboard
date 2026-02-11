@@ -10,4 +10,3 @@
 // Move to `invoke` (or something) package.
 export { getHandler } from "./handler.js";
 export { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
-export { invokeMainDescriber } from "./sandbox/invoke-describer.js";
