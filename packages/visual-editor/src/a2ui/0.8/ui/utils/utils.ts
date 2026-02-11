@@ -15,9 +15,23 @@
  */
 
 import { A2UIModelProcessor } from "../../data/model-processor.js";
-import { NumberValue, type StringValue } from "../../types/primitives.js";
+import {
+  BooleanValue,
+  NumberValue,
+  type StringValue,
+} from "../../types/primitives.js";
 import { type AnyComponentNode } from "../../types/types.js";
 
+/**
+ * Resolves a `StringValue` to a concrete string.
+ *
+ * Handles three cases:
+ * - `literalString` / `literal`: returns the hardcoded string directly.
+ * - `path`: resolves the data binding via `processor.getData()`.
+ *
+ * This is the recommended way to resolve `StringValue` in components and
+ * custom elements, rather than inlining the resolution logic.
+ */
 export function extractStringValue(
   val: StringValue | null,
   component: AnyComponentNode | null,
@@ -51,6 +65,12 @@ export function extractStringValue(
   return "";
 }
 
+/**
+ * Resolves a `NumberValue` to a concrete number.
+ *
+ * Handles `literalNumber` / `literal` (direct) and `path` (data-bound) cases.
+ * Returns `0` for null/missing values and `-1` for unresolvable paths.
+ */
 export function extractNumberValue(
   val: NumberValue | null,
   component: AnyComponentNode | null,
@@ -89,4 +109,48 @@ export function extractNumberValue(
   }
 
   return 0;
+}
+
+/**
+ * Resolves a `BooleanValue` to a concrete boolean.
+ *
+ * Handles `literalBoolean` / `literal` (direct) and `path` (data-bound) cases.
+ * When the bound value is a string, coerces `"true"` → `true` and everything
+ * else → `false`. Returns `false` for null/missing/unresolvable values.
+ */
+export function extractBooleanValue(
+  val: BooleanValue | null,
+  component: AnyComponentNode | null,
+  processor: A2UIModelProcessor | null,
+  surfaceId: string | null
+): boolean {
+  if (val !== null && typeof val === "object") {
+    if ("literalBoolean" in val) {
+      return val.literalBoolean ?? false;
+    } else if ("literal" in val && val.literal !== undefined) {
+      return val.literal ?? false;
+    } else if (val && "path" in val && val.path) {
+      if (!processor || !component) {
+        return false;
+      }
+
+      const boolValue = processor.getData(
+        component,
+        val.path,
+        surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
+      );
+
+      if (typeof boolValue === "boolean") {
+        return boolValue;
+      }
+
+      if (typeof boolValue === "string") {
+        return boolValue === "true";
+      }
+
+      return false;
+    }
+  }
+
+  return false;
 }

@@ -16,20 +16,34 @@ import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Loop } from "./loop.js";
-import type { ModelConstraint } from "./functions/generate.js";
+import { createAgentConfigurator } from "./agent-function-configurator.js";
 import { readFlags } from "../a2/settings.js";
+import { conformGeminiBody, streamGenerateContent } from "../a2/gemini.js";
+import { callGeminiImage } from "../a2/image-utils.js";
+import { callVideoGen } from "../video-generator/main.js";
+import { callAudioGen } from "../audio-generator/main.js";
+import { callMusicGen } from "../music-generator/main.js";
+import { Generators } from "./types.js";
+import { invokeAgentAdk } from "./agent-adk.js";
 
 export { invoke as default, computeAgentSchema, describe };
+
+const generators: Generators = {
+  streamContent: streamGenerateContent,
+  conformBody: conformGeminiBody,
+  callImage: callGeminiImage,
+  callVideo: callVideoGen,
+  callAudio: callAudioGen,
+  callMusic: callMusicGen,
+};
 
 export type AgentInputs = {
   config$prompt: LLMContent;
   "b-ui-consistent": boolean;
   "b-ui-prompt": LLMContent;
-  "b-si-instruction"?: string;
-  "b-si-constraint": ModelConstraint;
 } & Params;
 
-type AgentOutputs = {
+export type AgentOutputs = {
   [key: string]: LLMContent[];
 };
 
@@ -40,22 +54,22 @@ function computeAgentSchema(
   const uiPromptSchema: Schema["properties"] =
     flags?.consistentUI && enableA2UI
       ? {
-          "b-ui-prompt": {
-            type: "object",
-            behavior: ["llm-content", "config", "hint-advanced"],
-            title: "UI Layout instructions",
-            description: "Instructions for UI layout",
-          },
-        }
+        "b-ui-prompt": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "UI Layout instructions",
+          description: "Instructions for UI layout",
+        },
+      }
       : {};
   const uiConsistent: Schema["properties"] = flags?.consistentUI
     ? {
-        "b-ui-consistent": {
-          type: "boolean",
-          title: "Use A2UI",
-          behavior: ["config", "hint-advanced", "reactive"],
-        },
-      }
+      "b-ui-consistent": {
+        type: "boolean",
+        title: "Use A2UI",
+        behavior: ["config", "hint-advanced", "reactive"],
+      },
+    }
     : {};
   return {
     config$prompt: {
@@ -69,13 +83,24 @@ function computeAgentSchema(
   } satisfies Schema["properties"];
 }
 
-async function invoke(
+export async function toAgentOutputs(results?: LLMContent, href?: string): Promise<AgentOutputs> {
+  const context: LLMContent[] = [];
+  if (results) {
+    context.push(results);
+  }
+  if (!href || href === "/") {
+    href = "context";
+  }
+  return {
+    [href]: context,
+  };
+}
+
+async function invokeAgent(
   {
     config$prompt: objective,
     "b-ui-consistent": enableA2UI = false,
     "b-ui-prompt": uiPrompt,
-    "b-si-instruction": extraInstruction,
-    "b-si-constraint": modelConstraint,
     ...rest
   }: AgentInputs,
   caps: Capabilities,
@@ -84,26 +109,32 @@ async function invoke(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const loop = new Loop(caps, moduleArgs);
+  const configureFn = createAgentConfigurator(caps, moduleArgs, generators);
+  const loop = new Loop(caps, moduleArgs, configureFn);
   const result = await loop.run({
     objective,
     params,
-    extraInstruction,
     uiType: enableA2UI ? "a2ui" : "chat",
     uiPrompt,
-    modelConstraint,
   });
   if (!ok(result)) return result;
   console.log("LOOP", result);
-  const context: LLMContent[] = [];
-  if (result.outcomes) {
-    context.push(result.outcomes);
+  return toAgentOutputs(result.outcomes, result.href);
+}
+
+async function invoke(
+  inputs: AgentInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<AgentOutputs>> {
+  const flags = await moduleArgs.context.flags?.flags();
+  const opalAdkEnabled = flags?.opalAdk || false;
+
+  if (opalAdkEnabled) {
+    return invokeAgentAdk(inputs, caps, moduleArgs);
+  } else {
+    return invokeAgent(inputs, caps, moduleArgs);
   }
-  let route = result.href;
-  if (!route || route === "/") {
-    route = "context";
-  }
-  return { [route]: context };
 }
 
 async function describe(

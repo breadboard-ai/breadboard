@@ -206,7 +206,22 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.sca.controller.global.debug.isHydrated.then(() => {
       this.sca.controller.global.debug.enabled = true;
     });
-    Utils.Logging.setDebuggableAppController(this.sca.controller);
+
+    // If the router encountered an invalid URL (e.g. unsupported flow ID),
+    // show a warning snackbar once the controllers are hydrated.
+    if (this.sca.controller.router.urlError) {
+      this.sca.controller.isHydrated.then(() => {
+        this.sca.controller.global.snackbars.snackbar(
+          Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
+          BreadboardUI.Types.SnackType.WARNING,
+          [],
+          true,
+          globalThis.crypto.randomUUID(),
+          true
+        );
+        this.sca.controller.router.urlError = null;
+      });
+    }
 
     // Append SCA to the config.
     config.sca = this.sca;
@@ -285,8 +300,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.logger.log(
       Utils.Logging.Formatter.info("Visual Editor Initialized"),
-      Strings.from("APP_NAME"),
-      false
+      Strings.from("APP_NAME")
     );
 
     // Handle initial URL (replaces RuntimeURLChangeEvent from router.init())
@@ -414,6 +428,18 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         // Bump the SCA selectionId to trigger the step autosave.
         // This bridges the legacy selection system to the SCA trigger.
         this.sca.controller.editor.selection.bumpSelectionId();
+
+        // TODO: Remove once SelectionController is fully wired up.
+        // This sets the selectedNodeId for fast-access filtering.
+        const candidate = [...evt.selectionState.graphs].find(
+          ([, graph]) => graph.nodes.size > 0
+        );
+        if (candidate && candidate[1].nodes.size === 1) {
+          const [, graph] = candidate;
+          this.sca.controller.editor.graph.selectedNodeId = [...graph.nodes][0];
+        } else {
+          this.sca.controller.editor.graph.selectedNodeId = null;
+        }
 
         this.selectionState = {
           selectionChangeId: evt.selectionChangeId,

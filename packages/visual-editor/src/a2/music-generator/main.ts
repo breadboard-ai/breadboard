@@ -14,6 +14,7 @@ import {
   executeStep,
   type ContentMap,
   type ExecuteStepRequest,
+  type ExecuteStepArgs,
 } from "../a2/step-executor.js";
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
@@ -27,6 +28,7 @@ import {
   toTextConcat,
 } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];
@@ -45,7 +47,7 @@ function makeMusicInstruction() {
 
 async function callMusicGen(
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   prompt: string
 ): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
@@ -68,7 +70,7 @@ async function callMusicGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body);
+  const response = await executeStep(caps, args, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
@@ -112,7 +114,12 @@ async function invoke(
     return { context: [toLLMContent("Please provide the music prompt.")] };
   }
   console.log("PROMPT: ", combinedInstruction);
-  const result = await callMusicGen(caps, moduleArgs, combinedInstruction);
+  const reporter = createReporter(moduleArgs, {
+    title: `Generating Music`,
+    icon: "audio_magic_eraser",
+  });
+  const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
+  const result = await callMusicGen(caps, executeStepArgs, combinedInstruction);
   if (!ok(result)) return result;
   return { context: [result] };
 }

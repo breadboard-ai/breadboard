@@ -11,7 +11,7 @@ import {
   StoredDataCapabilityPart,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { ConnectorManager } from "./connector-manager.js";
+import connectorSave from "../google-drive/connector-save.js";
 import { callGenWebpage } from "./html-generator.js";
 import { Template } from "./template.js";
 import {
@@ -148,6 +148,8 @@ type InvokeInputs = {
   "b-system-instruction"?: LLMContent;
   "b-render-model-name": string;
   "b-google-doc-title"?: string;
+  "b-slide-deck-mode"?: string;
+  "b-slide-write-mode"?: string;
 };
 
 type InvokeOutputs = {
@@ -162,6 +164,7 @@ type DescribeInputs = {
   inputs: {
     text?: LLMContent;
     "p-render-mode": string;
+    "b-slide-deck-mode"?: string;
   };
 };
 
@@ -303,9 +306,12 @@ function getPalettePrompt(colors: PaletteColors): string {
 
 async function saveToGoogleDrive(
   caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
   content: LLMContent,
   mimeType: string,
-  title: string | undefined
+  title: string | undefined,
+  slideDeckMode?: string,
+  slideWriteMode?: string
 ): Promise<Outcome<SaveOutput>> {
   let graphId = "";
   // Let's get the title from the graph
@@ -319,13 +325,29 @@ async function saveToGoogleDrive(
       graphId = metadata.url?.replace("drive:/", "") || "";
     }
   }
-  const manager = new ConnectorManager(caps, {
-    url: "embed://a2/google-drive.bgl.json",
-    configuration: { file: { mimeType } },
-  });
-  return manager.save([content], { title, graphId }) as Promise<
-    Outcome<SaveOutput>
-  >;
+  const id = moduleArgs.context.currentStep?.id || "render-outputs";
+  return connectorSave(
+    {
+      method: "save",
+      id,
+      context: [content],
+      title,
+      graphId,
+      info: {
+        configuration: {
+          file: { mimeType, preview: "", id: "" },
+          slideDeckMode: slideDeckMode as "new" | "same" | undefined,
+          slideWriteMode: slideWriteMode as
+            | "prepend"
+            | "append"
+            | "overwrite"
+            | undefined,
+        },
+      },
+    },
+    caps,
+    moduleArgs
+  ) as Promise<Outcome<SaveOutput>>;
 }
 
 function paramsToContent(params: Params): LLMContent {
@@ -349,6 +371,8 @@ async function invoke(
     "b-system-instruction": systemInstruction,
     "b-render-model-name": modelType,
     "b-google-doc-title": googleDocTitle,
+    "b-slide-deck-mode": slideDeckMode,
+    "b-slide-write-mode": slideWriteMode,
     ...params
   }: InvokeInputs,
   caps: Capabilities,
@@ -418,6 +442,7 @@ async function invoke(
     case "GoogleDoc": {
       return saveToGoogleDrive(
         caps,
+        moduleArgs,
         out,
         "application/vnd.google-apps.document",
         googleDocTitle
@@ -426,14 +451,18 @@ async function invoke(
     case "GoogleSlides": {
       return saveToGoogleDrive(
         caps,
+        moduleArgs,
         out,
         "application/vnd.google-apps.presentation",
-        googleDocTitle
+        googleDocTitle,
+        slideDeckMode,
+        slideWriteMode
       );
     }
     case "GoogleSheets": {
       return saveToGoogleDrive(
         caps,
+        moduleArgs,
         out,
         "application/vnd.google-apps.spreadsheet",
         googleDocTitle
@@ -453,7 +482,10 @@ async function invoke(
   return { context: [out] };
 }
 
-function advancedSettings(renderType: RenderType): Record<string, Schema> {
+function advancedSettings(
+  renderType: RenderType,
+  slideDeckMode?: string
+): Record<string, Schema> {
   switch (renderType) {
     case "HTML":
       return {
@@ -483,15 +515,56 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
       };
     }
     case "GoogleSlides": {
-      return {
-        "b-google-doc-title": {
+      const settings: Record<string, Schema> = {
+        "b-slide-deck-mode": {
           type: "string",
-          behavior: ["config", "hint-advanced"],
-          title: "Google Presentation Title",
-          description:
-            "The title of a Google Drive Presentation that content will be saved to",
+          enum: [
+            {
+              id: "new",
+              title: "New slide deck",
+            },
+            {
+              id: "same",
+              title: "Same slide deck",
+            },
+          ],
+          behavior: ["config", "hint-advanced", "reactive"],
+          title: "Edit each time",
+          default: "new",
         },
       };
+      if (slideDeckMode === "same") {
+        settings["b-slide-write-mode"] = {
+          type: "string",
+          enum: [
+            {
+              id: "prepend",
+              title: "Prepend",
+              description: "Add to the beginning",
+            },
+            {
+              id: "append",
+              title: "Append",
+              description: "Add to the end",
+            },
+            {
+              id: "overwrite",
+              title: "Overwrite",
+              description: "Replace everything",
+            },
+          ],
+          behavior: ["config", "hint-advanced", "reactive"],
+          title: "Write mode",
+          default: "prepend",
+        };
+      }
+      settings["b-google-doc-title"] = {
+        type: "string",
+        behavior: ["config", "hint-advanced"],
+        title: "Slide deck name",
+        description: "Title of slide deck",
+      };
+      return settings;
     }
     case "GoogleSheets": {
       return {
@@ -519,7 +592,13 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
 }
 
 async function describe(
-  { inputs: { text, "p-render-mode": renderMode } }: DescribeInputs,
+  {
+    inputs: {
+      text,
+      "p-render-mode": renderMode,
+      "b-slide-deck-mode": slideDeckMode,
+    },
+  }: DescribeInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
@@ -551,7 +630,7 @@ async function describe(
           default: MANUAL_MODE,
           description: "Choose how to combine and display the outputs",
         },
-        ...advancedSettings(renderType),
+        ...advancedSettings(renderType, slideDeckMode),
         ...template.schemas(),
       },
       behavior: ["at-wireable"],

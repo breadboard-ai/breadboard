@@ -7,6 +7,7 @@
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
 import * as Agent from "./agent/agent-actions.js";
+import * as Asset from "./asset/asset-actions.js";
 import * as Board from "./board/board-actions.js";
 import * as Flowgen from "./flowgen/flowgen-actions.js";
 import * as Graph from "./graph/graph-actions.js";
@@ -17,11 +18,13 @@ import * as ScreenSize from "./screen-size/screen-size-actions.js";
 import * as Share from "./share/share-actions.js";
 import * as Shell from "./shell/shell-actions.js";
 import * as Step from "./step/step-actions.js";
+import * as Theme from "./theme/theme-actions.js";
 import type { ActionWithTriggers } from "../coordination.js";
 import { Utils } from "../utils.js";
 
 export interface AppActions {
   agent: typeof Agent;
+  asset: typeof Asset;
   board: typeof Board;
   flowgen: typeof Flowgen;
   graph: typeof Graph;
@@ -32,6 +35,7 @@ export interface AppActions {
   share: typeof Share;
   shell: typeof Shell;
   step: typeof Step;
+  theme: typeof Theme;
 }
 
 let instance: AppActions | null = null;
@@ -40,6 +44,7 @@ let triggerDisposers: Array<() => void> = [];
 export function actions(controller: AppController, services: AppServices) {
   if (!instance) {
     Agent.bind({ controller, services });
+    Asset.bind({ controller, services });
     Board.bind({ controller, services });
     Flowgen.bind({ controller, services });
     Graph.bind({ controller, services });
@@ -50,8 +55,10 @@ export function actions(controller: AppController, services: AppServices) {
     Share.bind({ controller, services });
     Shell.bind({ controller, services });
     Step.bind({ controller, services });
+    Theme.bind({ controller, services });
     instance = {
       agent: Agent,
+      asset: Asset,
       board: Board,
       flowgen: Flowgen,
       graph: Graph,
@@ -62,6 +69,7 @@ export function actions(controller: AppController, services: AppServices) {
       share: Share,
       shell: Shell,
       step: Step,
+      theme: Theme,
     } satisfies AppActions;
   }
   return instance;
@@ -84,6 +92,7 @@ export function activateTriggers(): () => void {
   // Collect all actions from all modules
   const allActions = [
     ...Object.values(Agent),
+    ...Object.values(Asset),
     ...Object.values(Board),
     ...Object.values(Flowgen),
     ...Object.values(Graph),
@@ -94,6 +103,7 @@ export function activateTriggers(): () => void {
     ...Object.values(Share),
     ...Object.values(Shell),
     ...Object.values(Step),
+    ...Object.values(Theme),
   ];
 
   // Filter to actions with triggers and extract metadata
@@ -134,8 +144,7 @@ export function activateTriggers(): () => void {
       "Trigger activation order:\n -",
       activationOrder.join("\n - ")
     ),
-    LABEL,
-    true  // Always show (not verbose)
+    LABEL
   );
 
   // Activate in sorted order
@@ -166,4 +175,18 @@ export function cleanActions(): void {
 }
 
 // Re-export individual modules for direct access in tests
-export { Agent, Board, Flowgen, Graph, Node, Router, Run, ScreenSize, Share, Shell, Step };
+export {
+  Agent,
+  Asset,
+  Board,
+  Flowgen,
+  Graph,
+  Node,
+  Router,
+  Run,
+  ScreenSize,
+  Share,
+  Shell,
+  Step,
+  Theme,
+};

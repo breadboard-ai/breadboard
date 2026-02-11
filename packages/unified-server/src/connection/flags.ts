@@ -1,5 +1,7 @@
 import "dotenv/config";
 
+import { getString, getStringList, getSecret } from "../flag-utils.js";
+
 export type SameSite = "Lax" | "None" | "Strict";
 
 export const ALLOWED_ORIGINS: string[] = getStringList("ALLOWED_ORIGINS", {
@@ -10,7 +12,7 @@ export const OAUTH_CLIENT: string = getString("OAUTH_CLIENT");
 
 export const OAUTH_SCOPES: string[] = getStringList("OAUTH_SCOPES");
 
-export const OAUTH_SECRET: string = getString("OAUTH_SECRET");
+export const OAUTH_SECRET: string = getSecret("OAUTH_SECRET");
 
 export const OAUTH_FETCH_COMMAND: string = getString("OAUTH_FETCH_COMMAND");
 
@@ -28,24 +30,6 @@ export const REFRESH_TOKEN_COOKIE_SAME_SITE: SameSite = getSameSite(
     default: "Strict",
   }
 );
-
-/** Get the value of the given flag as a string, or empty string if absent. */
-function getString(flagName: string): string {
-  return process.env[flagName] ?? "";
-}
-
-/** Get the value of the given flag as a comma-delimited list of strings. */
-function getStringList(
-  flagName: string,
-  opts: { delimiter: string | RegExp } = { delimiter: "," }
-): string[] {
-  return (
-    getString(flagName)
-      .split(opts.delimiter)
-      // Filter out empty strings (e.g. if the env value is empty)
-      .filter((x) => x)
-  );
-}
 
 function getSameSite(flagName: string, opts: { default: SameSite }): SameSite {
   const flagValue = getString(flagName) || opts.default;

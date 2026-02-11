@@ -22,6 +22,7 @@ export * from "./schema.js";
 export * from "./semver.js";
 export * from "./snapshot-updater.js";
 export * from "./stubs.js";
+export * from "./notebooklm.js";
 export * from "./template.js";
 export * from "./throttler.js";
 export * from "./timestamp.js";

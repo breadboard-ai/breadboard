@@ -12,16 +12,10 @@ import {
   FileSystemReadResult,
   FileSystemWriteArguments,
   FileSystemWriteResult,
-  Outcome,
 } from "./data.js";
-import {
-  GraphMetadata,
-  InputValues,
-  NodeMetadata,
-} from "./graph-descriptor.js";
+import { GraphMetadata, NodeMetadata } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
 import { NodeDescriberExport } from "./node-handler.js";
-import { InvokeInputs, InvokeOutputs } from "./sandbox.js";
 import { Schema } from "./schema.js";
 
 export type FetchInputs = {
@@ -85,35 +79,12 @@ export type FetchOutputs = {
   responseHeaders: Record<string, string>;
 };
 
-export type InputInputs = {
-  $metadata?: NodeMetadata;
-  schema?: Schema;
-} & Record<string, unknown>;
-
-export type InputOutputs = Record<string, unknown>;
-
-export type OutputInputs = {
-  $metadata?: NodeMetadata;
-  schema?: Schema;
-} & Record<string, unknown>;
-
-export type OutputOutputs = {
-  delivered: boolean;
-};
-
 export type BlobInputs = {
   contents: LLMContent[];
   transform: "persistent-temporary";
 };
 export type BlobOutputs = {
   contents: LLMContent[];
-};
-
-export type DescribeInputs = {
-  url: string;
-  inputs?: InputValues;
-  inputSchema?: Schema;
-  outputSchema?: Schema;
 };
 
 export type DescribeOutputs = {
@@ -132,10 +103,6 @@ export type DescribeOutputs = {
 };
 
 export type Capabilities = {
-  invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
-  input(inputs: InputInputs): Promise<InputOutputs>;
-  output(inputs: OutputInputs): Promise<OutputOutputs>;
-  describe(inputs: DescribeInputs): Promise<Outcome<DescribeOutputs>>;
   query(inputs: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(inputs: FileSystemReadArguments): Promise<FileSystemReadResult>;
   write(inputs: FileSystemWriteArguments): Promise<FileSystemWriteResult>;

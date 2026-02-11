@@ -6,9 +6,7 @@
 
 import { type GraphDescriptor } from "@breadboard-ai/types";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
-import type {
-  DriveFileId,
-} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
@@ -17,9 +15,7 @@ import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
-import type {
-  ShareState,
-} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+import type { ShareState } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
@@ -36,6 +32,9 @@ import { icons } from "../../styles/icons.js";
 import { ActionTracker } from "../../types/types.js";
 import { makeUrl } from "../../utils/urls.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
+import type { VisibilityLevel } from "./share-visibility-selector.js";
+import "./share-visibility-selector.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -323,7 +322,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor sca!: SCA;
 
-
   @consume({ context: guestConfigurationContext })
   accessor guestConfiguration: GuestConfiguration | undefined;
 
@@ -416,7 +414,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
       return this.#renderLoading();
     }
     if (status === "writable" || status === "updating") {
-      return this.#renderModifiableModalContents();
+      return CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
+        ? this.#renderWritableContentsV2()
+        : this.#renderWritableContentsV1();
     }
     if (status === "readonly") {
       return this.#renderReadonlyModalContents();
@@ -459,7 +459,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return undefined;
   }
 
-  #renderModifiableModalContents() {
+  #renderWritableContentsV1() {
     return [
       this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
       html`
@@ -472,6 +472,17 @@ export class SharePanel extends SignalWatcher(LitElement) {
         ? this.#renderAppLink()
         : nothing,
       this.#renderGranularSharingLink(),
+      this.#renderAdvisory(),
+    ];
+  }
+
+  #renderWritableContentsV2() {
+    return [
+      this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
+      this.#renderVisibilityDropdown(),
+      this.#isShared && this.#state.status !== "updating"
+        ? this.#renderAppLink()
+        : nothing,
       this.#renderAdvisory(),
     ];
   }
@@ -526,12 +537,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
         Publishing is disabled for all users from ${domain}.
         <br />
         ${preferredUrl
-        ? html`Please use
+          ? html`Please use
               <a href="${preferredUrl}" target="_blank"
                 >${new URL(preferredUrl).hostname}</a
               >
               to share with other ${domain} users.`
-        : nothing}
+          : nothing}
       </p>
     `;
   }
@@ -594,6 +605,29 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
 
+  #renderVisibilityDropdown() {
+    return html`<bb-share-visibility-selector
+      .value=${this.#computedVisibility}
+    ></bb-share-visibility-selector>`;
+  }
+
+  get #computedVisibility(): VisibilityLevel {
+    const state = this.#state;
+    if (
+      (state.status === "writable" || state.status === "updating") &&
+      state.published
+    ) {
+      return "anyone";
+    }
+    if (
+      (state.status === "writable" || state.status === "updating") &&
+      state.granularlyShared
+    ) {
+      return "restricted";
+    }
+    return "only-you";
+  }
+
   #renderPublishedSwitch() {
     const { status } = this.#state;
     if (status !== "writable" && status !== "updating") {
@@ -610,8 +644,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return html`
       <div id="published-switch-container">
         ${status === "updating"
-        ? html`<span class="g-icon spin spinner">progress_activity</span>`
-        : nothing}
+          ? html`<span class="g-icon spin spinner">progress_activity</span>`
+          : nothing}
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}
@@ -740,7 +774,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
     if (!this.graph) {
       return;
     }
-    await this.#actions.viewSharePermissions(this.graph, this.guestConfiguration?.shareSurface);
+    await this.#actions.viewSharePermissions(
+      this.graph,
+      this.guestConfiguration?.shareSurface
+    );
   }
 
   #onPublishedSwitchChange() {
@@ -756,7 +793,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const selected = input.selected;
     if (selected) {
       this.actionTracker?.publishApp(this.graph.url);
-      this.#actions.publish(this.graph, this.#getRequiredPublishPermissions(), this.guestConfiguration?.shareSurface);
+      this.#actions.publish(
+        this.graph,
+        this.#getRequiredPublishPermissions(),
+        this.guestConfiguration?.shareSurface
+      );
     } else {
       this.#actions.unpublish(this.graph);
     }

@@ -18,11 +18,14 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { classMap } from "lit/directives/class-map.js";
-import { A2UIModelProcessor } from "../data/model-processor.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
+import { extractStringValue } from "./utils/utils.js";
 
+/**
+ * Audio player component.
+ *
+ * Resolves its source URL from a `StringValue` using `extractStringValue`
+ * and renders a native `<audio>` element with controls.
+ */
 @customElement("a2ui-audioplayer")
 export class Audio extends Root {
   @property()
@@ -32,7 +35,6 @@ export class Audio extends Root {
    * at least 225px by 55px to render correctly.
    */
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -44,6 +46,7 @@ export class Audio extends Root {
         min-height: 55px;
         overflow: auto;
         min-width: 225px;
+        padding: var(--a2ui-audio-padding, 0);
       }
 
       audio {
@@ -54,47 +57,21 @@ export class Audio extends Root {
   ];
 
   #renderAudio() {
-    if (!this.url) {
+    const audioUrl = extractStringValue(
+      this.url,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
+
+    if (!audioUrl) {
       return nothing;
     }
 
-    if (this.url && typeof this.url === "object") {
-      if ("literalString" in this.url) {
-        return html`<audio controls src=${this.url.literalString} />`;
-      } else if ("literal" in this.url) {
-        return html`<audio controls src=${this.url.literal} />`;
-      } else if (this.url && "path" in this.url && this.url.path) {
-        if (!this.processor || !this.component) {
-          return html`(no processor)`;
-        }
-
-        const audioUrl = this.processor.getData(
-          this.component,
-          this.url.path,
-          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-        );
-        if (!audioUrl) {
-          return html`Invalid audio URL`;
-        }
-
-        if (typeof audioUrl !== "string") {
-          return html`Invalid audio URL`;
-        }
-        return html`<audio controls src=${audioUrl} />`;
-      }
-    }
-
-    return html``;
+    return html`<audio controls download src=${audioUrl} />`;
   }
 
   render() {
-    return html`<section
-      class=${classMap(this.theme.components.AudioPlayer)}
-      style=${this.theme.additionalStyles?.AudioPlayer
-        ? styleMap(this.theme.additionalStyles?.AudioPlayer)
-        : nothing}
-    >
-      ${this.#renderAudio()}
-    </section>`;
+    return html`<section>${this.#renderAudio()}</section>`;
   }
 }

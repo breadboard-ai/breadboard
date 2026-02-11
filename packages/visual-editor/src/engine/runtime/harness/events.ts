@@ -11,8 +11,6 @@ import {
   ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
-  HarnessRunResult,
-  InputResponse,
   InputValues,
   NodeEndResponse,
   NodeIdentifier,
@@ -25,16 +23,13 @@ import {
   RunErrorEvent,
   RunGraphEndEvent,
   RunGraphStartEvent,
-  RunInputEvent,
   RunLifecycleEvent,
-  RunNextEvent,
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunNodeStateChangeEvent,
   RunOutputEvent,
   RunSkipEvent,
   SkipProbeMessage,
-  TraversalResult,
 } from "@breadboard-ai/types";
 
 const opts = {
@@ -48,17 +43,6 @@ export class PendingEvent extends Event {
 
   constructor(public data: { timestamp: number }) {
     super(PendingEvent.eventName, { ...opts });
-  }
-}
-
-export class InputEvent extends Event implements RunInputEvent {
-  static readonly eventName = "input";
-
-  constructor(
-    public readonly running: boolean,
-    public data: InputResponse
-  ) {
-    super(InputEvent.eventName, { ...opts });
   }
 }
 
@@ -120,10 +104,7 @@ export class NodeStartEvent extends Event implements RunNodeStartEvent {
   static readonly eventName = "nodestart";
   readonly running = true;
 
-  constructor(
-    public data: NodeStartResponse,
-    public result?: TraversalResult
-  ) {
+  constructor(public data: NodeStartResponse) {
     super(NodeStartEvent.eventName, { ...opts });
   }
 }
@@ -174,14 +155,6 @@ export class StopEvent extends Event implements RunLifecycleEvent {
     public data: { timestamp: number }
   ) {
     super(StopEvent.eventName, { ...opts });
-  }
-}
-
-export class NextEvent extends Event implements RunNextEvent {
-  static readonly eventName = "next";
-
-  constructor(public data: HarnessRunResult | void) {
-    super(NextEvent.eventName, { ...opts });
   }
 }
 

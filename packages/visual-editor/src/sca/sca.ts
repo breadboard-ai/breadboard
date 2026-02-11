@@ -95,9 +95,16 @@
 import * as Services from "./services/services.js";
 import * as Controller from "./controller/controller.js";
 import * as Actions from "./actions/actions.js";
-import * as Utils from "./utils/utils.js";
 import { type RuntimeFlags } from "@breadboard-ai/types";
 import { RuntimeConfig } from "../runtime/types.js";
+
+// Re-export NotebookLM API client types and enums for UI components
+export {
+  type Notebook,
+  OriginProductType,
+  ApplicationPlatform,
+  DeviceType,
+} from "./services/notebooklm-api-client.js";
 
 export interface SCA {
   services: ReturnType<typeof Services.services>;
@@ -134,7 +141,6 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
       // Start polling for status updates
       services.statusUpdates.start(controller.global.statusUpdates);
     });
-    Utils.Logging.setDebuggableAppController(instance.controller);
   }
 
   return instance;

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, NodeHandler } from "@breadboard-ai/types";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import { ok as nodeOk } from "node:assert";
 import { editGraph } from "../helpers/_editor.js";
 
@@ -30,11 +30,11 @@ function testFilledOutSubGraph(): GraphDescriptor {
     nodes: [
       {
         id: "node3",
-        type: "foo",
+        type: "test:foo",
       },
       {
         id: "node4",
-        type: "bar",
+        type: "test:bar",
       },
     ],
     edges: [{ from: "node3", out: "out", to: "node4", in: "in" }],
@@ -54,56 +54,15 @@ function testEditGraph() {
       nodes: [
         {
           id: "node0",
-          type: "foo",
+          type: "test:foo",
         },
         {
           id: "node2",
-          type: "bar",
+          type: "test:bar",
         },
       ],
       edges: [{ from: "node0", out: "out", to: "node0", in: "in" }],
     },
-    {
-      kits: [
-        {
-          url: "",
-          handlers: {
-            foo: {
-              invoke: async () => {},
-              describe: async () => {
-                return {
-                  inputSchema: {
-                    additionalProperties: false,
-                    properties: {
-                      in: { type: "string" },
-                    },
-                  },
-                  outputSchema: {
-                    additionalProperties: false,
-                    properties: {
-                      out: { type: "string" },
-                    },
-                  },
-                };
-              },
-            } as NodeHandler,
-            bar: {
-              invoke: async () => {},
-              describe: async () => {
-                return {
-                  inputSchema: {},
-                  outputSchema: {
-                    additionalProperties: false,
-                    properties: {
-                      out: { type: "string" },
-                    },
-                  },
-                };
-              },
-            } as NodeHandler,
-          },
-        },
-      ],
-    }
+    {}
   );
 }

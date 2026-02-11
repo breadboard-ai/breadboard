@@ -33,8 +33,9 @@ import { McpClientManager } from "../mcp/index.js";
 import { a2 } from "./a2.js";
 import { type ConsentController } from "../sca/controller/subcontrollers/global/global.js";
 import { AgentContext } from "./agent/agent-context.js";
+import { NotebookLmApiClient } from "../sca/services/notebooklm-api-client.js";
 
-export { createA2ModuleFactory };
+export { createA2ModuleFactory, A2ModuleFactory, createCallableCapabilities };
 
 const URL_PREFIX = "embed://a2/";
 const URL_SUFFIX = ".bgl.json";
@@ -45,6 +46,7 @@ export type A2ModuleFactoryArgs = {
   shell: OpalShellHostProtocol;
   getConsentController: () => ConsentController;
   agentContext: AgentContext;
+  notebookLmApiClient: NotebookLmApiClient;
 };
 
 export type A2ModuleArgs = A2ModuleFactoryArgs & {
@@ -59,6 +61,14 @@ function createA2ModuleFactory(
 
 class A2ModuleFactory implements RunnableModuleFactory {
   constructor(private readonly args: A2ModuleFactoryArgs) {}
+
+  /**
+   * Creates A2ModuleArgs from NodeHandlerContext.
+   * Used for static component dispatch to bypass graph-based handlers.
+   */
+  createModuleArgs(context: NodeHandlerContext): A2ModuleArgs {
+    return { ...this.args, context };
+  }
 
   getDir(url?: string): Outcome<string> {
     if (!url) {
@@ -99,10 +109,6 @@ class A2ModuleFactory implements RunnableModuleFactory {
 export type CallableCapability = (inputs: Values) => Promise<Values | void>;
 
 export type CallableCapabilities = {
-  invoke: CallableCapability;
-  input: CallableCapability;
-  output: CallableCapability;
-  describe: CallableCapability;
   query: CallableCapability;
   read: CallableCapability;
   write: CallableCapability;
@@ -118,9 +124,8 @@ async function invokeCapability(
   if (!capability) {
     return { $error: `Capability "${name}" is not avaialble` };
   }
-  const isOutput = name === "output";
   const metadata = inputs.$metadata;
-  if (metadata && !isOutput) {
+  if (metadata) {
     delete inputs.$metadata;
   }
   const path =
@@ -147,10 +152,6 @@ async function invokeCapability(
 }
 
 const CAPABILITY_NAMES: (keyof CallableCapabilities)[] = [
-  "invoke",
-  "input",
-  "output",
-  "describe",
   "query",
   "read",
   "write",

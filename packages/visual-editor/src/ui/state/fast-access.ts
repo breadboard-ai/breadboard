@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  AssetPath,
-  EditableGraph,
-  GraphIdentifier,
-} from "@breadboard-ai/types";
+import { AssetPath, GraphIdentifier } from "@breadboard-ai/types";
 import {
   Component,
   Components,
@@ -16,12 +12,12 @@ import {
   FilterableMap,
   FilteredIntegrations,
   GraphAsset,
-  StepEditor,
   Tool,
 } from "./types.js";
 import { FilteredMap } from "./utils/filtered-map.js";
 import { signal } from "signal-utils";
 import { willCreateCycle } from "@breadboard-ai/utils";
+import { SCA } from "../../sca/sca.js";
 
 export { ReactiveFastAccess };
 
@@ -29,17 +25,38 @@ class ReactiveFastAccess implements FastAccess {
   readonly agentMode: FilterableMap<Tool>;
   readonly routes: FilterableMap<Component>;
 
+  /**
+   * Derives graphAssets from SCA controller.
+   */
+  get graphAssets(): Map<AssetPath, GraphAsset> {
+    return this.sca.controller.editor.graph.graphAssets;
+  }
+
+  /**
+   * Derives tools from SCA controller.
+   */
+  get tools(): ReadonlyMap<string, Tool> {
+    return this.sca.controller.editor.graph.tools;
+  }
+
+  /**
+   * Derives myTools from SCA controller.
+   */
+  get myTools(): ReadonlyMap<string, Tool> {
+    return this.sca.controller.editor.graph.myTools;
+  }
+
   @signal
   get #routes(): Map<string, Component> {
-    const nodeSelection = this.stepEditor.nodeSelection;
-    if (!nodeSelection) {
+    const selectedNodeId = this.sca.controller.editor.graph.selectedNodeId;
+    if (!selectedNodeId) {
       return new Map();
     }
-    const inspectable = this.editable?.inspect(nodeSelection.graph);
+    const inspectable = this.sca.controller.editor.graph.editor?.inspect("");
     if (!inspectable) {
       return new Map();
     }
-    const node = inspectable.nodeById(nodeSelection.node);
+    const node = inspectable.nodeById(selectedNodeId);
     if (!node) {
       return new Map();
     }
@@ -60,16 +77,18 @@ class ReactiveFastAccess implements FastAccess {
   }
 
   @signal
-  get components(): Map<GraphIdentifier, Components> {
-    const nodeSelection = this.stepEditor.nodeSelection;
-    if (!nodeSelection) {
-      return this.allComponents;
+  get components(): ReadonlyMap<GraphIdentifier, Components> {
+    const allComponents = this.sca.controller.editor.graph.components;
+    const selectedNodeId = this.sca.controller.editor.graph.selectedNodeId;
+
+    if (!selectedNodeId) {
+      return allComponents;
     }
-    const inspectable = this.editable?.inspect(nodeSelection.graph);
+    const inspectable = this.sca.controller.editor.graph.editor?.inspect("");
     if (!inspectable) {
-      return this.allComponents;
+      return allComponents;
     }
-    const components = this.allComponents.get(nodeSelection.graph);
+    const components = allComponents.get("");
     if (!components) {
       return new Map();
     }
@@ -77,25 +96,21 @@ class ReactiveFastAccess implements FastAccess {
     const graph = inspectable.raw();
 
     const validComponents = [...components].filter(
-      ([id]) => !willCreateCycle({ to: nodeSelection.node, from: id }, graph)
+      ([id]) => !willCreateCycle({ to: selectedNodeId, from: id }, graph)
     );
 
     return new Map<GraphIdentifier, Components>([
-      [nodeSelection.graph, new Map(validComponents)],
+      ["", new Map(validComponents)],
     ]);
   }
 
   constructor(
-    public readonly graphAssets: Map<AssetPath, GraphAsset>,
-    public readonly tools: ReadonlyMap<string, Tool>,
-    public readonly myTools: Map<string, Tool>,
-    unfilteredAgentMode: Map<string, Tool>,
-    private readonly allComponents: Map<GraphIdentifier, Components>,
     public readonly integrations: FilteredIntegrations,
-    private readonly editable: EditableGraph | undefined,
-    private readonly stepEditor: Omit<StepEditor, "fastAccess">
+    private readonly sca: SCA
   ) {
-    this.agentMode = new FilteredMap(() => unfilteredAgentMode);
+    this.agentMode = new FilteredMap(
+      () => this.sca.controller.editor.graph.agentModeTools
+    );
     this.routes = new FilteredMap(() => this.#routes);
   }
 }

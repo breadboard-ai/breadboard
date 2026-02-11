@@ -18,6 +18,7 @@ import {
 import { SimplifiedToolManager } from "../a2/tool-manager.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { FunctionCaller } from "./types.js";
+import type { ProgressReporter } from "./types.js";
 
 export { FunctionCallerImpl };
 
@@ -36,7 +37,8 @@ class FunctionCallerImpl implements FunctionCaller {
 
   async #callBuiltIn(
     part: FunctionCallCapabilityPart,
-    statusUpdateCallback: StatusUpdateCallback
+    statusUpdateCallback: StatusUpdateCallback,
+    reporter: ProgressReporter | null
   ): Promise<Outcome<FunctionResponseCapabilityPart>> {
     const { functionCall } = part;
     const { name, args } = functionCall;
@@ -44,7 +46,8 @@ class FunctionCallerImpl implements FunctionCaller {
     console.log("CALLING SYSTEM FUNCTION", name);
     const response = await definition.handler(
       args as Record<string, string>,
-      statusUpdateCallback
+      statusUpdateCallback,
+      reporter
     );
     if (!ok(response)) return response;
     return {
@@ -73,13 +76,14 @@ class FunctionCallerImpl implements FunctionCaller {
   call(
     callId: string,
     part: FunctionCallCapabilityPart,
-    statusUpdateCallback: StatusUpdateCallback
+    statusUpdateCallback: StatusUpdateCallback,
+    reporter: ProgressReporter | null
   ): void {
     const name = part.functionCall.name;
     if (this.builtIn.has(name)) {
       this.#functionPromises.push(
-        this.#callBuiltIn(part, statusUpdateCallback).then((result) =>
-          ok(result) ? { callId, response: result } : result
+        this.#callBuiltIn(part, statusUpdateCallback, reporter).then(
+          (result) => (ok(result) ? { callId, response: result } : result)
         )
       );
     } else {

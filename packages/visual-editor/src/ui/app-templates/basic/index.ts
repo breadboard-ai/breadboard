@@ -24,10 +24,7 @@ import {
 } from "../../types/types.js";
 
 // Custom Elements for the App.
-import "./a2ui-custom-elements/a2ui-custom-pdf-viewer.js";
-import "./a2ui-custom-elements/a2ui-custom-media-container.js";
-import "./a2ui-custom-elements/a2ui-custom-video.js";
-import "./a2ui-custom-elements/a2ui-custom-google-drive.js";
+import "./a2ui-custom-elements/index.js";
 import "./header/header.js";
 
 import { SignalWatcher } from "@lit-labs/signals";
@@ -37,7 +34,10 @@ import { styleMap } from "lit/directives/style-map.js";
 import * as A2UI from "../../../a2ui/0.8/ui/ui.js";
 import { v0_8 } from "../../../a2ui/index.js";
 import * as Theme from "../../../theme/index.js";
-import { theme as a2uiTheme } from "../../a2ui-theme/a2ui-theme.js";
+import {
+  theme as a2uiTheme,
+  applyTokens,
+} from "../../a2ui-theme/a2ui-theme.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import { projectRunContext } from "../../contexts/project-run.js";
 import {
@@ -132,6 +132,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @provide({ context: A2UI.Context.themeContext })
   accessor a2uitheme: v0_8.Types.Theme = a2uiTheme;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    applyTokens(this, this.a2uitheme.tokens);
+  }
 
   @state()
   @consume({ context: projectRunContext, subscribe: true })

@@ -18,7 +18,7 @@ import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-import "../../elements/welcome-panel/homepage-search-button.js";
+import "../../elements/shared/expanding-search-button.js";
 import { StateEvent } from "../../events/events.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import * as StringsHelper from "../../strings/helper.js";

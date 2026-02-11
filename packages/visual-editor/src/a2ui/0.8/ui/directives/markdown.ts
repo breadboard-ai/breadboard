@@ -27,9 +27,6 @@ import MarkdownIt from "markdown-it";
 import * as Sanitizer from "./sanitizer.js";
 
 class MarkdownDirective extends Directive {
-  // Maintains the map as a class property so rules can access it dynamically
-  #currentTagClassMap: Record<string, string[]> = {};
-
   #markdownIt = MarkdownIt({
     highlight: (str, lang) => {
       switch (lang) {
@@ -48,97 +45,59 @@ class MarkdownDirective extends Directive {
 
   constructor(partInfo: PartInfo) {
     super(partInfo);
-    this.#setupDynamicClassRules();
+    this.#setupRules();
   }
 
   /**
-   * Sets up the rules once, reading from the #currentTagClassMap.
+   * Sets up standard rules for link handling.
    */
-  #setupDynamicClassRules() {
-    const rulesToPatch = [
-      "paragraph_open",
-      "heading_open",
-      "bullet_list_open",
-      "ordered_list_open",
-      "list_item_open",
-      "link_open",
-      "blockquote_open",
-      "table_open",
-      "tr_open",
-      "td_open",
-      "th_open",
-      "strong_open",
-      "em_open",
-    ];
-
+  #setupRules() {
     const renderer = this.#markdownIt.renderer;
 
-    for (const ruleName of rulesToPatch) {
-      // Capture the original rule (or use default renderToken)
-      const original =
-        renderer.rules[ruleName] ||
-        ((tokens, idx, options, _env, self) => {
-          return self.renderToken(tokens, idx, options);
-        });
+    const linkOriginal =
+      renderer.rules["link_open"] ||
+      ((tokens, idx, options, _env, self) => {
+        return self.renderToken(tokens, idx, options);
+      });
 
-      renderer.rules[ruleName] = (tokens, idx, options, env, self) => {
-        const token = tokens[idx];
-        const classes = this.#currentTagClassMap[token.tag];
-        if (classes) {
-          for (const clazz of classes) {
-            token.attrJoin("class", clazz);
-          }
+    renderer.rules["link_open"] = (tokens, idx, options, env, self) => {
+      const token = tokens[idx];
+
+      // Links open in new tabs with secure defaults.
+      const targetIndex = token.attrIndex("target");
+      if (targetIndex < 0) {
+        token.attrPush(["target", "_blank"]);
+      } else if (token.attrs) {
+        token.attrs[targetIndex][1] = "_blank";
+      }
+
+      const relIndex = token.attrIndex("rel");
+      if (relIndex < 0) {
+        token.attrPush(["rel", "noopener noreferrer"]);
+      } else if (token.attrs) {
+        const currentRel = token.attrs[relIndex][1];
+        if (!currentRel.includes("noopener")) {
+          token.attrs[relIndex][1] = `${currentRel} noopener noreferrer`;
         }
+      }
 
-        // For links, also append the _blank target and rel info.
-        if (ruleName === "link_open") {
-          const targetIndex = token.attrIndex("target");
-          if (targetIndex < 0) {
-            token.attrPush(["target", "_blank"]);
-          } else {
-            if (token.attrs) {
-              token.attrs[targetIndex][1] = "_blank";
-            }
-          }
-
-          const relIndex = token.attrIndex("rel");
-          if (relIndex < 0) {
-            token.attrPush(["rel", "noopener noreferrer"]);
-          } else {
-            if (token.attrs) {
-              const currentRel = token.attrs[relIndex][1];
-              if (!currentRel.includes("noopener")) {
-                token.attrs[relIndex][1] = `${currentRel} noopener noreferrer`;
-              }
-            }
-          }
-        }
-
-        return original(tokens, idx, options, env, self);
-      };
-    }
+      return linkOriginal(tokens, idx, options, env, self);
+    };
   }
 
   #lastValue: string | null = null;
-  #lastTagClassMap: string | null = null;
 
-  update(_part: Part, [value, tagClassMap]: DirectiveParameters<this>) {
-    if (
-      this.#lastValue === value &&
-      JSON.stringify(tagClassMap) === this.#lastTagClassMap
-    ) {
+  update(_part: Part, [value]: DirectiveParameters<this>) {
+    if (this.#lastValue === value) {
       return noChange;
     }
 
     this.#lastValue = value;
-    this.#lastTagClassMap = JSON.stringify(tagClassMap);
-    return this.render(value, tagClassMap);
+    return this.render(value);
   }
 
-  render(value: string, tagClassMap: Record<string, string[]> = {}) {
-    this.#currentTagClassMap = tagClassMap;
+  render(value: string) {
     const htmlString = this.#markdownIt.render(value);
-
     return unsafeHTML(htmlString);
   }
 }

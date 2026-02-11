@@ -51,8 +51,7 @@ export function isHydrating<T>(accessor: () => T): boolean {
       const logger = getLogger();
       logger.log(
         Formatter.warning("isHydrating accessors must be synchronous"),
-        "Hydration Error",
-        false
+        "Hydration Error"
       );
       throw new Error("isHydrating accessors must be synchronous");
     }
@@ -87,7 +86,7 @@ export class PendingHydrationError extends Error {
     // Log immediately so it's visible even if the error is swallowed somewhere
     if (!ignoreHydrationErrors) {
       const logger = getLogger();
-      logger.log(msg, "Hydration Error", false);
+      logger.log(msg, "Hydration Error");
     }
 
     super(`PendingHydrationError on ${fieldName}`);

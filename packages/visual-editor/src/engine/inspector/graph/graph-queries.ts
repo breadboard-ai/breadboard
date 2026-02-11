@@ -22,7 +22,7 @@ import type {
 } from "@breadboard-ai/types";
 import { err, graphUrlLike, TemplatePart } from "@breadboard-ai/utils";
 import { getModuleId, isModule } from "../utils.js";
-import { GraphNodeType } from "./graph-node-type.js";
+import { A2NodeType } from "./a2-node-type.js";
 import { InspectableAssetImpl } from "./inspectable-asset.js";
 import { VirtualNode } from "./virtual-node.js";
 import { scanConfiguration } from "../../../utils/scan-configuration.js";
@@ -75,7 +75,7 @@ class GraphQueries {
 
   isStart(id: NodeIdentifier): boolean {
     if (this.#graphId) return false;
-    return id === this.#mutable.representation.entries.at(0);
+    return id === this.#mutable.entries.at(0);
   }
 
   nodeById(id: NodeIdentifier) {
@@ -94,14 +94,10 @@ class GraphQueries {
   }
 
   typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
-    const knownNodeType = this.#mutable.kits.getType(id);
-    if (knownNodeType) {
-      return knownNodeType;
-    }
     if (!graphUrlLike(id)) {
       return undefined;
     }
-    return new GraphNodeType(id, this.#mutable);
+    return new A2NodeType(id);
   }
 
   moduleExports(): Set<ModuleIdentifier> {

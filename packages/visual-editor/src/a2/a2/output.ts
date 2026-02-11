@@ -2,7 +2,9 @@
  * @fileoverview Provides an output helper.
  */
 
-import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
+import { LLMContent, OutputResponse, Schema } from "@breadboard-ai/types";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { getCurrentStepState } from "../agent/progress-work-item.js";
 
 type ReportInputs = {
   /**
@@ -34,10 +36,7 @@ type ReportInputs = {
 
 export { report };
 
-async function report(
-  { output }: Capabilities,
-  inputs: ReportInputs
-): Promise<boolean> {
+function report(moduleArgs: A2ModuleArgs, inputs: ReportInputs): void {
   const { actor: title, category: description, name, details, icon } = inputs;
 
   const detailsSchema: Schema =
@@ -62,16 +61,26 @@ async function report(
     properties: {
       details: detailsSchema,
     },
+    behavior: ["bubble"],
   };
 
-  const { delivered } = await output({
-    $metadata: {
-      title,
-      description,
-      icon,
+  const { appScreen, consoleEntry } = getCurrentStepState(moduleArgs);
+
+  const data: OutputResponse = {
+    node: {
+      id: "output-from-report",
+      type: "output",
+      configuration: { schema },
+      metadata: { title, description, icon },
     },
-    schema,
-    details,
-  });
-  return delivered;
+    outputs: { details } as OutputResponse["outputs"],
+    // Random path: no real invocation path exists since we bypass graph
+    // traversal. Used by idFromPath() as a unique map key.
+    path: [Math.floor(Math.random() * 1e9)],
+    bubbled: true,
+    timestamp: performance.now(),
+  };
+
+  appScreen?.addOutput(data);
+  consoleEntry?.addOutput(data);
 }

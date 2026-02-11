@@ -39,10 +39,14 @@ import {
   ResolvedVideo,
 } from "../types/types.js";
 
+/**
+ * Type guard: checks that a string value under a given key is a path reference.
+ */
 export function isPath(key: string, value: unknown): value is string {
   return key === "path" && typeof value === "string";
 }
 
+/** Type guard: non-null object (excludes arrays). */
 export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

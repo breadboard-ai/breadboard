@@ -3,7 +3,6 @@
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { setDebuggableAppController } from "../utils/logging/logger.js";
 import { DebuggableAppController, HydratedController } from "../types.js";
 import { BoardController } from "./subcontrollers/board/board-controller.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
@@ -58,13 +57,14 @@ class Controller implements AppController {
         "Editor_Sidebar",
         "SidebarController"
       ),
-      step: new Editor.Step.StepController(
-        "Editor_Step",
-        "StepController"
-      ),
+      step: new Editor.Step.StepController("Editor_Step", "StepController"),
       share: new Editor.Share.ShareController(
         "Editor_Share",
         "ShareController"
+      ),
+      theme: new Editor.Theme.ThemeController(
+        "Editor_Theme",
+        "ThemeController"
       ),
     };
 
@@ -106,6 +106,7 @@ class Controller implements AppController {
       async performMigrations() {
         const controller = appController();
         if (!controller) {
+          // eslint-disable-next-line no-console -- bootstrap: controller may not exist
           console.warn("Unable to complete migrations; no controller instance");
         }
 
@@ -199,7 +200,6 @@ export const appController = (flags?: RuntimeFlags): Controller => {
     if (!flags)
       throw new Error("App Controller must be instantiated with flags");
     controller = new Controller(flags);
-    setDebuggableAppController(controller);
   }
 
   return controller;
@@ -213,6 +213,7 @@ export interface AppController extends DebuggableAppController {
     sidebar: Editor.Sidebar.SidebarController;
     step: Editor.Step.StepController;
     share: Editor.Share.ShareController;
+    theme: Editor.Theme.ThemeController;
   };
   home: {
     recent: Home.RecentBoardsController;

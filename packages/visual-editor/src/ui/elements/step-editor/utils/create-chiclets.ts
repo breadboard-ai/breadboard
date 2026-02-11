@@ -5,7 +5,11 @@
  */
 
 import { InspectablePort } from "@breadboard-ai/types";
-import { isStoredData, Template } from "@breadboard-ai/utils";
+import {
+  isStoredData,
+  Template,
+  NOTEBOOKLM_TOOL_PATH,
+} from "@breadboard-ai/utils";
 import { html, HTMLTemplateResult, nothing } from "lit";
 import { Project } from "../../../state/index.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
@@ -72,7 +76,9 @@ export function createChiclets(
   }
 
   const chiclets: HTMLTemplateResult[] = [];
+
   const template = new Template(valStr);
+
   template.placeholders.forEach((part) => {
     const { type, path, title, invalid, mimeType, instance } = part;
     const assetType = getAssetType(mimeType) ?? "";
@@ -109,6 +115,9 @@ export function createChiclets(
     } else if (path === MEMORY_TOOL_PATH) {
       metadataIcon = "database";
       sourceTitle = "Use Memory";
+    } else if (path === NOTEBOOKLM_TOOL_PATH) {
+      metadataIcon = "notebooklm";
+      sourceTitle = "Use NotebookLM";
     }
 
     chiclets.push(
@@ -119,7 +128,9 @@ export function createChiclets(
       >
         ${metadataIcon
           ? html`<span
-              class="g-icon filled round"
+              class="g-icon filled round ${metadataIcon === "notebooklm"
+                ? "notebooklm"
+                : ""}"
               data-icon="${metadataIcon}"
             ></span>`
           : nothing}

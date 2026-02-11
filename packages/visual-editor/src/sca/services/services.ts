@@ -14,7 +14,7 @@ import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
   GraphLoader,
-  Kit,
+  NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
   PersistentBackend,
   RuntimeFlagManager,
@@ -28,7 +28,6 @@ import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
-import { addRunModule } from "../../engine/add-run-module.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
 import { createA2Server } from "../../a2/index.js";
 import { createLoader } from "../../engine/loader/index.js";
@@ -42,6 +41,8 @@ import { type ConsentController } from "../controller/subcontrollers/global/glob
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { RunService } from "./run-service.js";
 import { StatusUpdatesService } from "./status-updates-service.js";
+import { getLogger, Formatter } from "../utils/logging/logger.js";
+import { NotebookLmApiClient } from "./notebooklm-api-client.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
@@ -55,9 +56,9 @@ export interface AppServices {
   googleDriveBoardServer: GoogleDriveBoardServer;
   googleDriveClient: GoogleDriveClient;
   graphStore: ReturnType<typeof createGraphStore>;
-  kits: Kit[];
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
+  notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
   signinAdapter: SigninAdapter;
   statusUpdates: StatusUpdatesService;
@@ -87,7 +88,14 @@ export function services(
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: fetchWithCreds,
-      isTestApi: !!config.guestConfig?.isTestApi,
+      log(level, ...args) {
+        const logger = getLogger();
+        const msg =
+          level === "warning"
+            ? Formatter.warning(...args)
+            : Formatter.verbose(...args);
+        logger.log(msg, "Google Drive");
+      },
     });
 
     const fileSystem = createFileSystem({
@@ -114,14 +122,20 @@ export function services(
       fetchWithCreds,
     });
 
+    const notebookLmApiClient = new NotebookLmApiClient(
+      fetchWithCreds,
+      NOTEBOOKLM_API_PREFIX,
+      OPAL_BACKEND_API_PREFIX
+    );
+
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,
       shell: config.shellHost,
       getConsentController,
       agentContext,
+      notebookLmApiClient,
     });
-    const kits = addRunModule(sandbox, []);
     const googleDriveBoardServer = createGoogleDriveBoardServer(
       signinAdapter,
       googleDriveClient,
@@ -131,7 +145,6 @@ export function services(
     const a2Server = createA2Server();
     const loader = createLoader([googleDriveBoardServer, a2Server]);
     const graphStoreArgs = {
-      kits,
       loader,
       sandbox,
       fileSystem,
@@ -163,9 +176,9 @@ export function services(
       googleDriveBoardServer,
       googleDriveClient,
       graphStore,
-      kits,
       loader,
       mcpClientManager,
+      notebookLmApiClient,
       runService: new RunService(),
       signinAdapter,
       statusUpdates: new StatusUpdatesService(),

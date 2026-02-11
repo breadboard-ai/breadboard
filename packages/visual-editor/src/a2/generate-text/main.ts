@@ -30,6 +30,7 @@ import {
 } from "@breadboard-ai/types";
 import { filterUndefined } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { requestInput } from "../request-input.js";
 
 export {
   invoke as default,
@@ -269,29 +270,17 @@ function scrubFunctionResponses(c: LLMContent): LLMContent {
 }
 
 async function keepChatting(
-  caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
   sharedContext: SharedContext,
   result: LLMContent[]
 ) {
   const last = result.at(-1)!;
-  const product = last;
-  await caps.output({
-    schema: {
-      type: "object",
-      properties: {
-        "a-product": {
-          type: "object",
-          behavior: ["llm-content"],
-          title: "Draft",
-        },
-      },
-    },
-    $metadata: {
-      title: "Writer",
-      description: "Asking user",
-      icon: "generative-text",
-    },
-    "a-product": product,
+  report(moduleArgs, {
+    actor: "Writer",
+    category: "Asking user",
+    name: "Draft",
+    details: last,
+    icon: "generative-text",
   });
 
   const toInput: Schema = {
@@ -317,10 +306,10 @@ async function keepChatting(
 }
 
 /**
- * Gets user feedback via caps.input().
+ * Gets user feedback via direct input request.
  * This replaces the graph's `input` node.
  */
-async function getUserFeedback(caps: Capabilities): Promise<LLMContent> {
+async function getUserFeedback(moduleArgs: A2ModuleArgs): Promise<LLMContent> {
   const inputSchema: Schema = {
     type: "object",
     properties: {
@@ -333,8 +322,11 @@ async function getUserFeedback(caps: Capabilities): Promise<LLMContent> {
       },
     },
   };
-  const response = await caps.input({ schema: inputSchema });
-  return response.request as LLMContent;
+  const response = await requestInput(moduleArgs, inputSchema);
+  if (!ok(response)) {
+    return { parts: [{ text: "" }], role: "user" } as LLMContent;
+  }
+  return (response as Record<string, unknown>).request as LLMContent;
 }
 
 /**
@@ -422,7 +414,7 @@ async function makeText(
     // Check for missing description
     if (!sharedContext.description) {
       const msg = "Please provide a prompt for the step";
-      await report(caps, {
+      await report(moduleArgs, {
         actor: "Text Generator",
         name: msg,
         category: "Runtime error",
@@ -456,10 +448,10 @@ async function makeText(
     }
 
     // === CHAT MODE: Show output, get user input ===
-    await keepChatting(caps, sharedContext, [result]);
+    await keepChatting(moduleArgs, sharedContext, [result]);
 
     // Get user feedback (replaces the `input` node in the graph)
-    const request = await getUserFeedback(caps);
+    const request = await getUserFeedback(moduleArgs);
 
     // === JOIN phase: Merge user input into context ===
     joinUserInput(sharedContext, request, result);
@@ -481,7 +473,7 @@ async function invoke(
 ) {
   if (!context.description) {
     const msg = "Please provide a prompt for the step";
-    await report(caps, {
+    await report(moduleArgs, {
       actor: "Text Generator",
       name: msg,
       category: "Runtime error",
@@ -524,7 +516,7 @@ async function invoke(
   }
 
   if (gen.chat && !userEndedChat) {
-    return keepChatting(caps, gen.sharedContext, [result]);
+    return keepChatting(moduleArgs, gen.sharedContext, [result]);
   }
 
   // Fall through to default response.

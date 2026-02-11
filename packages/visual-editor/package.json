@@ -211,7 +211,7 @@
       ]
     },
     "lint": {
-      "command": "eslint 'src/**/*.ts'",
+      "command": "eslint --max-warnings=0 'src/**/*.ts'",
       "dependencies": [
         "<dependencies>#build:tsc"
       ],

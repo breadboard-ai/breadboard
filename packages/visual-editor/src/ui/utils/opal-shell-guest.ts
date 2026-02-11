@@ -33,7 +33,6 @@ const SHELL_ORIGIN_SESSION_STORAGE_KEY = "shellOrigin";
 
 const logger = Utils.Logging.getLogger();
 const label = "Shell Guest";
-const checkForDebugStatus = false;
 
 export async function connectToOpalShellHost(): Promise<{
   shellHost: OpalShellHostProtocol;
@@ -44,11 +43,7 @@ export async function connectToOpalShellHost(): Promise<{
   if (!hostOrigin) {
     // TODO(aomarks) Remove once we are fully migrated to the iframe
     // arrangement.
-    logger.log(
-      Utils.Logging.Formatter.info("Creating legacy host"),
-      label,
-      checkForDebugStatus
-    );
+    logger.log(Utils.Logging.Formatter.info("Creating legacy host"), label);
     const shellHost = new OAuthBasedOpalShell();
     const embedHandler = new EmbedHandlerImpl(shellHost);
     addMessageEventListenerToAllowedEmbedderIfPresent(
@@ -62,18 +57,10 @@ export async function connectToOpalShellHost(): Promise<{
   const shellPort = await establishMessageChannelWithShellHost(hostOrigin);
 
   // Initialize bi-directional comlink APIs
-  logger.log(
-    Utils.Logging.Formatter.info("Connecting to host API"),
-    label,
-    checkForDebugStatus
-  );
+  logger.log(Utils.Logging.Formatter.info("Connecting to host API"), label);
   const shellHost = comlink.wrap<OpalShellHostProtocol>(shellPort);
   beginSyncronizingUrls(shellHost);
-  logger.log(
-    Utils.Logging.Formatter.info("Exposing guest API"),
-    label,
-    checkForDebugStatus
-  );
+  logger.log(Utils.Logging.Formatter.info("Exposing guest API"), label);
   const embedHandler = new EmbedHandlerImpl(shellHost);
   comlink.expose(
     new OpalShellGuest(embedHandler) satisfies OpalShellGuestProtocol,
@@ -103,8 +90,7 @@ async function establishMessageChannelWithShellHost(
       "Sending establish MessageChannel request to",
       hostOrigin
     ),
-    label,
-    checkForDebugStatus
+    label
   );
   window.parent.postMessage(
     { type: SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST },
@@ -127,8 +113,7 @@ async function establishMessageChannelWithShellHost(
           Utils.Logging.Formatter.info(
             "Received establish MessageChannel response"
           ),
-          label,
-          checkForDebugStatus
+          label
         );
         responseReceived.resolve();
         listenerAbortCtl.abort();
@@ -214,8 +199,7 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
         `Could not find shell origin because shell did not set ` +
           `the ${JSON.stringify(SHELL_ORIGIN_URL_PARAMETER)} URL parameter.`
       ),
-      label,
-      checkForDebugStatus
+      label
     );
     return;
   }
@@ -226,8 +210,7 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
         Utils.Logging.Formatter.verbose(
           `${shellOrigin} matched allowed origin ${pattern}`
         ),
-        label,
-        checkForDebugStatus
+        label
       );
       if (passedInShellOrigin) {
         sessionStorage.setItem(
@@ -243,8 +226,7 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
       "Shell origin was not in allowlist",
       shellOrigin
     ),
-    label,
-    checkForDebugStatus
+    label
   );
 }
 

@@ -23,8 +23,7 @@ import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { OneShotFlowGenFailureResponse } from "./ui/flow-gen/flow-generator.js";
-import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
+
 import { markdown } from "./ui/directives/markdown.js";
 import { type SharePanel } from "./ui/elements/elements.js";
 import { deriveLiteViewType } from "./sca/utils/lite-view-type.js";
@@ -478,7 +477,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if (!fileId) {
       return;
     }
-    const isMine = this.sca.services.googleDriveBoardServer.isMine(new URL(url));
+    const isMine = this.sca.services.googleDriveBoardServer.isMine(
+      new URL(url)
+    );
     const isFeaturedGalleryItem =
       // This is a bit hacky and indirect, but an easy way to tell if something
       // is from the public gallery is to check if the GoogleDriveClient has
@@ -534,15 +535,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
    * This method is called by bb-editor-input-lite whenever it needs to
    * generate a new graph.
    */
-  async generate(
-    intent: string
-  ): Promise<OneShotFlowGenFailureResponse | undefined> {
+  async generate(intent: string): Promise<{ error: string } | undefined> {
     if ((await this.askUserToSignInIfNeeded()) !== "success") {
       return { error: "" };
     }
     // await this.sca.controller.global.flowgenInput.isHydrated;
     let projectState = this.runtime.project;
     this.sca.controller.global.flowgenInput.currentExampleIntent = intent;
+
+    // Set generating state early so the UI shows the editor view throughout
+    // the entire flow — including during zero-state board creation, where
+    // loadState transitions to "Loaded" while the graph is still empty.
+    this.sca.controller.global.flowgenInput.state = { status: "generating" };
 
     if (!projectState) {
       // Zero state: need to create the board first, then wait for load
@@ -554,31 +558,25 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       this.runtime.syncProjectState();
       projectState = this.runtime.project;
       if (!projectState) {
+        this.sca.controller.global.flowgenInput.state = { status: "initial" };
         return { error: `Failed to create a new opal.` };
       }
     }
 
     const currentGraph = this.sca.controller.editor.graph.graph;
     if (!currentGraph) {
+      this.sca.controller.global.flowgenInput.state = { status: "initial" };
       return { error: "No current graph detected, exting flow generation" };
     }
 
     if (!this.flowGenerator) {
+      this.sca.controller.global.flowgenInput.state = { status: "initial" };
       return { error: `No FlowGenerator was provided` };
     }
 
-    this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
-
-    const generated = await flowGenWithTheme(
-      this.flowGenerator,
-      intent,
-      currentGraph,
-      projectState
+    this.dispatchEvent(
+      new StateEvent({ eventType: "flowgen.generate", intent })
     );
-    if ("error" in generated) {
-      return generated;
-    }
-    await this.invokeBoardReplaceRoute(generated.flow, generated.theme);
   }
 
   #renderOriginalPrompt() {
@@ -615,8 +613,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderUserInput() {
     const editable =
-      (this.tab?.graphIsMine ?? false) ||
-      this.#viewType !== "editor";
+      (this.tab?.graphIsMine ?? false) || this.#viewType !== "editor";
     return html`<bb-editor-input-lite
       ?inert=${this.#isInert()}
       .controller=${this}
@@ -628,8 +625,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderMessage() {
     const editable =
-      (this.tab?.graphIsMine ?? false) ||
-      this.#viewType !== "editor";
+      (this.tab?.graphIsMine ?? false) || this.#viewType !== "editor";
     return html`<div
       ?disabled=${!editable}
       id="message"
@@ -652,10 +648,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderList() {
     return html`
-      <bb-step-list-view
-        ?inert=${this.#isInert()}
-        lite
-      ></bb-step-list-view>
+      <bb-step-list-view ?inert=${this.#isInert()} lite></bb-step-list-view>
     `;
   }
 
@@ -820,7 +813,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
               <button
                 class="w-400 md-body-small sans-flex"
                 @click=${() => {
-                  this.sca.controller.global.flowgenInput.currentExampleIntent = example.intent;
+                  this.sca.controller.global.flowgenInput.currentExampleIntent =
+                    example.intent;
                 }}
               >
                 <span class="example-icon">
@@ -975,10 +969,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderSharePanel() {
     return html`
-      <bb-share-panel
-        .graph=${this.#graph}
-        ${ref(this.#sharePanelRef)}
-      >
+      <bb-share-panel .graph=${this.#graph} ${ref(this.#sharePanelRef)}>
       </bb-share-panel>
     `;
   }

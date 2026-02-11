@@ -384,6 +384,12 @@ export class RunController extends RootController {
       error: null,
       completed: status === "succeeded",
       current: null,
+      addOutput() {},
+      requestInput() {
+        return Promise.reject(new Error("Input not supported in SCA path"));
+      },
+      activateInput() {},
+      resolveInput() {},
     };
   }
 }

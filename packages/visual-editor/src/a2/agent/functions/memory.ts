@@ -5,9 +5,9 @@
  */
 
 import { NodeHandlerContext } from "@breadboard-ai/types";
-import { err } from "@breadboard-ai/utils";
+import { ok } from "@breadboard-ai/utils";
 import z from "zod";
-import { llm, ok, toText, tr } from "../../a2/utils.js";
+import { llm, toText, tr } from "../../a2/utils.js";
 import { AgentFileSystem } from "../file-system.js";
 import {
   defineFunction,
@@ -65,6 +65,7 @@ function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
       {
         name: MEMORY_CREATE_SHEET_FUNCTION,
         icon: "table_chart",
+        title: "Creating a new memory sheet",
         description: "Creates a new memory sheet",
         parameters: {
           name: z.string().describe(tr`The name of the sheet. Use snake_case for
@@ -81,13 +82,16 @@ An array of strings representing the column headers (e.g., ['Name', 'Status']).`
       },
       async ({ task_id, status_update, ...parameters }) => {
         taskTreeManager.setInProgress(task_id, status_update);
-        return memoryManager.createSheet(context, parameters);
+        const result = await memoryManager.createSheet(context, parameters);
+        if (!ok(result)) return { error: result.$error };
+        return result;
       }
     ),
     defineFunction(
       {
         name: MEMORY_READ_SHEET_FUNCTION,
         icon: "table_chart",
+        title: "Reading memory",
         description: tr`
 Reads values from a specific memory range (e.g. Scores!A1:B3)`,
         parameters: {
@@ -127,6 +131,12 @@ generator. Will be provided when the "output_format" is set to "file"`
 provided when the "output_format" is set to "json"`
             )
             .optional(),
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
         },
       },
       async (args) => {
@@ -134,13 +144,13 @@ provided when the "output_format" is set to "json"`
           args;
         taskTreeManager.setInProgress(task_id, status_update);
         const result = await memoryManager.readSheet(context, rest);
-        if (!ok(result)) return result;
+        if (!ok(result)) return { error: result.$error };
         const parts = llm`${result}`.asParts().at(0);
         if (!parts) {
-          return err("Failed to create parts from result");
+          return { error: "The sheet is empty" };
         }
         const file_path = fileSystem.add(parts, file_name);
-        if (!ok(file_path)) return file_path;
+        if (!ok(file_path)) return { error: file_path.$error };
         if (output_format === "file") {
           return { file_path };
         }
@@ -150,6 +160,7 @@ provided when the "output_format" is set to "json"`
     defineFunction(
       {
         name: MEMORY_UPDATE_SHEET_FUNCTION,
+        title: "Updating memory",
         icon: "table_chart",
         description: tr`
 Overwrites a specific memory range with new data. Used for editing specific rows.
@@ -191,13 +202,19 @@ The 2D array of data to write.
         if (errors.length > 0) {
           return { error: errors.join(", ") };
         }
-        return memoryManager.updateSheet(context, { range, values });
+        const result = await memoryManager.updateSheet(context, {
+          range,
+          values,
+        });
+        if (!ok(result)) return { error: result.$error };
+        return result;
       }
     ),
     defineFunction(
       {
         name: MEMORY_DELETE_SHEET_FUNCTION,
         icon: "table_chart",
+        title: "Deleting a memory sheet",
         description: tr`
 Deletes a specific memory sheet`,
         parameters: {
@@ -208,13 +225,16 @@ Deletes a specific memory sheet`,
       },
       async ({ task_id, status_update, ...parameters }) => {
         taskTreeManager.setInProgress(task_id, status_update);
-        return memoryManager.deleteSheet(context, parameters);
+        const result = await memoryManager.deleteSheet(context, parameters);
+        if (!ok(result)) return { error: result.$error };
+        return result;
       }
     ),
     defineFunction(
       {
         name: MEMORY_GET_METADATA_FUNCTION,
         icon: "table_chart",
+        title: "Reading memory metadata",
         description: tr`
 Returns the names and header rows of all memory sheets.`,
         parameters: {
@@ -222,28 +242,38 @@ Returns the names and header rows of all memory sheets.`,
           ...statusUpdateSchema,
         },
         response: {
-          sheets: z.array(
-            z.object({
-              name: z.string().describe(tr`
+          sheets: z
+            .array(
+              z.object({
+                name: z.string().describe(tr`
 The name of the memory sheet
 `),
-              file_path: z.string().describe(tr`
+                file_path: z.string().describe(tr`
 The file path to read the memory sheet
 `),
-              columns: z.array(
-                z.string().describe(tr`
+                columns: z.array(
+                  z.string().describe(tr`
 The column name
 `)
-              ).describe(tr`
+                ).describe(tr`
 The list of column names
 `),
-            })
-          ),
+              })
+            )
+            .optional(),
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
         },
       },
       async ({ task_id, status_update }) => {
         taskTreeManager.setInProgress(task_id, status_update);
-        return memoryManager.getSheetMetadata(context);
+        const result = await memoryManager.getSheetMetadata(context);
+        if (!ok(result)) return { error: result.$error };
+        return result;
       }
     ),
   ];

@@ -35,10 +35,7 @@ export type Capability = (
 ) => Promise<Values | void>;
 
 export type CapabilitySpec = {
-  invoke?: Capability;
   input?: Capability;
-  output?: Capability;
-  describe?: Capability;
   query?: Capability;
   read?: Capability;
   write?: Capability;

@@ -64,6 +64,7 @@ function defineChatFunctions(args: ChatFunctionsArgs): FunctionDefinition[] {
     defineFunction(
       {
         name: CHAT_REQUEST_USER_INPUT,
+        title: "Asking the user",
         icon: "chat_bubble",
         description: tr`
 Requests input from user. Call this function to hold a conversatio with the user. Each call corresponds to a conversation turn. Use only when necessary to fulfill the objective.
@@ -87,7 +88,13 @@ Unless the objective explicitly asks for a particular type of input, use the "an
           ...taskIdSchema,
         },
         response: {
-          user_input: z.string().describe(`Response from the user`),
+          user_input: z.string().describe(`Response from the user`).optional(),
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
         },
       },
       async ({ user_message, input_type, task_id }) => {
@@ -96,16 +103,17 @@ Unless the objective explicitly asks for a particular type of input, use the "an
           user_message,
           input_type
         );
-        if (!ok(chatResponse)) return chatResponse;
+        if (!ok(chatResponse)) return { error: chatResponse.$error };
         const { input } = chatResponse;
         const pidgin = await args.translator.toPidgin(input, {}, true);
-        if (!ok(pidgin)) return pidgin;
+        if (!ok(pidgin)) return { error: pidgin.$error };
         return { user_input: pidgin.text };
       }
     ),
     defineFunction(
       {
         name: CHAT_PRESENT_CHOICES,
+        title: "Presenting Choices to the User",
         icon: "list",
         description: tr`
 Presents the user with a set of choices to select from. Use when you need the user to make a decision from a predefined set of options. 
@@ -158,7 +166,14 @@ Layout hint for displaying choices:
             .array(z.string())
             .describe(
               `Array of selected choice IDs. For "single" mode, this will have exactly one element.`
-            ),
+            )
+            .optional(),
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
         },
       },
       async ({
@@ -177,7 +192,7 @@ Layout hint for displaying choices:
           layout as ChatChoiceLayout,
           none_of_the_above_label
         );
-        if (!ok(choicesResponse)) return choicesResponse;
+        if (!ok(choicesResponse)) return { error: choicesResponse.$error };
         return { selected: choicesResponse.selected };
       }
     ),

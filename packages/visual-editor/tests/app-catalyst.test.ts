@@ -37,5 +37,4 @@ describe("AppCatalystApiClient", () => {
     assert.deepStrictEqual(init?.headers, { "content-type": "application/json" });
     assert.strictEqual(init?.body, "{}");
   });
-
 });

@@ -17,7 +17,6 @@ function makeMockRunConfig(): RunConfig {
     url: "test://board",
     runner: { edges: [], nodes: [] },
     diagnostics: true,
-    kits: [],
   } as unknown as RunConfig;
 }
 

@@ -42,7 +42,6 @@ import {
   OutputResponse,
 } from "./remote.js";
 import { SimplifiedProjectRunState } from "./state.js";
-import { TraversalResult } from "./traversal.js";
 import {
   TypedEventTarget,
   TypedEventTargetType,
@@ -128,10 +127,7 @@ export type RunConfig = {
    * Otherwise, defaults to invoking module's URL.
    */
   base?: URL;
-  /**
-   * The kits to use by the runtime.
-   */
-  kits: Kit[];
+
   /**
    * The loader to use when loading boards.
    */
@@ -201,8 +197,6 @@ export type RunEventMap = {
   start: RunLifecycleEvent;
   pause: RunLifecycleEvent;
   resume: RunLifecycleEvent;
-  next: RunNextEvent;
-  input: RunInputEvent;
   output: RunOutputEvent;
   error: RunErrorEvent;
   skip: RunSkipEvent;
@@ -218,15 +212,6 @@ export type RunEventMap = {
 export type RunLifecycleEvent = Event & {
   running: boolean;
   data: { timestamp: number; inputs?: InputValues };
-};
-
-export type RunNextEvent = Event & {
-  data: HarnessRunResult | void;
-};
-
-export type RunInputEvent = Event & {
-  data: InputResponse;
-  running: boolean;
 };
 
 export type RunOutputEvent = Event & {
@@ -261,7 +246,6 @@ export type RunGraphEndEvent = Event & {
 
 export type RunNodeStartEvent = Event & {
   data: NodeStartResponse;
-  result?: TraversalResult;
   running: true;
 };
 
@@ -297,13 +281,6 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * Starts a run
    */
   start(): Promise<void>;
-
-  /**
-   * Resumes the running of the board.
-   *
-   * @param inputs -- input values to provide to the runner.
-   */
-  resumeWithInputs(inputs: InputValues): Promise<void>;
 
   /**
    * For new runtime only: the current plan for the run.

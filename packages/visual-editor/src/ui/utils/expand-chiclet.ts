@@ -56,12 +56,18 @@ export function expandChiclet(
 
     case "tool": {
       if (instance) {
+        const toolIcon = projectState.integrations.registered
+          .get(path)
+          ?.tools.get(instance)?.icon;
         icon =
-          projectState.integrations.registered.get(path)?.tools.get(instance)
-            ?.icon || "robot_server";
+          (typeof toolIcon === "string" ? toolIcon : undefined) ||
+          "robot_server";
       } else {
         const toolInfo = sca?.controller.editor.graph.tools.get(path);
-        icon = iconSubstitute(toolInfo?.icon);
+        const toolIcon = toolInfo?.icon;
+        icon = iconSubstitute(
+          typeof toolIcon === "string" ? toolIcon : undefined
+        );
       }
       break;
     }
@@ -69,8 +75,7 @@ export function expandChiclet(
     case "asset": {
       icon = "alternate_email";
 
-      const assetInfo =
-        projectState?.stepEditor.fastAccess.graphAssets.get(path);
+      const assetInfo = sca?.controller.editor.graph.graphAssets.get(path);
       if (assetInfo?.metadata?.type) {
         icon = iconSubstitute(assetInfo.metadata.type);
       }

@@ -180,7 +180,11 @@ suite("ScreenSize Actions", () => {
 
       await screenSizeActions.init();
 
-      assert.strictEqual(sizeSet, "wide", "init should delegate to updateScreenSize");
+      assert.strictEqual(
+        sizeSet,
+        "wide",
+        "init should delegate to updateScreenSize"
+      );
     });
   });
 });

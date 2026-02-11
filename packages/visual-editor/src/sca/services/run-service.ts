@@ -33,7 +33,7 @@ export class RunService {
   /**
    * Creates a new HarnessRunner and AbortController.
    *
-   * The config should already have kits, signal, and graphStore set.
+   * The config should already have signal and graphStore set.
    * The caller (action) is responsible for setting the runner on the controller.
    *
    * @param config The run configuration

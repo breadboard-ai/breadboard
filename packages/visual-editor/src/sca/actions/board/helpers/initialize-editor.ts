@@ -115,6 +115,10 @@ export function initializeEditor(
   graphController.lastLoadedVersion = lastLoadedVersion;
   graphController.finalOutputValues = options.finalOutputValues;
 
+  // Bump version to trigger Asset.syncFromGraph and other version-change actions.
+  // This must happen AFTER all state is set so triggers see complete state.
+  graphController.version++;
+
   return {
     success: true,
     id,

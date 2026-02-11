@@ -6,7 +6,37 @@
 
 import type { Tool } from "../ui/state/types.js";
 
-export { A2_COMPONENTS, A2_TOOLS };
+// Tool module imports
+import * as toolsGetWeather from "./tools/get-weather.js";
+import * as toolsSearchWeb from "./tools/search-web.js";
+import * as toolsGetWebpage from "./tools/get-webpage.js";
+import * as toolsSearchMaps from "./tools/search-maps.js";
+import * as toolsSearchInternal from "./tools/search-internal.js";
+import * as toolsSearchEnterprise from "./tools/search-enterprise.js";
+import * as toolsCodeExecution from "./tools/code-execution.js";
+
+// Component module imports
+import * as askUserMain from "./ask-user/main.js";
+import * as generateMain from "./generate/main.js";
+import * as renderOutputs from "./a2/render-outputs.js";
+
+export { A2_COMPONENTS, A2_TOOLS, A2_TOOL_MAP, A2_COMPONENT_MAP };
+export type { A2Component };
+
+/**
+ * Generic function types for describe and invoke methods.
+ * Each module has its own specific input/output types, so we use a generic
+ * function signature here that matches the pattern in runnable-module-factory.ts.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DescribeFunction = (...args: any[]) => Promise<any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type InvokeFunction = (...args: any[]) => Promise<any>;
+
+type A2Tool = Tool & {
+  describe: DescribeFunction;
+  invoke: InvokeFunction;
+};
 
 const BASE_URL = "embed://a2/tools.bgl.json";
 
@@ -16,7 +46,7 @@ const BASE_URL = "embed://a2/tools.bgl.json";
  * Environment-specific tools include tags that are filtered at runtime
  * by fast-access-menu based on globalConfig.environmentName.
  */
-const A2_TOOLS: [string, Tool][] = [
+const A2_TOOLS: [string, A2Tool][] = [
   [
     `${BASE_URL}#module:get-weather`,
     {
@@ -24,6 +54,8 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Get Weather",
       description: "Get weather information for a location",
       icon: "sunny",
+      describe: toolsGetWeather.describe,
+      invoke: toolsGetWeather.default,
     },
   ],
   [
@@ -33,6 +65,8 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Search Web",
       description: "Search the web for information",
       icon: "search",
+      describe: toolsSearchWeb.describe,
+      invoke: toolsSearchWeb.default,
     },
   ],
   [
@@ -42,6 +76,8 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Get Webpage",
       description: "Retrieve content from a webpage",
       icon: "language",
+      describe: toolsGetWebpage.describe,
+      invoke: toolsGetWebpage.default,
     },
   ],
   [
@@ -51,6 +87,8 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Search Maps",
       description: "Search Google Maps for places",
       icon: "map_search",
+      describe: toolsSearchMaps.describe,
+      invoke: toolsSearchMaps.default,
     },
   ],
   [
@@ -61,6 +99,8 @@ const A2_TOOLS: [string, Tool][] = [
       description: "Search internal knowledge base",
       icon: "search",
       tags: ["environment-corp"],
+      describe: toolsSearchInternal.describe,
+      invoke: toolsSearchInternal.default,
     },
   ],
   [
@@ -71,6 +111,8 @@ const A2_TOOLS: [string, Tool][] = [
       description: "Search enterprise knowledge base",
       icon: "search",
       tags: ["environment-agentspace"],
+      describe: toolsSearchEnterprise.describe,
+      invoke: toolsSearchEnterprise.default,
     },
   ],
   [
@@ -80,9 +122,16 @@ const A2_TOOLS: [string, Tool][] = [
       title: "Code Execution",
       description: "Execute code snippets",
       icon: "code",
+      describe: toolsCodeExecution.describe,
+      invoke: toolsCodeExecution.default,
     },
   ],
 ];
+
+/**
+ * Map of tool URLs to A2Tool objects for efficient lookup.
+ */
+const A2_TOOL_MAP: ReadonlyMap<string, A2Tool> = new Map(A2_TOOLS);
 
 /**
  * Static registry of A2 components that appear in the component picker.
@@ -100,6 +149,8 @@ type A2Component = {
    * This allows short-circuiting the graph dispatch and calling the module directly.
    */
   moduleUrl?: string;
+  describe: DescribeFunction;
+  invoke: InvokeFunction;
 };
 
 const A2_COMPONENTS: A2Component[] = [
@@ -112,6 +163,8 @@ const A2_COMPONENTS: A2Component[] = [
     order: 1,
     category: "input",
     moduleUrl: "embed://a2/ask-user.bgl.json#module:main",
+    describe: askUserMain.describe,
+    invoke: askUserMain.default,
   },
   {
     url: "embed://a2/generate.bgl.json#module:main",
@@ -120,6 +173,8 @@ const A2_COMPONENTS: A2Component[] = [
     icon: "generative",
     order: 1,
     category: "generate",
+    describe: generateMain.describe,
+    invoke: generateMain.default,
   },
   {
     url: "embed://a2/a2.bgl.json#module:render-outputs",
@@ -128,5 +183,19 @@ const A2_COMPONENTS: A2Component[] = [
     icon: "responsive_layout",
     order: 100,
     category: "output",
+    describe: renderOutputs.describe,
+    invoke: renderOutputs.default,
   },
 ];
+
+/**
+ * Map of component URLs to A2Component objects for efficient lookup.
+ * Maps both the component URL and moduleUrl (if present) to the same component.
+ */
+const A2_COMPONENT_MAP: ReadonlyMap<string, A2Component> = new Map(
+  A2_COMPONENTS.flatMap((c) => {
+    const entries: [string, A2Component][] = [[c.url, c]];
+    if (c.moduleUrl) entries.push([c.moduleUrl, c]);
+    return entries;
+  })
+);

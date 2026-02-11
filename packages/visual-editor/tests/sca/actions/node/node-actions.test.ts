@@ -11,39 +11,8 @@ import { appController } from "../../../../src/sca/controller/controller.js";
 import { type AppServices } from "../../../../src/sca/services/services.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
+import { createMockEditor } from "../../helpers/mock-controller.js";
 import { EditableGraph } from "@breadboard-ai/types";
-
-/**
- * Creates a mock EditableGraph with the required methods.
- */
-function createMockEditor(options?: {
-  nodeId?: string;
-  onApply?: (transform: unknown) => void;
-  onGraphChange?: (callback: () => void) => void;
-}): EditableGraph {
-  const nodeId = options?.nodeId ?? "test-node";
-  return {
-    raw: () => ({
-      nodes: [{ id: nodeId, type: "promptTemplate" }],
-    }),
-    addEventListener: (_event: string, callback: () => void) => {
-      if (options?.onGraphChange) {
-        options.onGraphChange(callback);
-      }
-    },
-    removeEventListener: () => { },
-    inspect: () => ({
-      nodeById: (id: string) =>
-        id === nodeId
-          ? { descriptor: { type: "promptTemplate" } }
-          : undefined,
-    }),
-    apply: async (transform: unknown) => {
-      options?.onApply?.(transform);
-      return { success: true };
-    },
-  } as unknown as EditableGraph;
-}
 
 suite("Node Actions", () => {
   let controller: ReturnType<typeof appController>;
@@ -86,7 +55,11 @@ suite("Node Actions", () => {
         titleUserModified: false,
       });
 
-      assert.strictEqual(autonameCalled, false, "autonamer should not be called when readOnly");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autonamer should not be called when readOnly"
+      );
     });
 
     test("returns early when editor is null", async () => {
@@ -111,7 +84,11 @@ suite("Node Actions", () => {
         titleUserModified: false,
       });
 
-      assert.strictEqual(autonameCalled, false, "autonamer should not be called when no editor");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autonamer should not be called when no editor"
+      );
     });
 
     test("skips when outputTemplates disabled AND title user-modified", async () => {
@@ -142,7 +119,11 @@ suite("Node Actions", () => {
         titleUserModified: true,
       });
 
-      assert.strictEqual(autonameCalled, false, "autonamer should not be called");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autonamer should not be called"
+      );
 
       // Restore
       controller.global.flags.flags = originalFlags;
@@ -200,7 +181,11 @@ suite("Node Actions", () => {
         titleUserModified: false,
       });
 
-      assert.strictEqual(autonameCalled, false, "autonamer should not be called when node not found");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autonamer should not be called when node not found"
+      );
     });
 
     test("handles autoname error gracefully", async () => {
@@ -381,7 +366,11 @@ suite("Node Actions", () => {
         titleUserModified: false,
       });
 
-      assert.strictEqual(appliedTransform, false, "should NOT apply transform when graph changed");
+      assert.strictEqual(
+        appliedTransform,
+        false,
+        "should NOT apply transform when graph changed"
+      );
     });
 
     test("strips trailing period from description", async () => {
@@ -487,8 +476,8 @@ suite("Node Actions", () => {
     });
   });
 
-  suite("autonameFromTrigger", () => {
-    test("returns early when lastNodeConfigChange is null", async () => {
+  suite("autoname (triggered path)", () => {
+    test("returns early when lastNodeConfigChange is null and no config provided", async () => {
       let autonameCalled = false;
 
       const services = {
@@ -505,12 +494,17 @@ suite("Node Actions", () => {
       controller.editor.graph.readOnly = false;
       controller.editor.graph.lastNodeConfigChange = null;
 
-      await NodeActions.autonameFromTrigger();
+      // Call without arguments - simulates triggered path
+      await NodeActions.autoname();
 
-      assert.strictEqual(autonameCalled, false, "autoname should not be called when no config change");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autoname should not be called when no config change"
+      );
     });
 
-    test("calls autoname with data from lastNodeConfigChange", async () => {
+    test("calls autoname service with data from lastNodeConfigChange", async () => {
       let autonameCalled = false;
       let capturedArgs: unknown = null;
 
@@ -536,7 +530,8 @@ suite("Node Actions", () => {
         titleUserModified: false,
       };
 
-      await NodeActions.autonameFromTrigger();
+      // Call without arguments - simulates triggered path
+      await NodeActions.autoname();
 
       assert.strictEqual(autonameCalled, true, "autoname should be called");
       assert.ok(Array.isArray(capturedArgs), "args should be LLMContent array");
@@ -572,10 +567,15 @@ suite("Node Actions", () => {
         titleUserModified: true,
       };
 
-      await NodeActions.autonameFromTrigger();
+      // Call without arguments - simulates triggered path
+      await NodeActions.autoname();
 
       // Should skip because outputTemplates is false AND titleUserModified is true
-      assert.strictEqual(autonameCalled, false, "autoname should not be called when user modified title");
+      assert.strictEqual(
+        autonameCalled,
+        false,
+        "autoname should not be called when user modified title"
+      );
 
       controller.global.flags.flags = originalFlags;
     });

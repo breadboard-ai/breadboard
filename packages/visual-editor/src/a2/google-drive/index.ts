@@ -5,7 +5,6 @@
  */
 
 import * as googleDriveApi from "./api.js";
-import * as googleDriveConfigurator from "./configurator.js";
 import * as googleDriveConnectorLoad from "./connector-load.js";
 import * as googleDriveConnectorSave from "./connector-save.js";
 import * as googleDriveDocs from "./docs.js";
@@ -20,7 +19,6 @@ import { createBgl } from "../create-bgl.js";
 
 export const exports = {
   api: googleDriveApi,
-  configurator: googleDriveConfigurator,
   "connector-load": googleDriveConnectorLoad,
   "connector-save": googleDriveConnectorSave,
   docs: googleDriveDocs,

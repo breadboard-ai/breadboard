@@ -5,10 +5,13 @@
  */
 
 import type { Asset } from "@breadboard-ai/types";
-import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import assert from "node:assert";
-import { describe, test } from "node:test";
+import { after, before, beforeEach, suite, test } from "node:test";
+import { GoogleDriveBoardServer } from "../../../../src/board-server/server.js";
 import * as ShareActions from "../../../../src/sca/actions/share/share-actions.js";
+import type * as Editor from "../../../../src/sca/controller/subcontrollers/editor/editor.js";
+import { FakeGoogleDriveApi } from "../../helpers/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
 
 function makeAsset(handle: string, managed: boolean, title: string): Asset {
@@ -18,24 +21,76 @@ function makeAsset(handle: string, managed: boolean, title: string): Asset {
   };
 }
 
-describe("Share Actions", () => {
-  test("open -> load -> close", async () => {
+suite("Share Actions", () => {
+  let fakeDriveApi: FakeGoogleDriveApi;
+  let googleDriveClient: GoogleDriveClient;
+  let share: Editor.Share.ShareController;
+  /** Utility to get state without TypeScript narrowing over-firing from prior assertions */
+  const getState = () => share.state;
+
+  before(async () => {
+    fakeDriveApi = await FakeGoogleDriveApi.start();
+  });
+
+  after(async () => {
+    await fakeDriveApi.stop();
+  });
+
+  beforeEach(() => {
+    fakeDriveApi.reset();
+    googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl: fakeDriveApi.filesApiUrl,
+      uploadApiBaseUrl: fakeDriveApi.uploadApiUrl,
+      fetchWithCreds: globalThis.fetch,
+    });
+    const googleDriveBoardServer = new GoogleDriveBoardServer(
+      "FakeGoogleDrive",
+      { state: Promise.resolve("signedin") },
+      googleDriveClient,
+      [{ type: "domain", domain: "example.com", role: "reader" }],
+      "Breadboard",
+      // findUserOpalFolder stub
+      async () => ({ ok: true, id: "fake-folder-id" }),
+      // listUserOpals stub
+      async () => ({ ok: true as const, files: [] }),
+      // GalleryGraphCollection stub
+      {
+        loading: false,
+        loaded: Promise.resolve(),
+        error: undefined,
+        size: 0,
+        entries: () => [][Symbol.iterator](),
+        has: () => false,
+      },
+      // UserGraphCollection stub
+      {
+        loading: false,
+        loaded: Promise.resolve(),
+        error: undefined,
+        size: 0,
+        entries: () => [][Symbol.iterator](),
+        has: () => false,
+        put: () => {},
+        delete: () => false,
+      }
+    );
     const { controller } = makeTestController();
     const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async () => ({
-          id: "test-drive-id",
-          properties: {},
-          ownedByMe: true,
-          version: "1",
-        }),
-      } as object as Partial<GoogleDriveClient>,
+      googleDriveClient,
       signinAdapter: {
         domain: Promise.resolve("example.com"),
       },
+      googleDriveBoardServer,
     });
     ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
+    share = controller.editor.share;
+  });
+
+  test("open -> load -> close", async () => {
+    const createdFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "test-board.bgl.json", mimeType: "application/json" }
+    );
 
     // Panel is initially closed
     assert.deepEqual(share.state, { status: "closed" });
@@ -46,7 +101,7 @@ describe("Share Actions", () => {
 
     // Panel starts loading
     const loaded = ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive:/test-drive-id" },
+      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
     assert.deepEqual(share.state, { status: "loading" });
@@ -72,126 +127,72 @@ describe("Share Actions", () => {
   });
 
   test("publish", async () => {
-    const { controller } = makeTestController();
-    const createdPermissions: gapi.client.drive.Permission[] = [];
-    const createdBoards: Array<{ url: string }> = [];
-    const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async () => ({
-          id: "test-drive-id",
-          properties: {},
-          ownedByMe: true,
-          version: "1",
-        }),
-        updateFileMetadata: async () => ({ version: "2" }),
-        createPermission: async (
-          _fileId: string,
-          permission: gapi.client.drive.Permission
-        ) => {
-          createdPermissions.push(permission);
-          return { ...permission, id: "permission-id" };
-        },
-      } as object as Partial<GoogleDriveClient>,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer: {
-        create: async (url: URL) => {
-          createdBoards.push({ url: url.toString() });
-          return {
-            result: true,
-            url: "drive:/shareable-copy-id",
-          };
-        },
-        flushSaveQueue: async () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-      },
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
+    // Create a file for publishing
+    const createdFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "test-board.bgl.json", mimeType: "application/json" }
+    );
 
     // Open and load to get to writable state
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive:/test-drive-id" },
+      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.published, false);
+    const unpublishedState = getState();
+    assert.strictEqual(unpublishedState.status, "writable");
+    assert.strictEqual(unpublishedState.published, false);
 
     // Publish
-    const graph = { edges: [], nodes: [], url: "drive:/test-drive-id" };
+    const graph = { edges: [], nodes: [], url: `drive:/${createdFile.id}` };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
     await ShareActions.publish(graph, publishPermissions, undefined);
 
-    // Verify shareable copy was created via boardServer.create()
-    assert.strictEqual(createdBoards.length, 1);
-    assert.strictEqual(
-      createdBoards[0].url,
-      "drive:/test-drive-id-shared.bgl.json"
-    );
-
     // Verify state is now published
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.published, true);
+    const publishedState = getState();
+    assert.strictEqual(publishedState.status, "writable");
+    assert.strictEqual(publishedState.published, true);
+    const shareableFileId = publishedState.shareableFile.id;
 
-    // Verify permission was created with role: "reader"
-    assert.strictEqual(createdPermissions.length, 1);
-    assert.deepEqual(createdPermissions[0], {
-      type: "domain",
-      domain: "example.com",
-      role: "reader",
-    });
+    // Get the shareable copy's metadata to verify permissions
+    const shareableMetadata = await googleDriveClient.getFileMetadata(
+      shareableFileId,
+      { fields: ["permissions"] }
+    );
+    assert.ok(shareableMetadata.permissions, "Permissions should exist");
+    assert.strictEqual(shareableMetadata.permissions.length, 1);
+    assert.strictEqual(shareableMetadata.permissions[0].type, "domain");
+    assert.strictEqual(shareableMetadata.permissions[0].domain, "example.com");
+    assert.strictEqual(shareableMetadata.permissions[0].role, "reader");
   });
 
   test("unpublish", async () => {
-    const { controller } = makeTestController();
-    const deletedPermissionIds: string[] = [];
-    const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async () => ({
-          id: "test-drive-id",
-          properties: {},
-          ownedByMe: true,
-          version: "1",
-        }),
-        updateFileMetadata: async () => ({ version: "2" }),
-        createPermission: async (
-          _fileId: string,
-          permission: gapi.client.drive.Permission
-        ) => ({ ...permission, id: "permission-123" }),
-        deletePermission: async (_fileId: string, permissionId: string) => {
-          deletedPermissionIds.push(permissionId);
-        },
-      } as object as Partial<GoogleDriveClient>,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer: {
-        create: async () => ({
-          result: true,
-          url: "drive:/shareable-copy-id",
-        }),
-        flushSaveQueue: async () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-      },
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
+    // Create a file for publishing
+    const createdFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "test-board.bgl.json", mimeType: "application/json" }
+    );
 
     // Open, load, and publish to get to published state
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive:/test-drive-id" },
+      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
-    const graph = { edges: [], nodes: [], url: "drive:/test-drive-id" };
+    const graph = { edges: [], nodes: [], url: `drive:/${createdFile.id}` };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
     await ShareActions.publish(graph, publishPermissions, undefined);
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.published, true);
+    const publishedState = getState();
+    assert.strictEqual(publishedState.status, "writable");
+    assert.strictEqual(publishedState.published, true);
+    const shareableFileId = publishedState.shareableFile.id;
+
+    // Verify there's a permission before unpublishing
+    const beforeMetadata = await googleDriveClient.getFileMetadata(
+      shareableFileId,
+      { fields: ["permissions"] }
+    );
+    assert.ok(beforeMetadata.permissions?.length, "Should have permissions");
 
     // Unpublish
     await ShareActions.unpublish(graph);
@@ -200,188 +201,176 @@ describe("Share Actions", () => {
     assert.strictEqual(share.state.status, "writable");
     assert.strictEqual(share.state.published, false);
 
-    // Verify permission was deleted
-    assert.strictEqual(deletedPermissionIds.length, 1);
-    assert.strictEqual(deletedPermissionIds[0], "permission-123");
+    // Verify permission was deleted from the shareable copy
+    const afterMetadata = await googleDriveClient.getFileMetadata(
+      shareableFileId,
+      { fields: ["permissions"] }
+    );
+    assert.strictEqual(
+      afterMetadata.permissions?.length ?? 0,
+      0,
+      "Permissions should be empty after unpublish"
+    );
   });
 
   test("readonly when not owned by me", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async () => ({
-          id: "test-drive-id",
-          properties: {},
-          ownedByMe: false,
-          resourceKey: "resource-key-123",
-        }),
-      } as object as Partial<GoogleDriveClient>,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
+    // Enable resourceKey generation for this test
+    fakeDriveApi.createFileGeneratesResourceKey(true);
+
+    // Create a file owned by someone else
+    const createdFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "someone-elses-file.bgl.json", mimeType: "application/json" }
+    );
+    fakeDriveApi.forceSetFileMetadata(createdFile.id, { ownedByMe: false });
 
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive:/test-drive-id" },
+      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
 
     assert.strictEqual(share.state.status, "readonly");
-    assert.deepEqual(share.state.shareableFile, {
-      id: "test-drive-id",
-      resourceKey: "resource-key-123",
-    });
+    assert.strictEqual(share.state.shareableFile?.id, createdFile.id);
+    // resourceKey is auto-generated by fake, verify it exists
+    assert.ok(
+      share.state.shareableFile?.resourceKey,
+      "resourceKey should be set"
+    );
   });
 
   test("readonly when not owned by me but has shareable copy", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async (
-          fileId: string | { id: string },
-          _options?: { fields?: string[] }
-        ) => {
-          const id = typeof fileId === "string" ? fileId : fileId.id;
-          if (id === "test-drive-id") {
-            return {
-              id: "test-drive-id",
-              properties: {
-                mainToShareableCopy: "shareable-copy-id",
-              },
-              ownedByMe: false,
-              resourceKey: "main-resource-key",
-            };
-          }
-          if (id === "shareable-copy-id") {
-            return {
-              id: "shareable-copy-id",
-              resourceKey: "shareable-resource-key",
-            };
-          }
-          return { id };
-        },
-      } as object as Partial<GoogleDriveClient>,
+    // Enable resourceKey generation for this test
+    fakeDriveApi.createFileGeneratesResourceKey(true);
+
+    // Create the main file owned by someone else
+    const mainFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "main-file.bgl.json", mimeType: "application/json" }
+    );
+
+    // Create the shareable copy
+    const shareableCopy = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "shareable-copy.bgl.json", mimeType: "application/json" }
+    );
+
+    // Configure the main file to point to the shareable copy and mark as not owned
+    fakeDriveApi.forceSetFileMetadata(mainFile.id, {
+      ownedByMe: false,
+      properties: { mainToShareableCopy: shareableCopy.id },
     });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
 
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive:/test-drive-id" },
+      { edges: [], nodes: [], url: `drive:/${mainFile.id}` },
       []
     );
 
     assert.strictEqual(share.state.status, "readonly");
     // Should use the shareable copy's id and resourceKey, not the main file's
-    assert.deepEqual(share.state.shareableFile, {
-      id: "shareable-copy-id",
-      resourceKey: "shareable-resource-key",
-    });
+    assert.strictEqual(share.state.shareableFile?.id, shareableCopy.id);
+    assert.ok(
+      share.state.shareableFile?.resourceKey,
+      "resourceKey should be set"
+    );
   });
 
   test("readonly when file is a shareable copy", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async () => ({
-          id: "shareable-copy-id",
-          properties: {
-            // This property indicates the file is a shareable copy
-            shareableCopyToMain: "main-file-id",
-          },
-          ownedByMe: true,
-          resourceKey: "shareable-resource-key",
-        }),
-      } as object as Partial<GoogleDriveClient>,
-    });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
+    // Enable resourceKey generation for this test
+    fakeDriveApi.createFileGeneratesResourceKey(true);
+
+    // Create a file that is a shareable copy (has shareableCopyToMain property)
+    const createdFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      {
+        name: "shareable-copy.bgl.json",
+        mimeType: "application/json",
+        properties: { shareableCopyToMain: "main-file-id" },
+      }
+    );
 
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive:/shareable-copy-id" },
+      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
       []
     );
 
     assert.strictEqual(share.state.status, "readonly");
-    assert.deepEqual(share.state.shareableFile, {
-      id: "shareable-copy-id",
-      resourceKey: "shareable-resource-key",
-    });
+    assert.strictEqual(share.state.shareableFile?.id, createdFile.id);
+    // resourceKey is auto-generated by fake, verify it exists
+    assert.ok(
+      share.state.shareableFile?.resourceKey,
+      "resourceKey should be set"
+    );
   });
 
   test("publishStale updates shareable copy and clears stale flag", async () => {
-    const { controller } = makeTestController();
-    const writtenUrls: string[] = [];
-    const updatedMetadataFileIds: string[] = [];
-    const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async (fileId: string) => {
-          if (fileId === "test-drive-id") {
-            return {
-              id: "test-drive-id",
-              properties: {
-                mainToShareableCopy: "shareable-copy-id",
-              },
-              ownedByMe: true,
-              version: "5",
-            };
-          }
-          // shareable copy metadata
-          return {
-            id: "shareable-copy-id",
-            resourceKey: "shareable-resource-key",
-            properties: {
-              latestSharedVersion: "3", // older version, so stale
-            },
-            permissions: [
-              { type: "domain", domain: "example.com", role: "reader" },
-            ],
-          };
-        },
-        updateFileMetadata: async (fileId: string) => {
-          updatedMetadataFileIds.push(fileId);
-          return { version: "5" };
-        },
-      } as object as Partial<GoogleDriveClient>,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer: {
-        flushSaveQueue: async () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        ops: {
-          writeGraphToDrive: async (url: URL) => {
-            writtenUrls.push(url.toString());
-            return { result: true };
-          },
-        },
+    // Create the main file
+    const mainFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "main-file.bgl.json", mimeType: "application/json" }
+    );
+
+    // Create a shareable copy and link it to the main file
+    const shareableFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "shareable-copy.bgl.json", mimeType: "application/json" }
+    );
+
+    // Set up the main file -> shareable copy relationship with stale version
+    fakeDriveApi.forceSetFileMetadata(mainFile.id, {
+      ownedByMe: true,
+      version: "5",
+      properties: {
+        mainToShareableCopy: shareableFile.id,
       },
     });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
+
+    // Shareable copy has older version (stale)
+    fakeDriveApi.forceSetFileMetadata(shareableFile.id, {
+      properties: {
+        latestSharedVersion: "3", // older than main's version 5
+      },
+      permissions: [
+        {
+          type: "domain",
+          domain: "example.com",
+          role: "reader",
+          id: "existing-perm",
+        },
+      ],
+    });
+    fakeDriveApi.createFileGeneratesResourceKey(true);
 
     // Open and load to get to writable state with stale shareable copy
     ShareActions.openPanel();
     await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: "drive:/test-drive-id" },
+      { edges: [], nodes: [], url: `drive:/${mainFile.id}` },
       [{ type: "domain", domain: "example.com" }]
     );
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.shareableFile?.stale, true);
+    const staleState = getState();
+    assert.strictEqual(staleState.status, "writable");
+    assert.strictEqual(staleState.shareableFile?.stale, true);
+    assert.strictEqual(
+      staleState.latestVersion,
+      "5",
+      "latestVersion should be 5 from main file"
+    );
 
     // Publish stale
-    const graph = { edges: [], nodes: [], url: "drive:/test-drive-id" };
+    const graph = { edges: [], nodes: [], url: `drive:/${mainFile.id}` };
     await ShareActions.publishStale(graph);
 
-    // Verify shareable copy was updated
-    assert.deepEqual(writtenUrls, ["drive:/shareable-copy-id"]);
-
-    // Verify metadata was updated
+    // Verify shareable copy was updated - check the latestSharedVersion property
+    const updatedShareable = await googleDriveClient.getFileMetadata(
+      shareableFile.id,
+      { fields: ["properties"] }
+    );
     assert.strictEqual(
-      updatedMetadataFileIds.includes("shareable-copy-id"),
-      true
+      updatedShareable.properties?.latestSharedVersion,
+      "5",
+      "Shareable copy should be updated to latest version"
     );
 
     // Verify stale flag is now false
@@ -390,44 +379,24 @@ describe("Share Actions", () => {
   });
 
   test("granular sharing", async () => {
-    const { controller } = makeTestController();
-    // Track the permissions on the shareable copy - starts empty
-    let shareableCopyPermissions: gapi.client.drive.Permission[] = [];
-    const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async (fileId: string) => {
-          if (fileId === "test-drive-id") {
-            return {
-              id: "test-drive-id",
-              properties: {
-                mainToShareableCopy: "shareable-copy-id",
-              },
-              ownedByMe: true,
-              version: "1",
-            };
-          }
-          // shareable copy metadata
-          return {
-            id: "shareable-copy-id",
-            resourceKey: "shareable-resource-key",
-            properties: {},
-            permissions: shareableCopyPermissions,
-          };
-        },
-        updateFileMetadata: async () => ({ version: "1" }),
-      } as object as Partial<GoogleDriveClient>,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer: {
-        flushSaveQueue: async () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-      },
+    // Create the main file
+    const mainFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "test-board.bgl.json", mimeType: "application/json" }
+    );
+
+    // Create a shareable copy (simulating an existing one)
+    const shareableCopy = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "shareable-copy.bgl.json", mimeType: "application/json" }
+    );
+
+    // Link main file to shareable copy
+    fakeDriveApi.forceSetFileMetadata(mainFile.id, {
+      properties: { mainToShareableCopy: shareableCopy.id },
     });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
-    const graph = { edges: [], nodes: [], url: "drive:/test-drive-id" };
+
+    const graph = { edges: [], nodes: [], url: `drive:/${mainFile.id}` };
     const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load - initially not published
@@ -439,176 +408,114 @@ describe("Share Actions", () => {
 
     // User opens granular sharing dialog
     await ShareActions.viewSharePermissions(graph, undefined);
-    assert.deepEqual(share.state, {
-      status: "granular",
-      shareableFile: { id: "shareable-copy-id" },
-    });
+    assert.strictEqual(share.state.status, "granular");
 
-    // User adds individual permission
-    shareableCopyPermissions = [
-      { type: "user", emailAddress: "somebody@example.com", role: "reader" },
-    ];
+    // Simulate user adding individual permission via the native Drive share dialog
+    // We add the permission directly to the fake
+    await googleDriveClient.createPermission(
+      shareableCopy.id,
+      {
+        type: "user",
+        emailAddress: "somebody@example.com",
+        role: "reader",
+      },
+      { sendNotificationEmail: false }
+    );
 
     // User closes granular sharing dialog
     await ShareActions.onGoogleDriveSharePanelClose(graph);
     await ShareActions.readPublishedState(graph, publishPermissions);
 
     // We should now be granularly shared, but not published
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.granularlyShared, true);
-    assert.strictEqual(share.state.published, false);
+    const granularState1 = getState();
+    assert.strictEqual(granularState1.status, "writable");
+    assert.strictEqual(granularState1.granularlyShared, true);
+    assert.strictEqual(granularState1.published, false);
 
     // User opens granular sharing again
     await ShareActions.viewSharePermissions(graph, undefined);
-    assert.deepEqual(share.state, {
-      status: "granular",
-      shareableFile: { id: "shareable-copy-id" },
-    });
+    assert.strictEqual(getState().status, "granular");
 
     // User adds domain permission
-    shareableCopyPermissions = [
-      { type: "user", emailAddress: "somebody@example.com", role: "reader" },
-      { type: "domain", domain: "example.com", role: "reader" },
-    ];
+    await googleDriveClient.createPermission(
+      shareableCopy.id,
+      {
+        type: "domain",
+        domain: "example.com",
+        role: "reader",
+      },
+      { sendNotificationEmail: false }
+    );
 
     // User closes the dialog
     await ShareActions.onGoogleDriveSharePanelClose(graph);
     await ShareActions.readPublishedState(graph, publishPermissions);
 
     // We should now be granularly shared and published
-    assert.strictEqual(share.state.status, "writable");
-    assert.strictEqual(share.state.granularlyShared, true);
-    assert.strictEqual(share.state.published, true);
+    const granularState2 = getState();
+    assert.strictEqual(granularState2.status, "writable");
+    assert.strictEqual(granularState2.granularlyShared, true);
+    assert.strictEqual(granularState2.published, true);
   });
 
   test("managed assets get permissions synced during publish", async () => {
-    const { controller } = makeTestController();
-    const createdPermissions: Array<{
-      fileId: string;
-      permission: gapi.client.drive.Permission;
-    }> = [];
-    const deletedPermissions: Array<{
-      fileId: string;
-      permissionId: string;
-    }> = [];
-    const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async (
-          fileId: string | { id: string },
-          options?: { fields?: string[] }
-        ) => {
-          const id = typeof fileId === "string" ? fileId : fileId.id;
-          if (id === "test-drive-id") {
-            // Main file - no shareable copy yet
-            return {
-              id: "test-drive-id",
-              properties: {},
-              ownedByMe: true,
-              version: "1",
-            };
-          }
-          if (id === "shareable-copy-id") {
-            // If asking for permissions, return the shareable copy's permissions
-            if (options?.fields?.includes("permissions")) {
-              return {
-                permissions: [
-                  { type: "domain", domain: "example.com", role: "reader" },
-                ],
-              };
-            }
-            return {
-              id: "shareable-copy-id",
-              resourceKey: "shareable-resource-key",
-              properties: {},
-              permissions: [
-                { type: "domain", domain: "example.com", role: "reader" },
-              ],
-            };
-          }
-          if (id === "managed-asset-id") {
-            // Managed asset has no permissions yet - needs domain permission added
-            return {
-              id: "managed-asset-id",
-              capabilities: { canShare: true },
-              permissions: [],
-            };
-          }
-          if (id === "cant-share-asset-id") {
-            // Managed asset that can't be shared - should be skipped
-            return {
-              id: "cant-share-asset-id",
-              capabilities: { canShare: false },
-              permissions: [],
-            };
-          }
-          if (id === "excess-perms-asset-id") {
-            // Managed asset has an extra permission that needs to be removed
-            return {
-              id: "excess-perms-asset-id",
-              capabilities: { canShare: true },
-              permissions: [
-                {
-                  id: "excess-perm-id",
-                  type: "domain",
-                  domain: "example.com",
-                  role: "reader",
-                },
-                {
-                  id: "old-perm-id",
-                  type: "user",
-                  emailAddress: "old@example.com",
-                  role: "reader",
-                },
-              ],
-            };
-          }
-          return { id };
-        },
-        updateFileMetadata: async () => ({ version: "2" }),
-        createPermission: async (
-          fileId: string,
-          permission: gapi.client.drive.Permission
-        ) => {
-          createdPermissions.push({ fileId, permission });
-          return { id: "new-permission-id" };
-        },
-        deletePermission: async (fileId: string, permissionId: string) => {
-          deletedPermissions.push({ fileId, permissionId });
-        },
-      } as object as Partial<GoogleDriveClient>,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer: {
-        flushSaveQueue: async () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        create: async () => ({
-          result: true,
-          url: "drive:/shareable-copy-id",
-        }),
-        ops: {
-          writeGraphToDrive: async () => ({ result: true }),
-        },
-      },
+    // Create the main file
+    const mainFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "main-board.bgl.json", mimeType: "application/json" }
+    );
+
+    // Create managed asset files with different capabilities
+    const managedAsset = await googleDriveClient.createFile(
+      new Blob(["asset data"]),
+      { name: "managed-asset.bin", mimeType: "application/octet-stream" }
+    );
+    fakeDriveApi.forceSetFileMetadata(managedAsset.id, {
+      capabilities: { canShare: true },
     });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
+
+    const cantShareAsset = await googleDriveClient.createFile(
+      new Blob(["asset data"]),
+      { name: "cant-share-asset.bin", mimeType: "application/octet-stream" }
+    );
+    fakeDriveApi.forceSetFileMetadata(cantShareAsset.id, {
+      capabilities: { canShare: false },
+    });
+
+    const excessPermsAsset = await googleDriveClient.createFile(
+      new Blob(["asset data"]),
+      { name: "excess-perms-asset.bin", mimeType: "application/octet-stream" }
+    );
+    // Add a permission that matches the publish permission (should be kept)
+    await googleDriveClient.createPermission(
+      excessPermsAsset.id,
+      { type: "domain", domain: "example.com", role: "reader" },
+      { sendNotificationEmail: false }
+    );
+    // Add an extra permission that should be removed
+    const oldPerm = await googleDriveClient.createPermission(
+      excessPermsAsset.id,
+      { type: "user", emailAddress: "old@example.com", role: "reader" },
+      { sendNotificationEmail: false }
+    );
+    fakeDriveApi.forceSetFileMetadata(excessPermsAsset.id, {
+      capabilities: { canShare: true },
+    });
 
     // Graph with multiple managed assets
     const graph = {
       edges: [],
       nodes: [],
-      url: "drive:/test-drive-id",
+      url: `drive:/${mainFile.id}`,
       assets: {
-        "asset-1": makeAsset("drive:/managed-asset-id", true, "test-asset"),
+        "asset-1": makeAsset(`drive:/${managedAsset.id}`, true, "test-asset"),
         "asset-2": makeAsset(
-          "drive:/cant-share-asset-id",
+          `drive:/${cantShareAsset.id}`,
           true,
           "cant-share-asset"
         ),
         "asset-3": makeAsset(
-          "drive:/excess-perms-asset-id",
+          `drive:/${excessPermsAsset.id}`,
           true,
           "excess-perms-asset"
         ),
@@ -625,135 +532,91 @@ describe("Share Actions", () => {
     // Publish
     await ShareActions.publish(graph, publishPermissions, undefined);
 
-    // Verify managed-asset-id got the domain permission added
-    const assetPermission = createdPermissions.find(
-      (p) => p.fileId === "managed-asset-id"
+    // Verify managed asset got the domain permission added
+    const managedAssetMeta = await googleDriveClient.getFileMetadata(
+      managedAsset.id,
+      { fields: ["permissions"] }
     );
-    assert.ok(assetPermission, "Managed asset should have received permission");
-    assert.strictEqual(assetPermission.permission.type, "domain");
-    assert.strictEqual(assetPermission.permission.domain, "example.com");
+    const addedPerm = managedAssetMeta.permissions?.find(
+      (p) => p.type === "domain" && p.domain === "example.com"
+    );
+    assert.ok(
+      addedPerm,
+      "Managed asset should have received domain permission"
+    );
 
-    // Verify cant-share-asset-id did NOT receive any permissions (skipped)
-    const cantSharePermission = createdPermissions.find(
-      (p) => p.fileId === "cant-share-asset-id"
+    // Verify cant-share asset still has no permissions (skipped)
+    const cantShareMeta = await googleDriveClient.getFileMetadata(
+      cantShareAsset.id,
+      { fields: ["permissions"] }
     );
     assert.strictEqual(
-      cantSharePermission,
-      undefined,
+      cantShareMeta.permissions?.length ?? 0,
+      0,
       "Cant-share asset should NOT have received permission"
     );
 
-    // Verify excess-perms-asset-id had the old permission deleted
-    const deletedPerm = deletedPermissions.find(
-      (p) => p.fileId === "excess-perms-asset-id"
+    // Verify excess-perms asset had the old permission deleted
+    const excessMeta = await googleDriveClient.getFileMetadata(
+      excessPermsAsset.id,
+      { fields: ["permissions"] }
     );
-    assert.ok(deletedPerm, "Excess permission should have been deleted");
-    assert.strictEqual(deletedPerm.permissionId, "old-perm-id");
+    const oldPermStillExists = excessMeta.permissions?.find(
+      (p) => p.id === oldPerm.id
+    );
+    assert.strictEqual(
+      oldPermStillExists,
+      undefined,
+      "Old permission should have been deleted"
+    );
+    // The domain permission should still exist
+    const domainPermExists = excessMeta.permissions?.find(
+      (p) => p.type === "domain" && p.domain === "example.com"
+    );
+    assert.ok(domainPermExists, "Domain permission should still exist");
   });
 
   test("fixUnmanagedAssetProblems adds missing permissions", async () => {
-    const { controller } = makeTestController();
-    const createdPermissions: Array<{
-      fileId: string;
-      permission: gapi.client.drive.Permission;
-    }> = [];
-    const { services } = makeTestServices({
-      googleDriveClient: {
-        getFileMetadata: async (
-          fileId: string | { id: string },
-          options?: { fields?: string[] }
-        ) => {
-          const id = typeof fileId === "string" ? fileId : fileId.id;
-          if (id === "test-drive-id") {
-            // Main file - no shareable copy yet
-            return {
-              id: "test-drive-id",
-              properties: {},
-              ownedByMe: true,
-              version: "1",
-            };
-          }
-          if (id === "shareable-copy-id") {
-            // If asking for permissions, return the shareable copy's permissions
-            if (options?.fields?.includes("permissions")) {
-              return {
-                permissions: [
-                  { type: "domain", domain: "example.com", role: "reader" },
-                ],
-              };
-            }
-            return {
-              id: "shareable-copy-id",
-              resourceKey: "shareable-resource-key",
-              properties: {},
-              permissions: [
-                { type: "domain", domain: "example.com", role: "reader" },
-              ],
-            };
-          }
-          if (id === "unmanaged-asset-id") {
-            // Unmanaged asset - has share capability but no permissions
-            return {
-              id: "unmanaged-asset-id",
-              name: "My Unmanaged File",
-              iconLink: "https://example.com/icon.png",
-              capabilities: { canShare: true },
-              permissions: [],
-            };
-          }
-          if (id === "cant-share-asset-id") {
-            // Unmanaged asset - cannot be shared (no canShare capability)
-            return {
-              id: "cant-share-asset-id",
-              name: "Someone Elses File",
-              iconLink: "https://example.com/icon2.png",
-              capabilities: { canShare: false },
-              permissions: [],
-            };
-          }
-          return { id };
-        },
-        updateFileMetadata: async () => ({ version: "2" }),
-        createPermission: async (
-          fileId: string,
-          permission: gapi.client.drive.Permission
-        ) => {
-          createdPermissions.push({ fileId, permission });
-          return { id: "new-permission-id" };
-        },
-      } as object as Partial<GoogleDriveClient>,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      googleDriveBoardServer: {
-        flushSaveQueue: async () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        create: async () => ({
-          result: true,
-          url: "drive:/shareable-copy-id",
-        }),
-        ops: {
-          writeGraphToDrive: async () => ({ result: true }),
-        },
-      },
+    // Create the main file
+    const mainFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "main-file.bgl.json", mimeType: "application/json" }
+    );
+
+    // Create unmanaged assets - not managed by the main file's owner
+    const unmanagedAsset = await googleDriveClient.createFile(
+      new Blob(["asset data"]),
+      { name: "unmanaged-asset.bin", mimeType: "application/octet-stream" }
+    );
+    fakeDriveApi.forceSetFileMetadata(unmanagedAsset.id, {
+      name: "My Unmanaged File",
+      iconLink: "https://example.com/icon.png",
+      capabilities: { canShare: true },
     });
-    ShareActions.bind({ controller, services });
-    const share = controller.editor.share;
+
+    const cantShareAsset = await googleDriveClient.createFile(
+      new Blob(["asset data"]),
+      { name: "cant-share-asset.bin", mimeType: "application/octet-stream" }
+    );
+    fakeDriveApi.forceSetFileMetadata(cantShareAsset.id, {
+      name: "Someone Elses File",
+      iconLink: "https://example.com/icon2.png",
+      capabilities: { canShare: false },
+    });
 
     // Graph with unmanaged assets (managed: false or undefined)
     const graph = {
       edges: [],
       nodes: [],
-      url: "drive:/test-drive-id",
+      url: `drive:/${mainFile.id}`,
       assets: {
         "asset-1": makeAsset(
-          "drive:/unmanaged-asset-id",
+          `drive:/${unmanagedAsset.id}`,
           false,
           "unmanaged-asset"
         ),
         "asset-2": makeAsset(
-          "drive:/cant-share-asset-id",
+          `drive:/${cantShareAsset.id}`,
           false,
           "cant-share-asset"
         ),
@@ -773,16 +636,16 @@ describe("Share Actions", () => {
       undefined
     );
 
-    // Wait a tick for the state to transition to unmanaged-assets
-    await new Promise((r) => setTimeout(r, 10));
-    assert.strictEqual(share.state.status, "unmanaged-assets");
+    // Wait for the state to transition to unmanaged-assets (polling to avoid race condition)
+    for (let i = 0; i < 100; i++) {
+      if (getState().status === "unmanaged-assets") break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    assert.strictEqual(getState().status, "unmanaged-assets");
 
     // Verify we have both problems - one missing, one cant-share
-    // Re-read state after assertion to get proper type narrowing
-    const unmanagedState = share.state as {
-      status: "unmanaged-assets";
-      problems: Array<{ asset: { id: string }; problem: string }>;
-    };
+    const unmanagedState = getState();
+    assert.strictEqual(unmanagedState.status, "unmanaged-assets");
     const missingProblem = unmanagedState.problems.find(
       (p) => p.problem === "missing"
     );
@@ -791,8 +654,8 @@ describe("Share Actions", () => {
     );
     assert.ok(missingProblem, "Should have a missing permission problem");
     assert.ok(cantShareProblem, "Should have a cant-share problem");
-    assert.strictEqual(missingProblem.asset.id, "unmanaged-asset-id");
-    assert.strictEqual(cantShareProblem.asset.id, "cant-share-asset-id");
+    assert.strictEqual(missingProblem.asset.id, unmanagedAsset.id);
+    assert.strictEqual(cantShareProblem.asset.id, cantShareAsset.id);
 
     // Fix the unmanaged asset problems
     await ShareActions.fixUnmanagedAssetProblems();
@@ -800,25 +663,31 @@ describe("Share Actions", () => {
     // Wait for publish to complete
     await publishPromise;
 
-    // Verify permission was created only on the shareable asset
-    const assetPermission = createdPermissions.find(
-      (p) => p.fileId === "unmanaged-asset-id"
+    // Verify permission was created on the shareable asset (state verification)
+    const unmanagedMeta = await googleDriveClient.getFileMetadata(
+      unmanagedAsset.id,
+      { fields: ["permissions"] }
+    );
+    const addedPerm = unmanagedMeta.permissions?.find(
+      (p) => p.type === "domain" && p.domain === "example.com"
     );
     assert.ok(
-      assetPermission,
-      "Unmanaged asset should have received permission"
+      addedPerm,
+      "Unmanaged asset should have received domain permission"
     );
-    assert.strictEqual(assetPermission.permission.type, "domain");
-    assert.strictEqual(assetPermission.permission.domain, "example.com");
 
-    // Verify cant-share asset did NOT receive any permissions
-    const cantSharePermission = createdPermissions.find(
-      (p) => p.fileId === "cant-share-asset-id"
+    // Verify cant-share asset still has no domain permissions
+    const cantShareMeta = await googleDriveClient.getFileMetadata(
+      cantShareAsset.id,
+      { fields: ["permissions"] }
+    );
+    const cantShareDomainPerm = cantShareMeta.permissions?.find(
+      (p) => p.type === "domain" && p.domain === "example.com"
     );
     assert.strictEqual(
-      cantSharePermission,
+      cantShareDomainPerm,
       undefined,
-      "Cant-share asset should NOT have received permission"
+      "Cant-share asset should NOT have received domain permission"
     );
   });
 });

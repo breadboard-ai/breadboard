@@ -10,9 +10,9 @@ import { getGenerateFunctionGroup } from "../../../src/a2/agent/functions/genera
 import { createTestArgs } from "./generate-test-utils.js";
 
 describe("getGenerateFunctionGroup", () => {
-  describe("constraint filtering", () => {
-    it("returns all functions when constraint='none'", () => {
-      const args = createTestArgs({ modelConstraint: "none" });
+  describe("function definitions", () => {
+    it("returns all six functions", () => {
+      const args = createTestArgs();
       const group = getGenerateFunctionGroup(args);
 
       const functionNames = group.definitions.map(([name]) => name);
@@ -41,61 +41,11 @@ describe("getGenerateFunctionGroup", () => {
         "Should include generate_and_execute_code"
       );
     });
-
-    it("returns only image function when constraint='image'", () => {
-      const args = createTestArgs({ modelConstraint: "image" });
-      const group = getGenerateFunctionGroup(args);
-
-      const functionNames = group.definitions.map(([name]) => name);
-      deepStrictEqual(functionNames, ["generate_images"]);
-    });
-
-    it("returns only video function when constraint='video'", () => {
-      const args = createTestArgs({ modelConstraint: "video" });
-      const group = getGenerateFunctionGroup(args);
-
-      const functionNames = group.definitions.map(([name]) => name);
-      deepStrictEqual(functionNames, ["generate_video"]);
-    });
-
-    it("returns only speech function when constraint='speech'", () => {
-      const args = createTestArgs({ modelConstraint: "speech" });
-      const group = getGenerateFunctionGroup(args);
-
-      const functionNames = group.definitions.map(([name]) => name);
-      deepStrictEqual(functionNames, ["generate_speech_from_text"]);
-    });
-
-    it("returns only music function when constraint='music'", () => {
-      const args = createTestArgs({ modelConstraint: "music" });
-      const group = getGenerateFunctionGroup(args);
-
-      const functionNames = group.definitions.map(([name]) => name);
-      deepStrictEqual(functionNames, ["generate_music_from_text"]);
-    });
-
-    it("returns all functions when constraint='text-flash'", () => {
-      const args = createTestArgs({ modelConstraint: "text-flash" });
-      const group = getGenerateFunctionGroup(args);
-
-      const functionNames = group.definitions.map(([name]) => name);
-      // text-flash falls through to default case which returns all
-      assert(functionNames.length === 6, "Should return all 6 functions");
-    });
-
-    it("returns all functions when constraint='text-pro'", () => {
-      const args = createTestArgs({ modelConstraint: "text-pro" });
-      const group = getGenerateFunctionGroup(args);
-
-      const functionNames = group.definitions.map(([name]) => name);
-      // text-pro falls through to default case which returns all
-      assert(functionNames.length === 6, "Should return all 6 functions");
-    });
   });
 
   describe("instruction", () => {
     it("includes instruction text in the group", () => {
-      const args = createTestArgs({ modelConstraint: "none" });
+      const args = createTestArgs();
       const group = getGenerateFunctionGroup(args);
 
       assert(group.instruction !== undefined, "Should have instruction");
@@ -112,7 +62,7 @@ describe("getGenerateFunctionGroup", () => {
 
   describe("declarations", () => {
     it("generates FunctionDeclarations for all functions", () => {
-      const args = createTestArgs({ modelConstraint: "none" });
+      const args = createTestArgs();
       const group = getGenerateFunctionGroup(args);
 
       deepStrictEqual(
@@ -123,7 +73,7 @@ describe("getGenerateFunctionGroup", () => {
     });
 
     it("each declaration has name and description", () => {
-      const args = createTestArgs({ modelConstraint: "none" });
+      const args = createTestArgs();
       const group = getGenerateFunctionGroup(args);
 
       for (const decl of group.declarations) {

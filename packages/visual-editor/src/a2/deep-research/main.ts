@@ -5,7 +5,6 @@ import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { executeOpalAdkStream } from "../a2/opal-adk-stream.js";
 import invokeGemini, {
   type GeminiInputs,
   type Tool,
@@ -15,6 +14,7 @@ import { ArgumentNameGenerator } from "../a2/introducer.js";
 import { report } from "../a2/output.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils.js";
+import { OpalAdkStream, DEEP_RESEARCH_KEY } from "../a2/opal-adk-stream.js";
 
 export { invoke as default, describe, makeDeepResearchInstruction };
 
@@ -124,7 +124,7 @@ function reportWriterPrompt(
 }
 
 async function thought(
-  caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
   response: LLMContent,
   iteration: number
 ) {
@@ -132,7 +132,7 @@ async function thought(
   if (!first || !("text" in first)) {
     return;
   }
-  await report(caps, {
+  await report(moduleArgs, {
     actor: "Researcher",
     category: `Progress report, iteration ${iteration + 1}`,
     name: "Thought",
@@ -161,11 +161,12 @@ async function invokeOpalAdk(
   if (!ok(substituting)) {
     return substituting;
   }
-
-  const results = await executeOpalAdkStream(caps, moduleArgs, [substituting], "deep_research");
+  const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
+  const results = await opalAdkStream
+    .executeOpalAdkStream(DEEP_RESEARCH_KEY, [substituting]);
   console.log("deep-research results", results)
   return {
-    context: [...(context || []), results]
+    context: [...(context || []), results],
   };
 }
 
@@ -174,7 +175,7 @@ async function invokeLegacy(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
-  console.log('calling deep research agent.')
+  console.log("calling deep research agent.");
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
   const toolManager = new ToolManager(
     caps,
@@ -219,7 +220,7 @@ async function invokeLegacy(
     if (!response) {
       return err("No actionable response");
     }
-    await thought(caps, response, i);
+    await thought(moduleArgs, response, i);
 
     const callingTools = await toolManager.callTools(response, true, []);
     if (!ok(callingTools)) return callingTools;
@@ -234,7 +235,7 @@ async function invokeLegacy(
     content = [...content, response, ...toolResponses.flat()];
   }
   if (research.length === 0) {
-    await report(caps, {
+    await report(moduleArgs, {
       actor: "Researcher",
       category: "Error",
       name: "Error",
@@ -274,9 +275,17 @@ async function invoke(
   const flags = await moduleArgs.context.flags?.flags();
   const opalAdkEnabled = flags?.opalAdk || false;
   if (opalAdkEnabled) {
-    return invokeOpalAdk({ context, query, summarize, ...params }, caps, moduleArgs);
+    return invokeOpalAdk(
+      { context, query, summarize, ...params },
+      caps,
+      moduleArgs
+    );
   } else {
-    return invokeLegacy({ context, query, summarize, ...params }, caps, moduleArgs);
+    return invokeLegacy(
+      { context, query, summarize, ...params },
+      caps,
+      moduleArgs
+    );
   }
 }
 

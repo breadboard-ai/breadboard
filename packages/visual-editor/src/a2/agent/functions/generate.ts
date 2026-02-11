@@ -13,6 +13,7 @@ import {
 import { ok } from "@breadboard-ai/utils";
 import z from "zod";
 import { GenerationConfig, Tool } from "../../a2/gemini.js";
+import { type ExecuteStepArgs } from "../../a2/step-executor.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { AgentFileSystem } from "../file-system.js";
 import {
@@ -34,6 +35,7 @@ import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup, Generators } from "../types.js";
 import { fileNameSchema, statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
+import { createReporter } from "../progress-work-item.js";
 
 export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
 
@@ -61,7 +63,6 @@ export type GenerateFunctionArgs = {
   caps: Capabilities;
   moduleArgs: A2ModuleArgs;
   translator: PidginTranslator;
-  modelConstraint: ModelConstraint;
   taskTreeManager: TaskTreeManager;
   generators: Generators;
 };
@@ -118,7 +119,6 @@ function defineGenerateFunctions(
     caps,
     moduleArgs,
     translator,
-    modelConstraint,
     taskTreeManager,
     generators,
   } = args;
@@ -126,6 +126,7 @@ function defineGenerateFunctions(
     {
       name: "generate_images",
       icon: "photo_spark",
+      title: "Generating Image(s)",
       description: `Generates one or more images based on a prompt and optionally, one or more images`,
       parameters: {
         prompt: z.string()
@@ -201,7 +202,8 @@ The Gemini model to use for image generation. How to choose the right model:
         file_name,
         task_id,
       },
-      statusUpdater
+      statusUpdater,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdater(status_update || "Generating Image(s)", {
@@ -214,9 +216,20 @@ The Gemini model to use for image generation. How to choose the right model:
       const modelName =
         model == "pro" ? IMAGE_PRO_MODEL_NAME : IMAGE_FLASH_MODEL_NAME;
 
+      // Use provided reporter if available, otherwise create one
+      const effectiveReporter =
+        reporter ??
+        createReporter(moduleArgs, {
+          title: `Generating Image(s)`,
+          icon: "photo_spark",
+        });
+      const args: ExecuteStepArgs = {
+        ...moduleArgs,
+        reporter: effectiveReporter,
+      };
       const generated = await generators.callImage(
         caps,
-        moduleArgs,
+        args,
         modelName,
         prompt,
         imageParts.map((part) => ({ parts: [part] })),
@@ -251,6 +264,7 @@ The Gemini model to use for image generation. How to choose the right model:
     {
       name: GENERATE_TEXT_FUNCTION,
       icon: "text_analysis",
+      title: "Generating Text",
       description: `
 An extremely versatile text generator, powered by Gemini. Use it for any tasks
 that involve generation of text. Supports multimodal content input.`.trim(),
@@ -421,6 +435,7 @@ Specify URLs in the prompt.
     {
       name: "generate_video",
       icon: "videocam_auto",
+      title: "Generating Video",
       description:
         "Generating high-fidelity, 8-second videos featuring stunning realism and natively generated audio",
       parameters: {
@@ -472,7 +487,8 @@ The following elements should be included in your prompt:
     },
     async (
       { prompt, status_update, aspect_ratio, images, file_name, task_id },
-      statusUpdateCallback
+      statusUpdateCallback,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Video", {
@@ -481,9 +497,19 @@ The following elements should be included in your prompt:
       const imageParts = await fileSystem.getMany(images || []);
       if (!ok(imageParts)) return { error: imageParts.$error };
 
+      const effectiveReporter =
+        reporter ??
+        createReporter(moduleArgs, {
+          title: `Generating Video`,
+          icon: "videocam_auto",
+        });
+      const args: ExecuteStepArgs = {
+        ...moduleArgs,
+        reporter: effectiveReporter,
+      };
       const generating = await generators.callVideo(
         caps,
-        moduleArgs,
+        args,
         prompt,
         imageParts.map((part) => ({ parts: [part] })),
         false,
@@ -510,6 +536,7 @@ The following elements should be included in your prompt:
     {
       name: "generate_speech_from_text",
       icon: "audio_magic_eraser",
+      title: "Generating Speech",
       description: "Generates speech from text",
       parameters: {
         text: z.string().describe("The verbatim text to turn into speech."),
@@ -536,18 +563,24 @@ The following elements should be included in your prompt:
     },
     async (
       { text, status_update, voice, file_name, task_id },
-      statusUpdateCallback
+      statusUpdateCallback,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Speech", {
         expectedDurationInSec: 20,
       });
-      const generating = await generators.callAudio(
-        caps,
-        moduleArgs,
-        text,
-        voice
-      );
+      const effectiveReporter =
+        reporter ??
+        createReporter(moduleArgs, {
+          title: `Generating Speech`,
+          icon: "audio_magic_eraser",
+        });
+      const args: ExecuteStepArgs = {
+        ...moduleArgs,
+        reporter: effectiveReporter,
+      };
+      const generating = await generators.callAudio(caps, args, text, voice);
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);
@@ -563,6 +596,7 @@ The following elements should be included in your prompt:
     {
       name: "generate_music_from_text",
       icon: "audio_magic_eraser",
+      title: "Generating Music",
       description: tr`
 Generates instrumental music and audio soundscapes based on the provided prompt.
 
@@ -602,13 +636,24 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
     },
     async (
       { prompt, status_update, file_name, task_id },
-      statusUpdateCallback
+      statusUpdateCallback,
+      reporter
     ) => {
       taskTreeManager.setInProgress(task_id, status_update);
       statusUpdateCallback(status_update || "Generating Music", {
         expectedDurationInSec: 30,
       });
-      const generating = await generators.callMusic(caps, moduleArgs, prompt);
+      const effectiveReporter =
+        reporter ??
+        createReporter(moduleArgs, {
+          title: `Generating Music`,
+          icon: "audio_magic_eraser",
+        });
+      const args: ExecuteStepArgs = {
+        ...moduleArgs,
+        reporter: effectiveReporter,
+      };
+      const generating = await generators.callMusic(caps, args, prompt);
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);
@@ -624,6 +669,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
     {
       name: GENERATE_AND_EXECUTE_CODE_FUNCTION,
       icon: "code",
+      title: "Generating and Executing Code",
       description: tr`
 Generates and executes Python code, returning the result of execution.
 
@@ -802,28 +848,14 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
     }
   );
 
-  switch (modelConstraint) {
-    case "image":
-      return [imageFunction];
-    case "video":
-      return [videoFunction];
-    case "speech":
-      return [speechFunction];
-    case "music":
-      return [musicFunction];
-    case "text-flash":
-    case "text-pro":
-    case "none":
-    default:
-      return [
-        imageFunction,
-        textFunction,
-        videoFunction,
-        speechFunction,
-        musicFunction,
-        codeFunction,
-      ];
-  }
+  return [
+    imageFunction,
+    textFunction,
+    videoFunction,
+    speechFunction,
+    musicFunction,
+    codeFunction,
+  ];
 }
 
 function resolveTextModel(model: "pro" | "lite" | "flash"): string {

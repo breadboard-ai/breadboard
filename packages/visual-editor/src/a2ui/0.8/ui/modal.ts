@@ -14,43 +14,58 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, query, state } from "lit/decorators.js";
 import { Root } from "./root.js";
-import { classMap } from "lit/directives/class-map.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
 import { ref } from "lit/directives/ref.js";
 
+/**
+ * Modal dialog component.
+ *
+ * Renders in two modes: (1) when closed, shows only the `entry` slot
+ * (the clickable trigger); (2) when open, renders a native `<dialog>` with
+ * `showModal()`. Clicking the backdrop or the close button dismisses it.
+ *
+ * The component uses the Lit `ref` directive to call `showModal()` after
+ * the `<dialog>` element is inserted into the DOM.
+ */
 @customElement("a2ui-modal")
 export class Modal extends Root {
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
       }
 
       dialog {
-        padding: 0 0 0 0;
+        padding: 0;
         border: none;
         background: none;
+      }
 
-        & section {
-          & #controls {
-            display: flex;
-            justify-content: end;
-            margin-bottom: 4px;
+      dialog::backdrop {
+        background-color: var(--a2ui-color-backdrop, oklch(0 0 0 / 0.2));
+      }
 
-            & button {
-              padding: 0;
-              background: none;
-              width: 20px;
-              height: 20px;
-              pointer: cursor;
-              border: none;
-              cursor: pointer;
-            }
+      dialog > section {
+        border-radius: var(--a2ui-modal-radius, var(--a2ui-border-radius));
+        background: var(--a2ui-modal-bg, var(--a2ui-color-surface));
+        padding: var(--a2ui-spacing-4);
+        border: var(--a2ui-border-width) solid
+          var(--a2ui-modal-border-color, var(--a2ui-color-border));
+
+        & #controls {
+          display: flex;
+          justify-content: end;
+          margin-bottom: 4px;
+
+          & button {
+            padding: 0;
+            background: none;
+            width: 20px;
+            height: 20px;
+            border: none;
+            cursor: pointer;
           }
         }
       }
@@ -87,7 +102,6 @@ export class Modal extends Root {
     }
 
     return html`<dialog
-      class=${classMap(this.theme.components.Modal.backdrop)}
       @click=${(evt: Event) => {
         // Only clicks on the background close the dialog.
         const [top] = evt.composedPath();
@@ -109,12 +123,7 @@ export class Modal extends Root {
         requestAnimationFrame(showModalIfNeeded);
       })}
     >
-      <section
-        class=${classMap(this.theme.components.Modal.element)}
-        style=${this.theme.additionalStyles?.Modal
-          ? styleMap(this.theme.additionalStyles?.Modal)
-          : nothing}
-      >
+      <section>
         <div id="controls">
           <button
             @click=${() => {

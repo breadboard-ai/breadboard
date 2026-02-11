@@ -17,23 +17,10 @@ import { llm, progressFromThought } from "../a2/utils.js";
 import { StatusUpdateCallbackOptions } from "./function-definition.js";
 import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
 import { ConsoleWorkItem } from "./console-work-item.js";
+import { ProgressReporter } from "./types.js";
+import { StreamingRequestBody } from "../a2/opal-adk-stream.js";
 
 export { ConsoleProgressManager };
-
-/**
- * Friendly names for functions that don't use statusUpdateSchema.
- * These names are used as fallback titles in the console progress UI.
- */
-const FUNCTION_FRIENDLY_NAMES: Record<string, string> = {
-  system_objective_fulfilled: "Returning final outcome",
-  system_failed_to_fulfill: "Unable to proceed",
-  system_write_file: "Writing to file",
-  system_read_text_from_file: "Reading from file",
-  system_create_task_tree: "Creating task tree",
-  system_mark_completed_tasks: "Marking tasks complete",
-  chat_request_user_input: "Asking the user",
-  memory_update_sheet: "Updating memory",
-};
 
 /**
  * Functions that should not create a work item because
@@ -63,6 +50,20 @@ function parseThought(text: string): ParsedThought {
 }
 
 /**
+ * Trim trailing ellipsis ("...") from a string.
+ */
+function trimEllipsis(text: string): string {
+  return text.replace(/\.{3}$/, "");
+}
+
+/**
+ * Convert a string to Title Case.
+ */
+function toTitleCase(text: string): string {
+  return text.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
  * Manages console progress updates for agent execution.
  * Creates individual WorkItems for each progress update and adds them to the
  * console entry. Also manages AppScreen updates for the app view.
@@ -73,6 +74,7 @@ class ConsoleProgressManager implements AgentProgressManager {
   #previousStatus: string | undefined;
   #agentSession: ConsoleWorkItem | undefined;
   #pendingCalls: Map<string, ConsoleWorkItem> = new Map();
+  #lastTimestamp: number = performance.now();
 
   constructor(
     consoleEntry: ConsoleEntry | undefined,
@@ -86,12 +88,18 @@ class ConsoleProgressManager implements AgentProgressManager {
     itemTitle: string,
     productTitle: string,
     icon: string,
-    body: LLMContent
+    body: LLMContent,
+    start?: number
   ) {
     if (!this.#consoleEntry) return;
 
     const update = { type: "text" as const, title: productTitle, icon, body };
-    const workItem = new ConsoleWorkItem(itemTitle, icon, update);
+    const workItem = new ConsoleWorkItem(
+      toTitleCase(itemTitle),
+      icon,
+      update,
+      start
+    );
     workItem.finish(); // Mark as done immediately
     this.#consoleEntry.work.set(crypto.randomUUID(), workItem);
   }
@@ -137,11 +145,19 @@ class ConsoleProgressManager implements AgentProgressManager {
     );
   }
 
+  sendOpalAdkRequest(model: string, body: StreamingRequestBody) {
+    this.sendRequestCommon(model, body as JsonSerializable);
+  }
+
   /**
    * The agent sent initial request.
    * Appends to the agent session WorkItem.
    */
   sendRequest(model: string, body: GeminiBody) {
+    this.sendRequestCommon(model, body as JsonSerializable);
+  }
+
+  private sendRequestCommon(model: string, body: JsonSerializable) {
     if (this.#agentSession) {
       this.#agentSession.addProduct({
         type: "text",
@@ -150,11 +166,12 @@ class ConsoleProgressManager implements AgentProgressManager {
         body: {
           parts: [
             { text: `Calling model: ${model}` },
-            { json: body as JsonSerializable },
+            { json: body },
           ],
         },
       });
     }
+    this.#lastTimestamp = performance.now();
   }
 
   /**
@@ -162,11 +179,14 @@ class ConsoleProgressManager implements AgentProgressManager {
    */
   thought(text: string) {
     const { title, body } = parseThought(text);
+    const start = this.#lastTimestamp;
+    this.#lastTimestamp = performance.now();
     this.#addWorkItem(
       title ?? "Thought",
       "Thought",
       "spark",
-      llm`${body}`.asContent()
+      llm`${body}`.asContent(),
+      start
     );
     if (this.#screen) {
       this.#previousStatus = this.#screen.progress;
@@ -177,34 +197,44 @@ class ConsoleProgressManager implements AgentProgressManager {
 
   /**
    * The agent produced a function call.
-   * Returns a unique ID for matching with the corresponding function result.
+   * Returns a unique ID for matching with the corresponding function result,
+   * and a reporter for progress updates scoped to this function call.
    */
-  functionCall(part: FunctionCallCapabilityPart, icon?: string): string {
+  functionCall(
+    part: FunctionCallCapabilityPart,
+    icon?: string,
+    title?: string
+  ): { callId: string; reporter: ProgressReporter | null } {
     const callId = crypto.randomUUID();
     // Skip work item for functions handled by other UI mechanisms
     if (SKIP_WORK_ITEM_FUNCTIONS.has(part.functionCall.name)) {
-      return callId;
+      return { callId, reporter: null };
     }
     const effectiveIcon = icon ?? "robot_server";
     if (this.#consoleEntry) {
       const args = part.functionCall.args as Record<string, unknown>;
       const statusUpdate =
         typeof args.status_update === "string" ? args.status_update : null;
-      const friendlyName = FUNCTION_FRIENDLY_NAMES[part.functionCall.name];
-      const itemTitle =
-        statusUpdate ?? friendlyName ?? `Function: ${part.functionCall.name}`;
+      const itemTitle = trimEllipsis(
+        statusUpdate ?? title ?? `Function: ${part.functionCall.name}`
+      );
       const update = {
         type: "text" as const,
         title: `Calling function "${part.functionCall.name}"`,
         icon: effectiveIcon,
         body: { parts: [part] },
       };
-      const workItem = new ConsoleWorkItem(itemTitle, effectiveIcon, update);
+      const workItem = new ConsoleWorkItem(
+        toTitleCase(itemTitle),
+        effectiveIcon,
+        update
+      );
       // Don't finish yet - will be finished when result arrives
       this.#pendingCalls.set(callId, workItem);
       this.#consoleEntry.work.set(callId, workItem);
+      return { callId, reporter: workItem };
     }
-    return callId;
+    return { callId, reporter: null };
   }
 
   /**
@@ -245,7 +275,7 @@ class ConsoleProgressManager implements AgentProgressManager {
         this.#screen.expectedDuration = -1;
       } else {
         // Remove the occasional ellipsis from the status
-        status = status.replace(/\.+$/, "");
+        status = trimEllipsis(status);
         if (options?.expectedDurationInSec) {
           this.#screen.expectedDuration = options.expectedDurationInSec;
         } else {

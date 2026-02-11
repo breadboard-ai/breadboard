@@ -5,19 +5,30 @@
  */
 
 import {
+  AssetPath,
   EditableGraph,
+  EditHistoryCreator,
   GraphChangeEvent,
   GraphChangeRejectEvent,
   GraphDescriptor,
   GraphIdentifier,
+  GraphTheme,
+  InspectableGraph,
   NodeConfiguration,
   NodeIdentifier,
   OutputValues,
 } from "@breadboard-ai/types";
+import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
+import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { Tab } from "../../../../../runtime/types.js";
-import { Tool } from "../../../../../ui/state/types.js";
+import {
+  Tool,
+  Component,
+  Components,
+  GraphAsset,
+} from "../../../../../ui/state/types.js";
 import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
 
 /**
@@ -31,12 +42,89 @@ export interface ConfigChangeContext {
   titleUserModified: boolean;
 }
 
+/**
+ * Pending graph replacement request.
+ * Set by actions (e.g., flowgen), consumed by the Graph.replaceWithTheme trigger.
+ */
+export interface PendingGraphReplacement {
+  /** The replacement graph (will be mutated to apply theme) */
+  replacement: GraphDescriptor;
+  /** Optional theme to apply to the graph */
+  theme?: GraphTheme;
+  /** Edit history creator info */
+  creator: EditHistoryCreator;
+}
+
+/**
+ * Tool definition for the "Go to" routing action.
+ * Only available when the graph has more than one node.
+ */
+const ROUTING_TOOL: Tool = {
+  url: "routing",
+  title: "Go to:",
+  icon: "spark",
+};
+
+/**
+ * Tool definition for the "Use Memory" action.
+ * Always available in agent mode.
+ */
+const MEMORY_TOOL: Tool = {
+  url: "use-memory",
+  title: "Use Memory",
+  icon: "database",
+};
+
+/**
+ * Tool definition for the "NotebookLM" action.
+ * Always available in agent mode.
+ */
+const NOTEBOOKLM_TOOL: Tool = {
+  url: "notebooklm",
+  title: "Use NotebookLM",
+  icon: notebookLmIcon,
+};
+
 export class GraphController extends RootController {
   /**
    * Static registry of A2 tools. These are environment-independent
    * and don't change based on graph content.
    */
   readonly tools: ReadonlyMap<string, Tool> = new Map(A2_TOOLS);
+
+  /**
+   * Dynamic tools derived from the graph's sub-graphs.
+   * Updated reactively when the graph topology changes.
+   */
+  @field({ deep: false })
+  private accessor _myTools: Map<string, Tool> = new Map();
+
+  get myTools(): ReadonlyMap<string, Tool> {
+    return this._myTools;
+  }
+
+  /**
+   * Agent mode tools (routing, memory) derived from graph state.
+   * Updated reactively when the graph topology changes.
+   */
+  @field({ deep: false })
+  private accessor _agentModeTools: Map<string, Tool> = new Map();
+
+  get agentModeTools(): ReadonlyMap<string, Tool> {
+    return this._agentModeTools;
+  }
+
+  /**
+   * Components (nodes) available in each graph, keyed by graph ID.
+   * Updated reactively when the graph topology changes.
+   * Uses async port/metadata fetching with signal propagation on resolve.
+   */
+  @field({ deep: false })
+  private accessor _components: Map<GraphIdentifier, Components> = new Map();
+
+  get components(): ReadonlyMap<GraphIdentifier, Components> {
+    return this._components;
+  }
 
   @field({ deep: false })
   private accessor _editor: EditableGraph | null = null;
@@ -64,6 +152,22 @@ export class GraphController extends RootController {
   @field()
   accessor readOnly = false;
 
+  /**
+   * The currently selected node ID for step editing.
+   * TODO: Remove this once SelectionController is fully wired up.
+   * At that point, fast-access.ts should read from SelectionController
+   * directly.
+   */
+  @field()
+  accessor selectedNodeId: NodeIdentifier | null = null;
+
+  /**
+   * The graph URL parsed as a URL object, or null if no URL.
+   */
+  get graphUrl(): URL | null {
+    return this.url ? new URL(this.url) : null;
+  }
+
   @field()
   accessor lastEditError: string | null = null;
 
@@ -75,11 +179,44 @@ export class GraphController extends RootController {
   accessor saveStatus: "saved" | "saving" | "unsaved" | "error" = "saved";
 
   /**
+   * Graph assets (files/documents attached to the graph).
+   * Updated reactively when the graph changes.
+   */
+  @field({ deep: false })
+  private accessor _graphAssets: Map<AssetPath, GraphAsset> = new Map();
+
+  get graphAssets(): Map<AssetPath, GraphAsset> {
+    return this._graphAssets;
+  }
+
+  /**
+   * Sets the graph assets. Called by the Asset.syncFromGraph action.
+   */
+  setGraphAssets(assets: Map<AssetPath, GraphAsset>) {
+    this._graphAssets = assets;
+  }
+
+  /**
    * Tracks the most recent node configuration change.
    * Set by the changeNodeConfiguration action, consumed by the autoname trigger.
    */
   @field({ deep: true })
   accessor lastNodeConfigChange: ConfigChangeContext | null = null;
+
+  /**
+   * Pending graph replacement request.
+   * Set by actions (e.g., flowgen), consumed by the replaceWithTheme trigger.
+   * Contains all options needed to perform the replacement.
+   */
+  @field({ deep: false })
+  accessor pendingGraphReplacement: PendingGraphReplacement | null = null;
+
+  /**
+   * Clears the pending graph replacement after processing.
+   */
+  clearPendingGraphReplacement() {
+    this.pendingGraphReplacement = null;
+  }
 
   /**
    * Here for migrations.
@@ -144,6 +281,14 @@ export class GraphController extends RootController {
     this._title = this._graph?.title ?? null;
     this.lastEditError = null;
 
+    // Note: version is set by initializeEditor, not here
+
+    // Initialize derived data from the new graph
+    this.#updateMyTools();
+    this.#updateAgentModeTools();
+    this.#updateComponents();
+    // Note: graphAssets sync is handled by Asset.syncFromGraph action
+
     if (!this._editor) return;
     this._editor.addEventListener("graphchange", this.#onGraphChangeBound);
     this._editor.addEventListener(
@@ -158,6 +303,14 @@ export class GraphController extends RootController {
     this._title = evt.graph?.title ?? null;
     this.lastEditError = null;
     this.version++;
+
+    // Skip derived tools update on visual-only changes (e.g., node movement)
+    if (evt.visualOnly) return;
+
+    this.#updateMyTools();
+    this.#updateAgentModeTools();
+    this.#updateComponents();
+    // Note: graphAssets sync is handled by Asset.syncFromGraph action
   }
 
   #onGraphChangeRejectBound = this.#onGraphChangeReject.bind(this);
@@ -211,5 +364,137 @@ export class GraphController extends RootController {
     this.lastLoadedVersion = 0;
     this.lastNodeConfigChange = null;
     this.finalOutputValues = undefined;
+    this._myTools = new Map();
+    this._agentModeTools = new Map();
+    this._components = new Map();
+  }
+
+  /**
+   * Rebuilds myTools from the graph's sub-graphs.
+   * Each sub-graph becomes a tool entry keyed by its URL fragment.
+   * Uses wholesale Map replacement to trigger @field reactivity.
+   */
+  #updateMyTools() {
+    this._myTools = new Map(
+      Object.entries(this._graph?.graphs || {}).map<[string, Tool]>(
+        ([graphId, descriptor]) => {
+          const url = `#${graphId}`;
+          return [
+            url,
+            {
+              url,
+              title: descriptor.title || "Untitled Tool",
+              description: descriptor.description,
+              order: Number.MAX_SAFE_INTEGER,
+              icon: "tool",
+            },
+          ];
+        }
+      )
+    );
+  }
+
+  /**
+   * Rebuilds agentModeTools based on graph state.
+   * - ROUTING_TOOL: Only included when graph has >1 node
+   * - MEMORY_TOOL: Always included
+   * - NOTEBOOKLM_TOOL: Always included
+   * Uses wholesale Map replacement to trigger @field reactivity.
+   */
+  #updateAgentModeTools() {
+    const tools: [string, Tool][] = [];
+    if ((this._graph?.nodes?.length ?? 0) > 1) {
+      tools.push([`control-flow/routing`, ROUTING_TOOL]);
+    }
+    tools.push([`function-group/use-memory`, MEMORY_TOOL]);
+    tools.push([NOTEBOOKLM_TOOL_PATH, NOTEBOOKLM_TOOL]);
+    this._agentModeTools = new Map(tools);
+  }
+
+  /**
+   * Rebuilds components from inspectable graph nodes.
+   * Iterates all graphs (main + sub-graphs) and derives component info.
+   * Uses async port/metadata fetching with wholesale Map replacement on resolve.
+   * Includes a version guard to prevent stale async updates from overwriting
+   * fresher data when multiple updates overlap.
+   */
+  #componentsUpdateGeneration = 0;
+  #updateComponents() {
+    if (!this._editor) {
+      this._components = new Map();
+      return;
+    }
+
+    // Increment generation to track this update cycle
+    const currentGeneration = ++this.#componentsUpdateGeneration;
+
+    const inspectable = this._editor.inspect("");
+    const graphs: [GraphIdentifier, InspectableGraph][] = Object.entries(
+      inspectable.graphs() || {}
+    );
+    graphs.push(["", inspectable]);
+
+    for (const [graphId, graphInspectable] of graphs) {
+      const nodeValues: Promise<[string, Component]>[] = [];
+
+      for (const node of graphInspectable.nodes()) {
+        const ports = node.currentPorts();
+        const metadata = node.currentDescribe()?.metadata ?? {};
+        const { tags } = metadata;
+
+        // If we already know the tags and ports, just use them.
+        if (tags && !ports.updating) {
+          nodeValues.push(
+            Promise.resolve([
+              node.descriptor.id,
+              {
+                id: node.descriptor.id,
+                title: node.title(),
+                description: node.description(),
+                ports,
+                metadata,
+              },
+            ])
+          );
+          continue;
+        }
+
+        // ... but if there aren't tags or the ports are updating, try using
+        // the full `describe()` instead.
+        nodeValues.push(
+          Promise.all([node.ports(), node.describe()]).then(
+            ([ports, description]) => {
+              return [
+                node.descriptor.id,
+                {
+                  id: node.descriptor.id,
+                  title: node.title(),
+                  description: node.description(),
+                  ports,
+                  metadata: description.metadata ?? {},
+                },
+              ];
+            }
+          )
+        );
+      }
+
+      // When all node values resolve, update the components for this graph
+      // Guard against stale updates - only apply if we're still in the same update cycle
+      Promise.all(nodeValues).then((nodes) => {
+        if (currentGeneration !== this.#componentsUpdateGeneration) {
+          return; // A newer update is in progress, discard this stale result
+        }
+        const graphComponents = new Map<NodeIdentifier, Component>(nodes);
+        // Create a new Map to trigger reactivity
+        this._components = new Map([
+          ...this._components,
+          [graphId, graphComponents],
+        ]);
+      });
+    }
+
+    // Initialize with empty maps for each graph (will be updated when promises resolve)
+    this._components = new Map(graphs.map(([graphId]) => [graphId, new Map()]));
   }
 }

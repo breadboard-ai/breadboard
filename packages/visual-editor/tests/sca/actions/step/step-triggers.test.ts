@@ -32,7 +32,11 @@ suite("Step Triggers", () => {
       const trigger = onSelectionOrSidebarChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, false, "Should return false when no pending edits");
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when no pending edits"
+      );
     });
 
     test("returns true when pendingEdit exists", () => {
@@ -64,7 +68,11 @@ suite("Step Triggers", () => {
       const trigger = onSelectionOrSidebarChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true when pendingEdit exists");
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true when pendingEdit exists"
+      );
     });
 
     test("returns true when pendingAssetEdit exists", () => {
@@ -96,7 +104,11 @@ suite("Step Triggers", () => {
       const trigger = onSelectionOrSidebarChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true when pendingAssetEdit exists");
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true when pendingAssetEdit exists"
+      );
     });
 
     test("returns true when both edits exist", () => {
@@ -134,7 +146,11 @@ suite("Step Triggers", () => {
       const trigger = onSelectionOrSidebarChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true when both edits exist");
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true when both edits exist"
+      );
     });
 
     test("has correct trigger name", () => {
@@ -189,7 +205,11 @@ suite("Step Triggers", () => {
 
       // Second call should return true
       const result = trigger.condition();
-      assert.strictEqual(result, true, "Should return true after pending edit added");
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true after pending edit added"
+      );
     });
   });
 });

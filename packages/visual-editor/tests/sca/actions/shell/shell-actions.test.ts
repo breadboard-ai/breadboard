@@ -101,8 +101,11 @@ suite("Shell Actions", () => {
       // Title should not include separator when no graph title (just suffix)
       assert.ok(capturedTitle.length > 0, "Title should be set");
       // When title is empty, it should just be the suffix
-      assert.ok(!capturedTitle.includes(" - ") || capturedTitle.startsWith(" - ") === false,
-        "Title should not have graph title prefix");
+      assert.ok(
+        !capturedTitle.includes(" - ") ||
+          capturedTitle.startsWith(" - ") === false,
+        "Title should not have graph title prefix"
+      );
     });
 
     test("trims whitespace from graph title", async () => {

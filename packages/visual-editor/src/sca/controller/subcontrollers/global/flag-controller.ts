@@ -57,6 +57,9 @@ export class FlagController
   @field({ persist: "idb" })
   private accessor _streamPlanner: boolean | null = null;
 
+  @field({ persist: "idb" })
+  private accessor _enableNotebookLm: boolean | null = null;
+
   get agentMode() {
     if (this._agentMode === null)
       throw new Error("agentMode was not set by environment");
@@ -148,6 +151,12 @@ export class FlagController
     if (this._streamPlanner === null)
       throw new Error("streamPlanner was not set by environment");
     return this._streamPlanner;
+  }
+
+  get enableNotebookLm() {
+    if (this._enableNotebookLm === null)
+      throw new Error("enableNotebookLm was not set by environment");
+    return this._enableNotebookLm;
   }
 
   @field({ persist: "local" })
@@ -266,6 +275,12 @@ export class FlagController
         this._enableResumeAgentRun = value;
         return;
       }
+
+      case "enableNotebookLm": {
+        if (onlyIfNull && this._enableNotebookLm !== null) return;
+        this._enableNotebookLm = value;
+        return;
+      }
     }
   }
 
@@ -313,6 +328,7 @@ export class FlagController
       this.#set("streamGenWebpage", env.streamGenWebpage, onlyIfNull);
       this.#set("streamPlanner", env.streamPlanner, onlyIfNull);
       this.#set("enableResumeAgentRun", env.enableResumeAgentRun, onlyIfNull);
+      this.#set("enableNotebookLm", env.enableNotebookLm, onlyIfNull);
     });
   }
 

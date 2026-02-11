@@ -10,7 +10,6 @@ import * as Board from "../../../../src/sca/actions/board/board-actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
 import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
-import { testKit } from "../../../test-kit.js";
 import { SnackType } from "../../../../src/ui/types/types.js";
 import {
   makeFreshGraph,
@@ -56,7 +55,7 @@ suite("Board Actions", () => {
 
     suite("programming errors", () => {
       test("throws when no editor", async () => {
-        const graphStore = makeTestGraphStore({ kits: [testKit] });
+        const graphStore = makeTestGraphStore();
 
         const { controller } = makeMockController({
           editor: null,
@@ -80,7 +79,7 @@ suite("Board Actions", () => {
 
     suite("guard conditions (silent return)", () => {
       test("returns undefined when no URL", async () => {
-        const graphStore = makeTestGraphStore({ kits: [testKit] });
+        const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         const editor = graphStore.editByDescriptor(testGraph);
 
@@ -103,7 +102,7 @@ suite("Board Actions", () => {
       });
 
       test("returns undefined when readOnly", async () => {
-        const graphStore = makeTestGraphStore({ kits: [testKit] });
+        const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         const editor = graphStore.editByDescriptor(testGraph);
 
@@ -126,7 +125,7 @@ suite("Board Actions", () => {
       });
 
       test("returns undefined when board server cannot save", async () => {
-        const graphStore = makeTestGraphStore({ kits: [testKit] });
+        const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         const editor = graphStore.editByDescriptor(testGraph);
 
@@ -151,7 +150,7 @@ suite("Board Actions", () => {
 
     suite("successful save", () => {
       test("calls board server save with graph", async () => {
-        const graphStore = makeTestGraphStore({ kits: [testKit] });
+        const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         const editor = graphStore.editByDescriptor(testGraph);
 
@@ -179,7 +178,7 @@ suite("Board Actions", () => {
       });
 
       test("shows snackbar for user-initiated save", async () => {
-        const graphStore = makeTestGraphStore({ kits: [testKit] });
+        const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         const editor = graphStore.editByDescriptor(testGraph);
 
@@ -211,7 +210,7 @@ suite("Board Actions", () => {
 
     suite("error handling", () => {
       test("returns error result when save throws", async () => {
-        const graphStore = makeTestGraphStore({ kits: [testKit] });
+        const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         const editor = graphStore.editByDescriptor(testGraph);
 
@@ -245,7 +244,7 @@ suite("Board Actions", () => {
     const boardActions = Board;
 
     test("creates new board and returns URL", async () => {
-      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const graphStore = makeTestGraphStore();
       const testGraph = makeFreshGraph();
 
       const mockBoardServer = makeMockBoardServer({
@@ -281,7 +280,7 @@ suite("Board Actions", () => {
     });
 
     test("returns fail when create returns no URL", async () => {
-      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const graphStore = makeTestGraphStore();
       const testGraph = makeFreshGraph();
 
       const mockBoardServer = makeMockBoardServer({});
@@ -326,7 +325,7 @@ suite("Board Actions", () => {
     const boardActions = Board;
 
     test("deletes board and shows snackbar", async () => {
-      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const graphStore = makeTestGraphStore();
 
       const mockBoardServer = makeMockBoardServer({});
       const { controller, mockSnackbars } = makeMockController({
@@ -374,7 +373,7 @@ suite("Board Actions", () => {
     };
 
     test("remixes editor graph when URL matches and returns new URL", async () => {
-      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const graphStore = makeTestGraphStore();
       const testGraph = makeFreshGraph();
       testGraph.title = "My Board";
 
@@ -458,7 +457,7 @@ suite("Board Actions", () => {
     });
 
     test("returns save-failed when saveAs fails", async () => {
-      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const graphStore = makeTestGraphStore();
       const testGraph = makeFreshGraph();
       testGraph.title = "My Board";
 
@@ -505,7 +504,7 @@ suite("Board Actions", () => {
     const boardActions = Board;
 
     test("returns invalid-url for empty URL", async () => {
-      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const graphStore = makeTestGraphStore();
 
       const mockBoardServer = makeMockBoardServer({});
       const { controller } = makeMockController({
@@ -557,7 +556,7 @@ suite("Board Actions", () => {
     const boardActions = Board;
 
     test("resets graph controller and sets loadState to Home", () => {
-      const graphStore = makeTestGraphStore({ kits: [testKit] });
+      const graphStore = makeTestGraphStore();
 
       let resetAllCalled = false;
       let loadStateSet: string | null = null;
@@ -724,7 +723,11 @@ suite("Board Actions", () => {
         status: "debouncing",
       } as unknown as Event);
 
-      assert.strictEqual(capturedStatus, "unsaved", "Status should be 'unsaved'");
+      assert.strictEqual(
+        capturedStatus,
+        "unsaved",
+        "Status should be 'unsaved'"
+      );
     });
 
     test("ignores event when URL does not match current graph", async () => {
@@ -751,7 +754,11 @@ suite("Board Actions", () => {
         status: "saving",
       } as unknown as Event);
 
-      assert.strictEqual(statusSetCount, 0, "Status should not be set for different URL");
+      assert.strictEqual(
+        statusSetCount,
+        0,
+        "Status should not be set for different URL"
+      );
     });
 
     test("returns early when event is undefined", async () => {
@@ -775,7 +782,11 @@ suite("Board Actions", () => {
 
       await Board.handleSaveStatus(undefined);
 
-      assert.strictEqual(statusSetCount, 0, "Status should not be set when event is undefined");
+      assert.strictEqual(
+        statusSetCount,
+        0,
+        "Status should not be set when event is undefined"
+      );
     });
   });
 });

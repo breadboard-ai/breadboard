@@ -40,6 +40,7 @@ import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { scaContext } from "./sca/context/context.js";
 import { sca, type SCA } from "./sca/sca.js";
 import { RuntimeConfig } from "./runtime/types.js";
+import { getLogger, Formatter } from "./sca/utils/logging/logger.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -119,7 +120,14 @@ export class LiteHome extends SignalWatcher(LitElement) {
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: opalShell.fetchWithCreds,
-      isTestApi: !!mainArgs.guestConfiguration.isTestApi,
+      log(level, ...args) {
+        const logger = getLogger();
+        const msg =
+          level === "warning"
+            ? Formatter.warning(...args)
+            : Formatter.verbose(...args);
+        logger.log(msg, "Google Drive");
+      },
     });
     const googleDrivePublishPermissions =
       this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];

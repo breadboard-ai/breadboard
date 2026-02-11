@@ -3,11 +3,17 @@
  */
 
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
-import type { ContentMap, ExecuteStepRequest } from "./step-executor.js";
+import type {
+  ContentMap,
+  ExecuteStepRequest,
+  ExecuteStepArgs,
+} from "./step-executor.js";
 import { executeStep } from "./step-executor.js";
 import { executeWebpageStream } from "./generate-webpage-stream.js";
 import { encodeBase64, err, mergeContent, ok } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
+import { isInlineData } from "../../data/common.js";
 
 export { callGenWebpage };
 
@@ -95,7 +101,12 @@ async function callGenWebpageLegacy(
   // TODO(askerryryan): Remove once functional.
   console.log("request body");
   console.log(body);
-  const response = await executeStep(caps, moduleArgs, body, {
+  const reporter = createReporter(moduleArgs, {
+    title: `Calling generate_webpage`,
+    icon: "spark",
+  });
+  const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+  const response = await executeStep(caps, args, body, {
     expectedDurationInSec: 70,
   });
   if (!ok(response)) {
@@ -124,6 +135,16 @@ async function callGenWebpage(
   renderMode: string,
   modelName: string
 ): Promise<Outcome<LLMContent>> {
+  // If the content already contains HTML inlineData, pass it through
+  // without invoking webpage generation.
+  for (const item of content) {
+    for (const part of item.parts) {
+      if (isInlineData(part) && part.inlineData.mimeType === "text/html") {
+        return { role: "model", parts: [part] };
+      }
+    }
+  }
+
   const flags = await moduleArgs.context.flags?.flags();
   const useStreaming = flags?.streamGenWebpage ?? false;
 

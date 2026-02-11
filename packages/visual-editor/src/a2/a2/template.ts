@@ -6,7 +6,6 @@ export { invoke as default, describe, Template };
 
 import type { Params } from "./common.js";
 import { ok, err, isLLMContent, isLLMContentArray } from "./utils.js";
-import { ConnectorManager } from "./connector-manager.js";
 import type {
   Capabilities,
   DataPart,
@@ -43,6 +42,7 @@ export type AssetParamPart = {
   type: "asset";
   path: string;
   title: string;
+  mimeType?: string;
 };
 
 export type ParameterParamPart = {
@@ -189,7 +189,7 @@ class Template {
   async #replaceParam(
     param: ParamPart,
     params: Params,
-    whenTool: ToolCallback
+    whenTool?: ToolCallback
   ): Promise<Outcome<unknown>> {
     if (isIn(param)) {
       const { title: name, path } = param;
@@ -199,11 +199,8 @@ class Template {
       }
       return name;
     } else if (isAsset(param)) {
-      if (ConnectorManager.isConnector(param)) {
-        return new ConnectorManager(this.caps, param).materialize();
-      }
       return this.loadAsset(param);
-    } else if (isTool(param)) {
+    } else if (whenTool && isTool(param)) {
       const substituted = await whenTool(param);
       if (!ok(substituted)) return substituted;
       return substituted || param.title;
@@ -284,7 +281,7 @@ class Template {
 
   async substitute(
     params: Params,
-    whenTool: ToolCallback
+    whenTool?: ToolCallback
   ): Promise<Outcome<LLMContent>> {
     const replaced: DataPart[] = [];
     for (const part of this.#parts) {
@@ -376,49 +373,6 @@ class Template {
       path: ROUTE_TOOL_PATH,
       instance,
     });
-  }
-
-  /**
-   * This is roughly the same method as `schemas`, but for connectors.
-   * TODO: UNIFY
-   */
-  async schemaProperties(): Promise<Record<string, Schema>> {
-    let result: Record<string, Schema> = {};
-    for (const part of this.#parts) {
-      if (!("type" in part)) continue;
-      if (!isAsset(part)) continue;
-      if (!ConnectorManager.isConnector(part)) continue;
-      const props = await new ConnectorManager(
-        this.caps,
-        part
-      ).schemaProperties();
-      result = { ...result, ...props };
-    }
-    return result;
-  }
-
-  async save(
-    context?: LLMContent[],
-    options?: Record<string, unknown>
-  ): Promise<Outcome<void>> {
-    if (!context) return;
-
-    const errors: string[] = [];
-    for (const part of this.#parts) {
-      if (!("type" in part)) continue;
-      if (!isAsset(part)) continue;
-      if (!ConnectorManager.isConnector(part)) continue;
-      const saving = await new ConnectorManager(this.caps, part).save(
-        context,
-        options || {}
-      );
-      if (!ok(saving)) {
-        errors.push((saving as { $error: string }).$error);
-      }
-    }
-    if (errors.length > 0) {
-      return err(errors.join("\n"));
-    }
   }
 }
 

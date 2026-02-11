@@ -19,19 +19,6 @@ import { type ConsentController } from "../src/sca/controller/subcontrollers/glo
 export { stubCaps, stubModuleArgs, stubMemoryManager };
 
 const stubCaps: Capabilities = {
-  invoke() {
-    throw new Error(`Not implemented`);
-  },
-  input() {
-    throw new Error(`Not implemented`);
-  },
-  async output(data) {
-    console.log(data.$metadata?.title);
-    return { delivered: true };
-  },
-  describe() {
-    throw new Error(`Not implemented`);
-  },
   query() {
     throw new Error(`Not implemented`);
   },
@@ -63,6 +50,7 @@ const stubModuleArgs: A2ModuleArgs = {
       },
     } as Partial<ConsentController> as ConsentController;
   },
+  notebookLmApiClient: {} as never,
 };
 
 const stubMemoryManager: MemoryManager = {

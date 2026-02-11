@@ -22,6 +22,8 @@ import { GENERATE_TEXT_FUNCTION } from "./functions/generate.js";
 export { AgentFileSystem };
 
 const KNOWN_TYPES = ["audio", "video", "image", "text"];
+const DEFAULT_EXTENSION = "txt";
+const DEFAULT_MIME_TYPE = "text/plain";
 
 export type AddFilesToProjectResult = {
   existing: string[];
@@ -63,15 +65,19 @@ class AgentFileSystem {
     this.systemFiles.set(path, getter);
   }
 
-  overwrite(name: string, data: string, mimeType: string): string {
-    const path = this.#createNamed(name, mimeType, false);
+  overwrite(name: string, data: string): string {
+    const { path, mimeType } = this.#createNamed(name, false);
     this.#files.set(path, { data, mimeType, type: "text" });
     return path;
   }
 
-  write(name: string, data: string, mimeType: string): string {
-    const path = this.#createNamed(name, mimeType, true);
-    this.#files.set(path, { data, mimeType, type: "text" });
+  write(name: string, data: string): string {
+    const { path, mimeType } = this.#createNamed(name, true);
+    if (mimeType === "text/html") {
+      this.#files.set(path, { data, mimeType, type: "inlineData" });
+    } else {
+      this.#files.set(path, { data, mimeType, type: "text" });
+    }
     return path;
   }
 
@@ -278,8 +284,13 @@ class AgentFileSystem {
   add(part: DataPart, fileName?: string): Outcome<string> {
     const create = (mimeType: string) => {
       if (fileName) {
-        const withoutExtension = fileName.replace(/\.[^/.]+$/, "");
-        return this.#createNamed(withoutExtension, mimeType, true);
+        // If the fileName has no extension, derive one from the mimeType
+        // to avoid defaulting to .txt for non-text content.
+        const hasExtension = fileName.includes(".");
+        const name = hasExtension
+          ? fileName
+          : `${fileName}.${mime.getExtension(mimeType) || DEFAULT_EXTENSION}`;
+        return this.#createNamed(name, true).path;
       }
       return this.create(mimeType);
     };
@@ -341,21 +352,16 @@ class AgentFileSystem {
 
   #createNamed(
     name: string,
-    mimeType: string,
     overwriteWarning: boolean
-  ): string {
-    let filename;
-    if (name.includes(".")) {
-      filename = name;
-    } else {
-      const ext = mime.getExtension(mimeType);
-      filename = `${name}.${ext}`;
-    }
+  ): { path: string; mimeType: string } {
+    const ext = name.includes(".") ? name.split(".").pop() : undefined;
+    const mimeType = (ext && mime.getType(ext)) || DEFAULT_MIME_TYPE;
+    const filename = ext ? name : `${name}.${DEFAULT_EXTENSION}`;
     const path = `/mnt/${filename}`;
     if (overwriteWarning && this.#files.has(path)) {
       console.warn(`File "${path}" already exists, will be overwritten`);
     }
-    return path;
+    return { path, mimeType };
   }
 
   create(mimeType: string) {

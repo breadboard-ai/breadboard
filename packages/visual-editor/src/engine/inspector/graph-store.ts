@@ -18,7 +18,6 @@ import type {
   GraphStoreEventTarget,
   InspectableDescriberResultTypeCache,
   InspectableGraph,
-  Kit,
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
@@ -41,7 +40,6 @@ export { contextFromMutableGraph, contextFromMutableGraphStore, GraphStore };
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
   const store = mutable.store;
   return {
-    kits: [...store.kits],
     loader: store.loader,
     sandbox: store.sandbox,
     graphStore: store,
@@ -53,7 +51,6 @@ function contextFromMutableGraphStore(
   store: MutableGraphStore
 ): NodeHandlerContext {
   return {
-    kits: [...store.kits],
     loader: store.loader,
     sandbox: store.sandbox,
     graphStore: store,
@@ -64,7 +61,6 @@ class GraphStore
   extends (EventTarget as GraphStoreEventTarget)
   implements MutableGraphStore
 {
-  readonly kits: readonly Kit[];
   readonly sandbox: RunnableModuleFactory;
   readonly loader: GraphLoader;
   readonly fileSystem: FileSystem;
@@ -87,7 +83,6 @@ class GraphStore
 
   constructor(args: GraphStoreArgs) {
     super();
-    this.kits = args.kits;
     this.sandbox = args.sandbox;
     this.loader = args.loader;
     this.fileSystem = args.fileSystem;

@@ -5,11 +5,14 @@
  */
 
 import { AssetPath, InspectableAsset, LLMContent } from "@breadboard-ai/types";
-import { css, html, nothing, PropertyValues } from "lit";
+import { consume } from "@lit/context";
+import { SignalWatcher } from "@lit-labs/signals";
+import { css, html, HTMLTemplateResult, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
+import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { DragConnectorStartEvent } from "../../events/events.js";
 import { GraphAsset as GraphAssetState } from "../../state/types.js";
@@ -24,9 +27,13 @@ import {
 } from "./events/events.js";
 import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { toGridSize } from "./utils/to-grid-size.js";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SCA } from "../../../sca/sca.js";
 
 @customElement("bb-graph-asset")
-export class GraphAsset extends Box implements DragConnectorReceiver
+export class GraphAsset
+  extends SignalWatcher(Box)
+  implements DragConnectorReceiver
 {
   @property()
   accessor ownerGraph = "";
@@ -57,6 +64,9 @@ export class GraphAsset extends Box implements DragConnectorReceiver
 
   @property()
   accessor state: GraphAssetState | null = null;
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = [
     type,
@@ -342,7 +352,7 @@ export class GraphAsset extends Box implements DragConnectorReceiver
       transform: toCSSMatrix(this.worldTransform, this.force2D),
     };
 
-    let icon = "text_fields";
+    let icon: string | HTMLTemplateResult = "text_fields";
     if (this.asset?.type === "file") {
       icon = "upload";
     }
@@ -357,6 +367,9 @@ export class GraphAsset extends Box implements DragConnectorReceiver
           break;
         case "gdrive":
           icon = "drive";
+          break;
+        case "notebooklm":
+          icon = notebookLmIcon;
           break;
       }
     }
@@ -478,7 +491,7 @@ export class GraphAsset extends Box implements DragConnectorReceiver
           ${this.updating
             ? html`<p class="loading">Loading asset details...</p>`
             : nothing}
-          ${html`<div id="content-container">
+          <div id="content-container">
             <bb-llm-output
               @outputsloaded=${() => {
                 this.updating = false;
@@ -492,7 +505,7 @@ export class GraphAsset extends Box implements DragConnectorReceiver
               .showExportControls=${false}
               .graphUrl=${this.graphUrl}
             ></bb-llm-output>
-          </div>`}
+          </div>
         </div>
       </section>
 

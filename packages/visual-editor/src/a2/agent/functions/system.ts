@@ -37,7 +37,7 @@ export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
   translator: PidginTranslator;
   taskTreeManager: TaskTreeManager;
-  successCallback(href: string, pidginString: string): Outcome<void>;
+  successCallback(href: string, pidginString: string): Promise<Outcome<void>>;
   failureCallback(message: string): void;
 };
 
@@ -217,6 +217,7 @@ function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
     defineFunction(
       {
         name: OBJECTIVE_FULFILLED_FUNCTION,
+        title: "Returning final outcome",
         icon: "check_circle",
         description: `Inidicates completion of the overall objective. 
 Call only when the specified objective is entirely fulfilled`,
@@ -250,7 +251,10 @@ If the objective specifies other agent URLs using the
         },
       },
       async ({ objective_outcome, href }) => {
-        const result = args.successCallback(href || "/", objective_outcome);
+        const result = await args.successCallback(
+          href || "/",
+          objective_outcome
+        );
         if (!ok(result)) {
           return { error: result.$error };
         }
@@ -260,6 +264,7 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: FAILED_TO_FULFILL_FUNCTION,
+        title: "Unable to proceed",
         icon: "cancel",
         description: `Inidicates that the agent failed to fulfill of the overall
 objective. Call ONLY when all means of fulfilling the objective have been
@@ -309,22 +314,18 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: "system_write_file",
+        title: "Writing to file",
         icon: "edit",
         description: "Writes the provided text to a file",
         parameters: {
           file_name: z.string().describe(
             tr`
-The name of the file without the extension.
+The name of the file with the extension.
 This is the name that will come after the "/mnt/" prefix in the file path.
-Use snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten`
+Use snake_case for naming. If the file does not exist, it will be created. If the file already exists, its content will be overwritten.
+Examples: "report.md", "data.csv", "notes.txt", "config.json", "index.html"`
           ),
           content: z.string().describe(`The content to write into a file`),
-          mime_type: z
-            .string()
-            .describe(
-              `The text MIME type of the content, such as "text/plain", "application/json", "text/csv", etc.`
-            )
-            .default("text/plain"),
         },
         response: {
           file_path: z
@@ -337,7 +338,7 @@ Use snake_case for naming. If the file does not exist, it will be created. If th
             .optional(),
         },
       },
-      async ({ file_name, content, mime_type }) => {
+      async ({ file_name, content }) => {
         const translatedContent =
           await args.translator.fromPidginString(content);
         if (!ok(translatedContent)) {
@@ -345,8 +346,7 @@ Use snake_case for naming. If the file does not exist, it will be created. If th
         }
         const file_path = args.fileSystem.write(
           file_name,
-          toText(translatedContent),
-          mime_type
+          toText(translatedContent)
         );
         return { file_path };
       }
@@ -354,6 +354,7 @@ Use snake_case for naming. If the file does not exist, it will be created. If th
     defineFunction(
       {
         name: "system_read_text_from_file",
+        title: "Reading from file",
         icon: "description",
         description: tr`
 
@@ -393,6 +394,7 @@ If an error has occurred, will contain a description of the error`
     defineFunctionLoose(
       {
         name: CREATE_TASK_TREE_FUNCTION,
+        title: "Creating task tree",
         icon: "task",
         description: tr`
 
@@ -417,6 +419,7 @@ When working on a complicated problem, use this function to create a scratch pad
     defineFunction(
       {
         name: MARK_COMPLETED_TASKS_FUNCTION,
+        title: "Marking tasks complete",
         icon: "task",
         description: tr`
 Mark one or more tasks defined with the "${CREATE_TASK_TREE_FUNCTION}" as complete.

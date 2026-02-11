@@ -22,6 +22,18 @@ import { Root } from "./root.js";
 import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("a2ui-surface")
+/**
+ * Top-level rendering entry point for an A2UI surface.
+ *
+ * Receives a `SurfaceState` (built by the ModelProcessor) and renders:
+ * 1. An optional logo from `surface.styles.logoUrl`.
+ * 2. Inline theme styles derived from `surface.styles` (primaryColor → palette,
+ *    font → font-family).
+ * 3. An `<a2ui-root>` with the resolved component tree.
+ *
+ * Surface also provides the `Theme` via `@lit/context`, making it available
+ * to all descendant components without prop drilling.
+ */
 export class Surface extends Root {
   @property()
   accessor surfaceId: SurfaceID | null = null;

@@ -10,7 +10,6 @@ import type {
   GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
-  InputValues,
   InspectableAsset,
   InspectableAssetEdge,
   InspectableEdge,
@@ -21,14 +20,10 @@ import type {
   InspectableSubgraphs,
   ModuleIdentifier,
   MutableGraph,
-  NodeDescriberContext,
-  NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
   Outcome,
 } from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
-import { GraphDescriberManager } from "./graph-describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
 
 export { Graph };
@@ -113,17 +108,6 @@ class Graph implements InspectableGraph {
 
   entries(): InspectableNode[] {
     return new GraphQueries(this.#mutable, this.#graphId).entries();
-  }
-
-  async describe(
-    inputs?: InputValues,
-    context?: NodeDescriberContext
-  ): Promise<NodeDescriberResult> {
-    const manager = GraphDescriberManager.create(this.#graphId, this.#mutable);
-    if (!ok(manager)) {
-      throw new Error(`Inspect API Integrity Error: ${manager.$error}`);
-    }
-    return manager.describe(inputs, undefined, undefined, context);
   }
 
   graphs(): InspectableSubgraphs | undefined {

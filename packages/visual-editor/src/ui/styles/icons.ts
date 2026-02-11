@@ -60,14 +60,11 @@ export const icons = css`
         "opsz" 48,
         "ROND" 100;
     }
-  }
 
-  .svg-icon {
-    width: 20px;
-    height: 20px;
-    display: inline-block;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 20px 20px;
+    & > svg {
+      width: 1em;
+      height: 1em;
+      fill: currentColor;
+    }
   }
 `;

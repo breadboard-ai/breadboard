@@ -15,12 +15,16 @@ import { fetchWithRetry } from "../fetch-with-retry.js";
 type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
 
+export type LogLevel = "verbose" | "warning";
+
 export interface GoogleDriveClientOptions {
-  apiBaseUrl?: Promise<string>;
+  apiBaseUrl?: string | Promise<string>;
+  uploadApiBaseUrl?: string | Promise<string>;
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
   proxyApiBaseUrl?: string;
   fetchWithCreds: typeof globalThis.fetch;
-  isTestApi: boolean;
+  /** Optional logging callback. When provided, all log output routes here. */
+  log?: (level: LogLevel, ...args: unknown[]) => void;
 }
 
 export interface BaseRequestOptions {
@@ -65,7 +69,6 @@ export interface ListFilesOptions extends BaseWithFileFields {
     dir: "asc" | "desc";
   }>;
   pageSize?: number;
-  pageToken?: string;
 }
 
 export interface ListFilesResponse<T extends File> {
@@ -74,6 +77,8 @@ export interface ListFilesResponse<T extends File> {
   kind: "drive#fileList";
   nextPageToken?: string;
 }
+
+export type ListFilesResult<T extends File> = { files: T[] };
 
 export type CopyFileOptions = BaseWithFileFields;
 
@@ -174,6 +179,7 @@ type GoogleApiAuthorization = "fetchWithCreds" | "anonymous";
 
 export class GoogleDriveClient {
   readonly #apiUrl: Promise<string>;
+  readonly #uploadApiUrl: Promise<string>;
   readonly #publicProxy:
     | {
         apiUrl: string;
@@ -182,11 +188,15 @@ export class GoogleDriveClient {
       }
     | undefined;
   readonly fetchWithCreds: typeof globalThis.fetch;
-  readonly isTestApi: boolean;
+  readonly #log: (level: LogLevel, ...args: unknown[]) => void;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.#apiUrl =
-      options.apiBaseUrl || Promise.resolve(GOOGLE_DRIVE_FILES_API_PREFIX);
+    this.#apiUrl = Promise.resolve(
+      options.apiBaseUrl ?? GOOGLE_DRIVE_FILES_API_PREFIX
+    );
+    this.#uploadApiUrl = Promise.resolve(
+      options.uploadApiBaseUrl ?? GOOGLE_DRIVE_UPLOAD_API_PREFIX
+    );
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
           apiUrl: options.proxyApiBaseUrl,
@@ -194,7 +204,7 @@ export class GoogleDriveClient {
         }
       : undefined;
     this.fetchWithCreds = options.fetchWithCreds;
-    this.isTestApi = options.isTestApi;
+    this.#log = options.log ?? (() => {});
   }
 
   async #fetch(
@@ -398,7 +408,7 @@ export class GoogleDriveClient {
       options
     );
     const fileId = (file as File).id;
-    console.log(`[Google Drive] Created file`, {
+    this.#log("verbose", `Created file`, {
       id: fileId,
       open: fileId ? `http://drive.google.com/open?id=${fileId}` : null,
       name: metadata?.name,
@@ -434,7 +444,7 @@ export class GoogleDriveClient {
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
     const result = this.#uploadFileMultipart(fileId, data, metadata, options);
-    console.log(`[Google Drive] Updated file`, {
+    this.#log("verbose", `Updated file`, {
       id: fileId,
       open: `http://drive.google.com/open?id=${fileId}`,
       name: metadata?.name,
@@ -454,16 +464,18 @@ export class GoogleDriveClient {
     const isExistingFile = !!fileId;
     const isBlob = typeof data !== "string";
     if (isBlob && metadata?.mimeType && data.type !== metadata.mimeType) {
-      console.warn(
-        `[Google Drive] blob had type ${JSON.stringify(data.type)}` +
+      this.#log(
+        "warning",
+        `Blob had type ${JSON.stringify(data.type)}` +
           ` while metadata had type ${JSON.stringify(metadata.mimeType)}.`
       );
     }
 
+    const uploadBase = await this.#uploadApiUrl;
     const url = new URL(
       isExistingFile
-        ? `${GOOGLE_DRIVE_UPLOAD_API_PREFIX}/${encodeURIComponent(fileId)}`
-        : GOOGLE_DRIVE_UPLOAD_API_PREFIX
+        ? `${uploadBase}/${encodeURIComponent(fileId)}`
+        : uploadBase
     );
     url.searchParams.set("uploadType", "multipart");
     if (options?.fields) {
@@ -566,18 +578,18 @@ export class GoogleDriveClient {
   async listFiles<const T extends ListFilesOptions>(
     query: string,
     options?: T
-  ): Promise<ListFilesResponse<NarrowedDriveFileFromOptions<T>>> {
+  ): Promise<ListFilesResult<NarrowedDriveFileFromOptions<T>>> {
     // TODO(aomarks) Make this an async iterator.
     const url = new URL(await this.#apiUrl);
     url.searchParams.set("q", query);
     if (options?.pageSize) {
       url.searchParams.set("pageSize", String(options.pageSize));
     }
-    if (options?.pageToken) {
-      url.searchParams.set("pageToken", options.pageToken);
-    }
     if (options?.fields) {
-      url.searchParams.set("fields", `files(${options.fields.join(",")})`);
+      url.searchParams.set(
+        "fields",
+        `nextPageToken,files(${options.fields.join(",")})`
+      );
     }
     if (options?.orderBy?.length) {
       url.searchParams.set(
@@ -585,14 +597,28 @@ export class GoogleDriveClient {
         options.orderBy.map(({ field, dir }) => `${field} ${dir}`).join(",")
       );
     }
-    const response = await this.#fetch(url, { signal: options?.signal });
-    if (!response.ok) {
-      throw new Error(
-        `Google Drive listFiles ${response.status} error: ` +
-          (await response.text())
-      );
-    }
-    return await response.json();
+
+    const allFiles: NarrowedDriveFileFromOptions<T>[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      if (pageToken) {
+        url.searchParams.set("pageToken", pageToken);
+      }
+      const response = await this.#fetch(url, { signal: options?.signal });
+      if (!response.ok) {
+        throw new Error(
+          `Google Drive listFiles ${response.status} error: ` +
+            (await response.text())
+        );
+      }
+      const page: ListFilesResponse<NarrowedDriveFileFromOptions<T>> =
+        await response.json();
+      allFiles.push(...page.files);
+      pageToken = page.nextPageToken;
+    } while (pageToken);
+
+    return { files: allFiles };
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create */
@@ -620,9 +646,7 @@ export class GoogleDriveClient {
       );
     }
     const result = (await response.json()) as Permission;
-    console.debug(
-      `[Google Drive Client] Created permission ${result.id} on file ${fileId}`
-    );
+    this.#log("verbose", `Created permission ${result.id} on file ${fileId}`);
     return result;
   }
 
@@ -647,9 +671,9 @@ export class GoogleDriveClient {
           (await response.text())
       );
     }
-    console.debug(
-      `[Google Drive Client] Deleted permission ${permissionId}` +
-        ` from file ${fileId}`
+    this.#log(
+      "verbose",
+      `Deleted permission ${permissionId} from file ${fileId}`
     );
   }
 

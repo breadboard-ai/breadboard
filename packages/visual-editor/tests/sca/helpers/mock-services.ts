@@ -9,7 +9,6 @@ import type { GraphDescriptor } from "@breadboard-ai/types";
 import { AppServices } from "../../../src/sca/services/services.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
-import { testKit } from "../../test-kit.js";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { SigninAdapter } from "../../../src/ui/utils/signin-adapter.js";
 import type { GoogleDriveBoardServer } from "../../../src/board-server/server.js";
@@ -19,14 +18,14 @@ import type { GoogleDriveBoardServer } from "../../../src/board-server/server.js
  */
 
 const defaultAgentContext = {
-  invalidateResumableRuns: () => { },
+  invalidateResumableRuns: () => {},
 };
 
 /**
  * Helper to create a graph store with editor for testing.
  */
 export function makeTestGraphStoreWithEditor() {
-  const graphStore = makeTestGraphStore({ kits: [testKit] });
+  const graphStore = makeTestGraphStore();
   const testGraph: GraphDescriptor = { nodes: [], edges: [] };
   const editor = graphStore.editByDescriptor(testGraph);
   if (!editor) throw new Error("Unable to edit graph");
@@ -50,15 +49,15 @@ export function createMockRunner(
       }
       listeners[event].push(handler);
     },
-    removeEventListener: () => { },
-    start: () => { },
+    removeEventListener: () => {},
+    start: () => {},
     running: () => false,
     // Plan property for graphstart pre-population
     plan:
       nodes.length > 0
         ? {
-          stages: [nodes.map((n) => ({ node: n }))],
-        }
+            stages: [nodes.map((n) => ({ node: n }))],
+          }
         : undefined,
     // Helper for tests to fire events with optional data
     _fireEvent: (event: string, data?: unknown) => {
@@ -121,8 +120,8 @@ export function makeMockBoardServer(options: {
       return { result: true };
     },
     // For event bridge support
-    addEventListener: () => { },
-    removeEventListener: () => { },
+    addEventListener: () => {},
+    removeEventListener: () => {},
     // Test helpers
     get lastSavedGraph() {
       return lastSavedGraph;
@@ -179,7 +178,9 @@ export function makeTestServices(options: TestServicesOptions = {}) {
       addEventListener: () => {},
       removeEventListener: () => {},
       flushSaveQueue: async () => {},
+      dataPartTransformer: () => ({}),
     },
+    fetchWithCreds: mock.fn(async () => new Response("{}", { status: 200 })),
     googleDriveClient: googleDriveClient ?? {},
     signinAdapter: signinAdapter ?? {},
     // Mock RunService that returns a testable mock runner
@@ -226,7 +227,6 @@ export function makeTestServices(options: TestServicesOptions = {}) {
       } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],
-    kits: [],
     // Flowgen mocks (optional)
     ...(flowGeneratorMock && {
       flowGenerator: flowGeneratorMock as FlowGenerator,

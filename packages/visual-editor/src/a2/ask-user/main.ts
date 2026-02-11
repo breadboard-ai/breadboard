@@ -15,6 +15,8 @@ import { type Params } from "../a2/common.js";
 import { report } from "../a2/output.js";
 import { Template } from "../a2/template.js";
 import { defaultLLMContent, llm, ok, toText } from "../a2/utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { requestInput } from "../request-input.js";
 
 export { invoke as default, describe, askUser };
 
@@ -104,7 +106,8 @@ function createInputSchema(
  */
 async function askUser(
   inputs: AskUserInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AskUserOutputs>> {
   const {
     description,
@@ -124,7 +127,7 @@ async function askUser(
     details = substituting;
   }
 
-  await report(caps, {
+  await report(moduleArgs, {
     actor: "User Input",
     category: "Requesting Input",
     name: "",
@@ -137,8 +140,13 @@ async function askUser(
   const inputSchema = createInputSchema(title, modality, required);
 
   // === input phase: Get user input ===
-  const response = await caps.input({ schema: inputSchema });
-  const request = response.request as LLMContent | undefined;
+  const response = await requestInput(moduleArgs, inputSchema);
+  if (!ok(response)) {
+    return response;
+  }
+  const request = (response as Record<string, unknown>).request as
+    | LLMContent
+    | undefined;
 
   // === text-main phase: Return context ===
   if (!request) {
@@ -155,9 +163,10 @@ async function askUser(
  */
 async function invoke(
   inputs: AskUserInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AskUserOutputs>> {
-  return askUser(inputs, caps);
+  return askUser(inputs, caps, moduleArgs);
 }
 
 type DescribeInputs = {

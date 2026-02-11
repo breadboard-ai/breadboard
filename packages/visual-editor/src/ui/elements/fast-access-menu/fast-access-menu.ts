@@ -10,10 +10,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, LitElement, nothing } from "lit";
+import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Component, FastAccess, GraphAsset, Tool } from "../../state/index.js";
 import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 import {
   FastAccessDismissedEvent,
   FastAccessSelectEvent,
@@ -208,6 +209,45 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
       section.tools menu button {
         --background: var(--n-90);
+
+        &.generative,
+        &[icon="spark"],
+        &[icon="photo_spark"],
+        &[icon="audio_magic_eraser"],
+        &[icon="text_analysis"],
+        &[icon="button_magic"],
+        &[icon="generative-image-edit"],
+        &[icon="generative-code"],
+        &[icon="videocam_auto"],
+        &[icon="generative-search"],
+        &[icon="generative"],
+        &[icon="select_all"],
+        &[icon="laps"] {
+          --background: var(--ui-generate);
+        }
+
+        &.module {
+          --background: var(--ui-generate);
+        }
+
+        &.input,
+        &.output,
+        &.core,
+        &[icon="input"],
+        &[icon="ask-user"],
+        &[icon="chat_mirror"] {
+          --background: var(--ui-get-input);
+        }
+
+        &[icon="output"],
+        &[icon="docs"],
+        &[icon="drive_presentation"],
+        &[icon="sheets"],
+        &[icon="code"],
+        &[icon="web"],
+        &[icon="responsive_layout"] {
+          --background: var(--ui-display);
+        }
       }
 
       #outputs menu button {
@@ -341,6 +381,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     // Append agentMode tools (routing, memory) to the end of tools
     if (this.showAgentModeTools && this.state?.agentMode.results) {
       for (const [id, tool] of this.state.agentMode.results) {
+        // Skip NotebookLM tool if flag is not enabled
+        if (
+          id === NOTEBOOKLM_TOOL_PATH &&
+          !this.sca?.controller.global.flags.enableNotebookLm
+        ) {
+          continue;
+        }
         // Apply filter if present
         if (this.filter) {
           const filterRe = new RegExp(this.filter, "gim");
@@ -646,19 +693,21 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 const active = idx === this.selectedIndex;
                 const globalIndex = idx;
                 // Special handling for routing and memory tool icons
-                let icon: string | undefined;
+                let icon: string | HTMLTemplateResult | null | undefined;
                 if (tool.url === "control-flow/routing") {
                   icon = "start";
                 } else if (tool.url === "function-group/use-memory") {
                   icon = "database";
-                } else {
+                } else if (typeof tool.icon === "string") {
                   icon = iconSubstitute(tool.icon) ?? undefined;
+                } else {
+                  icon = tool.icon;
                 }
                 idx++;
                 return html`<li>
                   <button
                     class=${classMap({ active })}
-                    icon=${icon}
+                    icon=${typeof icon === "string" ? icon : "tool"}
                     @pointerover=${() => {
                       this.selectedIndex = globalIndex;
                     }}
@@ -719,7 +768,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
       <section class="group tools">
         ${this.showRoutes
-          ? html`<h3 class="sans-flex w-400 round">Routes</h3>
+          ? html`<h3 class="sans-flex w-400 round">Steps</h3>
               ${this.state?.routes.results.size
                 ? html`<menu>
                     ${repeat(
@@ -733,6 +782,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
                         return html`<li>
                           <button
+                            icon=${icon}
                             class=${classMap({ active })}
                             @pointerover=${() => {
                               this.selectedIndex = globalIndex;

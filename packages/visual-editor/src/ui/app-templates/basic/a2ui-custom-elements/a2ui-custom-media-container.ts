@@ -7,12 +7,10 @@
 import * as A2UI from "../../../../a2ui/index.js";
 import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
-import { unsafeCSS } from "lit";
 
 @customElement("a2ui-custom-media-container")
 export class A2UICustomMediaContainer extends A2UI.v0_8.UI.Root {
   static styles = [
-    unsafeCSS(A2UI.v0_8.Styles.structuralStyles),
     css`
       :host {
         display: block;

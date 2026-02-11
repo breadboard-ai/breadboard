@@ -21,6 +21,14 @@ import { SignalMap } from "signal-utils/map";
 import { SignalObject } from "signal-utils/object";
 import { SignalSet } from "signal-utils/set";
 
+/**
+ * Creates a signal-reactive `A2UIModelProcessor`.
+ *
+ * Injects signal-backed collections (`SignalMap`, `SignalArray`, `SignalSet`,
+ * `SignalObject`) so that every mutation to the data model or component tree
+ * automatically triggers reactive updates in `SignalWatcher` components —
+ * without the `ModelProcessor` itself knowing about signals.
+ */
 export function create() {
   return new A2UIModelProcessor({
     arrayCtor: SignalArray as unknown as ArrayConstructor,

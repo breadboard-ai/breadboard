@@ -9,6 +9,7 @@ const Strings = StringsHelper.forSection("Global");
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { discordIcon } from "../../styles/svg-icons.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
@@ -31,7 +32,6 @@ import {
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
-import { Utils } from "../../../sca/utils.js";
 import { until } from "lit/directives/until.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 
@@ -178,7 +178,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
 
-          bb-homepage-search-button {
+          bb-expanding-search-button {
             margin: 0 var(--bb-grid-size-6) 0 0;
           }
 
@@ -599,18 +599,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
         });
       }
 
-      if (
-        !Utils.Helpers.isHydrating(
-          () => this.sca.controller.global.main.experimentalComponents
-        ) &&
-        this.sca.controller.global.main.experimentalComponents
-      ) {
-        options.push({
-          id: "copy-board-contents",
-          title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
-          icon: "content_copy",
-        });
-      }
+      options.push({
+        id: "copy-board-contents",
+        title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
+        icon: "content_copy",
+      });
     }
 
     // On narrow screens (≤600px), the global item select is hidden via CSS,
@@ -657,8 +650,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
     {
       id: "chat",
       title: Strings.from("COMMAND_JOIN_CHAT"),
-      svgIcon:
-        "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
+      icon: discordIcon,
     },
     {
       id: "show-global-settings",

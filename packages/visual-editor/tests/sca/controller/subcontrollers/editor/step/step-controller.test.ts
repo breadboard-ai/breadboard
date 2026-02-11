@@ -8,7 +8,10 @@ import assert from "node:assert";
 import { suite, test } from "node:test";
 import { StepController } from "../../../../../../src/sca/controller/subcontrollers/editor/step/step-controller.js";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
-import type { PendingEdit, PendingAssetEdit } from "../../../../../../src/sca/types.js";
+import type {
+  PendingEdit,
+  PendingAssetEdit,
+} from "../../../../../../src/sca/types.js";
 
 suite("StepController", () => {
   suite("pendingEdit", () => {
@@ -113,13 +116,11 @@ suite("StepController", () => {
       const controller = new StepController("Step_7", "StepController");
       await controller.isHydrated;
 
-      const updateFn = async () => {};
       const dataPart = { text: "Asset content" };
       const edit: PendingAssetEdit = {
         assetPath: "assets/test-asset",
         title: "Test Asset",
         dataPart,
-        update: updateFn,
         graphVersion: 1,
       };
 
@@ -141,7 +142,6 @@ suite("StepController", () => {
         assetPath: "assets/test",
         title: "Test",
         dataPart: null,
-        update: async () => {},
         graphVersion: 1,
       });
       await controller.isSettled;
@@ -160,7 +160,6 @@ suite("StepController", () => {
         assetPath: "assets/title-only",
         title: "Title Only",
         dataPart: null,
-        update: async () => {},
         graphVersion: 5,
       };
 
@@ -189,7 +188,6 @@ suite("StepController", () => {
         assetPath: "assets/asset",
         title: "Asset",
         dataPart: null,
-        update: async () => {},
         graphVersion: 1,
       };
 
@@ -222,7 +220,6 @@ suite("StepController", () => {
         assetPath: "assets/a",
         title: "a",
         dataPart: null,
-        update: async () => {},
         graphVersion: 1,
       });
       await controller.isSettled;

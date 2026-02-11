@@ -22,6 +22,7 @@ import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
 } from "../../../../a2/a2/tool-manager.js";
+import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 import { SCA } from "../../../../sca/sca.js";
 import { consume } from "@lit/context";
 import { scaContext } from "../../../../sca/context/context.js";
@@ -75,6 +76,9 @@ export function chicletHtml(
   } else if (path === MEMORY_TOOL_PATH) {
     sourceTitle = "Use Memory";
     metadataIcon = "database";
+  } else if (path === NOTEBOOKLM_TOOL_PATH) {
+    sourceTitle = "Use NotebookLM";
+    metadataIcon = "notebooklm";
   }
 
   label.setAttribute("contenteditable", "false");
@@ -82,6 +86,9 @@ export function chicletHtml(
   if (metadataIcon) {
     const icon = document.createElement("span");
     icon.classList.add("g-icon", "filled", "round");
+    if (metadataIcon === "notebooklm") {
+      icon.classList.add("notebooklm");
+    }
     icon.dataset.icon = metadataIcon;
 
     label.appendChild(icon);
@@ -140,7 +147,7 @@ export function chicletHtml(
 
 @customElement("bb-text-editor")
 export class TextEditor extends SignalWatcher(LitElement) {
-  @consume({context: scaContext})
+  @consume({ context: scaContext })
   accessor sca!: SCA;
 
   @property()
@@ -150,7 +157,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
       value,
       this.sca,
       this.projectState,
-      this.subGraphId,
+      this.subGraphId
     );
     this.#updateEditorValue();
   }
@@ -1021,6 +1028,11 @@ export class TextEditor extends SignalWatcher(LitElement) {
     const containerBounds = this.getBoundingClientRect();
     const proxyBounds = this.#proxyRef.value.getBoundingClientRect();
     let top = Math.round(bounds.top - proxyBounds.top);
+    // When targeting a chiclet (routes/steps mode), shift the menu down
+    // to keep the triggering chip visible above.
+    if (this.#fastAccessTarget !== null) {
+      top += Math.round(bounds.height) + 4;
+    }
     let left = Math.round(bounds.left - proxyBounds.left);
 
     // If the fast access menu is about to go off the right, bring it back.
@@ -1232,7 +1244,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
         .showAgentModeTools=${this.#fastAccessTarget === null}
         .showAssets=${this.#fastAccessTarget === null}
         .showTools=${this.#fastAccessTarget === null}
-        .state=${this.projectState?.stepEditor.fastAccess}
+        .state=${this.projectState?.fastAccess}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;
   }

@@ -16,63 +16,60 @@ export type ShareState =
   | { status: "opening" }
   | { status: "loading" }
   | {
-    status: "readonly";
-    shareableFile: DriveFileId;
-  }
+      status: "readonly";
+      shareableFile: DriveFileId;
+    }
   | {
-    status: "writable";
-    published: true;
-    publishedPermissions: gapi.client.drive.Permission[];
-    granularlyShared: boolean;
-    shareableFile: DriveFileId & {
-      stale: boolean;
-      permissions: gapi.client.drive.Permission[];
-      shareSurface: string | undefined;
+      status: "writable";
+      published: true;
+      publishedPermissions: gapi.client.drive.Permission[];
+      granularlyShared: boolean;
+      shareableFile: DriveFileId & {
+        stale: boolean;
+        permissions: gapi.client.drive.Permission[];
+        shareSurface: string | undefined;
+      };
+      latestVersion: string;
+      userDomain: string;
+    }
+  | {
+      status: "writable";
+      published: false;
+      granularlyShared: boolean;
+      shareableFile:
+        | (DriveFileId & {
+            stale: boolean;
+            permissions: gapi.client.drive.Permission[];
+            shareSurface: string | undefined;
+          })
+        | undefined;
+      latestVersion: string;
+      userDomain: string;
+    }
+  | {
+      status: "updating";
+      published: boolean;
+      granularlyShared: boolean;
+      shareableFile: (DriveFileId & { stale: boolean }) | undefined;
+      userDomain: string;
+    }
+  | {
+      status: "granular";
+      shareableFile: DriveFileId;
+    }
+  | {
+      status: "unmanaged-assets";
+      problems: UnmanagedAssetProblem[];
+      oldState: ShareState;
+      closed: { promise: Promise<void>; resolve: () => void };
     };
-    latestVersion: string;
-    userDomain: string;
-  }
-  | {
-    status: "writable";
-    published: false;
-    granularlyShared: boolean;
-    shareableFile:
-    | (DriveFileId & {
-      stale: boolean;
-      permissions: gapi.client.drive.Permission[];
-      shareSurface: string | undefined;
-    })
-    | undefined;
-    latestVersion: string;
-    userDomain: string;
-  }
-  | {
-    status: "updating";
-    published: boolean;
-    granularlyShared: boolean;
-    shareableFile:
-    | (DriveFileId & { stale: boolean })
-    | undefined;
-    userDomain: string;
-  }
-  | {
-    status: "granular";
-    shareableFile: DriveFileId;
-  }
-  | {
-    status: "unmanaged-assets";
-    problems: UnmanagedAssetProblem[];
-    oldState: ShareState;
-    closed: { promise: Promise<void>; resolve: () => void };
-  };
 
 export type UnmanagedAssetProblem = {
   asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
 } & (
-    | { problem: "cant-share" }
-    | { problem: "missing"; missing: gapi.client.drive.Permission[] }
-  );
-
+  | { problem: "cant-share" }
+  | { problem: "missing"; missing: gapi.client.drive.Permission[] }
+);
 
 export class ShareController extends RootController {
   @field()

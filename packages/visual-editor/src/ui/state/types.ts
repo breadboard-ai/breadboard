@@ -10,7 +10,6 @@ import {
   AssetPath,
   ConsoleEntry,
   GraphIdentifier,
-  GraphTheme,
   HarnessRunner,
   InspectableNodePorts,
   LLMContent,
@@ -21,7 +20,6 @@ import {
   NodeRunState,
   OutputValues,
   RunError,
-  EditableGraph,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -33,11 +31,7 @@ import {
 } from "@breadboard-ai/types";
 
 import { StateEvent } from "../events/events.js";
-import {
-  AppTheme,
-  VisualEditorMode,
-  WorkspaceSelectionState,
-} from "../types/types.js";
+import { VisualEditorMode } from "../types/types.js";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
 
@@ -276,9 +270,11 @@ export type GraphAssetDescriptor = {
   path: AssetPath;
 };
 
-export type GraphAsset = GraphAssetDescriptor & {
-  update(title: string, data?: LLMContent[]): Promise<Outcome<void>>;
-};
+/**
+ * Graph asset data type.
+ * Note: Asset updates are handled by the Asset.updateAsset action.
+ */
+export type GraphAsset = GraphAssetDescriptor;
 
 export type GeneratedAssetIdentifier = string;
 
@@ -291,7 +287,7 @@ export type Tool = {
   url: string;
   title?: string;
   description?: string;
-  icon?: string;
+  icon?: string | HTMLTemplateResult;
   /**
    * The identifier of the tool. This is useful in cases when URL points at a
    * tool server, not the actual tool.
@@ -328,7 +324,7 @@ export type FastAccess = {
   tools: ReadonlyMap<string, Tool>;
   myTools: ReadonlyMap<string, Tool>;
   agentMode: FilterableMap<Tool>;
-  components: Map<GraphIdentifier, Components>;
+  components: ReadonlyMap<GraphIdentifier, Components>;
   integrations: FilteredIntegrations;
   /**
    * Available routes for the current step.
@@ -479,8 +475,7 @@ export type Project = {
   readonly integrations: Integrations;
   readonly organizer: Organizer;
   readonly renderer: RendererState;
-  readonly stepEditor: StepEditor;
-  readonly themes: ProjectThemeState;
+  readonly fastAccess: FastAccess;
 
   /**
    * Resets the current run.
@@ -526,11 +521,7 @@ export type ProjectInternal = Project & {
 
 export type ProjectValues = {
   graphAssets: Map<AssetPath, GraphAsset>;
-  myTools: Map<string, Tool>;
-  agentModeTools: Map<string, Tool>;
-  components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
   integrations: Integrations;
-  editable: EditableGraph;
 };
 
 export type EdgeRunState = {
@@ -542,80 +533,9 @@ export type RendererRunState = {
   edges: Map<string, EdgeRunState>;
 };
 
-/**
- * Represents the Model + Controler for the Step Editor.
- */
-export type StepEditor = {
-  fastAccess: FastAccess;
-  updateSelection(selectionState: WorkspaceSelectionState): void;
-  nodeSelection: {
-    graph: GraphIdentifier;
-    node: NodeIdentifier;
-  } | null;
-  /**
-   * Applies any pending edits via the SCA step autosave action.
-   * Call this before actions that need the latest graph state.
-   */
-  applyPendingEdits(): Promise<void>;
-};
-
-export type ThemeStatus = "generating" | "uploading" | "editing" | "idle";
-
 export type ThemePromptArgs = {
   random: boolean;
   title: string;
   description?: string;
   userInstruction?: string;
-};
-
-/**
- * Represents the model-controller for the project's themes.
- */
-export type ProjectThemeState = {
-  /**
-   * Reports the current status of the theming machinery. Aside from "idle",
-   * all other statuses are blocking -- calls to mutating functions will fail
-   * silently.
-   *
-   * Valid status values:
-   * - "generating" -- an image is currently being generated for the theme
-   * - "uploading" -- an image is currently being uploaded to Drive
-   * - "editing" -- theme is currently being edited.
-   * - "idle" -- the machinery is idle and ready for operation.
-   */
-  readonly status: ThemeStatus;
-  /**
-   * Adds provided theme to the list of available themes and sets it
-   * as current.
-   */
-  addTheme(theme: AppTheme): Promise<Outcome<void>>;
-
-  /**
-   * Generates a new theme based on the intent and sets it as current
-   */
-  generateThemeFromIntent(
-    intent: string,
-    abortSignal?: AbortSignal
-  ): Promise<Outcome<GraphTheme>>;
-
-  setTheme(theme: GraphTheme): Promise<Outcome<void>>;
-
-  /**
-   * Generates a new theme to the list of available themes and sets it
-   * as current.
-   */
-  generateTheme(
-    args: ThemePromptArgs,
-    signal: AbortSignal
-  ): Promise<Outcome<void>>;
-
-  /**
-   * Deletes a theme with a given ID
-   */
-  deleteTheme(id: string): Promise<Outcome<void>>;
-
-  /**
-   * Sets the current them to a given ID
-   */
-  setCurrent(id: string): Promise<Outcome<void>>;
 };

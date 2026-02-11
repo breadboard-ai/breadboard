@@ -11,7 +11,11 @@ import { STATUS } from "../../../../src/sca/controller/subcontrollers/run/run-co
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
 import type { PrepareRunConfig } from "../../../../src/sca/actions/run/run-actions.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
-import type { ConsoleEntry, EditableGraph, HarnessRunner } from "@breadboard-ai/types";
+import type {
+  ConsoleEntry,
+  EditableGraph,
+  HarnessRunner,
+} from "@breadboard-ai/types";
 import { coordination } from "../../../../src/sca/coordination.js";
 
 /**
@@ -185,56 +189,7 @@ suite("Run Actions", () => {
     );
   });
 
-  // ===== Output-related event tests =====
-
-  test("runner 'input' event sets input on controller", () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
-
-    const config = makeMockConfig();
-    RunActions.prepare(config);
-
-    // Simulate input event with data
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-    runner._fireEvent("input", {
-      node: { id: "input-node-1" },
-      inputArguments: { schema: { type: "object" } },
-    });
-
-    assert.ok(controller.run.main.input, "input should be set");
-    assert.strictEqual(
-      controller.run.main.input?.id,
-      "input-node-1",
-      "input id should match"
-    );
-    assert.deepStrictEqual(
-      controller.run.main.input?.schema,
-      { type: "object" },
-      "input schema should match"
-    );
-  });
-
-  test("runner 'input' event handles missing node id", () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
-
-    const config = makeMockConfig();
-    RunActions.prepare(config);
-
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-    runner._fireEvent("input", {
-      inputArguments: { schema: {} },
-    });
-
-    assert.ok(controller.run.main.input, "input should be set");
-    assert.strictEqual(controller.run.main.input?.id, "", "input id should be empty string");
-  });
+  // ===== Error-related event tests =====
 
   test("runner 'error' event sets error on controller with string message", () => {
     const { controller } = makeTestController();
@@ -258,7 +213,11 @@ suite("Run Actions", () => {
       "Something went wrong",
       "error message should match"
     );
-    assert.strictEqual(controller.run.main.input, null, "input should be cleared");
+    assert.strictEqual(
+      controller.run.main.input,
+      null,
+      "input should be cleared"
+    );
   });
 
   test("runner 'error' event handles error object with message property", () => {
@@ -320,7 +279,11 @@ suite("Run Actions", () => {
     };
     runner._fireEvent("end");
 
-    assert.strictEqual(controller.run.main.input, null, "input should be cleared after end");
+    assert.strictEqual(
+      controller.run.main.input,
+      null,
+      "input should be cleared after end"
+    );
   });
 
   test("runner 'graphstart' event resets and pre-populates output for top-level graph", () => {
@@ -489,9 +452,10 @@ suite("Run.start action", () => {
 
     // Track if start was called on the runner
     let startCalled = false;
-    (controller.run.main.runner as unknown as { start: () => void }).start = () => {
-      startCalled = true;
-    };
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {
+        startCalled = true;
+      };
 
     await RunActions.start();
 
@@ -529,10 +493,11 @@ suite("Run.start action", () => {
       resolveStart = resolve;
     });
 
-    (controller.run.main.runner as unknown as { start: () => void }).start = () => {
-      startCallCount++;
-      // This will not resolve immediately
-    };
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {
+        startCallCount++;
+        // This will not resolve immediately
+      };
 
     // Start the first call
     const firstCall = RunActions.start();
@@ -546,7 +511,11 @@ suite("Run.start action", () => {
     await secondCall;
 
     // Both should complete, but they should have been serialized
-    assert.strictEqual(startCallCount, 2, "runner.start() should be called twice");
+    assert.strictEqual(
+      startCallCount,
+      2,
+      "runner.start() should be called twice"
+    );
   });
 });
 
@@ -571,7 +540,9 @@ suite("Run.stop action", () => {
 
     // Track if abort was called
     let abortCalled = false;
-    (controller.run.main.abortController as unknown as { abort: () => void }).abort = () => {
+    (
+      controller.run.main.abortController as unknown as { abort: () => void }
+    ).abort = () => {
       abortCalled = true;
     };
 
@@ -635,48 +606,6 @@ suite("Run.stop action", () => {
     );
 
     done();
-  });
-});
-
-suite("mapLifecycleToRunStatus", () => {
-  test("maps 'inactive' to 'inactive'", () => {
-    assert.strictEqual(RunActions.mapLifecycleToRunStatus("inactive"), "inactive");
-  });
-
-  test("maps 'ready' to 'ready'", () => {
-    assert.strictEqual(RunActions.mapLifecycleToRunStatus("ready"), "ready");
-  });
-
-  test("maps 'working' to 'working'", () => {
-    assert.strictEqual(RunActions.mapLifecycleToRunStatus("working"), "working");
-  });
-
-  test("maps 'waiting' to 'working'", () => {
-    assert.strictEqual(RunActions.mapLifecycleToRunStatus("waiting"), "working");
-  });
-
-  test("maps 'succeeded' to 'succeeded'", () => {
-    assert.strictEqual(RunActions.mapLifecycleToRunStatus("succeeded"), "succeeded");
-  });
-
-  test("maps 'failed' to 'succeeded' (error styling handled separately)", () => {
-    assert.strictEqual(RunActions.mapLifecycleToRunStatus("failed"), "succeeded");
-  });
-
-  test("maps 'skipped' to 'skipped'", () => {
-    assert.strictEqual(RunActions.mapLifecycleToRunStatus("skipped"), "skipped");
-  });
-
-  test("maps 'interrupted' to 'interrupted'", () => {
-    assert.strictEqual(RunActions.mapLifecycleToRunStatus("interrupted"), "interrupted");
-  });
-
-  test("maps unknown state to 'inactive'", () => {
-    // Cast to simulate unknown state
-    assert.strictEqual(
-      RunActions.mapLifecycleToRunStatus("unknown" as "inactive"),
-      "inactive"
-    );
   });
 });
 
@@ -801,7 +730,11 @@ suite("syncConsoleFromRunner", () => {
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
-    assert.strictEqual(entry.status?.status, "working", "status should be 'working'");
+    assert.strictEqual(
+      entry.status?.status,
+      "working",
+      "status should be 'working'"
+    );
   });
 
   test("defaults to 'inactive' when node has no state", () => {
@@ -832,7 +765,11 @@ suite("syncConsoleFromRunner", () => {
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
-    assert.strictEqual(entry.status?.status, "inactive", "status should default to 'inactive'");
+    assert.strictEqual(
+      entry.status?.status,
+      "inactive",
+      "status should default to 'inactive'"
+    );
   });
 
   test("returns early when no graph editor", () => {
@@ -879,7 +816,9 @@ suite("syncConsoleFromRunner", () => {
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
     // GraphStore returns failure
-    (services.graphStore as unknown as { getByDescriptor: () => unknown }).getByDescriptor = () => ({ success: false });
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: false });
 
     assert.doesNotThrow(() => {
       RunActions.syncConsoleFromRunner();
@@ -914,14 +853,21 @@ suite("syncConsoleFromRunner", () => {
       nodeById: () => undefined, // Node not found
     };
 
-    (services.graphStore as unknown as { getByDescriptor: () => unknown }).getByDescriptor = () => ({ success: true, result: {} });
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect = () => mockInspectable;
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => mockInspectable;
 
     RunActions.syncConsoleFromRunner();
 
     const entry = controller.run.main.console.get("missing-node");
     assert.ok(entry, "entry should exist");
-    assert.strictEqual(entry.title, "missing-node", "title should fallback to nodeId");
+    assert.strictEqual(
+      entry.title,
+      "missing-node",
+      "title should fallback to nodeId"
+    );
   });
 
   test("handles empty plan gracefully", () => {
@@ -942,8 +888,11 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    (services.graphStore as unknown as { getByDescriptor: () => unknown }).getByDescriptor = () => ({ success: true, result: {} });
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect = () => ({ nodeById: () => undefined });
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => ({ nodeById: () => undefined });
 
     assert.doesNotThrow(() => {
       RunActions.syncConsoleFromRunner();
@@ -959,5 +908,347 @@ suite("syncConsoleFromRunner", () => {
       0,
       "console should be empty"
     );
+  });
+});
+
+suite("mapLifecycleToRunStatus", () => {
+  test("maps 'inactive' to 'inactive'", () => {
+    assert.strictEqual(
+      RunActions.mapLifecycleToRunStatus("inactive"),
+      "inactive"
+    );
+  });
+
+  test("maps 'ready' to 'ready'", () => {
+    assert.strictEqual(RunActions.mapLifecycleToRunStatus("ready"), "ready");
+  });
+
+  test("maps 'working' to 'working'", () => {
+    assert.strictEqual(
+      RunActions.mapLifecycleToRunStatus("working"),
+      "working"
+    );
+  });
+
+  test("maps 'waiting' to 'working'", () => {
+    assert.strictEqual(
+      RunActions.mapLifecycleToRunStatus("waiting"),
+      "working"
+    );
+  });
+
+  test("maps 'succeeded' to 'succeeded'", () => {
+    assert.strictEqual(
+      RunActions.mapLifecycleToRunStatus("succeeded"),
+      "succeeded"
+    );
+  });
+
+  test("maps 'failed' to 'succeeded' (completed state)", () => {
+    // Failed nodes are treated as succeeded for UI purposes
+    // as they are complete - error styling is handled separately
+    assert.strictEqual(
+      RunActions.mapLifecycleToRunStatus("failed"),
+      "succeeded"
+    );
+  });
+
+  test("maps 'skipped' to 'skipped'", () => {
+    assert.strictEqual(
+      RunActions.mapLifecycleToRunStatus("skipped"),
+      "skipped"
+    );
+  });
+
+  test("maps 'interrupted' to 'interrupted'", () => {
+    assert.strictEqual(
+      RunActions.mapLifecycleToRunStatus("interrupted"),
+      "interrupted"
+    );
+  });
+
+  test("maps unknown state to 'inactive'", () => {
+    // Test default case with an unknown value
+    assert.strictEqual(
+      RunActions.mapLifecycleToRunStatus("unknown-state" as never),
+      "inactive"
+    );
+  });
+});
+
+suite("runner nodeend event", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("updates existing console entry to succeeded on nodeend", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    config.graph = {
+      edges: [],
+      nodes: [{ id: "test-node", type: "test" }],
+    };
+    RunActions.prepare(config);
+
+    // Set up an existing console entry
+    controller.run.main.setConsoleEntry("test-node", {
+      title: "Test Node",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+    } as ConsoleEntry);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    // Fire nodeend for a top-level node (path.length === 1)
+    runner._fireEvent("nodeend", {
+      path: ["test-node"],
+      node: { id: "test-node" },
+    });
+
+    const entry = controller.run.main.console.get("test-node");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.status?.status,
+      "succeeded",
+      "status should be succeeded"
+    );
+    assert.strictEqual(entry.completed, true, "completed should be true");
+  });
+
+  test("ignores nodeend for nested nodes (path.length > 1)", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Set up an existing console entry with working status
+    controller.run.main.setConsoleEntry("nested-node", {
+      title: "Nested Node",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+    } as ConsoleEntry);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    // Fire nodeend for a nested node (path.length > 1)
+    runner._fireEvent("nodeend", {
+      path: ["parent-node", "nested-node"],
+      node: { id: "nested-node" },
+    });
+
+    const entry = controller.run.main.console.get("nested-node");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.status?.status,
+      "working",
+      "status should still be working"
+    );
+    assert.strictEqual(
+      entry.completed,
+      false,
+      "completed should still be false"
+    );
+  });
+
+  test("does nothing if node is not in console", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Ensure console is empty
+    assert.strictEqual(controller.run.main.console.size, 0);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    // Fire nodeend for a node that doesn't exist in console
+    runner._fireEvent("nodeend", {
+      path: ["nonexistent-node"],
+      node: { id: "nonexistent-node" },
+    });
+
+    // Should not throw and console should still be empty
+    assert.strictEqual(controller.run.main.console.size, 0);
+  });
+});
+
+suite("syncConsoleFromRunner async describe", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("async fetches node.describe when metadata has no tags", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Create a mock node with async describe
+    let describeCalled = false;
+    const mockNode = {
+      title: () => "Node 1",
+      describe: async () => {
+        describeCalled = true;
+        return {
+          metadata: {
+            icon: "async-icon",
+            tags: ["async-tag"],
+          },
+        };
+      },
+      currentDescribe: () => ({ metadata: {} }), // No tags initially
+      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
+    };
+
+    // Set up a mock runner
+    const mockRunner = {
+      plan: {
+        stages: [[{ node: { id: "node-1" } }]],
+      },
+      state: new Map<string, { state: string }>([
+        ["node-1", { state: "working" }],
+      ]),
+    };
+
+    controller.run.main.runner = mockRunner as unknown as HarnessRunner;
+
+    const mockEditor = {
+      raw: () => ({ nodes: [{ id: "node-1" }] }),
+    } as unknown as EditableGraph;
+
+    (controller.editor.graph as { editor: unknown }).editor = mockEditor;
+
+    // Mock graphStore to return our mock node
+    const mockInspectable = {
+      nodeById: () => mockNode,
+    };
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => mockInspectable;
+
+    RunActions.syncConsoleFromRunner();
+
+    // Wait for async describe to complete
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    assert.strictEqual(describeCalled, true, "describe should be called async");
+
+    // Verify the entry was updated with async metadata
+    const entry = controller.run.main.console.get("node-1");
+    assert.ok(entry, "entry should exist");
+    assert.deepStrictEqual(
+      entry.tags,
+      ["async-tag"],
+      "tags should be updated from async describe"
+    );
+  });
+
+  test("skips async describe when metadata already has tags", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Create a mock node that already has tags
+    let describeCalled = false;
+    const mockNode = {
+      title: () => "Node 1",
+      describe: async () => {
+        describeCalled = true;
+        return { metadata: { icon: "async-icon", tags: ["should-not-see"] } };
+      },
+      currentDescribe: () => ({ metadata: { tags: ["existing-tag"] } }), // Already has tags
+      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
+    };
+
+    const mockRunner = {
+      plan: { stages: [[{ node: { id: "node-1" } }]] },
+      state: new Map(),
+    };
+
+    controller.run.main.runner = mockRunner as unknown as HarnessRunner;
+
+    const mockEditor = {
+      raw: () => ({ nodes: [{ id: "node-1" }] }),
+    } as unknown as EditableGraph;
+
+    (controller.editor.graph as { editor: unknown }).editor = mockEditor;
+
+    const mockInspectable = { nodeById: () => mockNode };
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => mockInspectable;
+
+    RunActions.syncConsoleFromRunner();
+
+    // Wait a bit to ensure async would have been called
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    assert.strictEqual(
+      describeCalled,
+      false,
+      "describe should NOT be called when tags already exist"
+    );
+  });
+
+  test("skips async describe when node is null", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const mockRunner = {
+      plan: { stages: [[{ node: { id: "node-1" } }]] },
+      state: new Map(),
+    };
+
+    controller.run.main.runner = mockRunner as unknown as HarnessRunner;
+
+    const mockEditor = {
+      raw: () => ({ nodes: [{ id: "node-1" }] }),
+    } as unknown as EditableGraph;
+
+    (controller.editor.graph as { editor: unknown }).editor = mockEditor;
+
+    // Mock nodeById to return null
+    const mockInspectable = { nodeById: () => null };
+    (
+      services.graphStore as unknown as { getByDescriptor: () => unknown }
+    ).getByDescriptor = () => ({ success: true, result: {} });
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => mockInspectable;
+
+    // Should not throw
+    assert.doesNotThrow(() => {
+      RunActions.syncConsoleFromRunner();
+    });
+
+    // Entry should still be created with fallback
+    const entry = controller.run.main.console.get("node-1");
+    assert.ok(entry, "entry should exist even without node");
   });
 });

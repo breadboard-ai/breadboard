@@ -13,7 +13,6 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import {
-  EditableGraph,
   EditSpec,
   EditTransform,
   NodeHandlerMetadata,
@@ -21,130 +20,83 @@ import {
   PortIdentifier,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
-import { SignalMap } from "signal-utils/map";
 
-import { GraphAssetImpl } from "./graph-asset.js";
 import { ReactiveOrganizer } from "./organizer.js";
 import { ReactiveProjectRun } from "./project-run.js";
 import { RendererStateImpl } from "./renderer.js";
 import {
-  Component,
   GraphAsset,
   Integrations,
   Organizer,
   Project,
   ProjectInternal,
   ProjectRun,
-  ProjectThemeState,
   ProjectValues,
   RendererState,
-  StepEditor,
-  Tool,
+  FastAccess,
 } from "./types.js";
 import { IntegrationsImpl } from "./integrations.js";
-import { updateMap } from "./utils/update-map.js";
 import { McpClientManager } from "../../mcp/index.js";
-import { StepEditorImpl } from "./step-editor.js";
-import { ThemeState } from "./theme-state.js";
+import { ReactiveFastAccess } from "./fast-access.js";
+import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { transformDataParts } from "../../data/common.js";
-import { GoogleDriveBoardServer } from "../../board-server/server.js";
-import { ActionTracker } from "../types/types.js";
-import { Signal } from "signal-polyfill";
 import { SCA } from "../../sca/sca.js";
+import { transformDataParts } from "../../data/common.js";
 
 export { createProjectState, ReactiveProject };
 
-const THUMBNAIL_KEY = "@@thumbnail";
-
 function createProjectState(
-  fetchWithCreds: typeof globalThis.fetch,
-  boardServer: GoogleDriveBoardServer,
-  actionTracker: ActionTracker,
   mcpClientManager: McpClientManager,
-  editable: EditableGraph,
   sca: SCA
 ): Project {
-  return new ReactiveProject(
-    fetchWithCreds,
-    boardServer,
-    mcpClientManager,
-    actionTracker,
-    editable,
-    sca
-  );
+  return new ReactiveProject(mcpClientManager, sca);
 }
 
-type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
-
 class ReactiveProject implements ProjectInternal, ProjectValues {
-  readonly #fetchWithCreds: typeof globalThis.fetch;
-  readonly #boardServer: GoogleDriveBoardServer;
-
-  #graphChanged = new Signal.State({});
-  readonly #editable: EditableGraph;
-
-  @signal
-  get editable(): EditableGraph {
-    this.#graphChanged.get();
-    return this.#editable;
-  }
+  readonly #sca: SCA;
 
   @signal
   accessor run: ProjectRun;
 
-  readonly graphUrl: URL | null;
-  readonly graphAssets: SignalMap<AssetPath, GraphAsset>;
+  /**
+   * Delegates to GraphController.graphUrl
+   */
+  get graphUrl(): URL | null {
+    return this.#sca.controller.editor.graph.graphUrl;
+  }
 
-  readonly myTools: SignalMap<string, Tool>;
-  readonly agentModeTools: SignalMap<string, Tool>;
+  /**
+   * Delegates to GraphController.graphAssets
+   */
+  get graphAssets(): Map<AssetPath, GraphAsset> {
+    return this.#sca.controller.editor.graph.graphAssets;
+  }
+
   readonly organizer: Organizer;
-  readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
 
   readonly renderer: RendererState;
   readonly integrations: Integrations;
-  readonly stepEditor: StepEditor;
-  readonly themes: ProjectThemeState;
+  readonly fastAccess: FastAccess;
 
-  constructor(
-    fetchWithCreds: typeof globalThis.fetch,
-    boardServer: GoogleDriveBoardServer,
-    clientManager: McpClientManager,
-    private readonly actionTracker: ActionTracker,
-    editable: EditableGraph,
-    private readonly __sca: SCA
-  ) {
-    this.#fetchWithCreds = fetchWithCreds;
-    this.#boardServer = boardServer;
-    this.#editable = editable;
-    editable.addEventListener("graphchange", (e) => {
-      if (e.visualOnly) return;
-      this.#updateComponents();
-      this.#updateGraphAssets();
+  /**
+   * Derives editable from SCA controller.
+   */
+  get #editable() {
+    return this.#sca.controller.editor.graph.editor!;
+  }
 
-      this.#updateMyTools();
-      this.#updateAgentModeTools();
-      this.#graphChanged.set({});
-    });
-    const graph = editable.raw();
-    const graphUrlString = graph?.url;
-    this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
-    this.graphAssets = new SignalMap();
-    this.agentModeTools = new SignalMap();
-    this.components = new SignalMap();
-    this.myTools = new SignalMap();
-
+  constructor(clientManager: McpClientManager, sca: SCA) {
+    this.#sca = sca;
+    const editable = this.#editable;
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
-    this.stepEditor = new StepEditorImpl(this, this.__sca);
-    this.#updateGraphAssets();
+    this.fastAccess = new ReactiveFastAccess(
+      new FilteredIntegrationsImpl(this.integrations.registered),
+      this.#sca
+    );
     this.renderer = new RendererStateImpl(this.graphAssets);
-    this.#updateComponents();
-    this.#updateMyTools();
-    this.#updateAgentModeTools();
 
     this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
-    this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
   }
 
   resetRun(): void {
@@ -157,8 +109,8 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   ): Outcome<void> {
     // Intentionally reset this property with a new instance.
     this.run = ReactiveProjectRun.create(
-      this.stepEditor,
-      this.actionTracker,
+      this.#sca,
+      this.#sca.services.actionTracker,
       this.#editable.inspect(""),
       runner,
       this.#editable,
@@ -193,7 +145,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       url,
       contents,
       "persistent",
-      this.#boardServer.dataPartTransformer()
+      this.#sca.services.googleDriveBoardServer.dataPartTransformer()
     );
     if (!ok(transformed)) {
       console.warn(`Failed to persist a blob: "${transformed.$error}"`);
@@ -263,126 +215,5 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     }
     result.id = firstPort.name;
     return result;
-  }
-
-  #updateMyTools() {
-    const tools = Object.entries(this.#editable.raw().graphs || {}).map<
-      [string, Tool]
-    >(([graphId, descriptor]) => {
-      const url = `#${graphId}`;
-      return [
-        url,
-        {
-          url,
-          title: descriptor.title || "Untitled Tool",
-          description: descriptor.description,
-          order: Number.MAX_SAFE_INTEGER,
-          icon: "tool",
-        },
-      ];
-    });
-    updateMap(this.myTools, tools);
-  }
-
-  #updateAgentModeTools() {
-    const tools: [string, Tool][] = [];
-    if (this.#editable.raw().nodes.length > 1) {
-      tools.push([
-        `control-flow/routing`,
-        {
-          url: "routing",
-          title: "Go to:",
-          icon: "spark",
-        },
-      ]);
-    }
-    tools.push([
-      `function-group/use-memory`,
-      {
-        url: "use-memory",
-        title: "Use Memory",
-        icon: "database",
-      },
-    ]);
-    updateMap(this.agentModeTools, tools);
-  }
-
-  #updateComponents() {
-    const map = this.components;
-    const toDelete = new Set(map.keys());
-    const updated = Object.entries(this.#editable.inspect("").graphs() || {});
-    updated.push(["", this.#editable.inspect("")]);
-    updated.forEach(([key, value]) => {
-      let currentValue = map.get(key);
-      if (!currentValue) {
-        currentValue = new SignalMap<NodeIdentifier, Component>();
-        map.set(key, currentValue);
-      } else {
-        toDelete.delete(key);
-      }
-
-      const nodeValues: Promise<[string, Component]>[] = [];
-      for (const node of value.nodes()) {
-        const ports = node.currentPorts();
-        const metadata = node.currentDescribe()?.metadata ?? {};
-        const { tags } = metadata;
-
-        // If we already know the tags and ports, just use them.
-        if (tags && !ports.updating) {
-          nodeValues.push(
-            Promise.resolve([
-              node.descriptor.id,
-              {
-                id: node.descriptor.id,
-                title: node.title(),
-                description: node.description(),
-                ports,
-                metadata,
-              },
-            ])
-          );
-          continue;
-        }
-
-        // ... but if there aren't tags or the ports are updating, try using
-        // the full `describe()` instead.
-        nodeValues.push(
-          Promise.all([node.ports(), node.describe()]).then(
-            ([ports, description]) => {
-              return [
-                node.descriptor.id,
-                {
-                  id: node.descriptor.id,
-                  title: node.title(),
-                  description: node.description(),
-                  ports,
-                  metadata: description.metadata ?? {},
-                },
-              ];
-            }
-          )
-        );
-      }
-
-      Promise.all(nodeValues).then((nodes) => {
-        updateMap(currentValue, nodes);
-      });
-    });
-
-    [...toDelete.values()].forEach((key) => {
-      map.delete(key);
-    });
-  }
-
-  #updateGraphAssets() {
-    const { assets = {} } = this.#editable.raw();
-    // Special-case the thumbnail and splash so they doesn't show up.
-    delete assets[THUMBNAIL_KEY];
-
-    const graphAssets = Object.entries(assets).map<[string, GraphAsset]>(
-      ([path, asset]) => [path, new GraphAssetImpl(this, path, asset)]
-    );
-
-    updateMap(this.graphAssets, graphAssets);
   }
 }

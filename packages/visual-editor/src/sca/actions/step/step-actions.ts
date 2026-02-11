@@ -8,6 +8,9 @@
  * @fileoverview
  *
  * Actions for Step editing (node configuration in lite mode / sidebar).
+ *
+ * Note: These actions directly use the editor API rather than importing
+ * other action modules, following the SCA pattern of action independence.
  */
 
 import { LLMContent } from "@breadboard-ai/types";
@@ -15,30 +18,31 @@ import { ToastType } from "../../../ui/events/events.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { onSelectionOrSidebarChange } from "./triggers.js";
-import * as Graph from "../graph/graph-actions.js";
+import { UpdateNode } from "../../../ui/transforms/index.js";
+import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
+import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
+import { persistDataParts } from "../asset/asset-actions.js";
+import { Utils } from "../../utils.js";
 
 export const bind = makeAction();
 
 // =============================================================================
-// Actions
+// Triggered Actions
 // =============================================================================
 
 /**
- * Applies pending step edits when selection or sidebar changes.
- *
- * This replaces the manual save logic in canvas-controller willUpdate.
+ * Applies pending node edits when selection or sidebar changes.
  *
  * Key behavior:
  * - Clears pendingEdit BEFORE applying, so if apply fails we don't re-trigger.
  * - Checks graphVersion to detect stale edits. If graph changed since edit
- *   was captured (e.g. user typed then dragged a wire), shows a toast
- *   notification and discards the stale edit.
+ *   was captured, shows a toast notification and discards the stale edit.
  *
  * **Triggers:**
  * - `onSelectionOrSidebarChange`: Fires when selection or sidebar section changes
  */
-export const applyPendingEdits = asAction(
-  "Step.applyPendingEdits",
+export const applyPendingNodeEdit = asAction(
+  "Step.applyPendingNodeEdit",
   {
     mode: ActionMode.Immediate,
     priority: 100, // High priority - must run before autosave and other actions
@@ -47,54 +51,167 @@ export const applyPendingEdits = asAction(
   async (): Promise<void> => {
     const { controller } = bind;
 
-    // Read pending edits (these should be set since the trigger fired)
     const pendingEdit = controller.editor.step.pendingEdit;
-    const pendingAssetEdit = controller.editor.step.pendingAssetEdit;
-
-    // Current graph version
-    const currentVersion = controller.editor.graph.version;
-
-    // Handle node edit
-    if (pendingEdit) {
-      // Clear BEFORE applying so if apply fails we don't re-trigger
-      controller.editor.step.clearPendingEdit();
-
-      if (pendingEdit.graphVersion === currentVersion) {
-        // Version matches - safe to apply
-        await Graph.changeNodeConfiguration(
-          pendingEdit.nodeId,
-          pendingEdit.graphId,
-          pendingEdit.values,
-          null, // metadata
-          pendingEdit.ins ?? null // portsToAutowire (from chiclets)
-        );
-      } else {
-        // Version mismatch - stale edit, show toast and discard
-        controller.global.toasts.toast(
-          "Your edits were discarded because the steps changed",
-          ToastType.WARNING
-        );
-      }
+    if (!pendingEdit) {
+      return;
     }
 
-    // Handle asset edit
-    if (pendingAssetEdit) {
-      controller.editor.step.clearPendingAssetEdit();
+    // Clear BEFORE applying so if apply fails we don't re-trigger
+    controller.editor.step.clearPendingEdit();
 
-      if (pendingAssetEdit.graphVersion === currentVersion) {
-        // Version matches - safe to apply
-        let data: LLMContent[] | undefined = undefined;
-        if (pendingAssetEdit.dataPart) {
-          data = [{ role: "user", parts: [pendingAssetEdit.dataPart] }];
-        }
+    const currentVersion = controller.editor.graph.version;
+    if (pendingEdit.graphVersion !== currentVersion) {
+      // Version mismatch - stale edit, show toast and discard
+      controller.global.toasts.toast(
+        "Your edits were discarded because the steps changed",
+        ToastType.WARNING
+      );
+      return;
+    }
 
-        await pendingAssetEdit.update(pendingAssetEdit.title, data);
-      } else {
-        // Version mismatch - stale edit, show toast and discard
-        controller.global.toasts.toast(
-          "Your edits were discarded because the graph changed",
-          ToastType.WARNING
+    // Version matches - safe to apply
+    const editor = controller.editor.graph.editor;
+    if (!editor) {
+      return;
+    }
+
+    const updateNodeTransform = new UpdateNode(
+      pendingEdit.nodeId,
+      pendingEdit.graphId,
+      pendingEdit.values,
+      null, // metadata
+      pendingEdit.ins ?? null // portsToAutowire
+    );
+
+    await editor.apply(updateNodeTransform);
+
+    // Set the signal so the autoname trigger can react
+    controller.editor.graph.lastNodeConfigChange = {
+      nodeId: pendingEdit.nodeId,
+      graphId: pendingEdit.graphId,
+      configuration: pendingEdit.values,
+      titleUserModified: updateNodeTransform.titleUserModified,
+    };
+  }
+);
+
+/**
+ * Applies pending asset edits when selection or sidebar changes.
+ *
+ * Key behavior:
+ * - Clears pendingAssetEdit BEFORE applying, so if apply fails we don't re-trigger.
+ * - Checks graphVersion to detect stale edits. If graph changed since edit
+ *   was captured, shows a toast notification and discards the stale edit.
+ *
+ * **Triggers:**
+ * - `onSelectionOrSidebarChange`: Fires when selection or sidebar section changes
+ */
+export const applyPendingAssetEdit = asAction(
+  "Step.applyPendingAssetEdit",
+  {
+    mode: ActionMode.Immediate,
+    priority: 100, // High priority - must run before autosave and other actions
+    triggeredBy: () => onSelectionOrSidebarChange(bind),
+  },
+  async (): Promise<void> => {
+    const { controller, services } = bind;
+    const LABEL = "Step.applyPendingAssetEdit";
+    const logger = Utils.Logging.getLogger(controller);
+
+    const pendingAssetEdit = controller.editor.step.pendingAssetEdit;
+    if (!pendingAssetEdit) {
+      return;
+    }
+
+    // Clear BEFORE applying so if apply fails we don't re-trigger
+    controller.editor.step.clearPendingAssetEdit();
+
+    const currentVersion = controller.editor.graph.version;
+    if (pendingAssetEdit.graphVersion !== currentVersion) {
+      // Version mismatch - stale edit, show toast and discard
+      controller.global.toasts.toast(
+        "Your edits were discarded because the graph changed",
+        ToastType.WARNING
+      );
+      return;
+    }
+
+    // Version matches - safe to apply
+    const graphController = controller.editor.graph;
+    const editor = graphController.editor;
+    if (!editor) {
+      return;
+    }
+
+    // Get current asset to check metadata
+    const asset = graphController.graphAssets.get(pendingAssetEdit.assetPath);
+    if (!asset?.metadata) {
+      logger.log(
+        Utils.Logging.Formatter.warning(
+          `Graph asset "${pendingAssetEdit.assetPath}" has no metadata, can't update`
+        ),
+        LABEL
+      );
+      return;
+    }
+
+    const metadata = { ...asset.metadata, title: pendingAssetEdit.title };
+
+    // Persist data BEFORE applying any transforms to avoid flicker
+    // where syncFromGraph fires with old data.
+    let persistedData: LLMContent[] | undefined;
+    if (pendingAssetEdit.dataPart) {
+      const data: LLMContent[] = [
+        { role: "user", parts: [pendingAssetEdit.dataPart] },
+      ];
+      persistedData = await persistDataParts(
+        graphController.url,
+        data,
+        services.googleDriveBoardServer.dataPartTransformer()
+      );
+    }
+
+    // When data is provided, apply UpdateAssetData FIRST so that the
+    // graph descriptor has the new data before any syncFromGraph fires.
+    if (persistedData) {
+      let result = await editor.apply(
+        new UpdateAssetData(pendingAssetEdit.assetPath, metadata, persistedData)
+      );
+      if (!result.success) {
+        logger.log(
+          Utils.Logging.Formatter.warning(
+            `Failed to update asset data: ${result.error}`
+          ),
+          LABEL
         );
+        return;
+      }
+
+      result = await editor.apply(
+        new UpdateAssetWithRefs(pendingAssetEdit.assetPath, metadata)
+      );
+      if (!result.success) {
+        logger.log(
+          Utils.Logging.Formatter.warning(
+            `Failed to update asset refs: ${result.error}`
+          ),
+          LABEL
+        );
+        return;
+      }
+    } else {
+      // No data change, just update refs
+      const result = await editor.apply(
+        new UpdateAssetWithRefs(pendingAssetEdit.assetPath, metadata)
+      );
+      if (!result.success) {
+        logger.log(
+          Utils.Logging.Formatter.warning(
+            `Failed to update asset refs: ${result.error}`
+          ),
+          LABEL
+        );
+        return;
       }
     }
   }

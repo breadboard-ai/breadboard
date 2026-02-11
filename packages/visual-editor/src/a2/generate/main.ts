@@ -2,11 +2,9 @@
  * @fileoverview Mega step for generation capabilities.
  */
 
-import { ok } from "../a2/utils.js";
 import { readFlags } from "../a2/settings.js";
 import {
   Capabilities,
-  InputValues,
   LLMContent,
   RuntimeFlags,
   Schema,
@@ -16,15 +14,35 @@ import {
   makeTextInstruction,
   makeText,
   describe as describeGenerateText,
-  type MakeTextInputs,
 } from "../generate-text/main.js";
-import { makeGoOverListInstruction } from "../go-over-list/main.js";
+import goOverList, {
+  makeGoOverListInstruction,
+  describe as describeGoOverList,
+} from "../go-over-list/main.js";
 import agent, { computeAgentSchema, type AgentInputs } from "../agent/main.js";
-import { makeDeepResearchInstruction } from "../deep-research/main.js";
-import { makeImageInstruction } from "../a2/image-generator.js";
-import { makeSpeechInstruction } from "../audio-generator/main.js";
-import { makeVideoInstruction } from "../video-generator/main.js";
-import { makeMusicInstruction } from "../music-generator/main.js";
+import deepResearch, {
+  makeDeepResearchInstruction,
+  describe as describeDeepResearch,
+} from "../deep-research/main.js";
+import imageGenerator, {
+  makeImageInstruction,
+  describe as describeImageGenerator,
+} from "../a2/image-generator.js";
+import imageEditor, {
+  describe as describeImageEditor,
+} from "../a2/image-editor.js";
+import audioGenerator, {
+  makeSpeechInstruction,
+  describe as describeAudioGenerator,
+} from "../audio-generator/main.js";
+import videoGenerator, {
+  makeVideoInstruction,
+  describe as describeVideoGenerator,
+} from "../video-generator/main.js";
+import musicGenerator, {
+  makeMusicInstruction,
+  describe as describeMusicGenerator,
+} from "../music-generator/main.js";
 import type { ModelConstraint } from "../agent/functions/generate.js";
 
 export { invoke as default, describe };
@@ -76,6 +94,10 @@ type Mode = {
    * when in this mode.
    */
   modelConstraint: ModelConstraint;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  invoke: (...args: any[]) => Promise<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  describe: (...args: any[]) => Promise<any>;
 };
 
 const PROMPT_PORT = "config$prompt";
@@ -99,6 +121,8 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "none",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text-2.0-flash",
@@ -117,6 +141,8 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text-3-flash",
@@ -134,6 +160,8 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text",
@@ -151,6 +179,8 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text-2.5-pro",
@@ -168,6 +198,8 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text-3-pro",
@@ -185,6 +217,8 @@ const ALL_MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "think",
@@ -199,6 +233,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "plan"]]),
     makeInstruction: makeGoOverListInstruction,
     modelConstraint: "none",
+    invoke: goOverList,
+    describe: describeGoOverList,
   },
   {
     id: "deep-research",
@@ -213,6 +249,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "query"]]),
     makeInstruction: makeDeepResearchInstruction,
     modelConstraint: "none",
+    invoke: deepResearch,
+    describe: describeDeepResearch,
   },
   {
     id: "image-gen",
@@ -227,6 +265,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: false }),
     modelConstraint: "image",
+    invoke: imageGenerator,
+    describe: describeImageGenerator,
   },
   {
     id: "image",
@@ -242,6 +282,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: false }),
     modelConstraint: "image",
+    invoke: imageEditor,
+    describe: describeImageEditor,
   },
   {
     id: "image-pro",
@@ -257,6 +299,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: true }),
     modelConstraint: "image",
+    invoke: imageEditor,
+    describe: describeImageEditor,
   },
   {
     id: "audio",
@@ -271,6 +315,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "text"]]),
     makeInstruction: makeSpeechInstruction,
     modelConstraint: "speech",
+    invoke: audioGenerator,
+    describe: describeAudioGenerator,
   },
   {
     id: "video",
@@ -285,6 +331,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeVideoInstruction,
     modelConstraint: "video",
+    invoke: videoGenerator,
+    describe: describeVideoGenerator,
   },
   {
     id: "music",
@@ -299,25 +347,23 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "text"]]),
     makeInstruction: makeMusicInstruction,
     modelConstraint: "music",
+    invoke: musicGenerator,
+    describe: describeMusicGenerator,
   },
 ] as const;
 
-const AGENT_MODE_IDS = [
-  "agent",
-  "text-3-flash",
-  "text-3-pro",
-  "image",
-  "image-pro",
-  "audio",
-  "video",
-  "music",
-];
+// Modes only available in agent mode (hidden when agentMode is off)
+const AGENT_ONLY_IDS = new Set(["agent"]);
 
-const AGENT_MODES = ALL_MODES.filter(({ id }) => AGENT_MODE_IDS.includes(id));
-
-const PRE_AGENT_MODES = ALL_MODES.filter(({ id }) => id !== "agent");
-
-const modeMap = new Map(ALL_MODES.map((mode) => [mode.id, mode]));
+// Modes NOT available in agent mode (hidden when agentMode is on)
+const NON_AGENT_IDS = new Set([
+  "text-2.0-flash",
+  "text",
+  "text-2.5-pro",
+  "think",
+  "deep-research",
+  "image-gen",
+]);
 
 // Maps the prompt port to various names of the other ports.
 const portMapForward = new Map<string, Map<string, string>>(
@@ -365,18 +411,17 @@ function resolveModes(
   modeId: string | undefined,
   flags: Readonly<RuntimeFlags> | undefined
 ): ResolvedModes {
-  const modes = flags?.agentMode ? AGENT_MODES : PRE_AGENT_MODES;
-  const defaultMode = modes[0];
-  const current = modeMap.get(modeId || defaultMode.id) || defaultMode;
+  const agentMode = flags?.agentMode;
+  const modes = ALL_MODES.map((mode) => ({
+    ...mode,
+    hidden:
+      mode.hidden ||
+      (agentMode ? NON_AGENT_IDS.has(mode.id) : AGENT_ONLY_IDS.has(mode.id)),
+  }));
+  const defaultMode = modes.find((m) => !m.hidden) || modes[0];
+  const current =
+    modes.find((m) => m.id === (modeId || defaultMode.id)) || defaultMode;
   return { modes, current };
-}
-
-/**
- * Checks if the URL is for the generate-text subgraph.
- * Used to short-circuit graph dispatch and call makeText directly.
- */
-function isGenerateTextUrl(url: string): boolean {
-  return url.includes("generate-text.bgl.json#daf082ca");
 }
 
 async function invoke(
@@ -394,25 +439,19 @@ async function invoke(
         "b-ui-consistent": false,
         "b-ui-prompt": { parts: [] },
         ...rest,
-        "b-si-instruction": current.makeInstruction(rest),
-        "b-si-constraint": current.modelConstraint,
       };
       return agent(agentInputs, caps, moduleArgs);
     } else {
-      // Other modes dispatch directly to their board URLs
-      const { url, type, modelName } = current;
+      // Other modes dispatch directly to their module
+      const { type, modelName } = current;
       if (modelName) {
         rest["p-model-name"] = modelName;
       }
       const inputs = forwardPorts(type, rest);
-      // Short-circuit: Call makeText directly instead of graph dispatch
-      if (isGenerateTextUrl(url)) {
-        return makeText(inputs as MakeTextInputs, caps, moduleArgs);
-      }
-      return caps.invoke({ $board: url, ...inputs });
+      return current.invoke(inputs, caps, moduleArgs);
     }
   } else {
-    const { url, type, modelName } = current;
+    const { type, modelName } = current;
     // Model is treated as part of the Mode, but actually maps N:1
     // on actual underlying step type.
     if (modelName) {
@@ -420,11 +459,7 @@ async function invoke(
       rest["p-model-name"] = modelName;
     }
     const inputs = forwardPorts(type, rest);
-    // Short-circuit: Call makeText directly instead of graph dispatch
-    if (isGenerateTextUrl(url)) {
-      return makeText(inputs as MakeTextInputs, caps, moduleArgs);
-    }
-    return caps.invoke({ $board: url, ...inputs });
+    return current.invoke(inputs, caps, moduleArgs);
   }
 }
 
@@ -456,39 +491,24 @@ async function describe(
   const flags = await readFlags(moduleArgs);
 
   const { current, modes } = resolveModes(mode, flags);
-  const { url, type } = current;
+  const { type } = current;
   let modeSchema: Schema["properties"] = {};
   let behavior: Schema["behavior"] = [];
 
-  // Short-circuit: Call describeGenerateText directly instead of graph dispatch
-  if (isGenerateTextUrl(url)) {
-    const transformedInputs = forwardPorts(type, rest);
-    const describing = await describeGenerateText(
-      { inputs: transformedInputs },
-      caps
-    );
-    modeSchema = receivePorts(
-      type,
-      describing.inputSchema.properties || modeSchema
-    );
-    behavior = describing.inputSchema.behavior || [];
-  } else {
-    const describing = await caps.describe({
-      url,
-      inputs: rest as InputValues,
-    });
-    if (ok(describing)) {
-      modeSchema = receivePorts(
-        type,
-        describing.inputSchema.properties || modeSchema
-      );
-      behavior = describing.inputSchema.behavior || [];
-    }
-  }
+  const transformedInputs = forwardPorts(type, rest);
+  const describing = await current.describe(
+    { inputs: transformedInputs },
+    caps
+  );
+  modeSchema = receivePorts(
+    type,
+    describing.inputSchema.properties || modeSchema
+  );
+  behavior = describing.inputSchema.behavior || [];
   if (flags?.agentMode && current.id === "agent") {
     const agentSchema = computeAgentSchema(flags, rest);
     modeSchema = { ...modeSchema, ...agentSchema };
-    behavior = [...behavior];
+    behavior = [...(behavior || [])];
   }
 
   return {

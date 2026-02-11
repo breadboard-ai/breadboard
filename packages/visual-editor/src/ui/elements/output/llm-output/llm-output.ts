@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type { DataPart, LLMContent } from "@breadboard-ai/types";
-import { isStoredData, Template } from "@breadboard-ai/utils";
+import {
+  isStoredData,
+  Template,
+  isNotebookLmUrl,
+  parseNotebookLmId,
+} from "@breadboard-ai/utils";
 import {
   HTMLTemplateResult,
   LitElement,
@@ -45,6 +50,7 @@ import {
   isLLMContent,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
+import "../../notebooklm-viewer/notebooklm-viewer.js";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -739,6 +745,14 @@ export class LLMOutput extends LitElement {
             if (!url) {
               this.#outputLoaded();
               value = html`<div>Failed to retrieve stored data</div>`;
+            } else if (isNotebookLmUrl(url)) {
+              // NotebookLM reference - extract notebook ID and render viewer
+              const notebookId = parseNotebookLmId(url) ?? "";
+              this.#outputLoaded();
+              value = html`<bb-notebooklm-viewer
+                .notebookId=${notebookId}
+                .showExternalLink=${true}
+              ></bb-notebooklm-viewer>`;
             } else {
               const fileId = partToDriveFileId(part);
               if (fileId) {

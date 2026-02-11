@@ -150,4 +150,3 @@ suite("load-graph helpers", () => {
     });
   });
 });
-

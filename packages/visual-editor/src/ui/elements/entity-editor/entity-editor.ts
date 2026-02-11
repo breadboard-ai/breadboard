@@ -39,6 +39,7 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
@@ -438,6 +439,22 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
               & input {
                 display: none;
+              }
+            }
+
+            &.string:not(:has(.item-select-container)) {
+              & label {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--bb-grid-size);
+                width: 100%;
+              }
+
+              & input {
+                border: 1px solid var(--light-dark-n-80);
+                width: 100%;
+                box-sizing: border-box;
               }
             }
 
@@ -905,14 +922,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     if (assetPath !== null) {
       // When "asset-path" is submitted, we know that this is a an asset.
 
-      // 1) Get the right asset
-      const asset = this.projectState?.graphAssets.get(assetPath);
-      if (!asset) {
-        console.warn(`Unable to commit edits to asset "${assetPath}`);
-        return;
-      }
-
-      // 2) get title
+      // 1) get title
       const title = form.querySelector<HTMLInputElement>("#node-title")?.value;
       if (!title) {
         console.warn(
@@ -921,19 +931,29 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         return;
       }
 
-      // 3) update asset
+      // 2) update asset using Asset action
       const dataPart =
         form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
 
-      let data: LLMContent[] | undefined = undefined;
+      let assetData: LLMContent[] | undefined = undefined;
       if (dataPart) {
-        data = [{ role: "user", parts: [dataPart] }];
+        assetData = [{ role: "user", parts: [dataPart] }];
       }
 
-      const updating = await asset.update(title, data);
+      const updating = await this.sca.actions.asset.update(
+        assetPath,
+        title,
+        assetData
+      );
       if (!ok(updating)) {
         this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
       }
+
+      // The direct apply above incremented the graph version, so any
+      // pendingAssetEdit captured earlier (via @input) is now stale.
+      // Clear it to prevent a false "edits were discarded" warning.
+      this.#edited = false;
+      this.sca.controller.editor.step.clearPendingAssetEdit();
     }
   }
 
@@ -1400,7 +1420,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           value = html`<label
             class=${classMap({ slim: isControllerBehavior(port.schema) })}
             >${!isControllerBehavior(port.schema) ? html`${port.title}: ` : ""}
-            <input type="text" name=${port.name} .value=${port.value ?? ""}
+            <input
+              type="text"
+              name=${port.name}
+              .value=${port.value ?? ""}
+              placeholder=${port.schema.description ?? ""}
           /></label>`;
           break;
         }
@@ -1622,12 +1646,16 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
     const value = [input, output];
 
-    let icon: string | undefined | null = "text_fields";
+    let icon: string | HTMLTemplateResult | undefined | null = "text_fields";
     if (asset.type) {
       icon = iconSubstitute(asset.type);
     }
     if (asset.subType) {
-      icon = iconSubstitute(asset.subType);
+      if (asset.subType === "notebooklm") {
+        icon = notebookLmIcon;
+      } else {
+        icon = iconSubstitute(asset.subType);
+      }
     }
 
     return html`<div class=${classMap({ asset: true })}>
@@ -1749,7 +1777,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         title,
         dataPart,
         graphVersion: this.sca.controller.editor.graph.version,
-        update: asset.update.bind(asset),
       });
     }
   }
@@ -1843,7 +1870,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           }}
           .graphId=${null}
           .nodeId=${null}
-          .state=${this.projectState?.stepEditor.fastAccess}
+          .state=${this.projectState?.fastAccess}
         ></bb-fast-access-menu>
         <div ${ref(this.#proxyRef)} id="proxy"></div>`,
     ];

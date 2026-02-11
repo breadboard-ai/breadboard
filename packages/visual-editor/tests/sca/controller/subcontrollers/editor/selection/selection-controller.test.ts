@@ -10,7 +10,6 @@ import { SelectionController } from "../../../../../../src/sca/controller/subcon
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
 import { makeTestGraphStore } from "../../../../../helpers/_graph-store.js";
-import { testKit } from "../../../../../test-kit.js";
 import { toEdgeIdentifier } from "../../../../../../src/sca/utils/helpers/helpers.js";
 
 const testGraph: GraphDescriptor & Required<Pick<GraphDescriptor, "assets">> = {
@@ -203,9 +202,7 @@ suite("SelectionController", () => {
     const store = new SelectionController("Selection_5", "SelectionController");
     await store.isHydrated;
 
-    const graphStore = makeTestGraphStore({
-      kits: [testKit],
-    });
+    const graphStore = makeTestGraphStore();
 
     const mainGraphId = graphStore.getByDescriptor(testGraph);
     if (!mainGraphId.success) assert.fail("Unable to create graph");

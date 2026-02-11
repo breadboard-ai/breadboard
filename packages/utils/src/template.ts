@@ -6,6 +6,12 @@
 
 export { Template };
 
+import {
+  NOTEBOOKLM_MIMETYPE,
+  NOTEBOOKLM_TOOL_PATH,
+  NOTEBOOKLM_TOOL_TITLE,
+} from "./notebooklm.js";
+
 export type TemplatePartType = "in" | "asset" | "tool" | "param";
 
 export type TemplatePart = {
@@ -121,12 +127,43 @@ class Template {
     return this.#parsed.find((part) => typeof part !== "string");
   }
 
-  get placeholders() {
-    return this.#parsed.filter((part) => typeof part !== "string");
+  get #explicitPlaceholders(): TemplatePart[] {
+    return this.#parsed.filter(
+      (part): part is TemplatePart => typeof part !== "string"
+    );
+  }
+
+  get #implicitTools(): TemplatePart[] {
+    const explicit = this.#explicitPlaceholders;
+
+    const implicitTools: TemplatePart[] = [];
+
+    // Check for NotebookLM assets -> add NotebookLM tool if present
+    const hasNlmAsset = explicit.some(
+      (p) => p.type === "asset" && p.mimeType === NOTEBOOKLM_MIMETYPE
+    );
+    const hasNlmTool = explicit.some(
+      (p) => p.type === "tool" && p.path === NOTEBOOKLM_TOOL_PATH
+    );
+
+    if (hasNlmAsset && !hasNlmTool) {
+      implicitTools.push({
+        type: "tool",
+        path: NOTEBOOKLM_TOOL_PATH,
+        title: NOTEBOOKLM_TOOL_TITLE,
+      });
+    }
+
+    return implicitTools;
+  }
+
+  get placeholders(): TemplatePart[] {
+    return [...this.#explicitPlaceholders, ...this.#implicitTools];
   }
 
   get preview() {
-    return this.#parsed
+    const parts = [...this.#parsed, ...this.#implicitTools];
+    return parts
       .map((part) => (typeof part === "string" ? part : part.title))
       .join("")
       .trim();

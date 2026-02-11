@@ -15,7 +15,10 @@ import { AgentFileSystem } from "../../src/a2/agent/file-system.js";
 import { deepStrictEqual, fail, strictEqual } from "node:assert";
 import { ok } from "@breadboard-ai/utils/outcome.js";
 import { Template } from "../../src/a2/a2/template.js";
-import { ROUTE_TOOL_PATH } from "../../src/a2/a2/tool-manager.js";
+import {
+  ROUTE_TOOL_PATH,
+  NOTEBOOKLM_TOOL_PATH,
+} from "../../src/a2/a2/tool-manager.js";
 import { llm } from "../../src/a2/a2/utils.js";
 import { escapeHtml } from "../../src/utils/escape-html.js";
 import { LLMContent } from "@breadboard-ai/types";
@@ -146,6 +149,59 @@ describe("Pidgin Translator", () => {
 
       // Only one file should be stored
       strictEqual(fileSystem.files.size, 1);
+    });
+
+    it("sets useNotebookLM when content has NLM tool placeholder", async () => {
+      const translated = await makeTranslator().toPidgin(
+        llm`Use ${Template.part({ type: "tool", title: "Use NotebookLM", path: NOTEBOOKLM_TOOL_PATH })}`.asContent(),
+        {},
+        false
+      );
+      if (!ok(translated)) {
+        fail(translated.$error);
+      }
+      strictEqual(translated.useNotebookLM, true);
+    });
+
+    it("does not set useNotebookLM for non-NLM content", async () => {
+      const translated = await makeTranslator().toPidgin(
+        llm`Hello world`.asContent(),
+        {},
+        false
+      );
+      if (!ok(translated)) {
+        fail(translated.$error);
+      }
+      strictEqual(translated.useNotebookLM, false);
+    });
+
+    it("passes NLM storedData through as text URL, not into file system", async () => {
+      const { translator, fileSystem } = makeTranslatorWithFileSystem();
+
+      const handle = "https://notebooklm.google.com/notebook/abc123";
+      const content: LLMContent = {
+        role: "user",
+        parts: [
+          {
+            storedData: {
+              handle,
+              mimeType: "application/x-notebooklm",
+            },
+          },
+        ],
+      };
+
+      const translated = await translator.toPidgin(content, {}, false);
+      if (!ok(translated)) {
+        fail(translated.$error);
+      }
+
+      // The URL should appear as text, not as a <file> reference
+      strictEqual(translated.text.includes(handle), true);
+      strictEqual(translated.text.includes("<file"), false);
+
+      // File system should not have stored anything
+      strictEqual(fileSystem.files.size, 0);
     });
   });
 });
