@@ -41,8 +41,12 @@ jobs:
           node-version: 24.x
           cache: "npm"
 
-      # Download artifacts early so we can read the base SHA before building.
-      # The artifact only contains JSON data files and plain text metadata.
+      # Install dependencies on main before downloading any artifacts.
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      # Download artifacts AFTER install to isolate them from the trusted
+      # codebase. The artifact only contains JSON data files and plain text.
       - name: Download coverage artifact
         id: download
         uses: actions/download-artifact@v7
@@ -81,7 +85,14 @@ jobs:
         id: base-sha
         run: |
           if [ -f pr-artifact/base-sha.txt ]; then
-            echo "sha=$(cat pr-artifact/base-sha.txt)" >> $GITHUB_OUTPUT
+            SHA=$(cat pr-artifact/base-sha.txt)
+            # Validate SHA format to prevent injection from artifact content
+            if [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "sha=$SHA" >> $GITHUB_OUTPUT
+            else
+              echo "::warning::Invalid base SHA format, using HEAD of main"
+              echo "sha=" >> $GITHUB_OUTPUT
+            fi
           else
             echo "::warning::Base SHA file not found, using HEAD of main"
             echo "sha=" >> $GITHUB_OUTPUT
@@ -89,14 +100,11 @@ jobs:
 
       # Checkout the exact main commit from when the PR was opened/updated.
       # This avoids the automerge race where main already contains the PR
-      # changes by the time this workflow runs.
+      # changes by the time this workflow runs. The SHA is validated above
+      # as a 40-char hex string, so it can only reference an existing commit.
       - name: Checkout baseline commit
         if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && steps.base-sha.outputs.sha != ''
         run: git checkout ${{ steps.base-sha.outputs.sha }}
-
-      - name: Install dependencies
-        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
-        run: npm ci --ignore-scripts
 
       - name: Build and generate baseline coverage
         id: baseline
