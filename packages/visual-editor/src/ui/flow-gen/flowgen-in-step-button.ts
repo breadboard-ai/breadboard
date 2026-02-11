@@ -15,6 +15,9 @@ import {
   StateEvent,
   UtteranceEvent,
 } from "../events/events.js";
+import { scaContext } from "../../sca/context/context.js";
+import { type SCA } from "../../sca/sca.js";
+import { isEmpty } from "../utils/utils.js";
 import * as StringsHelper from "../strings/helper.js";
 import { fabStyles } from "../styles/fab.js";
 import { floatingPanelStyles } from "../styles/floating-panel.js";
@@ -208,6 +211,9 @@ export class FlowgenInStepButton extends LitElement {
   @consume({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator | undefined = undefined;
 
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
 
@@ -226,20 +232,48 @@ export class FlowgenInStepButton extends LitElement {
   @state()
   accessor #state: State = { status: "closed" };
 
+  @state()
+  accessor #showConfirmation = false;
+
   readonly #descriptionInput = createRef<HTMLInputElement>();
 
-  // Store pending edit parameters when waiting for confirmation
-  #pendingEdit: { description: string; graph: GraphDescriptor } | null = null;
-
   render() {
+    const modal = this.#showConfirmation
+      ? html`<bb-global-edit-confirmation-modal
+          @bbglobaleditconfirmation=${(
+            evt: CustomEvent<{ confirmed: boolean }>
+          ) => {
+            this.#showConfirmation = false;
+            if (evt.detail.confirmed) {
+              // Set localStorage flag to indicate user has confirmed
+              globalThis.localStorage.setItem(
+                "opal-suggested-edit-confirmed",
+                "true"
+              );
+              this.sca.controller.global.flowgenInput.seenConfirmationDialog = true;
+
+              const pendingEdit =
+                this.sca.controller.global.flowgenInput.pendingEdit;
+              if (pendingEdit) {
+                this.#proceedWithEdit(
+                  pendingEdit.description,
+                  pendingEdit.graph
+                );
+                this.sca.controller.global.flowgenInput.pendingEdit = null;
+              }
+            }
+          }}
+        ></bb-global-edit-confirmation-modal>`
+      : nothing;
+
     switch (this.#state.status) {
       case "closed": {
-        return this.#renderEditButton();
+        return [this.#renderEditButton(), modal];
       }
       case "open":
       case "generating":
       case "error": {
-        return [this.#renderEditButton(), this.#renderPanel()];
+        return [this.#renderEditButton(), this.#renderPanel(), modal];
       }
       default: {
         this.#state satisfies never;
@@ -397,41 +431,21 @@ export class FlowgenInStepButton extends LitElement {
       }
 
       // Check if this is the first time the user is making a suggested edit
-      const hasConfirmed = globalThis.localStorage.getItem(
-        "opal-suggested-edit-confirmed"
-      );
+      const seenConfirmationDialog =
+        this.sca.controller.global.flowgenInput.seenConfirmationDialog;
+      const graphIsEmpty = isEmpty(this.currentGraph ?? null);
 
-      if (!hasConfirmed) {
+      if (!seenConfirmationDialog && !graphIsEmpty) {
         // Store the pending edit and trigger the confirmation modal
-        this.#pendingEdit = {
+        this.sca.controller.global.flowgenInput.pendingEdit = {
           description,
           graph: this.currentGraph,
         };
-        this.dispatchEvent(
-          new CustomEvent("bbrequestglobaleditconfirmation", {
-            bubbles: true,
-            composed: true,
-          })
-        );
-        // Listen for confirmation
-        const handleConfirmation = () => {
-          window.removeEventListener(
-            "bbglobaleditconfirmed",
-            handleConfirmation
-          );
-          if (this.#pendingEdit) {
-            this.#proceedWithEdit(
-              this.#pendingEdit.description,
-              this.#pendingEdit.graph
-            );
-            this.#pendingEdit = null;
-          }
-        };
-        window.addEventListener("bbglobaleditconfirmed", handleConfirmation);
+        this.#showConfirmation = true;
         return;
       }
 
-      // User has already confirmed, proceed directly
+      // User has already confirmed or graph is empty, proceed directly
       this.#proceedWithEdit(description, this.currentGraph);
     }
   }

@@ -233,9 +233,6 @@ class Main extends MainBase {
         this.sca.controller.global.main.show.has("SignInModal")
           ? this.renderSignInModal()
           : nothing,
-        this.sca.controller.global.main.show.has("GlobalEditConfirmation")
-          ? this.#renderGlobalEditConfirmationModal()
-          : nothing,
         this.renderTooltip(),
         this.#renderToasts(),
         this.renderSnackbar(),
@@ -432,27 +429,6 @@ class Main extends MainBase {
         this.sca.controller.global.main.show.delete("WarmWelcome");
       }}
     ></bb-warm-welcome-modal>`;
-  }
-
-  #renderGlobalEditConfirmationModal() {
-    return html`<bb-global-edit-confirmation-modal
-      @bbglobaleditconfirmation=${(
-        evt: CustomEvent<{ confirmed: boolean }>
-      ) => {
-        this.sca.controller.global.main.show.delete("GlobalEditConfirmation");
-        if (evt.detail.confirmed) {
-          // Set localStorage flag to indicate user has confirmed
-          globalThis.localStorage.setItem(
-            "opal-suggested-edit-confirmed",
-            "true"
-          );
-          // Dispatch event to proceed with the edit
-          this.dispatchEvent(
-            new CustomEvent("bbglobaleditconfirmed", { bubbles: true })
-          );
-        }
-      }}
-    ></bb-global-edit-confirmation-modal>`;
   }
 
   #renderMissingShareDialog() {

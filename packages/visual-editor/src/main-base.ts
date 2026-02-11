@@ -352,11 +352,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.addEventListener("pointerdown", this.#hideTooltipBound);
     window.addEventListener("keydown", this.#onKeyboardShortCut);
 
-    // Listen for global edit confirmation modal requests
-    window.addEventListener("bbrequestglobaleditconfirmation", () => {
-      this.sca.controller.global.main.show.add("GlobalEditConfirmation");
-    });
-
     if (this.embedHandler) {
       this.embedState = embedState();
     }

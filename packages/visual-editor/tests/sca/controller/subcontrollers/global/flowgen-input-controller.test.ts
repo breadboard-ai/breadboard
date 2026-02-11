@@ -402,4 +402,57 @@ suite("FlowgenInputController", () => {
     assert.strictEqual(controller.currentExampleIntent, "");
     assert.strictEqual(controller.state.status, "initial");
   });
+
+  test("seenConfirmationDialog has initial value and is reactive", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_18"
+    );
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.seenConfirmationDialog, false);
+
+    controller.seenConfirmationDialog = true;
+    await controller.isSettled;
+
+    assert.strictEqual(controller.seenConfirmationDialog, true);
+  });
+
+  test("pendingEdit has initial value and is reactive", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_19"
+    );
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.pendingEdit, null);
+
+    const edit = {
+      description: "Test edit",
+      graph: { nodes: [], edges: [] },
+    };
+    controller.pendingEdit = edit;
+    await controller.isSettled;
+
+    assert.deepStrictEqual(controller.pendingEdit, edit);
+  });
+
+  test("clear() resets pendingEdit", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_20"
+    );
+    await controller.isHydrated;
+
+    controller.pendingEdit = {
+      description: "Test edit",
+      graph: { nodes: [], edges: [] },
+    };
+    await controller.isSettled;
+
+    controller.clear();
+    await controller.isSettled;
+
+    assert.strictEqual(controller.pendingEdit, null);
+  });
 });

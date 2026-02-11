@@ -7,6 +7,7 @@
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 import type { LiteModeIntentExample } from "../../../../ui/state/types.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 
 /**
  * Status type for the flowgen input component.
@@ -86,6 +87,19 @@ export class FlowgenInputController extends RootController {
   accessor plannerThought: string = "Planning ...";
 
   /**
+   * Whether the user has seen the global confirmation dialog.
+   */
+  @field({ persist: "local" })
+  accessor seenConfirmationDialog: boolean = false;
+
+  /**
+   * Pending edit parameters stored while waiting for confirmation.
+   */
+  @field()
+  accessor pendingEdit: { description: string; graph: GraphDescriptor } | null =
+    null;
+
+  /**
    * Example intents for the home screen.
    */
   get examples() {
@@ -136,6 +150,7 @@ export class FlowgenInputController extends RootController {
     this.#intentValue = undefined;
     this.plannerStatus = "Creating your app";
     this.plannerThought = "Planning ...";
+    this.pendingEdit = null;
     this.state = { status: "initial" };
   }
 }
