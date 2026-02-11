@@ -495,20 +495,20 @@ async function describe(
   let modeSchema: Schema["properties"] = {};
   let behavior: Schema["behavior"] = [];
 
-  const transformedInputs = forwardPorts(type, rest);
-  const describing = await current.describe(
-    { inputs: transformedInputs },
-    caps
-  );
-  modeSchema = receivePorts(
-    type,
-    describing.inputSchema.properties || modeSchema
-  );
-  behavior = describing.inputSchema.behavior || [];
   if (flags?.agentMode && current.id === "agent") {
-    const agentSchema = computeAgentSchema(flags, rest);
-    modeSchema = { ...modeSchema, ...agentSchema };
-    behavior = [...(behavior || [])];
+    // Agent mode has its own schema; skip text-generation describe entirely.
+    modeSchema = computeAgentSchema(flags, rest);
+  } else {
+    const transformedInputs = forwardPorts(type, rest);
+    const describing = await current.describe(
+      { inputs: transformedInputs },
+      caps
+    );
+    modeSchema = receivePorts(
+      type,
+      describing.inputSchema.properties || modeSchema
+    );
+    behavior = describing.inputSchema.behavior || [];
   }
 
   return {
