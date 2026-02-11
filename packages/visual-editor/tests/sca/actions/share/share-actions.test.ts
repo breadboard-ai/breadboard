@@ -118,8 +118,8 @@ suite("Share Actions", () => {
       latestVersion: "1",
       published: false,
       shareableFile: undefined,
-      userDomain: "example.com",
     });
+    assert.strictEqual(share.userDomain, "example.com");
 
     // User closes panel
     ShareActions.closePanel();

@@ -30,7 +30,6 @@ export type ShareState =
         shareSurface: string | undefined;
       };
       latestVersion: string;
-      userDomain: string;
     }
   | {
       status: "writable";
@@ -44,14 +43,12 @@ export type ShareState =
           })
         | undefined;
       latestVersion: string;
-      userDomain: string;
     }
   | {
       status: "updating";
       published: boolean;
       granularlyShared: boolean;
       shareableFile: (DriveFileId & { stale: boolean }) | undefined;
-      userDomain: string;
     }
   | {
       status: "granular";
@@ -96,6 +93,9 @@ export class ShareController extends RootController {
 
   @field()
   accessor granularlyShared = false;
+
+  @field()
+  accessor userDomain = "";
 
   @field()
   accessor state: ShareState = { status: "closed" };

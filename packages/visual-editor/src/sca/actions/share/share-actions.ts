@@ -61,6 +61,7 @@ export const readPublishedState = asAction(
 
     share.panel = "loading";
     share.state = { status: "loading" };
+    share.userDomain = (await services.signinAdapter.domain) ?? "";
 
     // Ensure any pending changes are saved so that our Drive operations will be
     // synchronized with those changes.
@@ -133,7 +134,6 @@ export const readPublishedState = asAction(
         granularlyShared: false,
         shareableFile: undefined,
         latestVersion: thisFileMetadata.version,
-        userDomain: (await services.signinAdapter.domain) ?? "",
       };
       return;
     }
@@ -189,7 +189,6 @@ export const readPublishedState = asAction(
           ],
       },
       latestVersion: thisFileMetadata.version,
-      userDomain: (await services.signinAdapter.domain) ?? "",
     };
 
     logger.log(
@@ -539,7 +538,6 @@ export const publish = asAction(
       published: true,
       granularlyShared: oldState.granularlyShared,
       shareableFile,
-      userDomain: oldState.userDomain,
     };
 
     let newLatestVersion: string | undefined;
@@ -584,7 +582,6 @@ export const publish = asAction(
       granularlyShared: oldState.granularlyShared,
       shareableFile,
       latestVersion: newLatestVersion ?? oldState.latestVersion,
-      userDomain: oldState.userDomain,
     };
   }
 );
@@ -621,7 +618,6 @@ export const unpublish = asAction(
       published: false,
       granularlyShared: oldState.granularlyShared,
       shareableFile,
-      userDomain: share.state.userDomain,
     };
 
     logger.log(
@@ -652,7 +648,6 @@ export const unpublish = asAction(
       granularlyShared: oldState.granularlyShared,
       shareableFile,
       latestVersion: oldState.latestVersion,
-      userDomain: oldState.userDomain,
     };
   }
 );
@@ -679,7 +674,6 @@ export const publishStale = asAction(
       published: oldState.published,
       granularlyShared: oldState.granularlyShared,
       shareableFile: oldState.shareableFile,
-      userDomain: oldState.userDomain,
     };
 
     const shareableFileUrl = new URL(`drive:/${oldState.shareableFile.id}`);

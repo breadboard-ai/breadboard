@@ -531,7 +531,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     if (state.status !== "writable" && state.status !== "updating") {
       return nothing;
     }
-    const domain = state.userDomain;
+    const domain = this.#controller.userDomain;
     if (!domain) {
       return nothing;
     }
@@ -647,7 +647,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       return nothing;
     }
     const published = state.published;
-    const domain = state.userDomain;
+    const domain = this.#controller.userDomain;
     const { disallowPublicPublishing } =
       this.globalConfig?.domains?.[domain] ?? {};
 
