@@ -474,6 +474,8 @@ export const styles: CSSResultGroup = [
             margin: 0 auto;
             width: 100%;
             max-width: 840px;
+            padding: 0 var(--bb-grid-size-4);
+            box-sizing: border-box;
             animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
           }
 
