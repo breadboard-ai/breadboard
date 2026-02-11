@@ -121,6 +121,8 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     applyTokens(this, this.theme.tokens);
   }
 
+  #paletteSheet: CSSStyleSheet | null = null;
+
   #applyPaletteStyles() {
     const activePalette = this.#baseColor
       ? Theme.generatePaletteFromColor(this.#baseColor)
@@ -131,12 +133,23 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       uiColorMapping,
       "original-"
     );
-    for (const [key, value] of Object.entries({
-      ...styles,
-      ...originalStyles,
-    })) {
-      this.style.setProperty(key, value);
+
+    // Build a :host rule with all palette custom properties.
+    // Using a constructed stylesheet (rather than inline style.setProperty)
+    // ensures that light-dark() values inside the custom properties resolve
+    // correctly — inline styles treat light-dark() as a raw string.
+    const cssText = Object.entries({ ...styles, ...originalStyles })
+      .map(([key, value]) => `${key}: ${value};`)
+      .join("\n");
+
+    if (!this.#paletteSheet) {
+      this.#paletteSheet = new CSSStyleSheet();
+      this.shadowRoot!.adoptedStyleSheets = [
+        ...this.shadowRoot!.adoptedStyleSheets,
+        this.#paletteSheet,
+      ];
     }
+    this.#paletteSheet.replaceSync(`:host { ${cssText} }`);
   }
 
   #applyColorScheme() {
@@ -269,6 +282,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           display: grid;
           grid-template-rows: 32px 40px 1fr;
           gap: var(--bb-grid-size-3);
+
+          & #controls-title {
+            flex: 1;
+          }
 
           & #mount-dir,
           & #mount-dir > span {
@@ -442,6 +459,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           grid-template-rows: 32px 1fr;
           gap: var(--bb-grid-size-4);
 
+          & #current-file {
+            flex: 1;
+          }
+
           & #render-mode,
           & #render-mode > button {
             display: flex;
@@ -506,7 +527,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           }
 
           & #surfaces {
-            background: light-dark(var(--s-90), var(--p-30));
+            background: var(--light-dark-s-90);
             color: var(--light-dark-n-0);
 
             & #surface-overlay {
@@ -971,7 +992,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           <h2
             class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
           >
-            Files
+            <div id="controls-title">Files</div>
             <button
               id="mount-dir"
               @click=${async () => {
@@ -990,7 +1011,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           <h2
             class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
           >
-            ${this.selectedFile?.name}
+            <div id="current-file">${this.selectedFile?.name}</div>
             <div id="render-mode">
               <button
                 class=${classMap({ active: this.#renderMode === "contexts" })}

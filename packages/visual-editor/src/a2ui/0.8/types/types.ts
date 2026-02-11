@@ -311,7 +311,15 @@ export type ResolvedDivider = Divider;
 export type ResolvedCheckbox = Checkbox;
 export type ResolvedTextField = TextField;
 export type ResolvedDateTimeInput = DateTimeInput;
-export type ResolvedMultipleChoice = MultipleChoice;
+export interface ResolvedMultipleChoice {
+  selections: MultipleChoice["selections"];
+  options?: {
+    label?: { path?: string; literalString?: string };
+    value: string;
+    child?: AnyComponentNode;
+  }[];
+  maxAllowedSelections?: number;
+}
 export type ResolvedSlider = Slider;
 
 export interface ResolvedRow {

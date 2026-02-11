@@ -52,6 +52,7 @@ export class Audio extends Root {
       audio {
         display: block;
         width: 100%;
+        border-radius: var(--a2ui-audio-radius);
       }
     `,
   ];
