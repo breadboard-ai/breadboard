@@ -35,6 +35,7 @@ export {
   makeConfig,
   makeEventSink,
   makeInvoker,
+  makeBlockingInvoker,
   makeConfigProvider,
   noopCallbacks,
   eventsByType,
@@ -111,6 +112,35 @@ function makeInvoker(
     ) => {
       return (outputsFn || defaultFn)(descriptor, inputs);
     },
+  };
+}
+
+/**
+ * Create a blocking invoker whose promise can be externally resolved.
+ * Useful for testing behavior while nodes are still "working".
+ *
+ * Returns the invoker plus `resolve` / `reject` functions to control it.
+ */
+function makeBlockingInvoker(): {
+  invoker: NodeInvoker;
+  resolve: (outputs?: OutputValues) => void;
+  reject: (error: Error) => void;
+} {
+  let resolve!: (outputs?: OutputValues) => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<OutputValues | undefined>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return {
+    invoker: {
+      invokeNode: async () => {
+        const outputs = await promise;
+        return outputs ?? { result: "ok" };
+      },
+    },
+    resolve,
+    reject,
   };
 }
 
