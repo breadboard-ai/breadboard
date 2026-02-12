@@ -26,6 +26,8 @@ import { Utils } from "../../utils.js";
 
 export const bind = makeAction();
 
+const LABEL = "Share";
+
 // =============================================================================
 // Actions
 // =============================================================================
@@ -35,7 +37,7 @@ export const open = asAction(
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
     const { controller, services } = bind;
-    const LABEL = "Share.open";
+
     const logger = Utils.Logging.getLogger(controller);
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
@@ -178,7 +180,7 @@ function getGraph(): GraphDescriptor | null {
 
 function getGraphFileId(graphUrl: string): string | undefined {
   const logger = Utils.Logging.getLogger();
-  const LABEL = "Share.getGraphFileId";
+
   if (!graphUrl.startsWith("drive:")) {
     logger.log(
       Utils.Logging.Formatter.error(
@@ -471,7 +473,7 @@ export const publish = asAction(
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
     const { controller, services } = bind;
-    const LABEL = "Share.publish";
+
     const logger = Utils.Logging.getLogger(controller);
     logger.log(Utils.Logging.Formatter.verbose("Publishing"), LABEL);
     const share = controller.editor.share;
@@ -562,7 +564,6 @@ export const unpublish = asAction(
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
 
-    const LABEL = "Share.unpublish";
     const logger = Utils.Logging.getLogger(controller);
     if (share.access !== "writable") {
       logger.log(
