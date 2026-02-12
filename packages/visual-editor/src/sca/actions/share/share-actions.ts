@@ -212,6 +212,12 @@ function getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
   return permissions.map((permission) => ({ role: "reader", ...permission }));
 }
 
+// This computation must live in the actions layer because it needs access to
+// guestConfig and globalConfig from services, but it can't be wrapped with
+// "asAction" as required by the lint rule, because that forces it to be async.
+// It can't be async because it needs to be rendered synchronously in the
+// share panel.
+// eslint-disable-next-line local-rules/action-exports-use-asaction
 export function computeAppUrl(shareableFile: DriveFileId | null): string {
   if (!shareableFile) {
     return "";
