@@ -739,9 +739,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   async #onClickViewSharePermissions(event: MouseEvent) {
     event.preventDefault();
-    await this.#actions.viewSharePermissions(
-      this.guestConfiguration?.shareSurface
-    );
+    await this.#actions.viewSharePermissions();
   }
 
   #onPublishedSwitchChange() {
@@ -757,7 +755,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const selected = input.selected;
     if (selected) {
       this.actionTracker?.publishApp(this.#graph.url);
-      this.#actions.publish(this.guestConfiguration?.shareSurface);
+      this.#actions.publish();
     } else {
       this.#actions.unpublish();
     }
@@ -813,6 +811,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     }
     return undefined;
   }
+
   async #onGoogleDriveSharePanelClose() {
     await this.#actions.onGoogleDriveSharePanelClose();
   }

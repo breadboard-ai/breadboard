@@ -20,6 +20,7 @@ import {
   PersistentBackend,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
+import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createFileSystem } from "../../engine/file-system/index.js";
 import { envFromSettings } from "../../utils/env-from-settings.js";
 import { createFileSystemBackend } from "../../idb/index.js";
@@ -51,6 +52,7 @@ export interface AppServices {
   apiClient: AppCatalystApiClient;
   autonamer: Autonamer;
   globalConfig: GlobalConfig;
+  guestConfig: GuestConfiguration;
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
   fileSystem: ReturnType<typeof createFileSystem>;
@@ -172,6 +174,7 @@ export function services(
       apiClient,
       autonamer,
       globalConfig: config.globalConfig,
+      guestConfig: config.guestConfig,
       emailPrefsManager,
       fetchWithCreds,
       fileSystem,

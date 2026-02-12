@@ -214,9 +214,7 @@ interface MakeShareableCopyResult {
   newMainVersion: string;
 }
 
-async function makeShareableCopy(
-  shareSurface: string | undefined
-): Promise<MakeShareableCopyResult> {
+async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
   const { services } = bind;
   const graph = getGraph();
   if (!graph) {
@@ -276,6 +274,7 @@ async function makeShareableCopy(
   // component.
   await boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
 
+  const shareSurface = services.guestConfig.shareSurface;
   const shareableCopyMetadata = await googleDriveClient.updateFileMetadata(
     shareableCopyFileId,
     {
@@ -468,7 +467,7 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
 export const publish = asAction(
   "Share.publish",
   { mode: ActionMode.Immediate },
-  async (shareSurface: string | undefined): Promise<void> => {
+  async (): Promise<void> => {
     const { controller, services } = bind;
     const LABEL = "Share.publish";
     const logger = Utils.Logging.getLogger(controller);
@@ -513,7 +512,7 @@ export const publish = asAction(
 
     let newLatestVersion: string | undefined;
     if (!share.shareableFile) {
-      const copyResult = await makeShareableCopy(shareSurface);
+      const copyResult = await makeShareableCopy();
       share.shareableFile = {
         id: copyResult.shareableCopyFileId,
         resourceKey: copyResult.shareableCopyResourceKey,
@@ -744,7 +743,7 @@ export const closePanel = asAction(
 export const viewSharePermissions = asAction(
   "Share.viewSharePermissions",
   { mode: ActionMode.Immediate },
-  async (shareSurface: string | undefined): Promise<void> => {
+  async (): Promise<void> => {
     const { controller } = bind;
     const share = controller.editor.share;
 
@@ -758,7 +757,7 @@ export const viewSharePermissions = asAction(
     // that's the file we need to open the granular permissions dialog with.
     const shareableCopyFileId =
       share.shareableFile?.id ??
-      (await makeShareableCopy(shareSurface)).shareableCopyFileId;
+      (await makeShareableCopy()).shareableCopyFileId;
 
     share.panel = "granular";
     share.shareableFile = { id: shareableCopyFileId };

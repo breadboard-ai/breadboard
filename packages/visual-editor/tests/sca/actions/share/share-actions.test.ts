@@ -146,7 +146,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.published, false);
 
     // Publish
-    const publishPromise = ShareActions.publish(undefined);
+    const publishPromise = ShareActions.publish();
 
     // Verify intermediate updating state
     assert.strictEqual(share.panel, "updating");
@@ -234,7 +234,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "writable");
 
     // Attempt to publish — should be a no-op
-    await ShareActions.publish(undefined);
+    await ShareActions.publish();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.published, false);
   });
@@ -242,7 +242,7 @@ suite("Share Actions", () => {
   test("unpublish", async () => {
     // Open, load, and publish to get to published state
     await ShareActions.open();
-    await ShareActions.publish(undefined);
+    await ShareActions.publish();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.published, true);
     assert.ok(share.shareableFile, "shareableFile should be set after publish");
@@ -479,7 +479,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.granularlyShared, false);
 
     // User opens granular sharing dialog
-    await ShareActions.viewSharePermissions(undefined);
+    await ShareActions.viewSharePermissions();
     assert.strictEqual(share.panel, "granular");
 
     // Simulate user adding individual permission via the native Drive share dialog
@@ -503,7 +503,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.published, false);
 
     // User opens granular sharing again
-    await ShareActions.viewSharePermissions(undefined);
+    await ShareActions.viewSharePermissions();
     assert.strictEqual(share.panel, "granular");
 
     // User adds domain permission
@@ -598,7 +598,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.published, false);
 
     // Publish
-    await ShareActions.publish(undefined);
+    await ShareActions.publish();
 
     // Verify managed asset got the domain permission added
     const managedAssetMeta = await googleDriveClient.getFileMetadata(
@@ -698,7 +698,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.access, "writable");
 
     // Start publish - this will detect the unmanaged asset and pause
-    const publishPromise = ShareActions.publish(undefined);
+    const publishPromise = ShareActions.publish();
 
     // Wait for the panel to transition to unmanaged-assets (polling to avoid race condition)
     for (let i = 0; i < 100; i++) {
