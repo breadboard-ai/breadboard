@@ -84,6 +84,10 @@ class PlanRunner
     this.#createController();
     this.dispatchEvent(new StartEvent({ timestamp: timestamp() }));
     await this.#controller!.run();
+    // Clear the controller after the run completes so that a subsequent
+    // start() creates a fresh controller rather than taking the restart()
+    // path (which is intended only for resuming from breakpoints).
+    this.#controller = null;
   }
 
   #createController() {
