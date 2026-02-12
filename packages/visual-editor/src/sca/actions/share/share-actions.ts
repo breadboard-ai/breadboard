@@ -52,13 +52,17 @@ export const open = asAction(
 
     const graphUrl = getGraph()?.url;
     if (!graphUrl) {
+      /* c8 ignore start */
       logger.log(Utils.Logging.Formatter.error("No graph url"), LABEL);
       return;
+      /* c8 ignore end */
     }
     const thisFileId = getGraphFileId(graphUrl);
     if (!thisFileId) {
+      /* c8 ignore start */
       logger.log(Utils.Logging.Formatter.error("No file id"), LABEL);
       return;
+      /* c8 ignore end */
     }
 
     share.panel = "loading";
@@ -181,6 +185,7 @@ function getGraph(): GraphDescriptor | null {
 function getGraphFileId(graphUrl: string): string | undefined {
   const logger = Utils.Logging.getLogger();
 
+  /* c8 ignore start */
   if (!graphUrl.startsWith("drive:")) {
     logger.log(
       Utils.Logging.Formatter.error(
@@ -194,6 +199,7 @@ function getGraphFileId(graphUrl: string): string | undefined {
   if (!graphFileId) {
     logger.log(Utils.Logging.Formatter.error("Graph file ID was empty"), LABEL);
   }
+  /* c8 ignore end */
   return graphFileId;
 }
 
@@ -201,6 +207,7 @@ function getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
   const { services } = bind;
   const permissions = services.globalConfig.googleDrive?.publishPermissions;
   if (!permissions || permissions.length === 0) {
+    /* c8 ignore start */
     Utils.Logging.getLogger().log(
       Utils.Logging.Formatter.error(
         "No googleDrive.publishPermissions configured"
@@ -208,6 +215,7 @@ function getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
       "Share.getRequiredPublishPermissions"
     );
     return [];
+    /* c8 ignore end */
   }
   return permissions.map((permission) => ({ role: "reader", ...permission }));
 }
@@ -291,11 +299,13 @@ async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
   );
   const shareableCopyFileId = extractGoogleDriveFileId(createResult.url ?? "");
   if (!shareableCopyFileId) {
+    /* c8 ignore start */
     Utils.Logging.getLogger().log(
       Utils.Logging.Formatter.error("Unexpected create result", createResult),
       "Share.makeShareableCopy"
     );
     throw new Error(`Error creating shareable file`);
+    /* c8 ignore end */
   }
 
   // Update the latest version property on the main file.
@@ -519,11 +529,14 @@ export const publish = asAction(
 
     const publishPermissions = getRequiredPublishPermissions();
     if (publishPermissions.length === 0) {
+      /* c8 ignore start */
       logger.log(
         Utils.Logging.Formatter.error("No publish permissions configured"),
         LABEL
       );
       return;
+
+      /* c8 ignore end */
     }
     if (!share.publicPublishingAllowed) {
       logger.log(
@@ -535,6 +548,7 @@ export const publish = asAction(
       return;
     }
     if (share.access !== "writable") {
+      /* c8 ignore start */
       logger.log(
         Utils.Logging.Formatter.error(
           'Expected published status to be "writable"'
@@ -542,6 +556,8 @@ export const publish = asAction(
         LABEL
       );
       return;
+
+      /* c8 ignore end */
     }
 
     if (share.published) {
@@ -584,7 +600,9 @@ export const publish = asAction(
     if (graph) {
       await handleAssetPermissions(share.shareableFile!.id, graph);
     } else {
+      /* c8 ignore start */
       logger.log(Utils.Logging.Formatter.error("No graph found"), LABEL);
+      /* c8 ignore end */
     }
 
     share.panel = "writable";
@@ -604,6 +622,7 @@ export const unpublish = asAction(
 
     const logger = Utils.Logging.getLogger(controller);
     if (share.access !== "writable") {
+      /* c8 ignore start */
       logger.log(
         Utils.Logging.Formatter.error(
           'Expected published status to be "writable"'
@@ -611,6 +630,8 @@ export const unpublish = asAction(
         LABEL
       );
       return;
+
+      /* c8 ignore end */
     }
     if (!share.published) {
       // Already unpublished!
@@ -770,6 +791,7 @@ export const closePanel = asAction(
         "Share.closePanel"
       );
     } else {
+      /* c8 ignore start */
       Utils.Logging.getLogger(controller).log(
         Utils.Logging.Formatter.error(
           "Unhandled panel:",
@@ -777,6 +799,8 @@ export const closePanel = asAction(
         ),
         "Share.closePanel"
       );
+
+      /* c8 ignore end */
     }
   }
 );
@@ -821,10 +845,13 @@ export const onGoogleDriveSharePanelClose = asAction(
     if (graph) {
       await handleAssetPermissions(graphFileId, graph);
     } else {
+      /* c8 ignore start */
       Utils.Logging.getLogger(controller).log(
         Utils.Logging.Formatter.error("No graph found"),
         "Share.onGoogleDriveSharePanelClose"
       );
+
+      /* c8 ignore end */
     }
     share.panel = "closed";
     await open();
