@@ -969,8 +969,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderSharePanel() {
     return html`
-      <bb-share-panel .graph=${this.#graph} ${ref(this.#sharePanelRef)}>
-      </bb-share-panel>
+      <bb-share-panel ${ref(this.#sharePanelRef)}></bb-share-panel>
     `;
   }
 

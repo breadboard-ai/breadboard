@@ -691,10 +691,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           : html`<section id="content" class="welcome">
               ${graphEditor}
             </section>`,
-      html`
-        <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
-        </bb-share-panel>
-      `,
+      html`<bb-share-panel ${ref(this.#sharePanelRef)}></bb-share-panel>`,
     ];
   }
 

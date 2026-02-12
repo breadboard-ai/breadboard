@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type GraphDescriptor } from "@breadboard-ai/types";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -328,8 +327,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
 
-  @property({ attribute: false })
-  accessor graph: GraphDescriptor | undefined;
+  get #graph() {
+    return this.sca.controller.editor.graph.graph;
+  }
 
   get #panel(): SharePanelStatus {
     return this.#controller.panel;
@@ -367,10 +367,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   open(): void {
-    if (!this.graph) {
-      return;
-    }
-    this.#actions.open(this.graph, this.#getRequiredPublishPermissions());
+    this.#actions.open(this.#getRequiredPublishPermissions());
   }
 
   close(): void {
@@ -378,7 +375,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderModal() {
-    const title = this.graph?.title;
+    const title = this.#graph?.title;
     return html`
       <dialog ${ref(this.#dialog)} @close=${this.close}>
         <header>
@@ -493,10 +490,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
   async #onClickPublishStale() {
-    if (!this.graph) {
-      return;
-    }
-    await this.#actions.publishStale(this.graph);
+    await this.#actions.publishStale();
   }
 
   #renderReadonlyModalContents() {
@@ -745,11 +739,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   async #onClickViewSharePermissions(event: MouseEvent) {
     event.preventDefault();
-    if (!this.graph) {
-      return;
-    }
     await this.#actions.viewSharePermissions(
-      this.graph,
       this.guestConfiguration?.shareSurface
     );
   }
@@ -760,20 +750,19 @@ export class SharePanel extends SignalWatcher(LitElement) {
       console.error("Expected input element to be rendered");
       return;
     }
-    if (!this.graph?.url) {
+    if (!this.#graph?.url) {
       console.error("No graph url");
       return;
     }
     const selected = input.selected;
     if (selected) {
-      this.actionTracker?.publishApp(this.graph.url);
+      this.actionTracker?.publishApp(this.#graph.url);
       this.#actions.publish(
-        this.graph,
         this.#getRequiredPublishPermissions(),
         this.guestConfiguration?.shareSurface
       );
     } else {
-      this.#actions.unpublish(this.graph);
+      this.#actions.unpublish();
     }
   }
 
@@ -828,11 +817,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return undefined;
   }
   async #onGoogleDriveSharePanelClose() {
-    if (!this.graph) {
-      return;
-    }
     await this.#actions.onGoogleDriveSharePanelClose(
-      this.graph,
       this.#getRequiredPublishPermissions()
     );
   }
