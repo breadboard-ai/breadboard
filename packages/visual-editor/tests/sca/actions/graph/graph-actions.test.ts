@@ -89,8 +89,9 @@ suite("Graph Actions", () => {
               pendingGraphReplacement: null,
               clearPendingGraphReplacement: () => {},
             },
+            theme: { updateHash() {} },
           },
-        } as AppController,
+        } as unknown as AppController,
       });
     });
 

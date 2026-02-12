@@ -424,7 +424,10 @@ export const replaceWithTheme = asAction(
     // 3. Replace the graph
     await replace(replacement, creator);
 
-    // 4. Clear flowgenInput now that the graph is populated. This is done
+    // 4. Update theme hash so the UI re-renders with the new theme
+    controller.editor.theme.updateHash(controller.editor.graph.graph);
+
+    // 5. Clear flowgenInput now that the graph is populated. This is done
     // here (not in the generate action) to prevent a flash: the generate
     // action sets pendingGraphReplacement and this trigger fires async.
     // If flowgenInput were cleared in generate, there'd be a render cycle
