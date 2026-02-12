@@ -15,6 +15,9 @@ import {
   StateEvent,
   UtteranceEvent,
 } from "../events/events.js";
+import { scaContext } from "../../sca/context/context.js";
+import { type SCA } from "../../sca/sca.js";
+import { isEmpty } from "../utils/utils.js";
 import * as StringsHelper from "../strings/helper.js";
 import { fabStyles } from "../styles/fab.js";
 import { floatingPanelStyles } from "../styles/floating-panel.js";
@@ -208,6 +211,9 @@ export class FlowgenInStepButton extends LitElement {
   @consume({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator | undefined = undefined;
 
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
 
@@ -226,17 +232,36 @@ export class FlowgenInStepButton extends LitElement {
   @state()
   accessor #state: State = { status: "closed" };
 
+  @state()
+  accessor #showConfirmation = false;
+
   readonly #descriptionInput = createRef<HTMLInputElement>();
 
   render() {
+    const modal = this.#showConfirmation
+      ? html`<bb-global-edit-confirmation-modal
+          @bbglobaleditconfirmation=${(
+            evt: CustomEvent<{ confirmed: boolean }>
+          ) => {
+            this.#showConfirmation = false;
+            if (evt.detail.confirmed) {
+              const description = this.#descriptionInput.value?.value;
+              if (description && this.currentGraph) {
+                this.#proceedWithEdit(description, this.currentGraph);
+              }
+            }
+          }}
+        ></bb-global-edit-confirmation-modal>`
+      : nothing;
+
     switch (this.#state.status) {
       case "closed": {
-        return this.#renderEditButton();
+        return [this.#renderEditButton(), modal];
       }
       case "open":
       case "generating":
       case "error": {
-        return [this.#renderEditButton(), this.#renderPanel()];
+        return [this.#renderEditButton(), this.#renderPanel(), modal];
       }
       default: {
         this.#state satisfies never;
@@ -392,14 +417,40 @@ export class FlowgenInStepButton extends LitElement {
         );
         return;
       }
+
+      // Check if this is the first time the user is making a suggested edit
+      const seenConfirmationDialog =
+        this.sca.controller.global.flowgenInput.seenConfirmationDialog;
+      const graphIsEmpty = isEmpty(this.currentGraph ?? null);
+
+      if (!seenConfirmationDialog && !graphIsEmpty) {
+        this.#showConfirmation = true;
+
+        return;
+      }
+
+      // User has already confirmed or graph is empty, proceed directly
+      this.#proceedWithEdit(description, this.currentGraph);
+    }
+  }
+
+  #proceedWithEdit(description: string, graph: GraphDescriptor) {
+    if (this.#state.status === "closed") {
+      // Reopen the panel if it was closed
+      const abort = new AbortController();
+      this.#state = {
+        status: "generating",
+        abort,
+      };
+    } else {
       this.#state = {
         status: "generating",
         abort: this.#state.abort,
       };
-      void this.#editBoard(description, this.currentGraph)
-        .then((graph) => this.#onEditComplete(graph))
-        .catch((error) => this.#onEditError(error));
     }
+    void this.#editBoard(description, graph)
+      .then((graph) => this.#onEditComplete(graph))
+      .catch((error) => this.#onEditError(error));
   }
 
   async #editBoard(

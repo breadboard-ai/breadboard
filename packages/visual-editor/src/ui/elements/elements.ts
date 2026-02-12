@@ -19,6 +19,7 @@ export { VEVideoModal } from "./shell/video-modal.js";
 export { VESnackbarDetailsModal } from "./shell/snackbar-details-modal.js";
 export { VEStatusUpdateModal } from "./shell/status-update-modal.js";
 export { VESignInModal } from "./shell/sign-in-modal.js";
+export { VEGlobalEditConfirmationModal } from "./shell/global-edit-confirmation-modal.js";
 
 // Inputs.
 export { AddAssetButton } from "./input/add-asset/add-asset-button.js";

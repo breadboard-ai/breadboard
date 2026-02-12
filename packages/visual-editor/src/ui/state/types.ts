@@ -317,7 +317,8 @@ export type UIOverlays =
   | "StatusUpdateModal"
   | "SignInModal"
   | "WarmWelcome"
-  | "NoAccessModal";
+  | "NoAccessModal"
+  | "GlobalEditConfirmation";
 
 export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
 
