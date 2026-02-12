@@ -367,7 +367,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   open(): void {
-    this.#actions.open(this.#getRequiredPublishPermissions());
+    this.#actions.open();
   }
 
   close(): void {
@@ -757,10 +757,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const selected = input.selected;
     if (selected) {
       this.actionTracker?.publishApp(this.#graph.url);
-      this.#actions.publish(
-        this.#getRequiredPublishPermissions(),
-        this.guestConfiguration?.shareSurface
-      );
+      this.#actions.publish(this.guestConfiguration?.shareSurface);
     } else {
       this.#actions.unpublish();
     }
@@ -817,21 +814,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return undefined;
   }
   async #onGoogleDriveSharePanelClose() {
-    await this.#actions.onGoogleDriveSharePanelClose(
-      this.#getRequiredPublishPermissions()
-    );
-  }
-
-  #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
-    if (!this.globalConfig) {
-      console.error(`No environment was provided`);
-      return [];
-    }
-    const permissions = this.globalConfig.googleDrive.publishPermissions;
-    if (permissions.length === 0) {
-      console.error(`Environment contained no googleDrive.publishPermissions`);
-    }
-    return permissions.map((permission) => ({ role: "reader", ...permission }));
+    await this.#actions.onGoogleDriveSharePanelClose();
   }
 }
 

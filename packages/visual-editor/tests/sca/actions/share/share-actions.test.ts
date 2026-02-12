@@ -91,6 +91,13 @@ suite("Share Actions", () => {
         domain: Promise.resolve("example.com"),
       },
       googleDriveBoardServer,
+      globalConfig: {
+        googleDrive: {
+          publishPermissions: [
+            { id: "123", type: "domain", domain: "example.com" },
+          ],
+        },
+      },
     });
     ShareActions.bind({ controller, services });
     share = controller.editor.share;
@@ -113,7 +120,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "closed");
 
     // User opens panel
-    const loaded = ShareActions.open([]);
+    const loaded = ShareActions.open();
     assert.strictEqual(share.panel, "loading");
     ShareActions.closePanel();
     assert.strictEqual(share.panel, "loading");
@@ -134,13 +141,12 @@ suite("Share Actions", () => {
 
   test("publish", async () => {
     // Open and load to get to writable state
-    await ShareActions.open([]);
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.published, false);
 
     // Publish
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
-    const publishPromise = ShareActions.publish(publishPermissions, undefined);
+    const publishPromise = ShareActions.publish(undefined);
 
     // Verify intermediate updating state
     assert.strictEqual(share.panel, "updating");
@@ -199,7 +205,6 @@ suite("Share Actions", () => {
 
   test("publish blocked by domain config", async () => {
     const graph = { edges: [], nodes: [], url: `drive:/${graphDriveFile.id}` };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Re-bind with domain config that disallows public publishing
     const { services } = makeTestServices({
@@ -208,6 +213,11 @@ suite("Share Actions", () => {
         domain: Promise.resolve("example.com"),
       },
       globalConfig: {
+        googleDrive: {
+          publishPermissions: [
+            { id: "123", type: "domain", domain: "example.com" },
+          ],
+        },
         domains: {
           "example.com": { disallowPublicPublishing: true },
         },
@@ -217,23 +227,22 @@ suite("Share Actions", () => {
 
     // Open and load
     setGraph(graph);
-    await ShareActions.open(publishPermissions);
+    await ShareActions.open();
 
     // Verify publicPublishingAllowed is false
     assert.strictEqual(share.publicPublishingAllowed, false);
     assert.strictEqual(share.panel, "writable");
 
     // Attempt to publish — should be a no-op
-    await ShareActions.publish(publishPermissions, undefined);
+    await ShareActions.publish(undefined);
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.published, false);
   });
 
   test("unpublish", async () => {
     // Open, load, and publish to get to published state
-    await ShareActions.open([]);
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
-    await ShareActions.publish(publishPermissions, undefined);
+    await ShareActions.open();
+    await ShareActions.publish(undefined);
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.published, true);
     assert.ok(share.shareableFile, "shareableFile should be set after publish");
@@ -282,7 +291,7 @@ suite("Share Actions", () => {
       nodes: [],
       url: `drive:/${createdFile.id}`,
     });
-    await ShareActions.open([]);
+    await ShareActions.open();
 
     assert.strictEqual(share.panel, "readonly");
     assert.strictEqual(share.access, "readonly");
@@ -318,7 +327,7 @@ suite("Share Actions", () => {
       nodes: [],
       url: `drive:/${mainFile.id}`,
     });
-    await ShareActions.open([]);
+    await ShareActions.open();
 
     assert.strictEqual(share.panel, "readonly");
     assert.strictEqual(share.access, "readonly");
@@ -346,7 +355,7 @@ suite("Share Actions", () => {
       nodes: [],
       url: `drive:/${createdFile.id}`,
     });
-    await ShareActions.open([]);
+    await ShareActions.open();
 
     assert.strictEqual(share.panel, "readonly");
     assert.strictEqual(share.access, "readonly");
@@ -399,7 +408,7 @@ suite("Share Actions", () => {
       nodes: [],
       url: `drive:/${mainFile.id}`,
     });
-    await ShareActions.open([{ type: "domain", domain: "example.com" }]);
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.stale, true);
     assert.strictEqual(share.latestVersion, "5");
@@ -460,11 +469,10 @@ suite("Share Actions", () => {
     });
 
     const graph = { edges: [], nodes: [], url: `drive:/${mainFile.id}` };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load - initially not published
     setGraph(graph);
-    await ShareActions.open(publishPermissions);
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.published, false);
@@ -487,7 +495,7 @@ suite("Share Actions", () => {
     );
 
     // User closes granular sharing dialog
-    await ShareActions.onGoogleDriveSharePanelClose(publishPermissions);
+    await ShareActions.onGoogleDriveSharePanelClose();
 
     // We should now be granularly shared, but not published
     assert.strictEqual(share.panel, "writable");
@@ -510,7 +518,7 @@ suite("Share Actions", () => {
     );
 
     // User closes the dialog
-    await ShareActions.onGoogleDriveSharePanelClose(publishPermissions);
+    await ShareActions.onGoogleDriveSharePanelClose();
 
     // We should now be granularly shared and published
     assert.strictEqual(share.panel, "writable");
@@ -581,17 +589,16 @@ suite("Share Actions", () => {
         ),
       },
     };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load
     setGraph(graph);
-    await ShareActions.open(publishPermissions);
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.published, false);
 
     // Publish
-    await ShareActions.publish(publishPermissions, undefined);
+    await ShareActions.publish(undefined);
 
     // Verify managed asset got the domain permission added
     const managedAssetMeta = await googleDriveClient.getFileMetadata(
@@ -683,16 +690,15 @@ suite("Share Actions", () => {
         ),
       },
     };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load
     setGraph(graph);
-    await ShareActions.open(publishPermissions);
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
 
     // Start publish - this will detect the unmanaged asset and pause
-    const publishPromise = ShareActions.publish(publishPermissions, undefined);
+    const publishPromise = ShareActions.publish(undefined);
 
     // Wait for the panel to transition to unmanaged-assets (polling to avoid race condition)
     for (let i = 0; i < 100; i++) {

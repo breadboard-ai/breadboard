@@ -33,7 +33,7 @@ export const bind = makeAction();
 export const open = asAction(
   "Share.open",
   { mode: ActionMode.Immediate },
-  async (publishPermissions: gapi.client.drive.Permission[]): Promise<void> => {
+  async (): Promise<void> => {
     const { controller, services } = bind;
     const LABEL = "Share.open";
     const logger = Utils.Logging.getLogger(controller);
@@ -133,6 +133,7 @@ export const open = asAction(
         bypassProxy: true,
       }
     );
+    const publishPermissions = getRequiredPublishPermissions();
     const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
     const diff = diffAssetReadPermissions({
       actual: allGraphPermissions,
@@ -190,6 +191,21 @@ function getGraphFileId(graphUrl: string): string | undefined {
     logger.log(Utils.Logging.Formatter.error("Graph file ID was empty"), LABEL);
   }
   return graphFileId;
+}
+
+function getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
+  const { services } = bind;
+  const permissions = services.globalConfig.googleDrive?.publishPermissions;
+  if (!permissions || permissions.length === 0) {
+    Utils.Logging.getLogger().log(
+      Utils.Logging.Formatter.error(
+        "No googleDrive.publishPermissions configured"
+      ),
+      "Share.getRequiredPublishPermissions"
+    );
+    return [];
+  }
+  return permissions.map((permission) => ({ role: "reader", ...permission }));
 }
 
 interface MakeShareableCopyResult {
@@ -452,10 +468,7 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
 export const publish = asAction(
   "Share.publish",
   { mode: ActionMode.Immediate },
-  async (
-    publishPermissions: gapi.client.drive.Permission[],
-    shareSurface: string | undefined
-  ): Promise<void> => {
+  async (shareSurface: string | undefined): Promise<void> => {
     const { controller, services } = bind;
     const LABEL = "Share.publish";
     const logger = Utils.Logging.getLogger(controller);
@@ -463,6 +476,7 @@ export const publish = asAction(
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
 
+    const publishPermissions = getRequiredPublishPermissions();
     if (publishPermissions.length === 0) {
       logger.log(
         Utils.Logging.Formatter.error("No publish permissions configured"),
@@ -754,7 +768,7 @@ export const viewSharePermissions = asAction(
 export const onGoogleDriveSharePanelClose = asAction(
   "Share.onGoogleDriveSharePanelClose",
   { mode: ActionMode.Immediate },
-  async (publishPermissions: gapi.client.drive.Permission[]): Promise<void> => {
+  async (): Promise<void> => {
     const { controller } = bind;
     const share = controller.editor.share;
 
@@ -773,6 +787,6 @@ export const onGoogleDriveSharePanelClose = asAction(
       );
     }
     share.panel = "closed";
-    await open(publishPermissions);
+    await open();
   }
 );
