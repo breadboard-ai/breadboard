@@ -11,6 +11,7 @@ export type {
   GraphDescriptor,
   GraphIdentifier,
   GraphInlineMetadata,
+  GraphToRun,
   InputIdentifier,
   InputResponse,
   InputValues,
@@ -24,8 +25,29 @@ export type {
   OutputIdentifier,
   OutputResponse,
   OutputValues,
+  RunArguments,
   SubGraphs,
 } from "@breadboard-ai/types";
 export type * from "@breadboard-ai/types/legacy.js";
 export type * from "@breadboard-ai/types/node-handler.js";
 export type * from "@breadboard-ai/types/schema.js";
+
+import type {
+  GraphToRun,
+  InputValues,
+  NodeDescriptor,
+  OutputValues,
+  RunArguments,
+} from "@breadboard-ai/types";
+
+export type { NodeInvoker };
+
+interface NodeInvoker {
+  invokeNode(
+    args: RunArguments,
+    graph: GraphToRun,
+    descriptor: NodeDescriptor,
+    inputs: InputValues,
+    invocationPath: number[]
+  ): Promise<OutputValues>;
+}

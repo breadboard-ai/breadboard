@@ -13,24 +13,17 @@ import type {
   RunArguments,
 } from "@breadboard-ai/types";
 
+import type { NodeInvoker } from "../../types.js";
 import { resolveBoardCapabilitiesInInputs } from "../../loader/capability.js";
 import { resolveGraph, SENTINEL_BASE_URL } from "../../loader/loader.js";
 import { callHandler, getHandler } from "../handler.js";
 
-export class NodeInvoker {
-  #graph: GraphToRun;
-  #context: NodeHandlerContext;
+export { NodeInvokerImpl };
 
-  constructor(args: RunArguments, graph: GraphToRun) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { inputs, start, stopAfter, ...context } = args;
-    this.#graph = graph;
-    this.#context = context;
-  }
-
-  #updateStepInfo(context: NodeHandlerContext) {
+class NodeInvokerImpl implements NodeInvoker {
+  #updateStepInfo(context: NodeHandlerContext, graph: GraphToRun) {
     const fileSystem = context.fileSystem?.createModuleFileSystem({
-      graphUrl: this.#graph.graph.url!,
+      graphUrl: graph.graph.url!,
     });
     return {
       ...context,
@@ -39,27 +32,32 @@ export class NodeInvoker {
   }
 
   async invokeNode(
+    args: RunArguments,
+    graph: GraphToRun,
     descriptor: NodeDescriptor,
     inputs: InputValues,
     invocationPath: number[]
   ) {
-    const { base = SENTINEL_BASE_URL } = this.#context;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { inputs: _inputs, start, stopAfter, ...context } = args;
+
+    const { base = SENTINEL_BASE_URL } = context;
     let outputs: OutputValues | undefined = undefined;
 
-    const outerGraph = this.#graph.graph;
+    const outerGraph = graph.graph;
 
     const handler = await getHandler(descriptor.type, {
-      ...this.#context,
+      ...context,
       outerGraph,
     });
 
     let newContext: NodeHandlerContext = {
-      ...this.#context,
+      ...context,
       descriptor,
-      board: resolveGraph(this.#graph),
+      board: resolveGraph(graph),
       // This is important: outerGraph is the value of the parent graph
-      // if this.#graph is a subgraph.
-      // Or it equals to "board" it this is not a subgraph
+      // if graph is a subgraph.
+      // Or it equals to "board" if this is not a subgraph
       // TODO: Make this more elegant.
       outerGraph,
       base,
@@ -68,16 +66,12 @@ export class NodeInvoker {
 
     // only for top-level steps, update env with the current step
     if (invocationPath.length === 1) {
-      newContext = this.#updateStepInfo(newContext);
+      newContext = this.#updateStepInfo(newContext, graph);
     }
 
     outputs = (await callHandler(
       handler,
-      resolveBoardCapabilitiesInInputs(
-        inputs,
-        this.#context,
-        this.#graph.graph.url
-      ),
+      resolveBoardCapabilitiesInInputs(inputs, context, graph.graph.url),
       newContext
     )) as OutputValues;
 

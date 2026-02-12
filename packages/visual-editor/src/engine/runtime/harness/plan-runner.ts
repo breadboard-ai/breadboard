@@ -26,7 +26,8 @@ import {
 import { ok, timestamp } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { NodeInvoker } from "../run/node-invoker.js";
+import { NodeInvokerImpl } from "../run/node-invoker.js";
+import type { NodeInvoker } from "../../../engine/types.js";
 import { createPlan } from "../static/create-plan.js";
 import { Orchestrator } from "../static/orchestrator.js";
 import {
@@ -99,7 +100,8 @@ class PlanRunner
       },
       (event: Event) => {
         this.dispatchEvent(event);
-      }
+      },
+      new NodeInvokerImpl()
     );
   }
 
@@ -274,7 +276,8 @@ class InternalRunStateController {
     private orchestrator: Orchestrator,
     public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
     public readonly pause: () => void,
-    public readonly dispatch: (event: Event) => void
+    public readonly dispatch: (event: Event) => void,
+    private readonly invoker: NodeInvoker
   ) {
     this.context = this.initializeNodeHandlerContext();
   }
@@ -325,16 +328,6 @@ class InternalRunStateController {
       assets: assetsFromGraphDescriptor(this.graph),
       env: context.fileSystem.env(),
     });
-    const invoker = new NodeInvoker(
-      {
-        ...context,
-        fileSystem,
-        signal,
-        currentStep: task.node,
-        currentGraph: this.graph,
-      },
-      { graph: this.graph }
-    );
     const nodeConfiguration = getLatestConfig(
       task.node.id,
       this.graph,
@@ -351,7 +344,15 @@ class InternalRunStateController {
       } else {
         outputs = augmentWithSkipOutputs(
           nodeConfiguration,
-          await invoker.invokeNode(
+          await this.invoker.invokeNode(
+            {
+              ...context,
+              fileSystem,
+              signal,
+              currentStep: task.node,
+              currentGraph: this.graph,
+            },
+            { graph: this.graph },
             task.node,
             { ...nodeConfiguration, ...controlState.adjustedInputs },
             path
