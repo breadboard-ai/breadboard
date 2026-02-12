@@ -150,6 +150,9 @@ const DeleteCommand: KeyboardCommand = {
       new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)
     );
 
+    sca.controller.editor.selection.deselectAll();
+
+    // Legacy bridge: keep selectionState flowing.
     runtime.select.deselectAll(
       tab.id,
       GraphUtils.createWorkspaceSelectionChangeId()
@@ -256,6 +259,9 @@ const SelectAllCommand: KeyboardCommand = {
     }
 
     const graph = editor.inspect("");
+    sca.controller.editor.selection.selectAll(graph);
+
+    // Legacy bridge: keep selectionState flowing.
     runtime.select.selectAll(tab.id, runtime.select.generateId(), graph);
   },
 };
@@ -490,6 +496,16 @@ const PasteCommand: KeyboardCommand = {
       await editor.edit(spec, GraphUtils.createEditChangeId());
       const workspaceSelection = GraphUtils.generateSelectionFrom(spec);
 
+      // Select the newly pasted nodes
+      const sel = sca.controller.editor.selection;
+      sel.deselectAll();
+      for (const [, graphState] of workspaceSelection.graphs) {
+        for (const nodeId of graphState.nodes) {
+          sel.addNode(nodeId);
+        }
+      }
+
+      // Legacy bridge: keep selectionState flowing.
       runtime.select.processSelections(
         tab.id,
         GraphUtils.createWorkspaceSelectionChangeId(),
@@ -580,6 +596,16 @@ const DuplicateCommand: KeyboardCommand = {
     await editor.edit(spec, GraphUtils.createEditChangeId());
     const workspaceSelection = GraphUtils.generateSelectionFrom(spec);
 
+    // Select the newly duplicated nodes
+    const sel = sca.controller.editor.selection;
+    sel.deselectAll();
+    for (const [, graphState] of workspaceSelection.graphs) {
+      for (const nodeId of graphState.nodes) {
+        sel.addNode(nodeId);
+      }
+    }
+
+    // Legacy bridge: keep selectionState flowing.
     runtime.select.processSelections(
       tab.id,
       GraphUtils.createWorkspaceSelectionChangeId(),

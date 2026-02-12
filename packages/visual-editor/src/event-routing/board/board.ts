@@ -365,6 +365,9 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
     sca.controller.global.main.blockingAction = false;
 
     if (tab) {
+      sca.controller.editor.selection.deselectAll();
+
+      // Legacy bridge: keep selectionState flowing.
       runtime.select.deselectAll(tab.id, runtime.select.generateId());
     }
 

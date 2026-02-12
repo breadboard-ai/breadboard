@@ -50,6 +50,11 @@ export const AddRoute: EventRoute<"node.add"> = {
       );
 
       // Select the new node
+      sca.controller.editor.selection.selectNodes([
+        originalEvent.detail.node.id,
+      ]);
+
+      // Legacy bridge: keep selectionState flowing.
       runtime.select.selectNodes(
         tab.id,
         runtime.select.generateId(),
@@ -102,7 +107,7 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
   {
     event: "node.changeedgeattachmentpoint",
 
-  async do({ originalEvent, sca }) {
+    async do({ originalEvent, sca }) {
       const { graphId } = originalEvent.detail;
 
       sca.controller.global.main.blockingAction = true;
