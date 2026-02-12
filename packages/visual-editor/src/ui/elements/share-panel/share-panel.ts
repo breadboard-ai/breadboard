@@ -500,7 +500,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderAppLink() {
-    const appUrl = this.#controller.appUrl;
+    const appUrl = this.#actions.computeAppUrl(this.#controller.shareableFile);
     if (!appUrl) {
       return nothing;
     }
@@ -738,7 +738,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   async #onClickCopyLinkButton() {
-    const appUrl = this.#controller.appUrl;
+    const appUrl = this.#actions.computeAppUrl(this.#controller.shareableFile);
     if (!appUrl) {
       console.error("No app url");
       return nothing;

@@ -20,9 +20,12 @@ import {
   type GoogleDriveAsset,
 } from "@breadboard-ai/utils/google-drive/utils.js";
 import type { UnmanagedAssetProblem } from "../../controller/subcontrollers/editor/share-controller.js";
+import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
+import { makeUrl } from "../../../ui/utils/urls.js";
+import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 
 export const bind = makeAction();
 
@@ -65,8 +68,6 @@ export const open = asAction(
       services.globalConfig.domains?.[share.userDomain]
         ?.disallowPublicPublishing ?? false
     );
-    share.guestConfig = services.guestConfig;
-    share.globalConfig = services.globalConfig;
 
     // Ensure any pending changes are saved so that our Drive operations will be
     // synchronized with those changes.
@@ -119,7 +120,6 @@ export const open = asAction(
             id: thisFileId,
             resourceKey: thisFileMetadata.resourceKey,
           };
-
       return;
     }
 
@@ -210,6 +210,38 @@ function getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
     return [];
   }
   return permissions.map((permission) => ({ role: "reader", ...permission }));
+}
+
+export function computeAppUrl(shareableFile: DriveFileId | null): string {
+  if (!shareableFile) {
+    return "";
+  }
+  const { services } = bind;
+  const shareSurface = services.guestConfig.shareSurface;
+  const shareSurfaceUrlTemplate =
+    shareSurface &&
+    services.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
+  if (shareSurfaceUrlTemplate) {
+    return makeShareLinkFromTemplate({
+      urlTemplate: shareSurfaceUrlTemplate,
+      fileId: shareableFile.id,
+      resourceKey: shareableFile.resourceKey,
+    });
+  }
+  const hostOrigin = services.globalConfig.hostOrigin;
+  if (!hostOrigin) {
+    return "";
+  }
+  return makeUrl(
+    {
+      page: "graph",
+      mode: "app",
+      flow: `drive:/${shareableFile.id}`,
+      resourceKey: shareableFile.resourceKey,
+      guestPrefixed: false,
+    },
+    hostOrigin
+  );
 }
 
 interface MakeShareableCopyResult {
