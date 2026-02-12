@@ -33,9 +33,15 @@ export type * from "@breadboard-ai/types/node-handler.js";
 export type * from "@breadboard-ai/types/schema.js";
 
 import type {
+  GraphDescriptor,
   GraphToRun,
   InputValues,
+  NodeConfiguration,
   NodeDescriptor,
+  NodeHandlerContext,
+  NodeIdentifier,
+  OrchestrationPlan,
+  Outcome,
   OutputValues,
   RunArguments,
 } from "@breadboard-ai/types";
@@ -50,4 +56,23 @@ interface NodeInvoker {
     inputs: InputValues,
     invocationPath: number[]
   ): Promise<OutputValues>;
+}
+
+export type { PlanCreator };
+
+type PlanCreator = (graph: GraphDescriptor) => OrchestrationPlan;
+
+export type { ConfigProvider };
+
+type ConfigProvider = (
+  id: NodeIdentifier,
+  graph: GraphDescriptor,
+  context: NodeHandlerContext
+) => Outcome<NodeConfiguration>;
+
+export type { RunEventSink };
+
+interface RunEventSink {
+  pause(): void;
+  dispatch(event: Event): void;
 }

@@ -17,7 +17,11 @@ import {
 } from "@breadboard-ai/types";
 
 import { ok, timestamp } from "@breadboard-ai/utils";
-import type { NodeInvoker } from "../../../engine/types.js";
+import type {
+  NodeInvoker,
+  ConfigProvider,
+  RunEventSink,
+} from "../../../engine/types.js";
 import { Orchestrator } from "../static/orchestrator.js";
 import {
   EndEvent,
@@ -34,7 +38,7 @@ import {
   computeSkipOutputs,
 } from "../../../runtime/control.js";
 import { assetsFromGraphDescriptor } from "../../../data/file-system.js";
-import { getLatestConfig } from "./get-latest-config.js";
+import { getLatestConfig as defaultGetLatestConfig } from "./get-latest-config.js";
 
 export { RunStateController };
 
@@ -53,11 +57,19 @@ class RunStateController {
     private graph: GraphDescriptor,
     private orchestrator: Orchestrator,
     public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
-    public readonly pause: () => void,
-    public readonly dispatch: (event: Event) => void,
-    private readonly invoker: NodeInvoker
+    private readonly eventSink: RunEventSink,
+    private readonly invoker: NodeInvoker,
+    private readonly configProvider: ConfigProvider = defaultGetLatestConfig
   ) {
-    this.context = this.initializeNodeHandlerContext();
+    this.context = initializeNodeHandlerContext(
+      this.config,
+      (event: Event) => this.eventSink.dispatch(event),
+      () => {
+        this.#stopControllers.forEach((controller) => {
+          controller.abort();
+        });
+      }
+    );
   }
 
   path(): number[] {
@@ -65,7 +77,7 @@ class RunStateController {
   }
 
   error(error: { $error: string }): { $error: string } {
-    this.dispatch(
+    this.eventSink.dispatch(
       new RunnerErrorEvent({
         error: error.$error,
         timestamp: timestamp(),
@@ -88,7 +100,7 @@ class RunStateController {
     }
 
     const path = this.path();
-    this.dispatch(
+    this.eventSink.dispatch(
       new NodeStartEvent({
         node: task.node,
         inputs: task.inputs,
@@ -106,7 +118,7 @@ class RunStateController {
       assets: assetsFromGraphDescriptor(this.graph),
       env: context.fileSystem.env(),
     });
-    const nodeConfiguration = getLatestConfig(
+    const nodeConfiguration = this.configProvider(
       task.node.id,
       this.graph,
       context
@@ -152,7 +164,7 @@ class RunStateController {
         }
       }
     }
-    this.dispatch(
+    this.eventSink.dispatch(
       new NodeEndEvent({
         node: task.node,
         inputs: task.inputs,
@@ -168,7 +180,7 @@ class RunStateController {
   preamble(): NodeHandlerContext {
     const context = this.context;
     if (this.orchestrator.progress !== "initial") return context;
-    this.dispatch(
+    this.eventSink.dispatch(
       new GraphStartEvent({
         graph: this.graph,
         graphId: "",
@@ -182,18 +194,18 @@ class RunStateController {
   postamble() {
     if (this.orchestrator.progress !== "finished") return;
     if (this.orchestrator.failed) {
-      this.pause();
+      this.eventSink.pause();
       return;
     }
 
-    this.dispatch(
+    this.eventSink.dispatch(
       new GraphEndEvent({
         path: [],
         timestamp: timestamp(),
       })
     );
 
-    this.dispatch(
+    this.eventSink.dispatch(
       new EndEvent({
         timestamp: timestamp(),
       })
@@ -233,7 +245,7 @@ class RunStateController {
           })
         );
         if (breakpoint) {
-          this.pause();
+          this.eventSink.pause();
           return;
         }
       }
@@ -280,52 +292,51 @@ class RunStateController {
     this.orchestrator.setInterrupted(id);
   }
 
-  initializeNodeHandlerContext(): NodeHandlerContext {
-    const {
-      loader,
-      fileSystem,
-      base,
-      signal,
-      graphStore,
-      fetchWithCreds,
-      getProjectRunState,
-      clientDeploymentConfiguration,
-      flags,
-    } = this.config;
-
-    const dispatch = this.dispatch;
-    const probe: Probe = {
-      async report(message: ProbeMessage) {
-        dispatchProbeMessage(dispatch, message);
-      },
-    };
-
-    signal?.addEventListener("abort", () => {
-      this.#stopControllers.forEach((controller) => {
-        controller.abort();
-      });
-    });
-
-    return {
-      probe,
-      loader,
-      fileSystem,
-      base,
-      signal,
-      graphStore,
-      sandbox: graphStore?.sandbox,
-      fetchWithCreds,
-      getProjectRunState,
-      clientDeploymentConfiguration,
-      flags,
-    };
-  }
-
   update(orchestrator: Orchestrator) {
     const oldOrchestrator = this.orchestrator;
     orchestrator.update(oldOrchestrator);
     this.orchestrator = orchestrator;
   }
+}
+
+function initializeNodeHandlerContext(
+  config: RunConfig,
+  dispatch: (event: Event) => void,
+  onAbort: () => void
+): NodeHandlerContext {
+  const {
+    loader,
+    fileSystem,
+    base,
+    signal,
+    graphStore,
+    fetchWithCreds,
+    getProjectRunState,
+    clientDeploymentConfiguration,
+    flags,
+  } = config;
+
+  const probe: Probe = {
+    async report(message: ProbeMessage) {
+      dispatchProbeMessage(dispatch, message);
+    },
+  };
+
+  signal?.addEventListener("abort", onAbort);
+
+  return {
+    probe,
+    loader,
+    fileSystem,
+    base,
+    signal,
+    graphStore,
+    sandbox: graphStore?.sandbox,
+    fetchWithCreds,
+    getProjectRunState,
+    clientDeploymentConfiguration,
+    flags,
+  };
 }
 
 function dispatchProbeMessage(

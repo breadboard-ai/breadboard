@@ -23,7 +23,8 @@ import { timestamp } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { NodeInvokerImpl } from "../run/node-invoker.js";
-import { createPlan } from "../static/create-plan.js";
+import type { PlanCreator } from "../../../engine/types.js";
+import { createPlan as defaultCreatePlan } from "../static/create-plan.js";
 import { Orchestrator } from "../static/orchestrator.js";
 import {
   EdgeStateChangeEvent,
@@ -51,6 +52,7 @@ class PlanRunner
   #controller: RunStateController | null = null;
 
   readonly config: RunConfig;
+  readonly #planCreator: PlanCreator;
 
   running() {
     return !!this.#controller;
@@ -75,13 +77,17 @@ class PlanRunner
       this.config.runner!,
       this.#orchestrator,
       this.breakpoints,
-      () => {
-        if (!this.#orchestrator.working) {
-          this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
-        }
-      },
-      (event: Event) => {
-        this.dispatchEvent(event);
+      {
+        pause: () => {
+          if (!this.#orchestrator.working) {
+            this.dispatchEvent(
+              new PauseEvent(false, { timestamp: timestamp() })
+            );
+          }
+        },
+        dispatch: (event: Event) => {
+          this.dispatchEvent(event);
+        },
       },
       new NodeInvokerImpl()
     );
@@ -117,9 +123,10 @@ class PlanRunner
 
   accessor breakpoints = new SignalMap<NodeIdentifier, BreakpointSpec>();
 
-  constructor(config: RunConfig) {
+  constructor(config: RunConfig, planCreator: PlanCreator = defaultCreatePlan) {
     super();
     this.config = config;
+    this.#planCreator = planCreator;
     if (!config.runner) {
       throw new Error(
         `Unable to initialize PlanRunner: RunConfig.runner is empty`
@@ -129,7 +136,7 @@ class PlanRunner
   }
 
   #createOrchestrator(graph: GraphDescriptor) {
-    const plan = createPlan(graph);
+    const plan = this.#planCreator(graph);
     return new Orchestrator(plan, {
       stateChangedbyOrchestrator: (id, newState, message) => {
         this.#dispatchNodeStateChangeEvent(id, newState, message);
