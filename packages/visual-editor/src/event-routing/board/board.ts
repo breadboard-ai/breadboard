@@ -261,7 +261,7 @@ export const RenameRoute: EventRoute<"board.rename"> = {
 export const CreateRoute: EventRoute<"board.create"> = {
   event: "board.create",
 
-  async do({ sca, originalEvent, askUserToSignInIfNeeded, embedHandler }) {
+  async do({ sca, originalEvent, askUserToSignInIfNeeded }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
       // The user didn't sign in, so hide any snackbars.
       sca.controller.global.snackbars.unsnackbar();
@@ -269,35 +269,38 @@ export const CreateRoute: EventRoute<"board.create"> = {
     }
 
     sca.controller.global.main.blockingAction = true;
-    const result = await sca.actions.board.saveAs(
-      originalEvent.detail.graph,
-      originalEvent.detail.messages
-    );
-    sca.controller.global.main.blockingAction = false;
+    try {
+      const result = await sca.actions.board.saveAs(
+        originalEvent.detail.graph,
+        originalEvent.detail.messages
+      );
 
-    if (!result?.url) {
-      return false;
+      if (!result?.url) {
+        return false;
+      }
+
+      const { lite, dev } = parseUrl(window.location.href);
+
+      sca.controller.router.go({
+        page: "graph",
+        // Ensure we always go back to the canvas when a board is created.
+        mode: "canvas",
+        // Ensure that we correctly preserve the "lite" mode.
+        lite,
+        flow: result.url.href,
+        // Resource key not required because we know the current user
+        // created it.
+        resourceKey: undefined,
+        dev,
+        guestPrefixed: true,
+      });
+      sca.services.embedHandler?.sendToEmbedder({
+        type: "board_id_created",
+        id: result.url.href,
+      });
+    } finally {
+      sca.controller.global.main.blockingAction = false;
     }
-
-    const { lite, dev } = parseUrl(window.location.href);
-
-    sca.controller.router.go({
-      page: "graph",
-      // Ensure we always go back to the canvas when a board is created.
-      mode: "canvas",
-      // Ensure that we correctly preserve the "lite" mode.
-      lite,
-      flow: result.url.href,
-      // Resource key not required because we know the current user
-      // created it.
-      resourceKey: undefined,
-      dev,
-      guestPrefixed: true,
-    });
-    embedHandler?.sendToEmbedder({
-      type: "board_id_created",
-      id: result.url.href,
-    });
 
     return false;
   },
@@ -307,40 +310,42 @@ export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
   async do(deps) {
-    const { originalEvent, sca, embedHandler } = deps;
+    const { originalEvent, sca } = deps;
 
     sca.controller.global.main.blockingAction = true;
+    try {
+      // Remix action handles snackbar, graph resolution, and saveAs
+      const result = await sca.actions.board.remix(
+        originalEvent.detail.url,
+        originalEvent.detail.messages
+      );
 
-    // Remix action handles snackbar, graph resolution, and saveAs
-    const result = await sca.actions.board.remix(
-      originalEvent.detail.url,
-      originalEvent.detail.messages
-    );
-    sca.controller.global.main.blockingAction = false;
+      if (!result?.success) {
+        return false;
+      }
 
-    if (!result?.success) {
-      return false;
+      const { lite, dev } = parseUrl(window.location.href);
+
+      sca.controller.router.go({
+        page: "graph",
+        // Ensure we always go back to the canvas when a board is created.
+        mode: "canvas",
+        // Ensure that we correctly preserve the "lite" mode.
+        lite,
+        flow: result.url.href,
+        // Resource key not required because we know the current user
+        // created it.
+        resourceKey: undefined,
+        dev,
+        guestPrefixed: true,
+      });
+      sca.services.embedHandler?.sendToEmbedder({
+        type: "board_id_created",
+        id: result.url.href,
+      });
+    } finally {
+      sca.controller.global.main.blockingAction = false;
     }
-
-    const { lite, dev } = parseUrl(window.location.href);
-
-    sca.controller.router.go({
-      page: "graph",
-      // Ensure we always go back to the canvas when a board is created.
-      mode: "canvas",
-      // Ensure that we correctly preserve the "lite" mode.
-      lite,
-      flow: result.url.href,
-      // Resource key not required because we know the current user
-      // created it.
-      resourceKey: undefined,
-      dev,
-      guestPrefixed: true,
-    });
-    embedHandler?.sendToEmbedder({
-      type: "board_id_created",
-      id: result.url.href,
-    });
 
     return false;
   },
@@ -356,13 +361,16 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
     }
 
     sca.controller.global.main.blockingAction = true;
-    await sca.actions.board.deleteBoard(
-      originalEvent.detail.url,
-      originalEvent.detail.messages
-    );
-    sca.controller.home.recent.remove(originalEvent.detail.url);
-    await sca.controller.home.recent.isSettled;
-    sca.controller.global.main.blockingAction = false;
+    try {
+      await sca.actions.board.deleteBoard(
+        originalEvent.detail.url,
+        originalEvent.detail.messages
+      );
+      sca.controller.home.recent.remove(originalEvent.detail.url);
+      await sca.controller.home.recent.isSettled;
+    } finally {
+      sca.controller.global.main.blockingAction = false;
+    }
 
     if (tab) {
       sca.controller.editor.selection.deselectAll();

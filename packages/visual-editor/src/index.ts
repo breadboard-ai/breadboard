@@ -314,7 +314,7 @@ class Main extends MainBase {
           nodeId: iterateOnPromptEvent.nodeId,
           modelId: iterateOnPromptEvent.modelId,
         };
-        this.embedHandler?.sendToEmbedder(message);
+        this.sca.services.embedHandler?.sendToEmbedder(message);
       }}
     ></bb-canvas-controller>`;
   }
@@ -575,7 +575,7 @@ class Main extends MainBase {
         if (!this.tab) {
           return;
         }
-        this.embedHandler?.sendToEmbedder({
+        this.sca.services.embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
         const homepage: MakeUrlInit = {

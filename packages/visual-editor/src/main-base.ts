@@ -32,7 +32,7 @@ import { boardServerContext } from "./ui/contexts/board-server.js";
 import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
 import { VESignInModal } from "./ui/elements/elements.js";
-import { EmbedHandler, embedState, EmbedState } from "./ui/embed/embed.js";
+import { embedState, EmbedState } from "./ui/embed/embed.js";
 
 import type {
   CheckAppAccessResult,
@@ -157,7 +157,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     createRef();
   protected feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
-  protected readonly embedHandler: EmbedHandler | undefined;
+
   protected readonly settings: SettingsStore;
   protected readonly hostOrigin: URL;
   protected readonly logger: ReturnType<typeof Utils.Logging.getLogger> =
@@ -194,6 +194,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       guestConfig: this.guestConfiguration,
       settings: this.settings,
       shellHost: this.opalShell,
+      embedHandler: args.embedHandler,
       env: args.env,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
@@ -242,8 +243,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.flowGenerator = this.sca.services.flowGenerator;
     this.actionTracker = this.sca.services.actionTracker;
 
-    this.embedHandler = args.embedHandler;
-
     this.#addRuntimeEventHandlers();
 
     this.boardServer = this.sca.services.googleDriveBoardServer;
@@ -283,7 +282,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     // Once we've determined the sign-in status, relay it to an embedder.
     this.sca.services.signinAdapter.state.then((state) =>
-      this.embedHandler?.sendToEmbedder({
+      this.sca.services.embedHandler?.sendToEmbedder({
         type: "home_loaded",
         isSignedIn: state === "signedin",
       })
@@ -348,27 +347,30 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.addEventListener("pointerdown", this.#hideTooltipBound);
     window.addEventListener("keydown", this.#onKeyboardShortCut);
 
-    if (this.embedHandler) {
+    if (this.sca.services.embedHandler) {
       this.embedState = embedState();
     }
 
-    this.embedHandler?.addEventListener(
+    this.sca.services.embedHandler?.addEventListener(
       "toggle_iterate_on_prompt",
       ({ message }) => {
         this.embedState.showIterateOnPrompt = message.on;
       }
     );
-    this.embedHandler?.addEventListener("create_new_board", ({ message }) => {
-      if (!message.prompt) {
-        // If no prompt provided, generate an empty board.
-        this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
-      } else {
-        void this.#generateGraph(message.prompt)
-          .then((graph) => this.#generateBoardFromGraph(graph))
-          .catch((error) => console.error("Error generating board", error));
+    this.sca.services.embedHandler?.addEventListener(
+      "create_new_board",
+      ({ message }) => {
+        if (!message.prompt) {
+          // If no prompt provided, generate an empty board.
+          this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
+        } else {
+          void this.#generateGraph(message.prompt)
+            .then((graph) => this.#generateBoardFromGraph(graph))
+            .catch((error) => console.error("Error generating board", error));
+        }
       }
-    });
-    this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
+    );
+    this.sca.services.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
 
   disconnectedCallback(): void {
@@ -598,7 +600,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    if (this.embedHandler) {
+    if (this.sca.services.embedHandler) {
       // When the board server is asked to create a new graph, it first makes a
       // very fast RPC just to allocate a drive file id, returns that file id,
       // and finishes initializing the graph in the background (uploading the
@@ -616,7 +618,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       const { url } = saveResult;
       const boardServer = this.sca.services.googleDriveBoardServer;
       await boardServer.flushSaveQueue(url.href);
-      this.embedHandler.sendToEmbedder({
+      this.sca.services.embedHandler.sendToEmbedder({
         type: "board_id_created",
         id: url.href,
       });
@@ -916,7 +918,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.askUserToSignInIfNeeded(scopes),
       boardServer: this.boardServer,
       actionTracker: this.actionTracker,
-      embedHandler: this.embedHandler,
       sca: this.sca,
     };
   }

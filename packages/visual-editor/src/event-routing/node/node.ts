@@ -27,8 +27,9 @@ export const ChangeRoute: EventRoute<"node.change"> = {
       );
     } catch (error) {
       console.warn("Failed to change node configuration", error);
+    } finally {
+      sca.controller.global.main.blockingAction = false;
     }
-    sca.controller.global.main.blockingAction = false;
 
     return false;
   },
@@ -91,13 +92,16 @@ export const ChangeEdgeRoute: EventRoute<"node.changeedge"> = {
 
   async do({ originalEvent, sca }) {
     sca.controller.global.main.blockingAction = true;
-    await sca.actions.graph.changeEdge(
-      originalEvent.detail.changeType,
-      originalEvent.detail.from,
-      originalEvent.detail.to,
-      originalEvent.detail.subGraphId
-    );
-    sca.controller.global.main.blockingAction = false;
+    try {
+      await sca.actions.graph.changeEdge(
+        originalEvent.detail.changeType,
+        originalEvent.detail.from,
+        originalEvent.detail.to,
+        originalEvent.detail.subGraphId
+      );
+    } finally {
+      sca.controller.global.main.blockingAction = false;
+    }
 
     return false;
   },
