@@ -29,14 +29,7 @@ import {
   TemplatePart,
   TemplatePartTransformCallback,
 } from "@breadboard-ai/utils";
-import {
-  css,
-  html,
-  HTMLTemplateResult,
-  LitElement,
-  nothing,
-  PropertyValues,
-} from "lit";
+import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { notebookLmIcon } from "../../styles/svg-icons.js";
@@ -51,11 +44,7 @@ import {
   ToastType,
 } from "../../events/events.js";
 import { Project } from "../../state/index.js";
-import {
-  ActionTracker,
-  EnumValue,
-  WorkspaceSelectionStateWithChangeId,
-} from "../../types/types.js";
+import { ActionTracker, EnumValue } from "../../types/types.js";
 import {
   isControllerBehavior,
   isLLMContentArrayBehavior,
@@ -118,8 +107,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   // NOTE: graphTopologyUpdateId was removed - autosave on selection change
   // is now handled by the SCA step autosave trigger.
 
-  @property()
-  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  // NOTE: selectionState prop removed. Selection is now read directly
+  // from SelectionController via SCA.
 
   @property()
   accessor mainGraphId: MainGraphIdentifier | null = null;
@@ -870,22 +859,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   }
 
   #calculateSelectionSize() {
-    if (!this.selectionState) {
-      return 0;
-    }
-
-    return [...this.selectionState.selectionState.graphs].reduce(
-      (prev, [, graph]) => {
-        return (
-          prev +
-          graph.assets.size +
-          graph.comments.size +
-          graph.nodes.size +
-          graph.references.size
-        );
-      },
-      0
-    );
+    return this.sca.controller.editor.selection.size;
   }
 
   /**
@@ -1682,26 +1656,15 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   }
 
   #renderSelectedItem() {
-    if (!this.selectionState) {
-      return;
-    }
+    const sel = this.sca.controller.editor.selection.selection;
 
-    const candidate = [...this.selectionState.selectionState.graphs].find(
-      ([, graph]) =>
-        graph.assets.size > 0 || graph.nodes.size > 0 || graph.comments.size > 0
-    );
     let value: HTMLTemplateResult | symbol = nothing;
-    if (!candidate) {
-      value = html`<div id="generic-status">Unsupported item</div>`;
+    if (sel.assets.size > 0) {
+      value = this.#renderAsset([...sel.assets][0]);
+    } else if (sel.nodes.size > 0) {
+      value = this.#renderNode(MAIN_BOARD_ID, [...sel.nodes][0]);
     } else {
-      const [id, graph] = candidate;
-      if (graph.assets.size) {
-        value = this.#renderAsset([...graph.assets][0]);
-      } else if (graph.nodes.size) {
-        value = this.#renderNode(id, [...graph.nodes][0]);
-      } else {
-        value = html`<div id="generic-status">Unsupported Item</div>`;
-      }
+      value = html`<div id="generic-status">Unsupported item</div>`;
     }
 
     return html`<form
@@ -1820,11 +1783,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     });
   }
 
-  protected firstUpdated(changedProperties: PropertyValues): void {
-    if (!changedProperties.has("selectionState")) {
-      return;
-    }
-
+  protected firstUpdated(): void {
     this.focus();
   }
 
@@ -1832,6 +1791,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Read graph version to subscribe to graph changes via SignalWatcher.
     // This ensures we re-render when the graph is modified (e.g., wire drag).
     void this.sca.controller.editor.graph.version;
+    // Subscribe to selection changes via SignalWatcher.
+    void this.sca.controller.editor.selection.selectionId;
 
     const selectionCount = this.#calculateSelectionSize();
     if (selectionCount === 0) {

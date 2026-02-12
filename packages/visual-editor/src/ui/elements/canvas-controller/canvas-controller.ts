@@ -19,10 +19,7 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { guard } from "lit/directives/guard.js";
-import {
-  AppTemplateAdditionalOptionsAvailable,
-  WorkspaceSelectionStateWithChangeId,
-} from "../../types/types.js";
+import { AppTemplateAdditionalOptionsAvailable } from "../../types/types.js";
 import { styles as canvasControllerStyles } from "./canvas-controller.styles.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
@@ -79,8 +76,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @state()
   accessor projectState!: Project;
 
-  @property()
-  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  // NOTE: selectionState prop removed. Entity-editor now reads from
+  // SelectionController via SCA directly.
 
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
@@ -324,7 +321,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         })}
         .graph=${graph}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-        .selectionState=${this.selectionState}
         .mainGraphId=${gc.mainGraphId}
         .readOnly=${!gc.graphIsMine}
         .projectState=${this.projectState}

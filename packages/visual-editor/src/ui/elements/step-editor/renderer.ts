@@ -42,11 +42,7 @@ import {
   SelectionTranslateEvent,
 } from "./events/events.js";
 import { NewAsset } from "../../types/types.js";
-import {
-  createEmptyGraphSelectionState,
-  createEmptyWorkspaceSelectionState,
-  createWorkspaceSelectionChangeId,
-} from "../../utils/workspace.js";
+import { createEmptyGraphSelectionState } from "../../utils/workspace.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import type {
@@ -1368,27 +1364,8 @@ export class Renderer extends SignalWatcher(LitElement) {
       this.#lastSeenSelectionId = sel.selectionId;
     }
 
-    // --- Legacy bridge: dispatch event for canvas-controller/entity-editor ---
-    const newState = createEmptyWorkspaceSelectionState();
-
-    // Build workspace state from all graph entities.
-    for (const [gId, g] of this.#graphs) {
-      if (gId === MOVE_GRAPH_ID) continue;
-      if (g.selectionState) {
-        newState.graphs.set(g.graphId, g.selectionState);
-      }
-    }
-
-    const selectionChangeId = createWorkspaceSelectionChangeId();
-    this.dispatchEvent(
-      new StateEvent({
-        eventType: "host.selectionstatechange",
-        selectionChangeId,
-        selections: newState,
-        replaceExistingSelections: !this.#isAdditiveSelection,
-        moveToSelection: false,
-      })
-    );
+    // NOTE: Legacy bridge removed. Entity-editor and canvas-controller
+    // now read directly from SelectionController via SCA.
   }
 
   #maybeRenderOverflowMenu() {

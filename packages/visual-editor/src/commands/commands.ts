@@ -12,11 +12,43 @@ import { ClipboardReader } from "../utils/clipboard-reader.js";
 import { Tab } from "../runtime/types.js";
 import { Utils } from "../sca/utils.js";
 import { A2_COMPONENTS } from "../a2/a2-registry.js";
+import type { SelectionController } from "../sca/controller/subcontrollers/editor/selection/selection-controller.js";
+import type {
+  ReferenceIdentifier,
+  WorkspaceSelectionState,
+} from "../runtime/types.js";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
     .composedPath()
     .some((target) => target instanceof BreadboardUI.Elements.Renderer);
+}
+
+/**
+ * Converts the flat SelectionController selection to a WorkspaceSelectionState
+ * keyed by MAIN_BOARD_ID. This bridges the SCA flat model to the legacy
+ * GraphUtils APIs that still expect per-graph selection maps.
+ */
+function selectionToWorkspace(
+  sel: SelectionController
+): WorkspaceSelectionState {
+  const s = sel.selection;
+  return {
+    graphs: new Map([
+      [
+        MAIN_BOARD_ID,
+        {
+          nodes: new Set(s.nodes),
+          edges: new Set(s.edges),
+          assets: new Set(s.assets),
+          assetEdges: new Set(s.assetEdges),
+          comments: new Set<string>(),
+          references: new Set<ReferenceIdentifier>(),
+        },
+      ],
+    ]),
+    modules: new Set(),
+  };
 }
 
 const SaveCommand: KeyboardCommand = {
@@ -77,13 +109,7 @@ const DeleteCommand: KeyboardCommand = {
     return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
-  async do({
-    runtime,
-    sca,
-    selectionState,
-    tab,
-    originalEvent,
-  }: KeyboardCommandDeps): Promise<void> {
+  async do({ sca, tab, originalEvent }: KeyboardCommandDeps): Promise<void> {
     if (tab?.readOnly) {
       return;
     }
@@ -97,52 +123,46 @@ const DeleteCommand: KeyboardCommand = {
       throw new Error("Unable to edit");
     }
 
-    if (
-      !tab ||
-      !selectionState ||
-      (!tab.moduleId && selectionState.selectionState.graphs.size === 0)
-    ) {
+    const sel = sca.controller.editor.selection;
+    if (!tab || sel.size === 0) {
       throw new Error("Nothing to delete");
     }
 
+    const workspaceState = selectionToWorkspace(sel);
     const graph = editor.inspect("");
-    const spec = GraphUtils.generateDeleteEditSpecFrom(
-      selectionState.selectionState,
-      graph
-    );
+    const spec = GraphUtils.generateDeleteEditSpecFrom(workspaceState, graph);
 
-    for (const selectionGraph of selectionState.selectionState.graphs.values()) {
-      // First delete any selected Asset Edges.
-      if (selectionGraph.assetEdges.size) {
-        const assetEdges = graph.assetEdges();
+    // Delete selected Asset Edges.
+    const selection = sel.selection;
+    if (selection.assetEdges.size) {
+      const assetEdges = graph.assetEdges();
 
-        if (Array.isArray(assetEdges)) {
-          for (const selectedAssetEdge of selectionGraph.assetEdges) {
-            for (const assetEdge of assetEdges) {
-              if (
-                selectedAssetEdge !==
-                Utils.Helpers.toAssetEdgeIdentifier(assetEdge)
-              ) {
-                continue;
-              }
-
-              await editor.apply(
-                new BreadboardUI.Transforms.ChangeAssetEdge("remove", "", {
-                  assetPath: assetEdge.assetPath,
-                  direction: assetEdge.direction,
-                  nodeId: assetEdge.node.descriptor.id,
-                })
-              );
+      if (Array.isArray(assetEdges)) {
+        for (const selectedAssetEdge of selection.assetEdges) {
+          for (const assetEdge of assetEdges) {
+            if (
+              selectedAssetEdge !==
+              Utils.Helpers.toAssetEdgeIdentifier(assetEdge)
+            ) {
+              continue;
             }
+
+            await editor.apply(
+              new BreadboardUI.Transforms.ChangeAssetEdge("remove", "", {
+                assetPath: assetEdge.assetPath,
+                direction: assetEdge.direction,
+                nodeId: assetEdge.node.descriptor.id,
+              })
+            );
           }
         }
       }
+    }
 
-      // Then delete any selected Assets.
-      if (selectionGraph.assets.size) {
-        for (const asset of selectionGraph.assets) {
-          await sca.actions.asset.removeGraphAsset(asset);
-        }
+    // Delete selected Assets.
+    if (selection.assets.size) {
+      for (const asset of selection.assets) {
+        await sca.actions.asset.removeGraphAsset(asset);
       }
     }
 
@@ -150,13 +170,7 @@ const DeleteCommand: KeyboardCommand = {
       new BreadboardUI.Transforms.MarkInPortsInvalidSpec(spec)
     );
 
-    sca.controller.editor.selection.deselectAll();
-
-    // Legacy bridge: keep selectionState flowing.
-    runtime.select.deselectAll(
-      tab.id,
-      GraphUtils.createWorkspaceSelectionChangeId()
-    );
+    sel.deselectAll();
   },
 };
 
@@ -239,12 +253,7 @@ const SelectAllCommand: KeyboardCommand = {
     return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
-  async do({
-    runtime,
-    tab,
-    originalEvent,
-    sca,
-  }: KeyboardCommandDeps): Promise<void> {
+  async do({ tab, originalEvent, sca }: KeyboardCommandDeps): Promise<void> {
     if (!isFocusedOnGraphRenderer(originalEvent)) {
       return;
     }
@@ -260,9 +269,6 @@ const SelectAllCommand: KeyboardCommand = {
 
     const graph = editor.inspect("");
     sca.controller.editor.selection.selectAll(graph);
-
-    // Legacy bridge: keep selectionState flowing.
-    runtime.select.selectAll(tab.id, runtime.select.generateId(), graph);
   },
 };
 
@@ -282,12 +288,7 @@ const CopyCommand: KeyboardCommand = {
     return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
-  async do({
-    selectionState,
-    tab,
-    originalEvent,
-    sca,
-  }: KeyboardCommandDeps): Promise<void> {
+  async do({ tab, originalEvent, sca }: KeyboardCommandDeps): Promise<void> {
     if (!isFocusedOnGraphRenderer(originalEvent)) {
       return;
     }
@@ -297,17 +298,14 @@ const CopyCommand: KeyboardCommand = {
       throw new Error("Unable to edit graph");
     }
 
-    if (
-      !tab ||
-      !selectionState ||
-      selectionState.selectionState.graphs.size === 0
-    ) {
+    const sel = sca.controller.editor.selection;
+    if (!tab || sel.size === 0) {
       throw new Error("Nothing to copy");
     }
 
     const graph = editor.inspect("");
     const board = GraphUtils.generateBoardFrom(
-      selectionState.selectionState,
+      selectionToWorkspace(sel),
       graph
     );
 
@@ -322,12 +320,7 @@ const CutCommand: KeyboardCommand = {
     return tab !== null && isFocusedOnGraphRenderer(evt);
   },
 
-  async do({
-    selectionState,
-    tab,
-    originalEvent,
-    sca,
-  }: KeyboardCommandDeps): Promise<void> {
+  async do({ tab, originalEvent, sca }: KeyboardCommandDeps): Promise<void> {
     if (!isFocusedOnGraphRenderer(originalEvent)) {
       return;
     }
@@ -341,24 +334,15 @@ const CutCommand: KeyboardCommand = {
       throw new Error("Unable to edit");
     }
 
-    if (
-      !tab ||
-      !selectionState ||
-      selectionState.selectionState.graphs.size === 0
-    ) {
+    const sel = sca.controller.editor.selection;
+    if (!tab || sel.size === 0) {
       throw new Error("Nothing to cut");
     }
 
+    const workspaceState = selectionToWorkspace(sel);
     const graph = editor.inspect("");
-    const board = GraphUtils.generateBoardFrom(
-      selectionState.selectionState,
-      graph
-    );
-
-    const spec = GraphUtils.generateDeleteEditSpecFrom(
-      selectionState.selectionState,
-      graph
-    );
+    const board = GraphUtils.generateBoardFrom(workspaceState, graph);
+    const spec = GraphUtils.generateDeleteEditSpecFrom(workspaceState, graph);
 
     await Promise.all([
       navigator.clipboard.writeText(JSON.stringify(board, null, 2)),
@@ -376,13 +360,7 @@ const PasteCommand: KeyboardCommand = {
     return tab !== null;
   },
 
-  async do({
-    runtime,
-    tab,
-    selectionState,
-    pointerLocation,
-    sca,
-  }: KeyboardCommandDeps): Promise<void> {
+  async do({ tab, pointerLocation, sca }: KeyboardCommandDeps): Promise<void> {
     if (tab?.readOnly) {
       return;
     }
@@ -414,31 +392,8 @@ const PasteCommand: KeyboardCommand = {
       let spec: EditSpec[] = [];
       // 1a. Paste a board.
       if (boardContents) {
-        const destGraphIds = [];
-        if (selectionState) {
-          for (const id of selectionState.selectionState.graphs.keys()) {
-            const state = selectionState.selectionState.graphs.get(id);
-            if (
-              !state ||
-              (state.edges.size === 0 &&
-                state.nodes.size === 0 &&
-                state.comments.size === 0)
-            ) {
-              continue;
-            }
-
-            if (id === MAIN_BOARD_ID) {
-              destGraphIds.push("");
-              continue;
-            }
-
-            destGraphIds.push(id);
-          }
-        }
-
-        if (destGraphIds.length === 0) {
-          destGraphIds.push("");
-        }
+        // Since subgraphs are legacy, always paste into the main graph.
+        const destGraphIds = [""];
 
         spec = GraphUtils.generateAddEditSpecFromDescriptor(
           boardContents,
@@ -504,13 +459,6 @@ const PasteCommand: KeyboardCommand = {
           sel.addNode(nodeId);
         }
       }
-
-      // Legacy bridge: keep selectionState flowing.
-      runtime.select.processSelections(
-        tab.id,
-        GraphUtils.createWorkspaceSelectionChangeId(),
-        workspaceSelection
-      );
     }
   },
 };
@@ -523,9 +471,7 @@ const DuplicateCommand: KeyboardCommand = {
   },
 
   async do({
-    runtime,
     tab,
-    selectionState,
     pointerLocation,
     originalEvent,
     sca,
@@ -539,11 +485,8 @@ const DuplicateCommand: KeyboardCommand = {
       throw new Error("Unable to edit graph");
     }
 
-    if (
-      !tab ||
-      !selectionState ||
-      selectionState.selectionState.graphs.size === 0
-    ) {
+    const sel = sca.controller.editor.selection;
+    if (!tab || sel.size === 0) {
       throw new Error("Nothing to duplicate");
     }
 
@@ -553,37 +496,14 @@ const DuplicateCommand: KeyboardCommand = {
 
     const graph = editor.inspect("");
     const boardContents = GraphUtils.generateBoardFrom(
-      selectionState.selectionState,
+      selectionToWorkspace(sel),
       graph
     );
 
     let spec: EditSpec[] = [];
     if (boardContents) {
-      const destGraphIds = [];
-      if (selectionState) {
-        for (const id of selectionState.selectionState.graphs.keys()) {
-          const state = selectionState.selectionState.graphs.get(id);
-          if (
-            !state ||
-            (state.edges.size === 0 &&
-              state.nodes.size === 0 &&
-              state.comments.size === 0)
-          ) {
-            continue;
-          }
-
-          if (id === MAIN_BOARD_ID) {
-            destGraphIds.push("");
-            continue;
-          }
-
-          destGraphIds.push(id);
-        }
-      }
-
-      if (destGraphIds.length === 0) {
-        destGraphIds.push("");
-      }
+      // Since subgraphs are legacy, always duplicate into the main graph.
+      const destGraphIds = [""];
 
       spec = GraphUtils.generateAddEditSpecFromDescriptor(
         boardContents,
@@ -597,20 +517,12 @@ const DuplicateCommand: KeyboardCommand = {
     const workspaceSelection = GraphUtils.generateSelectionFrom(spec);
 
     // Select the newly duplicated nodes
-    const sel = sca.controller.editor.selection;
     sel.deselectAll();
     for (const [, graphState] of workspaceSelection.graphs) {
       for (const nodeId of graphState.nodes) {
         sel.addNode(nodeId);
       }
     }
-
-    // Legacy bridge: keep selectionState flowing.
-    runtime.select.processSelections(
-      tab.id,
-      GraphUtils.createWorkspaceSelectionChangeId(),
-      workspaceSelection
-    );
   },
 };
 

@@ -296,7 +296,6 @@ class Main extends MainBase {
       ?inert=${renderValues.showingOverlay}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
       .projectState=${renderValues.projectState}
-      .selectionState=${this.selectionState}
       @bbshowvideomodal=${() => {
         this.sca.controller.global.main.show.add("VideoModal");
       }}

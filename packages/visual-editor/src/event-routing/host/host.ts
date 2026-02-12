@@ -22,27 +22,6 @@ export const ModeRoute: EventRoute<"host.modetoggle"> = {
   },
 };
 
-export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> =
-  {
-    event: "host.selectionstatechange",
-
-    async do({ runtime, originalEvent, tab }) {
-      // The renderer writes directly to SelectionController (outbound),
-      // so this route only forwards to the legacy runtime.select bridge
-      // for canvas-controller and entity-editor.
-      if (tab) {
-        runtime.select.processSelections(
-          tab.id,
-          originalEvent.detail.selectionChangeId,
-          originalEvent.detail.selections,
-          originalEvent.detail.replaceExistingSelections,
-          originalEvent.detail.moveToSelection
-        );
-      }
-      return false;
-    },
-  };
-
 export const LockRoute: EventRoute<"host.lock"> = {
   event: "host.lock",
 
