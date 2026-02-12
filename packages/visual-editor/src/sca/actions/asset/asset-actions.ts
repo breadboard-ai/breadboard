@@ -14,7 +14,12 @@
  * - `update`: Updates an asset's title and data (called directly)
  */
 
-import type { AssetPath, LLMContent, Outcome } from "@breadboard-ai/types";
+import type {
+  AssetPath,
+  LLMContent,
+  NodeValue,
+  Outcome,
+} from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { getLogger, Formatter } from "../../utils/logging/logger.js";
 
@@ -23,9 +28,13 @@ import { asAction, ActionMode } from "../../coordination.js";
 import { onGraphVersionChange } from "./triggers.js";
 import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
 import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
-import { transformDataParts } from "../../../data/common.js";
+import { RemoveAssetWithRefs } from "../../../ui/transforms/remove-asset-with-refs.js";
+import { isInlineData, transformDataParts } from "../../../data/common.js";
 import { GraphAssetImpl } from "../../../ui/state/graph-asset.js";
-import type { GraphAsset } from "../../../ui/state/types.js";
+import type {
+  GraphAsset,
+  GraphAssetDescriptor,
+} from "../../../ui/state/types.js";
 
 export const bind = makeAction();
 
@@ -179,3 +188,64 @@ export async function persistDataParts(
 
   return transformed;
 }
+
+/**
+ * Adds a new graph asset. Persists data parts first, then edits the graph.
+ */
+export const addGraphAsset = asAction(
+  "Asset.addGraphAsset",
+  { mode: ActionMode.Immediate },
+  async (asset: GraphAssetDescriptor): Promise<Outcome<void>> => {
+    const { controller, services } = bind;
+    const graphController = controller.editor.graph;
+    const editor = graphController.editor;
+
+    if (!editor) {
+      return err("No editor available");
+    }
+
+    const { data: assetData, metadata, path } = asset;
+    for (const data of assetData) {
+      for (const part of data.parts) {
+        if (isInlineData(part)) {
+          part.inlineData.title = metadata?.title;
+        }
+      }
+    }
+
+    const data = (await persistDataParts(
+      graphController.url,
+      assetData,
+      services.googleDriveBoardServer.dataPartTransformer()
+    )) as NodeValue;
+
+    const result = await editor.edit(
+      [{ type: "addasset", path, data, metadata }],
+      `Adding asset at path "${path}"`
+    );
+    if (!result.success) {
+      return err(result.error);
+    }
+  }
+);
+
+/**
+ * Removes a graph asset and cleans up references.
+ */
+export const removeGraphAsset = asAction(
+  "Asset.removeGraphAsset",
+  { mode: ActionMode.Immediate },
+  async (path: AssetPath): Promise<Outcome<void>> => {
+    const { controller } = bind;
+    const editor = controller.editor.graph.editor;
+
+    if (!editor) {
+      return err("No editor available");
+    }
+
+    const result = await editor.apply(new RemoveAssetWithRefs(path));
+    if (!result.success) {
+      return err(result.error);
+    }
+  }
+);

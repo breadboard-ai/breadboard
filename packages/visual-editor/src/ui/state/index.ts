@@ -6,5 +6,3 @@
 
 export * from "./types.js";
 export { createProjectState } from "./project.js";
-export type * from "./organizer.js";
-

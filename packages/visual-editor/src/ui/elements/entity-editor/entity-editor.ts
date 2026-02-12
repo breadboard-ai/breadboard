@@ -1764,7 +1764,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Check if this is an asset edit
     const assetPath = data.get("asset-path") as string | null;
     if (assetPath !== null) {
-      const asset = this.projectState?.graphAssets.get(assetPath);
+      const asset = this.sca.controller.editor.graph.graphAssets.get(assetPath);
       if (!asset) {
         return;
       }

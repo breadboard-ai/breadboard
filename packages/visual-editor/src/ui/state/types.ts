@@ -21,14 +21,7 @@ import {
   OutputValues,
   RunError,
 } from "@breadboard-ai/types";
-import {
-  EditSpec,
-  EditTransform,
-  NodeHandlerMetadata,
-  Outcome,
-  PortIdentifier,
-  Schema,
-} from "@breadboard-ai/types";
+import { Outcome, Schema } from "@breadboard-ai/types";
 
 import { StateEvent } from "../events/events.js";
 import { VisualEditorMode } from "../types/types.js";
@@ -245,25 +238,6 @@ export type UserInput = {
   schema: Schema;
 };
 
-/**
- * Represents the Model+Controller for the Asset Organizer.
- */
-export type Organizer = {
-  /**
-   * Current graph's assets.
-   */
-  graphAssets: Map<AssetPath, GraphAsset>;
-
-  graphUrl: URL | null;
-
-  addGraphAsset(asset: GraphAssetDescriptor): Promise<Outcome<void>>;
-  removeGraphAsset(path: AssetPath): Promise<Outcome<void>>;
-  changeGraphAssetMetadata(
-    path: AssetPath,
-    metadata: AssetMetadata
-  ): Promise<Outcome<void>>;
-};
-
 export type GraphAssetDescriptor = {
   metadata?: AssetMetadata;
   data: LLMContent[];
@@ -330,13 +304,6 @@ export type FastAccess = {
    * Available routes for the current step.
    */
   routes: FilterableMap<Component>;
-};
-
-/**
- * Represents the Model+Controller for the Renderer (the visual editor)
- */
-export type RendererState = {
-  graphAssets: Map<AssetPath, GraphAsset>;
 };
 
 export type UIOverlays =
@@ -464,17 +431,10 @@ export type Integrations = {
   rename(id: string, title: string): Promise<Outcome<void>>;
 };
 
-/**
- * Represents the Model+Controller for the entire Project.
- * Contains all the state for the project.
- */
 export type Project = {
   readonly run: ProjectRun;
-  readonly graphAssets: Map<AssetPath, GraphAsset>;
 
   readonly integrations: Integrations;
-  readonly organizer: Organizer;
-  readonly renderer: RendererState;
   readonly fastAccess: FastAccess;
 
   /**
@@ -482,45 +442,13 @@ export type Project = {
    */
   resetRun(): void;
 
-  /**
-   * Returns metadata for a given node. This function is sync, and it
-   * will return the current result, not the latest -- which is fine in most
-   * cases.
-   */
-  getMetadataForNode(
-    nodeId: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): Outcome<NodeHandlerMetadata>;
-
-  getPortsForNode(
-    nodeId: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): Outcome<InspectableNodePorts>;
-
-  getTitleForNode(
-    nodeId: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): Outcome<string>;
-
-  persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
   connectHarnessRunner(
     runner: HarnessRunner,
     signal?: AbortSignal
   ): Outcome<void>;
 };
 
-export type ProjectInternal = Project & {
-  graphUrl: URL | null;
-  apply(transform: EditTransform): Promise<Outcome<void>>;
-  edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
-  findOutputPortId(
-    graphId: GraphIdentifier,
-    id: NodeIdentifier
-  ): Outcome<{ id: PortIdentifier; title: string }>;
-};
-
 export type ProjectValues = {
-  graphAssets: Map<AssetPath, GraphAsset>;
   integrations: Integrations;
 };
 

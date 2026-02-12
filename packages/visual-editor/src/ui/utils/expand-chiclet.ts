@@ -22,31 +22,25 @@ export function expandChiclet(
   let tags: string[] | undefined;
   let title: string | null = null;
 
-  if (!projectState) {
+  if (!sca) {
     return {};
   }
 
+  const graphController = sca.controller.editor.graph;
+
   switch (type) {
     case "in": {
-      const metadata = projectState.getMetadataForNode(
-        path,
-        subGraphId ? subGraphId : ""
-      );
+      const graphId = subGraphId ? subGraphId : "";
+      const metadata = graphController.getMetadataForNode(path, graphId);
 
-      const ports = projectState.getPortsForNode(
-        path,
-        subGraphId ? subGraphId : ""
-      );
+      const ports = graphController.getPortsForNode(path, graphId);
 
       if (ok(metadata) && ok(ports)) {
         icon = getStepIcon(metadata.icon, ports);
         tags = metadata.tags ?? [];
       }
 
-      const nodeTitle = projectState.getTitleForNode(
-        path,
-        subGraphId ? subGraphId : ""
-      );
+      const nodeTitle = graphController.getTitleForNode(path, graphId);
       if (ok(nodeTitle)) {
         title = nodeTitle ?? null;
       }
@@ -56,14 +50,14 @@ export function expandChiclet(
 
     case "tool": {
       if (instance) {
-        const toolIcon = projectState.integrations.registered
+        const toolIcon = projectState?.integrations.registered
           .get(path)
           ?.tools.get(instance)?.icon;
         icon =
           (typeof toolIcon === "string" ? toolIcon : undefined) ||
           "robot_server";
       } else {
-        const toolInfo = sca?.controller.editor.graph.tools.get(path);
+        const toolInfo = graphController.tools.get(path);
         const toolIcon = toolInfo?.icon;
         icon = iconSubstitute(
           typeof toolIcon === "string" ? toolIcon : undefined
@@ -75,7 +69,7 @@ export function expandChiclet(
     case "asset": {
       icon = "alternate_email";
 
-      const assetInfo = sca?.controller.editor.graph.graphAssets.get(path);
+      const assetInfo = graphController.graphAssets.get(path);
       if (assetInfo?.metadata?.type) {
         icon = iconSubstitute(assetInfo.metadata.type);
       }

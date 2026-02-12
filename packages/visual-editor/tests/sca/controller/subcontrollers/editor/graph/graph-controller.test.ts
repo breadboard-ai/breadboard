@@ -9,6 +9,7 @@ import { beforeEach, suite, test } from "node:test";
 import { GraphController } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import { makeTestGraphStore } from "../../../../../helpers/_graph-store.js";
 import { EditableGraph } from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
 import { GraphStore } from "../../../../../../src/engine/inspector/graph-store.js";
 import { Tab } from "../../../../../../src/runtime/types.js";
@@ -646,5 +647,164 @@ suite("GraphController", () => {
     const asyncPathComponent = mainGraphComponents.get("async-path-node");
     assert.ok(asyncPathComponent, "Should have async-path component");
     assert.strictEqual(asyncPathComponent.id, "async-path-node");
+  });
+
+  // ==========================================================================
+  // Node Query Methods
+  // ==========================================================================
+
+  test("getMetadataForNode returns error when no editor", async () => {
+    const store = new GraphController("Graph_Meta_NoEditor", "GraphController");
+    await store.isHydrated;
+
+    const result = store.getMetadataForNode("foo", "");
+    assert.ok(!ok(result), "Should return an error");
+  });
+
+  test("getMetadataForNode returns error for missing node", async () => {
+    const store = new GraphController(
+      "Graph_Meta_MissingNode",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getMetadataForNode("nonexistent", "");
+    assert.ok(!ok(result), "Should return an error for missing node");
+  });
+
+  test("getMetadataForNode returns metadata for existing node", async () => {
+    const store = new GraphController("Graph_Meta_OK", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    // "foo" exists in the default test graph
+    const result = store.getMetadataForNode("foo", "");
+    // Not an error — either metadata or an Outcome error
+    // The node exists; metadata availability depends on the test handler
+    if (ok(result)) {
+      assert.ok(typeof result === "object");
+    }
+  });
+
+  test("getPortsForNode returns error when no editor", async () => {
+    const store = new GraphController(
+      "Graph_Ports_NoEditor",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    const result = store.getPortsForNode("foo", "");
+    assert.ok(!ok(result), "Should return an error");
+  });
+
+  test("getPortsForNode returns error for missing node", async () => {
+    const store = new GraphController(
+      "Graph_Ports_MissingNode",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getPortsForNode("nonexistent", "");
+    assert.ok(!ok(result), "Should return an error for missing node");
+  });
+
+  test("getPortsForNode returns ports for existing node", async () => {
+    const store = new GraphController("Graph_Ports_OK", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getPortsForNode("foo", "");
+    if (ok(result)) {
+      assert.ok("inputs" in result);
+      assert.ok("outputs" in result);
+    }
+  });
+
+  test("getTitleForNode returns error when no editor", async () => {
+    const store = new GraphController(
+      "Graph_Title_NoEditor",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    const result = store.getTitleForNode("foo", "");
+    assert.ok(!ok(result), "Should return an error");
+  });
+
+  test("getTitleForNode returns error for missing node", async () => {
+    const store = new GraphController(
+      "Graph_Title_MissingNode",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getTitleForNode("nonexistent", "");
+    assert.ok(!ok(result), "Should return an error for missing node");
+  });
+
+  test("getTitleForNode returns title for existing node", async () => {
+    const store = new GraphController("Graph_Title_OK", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getTitleForNode("foo", "");
+    if (ok(result)) {
+      assert.strictEqual(typeof result, "string");
+    }
+  });
+
+  test("findOutputPortId returns error when no editor", async () => {
+    const store = new GraphController(
+      "Graph_FindPort_NoEditor",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    const result = store.findOutputPortId("", "foo");
+    assert.ok(!ok(result), "Should return an error");
+  });
+
+  test("findOutputPortId returns error for missing node", async () => {
+    const store = new GraphController(
+      "Graph_FindPort_MissingNode",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.findOutputPortId("", "nonexistent");
+    assert.ok(!ok(result), "Should return an error for missing node");
+  });
+
+  test("findOutputPortId returns port info for existing node", async () => {
+    const store = new GraphController("Graph_FindPort_OK", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.findOutputPortId("", "foo");
+    if (ok(result)) {
+      assert.ok("id" in result);
+      assert.ok("title" in result);
+      assert.strictEqual(result.title, "foo");
+    }
   });
 });

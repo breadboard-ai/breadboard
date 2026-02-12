@@ -111,7 +111,6 @@ const DeleteCommand: KeyboardCommand = {
       graph
     );
 
-    let projectState: BreadboardUI.State.Project | null = null;
     for (const selectionGraph of selectionState.selectionState.graphs.values()) {
       // First delete any selected Asset Edges.
       if (selectionGraph.assetEdges.size) {
@@ -141,16 +140,8 @@ const DeleteCommand: KeyboardCommand = {
 
       // Then delete any selected Assets.
       if (selectionGraph.assets.size) {
-        if (!projectState) {
-          projectState = runtime.project;
-        }
-
-        if (!projectState) {
-          continue;
-        }
-
         for (const asset of selectionGraph.assets) {
-          await projectState.organizer.removeGraphAsset(asset);
+          await sca.actions.asset.removeGraphAsset(asset);
         }
       }
     }
