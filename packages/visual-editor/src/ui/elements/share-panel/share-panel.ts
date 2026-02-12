@@ -415,52 +415,30 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  get #isShared(): boolean | undefined {
-    const panel = this.#panel;
-    if (panel === "readonly") {
-      // If we're readonly, then we're not the owner. And if we're not the
-      // owner, and yet here we are, then it must be shared with us one way or
-      // the other.
-      return true;
-    }
-    if (panel === "writable" || panel === "updating") {
-      return this.#controller.published || this.#controller.granularlyShared;
-    }
-    return undefined;
-  }
-
-  get #isStale(): boolean | undefined {
-    const panel = this.#panel;
-    if (panel === "writable" || panel === "updating") {
-      return this.#controller.stale;
-    }
-    return undefined;
-  }
-
   #renderWritableContentsV1() {
+    const shared =
+      this.#controller.published || this.#controller.granularlyShared;
     return [
-      this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
+      this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
       html`
         <div id="permissions">
           Publish your ${APP_NAME} ${this.#renderPublishedSwitch()}
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      this.#isShared && this.#panel !== "updating"
-        ? this.#renderAppLink()
-        : nothing,
+      shared && this.#panel !== "updating" ? this.#renderAppLink() : nothing,
       this.#renderGranularSharingLink(),
       this.#renderAdvisory(),
     ];
   }
 
   #renderWritableContentsV2() {
+    const shared =
+      this.#controller.published || this.#controller.granularlyShared;
     return [
-      this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
+      this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
       this.#renderVisibilityDropdown(),
-      this.#isShared && this.#panel !== "updating"
-        ? this.#renderAppLink()
-        : nothing,
+      shared && this.#panel !== "updating" ? this.#renderAppLink() : nothing,
       this.#renderAdvisory(),
     ];
   }
@@ -482,6 +460,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       </div>
     `;
   }
+
   async #onClickPublishStale() {
     await this.#actions.publishStale();
   }
