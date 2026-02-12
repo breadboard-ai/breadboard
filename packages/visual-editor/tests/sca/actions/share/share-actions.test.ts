@@ -18,6 +18,7 @@ import {
 } from "../../../../src/sca/controller/subcontrollers/editor/share-controller.js";
 import { FakeGoogleDriveApi } from "../../helpers/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
+import { makeUrl } from "../../../../src/ui/utils/urls.js";
 
 function makeAsset(handle: string, managed: boolean, title: string): Asset {
   return {
@@ -792,5 +793,198 @@ suite("Share Actions", () => {
     assert.deepStrictEqual(share.publishedPermissions, []);
     assert.strictEqual(share.shareableFile, null);
     assert.deepStrictEqual(share.unmanagedAssetProblems, []);
+  });
+});
+
+suite("computeAppUrl", () => {
+  let controller: ReturnType<typeof makeTestController>["controller"];
+
+  function bindWith(opts: {
+    guestConfig?: Partial<
+      import("@breadboard-ai/types/opal-shell-protocol.js").GuestConfiguration
+    >;
+    globalConfig?: Partial<
+      import("../../../../src/ui/contexts/global-config.js").GlobalConfig
+    >;
+  }) {
+    ({ controller } = makeTestController());
+    const { services } = makeTestServices({
+      guestConfig: opts.guestConfig ?? {},
+      globalConfig: opts.globalConfig ?? {},
+    });
+    ShareActions.bind({ controller, services });
+  }
+
+  test("returns empty string when shareableFile is null", () => {
+    bindWith({});
+    assert.strictEqual(ShareActions.computeAppUrl(null), "");
+  });
+
+  // ── shareSurface template branch ──
+
+  test("uses shareSurface URL template when configured", () => {
+    bindWith({
+      guestConfig: {
+        shareSurface: "myapp",
+        shareSurfaceUrlTemplates: {
+          myapp: "https://myapp.example.com/view?id={fileId}&rk={resourceKey}",
+        },
+      },
+    });
+    const url = ShareActions.computeAppUrl({
+      id: "abc123",
+      resourceKey: "rk456",
+    });
+    assert.strictEqual(
+      url,
+      "https://myapp.example.com/view?id=abc123&rk=rk456"
+    );
+  });
+
+  test("shareSurface template omits empty resourceKey param", () => {
+    bindWith({
+      guestConfig: {
+        shareSurface: "myapp",
+        shareSurfaceUrlTemplates: {
+          myapp: "https://myapp.example.com/view?id={fileId}&rk={resourceKey}",
+        },
+      },
+    });
+    const url = ShareActions.computeAppUrl({
+      id: "abc123",
+      resourceKey: undefined,
+    });
+    assert.strictEqual(url, "https://myapp.example.com/view?id=abc123");
+  });
+
+  // ── hostOrigin / makeUrl branch ──
+
+  test("falls back to makeUrl with hostOrigin when no shareSurface", () => {
+    const hostOrigin = new URL("https://breadboard.example.com");
+    bindWith({
+      globalConfig: { hostOrigin },
+    });
+    const file = { id: "file-xyz", resourceKey: undefined };
+    const url = ShareActions.computeAppUrl(file);
+    assert.strictEqual(
+      url,
+      makeUrl(
+        {
+          page: "graph",
+          mode: "app",
+          flow: `drive:/${file.id}`,
+          resourceKey: file.resourceKey,
+          guestPrefixed: false,
+        },
+        hostOrigin
+      )
+    );
+  });
+
+  test("makeUrl branch includes resourceKey when present", () => {
+    const hostOrigin = new URL("https://breadboard.example.com");
+    bindWith({
+      globalConfig: { hostOrigin },
+    });
+    const file = { id: "file-xyz", resourceKey: "rk789" };
+    const url = ShareActions.computeAppUrl(file);
+    assert.strictEqual(
+      url,
+      makeUrl(
+        {
+          page: "graph",
+          mode: "app",
+          flow: `drive:/${file.id}`,
+          resourceKey: file.resourceKey,
+          guestPrefixed: false,
+        },
+        hostOrigin
+      )
+    );
+  });
+
+  // ── edge cases ──
+
+  test("returns empty string when no hostOrigin and no shareSurface", () => {
+    bindWith({});
+    assert.strictEqual(
+      ShareActions.computeAppUrl({ id: "file-xyz", resourceKey: undefined }),
+      ""
+    );
+  });
+
+  test("shareSurface takes precedence over hostOrigin", () => {
+    bindWith({
+      guestConfig: {
+        shareSurface: "myapp",
+        shareSurfaceUrlTemplates: {
+          myapp: "https://myapp.example.com/view?id={fileId}",
+        },
+      },
+      globalConfig: {
+        hostOrigin: new URL("https://breadboard.example.com"),
+      },
+    });
+    const url = ShareActions.computeAppUrl({
+      id: "abc123",
+      resourceKey: undefined,
+    });
+    assert.ok(url.startsWith("https://myapp.example.com"), url);
+  });
+
+  test("ignores shareSurface when template map is missing", () => {
+    const hostOrigin = new URL("https://breadboard.example.com");
+    bindWith({
+      guestConfig: {
+        shareSurface: "myapp",
+        // no shareSurfaceUrlTemplates
+      },
+      globalConfig: { hostOrigin },
+    });
+    const file = { id: "abc123", resourceKey: undefined };
+    const url = ShareActions.computeAppUrl(file);
+    // Should fall through to makeUrl
+    assert.strictEqual(
+      url,
+      makeUrl(
+        {
+          page: "graph",
+          mode: "app",
+          flow: `drive:/${file.id}`,
+          resourceKey: file.resourceKey,
+          guestPrefixed: false,
+        },
+        hostOrigin
+      )
+    );
+  });
+
+  test("ignores shareSurface when key not found in template map", () => {
+    const hostOrigin = new URL("https://breadboard.example.com");
+    bindWith({
+      guestConfig: {
+        shareSurface: "unknown-surface",
+        shareSurfaceUrlTemplates: {
+          myapp: "https://myapp.example.com/view?id={fileId}",
+        },
+      },
+      globalConfig: { hostOrigin },
+    });
+    const file = { id: "abc123", resourceKey: undefined };
+    const url = ShareActions.computeAppUrl(file);
+    // Should fall through to makeUrl since "unknown-surface" isn't in the map
+    assert.strictEqual(
+      url,
+      makeUrl(
+        {
+          page: "graph",
+          mode: "app",
+          flow: `drive:/${file.id}`,
+          resourceKey: file.resourceKey,
+          guestPrefixed: false,
+        },
+        hostOrigin
+      )
+    );
   });
 });
