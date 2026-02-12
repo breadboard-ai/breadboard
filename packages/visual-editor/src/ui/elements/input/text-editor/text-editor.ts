@@ -159,6 +159,10 @@ export class TextEditor extends SignalWatcher(LitElement) {
       this.projectState,
       this.subGraphId
     );
+    // If SCA wasn't available yet, chiclets that depend on graph lookups
+    // (e.g. routing chip targets) will render incomplete. Flag for refresh
+    // once the context arrives.
+    this.#needsChicletRefresh = !this.sca;
     this.#updateEditorValue();
   }
 
@@ -264,6 +268,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
   #rawValue = "";
   #renderableValue: TrustedHTML = createTrustedChicletHTML("");
+  #needsChicletRefresh = false;
   #isUsingFastAccess = false;
   #showFastAccessMenuOnKeyUp = false;
   #fastAccessTarget: TemplatePart | null = null;
@@ -1108,6 +1113,22 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
     if (this.#focusOnFirstRender) {
       this.focus();
+    }
+  }
+
+  protected updated(): void {
+    // The value setter may fire before @consume resolves the SCA context.
+    // Once SCA arrives, recompute the chiclet HTML so graph-dependent lookups
+    // (e.g. routing chip target titles) render correctly.
+    if (this.#needsChicletRefresh && this.sca) {
+      this.#needsChicletRefresh = false;
+      this.#renderableValue = createTrustedChicletHTML(
+        this.#rawValue,
+        this.sca,
+        this.projectState,
+        this.subGraphId
+      );
+      this.#updateEditorValue();
     }
   }
 
