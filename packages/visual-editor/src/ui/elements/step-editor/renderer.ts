@@ -41,10 +41,7 @@ import {
   SelectionMoveEvent,
   SelectionTranslateEvent,
 } from "./events/events.js";
-import {
-  NewAsset,
-  WorkspaceSelectionStateWithChangeId,
-} from "../../types/types.js";
+import { NewAsset } from "../../types/types.js";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
@@ -95,9 +92,6 @@ export class Renderer extends SignalWatcher(LitElement) {
 
   @property()
   accessor projectState: Project | null = null;
-
-  @property()
-  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property()
   accessor runState: RendererRunState | null = null;
@@ -154,7 +148,7 @@ export class Renderer extends SignalWatcher(LitElement) {
 
   // --- Internal state ---
 
-  #lastWrittenSelectionId = -1;
+  #lastSeenSelectionId = -1;
   #lastGraphVersion = -1;
 
   @state()
@@ -816,24 +810,10 @@ export class Renderer extends SignalWatcher(LitElement) {
     this.tick++;
   }
 
-  protected shouldUpdate(changedProperties: PropertyValues): boolean {
-    if (
-      changedProperties.size === 1 &&
-      changedProperties.has("selectionState") &&
-      this.sca.controller.editor.selection
-    ) {
-      // Skip re-render when the selection change originated from this renderer
-      // (outbound). The renderer already has the correct entity flags.
-      if (
-        this.sca.controller.editor.selection.selectionId ===
-        this.#lastWrittenSelectionId
-      ) {
-        return false;
-      }
-    }
-
-    return true;
-  }
+  // NOTE: shouldUpdate is intentionally NOT overridden. The old guard
+  // skipped re-renders when selectionState was the sole changed Lit property.
+  // Now that selection is signal-driven, willUpdate's #lastSeenSelectionId
+  // check handles skipping redundant inbound pushes instead.
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (this.#fitToViewPre) {
@@ -855,20 +835,20 @@ export class Renderer extends SignalWatcher(LitElement) {
       }
     }
 
-    if (
-      changedProperties.has("selectionState") &&
-      this.sca.controller.editor.selection
-    ) {
+    const sel = this.sca.controller.editor.selection;
+    if (sel && sel.selectionId !== this.#lastSeenSelectionId) {
+      this.#lastSeenSelectionId = sel.selectionId;
+
       // Inbound: read from SelectionController (source of truth) and push to
       // Graph entities. Since the controller uses a flat model (no per-graph
       // partitioning), we pass the full selection to each Graph. Each Graph's
       // setter only applies selection to its own entities.
-      const sel = this.sca.controller.editor.selection.selection;
+      const selection = sel.selection;
       const flatSelection = createEmptyGraphSelectionState();
-      for (const id of sel.nodes) flatSelection.nodes.add(id);
-      for (const id of sel.edges) flatSelection.edges.add(id as string);
-      for (const id of sel.assets) flatSelection.assets.add(id);
-      for (const id of sel.assetEdges)
+      for (const id of selection.nodes) flatSelection.nodes.add(id);
+      for (const id of selection.edges) flatSelection.edges.add(id as string);
+      for (const id of selection.assets) flatSelection.assets.add(id);
+      for (const id of selection.assetEdges)
         flatSelection.assetEdges.add(id as string);
 
       for (const [, graph] of this.#graphs) {
@@ -1008,7 +988,7 @@ export class Renderer extends SignalWatcher(LitElement) {
             graph.expandSelections();
           }
 
-          this.#updateSelectionFromGraph(graph);
+          this.#updateSelectionFromGraph();
         }
 
         if (this.camera?.bounds) {
@@ -1364,7 +1344,7 @@ export class Renderer extends SignalWatcher(LitElement) {
     );
   }
 
-  #updateSelectionFromGraph(graph: Graph, createNewSelection = false) {
+  #updateSelectionFromGraph(createNewSelection = false) {
     // --- Outbound: write to SelectionController ---
     if (this.sca.controller.editor.selection) {
       const sel = this.sca.controller.editor.selection;
@@ -1385,17 +1365,18 @@ export class Renderer extends SignalWatcher(LitElement) {
           sel.addAssetEdge(assetEdgeId as AssetEdgeIdentifier);
       }
 
-      this.#lastWrittenSelectionId = sel.selectionId;
+      this.#lastSeenSelectionId = sel.selectionId;
     }
 
     // --- Legacy bridge: dispatch event for canvas-controller/entity-editor ---
-    const newState = createNewSelection
-      ? createEmptyWorkspaceSelectionState()
-      : (this.selectionState?.selectionState ??
-        createEmptyWorkspaceSelectionState());
+    const newState = createEmptyWorkspaceSelectionState();
 
-    if (graph.selectionState) {
-      newState.graphs.set(graph.graphId, graph.selectionState);
+    // Build workspace state from all graph entities.
+    for (const [gId, g] of this.#graphs) {
+      if (gId === MOVE_GRAPH_ID) continue;
+      if (g.selectionState) {
+        newState.graphs.set(g.graphId, g.selectionState);
+      }
     }
 
     const selectionChangeId = createWorkspaceSelectionChangeId();
@@ -1584,7 +1565,7 @@ export class Renderer extends SignalWatcher(LitElement) {
                 return;
               }
 
-              this.#updateSelectionFromGraph(graph, true);
+              this.#updateSelectionFromGraph(true);
             }}
             @bbselectionmove=${(evt: SelectionMoveEvent) => {
               this.#applyMoveToSelection(

@@ -33,7 +33,6 @@ import {
 } from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
-  COMMAND_SET_MODULE_EDITOR,
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -107,7 +106,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
   #lastKnownNlEditValue = "";
   #prevMainGraphId: MainGraphIdentifier | null = null;
   #prevGraph: GraphDescriptor | null = null;
-  #selectionCount = 0;
 
   static styles = [icons, effects, canvasControllerStyles];
 
@@ -115,53 +113,9 @@ export class CanvasController extends SignalWatcher(LitElement) {
     if (changedProperties.has("projectState")) {
       this.#projectStateUpdated.set({});
     }
-    if (changedProperties.has("selectionState")) {
-      // If this is an imperative board with no selection state then set the
-      // selection to be the main.
-      const graph = this.sca.controller.editor.graph.graph;
-      if (
-        this.selectionState?.selectionState.graphs.size === 0 &&
-        this.selectionState?.selectionState.modules.size === 0 &&
-        graph?.main
-      ) {
-        this.selectionState?.selectionState.modules.add(graph.main);
-      }
-    }
 
-    let newSelectionCount = 0;
-    if (this.selectionState) {
-      newSelectionCount = [...this.selectionState.selectionState.graphs].reduce(
-        (prev, [, graph]) => {
-          return (
-            prev +
-            graph.assets.size +
-            graph.comments.size +
-            graph.nodes.size +
-            graph.references.size
-          );
-        },
-        0
-      );
-    }
-    this.#selectionCount = newSelectionCount;
-
-    // NOTE: Step autosave is now handled by the SCA step autosave trigger,
-    // which fires when selection or sidebar section changes. The trigger
-    // applies pending edits captured by entity-editor's @input handler.
-
-    // Here we decide how to handle the changing sidenav items & selections.
-    // If there are no selections and we're in the editor switch out to the app
-    // view. Otherwise, if there's any change to the selection and the sidenav
-    // isn't set to the editor, switch to it.
-    if (this.#selectionCount === 0 && this.sideNavItem === "editor") {
-      this.sideNavItem = "preview";
-    } else if (
-      this.#selectionCount > 0 &&
-      changedProperties.has("selectionState") &&
-      this.sideNavItem !== "editor"
-    ) {
-      this.sideNavItem = "editor";
-    }
+    // NOTE: Selection count and sidebar toggling are now handled by the
+    // SCA sidebar trigger action (Sidebar.updateOnSelectionChange).
 
     // If the user opens an unowned graph then we default them back to the app
     // view irrespective of whatever sidenav item they had selected prior.
@@ -222,13 +176,12 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const runState = this.runState;
 
     const graphEditor = guard(
-      [this.projectState, runState, this.#runStateEffect, this.selectionState],
+      [this.projectState, runState, this.#runStateEffect],
       () => {
         return html`<bb-renderer
           .projectState=${this.projectState}
           .runState=${runState}
           .runStateEffect=${this.#runStateEffect}
-          .selectionState=${this.selectionState}
           @input=${(evt: Event) => {
             const composedPath = evt.composedPath();
             const isFromNLInput = composedPath.some((el) => {
@@ -277,10 +230,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
             // If the item is already selected, skip the change.
             if (
-              this.selectionState?.selectionState.graphs.has(graphId) &&
-              this.selectionState.selectionState.graphs
-                .get(graphId)
-                ?.nodes.has(evt.id)
+              this.sca.controller.editor.selection.selection.nodes.has(evt.id)
             ) {
               return;
             }
@@ -324,7 +274,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
       }
     }
 
-    const selectionCount = this.#selectionCount;
+    const selectionCount = this.sca.controller.editor.selection.size;
 
     const sideNavItem = [
       html`${guard(
@@ -332,7 +282,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           graphIsEmpty,
           gc.graph,
           this.sca.services.signinAdapter.stateSignal?.status === "signedin",
-          this.selectionState,
+          this.sca.controller.editor.selection.selectionId,
           themeHash,
           this.#runStateEffect,
           selectionCount,
@@ -543,16 +493,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   updated() {
     // Inform bb-main which command set is in use.
-    const selectedModules = this.selectionState?.selectionState.modules;
-    const modules = selectedModules ? [...selectedModules] : [];
-
-    this.dispatchEvent(
-      new CommandsSetSwitchEvent(
-        modules.length > 0
-          ? COMMAND_SET_MODULE_EDITOR
-          : COMMAND_SET_GRAPH_EDITOR
-      )
-    );
+    // Module-based command sets are no longer tracked via selectionState.
+    this.dispatchEvent(new CommandsSetSwitchEvent(COMMAND_SET_GRAPH_EDITOR));
   }
 
   #maybeRenderEmptyState() {
