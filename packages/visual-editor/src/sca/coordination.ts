@@ -88,9 +88,26 @@ export interface EventTrigger {
 }
 
 /**
+ * A keyboard shortcut trigger that fires on key combinations.
+ *
+ * Key strings follow the format used by commands: "Cmd+s", "Ctrl+Shift+z", etc.
+ * Modifier order is always: Shift → Cmd → Ctrl.
+ */
+export interface KeyboardTrigger {
+  type: "keyboard";
+  name: string;
+  /** Key combinations that activate this trigger, e.g. ["Cmd+s", "Ctrl+s"] */
+  keys: string[];
+  /** Optional guard: if provided, trigger only fires when guard returns true */
+  guard?: (evt: KeyboardEvent) => boolean;
+  /** Target element to listen on (default: window) */
+  target?: EventTarget;
+}
+
+/**
  * Union of all trigger types.
  */
-export type TriggerDefinition = SignalTrigger | EventTrigger;
+export type TriggerDefinition = SignalTrigger | EventTrigger | KeyboardTrigger;
 
 /**
  * A factory function that creates a trigger definition.
@@ -151,6 +168,77 @@ export function eventTrigger(
   filter?: (evt: Event) => boolean
 ): EventTrigger {
   return { type: "event", name, target, eventType, filter };
+}
+
+/**
+ * Creates a keyboard shortcut trigger definition.
+ *
+ * @param name Human-readable name for debugging/logging
+ * @param keys Array of key combinations (e.g., ["Cmd+s", "Ctrl+s"])
+ * @param guard Optional guard function — action only fires when guard returns true
+ * @param target Optional event target (defaults to window)
+ * @returns A KeyboardTrigger definition
+ *
+ * @example
+ * ```typescript
+ * const onSave = keyboardTrigger("Save Shortcut", ["Cmd+s", "Ctrl+s"]);
+ * const onDelete = keyboardTrigger(
+ *   "Delete Shortcut",
+ *   ["Delete", "Backspace"],
+ *   (evt) => isFocusedOnGraphRenderer(evt)
+ * );
+ * ```
+ */
+export function keyboardTrigger(
+  name: string,
+  keys: string[],
+  guard?: (evt: KeyboardEvent) => boolean,
+  target?: EventTarget
+): KeyboardTrigger {
+  return { type: "keyboard", name, keys, guard, target };
+}
+
+// =============================================================================
+// Keyboard Helpers
+// =============================================================================
+
+/**
+ * Returns true if the event target is an element that has input preference
+ * (text inputs, textareas, selects, canvas, contenteditable elements).
+ * When these elements are focused, keyboard shortcuts should not fire.
+ */
+function receivesInputPreference(target: EventTarget): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLCanvasElement ||
+    (target instanceof HTMLElement &&
+      (target.contentEditable === "true" ||
+        target.contentEditable === "plaintext-only"))
+  );
+}
+
+/**
+ * Normalizes a KeyboardEvent into the key string format used by triggers.
+ * Format: modifiers are prepended in order Shift → Cmd → Ctrl.
+ * Examples: "s", "Shift+z", "Cmd+s", "Ctrl+Shift+z"
+ */
+export function normalizeKeyCombo(evt: KeyboardEvent): string {
+  let key = evt.key;
+  if (key === "Meta" || key === "Ctrl" || key === "Shift") {
+    return "";
+  }
+  if (evt.shiftKey) {
+    key = `Shift+${key}`;
+  }
+  if (evt.metaKey) {
+    key = `Cmd+${key}`;
+  }
+  if (evt.ctrlKey) {
+    key = `Ctrl+${key}`;
+  }
+  return key;
 }
 
 // =============================================================================
@@ -583,6 +671,60 @@ class CoordinationRegistry {
         this.#logger.log(
           Utils.Logging.Formatter.verbose(
             `Activated event trigger: ${trigger.name} (${trigger.eventType}) -> ${actionName}`
+          ),
+          LABEL
+        );
+      } else if (trigger.type === "keyboard") {
+        // Keyboard trigger: listen for keydown and match key combos
+        const target = trigger.target ?? globalThis.window;
+        if (!target) {
+          // SSR or test environment — skip
+          continue;
+        }
+
+        const handler = async (rawEvt: Event) => {
+          const evt = rawEvt as KeyboardEvent;
+
+          // Skip when focused on inputs/textareas/etc.
+          if (evt.composedPath().some((t) => receivesInputPreference(t))) {
+            return;
+          }
+
+          // Normalize and match
+          const normalized = normalizeKeyCombo(evt);
+          if (!normalized || !trigger.keys.includes(normalized)) {
+            return;
+          }
+
+          // Apply guard if provided
+          if (trigger.guard && !trigger.guard(evt)) {
+            return;
+          }
+
+          evt.preventDefault();
+          evt.stopImmediatePropagation();
+
+          try {
+            await (action as (evt: KeyboardEvent) => Promise<unknown>)(evt);
+          } catch (err) {
+            this.#logger.log(
+              Utils.Logging.Formatter.error(
+                `Trigger ${trigger.name} -> ${actionName} failed:`,
+                err
+              ),
+              LABEL
+            );
+          }
+        };
+
+        target.addEventListener("keydown", handler);
+        disposers.push(() => {
+          target.removeEventListener("keydown", handler);
+        });
+
+        this.#logger.log(
+          Utils.Logging.Formatter.verbose(
+            `Activated keyboard trigger: ${trigger.name} (${trigger.keys.join(", ")}) -> ${actionName}`
           ),
           LABEL
         );

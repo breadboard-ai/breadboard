@@ -5,6 +5,7 @@
  */
 
 import type { BoardServer, OutputValues } from "@breadboard-ai/types";
+import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import {
   AssetPath,
   EditHistoryCreator,
@@ -63,6 +64,7 @@ export interface RuntimeConfig {
   guestConfig: GuestConfiguration;
   settings: SettingsStore;
   shellHost: OpalShellHostProtocol;
+  embedHandler?: EmbedHandler;
   env?: FileSystemEntry[];
   appName: string;
   appSubName: string;

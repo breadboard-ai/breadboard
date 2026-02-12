@@ -10,7 +10,6 @@ import { Runtime } from "../runtime/runtime.js";
 import { Tab } from "../runtime/types.js";
 import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
 import { SettingsStore } from "../ui/data/settings-store.js";
-import { EmbedHandler } from "../ui/embed/embed.js";
 import type * as BreadboardUI from "../ui/index.js";
 import { ActionTracker, UserSignInResponse } from "../ui/types/types.js";
 import { type SCA } from "../sca/sca.js";
@@ -29,7 +28,6 @@ export interface EventRouteDeps<
   googleDriveClient: GoogleDriveClient | null;
   askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<UserSignInResponse>;
   boardServer: BoardServer;
-  embedHandler?: EmbedHandler;
   actionTracker?: ActionTracker;
 }
 

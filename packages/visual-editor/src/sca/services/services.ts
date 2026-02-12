@@ -5,6 +5,7 @@
  */
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import { RuntimeConfig } from "../../runtime/types.js";
 import type { GlobalConfig } from "../../ui/contexts/global-config.js";
 import {
@@ -48,6 +49,7 @@ import { NotebookLmApiClient } from "./notebooklm-api-client.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
+  embedHandler: EmbedHandler | undefined;
   agentContext: AgentContext;
   apiClient: AppCatalystApiClient;
   autonamer: Autonamer;
@@ -170,6 +172,7 @@ export function services(
 
     instance = {
       actionTracker,
+      embedHandler: config.embedHandler,
       agentContext,
       apiClient,
       autonamer,
