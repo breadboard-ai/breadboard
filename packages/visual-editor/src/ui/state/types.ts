@@ -21,14 +21,7 @@ import {
   OutputValues,
   RunError,
 } from "@breadboard-ai/types";
-import {
-  EditSpec,
-  EditTransform,
-  NodeHandlerMetadata,
-  Outcome,
-  PortIdentifier,
-  Schema,
-} from "@breadboard-ai/types";
+import { EditSpec, EditTransform, Outcome, Schema } from "@breadboard-ai/types";
 
 import { StateEvent } from "../events/events.js";
 import { VisualEditorMode } from "../types/types.js";
@@ -482,26 +475,6 @@ export type Project = {
    */
   resetRun(): void;
 
-  /**
-   * Returns metadata for a given node. This function is sync, and it
-   * will return the current result, not the latest -- which is fine in most
-   * cases.
-   */
-  getMetadataForNode(
-    nodeId: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): Outcome<NodeHandlerMetadata>;
-
-  getPortsForNode(
-    nodeId: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): Outcome<InspectableNodePorts>;
-
-  getTitleForNode(
-    nodeId: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): Outcome<string>;
-
   persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
   connectHarnessRunner(
     runner: HarnessRunner,
@@ -513,10 +486,6 @@ export type ProjectInternal = Project & {
   graphUrl: URL | null;
   apply(transform: EditTransform): Promise<Outcome<void>>;
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
-  findOutputPortId(
-    graphId: GraphIdentifier,
-    id: NodeIdentifier
-  ): Outcome<{ id: PortIdentifier; title: string }>;
 };
 
 export type ProjectValues = {

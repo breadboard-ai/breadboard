@@ -14,11 +14,15 @@ import {
   GraphIdentifier,
   GraphTheme,
   InspectableGraph,
+  InspectableNodePorts,
   NodeConfiguration,
+  NodeHandlerMetadata,
   NodeIdentifier,
+  Outcome,
   OutputValues,
+  PortIdentifier,
 } from "@breadboard-ai/types";
-import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
+import { err, NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
@@ -344,6 +348,89 @@ export class GraphController extends RootController {
       version: this.version,
       finalOutputValues: this.finalOutputValues,
     } satisfies Tab;
+  }
+
+  // =========================================================================
+  // Node Queries
+  // =========================================================================
+
+  /**
+   * Returns metadata for a given node. This function is sync, and it
+   * will return the current result, not the latest -- which is fine in most
+   * cases.
+   */
+  getMetadataForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<NodeHandlerMetadata> {
+    if (!this._editor) {
+      return err("No editor available");
+    }
+    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    const metadata = node.currentDescribe().metadata;
+    if (!metadata) {
+      return err(`Unable to find metadata for node with id "${nodeId}"`);
+    }
+    return metadata;
+  }
+
+  getPortsForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<InspectableNodePorts> {
+    if (!this._editor) {
+      return err("No editor available");
+    }
+    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    return node.currentPorts();
+  }
+
+  getTitleForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<string> {
+    if (!this._editor) {
+      return err("No editor available");
+    }
+    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    return node.title();
+  }
+
+  findOutputPortId(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ): Outcome<{ id: PortIdentifier; title: string }> {
+    if (!this._editor) {
+      return err("No editor available");
+    }
+    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    const { ports } = node.currentPorts().outputs;
+    const mainPort = ports.find((port) =>
+      port.schema.behavior?.includes("main-port")
+    );
+    const result = { id: "" as PortIdentifier, title: node.descriptor.id };
+    if (mainPort) {
+      result.id = mainPort.name as PortIdentifier;
+      return result;
+    }
+    const firstPort = ports.at(0);
+    if (!firstPort) {
+      return err(`Unable to find a port on node with id "${nodeId}`);
+    }
+    result.id = firstPort.name as PortIdentifier;
+    return result;
   }
 
   /**

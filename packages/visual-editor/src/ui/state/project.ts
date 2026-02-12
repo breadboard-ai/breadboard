@@ -4,21 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  AssetPath,
-  GraphIdentifier,
-  HarnessRunner,
-  InspectableNodePorts,
-  LLMContent,
-  NodeIdentifier,
-} from "@breadboard-ai/types";
-import {
-  EditSpec,
-  EditTransform,
-  NodeHandlerMetadata,
-  Outcome,
-  PortIdentifier,
-} from "@breadboard-ai/types";
+import { AssetPath, HarnessRunner, LLMContent } from "@breadboard-ai/types";
+import { EditSpec, EditTransform, Outcome } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 
 import { ReactiveOrganizer } from "./organizer.js";
@@ -153,67 +140,5 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
     }
 
     return transformed;
-  }
-
-  getMetadataForNode(
-    nodeId: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): Outcome<NodeHandlerMetadata> {
-    const node = this.#editable.inspect(graphId).nodeById(nodeId);
-    if (!node) {
-      return err(`Unable to find node with id "${nodeId}`);
-    }
-    const metadata = node.currentDescribe().metadata;
-    if (!metadata) {
-      return err(`Unable to find metadata for node with id "${nodeId}"`);
-    }
-    return metadata;
-  }
-
-  getPortsForNode(
-    nodeId: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): Outcome<InspectableNodePorts> {
-    const node = this.#editable.inspect(graphId).nodeById(nodeId);
-    if (!node) {
-      return err(`Unable to find node with id "${nodeId}`);
-    }
-    return node.currentPorts();
-  }
-
-  getTitleForNode(
-    nodeId: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): Outcome<string> {
-    const node = this.#editable.inspect(graphId).nodeById(nodeId);
-    if (!node) {
-      return err(`Unable to find node with id "${nodeId}`);
-    }
-    return node.title();
-  }
-
-  findOutputPortId(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): Outcome<{ id: PortIdentifier; title: string }> {
-    const node = this.#editable.inspect(graphId).nodeById(nodeId);
-    if (!node) {
-      return err(`Unable to find node with id "${nodeId}`);
-    }
-    const { ports } = node.currentPorts().outputs;
-    const mainPort = ports.find((port) =>
-      port.schema.behavior?.includes("main-port")
-    );
-    const result = { id: "", title: node.descriptor.id };
-    if (mainPort) {
-      result.id = mainPort.name;
-      return result;
-    }
-    const firstPort = ports.at(0);
-    if (!firstPort) {
-      return err(`Unable to find a port on node with id "${nodeId}`);
-    }
-    result.id = firstPort.name;
-    return result;
   }
 }
