@@ -9,12 +9,7 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("UIController");
 const GlobalStrings = StringsHelper.forSection("Global");
 
-import {
-  EditHistory,
-  EditableGraph,
-  GraphDescriptor,
-  MainGraphIdentifier,
-} from "@breadboard-ai/types";
+import { GraphDescriptor, MainGraphIdentifier } from "@breadboard-ai/types";
 import {
   HTMLTemplateResult,
   LitElement,
@@ -27,9 +22,6 @@ import { guard } from "lit/directives/guard.js";
 import {
   AppTemplateAdditionalOptionsAvailable,
   HighlightStateWithChangeId,
-  SETTINGS_TYPE,
-  STATUS,
-  SettingsStore,
   WorkspaceSelectionStateWithChangeId,
 } from "../../types/types.js";
 import { styles as canvasControllerStyles } from "./canvas-controller.styles.js";
@@ -60,8 +52,7 @@ import { icons } from "../../styles/icons.js";
 import { EntityEditor } from "../elements.js";
 import { consume, provide } from "@lit/context";
 import { SharePanel } from "../share-panel/share-panel.js";
-import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+
 import { effects } from "../../styles/host/effects.js";
 import { GraphTheme } from "@breadboard-ai/types";
 import { styleMap } from "lit/directives/style-map.js";
@@ -83,54 +74,15 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  /**
-   * Indicates whether or not the UI can currently run a flow or not.
-   * This is useful in situations where we're doing some work on the
-   * board and want to prevent the user from triggering the start
-   * of the flow.
-   */
-  @property()
-  accessor canRun = true;
-
-  @property()
-  accessor editor: EditableGraph | null = null;
-
-  @property()
-  accessor graph: GraphDescriptor | null = null;
-
-  @property()
-  accessor graphIsMine = false;
-
   @property()
   accessor graphTopologyUpdateId: number = 0;
-
-  @state()
-  accessor history: EditHistory | null = null;
-
-  @property()
-  accessor mainGraphId: MainGraphIdentifier | null = null;
 
   @provide({ context: projectStateContext })
   @state()
   accessor projectState!: Project;
 
   @property()
-  accessor readOnly = true;
-
-  @property()
-  accessor themeHash = 0;
-
-  @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-
-  @property()
-  accessor settings: SettingsStore | null = null;
-
-  @property()
-  accessor signedIn = false;
-
-  @property({ reflect: true })
-  accessor status = STATUS.RUNNING;
 
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
@@ -154,21 +106,15 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @state()
   accessor showAssetOrganizer = false;
 
-  @consume({ context: googleDriveClientContext })
-  @property({ attribute: false })
-  accessor googleDriveClient: GoogleDriveClient | undefined;
-
   #entityEditorRef: Ref<EntityEditor> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
   #lastKnownNlEditValue = "";
+  #prevMainGraphId: MainGraphIdentifier | null = null;
+  #prevGraph: GraphDescriptor | null = null;
+  #selectionCount = 0;
 
   static styles = [icons, effects, canvasControllerStyles];
 
-  connectedCallback(): void {
-    super.connectedCallback();
-  }
-
-  editorRender = 0;
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (changedProperties.has("projectState")) {
       this.#projectStateUpdated.set({});
@@ -176,12 +122,13 @@ export class CanvasController extends SignalWatcher(LitElement) {
     if (changedProperties.has("selectionState")) {
       // If this is an imperative board with no selection state then set the
       // selection to be the main.
+      const graph = this.sca.controller.editor.graph.graph;
       if (
         this.selectionState?.selectionState.graphs.size === 0 &&
         this.selectionState?.selectionState.modules.size === 0 &&
-        this.graph?.main
+        graph?.main
       ) {
-        this.selectionState?.selectionState.modules.add(this.graph.main);
+        this.selectionState?.selectionState.modules.add(graph.main);
       }
     }
 
@@ -200,6 +147,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         0
       );
     }
+    this.#selectionCount = newSelectionCount;
 
     // NOTE: Step autosave is now handled by the SCA step autosave trigger,
     // which fires when selection or sidebar section changes. The trigger
@@ -209,10 +157,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
     // If there are no selections and we're in the editor switch out to the app
     // view. Otherwise, if there's any change to the selection and the sidenav
     // isn't set to the editor, switch to it.
-    if (newSelectionCount === 0 && this.sideNavItem === "editor") {
+    if (this.#selectionCount === 0 && this.sideNavItem === "editor") {
       this.sideNavItem = "preview";
     } else if (
-      newSelectionCount > 0 &&
+      this.#selectionCount > 0 &&
       changedProperties.has("selectionState") &&
       this.sideNavItem !== "editor"
     ) {
@@ -221,18 +169,22 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
     // If the user opens an unowned graph then we default them back to the app
     // view irrespective of whatever sidenav item they had selected prior.
+    const mainGraphId = this.sca.controller.editor.graph.mainGraphId;
     if (
-      changedProperties.has("mainGraphId") &&
-      this.mainGraphId &&
-      !this.graphIsMine
+      mainGraphId !== this.#prevMainGraphId &&
+      mainGraphId &&
+      !this.sca.controller.editor.graph.graphIsMine
     ) {
       this.sideNavItem = "preview";
     }
+    this.#prevMainGraphId = mainGraphId;
 
     // Set theme designer to hidden when navigating away
-    if (changedProperties.has("graph")) {
+    const currentGraph = this.sca.controller.editor.graph.graph;
+    if (currentGraph !== this.#prevGraph) {
       this.showThemeDesigner = false;
     }
+    this.#prevGraph = currentGraph;
   }
 
   #projectStateUpdated = new Signal.State({});
@@ -266,62 +218,9 @@ export class CanvasController extends SignalWatcher(LitElement) {
   }
 
   render() {
-    const collapseNodesByDefault = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Collapse Nodes by Default")?.value
-      : false;
+    const gc = this.sca.controller.editor.graph;
 
-    const showNodePreviewValues = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show Node Preview Values")?.value
-      : false;
-
-    const hideSubboardSelectorWhenEmpty = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Hide Embedded Board Selector When Empty")?.value
-      : false;
-
-    const invertZoomScrollDirection = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Invert Zoom Scroll Direction")?.value
-      : false;
-
-    const showNodeShortcuts = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show Node Shortcuts")?.value
-      : false;
-
-    const showPortTooltips = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show Port Tooltips")?.value
-      : false;
-
-    const highlightInvalidWires = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Highlight Invalid Wires")?.value
-      : false;
-
-    const showSubgraphsInline = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show subgraphs inline")?.value
-      : false;
-
-    const showCustomStepEditing = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Enable Custom Step Creation")?.value
-      : false;
-
-    const showAssetsInGraph = true;
-    const graph = this.editor?.inspect("") || null;
+    const graph = gc.editor?.inspect("") || null;
     const graphIsEmpty = isEmpty(graph?.raw() ?? null);
 
     const runState = this.runState;
@@ -329,25 +228,15 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const graphEditor = guard(
       [
         graph,
-        this.graphIsMine,
+        gc.graphIsMine,
         this.projectState,
         runState,
         this.#runStateEffect,
-        this.history,
-        this.editorRender,
+        gc.editor?.history() ?? null,
         this.selectionState,
         this.highlightState,
         this.graphTopologyUpdateId,
         this.sca.controller.global.flags,
-        collapseNodesByDefault,
-        hideSubboardSelectorWhenEmpty,
-        showNodeShortcuts,
-        showNodePreviewValues,
-        invertZoomScrollDirection,
-        showPortTooltips,
-        highlightInvalidWires,
-        showSubgraphsInline,
-        showCustomStepEditing,
       ],
       () => {
         return html`<bb-renderer
@@ -356,15 +245,15 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .runStateEffect=${this.#runStateEffect}
           .runtimeFlags=${this.sca.controller.global.flags}
           .graph=${graph}
-          .graphIsMine=${this.graphIsMine}
+          .graphIsMine=${gc.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-          .history=${this.history}
-          .graphAssets=${this.sca.controller.editor.graph.graphAssets}
+          .history=${gc.editor?.history() ?? null}
+          .graphAssets=${gc.graphAssets}
           .selectionState=${this.selectionState}
-          .showAssetsInGraph=${showAssetsInGraph}
+          .showAssetsInGraph=${true}
           .highlightState=${this.highlightState}
-          .mainGraphId=${this.mainGraphId}
-          .readOnly=${this.readOnly}
+          .mainGraphId=${gc.mainGraphId}
+          .readOnly=${!gc.graphIsMine}
           @input=${(evt: Event) => {
             const composedPath = evt.composedPath();
             const isFromNLInput = composedPath.some((el) => {
@@ -441,12 +330,13 @@ export class CanvasController extends SignalWatcher(LitElement) {
     let theme: string;
     let themes: Record<string, GraphTheme>;
     let themeStyles: Record<string, string> = {};
+    const themeHash = this.sca.controller.editor.theme.themeHash;
     if (
-      this.graph?.metadata?.visual?.presentation?.themes &&
-      this.graph?.metadata?.visual?.presentation?.theme
+      gc.graph?.metadata?.visual?.presentation?.themes &&
+      gc.graph?.metadata?.visual?.presentation?.theme
     ) {
-      theme = this.graph.metadata.visual.presentation.theme;
-      themes = this.graph.metadata.visual.presentation.themes;
+      theme = gc.graph.metadata.visual.presentation.theme;
+      themes = gc.graph.metadata.visual.presentation.themes;
 
       if (themes[theme]) {
         const appPalette = themes[theme].palette;
@@ -459,30 +349,16 @@ export class CanvasController extends SignalWatcher(LitElement) {
       }
     }
 
-    let selectionCount = 0;
-    if (this.selectionState) {
-      selectionCount = [...this.selectionState.selectionState.graphs].reduce(
-        (prev, [, graph]) => {
-          return (
-            prev +
-            graph.assets.size +
-            graph.comments.size +
-            graph.nodes.size +
-            graph.references.size
-          );
-        },
-        0
-      );
-    }
+    const selectionCount = this.#selectionCount;
 
     const sideNavItem = [
       html`${guard(
         [
           graphIsEmpty,
-          this.graph,
-          this.signedIn,
+          gc.graph,
+          this.sca.services.signinAdapter.stateSignal?.status === "signedin",
           this.selectionState,
-          this.themeHash,
+          themeHash,
           this.#runStateEffect,
           selectionCount,
           this.sideNavItem,
@@ -495,17 +371,17 @@ export class CanvasController extends SignalWatcher(LitElement) {
               active: this.sideNavItem === "preview",
             })}
             .focusWhenIn=${focusAppControllerWhenIn}
-            .graph=${this.graph}
+            .graph=${gc.graph}
             .graphIsEmpty=${graphIsEmpty}
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-            .isMine=${this.graphIsMine}
+            .isMine=${gc.graphIsMine}
             .projectRun=${this.projectState?.run}
-            .readOnly=${!this.graphIsMine}
+            .readOnly=${!gc.graphIsMine}
             .runtimeFlags=${this.sca.controller.global.flags}
-            .settings=${this.settings}
-            .showGDrive=${this.signedIn}
-            .status=${this.status}
-            .themeHash=${this.themeHash}
+            .showGDrive=${this.sca.services.signinAdapter.stateSignal
+              ?.status === "signedin"}
+            .status=${this.sca.controller.run.main.status}
+            .themeHash=${themeHash}
             @bbthemeeditrequest=${(evt: ThemeEditRequestEvent) => {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
@@ -524,8 +400,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
         .graph=${graph}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .selectionState=${this.selectionState}
-        .mainGraphId=${this.mainGraphId}
-        .readOnly=${this.readOnly}
+        .mainGraphId=${gc.mainGraphId}
+        .readOnly=${!gc.graphIsMine}
         .projectState=${this.projectState}
       ></bb-entity-editor>`,
       html`
@@ -535,7 +411,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           })}
           .run=${this.projectState?.run}
           .themeStyles=${themeStyles}
-          .disclaimerContent=${this.graphIsMine
+          .disclaimerContent=${gc.graphIsMine
             ? GlobalStrings.from("LABEL_DISCLAIMER")
             : html`This content was created by another person. It may be
                 inaccurate or unsafe.
@@ -550,7 +426,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         class=${classMap({
           active: this.sideNavItem === "edit-history",
         })}
-        .history=${this.history}
+        .history=${gc.editor?.history() ?? null}
       ></bb-edit-history-panel>`,
     ];
 
@@ -558,8 +434,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
     if (this.showThemeDesigner) {
       themeEditor = html`<bb-app-theme-creator
         .projectState=${this.projectState}
-        .graph=${this.graph}
-        .themeHash=${this.themeHash}
+        .graph=${gc.graph}
+        .themeHash=${themeHash}
         .themeOptions=${this.#themeOptions}
         @pointerdown=${(evt: PointerEvent) => {
           evt.stopImmediatePropagation();
@@ -578,7 +454,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         }}
       >
         <div id="graph-container" slot="s0">
-          <bb-edit-history-overlay .history=${this.history}>
+          <bb-edit-history-overlay .history=${gc.editor?.history() ?? null}>
           </bb-edit-history-overlay>
           ${graphIsEmpty ? this.#maybeRenderEmptyState() : nothing}
           ${graphEditor} ${themeEditor}
@@ -638,7 +514,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
                   "sans-flex": true,
                   "w-500": true,
                   round: true,
-                  invisible: !this.graphIsMine,
+                  invisible: !gc.graphIsMine,
                 })}
                 @click=${() => {
                   this.sideNavItem = "preview";
@@ -662,7 +538,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
       this.sca?.controller.global.flowgenInput.state.status === "generating";
     const showStepListView = !graphIsEmpty || isGenerating;
     const prompt =
-      this.graph?.metadata?.raw_intent ?? this.graph?.metadata?.intent ?? null;
+      gc.graph?.metadata?.raw_intent ?? gc.graph?.metadata?.intent ?? null;
     const narrowScreenContent = !graph
       ? nothing
       : html`<section id="narrow-view">
@@ -670,7 +546,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             ? html`<bb-prompt-view .prompt=${prompt}></bb-prompt-view>
                 <bb-step-list-view></bb-step-list-view>`
             : html`<bb-empty-state narrow></bb-empty-state>`}
-          ${this.readOnly
+          ${!gc.graphIsMine
             ? nothing
             : html`<bb-flowgen-editor-input
                 .hasEmptyGraph=${graphIsEmpty}

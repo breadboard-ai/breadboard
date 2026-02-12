@@ -285,7 +285,7 @@ class Main extends MainBase {
       .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
       "signedin"}
       .status=${renderValues.tabStatus}
-      .themeHash=${renderValues.themeHash}
+      .themeHash=${this.sca.controller.editor.theme.themeHash}
     >
     </bb-app-controller>`;
   }
@@ -294,21 +294,9 @@ class Main extends MainBase {
     return html` <bb-canvas-controller
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
-      .canRun=${this.sca.controller.global.main.canRunMain}
-      .editor=${this.sca.controller.editor.graph.editor}
-      .graph=${this.tab?.graph ?? null}
-      .graphIsMine=${this.tab?.graphIsMine ?? false}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .history=${this.sca.controller.editor.graph.editor?.history() ?? null}
-      .mainGraphId=${this.tab?.mainGraphId}
       .projectState=${renderValues.projectState}
-      .readOnly=${this.tab?.readOnly ?? true}
       .selectionState=${this.selectionState}
-      .settings=${this.settings}
-      .signedIn=${this.sca.services.signinAdapter.stateSignal?.status ===
-      "signedin"}
-      .status=${renderValues.tabStatus}
-      .themeHash=${renderValues.themeHash}
       @bbshowvideomodal=${() => {
         this.sca.controller.global.main.show.add("VideoModal");
       }}
