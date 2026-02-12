@@ -6,10 +6,8 @@
 
 import {
   BreakpointSpec,
-  FileSystemEntry,
   GraphDescriptor,
   HarnessRunner,
-  NodeConfiguration,
   NodeHandlerContext,
   NodeIdentifier,
   NodeLifecycleState,
@@ -25,7 +23,7 @@ import {
   Task,
 } from "@breadboard-ai/types";
 
-import { err, ok, timestamp } from "@breadboard-ai/utils";
+import { ok, timestamp } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { NodeInvoker } from "../run/node-invoker.js";
@@ -45,12 +43,13 @@ import {
   SkipEvent,
   StartEvent,
 } from "./events.js";
-import { isLLMContentArray } from "../../../data/common.js";
 import {
   augmentWithSkipOutputs,
   computeControlState,
   computeSkipOutputs,
 } from "../../../runtime/control.js";
+import { assetsFromGraphDescriptor } from "../../../data/file-system.js";
+import { getLatestConfig } from "./get-latest-config.js";
 
 export { PlanRunner };
 
@@ -571,38 +570,4 @@ function dispatchProbeMessage(
       dispatch(new SkipEvent(structuredClone(message.data)));
       break;
   }
-}
-
-function getLatestConfig(
-  id: NodeIdentifier,
-  graph: GraphDescriptor,
-  context: NodeHandlerContext
-): Outcome<NodeConfiguration> {
-  const gettingMainGraph = context.graphStore?.getByDescriptor(graph);
-  if (!gettingMainGraph?.success) {
-    return err(`Can't to find graph "${graph.url}" in graph store`);
-  }
-  const inspector = context.graphStore?.inspect(gettingMainGraph.result, "");
-  if (!inspector) {
-    return err(`Can't get inspector for graph "${graph.url}"`);
-  }
-  const inspectableNode = inspector.nodeById(id);
-  if (!inspectableNode) {
-    return err(`Unable to find node "${id}`);
-  }
-  return inspectableNode?.configuration();
-}
-
-function assetsFromGraphDescriptor(
-  descriptor?: GraphDescriptor
-): FileSystemEntry[] {
-  const { assets } = descriptor || {};
-  if (!assets) return [];
-
-  return Object.entries(assets)
-    .filter(([, asset]) => isLLMContentArray(asset.data))
-    .map(([path, asset]) => {
-      const data = asset.data;
-      return { path: `/assets/${path}`, data } as FileSystemEntry;
-    });
 }
