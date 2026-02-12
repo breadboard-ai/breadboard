@@ -20,35 +20,37 @@ import {
   type GoogleDriveAsset,
 } from "@breadboard-ai/utils/google-drive/utils.js";
 import type { UnmanagedAssetProblem } from "../../controller/subcontrollers/editor/share-controller.js";
+import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
+import { makeUrl } from "../../../ui/utils/urls.js";
+import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 
 export const bind = makeAction();
+
+const LABEL = "Share";
 
 // =============================================================================
 // Actions
 // =============================================================================
 
-export const readPublishedState = asAction(
-  "Share.readPublishedState",
+export const open = asAction(
+  "Share.open",
   { mode: ActionMode.Immediate },
-  async (
-    graph: GraphDescriptor,
-    publishPermissions: gapi.client.drive.Permission[]
-  ): Promise<void> => {
+  async (): Promise<void> => {
     const { controller, services } = bind;
-    const LABEL = "Share.readPublishedState";
+
     const logger = Utils.Logging.getLogger(controller);
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
     const boardServer = services.googleDriveBoardServer;
 
-    if (share.panel !== "opening") {
+    if (share.panel !== "closed") {
       return;
     }
 
-    const graphUrl = graph.url;
+    const graphUrl = getGraph()?.url;
     if (!graphUrl) {
       logger.log(Utils.Logging.Formatter.error("No graph url"), LABEL);
       return;
@@ -118,7 +120,6 @@ export const readPublishedState = asAction(
             id: thisFileId,
             resourceKey: thisFileMetadata.resourceKey,
           };
-
       return;
     }
 
@@ -136,6 +137,7 @@ export const readPublishedState = asAction(
         bypassProxy: true,
       }
     );
+    const publishPermissions = getRequiredPublishPermissions();
     const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
     const diff = diffAssetReadPermissions({
       actual: allGraphPermissions,
@@ -171,9 +173,14 @@ export const readPublishedState = asAction(
 // Internal Helpers
 // =============================================================================
 
+function getGraph(): GraphDescriptor | null {
+  const { controller } = bind;
+  return controller.editor.graph.graph;
+}
+
 function getGraphFileId(graphUrl: string): string | undefined {
   const logger = Utils.Logging.getLogger();
-  const LABEL = "Share.getGraphFileId";
+
   if (!graphUrl.startsWith("drive:")) {
     logger.log(
       Utils.Logging.Formatter.error(
@@ -190,17 +197,71 @@ function getGraphFileId(graphUrl: string): string | undefined {
   return graphFileId;
 }
 
+function getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
+  const { services } = bind;
+  const permissions = services.globalConfig.googleDrive?.publishPermissions;
+  if (!permissions || permissions.length === 0) {
+    Utils.Logging.getLogger().log(
+      Utils.Logging.Formatter.error(
+        "No googleDrive.publishPermissions configured"
+      ),
+      "Share.getRequiredPublishPermissions"
+    );
+    return [];
+  }
+  return permissions.map((permission) => ({ role: "reader", ...permission }));
+}
+
+// This computation must live in the actions layer because it needs access to
+// guestConfig and globalConfig from services, but it can't be wrapped with
+// "asAction" as required by the lint rule, because that forces it to be async.
+// It can't be async because it needs to be rendered synchronously in the
+// share panel.
+// eslint-disable-next-line local-rules/action-exports-use-asaction
+export function computeAppUrl(shareableFile: DriveFileId | null): string {
+  if (!shareableFile) {
+    return "";
+  }
+  const { services } = bind;
+  const shareSurface = services.guestConfig.shareSurface;
+  const shareSurfaceUrlTemplate =
+    shareSurface &&
+    services.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
+  if (shareSurfaceUrlTemplate) {
+    return makeShareLinkFromTemplate({
+      urlTemplate: shareSurfaceUrlTemplate,
+      fileId: shareableFile.id,
+      resourceKey: shareableFile.resourceKey,
+    });
+  }
+  const hostOrigin = services.globalConfig.hostOrigin;
+  if (!hostOrigin) {
+    return "";
+  }
+  return makeUrl(
+    {
+      page: "graph",
+      mode: "app",
+      flow: `drive:/${shareableFile.id}`,
+      resourceKey: shareableFile.resourceKey,
+      guestPrefixed: false,
+    },
+    hostOrigin
+  );
+}
+
 interface MakeShareableCopyResult {
   shareableCopyFileId: string;
   shareableCopyResourceKey: string | undefined;
   newMainVersion: string;
 }
 
-async function makeShareableCopy(
-  graph: GraphDescriptor,
-  shareSurface: string | undefined
-): Promise<MakeShareableCopyResult> {
+async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
   const { services } = bind;
+  const graph = getGraph();
+  if (!graph) {
+    throw new Error(`No graph available`);
+  }
   const googleDriveClient = services.googleDriveClient;
   const boardServer = services.googleDriveBoardServer;
 
@@ -255,6 +316,7 @@ async function makeShareableCopy(
   // component.
   await boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
 
+  const shareSurface = services.guestConfig.shareSurface;
   const shareableCopyMetadata = await googleDriveClient.updateFileMetadata(
     shareableCopyFileId,
     {
@@ -447,18 +509,15 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
 export const publish = asAction(
   "Share.publish",
   { mode: ActionMode.Immediate },
-  async (
-    graph: GraphDescriptor,
-    publishPermissions: gapi.client.drive.Permission[],
-    shareSurface: string | undefined
-  ): Promise<void> => {
+  async (): Promise<void> => {
     const { controller, services } = bind;
-    const LABEL = "Share.publish";
+
     const logger = Utils.Logging.getLogger(controller);
     logger.log(Utils.Logging.Formatter.verbose("Publishing"), LABEL);
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
 
+    const publishPermissions = getRequiredPublishPermissions();
     if (publishPermissions.length === 0) {
       logger.log(
         Utils.Logging.Formatter.error("No publish permissions configured"),
@@ -495,7 +554,7 @@ export const publish = asAction(
 
     let newLatestVersion: string | undefined;
     if (!share.shareableFile) {
-      const copyResult = await makeShareableCopy(graph, shareSurface);
+      const copyResult = await makeShareableCopy();
       share.shareableFile = {
         id: copyResult.shareableCopyFileId,
         resourceKey: copyResult.shareableCopyResourceKey,
@@ -521,7 +580,12 @@ export const publish = asAction(
       LABEL
     );
 
-    await handleAssetPermissions(share.shareableFile!.id, graph);
+    const graph = getGraph();
+    if (graph) {
+      await handleAssetPermissions(share.shareableFile!.id, graph);
+    } else {
+      logger.log(Utils.Logging.Formatter.error("No graph found"), LABEL);
+    }
 
     share.panel = "writable";
     share.published = true;
@@ -533,12 +597,11 @@ export const publish = asAction(
 export const unpublish = asAction(
   "Share.unpublish",
   { mode: ActionMode.Immediate },
-  async (graph: GraphDescriptor): Promise<void> => {
+  async (): Promise<void> => {
     const { controller, services } = bind;
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
 
-    const LABEL = "Share.unpublish";
     const logger = Utils.Logging.getLogger(controller);
     if (share.access !== "writable") {
       logger.log(
@@ -551,6 +614,11 @@ export const unpublish = asAction(
     }
     if (!share.published) {
       // Already unpublished!
+      return;
+    }
+    const graph = getGraph();
+    if (!graph) {
+      logger.log(Utils.Logging.Formatter.error("No graph found"), LABEL);
       return;
     }
     share.panel = "updating";
@@ -584,13 +652,21 @@ export const unpublish = asAction(
 export const publishStale = asAction(
   "Share.publishStale",
   { mode: ActionMode.Immediate },
-  async (graph: GraphDescriptor): Promise<void> => {
+  async (): Promise<void> => {
     const { controller, services } = bind;
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
     const boardServer = services.googleDriveBoardServer;
 
     if (share.access !== "writable" || !share.shareableFile) {
+      return;
+    }
+    const graph = getGraph();
+    if (!graph) {
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.error("No graph found"),
+        "Share.publishStale"
+      );
       return;
     }
 
@@ -671,19 +747,6 @@ export const dismissUnmanagedAssetProblems = asAction(
   }
 );
 
-export const openPanel = asAction(
-  "Share.openPanel",
-  { mode: ActionMode.Immediate },
-  async (): Promise<void> => {
-    const { controller } = bind;
-    const share = controller.editor.share;
-    if (share.panel !== "closed") {
-      return;
-    }
-    share.panel = "opening";
-  }
-);
-
 export const closePanel = asAction(
   "Share.closePanel",
   { mode: ActionMode.Immediate },
@@ -695,7 +758,6 @@ export const closePanel = asAction(
     if (panel === "closed" || panel === "readonly" || panel === "writable") {
       share.panel = "closed";
     } else if (
-      panel === "opening" ||
       panel === "loading" ||
       panel === "updating" ||
       panel === "granular" ||
@@ -722,21 +784,11 @@ export const closePanel = asAction(
 export const viewSharePermissions = asAction(
   "Share.viewSharePermissions",
   { mode: ActionMode.Immediate },
-  async (
-    graph: GraphDescriptor,
-    shareSurface: string | undefined
-  ): Promise<void> => {
+  async (): Promise<void> => {
     const { controller } = bind;
     const share = controller.editor.share;
 
     if (share.access !== "writable") {
-      return;
-    }
-    if (!graph.url) {
-      Utils.Logging.getLogger(controller).log(
-        Utils.Logging.Formatter.error("No graph url"),
-        "Share.viewSharePermissions"
-      );
       return;
     }
 
@@ -746,7 +798,7 @@ export const viewSharePermissions = asAction(
     // that's the file we need to open the granular permissions dialog with.
     const shareableCopyFileId =
       share.shareableFile?.id ??
-      (await makeShareableCopy(graph, shareSurface)).shareableCopyFileId;
+      (await makeShareableCopy()).shareableCopyFileId;
 
     share.panel = "granular";
     share.shareableFile = { id: shareableCopyFileId };
@@ -756,7 +808,7 @@ export const viewSharePermissions = asAction(
 export const onGoogleDriveSharePanelClose = asAction(
   "Share.onGoogleDriveSharePanelClose",
   { mode: ActionMode.Immediate },
-  async (graph: GraphDescriptor): Promise<void> => {
+  async (): Promise<void> => {
     const { controller } = bind;
     const share = controller.editor.share;
 
@@ -765,8 +817,16 @@ export const onGoogleDriveSharePanelClose = asAction(
     }
     const graphFileId = share.shareableFile.id;
     share.panel = "loading";
-    await handleAssetPermissions(graphFileId, graph);
-    share.panel = "opening";
-    await openPanel();
+    const graph = getGraph();
+    if (graph) {
+      await handleAssetPermissions(graphFileId, graph);
+    } else {
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.error("No graph found"),
+        "Share.onGoogleDriveSharePanelClose"
+      );
+    }
+    share.panel = "closed";
+    await open();
   }
 );

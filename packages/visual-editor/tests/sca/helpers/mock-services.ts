@@ -6,6 +6,7 @@
 
 import { mock } from "node:test";
 import type { GraphDescriptor } from "@breadboard-ai/types";
+import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { AppServices } from "../../../src/sca/services/services.js";
 import type { GlobalConfig } from "../../../src/ui/contexts/global-config.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
@@ -156,6 +157,7 @@ export interface TestServicesOptions {
     }
   >;
   globalConfig?: Partial<GlobalConfig>;
+  guestConfig?: Partial<GuestConfiguration>;
 }
 
 export function makeTestServices(options: TestServicesOptions = {}) {
@@ -168,6 +170,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     signinAdapter,
     googleDriveBoardServer,
     globalConfig = {},
+    guestConfig = {},
   } = options;
 
   const actionTrackerMock = {
@@ -186,6 +189,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     fetchWithCreds: mock.fn(async () => new Response("{}", { status: 200 })),
     googleDriveClient: googleDriveClient ?? {},
     globalConfig,
+    guestConfig,
     signinAdapter: signinAdapter ?? {},
     // Mock RunService that returns a testable mock runner
     runService: {

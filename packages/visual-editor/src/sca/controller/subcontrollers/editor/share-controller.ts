@@ -20,7 +20,6 @@ export type UnmanagedAssetProblem = {
 
 export type SharePanelStatus =
   | "closed"
-  | "opening"
   | "loading"
   | "readonly"
   | "writable"

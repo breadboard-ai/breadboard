@@ -4,33 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type GraphDescriptor } from "@breadboard-ai/types";
-import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
-import { css, html, LitElement, nothing, type PropertyValues } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SharePanelStatus } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
-import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
 import { ActionTracker } from "../../types/types.js";
-import { makeUrl } from "../../utils/urls.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 import type { VisibilityLevel } from "./share-visibility-selector.js";
@@ -322,14 +317,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor sca!: SCA;
 
-  @consume({ context: guestConfigurationContext })
-  accessor guestConfiguration: GuestConfiguration | undefined;
-
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
 
-  @property({ attribute: false })
-  accessor graph: GraphDescriptor | undefined;
+  get #graph() {
+    return this.sca.controller.editor.graph.graph;
+  }
 
   get #panel(): SharePanelStatus {
     return this.#controller.panel;
@@ -347,22 +340,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
   #publishedSwitch = createRef<MdSwitch>();
   #googleDriveSharePanel = createRef<GoogleDriveSharePanel>();
 
-  override willUpdate(changes: PropertyValues<this>) {
-    super.willUpdate(changes);
-    if (changes.has("graph") && this.#panel !== "closed") {
-      this.#actions.openPanel();
-    }
-    if (this.#panel === "opening" && this.graph) {
-      this.#actions.readPublishedState(
-        this.graph,
-        this.#getRequiredPublishPermissions()
-      );
-    }
-  }
-
   override render() {
     const panel = this.#panel;
-    if (panel === "closed" || panel === "opening") {
+    if (panel === "closed") {
       return nothing;
     } else if (panel === "granular") {
       return this.#renderGranularSharingModal();
@@ -380,7 +360,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   open(): void {
-    this.#actions.openPanel();
+    this.#actions.open();
   }
 
   close(): void {
@@ -388,7 +368,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderModal() {
-    const title = this.graph?.title;
+    const title = this.#graph?.title;
     return html`
       <dialog ${ref(this.#dialog)} @close=${this.close}>
         <header>
@@ -435,52 +415,30 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  get #isShared(): boolean | undefined {
-    const panel = this.#panel;
-    if (panel === "readonly") {
-      // If we're readonly, then we're not the owner. And if we're not the
-      // owner, and yet here we are, then it must be shared with us one way or
-      // the other.
-      return true;
-    }
-    if (panel === "writable" || panel === "updating") {
-      return this.#controller.published || this.#controller.granularlyShared;
-    }
-    return undefined;
-  }
-
-  get #isStale(): boolean | undefined {
-    const panel = this.#panel;
-    if (panel === "writable" || panel === "updating") {
-      return this.#controller.stale;
-    }
-    return undefined;
-  }
-
   #renderWritableContentsV1() {
+    const shared =
+      this.#controller.published || this.#controller.granularlyShared;
     return [
-      this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
+      this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
       html`
         <div id="permissions">
           Publish your ${APP_NAME} ${this.#renderPublishedSwitch()}
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      this.#isShared && this.#panel !== "updating"
-        ? this.#renderAppLink()
-        : nothing,
+      shared && this.#panel !== "updating" ? this.#renderAppLink() : nothing,
       this.#renderGranularSharingLink(),
       this.#renderAdvisory(),
     ];
   }
 
   #renderWritableContentsV2() {
+    const shared =
+      this.#controller.published || this.#controller.granularlyShared;
     return [
-      this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
+      this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
       this.#renderVisibilityDropdown(),
-      this.#isShared && this.#panel !== "updating"
-        ? this.#renderAppLink()
-        : nothing,
+      shared && this.#panel !== "updating" ? this.#renderAppLink() : nothing,
       this.#renderAdvisory(),
     ];
   }
@@ -502,11 +460,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
       </div>
     `;
   }
+
   async #onClickPublishStale() {
-    if (!this.graph) {
-      return;
-    }
-    await this.#actions.publishStale(this.graph);
+    await this.#actions.publishStale();
   }
 
   #renderReadonlyModalContents() {
@@ -544,7 +500,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderAppLink() {
-    const appUrl = this.#appUrl;
+    const appUrl = this.#actions.computeAppUrl(this.#controller.shareableFile);
     if (!appUrl) {
       return nothing;
     }
@@ -755,13 +711,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   async #onClickViewSharePermissions(event: MouseEvent) {
     event.preventDefault();
-    if (!this.graph) {
-      return;
-    }
-    await this.#actions.viewSharePermissions(
-      this.graph,
-      this.guestConfiguration?.shareSurface
-    );
+    await this.#actions.viewSharePermissions();
   }
 
   #onPublishedSwitchChange() {
@@ -770,20 +720,16 @@ export class SharePanel extends SignalWatcher(LitElement) {
       console.error("Expected input element to be rendered");
       return;
     }
-    if (!this.graph?.url) {
+    if (!this.#graph?.url) {
       console.error("No graph url");
       return;
     }
     const selected = input.selected;
     if (selected) {
-      this.actionTracker?.publishApp(this.graph.url);
-      this.#actions.publish(
-        this.graph,
-        this.#getRequiredPublishPermissions(),
-        this.guestConfiguration?.shareSurface
-      );
+      this.actionTracker?.publishApp(this.#graph.url);
+      this.#actions.publish();
     } else {
-      this.#actions.unpublish(this.graph);
+      this.#actions.unpublish();
     }
   }
 
@@ -792,7 +738,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   async #onClickCopyLinkButton() {
-    const appUrl = this.#appUrl;
+    const appUrl = this.#actions.computeAppUrl(this.#controller.shareableFile);
     if (!appUrl) {
       console.error("No app url");
       return nothing;
@@ -806,54 +752,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     );
   }
 
-  get #appUrl(): string | undefined {
-    const panel = this.#panel;
-    const shareableFile = this.#controller.shareableFile;
-    if (
-      (panel === "writable" || panel === "updating" || panel === "readonly") &&
-      shareableFile
-    ) {
-      const shareSurface = this.guestConfiguration?.shareSurface;
-      const shareSurfaceUrlTemplate =
-        shareSurface &&
-        this.guestConfiguration?.shareSurfaceUrlTemplates?.[shareSurface];
-      if (shareSurfaceUrlTemplate) {
-        return makeShareLinkFromTemplate({
-          urlTemplate: shareSurfaceUrlTemplate,
-          fileId: shareableFile.id,
-          resourceKey: shareableFile.resourceKey,
-        });
-      }
-      return makeUrl(
-        {
-          page: "graph",
-          mode: "app",
-          flow: `drive:/${shareableFile.id}`,
-          resourceKey: shareableFile.resourceKey,
-          guestPrefixed: false,
-        },
-        this.globalConfig?.hostOrigin
-      );
-    }
-    return undefined;
-  }
   async #onGoogleDriveSharePanelClose() {
-    if (!this.graph) {
-      return;
-    }
-    await this.#actions.onGoogleDriveSharePanelClose(this.graph);
-  }
-
-  #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
-    if (!this.globalConfig) {
-      console.error(`No environment was provided`);
-      return [];
-    }
-    const permissions = this.globalConfig.googleDrive.publishPermissions;
-    if (permissions.length === 0) {
-      console.error(`Environment contained no googleDrive.publishPermissions`);
-    }
-    return permissions.map((permission) => ({ role: "reader", ...permission }));
+    await this.#actions.onGoogleDriveSharePanelClose();
   }
 }
 

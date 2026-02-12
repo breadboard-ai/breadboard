@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Asset } from "@breadboard-ai/types";
+import type { Asset, GraphDescriptor } from "@breadboard-ai/types";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import assert from "node:assert";
@@ -18,6 +18,7 @@ import {
 } from "../../../../src/sca/controller/subcontrollers/editor/share-controller.js";
 import { FakeGoogleDriveApi } from "../../helpers/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
+import { makeUrl } from "../../../../src/ui/utils/urls.js";
 
 function makeAsset(handle: string, managed: boolean, title: string): Asset {
   return {
@@ -29,7 +30,14 @@ function makeAsset(handle: string, managed: boolean, title: string): Asset {
 suite("Share Actions", () => {
   let fakeDriveApi: FakeGoogleDriveApi;
   let googleDriveClient: GoogleDriveClient;
+  let controller: ReturnType<typeof makeTestController>["controller"];
   let share: Editor.Share.ShareController;
+  let graphDriveFile: { id: string };
+
+  function setGraph(graph: GraphDescriptor | null): void {
+    (controller.editor.graph as { graph: GraphDescriptor | null }).graph =
+      graph;
+  }
 
   before(async () => {
     fakeDriveApi = await FakeGoogleDriveApi.start();
@@ -39,7 +47,7 @@ suite("Share Actions", () => {
     await fakeDriveApi.stop();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fakeDriveApi.reset();
     googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: fakeDriveApi.filesApiUrl,
@@ -77,39 +85,44 @@ suite("Share Actions", () => {
         delete: () => false,
       }
     );
-    const { controller } = makeTestController();
+    ({ controller } = makeTestController());
     const { services } = makeTestServices({
       googleDriveClient,
       signinAdapter: {
         domain: Promise.resolve("example.com"),
       },
       googleDriveBoardServer,
+      globalConfig: {
+        googleDrive: {
+          publishPermissions: [
+            { id: "123", type: "domain", domain: "example.com" },
+          ],
+        },
+      },
     });
     ShareActions.bind({ controller, services });
     share = controller.editor.share;
-  });
 
-  test("open -> load -> close", async () => {
-    const createdFile = await googleDriveClient.createFile(
+    // Create a default file and set graph for most tests.
+    // Tests that need special files can override with their own setGraph call.
+    graphDriveFile = await googleDriveClient.createFile(
       new Blob(["{}"], { type: "application/json" }),
       { name: "test-board.bgl.json", mimeType: "application/json" }
     );
+    setGraph({
+      edges: [],
+      nodes: [],
+      url: `drive:/${graphDriveFile.id}`,
+    });
+  });
 
+  test("open -> load -> close", async () => {
     // Panel is initially closed
     assert.strictEqual(share.panel, "closed");
 
     // User opens panel
-    ShareActions.openPanel();
-    assert.strictEqual(share.panel, "opening");
-
-    // Panel starts loading
-    const loaded = ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
-      []
-    );
+    const loaded = ShareActions.open();
     assert.strictEqual(share.panel, "loading");
-
-    // Can't close while loading
     ShareActions.closePanel();
     assert.strictEqual(share.panel, "loading");
 
@@ -128,29 +141,13 @@ suite("Share Actions", () => {
   });
 
   test("publish", async () => {
-    // Create a file for publishing
-    const createdFile = await googleDriveClient.createFile(
-      new Blob(["{}"], { type: "application/json" }),
-      { name: "test-board.bgl.json", mimeType: "application/json" }
-    );
-
     // Open and load to get to writable state
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
-      []
-    );
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.published, false);
 
     // Publish
-    const graph = { edges: [], nodes: [], url: `drive:/${createdFile.id}` };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
-    const publishPromise = ShareActions.publish(
-      graph,
-      publishPermissions,
-      undefined
-    );
+    const publishPromise = ShareActions.publish();
 
     // Verify intermediate updating state
     assert.strictEqual(share.panel, "updating");
@@ -182,7 +179,7 @@ suite("Share Actions", () => {
     );
     assert.strictEqual(
       shareableCopyProps.properties?.shareableCopyToMain,
-      createdFile.id,
+      graphDriveFile.id,
       "Shareable copy should point back to the main file"
     );
     assert.strictEqual(
@@ -197,7 +194,7 @@ suite("Share Actions", () => {
 
     // Verify main file has mainToShareableCopy pointing to the shareable copy
     const mainFileProps = await googleDriveClient.getFileMetadata(
-      createdFile.id,
+      graphDriveFile.id,
       { fields: ["properties"] }
     );
     assert.strictEqual(
@@ -208,59 +205,45 @@ suite("Share Actions", () => {
   });
 
   test("publish blocked by domain config", async () => {
-    const createdFile = await googleDriveClient.createFile(
-      new Blob(["{}"], { type: "application/json" }),
-      { name: "test-board.bgl.json", mimeType: "application/json" }
-    );
-    const graph = { edges: [], nodes: [], url: `drive:/${createdFile.id}` };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
+    const graph = { edges: [], nodes: [], url: `drive:/${graphDriveFile.id}` };
 
     // Re-bind with domain config that disallows public publishing
-    const { controller } = makeTestController();
     const { services } = makeTestServices({
       googleDriveClient,
       signinAdapter: {
         domain: Promise.resolve("example.com"),
       },
       globalConfig: {
+        googleDrive: {
+          publishPermissions: [
+            { id: "123", type: "domain", domain: "example.com" },
+          ],
+        },
         domains: {
           "example.com": { disallowPublicPublishing: true },
         },
       },
     });
     ShareActions.bind({ controller, services });
-    const blockedShare = controller.editor.share;
 
     // Open and load
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    setGraph(graph);
+    await ShareActions.open();
 
     // Verify publicPublishingAllowed is false
-    assert.strictEqual(blockedShare.publicPublishingAllowed, false);
-    assert.strictEqual(blockedShare.panel, "writable");
+    assert.strictEqual(share.publicPublishingAllowed, false);
+    assert.strictEqual(share.panel, "writable");
 
     // Attempt to publish — should be a no-op
-    await ShareActions.publish(graph, publishPermissions, undefined);
-    assert.strictEqual(blockedShare.panel, "writable");
-    assert.strictEqual(blockedShare.published, false);
+    await ShareActions.publish();
+    assert.strictEqual(share.panel, "writable");
+    assert.strictEqual(share.published, false);
   });
 
   test("unpublish", async () => {
-    // Create a file for publishing
-    const createdFile = await googleDriveClient.createFile(
-      new Blob(["{}"], { type: "application/json" }),
-      { name: "test-board.bgl.json", mimeType: "application/json" }
-    );
-
     // Open, load, and publish to get to published state
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
-      []
-    );
-    const graph = { edges: [], nodes: [], url: `drive:/${createdFile.id}` };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
-    await ShareActions.publish(graph, publishPermissions, undefined);
+    await ShareActions.open();
+    await ShareActions.publish();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.published, true);
     assert.ok(share.shareableFile, "shareableFile should be set after publish");
@@ -274,7 +257,7 @@ suite("Share Actions", () => {
     assert.ok(beforeMetadata.permissions?.length, "Should have permissions");
 
     // Unpublish
-    await ShareActions.unpublish(graph);
+    await ShareActions.unpublish();
 
     // Verify state is now unpublished
     assert.strictEqual(share.panel, "writable");
@@ -304,11 +287,12 @@ suite("Share Actions", () => {
     );
     fakeDriveApi.forceSetFileMetadata(createdFile.id, { ownedByMe: false });
 
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
-      []
-    );
+    setGraph({
+      edges: [],
+      nodes: [],
+      url: `drive:/${createdFile.id}`,
+    });
+    await ShareActions.open();
 
     assert.strictEqual(share.panel, "readonly");
     assert.strictEqual(share.access, "readonly");
@@ -339,11 +323,12 @@ suite("Share Actions", () => {
       properties: { mainToShareableCopy: shareableCopy.id },
     });
 
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: `drive:/${mainFile.id}` },
-      []
-    );
+    setGraph({
+      edges: [],
+      nodes: [],
+      url: `drive:/${mainFile.id}`,
+    });
+    await ShareActions.open();
 
     assert.strictEqual(share.panel, "readonly");
     assert.strictEqual(share.access, "readonly");
@@ -366,11 +351,12 @@ suite("Share Actions", () => {
       }
     );
 
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: `drive:/${createdFile.id}` },
-      []
-    );
+    setGraph({
+      edges: [],
+      nodes: [],
+      url: `drive:/${createdFile.id}`,
+    });
+    await ShareActions.open();
 
     assert.strictEqual(share.panel, "readonly");
     assert.strictEqual(share.access, "readonly");
@@ -418,22 +404,23 @@ suite("Share Actions", () => {
     fakeDriveApi.createFileGeneratesResourceKey(true);
 
     // Open and load to get to writable state with stale shareable copy
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(
-      { edges: [], nodes: [], url: `drive:/${mainFile.id}` },
-      [{ type: "domain", domain: "example.com" }]
-    );
+    setGraph({
+      edges: [],
+      nodes: [],
+      url: `drive:/${mainFile.id}`,
+    });
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.stale, true);
     assert.strictEqual(share.latestVersion, "5");
 
     // Publish stale with a graph that has identifiable content
-    const graph = {
+    setGraph({
       edges: [],
       nodes: [{ id: "updated-node", type: "test" }],
       url: `drive:/${mainFile.id}`,
-    };
-    await ShareActions.publishStale(graph);
+    });
+    await ShareActions.publishStale();
 
     // Verify shareable copy was updated - check the latestSharedVersion property
     const updatedShareable = await googleDriveClient.getFileMetadata(
@@ -483,18 +470,17 @@ suite("Share Actions", () => {
     });
 
     const graph = { edges: [], nodes: [], url: `drive:/${mainFile.id}` };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load - initially not published
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    setGraph(graph);
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.published, false);
     assert.strictEqual(share.granularlyShared, false);
 
     // User opens granular sharing dialog
-    await ShareActions.viewSharePermissions(graph, undefined);
+    await ShareActions.viewSharePermissions();
     assert.strictEqual(share.panel, "granular");
 
     // Simulate user adding individual permission via the native Drive share dialog
@@ -510,8 +496,7 @@ suite("Share Actions", () => {
     );
 
     // User closes granular sharing dialog
-    await ShareActions.onGoogleDriveSharePanelClose(graph);
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    await ShareActions.onGoogleDriveSharePanelClose();
 
     // We should now be granularly shared, but not published
     assert.strictEqual(share.panel, "writable");
@@ -519,7 +504,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.published, false);
 
     // User opens granular sharing again
-    await ShareActions.viewSharePermissions(graph, undefined);
+    await ShareActions.viewSharePermissions();
     assert.strictEqual(share.panel, "granular");
 
     // User adds domain permission
@@ -534,8 +519,7 @@ suite("Share Actions", () => {
     );
 
     // User closes the dialog
-    await ShareActions.onGoogleDriveSharePanelClose(graph);
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    await ShareActions.onGoogleDriveSharePanelClose();
 
     // We should now be granularly shared and published
     assert.strictEqual(share.panel, "writable");
@@ -606,17 +590,16 @@ suite("Share Actions", () => {
         ),
       },
     };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    setGraph(graph);
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
     assert.strictEqual(share.published, false);
 
     // Publish
-    await ShareActions.publish(graph, publishPermissions, undefined);
+    await ShareActions.publish();
 
     // Verify managed asset got the domain permission added
     const managedAssetMeta = await googleDriveClient.getFileMetadata(
@@ -708,20 +691,15 @@ suite("Share Actions", () => {
         ),
       },
     };
-    const publishPermissions = [{ type: "domain", domain: "example.com" }];
 
     // Open and load
-    ShareActions.openPanel();
-    await ShareActions.readPublishedState(graph, publishPermissions);
+    setGraph(graph);
+    await ShareActions.open();
     assert.strictEqual(share.panel, "writable");
     assert.strictEqual(share.access, "writable");
 
     // Start publish - this will detect the unmanaged asset and pause
-    const publishPromise = ShareActions.publish(
-      graph,
-      publishPermissions,
-      undefined
-    );
+    const publishPromise = ShareActions.publish();
 
     // Wait for the panel to transition to unmanaged-assets (polling to avoid race condition)
     for (let i = 0; i < 100; i++) {
@@ -815,5 +793,198 @@ suite("Share Actions", () => {
     assert.deepStrictEqual(share.publishedPermissions, []);
     assert.strictEqual(share.shareableFile, null);
     assert.deepStrictEqual(share.unmanagedAssetProblems, []);
+  });
+});
+
+suite("computeAppUrl", () => {
+  let controller: ReturnType<typeof makeTestController>["controller"];
+
+  function bindWith(opts: {
+    guestConfig?: Partial<
+      import("@breadboard-ai/types/opal-shell-protocol.js").GuestConfiguration
+    >;
+    globalConfig?: Partial<
+      import("../../../../src/ui/contexts/global-config.js").GlobalConfig
+    >;
+  }) {
+    ({ controller } = makeTestController());
+    const { services } = makeTestServices({
+      guestConfig: opts.guestConfig ?? {},
+      globalConfig: opts.globalConfig ?? {},
+    });
+    ShareActions.bind({ controller, services });
+  }
+
+  test("returns empty string when shareableFile is null", () => {
+    bindWith({});
+    assert.strictEqual(ShareActions.computeAppUrl(null), "");
+  });
+
+  // ── shareSurface template branch ──
+
+  test("uses shareSurface URL template when configured", () => {
+    bindWith({
+      guestConfig: {
+        shareSurface: "myapp",
+        shareSurfaceUrlTemplates: {
+          myapp: "https://myapp.example.com/view?id={fileId}&rk={resourceKey}",
+        },
+      },
+    });
+    const url = ShareActions.computeAppUrl({
+      id: "abc123",
+      resourceKey: "rk456",
+    });
+    assert.strictEqual(
+      url,
+      "https://myapp.example.com/view?id=abc123&rk=rk456"
+    );
+  });
+
+  test("shareSurface template omits empty resourceKey param", () => {
+    bindWith({
+      guestConfig: {
+        shareSurface: "myapp",
+        shareSurfaceUrlTemplates: {
+          myapp: "https://myapp.example.com/view?id={fileId}&rk={resourceKey}",
+        },
+      },
+    });
+    const url = ShareActions.computeAppUrl({
+      id: "abc123",
+      resourceKey: undefined,
+    });
+    assert.strictEqual(url, "https://myapp.example.com/view?id=abc123");
+  });
+
+  // ── hostOrigin / makeUrl branch ──
+
+  test("falls back to makeUrl with hostOrigin when no shareSurface", () => {
+    const hostOrigin = new URL("https://breadboard.example.com");
+    bindWith({
+      globalConfig: { hostOrigin },
+    });
+    const file = { id: "file-xyz", resourceKey: undefined };
+    const url = ShareActions.computeAppUrl(file);
+    assert.strictEqual(
+      url,
+      makeUrl(
+        {
+          page: "graph",
+          mode: "app",
+          flow: `drive:/${file.id}`,
+          resourceKey: file.resourceKey,
+          guestPrefixed: false,
+        },
+        hostOrigin
+      )
+    );
+  });
+
+  test("makeUrl branch includes resourceKey when present", () => {
+    const hostOrigin = new URL("https://breadboard.example.com");
+    bindWith({
+      globalConfig: { hostOrigin },
+    });
+    const file = { id: "file-xyz", resourceKey: "rk789" };
+    const url = ShareActions.computeAppUrl(file);
+    assert.strictEqual(
+      url,
+      makeUrl(
+        {
+          page: "graph",
+          mode: "app",
+          flow: `drive:/${file.id}`,
+          resourceKey: file.resourceKey,
+          guestPrefixed: false,
+        },
+        hostOrigin
+      )
+    );
+  });
+
+  // ── edge cases ──
+
+  test("returns empty string when no hostOrigin and no shareSurface", () => {
+    bindWith({});
+    assert.strictEqual(
+      ShareActions.computeAppUrl({ id: "file-xyz", resourceKey: undefined }),
+      ""
+    );
+  });
+
+  test("shareSurface takes precedence over hostOrigin", () => {
+    bindWith({
+      guestConfig: {
+        shareSurface: "myapp",
+        shareSurfaceUrlTemplates: {
+          myapp: "https://myapp.example.com/view?id={fileId}",
+        },
+      },
+      globalConfig: {
+        hostOrigin: new URL("https://breadboard.example.com"),
+      },
+    });
+    const url = ShareActions.computeAppUrl({
+      id: "abc123",
+      resourceKey: undefined,
+    });
+    assert.ok(url.startsWith("https://myapp.example.com"), url);
+  });
+
+  test("ignores shareSurface when template map is missing", () => {
+    const hostOrigin = new URL("https://breadboard.example.com");
+    bindWith({
+      guestConfig: {
+        shareSurface: "myapp",
+        // no shareSurfaceUrlTemplates
+      },
+      globalConfig: { hostOrigin },
+    });
+    const file = { id: "abc123", resourceKey: undefined };
+    const url = ShareActions.computeAppUrl(file);
+    // Should fall through to makeUrl
+    assert.strictEqual(
+      url,
+      makeUrl(
+        {
+          page: "graph",
+          mode: "app",
+          flow: `drive:/${file.id}`,
+          resourceKey: file.resourceKey,
+          guestPrefixed: false,
+        },
+        hostOrigin
+      )
+    );
+  });
+
+  test("ignores shareSurface when key not found in template map", () => {
+    const hostOrigin = new URL("https://breadboard.example.com");
+    bindWith({
+      guestConfig: {
+        shareSurface: "unknown-surface",
+        shareSurfaceUrlTemplates: {
+          myapp: "https://myapp.example.com/view?id={fileId}",
+        },
+      },
+      globalConfig: { hostOrigin },
+    });
+    const file = { id: "abc123", resourceKey: undefined };
+    const url = ShareActions.computeAppUrl(file);
+    // Should fall through to makeUrl since "unknown-surface" isn't in the map
+    assert.strictEqual(
+      url,
+      makeUrl(
+        {
+          page: "graph",
+          mode: "app",
+          flow: `drive:/${file.id}`,
+          resourceKey: file.resourceKey,
+          guestPrefixed: false,
+        },
+        hostOrigin
+      )
+    );
   });
 });
