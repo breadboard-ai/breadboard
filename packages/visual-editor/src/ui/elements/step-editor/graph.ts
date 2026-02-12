@@ -39,7 +39,8 @@ import { toGridSize } from "./utils/to-grid-size.js";
 import { GRID_SIZE, MOVE_GRAPH_ID } from "./constants.js";
 import { GraphAsset } from "./graph-asset.js";
 import { AssetPath, NodeRunState } from "@breadboard-ai/types";
-import { RendererRunState, RendererState } from "../../state/index.js";
+import { RendererRunState } from "../../state/index.js";
+import { GraphAsset as GraphAssetState } from "../../state/types.js";
 import { getStepIcon } from "../../utils/get-step-icon.js";
 import { toAssetEdgeIdentifier } from "../../../sca/utils/helpers/helpers.js";
 
@@ -57,9 +58,8 @@ export class Graph extends Box {
   @property()
   accessor url: URL | null = null;
 
-  // TODO: Make it GraphState
   @property()
-  accessor rendererState: RendererState | null = null;
+  accessor graphAssets: Map<AssetPath, GraphAssetState> | null = null;
 
   static styles = [
     Box.styles,
@@ -325,7 +325,7 @@ export class Graph extends Box {
 
       graphAsset.showBounds = this.showBounds;
       graphAsset.boundsLabel = asset.title;
-      graphAsset.state = this.rendererState?.graphAssets.get(assetPath) || null;
+      graphAsset.state = this.graphAssets?.get(assetPath) || null;
     }
 
     // Remove stale assets.

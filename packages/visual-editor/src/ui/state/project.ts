@@ -9,13 +9,12 @@ import { Outcome } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 
 import { ReactiveProjectRun } from "./project-run.js";
-import { RendererStateImpl } from "./renderer.js";
+
 import {
   Integrations,
   Project,
   ProjectRun,
   ProjectValues,
-  RendererState,
   FastAccess,
 } from "./types.js";
 import { IntegrationsImpl } from "./integrations.js";
@@ -39,47 +38,47 @@ class ReactiveProject implements Project, ProjectValues {
   @signal
   accessor run: ProjectRun;
 
-  readonly renderer: RendererState;
   readonly integrations: Integrations;
   readonly fastAccess: FastAccess;
 
-  /**
-   * Derives editable from SCA controller.
-   */
-  get #editable() {
-    return this.#sca.controller.editor.graph.editor!;
-  }
-
   constructor(clientManager: McpClientManager, sca: SCA) {
     this.#sca = sca;
-    const editable = this.#editable;
+    const editable = this.#sca.controller.editor.graph.editor;
+    if (!editable) {
+      throw new Error("No editor available");
+    }
     this.integrations = new IntegrationsImpl(clientManager, editable);
     this.fastAccess = new ReactiveFastAccess(
       new FilteredIntegrationsImpl(this.integrations.registered),
       this.#sca
     );
-    this.renderer = new RendererStateImpl(
-      this.#sca.controller.editor.graph.graphAssets
-    );
 
-    this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
+    this.run = ReactiveProjectRun.createInert(editable.inspect(""));
   }
 
   resetRun(): void {
-    this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
+    const editable = this.#sca.controller.editor.graph.editor;
+    if (!editable) {
+      throw new Error("No editor available");
+    }
+    this.run = ReactiveProjectRun.createInert(editable.inspect(""));
   }
 
   connectHarnessRunner(
     runner: HarnessRunner,
     signal?: AbortSignal
   ): Outcome<void> {
+    const editable = this.#sca.controller.editor.graph.editor;
+    if (!editable) {
+      throw new Error("No editor available");
+    }
     // Intentionally reset this property with a new instance.
     this.run = ReactiveProjectRun.create(
       this.#sca,
       this.#sca.services.actionTracker,
-      this.#editable.inspect(""),
+      editable.inspect(""),
       runner,
-      this.#editable,
+      editable,
       signal
     );
   }

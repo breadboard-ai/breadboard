@@ -306,13 +306,6 @@ export type FastAccess = {
   routes: FilterableMap<Component>;
 };
 
-/**
- * Represents the Model+Controller for the Renderer (the visual editor)
- */
-export type RendererState = {
-  graphAssets: Map<AssetPath, GraphAsset>;
-};
-
 export type UIOverlays =
   | "BoardEditModal"
   | "BetterOnDesktopModal"
@@ -442,7 +435,6 @@ export type Project = {
   readonly run: ProjectRun;
 
   readonly integrations: Integrations;
-  readonly renderer: RendererState;
   readonly fastAccess: FastAccess;
 
   /**

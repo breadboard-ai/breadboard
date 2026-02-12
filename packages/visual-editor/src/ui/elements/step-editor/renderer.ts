@@ -70,9 +70,10 @@ import { collectAssetIds, collectNodeIds } from "./utils/collect-ids.js";
 import { EditorControls } from "./editor-controls.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants.js";
-import { EditHistory, RuntimeFlags } from "@breadboard-ai/types";
+import { AssetPath, EditHistory, RuntimeFlags } from "@breadboard-ai/types";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command.js";
-import { Project, RendererRunState, RendererState } from "../../state/index.js";
+import { Project, RendererRunState } from "../../state/index.js";
+import { GraphAsset } from "../../state/types.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { ItemSelect } from "../elements.js";
 
@@ -103,7 +104,7 @@ export class Renderer extends LitElement {
   accessor graph: InspectableGraph | null = null;
 
   @property()
-  accessor state: RendererState | null = null;
+  accessor graphAssets: Map<AssetPath, GraphAsset> | null = null;
 
   @property()
   accessor mainGraphId: MainGraphIdentifier | null = null;
@@ -960,7 +961,7 @@ export class Renderer extends LitElement {
       mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
       mainGraph.nodes = this.graph.nodes();
       mainGraph.edges = this.graph.edges();
-      mainGraph.rendererState = this.state;
+      mainGraph.graphAssets = this.graphAssets;
       mainGraph.readOnly = this.readOnly;
       mainGraph.projectState = this.projectState;
       if (this.showAssetsInGraph) {
@@ -991,7 +992,7 @@ export class Renderer extends LitElement {
         subGraph.boundsLabel = graph.raw().title ?? "Custom Tool";
         subGraph.nodes = graph.nodes();
         subGraph.edges = graph.edges();
-        subGraph.rendererState = this.state;
+        subGraph.graphAssets = this.graphAssets;
         subGraph.readOnly = this.readOnly;
         subGraph.projectState = this.projectState;
         subGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;

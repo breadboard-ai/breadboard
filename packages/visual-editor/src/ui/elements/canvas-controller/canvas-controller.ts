@@ -205,7 +205,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
     // which fires when selection or sidebar section changes. The trigger
     // applies pending edits captured by entity-editor's @input handler.
 
-
     // Here we decide how to handle the changing sidenav items & selections.
     // If there are no selections and we're in the editor switch out to the app
     // view. Otherwise, if there's any change to the selection and the sidenav
@@ -360,7 +359,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .graphIsMine=${this.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
           .history=${this.history}
-          .state=${this.projectState?.renderer}
+          .graphAssets=${this.sca.controller.editor.graph.graphAssets}
           .selectionState=${this.selectionState}
           .showAssetsInGraph=${showAssetsInGraph}
           .highlightState=${this.highlightState}
@@ -664,23 +663,19 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const showStepListView = !graphIsEmpty || isGenerating;
     const prompt =
       this.graph?.metadata?.raw_intent ?? this.graph?.metadata?.intent ?? null;
-    const narrowScreenContent =
-      !graph
-        ? nothing
-        : html`<section id="narrow-view">
-            ${showStepListView
-              ? html`<bb-prompt-view
-                    .prompt=${prompt}
-                  ></bb-prompt-view>
-                  <bb-step-list-view
-                  ></bb-step-list-view>`
-              : html`<bb-empty-state narrow></bb-empty-state>`}
-            ${this.readOnly
-              ? nothing
-              : html`<bb-flowgen-editor-input
-                  .hasEmptyGraph=${graphIsEmpty}
-                ></bb-flowgen-editor-input>`}
-          </section>`;
+    const narrowScreenContent = !graph
+      ? nothing
+      : html`<section id="narrow-view">
+          ${showStepListView
+            ? html`<bb-prompt-view .prompt=${prompt}></bb-prompt-view>
+                <bb-step-list-view></bb-step-list-view>`
+            : html`<bb-empty-state narrow></bb-empty-state>`}
+          ${this.readOnly
+            ? nothing
+            : html`<bb-flowgen-editor-input
+                .hasEmptyGraph=${graphIsEmpty}
+              ></bb-flowgen-editor-input>`}
+        </section>`;
 
     const screenSize = this.sca.controller.global.screenSize.size;
     return [
