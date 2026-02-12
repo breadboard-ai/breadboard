@@ -137,7 +137,7 @@ function setupThemeTest(
   const ctrl = controller as unknown as Record<string, unknown>;
   ctrl.editor = {
     graph: { editor },
-    theme: { status: "idle" as string },
+    theme: { status: "idle" as string, themeHash: 0, updateHash() {} },
     selection: { selectionId: 0 },
     sidebar: { section: null },
     step: {

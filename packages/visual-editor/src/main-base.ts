@@ -64,7 +64,6 @@ import { keyboardCommands } from "./commands/commands.js";
 import { KeyboardCommandDeps } from "./commands/types.js";
 import { eventRoutes } from "./event-routing/event-routing.js";
 
-import { hash } from "@breadboard-ai/utils";
 import { MainArguments } from "./types/types.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
@@ -81,7 +80,6 @@ export type RenderValues = {
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
   projectState: BreadboardUI.State.Project | null;
   showingOverlay: boolean;
-  themeHash: number;
   tabStatus: BreadboardUI.Types.STATUS;
 };
 
@@ -878,19 +876,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected getRenderValues(): RenderValues {
     const tabStatus = this.sca.controller.run.main.status;
 
-    let themeHash = 0;
-    if (
-      this.tab?.graph?.metadata?.visual?.presentation?.themes &&
-      this.tab?.graph?.metadata?.visual?.presentation?.theme
-    ) {
-      const theme = this.tab.graph.metadata.visual.presentation.theme;
-      const themes = this.tab.graph.metadata.visual.presentation.themes;
-
-      if (themes[theme]) {
-        themeHash = hash(themes[theme]);
-      }
-    }
-
     const projectState = this.runtime.project;
 
     if (projectState && this.tab?.finalOutputValues) {
@@ -941,7 +926,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       projectState,
       saveStatus,
       showingOverlay: this.sca.controller.global.main.show.size > 0,
-      themeHash,
       tabStatus,
     } satisfies RenderValues;
   }

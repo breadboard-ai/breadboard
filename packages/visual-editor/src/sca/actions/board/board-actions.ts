@@ -493,7 +493,10 @@ export const load = asAction(
       finalOutputValues,
     });
 
-    // 9. Reset run state for new graph (clear console entries from previous graph)
+    // 9. Update theme hash for the newly loaded graph
+    controller.editor.theme.updateHash(prepared.graph);
+
+    // 10. Reset run state for new graph (clear console entries from previous graph)
     controller.run.main.resetOutput();
     controller.editor.share.reset();
 

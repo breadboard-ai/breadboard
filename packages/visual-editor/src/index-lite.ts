@@ -778,7 +778,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .status=${renderValues.tabStatus}
         .shouldShowFirstRunMessage=${true}
         .firstRunMessage=${Strings.from("LABEL_FIRST_RUN_LITE")}
-        .themeHash=${renderValues.themeHash}
+        .themeHash=${this.sca.controller.editor.theme.themeHash}
         .headerConfig=${{
           menu: false,
           replay: true,
