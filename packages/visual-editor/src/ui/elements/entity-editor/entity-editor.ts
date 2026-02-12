@@ -1782,7 +1782,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Subscribe to selection changes via SignalWatcher.
     void this.sca.controller.editor.selection.selectionId;
 
-    const selectionCount = this.sca.controller.editor.selection.size;
+    // Count only primary editable items (nodes, assets).
+    // Edges and asset-edges are secondary and shouldn't inflate the count.
+    const sel = this.sca.controller.editor.selection.selection;
+    const selectionCount = sel.nodes.size + sel.assets.size;
     if (selectionCount === 0) {
       return html`<div id="generic-status">Please select an item to edit</div>`;
     }
