@@ -15,7 +15,9 @@ import {
   PropertyValues,
   HTMLTemplateResult,
 } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
+import { consume } from "@lit/context";
 import { Graph } from "./graph.js";
 import { Camera } from "./camera.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -24,9 +26,7 @@ import { calculateBounds } from "./utils/calculate-bounds.js";
 import { clamp } from "./utils/clamp.js";
 import {
   GraphIdentifier,
-  InspectableGraph,
   InspectableNode,
-  MainGraphIdentifier,
   NodeDescriptor,
   NodeIdentifier,
 } from "@breadboard-ai/types";
@@ -41,17 +41,14 @@ import {
   SelectionMoveEvent,
   SelectionTranslateEvent,
 } from "./events/events.js";
-import {
-  NewAsset,
-  HighlightStateWithChangeId,
-  WorkspaceSelectionStateWithChangeId,
-} from "../../types/types.js";
-import {
-  createEmptyGraphHighlightState,
-  createEmptyGraphSelectionState,
-  createEmptyWorkspaceSelectionState,
-  createWorkspaceSelectionChangeId,
-} from "../../utils/workspace.js";
+import { NewAsset } from "../../types/types.js";
+import { createEmptyGraphSelectionState } from "../../utils/workspace.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
+import type {
+  AssetEdgeIdentifier,
+  EdgeIdentifier,
+} from "../../../sca/types.js";
 import {
   DragConnectorStartEvent,
   EditorPointerPositionChangeEvent,
@@ -70,62 +67,56 @@ import { collectAssetIds, collectNodeIds } from "./utils/collect-ids.js";
 import { EditorControls } from "./editor-controls.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants.js";
-import { AssetPath, EditHistory, RuntimeFlags } from "@breadboard-ai/types";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command.js";
 import { Project, RendererRunState } from "../../state/index.js";
-import { GraphAsset } from "../../state/types.js";
+
 import { baseColors } from "../../styles/host/base-colors.js";
 import { ItemSelect } from "../elements.js";
 
 @customElement("bb-renderer")
-export class Renderer extends LitElement {
-  /**
-   * We don't render the component in a traditional Lit-centric way, which means
-   * we can't consume signals directly. As such we allow the outer element (the
-   * canvas controller to observe the signals on the runtime flags and to pass
-   * them through here).
-   */
-  @property()
-  accessor runtimeFlags: RuntimeFlags | null = null;
+export class Renderer extends SignalWatcher(LitElement) {
+  // --- SCA context ---
 
-  @property()
-  accessor debug = false;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
-  @property()
-  accessor graphIsMine = false;
+  get #gc() {
+    return this.sca.controller.editor.graph;
+  }
 
-  @property({ reflect: true, type: Boolean })
-  accessor readOnly = false;
+  // --- External state (set by canvas-controller) ---
 
   @property()
   accessor projectState: Project | null = null;
 
   @property()
-  accessor graph: InspectableGraph | null = null;
-
-  @property()
-  accessor graphAssets: Map<AssetPath, GraphAsset> | null = null;
-
-  @property()
-  accessor mainGraphId: MainGraphIdentifier | null = null;
-
-  @property()
-  accessor showAssetsInGraph = false;
-
-  @property()
-  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-
-  @property()
   accessor runState: RendererRunState | null = null;
 
+  /**
+   * Bridge between signal and non-signal world. Incremented every time
+   * interesting signals change on the outside; used to track changes here.
+   */
   @property()
-  accessor highlightState: HighlightStateWithChangeId | null = null;
+  accessor runStateEffect = 0;
+
+  @property()
+  accessor debug = false;
+
+  // --- Interaction ---
 
   @property({ reflect: true })
   accessor interactionMode: "inert" | "selection" | "pan" | "move" = "inert";
 
   @property({ reflect: true, type: Boolean })
   accessor isDragPanning = false;
+
+  @property()
+  accessor expandSelections = true;
+
+  @property()
+  accessor allowEdgeAttachmentMove = true;
+
+  // --- Camera & zoom ---
 
   @property()
   accessor camera = new Camera();
@@ -151,22 +142,10 @@ export class Renderer extends LitElement {
   @property()
   accessor graphFitPadding = 128;
 
-  @property()
-  accessor graphTopologyUpdateId = 0;
+  // --- Internal state ---
 
-  @property()
-  accessor expandSelections = true;
-
-  @property()
-  accessor allowEdgeAttachmentMove = true;
-
-  /**
-   * This property acts as a bridge between signal and non-signal world. It is
-   * incremented every time interesting signals change on the outside and is
-   * used to track the change here inside.
-   */
-  @property()
-  accessor runStateEffect = 0;
+  #lastSeenSelectionId = -1;
+  #lastGraphVersion = -1;
 
   @state()
   accessor _boundsDirty = new Set<string>();
@@ -176,9 +155,6 @@ export class Renderer extends LitElement {
 
   @state()
   accessor #selectionOverflowMenu: { x: number; y: number } | null = null;
-
-  @state()
-  accessor history: EditHistory | null = null;
 
   static styles = [
     baseColors,
@@ -372,7 +348,7 @@ export class Renderer extends LitElement {
   #handleNewAssets(evt: CreateNewAssetsEvent) {
     evt.stopImmediatePropagation();
 
-    if (this.readOnly) {
+    if (!this.#gc.graphIsMine) {
       return;
     }
 
@@ -423,7 +399,7 @@ export class Renderer extends LitElement {
       !evt.dataTransfer ||
       !evt.dataTransfer.files ||
       !evt.dataTransfer.files.length ||
-      this.readOnly
+      !this.#gc.graphIsMine
     ) {
       return;
     }
@@ -527,7 +503,7 @@ export class Renderer extends LitElement {
     // Friendly names logic. Optionally appends a number to the title so that
     // the user can disambiguate between multiple steps of the same type.
     let maxNumber = -1;
-    for (const node of this.graph?.nodes() || []) {
+    for (const node of this.#gc.editor?.inspect("")?.nodes() || []) {
       if (node.descriptor.type !== nodeType) continue;
       const nodeFullTitle = node.descriptor.metadata?.title;
       if (!nodeFullTitle) continue;
@@ -759,16 +735,9 @@ export class Renderer extends LitElement {
       .composedPath()
       .some((el) => el === this.#editorControls.value);
 
-    let hasSelections = false;
-    if (this.selectionState) {
-      for (const graph of this.selectionState.selectionState.graphs.values()) {
-        hasSelections =
-          graph.nodes.size > 0 ||
-          graph.assets.size > 0 ||
-          graph.edges.size > 0 ||
-          graph.assetEdges.size > 0;
-      }
-    }
+    const hasSelections = this.sca.controller.editor.selection
+      ? this.sca.controller.editor.selection.size > 0
+      : false;
 
     if (evt.button !== 2 || isOnControls || !hasSelections) {
       return;
@@ -837,37 +806,10 @@ export class Renderer extends LitElement {
     this.tick++;
   }
 
-  protected shouldUpdate(changedProperties: PropertyValues): boolean {
-    if (
-      changedProperties.size === 1 &&
-      changedProperties.has("selectionState") &&
-      this.selectionState
-    ) {
-      if (
-        this.selectionState.selectionChangeId ===
-        changedProperties.get("selectionState")?.selectionChangeId
-      ) {
-        console.log("Ignoring selection state change");
-        return false;
-      }
-    }
-
-    if (
-      changedProperties.size === 1 &&
-      changedProperties.has("highlightState") &&
-      this.highlightState
-    ) {
-      if (
-        this.highlightState.highlightChangeId ===
-        changedProperties.get("highlightState")?.highlightChangeId
-      ) {
-        console.log("Ignoring highlight state change");
-        return false;
-      }
-    }
-
-    return true;
-  }
+  // NOTE: shouldUpdate is intentionally NOT overridden. The old guard
+  // skipped re-renders when selectionState was the sole changed Lit property.
+  // Now that selection is signal-driven, willUpdate's #lastSeenSelectionId
+  // check handles skipping redundant inbound pushes instead.
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (this.#fitToViewPre) {
@@ -889,15 +831,24 @@ export class Renderer extends LitElement {
       }
     }
 
-    if (changedProperties.has("selectionState") && this.selectionState) {
-      for (const [graphId, graph] of this.#graphs) {
-        const selectionState =
-          this.selectionState.selectionState.graphs.get(graphId);
-        if (selectionState) {
-          graph.selectionState = selectionState;
-        } else {
-          graph.selectionState = createEmptyGraphSelectionState();
-        }
+    const sel = this.sca.controller.editor.selection;
+    if (sel && sel.selectionId !== this.#lastSeenSelectionId) {
+      this.#lastSeenSelectionId = sel.selectionId;
+
+      // Inbound: read from SelectionController (source of truth) and push to
+      // Graph entities. Since the controller uses a flat model (no per-graph
+      // partitioning), we pass the full selection to each Graph. Each Graph's
+      // setter only applies selection to its own entities.
+      const selection = sel.selection;
+      const flatSelection = createEmptyGraphSelectionState();
+      for (const id of selection.nodes) flatSelection.nodes.add(id);
+      for (const id of selection.edges) flatSelection.edges.add(id as string);
+      for (const id of selection.assets) flatSelection.assets.add(id);
+      for (const id of selection.assetEdges)
+        flatSelection.assetEdges.add(id as string);
+
+      for (const [, graph] of this.#graphs) {
+        graph.selectionState = flatSelection;
 
         // Expands node selections to include edges.
         if (this.expandSelections) {
@@ -906,36 +857,12 @@ export class Renderer extends LitElement {
       }
     }
 
-    if (changedProperties.has("highlightState")) {
-      if (this.highlightState) {
-        for (const [graphId, graph] of this.#graphs) {
-          const highlightState =
-            this.highlightState.highlightState.graphs?.get(graphId);
-          if (highlightState) {
-            graph.highlightState = highlightState;
-          } else {
-            graph.highlightState = createEmptyGraphHighlightState();
-          }
-
-          graph.highlightType = this.highlightState.highlightType;
-        }
-      } else {
-        for (const graph of this.#graphs.values()) {
-          graph.highlightState = createEmptyGraphHighlightState();
-        }
-      }
-    }
-
-    if (
-      (changedProperties.has("graph") ||
-        changedProperties.has("graphTopologyUpdateId") ||
-        changedProperties.has("allowEdgeAttachmentMove") ||
-        changedProperties.has("readOnly") ||
-        changedProperties.has("runtimeFlags")) &&
-      this.graph &&
-      this.camera
-    ) {
-      const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
+    // Graph topology setup — runs when the graph version changes.
+    const graph = this.#gc.editor?.inspect("") ?? null;
+    const graphVersion = this.#gc.version;
+    if (graph && this.camera && graphVersion !== this.#lastGraphVersion) {
+      this.#lastGraphVersion = graphVersion;
+      const graphUrl = new URL(graph.raw().url ?? window.location.href);
 
       // Main graph.
       let mainGraph = this.#graphs.get(MAIN_BOARD_ID);
@@ -947,38 +874,36 @@ export class Renderer extends LitElement {
       // When going from an empty main graph to something populated ensure that
       // we re-center the graph to the view.
       const entitiesBefore = mainGraph.nodes.length + mainGraph.assets.size;
-      const entitiesAfter =
-        this.graph.nodes().length + this.graph.assets().size;
+      const entitiesAfter = graph.nodes().length + graph.assets().size;
       if (entitiesBefore === 0 && entitiesAfter > 0) {
         this.#fitToViewPost = true;
       }
 
-      if (this.runtimeFlags) {
-        mainGraph.force2D = this.runtimeFlags.force2DGraph;
+      const runtimeFlags = this.sca.controller.global.flags;
+      if (runtimeFlags) {
+        mainGraph.force2D = runtimeFlags.force2DGraph;
       }
 
       mainGraph.url = graphUrl;
-      mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
-      mainGraph.nodes = this.graph.nodes();
-      mainGraph.edges = this.graph.edges();
-      mainGraph.graphAssets = this.graphAssets;
-      mainGraph.readOnly = this.readOnly;
+      mainGraph.boundsLabel = graph.raw().title ?? "Untitled";
+      mainGraph.nodes = graph.nodes();
+      mainGraph.edges = graph.edges();
+      mainGraph.graphAssets = this.#gc.graphAssets;
+      mainGraph.readOnly = !this.#gc.graphIsMine;
       mainGraph.projectState = this.projectState;
-      if (this.showAssetsInGraph) {
-        mainGraph.assets = new Map(
-          Array.from(this.graph.assets().entries()).filter(
-            ([, asset]) => asset.type !== "connector"
-          )
-        );
-        mainGraph.assetEdges = this.graph.assetEdges();
-      }
+      mainGraph.assets = new Map(
+        Array.from(graph.assets().entries()).filter(
+          ([, asset]) => asset.type !== "connector"
+        )
+      );
+      mainGraph.assetEdges = graph.assetEdges();
 
       mainGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
       mainGraph.resetTransform();
 
       // Subgraphs.
-      for (const [id, graph] of Object.entries(this.graph.graphs() ?? {})) {
-        if (graph.nodes().length === 0) {
+      for (const [id, subGraphData] of Object.entries(graph.graphs() ?? {})) {
+        if (subGraphData.nodes().length === 0) {
           continue;
         }
 
@@ -989,18 +914,18 @@ export class Renderer extends LitElement {
         }
 
         subGraph.url = graphUrl;
-        subGraph.boundsLabel = graph.raw().title ?? "Custom Tool";
-        subGraph.nodes = graph.nodes();
-        subGraph.edges = graph.edges();
-        subGraph.graphAssets = this.graphAssets;
-        subGraph.readOnly = this.readOnly;
+        subGraph.boundsLabel = subGraphData.raw().title ?? "Custom Tool";
+        subGraph.nodes = subGraphData.nodes();
+        subGraph.edges = subGraphData.edges();
+        subGraph.graphAssets = this.#gc.graphAssets;
+        subGraph.readOnly = !this.#gc.graphIsMine;
         subGraph.projectState = this.projectState;
         subGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
         subGraph.resetTransform();
       }
 
       // Remove any stale graphs.
-      const subGraphs = this.graph.graphs() ?? {};
+      const subGraphs = graph.graphs() ?? {};
       for (const graphId of this.#graphs.keys()) {
         if (graphId === MAIN_BOARD_ID || subGraphs[graphId]) {
           continue;
@@ -1010,7 +935,7 @@ export class Renderer extends LitElement {
       }
 
       // Update disclaimer.
-      this.showDisclaimer = this.graph.nodes().length !== 0;
+      this.showDisclaimer = graph.nodes().length !== 0;
     }
 
     if (
@@ -1027,9 +952,8 @@ export class Renderer extends LitElement {
     if (
       (changedProperties.has("tick") ||
         changedProperties.has("_boundsDirty") ||
-        changedProperties.has("interactionMode") ||
-        changedProperties.has("graphTopologyUpdateId")) &&
-      this.graph &&
+        changedProperties.has("interactionMode")) &&
+      graph &&
       this.camera
     ) {
       const inverseCameraMatrix = this.camera.transform.inverse();
@@ -1060,7 +984,7 @@ export class Renderer extends LitElement {
             graph.expandSelections();
           }
 
-          this.#updateSelectionFromGraph(graph);
+          this.#updateSelectionFromGraph();
         }
 
         if (this.camera?.bounds) {
@@ -1258,7 +1182,7 @@ export class Renderer extends LitElement {
     deltaY: number,
     hasSettled: boolean
   ) {
-    if (!this.selectionState || !this.graph) {
+    if (!this.#gc.editor?.inspect("")) {
       return;
     }
 
@@ -1270,24 +1194,23 @@ export class Renderer extends LitElement {
     if (!moveGraph) {
       moveGraph = new Graph(MOVE_GRAPH_ID);
 
+      // Collect selected nodes from Graph entity flags (already in sync with
+      // SelectionController from the inbound path).
       const nodes: InspectableNode[] = [];
-      for (const [graphId, graph] of this.selectionState.selectionState
-        .graphs) {
-        for (const node of graph.nodes) {
+      for (const [graphId, graph] of this.#graphs) {
+        if (graphId === MOVE_GRAPH_ID) continue;
+        const graphSel = graph.selectionState;
+        if (!graphSel) continue;
+        for (const node of graphSel.nodes) {
+          const inspectableGraph = this.#gc.editor?.inspect("");
           const targetGraph =
             graphId === MAIN_BOARD_ID
-              ? this.graph
-              : this.graph.graphs()?.[graphId];
-          if (!targetGraph) {
-            continue;
-          }
+              ? inspectableGraph
+              : inspectableGraph?.graphs()?.[graphId];
+          if (!targetGraph) continue;
 
           const inspectableNode = targetGraph.nodeById(node);
-          if (!inspectableNode) {
-            continue;
-          }
-
-          nodes.push(inspectableNode);
+          if (inspectableNode) nodes.push(inspectableNode);
         }
       }
 
@@ -1317,19 +1240,18 @@ export class Renderer extends LitElement {
         }
       }
 
-      // Flatten the selection down
+      // Flatten the selection down from Graph entity flags.
       const moveNodes = new Map<GraphIdentifier, NodeIdentifier[]>();
-      for (const [graphId, graph] of this.selectionState.selectionState
-        .graphs) {
-        let moveNodeGraphItems = moveNodes.get(graphId);
-        if (!moveNodeGraphItems) {
-          moveNodeGraphItems = [];
-          moveNodes.set(graphId, moveNodeGraphItems);
-        }
+      for (const [graphId, graph] of this.#graphs) {
+        if (graphId === MOVE_GRAPH_ID) continue;
+        const graphSel = graph.selectionState;
+        if (!graphSel || graphSel.nodes.size === 0) continue;
 
-        for (const node of graph.nodes) {
+        const moveNodeGraphItems: NodeIdentifier[] = [];
+        for (const node of graphSel.nodes) {
           moveNodeGraphItems.push(node);
         }
+        moveNodes.set(graphId, moveNodeGraphItems);
       }
 
       this.dispatchEvent(
@@ -1343,16 +1265,10 @@ export class Renderer extends LitElement {
   }
 
   #applyTranslationToSelection(x: number, y: number, hasSettled: boolean) {
-    if (!this.selectionState) {
-      return;
-    }
-
-    for (const graphId of this.selectionState.selectionState.graphs.keys()) {
-      const graph = this.#graphs.get(graphId);
-      if (!graph) {
-        continue;
-      }
-
+    // Apply translation to all graphs — each graph's
+    // applyTranslationToSelection only affects its own selected entities.
+    for (const [graphId, graph] of this.#graphs) {
+      if (graphId === MOVE_GRAPH_ID) continue;
       graph.applyTranslationToSelection(x, y, hasSettled);
     }
 
@@ -1365,10 +1281,6 @@ export class Renderer extends LitElement {
   }
 
   #emitSettledLocationEdits() {
-    if (!this.selectionState) {
-      return;
-    }
-
     const edits: {
       type: "node" | "asset";
       id: string;
@@ -1377,17 +1289,13 @@ export class Renderer extends LitElement {
       y: number;
     }[] = [];
 
-    for (const graphId of this.selectionState.selectionState.graphs.keys()) {
-      const graph = this.#graphs.get(graphId);
-      const graphSelection =
-        this.selectionState.selectionState.graphs.get(graphId);
-      if (!graph || !graphSelection) {
-        continue;
-      }
+    // Read from Graph entity flags (already in sync with SelectionController).
+    for (const [graphId, graph] of this.#graphs) {
+      if (graphId === MOVE_GRAPH_ID) continue;
+      const graphSelection = graph.selectionState;
+      if (!graphSelection) continue;
 
       for (const nodeId of graphSelection.nodes) {
-        // Find the InspectableNode and the GraphNode entity and create the
-        // updated metadata from the two.
         const graphNode = graph.nodes.find(
           (node) => node.descriptor.id === nodeId
         );
@@ -1406,9 +1314,8 @@ export class Renderer extends LitElement {
         });
       }
 
+      if (!graphSelection) continue;
       for (const assetPath of graphSelection.assets) {
-        // Find the InspectableNode and the GraphNode entity and create the
-        // updated metadata from the two.
         const graphAssetEntity = graph.entities.get(assetPath);
         if (!graphAssetEntity) {
           continue;
@@ -1433,27 +1340,32 @@ export class Renderer extends LitElement {
     );
   }
 
-  #updateSelectionFromGraph(graph: Graph, createNewSelection = false) {
-    const newState = createNewSelection
-      ? createEmptyWorkspaceSelectionState()
-      : (this.selectionState?.selectionState ??
-        createEmptyWorkspaceSelectionState());
+  #updateSelectionFromGraph(createNewSelection = false) {
+    // --- Outbound: write to SelectionController ---
+    if (this.sca.controller.editor.selection) {
+      const sel = this.sca.controller.editor.selection;
+      if (!this.#isAdditiveSelection || createNewSelection) {
+        sel.deselectAll();
+      }
 
-    if (graph.selectionState) {
-      newState.graphs.set(graph.graphId, graph.selectionState);
+      // Sync the full state from all graphs' entity flags.
+      for (const [gId, g] of this.#graphs) {
+        if (gId === MOVE_GRAPH_ID) continue;
+        const graphSel = g.selectionState;
+        if (!graphSel) continue;
+        for (const nodeId of graphSel.nodes) sel.addNode(nodeId);
+        for (const edgeId of graphSel.edges)
+          sel.addEdge(edgeId as EdgeIdentifier);
+        for (const assetId of graphSel.assets) sel.addAsset(assetId);
+        for (const assetEdgeId of graphSel.assetEdges)
+          sel.addAssetEdge(assetEdgeId as AssetEdgeIdentifier);
+      }
+
+      this.#lastSeenSelectionId = sel.selectionId;
     }
 
-    const selectionChangeId = createWorkspaceSelectionChangeId();
-
-    this.dispatchEvent(
-      new StateEvent({
-        eventType: "host.selectionstatechange",
-        selectionChangeId,
-        selections: newState,
-        replaceExistingSelections: !this.#isAdditiveSelection,
-        moveToSelection: false,
-      })
-    );
+    // NOTE: Legacy bridge removed. Entity-editor and canvas-controller
+    // now read directly from SelectionController via SCA.
   }
 
   #maybeRenderOverflowMenu() {
@@ -1542,13 +1454,15 @@ export class Renderer extends LitElement {
       return nothing;
     }
 
-    const hasNoAssets = (this.graph?.assets() ?? new Map()).size === 0;
-    const hasNoSubGraphs = Object.keys(this.graph?.graphs() ?? {}).length === 0;
-    const subGraphsAreEmpty = Object.values(this.graph?.graphs() ?? {}).every(
-      (graph) => graph.nodes().length === 0
-    );
+    const inspectableGraph = this.#gc.editor?.inspect("") ?? null;
+    const hasNoAssets = (inspectableGraph?.assets() ?? new Map()).size === 0;
+    const hasNoSubGraphs =
+      Object.keys(inspectableGraph?.graphs() ?? {}).length === 0;
+    const subGraphsAreEmpty = Object.values(
+      inspectableGraph?.graphs() ?? {}
+    ).every((graph) => graph.nodes().length === 0);
     const showDefaultAdd =
-      this.graph?.nodes().length === 0 &&
+      inspectableGraph?.nodes().length === 0 &&
       hasNoAssets &&
       (hasNoSubGraphs || subGraphsAreEmpty);
 
@@ -1628,7 +1542,7 @@ export class Renderer extends LitElement {
                 return;
               }
 
-              this.#updateSelectionFromGraph(graph, true);
+              this.#updateSelectionFromGraph(true);
             }}
             @bbselectionmove=${(evt: SelectionMoveEvent) => {
               this.#applyMoveToSelection(
@@ -1678,12 +1592,12 @@ export class Renderer extends LitElement {
       </div>`,
       html`<bb-editor-controls
         ${ref(this.#editorControls)}
-        .graph=${this.graph}
-        .graphIsMine=${this.graphIsMine}
-        .history=${this.history}
-        .mainGraphId=${this.mainGraphId}
+        .graph=${inspectableGraph}
+        .graphIsMine=${this.#gc.graphIsMine}
+        .history=${this.#gc.editor?.history() ?? null}
+        .mainGraphId=${this.#gc.mainGraphId}
         .showDefaultAdd=${showDefaultAdd}
-        .readOnly=${this.readOnly}
+        .readOnly=${!this.#gc.graphIsMine}
         @wheel=${(evt: WheelEvent) => {
           evt.stopImmediatePropagation();
         }}
@@ -1716,7 +1630,7 @@ export class Renderer extends LitElement {
       ></div>`,
       selectionRectangle,
       this.dragConnector,
-      this.showDisclaimer && this.graphIsMine
+      this.showDisclaimer && this.#gc.graphIsMine
         ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
         : nothing,
       this.#maybeRenderOverflowMenu(),

@@ -18,6 +18,8 @@ import {
   toEdgeIdentifier,
 } from "../../../../utils/helpers/helpers.js";
 
+export type { Selection };
+
 interface Selection {
   nodes: Set<NodeIdentifier>;
   edges: Set<EdgeIdentifier>;
@@ -25,11 +27,6 @@ interface Selection {
   assetEdges: Set<AssetEdgeIdentifier>;
 }
 
-/**
- * TODO: When SelectionController is fully wired up to the
- * legacy selection system, expose selectedNodeId here instead of on
- * GraphController. fast-access.ts should then read from here directly.
- */
 export class SelectionController extends RootController {
   /**
    * Incremented when selection changes. Used by triggers to detect
@@ -50,16 +47,18 @@ export class SelectionController extends RootController {
     return this._selectionId;
   }
 
-  /**
-   * Increments the selectionId without modifying selection state.
-   * Used to bridge legacy selection events to the SCA trigger system.
-   */
-  bumpSelectionId(): void {
-    this._selectionId++;
-  }
-
   get selection(): Readonly<Selection> {
     return this._selection;
+  }
+
+  /**
+   * Returns the single selected node when exactly one node is selected
+   * and nothing else is selected, or null otherwise.
+   */
+  get selectedNodeId(): NodeIdentifier | null {
+    if (this.size !== 1) return null;
+    if (this._selection.nodes.size !== 1) return null;
+    return [...this._selection.nodes][0];
   }
 
   get size(): number {
@@ -71,7 +70,7 @@ export class SelectionController extends RootController {
     );
   }
 
-  clear() {
+  deselectAll() {
     this._selectionId++;
     this.removeNodes();
     this.removeEdges();
@@ -91,6 +90,16 @@ export class SelectionController extends RootController {
 
   removeNodes() {
     this._selection.nodes.clear();
+  }
+
+  /**
+   * Clear the current selection and select the given nodes.
+   */
+  selectNodes(ids: NodeIdentifier[]) {
+    this.deselectAll();
+    for (const id of ids) {
+      this.addNode(id);
+    }
   }
 
   addEdge(id: EdgeIdentifier) {
@@ -136,8 +145,7 @@ export class SelectionController extends RootController {
   }
 
   selectAll(graph: InspectableGraph) {
-    this._selectionId++;
-    this.clear();
+    this.deselectAll();
     for (const node of graph.nodes()) {
       this.addNode(node.descriptor.id);
     }

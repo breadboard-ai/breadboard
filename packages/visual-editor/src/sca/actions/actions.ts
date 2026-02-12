@@ -17,6 +17,7 @@ import * as Run from "./run/run-actions.js";
 import * as ScreenSize from "./screen-size/screen-size-actions.js";
 import * as Share from "./share/share-actions.js";
 import * as Shell from "./shell/shell-actions.js";
+import * as Sidebar from "./sidebar/sidebar-actions.js";
 import * as Step from "./step/step-actions.js";
 import * as Theme from "./theme/theme-actions.js";
 import type { ActionWithTriggers } from "../coordination.js";
@@ -34,6 +35,7 @@ export interface AppActions {
   screenSize: typeof ScreenSize;
   share: typeof Share;
   shell: typeof Shell;
+  sidebar: typeof Sidebar;
   step: typeof Step;
   theme: typeof Theme;
 }
@@ -54,6 +56,7 @@ export function actions(controller: AppController, services: AppServices) {
     ScreenSize.bind({ controller, services });
     Share.bind({ controller, services });
     Shell.bind({ controller, services });
+    Sidebar.bind({ controller, services });
     Step.bind({ controller, services });
     Theme.bind({ controller, services });
     instance = {
@@ -68,6 +71,7 @@ export function actions(controller: AppController, services: AppServices) {
       screenSize: ScreenSize,
       share: Share,
       shell: Shell,
+      sidebar: Sidebar,
       step: Step,
       theme: Theme,
     } satisfies AppActions;
@@ -102,6 +106,7 @@ export function activateTriggers(): () => void {
     ...Object.values(ScreenSize),
     ...Object.values(Share),
     ...Object.values(Shell),
+    ...Object.values(Sidebar),
     ...Object.values(Step),
     ...Object.values(Theme),
   ];
@@ -187,6 +192,7 @@ export {
   ScreenSize,
   Share,
   Shell,
+  Sidebar,
   Step,
   Theme,
 };

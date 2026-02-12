@@ -132,7 +132,7 @@ Controllers expose simple, atomic mutations. Complex multi-step workflows belong
 
 ```typescript
 // ✅ Good: Simple atomic mutation
-controller.editor.selection.clear();
+controller.editor.selection.deselectAll();
 
 // ❌ Bad: Complex workflow in controller
 controller.saveGraphAndNotifyAndRefresh(); // This should be an Action

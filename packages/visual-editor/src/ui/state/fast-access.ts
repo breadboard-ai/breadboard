@@ -48,7 +48,7 @@ class ReactiveFastAccess implements FastAccess {
 
   @signal
   get #routes(): Map<string, Component> {
-    const selectedNodeId = this.sca.controller.editor.graph.selectedNodeId;
+    const selectedNodeId = this.sca.controller.editor.selection.selectedNodeId;
     if (!selectedNodeId) {
       return new Map();
     }
@@ -79,7 +79,7 @@ class ReactiveFastAccess implements FastAccess {
   @signal
   get components(): ReadonlyMap<GraphIdentifier, Components> {
     const allComponents = this.sca.controller.editor.graph.components;
-    const selectedNodeId = this.sca.controller.editor.graph.selectedNodeId;
+    const selectedNodeId = this.sca.controller.editor.selection.selectedNodeId;
 
     if (!selectedNodeId) {
       return allComponents;

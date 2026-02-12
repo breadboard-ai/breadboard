@@ -22,26 +22,6 @@ export const ModeRoute: EventRoute<"host.modetoggle"> = {
   },
 };
 
-export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> =
-  {
-    event: "host.selectionstatechange",
-
-    async do({ runtime, originalEvent, tab }) {
-      if (!tab) {
-        return false;
-      }
-
-      runtime.select.processSelections(
-        tab.id,
-        originalEvent.detail.selectionChangeId,
-        originalEvent.detail.selections,
-        originalEvent.detail.replaceExistingSelections,
-        originalEvent.detail.moveToSelection
-      );
-      return false;
-    },
-  };
-
 export const LockRoute: EventRoute<"host.lock"> = {
   event: "host.lock",
 
@@ -70,7 +50,9 @@ export const FlagChangeRoute: EventRoute<"host.flagchange"> = {
         originalEvent.detail.value
       );
     } else {
-      await sca.controller.global.flags.clearOverride(originalEvent.detail.flag);
+      await sca.controller.global.flags.clearOverride(
+        originalEvent.detail.flag
+      );
     }
     return false;
   },

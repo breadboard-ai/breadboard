@@ -20,10 +20,7 @@ import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
 import * as Runtime from "./runtime/runtime.js";
-import {
-  RuntimeConfig,
-  WorkspaceSelectionStateWithChangeId,
-} from "./runtime/types.js";
+import { RuntimeConfig } from "./runtime/types.js";
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
@@ -148,7 +145,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected accessor tosStatus: CheckAppAccessResponse | null = null;
 
   // References.
-  protected selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  // NOTE: selectionState field removed. Selection is now managed
+  // entirely by SelectionController via SCA.
   protected runtime: Runtime.Runtime;
   protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
@@ -420,34 +418,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.runtime.select.addEventListener(
-      Runtime.Events.RuntimeSelectionChangeEvent.eventName,
-      (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
-        // Bump the SCA selectionId to trigger the step autosave.
-        // This bridges the legacy selection system to the SCA trigger.
-        this.sca.controller.editor.selection.bumpSelectionId();
-
-        // TODO: Remove once SelectionController is fully wired up.
-        // This sets the selectedNodeId for fast-access filtering.
-        const candidate = [...evt.selectionState.graphs].find(
-          ([, graph]) => graph.nodes.size > 0
-        );
-        if (candidate && candidate[1].nodes.size === 1) {
-          const [, graph] = candidate;
-          this.sca.controller.editor.graph.selectedNodeId = [...graph.nodes][0];
-        } else {
-          this.sca.controller.editor.graph.selectedNodeId = null;
-        }
-
-        this.selectionState = {
-          selectionChangeId: evt.selectionChangeId,
-          selectionState: evt.selectionState,
-          moveToSelection: evt.moveToSelection,
-        };
-
-        this.requestUpdate();
-      }
-    );
+    // NOTE: RuntimeSelectionChangeEvent listener removed.
+    // Selection is now managed by SelectionController via SCA.
 
     // Note: runtime.board and runtime.edit listeners removed - these classes
     // are now empty EventTargets. Functionality migrated to SCA:
@@ -793,7 +765,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     const deps: KeyboardCommandDeps = {
       runtime: this.runtime,
       sca: this.sca,
-      selectionState: this.selectionState,
       tab: this.tab,
       originalEvent: evt,
       pointerLocation: this.lastPointerPosition,
