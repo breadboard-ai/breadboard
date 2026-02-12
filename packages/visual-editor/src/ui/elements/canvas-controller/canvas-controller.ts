@@ -319,10 +319,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         class=${classMap({
           active: this.sideNavItem === "editor",
         })}
-        .graph=${graph}
-        .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-        .mainGraphId=${gc.mainGraphId}
-        .readOnly=${!gc.graphIsMine}
         .projectState=${this.projectState}
       ></bb-entity-editor>`,
       html`

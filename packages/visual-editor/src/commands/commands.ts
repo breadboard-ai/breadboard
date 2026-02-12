@@ -7,48 +7,16 @@
 import { EditSpec, GraphDescriptor } from "@breadboard-ai/types";
 import { KeyboardCommand, KeyboardCommandDeps } from "./types.js";
 import * as BreadboardUI from "../ui/index.js";
-import { GraphUtils, MAIN_BOARD_ID } from "../utils/graph-utils.js";
+import { GraphUtils } from "../utils/graph-utils.js";
 import { ClipboardReader } from "../utils/clipboard-reader.js";
 import { Tab } from "../runtime/types.js";
 import { Utils } from "../sca/utils.js";
 import { A2_COMPONENTS } from "../a2/a2-registry.js";
-import type { SelectionController } from "../sca/controller/subcontrollers/editor/selection/selection-controller.js";
-import type {
-  ReferenceIdentifier,
-  WorkspaceSelectionState,
-} from "../runtime/types.js";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
     .composedPath()
     .some((target) => target instanceof BreadboardUI.Elements.Renderer);
-}
-
-/**
- * Converts the flat SelectionController selection to a WorkspaceSelectionState
- * keyed by MAIN_BOARD_ID. This bridges the SCA flat model to the legacy
- * GraphUtils APIs that still expect per-graph selection maps.
- */
-function selectionToWorkspace(
-  sel: SelectionController
-): WorkspaceSelectionState {
-  const s = sel.selection;
-  return {
-    graphs: new Map([
-      [
-        MAIN_BOARD_ID,
-        {
-          nodes: new Set(s.nodes),
-          edges: new Set(s.edges),
-          assets: new Set(s.assets),
-          assetEdges: new Set(s.assetEdges),
-          comments: new Set<string>(),
-          references: new Set<ReferenceIdentifier>(),
-        },
-      ],
-    ]),
-    modules: new Set(),
-  };
 }
 
 const SaveCommand: KeyboardCommand = {
@@ -128,9 +96,8 @@ const DeleteCommand: KeyboardCommand = {
       throw new Error("Nothing to delete");
     }
 
-    const workspaceState = selectionToWorkspace(sel);
     const graph = editor.inspect("");
-    const spec = GraphUtils.generateDeleteEditSpecFrom(workspaceState, graph);
+    const spec = GraphUtils.generateDeleteEditSpecFrom(sel.selection, graph);
 
     // Delete selected Asset Edges.
     const selection = sel.selection;
@@ -304,10 +271,7 @@ const CopyCommand: KeyboardCommand = {
     }
 
     const graph = editor.inspect("");
-    const board = GraphUtils.generateBoardFrom(
-      selectionToWorkspace(sel),
-      graph
-    );
+    const board = GraphUtils.generateBoardFrom(sel.selection, graph);
 
     await navigator.clipboard.writeText(JSON.stringify(board, null, 2));
   },
@@ -339,7 +303,7 @@ const CutCommand: KeyboardCommand = {
       throw new Error("Nothing to cut");
     }
 
-    const workspaceState = selectionToWorkspace(sel);
+    const workspaceState = sel.selection;
     const graph = editor.inspect("");
     const board = GraphUtils.generateBoardFrom(workspaceState, graph);
     const spec = GraphUtils.generateDeleteEditSpecFrom(workspaceState, graph);
@@ -449,15 +413,12 @@ const PasteCommand: KeyboardCommand = {
       }
 
       await editor.edit(spec, GraphUtils.createEditChangeId());
-      const workspaceSelection = GraphUtils.generateSelectionFrom(spec);
 
       // Select the newly pasted nodes
       const sel = sca.controller.editor.selection;
       sel.deselectAll();
-      for (const [, graphState] of workspaceSelection.graphs) {
-        for (const nodeId of graphState.nodes) {
-          sel.addNode(nodeId);
-        }
+      for (const nodeId of GraphUtils.nodeIdsFromSpec(spec)) {
+        sel.addNode(nodeId);
       }
     }
   },
@@ -495,10 +456,7 @@ const DuplicateCommand: KeyboardCommand = {
     }
 
     const graph = editor.inspect("");
-    const boardContents = GraphUtils.generateBoardFrom(
-      selectionToWorkspace(sel),
-      graph
-    );
+    const boardContents = GraphUtils.generateBoardFrom(sel.selection, graph);
 
     let spec: EditSpec[] = [];
     if (boardContents) {
@@ -514,14 +472,11 @@ const DuplicateCommand: KeyboardCommand = {
     }
 
     await editor.edit(spec, GraphUtils.createEditChangeId());
-    const workspaceSelection = GraphUtils.generateSelectionFrom(spec);
 
     // Select the newly duplicated nodes
     sel.deselectAll();
-    for (const [, graphState] of workspaceSelection.graphs) {
-      for (const nodeId of graphState.nodes) {
-        sel.addNode(nodeId);
-      }
+    for (const nodeId of GraphUtils.nodeIdsFromSpec(spec)) {
+      sel.addNode(nodeId);
     }
   },
 };
