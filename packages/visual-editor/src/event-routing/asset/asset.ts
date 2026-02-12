@@ -30,14 +30,8 @@ const ASSET_TIMEOUT = 250;
 export const AddRoute: EventRoute<"asset.add"> = {
   event: "asset.add",
 
-  async do({ runtime, sca, tab, originalEvent, googleDriveClient }) {
+  async do({ sca, tab, originalEvent, googleDriveClient }) {
     if (!tab || !googleDriveClient) {
-      return false;
-    }
-
-    const projectState = runtime.project;
-
-    if (!projectState) {
       return false;
     }
 
@@ -67,7 +61,7 @@ export const AddRoute: EventRoute<"asset.add"> = {
           metadata.subType = asset.subType;
         }
 
-        return projectState?.organizer.addGraphAsset({
+        return sca.actions.asset.addGraphAsset({
           path: asset.path,
           metadata,
           data: [asset.data],

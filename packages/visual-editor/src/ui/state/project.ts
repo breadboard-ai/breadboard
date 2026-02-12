@@ -4,19 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssetPath, HarnessRunner, LLMContent } from "@breadboard-ai/types";
-import { EditSpec, EditTransform, Outcome } from "@breadboard-ai/types";
+import { HarnessRunner } from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 
-import { ReactiveOrganizer } from "./organizer.js";
 import { ReactiveProjectRun } from "./project-run.js";
 import { RendererStateImpl } from "./renderer.js";
 import {
-  GraphAsset,
   Integrations,
-  Organizer,
   Project,
-  ProjectInternal,
   ProjectRun,
   ProjectValues,
   RendererState,
@@ -26,9 +22,7 @@ import { IntegrationsImpl } from "./integrations.js";
 import { McpClientManager } from "../../mcp/index.js";
 import { ReactiveFastAccess } from "./fast-access.js";
 import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
-import { err, ok } from "@breadboard-ai/utils";
 import { SCA } from "../../sca/sca.js";
-import { transformDataParts } from "../../data/common.js";
 
 export { createProjectState, ReactiveProject };
 
@@ -39,27 +33,11 @@ function createProjectState(
   return new ReactiveProject(mcpClientManager, sca);
 }
 
-class ReactiveProject implements ProjectInternal, ProjectValues {
+class ReactiveProject implements Project, ProjectValues {
   readonly #sca: SCA;
 
   @signal
   accessor run: ProjectRun;
-
-  /**
-   * Delegates to GraphController.graphUrl
-   */
-  get graphUrl(): URL | null {
-    return this.#sca.controller.editor.graph.graphUrl;
-  }
-
-  /**
-   * Delegates to GraphController.graphAssets
-   */
-  get graphAssets(): Map<AssetPath, GraphAsset> {
-    return this.#sca.controller.editor.graph.graphAssets;
-  }
-
-  readonly organizer: Organizer;
 
   readonly renderer: RendererState;
   readonly integrations: Integrations;
@@ -75,13 +53,14 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
   constructor(clientManager: McpClientManager, sca: SCA) {
     this.#sca = sca;
     const editable = this.#editable;
-    this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
     this.fastAccess = new ReactiveFastAccess(
       new FilteredIntegrationsImpl(this.integrations.registered),
       this.#sca
     );
-    this.renderer = new RendererStateImpl(this.graphAssets);
+    this.renderer = new RendererStateImpl(
+      this.#sca.controller.editor.graph.graphAssets
+    );
 
     this.run = ReactiveProjectRun.createInert(this.#editable.inspect(""));
   }
@@ -103,42 +82,5 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
       this.#editable,
       signal
     );
-  }
-
-  async apply(transform: EditTransform): Promise<Outcome<void>> {
-    const editing = await this.#editable.apply(transform);
-    if (!editing.success) {
-      return err(editing.error);
-    }
-  }
-
-  async edit(spec: EditSpec[], label: string): Promise<Outcome<void>> {
-    const editing = await this.#editable.edit(spec, label);
-    if (!editing.success) {
-      return err(editing.error);
-    }
-  }
-
-  async persistDataParts(contents: LLMContent[]): Promise<LLMContent[]> {
-    const urlString = this.#editable.raw().url;
-    if (!urlString) {
-      console.warn("Can't persist blob without graph URL");
-      return contents;
-    }
-
-    const url = new URL(urlString);
-
-    const transformed = await transformDataParts(
-      url,
-      contents,
-      "persistent",
-      this.#sca.services.googleDriveBoardServer.dataPartTransformer()
-    );
-    if (!ok(transformed)) {
-      console.warn(`Failed to persist a blob: "${transformed.$error}"`);
-      return contents;
-    }
-
-    return transformed;
   }
 }
