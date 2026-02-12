@@ -6,7 +6,6 @@
 
 import { parseUrl } from "../../ui/utils/urls.js";
 import { EventRoute } from "../types.js";
-import type { AssetEdgeIdentifier, EdgeIdentifier } from "../../sca/types.js";
 
 export const ModeRoute: EventRoute<"host.modetoggle"> = {
   event: "host.modetoggle",
@@ -27,33 +26,10 @@ export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> 
   {
     event: "host.selectionstatechange",
 
-    async do({ runtime, sca, originalEvent, tab }) {
-      const sel = sca.controller.editor.selection;
-      const { selections, replaceExistingSelections } = originalEvent.detail;
-
-      if (replaceExistingSelections) {
-        sel.deselectAll();
-      }
-
-      if (selections) {
-        for (const [, graphState] of selections.graphs) {
-          for (const nodeId of graphState.nodes) {
-            sel.addNode(nodeId);
-          }
-          for (const edgeId of graphState.edges) {
-            sel.addEdge(edgeId as EdgeIdentifier);
-          }
-          for (const assetId of graphState.assets) {
-            sel.addAsset(assetId);
-          }
-          for (const assetEdgeId of graphState.assetEdges) {
-            sel.addAssetEdge(assetEdgeId as AssetEdgeIdentifier);
-          }
-        }
-      }
-
-      // Legacy bridge: keep runtime.select flowing until canvas-controller
-      // and entity-editor are migrated to consume SelectionController.
+    async do({ runtime, originalEvent, tab }) {
+      // The renderer writes directly to SelectionController (outbound),
+      // so this route only forwards to the legacy runtime.select bridge
+      // for canvas-controller and entity-editor.
       if (tab) {
         runtime.select.processSelections(
           tab.id,

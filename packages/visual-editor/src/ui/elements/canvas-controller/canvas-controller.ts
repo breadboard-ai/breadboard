@@ -21,7 +21,6 @@ import { customElement, property, state } from "lit/decorators.js";
 import { guard } from "lit/directives/guard.js";
 import {
   AppTemplateAdditionalOptionsAvailable,
-  HighlightStateWithChangeId,
   WorkspaceSelectionStateWithChangeId,
 } from "../../types/types.js";
 import { styles as canvasControllerStyles } from "./canvas-controller.styles.js";
@@ -99,9 +98,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
   get sideNavItem() {
     return this.sca.controller.editor.sidebar.section;
   }
-
-  @state()
-  accessor highlightState: HighlightStateWithChangeId | null = null;
 
   @state()
   accessor showAssetOrganizer = false;
@@ -226,34 +222,13 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const runState = this.runState;
 
     const graphEditor = guard(
-      [
-        graph,
-        gc.graphIsMine,
-        this.projectState,
-        runState,
-        this.#runStateEffect,
-        gc.editor?.history() ?? null,
-        this.selectionState,
-        this.highlightState,
-        this.graphTopologyUpdateId,
-        this.sca.controller.global.flags,
-      ],
+      [this.projectState, runState, this.#runStateEffect, this.selectionState],
       () => {
         return html`<bb-renderer
           .projectState=${this.projectState}
           .runState=${runState}
           .runStateEffect=${this.#runStateEffect}
-          .runtimeFlags=${this.sca.controller.global.flags}
-          .graph=${graph}
-          .graphIsMine=${gc.graphIsMine}
-          .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-          .history=${gc.editor?.history() ?? null}
-          .graphAssets=${gc.graphAssets}
           .selectionState=${this.selectionState}
-          .showAssetsInGraph=${true}
-          .highlightState=${this.highlightState}
-          .mainGraphId=${gc.mainGraphId}
-          .readOnly=${!gc.graphIsMine}
           @input=${(evt: Event) => {
             const composedPath = evt.composedPath();
             const isFromNLInput = composedPath.some((el) => {
