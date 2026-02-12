@@ -8,8 +8,12 @@ import type {
   DriveFileId,
   NarrowedDriveFile,
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
+import type { GlobalConfig } from "../../../../ui/contexts/global-config.js";
+import { makeUrl } from "../../../../ui/utils/urls.js";
+import { makeShareLinkFromTemplate } from "../../../../utils/make-share-link-from-template.js";
 
 export type UnmanagedAssetProblem = {
   asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
@@ -60,6 +64,43 @@ export class ShareController extends RootController {
 
   @field({ deep: false })
   accessor unmanagedAssetProblems: UnmanagedAssetProblem[] = [];
+
+  // These config objects are set once during the open action. They are
+  // temporary: a future refactoring will make config a controller, at which
+  // point these can be removed.
+  guestConfig: Partial<GuestConfiguration> = {};
+  globalConfig: Partial<GlobalConfig> = {};
+
+  get appUrl(): string {
+    const shareableFile = this.shareableFile;
+    if (!shareableFile) {
+      return "";
+    }
+    const shareSurface = this.guestConfig.shareSurface;
+    const shareSurfaceUrlTemplate =
+      shareSurface && this.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
+    if (shareSurfaceUrlTemplate) {
+      return makeShareLinkFromTemplate({
+        urlTemplate: shareSurfaceUrlTemplate,
+        fileId: shareableFile.id,
+        resourceKey: shareableFile.resourceKey,
+      });
+    }
+    const hostOrigin = this.globalConfig.hostOrigin;
+    if (!hostOrigin) {
+      return "";
+    }
+    return makeUrl(
+      {
+        page: "graph",
+        mode: "app",
+        flow: `drive:/${shareableFile.id}`,
+        resourceKey: shareableFile.resourceKey,
+        guestPrefixed: false,
+      },
+      hostOrigin
+    );
+  }
 
   /**
    * Resets all fields to their defaults. Called when loading a new opal.

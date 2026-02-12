@@ -63,6 +63,8 @@ export const open = asAction(
       services.globalConfig.domains?.[share.userDomain]
         ?.disallowPublicPublishing ?? false
     );
+    share.guestConfig = services.guestConfig;
+    share.globalConfig = services.globalConfig;
 
     // Ensure any pending changes are saved so that our Drive operations will be
     // synchronized with those changes.

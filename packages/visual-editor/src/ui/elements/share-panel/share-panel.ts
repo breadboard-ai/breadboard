@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
@@ -16,20 +15,17 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SharePanelStatus } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
-import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
 import { ActionTracker } from "../../types/types.js";
-import { makeUrl } from "../../utils/urls.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 import type { VisibilityLevel } from "./share-visibility-selector.js";
@@ -321,9 +317,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor sca!: SCA;
 
-  @consume({ context: guestConfigurationContext })
-  accessor guestConfiguration: GuestConfiguration | undefined;
-
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
 
@@ -528,7 +521,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderAppLink() {
-    const appUrl = this.#appUrl;
+    const appUrl = this.#controller.appUrl;
     if (!appUrl) {
       return nothing;
     }
@@ -766,7 +759,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   async #onClickCopyLinkButton() {
-    const appUrl = this.#appUrl;
+    const appUrl = this.#controller.appUrl;
     if (!appUrl) {
       console.error("No app url");
       return nothing;
@@ -778,38 +771,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
         ToastType.INFORMATION
       )
     );
-  }
-
-  get #appUrl(): string | undefined {
-    const panel = this.#panel;
-    const shareableFile = this.#controller.shareableFile;
-    if (
-      (panel === "writable" || panel === "updating" || panel === "readonly") &&
-      shareableFile
-    ) {
-      const shareSurface = this.guestConfiguration?.shareSurface;
-      const shareSurfaceUrlTemplate =
-        shareSurface &&
-        this.guestConfiguration?.shareSurfaceUrlTemplates?.[shareSurface];
-      if (shareSurfaceUrlTemplate) {
-        return makeShareLinkFromTemplate({
-          urlTemplate: shareSurfaceUrlTemplate,
-          fileId: shareableFile.id,
-          resourceKey: shareableFile.resourceKey,
-        });
-      }
-      return makeUrl(
-        {
-          page: "graph",
-          mode: "app",
-          flow: `drive:/${shareableFile.id}`,
-          resourceKey: shareableFile.resourceKey,
-          guestPrefixed: false,
-        },
-        this.globalConfig?.hostOrigin
-      );
-    }
-    return undefined;
   }
 
   async #onGoogleDriveSharePanelClose() {
