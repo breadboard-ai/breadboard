@@ -23,7 +23,11 @@ import { timestamp } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { NodeInvokerImpl } from "../run/node-invoker.js";
-import type { PlanCreator } from "../../../engine/types.js";
+import type {
+  ConfigProvider,
+  NodeInvoker,
+  PlanCreator,
+} from "../../../engine/types.js";
 import { createPlan as defaultCreatePlan } from "../static/create-plan.js";
 import { Orchestrator } from "../static/orchestrator.js";
 import {
@@ -53,6 +57,8 @@ class PlanRunner
 
   readonly config: RunConfig;
   readonly #planCreator: PlanCreator;
+  readonly #invoker: NodeInvoker;
+  readonly #configProvider: ConfigProvider | undefined;
 
   running() {
     return !!this.#controller;
@@ -76,7 +82,7 @@ class PlanRunner
 
   #createController() {
     if (this.#controller) return;
-    this.#controller = new RunStateController(
+    const args: ConstructorParameters<typeof RunStateController> = [
       this.config,
       this.config.runner!,
       this.#orchestrator,
@@ -93,8 +99,12 @@ class PlanRunner
           this.dispatchEvent(event);
         },
       },
-      new NodeInvokerImpl()
-    );
+      this.#invoker,
+    ];
+    if (this.#configProvider) {
+      args.push(this.#configProvider);
+    }
+    this.#controller = new RunStateController(...args);
   }
 
   @signal
@@ -127,10 +137,17 @@ class PlanRunner
 
   accessor breakpoints = new SignalMap<NodeIdentifier, BreakpointSpec>();
 
-  constructor(config: RunConfig, planCreator: PlanCreator = defaultCreatePlan) {
+  constructor(
+    config: RunConfig,
+    planCreator: PlanCreator = defaultCreatePlan,
+    invoker: NodeInvoker = new NodeInvokerImpl(),
+    configProvider?: ConfigProvider
+  ) {
     super();
     this.config = config;
     this.#planCreator = planCreator;
+    this.#invoker = invoker;
+    this.#configProvider = configProvider;
     if (!config.runner) {
       throw new Error(
         `Unable to initialize PlanRunner: RunConfig.runner is empty`

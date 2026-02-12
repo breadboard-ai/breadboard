@@ -8,120 +8,29 @@ import { suite, it } from "node:test";
 import assert from "node:assert";
 
 import type {
-  GraphDescriptor,
-  NodeConfiguration,
-  NodeDescriptor,
-  RunConfig,
-  InputValues,
-  OutputValues,
   BreakpointSpec,
+  GraphDescriptor,
+  InputValues,
   NodeIdentifier,
-  RunArguments,
-  GraphToRun,
 } from "@breadboard-ai/types";
-import type {
-  NodeInvoker,
-  RunEventSink,
-  ConfigProvider,
-} from "../src/engine/types.js";
+import type { ConfigProvider, NodeInvoker } from "../src/engine/types.js";
 import { createPlan } from "../src/engine/runtime/static/create-plan.js";
 import { Orchestrator } from "../src/engine/runtime/static/orchestrator.js";
 import { RunStateController } from "../src/engine/runtime/harness/run-state-controller.js";
+import {
+  makeLinearGraph,
+  makeSingleNodeGraph,
+  makeConfig,
+  makeEventSink,
+  makeInvoker,
+  makeConfigProvider,
+  noopCallbacks,
+  eventsByType,
+} from "./harness-test-helpers.js";
 
 // =========================================================================
-// Test Helpers
+// RunStateController-specific helpers
 // =========================================================================
-
-/** A minimal node descriptor for testing. */
-function makeNode(id: string, type = "test"): NodeDescriptor {
-  return { id, type };
-}
-
-/**
- * Build a trivial graph with N sequential nodes: A → B → C → ...
- * This produces a valid `GraphDescriptor` that `createPlan` can consume.
- */
-function makeLinearGraph(...nodeIds: string[]): GraphDescriptor {
-  const nodes = nodeIds.map((id) => makeNode(id));
-  const edges = [];
-  for (let i = 0; i < nodeIds.length - 1; i++) {
-    edges.push({ from: nodeIds[i], to: nodeIds[i + 1], out: "out", in: "in" });
-  }
-  return { nodes, edges, url: "test://graph" } as GraphDescriptor;
-}
-
-/** Build a graph with a single node */
-function makeSingleNodeGraph(id = "only"): GraphDescriptor {
-  return {
-    nodes: [makeNode(id)],
-    edges: [],
-    url: "test://single",
-  } as GraphDescriptor;
-}
-
-/** Build a mock RunConfig. Most fields are optional. */
-function makeConfig(graph: GraphDescriptor): RunConfig {
-  return {
-    url: graph.url || "test://graph",
-    runner: graph,
-  } as RunConfig;
-}
-
-/** Create a mock RunEventSink that records dispatched events. */
-function makeEventSink(): RunEventSink & {
-  events: Event[];
-  paused: boolean;
-} {
-  const sink = {
-    events: [] as Event[],
-    paused: false,
-    dispatch(event: Event) {
-      sink.events.push(event);
-    },
-    pause() {
-      sink.paused = true;
-    },
-  };
-  return sink;
-}
-
-/** Create a mock NodeInvoker. */
-function makeInvoker(
-  outputsFn?: (
-    descriptor: NodeDescriptor,
-    inputs: InputValues
-  ) => Promise<OutputValues>
-): NodeInvoker {
-  const defaultFn = async () => ({ result: "ok" });
-  return {
-    invokeNode: async (
-      _args: RunArguments,
-      _graph: GraphToRun,
-      descriptor: NodeDescriptor,
-      inputs: InputValues,
-      _path: number[]
-    ) => {
-      return (outputsFn || defaultFn)(descriptor, inputs);
-    },
-  };
-}
-
-/** Create a mock ConfigProvider that returns node configuration. */
-function makeConfigProvider(
-  configs?: Record<string, Record<string, unknown>>
-): ConfigProvider {
-  return (id: string) => {
-    return (configs?.[id] ?? {}) as NodeConfiguration;
-  };
-}
-
-/** Get the no-op orchestrator callbacks */
-function noopCallbacks() {
-  return {
-    stateChangedbyOrchestrator: () => {},
-    stateChanged: () => {},
-  };
-}
 
 /** Create a full test harness for RunStateController. */
 function makeController(opts: {
@@ -152,11 +61,6 @@ function makeController(opts: {
   );
 
   return { controller, orchestrator, eventSink, config };
-}
-
-/** Filter events by constructor name */
-function eventsByType(events: Event[], typeName: string): Event[] {
-  return events.filter((e) => e.constructor.name === typeName);
 }
 
 // =========================================================================
@@ -240,13 +144,10 @@ suite("RunStateController", () => {
         graph: makeSingleNodeGraph(),
       });
 
-      // Start run and try to re-enter
       const first = controller.run();
       const second = controller.run();
 
       await Promise.all([first, second]);
-      // If it re-entered, we'd likely get errors or duplicate events.
-      // The fact that it completes cleanly verifies the guard.
     });
   });
 
@@ -304,9 +205,6 @@ suite("RunStateController", () => {
 
       await controller.run();
 
-      // Config errors result in error outputs which cause orchestrator
-      // to finish (possibly in failed state, triggering pause).
-      // The run should complete cleanly either way.
       const nodeEndEvents = eventsByType(eventSink.events, "NodeEndEvent");
       assert.strictEqual(nodeEndEvents.length, 1, "node should still end");
     });
@@ -331,7 +229,6 @@ suite("RunStateController", () => {
       await controller.run();
 
       assert.ok(eventSink.paused, "should have paused");
-      // Should NOT have dispatched NodeStart since it stopped at breakpoint
       const nodeStarts = eventsByType(eventSink.events, "NodeStartEvent");
       assert.strictEqual(
         nodeStarts.length,
@@ -421,15 +318,12 @@ suite("RunStateController", () => {
         invoker,
       });
 
-      // Run to create stop controllers, then stopAll
       await controller.run();
       controller.stopAll();
-      // Should complete without errors
     });
 
     it("stop on non-existent node prints warning", () => {
       const { controller } = makeController({});
-      // Should not throw
       controller.stop("non-existent");
     });
   });
@@ -449,13 +343,11 @@ suite("RunStateController", () => {
 
       await controller.run();
 
-      // Should have dispatched multiple events
       assert.ok(eventSink.events.length > 0, "should dispatch events");
     });
 
     it("pauses via event sink when orchestrator fails", async () => {
       const eventSink = makeEventSink();
-      // Create a graph that will cause the orchestrator to fail
       const graph = makeSingleNodeGraph("failing");
       const config = makeConfig(graph);
       const plan = createPlan(graph);
@@ -476,10 +368,7 @@ suite("RunStateController", () => {
 
       await controller.run();
 
-      // Whether it pauses depends on orchestrator.failed state.
-      // At minimum, the run should complete cleanly.
       const endEvents = eventsByType(eventSink.events, "EndEvent");
-      // The run completed (either normally or via pause)
       assert.ok(
         endEvents.length > 0 || eventSink.paused,
         "should either end or pause"
@@ -499,7 +388,6 @@ suite("RunStateController", () => {
       const newPlan = createPlan(graph);
       const newOrchestrator = new Orchestrator(newPlan, noopCallbacks());
 
-      // Should not throw
       controller.update(newOrchestrator);
     });
   });
