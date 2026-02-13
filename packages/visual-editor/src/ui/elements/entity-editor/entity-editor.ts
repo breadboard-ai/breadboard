@@ -1545,11 +1545,13 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
       this.#fastAccessRef.value.focusFilter();
     });
+    this.sca.controller.editor.fastAccess.fastAccessMode = "tools";
     this.#isUsingFastAccess = true;
   }
 
   #hideFastAccess() {
     this.#isUsingFastAccess = false;
+    this.sca.controller.editor.fastAccess.fastAccessMode = null;
     if (!this.#fastAccessRef.value) {
       return;
     }
@@ -1798,9 +1800,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       this.#renderSelectedItem(),
       html`<bb-fast-access-menu
           ${ref(this.#fastAccessRef)}
-          .showTools=${true}
-          .showAssets=${false}
-          .showComponents=${false}
           @pointerdown=${(evt: PointerEvent) => {
             evt.stopImmediatePropagation();
           }}
@@ -1825,9 +1824,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
             this.#editorRef.value.addItem(part);
           }}
-          .graphId=${null}
-          .nodeId=${null}
-          .state=${this.projectState?.fastAccess}
+          .integrations=${this.projectState?.integrations ?? null}
         ></bb-fast-access-menu>
         <div ${ref(this.#proxyRef)} id="proxy"></div>`,
     ];

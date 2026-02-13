@@ -24,12 +24,11 @@ function createTrustedChicletHTMLImpl(
   value: string,
   sca?: SCA,
   projectState?: Project | null,
-  subGraphId?: string | null,
+  subGraphId?: string | null
 ): string {
   if (!value) {
     return "";
   }
-
 
   // Explanation:
   //
@@ -50,4 +49,27 @@ function createTrustedChicletHTMLImpl(
     (part) => escapeNodeText(part)
   );
   return template.renderable;
+}
+
+/**
+ * Set trusted HTML content on an element. Prefers `setHTML` when available
+ * for safer sanitized insertion, falling back to `innerHTML`.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Element/setHTML
+ */
+export function setTrustedHTML(el: Element, html: string | TrustedHTML): void {
+  if ("setHTML" in el) {
+    (
+      el as {
+        setHTML(
+          val: string | TrustedHTML,
+          opts: { sanitizer: { elements: string[] } }
+        ): void;
+      }
+    ).setHTML(html, {
+      sanitizer: { elements: ["span", "label"] },
+    });
+  } else {
+    (el as { innerHTML: string | TrustedHTML }).innerHTML = html;
+  }
 }

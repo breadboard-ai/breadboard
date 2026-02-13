@@ -5,10 +5,6 @@
  */
 
 import { RuntimeConfig } from "./types.js";
-
-export * as Events from "./events.js";
-export * as Types from "./types.js";
-
 import { State } from "../ui/index.js";
 import { Project } from "../ui/state/types.js";
 import { MainGraphIdentifier } from "@breadboard-ai/types";
@@ -26,10 +22,8 @@ export class Runtime extends EventTarget {
   constructor(config: RuntimeConfig) {
     super();
 
-    const sca = config.sca;
-    if (!sca) throw new Error("Expected SCA");
-
-    this.#sca = sca;
+    if (!config.sca) throw new Error("Expected SCA");
+    this.#sca = config.sca;
   }
 
   /**

@@ -10,17 +10,9 @@ import { signal } from "signal-utils";
 
 import { ReactiveProjectRun } from "./project-run.js";
 
-import {
-  Integrations,
-  Project,
-  ProjectRun,
-  ProjectValues,
-  FastAccess,
-} from "./types.js";
+import { Integrations, Project, ProjectRun, ProjectValues } from "./types.js";
 import { IntegrationsImpl } from "./integrations.js";
 import { McpClientManager } from "../../mcp/index.js";
-import { ReactiveFastAccess } from "./fast-access.js";
-import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
 import { SCA } from "../../sca/sca.js";
 
 export { createProjectState, ReactiveProject };
@@ -39,7 +31,6 @@ class ReactiveProject implements Project, ProjectValues {
   accessor run: ProjectRun;
 
   readonly integrations: Integrations;
-  readonly fastAccess: FastAccess;
 
   constructor(clientManager: McpClientManager, sca: SCA) {
     this.#sca = sca;
@@ -48,10 +39,6 @@ class ReactiveProject implements Project, ProjectValues {
       throw new Error("No editor available");
     }
     this.integrations = new IntegrationsImpl(clientManager, editable);
-    this.fastAccess = new ReactiveFastAccess(
-      new FilteredIntegrationsImpl(this.integrations.registered),
-      this.#sca
-    );
 
     this.run = ReactiveProjectRun.createInert(editable.inspect(""));
   }

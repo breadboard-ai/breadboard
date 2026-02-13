@@ -9,7 +9,6 @@ import {
   AssetMetadata,
   AssetPath,
   ConsoleEntry,
-  GraphIdentifier,
   HarnessRunner,
   InspectableNodePorts,
   LLMContent,
@@ -290,22 +289,6 @@ export type FilterableMap<T extends TitledItem> = {
   filter: string;
 };
 
-/**
- * Represents the Model+Controller for the "@" Menu.
- */
-export type FastAccess = {
-  graphAssets: Map<AssetPath, GraphAsset>;
-  tools: ReadonlyMap<string, Tool>;
-  myTools: ReadonlyMap<string, Tool>;
-  agentMode: FilterableMap<Tool>;
-  components: ReadonlyMap<GraphIdentifier, Components>;
-  integrations: FilteredIntegrations;
-  /**
-   * Available routes for the current step.
-   */
-  routes: FilterableMap<Component>;
-};
-
 export type UIOverlays =
   | "BoardEditModal"
   | "BetterOnDesktopModal"
@@ -435,7 +418,6 @@ export type Project = {
   readonly run: ProjectRun;
 
   readonly integrations: Integrations;
-  readonly fastAccess: FastAccess;
 
   /**
    * Resets the current run.

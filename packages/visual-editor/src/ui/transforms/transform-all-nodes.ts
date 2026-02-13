@@ -28,7 +28,7 @@ export type TemplatePartTransformer = (
   nodeId: NodeIdentifier
 ) => TemplatePart | null;
 
-export type EditTransformFactory = (id: NodeIdentifier) => EditTransform;
+export type EditTransformFactory = (id: NodeIdentifier) => EditTransform | null;
 
 function transformConfiguration(
   id: NodeIdentifier,
@@ -129,8 +129,11 @@ class TransformAllNodes implements EditTransform {
       if (!changingConfig.success) return changingConfig;
 
       if (this.nodeTransformer) {
-        const transformingNode = await this.nodeTransformer(id).apply(context);
-        if (!transformingNode.success) return transformingNode;
+        const nodeTransform = this.nodeTransformer(id);
+        if (nodeTransform) {
+          const transformingNode = await nodeTransform.apply(context);
+          if (!transformingNode.success) return transformingNode;
+        }
       }
     }
     return { success: true };

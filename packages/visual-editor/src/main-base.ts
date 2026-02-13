@@ -19,8 +19,8 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
-import * as Runtime from "./runtime/runtime.js";
-import { RuntimeConfig } from "./runtime/types.js";
+import { Runtime } from "./runtime/runtime.js";
+import { RuntimeConfig, Tab } from "./runtime/types.js";
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
@@ -112,7 +112,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected accessor sca: SCA;
 
   // Computed from SCA controller - no longer stored
-  protected get tab(): Runtime.Types.Tab | null {
+  protected get tab(): Tab | null {
     return this.sca.controller.editor.graph.asTab();
   }
 
@@ -144,7 +144,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   // References.
   // NOTE: selectionState field removed. Selection is now managed
   // entirely by SelectionController via SCA.
-  protected runtime: Runtime.Runtime;
+  protected runtime: Runtime;
   protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
   // Run status now tracked by this.sca.controller.run.main
@@ -219,7 +219,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     // Append SCA to the config.
     config.sca = this.sca;
-    this.runtime = new Runtime.Runtime(config);
+    this.runtime = new Runtime(config);
 
     this.googleDriveClient = this.sca.services.googleDriveClient;
 

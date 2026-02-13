@@ -23,6 +23,7 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SettingsStore } from "../ui/types/types.js";
 import type { InPort } from "../ui/transforms/autowire-in-ports.js";
+import type { GraphAsset, Tool, Component } from "../ui/state/types.js";
 
 export interface ServicesConfig {
   globalConfig: GlobalConfig;
@@ -150,3 +151,31 @@ export interface PendingAssetEdit {
   /** Graph version when edit was captured - used to detect stale edits */
   graphVersion: number;
 }
+
+/**
+ * Tagged union of all items that can appear in the Fast Access menu.
+ * Built by `GraphController.getFastAccessItems()` for a flat, indexed list
+ * that eliminates the brittle offset arithmetic previously in the UI.
+ */
+export type FastAccessItem =
+  | { kind: "asset"; asset: GraphAsset }
+  | { kind: "tool"; tool: Tool }
+  | { kind: "component"; component: Component }
+  | { kind: "route"; route: Component };
+
+/**
+ * The display context for the Fast Access menu.
+ *
+ * - `"tools"` — Tools picker (entity-editor `@` input). Shows tools + agent-mode only.
+ * - `"browse"` — Full `@` menu (text-editor). Shows assets, tools, components, agent-mode.
+ * - `"route"` — Chiclet re-targeting. Shows routes only.
+ */
+export type FastAccessMode = "tools" | "browse" | "route";
+
+/**
+ * Extended item type that includes integration tools (managed by legacy
+ * Integrations until that migration is complete).
+ */
+export type DisplayItem =
+  | FastAccessItem
+  | { kind: "integration-tool"; url: string; tool: Tool };
