@@ -1202,5 +1202,239 @@ suite("Asset Actions — Event-Triggered", () => {
       // Should not throw
       await Asset.onAddAssets(evt);
     });
+
+    test("sets subType in metadata when asset has subType", async () => {
+      const editCalls: unknown[][] = [];
+      const mockEditor = {
+        edit: async (edits: unknown[]) => {
+          editCalls.push(edits);
+        },
+        apply: async () => ({ success: true }),
+      };
+
+      bindAssetForEvent(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "asset.add",
+        assets: [
+          {
+            name: "tool.json",
+            type: "content",
+            subType: "webcam",
+            path: "tool.json" as AssetPath,
+            data: { role: "user", parts: [{ text: "payload" }] },
+          },
+        ],
+      });
+      await Asset.onAddAssets(evt);
+
+      assert.ok(editCalls.length > 0, "editor.edit should have been called");
+      const addSpec = editCalls[0][0] as {
+        metadata: { subType?: string };
+      };
+      assert.strictEqual(
+        addSpec.metadata.subType,
+        "webcam",
+        "subType should be set in metadata"
+      );
+    });
+
+    test("marks inline data parts with asset title", async () => {
+      const inlinePart = {
+        inlineData: { data: "dGVzdA==", mimeType: "text/plain" },
+      };
+      const editCalls: unknown[][] = [];
+      const mockEditor = {
+        edit: async (edits: unknown[]) => {
+          editCalls.push(edits);
+        },
+        apply: async () => ({ success: true }),
+      };
+
+      bindAssetForEvent(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "asset.add",
+        assets: [
+          {
+            name: "image.png",
+            type: "content",
+            path: "image.png" as AssetPath,
+            data: { role: "user", parts: [inlinePart] },
+          },
+        ],
+      });
+      await Asset.onAddAssets(evt);
+
+      // The inline part should have been mutated in-place with the title
+      assert.strictEqual(
+        (inlinePart.inlineData as { title?: string }).title,
+        "image.png",
+        "Inline data should be marked with asset title"
+      );
+    });
+
+    test("does not show snackbar when processing completes quickly", async () => {
+      const snackbarCalls: unknown[][] = [];
+      const mockEditor = {
+        edit: async () => {},
+        apply: async () => ({ success: true }),
+      };
+
+      Asset.bind({
+        controller: {
+          editor: {
+            graph: {
+              editor: mockEditor,
+              url: "https://example.com/board.json",
+              graphAssets: new Map(),
+            },
+          },
+          global: {
+            main: { blockingAction: false },
+            snackbars: {
+              snackbar: (...args: unknown[]) => {
+                snackbarCalls.push(args);
+              },
+              removeSnackbar: () => {},
+            },
+          },
+        } as unknown as AppController,
+        services: {
+          stateEventBus: new EventTarget(),
+          googleDriveBoardServer: {
+            dataPartTransformer: () => ({
+              addEphemeralBlob: async () => ({
+                storedData: { handle: "blob:test", mimeType: "text/plain" },
+              }),
+              persistPart: async (_url: URL, part: unknown) => part,
+              persistentToEphemeral: async (part: unknown) => part,
+              toFileData: async (_url: URL, part: unknown) => part,
+            }),
+          },
+        } as unknown as AppServices,
+      });
+
+      const evt = new StateEvent({
+        eventType: "asset.add",
+        assets: [
+          {
+            name: "fast.txt",
+            type: "content",
+            path: "fast.txt" as AssetPath,
+            data: { role: "user", parts: [{ text: "quick" }] },
+          },
+        ],
+      });
+
+      await Asset.onAddAssets(evt);
+
+      assert.strictEqual(
+        snackbarCalls.length,
+        0,
+        "No snackbar should appear for fast operations"
+      );
+    });
+
+    test("shows pending snackbar then dismisses it for slow operations", async () => {
+      const snackbarCalls: unknown[][] = [];
+
+      // Gate to block editor.edit until we release it
+      let releaseEdit!: () => void;
+      const editGate = new Promise<void>((resolve) => {
+        releaseEdit = resolve;
+      });
+
+      const mockEditor = {
+        edit: async () => {
+          await editGate;
+        },
+        apply: async () => ({ success: true }),
+      };
+
+      Asset.bind({
+        controller: {
+          editor: {
+            graph: {
+              editor: mockEditor,
+              url: "https://example.com/board.json",
+              graphAssets: new Map(),
+            },
+          },
+          global: {
+            main: { blockingAction: false },
+            snackbars: {
+              snackbar: (...args: unknown[]) => {
+                snackbarCalls.push(args);
+              },
+              removeSnackbar: () => {},
+            },
+          },
+        } as unknown as AppController,
+        services: {
+          stateEventBus: new EventTarget(),
+          googleDriveBoardServer: {
+            dataPartTransformer: () => ({
+              addEphemeralBlob: async () => ({
+                storedData: { handle: "blob:test", mimeType: "text/plain" },
+              }),
+              persistPart: async (_url: URL, part: unknown) => part,
+              persistentToEphemeral: async (part: unknown) => part,
+              toFileData: async (_url: URL, part: unknown) => part,
+            }),
+          },
+        } as unknown as AppServices,
+      });
+
+      const evt = new StateEvent({
+        eventType: "asset.add",
+        assets: [
+          {
+            name: "slow.txt",
+            type: "content",
+            path: "slow.txt" as AssetPath,
+            data: { role: "user", parts: [{ text: "slow data" }] },
+          },
+        ],
+      });
+
+      // Start the action but don't await it yet
+      const actionPromise = Asset.onAddAssets(evt);
+
+      // Wait past the ASSET_TIMEOUT (250ms)
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Pending snackbar should have appeared
+      assert.strictEqual(
+        snackbarCalls.length,
+        1,
+        "Pending snackbar should appear after timeout"
+      );
+      assert.strictEqual(
+        snackbarCalls[0][0],
+        "Processing assets, please wait..."
+      );
+
+      // Release the edit gate so the action completes
+      releaseEdit();
+      await actionPromise;
+
+      // Final snackbar should dismiss the pending one
+      assert.strictEqual(
+        snackbarCalls.length,
+        2,
+        "Should have pending + completion snackbars"
+      );
+      assert.strictEqual(snackbarCalls[1][0], "Processed assets");
+
+      // The completion snackbar should reference the same snackbarId
+      const pendingId = snackbarCalls[0][4];
+      const completionId = snackbarCalls[1][4];
+      assert.strictEqual(
+        pendingId,
+        completionId,
+        "Completion snackbar should replace the pending one"
+      );
+    });
   });
 });
