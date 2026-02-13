@@ -33,6 +33,7 @@ import "./share-visibility-selector.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
+const SHARING_V2 = CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2;
 
 @customElement("bb-share-panel")
 export class SharePanel extends SignalWatcher(LitElement) {
@@ -95,6 +96,155 @@ export class SharePanel extends SignalWatcher(LitElement) {
         font-size: 24px;
       }
 
+      dialog.sharing-v2 {
+        padding: var(--bb-grid-size-6);
+
+        h2 {
+          font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+            var(--bb-font-family);
+          color: #243351;
+        }
+
+        #app-link {
+          align-items: center;
+
+          #app-link-text {
+            background: none;
+            color: #525252;
+            border: none;
+          }
+
+          #app-link-copy-button {
+            width: 150px;
+            height: 40px;
+            border: 1px solid #f1f1f1;
+            background: #fff;
+            padding: 10px 16px;
+            gap: var(--bb-grid-size-2);
+            font-family: var(--bb-font-family-flex);
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0;
+
+            &.bb-button-outlined {
+              color: #1b1b1b;
+            }
+
+            &:hover {
+              background: #f1f1f1;
+              border-color: #ababab;
+            }
+          }
+        }
+      }
+
+      #advisory-v2 {
+        color: var(--light-dark-n-40);
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        margin: var(--bb-grid-size-8) 0 0 0;
+
+        a {
+          color: #665ef6;
+          font-weight: 700;
+          letter-spacing: 0.1px;
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      #editor-access-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--bb-grid-size-9);
+
+        label {
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+          color: var(--Text, #1b1b1b);
+          font-family: var(--bb-font-family-flex);
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 24px;
+          letter-spacing: 0;
+        }
+
+        .info-icon {
+          position: relative;
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          overflow: visible;
+          color: #525252;
+          padding: 4px;
+          margin: -4px;
+          cursor: help;
+        }
+
+        .info-icon::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 50%;
+          transform: translateX(-50%);
+          background: #2e2e2e;
+          color: #f2f2f2;
+          font-family: var(--bb-font-family-flex);
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 16px;
+          letter-spacing: 0.1px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          width: max-content;
+          max-width: 300px;
+          white-space: normal;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.15s ease;
+        }
+
+        .info-icon:hover::after {
+          opacity: 1;
+        }
+
+        md-switch {
+          --md-sys-color-primary: #000;
+          --md-sys-color-primary-container: #fff;
+          --md-sys-color-surface-container-highest: #e0e0e0;
+          --md-switch-track-height: 24px;
+          --md-switch-track-width: 40px;
+          --md-switch-selected-handle-width: 20px;
+          --md-switch-selected-handle-height: 20px;
+        }
+      }
+
+      #editor-access-toggle + #app-link {
+        margin-top: 44px;
+      }
+
+      footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--bb-grid-size-12);
+
+        .bb-button-outlined {
+          flex-direction: column;
+          padding: 10px 16px;
+          border: 1px solid #ababab;
+          color: #1b1b1b;
+          font-family: var(--bb-font-family-flex);
+          font-size: 14px;
+          line-height: 20px;
+          letter-spacing: 0;
+        }
+      }
+
       #loading {
         flex: 1;
         display: flex;
@@ -134,6 +284,38 @@ export class SharePanel extends SignalWatcher(LitElement) {
         button[disabled] {
           cursor: wait;
         }
+      }
+
+      #stale-v2 {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--bb-grid-size-4);
+        background: #f1f1f1;
+        margin: var(--bb-grid-size-4) calc(-1 * var(--bb-grid-size-6)) 0
+          calc(-1 * var(--bb-grid-size-6));
+        padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
+        font-family: var(--bb-font-family-flex);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: normal;
+        letter-spacing: 0;
+        color: #1a1a1a;
+
+        button {
+          font: 700 var(--bb-label-large) / 16px var(--bb-font-family);
+          color: #000;
+          letter-spacing: 0.25px;
+          flex-shrink: 0;
+        }
+
+        button[disabled] {
+          cursor: wait;
+        }
+      }
+
+      #stale-v2 + #advisory-v2 {
+        margin-top: var(--bb-grid-size-4);
       }
 
       #permissions {
@@ -370,7 +552,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
   #renderModal() {
     const title = this.#graph?.title;
     return html`
-      <dialog ${ref(this.#dialog)} @close=${this.close}>
+      <dialog
+        class=${SHARING_V2 ? "sharing-v2" : ""}
+        ${ref(this.#dialog)}
+        @close=${this.close}
+      >
         <header>
           <h2>Share ${title ? `“${title}”` : ""}</h2>
           <button
@@ -436,10 +622,14 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const shared =
       this.#controller.published || this.#controller.granularlyShared;
     return [
-      this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
+      this.#controller.stale && shared ? this.#renderStaleBannerV2() : nothing,
+      this.#renderAdvisoryV2(),
       this.#renderVisibilityDropdown(),
-      shared && this.#panel !== "updating" ? this.#renderAppLink() : nothing,
-      this.#renderAdvisory(),
+      this.#computedVisibility !== "only-you"
+        ? this.#renderEditorAccessToggle()
+        : nothing,
+      shared ? this.#renderAppLink() : nothing,
+      this.#renderDoneButton(),
     ];
   }
 
@@ -463,6 +653,43 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   async #onClickPublishStale() {
     await this.#actions.publishStale();
+  }
+
+  #renderStaleBannerV2() {
+    return html`
+      <div id="stale-v2">
+        <span>
+          Click update to push these changes. This will override previous
+          versions of the link that you shared.
+        </span>
+        <button
+          class="bb-button-text"
+          .disabled=${this.#panel !== "writable"}
+          @click=${this.#onClickPublishStale}
+        >
+          ${this.#panel === "updating"
+            ? html`<span class="g-icon spin spinner">progress_activity</span>`
+            : nothing}
+          Update
+        </button>
+      </div>
+    `;
+  }
+
+  #renderEditorAccessToggle() {
+    return html`
+      <div id="editor-access-toggle">
+        <label>
+          Allow access to editor view and remix
+          <span
+            class="g-icon info-icon"
+            data-tooltip="Allows others to easily see your prompts and make a copy of your Opal"
+            >info</span
+          >
+        </label>
+        <md-switch></md-switch>
+      </div>
+    `;
   }
 
   #renderReadonlyModalContents() {
@@ -554,6 +781,32 @@ export class SharePanel extends SignalWatcher(LitElement) {
           >responsibly</a
         >.
       </p>
+    `;
+  }
+
+  #renderAdvisoryV2() {
+    return html`
+      <p id="advisory-v2">
+        Sharing your ${APP_NAME} app makes it available to anyone with the link.
+        To restrict access to your app, you can edit your share permissions so
+        only you or specific people you specify can view it.
+        <a
+          href="https://policies.google.com/terms/generative-ai/use-policy"
+          target="_blank"
+          >Share responsibly</a
+        >.
+        <a href="https://developers.google.com/opal/faq" target="_blank"
+          >Learn more</a
+        >.
+      </p>
+    `;
+  }
+
+  #renderDoneButton() {
+    return html`
+      <footer>
+        <button class="bb-button-outlined" @click=${this.close}>Done</button>
+      </footer>
     `;
   }
 
@@ -741,7 +994,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const appUrl = this.#actions.computeAppUrl(this.#controller.shareableFile);
     if (!appUrl) {
       console.error("No app url");
-      return nothing;
+      return;
     }
     await navigator.clipboard.writeText(appUrl);
     this.dispatchEvent(
