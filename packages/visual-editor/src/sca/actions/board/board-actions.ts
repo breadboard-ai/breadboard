@@ -14,13 +14,21 @@ import type { StateEvent } from "../../../ui/events/events.js";
 import { parseUrl } from "../../../ui/utils/urls.js";
 import { Utils } from "../../utils.js";
 import { makeAction, withBlockingAction } from "../binder.js";
-import { asAction, ActionMode, stateEventTrigger } from "../../coordination.js";
+import {
+  asAction,
+  ActionMode,
+  stateEventTrigger,
+  keyboardTrigger,
+} from "../../coordination.js";
 import * as Helpers from "./helpers/helpers.js";
 import {
   onVersionChange,
   onNewerVersionAvailable,
   onSaveStatusChange,
 } from "./triggers.js";
+import { forSection } from "../../../ui/strings/helper.js";
+
+const Strings = forSection("Global");
 
 export const bind = makeAction();
 
@@ -809,5 +817,32 @@ export const onReplace = asAction(
       theme: detail.theme,
       creator: detail.creator,
     };
+  }
+);
+
+// =============================================================================
+// Keyboard-triggered Actions
+// =============================================================================
+
+/**
+ * Keyboard shortcut for saving a board.
+ *
+ * **Triggers:** `Cmd+s` / `Ctrl+s`
+ */
+export const onSave = asAction(
+  "Board.onSave",
+  {
+    mode: ActionMode.Awaits,
+    triggeredBy: () =>
+      keyboardTrigger("Save Shortcut", ["Cmd+s", "Ctrl+s"], () => {
+        const { controller } = bind;
+        return !!controller.editor.graph.editor;
+      }),
+  },
+  async (): Promise<void> => {
+    await save({
+      start: Strings.from("STATUS_SAVING_PROJECT"),
+      end: Strings.from("STATUS_PROJECT_SAVED"),
+    });
   }
 );

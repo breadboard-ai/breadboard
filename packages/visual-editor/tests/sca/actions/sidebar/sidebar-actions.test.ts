@@ -8,6 +8,9 @@ import { suite, test, beforeEach } from "node:test";
 import assert from "node:assert";
 import { coordination } from "../../../../src/sca/coordination.js";
 import * as sidebarActions from "../../../../src/sca/actions/sidebar/sidebar-actions.js";
+import { onSelectionChange } from "../../../../src/sca/actions/sidebar/triggers.js";
+import type { AppController } from "../../../../src/sca/controller/controller.js";
+import type { AppServices } from "../../../../src/sca/services/services.js";
 
 suite("Sidebar Actions", () => {
   beforeEach(() => {
@@ -211,6 +214,43 @@ suite("Sidebar Actions", () => {
         "editor",
         "Should switch from edit-history to editor when items are selected"
       );
+    });
+  });
+});
+
+// =============================================================================
+// Sidebar Triggers
+// =============================================================================
+
+suite("Sidebar Triggers", () => {
+  suite("onSelectionChange", () => {
+    test("returns a signal trigger that reads selectionId", () => {
+      let selectionIdValue = 42;
+
+      const bind = {
+        controller: {
+          editor: {
+            selection: {
+              get selectionId() {
+                return selectionIdValue;
+              },
+            },
+          },
+        } as unknown as AppController,
+        services: {} as unknown as AppServices,
+      };
+
+      const trigger = onSelectionChange(bind);
+
+      assert.strictEqual(trigger.type, "signal");
+      assert.strictEqual(trigger.name, "Selection Change → Sidebar");
+
+      // The condition should return the current selectionId
+      assert.strictEqual(trigger.condition(), 42);
+
+      // After changing selectionId, the condition should return the new value
+      selectionIdValue = 99;
+      assert.strictEqual(trigger.condition(), 99);
     });
   });
 });

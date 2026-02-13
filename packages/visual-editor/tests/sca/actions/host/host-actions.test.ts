@@ -5,7 +5,15 @@
  */
 
 import assert from "node:assert";
-import { suite, test, beforeEach, before, after } from "node:test";
+import {
+  suite,
+  test,
+  beforeEach,
+  afterEach,
+  before,
+  after,
+  mock,
+} from "node:test";
 import * as Host from "../../../../src/sca/actions/host/host-actions.js";
 import { coordination } from "../../../../src/sca/coordination.js";
 import type { AppController } from "../../../../src/sca/controller/controller.js";
@@ -185,6 +193,192 @@ suite("Host Actions — Event-Triggered", () => {
     test("runs without error (noop)", async () => {
       bindHost();
       await Host.userSignIn();
+    });
+  });
+});
+
+// =============================================================================
+// Host Actions — Keyboard
+// =============================================================================
+
+suite("Host Actions — Keyboard", () => {
+  before(() => setDOM());
+  after(() => unsetDOM());
+
+  beforeEach(() => {
+    coordination.reset();
+  });
+
+  interface KeyboardMockController {
+    global: {
+      main: { blockingAction: boolean; experimentalComponents: boolean };
+      debug: { enabled: boolean };
+      toasts: { toast: (...args: unknown[]) => string };
+    };
+    _toastCalls: unknown[][];
+  }
+
+  function makeKeyboardController(): KeyboardMockController {
+    const ctrl: KeyboardMockController = {
+      global: {
+        main: {
+          blockingAction: false,
+          experimentalComponents: false,
+        },
+        debug: { enabled: false },
+        toasts: {
+          toast: (...args: unknown[]) => {
+            ctrl._toastCalls.push(args);
+            return "toast-id";
+          },
+        },
+      },
+      _toastCalls: [],
+    };
+    return ctrl;
+  }
+
+  function bindKeyboard(
+    controller: KeyboardMockController,
+    services?: Partial<AppServices>
+  ) {
+    Host.bind({
+      controller: controller as unknown as AppController,
+      services: {
+        stateEventBus: new EventTarget(),
+        ...services,
+      } as unknown as AppServices,
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // onToggleExperimentalComponents
+  // ---------------------------------------------------------------------------
+  suite("onToggleExperimentalComponents", () => {
+    test("toggles experimentalComponents from false to true", async () => {
+      const ctrl = makeKeyboardController();
+      ctrl.global.main.experimentalComponents = false;
+      bindKeyboard(ctrl);
+
+      await Host.onToggleExperimentalComponents();
+
+      assert.strictEqual(ctrl.global.main.experimentalComponents, true);
+    });
+
+    test("toggles experimentalComponents from true to false", async () => {
+      const ctrl = makeKeyboardController();
+      ctrl.global.main.experimentalComponents = true;
+      bindKeyboard(ctrl);
+
+      await Host.onToggleExperimentalComponents();
+
+      assert.strictEqual(ctrl.global.main.experimentalComponents, false);
+    });
+
+    test("clears blockingAction after completion", async () => {
+      const ctrl = makeKeyboardController();
+      bindKeyboard(ctrl);
+
+      await Host.onToggleExperimentalComponents();
+
+      assert.strictEqual(
+        ctrl.global.main.blockingAction,
+        false,
+        "blockingAction should be cleared"
+      );
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // onToggleDebug
+  // ---------------------------------------------------------------------------
+  suite("onToggleDebug", () => {
+    test("toggles debug.enabled from false to true", async () => {
+      const ctrl = makeKeyboardController();
+      ctrl.global.debug.enabled = false;
+      bindKeyboard(ctrl);
+
+      await Host.onToggleDebug();
+
+      assert.strictEqual(ctrl.global.debug.enabled, true);
+    });
+
+    test("toggles debug.enabled from true to false", async () => {
+      const ctrl = makeKeyboardController();
+      ctrl.global.debug.enabled = true;
+      bindKeyboard(ctrl);
+
+      await Host.onToggleDebug();
+
+      assert.strictEqual(ctrl.global.debug.enabled, false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // onDownloadAgentTraces
+  // ---------------------------------------------------------------------------
+  suite("onDownloadAgentTraces", () => {
+    afterEach(() => {
+      mock.restoreAll();
+    });
+
+    test("creates download link when traces exist", async () => {
+      const ctrl = makeKeyboardController();
+      let clickedHref = "";
+
+      bindKeyboard(ctrl, {
+        agentContext: {
+          exportTraces: () => [{ trace: "data" }],
+        },
+      } as unknown as Partial<AppServices>);
+
+      const created: HTMLAnchorElement[] = [];
+      const originalCreate = document.createElement.bind(document);
+      mock.method(document, "createElement", (tag: string) => {
+        const el = originalCreate(tag);
+        if (tag === "a") {
+          created.push(el as HTMLAnchorElement);
+          (el as HTMLAnchorElement).click = () => {
+            clickedHref = (el as HTMLAnchorElement).href;
+          };
+        }
+        return el;
+      });
+
+      await Host.onDownloadAgentTraces();
+
+      assert.ok(created.length > 0, "Should create an anchor element");
+      assert.ok(
+        created[0].download.startsWith("agent-traces-"),
+        "Download filename should start with 'agent-traces-'"
+      );
+      assert.ok(clickedHref.length > 0, "Anchor should be clicked");
+    });
+
+    test("does nothing when traces are empty", async () => {
+      const ctrl = makeKeyboardController();
+
+      bindKeyboard(ctrl, {
+        agentContext: {
+          exportTraces: () => [],
+        },
+      } as unknown as Partial<AppServices>);
+
+      let anchorCreated = false;
+      const originalCreate = document.createElement.bind(document);
+      mock.method(document, "createElement", (tag: string) => {
+        const el = originalCreate(tag);
+        if (tag === "a") anchorCreated = true;
+        return el;
+      });
+
+      await Host.onDownloadAgentTraces();
+
+      assert.strictEqual(
+        anchorCreated,
+        false,
+        "Should not create anchor when no traces"
+      );
     });
   });
 });

@@ -121,6 +121,7 @@ export function activateTriggers(): () => void {
     action: ActionWithTriggers<(...args: never[]) => Promise<unknown>>;
     name: string;
     priority: number;
+    triggerType: string;
   }> = [];
 
   for (const action of allActions) {
@@ -134,10 +135,12 @@ export function activateTriggers(): () => void {
 
     if (!actionWithTriggers.trigger) continue;
 
+    const trigger = actionWithTriggers.trigger();
     actionsWithTriggers.push({
       action: actionWithTriggers,
       name: actionWithTriggers.actionName ?? "unknown",
       priority: actionWithTriggers.priority ?? 0,
+      triggerType: trigger?.type ?? "unknown",
     });
   }
 
@@ -146,7 +149,7 @@ export function activateTriggers(): () => void {
 
   // Log activation order
   const activationOrder = actionsWithTriggers.map(
-    (a) => `${a.name} (priority: ${a.priority})`
+    (a) => `${a.name} (priority: ${a.priority}, type: ${a.triggerType})`
   );
   const logger = Utils.Logging.getLogger();
   logger.log(
