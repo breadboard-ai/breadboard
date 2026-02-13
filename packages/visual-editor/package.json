@@ -288,7 +288,7 @@
     "idb": "^8.0.3",
     "lit": "^3.3.1",
     "littlezipper": "^0.1.5",
-    "markdown-it": "^14.1.0",
+    "markdown-it": "^14.1.1",
     "marked": "^16.3.0",
     "mime": "^4.1.0",
     "mimetext": "^3.0.27",
