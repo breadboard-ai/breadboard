@@ -38,7 +38,7 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
     if (this.#dummies) return this.#dummies;
 
     this.#dummies = Object.fromEntries(
-      ["output", "query", "read", "write", "blob"].map((name) => {
+      ["query", "read", "write"].map((name) => {
         return [name, () => ({ $error: "Capability not available" })];
       })
     );

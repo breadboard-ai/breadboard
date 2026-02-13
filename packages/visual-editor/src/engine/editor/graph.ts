@@ -77,7 +77,7 @@ const operations = new Map<EditSpec["type"], EditOperation>([
 ]);
 
 export class Graph implements EditableGraph {
-  #mutable: MutableGraphImpl;
+  #mutable: MutableGraph;
   #graph: GraphDescriptor;
   #eventTarget: EventTarget = new EventTarget();
   #history: GraphEditHistory;
@@ -303,7 +303,11 @@ export class Graph implements EditableGraph {
 
     if (dryRun) {
       const graph = checkpoint;
-      const mutable = new MutableGraphImpl(graph, this.#mutable.store);
+      const mutable = new MutableGraphImpl(
+        graph,
+        this.#mutable.store,
+        this.#mutable.store.deps
+      );
       context = { graph, mutable, apply };
     } else {
       context = { graph: this.#graph, mutable: this.#mutable, apply };

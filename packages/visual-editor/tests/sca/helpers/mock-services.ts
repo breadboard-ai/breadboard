@@ -235,6 +235,13 @@ export function makeTestServices(options: TestServicesOptions = {}) {
       } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],
+    // Mock sandbox for run config
+    sandbox: (() => {}) as unknown as AppServices["sandbox"],
+    // Mock file system for run config
+    fileSystem: {
+      env: () => [],
+      createRunFileSystem: () => ({}),
+    } as unknown as AppServices["fileSystem"],
     // Flowgen mocks (optional)
     ...(flowGeneratorMock && {
       flowGenerator: flowGeneratorMock as FlowGenerator,

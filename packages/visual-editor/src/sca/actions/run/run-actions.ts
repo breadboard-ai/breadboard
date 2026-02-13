@@ -142,9 +142,9 @@ export const prepare = asAction(
     } = config;
 
     // Build the fileSystem for this run
-    const fileSystem = services.graphStore.fileSystem.createRunFileSystem({
+    const fileSystem = services.fileSystem.createRunFileSystem({
       graphUrl: url,
-      env: envFromGraphDescriptor(services.graphStore.fileSystem.env(), graph),
+      env: envFromGraphDescriptor(services.fileSystem.env(), graph),
       assets: assetsFromGraphDescriptor(graph),
     });
 
@@ -155,6 +155,7 @@ export const prepare = asAction(
       diagnostics: true,
       loader: services.loader,
       graphStore: services.graphStore,
+      sandbox: services.sandbox,
       fileSystem,
       // TODO: Remove this. Inputs from Settings is no longer a thing.
       inputs: inputsFromSettings(settings),

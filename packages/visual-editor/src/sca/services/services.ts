@@ -21,6 +21,7 @@ import {
   PersistentBackend,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
+import type { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createFileSystem } from "../../engine/file-system/index.js";
 import { envFromSettings } from "../../utils/env-from-settings.js";
@@ -66,6 +67,7 @@ export interface AppServices {
   mcpClientManager: McpClientManager;
   notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
+  sandbox: RunnableModuleFactory;
   signinAdapter: SigninAdapter;
   statusUpdates: StatusUpdatesService;
 }
@@ -189,6 +191,7 @@ export function services(
       mcpClientManager,
       notebookLmApiClient,
       runService: new RunService(),
+      sandbox,
       signinAdapter,
       statusUpdates: new StatusUpdatesService(),
     } satisfies AppServices;
