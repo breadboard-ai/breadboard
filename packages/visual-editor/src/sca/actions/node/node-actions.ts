@@ -660,7 +660,7 @@ export const onPaste = asAction(
 
     const result = await new ClipboardReader(
       controller.editor.graph.url ?? undefined,
-      services.graphStore
+      services.loader
     ).read();
 
     let boardContents: GraphDescriptor | undefined;
