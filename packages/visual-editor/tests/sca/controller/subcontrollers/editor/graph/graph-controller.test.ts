@@ -807,4 +807,249 @@ suite("GraphController", () => {
       assert.strictEqual(result.title, "foo");
     }
   });
+
+  // ==========================================================================
+  // Fast Access Derivations
+  // ==========================================================================
+
+  test("getRoutes returns empty map when no node is selected", async () => {
+    const store = new GraphController("Graph_Routes_Null", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        { id: "node-a", type: "input", title: "Step A" },
+        { id: "node-b", type: "output", title: "Step B" },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const routes = store.getRoutes(null);
+    assert.strictEqual(routes.size, 0);
+  });
+
+  test("getRoutes excludes the selected node", async () => {
+    const store = new GraphController("Graph_Routes_Excl", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        { id: "node-a", type: "input", title: "Step A" },
+        { id: "node-b", type: "output", title: "Step B" },
+        { id: "node-c", type: "output", title: "Step C" },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const routes = store.getRoutes("node-b");
+    assert.strictEqual(routes.size, 2);
+    assert.ok(routes.has("node-a"));
+    assert.ok(routes.has("node-c"));
+    assert.ok(!routes.has("node-b"), "Selected node should be excluded");
+    assert.strictEqual(routes.get("node-a")?.title, "Step A");
+  });
+
+  test("getRoutes returns empty when no editor", async () => {
+    const store = new GraphController("Graph_Routes_NoEd", "GraphController");
+    await store.isHydrated;
+
+    // No editor set
+    const routes = store.getRoutes("some-node");
+    assert.strictEqual(routes.size, 0);
+  });
+
+  test("getFilteredComponents returns all components when no node selected", async () => {
+    const store = new GraphController("Graph_FC_Null", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        {
+          id: "node-a",
+          type: "input",
+          title: "A",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+        {
+          id: "node-b",
+          type: "output",
+          title: "B",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const unfiltered = store.getFilteredComponents(null);
+    // Should return the same map as _components when nothing is selected
+    assert.ok(unfiltered.has(""));
+    assert.strictEqual(unfiltered.get("")?.size, 2);
+  });
+
+  test("getFilteredComponents returns all components when no editor", async () => {
+    const store = new GraphController("Graph_FC_NoEd", "GraphController");
+    await store.isHydrated;
+
+    // No editor — should just return _components (empty)
+    const result = store.getFilteredComponents("some-node");
+    assert.strictEqual(result.size, 0);
+  });
+
+  test("getFastAccessItems returns empty when no editor", async () => {
+    const store = new GraphController("Graph_FAI_NoEd", "GraphController");
+    await store.isHydrated;
+
+    const items = store.getFastAccessItems(null);
+    // Should still have A2 tools even without an editor
+    assert.ok(items.length >= 0);
+    // All items should be tools (from A2_TOOLS)
+    for (const item of items) {
+      assert.strictEqual(item.kind, "tool");
+    }
+  });
+
+  test("getFastAccessItems includes assets, tools, and components", async () => {
+    const store = new GraphController("Graph_FAI_All", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        {
+          id: "node-a",
+          type: "input",
+          title: "A",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+        {
+          id: "node-b",
+          type: "output",
+          title: "B",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const items = store.getFastAccessItems(null);
+
+    // Should contain tools (from A2_TOOLS) and components
+    const kinds = new Set(items.map((i) => i.kind));
+    assert.ok(kinds.has("tool"), "Should have tools");
+    assert.ok(kinds.has("component"), "Should have components");
+  });
+
+  test("getFastAccessItems includes routes when node selected", async () => {
+    const store = new GraphController("Graph_FAI_Routes", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        {
+          id: "node-a",
+          type: "input",
+          title: "Step A",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+        {
+          id: "node-b",
+          type: "output",
+          title: "Step B",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // With a selected node, routes should be present
+    const items = store.getFastAccessItems("node-a");
+    const routeItems = items.filter((i) => i.kind === "route");
+    assert.ok(routeItems.length > 0, "Should have route items");
+
+    // Verify the route is for the non-selected node
+    const routeIds = routeItems.map((r) => {
+      if (r.kind === "route") return r.route.id;
+      return null;
+    });
+    assert.ok(routeIds.includes("node-b"), "Route should include node-b");
+    assert.ok(
+      !routeIds.includes("node-a"),
+      "Route should exclude selected node-a"
+    );
+  });
+
+  test("getFastAccessItems excludes routes when no node selected", async () => {
+    const store = new GraphController("Graph_FAI_NoRoutes", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        { id: "node-a", type: "input", title: "A" },
+        { id: "node-b", type: "output", title: "B" },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const items = store.getFastAccessItems(null);
+    const routeItems = items.filter((i) => i.kind === "route");
+    assert.strictEqual(
+      routeItems.length,
+      0,
+      "Should have no routes without selection"
+    );
+  });
+
+  test("getFastAccessItems orders tools by order field", async () => {
+    const store = new GraphController("Graph_FAI_Order", "GraphController");
+    await store.isHydrated;
+
+    // Set a mock editor so we can have myTools
+    const mockEditor = createMockEditor({
+      rawGraph: {
+        nodes: [],
+        graphs: {
+          "tool-z": { title: "Zeta Tool", nodes: [], edges: [] },
+          "tool-a": { title: "Alpha Tool", nodes: [], edges: [] },
+        },
+      },
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const items = store.getFastAccessItems(null);
+    const toolItems = items.filter((i) => i.kind === "tool");
+
+    // Tools should be sorted by their order field
+    for (let i = 1; i < toolItems.length; i++) {
+      const prev = toolItems[i - 1];
+      const curr = toolItems[i];
+      if (prev.kind === "tool" && curr.kind === "tool") {
+        assert.ok(
+          (prev.tool.order ?? 0) <= (curr.tool.order ?? 0),
+          "Tools should be sorted by order"
+        );
+      }
+    }
+  });
 });

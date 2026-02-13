@@ -17,7 +17,10 @@ import { getAssetType } from "../../../utils/mime-type.js";
 import { icons } from "../../../styles/icons.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { jsonStringify } from "../../../utils/json-stringify.js";
-import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js";
+import {
+  createTrustedChicletHTML,
+  setTrustedHTML,
+} from "../../../trusted-types/chiclet-html.js";
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
@@ -445,13 +448,14 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
       const fragment = document.createDocumentFragment();
       const tempEl = document.createElement("div");
-      (tempEl as { innerHTML: string | TrustedHTML }).innerHTML =
-        createTrustedChicletHTML(
-          `{${JSON.stringify(part)}}`,
-          this.sca,
-          this.projectState,
-          this.subGraphId
-        );
+      const chicletHtml = createTrustedChicletHTML(
+        `{${JSON.stringify(part)}}`,
+        this.sca,
+        this.projectState,
+        this.subGraphId
+      );
+
+      setTrustedHTML(tempEl, chicletHtml);
       let appendedEl: ChildNode | undefined;
       if (tempEl.firstChild) {
         // We can just take the last item even though this is using a while.
@@ -925,15 +929,14 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
     const fragment = document.createDocumentFragment();
     const tempEl = document.createElement("div");
-    (
-      tempEl as {
-        innerHTML: string | TrustedHTML;
-      }
-    ).innerHTML = createTrustedChicletHTML(
-      evt.clipboardData.getData("text"),
-      this.sca,
-      this.projectState,
-      this.subGraphId
+    setTrustedHTML(
+      tempEl,
+      createTrustedChicletHTML(
+        evt.clipboardData.getData("text"),
+        this.sca,
+        this.projectState,
+        this.subGraphId
+      )
     );
 
     while (tempEl.firstChild) {
@@ -1069,17 +1072,19 @@ export class TextEditor extends SignalWatcher(LitElement) {
     const hasTarget = this.#fastAccessTarget !== null;
 
     this.#fastAccessRef.value.selectedIndex = 0;
-    this.#fastAccessRef.value.showAssets = !hasTarget;
-    this.#fastAccessRef.value.showTools = !hasTarget;
-    this.#fastAccessRef.value.showComponents = !hasTarget;
-    this.#fastAccessRef.value.showRoutes = hasTarget;
-    this.#fastAccessRef.value.showAgentModeTools =
-      this.isAgentMode && !hasTarget;
+    if (this.sca) {
+      this.sca.controller.editor.fastAccess.fastAccessMode = hasTarget
+        ? "route"
+        : "browse";
+    }
     this.#isUsingFastAccess = true;
   }
 
   #hideFastAccess() {
     this.#isUsingFastAccess = false;
+    if (this.sca) {
+      this.sca.controller.editor.fastAccess.fastAccessMode = null;
+    }
     if (!this.#fastAccessRef.value) {
       return;
     }
@@ -1099,11 +1104,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
       return;
     }
 
-    (
-      this.#editorRef.value as {
-        innerHTML: string | TrustedHTML;
-      }
-    ).innerHTML = this.#renderableValue;
+    setTrustedHTML(this.#editorRef.value, this.#renderableValue);
     this.#ensureAllChicletsHaveSpace();
     this.#togglePlaceholder();
   }
@@ -1260,12 +1261,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
           this.#captureEditorValue();
           this.#togglePlaceholder();
         }}
-        .graphId=${this.subGraphId}
-        .nodeId=${this.nodeId}
-        .showAgentModeTools=${this.#fastAccessTarget === null}
-        .showAssets=${this.#fastAccessTarget === null}
-        .showTools=${this.#fastAccessTarget === null}
-        .state=${this.projectState?.fastAccess}
+        .integrations=${this.projectState?.integrations ?? null}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;
   }

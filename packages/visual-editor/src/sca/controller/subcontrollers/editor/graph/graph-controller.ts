@@ -22,7 +22,11 @@ import {
   OutputValues,
   PortIdentifier,
 } from "@breadboard-ai/types";
-import { err, NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
+import {
+  err,
+  NOTEBOOKLM_TOOL_PATH,
+  willCreateCycle,
+} from "@breadboard-ai/utils";
 import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
@@ -34,6 +38,7 @@ import {
   GraphAsset,
 } from "../../../../../ui/state/types.js";
 import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
+import type { FastAccessItem } from "../../../../types.js";
 
 /**
  * Context for tracking node configuration changes.
@@ -155,15 +160,6 @@ export class GraphController extends RootController {
 
   @field()
   accessor readOnly = false;
-
-  /**
-   * The currently selected node ID for step editing.
-   * TODO: Remove this once SelectionController is fully wired up.
-   * At that point, fast-access.ts should read from SelectionController
-   * directly.
-   */
-  @field()
-  accessor selectedNodeId: NodeIdentifier | null = null;
 
   /**
    * The graph URL parsed as a URL object, or null if no URL.
@@ -454,6 +450,125 @@ export class GraphController extends RootController {
     this._myTools = new Map();
     this._agentModeTools = new Map();
     this._components = new Map();
+  }
+
+  // =========================================================================
+  // Fast Access Derivations
+  // =========================================================================
+
+  /**
+   * Derives the set of route targets available from the currently selected node.
+   * Returns all nodes in the main graph except the selected one.
+   * Returns an empty map when no node is selected.
+   *
+   * Accepts `selectedNodeId` as a parameter because GraphController cannot
+   * access its sibling SelectionController directly. Callers pass
+   * `sca.controller.editor.selection.selectedNodeId`.
+   */
+  getRoutes(
+    selectedNodeId: NodeIdentifier | null
+  ): ReadonlyMap<string, Component> {
+    if (!selectedNodeId) {
+      return new Map();
+    }
+    const inspectable = this._editor?.inspect("");
+    if (!inspectable) {
+      return new Map();
+    }
+    return new Map<string, Component>(
+      inspectable
+        .nodes()
+        .filter((node) => node.descriptor.id !== selectedNodeId)
+        .map((node) => {
+          const id = node.descriptor.id;
+          return [
+            id,
+            {
+              id,
+              title: node.title(),
+              metadata: node.currentDescribe().metadata,
+            },
+          ];
+        })
+    );
+  }
+
+  /**
+   * Returns components with cycle-creating nodes filtered out for the
+   * currently selected node. When no node is selected, returns all components.
+   *
+   * Accepts `selectedNodeId` as a parameter because GraphController cannot
+   * access its sibling SelectionController directly.
+   */
+  getFilteredComponents(
+    selectedNodeId: NodeIdentifier | null
+  ): ReadonlyMap<GraphIdentifier, Components> {
+    if (!selectedNodeId) {
+      return this._components;
+    }
+    const inspectable = this._editor?.inspect("");
+    if (!inspectable) {
+      return this._components;
+    }
+    const components = this._components.get("");
+    if (!components) {
+      return new Map();
+    }
+
+    const graph = inspectable.raw();
+    const validComponents = [...components].filter(
+      ([id]) => !willCreateCycle({ to: selectedNodeId, from: id }, graph)
+    );
+
+    return new Map<GraphIdentifier, Components>([
+      ["", new Map(validComponents)],
+    ]);
+  }
+
+  /**
+   * Builds a flat, ordered list of all items available in the Fast Access menu.
+   * This replaces the brittle index-offset arithmetic that was previously in
+   * the UI component's `willUpdate()` and `#emitCurrentItem()`.
+   *
+   * The order is: assets → tools → components → routes.
+   * Integration items are NOT included here — they remain on the legacy
+   * Integrations manager until that migration is complete.
+   *
+   * @param selectedNodeId The currently selected node (for routes and
+   *   filtered components). Pass `null` when no node is selected.
+   */
+  getFastAccessItems(selectedNodeId: NodeIdentifier | null): FastAccessItem[] {
+    const items: FastAccessItem[] = [];
+
+    // Assets
+    for (const asset of this._graphAssets.values()) {
+      items.push({ kind: "asset", asset });
+    }
+
+    // Tools (A2 tools + myTools, sorted by order)
+    const allTools = [...this.tools.values(), ...this._myTools.values()].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0)
+    );
+    for (const tool of allTools) {
+      items.push({ kind: "tool", tool });
+    }
+
+    // Components (filtered for cycles)
+    const filteredComponents = this.getFilteredComponents(selectedNodeId);
+    const graphComponents = filteredComponents.get("");
+    if (graphComponents) {
+      for (const component of graphComponents.values()) {
+        items.push({ kind: "component", component });
+      }
+    }
+
+    // Routes
+    const routes = this.getRoutes(selectedNodeId);
+    for (const route of routes.values()) {
+      items.push({ kind: "route", route });
+    }
+
+    return items;
   }
 
   /**

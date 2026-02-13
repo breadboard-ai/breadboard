@@ -45,12 +45,12 @@ export const updateSidebarOnSelectionChange = asAction(
   },
   async (): Promise<void> => {
     const { controller } = bind;
-    const selectionSize = controller.editor.selection.size;
+    const nodeCount = controller.editor.selection.selection.nodes.size;
     const currentSection = controller.editor.sidebar.section;
 
-    if (selectionSize === 0 && currentSection === "editor") {
+    if (nodeCount === 0 && currentSection === "editor") {
       controller.editor.sidebar.section = "preview";
-    } else if (selectionSize > 0 && currentSection !== "editor") {
+    } else if (nodeCount > 0 && currentSection !== "editor") {
       controller.editor.sidebar.section = "editor";
     }
   }

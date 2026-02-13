@@ -66,6 +66,10 @@ class Controller implements AppController {
         "Editor_Theme",
         "ThemeController"
       ),
+      fastAccess: new Editor.FastAccess.FastAccessController(
+        "Editor_FastAccess",
+        "FastAccessController"
+      ),
     };
 
     this.home = {
@@ -214,6 +218,7 @@ export interface AppController extends DebuggableAppController {
     step: Editor.Step.StepController;
     share: Editor.Share.ShareController;
     theme: Editor.Theme.ThemeController;
+    fastAccess: Editor.FastAccess.FastAccessController;
   };
   home: {
     recent: Home.RecentBoardsController;

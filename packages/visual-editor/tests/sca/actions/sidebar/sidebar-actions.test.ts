@@ -26,8 +26,8 @@ suite("Sidebar Actions", () => {
         controller: {
           editor: {
             selection: {
-              get size() {
-                return 2;
+              selection: {
+                nodes: new Set(["node-a", "node-b"]),
               },
             },
             sidebar: {
@@ -59,8 +59,8 @@ suite("Sidebar Actions", () => {
         controller: {
           editor: {
             selection: {
-              get size() {
-                return 0;
+              selection: {
+                nodes: new Set(),
               },
             },
             sidebar: {
@@ -92,8 +92,8 @@ suite("Sidebar Actions", () => {
         controller: {
           editor: {
             selection: {
-              get size() {
-                return 3;
+              selection: {
+                nodes: new Set(["a", "b", "c"]),
               },
             },
             sidebar: {
@@ -125,8 +125,8 @@ suite("Sidebar Actions", () => {
         controller: {
           editor: {
             selection: {
-              get size() {
-                return 0;
+              selection: {
+                nodes: new Set(),
               },
             },
             sidebar: {
@@ -158,8 +158,8 @@ suite("Sidebar Actions", () => {
         controller: {
           editor: {
             selection: {
-              get size() {
-                return 0;
+              selection: {
+                nodes: new Set(),
               },
             },
             sidebar: {
@@ -191,8 +191,8 @@ suite("Sidebar Actions", () => {
         controller: {
           editor: {
             selection: {
-              get size() {
-                return 1;
+              selection: {
+                nodes: new Set(["node-a"]),
               },
             },
             sidebar: {
@@ -234,8 +234,8 @@ suite("Sidebar Actions", () => {
         controller: {
           editor: {
             selection: {
-              get size() {
-                return 0; // No selection after refresh
+              selection: {
+                nodes: new Set(), // No selection after refresh
               },
             },
             sidebar: {
