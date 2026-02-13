@@ -46,7 +46,7 @@ suite("Logger", () => {
 
     assert.strictEqual(
       infoMock.mock.calls[0].arguments[0],
-      "[\x1B[104;97m Item:get \x1B[m]"
+      "[\x1B[104;97m Item: get \x1B[m]"
     );
     assert.strictEqual(infoMock.mock.calls[0].arguments[1], "Info");
   });
