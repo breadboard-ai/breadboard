@@ -11,8 +11,7 @@ import {
   MutableGraphStore,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import * as BreadboardUI from "../ui/index.js";
-import { isShortsUri } from "../ui/utils/youtube.js";
+import * as YouTube from "../ui/utils/youtube.js";
 import { asBase64 } from "../data/common.js";
 
 export { ClipboardReader };
@@ -125,8 +124,8 @@ function tryParsingYouTubeUrl(s: string) {
     isWatchUri,
     convertShareUriToEmbedUri,
     convertWatchOrShortsUriToEmbedUri,
-  } = BreadboardUI.Utils.YouTube;
-  if (isWatchUri(fileUri) || isShortsUri(fileUri)) {
+  } = YouTube;
+  if (isWatchUri(fileUri) || YouTube.isShortsUri(fileUri)) {
     fileUri = convertWatchOrShortsUriToEmbedUri(fileUri);
   } else if (isShareUri(fileUri)) {
     fileUri = convertShareUriToEmbedUri(fileUri);

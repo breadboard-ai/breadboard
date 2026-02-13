@@ -304,6 +304,8 @@ class Main extends MainBase {
       ) => {
         this.lastPointerPosition.x = evt.x;
         this.lastPointerPosition.y = evt.y;
+        this.sca.controller.global.main.pointerLocation.x = evt.x;
+        this.sca.controller.global.main.pointerLocation.y = evt.y;
       }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
         const message: IterateOnPromptMessage = {

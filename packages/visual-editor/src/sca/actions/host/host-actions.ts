@@ -13,9 +13,15 @@
  * that affect global application state (mode, flags, locks, auth).
  */
 
-import { makeAction } from "../binder.js";
-import { asAction, ActionMode, stateEventTrigger } from "../../coordination.js";
+import { makeAction, withBlockingAction } from "../binder.js";
+import {
+  asAction,
+  ActionMode,
+  stateEventTrigger,
+  keyboardTrigger,
+} from "../../coordination.js";
 import type { StateEvent } from "../../../ui/events/events.js";
+import { ToastType } from "../../../ui/events/events.js";
 import { parseUrl } from "../../../ui/utils/urls.js";
 
 export { bind };
@@ -154,5 +160,113 @@ export const userSignIn = asAction(
   },
   async (): Promise<void> => {
     // Noop for main routing. This event is only handled in Lite mode.
+  }
+);
+
+// =============================================================================
+// Keyboard-triggered Actions
+// =============================================================================
+
+/**
+ * Toggle experimental components on/off.
+ *
+ * **Triggers:** `Cmd+Shift+e` / `Ctrl+Shift+e`
+ */
+export const onToggleExperimentalComponents = asAction(
+  "Host.onToggleExperimentalComponents",
+  {
+    mode: ActionMode.Awaits,
+    triggeredBy: () =>
+      keyboardTrigger("Toggle Experimental Components", [
+        "Cmd+Shift+e",
+        "Ctrl+Shift+e",
+      ]),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    await withBlockingAction(
+      controller,
+      async () => {
+        controller.global.main.experimentalComponents =
+          !controller.global.main.experimentalComponents;
+      },
+      {
+        alwaysNotify: true,
+        complete: `Experimental Components ${controller.global.main.experimentalComponents ? "Enabled" : "Disabled"}`,
+        completeType: ToastType.INFORMATION,
+      }
+    );
+  }
+);
+
+/**
+ * Toggle debug mode on/off.
+ *
+ * **Triggers:** `Cmd+Shift+d` / `Ctrl+Shift+d`
+ */
+export const onToggleDebug = asAction(
+  "Host.onToggleDebug",
+  {
+    mode: ActionMode.Awaits,
+    triggeredBy: () =>
+      keyboardTrigger("Toggle Debug", ["Cmd+Shift+d", "Ctrl+Shift+d"]),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    await withBlockingAction(
+      controller,
+      async () => {
+        controller.global.debug.enabled = !controller.global.debug.enabled;
+      },
+      {
+        alwaysNotify: true,
+        complete: `Debug ${controller.global.debug.enabled ? "Enabled" : "Disabled"}`,
+        completeType: ToastType.INFORMATION,
+      }
+    );
+  }
+);
+
+/**
+ * Download agent traces as a JSON file.
+ *
+ * **Triggers:** `Cmd+Shift+x` / `Ctrl+Shift+x`
+ */
+export const onDownloadAgentTraces = asAction(
+  "Host.onDownloadAgentTraces",
+  {
+    mode: ActionMode.Awaits,
+    triggeredBy: () =>
+      keyboardTrigger("Download Agent Traces", ["Cmd+Shift+x", "Ctrl+Shift+x"]),
+  },
+  async (): Promise<void> => {
+    const { controller, services } = bind;
+    await withBlockingAction(
+      controller,
+      async () => {
+        const traces = services.agentContext.exportTraces();
+        if (traces.length === 0) {
+          return;
+        }
+        const blob = new Blob([JSON.stringify(traces, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const now = new Date();
+        const pad = (n: number) => n.toString().padStart(2, "0");
+        const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+        a.download = `agent-traces-${timestamp}.log.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      {
+        alwaysNotify: true,
+        pending: "Downloading agent traces...",
+        complete: "Agent traces downloaded",
+        completeType: ToastType.INFORMATION,
+      }
+    );
   }
 );

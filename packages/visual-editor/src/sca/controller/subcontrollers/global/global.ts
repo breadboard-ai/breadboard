@@ -70,4 +70,11 @@ export class GlobalController extends RootController {
    */
   @field()
   accessor viewError: string = "";
+
+  /**
+   * Last known pointer position, updated from the editor's pointer events.
+   * Used by paste/duplicate to position new nodes near the cursor.
+   */
+  @field({ deep: true })
+  accessor pointerLocation: { x: number; y: number } = { x: 0, y: 0 };
 }

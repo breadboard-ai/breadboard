@@ -57,8 +57,6 @@ import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 
 import { Admin } from "./admin.js";
-import { keyboardCommands } from "./commands/commands.js";
-import { KeyboardCommandDeps } from "./commands/types.js";
 import { eventRoutes } from "./event-routing/event-routing.js";
 
 import { MainArguments } from "./types/types.js";
@@ -164,7 +162,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
   readonly #hideTooltipBound = this.#hideTooltip.bind(this);
-  readonly #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
   #urlEffectDisposer: (() => void) | null = null;
   #lastHandledUrl: string | null = null;
 
@@ -345,7 +342,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.addEventListener("pointerdown", this.#hideTooltipBound);
-    window.addEventListener("keydown", this.#onKeyboardShortCut);
 
     if (this.sca.services.embedHandler) {
       this.embedState = embedState();
@@ -379,7 +375,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.removeEventListener("pointerdown", this.#hideTooltipBound);
-    window.removeEventListener("keydown", this.#onKeyboardShortCut);
 
     // Dispose URL change effect
     if (this.#urlEffectDisposer) {
@@ -717,122 +712,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }
 
     this.tooltipRef.value.visible = false;
-  }
-
-  #receivesInputPreference(target: EventTarget) {
-    return (
-      target instanceof HTMLInputElement ||
-      target instanceof HTMLTextAreaElement ||
-      target instanceof HTMLSelectElement ||
-      target instanceof HTMLCanvasElement ||
-      (target instanceof HTMLElement &&
-        (target.contentEditable === "true" ||
-          target.contentEditable === "plaintext-only"))
-    );
-  }
-
-  #handlingShortcut = false;
-  async #onKeyboardShortcut(evt: KeyboardEvent) {
-    if (this.#handlingShortcut) {
-      return;
-    }
-
-    // Check if there's an input preference before actioning any main keyboard
-    // command. This is often something like the text inputs which have
-    // preference over these more general keyboard commands.
-    if (
-      evt.composedPath().some((target) => this.#receivesInputPreference(target))
-    ) {
-      return;
-    }
-
-    let key = evt.key;
-    if (key === "Meta" || key === "Ctrl" || key === "Shift") {
-      return;
-    }
-    if (evt.shiftKey) {
-      key = `Shift+${key}`;
-    }
-    if (evt.metaKey) {
-      key = `Cmd+${key}`;
-    }
-    if (evt.ctrlKey) {
-      key = `Ctrl+${key}`;
-    }
-
-    const deps: KeyboardCommandDeps = {
-      runtime: this.runtime,
-      sca: this.sca,
-      tab: this.tab,
-      originalEvent: evt,
-      pointerLocation: this.lastPointerPosition,
-      settings: this.settings,
-      strings: Strings,
-    } as const;
-
-    for (const [keys, command] of keyboardCommands) {
-      if (keys.includes(key) && command.willHandle(this.tab, evt)) {
-        evt.preventDefault();
-        evt.stopImmediatePropagation();
-
-        this.#handlingShortcut = true;
-
-        // Toast.
-        let toastId;
-        const notifyUser = () => {
-          toastId = this.sca.controller.global.toasts.toast(
-            command.messagePending ?? Strings.from("STATUS_GENERIC_WORKING"),
-            BreadboardUI.Events.ToastType.PENDING,
-            true
-          );
-        };
-
-        // Either notify or set a timeout for notifying the user.
-        let notifyUserOnTimeout;
-        if (command.alwaysNotify) {
-          notifyUser();
-        } else {
-          notifyUserOnTimeout = setTimeout(
-            notifyUser,
-            command.messageTimeout ?? 500
-          );
-        }
-
-        // Perform the command.
-        try {
-          this.sca.controller.global.main.blockingAction = true;
-          await command.do(deps);
-          this.sca.controller.global.main.blockingAction = false;
-
-          // Replace the toast.
-          if (toastId) {
-            this.sca.controller.global.toasts.toast(
-              command.messageComplete ?? Strings.from("STATUS_GENERIC_WORKING"),
-              command.messageType ?? BreadboardUI.Events.ToastType.INFORMATION,
-              false,
-              toastId
-            );
-          }
-        } catch (err) {
-          const commandErr = err as { message: string };
-          this.sca.controller.global.toasts.toast(
-            commandErr.message ?? Strings.from("ERROR_GENERIC"),
-            BreadboardUI.Events.ToastType.ERROR,
-            false,
-            toastId
-          );
-        } finally {
-          // Clear the timeout in case it's not fired yet.
-          if (notifyUserOnTimeout) {
-            clearTimeout(notifyUserOnTimeout);
-          }
-          this.sca.controller.global.main.blockingAction = false;
-        }
-
-        this.#handlingShortcut = false;
-        break;
-      }
-    }
   }
 
   /**
