@@ -96,7 +96,8 @@ export interface DebugEntry {
 }
 
 export interface DebugLog {
-  type: "error" | "info" | "warning" | "verbose";
+  type: "error" | "info" | "warning" | "verbose" | "group";
+  title?: string;
   args: string[];
 }
 
@@ -105,6 +106,7 @@ export interface DebugFormatter {
   info(...args: unknown[]): DebugLog;
   warning(...args: unknown[]): DebugLog;
   verbose(...args: unknown[]): DebugLog;
+  group(...args: unknown[]): DebugLog;
 }
 
 export interface DebugParams<Value> {

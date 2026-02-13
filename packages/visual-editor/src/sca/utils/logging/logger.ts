@@ -21,12 +21,16 @@ export function getLogger(_appController?: unknown) {
 
 class Logger {
   log(logMsg: DebugLog, label = "") {
-    this.logItem(logMsg.type, "", label, ...logMsg.args);
+    let fn = "";
+    if (logMsg.type === "group") {
+      fn = logMsg.title ?? "";
+    }
+    this.logItem(logMsg.type, fn, label, ...logMsg.args);
   }
 
   logItem(
-    type: "info" | "warning" | "error" | "verbose",
-    fn: "get" | "set" | "",
+    type: "info" | "warning" | "error" | "verbose" | "group",
+    fn: string,
     name: string,
     ...args: unknown[]
   ) {
@@ -50,12 +54,19 @@ class Logger {
         code = "\x1B[42;97m";
         method = console.debug;
         break;
+      case "group":
+        code = "\x1B[104;97m";
+        method = console.log;
+        break;
     }
 
-    method.call(
-      console,
-      `[${code} ${name}${fn ? `:${fn}` : ""} ${end}]`,
-      ...args
-    );
+    const prefix = `[${code} ${name}${fn ? `: ${fn}` : ""} ${end}]`;
+    if (type === "group") {
+      console.groupCollapsed(prefix);
+      method.call(console, ...args);
+      console.groupEnd();
+      return;
+    }
+    method.call(console, prefix, ...args);
   }
 }

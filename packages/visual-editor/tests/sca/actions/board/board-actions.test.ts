@@ -5,10 +5,11 @@
  */
 
 import assert from "node:assert";
-import { suite, test, beforeEach } from "node:test";
+import { suite, test, beforeEach, before, after } from "node:test";
 import * as Board from "../../../../src/sca/actions/board/board-actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
+import type { EditHistoryCreator, GraphTheme } from "@breadboard-ai/types";
 import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
 import { SnackType } from "../../../../src/ui/types/types.js";
 import {
@@ -17,6 +18,8 @@ import {
   makeMockBoardServer,
 } from "../../helpers/index.js";
 import { coordination } from "../../../../src/sca/coordination.js";
+import { StateEvent } from "../../../../src/ui/events/events.js";
+import { setDOM, unsetDOM } from "../../../fake-dom.js";
 
 /**
  * Creates a mock controller with the given graph state.
@@ -787,6 +790,391 @@ suite("Board Actions", () => {
         0,
         "Status should not be set when event is undefined"
       );
+    });
+  });
+
+  // ===========================================================================
+  // Event-Triggered Board Actions
+  // ===========================================================================
+
+  suite("onLoad (event-triggered)", () => {
+    before(() => setDOM());
+    after(() => unsetDOM());
+
+    test("calls router.go with detail URL", async () => {
+      let lastGo: unknown = null;
+      let lastRecentAdd: unknown = null;
+
+      const mockController = {
+        global: {
+          main: {
+            mode: "canvas",
+            isHydrated: Promise.resolve(),
+          },
+        },
+        router: {
+          go: (params: unknown) => {
+            lastGo = params;
+          },
+        },
+        home: {
+          recent: {
+            add: (entry: unknown) => {
+              lastRecentAdd = entry;
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      const evt = new StateEvent({
+        eventType: "board.load",
+        url: "drive:/my-board",
+        shared: false,
+      });
+      await Board.onLoad(evt);
+
+      assert.ok(lastGo, "router.go should have been called");
+      assert.strictEqual(
+        (lastGo as Record<string, unknown>).flow,
+        "drive:/my-board"
+      );
+      assert.ok(lastRecentAdd, "recent.add should have been called");
+    });
+  });
+
+  suite("onRename (event-triggered)", () => {
+    test("calls editor.edit with changegraphmetadata", async () => {
+      const editCalls: unknown[] = [];
+      const mockEditor = {
+        edit: async (edits: unknown[], label: string) => {
+          editCalls.push({ edits, label });
+        },
+      };
+
+      const mockController = {
+        editor: {
+          graph: {
+            editor: mockEditor,
+            readOnly: false,
+          },
+        },
+        global: {
+          main: { blockingAction: false },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      const evt = new StateEvent({
+        eventType: "board.rename",
+        title: "New Title",
+        description: "New Description",
+      });
+      await Board.onRename(evt);
+
+      assert.strictEqual(editCalls.length, 1);
+      const call = editCalls[0] as { edits: { type: string }[] };
+      assert.strictEqual(call.edits[0].type, "changegraphmetadata");
+    });
+
+    test("returns early when no editor", async () => {
+      const mockController = {
+        editor: {
+          graph: {
+            editor: null,
+            readOnly: false,
+          },
+        },
+        global: {
+          main: { blockingAction: false },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      const evt = new StateEvent({
+        eventType: "board.rename",
+        title: "New Title",
+        description: null,
+      });
+      // Should not throw
+      await Board.onRename(evt);
+    });
+  });
+
+  suite("onTogglePin (event-triggered)", () => {
+    test("calls recent.setPin with url and pin status", async () => {
+      let setPinArgs: unknown = null;
+
+      const mockController = {
+        home: {
+          recent: {
+            setPin: (url: string, pinned: boolean) => {
+              setPinArgs = { url, pinned };
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      const evt = new StateEvent({
+        eventType: "board.togglepin",
+        url: "drive:/my-board",
+        status: "pin",
+      });
+      await Board.onTogglePin(evt);
+
+      assert.ok(setPinArgs, "setPin should have been called");
+      assert.strictEqual(
+        (setPinArgs as Record<string, unknown>).url,
+        "drive:/my-board"
+      );
+      assert.strictEqual((setPinArgs as Record<string, unknown>).pinned, true);
+    });
+
+    test("unpins when status is unpin", async () => {
+      let setPinArgs: unknown = null;
+
+      const mockController = {
+        home: {
+          recent: {
+            setPin: (url: string, pinned: boolean) => {
+              setPinArgs = { url, pinned };
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      const evt = new StateEvent({
+        eventType: "board.togglepin",
+        url: "drive:/my-board",
+        status: "unpin",
+      });
+      await Board.onTogglePin(evt);
+
+      assert.strictEqual((setPinArgs as Record<string, unknown>).pinned, false);
+    });
+  });
+
+  suite("onUndo (event-triggered)", () => {
+    test("calls history.undo when available", async () => {
+      let undoCalled = false;
+      const mockController = {
+        editor: {
+          graph: {
+            readOnly: false,
+            editor: {
+              history: () => ({
+                canUndo: () => true,
+                undo: async () => {
+                  undoCalled = true;
+                },
+              }),
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      await Board.onUndo();
+      assert.strictEqual(undoCalled, true, "undo should have been called");
+    });
+
+    test("skips when readOnly", async () => {
+      let undoCalled = false;
+      const mockController = {
+        editor: {
+          graph: {
+            readOnly: true,
+            editor: {
+              history: () => ({
+                canUndo: () => true,
+                undo: async () => {
+                  undoCalled = true;
+                },
+              }),
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      await Board.onUndo();
+      assert.strictEqual(undoCalled, false, "undo should not be called");
+    });
+
+    test("skips when canUndo returns false", async () => {
+      let undoCalled = false;
+      const mockController = {
+        editor: {
+          graph: {
+            readOnly: false,
+            editor: {
+              history: () => ({
+                canUndo: () => false,
+                undo: async () => {
+                  undoCalled = true;
+                },
+              }),
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      await Board.onUndo();
+      assert.strictEqual(undoCalled, false, "undo should not be called");
+    });
+  });
+
+  suite("onRedo (event-triggered)", () => {
+    test("calls history.redo when available", async () => {
+      let redoCalled = false;
+      const mockController = {
+        editor: {
+          graph: {
+            readOnly: false,
+            editor: {
+              history: () => ({
+                canRedo: () => true,
+                redo: async () => {
+                  redoCalled = true;
+                },
+              }),
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      await Board.onRedo();
+      assert.strictEqual(redoCalled, true, "redo should have been called");
+    });
+
+    test("skips when readOnly", async () => {
+      let redoCalled = false;
+      const mockController = {
+        editor: {
+          graph: {
+            readOnly: true,
+            editor: {
+              history: () => ({
+                canRedo: () => true,
+                redo: async () => {
+                  redoCalled = true;
+                },
+              }),
+            },
+          },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      await Board.onRedo();
+      assert.strictEqual(redoCalled, false, "redo should not be called");
+    });
+  });
+
+  suite("onReplace (event-triggered)", () => {
+    test("sets pendingGraphReplacement on graph controller", async () => {
+      const mockController = {
+        editor: {
+          graph: {
+            pendingGraphReplacement: null as unknown,
+          },
+        },
+      };
+
+      Board.bind({
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        controller: mockController as unknown as AppController,
+      });
+
+      const replacement = { nodes: [], edges: [] };
+      const theme = {} as GraphTheme;
+      const creator = {} as EditHistoryCreator;
+      const evt = new StateEvent({
+        eventType: "board.replace",
+        replacement,
+        theme,
+        creator,
+      });
+      await Board.onReplace(evt);
+
+      assert.ok(
+        mockController.editor.graph.pendingGraphReplacement,
+        "pendingGraphReplacement should be set"
+      );
+      const pending = mockController.editor.graph.pendingGraphReplacement as {
+        replacement: unknown;
+        theme: unknown;
+        creator: unknown;
+      };
+      assert.strictEqual(pending.replacement, replacement);
+      assert.strictEqual(pending.theme, theme);
+      assert.strictEqual(pending.creator, creator);
     });
   });
 });

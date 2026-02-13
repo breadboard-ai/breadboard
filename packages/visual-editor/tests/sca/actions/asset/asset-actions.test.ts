@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert";
-import { suite, test } from "node:test";
+import { before, after, beforeEach, suite, test } from "node:test";
 import * as Asset from "../../../../src/sca/actions/asset/asset-actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
@@ -16,6 +16,9 @@ import {
 import { GraphDescriptor, AssetPath } from "@breadboard-ai/types";
 import type { GraphAsset } from "../../../../src/ui/state/types.js";
 import { onGraphVersionChange } from "../../../../src/sca/actions/asset/triggers.js";
+import { StateEvent } from "../../../../src/ui/events/events.js";
+import { coordination } from "../../../../src/sca/coordination.js";
+import { setDOM, unsetDOM } from "../../../fake-dom.js";
 
 suite("Asset Actions", () => {
   suite("syncFromGraph", () => {
@@ -1058,6 +1061,146 @@ suite("Asset Triggers", () => {
         false,
         "Should return false when no graph"
       );
+    });
+  });
+});
+
+// =============================================================================
+// Event-Triggered Asset Actions
+// =============================================================================
+
+suite("Asset Actions — Event-Triggered", () => {
+  before(() => setDOM());
+  after(() => unsetDOM());
+
+  beforeEach(() => {
+    coordination.reset();
+  });
+
+  function bindAssetForEvent(editor: unknown) {
+    Asset.bind({
+      controller: {
+        editor: {
+          graph: {
+            editor,
+            url: "https://example.com/board.json",
+            graphAssets: new Map(),
+          },
+        },
+        global: {
+          main: { blockingAction: false },
+          snackbars: {
+            snackbar: () => {},
+            removeSnackbar: () => {},
+          },
+        },
+      } as unknown as AppController,
+      services: {
+        stateEventBus: new EventTarget(),
+        googleDriveBoardServer: {
+          dataPartTransformer: () => ({
+            addEphemeralBlob: async () => ({
+              storedData: { handle: "blob:test", mimeType: "text/plain" },
+            }),
+            persistPart: async (_url: URL, part: unknown) => part,
+            persistentToEphemeral: async (part: unknown) => part,
+            toFileData: async (_url: URL, part: unknown) => part,
+          }),
+        },
+      } as unknown as AppServices,
+    });
+  }
+
+  suite("onChangeAssetEdge", () => {
+    test("applies ChangeAssetEdge transform for add", async () => {
+      let appliedTransform: unknown = null;
+      const mockEditor = {
+        apply: async (transform: unknown) => {
+          appliedTransform = transform;
+          return { success: true };
+        },
+      };
+
+      bindAssetForEvent(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "asset.changeedge",
+        changeType: "add" as const,
+        assetEdge: {
+          direction: "load",
+          nodeId: "node-1",
+          assetPath: "test.txt" as AssetPath,
+        },
+        subGraphId: null,
+      });
+      await Asset.onChangeAssetEdge(evt);
+
+      assert.ok(appliedTransform, "editor.apply should have been called");
+    });
+
+    test("returns early when no editor", async () => {
+      bindAssetForEvent(null);
+
+      const evt = new StateEvent({
+        eventType: "asset.changeedge",
+        changeType: "remove" as const,
+        assetEdge: {
+          direction: "load",
+          nodeId: "node-1",
+          assetPath: "test.txt" as AssetPath,
+        },
+        subGraphId: null,
+      });
+      // Should not throw
+      await Asset.onChangeAssetEdge(evt);
+    });
+  });
+
+  suite("onAddAssets", () => {
+    test("calls addGraphAsset for each asset in the event", async () => {
+      const editCalls: unknown[][] = [];
+      const mockEditor = {
+        edit: async (edits: unknown[]) => {
+          editCalls.push(edits);
+          return { success: true };
+        },
+        apply: async () => ({ success: true }),
+      };
+
+      bindAssetForEvent(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "asset.add",
+        assets: [
+          {
+            name: "doc.txt",
+            type: "content",
+            path: "doc.txt" as AssetPath,
+            data: { role: "user", parts: [{ text: "hello" }] },
+          },
+        ],
+      });
+      await Asset.onAddAssets(evt);
+
+      assert.ok(editCalls.length > 0, "editor.edit should have been called");
+    });
+
+    test("returns early when no editor", async () => {
+      bindAssetForEvent(null);
+
+      const evt = new StateEvent({
+        eventType: "asset.add",
+        assets: [
+          {
+            name: "doc.txt",
+            type: "content",
+            path: "doc.txt" as AssetPath,
+            data: { role: "user", parts: [{ text: "hello" }] },
+          },
+        ],
+      });
+      // Should not throw
+      await Asset.onAddAssets(evt);
     });
   });
 });

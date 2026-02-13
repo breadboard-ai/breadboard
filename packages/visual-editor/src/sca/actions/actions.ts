@@ -150,9 +150,9 @@ export function activateTriggers(): () => void {
   );
   const logger = Utils.Logging.getLogger();
   logger.log(
-    Utils.Logging.Formatter.info(
-      "Trigger activation order:\n -",
-      activationOrder.join("\n - ")
+    Utils.Logging.Formatter.group(
+      "Trigger activation order",
+      ` - ${activationOrder.join("\n - ")}`
     ),
     LABEL
   );

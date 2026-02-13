@@ -242,6 +242,8 @@ export function makeTestServices(options: TestServicesOptions = {}) {
       env: () => [],
       createRunFileSystem: () => ({}),
     } as unknown as AppServices["fileSystem"],
+    // Event bus for event-triggered actions
+    stateEventBus: new EventTarget(),
     // Flowgen mocks (optional)
     ...(flowGeneratorMock && {
       flowGenerator: flowGeneratorMock as FlowGenerator,
