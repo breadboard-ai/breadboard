@@ -8,6 +8,7 @@ import type {
   AffectedNode,
   GraphDescriptor,
   GraphIdentifier,
+  GraphStoreArgs,
   InspectableDescriberResultCache,
   InspectableEdgeCache,
   InspectableGraphCache,
@@ -38,6 +39,7 @@ export { MutableGraphImpl };
 class MutableGraphImpl implements MutableGraph {
   readonly store: MutableGraphStore;
   readonly id: MainGraphIdentifier;
+  readonly #deps: GraphStoreArgs;
 
   legacyKitMetadata: KitDescriptor | null = null;
 
@@ -50,8 +52,13 @@ class MutableGraphImpl implements MutableGraph {
   ports!: InspectablePortCache;
   entries!: NodeIdentifier[];
 
-  constructor(graph: GraphDescriptor, store: MutableGraphStore) {
+  constructor(
+    graph: GraphDescriptor,
+    store: MutableGraphStore,
+    deps: GraphStoreArgs
+  ) {
     this.store = store;
+    this.#deps = deps;
     this.id = crypto.randomUUID();
     this.rebuild(graph);
   }
@@ -128,7 +135,9 @@ class MutableGraphImpl implements MutableGraph {
       (edge, graphId) => new InspectableEdge(this, edge, graphId)
     );
     this.modules = new ModuleCache();
-    this.describe = new DescribeResultCache(new NodeDescriberManager(this));
+    this.describe = new DescribeResultCache(
+      new NodeDescriberManager(this, this.#deps)
+    );
     this.graphs = new GraphCache((id) => new Graph(id, this));
     this.ports = new PortCache();
     this.graphs.rebuild(graph);

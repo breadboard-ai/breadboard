@@ -7,17 +7,18 @@
 import type {
   DescribeResultTypeCacheArgs,
   GraphDescriptor,
+  GraphStoreArgs,
   MutableGraphStore,
   NodeDescriberContext,
   NodeDescriberFunction,
   NodeDescriberResult,
   NodeHandler,
+  NodeHandlerContext,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import { createLoader } from "../../loader/index.js";
 import { SENTINEL_BASE_URL } from "../../loader/loader.js";
 import { getHandler } from "../../runtime/legacy.js";
-import { contextFromMutableGraphStore } from "../graph-store.js";
 import { UpdateEvent } from "./event.js";
 import { emptyResult, NodeDescriberManager } from "./node-describer-manager.js";
 import { describeInput, describeOutput } from "./schemas.js";
@@ -33,7 +34,14 @@ const PLACEHOLDER_ID = crypto.randomUUID();
 const TYPE_DESCRIPTOR_GRAPH_URL = SENTINEL_BASE_URL.href;
 
 class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
-  constructor(public readonly store: MutableGraphStore) {}
+  #deps: GraphStoreArgs;
+
+  constructor(
+    public readonly store: MutableGraphStore,
+    deps: GraphStoreArgs
+  ) {
+    this.#deps = deps;
+  }
 
   initial(): NodeDescriberResult {
     return emptyResult();
@@ -64,7 +72,7 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
     if (!describer) {
       return asWired;
     }
-    const loader = this.store.loader || createLoader();
+    const loader = this.#deps.loader || createLoader();
     // When describing types, we provide a weird empty graph with a special URL
     // because we're not actually inside of any graph, and that is ok.
     const outerGraph: GraphDescriptor = {
@@ -75,16 +83,16 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
     const context: NodeDescriberContext = {
       outerGraph,
       loader,
-      sandbox: this.store.sandbox,
+      sandbox: this.#deps.sandbox,
       graphStore: this.store,
-      fileSystem: this.store.fileSystem.createRunFileSystem({
+      fileSystem: this.#deps.fileSystem.createRunFileSystem({
         graphUrl: TYPE_DESCRIPTOR_GRAPH_URL,
-        env: envFromGraphDescriptor(this.store.fileSystem.env()),
+        env: envFromGraphDescriptor(this.#deps.fileSystem.env()),
         assets: assetsFromGraphDescriptor(),
       }),
       wires: { incoming: {}, outgoing: {} },
       asType: true,
-      flags: this.store.flags,
+      flags: this.#deps.flags,
     };
     try {
       return describer(
@@ -103,11 +111,13 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
     type: NodeTypeIdentifier
   ): Promise<NodeDescriberFunction | undefined> {
     let handler: NodeHandler | undefined;
+    const context: NodeHandlerContext = {
+      loader: this.#deps.loader,
+      sandbox: this.#deps.sandbox,
+      graphStore: this.store,
+    };
     try {
-      handler = await getHandler(
-        type,
-        contextFromMutableGraphStore(this.store)
-      );
+      handler = await getHandler(type, context);
     } catch (e) {
       console.warn(`Error getting describer for node type ${type}`, e);
     }

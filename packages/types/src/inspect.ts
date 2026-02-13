@@ -771,11 +771,8 @@ export type AddResult = {
 
 export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
   GraphLoader & {
-    readonly sandbox: RunnableModuleFactory;
-    readonly loader: GraphLoader;
-    readonly fileSystem: FileSystem;
     readonly types: InspectableDescriberResultTypeCache;
-    readonly flags: RuntimeFlagManager;
+    readonly deps: GraphStoreArgs;
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 

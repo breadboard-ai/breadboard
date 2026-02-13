@@ -9,18 +9,19 @@ import { getHandler } from "../../runtime/legacy.js";
 import type {
   DescribeResultCacheArgs,
   GraphIdentifier,
+  GraphStoreArgs,
   InspectableEdge,
   MutableGraph,
   NodeDescriberContext,
   NodeDescriberFunction,
   NodeDescriberResult,
   NodeHandler,
+  NodeHandlerContext,
   NodeIdentifier,
   NodeTypeDescriberOptions,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import { SchemaDiffer } from "@breadboard-ai/utils";
-import { contextFromMutableGraph } from "../graph-store.js";
 import { UpdateEvent } from "./event.js";
 
 import {
@@ -44,7 +45,14 @@ function emptyResult(): NodeDescriberResult {
 }
 
 class NodeDescriberManager implements DescribeResultCacheArgs {
-  public constructor(public readonly mutable: MutableGraph) {}
+  #deps: GraphStoreArgs;
+
+  public constructor(
+    public readonly mutable: MutableGraph,
+    deps: GraphStoreArgs
+  ) {
+    this.#deps = deps;
+  }
 
   initial(
     graphId: GraphIdentifier,
@@ -108,8 +116,14 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
     type: NodeTypeIdentifier
   ): Promise<NodeDescriberFunction | undefined> {
     let handler: NodeHandler | undefined;
+    const context: NodeHandlerContext = {
+      loader: this.#deps.loader,
+      sandbox: this.#deps.sandbox,
+      graphStore: this.mutable.store,
+      outerGraph: this.mutable.graph,
+    };
     try {
-      handler = await getHandler(type, contextFromMutableGraph(this.mutable));
+      handler = await getHandler(type, context);
     } catch (e) {
       console.warn(`Error getting describer for node type ${type}`, e);
     }
@@ -140,19 +154,19 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
     if (!describer) {
       return asWired;
     }
-    const loader = this.mutable.store.loader || createLoader();
+    const loader = this.#deps.loader || createLoader();
     const graph = this.mutable.graph;
     const context: NodeDescriberContext = {
       outerGraph: graph,
       loader,
-      sandbox: this.mutable.store.sandbox,
+      sandbox: this.#deps.sandbox,
       graphStore: this.mutable.store,
-      fileSystem: this.mutable.store.fileSystem.createRunFileSystem({
+      fileSystem: this.#deps.fileSystem.createRunFileSystem({
         graphUrl: graph.url!,
-        env: envFromGraphDescriptor(this.mutable.store.fileSystem.env(), graph),
+        env: envFromGraphDescriptor(this.#deps.fileSystem.env(), graph),
         assets: assetsFromGraphDescriptor(graph),
       }),
-      flags: this.mutable.store.flags,
+      flags: this.#deps.flags,
       wires: {
         incoming: Object.fromEntries(
           (options?.incoming ?? []).map((edge) => [

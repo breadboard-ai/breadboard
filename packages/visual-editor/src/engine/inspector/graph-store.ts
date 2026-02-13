@@ -8,7 +8,6 @@ import type {
   AddResult,
   EditableGraph,
   EditableGraphOptions,
-  FileSystem,
   GraphDescriptor,
   GraphIdentifier,
   GraphLoader,
@@ -21,9 +20,7 @@ import type {
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
-  NodeHandlerContext,
   Result,
-  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import { hash, SnapshotUpdater } from "@breadboard-ai/utils";
 import { Graph as GraphEditor } from "../editor/graph.js";
@@ -32,39 +29,16 @@ import { UpdateEvent } from "./graph/event.js";
 
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import { NodeTypeDescriberManager } from "./graph/node-type-describer-manager.js";
-import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import { urlComponentsFromString } from "../loader/loader.js";
 
-export { contextFromMutableGraph, contextFromMutableGraphStore, GraphStore };
-
-function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
-  const store = mutable.store;
-  return {
-    loader: store.loader,
-    sandbox: store.sandbox,
-    graphStore: store,
-    outerGraph: mutable.graph,
-  };
-}
-
-function contextFromMutableGraphStore(
-  store: MutableGraphStore
-): NodeHandlerContext {
-  return {
-    loader: store.loader,
-    sandbox: store.sandbox,
-    graphStore: store,
-  };
-}
+export { GraphStore };
 
 class GraphStore
   extends (EventTarget as GraphStoreEventTarget)
   implements MutableGraphStore
 {
-  readonly sandbox: RunnableModuleFactory;
-  readonly loader: GraphLoader;
-  readonly fileSystem: FileSystem;
-  readonly flags: RuntimeFlagManager;
+  #loader: GraphLoader;
+  #deps: GraphStoreArgs;
 
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
   #mutables: Map<MainGraphIdentifier, SnapshotUpdater<MutableGraph>> =
@@ -81,14 +55,16 @@ class GraphStore
    */
   public readonly types: InspectableDescriberResultTypeCache;
 
+  get deps(): GraphStoreArgs {
+    return this.#deps;
+  }
+
   constructor(args: GraphStoreArgs) {
     super();
-    this.sandbox = args.sandbox;
-    this.loader = args.loader;
-    this.fileSystem = args.fileSystem;
-    this.flags = args.flags;
+    this.#loader = args.loader;
+    this.#deps = args;
     this.types = new DescribeResultTypeCache(
-      new NodeTypeDescriberManager(this)
+      new NodeTypeDescriberManager(this, args)
     );
   }
 
@@ -251,7 +227,7 @@ class GraphStore
     graph: GraphDescriptor
   ): SnapshotUpdater<MutableGraph> {
     // Create a simple static snapshot
-    const mutable = new MutableGraphImpl(graph, this);
+    const mutable = new MutableGraphImpl(graph, this, this.#deps);
     return new SnapshotUpdater({
       initial() {
         return mutable;
@@ -266,12 +242,12 @@ class GraphStore
     url: string,
     options: GraphLoaderContext
   ): SnapshotUpdater<MutableGraph> {
-    const mutable = new MutableGraphImpl(emptyGraph(), this);
+    const mutable = new MutableGraphImpl(emptyGraph(), this, this.#deps);
     let graphId = "";
     return new SnapshotUpdater({
       initial: () => mutable,
       latest: async () => {
-        const loader = this.loader;
+        const loader = this.#loader;
         if (!loader) {
           throw new Error(`Unable to load "${url}": no loader provided`);
         }

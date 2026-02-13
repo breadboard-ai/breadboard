@@ -16,5 +16,5 @@ function inspector(
   options: InspectableGraphOptions = {}
 ) {
   const store = makeTestGraphStore(options);
-  return new Graph("", new MutableGraphImpl(graph, store));
+  return new Graph("", new MutableGraphImpl(graph, store, store.deps));
 }

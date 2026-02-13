@@ -331,7 +331,7 @@ function initializeNodeHandlerContext(
     base,
     signal,
     graphStore,
-    sandbox: graphStore?.sandbox,
+    sandbox: config.sandbox,
     fetchWithCreds,
     getProjectRunState,
     clientDeploymentConfiguration,

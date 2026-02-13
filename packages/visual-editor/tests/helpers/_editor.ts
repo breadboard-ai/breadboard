@@ -18,6 +18,6 @@ export const editGraph = (
   options: EditableGraphOptions = {}
 ): EditableGraph => {
   const store = makeTestGraphStore(options);
-  const mutable = new MutableGraphImpl(graph, store);
+  const mutable = new MutableGraphImpl(graph, store, store.deps);
   return new Graph(mutable, options);
 };
