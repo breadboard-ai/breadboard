@@ -20,11 +20,7 @@ function getLatestConfig(
   graph: GraphDescriptor,
   context: NodeHandlerContext
 ): Outcome<NodeConfiguration> {
-  const gettingMainGraph = context.graphStore?.getByDescriptor(graph);
-  if (!gettingMainGraph?.success) {
-    return err(`Can't to find graph "${graph.url}" in graph store`);
-  }
-  const inspector = context.graphStore?.inspect(gettingMainGraph.result, "");
+  const inspector = context.graphStore?.inspect("");
   if (!inspector) {
     return err(`Can't get inspector for graph "${graph.url}"`);
   }

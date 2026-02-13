@@ -6,7 +6,7 @@
 
 import { FileSystem, Outcome } from "./data.js";
 import { AffectedNode, EditableGraph, EditableGraphOptions } from "./edit.js";
-import type { Result } from "./result.js";
+
 import {
   AssetPath,
   AssetType,
@@ -30,7 +30,7 @@ import {
   OutputValues,
 } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
-import { GraphLoader, GraphLoaderContext } from "./loader.js";
+import { GraphLoader } from "./loader.js";
 import { NodeDescriberResult, NodeHandlerMetadata } from "./node-handler.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
@@ -761,37 +761,14 @@ type GraphsStoreEventMap = {
 
 export type GraphStoreEventTarget = TypedEventTarget<GraphsStoreEventMap>;
 
-export type AddResult = {
-  mutable: MutableGraph;
-  graphId: GraphIdentifier;
-  // NEED THIS, because describing is different for graphs and modules
-  moduleId?: ModuleIdentifier;
-  updating: boolean;
-};
-
 export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
   GraphLoader & {
     readonly types: InspectableDescriberResultTypeCache;
 
-    get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
-
-    addByURL(
-      url: string,
-      dependencies: MainGraphIdentifier[],
-      context: GraphLoaderContext
-    ): AddResult;
-
-    getLatest(mutable: MutableGraph): Promise<MutableGraph>;
-
-    getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
-    editByDescriptor(
-      graph: GraphDescriptor,
-      options?: EditableGraphOptions
-    ): EditableGraph | undefined;
-    inspect(
-      id: MainGraphIdentifier,
-      graphId: GraphIdentifier
-    ): InspectableGraph | undefined;
+    set(graph: GraphDescriptor): void;
+    get(): MutableGraph | undefined;
+    edit(options?: EditableGraphOptions): EditableGraph | undefined;
+    inspect(graphId: GraphIdentifier): InspectableGraph | undefined;
   };
 
 export type PortIdentifier = string;

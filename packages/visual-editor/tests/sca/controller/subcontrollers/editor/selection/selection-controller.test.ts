@@ -204,9 +204,8 @@ suite("SelectionController", () => {
 
     const graphStore = makeTestGraphStore();
 
-    const mainGraphId = graphStore.getByDescriptor(testGraph);
-    if (!mainGraphId.success) assert.fail("Unable to create graph");
-    const inspectableGraph = graphStore.inspect(mainGraphId.result, "");
+    graphStore.set(testGraph);
+    const inspectableGraph = graphStore.inspect("");
     if (!inspectableGraph) assert.fail("Unable to inspect graph");
 
     store.selectAll(inspectableGraph);

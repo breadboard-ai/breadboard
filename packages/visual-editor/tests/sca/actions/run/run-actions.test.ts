@@ -815,10 +815,9 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    // GraphStore returns failure
-    (
-      services.graphStore as unknown as { getByDescriptor: () => unknown }
-    ).getByDescriptor = () => ({ success: false });
+    // GraphStore returns null for inspection (no graph store set up)
+    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
+      () => null;
 
     assert.doesNotThrow(() => {
       RunActions.syncConsoleFromRunner();
@@ -853,9 +852,6 @@ suite("syncConsoleFromRunner", () => {
       nodeById: () => undefined, // Node not found
     };
 
-    (
-      services.graphStore as unknown as { getByDescriptor: () => unknown }
-    ).getByDescriptor = () => ({ success: true, result: {} });
     (services.graphStore as unknown as { inspect: () => unknown }).inspect =
       () => mockInspectable;
 
@@ -888,9 +884,6 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    (
-      services.graphStore as unknown as { getByDescriptor: () => unknown }
-    ).getByDescriptor = () => ({ success: true, result: {} });
     (services.graphStore as unknown as { inspect: () => unknown }).inspect =
       () => ({ nodeById: () => undefined });
 
@@ -1144,9 +1137,6 @@ suite("syncConsoleFromRunner async describe", () => {
     const mockInspectable = {
       nodeById: () => mockNode,
     };
-    (
-      services.graphStore as unknown as { getByDescriptor: () => unknown }
-    ).getByDescriptor = () => ({ success: true, result: {} });
     (services.graphStore as unknown as { inspect: () => unknown }).inspect =
       () => mockInspectable;
 
@@ -1198,9 +1188,6 @@ suite("syncConsoleFromRunner async describe", () => {
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
     const mockInspectable = { nodeById: () => mockNode };
-    (
-      services.graphStore as unknown as { getByDescriptor: () => unknown }
-    ).getByDescriptor = () => ({ success: true, result: {} });
     (services.graphStore as unknown as { inspect: () => unknown }).inspect =
       () => mockInspectable;
 
@@ -1236,9 +1223,6 @@ suite("syncConsoleFromRunner async describe", () => {
 
     // Mock nodeById to return null
     const mockInspectable = { nodeById: () => null };
-    (
-      services.graphStore as unknown as { getByDescriptor: () => unknown }
-    ).getByDescriptor = () => ({ success: true, result: {} });
     (services.graphStore as unknown as { inspect: () => unknown }).inspect =
       () => mockInspectable;
 

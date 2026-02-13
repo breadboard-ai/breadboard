@@ -76,7 +76,8 @@ suite("Graph Actions", () => {
       const graphStore = makeTestGraphStore();
 
       testGraph = graphWithTwoNodes();
-      const editor = graphStore.editByDescriptor(testGraph);
+      graphStore.set(testGraph);
+      const editor = graphStore.edit();
       if (!editor) assert.fail("Unable to edit graph");
 
       graphActions.bind({

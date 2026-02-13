@@ -29,7 +29,8 @@ const defaultAgentContext = {
 export function makeTestGraphStoreWithEditor() {
   const graphStore = makeTestGraphStore();
   const testGraph: GraphDescriptor = { nodes: [], edges: [] };
-  const editor = graphStore.editByDescriptor(testGraph);
+  graphStore.set(testGraph);
+  const editor = graphStore.edit();
   if (!editor) throw new Error("Unable to edit graph");
   return { graphStore, editor };
 }
@@ -211,7 +212,6 @@ export function makeTestServices(options: TestServicesOptions = {}) {
           createRunFileSystem: () => ({}),
         },
         // For nodestart event handling
-        getByDescriptor: () => ({ success: true, result: {} }),
         inspect: () => ({
           nodeById: (id: string) => {
             const meta = nodeMetadata[id] ?? {};
