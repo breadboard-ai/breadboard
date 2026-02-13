@@ -70,13 +70,13 @@ export const graphDescriptorFromCapability = async (
     // TODO: Use JSON schema to validate rather than this hack.
     return { success: true, graph: capability.board };
   } else if (isResolvedURLBoardCapability(capability)) {
-    if (!context?.graphStore) {
+    if (!context?.loader) {
       return {
         success: false,
-        error: `The "board" Capability is a URL, but no graph store was supplied.`,
+        error: `The "board" Capability is a URL, but no loader was supplied.`,
       };
     }
-    const loaderResult = await context.graphStore.load(capability.url, context);
+    const loaderResult = await context.loader.load(capability.url, context);
     if (!loaderResult.success) {
       return {
         success: false,
@@ -85,15 +85,12 @@ export const graphDescriptorFromCapability = async (
     }
     return loaderResult;
   } else if (isUnresolvedPathBoardCapability(capability)) {
-    if (!context?.graphStore) {
+    if (!context?.loader) {
       throw new Error(
-        `The "board" Capability is a URL, but no graph store was supplied.`
+        `The "board" Capability is a URL, but no loader was supplied.`
       );
     }
-    const loaderResult = await context.graphStore.load(
-      capability.path,
-      context
-    );
+    const loaderResult = await context.loader.load(capability.path, context);
     if (!loaderResult.success) {
       return {
         success: false,
@@ -118,7 +115,7 @@ export const getGraphDescriptor = async (
   if (!board) return { success: false, error: "No board provided" };
 
   if (typeof board === "string") {
-    const loaderResult = await context?.graphStore?.load(board, context);
+    const loaderResult = await context?.loader?.load(board, context);
     if (!loaderResult?.success || !loaderResult.graph) {
       throw new Error(`Unable to load graph from "${board}"`);
     }

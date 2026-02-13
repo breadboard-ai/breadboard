@@ -7,7 +7,7 @@
 import { GraphDescriptor, InspectableGraphOptions } from "@breadboard-ai/types";
 import { Graph } from "../../src/engine/inspector/graph/graph.js";
 import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
-import { makeTestGraphStore } from "./_graph-store.js";
+import { makeTestGraphStore, makeTestGraphStoreArgs } from "./_graph-store.js";
 
 export { inspector };
 
@@ -15,6 +15,7 @@ function inspector(
   graph: GraphDescriptor,
   options: InspectableGraphOptions = {}
 ) {
-  const store = makeTestGraphStore(options);
-  return new Graph("", new MutableGraphImpl(graph, store, store.deps));
+  const args = makeTestGraphStoreArgs(options);
+  const store = makeTestGraphStore(args);
+  return new Graph("", new MutableGraphImpl(graph, store, args));
 }

@@ -5,16 +5,19 @@
  */
 
 import type {
+  GraphStoreArgs,
   InspectableGraphOptions,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import { GraphStore } from "../../src/engine/inspector/graph-store.js";
 import { makeFs } from "../test-file-system.js";
 
-export { makeTestGraphStore };
+export { makeTestGraphStore, makeTestGraphStoreArgs };
 
-function makeTestGraphStore(options: InspectableGraphOptions = {}) {
-  return new GraphStore({
+function makeTestGraphStoreArgs(
+  options: InspectableGraphOptions = {}
+): GraphStoreArgs {
+  return {
     fileSystem: makeFs(),
     sandbox: options.sandbox || {
       createRunnableModule() {
@@ -43,5 +46,9 @@ function makeTestGraphStore(options: InspectableGraphOptions = {}) {
         throw new Error("Do not use flags with test graph store");
       },
     } satisfies RuntimeFlagManager,
-  });
+  };
+}
+
+function makeTestGraphStore(args?: GraphStoreArgs) {
+  return new GraphStore(args ?? makeTestGraphStoreArgs());
 }

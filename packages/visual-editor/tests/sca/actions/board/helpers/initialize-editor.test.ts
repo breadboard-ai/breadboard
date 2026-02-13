@@ -13,6 +13,7 @@ import {
 } from "../../../../../src/sca/actions/board/helpers/initialize-editor.js";
 import type * as Editor from "../../../../../src/sca/controller/subcontrollers/editor/editor.js";
 import { setDOM, unsetDOM } from "../../../../fake-dom.js";
+import { makeTestGraphStore } from "../../../../helpers/_graph-store.js";
 
 function makeMockGraphController(): Editor.Graph.GraphController {
   const state: Record<string, unknown> = {};
@@ -80,22 +81,6 @@ function makeMockGraph(): GraphDescriptor {
   };
 }
 
-function makeMockGraphStore(): MutableGraphStore {
-  const graphs = new Map<string, unknown>();
-  return {
-    getByDescriptor: (graph: GraphDescriptor) => {
-      const id = `graph-${graphs.size}`;
-      graphs.set(id, graph);
-      return { success: true, result: id };
-    },
-    editByDescriptor: () => ({
-      raw: () => ({}),
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    }),
-  } as unknown as MutableGraphStore;
-}
-
 suite("initialize-editor helpers", () => {
   beforeEach(() => {
     setDOM();
@@ -106,9 +91,10 @@ suite("initialize-editor helpers", () => {
   });
 
   test("initializes editor with correct state", () => {
-    const graphStore = makeMockGraphStore();
+    const graphStore = makeTestGraphStore();
     const graphController = makeMockGraphController();
     const graph = makeMockGraph();
+    graphStore.set(graph);
 
     const result = initializeEditor(graphStore, graphController, {
       graph,
@@ -122,7 +108,6 @@ suite("initialize-editor helpers", () => {
 
     assert.strictEqual(result.success, true);
     assert.ok(result.id);
-    assert.ok(result.mainGraphId);
 
     // Verify controller state was set
     // Note: version is input (5) + 1 for the trigger bump = 6
@@ -134,9 +119,10 @@ suite("initialize-editor helpers", () => {
   });
 
   test("sets graphIsMine to false when readOnly is true", () => {
-    const graphStore = makeMockGraphStore();
+    const graphStore = makeTestGraphStore();
     const graphController = makeMockGraphController();
     const graph = makeMockGraph();
+    graphStore.set(graph);
 
     initializeEditor(graphStore, graphController, {
       graph,
@@ -168,32 +154,10 @@ suite("initialize-editor helpers", () => {
     assert.strictEqual(Object.keys(graphController._state).length, 0);
   });
 
-  test("throws when graph cannot be added", () => {
-    const graphStore = {
-      getByDescriptor: () => ({ success: false, error: "Test error" }),
-    } as unknown as MutableGraphStore;
-    const graphController = makeMockGraphController();
-    const graph = makeMockGraph();
-
-    assert.throws(
-      () =>
-        initializeEditor(graphStore, graphController, {
-          graph,
-          moduleId: null,
-          subGraphId: null,
-          url: "https://example.com/board.json",
-          readOnly: false,
-          version: 1,
-          lastLoadedVersion: -1,
-        }),
-      { message: "Unable to add graph: Test error" }
-    );
-  });
-
   test("throws when editor cannot be created", () => {
     const graphStore = {
-      getByDescriptor: () => ({ success: true, result: "graph-0" }),
-      editByDescriptor: () => null,
+      set: () => {},
+      get: () => undefined,
     } as unknown as MutableGraphStore;
     const graphController = makeMockGraphController();
     const graph = makeMockGraph();
@@ -209,7 +173,7 @@ suite("initialize-editor helpers", () => {
           version: 1,
           lastLoadedVersion: -1,
         }),
-      { message: "Unable to edit by descriptor" }
+      { message: "Unable to create editor" }
     );
   });
 });

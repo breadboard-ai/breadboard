@@ -7,8 +7,8 @@
 import {
   FileDataPart,
   GraphDescriptor,
+  GraphLoader,
   InlineDataCapabilityPart,
-  MutableGraphStore,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import * as YouTube from "../ui/utils/youtube.js";
@@ -42,7 +42,7 @@ export type DetectedType =
 class ClipboardReader {
   constructor(
     public readonly graphUrl: string | undefined,
-    public readonly graphStore: MutableGraphStore
+    public readonly loader: GraphLoader
   ) {}
 
   async read(): Promise<DetectedType> {
@@ -76,7 +76,7 @@ class ClipboardReader {
   }
 
   async isGraphUrl(url: string) {
-    const loading = await this.graphStore.load(url, {});
+    const loading = await this.loader.load(url, {});
     return loading.success;
   }
 

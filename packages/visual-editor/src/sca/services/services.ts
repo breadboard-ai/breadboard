@@ -176,9 +176,6 @@ export function services(
     };
 
     const graphStore = createGraphStore(graphStoreArgs);
-    for (const [, item] of a2Server.userGraphs?.entries() || []) {
-      graphStore.addByURL(item.url, [], {});
-    }
 
     const autonamer = new Autonamer(graphStoreArgs, fileSystem, sandbox);
     const apiClient = new AppCatalystApiClient(

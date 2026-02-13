@@ -41,6 +41,10 @@ class MutableGraphImpl implements MutableGraph {
   readonly id: MainGraphIdentifier;
   readonly #deps: GraphStoreArgs;
 
+  get deps(): GraphStoreArgs {
+    return this.#deps;
+  }
+
   legacyKitMetadata: KitDescriptor | null = null;
 
   graph!: GraphDescriptor;

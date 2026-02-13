@@ -11,6 +11,7 @@ import { AppServices } from "../../../src/sca/services/services.js";
 import type { GlobalConfig } from "../../../src/ui/contexts/global-config.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
+import { editGraphStore } from "../../helpers/_editor.js";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { SigninAdapter } from "../../../src/ui/utils/signin-adapter.js";
 import type { GoogleDriveBoardServer } from "../../../src/board-server/server.js";
@@ -29,7 +30,8 @@ const defaultAgentContext = {
 export function makeTestGraphStoreWithEditor() {
   const graphStore = makeTestGraphStore();
   const testGraph: GraphDescriptor = { nodes: [], edges: [] };
-  const editor = graphStore.editByDescriptor(testGraph);
+  graphStore.set(testGraph);
+  const editor = editGraphStore(graphStore);
   if (!editor) throw new Error("Unable to edit graph");
   return { graphStore, editor };
 }
@@ -211,26 +213,32 @@ export function makeTestServices(options: TestServicesOptions = {}) {
           createRunFileSystem: () => ({}),
         },
         // For nodestart event handling
-        getByDescriptor: () => ({ success: true, result: {} }),
-        inspect: () => ({
-          nodeById: (id: string) => {
-            const meta = nodeMetadata[id] ?? {};
-            return {
-              title: () => meta.title ?? id,
-              currentDescribe: () => ({
-                metadata: { icon: meta.icon, tags: meta.tags },
-              }),
-              currentPorts: () => ({
-                inputs: { ports: [] },
-                outputs: { ports: [] },
-              }),
-              // For async describe fallback - include tags to skip this branch
-              describe: () =>
-                Promise.resolve({
-                  metadata: { icon: meta.icon, tags: meta.tags },
-                }),
-            };
-          },
+        get: () => ({
+          graphs: new Map([
+            [
+              "",
+              {
+                nodeById: (id: string) => {
+                  const meta = nodeMetadata[id] ?? {};
+                  return {
+                    title: () => meta.title ?? id,
+                    currentDescribe: () => ({
+                      metadata: { icon: meta.icon, tags: meta.tags },
+                    }),
+                    currentPorts: () => ({
+                      inputs: { ports: [] },
+                      outputs: { ports: [] },
+                    }),
+                    // For async describe fallback - include tags to skip this branch
+                    describe: () =>
+                      Promise.resolve({
+                        metadata: { icon: meta.icon, tags: meta.tags },
+                      }),
+                  };
+                },
+              },
+            ],
+          ]),
         }),
       } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions

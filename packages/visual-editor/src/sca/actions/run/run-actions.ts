@@ -245,12 +245,8 @@ export const prepare = asAction(
         controller.run.main.setEstimatedEntryCount(nodeIds.length);
 
         // Pre-populate console with all graph nodes as "inactive" in execution order
-        const graphDescriptor = services.graphStore.getByDescriptor(graph);
-        if (graphDescriptor?.success) {
-          const inspectable = services.graphStore.inspect(
-            graphDescriptor.result,
-            ""
-          );
+        const inspectable = services.graphStore.get()?.graphs.get("");
+        if (inspectable) {
           for (const nodeId of nodeIds) {
             const node = inspectable?.nodeById(nodeId);
             const title = node?.title() ?? nodeId;
@@ -293,13 +289,7 @@ export const prepare = asAction(
       if (event.data.path.length > 1) return;
 
       const nodeId = event.data.node.id;
-      const graphDescriptor = services.graphStore.getByDescriptor(graph);
-      if (!graphDescriptor?.success) return;
-
-      const inspectable = services.graphStore.inspect(
-        graphDescriptor.result,
-        ""
-      );
+      const inspectable = services.graphStore.get()?.graphs.get("");
       const node = inspectable?.nodeById(nodeId);
       const title = node?.title() ?? nodeId;
       const metadata = node?.currentDescribe()?.metadata ?? {};
@@ -416,12 +406,7 @@ export const syncConsoleFromRunner = asAction(
       return;
     }
 
-    const graphDescriptor = services.graphStore.getByDescriptor(graph);
-    if (!graphDescriptor?.success) {
-      return;
-    }
-
-    const inspectable = services.graphStore.inspect(graphDescriptor.result, "");
+    const inspectable = services.graphStore.get()?.graphs.get("");
     if (!inspectable) {
       return;
     }

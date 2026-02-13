@@ -11,6 +11,7 @@ import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
 import type { EditHistoryCreator, GraphTheme } from "@breadboard-ai/types";
 import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
+import { editGraphStore } from "../../../helpers/_editor.js";
 import { SnackType } from "../../../../src/ui/types/types.js";
 import {
   makeFreshGraph,
@@ -84,7 +85,8 @@ suite("Board Actions", () => {
       test("returns undefined when no URL", async () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
-        const editor = graphStore.editByDescriptor(testGraph);
+        graphStore.set(testGraph);
+        const editor = editGraphStore(graphStore);
 
         const { controller } = makeMockController({
           editor,
@@ -107,7 +109,8 @@ suite("Board Actions", () => {
       test("returns undefined when readOnly", async () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
-        const editor = graphStore.editByDescriptor(testGraph);
+        graphStore.set(testGraph);
+        const editor = editGraphStore(graphStore);
 
         const { controller } = makeMockController({
           editor,
@@ -130,7 +133,8 @@ suite("Board Actions", () => {
       test("returns undefined when board server cannot save", async () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
-        const editor = graphStore.editByDescriptor(testGraph);
+        graphStore.set(testGraph);
+        const editor = editGraphStore(graphStore);
 
         const { controller } = makeMockController({
           editor,
@@ -155,7 +159,8 @@ suite("Board Actions", () => {
       test("calls board server save with graph", async () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
-        const editor = graphStore.editByDescriptor(testGraph);
+        graphStore.set(testGraph);
+        const editor = editGraphStore(graphStore);
 
         const mockBoardServer = makeMockBoardServer({ canSave: true });
         const { controller } = makeMockController({
@@ -183,7 +188,8 @@ suite("Board Actions", () => {
       test("shows snackbar for user-initiated save", async () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
-        const editor = graphStore.editByDescriptor(testGraph);
+        graphStore.set(testGraph);
+        const editor = editGraphStore(graphStore);
 
         const mockBoardServer = makeMockBoardServer({ canSave: true });
         const { controller, mockSnackbars } = makeMockController({
@@ -215,7 +221,8 @@ suite("Board Actions", () => {
       test("returns error result when save throws", async () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
-        const editor = graphStore.editByDescriptor(testGraph);
+        graphStore.set(testGraph);
+        const editor = editGraphStore(graphStore);
 
         const mockBoardServer = makeMockBoardServer({
           canSave: true,
@@ -380,7 +387,8 @@ suite("Board Actions", () => {
       const testGraph = makeFreshGraph();
       testGraph.title = "My Board";
 
-      const editor = graphStore.editByDescriptor(testGraph);
+      graphStore.set(testGraph);
+      const editor = editGraphStore(graphStore);
 
       const mockBoardServer = makeMockBoardServer({
         createUrl: "https://new.example.com/remixed.json",
@@ -418,20 +426,6 @@ suite("Board Actions", () => {
     });
 
     test("returns error when store has empty graph", async () => {
-      // Create a mock graphStore that returns an empty graph
-      const mockGraphStore = {
-        addByURL: () => ({
-          mutable: { id: "test", graph: { nodes: [], edges: [] } },
-          graphId: "",
-          moduleId: undefined,
-          updating: false,
-        }),
-        getLatest: async () => ({
-          id: "test",
-          graph: { nodes: [], edges: [] }, // Empty graph
-        }),
-      };
-
       // No graph in editor
       const { controller } = makeMockController({
         editor: null,
@@ -441,7 +435,12 @@ suite("Board Actions", () => {
 
       boardActions.bind({
         services: {
-          graphStore: mockGraphStore,
+          loader: {
+            load: async () => ({
+              success: true,
+              graph: { nodes: [], edges: [] }, // Empty graph
+            }),
+          },
           googleDriveBoardServer: makeMockBoardServer({}),
         } as unknown as AppServices,
         controller,
@@ -464,7 +463,8 @@ suite("Board Actions", () => {
       const testGraph = makeFreshGraph();
       testGraph.title = "My Board";
 
-      const editor = graphStore.editByDescriptor(testGraph);
+      graphStore.set(testGraph);
+      const editor = editGraphStore(graphStore);
 
       // Mock boardServer that returns no URL (create fails)
       const mockBoardServer = makeMockBoardServer({});

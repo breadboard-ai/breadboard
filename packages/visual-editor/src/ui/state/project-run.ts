@@ -74,11 +74,7 @@ function createProjectRunStateFromFinalOutput(
     return error(`Graph store wasn't supplied`);
   }
 
-  const gettingMainGraph = graphStore.getByDescriptor(graph);
-  if (!gettingMainGraph?.success) {
-    return error(`Can't to find graph in graph store`);
-  }
-  const inspectable = graphStore.inspect(gettingMainGraph.result, "");
+  const inspectable = graphStore.get()?.graphs.get("");
   if (!inspectable) {
     return error(`Can't inspect graph`);
   }

@@ -274,11 +274,13 @@ export const remix = asAction(
       // Fall back to loading from the store (for gallery remixes, etc.)
       logger.log(Utils.Logging.Formatter.verbose("Using graph store"), LABEL);
 
-      const graphStore = services.graphStore;
-      const addResult = graphStore.addByURL(url, [], {});
-      const mutable = await graphStore.getLatest(addResult.mutable);
+      const loadResult = await services.loader.load(url, {});
 
-      if (!mutable.graph || mutable.graph.nodes.length === 0) {
+      if (
+        !loadResult.success ||
+        !loadResult.graph ||
+        loadResult.graph.nodes.length === 0
+      ) {
         // Empty graph means the load failed - likely URL mismatch
         snackbars.snackbar(
           messages.error,
@@ -291,7 +293,7 @@ export const remix = asAction(
         return { success: false, reason: "no-graph" };
       }
 
-      graph = structuredClone(mutable.graph);
+      graph = structuredClone(loadResult.graph);
     }
 
     // Append " Remix" to the title

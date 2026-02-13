@@ -5,7 +5,6 @@
  */
 
 import type {
-  MainGraphIdentifier,
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
@@ -14,6 +13,7 @@ import type {
   MutableGraphStore,
   OutputValues,
 } from "@breadboard-ai/types";
+import { Graph as GraphEditor } from "../../../../engine/editor/graph.js";
 import type * as Editor from "../../../controller/subcontrollers/editor/editor.js";
 
 /**
@@ -50,15 +50,13 @@ export interface InitializeEditorResult {
   success: true;
   /** The editor ID (for identifying this editing session) */
   id: string;
-  /** The main graph ID in the graph store */
-  mainGraphId: MainGraphIdentifier;
 }
 
 /**
  * Sets up the editor state for a loaded graph.
  *
  * This function:
- * - Adds the graph to the graph store
+ * - Sets the graph in the graph store
  * - Creates an editor instance
  * - Wires up event listeners for graph changes
  * - Updates the graph controller state
@@ -66,7 +64,7 @@ export interface InitializeEditorResult {
  * @param graphStore The mutable graph store
  * @param graphController The graph controller to update
  * @param options Editor initialization options
- * @returns The editor ID and main graph ID
+ * @returns The editor ID
  */
 export function initializeEditor(
   graphStore: MutableGraphStore,
@@ -84,21 +82,19 @@ export function initializeEditor(
     onHistoryChanged,
   } = options;
 
-  // Add graph to store
-  const mainGraphId = graphStore.getByDescriptor(graph);
-  if (!mainGraphId.success) {
-    throw new Error(`Unable to add graph: ${mainGraphId.error}`);
-  }
+  // Set graph in store
+  graphStore.set(graph);
 
   // Create editor
-  const editor = graphStore.editByDescriptor(graph, {
+  const mutable = graphStore.get();
+  if (!mutable) {
+    throw new Error("Unable to create editor");
+  }
+  const editor = new GraphEditor(mutable, {
     creator,
     history,
     onHistoryChanged,
   });
-  if (!editor) {
-    throw new Error("Unable to edit by descriptor");
-  }
 
   // Generate a session ID
   const id = globalThis.crypto.randomUUID();
@@ -111,7 +107,7 @@ export function initializeEditor(
   graphController.readOnly = readOnly;
   // Derive graphIsMine from readOnly for legacy compat (deprecated)
   graphController.graphIsMine = !readOnly;
-  graphController.mainGraphId = mainGraphId.result;
+  graphController.mainGraphId = id;
   graphController.lastLoadedVersion = lastLoadedVersion;
   graphController.finalOutputValues = options.finalOutputValues;
 
@@ -122,7 +118,6 @@ export function initializeEditor(
   return {
     success: true,
     id,
-    mainGraphId: mainGraphId.result,
   };
 }
 
