@@ -27,11 +27,18 @@ class UpdateNodeTitle implements EditTransform {
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
     const graphId = this.graphId;
 
+    // Track which nodes had a type: "in" reference to this node.
+    // Only those nodes need their autowire edges updated via AutoWireInPorts.
+    // Routing chiclets (type: "tool") may also match for title updates,
+    // but should NOT trigger AutoWireInPorts (they are routes, not in-ports).
+    const nodesWithInRef = new Set<NodeIdentifier>();
+
     return new TransformAllNodes(
       graphId,
-      (part) => {
+      (part, nodeId) => {
         const { type, path, instance } = part;
         if (type === "in" && path === this.nodeId) {
+          nodesWithInRef.add(nodeId);
           return { type, path, title: this.title };
         }
         if (
@@ -45,6 +52,7 @@ class UpdateNodeTitle implements EditTransform {
       },
       "Updating Node Titles in @-references.",
       (id) => {
+        if (!nodesWithInRef.has(id)) return null;
         return new AutoWireInPorts(
           id,
           graphId,

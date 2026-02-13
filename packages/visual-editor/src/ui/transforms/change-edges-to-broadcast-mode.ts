@@ -40,15 +40,9 @@ class ChangeEdgesToBroadcastMode implements EditTransform {
     const edits: EditSpec[] = [];
     for (const edge of edges) {
       const oldValue = edge.raw();
-      if (oldValue.out === "context") continue;
-      const newValue = {
-        ...oldValue,
-        out: "context",
-      };
       edits.push({
-        type: "changeedge",
-        from: oldValue,
-        to: newValue,
+        type: "removeedge",
+        edge: oldValue,
         graphId,
       });
     }
