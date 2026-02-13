@@ -48,43 +48,39 @@ class ReactiveFastAccess implements FastAccess {
 
   @signal
   get #routes(): Map<string, Component> {
-    const nodes = this.sca.controller.editor.selection.selection.nodes;
-    if (nodes.size !== 1) {
+    const selectedNodeId = this.sca.controller.editor.selection.selectedNodeId;
+    if (!selectedNodeId) {
       return new Map();
     }
-    const selectedNodeId = [...nodes][0];
     const inspectable = this.sca.controller.editor.graph.editor?.inspect("");
     if (!inspectable) {
       return new Map();
     }
-    const node = inspectable.nodeById(selectedNodeId);
-    if (!node) {
-      return new Map();
-    }
     return new Map<string, Component>(
-      node.outgoing().map((edge) => {
-        const node = edge.to;
-        const id = node.descriptor.id;
-        return [
-          id,
-          {
+      inspectable
+        .nodes()
+        .filter((node) => node.descriptor.id !== selectedNodeId)
+        .map((node) => {
+          const id = node.descriptor.id;
+          return [
             id,
-            title: node.title(),
-            metadata: node.currentDescribe().metadata,
-          },
-        ];
-      })
+            {
+              id,
+              title: node.title(),
+              metadata: node.currentDescribe().metadata,
+            },
+          ];
+        })
     );
   }
 
   @signal
   get components(): ReadonlyMap<GraphIdentifier, Components> {
     const allComponents = this.sca.controller.editor.graph.components;
-    const nodes = this.sca.controller.editor.selection.selection.nodes;
-    if (nodes.size !== 1) {
+    const selectedNodeId = this.sca.controller.editor.selection.selectedNodeId;
+    if (!selectedNodeId) {
       return allComponents;
     }
-    const selectedNodeId = [...nodes][0];
     const inspectable = this.sca.controller.editor.graph.editor?.inspect("");
     if (!inspectable) {
       return allComponents;

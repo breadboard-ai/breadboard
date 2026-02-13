@@ -215,6 +215,50 @@ suite("Sidebar Actions", () => {
         "Should switch from edit-history to editor when items are selected"
       );
     });
+
+    test("has runOnActivate set to true", () => {
+      assert.strictEqual(
+        sidebarActions.updateSidebarOnSelectionChange.runOnActivate,
+        true,
+        "Should have runOnActivate to reconcile persisted state on boot"
+      );
+    });
+
+    test("reconciles persisted 'editor' section on boot when no selection", async () => {
+      // Simulates the page refresh scenario: sidebar was persisted as
+      // "editor" but no node is selected after reload.
+      let sectionSet: string | undefined;
+
+      sidebarActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            selection: {
+              get size() {
+                return 0; // No selection after refresh
+              },
+            },
+            sidebar: {
+              get section() {
+                return "editor"; // Persisted value from localStorage
+              },
+              set section(val: string) {
+                sectionSet = val;
+              },
+            },
+          },
+        } as never,
+      });
+
+      // This is what activateTriggers() does for runOnActivate actions
+      await sidebarActions.updateSidebarOnSelectionChange();
+
+      assert.strictEqual(
+        sectionSet,
+        "preview",
+        "Should reset editor to preview when no selection exists on boot"
+      );
+    });
   });
 });
 
