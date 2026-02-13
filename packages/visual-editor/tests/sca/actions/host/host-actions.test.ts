@@ -5,7 +5,15 @@
  */
 
 import assert from "node:assert";
-import { suite, test, beforeEach, before, after } from "node:test";
+import {
+  suite,
+  test,
+  beforeEach,
+  afterEach,
+  before,
+  after,
+  mock,
+} from "node:test";
 import * as Host from "../../../../src/sca/actions/host/host-actions.js";
 import { coordination } from "../../../../src/sca/coordination.js";
 import type { AppController } from "../../../../src/sca/controller/controller.js";
@@ -310,6 +318,10 @@ suite("Host Actions — Keyboard", () => {
   // onDownloadAgentTraces
   // ---------------------------------------------------------------------------
   suite("onDownloadAgentTraces", () => {
+    afterEach(() => {
+      mock.restoreAll();
+    });
+
     test("creates download link when traces exist", async () => {
       const ctrl = makeKeyboardController();
       let clickedHref = "";
@@ -320,10 +332,9 @@ suite("Host Actions — Keyboard", () => {
         },
       } as unknown as Partial<AppServices>);
 
-      // Mock document.createElement to capture the download link
-      const originalCreate = document.createElement.bind(document);
       const created: HTMLAnchorElement[] = [];
-      document.createElement = ((tag: string) => {
+      const originalCreate = document.createElement.bind(document);
+      mock.method(document, "createElement", (tag: string) => {
         const el = originalCreate(tag);
         if (tag === "a") {
           created.push(el as HTMLAnchorElement);
@@ -332,20 +343,16 @@ suite("Host Actions — Keyboard", () => {
           };
         }
         return el;
-      }) as typeof document.createElement;
+      });
 
-      try {
-        await Host.onDownloadAgentTraces();
+      await Host.onDownloadAgentTraces();
 
-        assert.ok(created.length > 0, "Should create an anchor element");
-        assert.ok(
-          created[0].download.startsWith("agent-traces-"),
-          "Download filename should start with 'agent-traces-'"
-        );
-        assert.ok(clickedHref.length > 0, "Anchor should be clicked");
-      } finally {
-        document.createElement = originalCreate;
-      }
+      assert.ok(created.length > 0, "Should create an anchor element");
+      assert.ok(
+        created[0].download.startsWith("agent-traces-"),
+        "Download filename should start with 'agent-traces-'"
+      );
+      assert.ok(clickedHref.length > 0, "Anchor should be clicked");
     });
 
     test("does nothing when traces are empty", async () => {
@@ -357,25 +364,21 @@ suite("Host Actions — Keyboard", () => {
         },
       } as unknown as Partial<AppServices>);
 
-      const originalCreate = document.createElement.bind(document);
       let anchorCreated = false;
-      document.createElement = ((tag: string) => {
+      const originalCreate = document.createElement.bind(document);
+      mock.method(document, "createElement", (tag: string) => {
         const el = originalCreate(tag);
         if (tag === "a") anchorCreated = true;
         return el;
-      }) as typeof document.createElement;
+      });
 
-      try {
-        await Host.onDownloadAgentTraces();
+      await Host.onDownloadAgentTraces();
 
-        assert.strictEqual(
-          anchorCreated,
-          false,
-          "Should not create anchor when no traces"
-        );
-      } finally {
-        document.createElement = originalCreate;
-      }
+      assert.strictEqual(
+        anchorCreated,
+        false,
+        "Should not create anchor when no traces"
+      );
     });
   });
 });
