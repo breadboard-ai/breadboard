@@ -5,8 +5,6 @@
  */
 
 import type {
-  EditableGraph,
-  EditableGraphOptions,
   GraphDescriptor,
   GraphLoader,
   GraphLoaderContext,
@@ -17,7 +15,7 @@ import type {
   MutableGraph,
   MutableGraphStore,
 } from "@breadboard-ai/types";
-import { Graph as GraphEditor } from "../editor/graph.js";
+
 import { DescribeResultTypeCache } from "./graph/describe-type-cache.js";
 
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
@@ -65,10 +63,5 @@ class GraphStore
 
   get(): MutableGraph | undefined {
     return this.#mutable;
-  }
-
-  edit(options: EditableGraphOptions = {}): EditableGraph | undefined {
-    if (!this.#mutable) return undefined;
-    return new GraphEditor(this.#mutable, options);
   }
 }

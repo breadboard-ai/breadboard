@@ -13,6 +13,7 @@ import type {
   MutableGraphStore,
   OutputValues,
 } from "@breadboard-ai/types";
+import { Graph as GraphEditor } from "../../../../engine/editor/graph.js";
 import type * as Editor from "../../../controller/subcontrollers/editor/editor.js";
 
 /**
@@ -85,14 +86,15 @@ export function initializeEditor(
   graphStore.set(graph);
 
   // Create editor
-  const editor = graphStore.edit({
+  const mutable = graphStore.get();
+  if (!mutable) {
+    throw new Error("Unable to create editor");
+  }
+  const editor = new GraphEditor(mutable, {
     creator,
     history,
     onHistoryChanged,
   });
-  if (!editor) {
-    throw new Error("Unable to create editor");
-  }
 
   // Generate a session ID
   const id = globalThis.crypto.randomUUID();

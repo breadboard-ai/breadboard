@@ -11,6 +11,7 @@ import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
 import type { EditHistoryCreator, GraphTheme } from "@breadboard-ai/types";
 import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
+import { editGraphStore } from "../../../helpers/_editor.js";
 import { SnackType } from "../../../../src/ui/types/types.js";
 import {
   makeFreshGraph,
@@ -85,7 +86,7 @@ suite("Board Actions", () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         graphStore.set(testGraph);
-        const editor = graphStore.edit();
+        const editor = editGraphStore(graphStore);
 
         const { controller } = makeMockController({
           editor,
@@ -109,7 +110,7 @@ suite("Board Actions", () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         graphStore.set(testGraph);
-        const editor = graphStore.edit();
+        const editor = editGraphStore(graphStore);
 
         const { controller } = makeMockController({
           editor,
@@ -133,7 +134,7 @@ suite("Board Actions", () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         graphStore.set(testGraph);
-        const editor = graphStore.edit();
+        const editor = editGraphStore(graphStore);
 
         const { controller } = makeMockController({
           editor,
@@ -159,7 +160,7 @@ suite("Board Actions", () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         graphStore.set(testGraph);
-        const editor = graphStore.edit();
+        const editor = editGraphStore(graphStore);
 
         const mockBoardServer = makeMockBoardServer({ canSave: true });
         const { controller } = makeMockController({
@@ -188,7 +189,7 @@ suite("Board Actions", () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         graphStore.set(testGraph);
-        const editor = graphStore.edit();
+        const editor = editGraphStore(graphStore);
 
         const mockBoardServer = makeMockBoardServer({ canSave: true });
         const { controller, mockSnackbars } = makeMockController({
@@ -221,7 +222,7 @@ suite("Board Actions", () => {
         const graphStore = makeTestGraphStore();
         const testGraph = makeFreshGraph();
         graphStore.set(testGraph);
-        const editor = graphStore.edit();
+        const editor = editGraphStore(graphStore);
 
         const mockBoardServer = makeMockBoardServer({
           canSave: true,
@@ -387,7 +388,7 @@ suite("Board Actions", () => {
       testGraph.title = "My Board";
 
       graphStore.set(testGraph);
-      const editor = graphStore.edit();
+      const editor = editGraphStore(graphStore);
 
       const mockBoardServer = makeMockBoardServer({
         createUrl: "https://new.example.com/remixed.json",
@@ -466,7 +467,7 @@ suite("Board Actions", () => {
       testGraph.title = "My Board";
 
       graphStore.set(testGraph);
-      const editor = graphStore.edit();
+      const editor = editGraphStore(graphStore);
 
       // Mock boardServer that returns no URL (create fails)
       const mockBoardServer = makeMockBoardServer({});

@@ -5,7 +5,7 @@
  */
 
 import { FileSystem, Outcome } from "./data.js";
-import { AffectedNode, EditableGraph, EditableGraphOptions } from "./edit.js";
+import { AffectedNode } from "./edit.js";
 
 import {
   AssetPath,
@@ -767,7 +767,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
 
     set(graph: GraphDescriptor): void;
     get(): MutableGraph | undefined;
-    edit(options?: EditableGraphOptions): EditableGraph | undefined;
   };
 
 export type PortIdentifier = string;

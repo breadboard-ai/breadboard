@@ -11,6 +11,7 @@ import { AppServices } from "../../../src/sca/services/services.js";
 import type { GlobalConfig } from "../../../src/ui/contexts/global-config.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
+import { editGraphStore } from "../../helpers/_editor.js";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { SigninAdapter } from "../../../src/ui/utils/signin-adapter.js";
 import type { GoogleDriveBoardServer } from "../../../src/board-server/server.js";
@@ -30,7 +31,7 @@ export function makeTestGraphStoreWithEditor() {
   const graphStore = makeTestGraphStore();
   const testGraph: GraphDescriptor = { nodes: [], edges: [] };
   graphStore.set(testGraph);
-  const editor = graphStore.edit();
+  const editor = editGraphStore(graphStore);
   if (!editor) throw new Error("Unable to edit graph");
   return { graphStore, editor };
 }

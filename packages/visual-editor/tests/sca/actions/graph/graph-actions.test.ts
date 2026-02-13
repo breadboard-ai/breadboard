@@ -10,6 +10,7 @@ import * as Graph from "../../../../src/sca/actions/graph/graph-actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
 import { makeTestGraphStore } from "../../../helpers/_graph-store.js";
+import { editGraphStore } from "../../../helpers/_editor.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import type { ConfigChangeContext } from "../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import { makeFreshGraph } from "../../helpers/index.js";
@@ -77,7 +78,7 @@ suite("Graph Actions", () => {
 
       testGraph = graphWithTwoNodes();
       graphStore.set(testGraph);
-      const editor = graphStore.edit();
+      const editor = editGraphStore(graphStore);
       if (!editor) assert.fail("Unable to edit graph");
 
       graphActions.bind({

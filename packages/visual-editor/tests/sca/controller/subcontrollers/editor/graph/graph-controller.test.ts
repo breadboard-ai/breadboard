@@ -8,6 +8,7 @@ import assert from "node:assert";
 import { beforeEach, suite, test } from "node:test";
 import { GraphController } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import { makeTestGraphStore } from "../../../../../helpers/_graph-store.js";
+import { editGraphStore } from "../../../../../helpers/_editor.js";
 import { EditableGraph } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
@@ -26,7 +27,7 @@ suite("GraphController", () => {
 
     testGraph = makeFreshGraph();
     graphStore.set(testGraph);
-    editableGraph = graphStore.edit();
+    editableGraph = editGraphStore(graphStore);
     if (!editableGraph) assert.fail("Unable to edit graph");
   });
 
@@ -50,7 +51,7 @@ suite("GraphController", () => {
 
     // Make a new one and apply it.
     graphStore.set(makeFreshGraph());
-    const editableGraphAlt = graphStore.edit();
+    const editableGraphAlt = editGraphStore(graphStore);
     if (!editableGraphAlt) assert.fail("No editable graph");
 
     // On changing the editor we should not get a graph change on the old
@@ -208,7 +209,7 @@ suite("GraphController", () => {
     };
 
     graphStore.set(graphWithSubGraphs);
-    const editable = graphStore.edit();
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     // Verify the graph structure is preserved
@@ -264,7 +265,7 @@ suite("GraphController", () => {
     };
 
     graphStore.set(graphWithSubGraphs);
-    const editable = graphStore.edit();
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     // Verify the graph structure is preserved
@@ -456,7 +457,7 @@ suite("GraphController", () => {
     };
 
     graphStore.set(graphWithNodes);
-    const editable = graphStore.edit();
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     store.setEditor(editable);
@@ -512,7 +513,7 @@ suite("GraphController", () => {
       nodes: [{ id: "first-node", type: "input" }],
     };
     graphStore.set(graph1);
-    const editable1 = graphStore.edit();
+    const editable1 = editGraphStore(graphStore);
     if (!editable1) assert.fail("Unable to edit graph 1");
 
     store.setEditor(editable1);
@@ -524,7 +525,7 @@ suite("GraphController", () => {
       nodes: [{ id: "second-node", type: "output" }],
     };
     graphStore.set(graph2);
-    const editable2 = graphStore.edit();
+    const editable2 = editGraphStore(graphStore);
     if (!editable2) assert.fail("Unable to edit graph 2");
 
     store.setEditor(editable2);
@@ -558,7 +559,7 @@ suite("GraphController", () => {
     };
 
     graphStore.set(graphWithUntitledSubGraph);
-    const editable = graphStore.edit();
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     const rawGraph = editable.raw();
@@ -585,7 +586,7 @@ suite("GraphController", () => {
     };
 
     graphStore.set(graphWithNode);
-    const editable = graphStore.edit();
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     store.setEditor(editable);
