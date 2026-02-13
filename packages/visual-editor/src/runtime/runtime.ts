@@ -53,9 +53,6 @@ export class Runtime extends EventTarget {
       return null;
     }
 
-    return State.createProjectState(
-      this.#sca.services.mcpClientManager,
-      this.#sca
-    );
+    return State.createProjectState(this.#sca);
   }
 }

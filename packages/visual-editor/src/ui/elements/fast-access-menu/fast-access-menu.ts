@@ -5,13 +5,8 @@
  */
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import {
-  Component,
-  GraphAsset,
-  Integrations,
-  Tool,
-} from "../../state/index.js";
+import { customElement, state } from "lit/decorators.js";
+import { Component, GraphAsset, Tool } from "../../state/index.js";
 import {
   FastAccessDismissedEvent,
   FastAccessSelectEvent,
@@ -37,13 +32,6 @@ import type { DisplayItem } from "../../../sca/types.js";
 export class FastAccessMenu extends SignalWatcher(LitElement) {
   @state()
   accessor selectedIndex = 0;
-
-  /**
-   * Project reference for integration tools access.
-   * TODO: Remove when Integrations is migrated to SCA.
-   */
-  @property({ attribute: false })
-  accessor integrations: Integrations | null = null;
 
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
@@ -332,7 +320,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         environmentName: this.globalConfig?.environmentName,
         enableNotebookLm:
           this.sca?.controller.global.flags.enableNotebookLm ?? false,
-        integrations: this.integrations,
+        integrationsController:
+          this.sca?.controller.editor.integrations ?? null,
       }
     );
 
@@ -693,7 +682,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       let group = integrationsByUrl.get(item.url);
       if (!group) {
         // Use the integration title from registered integrations
-        const integration = this.integrations?.registered.get(item.url);
+        const integration =
+          this.sca?.controller.editor.integrations.registered.get(item.url);
         group = {
           title: integration?.title ?? item.url,
           items: [],

@@ -11,10 +11,8 @@ import type {
   DisplayItem,
   FastAccessItem,
 } from "../../../../../../src/sca/types.js";
-import type {
-  Integrations,
-  Tool,
-} from "../../../../../../src/ui/state/types.js";
+import type { Tool } from "../../../../../../src/ui/state/types.js";
+import type { IntegrationsController } from "../../../../../../src/sca/controller/subcontrollers/editor/integrations/integrations.js";
 import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 
 suite("FastAccessController", () => {
@@ -23,7 +21,7 @@ suite("FastAccessController", () => {
   const noOpts = {
     environmentName: undefined,
     enableNotebookLm: false,
-    integrations: null,
+    integrationsController: null,
   } as const;
 
   const noAgentTools = new Map<string, Tool>();
@@ -223,7 +221,7 @@ suite("FastAccessController", () => {
     const items = controller.getDisplayItems(rawItems, noAgentTools, {
       environmentName: "production",
       enableNotebookLm: false,
-      integrations: null,
+      integrationsController: null,
     });
     assert.strictEqual(items.length, 2);
     const titles = items
@@ -301,12 +299,12 @@ suite("FastAccessController", () => {
   });
 
   // =========================================================================
-  // Integration tools (legacy)
+  // Integration tools
   // =========================================================================
 
   test("integration tools are appended when present", () => {
     controller.fastAccessMode = "tools";
-    const integrations = {
+    const integrationsController = {
       registered: new Map([
         [
           "https://integration.example.com",
@@ -316,10 +314,10 @@ suite("FastAccessController", () => {
           },
         ],
       ]),
-    };
+    } as unknown as IntegrationsController;
     const items = controller.getDisplayItems([], noAgentTools, {
       ...noOpts,
-      integrations: integrations as unknown as Integrations,
+      integrationsController,
     });
     assert.strictEqual(items.length, 1);
     assert.strictEqual(items[0]!.kind, "integration-tool");
@@ -328,7 +326,7 @@ suite("FastAccessController", () => {
   test("integration tools filtered by text filter", () => {
     controller.fastAccessMode = "tools";
     controller.filter = "special";
-    const integrations = {
+    const integrationsController = {
       registered: new Map([
         [
           "https://integration.example.com",
@@ -341,17 +339,17 @@ suite("FastAccessController", () => {
           },
         ],
       ]),
-    };
+    } as unknown as IntegrationsController;
     const items = controller.getDisplayItems([], noAgentTools, {
       ...noOpts,
-      integrations: integrations as unknown as Integrations,
+      integrationsController,
     });
     assert.strictEqual(items.length, 1);
   });
 
   test("incomplete integrations are skipped", () => {
     controller.fastAccessMode = "tools";
-    const integrations = {
+    const integrationsController = {
       registered: new Map([
         [
           "https://integration.example.com",
@@ -361,10 +359,10 @@ suite("FastAccessController", () => {
           },
         ],
       ]),
-    };
+    } as unknown as IntegrationsController;
     const items = controller.getDisplayItems([], noAgentTools, {
       ...noOpts,
-      integrations: integrations as unknown as Integrations,
+      integrationsController,
     });
     assert.strictEqual(items.length, 0);
   });

@@ -73,7 +73,7 @@ if ("CSS" in window && "registerProperty" in window.CSS) {
 //
 // eslint-disable-next-line local-rules/sca-consume-requires-signalwatcher
 export class GraphNode extends Box implements DragConnectorReceiver {
-  @consume({ context: scaContext})
+  @consume({ context: scaContext })
   accessor sca!: SCA;
 
   @property()
@@ -690,7 +690,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                       chiclets.push(
                         ...createChiclets(
                           port,
-                          this.projectState,
                           this.ownerGraph !== MAIN_BOARD_ID
                             ? this.ownerGraph
                             : "",

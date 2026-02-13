@@ -70,6 +70,10 @@ class Controller implements AppController {
         "Editor_FastAccess",
         "FastAccessController"
       ),
+      integrations: new Editor.Integrations.IntegrationsController(
+        "Editor_Integrations",
+        "IntegrationsController"
+      ),
     };
 
     this.home = {
@@ -122,6 +126,7 @@ class Controller implements AppController {
         await Migrations.statusUpdatesMigration(
           controller.global.statusUpdates
         );
+        await Migrations.mcpServersMigration(controller.editor.integrations);
       },
       /* c8 ignore end */
     };
@@ -219,6 +224,7 @@ export interface AppController extends DebuggableAppController {
     share: Editor.Share.ShareController;
     theme: Editor.Theme.ThemeController;
     fastAccess: Editor.FastAccess.FastAccessController;
+    integrations: Editor.Integrations.IntegrationsController;
   };
   home: {
     recent: Home.RecentBoardsController;

@@ -30,6 +30,7 @@ import { createEphemeralBlobStore } from "../../engine/file-system/ephemeral-blo
 import { composeFileSystemBackends } from "../../engine/file-system/composed-peristent-backend.js";
 import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
+import { IntegrationManagerService } from "./integration-managers.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
@@ -73,6 +74,7 @@ export interface AppServices {
   graphStore: ReturnType<typeof createGraphStore>;
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
+  integrationManagers: IntegrationManagerService;
   notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
   sandbox: RunnableModuleFactory;
@@ -204,6 +206,7 @@ export function services(
       googleDriveBoardServer,
       googleDriveClient,
       graphStore,
+      integrationManagers: new IntegrationManagerService(),
       loader,
       mcpClientManager,
       notebookLmApiClient,
