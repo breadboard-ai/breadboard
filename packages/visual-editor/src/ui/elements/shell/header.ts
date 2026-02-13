@@ -224,19 +224,20 @@ export class VEHeader extends SignalWatcher(LitElement) {
             }
           }
 
-          & #share {
+          & #share-button {
             display: none;
             align-items: center;
             background: var(--light-dark-n-100);
             border: 1px solid var(--light-dark-n-95);
             border-radius: var(--bb-grid-size-16);
             margin: 0 0 0 var(--bb-grid-size-6);
-
             color: var(--light-dark-n-0);
             height: var(--bb-grid-size-8);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
             font-size: 12px;
-            transition: border 0.2s cubic-bezier(0, 0, 0.2, 1);
+            transition:
+              background 0.2s cubic-bezier(0, 0, 0.2, 1),
+              border 0.2s cubic-bezier(0, 0, 0.2, 1);
 
             & .g-icon {
               margin-right: var(--bb-grid-size-2);
@@ -249,9 +250,25 @@ export class VEHeader extends SignalWatcher(LitElement) {
                 border: 1px solid var(--light-dark-n-80);
               }
             }
+
+            &.owner {
+              background: var(--light-dark-n-0);
+              border: none;
+              color: var(--light-dark-n-100);
+              margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
+
+              &:not([disabled]):hover {
+                background: light-dark(var(--n-25), var(--n-90));
+                border: none;
+              }
+            }
+
+            &.sharing-v2 {
+              border-radius: 100px;
+              font-size: 14px;
+            }
           }
 
-          & #publish,
           & #remix {
             display: none;
             align-items: center;
@@ -259,7 +276,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
             border: none;
             border-radius: var(--bb-grid-size-16);
             margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
-
             color: var(--light-dark-n-100);
             height: var(--bb-grid-size-8);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
@@ -281,7 +297,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
           & #publish-button {
             display: none;
-            margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
+            margin: 0 0 0 var(--bb-grid-size-6);
           }
 
           & #remix {
@@ -403,9 +419,8 @@ export class VEHeader extends SignalWatcher(LitElement) {
         }
         section #right {
           #remix,
-          #publish,
-          #publish-button,
-          #share {
+          #share-button,
+          #publish-button {
             display: flex;
           }
         }
@@ -484,7 +499,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         ${[
           this.#renderSaveStatusLabel(),
           this.#renderPublishButton(),
-          this.#renderSharePublishButton(),
+          this.#renderShareButton(),
           this.#renderRemixButton(),
           this.#renderGraphItemSelect(),
           this.#renderGlobalItemSelect(),
@@ -779,36 +794,27 @@ export class VEHeader extends SignalWatcher(LitElement) {
     if (!this.isMine || !CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
       return nothing;
     }
-
     return html`<bb-publish-button id="publish-button"></bb-publish-button>`;
   }
 
-  #renderSharePublishButton() {
-    if (this.isMine) {
-      return html`<button
-        id="publish"
-        class="sans-flex round w-500"
-        @click=${() => {
-          this.dispatchEvent(new ShareRequestedEvent());
-        }}
-      >
-        <span class="g-icon">share</span
-        >${CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
-          ? "Share"
-          : Strings.from("COMMAND_COPY_APP_PREVIEW_URL")}
-      </button>`;
-    }
-
+  #renderShareButton() {
+    const label = CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
+      ? "Share"
+      : Strings.from("COMMAND_COPY_APP_PREVIEW_URL");
     return html`<button
-      id="share"
-      class="sans-flex round w-500"
+      id="share-button"
+      class=${classMap({
+        "sans-flex": true,
+        round: true,
+        "w-500": true,
+        owner: !!this.isMine,
+        "sharing-v2": !!CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2,
+      })}
       @click=${() => {
         this.dispatchEvent(new ShareRequestedEvent());
       }}
     >
-      <span class="g-icon">share</span>${Strings.from(
-        "COMMAND_COPY_APP_PREVIEW_URL"
-      )}
+      <span class="g-icon">share</span>${label}
     </button>`;
   }
 

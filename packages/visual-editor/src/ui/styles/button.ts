@@ -17,7 +17,8 @@ export const buttonStyles = css`
       var(--bb-font-family);
     transition:
       background 0.2s cubic-bezier(0, 0, 0.3, 1),
-      color 0.2s cubic-bezier(0, 0, 0.3, 1);
+      color 0.2s cubic-bezier(0, 0, 0.3, 1),
+      border-color 0.2s cubic-bezier(0, 0, 0.3, 1);
     display: flex;
     align-items: center;
     justify-content: center;
