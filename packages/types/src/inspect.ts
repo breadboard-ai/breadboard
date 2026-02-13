@@ -761,13 +761,12 @@ type GraphsStoreEventMap = {
 
 export type GraphStoreEventTarget = TypedEventTarget<GraphsStoreEventMap>;
 
-export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
-  GraphLoader & {
-    readonly types: InspectableDescriberResultTypeCache;
+export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
+  readonly types: InspectableDescriberResultTypeCache;
 
-    set(graph: GraphDescriptor): void;
-    get(): MutableGraph | undefined;
-  };
+  set(graph: GraphDescriptor): void;
+  get(): MutableGraph | undefined;
+};
 
 export type PortIdentifier = string;
 

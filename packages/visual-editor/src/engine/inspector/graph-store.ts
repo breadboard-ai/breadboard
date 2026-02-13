@@ -6,9 +6,6 @@
 
 import type {
   GraphDescriptor,
-  GraphLoader,
-  GraphLoaderContext,
-  GraphLoaderResult,
   GraphStoreArgs,
   GraphStoreEventTarget,
   InspectableDescriberResultTypeCache,
@@ -27,7 +24,6 @@ class GraphStore
   extends (EventTarget as GraphStoreEventTarget)
   implements MutableGraphStore
 {
-  #loader: GraphLoader;
   #deps: GraphStoreArgs;
   #mutable: MutableGraph | undefined;
 
@@ -43,18 +39,10 @@ class GraphStore
 
   constructor(args: GraphStoreArgs) {
     super();
-    this.#loader = args.loader;
     this.#deps = args;
     this.types = new DescribeResultTypeCache(
       new NodeTypeDescriberManager(this, args)
     );
-  }
-
-  async load(
-    path: string,
-    context: GraphLoaderContext
-  ): Promise<GraphLoaderResult> {
-    return this.#loader.load(path, context);
   }
 
   set(graph: GraphDescriptor): void {

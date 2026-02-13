@@ -426,14 +426,6 @@ suite("Board Actions", () => {
     });
 
     test("returns error when store has empty graph", async () => {
-      // Create a mock graphStore that returns an empty graph via load
-      const mockGraphStore = {
-        load: async () => ({
-          success: true,
-          graph: { nodes: [], edges: [] }, // Empty graph
-        }),
-      };
-
       // No graph in editor
       const { controller } = makeMockController({
         editor: null,
@@ -443,7 +435,12 @@ suite("Board Actions", () => {
 
       boardActions.bind({
         services: {
-          graphStore: mockGraphStore,
+          loader: {
+            load: async () => ({
+              success: true,
+              graph: { nodes: [], edges: [] }, // Empty graph
+            }),
+          },
           googleDriveBoardServer: makeMockBoardServer({}),
         } as unknown as AppServices,
         controller,
