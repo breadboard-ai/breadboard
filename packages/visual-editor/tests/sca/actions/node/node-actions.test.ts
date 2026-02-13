@@ -5,14 +5,21 @@
  */
 
 import assert from "node:assert";
-import { after, afterEach, before, suite, test } from "node:test";
+import { after, afterEach, before, beforeEach, suite, test } from "node:test";
 import { Node as NodeActions } from "../../../../src/sca/actions/actions.js";
-import { appController } from "../../../../src/sca/controller/controller.js";
+import * as NodeActionsModule from "../../../../src/sca/actions/node/node-actions.js";
+import {
+  appController,
+  AppController,
+} from "../../../../src/sca/controller/controller.js";
 import { type AppServices } from "../../../../src/sca/services/services.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 import { createMockEditor } from "../../helpers/mock-controller.js";
 import { EditableGraph } from "@breadboard-ai/types";
+import { StateEvent } from "../../../../src/ui/events/events.js";
+import { coordination } from "../../../../src/sca/coordination.js";
+import type { EdgeAttachmentPoint } from "../../../../src/ui/types/types.js";
 
 suite("Node Actions", () => {
   let controller: ReturnType<typeof appController>;
@@ -578,6 +585,293 @@ suite("Node Actions", () => {
       );
 
       controller.global.flags.flags = originalFlags;
+    });
+  });
+});
+
+suite("Node Actions — Event-Triggered", () => {
+  beforeEach(() => {
+    coordination.reset();
+  });
+
+  function makeMockEditorForEvent(options?: {
+    onApply?: (transform: unknown) => void;
+    onEdit?: (edits: unknown[], label: string) => void;
+    rawGraph?: Record<string, unknown>;
+  }) {
+    return {
+      apply: async (transform: unknown) => {
+        options?.onApply?.(transform);
+        return { success: true };
+      },
+      edit: async (edits: unknown[], label: string) => {
+        options?.onEdit?.(edits, label);
+      },
+      inspect: (_graphId: string) => ({
+        nodeById: (_id: string) => ({
+          metadata: () => ({}),
+        }),
+      }),
+      raw: () => options?.rawGraph ?? { nodes: [], edges: [] },
+    };
+  }
+
+  function bindNode(
+    editor: unknown,
+    overrides?: { readOnly?: boolean; selectNodes?: (ids: string[]) => void }
+  ) {
+    NodeActionsModule.bind({
+      controller: {
+        editor: {
+          graph: {
+            editor,
+            readOnly: overrides?.readOnly ?? false,
+            lastNodeConfigChange: null,
+          },
+          selection: {
+            selectNodes: overrides?.selectNodes ?? (() => {}),
+          },
+        },
+        global: {
+          main: { blockingAction: false },
+        },
+      } as unknown as AppController,
+      services: {
+        stateEventBus: new EventTarget(),
+      } as unknown as AppServices,
+    });
+  }
+
+  suite("onNodeChange", () => {
+    test("applies UpdateNode transform and sets lastNodeConfigChange", async () => {
+      let appliedTransform: unknown = null;
+      const mockEditor = makeMockEditorForEvent({
+        onApply: (transform) => {
+          appliedTransform = transform;
+        },
+      });
+
+      bindNode(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "node.change",
+        id: "node-1",
+        configurationPart: { prompt: "hello" },
+        subGraphId: null,
+        metadata: null,
+        ins: null,
+      });
+      await NodeActionsModule.onNodeChange(evt);
+
+      assert.ok(appliedTransform, "editor.apply should have been called");
+    });
+
+    test("returns early when readOnly", async () => {
+      let appliedTransform: unknown = null;
+      const mockEditor = makeMockEditorForEvent({
+        onApply: (transform) => {
+          appliedTransform = transform;
+        },
+      });
+
+      bindNode(mockEditor, { readOnly: true });
+
+      const evt = new StateEvent({
+        eventType: "node.change",
+        id: "node-1",
+        configurationPart: { prompt: "hello" },
+        subGraphId: null,
+        metadata: null,
+        ins: null,
+      });
+      await NodeActionsModule.onNodeChange(evt);
+
+      assert.strictEqual(appliedTransform, null, "apply should not be called");
+    });
+
+    test("returns early when no editor", async () => {
+      bindNode(null);
+
+      const evt = new StateEvent({
+        eventType: "node.change",
+        id: "node-1",
+        configurationPart: {},
+        subGraphId: null,
+        metadata: null,
+        ins: null,
+      });
+      // Should not throw
+      await NodeActionsModule.onNodeChange(evt);
+    });
+  });
+
+  suite("onNodeAdd", () => {
+    test("calls editor.edit with addnode and selects the new node", async () => {
+      const edits: unknown[] = [];
+      let selectedIds: string[] = [];
+
+      const mockEditor = makeMockEditorForEvent({
+        onEdit: (e) => edits.push(...e),
+      });
+
+      bindNode(mockEditor, {
+        selectNodes: (ids: string[]) => {
+          selectedIds = ids;
+        },
+      });
+
+      const evt = new StateEvent({
+        eventType: "node.add",
+        node: { id: "new-node", type: "someType" },
+        graphId: "",
+      });
+      await NodeActionsModule.onNodeAdd(evt);
+
+      assert.strictEqual(edits.length, 1);
+      assert.strictEqual((edits[0] as Record<string, unknown>).type, "addnode");
+      assert.deepStrictEqual(selectedIds, ["new-node"]);
+    });
+
+    test("returns early when no editor", async () => {
+      bindNode(null);
+
+      const evt = new StateEvent({
+        eventType: "node.add",
+        node: { id: "new-node", type: "someType" },
+        graphId: "",
+      });
+      // Should not throw
+      await NodeActionsModule.onNodeAdd(evt);
+    });
+  });
+
+  suite("onMoveSelection", () => {
+    test("builds changemetadata edits for node updates", async () => {
+      const edits: unknown[] = [];
+      const mockEditor = makeMockEditorForEvent({
+        onEdit: (e) => edits.push(...e),
+      });
+
+      bindNode(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "node.moveselection",
+        updates: [{ type: "node", id: "node-1", graphId: "", x: 100, y: 200 }],
+      });
+      await NodeActionsModule.onMoveSelection(evt);
+
+      assert.strictEqual(edits.length, 1);
+      assert.strictEqual(
+        (edits[0] as Record<string, unknown>).type,
+        "changemetadata"
+      );
+    });
+
+    test("builds changeassetmetadata edits for asset updates", async () => {
+      const edits: unknown[] = [];
+      const rawGraph = {
+        nodes: [],
+        edges: [],
+        assets: {
+          "asset-1": {
+            metadata: { title: "test", type: "image/png" },
+          },
+        },
+      };
+      const mockEditor = makeMockEditorForEvent({
+        onEdit: (e) => edits.push(...e),
+        rawGraph,
+      });
+
+      bindNode(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "node.moveselection",
+        updates: [{ type: "asset", id: "asset-1", graphId: "", x: 50, y: 75 }],
+      });
+      await NodeActionsModule.onMoveSelection(evt);
+
+      assert.strictEqual(edits.length, 1);
+      assert.strictEqual(
+        (edits[0] as Record<string, unknown>).type,
+        "changeassetmetadata"
+      );
+    });
+  });
+
+  suite("onChangeEdge", () => {
+    test("applies ChangeEdge transform", async () => {
+      let appliedTransform: unknown = null;
+      const mockEditor = makeMockEditorForEvent({
+        onApply: (transform) => {
+          appliedTransform = transform;
+        },
+      });
+
+      bindNode(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "node.changeedge",
+        changeType: "add",
+        from: { from: "a", out: "out", to: "b", in: "in" },
+        to: undefined,
+        subGraphId: null,
+      });
+      await NodeActionsModule.onChangeEdge(evt);
+
+      assert.ok(appliedTransform, "apply should have been called");
+    });
+
+    test("returns early when no editor", async () => {
+      bindNode(null);
+
+      const evt = new StateEvent({
+        eventType: "node.changeedge",
+        changeType: "add",
+        from: { from: "a", out: "out", to: "b", in: "in" },
+        to: undefined,
+        subGraphId: null,
+      });
+      // Should not throw
+      await NodeActionsModule.onChangeEdge(evt);
+    });
+  });
+
+  suite("onChangeEdgeAttachmentPoint", () => {
+    test("applies ChangeEdgeAttachmentPoint transform", async () => {
+      let appliedTransform: unknown = null;
+      const mockEditor = makeMockEditorForEvent({
+        onApply: (transform) => {
+          appliedTransform = transform;
+        },
+      });
+
+      bindNode(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "node.changeedgeattachmentpoint",
+        graphId: "",
+        edge: { from: "a", out: "out", to: "b", in: "in" },
+        which: "from",
+        attachmentPoint: { x: 10, y: 20 } as unknown as EdgeAttachmentPoint,
+      });
+      await NodeActionsModule.onChangeEdgeAttachmentPoint(evt);
+
+      assert.ok(appliedTransform, "apply should have been called");
+    });
+
+    test("returns early when no editor", async () => {
+      bindNode(null);
+
+      const evt = new StateEvent({
+        eventType: "node.changeedgeattachmentpoint",
+        graphId: "",
+        edge: { from: "a", out: "out", to: "b", in: "in" },
+        which: "from",
+        attachmentPoint: { x: 10, y: 20 } as unknown as EdgeAttachmentPoint,
+      });
+      // Should not throw
+      await NodeActionsModule.onChangeEdgeAttachmentPoint(evt);
     });
   });
 });

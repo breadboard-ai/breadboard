@@ -6,6 +6,8 @@
 
 import type { BoardServer, OutputValues } from "@breadboard-ai/types";
 import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
+import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
+import { type UserSignInResponse } from "../ui/types/types.js";
 import {
   AssetPath,
   EditHistoryCreator,
@@ -68,6 +70,9 @@ export interface RuntimeConfig {
   env?: FileSystemEntry[];
   appName: string;
   appSubName: string;
+  askUserToSignInIfNeeded?: (
+    scopes?: OAuthScope[]
+  ) => Promise<UserSignInResponse>;
 }
 
 export type ReferenceIdentifier =

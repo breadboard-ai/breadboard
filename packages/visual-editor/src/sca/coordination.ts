@@ -171,6 +171,33 @@ export function eventTrigger(
 }
 
 /**
+ * Creates a trigger that listens for a specific `StateEvent` on a bus.
+ *
+ * StateEvent always dispatches with `.type === "bbevent"`. This helper
+ * listens for `"bbevent"` and filters by `detail.eventType` to match
+ * the specific event (e.g. `"node.change"`).
+ *
+ * @param name Human-readable name for debugging/logging
+ * @param target The EventTarget (typically `stateEventBus`)
+ * @param eventType The logical event type (e.g. `"node.change"`)
+ * @returns An EventTrigger definition
+ */
+export function stateEventTrigger(
+  name: string,
+  target: EventTarget,
+  eventType: string
+): EventTrigger {
+  return {
+    type: "event",
+    name,
+    target,
+    eventType: "bbevent",
+    filter: (evt: Event) =>
+      (evt as CustomEvent).detail?.eventType === eventType,
+  };
+}
+
+/**
  * Creates a keyboard shortcut trigger definition.
  *
  * @param name Human-readable name for debugging/logging

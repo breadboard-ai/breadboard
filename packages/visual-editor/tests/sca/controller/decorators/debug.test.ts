@@ -59,15 +59,15 @@ suite("Debug Decorator", () => {
     infoMock.mock.restore();
 
     assert.deepStrictEqual(callInfo[0].arguments, [
-      "[\x1B[104;97m name:get \x1B[m]",
+      "[\x1B[104;97m name: get \x1B[m]",
       "test",
     ]);
     assert.deepStrictEqual(callInfo[1].arguments, [
-      "[\x1B[104;97m name:set \x1B[m]",
+      "[\x1B[104;97m name: set \x1B[m]",
       "foo",
     ]);
     assert.deepStrictEqual(callInfo[2].arguments, [
-      "[\x1B[104;97m name:get \x1B[m]",
+      "[\x1B[104;97m name: get \x1B[m]",
       "foo",
     ]);
   });
@@ -121,15 +121,15 @@ suite("Debug Decorator", () => {
     infoMock.mock.restore();
 
     assert.deepStrictEqual(callInfo[0].arguments, [
-      "[\x1B[104;97m Custom Get Name:get \x1B[m]",
+      "[\x1B[104;97m Custom Get Name: get \x1B[m]",
       "test",
     ]);
     assert.deepStrictEqual(callInfo[1].arguments, [
-      "[\x1B[104;97m Custom Set Name:set \x1B[m]",
+      "[\x1B[104;97m Custom Set Name: set \x1B[m]",
       "foo",
     ]);
     assert.deepStrictEqual(callInfo[2].arguments, [
-      "[\x1B[104;97m Custom Get Name:get \x1B[m]",
+      "[\x1B[104;97m Custom Get Name: get \x1B[m]",
       "foo",
     ]);
   });

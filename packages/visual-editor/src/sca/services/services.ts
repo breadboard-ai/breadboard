@@ -40,16 +40,24 @@ import { Autonamer } from "./autonamer.js";
 import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
 import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";
-import { ActionTracker } from "../../ui/types/types.js";
+import { ActionTracker, UserSignInResponse } from "../../ui/types/types.js";
 import { type ConsentController } from "../controller/subcontrollers/global/global.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { RunService } from "./run-service.js";
 import { StatusUpdatesService } from "./status-updates-service.js";
 import { getLogger, Formatter } from "../utils/logging/logger.js";
 import { NotebookLmApiClient } from "./notebooklm-api-client.js";
+import type { OAuthScope } from "../../ui/connection/oauth-scopes.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
+  /**
+   * A function reference for prompting the user to sign in.
+   * Set by MainBase during initialization. DOM-coupled (uses sign-in modal).
+   */
+  askUserToSignInIfNeeded: (
+    scopes?: OAuthScope[]
+  ) => Promise<UserSignInResponse>;
   embedHandler: EmbedHandler | undefined;
   agentContext: AgentContext;
   apiClient: AppCatalystApiClient;
@@ -69,6 +77,12 @@ export interface AppServices {
   runService: RunService;
   sandbox: RunnableModuleFactory;
   signinAdapter: SigninAdapter;
+  /**
+   * An EventTarget for dispatching StateEvents into the SCA trigger system.
+   * handleRoutedEvent re-dispatches its events onto this bus so that
+   * SCA actions with eventTrigger can listen for them.
+   */
+  stateEventBus: EventTarget;
   statusUpdates: StatusUpdatesService;
 }
 
@@ -174,6 +188,9 @@ export function services(
 
     instance = {
       actionTracker,
+      askUserToSignInIfNeeded:
+        config.askUserToSignInIfNeeded ??
+        (async () => "failure" as UserSignInResponse),
       embedHandler: config.embedHandler,
       agentContext,
       apiClient,
@@ -193,6 +210,7 @@ export function services(
       runService: new RunService(),
       sandbox,
       signinAdapter,
+      stateEventBus: new EventTarget(),
       statusUpdates: new StatusUpdatesService(),
     } satisfies AppServices;
   }

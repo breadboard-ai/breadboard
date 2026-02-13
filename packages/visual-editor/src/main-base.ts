@@ -68,7 +68,6 @@ import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js"
 import { sca, SCA } from "./sca/sca.js";
 import { Utils } from "./sca/utils.js";
 import { scaContext } from "./sca/context/context.js";
-import { GraphUtils } from "./utils/graph-utils.js";
 
 export { MainBase };
 
@@ -198,6 +197,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       env: args.env,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
+      askUserToSignInIfNeeded: (scopes) => this.askUserToSignInIfNeeded(scopes),
     };
     this.sca = sca(config, args.globalConfig.flags);
     this.sca.controller.global.debug.isHydrated.then(() => {
@@ -664,10 +664,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
 
       this.sca.controller.global.main.loadState = "Loaded";
-      this.runtime.select.refresh(
-        tab.id,
-        GraphUtils.createWorkspaceSelectionChangeId()
-      );
     } else {
       this.sca.controller.router.clearFlowParameters();
       // Page title is now handled by the page title trigger in SCA
@@ -1123,10 +1119,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       keyof BreadboardUI.Events.StateEventDetailMap
     >
   ) {
-    // Locate the specific handler based on the event type.
+    // Bridge: re-dispatch onto stateEventBus so SCA eventTrigger actions fire.
+    // The event type must match the trigger's eventType (e.g. "node.change"),
+    // not the DOM-level "bbevent" type that StateEvent uses.
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent(evt.detail)
+    );
+
+    // FIXME: Legacy event route fallthrough. These routes still depend on the
+    // legacy runtime — remove when all routes are migrated to SCA actions.
     const eventRoute = eventRoutes.get(evt.detail.eventType);
     if (!eventRoute) {
-      console.warn(`No event handler for "${evt.detail.eventType}"`);
       return;
     }
 

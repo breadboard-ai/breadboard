@@ -66,6 +66,7 @@ suite("Actions", () => {
       } as unknown as AppController;
 
       const mockServices = {
+        stateEventBus: new EventTarget(),
         agentContext: {
           invalidateResumableRuns: () => {},
           clearAllRuns: () => {},
@@ -117,6 +118,7 @@ suite("Actions", () => {
       } as unknown as AppController;
 
       const mockServices = {
+        stateEventBus: new EventTarget(),
         agentContext: {
           invalidateResumableRuns: () => {},
           clearAllRuns: () => {},
@@ -169,6 +171,7 @@ suite("Actions", () => {
       } as unknown as AppController;
 
       const mockServices = {
+        stateEventBus: new EventTarget(),
         agentContext: {
           invalidateResumableRuns: () => {},
           clearAllRuns: () => {},
@@ -212,6 +215,7 @@ suite("Actions", () => {
       } as unknown as AppController;
 
       const mockServices = {
+        stateEventBus: new EventTarget(),
         agentContext: {
           invalidateResumableRuns: () => {},
           clearAllRuns: () => {},
