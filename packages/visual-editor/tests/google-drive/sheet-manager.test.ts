@@ -11,6 +11,8 @@ import {
   SheetManager,
   SheetGetter,
   SheetManagerConfig,
+  isSystemSheet,
+  SYSTEM_SHEET_PREFIX,
 } from "../../src/a2/google-drive/sheet-manager.js";
 import { NodeHandlerContext } from "@breadboard-ai/types";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
@@ -643,6 +645,201 @@ describe("SheetManager", () => {
         success: false,
         error: "Set values failed",
       });
+    });
+  });
+});
+
+// ==================== isSystemSheet ====================
+describe("isSystemSheet", () => {
+  it("returns true for sheets with __ prefix", () => {
+    strictEqual(isSystemSheet("__chat_log__"), true);
+    strictEqual(isSystemSheet("__internal"), true);
+  });
+
+  it("returns false for normal sheets", () => {
+    strictEqual(isSystemSheet("Sheet1"), false);
+    strictEqual(isSystemSheet("_single_underscore"), false);
+    strictEqual(isSystemSheet("notes"), false);
+  });
+
+  it("SYSTEM_SHEET_PREFIX is __", () => {
+    strictEqual(SYSTEM_SHEET_PREFIX, "__");
+  });
+});
+
+describe("SheetManager system sheet features", () => {
+  // ==================== getSheetMetadata system sheet filtering ====================
+  describe("getSheetMetadata filters system sheets", () => {
+    it("filters out system sheets from metadata results", async () => {
+      const metadataWithSystemSheet = {
+        sheets: [
+          { properties: { title: "Sheet1", sheetId: 1 } },
+          { properties: { title: "__chat_log__", sheetId: 2 } },
+          { properties: { title: "intro", sheetId: 0 } },
+        ],
+      };
+      const { config } = createMockConfig(async (url) => {
+        if (url.includes("/values/")) {
+          return new Response(JSON.stringify(mockSpreadsheetValues));
+        }
+        return new Response(JSON.stringify(metadataWithSystemSheet));
+      });
+      const { sheetGetter } = createMockSheetGetter("sheet-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      const result = await manager.getSheetMetadata(stubContext);
+      if (!ok(result)) throw new Error("Expected success");
+
+      // Only Sheet1 should remain (id=0 and __chat_log__ filtered out)
+      strictEqual(result.sheets.length, 1);
+      strictEqual(result.sheets[0].name, "Sheet1");
+    });
+  });
+
+  // ==================== appendToSheet ====================
+  describe("appendToSheet", () => {
+    it("successfully appends values to a sheet", async () => {
+      const { config } = createMockConfig(async () => new Response("{}"));
+      const { sheetGetter } = createMockSheetGetter("sheet-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      const result = await manager.appendToSheet(stubContext, {
+        range: "__chat_log__!A:D",
+        values: [["ts", "session", "user", "hello"]],
+      });
+
+      deepStrictEqual(result, { success: true });
+    });
+
+    it("returns error when sheetGetter fails", async () => {
+      const { config } = createMockConfig();
+      const { sheetGetter } = createMockSheetGetter({
+        $error: "Sheet not found",
+      });
+      const manager = new SheetManager(config, sheetGetter);
+
+      const result = await manager.appendToSheet(stubContext, {
+        range: "__chat_log__!A:D",
+        values: [["ts", "session", "user", "hello"]],
+      });
+
+      strictEqual(ok(result), false);
+    });
+
+    it("returns error when API call fails", async () => {
+      const { config } = createMockConfig(
+        async () =>
+          new Response(JSON.stringify({ error: { message: "Append failed" } }))
+      );
+      const { sheetGetter } = createMockSheetGetter("sheet-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      const result = await manager.appendToSheet(stubContext, {
+        range: "__chat_log__!A:D",
+        values: [["ts", "session", "user", "hello"]],
+      });
+
+      strictEqual(ok(result), false);
+    });
+
+    it("clears cache for the affected sheet", async () => {
+      const { config, fetchMock } = createMockConfig(
+        async () => new Response("{}")
+      );
+      const { sheetGetter } = createMockSheetGetter("sheet-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      // Prime cache
+      await manager.readSheet(stubContext, { range: "__chat_log__!A:D" });
+      // Read again — should hit cache (no new fetch)
+      await manager.readSheet(stubContext, { range: "__chat_log__!A:D" });
+      const countBeforeAppend = fetchMock.mock.calls.length;
+
+      // Append should clear cache
+      await manager.appendToSheet(stubContext, {
+        range: "__chat_log__!A:D",
+        values: [["ts", "session", "user", "hello"]],
+      });
+
+      // Read again should hit API (cache cleared)
+      await manager.readSheet(stubContext, { range: "__chat_log__!A:D" });
+      // append = 1 call, read = 1 call = 2 new calls
+      strictEqual(
+        fetchMock.mock.calls.length,
+        countBeforeAppend + 2,
+        "should make new fetch calls for append + read after cache clear"
+      );
+    });
+  });
+
+  // ==================== ensureSystemSheet ====================
+  describe("ensureSystemSheet", () => {
+    it("creates sheet when it does not exist", async () => {
+      const metadataWithoutSystemSheet = {
+        sheets: [{ properties: { title: "Sheet1", sheetId: 1 } }],
+      };
+      const { config } = createMockConfig(async (url) => {
+        // Metadata call or addSheet/setValues calls
+        if (
+          url.includes(":batchUpdate") ||
+          url.includes("/values/") ||
+          url.endsWith("sheet-id")
+        ) {
+          // If contains :batchUpdate, it's creating the sheet
+          // If contains /values/, it's setting initial column headers
+          return new Response("{}");
+        }
+        return new Response(JSON.stringify(metadataWithoutSystemSheet));
+      });
+      const { sheetGetter } = createMockSheetGetter("sheet-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      const result = await manager.ensureSystemSheet(
+        stubContext,
+        "__chat_log__",
+        ["timestamp", "session_id", "role", "content"]
+      );
+
+      deepStrictEqual(result, { success: true });
+    });
+
+    it("skips creation when sheet already exists", async () => {
+      const { config, fetchMock } = createMockConfig(async () => {
+        return new Response(
+          JSON.stringify({
+            sheets: [{ properties: { title: "__chat_log__", sheetId: 5 } }],
+          })
+        );
+      });
+      const { sheetGetter } = createMockSheetGetter("sheet-id");
+      const manager = new SheetManager(config, sheetGetter);
+
+      const result = await manager.ensureSystemSheet(
+        stubContext,
+        "__chat_log__",
+        ["timestamp", "session_id", "role", "content"]
+      );
+
+      deepStrictEqual(result, { success: true });
+      // Should only have the metadata fetch, no addSheet/setValues calls
+      // (sheetGetter + metadata = 2 calls)
+      strictEqual(fetchMock.mock.calls.length, 1);
+    });
+
+    it("returns error when sheetGetter fails", async () => {
+      const { config } = createMockConfig();
+      const { sheetGetter } = createMockSheetGetter({
+        $error: "No sheet",
+      });
+      const manager = new SheetManager(config, sheetGetter);
+
+      const result = await manager.ensureSystemSheet(
+        stubContext,
+        "__chat_log__",
+        ["timestamp"]
+      );
+
+      strictEqual(ok(result), false);
     });
   });
 });

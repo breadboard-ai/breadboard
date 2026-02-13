@@ -7,7 +7,11 @@
 import { describe, it, mock } from "node:test";
 import { ok as assert, strictEqual } from "node:assert";
 import { createAgentConfigurator } from "../../src/a2/agent/agent-function-configurator.js";
-import { stubCaps, stubModuleArgs } from "../useful-stubs.js";
+import {
+  stubCaps,
+  stubModuleArgs,
+  stubMemoryManager,
+} from "../useful-stubs.js";
 import {
   createMockGenerators,
   createMockFileSystem,
@@ -28,6 +32,8 @@ function createMockDeps() {
     translator: createMockTranslator(),
     ui: {
       chatLog: [] as LLMContent[],
+      setMemoryManager: mock.fn(),
+      seedChatLog: mock.fn(),
     } as unknown as AgentUI,
   };
 }
@@ -95,9 +101,17 @@ describe("createAgentConfigurator", () => {
 
   describe("memory group", () => {
     it("includes memory group when useMemory is true", async () => {
+      // Override the agentContext's memoryManager with a stub that doesn't
+      // try real network calls (the default uses a real SheetManager).
+      const agentContext = Object.create(stubModuleArgs.agentContext);
+      agentContext.memoryManager = stubMemoryManager;
+      const moduleArgsWithMemory = {
+        ...stubModuleArgs,
+        agentContext,
+      } as typeof stubModuleArgs;
       const configureFn = createAgentConfigurator(
         stubCaps,
-        stubModuleArgs,
+        moduleArgsWithMemory,
         createMockGenerators()
       );
       const result = await configureFn(

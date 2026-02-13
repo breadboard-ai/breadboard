@@ -18,6 +18,7 @@ import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup, MemoryManager } from "../types.js";
 import { statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
+import { CHAT_LOG_PATH } from "./chat.js";
 
 export { getMemoryFunctionGroup };
 
@@ -39,16 +40,17 @@ const instruction = tr`
 
 ## Using memory data store
 
-You have access to persistent data store that allows you to recall and remember data across multiple sessions. Use the data store when the objective contains the key phrase "Use Memory Data Store".
+You have access to a persistent data store that allows you to recall and remember data across multiple sessions. Use the data store when the objective contains the key phrase "Use Memory".
 
-The data store is stored in a single Google Spreadsheet. 
+The data store is stored in a Google Spreadsheet. 
 
-You can create new sheets within this spreadsheet using "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete existing sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. You can also get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
+You can create new sheets within this spreadsheet using the "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete existing sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. You can also get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
 
-To retrieve data from the data store, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a file using the "/mnt/memory/sheet_name" path.
+To retrieve data from memory, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a file using the "/mnt/memory/sheet_name" path.
 
-To update data in the data store, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
-`;
+To update data in memory, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
+
+The full transcript of the conversation with the user is automatically stored in a separate data store. Don't call any functions when asked to store chat logs or chat information. Just read the chat log from "${CHAT_LOG_PATH}" whenever you need the chat history.`;
 
 function getMemoryFunctionGroup(args: MemoryFunctionArgs): FunctionGroup {
   return {

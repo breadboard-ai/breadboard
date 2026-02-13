@@ -159,6 +159,15 @@ export type MemoryManager = {
     context: NodeHandlerContext,
     args: { name: string }
   ): Promise<Outcome<AgentOutcome>>;
+  appendToSheet(
+    context: NodeHandlerContext,
+    args: { range: string; values: string[][] }
+  ): Promise<Outcome<AgentOutcome>>;
+  ensureSystemSheet(
+    context: NodeHandlerContext,
+    name: string,
+    columns: string[]
+  ): Promise<Outcome<AgentOutcome>>;
 };
 
 export type UIType = "chat" | "a2ui" | "simulated";
