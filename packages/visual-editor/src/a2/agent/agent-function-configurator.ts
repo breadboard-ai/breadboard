@@ -91,6 +91,24 @@ function createAgentConfigurator(
       deps.fileSystem.addSystemFile(CHAT_LOG_PATH, () =>
         JSON.stringify(deps.ui.chatLog)
       );
+      if (flags.useMemory) {
+        const memoryManager = moduleArgs.agentContext.memoryManager;
+        deps.ui.setMemoryManager(memoryManager, moduleArgs.context);
+        // Ensure the __chat_log__ sheet exists, then load historical entries.
+        const ensured = await memoryManager.ensureSystemSheet(
+          moduleArgs.context,
+          "__chat_log__",
+          ["timestamp", "session_id", "role", "content"]
+        );
+        if (ok(ensured)) {
+          const sheetData = await memoryManager.readSheet(moduleArgs.context, {
+            range: "__chat_log__!A:D",
+          });
+          if (ok(sheetData) && "values" in sheetData && sheetData.values) {
+            deps.ui.seedChatLog(sheetData.values);
+          }
+        }
+      }
       groups.push(
         getChatFunctionGroup({
           chatManager: deps.ui,

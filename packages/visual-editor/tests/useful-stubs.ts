@@ -57,14 +57,20 @@ const stubMemoryManager: MemoryManager = {
   createSheet: () => {
     throw new Error(`Not implemented`);
   },
-  readSheet: () => {
-    throw new Error(`Not implemented`);
+  readSheet: async () => {
+    return { values: [] };
   },
   updateSheet: () => {
     throw new Error(`Not implemented`);
   },
   deleteSheet: () => {
     throw new Error(`Not implemented`);
+  },
+  appendToSheet: async () => {
+    return { success: true };
+  },
+  ensureSystemSheet: async () => {
+    return { success: true };
   },
   getSheetMetadata: function (): Promise<
     Outcome<{ sheets: SheetMetadataWithFilePath[] }>
