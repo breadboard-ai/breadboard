@@ -808,6 +808,13 @@ export interface ActionOptions {
    * (like applying pending edits before autosave) activate in the right order.
    */
   priority?: number;
+  /**
+   * If true, the action is called once immediately after activation.
+   * Use this to reconcile persisted controller state with current reality
+   * on boot (e.g., sidebar section may be persisted as "editor" but
+   * there's no selection after a page refresh).
+   */
+  runOnActivate?: boolean;
 }
 
 /**
@@ -849,6 +856,8 @@ export interface ActionWithTriggers<T extends AppAction<never[]>> {
   readonly actionName: string;
   /** Activation priority (higher = activates first, default 0) */
   readonly priority: number;
+  /** Whether the action should run once immediately after activation */
+  readonly runOnActivate: boolean;
   /** Start listening for trigger. Returns a dispose function. */
   activate: () => () => void;
   /** The trigger factory, if any (for debugging/inspection) */
@@ -910,7 +919,12 @@ export function asAction<T extends AppAction<never[]>>(
   const normalizedOptions: ActionOptions =
     typeof options === "string" ? { mode: options } : options;
 
-  const { mode, triggeredBy, priority: rawPriority = 0 } = normalizedOptions;
+  const {
+    mode,
+    triggeredBy,
+    priority: rawPriority = 0,
+    runOnActivate = false,
+  } = normalizedOptions;
 
   // Clamp priority to reasonable bounds to prevent gaming
   const MIN_PRIORITY = -1000;
@@ -935,6 +949,7 @@ export function asAction<T extends AppAction<never[]>>(
   const actionWithTriggers = Object.assign(wrapped, {
     actionName: name,
     priority,
+    runOnActivate,
     trigger: triggeredBy,
     activate: () => {
       // Resolve trigger factory lazily here, not at import time

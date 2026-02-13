@@ -38,6 +38,10 @@ export const updateSidebarOnSelectionChange = asAction(
   {
     mode: ActionMode.Immediate,
     triggeredBy: () => onSelectionChange(bind),
+    // The sidebar section is persisted to localStorage. On page refresh,
+    // "editor" may be restored but there's no selection yet. Running this
+    // action on activation reconciles the persisted value with reality.
+    runOnActivate: true,
   },
   async (): Promise<void> => {
     const { controller } = bind;

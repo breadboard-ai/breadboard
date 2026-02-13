@@ -166,6 +166,19 @@ export function activateTriggers(): () => void {
     triggerDisposers.push(dispose);
   }
 
+  // Run actions flagged with runOnActivate to reconcile persisted state
+  // with current reality (e.g., sidebar section persisted as "editor"
+  // but no selection exists after page refresh).
+  for (const { action, name } of actionsWithTriggers) {
+    if (!action.runOnActivate) continue;
+    action().catch((err: Error) => {
+      logger.log(
+        Utils.Logging.Formatter.error(`Boot-time run of ${name} failed:`, err),
+        LABEL
+      );
+    });
+  }
+
   // Return combined dispose function
   return () => {
     for (const dispose of triggerDisposers) {
