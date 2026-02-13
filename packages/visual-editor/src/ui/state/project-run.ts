@@ -74,7 +74,7 @@ function createProjectRunStateFromFinalOutput(
     return error(`Graph store wasn't supplied`);
   }
 
-  const inspectable = graphStore.inspect("");
+  const inspectable = graphStore.get()?.graphs.get("");
   if (!inspectable) {
     return error(`Can't inspect graph`);
   }

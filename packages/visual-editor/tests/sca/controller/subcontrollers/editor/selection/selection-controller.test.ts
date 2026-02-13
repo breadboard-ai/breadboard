@@ -205,7 +205,7 @@ suite("SelectionController", () => {
     const graphStore = makeTestGraphStore();
 
     graphStore.set(testGraph);
-    const inspectableGraph = graphStore.inspect("");
+    const inspectableGraph = graphStore.get()?.graphs.get("");
     if (!inspectableGraph) assert.fail("Unable to inspect graph");
 
     store.selectAll(inspectableGraph);

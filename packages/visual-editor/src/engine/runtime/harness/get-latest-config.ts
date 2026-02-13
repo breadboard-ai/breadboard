@@ -20,7 +20,7 @@ function getLatestConfig(
   graph: GraphDescriptor,
   context: NodeHandlerContext
 ): Outcome<NodeConfiguration> {
-  const inspector = context.graphStore?.inspect("");
+  const inspector = context.graphStore?.get()?.graphs.get("");
   if (!inspector) {
     return err(`Can't get inspector for graph "${graph.url}"`);
   }

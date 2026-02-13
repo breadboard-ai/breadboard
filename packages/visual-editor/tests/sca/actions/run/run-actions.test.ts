@@ -815,9 +815,8 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    // GraphStore returns null for inspection (no graph store set up)
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
-      () => null;
+    // GraphStore returns null for get() (no graph store set up)
+    (services.graphStore as unknown as { get: () => unknown }).get = () => null;
 
     assert.doesNotThrow(() => {
       RunActions.syncConsoleFromRunner();
@@ -852,8 +851,9 @@ suite("syncConsoleFromRunner", () => {
       nodeById: () => undefined, // Node not found
     };
 
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
-      () => mockInspectable;
+    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
+      graphs: new Map([["", mockInspectable]]),
+    });
 
     RunActions.syncConsoleFromRunner();
 
@@ -884,8 +884,9 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
-      () => ({ nodeById: () => undefined });
+    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
+      graphs: new Map([["", { nodeById: () => undefined }]]),
+    });
 
     assert.doesNotThrow(() => {
       RunActions.syncConsoleFromRunner();
@@ -1137,8 +1138,9 @@ suite("syncConsoleFromRunner async describe", () => {
     const mockInspectable = {
       nodeById: () => mockNode,
     };
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
-      () => mockInspectable;
+    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
+      graphs: new Map([["", mockInspectable]]),
+    });
 
     RunActions.syncConsoleFromRunner();
 
@@ -1188,8 +1190,9 @@ suite("syncConsoleFromRunner async describe", () => {
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
     const mockInspectable = { nodeById: () => mockNode };
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
-      () => mockInspectable;
+    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
+      graphs: new Map([["", mockInspectable]]),
+    });
 
     RunActions.syncConsoleFromRunner();
 
@@ -1223,8 +1226,9 @@ suite("syncConsoleFromRunner async describe", () => {
 
     // Mock nodeById to return null
     const mockInspectable = { nodeById: () => null };
-    (services.graphStore as unknown as { inspect: () => unknown }).inspect =
-      () => mockInspectable;
+    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
+      graphs: new Map([["", mockInspectable]]),
+    });
 
     // Should not throw
     assert.doesNotThrow(() => {

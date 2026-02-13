@@ -8,14 +8,12 @@ import type {
   EditableGraph,
   EditableGraphOptions,
   GraphDescriptor,
-  GraphIdentifier,
   GraphLoader,
   GraphLoaderContext,
   GraphLoaderResult,
   GraphStoreArgs,
   GraphStoreEventTarget,
   InspectableDescriberResultTypeCache,
-  InspectableGraph,
   MutableGraph,
   MutableGraphStore,
 } from "@breadboard-ai/types";
@@ -72,10 +70,5 @@ class GraphStore
   edit(options: EditableGraphOptions = {}): EditableGraph | undefined {
     if (!this.#mutable) return undefined;
     return new GraphEditor(this.#mutable, options);
-  }
-
-  inspect(graphId: GraphIdentifier): InspectableGraph | undefined {
-    if (!this.#mutable) return undefined;
-    return this.#mutable.graphs.get(graphId);
   }
 }

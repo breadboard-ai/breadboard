@@ -212,25 +212,32 @@ export function makeTestServices(options: TestServicesOptions = {}) {
           createRunFileSystem: () => ({}),
         },
         // For nodestart event handling
-        inspect: () => ({
-          nodeById: (id: string) => {
-            const meta = nodeMetadata[id] ?? {};
-            return {
-              title: () => meta.title ?? id,
-              currentDescribe: () => ({
-                metadata: { icon: meta.icon, tags: meta.tags },
-              }),
-              currentPorts: () => ({
-                inputs: { ports: [] },
-                outputs: { ports: [] },
-              }),
-              // For async describe fallback - include tags to skip this branch
-              describe: () =>
-                Promise.resolve({
-                  metadata: { icon: meta.icon, tags: meta.tags },
-                }),
-            };
-          },
+        get: () => ({
+          graphs: new Map([
+            [
+              "",
+              {
+                nodeById: (id: string) => {
+                  const meta = nodeMetadata[id] ?? {};
+                  return {
+                    title: () => meta.title ?? id,
+                    currentDescribe: () => ({
+                      metadata: { icon: meta.icon, tags: meta.tags },
+                    }),
+                    currentPorts: () => ({
+                      inputs: { ports: [] },
+                      outputs: { ports: [] },
+                    }),
+                    // For async describe fallback - include tags to skip this branch
+                    describe: () =>
+                      Promise.resolve({
+                        metadata: { icon: meta.icon, tags: meta.tags },
+                      }),
+                  };
+                },
+              },
+            ],
+          ]),
         }),
       } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions

@@ -768,7 +768,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     set(graph: GraphDescriptor): void;
     get(): MutableGraph | undefined;
     edit(options?: EditableGraphOptions): EditableGraph | undefined;
-    inspect(graphId: GraphIdentifier): InspectableGraph | undefined;
   };
 
 export type PortIdentifier = string;
