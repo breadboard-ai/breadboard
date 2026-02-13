@@ -15,6 +15,7 @@
  */
 
 import type {
+  AssetMetadata,
   AssetPath,
   LLMContent,
   NodeValue,
@@ -22,9 +23,12 @@ import type {
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { getLogger, Formatter } from "../../utils/logging/logger.js";
+import type { StateEvent } from "../../../ui/events/events.js";
+import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
+import { ChangeAssetEdge } from "../../../ui/transforms/index.js";
 
-import { makeAction } from "../binder.js";
-import { asAction, ActionMode } from "../../coordination.js";
+import { makeAction, withBlockingAction } from "../binder.js";
+import { asAction, ActionMode, stateEventTrigger } from "../../coordination.js";
 import { onGraphVersionChange } from "./triggers.js";
 import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
 import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
@@ -246,6 +250,146 @@ export const removeGraphAsset = asAction(
     const result = await editor.apply(new RemoveAssetWithRefs(path));
     if (!result.success) {
       return err(result.error);
+    }
+  }
+);
+
+// =============================================================================
+// Event-Triggered Actions
+// =============================================================================
+
+const ASSET_TIMEOUT = 250;
+
+/**
+ * Adds, removes, or changes an asset edge.
+ *
+ * **Triggers:** `asset.changeedge` StateEvent
+ */
+export const onChangeAssetEdge = asAction(
+  "Asset.onChangeAssetEdge",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => {
+      const { services } = bind;
+      return stateEventTrigger(
+        "Asset Change Edge",
+        services.stateEventBus,
+        "asset.changeedge"
+      );
+    },
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const { editor } = controller.editor.graph;
+    if (!editor) return;
+
+    const detail = (evt as StateEvent<"asset.changeedge">).detail;
+    await withBlockingAction(controller, async () => {
+      const graphId = detail.subGraphId ?? "";
+      const transform = new ChangeAssetEdge(
+        detail.changeType,
+        graphId,
+        detail.assetEdge
+      );
+      const result = await editor.apply(transform);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+    });
+  }
+);
+
+/**
+ * Adds one or more assets to the graph.
+ *
+ * **Triggers:** `asset.add` StateEvent
+ */
+export const onAddAssets = asAction(
+  "Asset.onAddAssets",
+  {
+    mode: ActionMode.Awaits,
+    triggeredBy: () => {
+      const { services } = bind;
+      return stateEventTrigger(
+        "Asset Add",
+        services.stateEventBus,
+        "asset.add"
+      );
+    },
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller, services } = bind;
+    const { editor } = controller.editor.graph;
+    if (!editor) return;
+
+    const detail = (evt as StateEvent<"asset.add">).detail;
+
+    let snackbarId: SnackbarUUID | undefined;
+    const longRunningTaskTimeout = window.setTimeout(() => {
+      snackbarId = globalThis.crypto.randomUUID() as SnackbarUUID;
+      controller.global.snackbars.snackbar(
+        "Processing assets, please wait...",
+        SnackType.PENDING,
+        [],
+        true,
+        snackbarId,
+        true
+      );
+    }, ASSET_TIMEOUT);
+
+    const graphUrl = controller.editor.graph.url;
+
+    await Promise.all(
+      detail.assets.map(async (asset) => {
+        const metadata: AssetMetadata = {
+          title: asset.name,
+          type: asset.type,
+          visual: asset.visual,
+          managed: asset.managed,
+        };
+
+        if (asset.subType) {
+          metadata.subType = asset.subType;
+        }
+
+        // Mark inline data with asset title
+        for (const part of asset.data.parts) {
+          if (isInlineData(part)) {
+            part.inlineData.title = metadata.title;
+          }
+        }
+
+        // Persist data parts
+        const data = await persistDataParts(
+          graphUrl,
+          [asset.data],
+          services.googleDriveBoardServer.dataPartTransformer()
+        );
+
+        await editor.edit(
+          [
+            {
+              type: "addasset",
+              path: asset.path,
+              data: data as NodeValue,
+              metadata,
+            },
+          ],
+          `Adding asset at path "${asset.path}"`
+        );
+      })
+    );
+
+    window.clearTimeout(longRunningTaskTimeout);
+    if (snackbarId) {
+      controller.global.snackbars.snackbar(
+        "Processed assets",
+        SnackType.INFORMATION,
+        [],
+        false,
+        snackbarId,
+        true
+      );
     }
   }
 );

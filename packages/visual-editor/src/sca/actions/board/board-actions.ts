@@ -10,9 +10,11 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
+import type { StateEvent } from "../../../ui/events/events.js";
+import { parseUrl } from "../../../ui/utils/urls.js";
 import { Utils } from "../../utils.js";
-import { makeAction } from "../binder.js";
-import { asAction, ActionMode } from "../../coordination.js";
+import { makeAction, withBlockingAction } from "../binder.js";
+import { asAction, ActionMode, stateEventTrigger } from "../../coordination.js";
 import * as Helpers from "./helpers/helpers.js";
 import {
   onVersionChange,
@@ -612,5 +614,200 @@ export const handleSaveStatus = asAction(
         controller.editor.graph.saveStatus = "saved";
         break;
     }
+  }
+);
+
+// =============================================================================
+// Event-Triggered Actions
+// =============================================================================
+
+/**
+ * Loads a board by navigating to its URL.
+ *
+ * **Triggers:** `board.load` StateEvent
+ */
+export const onLoad = asAction(
+  "Board.onLoad",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => {
+      const { services } = bind;
+      return stateEventTrigger(
+        "Board Load",
+        services.stateEventBus,
+        "board.load"
+      );
+    },
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as StateEvent<"board.load">).detail;
+
+    if (Utils.Helpers.isHydrating(() => controller.global.main.mode)) {
+      await controller.global.main.isHydrated;
+    }
+
+    controller.router.go({
+      page: "graph",
+      mode: controller.global.main.mode,
+      flow: detail.url,
+      resourceKey: undefined,
+      dev: parseUrl(window.location.href).dev,
+      guestPrefixed: true,
+    });
+    controller.home.recent.add({ url: detail.url });
+  }
+);
+
+/**
+ * Renames the current board.
+ *
+ * **Triggers:** `board.rename` StateEvent
+ */
+export const onRename = asAction(
+  "Board.onRename",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => {
+      const { services } = bind;
+      return stateEventTrigger(
+        "Board Rename",
+        services.stateEventBus,
+        "board.rename"
+      );
+    },
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as StateEvent<"board.rename">).detail;
+    const { editor } = controller.editor.graph;
+    if (!editor) return;
+
+    await withBlockingAction(controller, async () => {
+      await editor.edit(
+        [
+          {
+            type: "changegraphmetadata",
+            title: detail.title ?? undefined,
+            description: detail.description ?? undefined,
+            graphId: "",
+          },
+        ],
+        "Updating title and description"
+      );
+    });
+  }
+);
+
+/**
+ * Toggles pin status of a board in recents.
+ *
+ * **Triggers:** `board.togglepin` StateEvent
+ */
+export const onTogglePin = asAction(
+  "Board.onTogglePin",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => {
+      const { services } = bind;
+      return stateEventTrigger(
+        "Board Toggle Pin",
+        services.stateEventBus,
+        "board.togglepin"
+      );
+    },
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as StateEvent<"board.togglepin">).detail;
+    controller.home.recent.setPin(detail.url, detail.status === "pin");
+  }
+);
+
+/**
+ * Undoes the last graph edit.
+ *
+ * **Triggers:** `board.undo` StateEvent
+ */
+export const onUndo = asAction(
+  "Board.onUndo",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => {
+      const { services } = bind;
+      return stateEventTrigger(
+        "Board Undo",
+        services.stateEventBus,
+        "board.undo"
+      );
+    },
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    if (controller.editor.graph.readOnly) return;
+    const history = controller.editor.graph.editor?.history();
+    if (!history || !history.canUndo()) return;
+    await history.undo();
+  }
+);
+
+/**
+ * Redoes the last undone graph edit.
+ *
+ * **Triggers:** `board.redo` StateEvent
+ */
+export const onRedo = asAction(
+  "Board.onRedo",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => {
+      const { services } = bind;
+      return stateEventTrigger(
+        "Board Redo",
+        services.stateEventBus,
+        "board.redo"
+      );
+    },
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    if (controller.editor.graph.readOnly) return;
+    const history = controller.editor.graph.editor?.history();
+    if (!history || !history.canRedo()) return;
+    await history.redo();
+  }
+);
+
+/**
+ * Replaces the current board with a new one (including theme).
+ *
+ * Sets `pendingGraphReplacement` on the graph controller so the existing
+ * `Graph.replaceWithTheme` trigger picks it up and handles the actual
+ * replacement + theme application.
+ *
+ * **Triggers:** `board.replace` StateEvent
+ */
+export const onReplace = asAction(
+  "Board.onReplace",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => {
+      const { services } = bind;
+      return stateEventTrigger(
+        "Board Replace",
+        services.stateEventBus,
+        "board.replace"
+      );
+    },
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as StateEvent<"board.replace">).detail;
+
+    controller.editor.graph.pendingGraphReplacement = {
+      replacement: detail.replacement,
+      theme: detail.theme,
+      creator: detail.creator,
+    };
   }
 );

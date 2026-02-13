@@ -69,3 +69,26 @@ export function makeAction<T extends DefaultBindings>(): Action<T> {
     },
   }) as Action<T>;
 }
+
+/**
+ * Runs an async callback while the `blockingAction` flag is set on the
+ * controller. The flag is always cleared in a `finally` block.
+ *
+ * This is the standard pattern for actions triggered by user events that
+ * perform async editor operations: we block the UI to prevent concurrent
+ * edits, run the work, then unblock.
+ *
+ * @param controller App controller whose `blockingAction` flag to manage
+ * @param fn The async work to run while blocking
+ */
+export async function withBlockingAction(
+  controller: AppController,
+  fn: () => Promise<void>
+): Promise<void> {
+  controller.global.main.blockingAction = true;
+  try {
+    await fn();
+  } finally {
+    controller.global.main.blockingAction = false;
+  }
+}

@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * FIXME: Legacy board event routes. These still depend on the legacy runtime
+ * (e.g. runtime.project, tab) which is not yet available through SCA services.
+ * Migrate to SCA board-actions.ts (using stateEventTrigger) once the runtime
+ * dependency is resolved, then delete this file.
+ */
+
 import { EventRoute } from "../types.js";
 
 import { ConsentType, ConsentUIType, InputValues } from "@breadboard-ai/types";
@@ -11,8 +18,8 @@ import { ConsentType, ConsentUIType, InputValues } from "@breadboard-ai/types";
 import { StateEvent } from "../../ui/events/events.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
-import { Utils } from "../../sca/utils.js";
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
@@ -71,65 +78,7 @@ export const RunRoute: EventRoute<"board.run"> = {
   },
 };
 
-export const LoadRoute: EventRoute<"board.load"> = {
-  event: "board.load",
-
-  async do({ originalEvent, sca }) {
-    if (Utils.Helpers.isHydrating(() => sca.controller.global.main.mode)) {
-      await sca.controller.global.main.isHydrated;
-    }
-
-    sca.controller.router.go({
-      page: "graph",
-      mode: sca.controller.global.main.mode,
-      flow: originalEvent.detail.url,
-      resourceKey: undefined,
-      dev: parseUrl(window.location.href).dev,
-      guestPrefixed: true,
-    });
-    sca.controller.home.recent.add({ url: originalEvent.detail.url });
-    return false;
-  },
-};
-
-export const UndoRoute: EventRoute<"board.undo"> = {
-  event: "board.undo",
-
-  async do({ tab, sca }) {
-    if (tab?.readOnly || !tab?.graphIsMine) {
-      return false;
-    }
-
-    sca.actions.graph.undo();
-    return false;
-  },
-};
-
-export const RedoRoute: EventRoute<"board.redo"> = {
-  event: "board.redo",
-
-  async do({ sca, tab }) {
-    if (tab?.readOnly || !tab?.graphIsMine) {
-      return false;
-    }
-
-    sca.actions.graph.redo();
-    return false;
-  },
-};
-
-export const TogglePinRoute: EventRoute<"board.togglepin"> = {
-  event: "board.togglepin",
-
-  async do({ sca, originalEvent }) {
-    sca.controller.home.recent.setPin(
-      originalEvent.detail.url,
-      originalEvent.detail.status === "pin"
-    );
-    return false;
-  },
-};
-
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
@@ -174,6 +123,7 @@ export const StopRoute: EventRoute<"board.stop"> = {
   },
 };
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const RestartRoute: EventRoute<"board.restart"> = {
   event: "board.restart",
 
@@ -216,6 +166,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
   },
 };
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const InputRoute: EventRoute<"board.input"> = {
   event: "board.input",
 
@@ -240,24 +191,7 @@ export const InputRoute: EventRoute<"board.input"> = {
   },
 };
 
-export const RenameRoute: EventRoute<"board.rename"> = {
-  event: "board.rename",
-
-  async do({ originalEvent, sca }) {
-    try {
-      sca.controller.global.main.blockingAction = true;
-      // Page title is now handled by the page title trigger in SCA
-      await sca.actions.graph.updateBoardTitleAndDescription(
-        originalEvent.detail.title,
-        originalEvent.detail.description
-      );
-    } finally {
-      sca.controller.global.main.blockingAction = false;
-    }
-    return false;
-  },
-};
-
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const CreateRoute: EventRoute<"board.create"> = {
   event: "board.create",
 
@@ -306,6 +240,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
   },
 };
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
@@ -351,11 +286,12 @@ export const RemixRoute: EventRoute<"board.remix"> = {
   },
 };
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const DeleteRoute: EventRoute<"board.delete"> = {
   event: "board.delete",
 
   async do(deps) {
-    const { tab, runtime, originalEvent, sca } = deps;
+    const { originalEvent, sca } = deps;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
     }
@@ -372,12 +308,7 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
       sca.controller.global.main.blockingAction = false;
     }
 
-    if (tab) {
-      sca.controller.editor.selection.deselectAll();
-
-      // Legacy bridge: keep selectionState flowing.
-      runtime.select.deselectAll(tab.id, runtime.select.generateId());
-    }
+    sca.controller.editor.selection.deselectAll();
 
     if (sca.controller.router.parsedUrl.page === "home") return false;
 
@@ -387,25 +318,6 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
       lite,
       dev,
       guestPrefixed: true,
-    });
-
-    return false;
-  },
-};
-
-export const ReplaceRoute: EventRoute<"board.replace"> = {
-  event: "board.replace",
-
-  async do(deps) {
-    const { originalEvent, googleDriveClient, sca } = deps;
-    const { replacement, theme, creator } = originalEvent.detail;
-
-    // Theme handling is centralized in the SCA action
-    await sca.actions.graph.replaceWithTheme({
-      replacement,
-      theme,
-      creator,
-      googleDriveClient,
     });
 
     return false;

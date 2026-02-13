@@ -4,8 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * FIXME: Legacy flowgen event route. This still depends on the legacy runtime
+ * (runtime.project, tab, settings) which is not yet available through SCA
+ * services. Migrate to SCA flowgen-actions.ts (using stateEventTrigger) once
+ * the runtime dependency is resolved, then delete this file.
+ */
+
 import { EventRoute } from "../types.js";
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const GenerateRoute: EventRoute<"flowgen.generate"> = {
   event: "flowgen.generate",
 

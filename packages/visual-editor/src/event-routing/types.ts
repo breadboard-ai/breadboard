@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * FIXME: Legacy event routing types — delete when all routes are migrated
+ * to SCA actions.
+ */
+
 import { BoardServer } from "@breadboard-ai/types";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { Runtime } from "../runtime/runtime.js";

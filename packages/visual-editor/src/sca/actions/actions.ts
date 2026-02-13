@@ -11,6 +11,7 @@ import * as Asset from "./asset/asset-actions.js";
 import * as Board from "./board/board-actions.js";
 import * as Flowgen from "./flowgen/flowgen-actions.js";
 import * as Graph from "./graph/graph-actions.js";
+import * as Host from "./host/host-actions.js";
 import * as Node from "./node/node-actions.js";
 import * as Router from "./router/router-actions.js";
 import * as Run from "./run/run-actions.js";
@@ -29,6 +30,7 @@ export interface AppActions {
   board: typeof Board;
   flowgen: typeof Flowgen;
   graph: typeof Graph;
+  host: typeof Host;
   node: typeof Node;
   router: typeof Router;
   run: typeof Run;
@@ -50,6 +52,7 @@ export function actions(controller: AppController, services: AppServices) {
     Board.bind({ controller, services });
     Flowgen.bind({ controller, services });
     Graph.bind({ controller, services });
+    Host.bind({ controller, services });
     Node.bind({ controller, services });
     Router.bind({ controller, services });
     Run.bind({ controller, services });
@@ -65,6 +68,7 @@ export function actions(controller: AppController, services: AppServices) {
       board: Board,
       flowgen: Flowgen,
       graph: Graph,
+      host: Host,
       node: Node,
       router: Router,
       run: Run,
@@ -100,6 +104,7 @@ export function activateTriggers(): () => void {
     ...Object.values(Board),
     ...Object.values(Flowgen),
     ...Object.values(Graph),
+    ...Object.values(Host),
     ...Object.values(Node),
     ...Object.values(Router),
     ...Object.values(Run),
@@ -186,6 +191,7 @@ export {
   Board,
   Flowgen,
   Graph,
+  Host,
   Node,
   Router,
   Run,
