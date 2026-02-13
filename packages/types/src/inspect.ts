@@ -772,7 +772,6 @@ export type AddResult = {
 export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
   GraphLoader & {
     readonly types: InspectableDescriberResultTypeCache;
-    readonly deps: GraphStoreArgs;
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 
@@ -830,6 +829,7 @@ export type MutableGraph = {
   graph: GraphDescriptor;
   legacyKitMetadata: KitDescriptor | null;
   readonly id: MainGraphIdentifier;
+  readonly deps: GraphStoreArgs;
   readonly graphs: InspectableGraphCache;
   readonly store: MutableGraphStore;
   readonly nodes: InspectableNodeCache;

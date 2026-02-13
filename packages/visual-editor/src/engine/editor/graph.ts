@@ -306,7 +306,7 @@ export class Graph implements EditableGraph {
       const mutable = new MutableGraphImpl(
         graph,
         this.#mutable.store,
-        this.#mutable.store.deps
+        this.#mutable.deps
       );
       context = { graph, mutable, apply };
     } else {

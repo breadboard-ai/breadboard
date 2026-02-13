@@ -55,10 +55,6 @@ class GraphStore
    */
   public readonly types: InspectableDescriberResultTypeCache;
 
-  get deps(): GraphStoreArgs {
-    return this.#deps;
-  }
-
   constructor(args: GraphStoreArgs) {
     super();
     this.#loader = args.loader;
