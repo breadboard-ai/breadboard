@@ -73,7 +73,7 @@ class AutoWireInPorts implements EditTransform {
     );
     console.log("AUTOWIRES INVALID REFS", invalidReferences);
 
-    console.group("UPDATE AUTOWIRES");
+    console.groupCollapsed("UPDATE AUTOWIRES");
     console.log("Icoming:");
     console.table(incoming);
 

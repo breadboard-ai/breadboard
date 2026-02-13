@@ -11,7 +11,8 @@ import type {
   FastAccessItem,
   DisplayItem,
 } from "../../../../types.js";
-import type { Integrations, Tool } from "../../../../../ui/state/types.js";
+import type { Tool } from "../../../../../ui/state/types.js";
+import type { IntegrationsController } from "../integrations/integrations-controller.js";
 import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 
 export { FastAccessController };
@@ -49,7 +50,7 @@ class FastAccessController extends RootController {
    * @param agentModeTools - agent-mode tools from GraphController
    * @param opts.environmentName - from GlobalConfig context (legacy)
    * @param opts.enableNotebookLm - from FlagController
-   * @param opts.integrations - legacy Integrations (not yet in SCA)
+   * @param opts.integrationsController - IntegrationsController for integration tools
    */
   getDisplayItems(
     rawItems: FastAccessItem[],
@@ -57,7 +58,7 @@ class FastAccessController extends RootController {
     opts: {
       environmentName?: string;
       enableNotebookLm: boolean;
-      integrations: Integrations | null;
+      integrationsController: IntegrationsController | null;
     }
   ): DisplayItem[] {
     const mode = this.fastAccessMode;
@@ -138,9 +139,9 @@ class FastAccessController extends RootController {
       }
     }
 
-    // Append integration tools (legacy — stays until Integrations migration)
-    if (opts.integrations) {
-      for (const [url, state] of opts.integrations.registered) {
+    // Append integration tools from IntegrationsController
+    if (opts.integrationsController) {
+      for (const [url, state] of opts.integrationsController.registered) {
         if (state.status !== "complete") continue;
         for (const [, tool] of state.tools) {
           if (filterRe) {

@@ -6,7 +6,6 @@
 
 import { Template } from "@breadboard-ai/utils";
 import { chicletHtml } from "../elements/input/text-editor/text-editor.js";
-import type { Project } from "../state/types.js";
 import { escapeNodeText } from "../../utils/sanitizer.js";
 import { SCA } from "../../sca/sca.js";
 
@@ -23,7 +22,6 @@ export const createTrustedChicletHTML =
 function createTrustedChicletHTMLImpl(
   value: string,
   sca?: SCA,
-  projectState?: Project | null,
   subGraphId?: string | null
 ): string {
   if (!value) {
@@ -45,7 +43,7 @@ function createTrustedChicletHTMLImpl(
   //   guaranteed to not use unsafe sinks, the outerHTML is also trusted.
   const template = new Template(value);
   template.substitute(
-    (part) => chicletHtml(part, projectState ?? null, subGraphId ?? null, sca),
+    (part) => chicletHtml(part, subGraphId ?? null, sca),
     (part) => escapeNodeText(part)
   );
   return template.renderable;

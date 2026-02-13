@@ -32,7 +32,6 @@ import { scaContext } from "../../../../sca/context/context.js";
 
 export function chicletHtml(
   part: TemplatePart,
-  projectState: Project | null,
   subGraphId: string | null,
   sca?: SCA
 ) {
@@ -40,7 +39,6 @@ export function chicletHtml(
   const assetType = getAssetType(mimeType) ?? "";
   const { icon: srcIcon, tags: metadataTags } = expandChiclet(
     part,
-    projectState,
     subGraphId,
     sca
   );
@@ -117,7 +115,6 @@ export function chicletHtml(
     if (instance) {
       const { icon, title } = expandChiclet(
         { path: instance, type: "in", title: "unknown" },
-        projectState,
         subGraphId,
         sca
       );
@@ -159,7 +156,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
     this.#renderableValue = createTrustedChicletHTML(
       value,
       this.sca,
-      this.projectState,
       this.subGraphId
     );
     // If SCA wasn't available yet, chiclets that depend on graph lookups
@@ -451,7 +447,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
       const chicletHtml = createTrustedChicletHTML(
         `{${JSON.stringify(part)}}`,
         this.sca,
-        this.projectState,
         this.subGraphId
       );
 
@@ -934,7 +929,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
       createTrustedChicletHTML(
         evt.clipboardData.getData("text"),
         this.sca,
-        this.projectState,
         this.subGraphId
       )
     );
@@ -1126,7 +1120,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
       this.#renderableValue = createTrustedChicletHTML(
         this.#rawValue,
         this.sca,
-        this.projectState,
         this.subGraphId
       );
       this.#updateEditorValue();
@@ -1261,7 +1254,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
           this.#captureEditorValue();
           this.#togglePlaceholder();
         }}
-        .integrations=${this.projectState?.integrations ?? null}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;
   }

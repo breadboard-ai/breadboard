@@ -5,14 +5,12 @@
  */
 
 import { ok, TemplatePart } from "@breadboard-ai/utils";
-import { Project } from "../state/index.js";
 import { getStepIcon } from "./get-step-icon.js";
 import { iconSubstitute } from "./icon-substitute.js";
 import type { SCA } from "../../sca/sca.js";
 
 export function expandChiclet(
   part: TemplatePart,
-  projectState: Project | null,
   subGraphId: string | null,
   sca?: SCA
 ): { tags?: string[]; icon?: string | null; title?: string | null } {
@@ -50,7 +48,7 @@ export function expandChiclet(
 
     case "tool": {
       if (instance) {
-        const toolIcon = projectState?.integrations.registered
+        const toolIcon = sca?.controller.editor.integrations.registered
           .get(path)
           ?.tools.get(instance)?.icon;
         icon =

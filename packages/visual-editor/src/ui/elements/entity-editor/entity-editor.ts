@@ -1824,7 +1824,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
             this.#editorRef.value.addItem(part);
           }}
-          .integrations=${this.projectState?.integrations ?? null}
         ></bb-fast-access-menu>
         <div ${ref(this.#proxyRef)} id="proxy"></div>`,
     ];

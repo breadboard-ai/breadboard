@@ -12,8 +12,6 @@ import {
   HarnessRunner,
   InspectableNodePorts,
   LLMContent,
-  McpServerDescriptor,
-  McpServerIdentifier,
   NodeIdentifier,
   NodeMetadata,
   NodeRunState,
@@ -351,73 +349,8 @@ export type IntegrationState = {
   message: string | null;
 };
 
-export type FilteredIntegrations = {
-  filter: string;
-
-  results: ReadonlyMap<McpServerIdentifier, IntegrationState>;
-};
-
-/**
- * Represents the Model+Controller for of the project's Integrations
- * configuration.
- */
-export type Integrations = {
-  /**
-   * List of registered integrations. This list is controlled by
-   * `register`/`unregister` methods.
-   */
-  registered: ReadonlyMap<McpServerIdentifier, IntegrationState>;
-  /**
-   * List of all known MCP servers. This list is controlled by `add`/`remove`
-   * methods.
-   */
-  known: AsyncComputedResult<
-    ReadonlyMap<McpServerIdentifier, McpServerDescriptor>
-  >;
-
-  /**
-   * Register the server specified by id. This adds it to the assets in the BGL.
-   */
-  register(id: McpServerIdentifier): Promise<Outcome<void>>;
-
-  /**
-   * Unregister the server specified by id. This removes it from the assets
-   * in the BGL.
-   */
-  unregister(id: McpServerIdentifier): Promise<Outcome<void>>;
-
-  /**
-   * Add as a new MCP server by URL. This both adds it to the list of known
-   * servers and registers it.
-   *
-   * @param url - URL of the server
-   * @param title - title of the server, optional
-   */
-  add(
-    url: string,
-    title: string | undefined,
-    authToken: string | undefined
-  ): Promise<Outcome<void>>;
-
-  /**
-   * Remove the MCP server specified by id. This removes it both from the assets
-   * in the BGL and removes it entirely from the list of known servers.
-   * Will fail if the server is not removable.
-   */
-  remove(id: McpServerIdentifier): Promise<Outcome<void>>;
-
-  /**
-   *
-   * @param id - id of the server
-   * @param title - new title of the server
-   */
-  rename(id: string, title: string): Promise<Outcome<void>>;
-};
-
 export type Project = {
   readonly run: ProjectRun;
-
-  readonly integrations: Integrations;
 
   /**
    * Resets the current run.
@@ -428,10 +361,6 @@ export type Project = {
     runner: HarnessRunner,
     signal?: AbortSignal
   ): Outcome<void>;
-};
-
-export type ProjectValues = {
-  integrations: Integrations;
 };
 
 export type EdgeRunState = {
