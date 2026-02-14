@@ -477,6 +477,10 @@ export const styles: CSSResultGroup = [
             padding: 0 var(--bb-grid-size-4);
             box-sizing: border-box;
             animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
+
+            @container (min-width: 800px) {
+              padding: 0 var(--bb-grid-size-15);
+            }
           }
 
           & .thoughts {
