@@ -697,18 +697,6 @@ export type InspectableDescriberResultCacheEntry = {
   updating: boolean;
 };
 
-export type DescribeResultTypeCacheArgs = {
-  initial(): NodeDescriberResult;
-  latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult>;
-  updated(type: NodeTypeIdentifier): void;
-};
-
-export type InspectableDescriberResultTypeCache = {
-  get(type: NodeTypeIdentifier): InspectableDescriberResultCacheEntry;
-  update(affectedTypes: NodeTypeIdentifier[]): void;
-  clear(): void;
-};
-
 export type InspectableDescriberResultCache = {
   get(
     id: NodeIdentifier,
@@ -762,8 +750,6 @@ type GraphsStoreEventMap = {
 export type GraphStoreEventTarget = TypedEventTarget<GraphsStoreEventMap>;
 
 export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
-  readonly types: InspectableDescriberResultTypeCache;
-
   set(graph: GraphDescriptor): void;
   get(): MutableGraph | undefined;
 };

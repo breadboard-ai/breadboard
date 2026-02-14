@@ -8,15 +8,11 @@ import type {
   GraphDescriptor,
   GraphStoreArgs,
   GraphStoreEventTarget,
-  InspectableDescriberResultTypeCache,
   MutableGraph,
   MutableGraphStore,
 } from "@breadboard-ai/types";
 
-import { DescribeResultTypeCache } from "./graph/describe-type-cache.js";
-
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
-import { NodeTypeDescriberManager } from "./graph/node-type-describer-manager.js";
 
 export { GraphStore };
 
@@ -27,22 +23,9 @@ class GraphStore
   #deps: GraphStoreArgs;
   #mutable: MutableGraph | undefined;
 
-  /**
-   * The cache of type describer results. These are currently
-   * entirely static: they are only loaded once and exist
-   * for the lifetime of the GraphStore. At the moment, this
-   * is ok, since the only graph that ever changes is the main
-   * graph, and we don't need its type. This will change
-   * probably, so we need to be on look out for when.
-   */
-  public readonly types: InspectableDescriberResultTypeCache;
-
   constructor(args: GraphStoreArgs) {
     super();
     this.#deps = args;
-    this.types = new DescribeResultTypeCache(
-      new NodeTypeDescriberManager(this, args)
-    );
   }
 
   set(graph: GraphDescriptor): void {
