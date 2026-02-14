@@ -9,12 +9,13 @@ import type {
   EditHistoryEntry,
   GraphDescriptor,
   GraphIdentifier,
+  GraphStoreArgs,
   ModuleIdentifier,
-  MutableGraphStore,
   OutputValues,
 } from "@breadboard-ai/types";
 import { Graph as GraphEditor } from "../../../../engine/editor/graph.js";
 import type * as Editor from "../../../controller/subcontrollers/editor/editor.js";
+import { MutableGraphImpl } from "../../../../engine/inspector/graph/mutable-graph.js";
 
 /**
  * Options for initializing the editor.
@@ -41,6 +42,8 @@ export interface InitializeEditorOptions {
   onHistoryChanged?: (history: Readonly<EditHistoryEntry[]>) => void;
   /** Pre-loaded final output values */
   finalOutputValues?: OutputValues;
+  /** Dependencies for creating MutableGraphImpl */
+  graphStoreArgs: GraphStoreArgs;
 }
 
 /**
@@ -56,18 +59,17 @@ export interface InitializeEditorResult {
  * Sets up the editor state for a loaded graph.
  *
  * This function:
- * - Sets the graph in the graph store
+ * - Creates a MutableGraphImpl from the graph descriptor
+ * - Stores it in the graph controller
  * - Creates an editor instance
  * - Wires up event listeners for graph changes
  * - Updates the graph controller state
  *
- * @param graphStore The mutable graph store
  * @param graphController The graph controller to update
  * @param options Editor initialization options
  * @returns The editor ID
  */
 export function initializeEditor(
-  graphStore: MutableGraphStore,
   graphController: Editor.Graph.GraphController,
   options: InitializeEditorOptions
 ): InitializeEditorResult {
@@ -80,16 +82,12 @@ export function initializeEditor(
     creator,
     history,
     onHistoryChanged,
+    graphStoreArgs,
   } = options;
 
-  // Set graph in store
-  graphStore.set(graph);
-
-  // Create editor
-  const mutable = graphStore.get();
-  if (!mutable) {
-    throw new Error("Unable to create editor");
-  }
+  // Create MutableGraphImpl and store in controller
+  const mutable = new MutableGraphImpl(graph, graphController, graphStoreArgs);
+  graphController.set(mutable);
   const editor = new GraphEditor(mutable, {
     creator,
     history,

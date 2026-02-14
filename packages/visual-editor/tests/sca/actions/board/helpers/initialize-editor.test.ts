@@ -6,18 +6,31 @@
 
 import assert from "node:assert";
 import { afterEach, beforeEach, suite, test } from "node:test";
-import type { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
+import type { GraphDescriptor, MutableGraph } from "@breadboard-ai/types";
 import {
   initializeEditor,
   resetEditor,
 } from "../../../../../src/sca/actions/board/helpers/initialize-editor.js";
 import type * as Editor from "../../../../../src/sca/controller/subcontrollers/editor/editor.js";
 import { setDOM, unsetDOM } from "../../../../fake-dom.js";
-import { makeTestGraphStore } from "../../../../helpers/_graph-store.js";
+import { makeTestGraphStoreArgs } from "../../../../helpers/_graph-store.js";
 
-function makeMockGraphController(): Editor.Graph.GraphController {
+const testGraphStoreArgs = makeTestGraphStoreArgs();
+
+function makeMockGraphController(): Editor.Graph.GraphController & {
+  _state: Record<string, unknown>;
+} {
+  let mutableGraph: MutableGraph | undefined;
   const state: Record<string, unknown> = {};
   return {
+    // MutableGraphStore implementation — just stores the MutableGraph
+    set(graph: MutableGraph) {
+      mutableGraph = graph;
+    },
+    get() {
+      return mutableGraph;
+    },
+
     get id() {
       return state.id as string;
     },
@@ -64,6 +77,7 @@ function makeMockGraphController(): Editor.Graph.GraphController {
       state.lastLoadedVersion = v;
     },
     resetAll: () => {
+      mutableGraph = undefined;
       for (const key of Object.keys(state)) {
         delete state[key];
       }
@@ -91,12 +105,10 @@ suite("initialize-editor helpers", () => {
   });
 
   test("initializes editor with correct state", () => {
-    const graphStore = makeTestGraphStore();
     const graphController = makeMockGraphController();
     const graph = makeMockGraph();
-    graphStore.set(graph);
 
-    const result = initializeEditor(graphStore, graphController, {
+    const result = initializeEditor(graphController, {
       graph,
       moduleId: null,
       subGraphId: null,
@@ -104,6 +116,7 @@ suite("initialize-editor helpers", () => {
       readOnly: false,
       version: 5,
       lastLoadedVersion: 3,
+      graphStoreArgs: testGraphStoreArgs,
     });
 
     assert.strictEqual(result.success, true);
@@ -119,12 +132,10 @@ suite("initialize-editor helpers", () => {
   });
 
   test("sets graphIsMine to false when readOnly is true", () => {
-    const graphStore = makeTestGraphStore();
     const graphController = makeMockGraphController();
     const graph = makeMockGraph();
-    graphStore.set(graph);
 
-    initializeEditor(graphStore, graphController, {
+    initializeEditor(graphController, {
       graph,
       moduleId: null,
       subGraphId: null,
@@ -132,6 +143,7 @@ suite("initialize-editor helpers", () => {
       readOnly: true,
       version: 1,
       lastLoadedVersion: -1,
+      graphStoreArgs: testGraphStoreArgs,
     });
 
     assert.strictEqual(graphController.readOnly, true);
@@ -139,10 +151,7 @@ suite("initialize-editor helpers", () => {
   });
 
   test("resetEditor clears controller state", () => {
-    const graphController =
-      makeMockGraphController() as Editor.Graph.GraphController & {
-        _state: Record<string, unknown>;
-      };
+    const graphController = makeMockGraphController();
 
     // Set some state
     graphController.url = "https://example.com/board.json";
@@ -152,28 +161,5 @@ suite("initialize-editor helpers", () => {
 
     // State should be cleared
     assert.strictEqual(Object.keys(graphController._state).length, 0);
-  });
-
-  test("throws when editor cannot be created", () => {
-    const graphStore = {
-      set: () => {},
-      get: () => undefined,
-    } as unknown as MutableGraphStore;
-    const graphController = makeMockGraphController();
-    const graph = makeMockGraph();
-
-    assert.throws(
-      () =>
-        initializeEditor(graphStore, graphController, {
-          graph,
-          moduleId: null,
-          subGraphId: null,
-          url: "https://example.com/board.json",
-          readOnly: false,
-          version: 1,
-          lastLoadedVersion: -1,
-        }),
-      { message: "Unable to create editor" }
-    );
   });
 });

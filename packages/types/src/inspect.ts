@@ -34,10 +34,7 @@ import { GraphLoader } from "./loader.js";
 import { NodeDescriberResult, NodeHandlerMetadata } from "./node-handler.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
-import {
-  TypedEventTarget,
-  TypedEventTargetType,
-} from "./typed-event-target.js";
+
 import { UUID } from "./uuid.js";
 import { RuntimeFlagManager } from "./flags.js";
 
@@ -697,18 +694,6 @@ export type InspectableDescriberResultCacheEntry = {
   updating: boolean;
 };
 
-export type DescribeResultTypeCacheArgs = {
-  initial(): NodeDescriberResult;
-  latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult>;
-  updated(type: NodeTypeIdentifier): void;
-};
-
-export type InspectableDescriberResultTypeCache = {
-  get(type: NodeTypeIdentifier): InspectableDescriberResultCacheEntry;
-  update(affectedTypes: NodeTypeIdentifier[]): void;
-  clear(): void;
-};
-
 export type InspectableDescriberResultCache = {
   get(
     id: NodeIdentifier,
@@ -747,24 +732,8 @@ export type GraphStoreArgs = Required<InspectableGraphOptions> & {
   flags: RuntimeFlagManager;
 };
 
-export type GraphStoreUpdateEvent = Event & {
-  mainGraphId: MainGraphIdentifier;
-  affectedGraphs: MainGraphIdentifier[];
-  graphId: GraphIdentifier;
-  nodeId: NodeIdentifier;
-  topologyChange: boolean;
-};
-
-type GraphsStoreEventMap = {
-  update: GraphStoreUpdateEvent;
-};
-
-export type GraphStoreEventTarget = TypedEventTarget<GraphsStoreEventMap>;
-
-export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
-  readonly types: InspectableDescriberResultTypeCache;
-
-  set(graph: GraphDescriptor): void;
+export type MutableGraphStore = {
+  set(graph: MutableGraph): void;
   get(): MutableGraph | undefined;
 };
 

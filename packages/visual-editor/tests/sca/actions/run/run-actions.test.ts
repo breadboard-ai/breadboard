@@ -301,6 +301,29 @@ suite("Run Actions", () => {
         { id: "node3", type: "test" },
       ],
     };
+
+    // Mock controller.editor.graph.get() to return inspectable graph data
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => ({
+                title: () => id,
+                currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                currentPorts: () => ({
+                  inputs: { ports: [] },
+                  outputs: { ports: [] },
+                }),
+                describe: () =>
+                  Promise.resolve({ metadata: { tags: ["test"] } }),
+              }),
+            },
+          ],
+        ]),
+      });
+
     RunActions.prepare(config);
 
     // Add some console entries to verify reset
@@ -635,14 +658,45 @@ suite("syncConsoleFromRunner", () => {
   test("builds console entries from runner plan in execution order", () => {
     const { controller } = makeTestController();
     // Use nodeMetadata option for cleaner mocking
-    const { services } = makeTestServices({
-      nodeMetadata: {
-        "node-1": { title: "Title for node-1", icon: "star", tags: ["test"] },
-        "node-2": { title: "Title for node-2", icon: "star", tags: ["test"] },
-        "node-3": { title: "Title for node-3", icon: "star", tags: ["test"] },
-      },
-    });
+    const { services } = makeTestServices({});
     RunActions.bind({ controller, services });
+
+    // Mock controller.editor.graph.get() with node metadata
+    const nodeMetadata: Record<
+      string,
+      { title?: string; icon?: string; tags?: string[] }
+    > = {
+      "node-1": { title: "Title for node-1", icon: "star", tags: ["test"] },
+      "node-2": { title: "Title for node-2", icon: "star", tags: ["test"] },
+      "node-3": { title: "Title for node-3", icon: "star", tags: ["test"] },
+    };
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => {
+                const meta = nodeMetadata[id] ?? {};
+                return {
+                  title: () => meta.title ?? id,
+                  currentDescribe: () => ({
+                    metadata: { icon: meta.icon, tags: meta.tags },
+                  }),
+                  currentPorts: () => ({
+                    inputs: { ports: [] },
+                    outputs: { ports: [] },
+                  }),
+                  describe: () =>
+                    Promise.resolve({
+                      metadata: { icon: meta.icon, tags: meta.tags },
+                    }),
+                };
+              },
+            },
+          ],
+        ]),
+      });
 
     // Set up a mock runner with a plan
     const mockRunner = {
@@ -701,12 +755,35 @@ suite("syncConsoleFromRunner", () => {
 
   test("maps node state from runner.state", () => {
     const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      nodeMetadata: {
-        "node-1": { title: "Node 1", tags: ["test"] },
-      },
-    });
+    const { services } = makeTestServices({});
     RunActions.bind({ controller, services });
+
+    // Mock controller.editor.graph.get() with node metadata
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => {
+                if (id === "node-1") {
+                  return {
+                    title: () => "Node 1",
+                    currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                    currentPorts: () => ({
+                      inputs: { ports: [] },
+                      outputs: { ports: [] },
+                    }),
+                    describe: () =>
+                      Promise.resolve({ metadata: { tags: ["test"] } }),
+                  };
+                }
+                return undefined;
+              },
+            },
+          ],
+        ]),
+      });
 
     // Set up a mock runner with state
     const mockRunner = {
@@ -739,12 +816,35 @@ suite("syncConsoleFromRunner", () => {
 
   test("defaults to 'inactive' when node has no state", () => {
     const { controller } = makeTestController();
-    const { services } = makeTestServices({
-      nodeMetadata: {
-        "node-1": { title: "Node 1", tags: ["test"] },
-      },
-    });
+    const { services } = makeTestServices({});
     RunActions.bind({ controller, services });
+
+    // Mock controller.editor.graph.get() with node metadata
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => {
+                if (id === "node-1") {
+                  return {
+                    title: () => "Node 1",
+                    currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                    currentPorts: () => ({
+                      inputs: { ports: [] },
+                      outputs: { ports: [] },
+                    }),
+                    describe: () =>
+                      Promise.resolve({ metadata: { tags: ["test"] } }),
+                  };
+                }
+                return undefined;
+              },
+            },
+          ],
+        ]),
+      });
 
     const mockRunner = {
       plan: {
@@ -815,8 +915,9 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    // GraphStore returns null for get() (no graph store set up)
-    (services.graphStore as unknown as { get: () => unknown }).get = () => null;
+    // Controller's graph returns null for get() (no graph store set up)
+    (controller.editor.graph as unknown as { get: () => unknown }).get = () =>
+      null;
 
     assert.doesNotThrow(() => {
       RunActions.syncConsoleFromRunner();
@@ -851,9 +952,10 @@ suite("syncConsoleFromRunner", () => {
       nodeById: () => undefined, // Node not found
     };
 
-    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
-      graphs: new Map([["", mockInspectable]]),
-    });
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", mockInspectable]]),
+      });
 
     RunActions.syncConsoleFromRunner();
 
@@ -884,9 +986,10 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
-      graphs: new Map([["", { nodeById: () => undefined }]]),
-    });
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: () => undefined }]]),
+      });
 
     assert.doesNotThrow(() => {
       RunActions.syncConsoleFromRunner();
@@ -1138,9 +1241,10 @@ suite("syncConsoleFromRunner async describe", () => {
     const mockInspectable = {
       nodeById: () => mockNode,
     };
-    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
-      graphs: new Map([["", mockInspectable]]),
-    });
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", mockInspectable]]),
+      });
 
     RunActions.syncConsoleFromRunner();
 
@@ -1190,9 +1294,10 @@ suite("syncConsoleFromRunner async describe", () => {
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
     const mockInspectable = { nodeById: () => mockNode };
-    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
-      graphs: new Map([["", mockInspectable]]),
-    });
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", mockInspectable]]),
+      });
 
     RunActions.syncConsoleFromRunner();
 
@@ -1226,9 +1331,10 @@ suite("syncConsoleFromRunner async describe", () => {
 
     // Mock nodeById to return null
     const mockInspectable = { nodeById: () => null };
-    (services.graphStore as unknown as { get: () => unknown }).get = () => ({
-      graphs: new Map([["", mockInspectable]]),
-    });
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", mockInspectable]]),
+      });
 
     // Should not throw
     assert.doesNotThrow(() => {

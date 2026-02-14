@@ -22,7 +22,6 @@ import type {
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import { SchemaDiffer } from "@breadboard-ai/utils";
-import { UpdateEvent } from "./event.js";
 
 import {
   describeInput,
@@ -106,10 +105,9 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
     }
   }
 
-  updated(graphId: GraphIdentifier, nodeId: NodeIdentifier): void {
-    this.mutable.store.dispatchEvent(
-      new UpdateEvent(this.mutable.id, graphId, nodeId, [], false)
-    );
+  updated(_graphId: GraphIdentifier, _nodeId: NodeIdentifier): void {
+    // Node type descriptions are now tracked via GraphController.topologyVersion,
+    // so no event dispatch is needed here.
   }
 
   async #getDescriber(

@@ -26,7 +26,7 @@
  * - Typically stateless (with respect to the UI).
  * - Injected once at application boot.
  * - Held in `app.services` but rarely accessed directly by the UI.
- * - **Examples:** `FileSystem`, `GraphStore`, `Autonamer`, `GoogleDriveClient`.
+ * - **Examples:** `FileSystem`, `Autonamer`, `GoogleDriveClient`.
  *
  * ## 2. Controllers (The "State")
  * **Role:** The reactive source of truth.
@@ -121,6 +121,7 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
       controller.global.flags,
       () => controller.global.consent
     );
+
     const actions = Actions.actions(controller, services);
 
     instance = {

@@ -10,7 +10,10 @@ import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protoco
 import { AppServices } from "../../../src/sca/services/services.js";
 import type { GlobalConfig } from "../../../src/ui/contexts/global-config.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
-import { makeTestGraphStore } from "../../helpers/_graph-store.js";
+import {
+  makeTestGraphStore,
+  loadGraphIntoStore,
+} from "../../helpers/_graph-store.js";
 import { editGraphStore } from "../../helpers/_editor.js";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { SigninAdapter } from "../../../src/ui/utils/signin-adapter.js";
@@ -30,7 +33,7 @@ const defaultAgentContext = {
 export function makeTestGraphStoreWithEditor() {
   const graphStore = makeTestGraphStore();
   const testGraph: GraphDescriptor = { nodes: [], edges: [] };
-  graphStore.set(testGraph);
+  loadGraphIntoStore(graphStore, testGraph);
   const editor = editGraphStore(graphStore);
   if (!editor) throw new Error("Unable to edit graph");
   return { graphStore, editor };
@@ -144,13 +147,7 @@ export function makeMockBoardServer(options: {
 
 export interface TestServicesOptions {
   agentContext?: typeof defaultAgentContext;
-  graphStore?: AppServices["graphStore"];
   flowGeneratorMock?: Partial<FlowGenerator>;
-  /** Custom metadata for mock nodes - keyed by node ID */
-  nodeMetadata?: Record<
-    string,
-    { title?: string; icon?: string; tags?: string[] }
-  >;
   googleDriveClient?: Partial<GoogleDriveClient>;
   signinAdapter?: Partial<SigninAdapter>;
   googleDriveBoardServer?: Partial<
@@ -165,9 +162,7 @@ export interface TestServicesOptions {
 export function makeTestServices(options: TestServicesOptions = {}) {
   const {
     agentContext = defaultAgentContext,
-    graphStore,
     flowGeneratorMock,
-    nodeMetadata = {},
     googleDriveClient,
     signinAdapter,
     googleDriveBoardServer,
@@ -204,43 +199,6 @@ export function makeTestServices(options: TestServicesOptions = {}) {
         return { runner: mockRunner, abortController };
       },
     },
-    // graphStore - use provided or default mock
-    graphStore:
-      graphStore ??
-      ({
-        fileSystem: {
-          env: () => [],
-          createRunFileSystem: () => ({}),
-        },
-        // For nodestart event handling
-        get: () => ({
-          graphs: new Map([
-            [
-              "",
-              {
-                nodeById: (id: string) => {
-                  const meta = nodeMetadata[id] ?? {};
-                  return {
-                    title: () => meta.title ?? id,
-                    currentDescribe: () => ({
-                      metadata: { icon: meta.icon, tags: meta.tags },
-                    }),
-                    currentPorts: () => ({
-                      inputs: { ports: [] },
-                      outputs: { ports: [] },
-                    }),
-                    // For async describe fallback - include tags to skip this branch
-                    describe: () =>
-                      Promise.resolve({
-                        metadata: { icon: meta.icon, tags: meta.tags },
-                      }),
-                  };
-                },
-              },
-            ],
-          ]),
-        }),
-      } as unknown as AppServices["graphStore"]),
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],
     // Mock sandbox for run config

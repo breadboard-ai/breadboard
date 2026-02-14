@@ -15,6 +15,8 @@ import {
   GraphTheme,
   InspectableGraph,
   InspectableNodePorts,
+  MutableGraph,
+  MutableGraphStore,
   NodeConfiguration,
   NodeHandlerMetadata,
   NodeIdentifier,
@@ -94,7 +96,25 @@ const NOTEBOOKLM_TOOL: Tool = {
   icon: notebookLmIcon,
 };
 
-export class GraphController extends RootController {
+export class GraphController
+  extends RootController
+  implements MutableGraphStore
+{
+  #mutableGraph: MutableGraph | undefined;
+
+  /**
+   * MutableGraphStore.set — stores the given MutableGraph.
+   */
+  set(graph: MutableGraph): void {
+    this.#mutableGraph = graph;
+  }
+
+  /**
+   * MutableGraphStore.get — returns the current MutableGraph.
+   */
+  get(): MutableGraph | undefined {
+    return this.#mutableGraph;
+  }
   /**
    * Static registry of A2 tools. These are environment-independent
    * and don't change based on graph content.
@@ -151,6 +171,14 @@ export class GraphController extends RootController {
 
   @field()
   accessor version = 0;
+
+  /**
+   * Monotonically increases on non-visual graph topology changes.
+   * Used by UI components to detect when the graph structure has changed
+   * (as opposed to visual-only changes like node movement).
+   */
+  @field()
+  accessor topologyVersion = 0;
 
   @field()
   accessor lastLoadedVersion = 0;
@@ -307,6 +335,7 @@ export class GraphController extends RootController {
     // Skip derived tools update on visual-only changes (e.g., node movement)
     if (evt.visualOnly) return;
 
+    this.topologyVersion++;
     this.#updateMyTools();
     this.#updateAgentModeTools();
     this.#updateComponents();

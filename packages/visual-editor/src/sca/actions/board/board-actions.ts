@@ -490,7 +490,7 @@ export const load = asAction(
     }
 
     // 8. Initialize the editor
-    Helpers.initializeEditor(services.graphStore, controller.editor.graph, {
+    Helpers.initializeEditor(controller.editor.graph, {
       graph: prepared.graph,
       moduleId: prepared.moduleId,
       subGraphId: prepared.subGraphId,
@@ -503,6 +503,12 @@ export const load = asAction(
       onHistoryChanged: (h) =>
         controller.board.main.saveEditHistory(resolvedUrl, h),
       finalOutputValues,
+      graphStoreArgs: {
+        loader: services.loader,
+        sandbox: services.sandbox,
+        fileSystem: services.fileSystem,
+        flags: controller.global.flags,
+      },
     });
 
     // 9. Update theme hash for the newly loaded graph

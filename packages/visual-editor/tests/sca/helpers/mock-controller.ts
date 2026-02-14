@@ -121,7 +121,14 @@ export function makeTestController(options: TestControllerOptions = {}) {
       init: () => {},
     },
     editor: {
-      graph: editor ? { editor, lastNodeConfigChange: null } : graph,
+      graph: editor
+        ? {
+            editor,
+            lastNodeConfigChange: null,
+            get: () => undefined,
+            set: () => {},
+          }
+        : { ...graph, get: () => undefined, set: () => {} },
       selection: {
         selectionId: 0,
       },

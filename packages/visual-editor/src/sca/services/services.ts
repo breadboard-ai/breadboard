@@ -36,7 +36,6 @@ import { AgentContext } from "../../a2/agent/agent-context.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
 import { createA2Server } from "../../a2/index.js";
 import { createLoader } from "../../engine/loader/index.js";
-import { createGraphStore } from "../../engine/inspector/index.js";
 import { Autonamer } from "./autonamer.js";
 import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
@@ -71,7 +70,6 @@ export interface AppServices {
   flowGenerator: FlowGenerator;
   googleDriveBoardServer: GoogleDriveBoardServer;
   googleDriveClient: GoogleDriveClient;
-  graphStore: ReturnType<typeof createGraphStore>;
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
   integrationManagers: IntegrationManagerService;
@@ -175,8 +173,6 @@ export function services(
       flags,
     };
 
-    const graphStore = createGraphStore(graphStoreArgs);
-
     const autonamer = new Autonamer(graphStoreArgs, fileSystem, sandbox);
     const apiClient = new AppCatalystApiClient(
       fetchWithCreds,
@@ -202,7 +198,6 @@ export function services(
       flowGenerator,
       googleDriveBoardServer,
       googleDriveClient,
-      graphStore,
       integrationManagers: new IntegrationManagerService(),
       loader,
       mcpClientManager,
