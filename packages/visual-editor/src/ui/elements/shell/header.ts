@@ -193,7 +193,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
             line-height: 1;
             color: light-dark(var(--n-0), var(--n-70));
             margin: 0 0 0 var(--bb-grid-size-4);
-            min-width: 45px;
           }
 
           & #toggle-user-menu {
@@ -297,7 +296,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
           & #publish-button {
             display: none;
-            margin: 0 0 0 var(--bb-grid-size-6);
+            margin: 0 0 0 var(--bb-grid-size-2);
           }
 
           & #remix {

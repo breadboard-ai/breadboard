@@ -1,24 +1,31 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, css, LitElement } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { css, html, LitElement } from "lit";
 import { customElement } from "lit/decorators.js";
-import { icons } from "../../styles/icons.js";
+import { classMap } from "lit/directives/class-map.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
 
 @customElement("bb-publish-button")
-export class PublishButton extends LitElement {
+export class PublishButton extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     baseColors,
     type,
     css`
       :host {
-        display: block;
+        display: flex;
+        justify-content: flex-end;
+        width: 130px;
       }
 
       button {
@@ -46,14 +53,19 @@ export class PublishButton extends LitElement {
           position: absolute;
           width: 8px;
           height: 8px;
-          background: #a80710;
           border-radius: 50%;
           top: -2px;
           right: -2px;
           border: 1px solid var(--light-dark-n-100);
+          display: none;
         }
 
-        &:hover {
+        &.has-red-dot::after {
+          display: block;
+          background: #a80710;
+        }
+
+        &:hover:not(:disabled) {
           border: 1px solid var(--light-dark-n-50);
         }
 
@@ -62,22 +74,69 @@ export class PublishButton extends LitElement {
           cursor: auto;
         }
       }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .spinner {
+        animation: spin 1s linear infinite;
+        color: #575B5F;
+      }
     `,
   ];
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
+  get #share() {
+    return this.sca?.controller?.editor?.share;
+  }
 
   render() {
     return html`
       <button
-        class="sans-flex round w-500"
-        @click=${() => {
-        console.log("Publish clicked");
-      }}
+        class=${classMap({
+          "sans-flex": true,
+          round: true,
+          "w-500": true,
+          "has-red-dot": this.#hasRedDot,
+        })}
+        ?disabled=${this.#isDisabled}
       >
-        <span class="g-icon">cloud_done</span>
-        Publish
+        <span class=${classMap({
+          "g-icon": true,
+          spinner: this.#isPublishing,
+        })}>${this.#icon}</span>
+        ${this.#label}
       </button>
     `;
   }
+
+  get #hasRedDot() {
+    const share = this.#share;
+    return share?.published && share?.stale;
+  }
+
+  get #isDisabled() {
+    const share = this.#share;
+    return !share?.published || !share?.stale;
+  }
+
+  get #isPublishing() {
+    return this.#share?.panel === "updating";
+  }
+
+  get #label() {
+    return this.#isPublishing ? "Publishing" : "Publish";
+  }
+
+  get #icon() {
+    return this.#isPublishing ? "progress_activity" : "cloud_upload";
+  }
+
 }
 
 declare global {
