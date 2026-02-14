@@ -9,7 +9,7 @@ import { suite, test } from "node:test";
 import { SelectionController } from "../../../../../../src/sca/controller/subcontrollers/editor/selection/selection-controller.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
-import { makeTestGraphStore } from "../../../../../helpers/_graph-store.js";
+import { makeTestGraphStore, loadGraphIntoStore } from "../../../../../helpers/_graph-store.js";
 import { toEdgeIdentifier } from "../../../../../../src/sca/utils/helpers/helpers.js";
 
 const testGraph: GraphDescriptor & Required<Pick<GraphDescriptor, "assets">> = {
@@ -204,7 +204,7 @@ suite("SelectionController", () => {
 
     const graphStore = makeTestGraphStore();
 
-    graphStore.set(testGraph);
+    loadGraphIntoStore(graphStore, testGraph);
     const inspectableGraph = graphStore.get()?.graphs.get("");
     if (!inspectableGraph) assert.fail("Unable to inspect graph");
 

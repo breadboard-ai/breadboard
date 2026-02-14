@@ -733,7 +733,7 @@ export type GraphStoreArgs = Required<InspectableGraphOptions> & {
 };
 
 export type MutableGraphStore = {
-  set(graph: GraphDescriptor): void;
+  set(graph: MutableGraph): void;
   get(): MutableGraph | undefined;
 };
 

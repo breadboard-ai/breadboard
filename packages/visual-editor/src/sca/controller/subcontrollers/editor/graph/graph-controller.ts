@@ -12,7 +12,6 @@ import {
   GraphChangeRejectEvent,
   GraphDescriptor,
   GraphIdentifier,
-  GraphStoreArgs,
   GraphTheme,
   InspectableGraph,
   InspectableNodePorts,
@@ -97,39 +96,17 @@ const NOTEBOOKLM_TOOL: Tool = {
   icon: notebookLmIcon,
 };
 
-import { MutableGraphImpl } from "../../../../../engine/inspector/graph/mutable-graph.js";
-
 export class GraphController
   extends RootController
   implements MutableGraphStore
 {
   #mutableGraph: MutableGraph | undefined;
-  #graphStoreArgs: GraphStoreArgs | undefined;
 
   /**
-   * Sets the GraphStoreArgs used to create MutableGraphImpl instances.
-   * Must be called before `set()`. Typically called once during service init.
+   * MutableGraphStore.set — stores the given MutableGraph.
    */
-  set graphStoreArgs(args: GraphStoreArgs) {
-    this.#graphStoreArgs = args;
-  }
-
-  get graphStoreArgs(): GraphStoreArgs | undefined {
-    return this.#graphStoreArgs;
-  }
-
-  /**
-   * MutableGraphStore.set — creates a new MutableGraphImpl from the graph.
-   */
-  set(graph: GraphDescriptor): void {
-    if (!this.#graphStoreArgs) {
-      throw new Error("GraphController: graphStoreArgs not set");
-    }
-    this.#mutableGraph = new MutableGraphImpl(
-      graph,
-      this,
-      this.#graphStoreArgs
-    );
+  set(graph: MutableGraph): void {
+    this.#mutableGraph = graph;
   }
 
   /**

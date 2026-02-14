@@ -10,7 +10,10 @@ import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protoco
 import { AppServices } from "../../../src/sca/services/services.js";
 import type { GlobalConfig } from "../../../src/ui/contexts/global-config.js";
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
-import { makeTestGraphStore } from "../../helpers/_graph-store.js";
+import {
+  makeTestGraphStore,
+  loadGraphIntoStore,
+} from "../../helpers/_graph-store.js";
 import { editGraphStore } from "../../helpers/_editor.js";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { SigninAdapter } from "../../../src/ui/utils/signin-adapter.js";
@@ -30,7 +33,7 @@ const defaultAgentContext = {
 export function makeTestGraphStoreWithEditor() {
   const graphStore = makeTestGraphStore();
   const testGraph: GraphDescriptor = { nodes: [], edges: [] };
-  graphStore.set(testGraph);
+  loadGraphIntoStore(graphStore, testGraph);
   const editor = editGraphStore(graphStore);
   if (!editor) throw new Error("Unable to edit graph");
   return { graphStore, editor };
@@ -144,7 +147,6 @@ export function makeMockBoardServer(options: {
 
 export interface TestServicesOptions {
   agentContext?: typeof defaultAgentContext;
-  graphStoreArgs?: AppServices["graphStoreArgs"];
   flowGeneratorMock?: Partial<FlowGenerator>;
   googleDriveClient?: Partial<GoogleDriveClient>;
   signinAdapter?: Partial<SigninAdapter>;
@@ -160,7 +162,6 @@ export interface TestServicesOptions {
 export function makeTestServices(options: TestServicesOptions = {}) {
   const {
     agentContext = defaultAgentContext,
-    graphStoreArgs,
     flowGeneratorMock,
     googleDriveClient,
     signinAdapter,
@@ -198,8 +199,6 @@ export function makeTestServices(options: TestServicesOptions = {}) {
         return { runner: mockRunner, abortController };
       },
     },
-    // graphStoreArgs - use provided or empty mock
-    graphStoreArgs: graphStoreArgs ?? ({} as AppServices["graphStoreArgs"]),
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],
     // Mock sandbox for run config

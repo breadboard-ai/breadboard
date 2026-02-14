@@ -122,10 +122,6 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
       () => controller.global.consent
     );
 
-    // Wire graph store dependencies to the GraphController
-    // (which now implements MutableGraphStore directly).
-    controller.editor.graph.graphStoreArgs = services.graphStoreArgs;
-
     const actions = Actions.actions(controller, services);
 
     instance = {

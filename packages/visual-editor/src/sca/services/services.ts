@@ -16,7 +16,6 @@ import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
   GraphLoader,
-  GraphStoreArgs,
   NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
   PersistentBackend,
@@ -71,7 +70,6 @@ export interface AppServices {
   flowGenerator: FlowGenerator;
   googleDriveBoardServer: GoogleDriveBoardServer;
   googleDriveClient: GoogleDriveClient;
-  graphStoreArgs: GraphStoreArgs;
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
   integrationManagers: IntegrationManagerService;
@@ -200,7 +198,6 @@ export function services(
       flowGenerator,
       googleDriveBoardServer,
       googleDriveClient,
-      graphStoreArgs,
       integrationManagers: new IntegrationManagerService(),
       loader,
       mcpClientManager,
