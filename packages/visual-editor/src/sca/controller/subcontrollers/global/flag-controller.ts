@@ -60,6 +60,9 @@ export class FlagController
   @field({ persist: "idb" })
   private accessor _enableNotebookLm: boolean | null = null;
 
+  @field({ persist: "idb" })
+  private accessor _enableGraphEditorAgent: boolean | null = null;
+
   get agentMode() {
     if (this._agentMode === null)
       throw new Error("agentMode was not set by environment");
@@ -157,6 +160,12 @@ export class FlagController
     if (this._enableNotebookLm === null)
       throw new Error("enableNotebookLm was not set by environment");
     return this._enableNotebookLm;
+  }
+
+  get enableGraphEditorAgent() {
+    if (this._enableGraphEditorAgent === null)
+      throw new Error("enableGraphEditorAgent was not set by environment");
+    return this._enableGraphEditorAgent;
   }
 
   @field({ persist: "local" })
@@ -281,6 +290,12 @@ export class FlagController
         this._enableNotebookLm = value;
         return;
       }
+
+      case "enableGraphEditorAgent": {
+        if (onlyIfNull && this._enableGraphEditorAgent !== null) return;
+        this._enableGraphEditorAgent = value;
+        return;
+      }
     }
   }
 
@@ -329,6 +344,11 @@ export class FlagController
       this.#set("streamPlanner", env.streamPlanner, onlyIfNull);
       this.#set("enableResumeAgentRun", env.enableResumeAgentRun, onlyIfNull);
       this.#set("enableNotebookLm", env.enableNotebookLm, onlyIfNull);
+      this.#set(
+        "enableGraphEditorAgent",
+        env.enableGraphEditorAgent,
+        onlyIfNull
+      );
     });
   }
 

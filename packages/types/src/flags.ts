@@ -83,6 +83,11 @@ export type RuntimeFlags = {
    * Enables NotebookLM integration
    */
   enableNotebookLm: boolean;
+
+  /**
+   * Enables the graph editor agent for conversational graph building
+   */
+  enableGraphEditorAgent: boolean;
 };
 
 /**
