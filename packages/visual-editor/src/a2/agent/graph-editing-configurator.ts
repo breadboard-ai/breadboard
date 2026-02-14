@@ -7,6 +7,8 @@
 import type { GraphEditingActions } from "../runnable-module-factory.js";
 import type { FunctionGroupConfigurator } from "./loop.js";
 import { getGraphEditingFunctionGroup } from "./functions/graph-editing.js";
+import { getChatFunctionGroup, CHAT_LOG_PATH } from "./functions/chat.js";
+import { TaskTreeManager } from "./task-tree-manager.js";
 
 export { createGraphEditingConfigurator };
 
@@ -18,7 +20,25 @@ export { createGraphEditingConfigurator };
 function createGraphEditingConfigurator(
   graphEditingActions: GraphEditingActions
 ): FunctionGroupConfigurator {
-  return async () => {
-    return [getGraphEditingFunctionGroup({ graphEditingActions })];
+  return async (deps, flags) => {
+    const groups = [];
+    const taskTreeManager = new TaskTreeManager(deps.fileSystem);
+
+    groups.push(getGraphEditingFunctionGroup({ graphEditingActions }));
+
+    if (flags.uiType === "chat") {
+      deps.fileSystem.addSystemFile(CHAT_LOG_PATH, () =>
+        JSON.stringify(deps.ui.chatLog)
+      );
+      groups.push(
+        getChatFunctionGroup({
+          chatManager: deps.ui,
+          translator: deps.translator,
+          taskTreeManager,
+        })
+      );
+    }
+
+    return groups;
   };
 }

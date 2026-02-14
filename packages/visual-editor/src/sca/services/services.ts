@@ -32,6 +32,7 @@ import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
 import { IntegrationManagerService } from "./integration-managers.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
+import type { GraphEditingActions } from "../../a2/runnable-module-factory.js";
 import { getGraphEditingActions } from "../actions/graph/graph-editing-actions.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
@@ -75,6 +76,7 @@ export interface AppServices {
   mcpClientManager: McpClientManager;
   integrationManagers: IntegrationManagerService;
   notebookLmApiClient: NotebookLmApiClient;
+  graphEditingActions: GraphEditingActions;
   runService: RunService;
   sandbox: RunnableModuleFactory;
   signinAdapter: SigninAdapter;
@@ -204,6 +206,7 @@ export function services(
       loader,
       mcpClientManager,
       notebookLmApiClient,
+      graphEditingActions: getGraphEditingActions(),
       runService: new RunService(),
       sandbox,
       signinAdapter,
