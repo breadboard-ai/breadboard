@@ -490,7 +490,7 @@ export const load = asAction(
     }
 
     // 8. Initialize the editor
-    Helpers.initializeEditor(services.graphStore, controller.editor.graph, {
+    Helpers.initializeEditor(controller.editor.graph, {
       graph: prepared.graph,
       moduleId: prepared.moduleId,
       subGraphId: prepared.subGraphId,

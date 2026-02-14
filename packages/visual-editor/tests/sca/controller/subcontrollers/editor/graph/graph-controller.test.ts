@@ -9,10 +9,9 @@ import { beforeEach, suite, test } from "node:test";
 import { GraphController } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import { makeTestGraphStore } from "../../../../../helpers/_graph-store.js";
 import { editGraphStore } from "../../../../../helpers/_editor.js";
-import { EditableGraph } from "@breadboard-ai/types";
+import { EditableGraph, MutableGraphStore } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
-import { GraphStore } from "../../../../../../src/engine/inspector/graph-store.js";
 import { Tab } from "../../../../../../src/runtime/types.js";
 import { createMockEditor, makeFreshGraph } from "../../../../helpers/index.js";
 import { A2_TOOLS } from "../../../../../../src/a2/a2-registry.js";
@@ -20,7 +19,7 @@ import { A2_TOOLS } from "../../../../../../src/a2/a2-registry.js";
 suite("GraphController", () => {
   let testGraph = makeFreshGraph();
   let editableGraph: EditableGraph | undefined;
-  let graphStore: GraphStore;
+  let graphStore: MutableGraphStore;
 
   beforeEach(() => {
     graphStore = makeTestGraphStore();

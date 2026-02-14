@@ -154,7 +154,7 @@ export const prepare = asAction(
       runner: graph,
       diagnostics: true,
       loader: services.loader,
-      graphStore: services.graphStore,
+      graphStore: controller.editor.graph,
       sandbox: services.sandbox,
       fileSystem,
       // TODO: Remove this. Inputs from Settings is no longer a thing.
@@ -245,7 +245,7 @@ export const prepare = asAction(
         controller.run.main.setEstimatedEntryCount(nodeIds.length);
 
         // Pre-populate console with all graph nodes as "inactive" in execution order
-        const inspectable = services.graphStore.get()?.graphs.get("");
+        const inspectable = controller.editor.graph.get()?.graphs.get("");
         if (inspectable) {
           for (const nodeId of nodeIds) {
             const node = inspectable?.nodeById(nodeId);
@@ -289,7 +289,7 @@ export const prepare = asAction(
       if (event.data.path.length > 1) return;
 
       const nodeId = event.data.node.id;
-      const inspectable = services.graphStore.get()?.graphs.get("");
+      const inspectable = controller.editor.graph.get()?.graphs.get("");
       const node = inspectable?.nodeById(nodeId);
       const title = node?.title() ?? nodeId;
       const metadata = node?.currentDescribe()?.metadata ?? {};
@@ -380,7 +380,7 @@ export const syncConsoleFromRunner = asAction(
     triggeredBy: () => onGraphVersionForSync(bind),
   },
   async (): Promise<void> => {
-    const { controller, services } = bind;
+    const { controller } = bind;
     const runController = controller.run.main;
     const graphController = controller.editor.graph;
 
@@ -406,7 +406,7 @@ export const syncConsoleFromRunner = asAction(
       return;
     }
 
-    const inspectable = services.graphStore.get()?.graphs.get("");
+    const inspectable = controller.editor.graph.get()?.graphs.get("");
     if (!inspectable) {
       return;
     }

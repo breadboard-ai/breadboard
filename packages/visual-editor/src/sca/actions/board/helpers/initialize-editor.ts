@@ -10,7 +10,6 @@ import type {
   GraphDescriptor,
   GraphIdentifier,
   ModuleIdentifier,
-  MutableGraphStore,
   OutputValues,
 } from "@breadboard-ai/types";
 import { Graph as GraphEditor } from "../../../../engine/editor/graph.js";
@@ -67,7 +66,6 @@ export interface InitializeEditorResult {
  * @returns The editor ID
  */
 export function initializeEditor(
-  graphStore: MutableGraphStore,
   graphController: Editor.Graph.GraphController,
   options: InitializeEditorOptions
 ): InitializeEditorResult {
@@ -82,11 +80,11 @@ export function initializeEditor(
     onHistoryChanged,
   } = options;
 
-  // Set graph in store
-  graphStore.set(graph);
+  // Set graph in store (GraphController implements MutableGraphStore)
+  graphController.set(graph);
 
   // Create editor
-  const mutable = graphStore.get();
+  const mutable = graphController.get();
   if (!mutable) {
     throw new Error("Unable to create editor");
   }

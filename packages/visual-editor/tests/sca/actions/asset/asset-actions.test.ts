@@ -182,8 +182,8 @@ suite("Asset Actions", () => {
     });
 
     test("returns error when asset has no metadata", async () => {
-      const { graphStore, editor } = makeTestGraphStoreWithEditor();
-      const { services } = makeTestServices({ graphStore });
+      const { editor } = makeTestGraphStoreWithEditor();
+      const { services } = makeTestServices();
 
       const graphAssets = new Map<AssetPath, GraphAsset>();
       graphAssets.set("no-metadata.txt", {
@@ -215,8 +215,8 @@ suite("Asset Actions", () => {
     });
 
     test("returns error when asset not found", async () => {
-      const { graphStore, editor } = makeTestGraphStoreWithEditor();
-      const { services } = makeTestServices({ graphStore });
+      const { editor } = makeTestGraphStoreWithEditor();
+      const { services } = makeTestServices();
 
       const graphAssets = new Map<AssetPath, GraphAsset>();
 
@@ -239,8 +239,8 @@ suite("Asset Actions", () => {
     });
 
     test("updates asset title successfully", async () => {
-      const { graphStore, editor } = makeTestGraphStoreWithEditor();
-      const { services } = makeTestServices({ graphStore });
+      const { editor } = makeTestGraphStoreWithEditor();
+      const { services } = makeTestServices();
 
       // Add an asset to the graph first
       await editor.edit(
@@ -285,7 +285,7 @@ suite("Asset Actions", () => {
     });
 
     test("updates asset with data successfully", async () => {
-      const { graphStore, editor } = makeTestGraphStoreWithEditor();
+      const { editor } = makeTestGraphStoreWithEditor();
 
       // Create mock transformer that returns data unchanged
       const mockTransformer = {
@@ -300,7 +300,7 @@ suite("Asset Actions", () => {
         toFileData: async (_url: URL, part: unknown) => part,
       };
 
-      const { services } = makeTestServices({ graphStore });
+      const { services } = makeTestServices();
 
       // Add an asset to the graph first
       await editor.edit(
@@ -357,7 +357,7 @@ suite("Asset Actions", () => {
     });
 
     test("returns error when UpdateAssetData fails", async () => {
-      const { graphStore, editor } = makeTestGraphStoreWithEditor();
+      const { editor } = makeTestGraphStoreWithEditor();
 
       // Create mock transformer
       const mockTransformer = {
@@ -372,7 +372,7 @@ suite("Asset Actions", () => {
         toFileData: async (_url: URL, part: unknown) => part,
       };
 
-      const { services } = makeTestServices({ graphStore });
+      const { services } = makeTestServices();
 
       // Add asset to graph
       await editor.edit(
@@ -658,8 +658,8 @@ suite("Asset Actions", () => {
     });
 
     test("adds an asset successfully", async () => {
-      const { graphStore, editor } = makeTestGraphStoreWithEditor();
-      const { services } = makeTestServices({ graphStore });
+      const { editor } = makeTestGraphStoreWithEditor();
+      const { services } = makeTestServices();
 
       Asset.bind({
         services: services as AppServices,
@@ -690,8 +690,8 @@ suite("Asset Actions", () => {
     });
 
     test("adds multiple assets in parallel (Promise.all)", async () => {
-      const { graphStore, editor } = makeTestGraphStoreWithEditor();
-      const { services } = makeTestServices({ graphStore });
+      const { editor } = makeTestGraphStoreWithEditor();
+      const { services } = makeTestServices();
 
       Asset.bind({
         services: services as AppServices,
@@ -762,8 +762,8 @@ suite("Asset Actions", () => {
     });
 
     test("sets inlineData title from metadata (L203-204)", async () => {
-      const { graphStore, editor } = makeTestGraphStoreWithEditor();
-      const { services } = makeTestServices({ graphStore });
+      const { editor } = makeTestGraphStoreWithEditor();
+      const { services } = makeTestServices();
 
       // Mock transformer needed because persistDataParts calls
       // transformer.persistPart on inline data parts
@@ -851,8 +851,8 @@ suite("Asset Actions", () => {
     });
 
     test("removes an asset successfully", async () => {
-      const { graphStore, editor } = makeTestGraphStoreWithEditor();
-      const { services } = makeTestServices({ graphStore });
+      const { editor } = makeTestGraphStoreWithEditor();
+      const { services } = makeTestServices();
 
       // First add an asset
       await editor.edit(

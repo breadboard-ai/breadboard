@@ -8,11 +8,11 @@ import {
   EditableGraph,
   EditableGraphOptions,
   GraphDescriptor,
+  MutableGraphStore,
 } from "@breadboard-ai/types";
 import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
 import { Graph } from "../../src/engine/editor/graph.js";
 import { makeTestGraphStore, makeTestGraphStoreArgs } from "./_graph-store.js";
-import type { GraphStore } from "../../src/engine/inspector/graph-store.js";
 
 export { editGraphStore };
 
@@ -31,7 +31,7 @@ export const editGraph = (
  * Test helper replacing the removed `graphStore.edit()` method.
  */
 function editGraphStore(
-  graphStore: GraphStore,
+  graphStore: MutableGraphStore,
   options: EditableGraphOptions = {}
 ): EditableGraph | undefined {
   const mutable = graphStore.get();

@@ -5,11 +5,14 @@
  */
 
 import type {
+  GraphDescriptor,
   GraphStoreArgs,
   InspectableGraphOptions,
+  MutableGraph,
+  MutableGraphStore,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { GraphStore } from "../../src/engine/inspector/graph-store.js";
+import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
 import { makeFs } from "../test-file-system.js";
 
 export { makeTestGraphStore, makeTestGraphStoreArgs };
@@ -49,6 +52,20 @@ function makeTestGraphStoreArgs(
   };
 }
 
-function makeTestGraphStore(args?: GraphStoreArgs) {
-  return new GraphStore(args ?? makeTestGraphStoreArgs());
+/**
+ * Creates a test MutableGraphStore for use in unit tests.
+ * This replaces the deleted GraphStore class with a minimal implementation.
+ */
+function makeTestGraphStore(args?: GraphStoreArgs): MutableGraphStore {
+  const storeArgs = args ?? makeTestGraphStoreArgs();
+  let mutableGraph: MutableGraph | undefined;
+  const store: MutableGraphStore = {
+    set(graph: GraphDescriptor): void {
+      mutableGraph = new MutableGraphImpl(graph, store, storeArgs);
+    },
+    get(): MutableGraph | undefined {
+      return mutableGraph;
+    },
+  };
+  return store;
 }
