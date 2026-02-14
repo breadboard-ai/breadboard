@@ -7,7 +7,6 @@
 import type {
   GraphDescriptor,
   GraphStoreArgs,
-  GraphStoreEventTarget,
   MutableGraph,
   MutableGraphStore,
 } from "@breadboard-ai/types";
@@ -16,15 +15,11 @@ import { MutableGraphImpl } from "./graph/mutable-graph.js";
 
 export { GraphStore };
 
-class GraphStore
-  extends (EventTarget as GraphStoreEventTarget)
-  implements MutableGraphStore
-{
+class GraphStore implements MutableGraphStore {
   #deps: GraphStoreArgs;
   #mutable: MutableGraph | undefined;
 
   constructor(args: GraphStoreArgs) {
-    super();
     this.#deps = args;
   }
 

@@ -152,6 +152,14 @@ export class GraphController extends RootController {
   @field()
   accessor version = 0;
 
+  /**
+   * Monotonically increases on non-visual graph topology changes.
+   * Used by UI components to detect when the graph structure has changed
+   * (as opposed to visual-only changes like node movement).
+   */
+  @field()
+  accessor topologyVersion = 0;
+
   @field()
   accessor lastLoadedVersion = 0;
 
@@ -307,6 +315,7 @@ export class GraphController extends RootController {
     // Skip derived tools update on visual-only changes (e.g., node movement)
     if (evt.visualOnly) return;
 
+    this.topologyVersion++;
     this.#updateMyTools();
     this.#updateAgentModeTools();
     this.#updateComponents();

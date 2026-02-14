@@ -25,7 +25,7 @@ import type {
 import { DescribeResultCache } from "./describe-cache.js";
 import { EdgeCache } from "./edge-cache.js";
 import { Edge as InspectableEdge } from "./edge.js";
-import { UpdateEvent } from "./event.js";
+
 import { GraphCache } from "./graph-cache.js";
 import { Graph } from "./graph.js";
 import { ModuleCache } from "./module.js";
@@ -72,7 +72,7 @@ class MutableGraphImpl implements MutableGraph {
     visualOnly: boolean,
     affectedNodes: AffectedNode[],
     affectedModules: ModuleIdentifier[],
-    topologyChange: boolean
+    _topologyChange: boolean
   ): void {
     // TODO: Handle this a better way?
     for (const id of affectedModules) {
@@ -103,9 +103,6 @@ class MutableGraphImpl implements MutableGraph {
     // TODO: Handle removals, etc.
     if (!visualOnly) {
       this.describe.update(affectedNodes);
-      this.store.dispatchEvent(
-        new UpdateEvent(this.id, "", "", [], topologyChange)
-      );
     }
     this.entries = findEntries(graph);
     this.graph = graph;

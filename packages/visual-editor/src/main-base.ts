@@ -117,26 +117,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   /**
-   * Monotonically increases whenever the graph topology of a graph in the
-   * current tab changes. Graph topology == any non-visual change to the graph.
-   * - this property is incremented whenever the "update" event is received
-   *   from the `GraphStore` instance, which stores and tracks all known graphs,
-   *   across all tabs, etc.
-   * - this property is only incremented when the "update" is for the current
-   *   tab's graph, but that still works when we switch tabs, since we don't
-   *   check the value of the property, just whether it changed.
-   * - because it is decorated with `@state()` on this component,
-   *   incrementing this property causes a new render of the component.
-   * - this property is then passed to various sub-components that need to be
-   *   aware of graph topology changes.
-   * - these sub-components need to have their own `graphTopologyUpdateId` that
-   *   should be decorated as `@property()`, so that the change to this property
-   *   causes a new render of that component, too.
-   * - as the resulting effect, incrementing the property will keep the parts
-   *   of the UI that need to reflect the latest graph topology up to date.
+   * @deprecated Use sca.controller.editor.graph.topologyVersion instead.
+   * Kept as a @state() only to avoid breaking sub-components that still
+   * receive it as a @property().
    */
-  @state()
-  accessor graphTopologyUpdateId: number = 0;
+  get graphTopologyUpdateId(): number {
+    return this.sca.controller.editor.graph.topologyVersion;
+  }
 
   @state()
   protected accessor tosStatus: CheckAppAccessResponse | null = null;
@@ -264,18 +251,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     );
     admin.runtime = this.runtime;
     admin.settingsHelper = this.settingsHelper;
-
-    this.sca.services.graphStore.addEventListener("update", (evt) => {
-      const { mainGraphId } = evt;
-      const current = this.tab?.mainGraphId;
-      if (
-        !current ||
-        (mainGraphId !== current && !evt.affectedGraphs.includes(current))
-      ) {
-        return;
-      }
-      this.graphTopologyUpdateId++;
-    });
 
     // Once we've determined the sign-in status, relay it to an embedder.
     this.sca.services.signinAdapter.state.then((state) =>

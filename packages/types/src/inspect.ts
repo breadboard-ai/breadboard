@@ -34,10 +34,7 @@ import { GraphLoader } from "./loader.js";
 import { NodeDescriberResult, NodeHandlerMetadata } from "./node-handler.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
-import {
-  TypedEventTarget,
-  TypedEventTargetType,
-} from "./typed-event-target.js";
+
 import { UUID } from "./uuid.js";
 import { RuntimeFlagManager } from "./flags.js";
 
@@ -735,21 +732,7 @@ export type GraphStoreArgs = Required<InspectableGraphOptions> & {
   flags: RuntimeFlagManager;
 };
 
-export type GraphStoreUpdateEvent = Event & {
-  mainGraphId: MainGraphIdentifier;
-  affectedGraphs: MainGraphIdentifier[];
-  graphId: GraphIdentifier;
-  nodeId: NodeIdentifier;
-  topologyChange: boolean;
-};
-
-type GraphsStoreEventMap = {
-  update: GraphStoreUpdateEvent;
-};
-
-export type GraphStoreEventTarget = TypedEventTarget<GraphsStoreEventMap>;
-
-export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
+export type MutableGraphStore = {
   set(graph: GraphDescriptor): void;
   get(): MutableGraph | undefined;
 };
