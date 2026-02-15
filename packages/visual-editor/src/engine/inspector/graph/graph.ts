@@ -6,7 +6,7 @@
 
 import type {
   AssetPath,
-  Edge,
+  Edge as EdgeDescriptor,
   GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
@@ -23,6 +23,8 @@ import type {
   Outcome,
 } from "@breadboard-ai/types";
 import { GraphQueries } from "./graph-queries.js";
+import { Edge } from "./edge.js";
+import { unfixUpStarEdge } from "./edge.js";
 
 export { Graph };
 
@@ -65,11 +67,20 @@ class Graph implements InspectableGraph {
   }
 
   edges(): InspectableEdge[] {
-    return this.#mutable.edges.edges(this.#graphId);
+    return this.#descriptor().edges.map(
+      (edge) => new Edge(this.#mutable, edge, this.#graphId)
+    );
   }
 
-  hasEdge(edge: Edge): boolean {
-    return this.#mutable.edges.hasByValue(edge, this.#graphId);
+  hasEdge(edge: EdgeDescriptor): boolean {
+    const fixed = unfixUpStarEdge(edge);
+    return !!this.#descriptor().edges.find(
+      (e) =>
+        e.from === fixed.from &&
+        e.to === fixed.to &&
+        e.out === fixed.out &&
+        e.in === fixed.in
+    );
   }
 
   typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {

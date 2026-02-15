@@ -52,7 +52,7 @@ export const fixupConstantEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
 };
 
 class Edge implements InspectableEdge {
-  #mutable: MutableGraph | null;
+  #mutable: MutableGraph;
   #edge: EdgeDescriptor;
   #graphId: GraphIdentifier;
 
@@ -71,11 +71,6 @@ class Edge implements InspectableEdge {
   }
 
   get from() {
-    if (!this.#mutable) {
-      throw new Error(
-        `Unable to access "from": this edge was deleted and is no longer part of the graph`
-      );
-    }
     const from = this.#mutable.nodes.get(this.#edge.from, this.#graphId);
     console.assert(from, "From node not found when getting from.");
     return from!;
@@ -86,11 +81,6 @@ class Edge implements InspectableEdge {
   }
 
   get to() {
-    if (!this.#mutable) {
-      throw new Error(
-        `Unable to access "to": this edge was deleted and is no longer part of the graph`
-      );
-    }
     const to = this.#mutable.nodes.get(this.#edge.to, this.#graphId);
     console.assert(to, "To node not found when getting to.");
     return to!;
@@ -120,9 +110,5 @@ class Edge implements InspectableEdge {
   async inPort(): Promise<InspectablePort> {
     const ports = await this.to.ports();
     return ports.inputs.ports.find((port) => port.name === this.in)!;
-  }
-
-  setDeleted() {
-    this.#mutable = null;
   }
 }

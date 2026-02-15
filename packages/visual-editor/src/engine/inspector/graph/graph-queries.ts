@@ -21,6 +21,7 @@ import type {
 } from "@breadboard-ai/types";
 import { err, graphUrlLike, TemplatePart } from "@breadboard-ai/utils";
 import { A2NodeType } from "./a2-node-type.js";
+import { Edge } from "./edge.js";
 import { InspectableAssetImpl } from "./inspectable-asset.js";
 import { scanConfiguration } from "../../../utils/scan-configuration.js";
 import { ROUTE_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
@@ -55,13 +56,13 @@ class GraphQueries {
   incoming(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph()
       .edges.filter((edge) => edge.to === id)
-      .map((edge) => this.#mutable.edges.getOrCreate(edge, this.#graphId));
+      .map((edge) => new Edge(this.#mutable, edge, this.#graphId));
   }
 
   outgoing(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph()
       .edges.filter((edge) => edge.from === id)
-      .map((edge) => this.#mutable.edges.getOrCreate(edge, this.#graphId));
+      .map((edge) => new Edge(this.#mutable, edge, this.#graphId));
   }
 
   entries(): InspectableNode[] {

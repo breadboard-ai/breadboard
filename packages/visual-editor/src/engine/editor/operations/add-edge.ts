@@ -124,7 +124,6 @@ export class AddEdge implements EditOperation {
 
     edge = fixUpStarEdge(edge);
     edge = fixupConstantEdge(edge);
-    mutable.edges.add(edge, graphId);
     handle.result.graph().edges.push(edge);
     return {
       success: true,

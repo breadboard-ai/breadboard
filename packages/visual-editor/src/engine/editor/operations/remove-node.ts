@@ -65,9 +65,6 @@ export class RemoveNode implements EditOperation {
     // Remove any edges that are connected to the removed node.
     graph.edges = graph.edges.filter((edge) => {
       const shouldRemove = edge.from === id || edge.to === id;
-      if (shouldRemove) {
-        mutable.edges.remove(edge, graphId);
-      }
       return !shouldRemove;
     });
     // Remove the node from the graph.

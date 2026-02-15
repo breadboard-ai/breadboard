@@ -10,7 +10,6 @@ import type {
   GraphIdentifier,
   GraphStoreArgs,
   InspectableDescriberResultCache,
-  InspectableEdgeCache,
   InspectableGraphCache,
   InspectableNodeCache,
   MainGraphIdentifier,
@@ -19,8 +18,6 @@ import type {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { DescribeResultCache } from "./describe-cache.js";
-import { EdgeCache } from "./edge-cache.js";
-import { Edge as InspectableEdge } from "./edge.js";
 
 import { GraphCache } from "./graph-cache.js";
 import { Graph } from "./graph.js";
@@ -42,7 +39,6 @@ class MutableGraphImpl implements MutableGraph {
   graph!: GraphDescriptor;
   graphs!: InspectableGraphCache;
   nodes!: InspectableNodeCache;
-  edges!: InspectableEdgeCache;
   describe!: InspectableDescriberResultCache;
   entries!: NodeIdentifier[];
 
@@ -73,13 +69,11 @@ class MutableGraphImpl implements MutableGraph {
   addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
     this.graphs.add(graphId);
     this.nodes.addSubgraphNodes(subgraph, graphId);
-    this.edges.addSubgraphEdges(subgraph, graphId);
   }
 
   removeSubgraph(graphId: GraphIdentifier): void {
     this.graphs.remove(graphId);
     this.nodes.removeSubgraphNodes(graphId);
-    this.edges.removeSubgraphEdges(graphId);
   }
 
   rebuild(graph: GraphDescriptor) {
@@ -94,17 +88,12 @@ class MutableGraphImpl implements MutableGraph {
       }
       return new Node(descriptor, this, graphId);
     });
-    this.edges = new EdgeCache(
-      (edge, graphId) => new InspectableEdge(this, edge, graphId)
-    );
     this.describe = new DescribeResultCache(
       new NodeDescriberManager(this, this.#deps)
     );
     this.graphs = new GraphCache((id) => new Graph(id, this));
-
     this.graphs.rebuild(graph);
     this.nodes.rebuild(graph);
-    this.edges.rebuild(graph);
   }
 }
 

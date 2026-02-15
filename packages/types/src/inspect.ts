@@ -588,21 +588,6 @@ export type NodeStoreMutator = {
   removeSubgraphNodes(graphId: GraphIdentifier): void;
 };
 
-export type EdgeStoreMutator = {
-  add(edge: Edge, graphId: GraphIdentifier): void;
-  remove(edge: Edge, graphId: GraphIdentifier): void;
-  addSubgraphEdges(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraphEdges(graphId: GraphIdentifier): void;
-};
-
-export type InspectableEdgeCache = EdgeStoreMutator & {
-  get(edge: Edge, graphId: GraphIdentifier): InspectableEdge | undefined;
-  getOrCreate(edge: Edge, graphId: GraphIdentifier): InspectableEdge;
-  hasByValue(edge: Edge, graphId: GraphIdentifier): boolean;
-  edges(graphId: GraphIdentifier): InspectableEdge[];
-  rebuild(graph: GraphDescriptor): void;
-};
-
 export type InspectableNodeCache = NodeStoreMutator & {
   byType(type: NodeTypeIdentifier, graphId: GraphIdentifier): InspectableNode[];
   get(
@@ -686,7 +671,6 @@ export type MutableGraph = {
   readonly graphs: InspectableGraphCache;
   readonly store: MutableGraphStore;
   readonly nodes: InspectableNodeCache;
-  readonly edges: InspectableEdgeCache;
   readonly describe: InspectableDescriberResultCache;
 
   readonly entries: NodeIdentifier[];
