@@ -689,31 +689,6 @@ export type MutableGraphStore = {
 
 export type PortIdentifier = string;
 
-export type PortChanges = {
-  fixedChanged: boolean;
-  deleted: PortIdentifier[];
-  added: InspectablePort[];
-  updated: InspectablePort[];
-};
-
-export type NodePortChanges = {
-  input: PortChanges;
-  output: PortChanges;
-  side: PortChanges;
-};
-
-export type InspectablePortCache = {
-  getChanges(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    port: InspectableNodePorts
-  ): NodePortChanges;
-  current(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): InspectableNodePorts | undefined;
-};
-
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
@@ -729,7 +704,6 @@ export type MutableGraph = {
   readonly edges: InspectableEdgeCache;
   readonly describe: InspectableDescriberResultCache;
 
-  readonly ports: InspectablePortCache;
   readonly entries: NodeIdentifier[];
 
   update(

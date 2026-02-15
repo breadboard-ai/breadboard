@@ -13,7 +13,6 @@ import type {
   InspectableEdgeCache,
   InspectableGraphCache,
   InspectableNodeCache,
-  InspectablePortCache,
   KitDescriptor,
   MainGraphIdentifier,
   MutableGraph,
@@ -29,7 +28,6 @@ import { Graph } from "./graph.js";
 import { NodeCache } from "./node-cache.js";
 import { NodeDescriberManager } from "./node-describer-manager.js";
 import { Node } from "./node.js";
-import { PortCache } from "./port-cache.js";
 
 export { MutableGraphImpl };
 
@@ -49,7 +47,6 @@ class MutableGraphImpl implements MutableGraph {
   nodes!: InspectableNodeCache;
   edges!: InspectableEdgeCache;
   describe!: InspectableDescriberResultCache;
-  ports!: InspectablePortCache;
   entries!: NodeIdentifier[];
 
   constructor(
@@ -108,7 +105,7 @@ class MutableGraphImpl implements MutableGraph {
       new NodeDescriberManager(this, this.#deps)
     );
     this.graphs = new GraphCache((id) => new Graph(id, this));
-    this.ports = new PortCache();
+
     this.graphs.rebuild(graph);
     this.nodes.rebuild(graph);
     this.edges.rebuild(graph);
