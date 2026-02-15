@@ -14,13 +14,23 @@ import type { SCA } from "../../../sca/sca.js";
 import { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
 import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing-main.js";
 import type { LoopHooks } from "../../../a2/agent/types.js";
+import { parseThought } from "../../../a2/agent/thought-parser.js";
+import { markdown } from "../../directives/markdown.js";
 
 export { GraphEditingChat };
 
-type ChatMessage = {
-  role: "user" | "model" | "system";
-  text: string;
-};
+/**
+ * A single chat entry. Can be:
+ * - A user or model text message
+ * - A system message (function call label)
+ * - A thought group (collapsible, shows latest title)
+ */
+type ChatEntry =
+  | { kind: "message"; role: "user" | "model" | "system"; text: string }
+  | {
+      kind: "thought-group";
+      thoughts: { title: string | null; body: string }[];
+    };
 
 /**
  * A chat overlay for the graph editing agent.
@@ -38,10 +48,13 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   accessor #open = false;
 
   @state()
-  accessor #messages: ChatMessage[] = [];
+  accessor #entries: ChatEntry[] = [];
 
   @state()
   accessor #waiting = false;
+
+  @state()
+  accessor #expandedGroups: Set<number> = new Set();
 
   @query("#chat-input")
   accessor #inputEl: HTMLInputElement | null = null;
@@ -189,10 +202,91 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       align-self: flex-start;
     }
 
+    .message.model p {
+      margin: 0 0 8px 0;
+    }
+
+    .message.model p:last-child {
+      margin-bottom: 0;
+    }
+
+    .message.model ul,
+    .message.model ol {
+      margin: 0 0 8px 0;
+      padding-left: 20px;
+    }
+
+    .message.model code {
+      background: #f1f3f4;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .message.model pre {
+      background: #f1f3f4;
+      padding: 8px 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 0 0 8px 0;
+    }
+
+    .message.model pre code {
+      background: none;
+      padding: 0;
+    }
+
     .message.system {
       color: #5f6368;
       align-self: flex-start;
       font-size: 13px;
+    }
+
+    /* ── Thought groups ── */
+
+    .thought-group {
+      align-self: flex-start;
+    }
+
+    .thought-group-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      color: #5f6368;
+      font-size: 13px;
+      user-select: none;
+    }
+
+    .thought-group-header:hover {
+      color: #202124;
+    }
+
+    .thought-group-header .icon {
+      font-size: 18px;
+      transition: transform 0.15s ease;
+    }
+
+    .thought-group-header .icon.expanded {
+      transform: rotate(180deg);
+    }
+
+    .thought-group-body {
+      padding: 4px 0 4px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .thought-item {
+      font-size: 12px;
+      color: #5f6368;
+      line-height: 1.4;
+    }
+
+    .thought-item-title {
+      font-weight: 500;
+      color: #3c4043;
     }
 
     /* ── Input area ── */
@@ -309,9 +403,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
             </button>
           </div>
           <div id="chat-messages">
-            ${this.#messages.map(
-              (msg) => html`<div class="message ${msg.role}">${msg.text}</div>`
-            )}
+            ${this.#entries.map((entry, idx) => this.#renderEntry(entry, idx))}
             ${this.#loopRunning && !this.#waiting
               ? html`<div class="message system">Thinking…</div>`
               : nothing}
@@ -340,8 +432,87 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     `;
   }
 
-  #addMessage(role: ChatMessage["role"], text: string) {
-    this.#messages = [...this.#messages, { role, text }];
+  #renderEntry(entry: ChatEntry, index: number) {
+    if (entry.kind === "message") {
+      const content =
+        entry.role === "model" ? markdown(entry.text) : entry.text;
+      return html`<div class="message ${entry.role}">${content}</div>`;
+    }
+
+    // Thought group — show latest title with twistie
+    const thoughts = entry.thoughts;
+    const latest = thoughts[thoughts.length - 1];
+    const title = latest.title ?? latest.body;
+    const isExpanded = this.#expandedGroups.has(index);
+
+    return html`
+      <div class="thought-group">
+        <div
+          class="thought-group-header"
+          @click=${() => this.#toggleGroup(index)}
+        >
+          <span class="icon ${isExpanded ? "expanded" : ""}">
+            arrow_drop_down
+          </span>
+          <span>${title}</span>
+        </div>
+        ${isExpanded
+          ? html`
+              <div class="thought-group-body">
+                ${thoughts.map(
+                  (t) => html`
+                    <div class="thought-item">
+                      ${t.title
+                        ? html`<span class="thought-item-title"
+                              >${t.title}:</span
+                            >
+                            ${markdown(t.body)}`
+                        : markdown(t.body)}
+                    </div>
+                  `
+                )}
+              </div>
+            `
+          : nothing}
+      </div>
+    `;
+  }
+
+  #toggleGroup(index: number) {
+    const next = new Set(this.#expandedGroups);
+    if (next.has(index)) {
+      next.delete(index);
+    } else {
+      next.add(index);
+    }
+    this.#expandedGroups = next;
+  }
+
+  /**
+   * Get or create the current thought group at the end of entries.
+   * Returns the group if the last entry is a thought-group, or creates one.
+   */
+  #currentThoughtGroup(): ChatEntry & { kind: "thought-group" } {
+    const last = this.#entries[this.#entries.length - 1];
+    if (last && last.kind === "thought-group") {
+      return last;
+    }
+    const group: ChatEntry = { kind: "thought-group", thoughts: [] };
+    this.#entries = [...this.#entries, group];
+    return group as ChatEntry & { kind: "thought-group" };
+  }
+
+  #addMessage(role: "user" | "model" | "system", text: string) {
+    this.#entries = [...this.#entries, { kind: "message", role, text }];
+    this.#scrollToBottom();
+  }
+
+  #addThought(text: string) {
+    const parsed = parseThought(text);
+    const group = this.#currentThoughtGroup();
+    group.thoughts.push(parsed);
+    // Trigger reactive update
+    this.#entries = [...this.#entries];
     this.#scrollToBottom();
   }
 
@@ -356,7 +527,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   #buildHooks(): LoopHooks {
     return {
       onThought: (text) => {
-        this.#addMessage("model", text);
+        this.#addThought(text);
       },
       onFunctionCall: (part, _icon, title) => {
         const name = part.functionCall.name;
@@ -440,7 +611,8 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     this.#pendingResolve = null;
     this.#waiting = false;
     this.#open = false;
-    this.#messages = [];
+    this.#entries = [];
+    this.#expandedGroups = new Set();
   }
 
   #scrollToBottom() {

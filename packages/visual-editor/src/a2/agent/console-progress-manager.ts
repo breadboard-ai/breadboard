@@ -19,6 +19,7 @@ import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
 import { ConsoleWorkItem } from "./console-work-item.js";
 import { ProgressReporter } from "./types.js";
 import { StreamingRequestBody } from "../a2/opal-adk-stream.js";
+import { parseThought } from "./thought-parser.js";
 
 export { ConsoleProgressManager };
 
@@ -27,27 +28,6 @@ export { ConsoleProgressManager };
  * they are handled by other UI mechanisms.
  */
 const SKIP_WORK_ITEM_FUNCTIONS = new Set(["chat_present_choices"]);
-
-/**
- * Parsed thought with optional title and body.
- */
-type ParsedThought = {
-  title: string | null;
-  body: string;
-};
-
-/**
- * Parse a thought string to extract title (from **Title**) and body.
- */
-function parseThought(text: string): ParsedThought {
-  const match = text.match(/\*\*(.+?)\*\*/);
-  if (!match) {
-    return { title: null, body: text };
-  }
-  const title = match[1];
-  const body = text.replace(match[0], "").trim();
-  return { title, body };
-}
 
 /**
  * Trim trailing ellipsis ("...") from a string.
@@ -164,10 +144,7 @@ class ConsoleProgressManager implements AgentProgressManager {
         title: "Send request",
         icon: "upload",
         body: {
-          parts: [
-            { text: `Calling model: ${model}` },
-            { json: body },
-          ],
+          parts: [{ text: `Calling model: ${model}` }, { json: body }],
         },
       });
     }
