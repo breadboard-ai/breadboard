@@ -50,6 +50,12 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   #loopRunning = false;
   #pendingResolve: ((text: string) => void) | null = null;
 
+  /**
+   * The flow ID that the current loop was started for.
+   * Used to detect graph changes and restart the loop.
+   */
+  #currentFlow: string | undefined = undefined;
+
   static styles = css`
     :host {
       position: fixed;
@@ -258,6 +264,19 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   `;
 
   render() {
+    const { parsedUrl } = this.sca.controller.router;
+
+    // Hide entirely when not viewing a graph (e.g. home page)
+    if (parsedUrl.page !== "graph") {
+      return nothing;
+    }
+
+    // If the graph changed, reset the loop
+    if (this.#currentFlow !== parsedUrl.flow) {
+      this.#resetLoop();
+      this.#currentFlow = parsedUrl.flow;
+    }
+
     if (!this.#open) {
       return html`
         <div
@@ -409,6 +428,19 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
         this.#loopRunning = false;
         this.#addMessage("system", `Error: ${(e as Error).message}`);
       });
+  }
+
+  /**
+   * Kill the current loop and clear all state.
+   */
+  #resetLoop() {
+    this.#abortController?.abort();
+    this.#abortController = null;
+    this.#loopRunning = false;
+    this.#pendingResolve = null;
+    this.#waiting = false;
+    this.#open = false;
+    this.#messages = [];
   }
 
   #scrollToBottom() {
