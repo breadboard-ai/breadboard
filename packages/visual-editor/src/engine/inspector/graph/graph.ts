@@ -23,8 +23,7 @@ import type {
   Outcome,
 } from "@breadboard-ai/types";
 import { GraphQueries } from "./graph-queries.js";
-import { Edge } from "./edge.js";
-import { unfixUpStarEdge } from "./edge.js";
+import { Edge, fixUpStarEdge } from "./edge.js";
 
 export { Graph };
 
@@ -73,7 +72,7 @@ class Graph implements InspectableGraph {
   }
 
   hasEdge(edge: EdgeDescriptor): boolean {
-    const fixed = unfixUpStarEdge(edge);
+    const fixed = fixUpStarEdge(edge);
     return !!this.#descriptor().edges.find(
       (e) =>
         e.from === fixed.from &&
