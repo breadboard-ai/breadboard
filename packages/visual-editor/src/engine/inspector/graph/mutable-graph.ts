@@ -13,7 +13,6 @@ import type {
   InspectableEdgeCache,
   InspectableGraphCache,
   InspectableNodeCache,
-  KitDescriptor,
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
@@ -40,8 +39,6 @@ class MutableGraphImpl implements MutableGraph {
     return this.#deps;
   }
 
-  legacyKitMetadata: KitDescriptor | null = null;
-
   graph!: GraphDescriptor;
   graphs!: InspectableGraphCache;
   nodes!: InspectableNodeCache;
@@ -63,8 +60,7 @@ class MutableGraphImpl implements MutableGraph {
   update(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: AffectedNode[],
-    _topologyChange: boolean
+    affectedNodes: AffectedNode[]
   ): void {
     // TODO: Handle removals, etc.
     if (!visualOnly) {

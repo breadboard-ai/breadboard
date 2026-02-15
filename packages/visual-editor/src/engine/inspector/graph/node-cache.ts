@@ -13,7 +13,6 @@ import type {
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import { Node } from "./node.js";
 
 type NodeFactory = (
   node: NodeDescriptor,
@@ -42,10 +41,6 @@ export class NodeCache implements InspectableNodeCache {
   }
 
   removeSubgraphNodes(graphId: GraphIdentifier): void {
-    const subgraph = this.#map.get(graphId);
-    subgraph?.forEach((node) => {
-      (node as Node).setDeleted();
-    });
     this.#map.delete(graphId);
   }
 
@@ -104,16 +99,17 @@ export class NodeCache implements InspectableNodeCache {
       );
       return;
     }
-    const node = nodeMap.get(id) as Node;
+    const node = nodeMap.get(id);
     console.assert(node, "Node does not exist in cache.");
-    const type = node!.descriptor.type;
-    const list = this.#typeMap?.get(graphId)?.get(type);
-    if (list) {
-      const index = list.indexOf(node!);
-      list.splice(index, 1);
+    if (node) {
+      const type = node.descriptor.type;
+      const list = this.#typeMap?.get(graphId)?.get(type);
+      if (list) {
+        const index = list.indexOf(node);
+        list.splice(index, 1);
+      }
     }
     nodeMap.delete(id);
-    node.setDeleted();
   }
 
   nodes(graphId: GraphIdentifier): InspectableNode[] {

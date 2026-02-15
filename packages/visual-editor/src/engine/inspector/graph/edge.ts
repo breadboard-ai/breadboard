@@ -125,8 +125,4 @@ class Edge implements InspectableEdge {
   setDeleted() {
     this.#mutable = null;
   }
-
-  deleted(): boolean {
-    return !this.#mutable;
-  }
 }

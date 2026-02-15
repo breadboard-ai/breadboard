@@ -132,13 +132,6 @@ export type InspectableNode = {
   ): InspectableNodePorts;
 
   /**
-   * Returns `true` if the node has been deleted from the graph and this
-   * instance of `InspectableNode` no longer represents a valid node in
-   * a graph. Returns `false` otherwise.
-   */
-  deleted(): boolean;
-
-  /**
    * Returns all routes used in this step
    */
   routes(): NodeIdentifier[];
@@ -218,13 +211,6 @@ export type InspectableEdge = {
    * Get the inspectable input port.
    */
   inPort(): Promise<InspectablePort>;
-
-  /**
-   * Returns `true` if the edge has been deleted from the graph and this
-   * instance of `InspectableEdge` no longer represents a valid edge in
-   * a graph. Returns `false` otherwise.
-   */
-  deleted(): boolean;
 };
 
 export type ValidateResult =
@@ -695,7 +681,6 @@ export type PortIdentifier = string;
  */
 export type MutableGraph = {
   graph: GraphDescriptor;
-  legacyKitMetadata: KitDescriptor | null;
   readonly id: MainGraphIdentifier;
   readonly deps: GraphStoreArgs;
   readonly graphs: InspectableGraphCache;
@@ -709,8 +694,7 @@ export type MutableGraph = {
   update(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: AffectedNode[],
-    topologyChange: boolean
+    affectedNodes: AffectedNode[]
   ): void;
 
   addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
