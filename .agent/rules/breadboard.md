@@ -82,8 +82,8 @@ code-to-be-tested contains signals, use the
 `packages/visual-editor/tests/signal-watcher.ts` helper for easy reactivity
 testing.
 
-In `packages/visual-editor`, use `npm run test:file` to run test files
-individually:
+In `packages/visual-editor`, use `npm run test:file` to run subsets of tests or
+individual tests:
 
 ```bash
 npm run test:file -- './dist/tsc/tests/sca/actions/share/**/*.js'
