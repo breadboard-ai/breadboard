@@ -625,12 +625,8 @@ export type InspectableDescriberResultCache = {
 };
 
 export type InspectableGraphCache = {
-  add(id: GraphIdentifier): void;
   get(id: GraphIdentifier): InspectableGraph | undefined;
   graphs(): InspectableSubgraphs;
-  remove(id: GraphIdentifier): void;
-  rebuild(graph: GraphDescriptor): void;
-  clear(): void;
 };
 
 export type MainGraphIdentifier = UUID;
@@ -672,8 +668,6 @@ export type MutableGraph = {
   readonly store: MutableGraphStore;
   readonly nodes: InspectableNodeCache;
   readonly describe: InspectableDescriberResultCache;
-
-  readonly entries: NodeIdentifier[];
 
   update(
     graph: GraphDescriptor,
