@@ -4,15 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Capabilities, DataPart, LLMContent } from "@breadboard-ai/types";
-import { Template, type ParamPart } from "../../a2/template.js";
-import { A2_TOOL_MAP } from "../../a2-registry.js";
+import type { Capabilities, LLMContent } from "@breadboard-ai/types";
+import {
+  Template,
+  type ParamPart,
+  type ToolParamPart,
+} from "../../a2/template.js";
+import { A2_TOOL_MAP, A2_TOOLS } from "../../a2-registry.js";
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
   NOTEBOOKLM_TOOL_PATH,
 } from "../../a2/tool-manager.js";
-import { mergeTextParts } from "../../a2/utils.js";
 
 export { EditingAgentPidginTranslator };
 
@@ -57,10 +60,15 @@ class EditingAgentPidginTranslator {
   #routeHandles = new Map<string, string>();
   #routeCounter = 0;
 
-  constructor(private readonly caps: Capabilities) {}
+  #caps: Capabilities;
+
+  constructor(caps?: Capabilities) {
+    // simpleSubstitute doesn't use caps, so a stub is fine.
+    this.#caps = caps ?? ({} as Capabilities);
+  }
 
   toPidgin(content: LLMContent): ToPidginResult {
-    const template = new Template(this.caps, content);
+    const template = new Template(this.#caps, content);
 
     const result = template.simpleSubstitute((param) => {
       const { type } = param;
@@ -90,28 +98,74 @@ class EditingAgentPidginTranslator {
     return { text };
   }
 
-  fromPidgin(content: string): LLMContent {
+  fromPidgin(
+    content: string,
+    resolveNodeTitle?: (nodeId: string) => string | undefined
+  ): LLMContent {
     const segments = content.split(SPLIT_REGEX);
-    const parts: DataPart[] = segments
-      .map((segment): DataPart | null => {
-        if (PARENT_PARSE_REGEX.test(segment)) {
-          return { text: segment };
-        }
-        if (FILE_PARSE_REGEX.test(segment)) {
-          return { text: segment };
-        }
-        if (TOOL_PARSE_REGEX.test(segment)) {
-          return { text: segment };
-        }
-        if (LINK_PARSE_REGEX.test(segment)) {
-          return { text: segment };
-        }
-        if (segment === "") return null;
-        return { text: segment };
-      })
-      .filter((part): part is DataPart => part !== null);
+    const textParts: string[] = [];
 
-    return { parts: mergeTextParts(parts, ""), role: "user" };
+    for (const segment of segments) {
+      if (segment === "") continue;
+
+      const parentMatch = segment.match(PARENT_PARSE_REGEX);
+      if (parentMatch) {
+        const handle = parentMatch[1];
+        // Resolve handle to node ID, or use the handle itself if it's already
+        // a raw node ID (e.g. from graph_get_overview).
+        const nodePath = this.getNodeId(handle) ?? handle;
+        // Use the node's actual title if a resolver is provided
+        const title = resolveNodeTitle?.(nodePath) ?? handle;
+        textParts.push(Template.part({ type: "in", path: nodePath, title }));
+        continue;
+      }
+
+      const fileMatch = segment.match(FILE_PARSE_REGEX);
+      if (fileMatch) {
+        const path = fileMatch[1];
+        textParts.push(Template.part({ type: "asset", path, title: path }));
+        continue;
+      }
+
+      const toolMatch = segment.match(TOOL_PARSE_REGEX);
+      if (toolMatch) {
+        const name = toolMatch[1];
+        const resolved = this.#resolveToolName(name);
+        // Always generate a chip; use resolved title or fallback to name
+        textParts.push(
+          Template.part({
+            type: "tool",
+            path: resolved?.path ?? name,
+            title: resolved?.title ?? name,
+          })
+        );
+        continue;
+      }
+
+      const linkMatch = segment.match(LINK_PARSE_REGEX);
+      if (linkMatch) {
+        const routeHandle = linkMatch[1];
+        const title = linkMatch[2].trim();
+        const instance = this.getOriginalRoute(routeHandle);
+        if (instance) {
+          const part: ToolParamPart = {
+            type: "tool",
+            path: ROUTE_TOOL_PATH,
+            title,
+            instance,
+          };
+          textParts.push(Template.part(part));
+        } else {
+          textParts.push(segment);
+        }
+        continue;
+      }
+
+      textParts.push(segment);
+    }
+
+    const joined = textParts.join("");
+    return { parts: [{ text: joined }], role: "user" };
   }
 
   /**
@@ -211,5 +265,25 @@ class EditingAgentPidginTranslator {
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
+  }
+
+  /**
+   * Resolve a tool friendly name to its path, handling
+   * well-known names (memory, notebooklm) and reverse lookups.
+   */
+  #resolveToolName(name: string): { path: string; title: string } | undefined {
+    if (name === "memory") return { path: MEMORY_TOOL_PATH, title: "Memory" };
+    if (name === "notebooklm")
+      return { path: NOTEBOOKLM_TOOL_PATH, title: "NotebookLM" };
+    // Prefer A2_TOOLS lookup — it has the proper display title
+    for (const [url, tool] of A2_TOOLS) {
+      if (tool.title && this.#toKebabCase(tool.title) === name) {
+        return { path: url, title: tool.title };
+      }
+    }
+    // Fallback: reverse map (populated by prior toPidgin calls)
+    const fromReverse = this.#toolReverse.get(name);
+    if (fromReverse) return { path: fromReverse, title: name };
+    return undefined;
   }
 }

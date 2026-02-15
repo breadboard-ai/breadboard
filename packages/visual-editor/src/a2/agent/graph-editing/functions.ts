@@ -4,21 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  Edge,
-  NodeConfiguration,
-  NodeDescriptor,
-} from "@breadboard-ai/types";
+import type { NodeDescriptor, NodeValue } from "@breadboard-ai/types";
+import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 import z from "zod";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
 import type { FunctionGroup } from "../types.js";
-import { A2_COMPONENTS, A2_TOOLS } from "../../a2-registry.js";
+import { A2_TOOLS } from "../../a2-registry.js";
 import {
   bind,
   addNode,
-  changeEdge,
   changeNodeConfiguration,
 } from "../../../sca/actions/graph/graph-actions.js";
+import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
+import { layoutGraph } from "./layout-graph.js";
 
 export { getGraphEditingFunctionGroup };
 
@@ -27,50 +25,59 @@ export { getGraphEditingFunctionGroup };
 // =============================================================================
 
 const GRAPH_GET_OVERVIEW = "graph_get_overview";
-const GRAPH_DESCRIBE_STEP_TYPE = "graph_describe_step_type";
-const GRAPH_ADD_STEP = "graph_add_step";
 const GRAPH_REMOVE_STEP = "graph_remove_step";
-const GRAPH_UPDATE_STEP = "graph_update_step";
-const GRAPH_CONNECT_STEPS = "graph_connect_steps";
+const GRAPH_CREATE_STEP = "create_step";
+const GRAPH_EDIT_STEP_PROMPT = "edit_step_prompt";
 
 /**
- * Map from user-friendly step type names to the component URLs in the registry.
+ * The Generate component URL from A2_COMPONENTS.
  */
-const STEP_TYPE_MAP: Record<string, string> = {};
-for (const component of A2_COMPONENTS) {
-  const key = component.title.toLowerCase().replace(/\s+/g, "_");
-  STEP_TYPE_MAP[key] = component.url;
-}
+const GENERATE_COMPONENT_URL = "embed://a2/generate.bgl.json#module:main";
+
+/**
+ * Build the list of available tool names for the instruction text.
+ */
+const TOOL_NAMES = A2_TOOLS.map(
+  ([, tool]) =>
+    `- ${(tool.title ?? "").toLowerCase().replace(/\s+/g, "-")} — ${tool.description}`
+).join("\n");
+
+const PROMPT_DESCRIPTION = `The prompt for the step, written as plain text with \
+optional markup tags to express connections and tool usage:
+- <parent src="STEP_ID" /> — wire an incoming connection from an existing step. \
+STEP_ID must be the ID of a step obtained from graph_get_overview.
+- <tool name="TOOL_NAME" /> — attach a tool to the step. Available tools:
+${TOOL_NAMES}
+- <file src="PATH" /> — reference a file asset.
+- <a href="URL">TITLE</a> — add a route (navigation link).
+
+Any text outside of these tags is the prompt content.`;
 
 // =============================================================================
 // Instruction
 // =============================================================================
 
 function buildInstruction(): string {
-  const componentLines = A2_COMPONENTS.map(
-    (c: (typeof A2_COMPONENTS)[number]) =>
-      `- "${c.title.toLowerCase().replace(/\s+/g, "_")}" — ${c.description}`
-  );
-
-  const toolLines = A2_TOOLS.map(
-    ([, tool]: (typeof A2_TOOLS)[number]) => `- ${tool.title}`
-  );
-
   return `## Graph Editing
 
-You can inspect and modify the current graph (a flow of connected steps).
+You can inspect, create, edit, and remove steps in the current graph.
 
-### Available Step Types
-${componentLines.join("\n")}
+### Writing Prompts
+Use plain text for the prompt content. To express connections and tool usage, \
+use these markup tags:
 
-### Available Tools (attachable to Generate steps)
-${toolLines.join("\n")}
+- \`<parent src="STEP_ID" />\` — wire an incoming connection from an existing step.
+- \`<tool name="TOOL_NAME" />\` — attach a tool capability to the step.
+- \`<file src="PATH" />\` — reference a file asset.
+- \`<a href="URL">TITLE</a>\` — add a route (navigation link).
+
+### Available Tools
+${TOOL_NAMES}
 
 ### Editing Tips
-- Use graph_get_overview to understand the current graph before making changes.
-- When adding a step, provide a descriptive title.
-- Steps are connected via edges: an edge runs from an output port of one step to an input port of another.
-- Port names default to "*" (wildcard) which auto-wires the primary ports.
+- Use graph_get_overview first to understand the current graph.
+- When creating a step, reference existing steps with <parent> to wire connections.
+- Steps are always created as Generate steps with Agent mode.
 `;
 }
 
@@ -78,7 +85,7 @@ ${toolLines.join("\n")}
 // Function definitions
 // =============================================================================
 
-function defineGraphEditingFunctions() {
+function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
   function requireEditor() {
     const { controller } = bind;
     const editor = controller.editor.graph.editor;
@@ -86,6 +93,18 @@ function defineGraphEditingFunctions() {
       throw new Error("No active graph to edit");
     }
     return editor;
+  }
+
+  /**
+   * Creates a resolver that looks up node titles from the current graph.
+   */
+  function nodeTitleResolver(): (nodeId: string) => string | undefined {
+    const editor = requireEditor();
+    const inspector = editor.inspect("");
+    return (nodeId: string) => {
+      const node = inspector.nodeById(nodeId);
+      return node?.metadata()?.title;
+    };
   }
 
   return [
@@ -139,138 +158,6 @@ function defineGraphEditingFunctions() {
     ),
 
     // =========================================================================
-    // graph_describe_step_type
-    // =========================================================================
-    defineFunction(
-      {
-        name: GRAPH_DESCRIBE_STEP_TYPE,
-        title: "Describing step type",
-        icon: "info",
-        description:
-          "Get the detailed input/output schema for a step type. Use this when you need to know what configuration a step accepts.",
-        parameters: {
-          step_type: z
-            .string()
-            .describe(
-              `The step type to describe. One of: ${Object.keys(STEP_TYPE_MAP).join(", ")}`
-            ),
-        },
-        response: {
-          description: z.string().describe("JSON description of the step type"),
-        },
-      },
-      async ({ step_type }) => {
-        const url = STEP_TYPE_MAP[step_type];
-        if (!url) {
-          return {
-            $error: `Unknown step type "${step_type}". Available types: ${Object.keys(STEP_TYPE_MAP).join(", ")}`,
-          };
-        }
-
-        const component = A2_COMPONENTS.find(
-          (c: (typeof A2_COMPONENTS)[number]) => c.url === url
-        );
-        if (!component) {
-          return { $error: `Component not found for type "${step_type}"` };
-        }
-
-        // Call the component's describe function to get dynamic schema
-        let schema: unknown;
-        try {
-          schema = await component.describe({ inputs: {} });
-        } catch {
-          // If describe fails, we still return basic info
-        }
-
-        return {
-          description: JSON.stringify(
-            {
-              step_type,
-              title: component.title,
-              description: component.description,
-              schema,
-            },
-            null,
-            2
-          ),
-        };
-      }
-    ),
-
-    // =========================================================================
-    // graph_add_step
-    // =========================================================================
-    defineFunction(
-      {
-        name: GRAPH_ADD_STEP,
-        title: "Adding step",
-        icon: "add_circle",
-        description:
-          "Add a new step to the graph. Returns the ID of the created step.",
-        parameters: {
-          step_type: z
-            .string()
-            .describe(
-              `The type of step to add. One of: ${Object.keys(STEP_TYPE_MAP).join(", ")}`
-            ),
-          title: z.string().describe("A descriptive title for the step"),
-          configuration: z
-            .string()
-            .optional()
-            .describe(
-              "Optional JSON configuration for the step (e.g., prompt text)"
-            ),
-          connect_after: z
-            .string()
-            .optional()
-            .describe(
-              "Optional: ID of an existing step to connect this new step after"
-            ),
-        },
-        response: {
-          step_id: z.string().describe("The ID of the newly created step"),
-        },
-      },
-      async ({ step_type, title, configuration, connect_after }) => {
-        const url = STEP_TYPE_MAP[step_type];
-        if (!url) {
-          return {
-            $error: `Unknown step type "${step_type}". Available types: ${Object.keys(STEP_TYPE_MAP).join(", ")}`,
-          };
-        }
-
-        const stepId = globalThis.crypto.randomUUID();
-        const config: NodeConfiguration | undefined = configuration
-          ? (JSON.parse(configuration) as NodeConfiguration)
-          : undefined;
-        const node: NodeDescriptor = {
-          id: stepId,
-          type: url,
-          metadata: { title },
-          ...(config ? { configuration: config } : {}),
-        };
-
-        await addNode(node, "");
-
-        // Optionally wire the new step after an existing one
-        if (connect_after) {
-          try {
-            await changeEdge("add", {
-              from: connect_after,
-              to: stepId,
-              out: "*",
-              in: "*",
-            });
-          } catch {
-            // If auto-wiring fails, the step is still created
-          }
-        }
-
-        return { step_id: stepId };
-      }
-    ),
-
-    // =========================================================================
     // graph_remove_step
     // =========================================================================
     defineFunction(
@@ -290,7 +177,6 @@ function defineGraphEditingFunctions() {
       async ({ step_id }) => {
         const editor = requireEditor();
 
-        // Use editor.edit directly (no SCA Action for removenode yet)
         const result = await editor.edit(
           [{ type: "removenode", id: step_id, graphId: "" }],
           `Remove step: ${step_id}`
@@ -305,115 +191,106 @@ function defineGraphEditingFunctions() {
     ),
 
     // =========================================================================
-    // graph_update_step
+    // create_step
     // =========================================================================
     defineFunction(
       {
-        name: GRAPH_UPDATE_STEP,
-        title: "Updating step",
-        icon: "edit",
+        name: GRAPH_CREATE_STEP,
+        title: "Creating step",
+        icon: "add_circle",
         description:
-          "Update a step's configuration, title, and/or description.",
+          "Create a new Generate step with a prompt. Use <parent> tags in the prompt to wire connections from existing steps.",
         parameters: {
-          step_id: z.string().describe("The ID of the step to update"),
-          configuration: z
-            .string()
-            .optional()
-            .describe("New configuration as JSON to merge"),
-          title: z.string().optional().describe("New title for the step"),
-          description: z
-            .string()
-            .optional()
-            .describe("New description for the step"),
+          title: z.string().describe("A descriptive title for the step"),
+          prompt: z.string().describe(PROMPT_DESCRIPTION),
         },
         response: {
-          success: z.boolean(),
+          step_id: z.string().describe("The ID of the newly created step"),
         },
       },
-      async ({ step_id, configuration, title, description }) => {
-        const editor = requireEditor();
+      async ({ title, prompt }) => {
+        const promptContent = translator.fromPidgin(
+          prompt,
+          nodeTitleResolver()
+        );
 
-        // If title or description changed, update metadata first
-        if (title !== undefined || description !== undefined) {
-          const inspector = editor.inspect("");
-          const node = inspector.nodeById(step_id);
-          if (!node) {
-            return { $error: `Step "${step_id}" not found` };
-          }
-          const existingMetadata = node.metadata() ?? {};
-          const metadata = {
-            ...existingMetadata,
-            ...(title !== undefined ? { title } : {}),
-            ...(description !== undefined ? { description } : {}),
-          };
-          const result = await editor.edit(
-            [{ type: "changemetadata", id: step_id, graphId: "", metadata }],
-            `Update step metadata: ${step_id}`
+        const stepId = globalThis.crypto.randomUUID();
+        const node: NodeDescriptor = {
+          id: stepId,
+          type: GENERATE_COMPONENT_URL,
+          metadata: { title },
+          configuration: {
+            "generation-mode": "agent",
+            config$prompt: promptContent as unknown as NodeValue,
+          },
+        };
+
+        await addNode(node, "");
+
+        // Auto-wire edges from <parent> references
+        const ports = extractParentPorts(prompt, translator);
+        if (ports.length > 0) {
+          await changeNodeConfiguration(
+            stepId,
+            "",
+            { config$prompt: promptContent as unknown as NodeValue },
+            null,
+            ports
           );
-          if (!result.success) {
-            return {
-              $error: `Failed to update metadata for step "${step_id}"`,
-            };
-          }
         }
 
-        // If configuration changed, use the SCA Action
-        if (configuration) {
-          const configPart = JSON.parse(configuration) as NodeConfiguration;
-          await changeNodeConfiguration(step_id, "", configPart);
-        }
+        // Re-layout all nodes based on updated topology
+        const graph = requireEditor().raw();
+        await layoutGraph(graph.nodes ?? [], graph.edges ?? []);
 
-        return { success: true };
+        return { step_id: stepId };
       }
     ),
 
     // =========================================================================
-    // graph_connect_steps
+    // edit_step_prompt
     // =========================================================================
     defineFunction(
       {
-        name: GRAPH_CONNECT_STEPS,
-        title: "Connecting steps",
-        icon: "link",
-        description: "Add or remove a connection (edge) between two steps.",
+        name: GRAPH_EDIT_STEP_PROMPT,
+        title: "Editing step prompt",
+        icon: "edit",
+        description:
+          "Update an existing step's prompt. Use <parent> tags to change connections.",
         parameters: {
-          action: z
-            .enum(["add", "remove"])
-            .describe('Whether to "add" or "remove" the connection'),
-          from_step_id: z.string().describe("The source step ID"),
-          to_step_id: z.string().describe("The destination step ID"),
-          from_port: z
-            .string()
-            .optional()
-            .describe(
-              'Source output port name (defaults to "*" for auto-wiring)'
-            ),
-          to_port: z
-            .string()
-            .optional()
-            .describe(
-              'Destination input port name (defaults to "*" for auto-wiring)'
-            ),
+          step_id: z.string().describe("The ID of the step to edit"),
+          prompt: z.string().describe(PROMPT_DESCRIPTION),
         },
         response: {
           success: z.boolean(),
         },
       },
-      async ({ action, from_step_id, to_step_id, from_port, to_port }) => {
-        const edge: Edge = {
-          from: from_step_id,
-          to: to_step_id,
-          out: from_port ?? "*",
-          in: to_port ?? "*",
-        };
-
-        try {
-          await changeEdge(action, edge);
-        } catch (e) {
-          return {
-            $error: `Failed to ${action} connection: ${(e as Error).message}`,
-          };
+      async ({ step_id, prompt }) => {
+        const editor = requireEditor();
+        const inspector = editor.inspect("");
+        const node = inspector.nodeById(step_id);
+        if (!node) {
+          return { $error: `Step "${step_id}" not found` };
         }
+
+        const promptContent = translator.fromPidgin(
+          prompt,
+          nodeTitleResolver()
+        );
+        const ports = extractParentPorts(prompt, translator);
+
+        // Update configuration and auto-wire edges in one transform
+        await changeNodeConfiguration(
+          step_id,
+          "",
+          { config$prompt: promptContent as unknown as NodeValue },
+          null,
+          ports
+        );
+
+        // Re-layout all nodes based on updated topology
+        const graph = requireEditor().raw();
+        await layoutGraph(graph.nodes ?? [], graph.edges ?? []);
 
         return { success: true };
       }
@@ -422,12 +299,43 @@ function defineGraphEditingFunctions() {
 }
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+const PARENT_SRC_REGEX = /<parent\s+src\s*=\s*"([^"]*)"\s*\/>/g;
+
+/**
+ * Extract parent ports from pidgin text. Each <parent src="STEP_ID" /> tag
+ * becomes an InPort for auto-wiring.
+ */
+function extractParentPorts(
+  pidginText: string,
+  translator: EditingAgentPidginTranslator
+): InPort[] {
+  const ports: InPort[] = [];
+  const seen = new Set<string>();
+
+  for (const match of pidginText.matchAll(PARENT_SRC_REGEX)) {
+    const handle = match[1];
+    // The handle could be a raw step ID (from the LLM) or a translator handle
+    const nodeId = translator.getNodeId(handle) ?? handle;
+    if (seen.has(nodeId)) continue;
+    seen.add(nodeId);
+    ports.push({ path: nodeId, title: handle });
+  }
+
+  return ports;
+}
+
+// =============================================================================
 // Function group factory
 // =============================================================================
 
-function getGraphEditingFunctionGroup(): FunctionGroup {
+function getGraphEditingFunctionGroup(
+  translator: EditingAgentPidginTranslator
+): FunctionGroup {
   return {
-    ...mapDefinitions(defineGraphEditingFunctions()),
+    ...mapDefinitions(defineGraphEditingFunctions(translator)),
     instruction: buildInstruction(),
   };
 }

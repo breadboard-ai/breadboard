@@ -8,21 +8,22 @@ import z from "zod";
 import { getGraphEditingFunctionGroup } from "./functions.js";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
 import type { FunctionGroup } from "../types.js";
+import { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 
 export { buildGraphEditingFunctionGroups };
 
 /**
  * Builds the function groups for the graph editing agent.
  *
- * Unlike the content generation agent (which uses `FunctionGroupConfigurator`
- * for its complex deps), this is a plain function that returns groups directly.
- * The graph editing agent has no file system, pidgin, or run state.
+ * Creates a shared `EditingAgentPidginTranslator` that accumulates
+ * handle maps across function calls within a session.
  */
 function buildGraphEditingFunctionGroups(args: {
   waitForInput: (agentMessage: string) => Promise<string>;
 }): FunctionGroup[] {
+  const translator = new EditingAgentPidginTranslator();
   return [
-    getGraphEditingFunctionGroup(),
+    getGraphEditingFunctionGroup(translator),
     getChatFunctionGroup(args.waitForInput),
   ];
 }

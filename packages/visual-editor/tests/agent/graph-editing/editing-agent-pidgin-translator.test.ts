@@ -9,7 +9,10 @@ import { EditingAgentPidginTranslator } from "../../../src/a2/agent/graph-editin
 import { stubCaps } from "../../useful-stubs.js";
 import { deepStrictEqual, strictEqual } from "node:assert";
 import { Template } from "../../../src/a2/a2/template.js";
-import { ROUTE_TOOL_PATH } from "../../../src/a2/a2/tool-manager.js";
+import {
+  ROUTE_TOOL_PATH,
+  MEMORY_TOOL_PATH,
+} from "../../../src/a2/a2/tool-manager.js";
 import { llm } from "../../../src/a2/a2/utils.js";
 
 function makeTranslator(): EditingAgentPidginTranslator {
@@ -155,51 +158,149 @@ describe("EditingAgentPidginTranslator", () => {
   });
 
   describe("fromPidgin", () => {
-    it("parses parent tags in mixed content", () => {
-      const result = makeTranslator().fromPidgin(
-        `Hello <parent src="node-1" /> world`
-      );
+    it("reconstructs parent placeholders via roundtrip", () => {
+      const translator = makeTranslator();
+      // First toPidgin to populate handle maps
+      const original = llm`Hello ${Template.part({
+        type: "in",
+        path: "abc-123",
+        title: "Input A",
+      })} world`.asContent();
+      const pidgin = translator.toPidgin(original);
+
+      // Now fromPidgin should reconstruct template placeholders
+      const result = translator.fromPidgin(pidgin.text);
+      const expectedText = `Hello ${Template.part({
+        type: "in",
+        path: "abc-123",
+        title: "node-1",
+      })} world`;
       deepStrictEqual(result, {
-        parts: [{ text: `Hello <parent src="node-1" /> world` }],
+        parts: [{ text: expectedText }],
         role: "user",
       });
     });
 
-    it("parses file tags", () => {
-      const result = makeTranslator().fromPidgin(
+    it("reconstructs file asset placeholders", () => {
+      const translator = makeTranslator();
+      const result = translator.fromPidgin(
         `See <file src="assets/image.png" />`
       );
+      const expectedText = `See ${Template.part({
+        type: "asset",
+        path: "assets/image.png",
+        title: "assets/image.png",
+      })}`;
       deepStrictEqual(result, {
-        parts: [{ text: `See <file src="assets/image.png" />` }],
+        parts: [{ text: expectedText }],
         role: "user",
       });
     });
 
-    it("parses tool tags", () => {
-      const result = makeTranslator().fromPidgin(
-        `Use <tool name="get-weather" />`
-      );
+    it("reconstructs known tool placeholders via roundtrip", () => {
+      const translator = makeTranslator();
+      // First toPidgin to populate tool maps
+      const original = llm`Use ${Template.part({
+        type: "tool",
+        path: "embed://a2/tools.bgl.json#module:get-weather",
+        title: "Get Weather",
+      })}`.asContent();
+      translator.toPidgin(original);
+
+      const result = translator.fromPidgin(`Use <tool name="get-weather" />`);
+      const expectedText = `Use ${Template.part({
+        type: "tool",
+        path: "embed://a2/tools.bgl.json#module:get-weather",
+        title: "Get Weather",
+      })}`;
       deepStrictEqual(result, {
-        parts: [{ text: `Use <tool name="get-weather" />` }],
+        parts: [{ text: expectedText }],
         role: "user",
       });
     });
 
-    it("parses anchor tags", () => {
-      const result = makeTranslator().fromPidgin(
+    it("reconstructs memory tool placeholders", () => {
+      const translator = makeTranslator();
+      const result = translator.fromPidgin(`Use <tool name="memory" />`);
+      const expectedText = `Use ${Template.part({
+        type: "tool",
+        path: MEMORY_TOOL_PATH,
+        title: "Memory",
+      })}`;
+      deepStrictEqual(result, {
+        parts: [{ text: expectedText }],
+        role: "user",
+      });
+    });
+
+    it("reconstructs route placeholders via roundtrip", () => {
+      const translator = makeTranslator();
+      // First toPidgin to populate route maps
+      const original = llm`Go to ${Template.route(
+        "Route A",
+        "cool-route"
+      )}`.asContent();
+      translator.toPidgin(original);
+
+      const result = translator.fromPidgin(
         `Go to <a href="/route-1">Route A</a>`
       );
+      const expectedText = `Go to ${Template.part({
+        type: "tool",
+        path: ROUTE_TOOL_PATH,
+        title: "Route A",
+        instance: "cool-route",
+      })}`;
       deepStrictEqual(result, {
-        parts: [{ text: `Go to <a href="/route-1">Route A</a>` }],
+        parts: [{ text: expectedText }],
         role: "user",
       });
     });
 
-    it("handles complex mixed content", () => {
-      const input = `Start <parent src="node-1" /> middle <tool name="get-weather" /> end`;
-      const result = makeTranslator().fromPidgin(input);
+    it("creates chip for unknown parent handles using handle as path", () => {
+      const translator = makeTranslator();
+      const result = translator.fromPidgin(
+        `Hello <parent src="node-999" /> world`
+      );
+      const expectedChip = Template.part({
+        type: "in",
+        path: "node-999",
+        title: "node-999",
+      });
       deepStrictEqual(result, {
-        parts: [{ text: input }],
+        parts: [{ text: `Hello ${expectedChip} world` }],
+        role: "user",
+      });
+    });
+
+    it("handles complex mixed content roundtrip", () => {
+      const translator = makeTranslator();
+      // Populate maps
+      const original = llm`${Template.part({
+        type: "in",
+        path: "abc-123",
+        title: "Input A",
+      })} then ${Template.part({
+        type: "tool",
+        path: "embed://a2/tools.bgl.json#module:get-weather",
+        title: "Get Weather",
+      })}`.asContent();
+      translator.toPidgin(original);
+
+      const result = translator.fromPidgin(
+        `<parent src="node-1" /> then <tool name="get-weather" />`
+      );
+      const expectedText = `${Template.part({
+        type: "in",
+        path: "abc-123",
+        title: "node-1",
+      })} then ${Template.part({
+        type: "tool",
+        path: "embed://a2/tools.bgl.json#module:get-weather",
+        title: "Get Weather",
+      })}`;
+      deepStrictEqual(result, {
+        parts: [{ text: expectedText }],
         role: "user",
       });
     });
