@@ -307,7 +307,7 @@ ${inner}
               return `<a href="${routeName}">${param.title}</a>`;
             } else if (param.path === MEMORY_TOOL_PATH) {
               useMemory = true;
-              return "Use Memory Data Store";
+              return "Use Memory";
             } else if (param.path === NOTEBOOKLM_TOOL_PATH) {
               useNotebookLM = true;
               return "Use NotebookLM";
