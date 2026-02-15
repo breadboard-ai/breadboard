@@ -501,6 +501,13 @@ export class CanvasController extends SignalWatcher(LitElement) {
       return nothing;
     }
 
+    // The empty state callouts reference the flowgen-editor-input which is not
+    // rendered when the graph editing agent is active. Skip it to avoid both
+    // misleading arrows and z-index overlap with the chat panel.
+    if (this.sca.controller.global.flags.enableGraphEditorAgent) {
+      return nothing;
+    }
+
     return html`<bb-empty-state></bb-empty-state>`;
   }
 
