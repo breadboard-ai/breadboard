@@ -71,8 +71,7 @@ export class RemoveEdge implements EditOperation {
     edge = fixUpStarEdge(edge);
     const edges = graph.edges;
     const index = findEdgeIndex(graph, edge);
-    const foundEdge = edges.splice(index, 1)[0];
-    mutable.edges.remove(foundEdge, graphId);
+    edges.splice(index, 1);
     return {
       success: true,
       affectedNodes: [

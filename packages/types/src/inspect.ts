@@ -132,13 +132,6 @@ export type InspectableNode = {
   ): InspectableNodePorts;
 
   /**
-   * Returns `true` if the node has been deleted from the graph and this
-   * instance of `InspectableNode` no longer represents a valid node in
-   * a graph. Returns `false` otherwise.
-   */
-  deleted(): boolean;
-
-  /**
    * Returns all routes used in this step
    */
   routes(): NodeIdentifier[];
@@ -218,13 +211,6 @@ export type InspectableEdge = {
    * Get the inspectable input port.
    */
   inPort(): Promise<InspectablePort>;
-
-  /**
-   * Returns `true` if the edge has been deleted from the graph and this
-   * instance of `InspectableEdge` no longer represents a valid edge in
-   * a graph. Returns `false` otherwise.
-   */
-  deleted(): boolean;
 };
 
 export type ValidateResult =
@@ -595,36 +581,13 @@ export type InspectableNodeType = {
   ports(): Promise<InspectableNodePorts>;
 };
 
-export type NodeStoreMutator = {
-  add(node: NodeDescriptor, graphId: GraphIdentifier): void;
-  remove(id: NodeIdentifier, graphId: GraphIdentifier): void;
-  addSubgraphNodes(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraphNodes(graphId: GraphIdentifier): void;
-};
-
-export type EdgeStoreMutator = {
-  add(edge: Edge, graphId: GraphIdentifier): void;
-  remove(edge: Edge, graphId: GraphIdentifier): void;
-  addSubgraphEdges(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraphEdges(graphId: GraphIdentifier): void;
-};
-
-export type InspectableEdgeCache = EdgeStoreMutator & {
-  get(edge: Edge, graphId: GraphIdentifier): InspectableEdge | undefined;
-  getOrCreate(edge: Edge, graphId: GraphIdentifier): InspectableEdge;
-  hasByValue(edge: Edge, graphId: GraphIdentifier): boolean;
-  edges(graphId: GraphIdentifier): InspectableEdge[];
-  rebuild(graph: GraphDescriptor): void;
-};
-
-export type InspectableNodeCache = NodeStoreMutator & {
+export type InspectableNodeCache = {
   byType(type: NodeTypeIdentifier, graphId: GraphIdentifier): InspectableNode[];
   get(
     id: NodeIdentifier,
     graphId: GraphIdentifier
   ): InspectableNode | undefined;
   nodes(graphId: GraphIdentifier): InspectableNode[];
-  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableDescriberResultCacheEntry = {
@@ -654,12 +617,8 @@ export type InspectableDescriberResultCache = {
 };
 
 export type InspectableGraphCache = {
-  add(id: GraphIdentifier): void;
   get(id: GraphIdentifier): InspectableGraph | undefined;
   graphs(): InspectableSubgraphs;
-  remove(id: GraphIdentifier): void;
-  rebuild(graph: GraphDescriptor): void;
-  clear(): void;
 };
 
 export type MainGraphIdentifier = UUID;
@@ -689,58 +648,24 @@ export type MutableGraphStore = {
 
 export type PortIdentifier = string;
 
-export type PortChanges = {
-  fixedChanged: boolean;
-  deleted: PortIdentifier[];
-  added: InspectablePort[];
-  updated: InspectablePort[];
-};
-
-export type NodePortChanges = {
-  input: PortChanges;
-  output: PortChanges;
-  side: PortChanges;
-};
-
-export type InspectablePortCache = {
-  getChanges(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    port: InspectableNodePorts
-  ): NodePortChanges;
-  current(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): InspectableNodePorts | undefined;
-};
-
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
  */
 export type MutableGraph = {
   graph: GraphDescriptor;
-  legacyKitMetadata: KitDescriptor | null;
   readonly id: MainGraphIdentifier;
   readonly deps: GraphStoreArgs;
   readonly graphs: InspectableGraphCache;
   readonly store: MutableGraphStore;
   readonly nodes: InspectableNodeCache;
-  readonly edges: InspectableEdgeCache;
   readonly describe: InspectableDescriberResultCache;
-
-  readonly ports: InspectablePortCache;
-  readonly entries: NodeIdentifier[];
 
   update(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: AffectedNode[],
-    topologyChange: boolean
+    affectedNodes: AffectedNode[]
   ): void;
-
-  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraph(graphId: GraphIdentifier): void;
 
   rebuild(graph: GraphDescriptor): void;
 };

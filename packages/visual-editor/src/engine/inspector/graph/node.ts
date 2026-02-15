@@ -26,7 +26,6 @@ export class Node implements InspectableNode {
   descriptor: NodeDescriptor;
   #graph: MutableGraph;
   #graphId: GraphIdentifier;
-  #deleted = false;
 
   constructor(
     descriptor: NodeDescriptor,
@@ -137,14 +136,6 @@ export class Node implements InspectableNode {
       inputValues,
       outputValues
     );
-  }
-
-  setDeleted() {
-    this.#deleted = true;
-  }
-
-  deleted() {
-    return this.#deleted;
   }
 
   routes(): NodeIdentifier[] {

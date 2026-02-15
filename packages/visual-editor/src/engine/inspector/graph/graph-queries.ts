@@ -21,6 +21,7 @@ import type {
 } from "@breadboard-ai/types";
 import { err, graphUrlLike, TemplatePart } from "@breadboard-ai/utils";
 import { A2NodeType } from "./a2-node-type.js";
+import { Edge } from "./edge.js";
 import { InspectableAssetImpl } from "./inspectable-asset.js";
 import { scanConfiguration } from "../../../utils/scan-configuration.js";
 import { ROUTE_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
@@ -55,13 +56,13 @@ class GraphQueries {
   incoming(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph()
       .edges.filter((edge) => edge.to === id)
-      .map((edge) => this.#mutable.edges.getOrCreate(edge, this.#graphId));
+      .map((edge) => new Edge(this.#mutable, edge, this.#graphId));
   }
 
   outgoing(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph()
       .edges.filter((edge) => edge.from === id)
-      .map((edge) => this.#mutable.edges.getOrCreate(edge, this.#graphId));
+      .map((edge) => new Edge(this.#mutable, edge, this.#graphId));
   }
 
   entries(): InspectableNode[] {
@@ -72,7 +73,7 @@ class GraphQueries {
 
   isStart(id: NodeIdentifier): boolean {
     if (this.#graphId) return false;
-    return id === this.#mutable.entries.at(0);
+    return id === findEntries(this.#mutable.graph).at(0);
   }
 
   nodeById(id: NodeIdentifier) {
@@ -177,4 +178,42 @@ function routesFromConfiguration(configuration: NodeConfiguration) {
   return toolsFromConfiguration(configuration)
     .filter((part) => part.path === ROUTE_TOOL_PATH && part.instance)
     .map((part) => part.instance!);
+}
+
+function findEntries(graph: GraphDescriptor): NodeIdentifier[] {
+  const incomingEdges = new Set<NodeIdentifier>();
+  const outgoingEdges = new Set<NodeIdentifier>();
+
+  for (const edge of graph.edges) {
+    incomingEdges.add(edge.to);
+    outgoingEdges.add(edge.from);
+  }
+
+  const entries = graph.nodes.filter((node) => !incomingEdges.has(node.id));
+
+  if (entries.length === 0) return [];
+
+  const standalone: NodeIdentifier[] = [];
+  const connected: NodeIdentifier[] = [];
+  let onlyStandalone = true;
+
+  for (const node of entries) {
+    if (outgoingEdges.has(node.id)) {
+      onlyStandalone = false;
+      connected.push(node.id);
+    } else {
+      standalone.push(node.id);
+    }
+  }
+
+  if (standalone.length === 0) return entries.map((n) => n.id);
+
+  const start = standalone.find(
+    (id) => graph.nodes.find((n) => n.id === id)?.metadata?.start
+  );
+  if (start) return [start];
+
+  if (onlyStandalone) return [standalone[0]];
+
+  return connected;
 }

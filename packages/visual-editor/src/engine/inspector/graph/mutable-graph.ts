@@ -10,26 +10,18 @@ import type {
   GraphIdentifier,
   GraphStoreArgs,
   InspectableDescriberResultCache,
-  InspectableEdgeCache,
   InspectableGraphCache,
   InspectableNodeCache,
-  InspectablePortCache,
-  KitDescriptor,
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
-  NodeIdentifier,
+  NodeDescriptor,
 } from "@breadboard-ai/types";
 import { DescribeResultCache } from "./describe-cache.js";
-import { EdgeCache } from "./edge-cache.js";
-import { Edge as InspectableEdge } from "./edge.js";
 
-import { GraphCache } from "./graph-cache.js";
 import { Graph } from "./graph.js";
-import { NodeCache } from "./node-cache.js";
 import { NodeDescriberManager } from "./node-describer-manager.js";
 import { Node } from "./node.js";
-import { PortCache } from "./port-cache.js";
 
 export { MutableGraphImpl };
 
@@ -42,15 +34,10 @@ class MutableGraphImpl implements MutableGraph {
     return this.#deps;
   }
 
-  legacyKitMetadata: KitDescriptor | null = null;
-
   graph!: GraphDescriptor;
   graphs!: InspectableGraphCache;
   nodes!: InspectableNodeCache;
-  edges!: InspectableEdgeCache;
   describe!: InspectableDescriberResultCache;
-  ports!: InspectablePortCache;
-  entries!: NodeIdentifier[];
 
   constructor(
     graph: GraphDescriptor,
@@ -66,89 +53,50 @@ class MutableGraphImpl implements MutableGraph {
   update(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: AffectedNode[],
-    _topologyChange: boolean
+    affectedNodes: AffectedNode[]
   ): void {
     // TODO: Handle removals, etc.
     if (!visualOnly) {
       this.describe.update(affectedNodes);
     }
-    this.entries = findEntries(graph);
     this.graph = graph;
-  }
-
-  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
-    this.graphs.add(graphId);
-    this.nodes.addSubgraphNodes(subgraph, graphId);
-    this.edges.addSubgraphEdges(subgraph, graphId);
-  }
-
-  removeSubgraph(graphId: GraphIdentifier): void {
-    this.graphs.remove(graphId);
-    this.nodes.removeSubgraphNodes(graphId);
-    this.edges.removeSubgraphEdges(graphId);
   }
 
   rebuild(graph: GraphDescriptor) {
-    this.entries = findEntries(graph);
     this.graph = graph;
-    this.nodes = new NodeCache((descriptor, graphId) => {
-      const graph = graphId ? this.graphs.get(graphId) : this;
-      if (!graph) {
-        throw new Error(
-          `Inspect API Integrity error: unable to find subgraph "${graphId}"`
-        );
-      }
-      return new Node(descriptor, this, graphId);
-    });
-    this.edges = new EdgeCache(
-      (edge, graphId) => new InspectableEdge(this, edge, graphId)
-    );
     this.describe = new DescribeResultCache(
       new NodeDescriberManager(this, this.#deps)
     );
-    this.graphs = new GraphCache((id) => new Graph(id, this));
-    this.ports = new PortCache();
-    this.graphs.rebuild(graph);
-    this.nodes.rebuild(graph);
-    this.edges.rebuild(graph);
-  }
-}
-
-function findEntries(graph: GraphDescriptor): NodeIdentifier[] {
-  const incomingEdges = new Set<NodeIdentifier>();
-  const outgoingEdges = new Set<NodeIdentifier>();
-
-  for (const edge of graph.edges) {
-    incomingEdges.add(edge.to);
-    outgoingEdges.add(edge.from);
+    this.graphs = {
+      get: (id: GraphIdentifier) => new Graph(id, this),
+      graphs: () =>
+        Object.fromEntries(
+          Object.keys(this.graph.graphs || {}).map((id) => [
+            id,
+            new Graph(id, this),
+          ])
+        ),
+    };
+    this.nodes = this.#createNodeAccessor();
   }
 
-  const entries = graph.nodes.filter((node) => !incomingEdges.has(node.id));
-
-  if (entries.length === 0) return [];
-
-  const standalone: NodeIdentifier[] = [];
-  const connected: NodeIdentifier[] = [];
-  let onlyStandalone = true;
-
-  for (const node of entries) {
-    if (outgoingEdges.has(node.id)) {
-      onlyStandalone = false;
-      connected.push(node.id);
-    } else {
-      standalone.push(node.id);
-    }
+  #graphNodes(graphId: GraphIdentifier): NodeDescriptor[] {
+    if (!graphId) return this.graph.nodes;
+    return this.graph.graphs?.[graphId]?.nodes || [];
   }
 
-  if (standalone.length === 0) return entries.map((n) => n.id);
-
-  const start = standalone.find(
-    (id) => graph.nodes.find((n) => n.id === id)?.metadata?.start
-  );
-  if (start) return [start];
-
-  if (onlyStandalone) return [standalone[0]];
-
-  return connected;
+  #createNodeAccessor(): InspectableNodeCache {
+    return {
+      get: (id, graphId) => {
+        const descriptor = this.#graphNodes(graphId).find((n) => n.id === id);
+        return descriptor ? new Node(descriptor, this, graphId) : undefined;
+      },
+      nodes: (graphId) =>
+        this.#graphNodes(graphId).map((n) => new Node(n, this, graphId)),
+      byType: (type, graphId) =>
+        this.#graphNodes(graphId)
+          .filter((n) => n.type === type)
+          .map((n) => new Node(n, this, graphId)),
+    };
+  }
 }

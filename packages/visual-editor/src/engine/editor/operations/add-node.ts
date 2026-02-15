@@ -72,7 +72,6 @@ export class AddNode implements EditOperation {
     }
 
     handle.result.graph().nodes.push(node);
-    mutable.nodes.add(node, graphId);
     return {
       success: true,
       affectedNodes: [{ id: node.id, graphId }],
