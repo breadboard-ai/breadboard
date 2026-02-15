@@ -5,7 +5,6 @@
  */
 
 import z from "zod";
-import type { GraphEditingActions } from "../../sca/actions/graph/graph-editing-actions.js";
 import { getGraphEditingFunctionGroup } from "./functions/graph-editing.js";
 import { defineFunction, mapDefinitions } from "./function-definition.js";
 import type { FunctionGroup } from "./types.js";
@@ -20,11 +19,10 @@ export { buildGraphEditingFunctionGroups };
  * The graph editing agent has no file system, pidgin, or run state.
  */
 function buildGraphEditingFunctionGroups(args: {
-  graphEditingActions: GraphEditingActions;
   waitForInput: (agentMessage: string) => Promise<string>;
 }): FunctionGroup[] {
   return [
-    getGraphEditingFunctionGroup(args),
+    getGraphEditingFunctionGroup(),
     getChatFunctionGroup(args.waitForInput),
   ];
 }

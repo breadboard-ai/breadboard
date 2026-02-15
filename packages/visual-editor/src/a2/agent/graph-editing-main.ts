@@ -8,7 +8,6 @@ import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Loop, AgentResult } from "./loop.js";
 import { buildGraphEditingFunctionGroups } from "./graph-editing-configurator.js";
-import type { GraphEditingActions } from "../../sca/actions/graph/graph-editing-actions.js";
 import type { LoopHooks } from "./types.js";
 
 export { invokeGraphEditingAgent };
@@ -23,12 +22,10 @@ export { invokeGraphEditingAgent };
 async function invokeGraphEditingAgent(
   objective: LLMContent,
   moduleArgs: A2ModuleArgs,
-  graphEditingActions: GraphEditingActions,
   waitForInput: (agentMessage: string) => Promise<string>,
   hooks?: LoopHooks
 ): Promise<Outcome<AgentResult>> {
   const functionGroups = buildGraphEditingFunctionGroups({
-    graphEditingActions,
     waitForInput,
   });
   const loop = new Loop(moduleArgs);

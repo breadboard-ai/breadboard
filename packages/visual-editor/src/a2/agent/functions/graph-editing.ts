@@ -6,7 +6,6 @@
 
 import type {
   Edge,
-  EditableGraph,
   NodeConfiguration,
   NodeDescriptor,
 } from "@breadboard-ai/types";
@@ -14,14 +13,14 @@ import z from "zod";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
 import type { FunctionGroup } from "../types.js";
 import { A2_COMPONENTS, A2_TOOLS } from "../../a2-registry.js";
-import type { GraphEditingActions } from "../../../sca/actions/graph/graph-editing-actions.js";
+import {
+  bind,
+  addNode,
+  changeEdge,
+  changeNodeConfiguration,
+} from "../../../sca/actions/graph/graph-actions.js";
 
 export { getGraphEditingFunctionGroup };
-export type { GraphEditingFunctionArgs };
-
-type GraphEditingFunctionArgs = {
-  graphEditingActions: GraphEditingActions;
-};
 
 // =============================================================================
 // Constants
@@ -79,11 +78,10 @@ ${toolLines.join("\n")}
 // Function definitions
 // =============================================================================
 
-function defineGraphEditingFunctions(args: GraphEditingFunctionArgs) {
-  const { graphEditingActions } = args;
-
-  function requireEditor(): EditableGraph {
-    const editor = graphEditingActions.getEditor();
+function defineGraphEditingFunctions() {
+  function requireEditor() {
+    const { controller } = bind;
+    const editor = controller.editor.graph.editor;
     if (!editor) {
       throw new Error("No active graph to edit");
     }
@@ -252,12 +250,12 @@ function defineGraphEditingFunctions(args: GraphEditingFunctionArgs) {
           ...(config ? { configuration: config } : {}),
         };
 
-        await graphEditingActions.addNode(node, "");
+        await addNode(node, "");
 
         // Optionally wire the new step after an existing one
         if (connect_after) {
           try {
-            await graphEditingActions.changeEdge("add", {
+            await changeEdge("add", {
               from: connect_after,
               to: stepId,
               out: "*",
@@ -362,11 +360,7 @@ function defineGraphEditingFunctions(args: GraphEditingFunctionArgs) {
         // If configuration changed, use the SCA Action
         if (configuration) {
           const configPart = JSON.parse(configuration) as NodeConfiguration;
-          await graphEditingActions.changeNodeConfiguration(
-            step_id,
-            "",
-            configPart
-          );
+          await changeNodeConfiguration(step_id, "", configPart);
         }
 
         return { success: true };
@@ -414,7 +408,7 @@ function defineGraphEditingFunctions(args: GraphEditingFunctionArgs) {
         };
 
         try {
-          await graphEditingActions.changeEdge(action, edge);
+          await changeEdge(action, edge);
         } catch (e) {
           return {
             $error: `Failed to ${action} connection: ${(e as Error).message}`,
@@ -431,11 +425,9 @@ function defineGraphEditingFunctions(args: GraphEditingFunctionArgs) {
 // Function group factory
 // =============================================================================
 
-function getGraphEditingFunctionGroup(
-  args: GraphEditingFunctionArgs
-): FunctionGroup {
+function getGraphEditingFunctionGroup(): FunctionGroup {
   return {
-    ...mapDefinitions(defineGraphEditingFunctions(args)),
+    ...mapDefinitions(defineGraphEditingFunctions()),
     instruction: buildInstruction(),
   };
 }

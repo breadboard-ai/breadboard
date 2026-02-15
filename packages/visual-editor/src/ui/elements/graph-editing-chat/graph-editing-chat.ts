@@ -543,7 +543,6 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     invokeGraphEditingAgent(
       objective,
       moduleArgs,
-      this.sca.services.graphEditingActions,
       this.#waitForInput,
       this.#buildHooks()
     )
