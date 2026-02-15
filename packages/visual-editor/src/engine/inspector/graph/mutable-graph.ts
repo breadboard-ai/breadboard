@@ -15,11 +15,11 @@ import type {
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
+  NodeDescriptor,
 } from "@breadboard-ai/types";
 import { DescribeResultCache } from "./describe-cache.js";
 
 import { Graph } from "./graph.js";
-import { NodeCache } from "./node-cache.js";
 import { NodeDescriberManager } from "./node-describer-manager.js";
 import { Node } from "./node.js";
 
@@ -62,25 +62,8 @@ class MutableGraphImpl implements MutableGraph {
     this.graph = graph;
   }
 
-  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
-    this.nodes.addSubgraphNodes(subgraph, graphId);
-  }
-
-  removeSubgraph(graphId: GraphIdentifier): void {
-    this.nodes.removeSubgraphNodes(graphId);
-  }
-
   rebuild(graph: GraphDescriptor) {
     this.graph = graph;
-    this.nodes = new NodeCache((descriptor, graphId) => {
-      const graph = graphId ? this.graphs.get(graphId) : this;
-      if (!graph) {
-        throw new Error(
-          `Inspect API Integrity error: unable to find subgraph "${graphId}"`
-        );
-      }
-      return new Node(descriptor, this, graphId);
-    });
     this.describe = new DescribeResultCache(
       new NodeDescriberManager(this, this.#deps)
     );
@@ -94,6 +77,26 @@ class MutableGraphImpl implements MutableGraph {
           ])
         ),
     };
-    this.nodes.rebuild(graph);
+    this.nodes = this.#createNodeAccessor();
+  }
+
+  #graphNodes(graphId: GraphIdentifier): NodeDescriptor[] {
+    if (!graphId) return this.graph.nodes;
+    return this.graph.graphs?.[graphId]?.nodes || [];
+  }
+
+  #createNodeAccessor(): InspectableNodeCache {
+    return {
+      get: (id, graphId) => {
+        const descriptor = this.#graphNodes(graphId).find((n) => n.id === id);
+        return descriptor ? new Node(descriptor, this, graphId) : undefined;
+      },
+      nodes: (graphId) =>
+        this.#graphNodes(graphId).map((n) => new Node(n, this, graphId)),
+      byType: (type, graphId) =>
+        this.#graphNodes(graphId)
+          .filter((n) => n.type === type)
+          .map((n) => new Node(n, this, graphId)),
+    };
   }
 }

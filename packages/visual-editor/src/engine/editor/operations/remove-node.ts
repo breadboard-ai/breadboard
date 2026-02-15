@@ -69,7 +69,6 @@ export class RemoveNode implements EditOperation {
     });
     // Remove the node from the graph.
     graph.nodes = graph.nodes.filter((node) => node.id != id);
-    mutable.nodes.remove(id, graphId);
     return {
       success: true,
       affectedNodes: [{ id, graphId }],

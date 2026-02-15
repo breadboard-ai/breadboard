@@ -581,21 +581,13 @@ export type InspectableNodeType = {
   ports(): Promise<InspectableNodePorts>;
 };
 
-export type NodeStoreMutator = {
-  add(node: NodeDescriptor, graphId: GraphIdentifier): void;
-  remove(id: NodeIdentifier, graphId: GraphIdentifier): void;
-  addSubgraphNodes(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraphNodes(graphId: GraphIdentifier): void;
-};
-
-export type InspectableNodeCache = NodeStoreMutator & {
+export type InspectableNodeCache = {
   byType(type: NodeTypeIdentifier, graphId: GraphIdentifier): InspectableNode[];
   get(
     id: NodeIdentifier,
     graphId: GraphIdentifier
   ): InspectableNode | undefined;
   nodes(graphId: GraphIdentifier): InspectableNode[];
-  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableDescriberResultCacheEntry = {
@@ -674,9 +666,6 @@ export type MutableGraph = {
     visualOnly: boolean,
     affectedNodes: AffectedNode[]
   ): void;
-
-  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraph(graphId: GraphIdentifier): void;
 
   rebuild(graph: GraphDescriptor): void;
 };
