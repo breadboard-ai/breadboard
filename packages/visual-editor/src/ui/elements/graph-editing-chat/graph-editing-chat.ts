@@ -25,9 +25,9 @@ type ChatMessage = {
 /**
  * A chat overlay for the graph editing agent.
  *
- * The agent loop is persistent — it starts on the first message and runs
- * for the session lifetime. Between interactions the agent parks on
- * `wait_for_user_input`, which resolves when the user sends a message.
+ * The agent loop is persistent — it starts when the user opens the panel
+ * and runs for the session lifetime. Between interactions the agent parks
+ * on `wait_for_user_input`, which resolves when the user sends a message.
  */
 @customElement("bb-graph-editing-chat")
 class GraphEditingChat extends SignalWatcher(LitElement) {
@@ -46,20 +46,8 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   @query("#chat-input")
   accessor #inputEl: HTMLInputElement | null = null;
 
-  /**
-   * AbortController for the agent loop.
-   */
   #abortController: AbortController | null = null;
-
-  /**
-   * Whether the persistent loop is running.
-   */
   #loopRunning = false;
-
-  /**
-   * Pending resolve callback — set when the agent calls wait_for_user_input.
-   * Resolved when the user sends a message.
-   */
   #pendingResolve: ((text: string) => void) | null = null;
 
   static styles = css`
@@ -71,31 +59,65 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       font-family: "Google Sans", sans-serif;
     }
 
-    #toggle-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: none;
-      background: #1a73e8;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    /* ── Collapsed input bar ── */
+
+    #input-bar {
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 8px;
+      background: white;
+      border-radius: 28px;
+      padding: 8px 16px 8px 8px;
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.12),
+        0 1px 2px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      min-width: 280px;
     }
 
-    #toggle-btn:hover {
-      background: #1557b0;
+    #input-bar:hover {
+      box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.16),
+        0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    #bar-icon {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+
+    #bar-label {
+      flex: 1;
+      color: #5f6368;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    #bar-history {
+      font-family: "Google Symbols";
+      font-size: 20px;
+      color: #5f6368;
+      flex-shrink: 0;
+    }
+
+    /* ── Chat panel ── */
+
+    #chat-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
     }
 
     #chat-panel {
       width: 380px;
-      height: 480px;
-      background: #1e1e1e;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+      max-height: 420px;
+      background: white;
+      border-radius: 16px;
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.12),
+        0 1px 4px rgba(0, 0, 0, 0.08);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -103,83 +125,104 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
 
     #chat-header {
       padding: 12px 16px;
-      background: #2d2d2d;
-      color: #e0e0e0;
+      color: #202124;
       font-size: 14px;
       font-weight: 500;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid #e8eaed;
     }
 
     #chat-header button {
       background: none;
       border: none;
-      color: #aaa;
+      color: #5f6368;
       cursor: pointer;
       font-size: 18px;
-      padding: 0;
+      padding: 4px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #chat-header button:hover {
+      background: #f1f3f4;
     }
 
     #chat-messages {
       flex: 1;
       overflow-y: auto;
-      padding: 12px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
 
+    /* ── Messages ── */
+
     .message {
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      line-height: 1.4;
+      font-size: 14px;
+      line-height: 1.5;
       max-width: 85%;
       word-wrap: break-word;
       white-space: pre-wrap;
     }
 
     .message.user {
-      background: #1a73e8;
-      color: white;
+      background: #d3e3fd;
+      color: #1a1a1a;
+      padding: 8px 14px;
+      border-radius: 18px;
       align-self: flex-end;
     }
 
     .message.model {
-      background: #333;
-      color: #e0e0e0;
+      color: #202124;
       align-self: flex-start;
     }
 
     .message.system {
-      background: #2a2a2a;
-      color: #888;
-      align-self: center;
-      font-style: italic;
-      font-size: 12px;
+      color: #5f6368;
+      align-self: flex-start;
+      font-size: 13px;
     }
 
-    #chat-input-area {
-      padding: 12px;
-      background: #2d2d2d;
+    /* ── Input area ── */
+
+    #chat-input-bar {
       display: flex;
+      align-items: center;
       gap: 8px;
+      padding: 8px 16px 8px 8px;
+      background: white;
+      border-radius: 28px;
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.12),
+        0 1px 2px rgba(0, 0, 0, 0.08);
+      min-width: 280px;
+    }
+
+    #chat-input-bar img {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
     }
 
     #chat-input {
       flex: 1;
-      padding: 8px 12px;
-      border: 1px solid #444;
-      border-radius: 8px;
-      background: #1e1e1e;
-      color: #e0e0e0;
-      font-size: 13px;
+      border: none;
+      background: transparent;
+      color: #202124;
+      font-size: 14px;
+      line-height: 20px;
       outline: none;
+      font-family: inherit;
     }
 
-    #chat-input:focus {
-      border-color: #1a73e8;
+    #chat-input::placeholder {
+      color: #5f6368;
     }
 
     #chat-input:disabled {
@@ -187,71 +230,80 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     }
 
     #send-btn {
-      padding: 8px 16px;
+      background: none;
       border: none;
-      border-radius: 8px;
-      background: #1a73e8;
-      color: white;
       cursor: pointer;
-      font-size: 13px;
+      padding: 4px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1a73e8;
+      font-size: 18px;
     }
 
     #send-btn:hover {
-      background: #1557b0;
+      background: #f1f3f4;
     }
 
     #send-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    .icon {
+      font-family: "Google Symbols";
+      font-size: 20px;
     }
   `;
 
   render() {
     if (!this.#open) {
-      return html`<button
-        id="toggle-btn"
-        @click=${() => {
-          this.#open = true;
-          this.#ensureLoopRunning();
-        }}
-        title="Graph Editor Agent"
-      >
-        ✦
-      </button>`;
+      return html`
+        <div
+          id="input-bar"
+          @click=${() => {
+            this.#open = true;
+            this.#ensureLoopRunning();
+          }}
+        >
+          <img id="bar-icon" src="/images/favicon.png" alt="" />
+          <span id="bar-label">Edit Opal with Gemini</span>
+          <span id="bar-history">history</span>
+        </div>
+      `;
     }
 
-    // Input is enabled only when the agent is waiting for user input
-    // (or the loop hasn't started yet)
     const inputDisabled = this.#loopRunning && !this.#waiting;
 
     return html`
-      <div id="chat-panel">
-        <div id="chat-header">
-          <span>Graph Editor Agent</span>
-          <button
-            @click=${() => {
-              this.#open = false;
-            }}
-          >
-            ✕
-          </button>
+      <div id="chat-container">
+        <div id="chat-panel">
+          <div id="chat-header">
+            <span>Chat</span>
+            <button
+              @click=${() => {
+                this.#open = false;
+              }}
+            >
+              <span class="icon">close</span>
+            </button>
+          </div>
+          <div id="chat-messages">
+            ${this.#messages.map(
+              (msg) => html`<div class="message ${msg.role}">${msg.text}</div>`
+            )}
+            ${this.#loopRunning && !this.#waiting
+              ? html`<div class="message system">Thinking…</div>`
+              : nothing}
+          </div>
         </div>
-        <div id="chat-messages">
-          ${this.#messages.length === 0
-            ? html`<div class="message system">Starting…</div>`
-            : nothing}
-          ${this.#messages.map(
-            (msg) => html`<div class="message ${msg.role}">${msg.text}</div>`
-          )}
-          ${this.#loopRunning && !this.#waiting
-            ? html`<div class="message system">Thinking…</div>`
-            : nothing}
-        </div>
-        <div id="chat-input-area">
+        <div id="chat-input-bar">
+          <img src="/images/favicon.png" alt="" />
           <input
             id="chat-input"
             type="text"
-            placeholder="e.g. Add a generate text step"
+            placeholder="Edit Opal with Gemini"
             ?disabled=${inputDisabled}
             @keydown=${(e: KeyboardEvent) => {
               if (e.key === "Enter") this.#onSend();
@@ -262,7 +314,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
             ?disabled=${inputDisabled}
             @click=${this.#onSend}
           >
-            Send
+            <span class="icon">send_spark</span>
           </button>
         </div>
       </div>
@@ -274,11 +326,6 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     this.#scrollToBottom();
   }
 
-  /**
-   * Called by the agent's `wait_for_user_input` function.
-   * Displays the agent's message and returns a Promise that resolves
-   * when the user sends a message.
-   */
   #waitForInput = (agentMessage: string): Promise<string> => {
     this.#addMessage("model", agentMessage);
     this.#waiting = true;
@@ -287,9 +334,6 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     });
   };
 
-  /**
-   * Build LoopHooks that push agent output directly into the chat messages.
-   */
   #buildHooks(): LoopHooks {
     return {
       onThought: (text) => {
@@ -297,9 +341,8 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       },
       onFunctionCall: (part, _icon, title) => {
         const name = part.functionCall.name;
-        // Don't show wait_for_user_input as a function call — it's invisible
         if (name !== "wait_for_user_input") {
-          this.#addMessage("system", `Calling ${title ?? name}…`);
+          this.#addMessage("system", `${title ?? name}…`);
         }
         return { callId: crypto.randomUUID(), reporter: null };
       },
@@ -316,7 +359,6 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     input.value = "";
     this.#addMessage("user", text);
 
-    // All user messages go through the pending resolve
     if (this.#pendingResolve) {
       const resolve = this.#pendingResolve;
       this.#pendingResolve = null;
@@ -325,9 +367,6 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     }
   }
 
-  /**
-   * Start the persistent loop if it isn't already running.
-   */
   #ensureLoopRunning() {
     if (this.#loopRunning) return;
     this.#loopRunning = true;
@@ -340,7 +379,6 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       ],
     };
 
-    // Build minimal A2ModuleArgs from SCA services
     const factory = this.sca.services.sandbox as A2ModuleFactory;
 
     this.#abortController?.abort();
@@ -354,7 +392,6 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
 
     const moduleArgs = factory.createModuleArgs(context);
 
-    // Fire and forget — the loop runs until abort
     invokeGraphEditingAgent(
       objective,
       moduleArgs,
