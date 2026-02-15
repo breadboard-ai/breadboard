@@ -5,7 +5,7 @@
  */
 
 import z from "zod";
-import type { GraphEditingActions } from "../runnable-module-factory.js";
+import type { GraphEditingActions } from "../../sca/actions/graph/graph-editing-actions.js";
 import { getGraphEditingFunctionGroup } from "./functions/graph-editing.js";
 import { defineFunction, mapDefinitions } from "./function-definition.js";
 import type { FunctionGroup } from "./types.js";

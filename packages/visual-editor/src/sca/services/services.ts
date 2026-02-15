@@ -32,8 +32,8 @@ import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
 import { IntegrationManagerService } from "./integration-managers.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
-import type { GraphEditingActions } from "../../a2/runnable-module-factory.js";
 import { getGraphEditingActions } from "../actions/graph/graph-editing-actions.js";
+import type { GraphEditingActions } from "../actions/graph/graph-editing-actions.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
 import { createA2Server } from "../../a2/index.js";
@@ -160,7 +160,6 @@ export function services(
       getConsentController,
       agentContext,
       notebookLmApiClient,
-      graphEditingActions: getGraphEditingActions(),
     });
     const googleDriveBoardServer = createGoogleDriveBoardServer(
       signinAdapter,

@@ -5,16 +5,10 @@
  */
 
 import type {
-  Edge,
-  EditableGraph,
   GraphDescriptor,
-  GraphIdentifier,
   InputValues,
   MutableGraph,
-  NodeConfiguration,
-  NodeDescriptor,
   NodeHandlerContext,
-  NodeIdentifier,
   NodeMetadata,
   Outcome,
   OutputValues,
@@ -53,28 +47,6 @@ export type A2ModuleFactoryArgs = {
   getConsentController: () => ConsentController;
   agentContext: AgentContext;
   notebookLmApiClient: NotebookLmApiClient;
-  graphEditingActions?: GraphEditingActions;
-};
-
-/**
- * Graph editing callbacks that mirror SCA Actions.
- * Injected by the SCA layer so the agent can edit the
- * graph through the same code path as user interactions.
- */
-export type GraphEditingActions = {
-  getEditor(): EditableGraph | null;
-  addNode(node: NodeDescriptor, graphId: GraphIdentifier): Promise<void>;
-  changeEdge(
-    changeType: "add" | "remove" | "move",
-    from: Edge,
-    to?: Edge,
-    subGraphId?: string | null
-  ): Promise<void>;
-  changeNodeConfiguration(
-    id: NodeIdentifier,
-    graphId: GraphIdentifier,
-    configurationPart: NodeConfiguration
-  ): Promise<void>;
 };
 
 export type A2ModuleArgs = A2ModuleFactoryArgs & {

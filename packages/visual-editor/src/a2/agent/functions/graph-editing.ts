@@ -14,7 +14,7 @@ import z from "zod";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
 import type { FunctionGroup } from "../types.js";
 import { A2_COMPONENTS, A2_TOOLS } from "../../a2-registry.js";
-import type { GraphEditingActions } from "../../runnable-module-factory.js";
+import type { GraphEditingActions } from "../../../sca/actions/graph/graph-editing-actions.js";
 
 export { getGraphEditingFunctionGroup };
 export type { GraphEditingFunctionArgs };
