@@ -14,6 +14,14 @@ example:
 - `npm run test` first invokes build (or `build:tsc`) for all dependencies, then
   runs testing.
 
+## Build Verification Workflow
+
+When making code changes, check if the user already has a build running in watch
+mode (look for a running terminal like `npm run build --watch`). If not, prompt
+the user to start one before making changes. Use the running build terminal
+output to verify compilation instead of running separate `tsc --noEmit`
+commands.
+
 ## Packages
 
 These are some significant packages:
