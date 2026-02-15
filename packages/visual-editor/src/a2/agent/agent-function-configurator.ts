@@ -7,7 +7,7 @@
 import { Capabilities } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import type { FunctionGroupConfigurator } from "./loop.js";
+import type { FunctionGroupConfigurator } from "./types.js";
 import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
 import { getGenerateFunctionGroup } from "./functions/generate.js";
 import { getSystemFunctionGroup } from "./functions/system.js";

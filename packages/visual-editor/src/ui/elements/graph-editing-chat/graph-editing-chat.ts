@@ -8,7 +8,7 @@ import { consume } from "@lit/context";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, state, query } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import type { Capabilities, LLMContent } from "@breadboard-ai/types";
+import type { LLMContent } from "@breadboard-ai/types";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
 import { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
@@ -379,17 +379,9 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
 
     const moduleArgs = factory.createModuleArgs(context);
 
-    // Build minimal capabilities (no file system needed for graph editing)
-    const caps: Capabilities = {
-      query: async () => ({ entries: [] }),
-      read: async () => ({ data: undefined, last: 0 }),
-      write: async () => undefined as void,
-    };
-
     try {
       const result = await invokeGraphEditingAgent(
         objective,
-        caps,
         moduleArgs,
         this.sca.services.graphEditingActions
       );

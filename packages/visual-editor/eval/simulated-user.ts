@@ -20,9 +20,10 @@ import {
   ChatManager,
   ChatResponse,
   FunctionGroup,
+  FunctionGroupConfigurator,
   VALID_INPUT_TYPES,
 } from "../src/a2/agent/types.js";
-import { Loop, FunctionGroupConfigurator } from "../src/a2/agent/loop.js";
+import { Loop, LoopController } from "../src/a2/agent/loop.js";
 import { tr } from "../src/a2/a2/utils.js";
 import z from "zod";
 import { taskIdSchema } from "../src/a2/agent/functions/system.js";
@@ -125,11 +126,14 @@ class SimulatedUserChatManager implements ChatManager {
 
   constructor(
     userObjective: string,
-    caps: Capabilities,
+    _caps: Capabilities,
     moduleArgs: A2ModuleArgs
   ) {
-    const configurator = createUserAgentConfigurator(this.#bridge);
-    const loop = new Loop(caps, moduleArgs, configurator);
+    const loop = new Loop(moduleArgs);
+    const functionGroups = buildUserAgentFunctionGroups(
+      this.#bridge,
+      loop.controller
+    );
 
     const objective =
       llm`You are simulating a human user interacting with an AI assistant.
@@ -147,8 +151,7 @@ Stay in character. Keep responses concise and natural. Do NOT explain that you a
     // Start the loop — it will immediately call wait_for_agent_message and block
     this.#loopPromise = loop.run({
       objective,
-      params: {},
-      uiType: "simulated",
+      functionGroups,
     });
   }
 
@@ -217,117 +220,120 @@ Your available functions form a conversation loop:
 IMPORTANT: Always call "wait_for_agent_message" first, then respond, then call "wait_for_agent_message" again. Never call two response functions in a row.
 `;
 
-function createUserAgentConfigurator(
-  bridge: ChatBridge
-): FunctionGroupConfigurator {
-  return async (_deps, flags) => {
-    const functions = [
-      defineFunction(
-        {
-          name: "wait_for_agent_message",
-          title: "Waiting for message",
-          icon: "hourglass_empty",
-          description:
-            "Wait for the next message from the AI assistant. Call this first and after each response.",
-          parameters: {},
-          response: {
-            interaction_type: z
-              .enum(["chat", "choices", "ended"])
-              .describe(
-                "Type of interaction: 'chat' for freeform, 'choices' for selection, 'ended' when conversation is over"
-              ),
-            message: z
-              .string()
-              .describe("The message from the AI assistant")
-              .optional(),
-            choices: z
-              .string()
-              .describe(
-                "JSON-encoded array of {id, label} objects when interaction_type is 'choices'"
-              )
-              .optional(),
-            selection_mode: z
-              .string()
-              .describe("'single' or 'multiple' for choice selection")
-              .optional(),
-          },
+function buildUserAgentFunctionGroups(
+  bridge: ChatBridge,
+  controller: LoopController
+): FunctionGroup[] {
+  const functions = [
+    defineFunction(
+      {
+        name: "wait_for_agent_message",
+        title: "Waiting for message",
+        icon: "hourglass_empty",
+        description:
+          "Wait for the next message from the AI assistant. Call this first and after each response.",
+        parameters: {},
+        response: {
+          interaction_type: z
+            .enum(["chat", "choices", "ended"])
+            .describe(
+              "Type of interaction: 'chat' for freeform, 'choices' for selection, 'ended' when conversation is over"
+            ),
+          message: z
+            .string()
+            .describe("The message from the AI assistant")
+            .optional(),
+          choices: z
+            .string()
+            .describe(
+              "JSON-encoded array of {id, label} objects when interaction_type is 'choices'"
+            )
+            .optional(),
+          selection_mode: z
+            .string()
+            .describe("'single' or 'multiple' for choice selection")
+            .optional(),
         },
-        async () => {
-          const request = await bridge.waitForMessage();
-          if (request === null) {
-            // Bridge closed — conversation ended, terminate the loop
-            await flags.onSuccess("/", "Conversation ended.");
-            return { interaction_type: "ended" as const };
-          }
-          if (request.type === "chat") {
-            return {
-              interaction_type: "chat" as const,
-              message: request.message,
-            };
-          }
+      },
+      async () => {
+        const request = await bridge.waitForMessage();
+        if (request === null) {
+          // Bridge closed — conversation ended, terminate the loop
+          controller.terminate({
+            success: true,
+            href: "/",
+            outcomes: undefined,
+          });
+          return { interaction_type: "ended" as const };
+        }
+        if (request.type === "chat") {
           return {
-            interaction_type: "choices" as const,
+            interaction_type: "chat" as const,
             message: request.message,
-            choices: JSON.stringify(request.choices),
-            selection_mode: request.selectionMode,
           };
         }
-      ),
+        return {
+          interaction_type: "choices" as const,
+          message: request.message,
+          choices: JSON.stringify(request.choices),
+          selection_mode: request.selectionMode,
+        };
+      }
+    ),
 
-      defineFunction(
-        {
-          name: "respond_to_chat",
-          title: "Responding",
-          icon: "chat_bubble",
-          description:
-            "Send your text response to the AI assistant. Call wait_for_agent_message afterwards.",
-          parameters: {
-            response_text: z.string().describe("Your response as the user"),
-          },
-          response: {
-            status: z
-              .string()
-              .describe("Confirmation that the response was sent"),
-          },
-        },
-        async ({ response_text }) => {
-          bridge.sendResponse(response_text);
-          return { status: "sent" };
-        }
-      ),
-
-      defineFunction(
-        {
-          name: "select_from_choices",
-          title: "Selecting",
-          icon: "list",
-          description:
-            "Select from the presented choices. Call wait_for_agent_message afterwards.",
-          parameters: {
-            selected_ids: z
-              .array(z.string())
-              .describe("The IDs of the choices you want to select"),
-          },
-          response: {
-            status: z
-              .string()
-              .describe("Confirmation that the selection was sent"),
-          },
-        },
-        async ({ selected_ids }) => {
-          bridge.sendResponse(JSON.stringify(selected_ids));
-          return { status: "sent" };
-        }
-      ),
-    ];
-
-    return [
+    defineFunction(
       {
-        ...mapDefinitions(functions),
-        instruction: userAgentInstruction,
+        name: "respond_to_chat",
+        title: "Responding",
+        icon: "chat_bubble",
+        description:
+          "Send your text response to the AI assistant. Call wait_for_agent_message afterwards.",
+        parameters: {
+          response_text: z.string().describe("Your response as the user"),
+        },
+        response: {
+          status: z
+            .string()
+            .describe("Confirmation that the response was sent"),
+        },
       },
-    ] satisfies FunctionGroup[];
-  };
+      async ({ response_text }) => {
+        bridge.sendResponse(response_text);
+        return { status: "sent" };
+      }
+    ),
+
+    defineFunction(
+      {
+        name: "select_from_choices",
+        title: "Selecting",
+        icon: "list",
+        description:
+          "Select from the presented choices. Call wait_for_agent_message afterwards.",
+        parameters: {
+          selected_ids: z
+            .array(z.string())
+            .describe("The IDs of the choices you want to select"),
+        },
+        response: {
+          status: z
+            .string()
+            .describe("Confirmation that the selection was sent"),
+        },
+      },
+      async ({ selected_ids }) => {
+        bridge.sendResponse(JSON.stringify(selected_ids));
+        return { status: "sent" };
+      }
+    ),
+  ];
+
+  return [
+    {
+      ...mapDefinitions(functions),
+      instruction: userAgentInstruction,
+    },
+  ] satisfies FunctionGroup[];
 }
 
 // -- Outer configurator: chat functions for the main agent --
