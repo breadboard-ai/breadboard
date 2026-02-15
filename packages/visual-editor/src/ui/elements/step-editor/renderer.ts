@@ -199,6 +199,13 @@ export class Renderer extends SignalWatcher(LitElement) {
         background: transparent;
         opacity: 0;
         animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
+
+        &.under-chat {
+          width: auto;
+          left: var(--bb-grid-size-4);
+          bottom: var(--bb-grid-size-2);
+          min-width: 280px;
+        }
       }
 
       #overlay {
@@ -1631,7 +1638,14 @@ export class Renderer extends SignalWatcher(LitElement) {
       selectionRectangle,
       this.dragConnector,
       this.showDisclaimer && this.#gc.graphIsMine
-        ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
+        ? html`<p
+            id="disclaimer"
+            class=${this.sca.controller.global.flags.enableGraphEditorAgent
+              ? "under-chat"
+              : ""}
+          >
+            ${Strings.from("LABEL_DISCLAIMER")}
+          </p>`
         : nothing,
       this.#maybeRenderOverflowMenu(),
     ];

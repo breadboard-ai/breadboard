@@ -6,7 +6,10 @@
 
 import { consume } from "@lit/context";
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, state, query } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
+import { createRef, ref } from "lit/directives/ref.js";
+import "../input/expanding-textarea.js";
+import type { ExpandingTextarea } from "../input/expanding-textarea.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import type { LLMContent } from "@breadboard-ai/types";
 import { scaContext } from "../../../sca/context/context.js";
@@ -56,11 +59,11 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   @state()
   accessor #expandedGroups: Set<number> = new Set();
 
-  @query("#chat-input")
-  accessor #inputEl: HTMLInputElement | null = null;
+  readonly #inputRef = createRef<ExpandingTextarea>();
 
   #abortController: AbortController | null = null;
   #loopRunning = false;
+  #processing = false;
   #pendingResolve: ((text: string) => void) | null = null;
 
   /**
@@ -72,52 +75,10 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   static styles = css`
     :host {
       position: fixed;
-      bottom: 16px;
-      left: 16px;
+      bottom: var(--bb-grid-size-7);
+      left: var(--bb-grid-size-4);
       z-index: 9999;
       font-family: "Google Sans", sans-serif;
-    }
-
-    /* ── Collapsed input bar ── */
-
-    #input-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: white;
-      border-radius: 28px;
-      padding: 8px 16px 8px 8px;
-      box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.12),
-        0 1px 2px rgba(0, 0, 0, 0.08);
-      cursor: pointer;
-      min-width: 280px;
-    }
-
-    #input-bar:hover {
-      box-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.16),
-        0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    #bar-icon {
-      width: 32px;
-      height: 32px;
-      flex-shrink: 0;
-    }
-
-    #bar-label {
-      flex: 1;
-      color: #5f6368;
-      font-size: 14px;
-      line-height: 20px;
-    }
-
-    #bar-history {
-      font-family: "Google Symbols";
-      font-size: 20px;
-      color: #5f6368;
-      flex-shrink: 0;
     }
 
     /* ── Chat panel ── */
@@ -294,13 +255,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     #chat-input-bar {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 16px 8px 8px;
-      background: white;
-      border-radius: 28px;
-      box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.12),
-        0 1px 2px rgba(0, 0, 0, 0.08);
+      gap: var(--bb-grid-size-2);
       min-width: 280px;
     }
 
@@ -310,45 +265,49 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       flex-shrink: 0;
     }
 
-    #chat-input {
+    bb-expanding-textarea {
       flex: 1;
+      color: var(--light-dark-n-0);
+      background: var(--light-dark-n-100);
       border: none;
-      background: transparent;
-      color: #202124;
-      font-size: 14px;
-      line-height: 20px;
-      outline: none;
-      font-family: inherit;
-    }
+      border-radius: var(--bb-grid-size-7);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+      --min-lines: 1;
+      --max-lines: 4;
+      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+      line-height: 1lh;
+      caret-color: var(--light-dark-n-0);
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.12),
+        0 1px 2px rgba(0, 0, 0, 0.08);
 
-    #chat-input::placeholder {
-      color: #5f6368;
-    }
+      &:focus-within {
+        outline: 1px solid var(--ui-custom-o-100);
+      }
 
-    #chat-input:disabled {
-      opacity: 0.5;
-    }
+      > [slot~="submit"] {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        color: light-dark(var(--n-70), var(--n-40));
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+        transition: color 0.2s ease;
+        cursor: default;
+        pointer-events: none;
 
-    #send-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #1a73e8;
-      font-size: 18px;
-    }
+        &.active {
+          color: light-dark(var(--n-0), var(--n-100)) !important;
+          cursor: pointer;
+          pointer-events: auto;
+        }
+      }
 
-    #send-btn:hover {
-      background: #f1f3f4;
-    }
-
-    #send-btn:disabled {
-      opacity: 0.3;
-      cursor: default;
+      &::part(textarea)::placeholder {
+        color: #5f6368;
+      }
     }
 
     .icon {
@@ -371,62 +330,59 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       this.#currentFlow = parsedUrl.flow;
     }
 
-    if (!this.#open) {
-      return html`
-        <div
-          id="input-bar"
-          @click=${() => {
-            this.#open = true;
-            this.#ensureLoopRunning();
-          }}
-        >
-          <img id="bar-icon" src="/images/favicon.png" alt="" />
-          <span id="bar-label">Edit Opal with Gemini</span>
-          <span id="bar-history">history</span>
-        </div>
-      `;
-    }
-
-    const inputDisabled = this.#loopRunning && !this.#waiting;
+    const inputDisabled = this.#processing;
 
     return html`
       <div id="chat-container">
-        <div id="chat-panel">
-          <div id="chat-header">
-            <span>Chat</span>
-            <button
-              @click=${() => {
-                this.#open = false;
-              }}
-            >
-              <span class="icon">close</span>
-            </button>
-          </div>
-          <div id="chat-messages">
-            ${this.#entries.map((entry, idx) => this.#renderEntry(entry, idx))}
-            ${this.#loopRunning && !this.#waiting
-              ? html`<div class="message system">Thinking…</div>`
-              : nothing}
-          </div>
-        </div>
+        ${this.#open
+          ? html`
+              <div id="chat-panel">
+                <div id="chat-header">
+                  <span>Chat</span>
+                  <button
+                    @click=${() => {
+                      this.#open = false;
+                    }}
+                  >
+                    <span class="icon">close</span>
+                  </button>
+                </div>
+                <div id="chat-messages">
+                  ${this.#entries.map((entry, idx) =>
+                    this.#renderEntry(entry, idx)
+                  )}
+                  ${this.#loopRunning && !this.#waiting
+                    ? html`<div class="message system">Thinking…</div>`
+                    : nothing}
+                </div>
+              </div>
+            `
+          : nothing}
         <div id="chat-input-bar">
           <img src="/images/favicon.png" alt="" />
-          <input
-            id="chat-input"
-            type="text"
-            placeholder="Edit Opal with Gemini"
-            ?disabled=${inputDisabled}
-            @keydown=${(e: KeyboardEvent) => {
-              if (e.key === "Enter") this.#onSend();
+          <bb-expanding-textarea
+            ${ref(this.#inputRef)}
+            .disabled=${inputDisabled}
+            .placeholder=${"Edit Opal with Gemini"}
+            @focus=${() => {
+              if (!this.#open) {
+                this.#open = true;
+                this.#ensureLoopRunning();
+                // Re-focus after Lit update completes
+                this.updateComplete.then(() => {
+                  this.#inputRef.value?.focus();
+                });
+              }
             }}
-          />
-          <button
-            id="send-btn"
-            ?disabled=${inputDisabled}
-            @click=${this.#onSend}
+            @change=${this.#onSend}
+            @input=${() => this.requestUpdate()}
           >
-            <span class="icon">send_spark</span>
-          </button>
+            <span
+              slot="submit"
+              class="icon ${this.#inputRef.value?.value ? "active" : ""}"
+              >send_spark</span
+            >
+          </bb-expanding-textarea>
         </div>
       </div>
     `;
@@ -519,6 +475,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   #waitForInput = (agentMessage: string): Promise<string> => {
     this.#addMessage("model", agentMessage);
     this.#waiting = true;
+    this.#processing = false;
     return new Promise<string>((resolve) => {
       this.#pendingResolve = resolve;
     });
@@ -540,7 +497,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   }
 
   async #onSend() {
-    const input = this.#inputEl;
+    const input = this.#inputRef.value;
     if (!input) return;
 
     const text = input.value.trim();
@@ -553,6 +510,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       const resolve = this.#pendingResolve;
       this.#pendingResolve = null;
       this.#waiting = false;
+      this.#processing = true;
       resolve(text);
     }
   }

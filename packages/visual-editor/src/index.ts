@@ -19,7 +19,6 @@ import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.j
 import { MakeUrlInit } from "./ui/types/types.js";
 import { repeat } from "lit/directives/repeat.js";
 import { Utils } from "./sca/utils.js";
-import "./ui/elements/graph-editing-chat/graph-editing-chat.js";
 
 // Build constant.
 declare const ENABLE_DEBUG_TOOLING: boolean;
@@ -140,19 +139,6 @@ class Main extends MainBase {
     }
   }
 
-  #renderGraphEditingChat() {
-    try {
-      if (!this.sca.controller.global.flags.enableGraphEditorAgent) {
-        return nothing;
-      }
-    } catch {
-      // Flag not yet initialized
-      return nothing;
-    }
-
-    return html`<bb-graph-editing-chat></bb-graph-editing-chat>`;
-  }
-
   render() {
     const renderValues = this.getRenderValues();
 
@@ -253,7 +239,6 @@ class Main extends MainBase {
         this.#renderFeedbackPanel(),
         this.renderConsentRequests(),
         this.#maybeRenderDebugPanel(),
-        this.#renderGraphEditingChat(),
       ]}
     </div>`;
   }
