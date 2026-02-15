@@ -82,13 +82,10 @@ code-to-be-tested contains signals, use the
 `packages/visual-editor/tests/signal-watcher.ts` helper for easy reactivity
 testing.
 
-In `packages/visual-editor`, use `npm run test:pattern` to run tests with direct
-control over node's test runner flags:
+In `packages/visual-editor`, use `npm run test:file` to run test files
+individually:
 
 ```bash
-# Filter tests by name pattern
-npm run test:pattern -- --test-name-pattern="ChoicePresenter"
+npm run test:file -- './dist/tsc/tests/sca/actions/share/**/*.js'
 
-# Run only tests marked with .only
-npm run test:pattern -- --test-only
 ```
