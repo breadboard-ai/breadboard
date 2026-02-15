@@ -13,7 +13,6 @@ import type {
   InspectableEdge,
   InspectableNode,
   InspectableNodeType,
-  ModuleIdentifier,
   MutableGraph,
   NodeConfiguration,
   NodeIdentifier,
@@ -21,10 +20,8 @@ import type {
   Outcome,
 } from "@breadboard-ai/types";
 import { err, graphUrlLike, TemplatePart } from "@breadboard-ai/utils";
-import { getModuleId, isModule } from "../utils.js";
 import { A2NodeType } from "./a2-node-type.js";
 import { InspectableAssetImpl } from "./inspectable-asset.js";
-import { VirtualNode } from "./virtual-node.js";
 import { scanConfiguration } from "../../../utils/scan-configuration.js";
 import { ROUTE_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
 
@@ -79,9 +76,6 @@ class GraphQueries {
   }
 
   nodeById(id: NodeIdentifier) {
-    if (this.#graph().virtual) {
-      return new VirtualNode({ id });
-    }
     return this.#mutable.nodes.get(id, this.#graphId);
   }
 
@@ -100,18 +94,10 @@ class GraphQueries {
     return new A2NodeType(id);
   }
 
-  moduleExports(): Set<ModuleIdentifier> {
-    const exports = this.#mutable.graph.exports;
-    if (!exports) return new Set();
-    return new Set(
-      exports.filter((e) => isModule(e)).map((e) => getModuleId(e))
-    );
-  }
-
   graphExports(): Set<GraphIdentifier> {
     const exports = this.#mutable.graph.exports;
     if (!exports) return new Set();
-    return new Set(exports.filter((e) => !isModule(e)).map((e) => e.slice(1)));
+    return new Set(exports.map((e) => e.slice(1)));
   }
 
   assets(): Map<AssetPath, InspectableAsset> {

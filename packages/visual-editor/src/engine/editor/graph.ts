@@ -21,11 +21,9 @@ import type {
   GraphDescriptor,
   GraphIdentifier,
   MutableGraph,
-  NodeIdentifier,
   RejectionReason,
   SingleEditResult,
 } from "@breadboard-ai/types";
-import { ModuleIdentifier } from "@breadboard-ai/types";
 import { PromiseQueue } from "@breadboard-ai/utils";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
@@ -33,7 +31,6 @@ import { GraphEditHistory } from "./history.js";
 import { AddAsset } from "./operations/add-asset.js";
 import { AddEdge } from "./operations/add-edge.js";
 import { AddGraph } from "./operations/add-graph.js";
-import { AddModule } from "./operations/add-module.js";
 import { AddNode } from "./operations/add-node.js";
 import { ChangeAssetMetadata } from "./operations/change-asset-metadata.js";
 import { ChangeConfiguration } from "./operations/change-configuration.js";
@@ -41,11 +38,9 @@ import { ChangeEdgeMetadata } from "./operations/change-edge-metadata.js";
 import { ChangeEdge } from "./operations/change-edge.js";
 import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
 import { ChangeMetadata } from "./operations/change-metadata.js";
-import { ChangeModule } from "./operations/change-module.js";
 import { RemoveAsset } from "./operations/remove-asset.js";
 import { RemoveEdge } from "./operations/remove-edge.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
-import { RemoveModule } from "./operations/remove-module.js";
 import { RemoveNode } from "./operations/remove-node.js";
 import { ReplaceGraph } from "./operations/replace-graph.js";
 import { ToggleExport } from "./operations/toggle-export.js";
@@ -62,9 +57,6 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["changeconfiguration", new ChangeConfiguration()],
   ["changemetadata", new ChangeMetadata()],
   ["changegraphmetadata", new ChangeGraphMetadata()],
-  ["addmodule", new AddModule()],
-  ["removemodule", new RemoveModule()],
-  ["changemodule", new ChangeModule()],
   ["addgraph", new AddGraph()],
   ["removegraph", new RemoveGraph()],
   ["toggleexport", new ToggleExport()],
@@ -100,7 +92,6 @@ export class Graph implements EditableGraph {
             "history",
             [],
             [],
-            [],
             true,
             true,
             null
@@ -131,7 +122,6 @@ export class Graph implements EditableGraph {
   #updateGraph(
     visualOnly: boolean,
     affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[],
     affectedGraphs: GraphIdentifier[],
     topologyChange: boolean,
     integrationsChange: boolean,
@@ -141,7 +131,6 @@ export class Graph implements EditableGraph {
       this.#graph,
       visualOnly,
       affectedNodes,
-      affectedModules,
       topologyChange
     );
     this.#eventTarget.dispatchEvent(
@@ -150,7 +139,6 @@ export class Graph implements EditableGraph {
         visualOnly,
         "edit",
         affectedNodes,
-        affectedModules,
         affectedGraphs,
         topologyChange,
         integrationsChange,
@@ -257,8 +245,6 @@ export class Graph implements EditableGraph {
     let visualOnly = true;
     // Collect affected nodes
     const affectedNodes: AffectedNode[][] = [];
-    // Collect affected modules
-    const affectedModules: NodeIdentifier[][] = [];
     // Collect affected graphs
     const affectedGraphs: GraphIdentifier[][] = [];
     // Presume that there were no integration changes.
@@ -280,7 +266,6 @@ export class Graph implements EditableGraph {
           return { success: false, error };
         }
         affectedNodes.push(result.affectedNodes);
-        affectedModules.push(result.affectedModules);
         affectedGraphs.push(result.affectedGraphs);
         if (!result.noChange) {
           noChange = false;
@@ -336,7 +321,6 @@ export class Graph implements EditableGraph {
       this.#updateGraph(
         visualOnly,
         unique(affectedNodes.flat()),
-        [...new Set(affectedModules.flat())],
         [...new Set(affectedGraphs.flat())],
         topologyChange,
         integrationsChange,

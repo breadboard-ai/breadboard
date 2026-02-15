@@ -12,10 +12,8 @@ import type {
   GraphProvider,
   GraphToRun,
 } from "@breadboard-ai/types";
-import { ModuleIdentifier } from "@breadboard-ai/types";
 
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
-const MODULE_PREFIX = "module:";
 
 export {
   getGraphUrl,
@@ -32,34 +30,18 @@ function getGraphUrl(path: string, context: GraphLoaderContext): URL {
 function getGraphUrlComponents(url: URL): {
   mainGraphUrl: string;
   graphId: string;
-  moduleId?: string;
 } {
   const noHash = removeHash(url);
   const mainGraphUrl = noHash.href;
   const graphId = url.hash.slice(1);
-  if (graphId.startsWith(MODULE_PREFIX)) {
-    return {
-      mainGraphUrl,
-      graphId: "",
-      moduleId: graphId.slice(MODULE_PREFIX.length),
-    };
-  } else if (graphId) {
+  if (graphId) {
     return { mainGraphUrl, graphId };
   }
   return { mainGraphUrl, graphId: "" };
 }
 
 function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
-  const { graph, subGraphId, moduleId } = graphToRun;
-  if (moduleId) {
-    const title = graph.modules?.[moduleId]?.metadata?.title || moduleId;
-    const description =
-      graph.modules?.[moduleId]?.metadata?.description || undefined;
-    const url = graph.url?.startsWith(MODULE_PREFIX)
-      ? graph.url
-      : `${MODULE_PREFIX}${moduleId}:${graph.url}`;
-    return { ...graph, main: moduleId, url, title, description };
-  }
+  const { graph, subGraphId } = graphToRun;
   return subGraphId ? graph.graphs![subGraphId] : graph;
 }
 
@@ -75,11 +57,6 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
 
 export const baseURLFromString = (urlString: string | undefined) => {
   if (urlString) {
-    // Account for generated module URL, created in `resolveGraph`.
-    if (urlString.startsWith(MODULE_PREFIX)) {
-      // remove MODULE_PREFIX and moduleId
-      urlString = urlString.split(":").slice(2).join(":");
-    }
     return new URL(urlString);
   }
   return null;
@@ -104,17 +81,7 @@ function urlComponentsFromString(
 ): {
   mainGraphUrl: string;
   graphId: string;
-  moduleId?: string;
 } {
-  if (urlString.startsWith(MODULE_PREFIX)) {
-    const parts = urlString.split(":");
-    const moduleId = parts[1];
-    return {
-      graphId: "",
-      moduleId,
-      mainGraphUrl: parts.slice(2).join(":"),
-    };
-  }
   return getGraphUrlComponents(getGraphUrl(urlString, context));
 }
 
@@ -160,24 +127,6 @@ export class Loader implements GraphLoader {
     hash: string,
     supergraph: GraphDescriptor
   ): GraphLoaderResult {
-    const isModule = hash.startsWith(MODULE_PREFIX);
-    if (isModule) {
-      const modules = supergraph.modules;
-      const moduleId: ModuleIdentifier = hash.slice(MODULE_PREFIX.length);
-      if (!modules) {
-        const error = `No modules to load "${moduleId}" from`;
-        console.warn(error);
-        return { success: false, error };
-      }
-      const module = modules[moduleId];
-      if (!module) {
-        const error = `No module found for module ID: ${moduleId}`;
-        console.warn(error);
-        return { success: false, error };
-      }
-      return { success: true, graph: supergraph, moduleId };
-    }
-
     const subgraphs = supergraph.graphs;
     if (!subgraphs) {
       const error = `No subgraphs to load "#${hash}" from`;

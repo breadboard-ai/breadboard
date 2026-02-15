@@ -91,7 +91,6 @@ export class AddEdge implements EditOperation {
         { id: edge.from, graphId },
         { id: edge.to, graphId },
       ],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };
@@ -133,7 +132,6 @@ export class AddEdge implements EditOperation {
         { id: edge.from, graphId },
         { id: edge.to, graphId },
       ],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };

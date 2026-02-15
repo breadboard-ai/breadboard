@@ -44,7 +44,6 @@ class RemoveIntegration implements EditOperation {
     return {
       success: true,
       affectedGraphs: [],
-      affectedModules: [],
       affectedNodes: [],
       integrationsChange: true,
       noChange,

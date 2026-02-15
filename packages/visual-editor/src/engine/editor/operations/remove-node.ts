@@ -32,7 +32,6 @@ export class RemoveNode implements EditOperation {
     return {
       success: true,
       affectedNodes: [{ id, graphId }],
-      affectedModules: [],
       affectedGraphs: [],
       topologyChange: true,
     };
@@ -77,7 +76,6 @@ export class RemoveNode implements EditOperation {
     return {
       success: true,
       affectedNodes: [{ id, graphId }],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };

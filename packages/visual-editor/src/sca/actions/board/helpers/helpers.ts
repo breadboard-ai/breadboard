@@ -23,7 +23,6 @@ export {
 // Graph preparation helpers
 export {
   prepareGraph,
-  validateModuleId,
   validateSubGraphId,
   renameLegacyMainBoard,
   type PrepareGraphOptions,

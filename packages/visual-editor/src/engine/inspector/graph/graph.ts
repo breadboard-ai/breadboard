@@ -14,11 +14,9 @@ import type {
   InspectableAssetEdge,
   InspectableEdge,
   InspectableGraph,
-  InspectableModules,
   InspectableNode,
   InspectableNodeType,
   InspectableSubgraphs,
-  ModuleIdentifier,
   MutableGraph,
   NodeIdentifier,
   NodeTypeIdentifier,
@@ -50,14 +48,6 @@ class Graph implements InspectableGraph {
     return this.#mutable.graph;
   }
 
-  imperative(): boolean {
-    return !!this.main();
-  }
-
-  main(): string | undefined {
-    return this.#descriptor().main;
-  }
-
   metadata(): GraphMetadata | undefined {
     return this.#descriptor().metadata;
   }
@@ -72,14 +62,6 @@ class Graph implements InspectableGraph {
 
   nodes(): InspectableNode[] {
     return this.#mutable.nodes.nodes(this.#graphId);
-  }
-
-  moduleById(id: ModuleIdentifier) {
-    return this.#mutable.modules.get(id);
-  }
-
-  modules(): InspectableModules {
-    return this.#mutable.modules.modules();
   }
 
   edges(): InspectableEdge[] {
@@ -117,10 +99,6 @@ class Graph implements InspectableGraph {
 
   graphId(): GraphIdentifier {
     return this.#graphId;
-  }
-
-  moduleExports(): Set<ModuleIdentifier> {
-    return new GraphQueries(this.#mutable, this.#graphId).moduleExports();
   }
 
   graphExports(): Set<GraphIdentifier> {

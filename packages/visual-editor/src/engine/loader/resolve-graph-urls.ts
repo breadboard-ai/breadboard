@@ -19,10 +19,7 @@ export { resolveGraphUrls };
  * @returns a new instance of GraphToRun
  */
 function resolveGraphUrls(graphToRun: GraphToRun): GraphToRun {
-  const { graph: mainGraph, subGraphId, moduleId } = graphToRun;
-  if (moduleId) {
-    return graphToRun;
-  }
+  const { graph: mainGraph, subGraphId } = graphToRun;
   const graph = subGraphId ? mainGraph.graphs?.[subGraphId] : mainGraph;
   if (!graph) {
     console.warn(

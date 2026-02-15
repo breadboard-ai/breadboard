@@ -147,7 +147,6 @@ suite("GraphController", () => {
       boardServer: null,
       lastLoadedVersion: 20,
       mainGraphId: globalThis.crypto.randomUUID(),
-      moduleId: null,
       name: "Untitled app",
       subGraphId: null,
       type: 0,

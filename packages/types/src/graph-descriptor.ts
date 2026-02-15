@@ -314,10 +314,6 @@ export type GraphInlineMetadata = {
    * The URL of the graph that will act as the describer for
    * this graph. Can be a relative URL and refer to a sub-graph
    * within this graph.
-   *
-   * The describers in the format of "module:name" will be interpreted as
-   * "use the `describe` export of the module named `name` to describe this
-   * graph".
    */
   describer?: string;
 };
@@ -444,10 +440,6 @@ export type GraphMetadata = {
    * The URL of the graph that will act as the describer for
    * this graph. Can be a relative URL and refer to a sub-graph
    * within this graph.
-   *
-   * The describers in the format of "module:name" will be interpreted as
-   * "use the `describe` export of the module named `name` to describe this
-   * graph".
    */
   describer?: string;
   /**
@@ -579,89 +571,6 @@ type TestProperties = {
   start?: NodeIdentifier;
 };
 
-/**
- * Unique identifier of a module.
- */
-export type ModuleIdentifier = string;
-
-/**
- * The code for this module, which should include a describer, an invoker, and
- * any other relevant information to power the module.
- */
-export type ModuleCode = string;
-
-/**
- * A tag that can be associated with a graph.
- * - `published`: The module is published (as opposed to a draft). It may be
- *    used in production and shared with others.
- * - `experimental`: The graph is experimental and may not be stable.
- */
-export type ModuleTag = "published" | "experimental";
-
-export type ModuleLanguage = string;
-
-export type ModuleMetadata = {
-  /**
-   * Whether the module should be presented as a runnable item to runModule.
-   */
-  runnable?: boolean;
-
-  /**
-   * The icon for the module.
-   */
-  icon?: string;
-
-  /**
-   * The source file for the module, if relevant.
-   */
-  url?: string;
-
-  /**
-   * The description for the module.
-   */
-  description?: string;
-
-  /**
-   * The title for the module.
-   */
-  title?: string;
-
-  /**
-   * Tags associated with the module. At this moment, free-form strings.
-   */
-  tags?: ModuleTag[];
-
-  /**
-   * The documentation for the module, expressed as a URL and optional description.
-   */
-  help?: {
-    description?: string;
-    url: string;
-  };
-
-  /**
-   * The pre-compiled source for this module.
-   */
-  source?: {
-    language: ModuleLanguage;
-    code: ModuleCode;
-  };
-};
-
-export type Module = {
-  /**
-   * Metadata associated with the graph.
-   */
-  metadata?: ModuleMetadata;
-
-  /**
-   * The code for this module.
-   */
-  code: ModuleCode;
-};
-
-export type Modules = Record<ModuleIdentifier, Module>;
-
 export type AssetPath = string;
 
 /**
@@ -726,28 +635,12 @@ export type GraphCommonProperties = GraphInlineMetadata & {
   args?: InputValues;
 
   /**
-   * Modules that are included as part of this graph.
-   */
-  modules?: Modules;
-
-  /**
-   * The modules and sub-graphs that this graph declares as "exports": they
-   * themselves are usable declarative or imperative graphs.
+   * The sub-graphs that this graph declares as "exports": they
+   * themselves are usable declarative graphs.
    * When the "exports" property exist, this graph is actually a Kit
-   * declaration: it can be used to distributed multiple graphs.
+   * declaration: it can be used to distribute multiple graphs.
    */
-  exports?: (ModuleIdentifier | `#${GraphIdentifier}`)[];
-
-  /**
-   * An optional property that indicates that this graph is
-   * "virtual": it can not be represented by a static list
-   * of edges and nodes, and is instead more of a representation
-   * of something that's "graph-like".
-   * Modules, when they invoke capabilities, are "virtual" graphs:
-   * they don't have a defined topology and instead, this topology
-   * is discovered through imperative code execution
-   */
-  virtual?: true;
+  exports?: string[];
 
   /**
    * An optional collection of assets associated with the graph. Each asset
@@ -818,25 +711,11 @@ export type DeclarativeGraph = GraphCommonProperties & {
 };
 
 /**
- * Represents a graph that's backed by code rather than nodes and edges.
- */
-export type ImperativeGraph = GraphCommonProperties & {
-  /**
-   * The id of the Module that is used as an entry point for this graph.
-   * If this value is set, the graph is a "module graph": it is backed
-   * by code rather than by nodes and edges.
-   */
-  main: ModuleIdentifier;
-};
-
-/**
- * A union type of both declarative and imperative graphs. Represents a graph
- * that is either declarative (defined by nodes and edges) or imperative
- * (backed by code).
+ * Represents a graph: a collection of nodes and edges that form
+ * the graph topology, along with metadata and other properties.
  */
 export type GraphDescriptor = GraphCommonProperties &
   DeclarativeGraph &
-  Partial<ImperativeGraph> &
   TestProperties;
 
 /**

@@ -12,12 +12,10 @@ import type {
   InspectableDescriberResultCache,
   InspectableEdgeCache,
   InspectableGraphCache,
-  InspectableModuleCache,
   InspectableNodeCache,
   InspectablePortCache,
   KitDescriptor,
   MainGraphIdentifier,
-  ModuleIdentifier,
   MutableGraph,
   MutableGraphStore,
   NodeIdentifier,
@@ -28,7 +26,6 @@ import { Edge as InspectableEdge } from "./edge.js";
 
 import { GraphCache } from "./graph-cache.js";
 import { Graph } from "./graph.js";
-import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node-cache.js";
 import { NodeDescriberManager } from "./node-describer-manager.js";
 import { Node } from "./node.js";
@@ -51,7 +48,6 @@ class MutableGraphImpl implements MutableGraph {
   graphs!: InspectableGraphCache;
   nodes!: InspectableNodeCache;
   edges!: InspectableEdgeCache;
-  modules!: InspectableModuleCache;
   describe!: InspectableDescriberResultCache;
   ports!: InspectablePortCache;
   entries!: NodeIdentifier[];
@@ -71,35 +67,8 @@ class MutableGraphImpl implements MutableGraph {
     graph: GraphDescriptor,
     visualOnly: boolean,
     affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[],
     _topologyChange: boolean
   ): void {
-    // TODO: Handle this a better way?
-    for (const id of affectedModules) {
-      this.modules.remove(id);
-      if (!graph.modules || !graph.modules[id]) {
-        continue;
-      }
-
-      this.modules.add(id, graph.modules[id]);
-
-      // Find any nodes configured to use this module and clear its describer.
-      const runModulesNodes = this.nodes.byType("runModule", "");
-      for (const node of runModulesNodes) {
-        if (
-          node.configuration().$module &&
-          node.configuration().$module === id &&
-          !affectedNodes.find((n) => n.id === node.descriptor.id)
-        ) {
-          affectedNodes.push({
-            id: node.descriptor.id,
-            graphId: "",
-          });
-          visualOnly = false;
-        }
-      }
-    }
-
     // TODO: Handle removals, etc.
     if (!visualOnly) {
       this.describe.update(affectedNodes);
@@ -135,7 +104,6 @@ class MutableGraphImpl implements MutableGraph {
     this.edges = new EdgeCache(
       (edge, graphId) => new InspectableEdge(this, edge, graphId)
     );
-    this.modules = new ModuleCache();
     this.describe = new DescribeResultCache(
       new NodeDescriberManager(this, this.#deps)
     );
@@ -144,7 +112,6 @@ class MutableGraphImpl implements MutableGraph {
     this.graphs.rebuild(graph);
     this.nodes.rebuild(graph);
     this.edges.rebuild(graph);
-    this.modules.rebuild(graph);
   }
 }
 

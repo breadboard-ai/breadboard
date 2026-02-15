@@ -361,8 +361,6 @@ export const deleteBoard = asAction(
 export interface LoadOptions {
   /** Base URL to resolve relative URLs against */
   baseUrl?: string | null;
-  /** Module ID to focus on (for imperative graphs) */
-  moduleId?: string | null;
   /** Subgraph ID to focus on */
   subGraphId?: string | null;
   /** Creator info for edit history */
@@ -446,7 +444,6 @@ export const load = asAction(
 
     // 3. Prepare the graph
     const prepared = await Helpers.prepareGraph(graph, {
-      moduleId: options.moduleId,
       subGraphId: options.subGraphId,
       googleDriveClient: services.googleDriveClient,
     });
@@ -492,7 +489,6 @@ export const load = asAction(
     // 8. Initialize the editor
     Helpers.initializeEditor(controller.editor.graph, {
       graph: prepared.graph,
-      moduleId: prepared.moduleId,
       subGraphId: prepared.subGraphId,
       url: resolvedUrl,
       readOnly: !isMineCheck(resolvedUrl),

@@ -111,7 +111,6 @@ function virtualGraph(): GraphDescriptor {
   return {
     nodes: [],
     edges: [],
-    virtual: true,
   };
 }
 
