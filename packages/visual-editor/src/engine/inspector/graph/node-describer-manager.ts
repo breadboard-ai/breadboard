@@ -21,7 +21,6 @@ import type {
   NodeTypeDescriberOptions,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import { SchemaDiffer } from "@breadboard-ai/utils";
 
 import {
   describeInput,
@@ -78,36 +77,6 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
       inputs: { ...node.configuration() },
     });
     return result;
-  }
-
-  willUpdate(
-    previous: NodeDescriberResult,
-    current: NodeDescriberResult
-  ): void {
-    const inputsDiffer = new SchemaDiffer(
-      previous.inputSchema,
-      current.inputSchema
-    );
-    inputsDiffer.computeDiff();
-
-    const outputsDiffer = new SchemaDiffer(
-      previous.outputSchema,
-      current.outputSchema
-    );
-    outputsDiffer.computeDiff();
-
-    if (
-      inputsDiffer.same() &&
-      outputsDiffer.same() &&
-      sameMetadata(previous, current)
-    ) {
-      return;
-    }
-  }
-
-  updated(_graphId: GraphIdentifier, _nodeId: NodeIdentifier): void {
-    // Node type descriptions are now tracked via GraphController.topologyVersion,
-    // so no event dispatch is needed here.
   }
 
   async #getDescriber(
@@ -218,12 +187,4 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
       outputSchema: edgesToSchema(EdgeType.Out, outgoing),
     } satisfies NodeDescriberResult;
   }
-}
-
-function sameMetadata(a: NodeDescriberResult, b: NodeDescriberResult) {
-  if (a.title !== b.title) return false;
-  if (a.description !== b.description) return false;
-  if (a.metadata?.icon !== b.metadata?.icon) return false;
-  // TODO: Compare tags and help.
-  return true;
 }
