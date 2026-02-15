@@ -13,10 +13,7 @@ import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
 import { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
 import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing-main.js";
-import {
-  createGraphEditingState,
-  type GraphEditingState,
-} from "./graph-editing-state.js";
+import type { LoopHooks } from "../../../a2/agent/types.js";
 
 export { GraphEditingChat };
 
@@ -28,10 +25,9 @@ type ChatMessage = {
 /**
  * A chat overlay for the graph editing agent.
  *
- * Uses the real `Loop` infrastructure via `invokeGraphEditingAgent`.
- * The overlay creates its own standalone reactive state (ConsoleEntry +
- * AppScreen) and watches it via `SignalWatcher` to reactively render
- * chat messages and input requests from the agent.
+ * The agent loop is persistent — it starts on the first message and runs
+ * for the session lifetime. Between interactions the agent parks on
+ * `wait_for_user_input`, which resolves when the user sends a message.
  */
 @customElement("bb-graph-editing-chat")
 class GraphEditingChat extends SignalWatcher(LitElement) {
@@ -45,24 +41,26 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
   accessor #messages: ChatMessage[] = [];
 
   @state()
-  accessor #running = false;
-
-  @state()
-  accessor #waitingForInput = false;
+  accessor #waiting = false;
 
   @query("#chat-input")
   accessor #inputEl: HTMLInputElement | null = null;
 
   /**
-   * Standalone reactive state for this overlay.
-   * Created fresh for each conversation session.
-   */
-  #editingState: GraphEditingState | null = null;
-
-  /**
-   * AbortController for the current agent loop run.
+   * AbortController for the agent loop.
    */
   #abortController: AbortController | null = null;
+
+  /**
+   * Whether the persistent loop is running.
+   */
+  #loopRunning = false;
+
+  /**
+   * Pending resolve callback — set when the agent calls wait_for_user_input.
+   * Resolved when the user sends a message.
+   */
+  #pendingResolve: ((text: string) => void) | null = null;
 
   static styles = css`
     :host {
@@ -214,6 +212,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
         id="toggle-btn"
         @click=${() => {
           this.#open = true;
+          this.#ensureLoopRunning();
         }}
         title="Graph Editor Agent"
       >
@@ -221,8 +220,9 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       </button>`;
     }
 
-    // Check for agent messages in the console entry's work items
-    this.#syncMessagesFromState();
+    // Input is enabled only when the agent is waiting for user input
+    // (or the loop hasn't started yet)
+    const inputDisabled = this.#loopRunning && !this.#waiting;
 
     return html`
       <div id="chat-panel">
@@ -238,14 +238,12 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
         </div>
         <div id="chat-messages">
           ${this.#messages.length === 0
-            ? html`<div class="message system">
-                Ask me to build or modify the graph.
-              </div>`
+            ? html`<div class="message system">Starting…</div>`
             : nothing}
           ${this.#messages.map(
             (msg) => html`<div class="message ${msg.role}">${msg.text}</div>`
           )}
-          ${this.#running && !this.#waitingForInput
+          ${this.#loopRunning && !this.#waiting
             ? html`<div class="message system">Thinking…</div>`
             : nothing}
         </div>
@@ -254,14 +252,14 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
             id="chat-input"
             type="text"
             placeholder="e.g. Add a generate text step"
-            ?disabled=${this.#running && !this.#waitingForInput}
+            ?disabled=${inputDisabled}
             @keydown=${(e: KeyboardEvent) => {
               if (e.key === "Enter") this.#onSend();
             }}
           />
           <button
             id="send-btn"
-            ?disabled=${this.#running && !this.#waitingForInput}
+            ?disabled=${inputDisabled}
             @click=${this.#onSend}
           >
             Send
@@ -271,61 +269,41 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     `;
   }
 
+  #addMessage(role: ChatMessage["role"], text: string) {
+    this.#messages = [...this.#messages, { role, text }];
+    this.#scrollToBottom();
+  }
+
   /**
-   * Syncs chat messages from the reactive console entry state.
-   * Called during render to pick up new work items pushed by the Loop.
+   * Called by the agent's `wait_for_user_input` function.
+   * Displays the agent's message and returns a Promise that resolves
+   * when the user sends a message.
    */
-  #syncMessagesFromState() {
-    if (!this.#editingState) return;
+  #waitForInput = (agentMessage: string): Promise<string> => {
+    this.#addMessage("model", agentMessage);
+    this.#waiting = true;
+    return new Promise<string>((resolve) => {
+      this.#pendingResolve = resolve;
+    });
+  };
 
-    const { consoleEntry } = this.#editingState;
-
-    // Check if the agent is waiting for input
-    const current = consoleEntry.current;
-    this.#waitingForInput = current?.awaitingUserInput ?? false;
-
-    // Extract text messages from work items
-    const newMessages: ChatMessage[] = [];
-    for (const [, item] of consoleEntry.work) {
-      // Work items with products containing LLMContent are agent messages
-      for (const [, product] of item.product) {
-        if (this.#isLLMContent(product)) {
-          const text = this.#extractText(product);
-          if (text) {
-            newMessages.push({ role: "model", text });
-          }
+  /**
+   * Build LoopHooks that push agent output directly into the chat messages.
+   */
+  #buildHooks(): LoopHooks {
+    return {
+      onThought: (text) => {
+        this.#addMessage("model", text);
+      },
+      onFunctionCall: (part, _icon, title) => {
+        const name = part.functionCall.name;
+        // Don't show wait_for_user_input as a function call — it's invisible
+        if (name !== "wait_for_user_input") {
+          this.#addMessage("system", `Calling ${title ?? name}…`);
         }
-      }
-    }
-
-    // Only update if there are new messages beyond what we already have
-    // (user messages are tracked separately in #messages)
-    if (newMessages.length > this.#lastAgentMessageCount) {
-      // Rebuild messages by interleaving user messages with agent messages
-      // from the work items
-      this.#lastAgentMessageCount = newMessages.length;
-      this.requestUpdate();
-      this.#scrollToBottom();
-    }
-  }
-
-  #lastAgentMessageCount = 0;
-
-  #isLLMContent(value: unknown): value is LLMContent {
-    return (
-      value !== null &&
-      typeof value === "object" &&
-      "parts" in (value as Record<string, unknown>)
-    );
-  }
-
-  #extractText(content: LLMContent): string {
-    return (
-      content.parts
-        ?.map((p) => ("text" in p ? p.text : ""))
-        .filter(Boolean)
-        .join("\n") || ""
-    );
+        return { callId: crypto.randomUUID(), reporter: null };
+      },
+    };
   }
 
   async #onSend() {
@@ -336,76 +314,64 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     if (!text) return;
 
     input.value = "";
+    this.#addMessage("user", text);
 
-    // If we're waiting for input for the agent, resolve it
-    if (this.#waitingForInput && this.#editingState) {
-      this.#messages = [...this.#messages, { role: "user", text }];
-      this.#waitingForInput = false;
-
-      // Resolve the pending input request with LLMContent format
-      this.#editingState.consoleEntry.resolveInput({
-        input: { parts: [{ text }] },
-      });
-      this.#scrollToBottom();
-      return;
+    // All user messages go through the pending resolve
+    if (this.#pendingResolve) {
+      const resolve = this.#pendingResolve;
+      this.#pendingResolve = null;
+      this.#waiting = false;
+      resolve(text);
     }
+  }
 
-    // First message or new conversation — start the agent loop
-    this.#messages = [...this.#messages, { role: "user", text }];
-    this.#running = true;
-    this.#lastAgentMessageCount = 0;
+  /**
+   * Start the persistent loop if it isn't already running.
+   */
+  #ensureLoopRunning() {
+    if (this.#loopRunning) return;
+    this.#loopRunning = true;
 
-    // Create fresh standalone state for this conversation
-    this.#editingState = createGraphEditingState();
-
-    // Build the objective
     const objective: LLMContent = {
-      parts: [{ text }],
+      parts: [
+        {
+          text: "You are a graph editing assistant. Greet the user briefly and call wait_for_user_input to receive their first instruction.",
+        },
+      ],
     };
 
     // Build minimal A2ModuleArgs from SCA services
     const factory = this.sca.services.sandbox as A2ModuleFactory;
 
-    // Abort any previous run
     this.#abortController?.abort();
     this.#abortController = new AbortController();
 
     const context = {
       fetchWithCreds: this.sca.services.fetchWithCreds,
-      getProjectRunState: () => this.#editingState!.projectRunState,
-      currentStep: { id: this.#editingState.stepId, type: "graph-editing" },
+      currentStep: { id: "graph-editing", type: "graph-editing" },
       signal: this.#abortController.signal,
     };
 
     const moduleArgs = factory.createModuleArgs(context);
 
-    try {
-      const result = await invokeGraphEditingAgent(
-        objective,
-        moduleArgs,
-        this.sca.services.graphEditingActions
-      );
-
-      // Agent loop completed
-      this.#running = false;
-
-      if (result && "$error" in result) {
-        this.#messages = [
-          ...this.#messages,
-          { role: "system", text: `Error: ${result.$error}` },
-        ];
-      } else {
-        this.#messages = [...this.#messages, { role: "system", text: "Done." }];
-      }
-    } catch (e) {
-      this.#running = false;
-      this.#messages = [
-        ...this.#messages,
-        { role: "system", text: `Error: ${(e as Error).message}` },
-      ];
-    }
-
-    this.#scrollToBottom();
+    // Fire and forget — the loop runs until abort
+    invokeGraphEditingAgent(
+      objective,
+      moduleArgs,
+      this.sca.services.graphEditingActions,
+      this.#waitForInput,
+      this.#buildHooks()
+    )
+      .then((result) => {
+        this.#loopRunning = false;
+        if (result && "$error" in result) {
+          this.#addMessage("system", `Error: ${result.$error}`);
+        }
+      })
+      .catch((e) => {
+        this.#loopRunning = false;
+        this.#addMessage("system", `Error: ${(e as Error).message}`);
+      });
   }
 
   #scrollToBottom() {

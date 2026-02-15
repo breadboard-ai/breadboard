@@ -9,29 +9,33 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Loop, AgentResult } from "./loop.js";
 import { buildGraphEditingFunctionGroups } from "./graph-editing-configurator.js";
 import type { GraphEditingActions } from "../runnable-module-factory.js";
+import type { LoopHooks } from "./types.js";
 
 export { invokeGraphEditingAgent };
 
 /**
- * Creates and runs a graph editing agent loop.
+ * Creates and runs a persistent graph editing agent loop.
  *
- * Unlike the content generation agent (which uses buildAgentRun for full
- * infrastructure), this agent uses the Loop directly with minimal setup —
- * no pidgin translation, no run state, no progress UI, no termination
- * callbacks. The loop runs until the signal aborts it.
+ * The loop runs indefinitely — the agent parks on `wait_for_user_input`
+ * between interactions and resumes when the user sends a message.
+ * The only way to end it is via signal abort.
  */
 async function invokeGraphEditingAgent(
   objective: LLMContent,
   moduleArgs: A2ModuleArgs,
-  graphEditingActions: GraphEditingActions
+  graphEditingActions: GraphEditingActions,
+  waitForInput: (agentMessage: string) => Promise<string>,
+  hooks?: LoopHooks
 ): Promise<Outcome<AgentResult>> {
   const functionGroups = buildGraphEditingFunctionGroups({
     graphEditingActions,
+    waitForInput,
   });
   const loop = new Loop(moduleArgs);
 
   return loop.run({
     objective,
     functionGroups,
+    hooks,
   });
 }
