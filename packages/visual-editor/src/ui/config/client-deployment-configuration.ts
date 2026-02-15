@@ -31,6 +31,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
   enableNotebookLm: false,
+  enableGraphEditorAgent: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

@@ -14,12 +14,12 @@ import type {
   FunctionGroupConfigurator,
   LoopDeps,
   FunctionGroupConfiguratorFlags,
-} from "../../../src/a2/agent/loop.js";
-import type { FunctionGroup } from "../../../src/a2/agent/types.js";
+  FunctionGroup,
+} from "../../../src/a2/agent/types.js";
 
 session({ name: "Agent" }, async (session) => {
   // Need to import dynamically to let the mocks do their job.
-  const Loop = (await import("../../../src/a2/agent/loop.js")).Loop;
+  const { buildAgentRun } = await import("../../../src/a2/agent/loop-setup.js");
   const { createAgentConfigurator } =
     await import("../../../src/a2/agent/agent-function-configurator.js");
   const { streamGenerateContent, conformGeminiBody } =
@@ -95,8 +95,17 @@ session({ name: "Agent" }, async (session) => {
           configureFn = agentConfigurator;
         }
 
-        const loop = new Loop(caps, moduleArgs, configureFn);
-        const result = await loop.run({ objective, params: {}, uiType });
+        const setup = await buildAgentRun({
+          objective,
+          params: {},
+          caps,
+          moduleArgs,
+          configureFn,
+          uiType,
+        });
+        if (!ok(setup)) return setup;
+        const { loop, runArgs } = setup;
+        const result = await loop.run(runArgs);
 
         if (simulatedUser) {
           await simulatedUser.close();

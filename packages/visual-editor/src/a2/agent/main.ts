@@ -15,7 +15,7 @@ import { ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { Loop } from "./loop.js";
+import { buildAgentRun } from "./loop-setup.js";
 import { createAgentConfigurator } from "./agent-function-configurator.js";
 import { readFlags } from "../a2/settings.js";
 import { conformGeminiBody, streamGenerateContent } from "../a2/gemini.js";
@@ -54,22 +54,22 @@ function computeAgentSchema(
   const uiPromptSchema: Schema["properties"] =
     flags?.consistentUI && enableA2UI
       ? {
-        "b-ui-prompt": {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "UI Layout instructions",
-          description: "Instructions for UI layout",
-        },
-      }
+          "b-ui-prompt": {
+            type: "object",
+            behavior: ["llm-content", "config", "hint-advanced"],
+            title: "UI Layout instructions",
+            description: "Instructions for UI layout",
+          },
+        }
       : {};
   const uiConsistent: Schema["properties"] = flags?.consistentUI
     ? {
-      "b-ui-consistent": {
-        type: "boolean",
-        title: "Use A2UI",
-        behavior: ["config", "hint-advanced", "reactive"],
-      },
-    }
+        "b-ui-consistent": {
+          type: "boolean",
+          title: "Use A2UI",
+          behavior: ["config", "hint-advanced", "reactive"],
+        },
+      }
     : {};
   return {
     config$prompt: {
@@ -83,7 +83,10 @@ function computeAgentSchema(
   } satisfies Schema["properties"];
 }
 
-export async function toAgentOutputs(results?: LLMContent, href?: string): Promise<AgentOutputs> {
+export async function toAgentOutputs(
+  results?: LLMContent,
+  href?: string
+): Promise<AgentOutputs> {
   const context: LLMContent[] = [];
   if (results) {
     context.push(results);
@@ -110,13 +113,18 @@ async function invokeAgent(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
   const configureFn = createAgentConfigurator(caps, moduleArgs, generators);
-  const loop = new Loop(caps, moduleArgs, configureFn);
-  const result = await loop.run({
+  const setup = await buildAgentRun({
     objective,
     params,
+    caps,
+    moduleArgs,
+    configureFn,
     uiType: enableA2UI ? "a2ui" : "chat",
     uiPrompt,
   });
+  if (!ok(setup)) return setup;
+  const { loop, runArgs } = setup;
+  const result = await loop.run(runArgs);
   if (!ok(result)) return result;
   console.log("LOOP", result);
   return toAgentOutputs(result.outcomes, result.href);

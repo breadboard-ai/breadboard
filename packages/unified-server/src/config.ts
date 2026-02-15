@@ -81,6 +81,7 @@ export async function createClientConfig(opts: {
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
       enableNotebookLm: flags.ENABLE_NOTEBOOK_LM,
       enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
+      enableGraphEditorAgent: flags.ENABLE_GRAPH_EDITOR_AGENT,
     },
   };
 }

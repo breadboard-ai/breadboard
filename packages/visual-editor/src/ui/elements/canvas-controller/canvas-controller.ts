@@ -57,6 +57,7 @@ const focusAppControllerWhenIn = ["canvas", "preview"];
 
 import "./empty-state.js";
 import "../../flow-gen/flowgen-editor-input.js";
+import "../../elements/graph-editing-chat/graph-editing-chat.js";
 import { isEmpty } from "../../utils/utils.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
@@ -465,9 +466,15 @@ export class CanvasController extends SignalWatcher(LitElement) {
             : html`<bb-empty-state narrow></bb-empty-state>`}
           ${!gc.graphIsMine
             ? nothing
-            : html`<bb-flowgen-editor-input
-                .hasEmptyGraph=${graphIsEmpty}
-              ></bb-flowgen-editor-input>`}
+            : this.sca.controller.global.flags.enableGraphEditorAgent
+              ? html`<bb-graph-editing-chat
+                  @pointerdown=${(evt: PointerEvent) => {
+                    evt.stopPropagation();
+                  }}
+                ></bb-graph-editing-chat>`
+              : html`<bb-flowgen-editor-input
+                  .hasEmptyGraph=${graphIsEmpty}
+                ></bb-flowgen-editor-input>`}
         </section>`;
 
     const screenSize = this.sca.controller.global.screenSize.size;
