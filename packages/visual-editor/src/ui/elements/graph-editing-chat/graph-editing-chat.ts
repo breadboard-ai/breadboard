@@ -15,7 +15,7 @@ import type { LLMContent } from "@breadboard-ai/types";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
 import { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
-import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing-main.js";
+import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing/main.js";
 import type { LoopHooks } from "../../../a2/agent/types.js";
 import { parseThought } from "../../../a2/agent/thought-parser.js";
 import { markdown } from "../../directives/markdown.js";

@@ -5,9 +5,9 @@
  */
 
 import z from "zod";
-import { getGraphEditingFunctionGroup } from "./functions/graph-editing.js";
-import { defineFunction, mapDefinitions } from "./function-definition.js";
-import type { FunctionGroup } from "./types.js";
+import { getGraphEditingFunctionGroup } from "./functions.js";
+import { defineFunction, mapDefinitions } from "../function-definition.js";
+import type { FunctionGroup } from "../types.js";
 
 export { buildGraphEditingFunctionGroups };
 

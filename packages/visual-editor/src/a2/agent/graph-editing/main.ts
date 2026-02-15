@@ -5,10 +5,10 @@
  */
 
 import { LLMContent, Outcome } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { Loop, AgentResult } from "./loop.js";
-import { buildGraphEditingFunctionGroups } from "./graph-editing-configurator.js";
-import type { LoopHooks } from "./types.js";
+import { A2ModuleArgs } from "../../runnable-module-factory.js";
+import { Loop, AgentResult } from "../loop.js";
+import { buildGraphEditingFunctionGroups } from "./configurator.js";
+import type { LoopHooks } from "../types.js";
 
 export { invokeGraphEditingAgent };
 
