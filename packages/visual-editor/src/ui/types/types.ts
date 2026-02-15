@@ -24,7 +24,6 @@ import type {
   GraphMetadata,
   InlineDataCapabilityPart,
   LLMContent,
-  ModuleIdentifier,
   RuntimeFlags,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
@@ -280,7 +279,6 @@ export interface WorkspaceVisualStateWithChangeId {
 export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
 export type WorkspaceSelectionState = {
   graphs: Map<GraphIdentifier, GraphSelectionState>;
-  modules: Set<ModuleIdentifier>;
 };
 export interface WorkspaceSelectionStateWithChangeId {
   selectionChangeId: WorkspaceSelectionChangeId;

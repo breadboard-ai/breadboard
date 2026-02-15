@@ -36,7 +36,6 @@ export class RemoveEdge implements EditOperation {
         { id: spec.from, graphId },
         { id: spec.to, graphId },
       ],
-      affectedModules: [],
       affectedGraphs: [],
       topologyChange: true,
     };
@@ -80,7 +79,6 @@ export class RemoveEdge implements EditOperation {
         { id: edge.from, graphId },
         { id: edge.to, graphId },
       ],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };

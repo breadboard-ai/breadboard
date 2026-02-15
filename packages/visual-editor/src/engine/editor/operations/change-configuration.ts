@@ -29,7 +29,6 @@ export class ChangeConfiguration implements EditOperation {
     return {
       success: true,
       affectedNodes: [],
-      affectedModules: [],
       affectedGraphs: [],
     };
   }
@@ -74,7 +73,6 @@ export class ChangeConfiguration implements EditOperation {
     return {
       success: true,
       affectedNodes: [{ id, graphId }],
-      affectedModules: [],
       affectedGraphs: [graphId],
     };
   }

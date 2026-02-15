@@ -15,7 +15,6 @@ import {
   GraphMetadata,
   InputValues,
   KitDescriptor,
-  ModuleIdentifier,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
@@ -398,5 +397,4 @@ export type RunArguments = NodeHandlerContext & {
 export type GraphToRun = {
   graph: GraphDescriptor;
   subGraphId?: GraphIdentifier;
-  moduleId?: ModuleIdentifier;
 };

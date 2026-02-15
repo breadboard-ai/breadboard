@@ -17,10 +17,6 @@ import {
   GraphMetadata,
   InputValues,
   KitDescriptor,
-  Module,
-  ModuleCode,
-  ModuleIdentifier,
-  ModuleMetadata,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
@@ -317,30 +313,6 @@ export type InspectableGraph = {
    */
   graphId(): GraphIdentifier;
   /**
-   * Returns a module by name.
-   */
-  moduleById(id: ModuleIdentifier): InspectableModule | undefined;
-  /**
-   * Returns the modules that are embedded in this graph.
-   */
-  modules(): InspectableModules;
-  /**
-   * Returns true if the graph represents an `ImperativeGraph` instance.
-   * Imperative `InspectableGraph` will still show nodes and edges, but
-   * it is just a fixed topology that represents how the graph is run.
-   */
-  imperative(): boolean;
-  /**
-   * Returns the name of the designated "main" module if this is an
-   * `ImperativeGraph` instance and `undefined` if it is not yet set or
-   * this is a `DeclarativeGraph` instance.
-   */
-  main(): string | undefined;
-  /**
-   * Returns all module exports
-   */
-  moduleExports(): Set<ModuleIdentifier>;
-  /**
    * Returns all graph exports
    */
   graphExports(): Set<GraphIdentifier>;
@@ -623,20 +595,6 @@ export type InspectableNodeType = {
   ports(): Promise<InspectableNodePorts>;
 };
 
-export type InspectableModule = {
-  /**
-   * Returns the metadata, associated with this node type.
-   */
-  metadata(): ModuleMetadata;
-
-  /**
-   *
-   */
-  code(): ModuleCode;
-};
-
-export type InspectableModules = Record<ModuleIdentifier, InspectableModule>;
-
 export type NodeStoreMutator = {
   add(node: NodeDescriptor, graphId: GraphIdentifier): void;
   remove(id: NodeIdentifier, graphId: GraphIdentifier): void;
@@ -666,14 +624,6 @@ export type InspectableNodeCache = NodeStoreMutator & {
     graphId: GraphIdentifier
   ): InspectableNode | undefined;
   nodes(graphId: GraphIdentifier): InspectableNode[];
-  rebuild(graph: GraphDescriptor): void;
-};
-
-export type InspectableModuleCache = {
-  get(id: string): InspectableModule | undefined;
-  add(id: string, module: Module): void;
-  remove(id: ModuleIdentifier): void;
-  modules(): InspectableModules;
   rebuild(graph: GraphDescriptor): void;
 };
 
@@ -777,7 +727,6 @@ export type MutableGraph = {
   readonly store: MutableGraphStore;
   readonly nodes: InspectableNodeCache;
   readonly edges: InspectableEdgeCache;
-  readonly modules: InspectableModuleCache;
   readonly describe: InspectableDescriberResultCache;
 
   readonly ports: InspectablePortCache;
@@ -787,7 +736,6 @@ export type MutableGraph = {
     graph: GraphDescriptor,
     visualOnly: boolean,
     affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[],
     topologyChange: boolean
   ): void;
 

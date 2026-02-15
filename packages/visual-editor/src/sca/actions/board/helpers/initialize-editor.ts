@@ -10,7 +10,6 @@ import type {
   GraphDescriptor,
   GraphIdentifier,
   GraphStoreArgs,
-  ModuleIdentifier,
   OutputValues,
 } from "@breadboard-ai/types";
 import { Graph as GraphEditor } from "../../../../engine/editor/graph.js";
@@ -23,8 +22,6 @@ import { MutableGraphImpl } from "../../../../engine/inspector/graph/mutable-gra
 export interface InitializeEditorOptions {
   /** The prepared graph to edit */
   graph: GraphDescriptor;
-  /** The resolved module ID */
-  moduleId: ModuleIdentifier | null;
   /** The resolved subgraph ID */
   subGraphId: GraphIdentifier | null;
   /** The URL the graph was loaded from */

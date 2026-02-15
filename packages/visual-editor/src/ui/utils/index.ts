@@ -16,7 +16,6 @@ export {
   isLLMContentArrayBehavior,
   behaviorsMatch,
   isConfigurableBehavior,
-  isModuleBehavior,
   isTextBehavior,
 } from "./behaviors.js";
 

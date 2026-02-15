@@ -13,7 +13,6 @@ import type {
   GraphDescriptor,
   GraphIdentifier,
   NoChangeRejection,
-  NodeIdentifier,
 } from "@breadboard-ai/types";
 
 /**
@@ -27,7 +26,6 @@ export class ChangeEvent extends Event implements GraphChangeEvent {
     public readonly visualOnly: boolean,
     public readonly changeType: ChangeEventType,
     public readonly affectedNodes: AffectedNode[],
-    public readonly affectedModules: NodeIdentifier[],
     public readonly affectedGraphs: GraphIdentifier[],
     public readonly topologyChange: boolean,
     public readonly integrationsChange: boolean,

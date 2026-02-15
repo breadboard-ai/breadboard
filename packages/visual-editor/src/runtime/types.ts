@@ -17,7 +17,6 @@ import {
   GraphIdentifier,
   GraphMetadata,
   MainGraphIdentifier,
-  ModuleIdentifier,
   NodeIdentifier,
   PortIdentifier,
 } from "@breadboard-ai/types";
@@ -43,7 +42,6 @@ export interface Tab {
   graph: GraphDescriptor;
   graphIsMine: boolean;
   subGraphId: string | null;
-  moduleId: ModuleIdentifier | null;
   version: number;
   lastLoadedVersion: number;
   readOnly: boolean;
@@ -110,7 +108,6 @@ export interface WorkspaceVisualStateWithChangeId {
 export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
 export type WorkspaceSelectionState = {
   graphs: Map<GraphIdentifier, GraphSelectionState>;
-  modules: Set<ModuleIdentifier>;
 };
 export interface WorkspaceSelectionStateWithChangeId {
   selectionChangeId: WorkspaceSelectionChangeId;

@@ -38,7 +38,6 @@ class AddGraph implements EditOperation {
 
     return {
       success: true,
-      affectedModules: [],
       affectedNodes: [],
       affectedGraphs: [id],
     };

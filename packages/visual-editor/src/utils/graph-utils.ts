@@ -82,7 +82,6 @@ export function createWorkspaceSelectionChangeId(): WorkspaceSelectionChangeId {
 export function createEmptyWorkspaceSelectionState(): WorkspaceSelectionState {
   return {
     graphs: new Map(),
-    modules: new Set(),
   };
 }
 
@@ -781,7 +780,6 @@ function selectionFromFlat(s: Selection): WorkspaceSelectionState {
         },
       ],
     ]),
-    modules: new Set(),
   };
 }
 

@@ -38,10 +38,6 @@ export function isLLMContentBehavior(schema: Schema): boolean {
   return schema.behavior?.includes("llm-content") ?? false;
 }
 
-export function isModuleBehavior(schema: Schema): boolean {
-  return schema.behavior?.includes("module") ?? false;
-}
-
 export function isConfigurableBehavior(schema: Schema): boolean {
   return schema.behavior?.includes("config") ?? false;
 }

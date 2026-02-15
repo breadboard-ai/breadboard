@@ -34,7 +34,6 @@ class UpsertInteration implements EditOperation {
     return {
       success: true,
       affectedGraphs: [],
-      affectedModules: [],
       affectedNodes: [],
       integrationsChange: true,
     };

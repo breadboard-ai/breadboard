@@ -110,7 +110,6 @@ suite("initialize-editor helpers", () => {
 
     const result = initializeEditor(graphController, {
       graph,
-      moduleId: null,
       subGraphId: null,
       url: "https://example.com/board.json",
       readOnly: false,
@@ -137,7 +136,6 @@ suite("initialize-editor helpers", () => {
 
     initializeEditor(graphController, {
       graph,
-      moduleId: null,
       subGraphId: null,
       url: "https://example.com/board.json",
       readOnly: true,

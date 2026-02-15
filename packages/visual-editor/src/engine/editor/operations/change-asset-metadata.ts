@@ -62,7 +62,6 @@ class ChangeAssetMetadata implements EditOperation {
       visualOnly,
       success: true,
       affectedGraphs: [],
-      affectedModules: [],
       affectedNodes: [],
     };
   }

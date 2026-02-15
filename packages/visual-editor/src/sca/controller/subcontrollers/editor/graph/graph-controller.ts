@@ -366,7 +366,6 @@ export class GraphController
       boardServer: null,
       lastLoadedVersion: this.lastLoadedVersion,
       mainGraphId: this.mainGraphId,
-      moduleId: null,
       name: this._graph.title ?? "Untitled app",
       subGraphId: null,
       type: 0,
