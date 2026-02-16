@@ -20,7 +20,7 @@ import {
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
-import { UILoadState } from "../../state/types.js";
+import { UILoadState } from "../../types/state-types.js";
 import * as Styles from "../../styles/styles.js";
 import {
   ActionTracker,

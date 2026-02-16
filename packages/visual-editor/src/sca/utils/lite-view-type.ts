@@ -5,7 +5,7 @@
  */
 
 import type { SCA } from "../sca.js";
-import type { LiteModeType } from "../../ui/state/types.js";
+import type { LiteModeType } from "../types.js";
 import { Utils } from "../utils.js";
 
 /**

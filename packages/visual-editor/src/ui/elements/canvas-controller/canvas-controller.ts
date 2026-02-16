@@ -34,7 +34,7 @@ import {
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
 import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
-import { RendererRunState } from "../../state/types.js";
+import { RendererRunState } from "../../../sca/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
 import "../../lite/step-list-view/step-list-view.js";

@@ -18,6 +18,7 @@ import {
   createReporter,
 } from "../agent/progress-work-item.js";
 import { err, progressFromThought, toLLMContentInline } from "./utils.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 const STREAM_BACKEND_ENDPOINT = new URL(
@@ -238,7 +239,7 @@ async function executeWebpageStream(
 
           if (appScreen) {
             appScreen.progress = progressFromThought(text);
-            appScreen.expectedDuration = -1;
+            setScreenDuration(appScreen, -1);
           }
 
           reporter.addText(`Thinking (${thoughtCount})`, text, "spark");
@@ -262,7 +263,7 @@ async function executeWebpageStream(
   } finally {
     if (appScreen) {
       appScreen.progress = undefined;
-      appScreen.expectedDuration = -1;
+      setScreenDuration(appScreen, -1);
     }
     reporter.finish();
   }

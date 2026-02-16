@@ -10,7 +10,7 @@ import {
   AssetPath,
   LLMContent,
 } from "@breadboard-ai/types";
-import { GraphAsset } from "./types.js";
+import type { GraphAsset } from "../types.js";
 
 export { GraphAssetImpl };
 

@@ -8,6 +8,7 @@ import {
 } from "../agent/progress-work-item.js";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import {
   Capabilities,
   LLMContent,
@@ -496,7 +497,7 @@ async function callAPI(
     reporter.addJson("Model Input", conformedBody, "upload");
     if (appScreen) {
       appScreen.progress = title;
-      appScreen.expectedDuration = calculateDuration(model);
+      setScreenDuration(appScreen, calculateDuration(model));
     }
 
     let $error: string = "Unknown error";

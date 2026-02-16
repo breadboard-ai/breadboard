@@ -7,7 +7,7 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, suite, test } from "node:test";
 import { AppScreenPresenter } from "../../../src/ui/presenters/app-screen-presenter.js";
-import { ReactiveAppScreen } from "../../../src/ui/state/app-screen.js";
+import { createAppScreen } from "../../../src/sca/utils/app-screen.js";
 import { ScreenController } from "../../../src/sca/controller/subcontrollers/run/screen-controller.js";
 import { RunController } from "../../../src/sca/controller/subcontrollers/run/run-controller.js";
 import { RendererController } from "../../../src/sca/controller/subcontrollers/run/renderer-controller.js";
@@ -89,7 +89,7 @@ suite("AppScreenPresenter state derivation", () => {
     const presenter = new AppScreenPresenter();
     presenter.connect(sca);
 
-    const appScreen = new ReactiveAppScreen("Test", undefined);
+    const appScreen = createAppScreen("Test", undefined);
     screen.setScreen("node-1", appScreen);
     await flush();
 
@@ -105,9 +105,9 @@ suite("AppScreenPresenter state derivation", () => {
     const presenter = new AppScreenPresenter();
     presenter.connect(sca);
 
-    const appScreen = new ReactiveAppScreen("Test", undefined);
-    screen.setScreen("node-1", appScreen);
-    appScreen.finalize({
+    screen.setScreen("node-1", createAppScreen("Test", undefined));
+    // After setScreen, use the wrapped reference from the controller.
+    screen.screens.get("node-1")!.finalize({
       outputs: {},
       path: [0],
       node: { id: "node-1", type: "test" },
@@ -131,7 +131,7 @@ suite("AppScreenPresenter state derivation", () => {
     presenter.connect(sca);
 
     // Need at least one screen for `last` to be non-null
-    screen.setScreen("node-1", new ReactiveAppScreen("Test", undefined));
+    screen.setScreen("node-1", createAppScreen("Test", undefined));
     await flush();
 
     assert.strictEqual(presenter.state, "error");
@@ -144,7 +144,7 @@ suite("AppScreenPresenter state derivation", () => {
     const presenter = new AppScreenPresenter();
     presenter.connect(sca);
 
-    screen.setScreen("node-1", new ReactiveAppScreen("Test", undefined));
+    screen.setScreen("node-1", createAppScreen("Test", undefined));
     await flush();
 
     assert.strictEqual(presenter.state, "input");
@@ -167,12 +167,13 @@ suite("AppScreenPresenter current and last", () => {
     const presenter = new AppScreenPresenter();
     presenter.connect(sca);
 
-    const screen1 = new ReactiveAppScreen("A", undefined);
-    const screen2 = new ReactiveAppScreen("B", undefined);
+    const screen1 = createAppScreen("A", undefined);
+    const screen2 = createAppScreen("B", undefined);
     screen.setScreen("node-1", screen1);
     screen.setScreen("node-2", screen2);
 
-    screen1.finalize({
+    // After setScreen, must use the wrapped reference from the controller.
+    screen.screens.get("node-1")!.finalize({
       outputs: {},
       path: [0],
       node: { id: "node-1", type: "test" },
@@ -194,13 +195,15 @@ suite("AppScreenPresenter current and last", () => {
     const presenter = new AppScreenPresenter();
     presenter.connect(sca);
 
-    const screen1 = new ReactiveAppScreen("A", undefined);
-    const screen2 = new ReactiveAppScreen("B", undefined);
+    const screen1 = createAppScreen("A", undefined);
+    const screen2 = createAppScreen("B", undefined);
     screen.setScreen("node-1", screen1);
     screen.setScreen("node-2", screen2);
     await flush();
 
-    assert.strictEqual(presenter.last, screen2);
+    // setScreen wraps the POJO into a SignalObject, so compare against
+    // the wrapped reference from the controller, not the original POJO.
+    assert.strictEqual(presenter.last, screen.screens.get("node-2"));
 
     presenter.disconnect();
   });
@@ -210,7 +213,7 @@ suite("AppScreenPresenter current and last", () => {
     const presenter = new AppScreenPresenter();
     presenter.connect(sca);
 
-    screen.setScreen("node-1", new ReactiveAppScreen("Test", undefined));
+    screen.setScreen("node-1", createAppScreen("Test", undefined));
     await flush();
 
     presenter.disconnect();
@@ -218,5 +221,45 @@ suite("AppScreenPresenter current and last", () => {
     assert.strictEqual(presenter.state, "splash");
     assert.strictEqual(presenter.current.size, 0);
     assert.strictEqual(presenter.last, null);
+  });
+
+  test("state is interactive when a screen has a2ui and interactive status", async () => {
+    const { sca, screen } = makeMockSCA();
+    const presenter = new AppScreenPresenter();
+    presenter.connect(sca);
+
+    screen.setScreen("node-1", createAppScreen("Interactive Test", undefined));
+
+    // Mutate the wrapped screen to simulate an interactive state
+    const wrappedScreen = screen.screens.get("node-1")!;
+    wrappedScreen.status = "interactive";
+    wrappedScreen.last = {
+      output: {},
+      schema: undefined,
+      a2ui: { type: "test" },
+    } as never;
+    await flush();
+
+    assert.strictEqual(presenter.state, "interactive");
+
+    presenter.disconnect();
+  });
+
+  test("connect is idempotent", async () => {
+    const { sca, screen } = makeMockSCA();
+    const presenter = new AppScreenPresenter();
+
+    presenter.connect(sca);
+    await flush();
+
+    // Calling connect again should not create duplicate effects
+    presenter.connect(sca);
+    screen.setScreen("node-1", createAppScreen("Test", undefined));
+    await flush();
+
+    assert.strictEqual(presenter.current.size, 1);
+
+    presenter.disconnect();
+    assert.strictEqual(presenter.state, "splash");
   });
 });

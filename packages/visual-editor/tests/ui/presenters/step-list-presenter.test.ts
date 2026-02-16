@@ -220,4 +220,418 @@ describe("StepListPresenter", () => {
     // Should only need one disconnect
     assert.strictEqual(presenter.steps.size, 0);
   });
+
+  test("maps 'waiting' status to 'working'", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Waiting",
+      status: { status: "waiting" } as unknown as NodeRunState,
+    });
+    sca.controller.run.main.setConsoleEntry("node-wait", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("node-wait")?.status, "working");
+    presenter.disconnect();
+  });
+
+  test("maps 'working' status to 'working'", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Working",
+      status: { status: "working" } as unknown as NodeRunState,
+    });
+    sca.controller.run.main.setConsoleEntry("node-work", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("node-work")?.status, "working");
+    presenter.disconnect();
+  });
+
+  test("maps 'succeeded' status to 'complete'", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Succeeded",
+      status: { status: "succeeded" } as unknown as NodeRunState,
+    });
+    sca.controller.run.main.setConsoleEntry("node-ok", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("node-ok")?.status, "complete");
+    presenter.disconnect();
+  });
+
+  test("maps 'inactive' status to 'ready'", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Inactive",
+      status: { status: "inactive" } as unknown as NodeRunState,
+    });
+    sca.controller.run.main.setConsoleEntry("node-inact", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("node-inact")?.status, "ready");
+    presenter.disconnect();
+  });
+
+  test("maps 'ready' status to 'ready'", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Ready",
+      status: { status: "ready" } as unknown as NodeRunState,
+    });
+    sca.controller.run.main.setConsoleEntry("node-ready", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("node-ready")?.status, "ready");
+    presenter.disconnect();
+  });
+
+  test("maps 'failed' status to 'complete'", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Failed",
+      status: { status: "failed" } as unknown as NodeRunState,
+    });
+    sca.controller.run.main.setConsoleEntry("node-fail", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("node-fail")?.status, "complete");
+    presenter.disconnect();
+  });
+
+  test("maps 'skipped' status to 'complete'", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Skipped",
+      status: { status: "skipped" } as unknown as NodeRunState,
+    });
+    sca.controller.run.main.setConsoleEntry("node-skip", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("node-skip")?.status, "complete");
+    presenter.disconnect();
+  });
+
+  test("maps 'interrupted' status to 'complete'", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Interrupted",
+      status: { status: "interrupted" } as unknown as NodeRunState,
+    });
+    sca.controller.run.main.setConsoleEntry("node-int", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("node-int")?.status, "complete");
+    presenter.disconnect();
+  });
+
+  test("flowgen generating status overrides to 'working'", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    // Set flowgen to generating
+    (
+      sca.controller.global.flowgenInput as { state: { status: string } }
+    ).state.status = "generating";
+
+    const entry = mockConsoleEntry({
+      title: "Node",
+      status: { status: "inactive" } as unknown as NodeRunState,
+    });
+    sca.controller.run.main.setConsoleEntry("node-fg", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(
+      presenter.steps.get("node-fg")?.status,
+      "working",
+      "generating status should override to 'working'"
+    );
+    presenter.disconnect();
+  });
+
+  test("input entry extracts prompt from output values", async () => {
+    const sca = makeMockSCA();
+    const presenter = new StepListPresenter();
+
+    const outputMap = new Map([
+      ["key", { parts: [{ text: "What is your name?" }] }],
+    ]);
+
+    const entry = mockConsoleEntry({
+      title: "User Input",
+      tags: ["input"],
+      output: outputMap as never,
+    });
+    sca.controller.run.main.setConsoleEntry("input-prompt", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(
+      presenter.steps.get("input-prompt")?.prompt,
+      "What is your name?"
+    );
+    presenter.disconnect();
+  });
+
+  test("non-input entry gets prompt from graph node step_intent", async () => {
+    const sca = makeMockSCA();
+    // Set up a graph with a node that has step_intent metadata
+    const graph = {
+      nodes: [
+        {
+          id: "gen-node",
+          type: "generate",
+          metadata: { step_intent: "Summarize the document" },
+        },
+      ],
+    };
+    (sca.controller.editor.graph as { editor: { raw: () => unknown } }).editor =
+      {
+        raw: () => graph,
+      };
+
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Generate",
+      tags: ["generate"],
+    });
+    sca.controller.run.main.setConsoleEntry("gen-node", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(
+      presenter.steps.get("gen-node")?.prompt,
+      "Summarize the document"
+    );
+    presenter.disconnect();
+  });
+
+  test("non-input entry falls back to config$prompt for prompt", async () => {
+    const sca = makeMockSCA();
+    const graph = {
+      nodes: [
+        {
+          id: "gen-node",
+          type: "generate",
+          configuration: {
+            config$prompt: [{ parts: [{ text: "Config prompt text" }] }],
+          },
+        },
+      ],
+    };
+    (sca.controller.editor.graph as { editor: { raw: () => unknown } }).editor =
+      {
+        raw: () => graph,
+      };
+
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Generate",
+      tags: ["generate"],
+    });
+    sca.controller.run.main.setConsoleEntry("gen-node", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(
+      presenter.steps.get("gen-node")?.prompt,
+      "Config prompt text"
+    );
+    presenter.disconnect();
+  });
+
+  test("non-input entry falls back to text field for prompt", async () => {
+    const sca = makeMockSCA();
+    const graph = {
+      nodes: [
+        {
+          id: "gen-node",
+          type: "generate",
+          configuration: {
+            text: "Plain text prompt",
+          },
+        },
+      ],
+    };
+    (sca.controller.editor.graph as { editor: { raw: () => unknown } }).editor =
+      {
+        raw: () => graph,
+      };
+
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Generate",
+      tags: ["generate"],
+    });
+    sca.controller.run.main.setConsoleEntry("gen-node", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(
+      presenter.steps.get("gen-node")?.prompt,
+      "Plain text prompt"
+    );
+    presenter.disconnect();
+  });
+
+  test("input entry gets label from graph node title config", async () => {
+    const sca = makeMockSCA();
+    const graph = {
+      nodes: [
+        {
+          id: "input-node",
+          type: "input",
+          configuration: {
+            title: "Customer Name",
+          },
+        },
+      ],
+    };
+    (sca.controller.editor.graph as { editor: { raw: () => unknown } }).editor =
+      {
+        raw: () => graph,
+      };
+
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Input",
+      tags: ["input"],
+    });
+    sca.controller.run.main.setConsoleEntry("input-node", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(
+      presenter.steps.get("input-node")?.label,
+      "Customer Name"
+    );
+    presenter.disconnect();
+  });
+
+  test("input entry falls back to description for label", async () => {
+    const sca = makeMockSCA();
+    const graph = {
+      nodes: [
+        {
+          id: "input-node",
+          type: "input",
+          configuration: {
+            description: "Enter your email",
+          },
+        },
+      ],
+    };
+    (sca.controller.editor.graph as { editor: { raw: () => unknown } }).editor =
+      {
+        raw: () => graph,
+      };
+
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Input",
+      tags: ["input"],
+    });
+    sca.controller.run.main.setConsoleEntry("input-node", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(
+      presenter.steps.get("input-node")?.label,
+      "Enter your email"
+    );
+    presenter.disconnect();
+  });
+
+  test("returns empty prompt when graph has no matching node", async () => {
+    const sca = makeMockSCA();
+    const graph = { nodes: [] };
+    (sca.controller.editor.graph as { editor: { raw: () => unknown } }).editor =
+      {
+        raw: () => graph,
+      };
+
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Unknown",
+      tags: ["generate"],
+    });
+    sca.controller.run.main.setConsoleEntry("missing-node", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("missing-node")?.prompt, "");
+    presenter.disconnect();
+  });
+
+  test("returns empty prompt when node has no configuration", async () => {
+    const sca = makeMockSCA();
+    const graph = {
+      nodes: [{ id: "bare-node", type: "test" }],
+    };
+    (sca.controller.editor.graph as { editor: { raw: () => unknown } }).editor =
+      {
+        raw: () => graph,
+      };
+
+    const presenter = new StepListPresenter();
+
+    const entry = mockConsoleEntry({
+      title: "Bare",
+      tags: ["generate"],
+    });
+    sca.controller.run.main.setConsoleEntry("bare-node", entry);
+
+    presenter.connect(sca);
+    await flushEffects();
+
+    assert.strictEqual(presenter.steps.get("bare-node")?.prompt, "");
+    presenter.disconnect();
+  });
 });

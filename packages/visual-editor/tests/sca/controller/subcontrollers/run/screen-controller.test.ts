@@ -7,7 +7,7 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, suite, test } from "node:test";
 import { ScreenController } from "../../../../../src/sca/controller/subcontrollers/run/screen-controller.js";
-import { ReactiveAppScreen } from "../../../../../src/ui/state/app-screen.js";
+import { createAppScreen } from "../../../../../src/sca/utils/app-screen.js";
 import { setDOM, unsetDOM } from "../../../../fake-dom.js";
 
 /**
@@ -36,23 +36,26 @@ suite("ScreenController screen management", () => {
     const controller = new ScreenController("ScreenTest_2", "ScreenController");
     await controller.isHydrated;
 
-    const screen = new ReactiveAppScreen("Test Node", undefined);
+    const screen = createAppScreen("Test Node", undefined);
     controller.setScreen("node-1", screen);
     await controller.isSettled;
 
     assert.strictEqual(controller.screens.size, 1);
-    assert.strictEqual(controller.screens.get("node-1"), screen);
+    assert.ok(controller.screens.has("node-1"));
+    // DeepSignalMap wraps on set(), so the stored value is a SignalObject.
+    // Verify content identity via title.
+    assert.strictEqual(controller.screens.get("node-1")?.title, "Test Node");
   });
 
   test("screens.get returns screen by id", async () => {
     const controller = new ScreenController("ScreenTest_3", "ScreenController");
     await controller.isHydrated;
 
-    const screen = new ReactiveAppScreen("Test Node", undefined);
+    const screen = createAppScreen("Test Node", undefined);
     controller.setScreen("node-1", screen);
     await controller.isSettled;
 
-    assert.strictEqual(controller.screens.get("node-1"), screen);
+    assert.strictEqual(controller.screens.get("node-1")?.title, "Test Node");
     assert.strictEqual(controller.screens.get("node-2"), undefined);
   });
 
@@ -60,7 +63,7 @@ suite("ScreenController screen management", () => {
     const controller = new ScreenController("ScreenTest_4", "ScreenController");
     await controller.isHydrated;
 
-    const screen = new ReactiveAppScreen("Test Node", undefined);
+    const screen = createAppScreen("Test Node", undefined);
     controller.setScreen("node-1", screen);
     await controller.isSettled;
 
@@ -83,8 +86,8 @@ suite("ScreenController screen management", () => {
     const controller = new ScreenController("ScreenTest_6", "ScreenController");
     await controller.isHydrated;
 
-    const screenA = new ReactiveAppScreen("Node A", undefined);
-    const screenB = new ReactiveAppScreen("Node B", undefined);
+    const screenA = createAppScreen("Node A", undefined);
+    const screenB = createAppScreen("Node B", undefined);
     controller.setScreen("node-a", screenA);
     controller.setScreen("node-b", screenB);
     await controller.isSettled;
@@ -105,7 +108,7 @@ suite("ScreenController screen management", () => {
     const controller = new ScreenController("ScreenTest_7", "ScreenController");
     await controller.isHydrated;
 
-    const screen = new ReactiveAppScreen("Test", undefined);
+    const screen = createAppScreen("Test", undefined);
     controller.setScreen("node-1", screen);
     await controller.isSettled;
 
@@ -130,8 +133,8 @@ suite("ScreenController reset", () => {
     );
     await controller.isHydrated;
 
-    controller.setScreen("node-1", new ReactiveAppScreen("A", undefined));
-    controller.setScreen("node-2", new ReactiveAppScreen("B", undefined));
+    controller.setScreen("node-1", createAppScreen("A", undefined));
+    controller.setScreen("node-2", createAppScreen("B", undefined));
     await controller.isSettled;
 
     controller.reset();

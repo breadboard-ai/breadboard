@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   FileDataPart,
-  JSONPart,
   JsonSerializable,
+  JSONPart,
   LLMContent,
+  OutputValues,
+  Schema,
 } from "@breadboard-ai/types";
-import { OutputValues, Schema } from "@breadboard-ai/types";
+import { getLogger, Formatter } from "./logging/logger.js";
 
 export { idFromPath, toJson, toLLMContentArray, getFirstFileDataPart };
 
@@ -37,8 +39,11 @@ function toLLMContentArray(schema: Schema, values: OutputValues): Products {
   for (const [name, propertySchema] of Object.entries(schema.properties)) {
     const value = values[name];
     if (!value) {
-      console.warn(
-        `Schema specifies property "${name}", but it wasn't supplied`
+      getLogger().log(
+        Formatter.warning(
+          `Schema specifies property "${name}", but it wasn't supplied`
+        ),
+        "toLLMContentArray"
       );
       continue;
     }
@@ -84,7 +89,10 @@ function getFirstFileDataPart(content: LLMContent): FileDataPart | null {
     if (!first || !("fileData" in first)) return null;
     return first;
   } catch {
-    console.warn(`This is likely not LLMContent`, content);
+    getLogger().log(
+      Formatter.warning(`This is likely not LLMContent`),
+      "getFirstFileDataPart"
+    );
   }
   return null;
 }

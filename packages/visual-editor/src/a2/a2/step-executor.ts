@@ -29,6 +29,7 @@ import {
   toLLMContentStored,
 } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 
 const BACKEND_ENDPOINT = new URL("v1beta1/executeStep", OPAL_BACKEND_API_PREFIX)
   .href;
@@ -215,10 +216,12 @@ async function executeStep(
     if (appScreen) {
       appScreen.progress = progressUpdateOptions?.message || title;
       if (progressUpdateOptions?.expectedDurationInSec) {
-        appScreen.expectedDuration =
-          progressUpdateOptions.expectedDurationInSec;
+        setScreenDuration(
+          appScreen,
+          progressUpdateOptions.expectedDurationInSec
+        );
       } else {
-        appScreen.expectedDuration = -1;
+        setScreenDuration(appScreen, -1);
       }
     }
 
@@ -270,7 +273,7 @@ async function executeStep(
     reporter.finish();
     if (appScreen) {
       appScreen.progress = undefined;
-      appScreen.expectedDuration = -1;
+      setScreenDuration(appScreen, -1);
     }
   }
 }

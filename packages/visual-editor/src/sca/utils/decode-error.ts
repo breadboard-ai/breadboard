@@ -5,9 +5,9 @@
  */
 
 import { ErrorResponse, RunError, RunErrorEvent } from "@breadboard-ai/types";
-import { ErrorMetadata } from "../types.js";
-import { formatError } from "../../utils/format-error.js";
-import { ActionTracker } from "../../types/types.js";
+import type { ErrorMetadata } from "../types.js";
+import { formatError } from "./format-error.js";
+import { ActionTracker } from "../../ui/types/types.js";
 
 export { decodeError, decodeErrorData };
 

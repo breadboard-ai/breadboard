@@ -74,6 +74,11 @@ class Controller implements AppController {
         "Editor_Integrations",
         "IntegrationsController"
       ),
+      graphEditingAgent:
+        new Editor.GraphEditingAgent.GraphEditingAgentController(
+          "Editor_GraphEditingAgent",
+          "GraphEditingAgentController"
+        ),
     };
 
     this.home = {
@@ -230,6 +235,7 @@ export interface AppController extends DebuggableAppController {
     theme: Editor.Theme.ThemeController;
     fastAccess: Editor.FastAccess.FastAccessController;
     integrations: Editor.Integrations.IntegrationsController;
+    graphEditingAgent: Editor.GraphEditingAgent.GraphEditingAgentController;
   };
   home: {
     recent: Home.RecentBoardsController;

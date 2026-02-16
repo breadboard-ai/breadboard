@@ -16,6 +16,7 @@ import type { ErrorMetadata } from "../a2/utils.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import type { ProgressReporter } from "./types.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 
 export { ProgressWorkItem, createReporter, getCurrentStepState };
 export type { ProgressReporter };
@@ -136,7 +137,7 @@ class ProgressWorkItem implements WorkItem {
   finish() {
     if (this.screen) {
       this.screen.progress = undefined;
-      this.screen.expectedDuration = -1;
+      setScreenDuration(this.screen, -1);
     }
     this.end = performance.now();
   }
