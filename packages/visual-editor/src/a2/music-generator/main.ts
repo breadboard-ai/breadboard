@@ -2,12 +2,7 @@
  * @fileoverview Generates music output using supplied context.
  */
 
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { type DescriberResult } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
 import {
@@ -46,7 +41,6 @@ function makeMusicInstruction() {
 }
 
 async function callMusicGen(
-  caps: Capabilities,
   args: ExecuteStepArgs,
   prompt: string
 ): Promise<Outcome<LLMContent>> {
@@ -70,7 +64,7 @@ async function callMusicGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, args, body);
+  const response = await executeStep(args, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
@@ -78,7 +72,6 @@ async function callMusicGen(
 
 async function invoke(
   { context, text, ...params }: AudioGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AudioGeneratorOutputs>> {
   context ??= [];
@@ -91,9 +84,8 @@ async function invoke(
     moduleArgs.context.currentGraph
   );
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
@@ -122,7 +114,7 @@ async function invoke(
     icon: "audio_magic_eraser",
   });
   const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
-  const result = await callMusicGen(caps, executeStepArgs, combinedInstruction);
+  const result = await callMusicGen(executeStepArgs, combinedInstruction);
   if (!ok(result)) return result;
   return { context: [result] };
 }
@@ -133,10 +125,7 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { text } }: DescribeInputs,
-  _caps: Capabilities
-) {
+async function describe({ inputs: { text } }: DescribeInputs) {
   const template = new Template(text);
   return {
     inputSchema: {

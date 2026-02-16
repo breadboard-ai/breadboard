@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import type { FunctionGroupConfigurator } from "./types.js";
@@ -22,7 +21,6 @@ import { Generators } from "./types.js";
 export { createAgentConfigurator };
 
 function createAgentConfigurator(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   generators: Generators
 ): FunctionGroupConfigurator {
@@ -43,7 +41,6 @@ function createAgentConfigurator(
     groups.push(
       getGenerateFunctionGroup({
         fileSystem: deps.fileSystem,
-        caps,
         moduleArgs,
         translator: deps.translator,
         taskTreeManager,
@@ -76,7 +73,6 @@ function createAgentConfigurator(
 
     if (flags.uiType === "a2ui") {
       const a2uiFunctionGroup = await getA2UIFunctionGroup({
-        caps,
         moduleArgs,
         fileSystem: deps.fileSystem,
         translator: deps.translator,

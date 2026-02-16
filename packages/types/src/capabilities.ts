@@ -4,80 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystemPath } from "./data.js";
-import { GraphMetadata, NodeMetadata } from "./graph-descriptor.js";
-import { LLMContent } from "./llm-content.js";
+import { GraphMetadata } from "./graph-descriptor.js";
 import { NodeDescriberExport } from "./node-handler.js";
 import { Schema } from "./schema.js";
-
-export type FetchInputs = {
-  $metadata?: NodeMetadata;
-  /**
-   * The URL to fetch
-   */
-  url: string;
-  /**
-   * The HTTP method to use. "GET is default.
-   */
-  method?: "GET" | "POST" | "PUT" | "DELETE";
-  /**
-   * Headers to send with request
-   */
-  headers?: Record<string, string>;
-  /**
-   * The body of the request
-   */
-  body?: unknown;
-  /**
-   * Determines the browser's behavior in case the server replies
-   * with a redirect status.
-   */
-  redirect?: "follow" | "error" | "manual";
-  /**
-   * The FileSystem path to save the response to
-   */
-  file?: FileSystemPath;
-  /**
-   * If provided, saves the response as a stream file.
-   * Only valid when "file" is supplied as well.
-   */
-  stream?: "sse" | "text" | "json";
-};
-
-export type FetchOutputs = {
-  /**
-   * The error object.
-   */
-  $error?: unknown;
-  /**
-   * The response from the fetch request
-   */
-  response: unknown;
-  /**
-   * The HTTP status code of the response
-   */
-  status: number;
-  /**
-   * The status text of the response
-   */
-  statusText: string;
-  /**
-   * The content type of the response
-   */
-  contentType: string;
-  /**
-   * The headers of the response
-   */
-  responseHeaders: Record<string, string>;
-};
-
-export type BlobInputs = {
-  contents: LLMContent[];
-  transform: "persistent-temporary";
-};
-export type BlobOutputs = {
-  contents: LLMContent[];
-};
 
 export type DescribeOutputs = {
   title?: string;
@@ -93,6 +22,3 @@ export type DescribeOutputs = {
    */
   exports?: Record<string, NodeDescriberExport>;
 };
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export type Capabilities = {};

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types/capabilities.js";
 import { SmartLayoutPipeline } from "../a2ui/smart-layout-pipeline.js";
 import { FunctionGroup } from "../types.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
@@ -20,7 +19,6 @@ import { mapDefinitions } from "../function-definition.js";
 export { getA2UIFunctionGroup };
 
 export type A2UIFunctionArgs = {
-  caps: Capabilities;
   moduleArgs: A2ModuleArgs;
   fileSystem: AgentFileSystem;
   translator: PidginTranslator;

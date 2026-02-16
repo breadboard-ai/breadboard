@@ -1,7 +1,6 @@
 export type { StreamingRequestBody, StreamChunk };
 
 import {
-  Capabilities,
   LLMContent,
   OPAL_BACKEND_API_PREFIX,
   Outcome,
@@ -106,7 +105,6 @@ class OpalAdkStream {
   private readonly memoryManager: MemoryManager;
 
   constructor(
-    caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs
   ) {
     this.memoryManager = moduleArgs.agentContext.memoryManager;
@@ -114,7 +112,7 @@ class OpalAdkStream {
       context: moduleArgs.context,
       memoryManager: this.memoryManager,
     });
-    this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
+    this.translator = new PidginTranslator(moduleArgs, this.fileSystem);
     this.ui = new AgentUI(moduleArgs, this.translator);
   }
 

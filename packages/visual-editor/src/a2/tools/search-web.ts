@@ -2,7 +2,7 @@
  * @fileoverview Given a query, searches the Web with Google Search.
  */
 
-import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
+import { Outcome, Schema } from "@breadboard-ai/types";
 import { GeminiPrompt } from "../a2/gemini-prompt.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { ok, toText } from "../a2/utils.js";
@@ -20,13 +20,11 @@ export type SearchWebOutputs = {
 
 async function invoke(
   { query }: SearchWebInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<SearchWebOutputs>> {
-  const toolManager = new ToolManager(caps, moduleArgs);
+  const toolManager = new ToolManager(moduleArgs);
   toolManager.addSearch();
   const result = await new GeminiPrompt(
-    caps,
     moduleArgs,
     {
       body: {

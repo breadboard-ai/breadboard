@@ -3,7 +3,7 @@
  */
 
 import type { ExportDescriberResult, ToolOutput } from "./common.js";
-import { Capabilities, JsonSerializable, Outcome } from "@breadboard-ai/types";
+import { JsonSerializable, Outcome } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export type ConnectorInfo<
@@ -35,13 +35,11 @@ export type ToolHandler<
 > = {
   title: string;
   list(
-    caps: Capabilities,
     moduleArgs: A2ModuleArgs,
     id: string,
     info: ConnectorInfo<C>
   ): Promise<Outcome<ListMethodOutput>>;
   invoke(
-    caps: Capabilities,
     moduleArgs: A2ModuleArgs,
     id: string,
     info: ConnectorInfo<C>,

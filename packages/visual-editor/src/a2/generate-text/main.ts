@@ -23,7 +23,6 @@ import { defaultLLMContent, err, ok, isEmpty } from "../a2/utils.js";
 import { defaultSafetySettings, type GeminiInputs } from "../a2/gemini.js";
 import { GeminiPrompt, type GeminiPromptOutput } from "../a2/gemini-prompt.js";
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -66,7 +65,6 @@ class GenerateText {
   #hasTools = false;
 
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     public readonly sharedContext: SharedContext
   ) {
@@ -80,9 +78,8 @@ class GenerateText {
       this.moduleArgs.context.currentGraph
     );
     const toolManager = new ToolManager(
-      this.caps,
       this.moduleArgs,
-      new ArgumentNameGenerator(this.caps, this.moduleArgs)
+      new ArgumentNameGenerator(this.moduleArgs)
     );
     const doneTool = createDoneTool();
     const keepChattingTool = createKeepChattingTool();
@@ -166,7 +163,7 @@ class GenerateText {
       }
     }
     inputs.body.systemInstruction = systemInstruction;
-    const prompt = new GeminiPrompt(this.caps, this.moduleArgs, inputs, {
+    const prompt = new GeminiPrompt(this.moduleArgs, inputs, {
       toolManager,
     });
     const result = await prompt.invoke();
@@ -213,7 +210,6 @@ class GenerateText {
             };
           }
           const nextTurn = new GeminiPrompt(
-            this.caps,
             this.moduleArgs,
             inputs,
             { toolManager }
@@ -367,7 +363,6 @@ export type MakeTextInputs = {
  */
 async function makeText(
   inputs: MakeTextInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<{ context: LLMContent[] }>> {
   const {
@@ -426,7 +421,7 @@ async function makeText(
       return err(msg, { origin: "client", kind: "config" });
     }
 
-    const gen = new GenerateText(caps, moduleArgs, sharedContext);
+    const gen = new GenerateText(moduleArgs, sharedContext);
     const initializing = await gen.initialize();
     if (!ok(initializing)) return initializing;
 
@@ -471,7 +466,6 @@ async function makeText(
 
 async function invoke(
   { context }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   if (!context.description) {
@@ -497,7 +491,7 @@ async function invoke(
     return done([...context.context, last]);
   }
 
-  const gen = new GenerateText(caps, moduleArgs, context);
+  const gen = new GenerateText(moduleArgs, context);
   const initializing = await gen.initialize();
   if (!ok(initializing)) return initializing;
 
@@ -541,7 +535,6 @@ export type DescribeInputs = {
 
 async function describe(
   { inputs: { description } }: DescribeInputs,
-  _caps: Capabilities
 ) {
   const chatSchema: Schema["properties"] = {
     "p-chat": {

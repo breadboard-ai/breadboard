@@ -32,12 +32,7 @@ describe("generate_speech_from_text", () => {
       let capturedVoice = "";
       const generators = createMockGenerators({
         callAudio: mock.fn(
-          async (
-            _caps: unknown,
-            _moduleArgs: unknown,
-            _text: string,
-            voice: string
-          ) => {
+          async (_moduleArgs: unknown, _text: string, voice: string) => {
             capturedVoice = voice;
             return fixtures.audioSuccess;
           }
@@ -59,12 +54,10 @@ describe("generate_speech_from_text", () => {
     it("passes text to generator", async () => {
       let capturedText = "";
       const generators = createMockGenerators({
-        callAudio: mock.fn(
-          async (_caps: unknown, _moduleArgs: unknown, text: string) => {
-            capturedText = text;
-            return fixtures.audioSuccess;
-          }
-        ) as unknown as Generators["callAudio"],
+        callAudio: mock.fn(async (_moduleArgs: unknown, text: string) => {
+          capturedText = text;
+          return fixtures.audioSuccess;
+        }) as unknown as Generators["callAudio"],
       });
 
       const args = createTestArgs({ generators });

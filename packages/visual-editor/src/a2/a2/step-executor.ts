@@ -6,7 +6,6 @@ export { executeStep, executeTool, parseExecutionOutput };
 export type { ExecuteStepArgs };
 
 import {
-  Capabilities,
   InlineDataCapabilityPart,
   JsonSerializable,
   LLMContent,
@@ -141,7 +140,6 @@ function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
 async function executeTool<
   T extends JsonSerializable = Record<string, JsonSerializable>,
 >(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   api: string,
   params: Record<string, string>
@@ -167,7 +165,6 @@ async function executeTool<
     icon: "spark",
   });
   const response = await executeStep(
-    caps,
     { ...moduleArgs, reporter },
     {
       planStep: {
@@ -204,7 +201,6 @@ type ProgressUpdateOptions = {
 type ExecuteStepArgs = A2ModuleArgs & { reporter: ProgressReporter };
 
 async function executeStep(
-  _caps: Capabilities,
   args: ExecuteStepArgs,
   body: ExecuteStepRequest,
   progressUpdateOptions?: ProgressUpdateOptions
