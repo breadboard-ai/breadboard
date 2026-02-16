@@ -9,7 +9,7 @@ import { customElement, property } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
-import { StepListStepState } from "../../state/index.js";
+import type { StepListStepState } from "../../../sca/types.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { hash } from "@breadboard-ai/utils";
@@ -448,9 +448,7 @@ export class StepListView extends SignalWatcher(LitElement) {
 
     const renderPlaceholders = () => {
       return html`<ul id="list">
-        ${this.#status === "generating"
-          ? renderPlannerProgress()
-          : nothing}
+        ${this.#status === "generating" ? renderPlannerProgress() : nothing}
         ${repeat(new Array(4), () => {
           return html`<li>
             ${renderStep(
@@ -492,10 +490,7 @@ export class StepListView extends SignalWatcher(LitElement) {
       </li>`;
     };
 
-    if (
-      this.#viewType === "editor" &&
-      this.#status === "generating"
-    ) {
+    if (this.#viewType === "editor" && this.#status === "generating") {
       return renderPlaceholders();
     }
 

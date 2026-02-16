@@ -15,6 +15,7 @@ import "@material/web/checkbox/checkbox.js";
 import type { MdCheckbox } from "@material/web/checkbox/checkbox.js";
 import type { MdTabs } from "@material/web/tabs/tabs.js";
 import * as BreadboardUI from "../../../ui/index.js";
+import type { UI } from "../../types/state-types.js";
 import { EmailPrefsManager } from "../../utils/email-prefs-manager.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
@@ -55,7 +56,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   accessor sca!: SCA;
 
   @property()
-  accessor uiState: BreadboardUI.State.UI | undefined = undefined;
+  accessor uiState: UI | undefined = undefined;
 
   @property()
   accessor emailPrefsManager: EmailPrefsManager | null = null;

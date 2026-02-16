@@ -10,7 +10,7 @@ import * as Integration from "../../../../src/sca/actions/integration/integratio
 import { makeTestGraphStoreWithEditor } from "../../helpers/index.js";
 import type { AppServices } from "../../../../src/sca/services/services.js";
 import type { AppController } from "../../../../src/sca/controller/controller.js";
-import type { IntegrationState } from "../../../../src/ui/state/types.js";
+import type { IntegrationState } from "../../../../src/ui/types/state-types.js";
 import { IntegrationManagerService } from "../../../../src/sca/services/integration-managers.js";
 import { ok } from "@breadboard-ai/utils";
 
