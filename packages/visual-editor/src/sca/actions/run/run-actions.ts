@@ -8,11 +8,16 @@ import type {
   ConsoleEntry,
   ErrorObject,
   GraphDescriptor,
-  HarnessRunner,
   NodeLifecycleState,
   NodeRunStatus,
   RunConfig,
   RuntimeFlagManager,
+} from "@breadboard-ai/types";
+import type {
+  LLMContent,
+  OutputResponse,
+  Schema,
+  WorkItem,
 } from "@breadboard-ai/types";
 import {
   assetsFromGraphDescriptor,
@@ -32,10 +37,12 @@ import { edgeToString } from "../../../ui/utils/workspace.js";
 import { decodeErrorData } from "../../../ui/state/utils/decode-error.js";
 import { ReactiveAppScreen } from "../../../ui/state/app-screen.js";
 import { computeControlState } from "../../../runtime/control.js";
+import { toLLMContentArray } from "../../../ui/state/common.js";
 import {
   cleanupStoppedInput,
   dispatchRun,
   dispatchStop,
+  handleInputRequested,
 } from "./helpers/helpers.js";
 
 export const bind = makeAction();
@@ -70,27 +77,20 @@ export const stop = asAction(
   "Run.stop",
   ActionMode.Immediate,
   async (): Promise<void> => {
-    const { controller } = bind;
-    const runController = controller.run.main;
-    if (runController.abortController) {
-      runController.abortController.abort();
+    const { run } = bind.controller;
+    if (run.main.abortController) {
+      run.main.abortController.abort();
     }
-    runController.setStatus(STATUS.STOPPED);
+    run.main.reset();
+    run.screen.reset();
+    run.renderer.reset();
+    run.main.setStatus(STATUS.STOPPED);
   }
 );
 
 // =============================================================================
 // Run Preparation
 // =============================================================================
-
-/**
- * Callback to connect the runner to the project.
- * Called after runner is created, allowing Runtime to bridge to Project.
- */
-export type ConnectToProjectCallback = (
-  runner: HarnessRunner,
-  abortSignal: AbortSignal
-) => void;
 
 /**
  * Configuration for preparing a run.
@@ -106,13 +106,13 @@ export interface PrepareRunConfig {
   fetchWithCreds: typeof fetch;
   /** Runtime flags */
   flags: RuntimeFlagManager;
-  /** Callback to get project run state */
-  getProjectRunState: RunConfig["getProjectRunState"];
   /**
-   * Callback to connect runner to project (bridging Runtime to SCA).
-   * @deprecated Remove once Project is moved into SCA structure.
+   * FIXME: This is a shim that lets engine/A2 modules reach back into
+   * the SCA console and screen state. Find a better pattern — ideally the
+   * engine emits values and SCA actions write them to the console, rather
+   * than the engine pulling state via a callback.
    */
-  connectToProject?: ConnectToProjectCallback;
+  getProjectRunState: RunConfig["getProjectRunState"];
 }
 
 /**
@@ -127,15 +127,8 @@ export const prepare = asAction(
     const logger = Utils.Logging.getLogger(controller);
     const LABEL = "Run Actions";
 
-    const {
-      graph,
-      url,
-      settings,
-      fetchWithCreds,
-      flags,
-      getProjectRunState,
-      connectToProject,
-    } = config;
+    const { graph, url, settings, fetchWithCreds, flags, getProjectRunState } =
+      config;
 
     // Build the fileSystem for this run
     const fileSystem = services.fileSystem.createRunFileSystem({
@@ -227,7 +220,7 @@ export const prepare = asAction(
     runner.addEventListener("graphstart", (event) => {
       // Only reset for top-level graph
       if (event.data.path.length === 0) {
-        controller.run.main.resetOutput();
+        controller.run.main.reset();
         controller.run.renderer.reset();
         controller.run.screen.reset();
 
@@ -295,6 +288,8 @@ export const prepare = asAction(
       const entry = RunController.createConsoleEntry(title, "working", {
         icon: getStepIcon(metadata.icon, node?.currentPorts()),
         tags: metadata.tags,
+        id: nodeId,
+        controller: controller.run.main,
       });
       controller.run.main.setConsoleEntry(nodeId, entry);
       controller.run.renderer.setNodeState(nodeId, { status: "working" });
@@ -316,6 +311,21 @@ export const prepare = asAction(
       const nodeId = event.data.node.id;
       const existing = controller.run.main.console.get(nodeId);
       if (existing) {
+        // Populate the output map for completed step display.
+        const { outputs } = event.data;
+        if (outputs && !("$error" in outputs)) {
+          const inspectable = controller.editor.graph.get()?.graphs.get("");
+          const node = inspectable?.nodeById(nodeId);
+          const outputSchema = node?.currentDescribe()?.outputSchema ?? {};
+          const { products } = toLLMContentArray(
+            outputSchema as Schema,
+            outputs
+          );
+          for (const [name, product] of Object.entries(products)) {
+            existing.output.set(name, product as LLMContent);
+          }
+        }
+
         controller.run.main.setConsoleEntry(nodeId, {
           ...existing,
           status: { status: "succeeded" },
@@ -358,21 +368,29 @@ export const prepare = asAction(
       });
     });
 
-    // ── Screen output ─────────────────────────────────────────────────────
+    // ── Output ────────────────────────────────────────────────────────────
 
     runner.addEventListener("output", (event) => {
       if (!event.data.bubbled) return;
       const nodeId = event.data.node.id;
+
+      // Write to screen (app view).
       controller.run.screen.screens.get(nodeId)?.addOutput(event.data);
+
+      // Write to console entry as a work item (console view live display).
+      const entry = controller.run.main.console.get(nodeId);
+      if (entry) {
+        addOutputWorkItem(entry, event.data);
+      }
     });
+
+    // Wire input lifecycle: when a console entry calls requestInputForNode,
+    // notify the input queue to handle activation (bump screen, set input, etc.)
+    controller.run.main.onInputRequested = (id, schema) =>
+      handleInputRequested(id, schema, controller.run);
 
     // Set on controller
     controller.run.main.setRunner(runner, abortController);
-
-    // Connect to project if callback provided
-    if (connectToProject) {
-      connectToProject(runner, abortController.signal);
-    }
 
     // Set status to stopped (ready to start)
     controller.run.main.setStatus(STATUS.STOPPED);
@@ -613,3 +631,34 @@ export const executeNodeAction = asAction(
     }
   }
 );
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Helpers
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Creates a WorkItem from an OutputResponse and adds it to the console entry.
+ * This provides live output display in the console view while a step runs.
+ */
+function addOutputWorkItem(entry: ConsoleEntry, data: OutputResponse): void {
+  const { path, node, outputs } = data;
+  const { configuration = {}, metadata } = node;
+  const { schema = {} } = configuration;
+  const id = path.join("-");
+  const title = metadata?.description || metadata?.title || "Output";
+  const icon = metadata?.icon || "output";
+  const { products } = toLLMContentArray(schema as Schema, outputs);
+
+  const item: WorkItem = {
+    title,
+    icon,
+    start: data.timestamp || performance.now(),
+    end: null,
+    elapsed: 0,
+    awaitingUserInput: false,
+    product: new Map(Object.entries(products) as [string, LLMContent][]),
+  };
+
+  entry.work.set(id, item);
+  entry.current = item;
+}

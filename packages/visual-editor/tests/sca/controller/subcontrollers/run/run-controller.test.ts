@@ -11,7 +11,12 @@ import {
   STATUS,
 } from "../../../../../src/sca/controller/subcontrollers/run/run-controller.js";
 import { setDOM, unsetDOM } from "../../../../fake-dom.js";
-import type { ConsoleEntry, RunError } from "@breadboard-ai/types";
+import type {
+  ConsoleEntry,
+  HarnessRunner,
+  RunError,
+  Schema,
+} from "@breadboard-ai/types";
 
 /**
  * Tests for the RunController.
@@ -45,7 +50,7 @@ suite("RunController status management", () => {
     assert.strictEqual(controller.status, STATUS.RUNNING);
   });
 
-  test("reset returns status to STOPPED", async () => {
+  test("reset does not change status", async () => {
     const controller = new RunController("RunTest_3", "RunController");
     await controller.isHydrated;
 
@@ -55,71 +60,8 @@ suite("RunController status management", () => {
     controller.reset();
     await controller.isSettled;
 
-    assert.strictEqual(controller.status, STATUS.STOPPED);
-  });
-});
-
-suite("RunController status helpers", () => {
-  beforeEach(() => {
-    setDOM();
-  });
-
-  afterEach(() => {
-    unsetDOM();
-  });
-
-  test("isRunning returns true only when RUNNING", async () => {
-    const controller = new RunController("RunTest_4", "RunController");
-    await controller.isHydrated;
-
-    // Default: not running
-    assert.strictEqual(controller.isRunning, false);
-
-    // Set to RUNNING
-    controller.setStatus(STATUS.RUNNING);
-    await controller.isSettled;
-    assert.strictEqual(controller.isRunning, true);
-
-    // Set to PAUSED - not running
-    controller.setStatus(STATUS.PAUSED);
-    await controller.isSettled;
-    assert.strictEqual(controller.isRunning, false);
-  });
-
-  test("isPaused returns true only when PAUSED", async () => {
-    const controller = new RunController("RunTest_5", "RunController");
-    await controller.isHydrated;
-
-    // Default: not paused
-    assert.strictEqual(controller.isPaused, false);
-
-    // Set to PAUSED
-    controller.setStatus(STATUS.PAUSED);
-    await controller.isSettled;
-    assert.strictEqual(controller.isPaused, true);
-
-    // Set to RUNNING - not paused
-    controller.setStatus(STATUS.RUNNING);
-    await controller.isSettled;
-    assert.strictEqual(controller.isPaused, false);
-  });
-
-  test("isStopped returns true only when STOPPED", async () => {
-    const controller = new RunController("RunTest_6", "RunController");
-    await controller.isHydrated;
-
-    // Default: stopped
-    assert.strictEqual(controller.isStopped, true);
-
-    // Set to RUNNING - not stopped
-    controller.setStatus(STATUS.RUNNING);
-    await controller.isSettled;
-    assert.strictEqual(controller.isStopped, false);
-
-    // Reset - stopped again
-    controller.reset();
-    await controller.isSettled;
-    assert.strictEqual(controller.isStopped, true);
+    // reset() clears output state but does not modify status
+    assert.strictEqual(controller.status, STATUS.RUNNING);
   });
 });
 
@@ -137,28 +79,27 @@ suite("RunController status transitions", () => {
     await controller.isHydrated;
 
     // Start: stopped
-    assert.strictEqual(controller.isStopped, true);
+    assert.strictEqual(controller.status, STATUS.STOPPED);
 
     // User starts run
     controller.setStatus(STATUS.RUNNING);
     await controller.isSettled;
-    assert.strictEqual(controller.isRunning, true);
+    assert.strictEqual(controller.status, STATUS.RUNNING);
 
     // Run pauses for input
     controller.setStatus(STATUS.PAUSED);
     await controller.isSettled;
-    assert.strictEqual(controller.isPaused, true);
-    assert.strictEqual(controller.isRunning, false);
+    assert.strictEqual(controller.status, STATUS.PAUSED);
 
     // User provides input, run resumes
     controller.setStatus(STATUS.RUNNING);
     await controller.isSettled;
-    assert.strictEqual(controller.isRunning, true);
+    assert.strictEqual(controller.status, STATUS.RUNNING);
 
     // Run completes
     controller.setStatus(STATUS.STOPPED);
     await controller.isSettled;
-    assert.strictEqual(controller.isStopped, true);
+    assert.strictEqual(controller.status, STATUS.STOPPED);
   });
 });
 
@@ -188,11 +129,11 @@ suite("RunController console management", () => {
     await controller.isSettled;
 
     assert.strictEqual(controller.console.size, 1);
-    assert.strictEqual(controller.console.get("node-1"), mockEntry);
+    assert.deepStrictEqual(controller.console.get("node-1"), mockEntry);
     assert.strictEqual(controller.consoleState, "entries");
   });
 
-  test("resetOutput clears console", async () => {
+  test("reset clears console", async () => {
     const controller = new RunController("RunTest_console_3", "RunController");
     await controller.isHydrated;
 
@@ -200,7 +141,7 @@ suite("RunController console management", () => {
     controller.setConsoleEntry("node-1", mockEntry);
     await controller.isSettled;
 
-    controller.resetOutput();
+    controller.reset();
     await controller.isSettled;
 
     assert.strictEqual(controller.console.size, 0);
@@ -249,7 +190,7 @@ suite("RunController input handling", () => {
     assert.strictEqual(controller.input, null);
   });
 
-  test("resetOutput clears input", async () => {
+  test("reset clears input", async () => {
     const controller = new RunController("RunTest_input_4", "RunController");
     await controller.isHydrated;
 
@@ -257,7 +198,7 @@ suite("RunController input handling", () => {
     controller.setInput(mockInput);
     await controller.isSettled;
 
-    controller.resetOutput();
+    controller.reset();
     await controller.isSettled;
 
     assert.strictEqual(controller.input, null);
@@ -320,7 +261,7 @@ suite("RunController error handling", () => {
     assert.strictEqual(controller.dismissedErrors.has("failed-node"), true);
   });
 
-  test("resetOutput clears error and dismissedErrors", async () => {
+  test("reset clears error and dismissedErrors", async () => {
     const controller = new RunController("RunTest_error_5", "RunController");
     await controller.isHydrated;
 
@@ -328,7 +269,7 @@ suite("RunController error handling", () => {
     controller.dismissError("node-1");
     await controller.isSettled;
 
-    controller.resetOutput();
+    controller.reset();
     await controller.isSettled;
 
     assert.strictEqual(controller.error, null);
@@ -403,14 +344,14 @@ suite("RunController progress tracking", () => {
     assert.strictEqual(controller.progress, 0.2); // 2/10
   });
 
-  test("resetOutput clears estimatedEntryCount", async () => {
+  test("reset clears estimatedEntryCount", async () => {
     const controller = new RunController("RunTest_progress_6", "RunController");
     await controller.isHydrated;
 
     controller.setEstimatedEntryCount(10);
     await controller.isSettled;
 
-    controller.resetOutput();
+    controller.reset();
     await controller.isSettled;
 
     assert.strictEqual(controller.estimatedEntryCount, 0);
@@ -465,5 +406,337 @@ suite("RunController.createConsoleEntry", () => {
 
     assert.strictEqual(entry.icon, undefined);
     assert.strictEqual(entry.tags, undefined);
+  });
+});
+
+// =============================================================================
+// clearRunner
+// =============================================================================
+
+suite("RunController.clearRunner", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("clears runner, abortController, and onInputRequested", async () => {
+    const controller = new RunController("RunTest_clear_1", "RunController");
+    await controller.isHydrated;
+
+    const mockRunner = {} as unknown as HarnessRunner;
+    const mockAbort = new AbortController();
+    controller.setRunner(mockRunner, mockAbort);
+    controller.onInputRequested = () => {};
+
+    assert.strictEqual(controller.runner, mockRunner);
+    assert.strictEqual(controller.abortController, mockAbort);
+    assert.ok(controller.onInputRequested);
+
+    controller.clearRunner();
+
+    assert.strictEqual(controller.runner, null);
+    assert.strictEqual(controller.abortController, null);
+    assert.strictEqual(controller.onInputRequested, null);
+  });
+
+  test("is distinct from reset (does not clear console or input)", async () => {
+    const controller = new RunController("RunTest_clear_2", "RunController");
+    await controller.isHydrated;
+
+    // Populate output state
+    const mockEntry = { id: "node-1" } as unknown as ConsoleEntry;
+    controller.setConsoleEntry("node-1", mockEntry);
+    controller.setInput({ id: "node-1", schema: {} });
+    await controller.isSettled;
+
+    // Populate runner state
+    const mockRunner = {} as unknown as HarnessRunner;
+    controller.setRunner(mockRunner, new AbortController());
+
+    controller.clearRunner();
+
+    // Runner state cleared
+    assert.strictEqual(controller.runner, null);
+    // Output state preserved
+    assert.strictEqual(controller.console.size, 1);
+    assert.ok(controller.input);
+  });
+});
+
+// =============================================================================
+// inputs getter and pendingInputNodeIds
+// =============================================================================
+
+suite("RunController.inputs and pendingInputNodeIds", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("addPendingInput populates pendingInputNodeIds and inputSchemas", async () => {
+    const controller = new RunController("RunTest_inputs_3", "RunController");
+    await controller.isHydrated;
+
+    const schema = { properties: { text: { type: "string" } } } as Schema;
+    controller.addPendingInput("input-1", schema);
+
+    assert.strictEqual(controller.pendingInputNodeIds.size, 1);
+    assert.ok(controller.pendingInputNodeIds.has("input-1"));
+    assert.deepStrictEqual(controller.inputSchemas.get("input-1"), schema);
+  });
+
+  test("removePendingInput clears node from queue", async () => {
+    const controller = new RunController("RunTest_inputs_4", "RunController");
+    await controller.isHydrated;
+
+    controller.addPendingInput("node-a", { properties: {} } as Schema);
+    assert.strictEqual(controller.pendingInputNodeIds.size, 1);
+
+    controller.removePendingInput("node-a");
+    assert.strictEqual(controller.pendingInputNodeIds.size, 0);
+    assert.strictEqual(controller.inputSchemas.size, 0);
+  });
+
+  test("nextPendingInputId returns the first queued node", async () => {
+    const controller = new RunController("RunTest_inputs_5", "RunController");
+    await controller.isHydrated;
+
+    controller.addPendingInput("first", { properties: {} } as Schema);
+    controller.addPendingInput("second", { properties: {} } as Schema);
+
+    assert.strictEqual(controller.nextPendingInputId, "first");
+  });
+
+  test("nextPendingInputId returns undefined when empty", async () => {
+    const controller = new RunController("RunTest_inputs_6", "RunController");
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.nextPendingInputId, undefined);
+  });
+
+  test("inputSchemas returns stored schemas", async () => {
+    const controller = new RunController("RunTest_inputs_7", "RunController");
+    await controller.isHydrated;
+
+    const schema = { properties: { q: { type: "string" } } } as Schema;
+    controller.addPendingInput("s-node", schema);
+
+    assert.strictEqual(controller.inputSchemas.size, 1);
+    assert.deepStrictEqual(controller.inputSchemas.get("s-node"), schema);
+  });
+});
+
+// =============================================================================
+// requestInputForNode, activateInputForNode, resolveInputForNode
+// =============================================================================
+
+suite("RunController input lifecycle", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("requestInputForNode stores resolver and schema, calls onInputRequested", async () => {
+    const controller = new RunController("RunTest_reqInput_1", "RunController");
+    await controller.isHydrated;
+
+    let requestedId: string | null = null;
+    let requestedSchema: Schema | null = null;
+    controller.onInputRequested = (id, schema) => {
+      requestedId = id;
+      requestedSchema = schema;
+    };
+
+    const schema = { properties: { name: { type: "string" } } } as Schema;
+    // Start the request without awaiting (it blocks until resolved)
+    const promise = controller.requestInputForNode("node-x", schema);
+
+    assert.strictEqual(requestedId, "node-x");
+    assert.deepStrictEqual(requestedSchema, schema);
+
+    // Resolve it
+    controller.resolveInputForNode("node-x", { name: "Alice" });
+    const result = await promise;
+    assert.deepStrictEqual(result, { name: "Alice" });
+  });
+
+  test("activateInputForNode creates a WorkItem on the console entry", async () => {
+    const controller = new RunController("RunTest_actInput_1", "RunController");
+    await controller.isHydrated;
+
+    const schema = { properties: { q: { type: "string" } } } as Schema;
+    const entry = RunController.createConsoleEntry("Input", "working", {
+      id: "node-y",
+      controller,
+    });
+    controller.setConsoleEntry("node-y", entry);
+    await controller.isSettled;
+
+    // Request input first (stores the schema)
+    controller.requestInputForNode("node-y", schema);
+
+    // Now activate
+    controller.activateInputForNode("node-y");
+
+    const storedEntry = controller.console.get("node-y");
+    assert.ok(storedEntry, "Entry should exist");
+    assert.ok(storedEntry!.work.size > 0, "Should have a work item");
+    assert.ok(storedEntry!.current, "Should have a current work item");
+    assert.strictEqual(storedEntry!.current!.awaitingUserInput, true);
+    assert.strictEqual(storedEntry!.current!.title, "Input");
+  });
+
+  test("activateInputForNode does nothing when no schema", async () => {
+    const controller = new RunController("RunTest_actInput_2", "RunController");
+    await controller.isHydrated;
+
+    const entry = RunController.createConsoleEntry("Step", "working");
+    controller.setConsoleEntry("node-z", entry);
+    await controller.isSettled;
+
+    // No requestInputForNode call, so no schema stored
+    controller.activateInputForNode("node-z");
+
+    const storedEntry = controller.console.get("node-z");
+    assert.strictEqual(storedEntry!.work.size, 0);
+  });
+
+  test("activateInputForNode does nothing when no console entry", async () => {
+    const controller = new RunController("RunTest_actInput_3", "RunController");
+    await controller.isHydrated;
+
+    // Store schema but no console entry
+    controller.requestInputForNode("missing-node", {
+      properties: {},
+    } as Schema);
+
+    // Should not throw
+    controller.activateInputForNode("missing-node");
+  });
+
+  test("resolveInputForNode resolves the pending promise and cleans up", async () => {
+    const controller = new RunController("RunTest_resolve_1", "RunController");
+    await controller.isHydrated;
+
+    const schema = { properties: {} } as Schema;
+    const promise = controller.requestInputForNode("r-node", schema);
+
+    controller.resolveInputForNode("r-node", { answer: 42 });
+    const result = await promise;
+
+    assert.deepStrictEqual(result, { answer: 42 });
+  });
+
+  test("resolveInputForNode is safe when no pending resolver", async () => {
+    const controller = new RunController("RunTest_resolve_2", "RunController");
+    await controller.isHydrated;
+
+    // Should not throw
+    controller.resolveInputForNode("nonexistent", { data: true });
+  });
+});
+
+// =============================================================================
+// createConsoleEntry delegate methods
+// =============================================================================
+
+suite("RunController.createConsoleEntry delegates", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("requestInput delegates to controller.requestInputForNode", async () => {
+    const controller = new RunController("RunTest_delegate_1", "RunController");
+    await controller.isHydrated;
+
+    const schema = { properties: { text: { type: "string" } } } as Schema;
+    const entry = RunController.createConsoleEntry("Delegate Test", "working", {
+      id: "del-node",
+      controller,
+    });
+
+    // Start input request via the entry's delegate
+    const promise = entry.requestInput(schema);
+
+    // Resolve via the controller
+    controller.resolveInputForNode("del-node", { text: "hello" });
+
+    const result = await promise;
+    assert.deepStrictEqual(result, { text: "hello" });
+  });
+
+  test("requestInput rejects when no controller bound", async () => {
+    const entry = RunController.createConsoleEntry("No Ctrl", "working");
+
+    await assert.rejects(
+      () => entry.requestInput({ properties: {} } as Schema),
+      { message: "No controller bound for input" }
+    );
+  });
+
+  test("activateInput delegates to controller.activateInputForNode", async () => {
+    const controller = new RunController("RunTest_delegate_2", "RunController");
+    await controller.isHydrated;
+
+    const schema = { properties: {} } as Schema;
+    const entry = RunController.createConsoleEntry("Activate Test", "working", {
+      id: "act-node",
+      controller,
+    });
+    controller.setConsoleEntry("act-node", entry);
+    await controller.isSettled;
+
+    // Store schema first
+    controller.requestInputForNode("act-node", schema);
+
+    // Activate via delegate
+    entry.activateInput();
+
+    const stored = controller.console.get("act-node");
+    assert.ok(stored!.work.size > 0, "Should have work item from activation");
+  });
+
+  test("activateInput is no-op when no controller bound", () => {
+    const entry = RunController.createConsoleEntry("No Ctrl", "working");
+
+    // Should not throw
+    entry.activateInput();
+  });
+
+  test("resolveInput delegates to controller.resolveInputForNode", async () => {
+    const controller = new RunController("RunTest_delegate_3", "RunController");
+    await controller.isHydrated;
+
+    const schema = { properties: {} } as Schema;
+    const entry = RunController.createConsoleEntry("Resolve Test", "working", {
+      id: "res-node",
+      controller,
+    });
+
+    const promise = entry.requestInput(schema);
+    entry.resolveInput({ value: "done" });
+
+    const result = await promise;
+    assert.deepStrictEqual(result, { value: "done" });
+  });
+
+  test("resolveInput is no-op when no controller bound", () => {
+    const entry = RunController.createConsoleEntry("No Ctrl", "working");
+
+    // Should not throw
+    entry.resolveInput({ value: "ignored" });
   });
 });

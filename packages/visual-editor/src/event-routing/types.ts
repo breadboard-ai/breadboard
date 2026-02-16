@@ -11,7 +11,7 @@
 
 import { BoardServer } from "@breadboard-ai/types";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { Runtime } from "../runtime/runtime.js";
+
 import { Tab } from "../runtime/types.js";
 import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
 import { SettingsStore } from "../ui/data/settings-store.js";
@@ -26,7 +26,7 @@ export interface EventRouteDeps<
   K extends keyof BreadboardUI.Events.StateEventDetailMap,
 > {
   originalEvent: StateCustomEvent<K>;
-  runtime: Runtime;
+
   settings: SettingsStore | null;
   tab: Tab | null;
   sca: SCA;

@@ -112,20 +112,6 @@ suite("ScreenController screen management", () => {
     controller.bumpScreen("nonexistent");
     assert.strictEqual(controller.screens.size, 1);
   });
-
-  test("clearScreens removes all screens", async () => {
-    const controller = new ScreenController("ScreenTest_8", "ScreenController");
-    await controller.isHydrated;
-
-    controller.setScreen("node-1", new ReactiveAppScreen("A", undefined));
-    controller.setScreen("node-2", new ReactiveAppScreen("B", undefined));
-    await controller.isSettled;
-
-    controller.clearScreens();
-    await controller.isSettled;
-
-    assert.strictEqual(controller.screens.size, 0);
-  });
 });
 
 suite("ScreenController reset", () => {

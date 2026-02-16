@@ -5,22 +5,15 @@
  */
 
 import {
-  App,
   AssetMetadata,
   AssetPath,
-  ConsoleEntry,
-  HarnessRunner,
   InspectableNodePorts,
   LLMContent,
   NodeIdentifier,
   NodeMetadata,
   NodeRunState,
-  OutputValues,
-  RunError,
 } from "@breadboard-ai/types";
-import { Outcome, Schema } from "@breadboard-ai/types";
 
-import { StateEvent } from "../events/events.js";
 import { VisualEditorMode } from "../types/types.js";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
@@ -31,81 +24,6 @@ import type { AsyncComputedStatus } from "signal-utils/async-computed";
 export type AsyncComputedResult<T> = {
   value: T | undefined;
   status: AsyncComputedStatus;
-};
-
-export type ProjectRunStatus = "running" | "paused" | "stopped";
-
-/**
- * Represents the Model+Controller for the individual run of the graph.
- * The name is so weird because there's already a `RunState` type in
- * `@google-labs/breadboard`.
- */
-export type ProjectRun = {
-  /**
-   * Represents the renderer (the graph) state during the run.
-   */
-  renderer: RendererRunState;
-  /**
-   * Represents the App state during the run.
-   */
-  app: App;
-  /**
-   * Provides an estimate of entries that will be in console for this run.
-   * The estimate is updated when the run goes over it.
-   */
-  estimatedEntryCount: number;
-  /**
-   * Provides a number between 0 and 1 indicating current progress of the run.
-   * 0 - just started
-   * 1 - completely done
-   */
-  progress: number;
-  /**
-   * Console (fka Activity View)
-   */
-  console: Map<string, ConsoleEntry>;
-  // TODO: Move this under console. It should be similar to App: holds entries,
-  // rather than being a map.
-  /**
-   * The state of the console. The values are:
-   * - "start" -- at the start screen
-   * - "entries" -- showing entries
-   */
-  consoleState: "start" | "entries";
-  /**
-   * Overall error message that is conveyed to the user (appears in snackbar),
-   * combining multiple errors, if necessary.
-   */
-  error: RunError | null;
-  /**
-   * The status of the run
-   */
-  status: ProjectRunStatus;
-  /**
-   * The current (unifinished) entries in the console
-   */
-  current: Map<string, ConsoleEntry> | null;
-  /**
-   * The user input (if any) that the run is waiting on. If `null`,
-   * the run is not currently waiting on user input.
-   */
-  input: UserInput | null;
-  /**
-   * Final output values. When the run is still ongoing, will be `null`.
-   */
-  finalOutput: OutputValues | null;
-  /**
-   * Handles user action. This is a receiver for user's events, such as
-   * clicking on the "Run step" buttons, etc.
-   */
-  handleUserAction(
-    payload: StateEvent<"node.action">["payload"]
-  ): Promise<Outcome<void>>;
-
-  /**
-   * Call when the user chooses to dismiss errors shown (if any)
-   */
-  dismissError(): void;
 };
 
 export type StepListStateStatus = "planning" | "running" | "ready";
@@ -221,20 +139,6 @@ export type ErrorMetadata = {
   reasons?: ErrorReason[];
 };
 
-/**
- * Represents user input request.
- */
-export type UserInput = {
-  /**
-   * Node id of the current input request.
-   */
-  id: NodeIdentifier;
-  /**
-   * The schema of the current input request.
-   */
-  schema: Schema;
-};
-
 export type GraphAssetDescriptor = {
   metadata?: AssetMetadata;
   data: LLMContent[];
@@ -347,20 +251,6 @@ export type IntegrationState = {
   tools: Map<string, Tool>;
 
   message: string | null;
-};
-
-export type Project = {
-  readonly run: ProjectRun;
-
-  /**
-   * Resets the current run.
-   */
-  resetRun(): void;
-
-  connectHarnessRunner(
-    runner: HarnessRunner,
-    signal?: AbortSignal
-  ): Outcome<void>;
 };
 
 export type EdgeRunState = {

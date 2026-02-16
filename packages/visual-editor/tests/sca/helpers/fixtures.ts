@@ -5,8 +5,6 @@
  */
 
 import type { GraphDescriptor, NodeDescriptor } from "@breadboard-ai/types";
-import type { Project } from "../../../src/ui/state/types.js";
-import { mock } from "node:test";
 
 /**
  * Shared fixtures for SCA tests.
@@ -33,17 +31,4 @@ export function makeFreshGraph(options?: {
     nodes: options?.nodes ?? [{ id: "foo", type: "test:promptTemplate" }],
     ...(options?.title && { title: options.title }),
   };
-}
-
-/**
- * Creates a mock project state for flowgen testing.
- */
-export function makeTestProjectState(): Project {
-  return {
-    themes: {
-      generateThemeFromIntent: mock.fn(() =>
-        Promise.resolve({ error: "skipped" })
-      ),
-    },
-  } as unknown as Project;
 }

@@ -8,7 +8,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
-import { Project } from "../../state/index.js";
+
 import "@material/web/tabs/primary-tab.js";
 import "@material/web/tabs/tabs.js";
 import "@material/web/checkbox/checkbox.js";
@@ -53,9 +53,6 @@ function shouldShowTabs(enabledTabs: Record<TabId, boolean>) {
 export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @property()
-  accessor project: Project | null = null;
 
   @property()
   accessor uiState: BreadboardUI.State.UI | undefined = undefined;
@@ -211,8 +208,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
       [TabId.INTEGRATIONS]: {
         name: Strings.from("LABEL_SETTINGS_INTEGRATIONS"),
         template: () =>
-          html` <bb-mcp-servers-settings .project=${this.project}>
-          </bb-mcp-servers-settings>`,
+          html` <bb-mcp-servers-settings> </bb-mcp-servers-settings>`,
       },
       [TabId.EXPERIMENTAL]: {
         name: Strings.from("LABEL_SETTINGS_EXPERIMENTAL"),

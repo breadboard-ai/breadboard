@@ -13,11 +13,17 @@
 
 import { EventRoute } from "../types.js";
 
-import { ConsentType, ConsentUIType, InputValues } from "@breadboard-ai/types";
+import {
+  ConsentType,
+  ConsentUIType,
+  InputValues,
+  SimplifiedProjectRunState,
+} from "@breadboard-ai/types";
 
 import { StateEvent } from "../../ui/events/events.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
+import { provideInput } from "../../sca/actions/run/helpers/input-queue.js";
 
 // FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const RunRoute: EventRoute<"board.run"> = {
@@ -36,7 +42,7 @@ export const RunRoute: EventRoute<"board.run"> = {
       return false;
     }
 
-    if (!sca.controller.run.main.hasRunner) {
+    if (!sca.controller.run.main.runner) {
       console.warn(`Run not prepared - runner not available`);
       return false;
     }
@@ -82,7 +88,7 @@ export const RunRoute: EventRoute<"board.run"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, runtime, sca, settings }) {
+  async do({ tab, sca, settings }) {
     if (!tab) {
       return false;
     }
@@ -100,9 +106,6 @@ export const StopRoute: EventRoute<"board.stop"> = {
     // Stop the run via controller
     sca.actions.run.stop();
 
-    // Reset project run state
-    runtime.project?.resetRun();
-
     // Prepare the next run
     const url = tab.graph.url;
     if (url && settings) {
@@ -112,10 +115,11 @@ export const StopRoute: EventRoute<"board.stop"> = {
         settings,
         fetchWithCreds: sca.services.fetchWithCreds,
         flags: sca.controller.global.flags,
-        getProjectRunState: () => runtime.project?.run,
-        connectToProject: (runner, abortSignal) => {
-          runtime.project?.connectHarnessRunner(runner, abortSignal);
-        },
+        getProjectRunState: () =>
+          ({
+            console: sca.controller.run.main.console,
+            app: { screens: sca.controller.run.screen.screens },
+          }) as unknown as SimplifiedProjectRunState,
       });
     }
 
@@ -129,7 +133,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
 
   async do({
     tab,
-    runtime,
     settings,
     googleDriveClient,
     sca,
@@ -139,7 +142,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
   }) {
     await StopRoute.do({
       tab,
-      runtime,
       originalEvent: new StateEvent({
         eventType: "board.stop",
       }),
@@ -152,7 +154,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     actionTracker?.runApp(tab?.graph.url, "console");
     await RunRoute.do({
       tab,
-      runtime,
       originalEvent: new StateEvent({
         eventType: "board.run",
       }),
@@ -166,27 +167,16 @@ export const RestartRoute: EventRoute<"board.restart"> = {
   },
 };
 
-// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const InputRoute: EventRoute<"board.input"> = {
   event: "board.input",
 
-  async do({ tab, settings, originalEvent, runtime }) {
+  async do({ tab, settings, originalEvent, sca }) {
     if (!settings || !tab) {
       return false;
     }
 
     const data = originalEvent.detail.data as InputValues;
-
-    // Direct path: resolve the pending Promise in the console entry.
-    // This replaces the old flow where we called runner.resumeWithInputs()
-    // and the data flowed back through the PlanRunner event loop.
-    const projectRun = runtime.project?.run;
-    if (projectRun && "provideInput" in projectRun) {
-      (
-        projectRun as unknown as { provideInput(values: InputValues): void }
-      ).provideInput(data);
-    }
-
+    provideInput(data, sca.controller.run);
     return false;
   },
 };

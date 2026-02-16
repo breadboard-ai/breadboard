@@ -59,11 +59,7 @@ suite("Run Actions", () => {
       controller.run.main.abortController,
       "abortController should be set on controller"
     );
-    assert.strictEqual(
-      controller.run.main.hasRunner,
-      true,
-      "hasRunner should return true"
-    );
+    assert.ok(controller.run.main.runner !== null, "runner should be set");
   });
 
   test("prepare sets status to STOPPED (ready)", () => {
@@ -431,27 +427,6 @@ suite("Run Actions", () => {
       0,
       "console should be empty for nested node"
     );
-  });
-
-  test("prepare calls connectToProject callback when provided", () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
-
-    let called = false;
-    let receivedRunner: unknown = null;
-    let receivedSignal: AbortSignal | null = null;
-    const config = makeMockConfig();
-    config.connectToProject = (runner, signal) => {
-      called = true;
-      receivedRunner = runner;
-      receivedSignal = signal;
-    };
-    RunActions.prepare(config);
-
-    assert.ok(called, "connectToProject should be called");
-    assert.ok(receivedRunner, "runner should be passed");
-    assert.ok(receivedSignal, "signal should be passed");
   });
 });
 

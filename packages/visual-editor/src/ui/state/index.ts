@@ -5,4 +5,3 @@
  */
 
 export * from "./types.js";
-export { createProjectState } from "./project.js";

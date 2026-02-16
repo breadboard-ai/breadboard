@@ -85,14 +85,6 @@ class ScreenController extends RootController {
     this._screens.set(id, screen);
   }
 
-  /**
-   * Clears all screens.
-   * Called on graphstart to reset for a new run.
-   */
-  clearScreens(): void {
-    this._screens.clear();
-  }
-
   // ═══════════════════════════════════════════════════════════════════════════
   // RESET
   // ═══════════════════════════════════════════════════════════════════════════
