@@ -16,7 +16,6 @@ import type {
   NodeDescriberResult,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { hash } from "@breadboard-ai/utils";
 import { getHandler } from "../../runtime/legacy.js";
 
 export { DescribeResultCache };
@@ -106,7 +105,7 @@ class SignalBackedEntry {
 }
 
 class DescribeResultCache implements InspectableDescriberResultCache {
-  #map = new Map<number, SignalBackedEntry>();
+  #map = new Map<string, SignalBackedEntry>();
   #mutable: MutableGraph;
   #deps: GraphStoreArgs;
 
@@ -119,7 +118,7 @@ class DescribeResultCache implements InspectableDescriberResultCache {
     id: NodeIdentifier,
     graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry {
-    const key = computeHash({ id, graphId });
+    const key = `${graphId}:${id}`;
     let entry = this.#map.get(key);
     if (!entry) {
       entry = new SignalBackedEntry(this.#mutable, this.#deps, graphId, id);
@@ -130,12 +129,8 @@ class DescribeResultCache implements InspectableDescriberResultCache {
 
   update(affectedNodes: AffectedNode[]) {
     affectedNodes.forEach((affected) => {
-      const key = computeHash(affected);
+      const key = `${affected.graphId}:${affected.id}`;
       this.#map.get(key)?.refresh();
     });
   }
-}
-
-function computeHash(node: AffectedNode): number {
-  return hash(node);
 }
