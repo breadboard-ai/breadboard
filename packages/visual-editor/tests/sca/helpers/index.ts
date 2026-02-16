@@ -12,7 +12,7 @@
  */
 
 // Fixtures
-export { makeFreshGraph, makeTestProjectState } from "./fixtures.js";
+export { makeFreshGraph } from "./fixtures.js";
 
 // Controller mocks
 export {

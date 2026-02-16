@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, Outcome } from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { llm } from "../src/a2/a2/utils.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
@@ -124,11 +124,7 @@ class SimulatedUserChatManager implements ChatManager {
   readonly #bridge = new ChatBridge();
   readonly #loopPromise: Promise<unknown>;
 
-  constructor(
-    userObjective: string,
-    _caps: Capabilities,
-    moduleArgs: A2ModuleArgs
-  ) {
+  constructor(userObjective: string, moduleArgs: A2ModuleArgs) {
     const loop = new Loop(moduleArgs);
     const functionGroups = buildUserAgentFunctionGroups(
       this.#bridge,

@@ -2,14 +2,13 @@
  * @fileoverview Break an objective into tasks and then execute them.
  */
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
-import { readSettings } from "../a2/settings.js";
+
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { err, ok } from "../a2/utils.js";
@@ -57,15 +56,13 @@ function findStrategist(name?: string): Strategist | undefined {
 
 async function invoke(
   { context, plan: objective, strategy, ...params }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
-  const template = new Template(caps, objective);
+  const template = new Template(objective, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
   );
@@ -77,7 +74,7 @@ async function invoke(
   }
 
   // Process single item directly (list support removed)
-  const executor = new Runtime(caps, moduleArgs, context, toolManager);
+  const executor = new Runtime(moduleArgs, context, toolManager);
   const executingOne = await executor.executeStrategy(substituting, strategist);
   if (!ok(executingOne)) return executingOne;
 
@@ -97,27 +94,8 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { plan } }: DescribeInputs,
-  caps: Capabilities
-) {
-  const template = new Template(caps, plan);
-  const settings = await readSettings(caps);
-  const experimental =
-    ok(settings) && !!settings["Show Experimental Components"];
-  let extra: Record<string, Schema> = {};
-  if (experimental) {
-    extra = {
-      // "z-list": {
-      //   type: "boolean",
-      //   title: "Make a list",
-      //   behavior: ["config", "hint-preview", "hint-advanced"],
-      //   icon: "summarize",
-      //   description:
-      //     "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
-      // },
-    };
-  }
+async function describe({ inputs: { plan } }: DescribeInputs) {
+  const template = new Template(plan);
   return {
     inputSchema: {
       type: "object",
@@ -147,7 +125,6 @@ async function describe(
           icon: "joiner",
           default: STRATEGISTS[0].name,
         },
-        ...extra,
         ...template.schemas(),
       },
       behavior: ["at-wireable"],

@@ -7,7 +7,7 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import type { AppScreenOutput, BoardServer } from "@breadboard-ai/types";
+import type { BoardServer } from "@breadboard-ai/types";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, LitElement, nothing } from "lit";
@@ -19,7 +19,6 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
-import { Runtime } from "./runtime/runtime.js";
 import { RuntimeConfig, Tab } from "./runtime/types.js";
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
@@ -47,7 +46,7 @@ import {
   FlowGenerator,
   flowGeneratorContext,
 } from "./ui/flow-gen/flow-generator.js";
-import { ReactiveAppScreen } from "./ui/state/app-screen.js";
+
 import {
   ActionTracker,
   RecentBoard,
@@ -72,7 +71,6 @@ export { MainBase };
 export type RenderValues = {
   canSave: boolean;
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
-  projectState: BreadboardUI.State.Project | null;
   showingOverlay: boolean;
   tabStatus: BreadboardUI.Types.STATUS;
 };
@@ -131,7 +129,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   // References.
   // NOTE: selectionState field removed. Selection is now managed
   // entirely by SelectionController via SCA.
-  protected runtime: Runtime;
+
   protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
   // Run status now tracked by this.sca.controller.run.main
@@ -204,10 +202,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    // Append SCA to the config.
-    config.sca = this.sca;
-    this.runtime = new Runtime(config);
-
     this.googleDriveClient = this.sca.services.googleDriveClient;
 
     // Asyncronously check if the user has an access restriction (e.g. geo) and
@@ -226,8 +220,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.flowGenerator = this.sca.services.flowGenerator;
     this.actionTracker = this.sca.services.actionTracker;
-
-    this.#addRuntimeEventHandlers();
 
     this.boardServer = this.sca.services.googleDriveBoardServer;
 
@@ -249,7 +241,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       this.googleDriveClient,
       this.sca.services.signinAdapter
     );
-    admin.runtime = this.runtime;
+
     admin.settingsHelper = this.settingsHelper;
 
     // Once we've determined the sign-in status, relay it to an embedder.
@@ -382,38 +374,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       this.sca.controller.global.main.subscriptionStatus = "error";
       this.sca.controller.global.main.subscriptionCredits = -2;
     }
-  }
-
-  #addRuntimeEventHandlers() {
-    if (!this.runtime) {
-      console.error("No runtime found");
-      return;
-    }
-
-    // NOTE: RuntimeSelectionChangeEvent listener removed.
-    // Selection is now managed by SelectionController via SCA.
-
-    // Note: runtime.board and runtime.edit listeners removed - these classes
-    // are now empty EventTargets. Functionality migrated to SCA:
-    // - RuntimeShareMissingEvent: handled elsewhere
-    // - RuntimeRequestSignInEvent: handled elsewhere
-    // - RuntimeVisualChangeEvent: handled by SCA triggers
-    // - RuntimeBoardLoadErrorEvent: handled by SCA
-    // - RuntimeErrorEvent: handled by SCA
-
-    // Note: RuntimeNewerSharedVersionEvent listener moved to
-    // SCA trigger: Board.registerNewerVersionTrigger()
-
-    // Note: RuntimeTabChangeEvent listener removed - logic moved to
-    // #handleBoardStateChanged() which is called directly after load/close
-
-    // Note: RuntimeTabCloseEvent listener removed - stop-run logic moved to
-    // before close() call in route handler
-
-    // Note: RuntimeBoardRunEvent listener removed -
-    // run status now tracked by runner event listeners
-    // set up in sca.actions.run.prepare() which updates
-    // controller.run.main.status directly
   }
 
   /**
@@ -600,9 +560,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
    * Calls syncProjectState directly instead of event dispatch.
    */
   async #handleBoardStateChanged(): Promise<void> {
-    // Sync project state (creates the Project object for the loaded graph)
-    this.runtime.syncProjectState();
-
     const tab = this.tab;
     this.#maybeShowWelcomePanel();
 
@@ -611,20 +568,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
       const url = tab.graph.url;
       if (url) {
-        this.sca.actions.run.prepare({
-          graph: tab.graph,
-          url,
-          settings: this.settings,
-          fetchWithCreds: this.sca.services.fetchWithCreds,
-          flags: this.sca.controller.global.flags,
-          getProjectRunState: () => this.runtime.project?.run,
-          connectToProject: (runner, abortSignal) => {
-            const project = this.runtime.project;
-            if (project) {
-              project.connectHarnessRunner(runner, abortSignal);
-            }
-          },
-        });
+        this.sca.actions.run.prepare();
       }
 
       if (tab.graph.url && tab.graphIsMine) {
@@ -699,19 +643,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected getRenderValues(): RenderValues {
     const tabStatus = this.sca.controller.run.main.status;
 
-    const projectState = this.runtime.project;
-
-    if (projectState && this.tab?.finalOutputValues) {
-      const current = new ReactiveAppScreen("", undefined);
-      current.status = "complete";
-      const last: AppScreenOutput = {
-        output: this.tab.finalOutputValues,
-        schema: {},
-      };
-      current.outputs.set("final", last);
-      projectState.run.app.screens.set("final", current);
-    }
-
     // Inline canSave logic - use services directly
     let canSave = false;
     if (this.tab && !this.tab.readOnly) {
@@ -746,7 +677,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     return {
       canSave,
-      projectState,
       saveStatus,
       showingOverlay: this.sca.controller.global.main.show.size > 0,
       tabStatus,
@@ -760,7 +690,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   ) {
     return {
       originalEvent: evt,
-      runtime: this.runtime,
+
       settings: this.settings,
       tab: this.tab,
       googleDriveClient: this.googleDriveClient,
@@ -867,7 +797,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "dismiss": {
-            this.runtime.project?.run?.dismissError();
+            this.sca.controller.run.main.dismissError();
             break;
           }
         }

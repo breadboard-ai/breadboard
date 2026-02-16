@@ -2,7 +2,6 @@
  * @fileoverview Tools for working with Sheets.
  */
 import {
-  Capabilities,
   JSONPart,
   LLMContent,
   Outcome,
@@ -36,7 +35,6 @@ function sheetSchema(): GeminiSchema {
 }
 
 async function inferSheetValues(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   contents?: LLMContent[]
 ): Promise<Outcome<unknown[][]>> {
@@ -45,7 +43,7 @@ async function inferSheetValues(
       `Unable to infer spreadsheet values. No information was provided.`
     );
   }
-  const prompt = new GeminiPrompt(caps, moduleArgs, {
+  const prompt = new GeminiPrompt(moduleArgs, {
     body: {
       contents,
       systemInstruction:

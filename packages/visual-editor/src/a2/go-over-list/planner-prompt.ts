@@ -2,7 +2,7 @@
  * @fileoverview Contains the planner prompt.
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { type GeminiSchema, defaultSafetySettings } from "../a2/gemini.js";
 import { GeminiPrompt } from "../a2/gemini-prompt.js";
 import { err, llm } from "../a2/utils.js";
@@ -96,7 +96,6 @@ function prependInstruction(text: string, plan: LLMContent): LLMContent {
 }
 
 function thinkingPlannerPrompt(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   context: LLMContent[],
   objective: LLMContent,
@@ -135,7 +134,7 @@ If no more steps are needed, return no steps.
 `.asContent();
 
   const contents = [...context, instruction];
-  return new GeminiPrompt(caps, moduleArgs, {
+  return new GeminiPrompt(moduleArgs, {
     body: {
       contents,
       safetySettings: defaultSafetySettings(),
@@ -148,7 +147,6 @@ If no more steps are needed, return no steps.
 }
 
 function plannerPrompt(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   context: LLMContent[] | undefined,
   objective: LLMContent,
@@ -159,7 +157,7 @@ function plannerPrompt(
   const instruction = `${preamble(extraPlannerPrompt)}`;
 
   const contents = [...context, prependInstruction(instruction, objective)];
-  return new GeminiPrompt(caps, moduleArgs, {
+  return new GeminiPrompt(moduleArgs, {
     body: {
       contents,
       safetySettings: defaultSafetySettings(),

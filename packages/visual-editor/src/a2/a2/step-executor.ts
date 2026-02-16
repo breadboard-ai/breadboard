@@ -6,11 +6,10 @@ export { executeStep, executeTool, parseExecutionOutput };
 export type { ExecuteStepArgs };
 
 import {
-  Capabilities,
-  FileSystemReadWritePath,
   InlineDataCapabilityPart,
   JsonSerializable,
   LLMContent,
+  OPAL_BACKEND_API_PREFIX,
   Outcome,
 } from "@breadboard-ai/types";
 import {
@@ -29,9 +28,10 @@ import {
   toLLMContentStored,
 } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 
-const DEFAULT_BACKEND_ENDPOINT =
-  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
+const BACKEND_ENDPOINT = new URL("v1beta1/executeStep", OPAL_BACKEND_API_PREFIX)
+  .href;
 
 type Chunk = {
   mimetype: string;
@@ -140,7 +140,6 @@ function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
 async function executeTool<
   T extends JsonSerializable = Record<string, JsonSerializable>,
 >(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   api: string,
   params: Record<string, string>
@@ -166,7 +165,6 @@ async function executeTool<
     icon: "spark",
   });
   const response = await executeStep(
-    caps,
     { ...moduleArgs, reporter },
     {
       planStep: {
@@ -192,23 +190,6 @@ async function executeTool<
   }
 }
 
-type BackendSettings = {
-  endpoint_url: string;
-};
-async function getBackendUrl(caps: Capabilities) {
-  const reading = await caps.read({ path: "/env/settings/backend" });
-  if (ok(reading)) {
-    const part = reading.data?.at(0)?.parts?.at(0);
-    if (part && "json" in part) {
-      const settings = part.json as BackendSettings;
-      if (settings && settings.endpoint_url) {
-        return settings.endpoint_url;
-      }
-    }
-  }
-  return DEFAULT_BACKEND_ENDPOINT;
-}
-
 type ProgressUpdateOptions = {
   message?: string;
   expectedDurationInSec?: number;
@@ -220,7 +201,6 @@ type ProgressUpdateOptions = {
 type ExecuteStepArgs = A2ModuleArgs & { reporter: ProgressReporter };
 
 async function executeStep(
-  caps: Capabilities,
   args: ExecuteStepArgs,
   body: ExecuteStepRequest,
   progressUpdateOptions?: ProgressUpdateOptions
@@ -232,21 +212,18 @@ async function executeStep(
     if (appScreen) {
       appScreen.progress = progressUpdateOptions?.message || title;
       if (progressUpdateOptions?.expectedDurationInSec) {
-        appScreen.expectedDuration =
-          progressUpdateOptions.expectedDurationInSec;
+        setScreenDuration(
+          appScreen,
+          progressUpdateOptions.expectedDurationInSec
+        );
       } else {
-        appScreen.expectedDuration = -1;
+        setScreenDuration(appScreen, -1);
       }
     }
 
     reporter.addJson("Step Input", elideEncodedData(body), "upload");
     // Call the API.
-    const url = await getBackendUrl(caps);
-    // Record model call with action tracker.
-    caps.write({
-      path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
-      data: [],
-    });
+    const url = BACKEND_ENDPOINT;
     let response: ExecuteStepResponse;
     try {
       const fetchResponse = await fetchWithCreds(url, {
@@ -292,7 +269,7 @@ async function executeStep(
     reporter.finish();
     if (appScreen) {
       appScreen.progress = undefined;
-      appScreen.expectedDuration = -1;
+      setScreenDuration(appScreen, -1);
     }
   }
 }

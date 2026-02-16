@@ -33,7 +33,8 @@ import {
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Project, RendererRunState } from "../../state/types.js";
+import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
+import { RendererRunState } from "../../../sca/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
 import "../../lite/step-list-view/step-list-view.js";
@@ -45,7 +46,7 @@ import {
 } from "../../utils/workspace.js";
 import { icons } from "../../styles/icons.js";
 import { EntityEditor } from "../elements.js";
-import { consume, provide } from "@lit/context";
+import { consume } from "@lit/context";
 import { SharePanel } from "../share-panel/share-panel.js";
 
 import { effects } from "../../styles/host/effects.js";
@@ -59,8 +60,8 @@ import "./empty-state.js";
 import "../../flow-gen/flowgen-editor-input.js";
 import "../../elements/graph-editing-chat/graph-editing-chat.js";
 import { isEmpty } from "../../utils/utils.js";
-import { Signal, SignalWatcher } from "@lit-labs/signals";
-import { projectStateContext } from "../../contexts/contexts.js";
+import { SignalWatcher } from "@lit-labs/signals";
+
 import * as Theme from "../../../theme/index.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
@@ -74,9 +75,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @property()
   accessor graphTopologyUpdateId: number = 0;
 
-  @provide({ context: projectStateContext })
-  @state()
-  accessor projectState!: Project;
+  readonly #appPresenter = new AppScreenPresenter();
 
   // NOTE: selectionState prop removed. Entity-editor now reads from
   // SelectionController via SCA directly.
@@ -108,11 +107,17 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   static styles = [icons, effects, canvasControllerStyles];
 
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (changedProperties.has("projectState")) {
-      this.#projectStateUpdated.set({});
-    }
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#appPresenter.connect(this.sca);
+  }
 
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#appPresenter.disconnect();
+  }
+
+  protected willUpdate(_changedProperties: PropertyValues<this>): void {
     // NOTE: Selection count and sidebar toggling are now handled by the
     // SCA sidebar trigger action (Sidebar.updateOnSelectionChange).
 
@@ -136,18 +141,12 @@ export class CanvasController extends SignalWatcher(LitElement) {
     this.#prevGraph = currentGraph;
   }
 
-  #projectStateUpdated = new Signal.State({});
-
   @signal
   get runState(): RendererRunState {
-    this.#projectStateUpdated.get();
-    if (!this.projectState) {
-      return {
-        nodes: new Map(),
-        edges: new Map(),
-      };
-    }
-    return this.projectState.run.renderer;
+    return {
+      nodes: this.sca.controller.run.renderer.nodes,
+      edges: this.sca.controller.run.renderer.edges,
+    };
   }
 
   /**
@@ -162,7 +161,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
     this.runState.edges.values();
     this.runState.nodes.values();
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    this.projectState?.run.app.state;
+    this.#appPresenter.state;
     return ++this.#runStateEffectCount;
   }
 
@@ -174,82 +173,78 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
     const runState = this.runState;
 
-    const graphEditor = guard(
-      [this.projectState, runState, this.#runStateEffect],
-      () => {
-        return html`<bb-renderer
-          .projectState=${this.projectState}
-          .runState=${runState}
-          .runStateEffect=${this.#runStateEffect}
-          @input=${(evt: Event) => {
-            const composedPath = evt.composedPath();
-            const isFromNLInput = composedPath.some((el) => {
-              return (
-                el instanceof HTMLElement &&
-                el.tagName.toLocaleLowerCase() === "bb-flowgen-editor-input"
-              );
-            });
-
-            if (isFromNLInput) {
-              const target = composedPath.at(0);
-              if (!(target instanceof HTMLTextAreaElement)) {
-                return;
-              }
-
-              this.#lastKnownNlEditValue = target.value;
-              this.requestUpdate();
-            }
-          }}
-          @bbautofocuseditor=${() => {
-            if (!this.#entityEditorRef.value) {
-              return;
-            }
-
-            this.#entityEditorRef.value.focus();
-          }}
-          @bbnodeconfigurationupdaterequest=${(
-            evt: NodeConfigurationUpdateRequestEvent
-          ) => {
-            if (!evt.id) {
-              return;
-            }
-
-            this.sideNavItem = "editor";
-
-            const newState = createEmptyWorkspaceSelectionState();
-            const graphState = createEmptyGraphSelectionState();
-            const graphId = evt.subGraphId ? evt.subGraphId : MAIN_BOARD_ID;
-            const selectionChangeId = createWorkspaceSelectionChangeId();
-            graphState.nodes.add(evt.id);
-            newState.graphs.set(graphId, graphState);
-
-            // Intercept the port value click and convert it to a selection
-            // change *and* switch the side nav item with it.
-            evt.stopImmediatePropagation();
-
-            // If the item is already selected, skip the change.
-            if (
-              this.sca.controller.editor.selection.selection.nodes.has(evt.id)
-            ) {
-              return;
-            }
-
-            this.dispatchEvent(
-              new StateEvent({
-                eventType: "host.selectionstatechange",
-                selectionChangeId,
-                selections: newState,
-                replaceExistingSelections: true,
-                moveToSelection: false,
-              })
+    const graphEditor = guard([runState, this.#runStateEffect], () => {
+      return html`<bb-renderer
+        .runState=${runState}
+        .runStateEffect=${this.#runStateEffect}
+        @input=${(evt: Event) => {
+          const composedPath = evt.composedPath();
+          const isFromNLInput = composedPath.some((el) => {
+            return (
+              el instanceof HTMLElement &&
+              el.tagName.toLocaleLowerCase() === "bb-flowgen-editor-input"
             );
-          }}
-          @bbshowassetorganizer=${() => {
-            this.showAssetOrganizer = true;
-          }}
-        ></bb-renderer>`;
-      }
-    );
+          });
+
+          if (isFromNLInput) {
+            const target = composedPath.at(0);
+            if (!(target instanceof HTMLTextAreaElement)) {
+              return;
+            }
+
+            this.#lastKnownNlEditValue = target.value;
+            this.requestUpdate();
+          }
+        }}
+        @bbautofocuseditor=${() => {
+          if (!this.#entityEditorRef.value) {
+            return;
+          }
+
+          this.#entityEditorRef.value.focus();
+        }}
+        @bbnodeconfigurationupdaterequest=${(
+          evt: NodeConfigurationUpdateRequestEvent
+        ) => {
+          if (!evt.id) {
+            return;
+          }
+
+          this.sideNavItem = "editor";
+
+          const newState = createEmptyWorkspaceSelectionState();
+          const graphState = createEmptyGraphSelectionState();
+          const graphId = evt.subGraphId ? evt.subGraphId : MAIN_BOARD_ID;
+          const selectionChangeId = createWorkspaceSelectionChangeId();
+          graphState.nodes.add(evt.id);
+          newState.graphs.set(graphId, graphState);
+
+          // Intercept the port value click and convert it to a selection
+          // change *and* switch the side nav item with it.
+          evt.stopImmediatePropagation();
+
+          // If the item is already selected, skip the change.
+          if (
+            this.sca.controller.editor.selection.selection.nodes.has(evt.id)
+          ) {
+            return;
+          }
+
+          this.dispatchEvent(
+            new StateEvent({
+              eventType: "host.selectionstatechange",
+              selectionChangeId,
+              selections: newState,
+              replaceExistingSelections: true,
+              moveToSelection: false,
+            })
+          );
+        }}
+        @bbshowassetorganizer=${() => {
+          this.showAssetOrganizer = true;
+        }}
+      ></bb-renderer>`;
+    });
 
     let theme: string;
     let themes: Record<string, GraphTheme>;
@@ -299,7 +294,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
             .graphIsEmpty=${graphIsEmpty}
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}
             .isMine=${gc.graphIsMine}
-            .projectRun=${this.projectState?.run}
             .readOnly=${!gc.graphIsMine}
             .runtimeFlags=${this.sca.controller.global.flags}
             .showGDrive=${this.sca.services.signinAdapter.stateSignal
@@ -321,14 +315,12 @@ export class CanvasController extends SignalWatcher(LitElement) {
         class=${classMap({
           active: this.sideNavItem === "editor",
         })}
-        .projectState=${this.projectState}
       ></bb-entity-editor>`,
       html`
         <bb-console-view
           class=${classMap({
             active: this.sideNavItem === "console",
           })}
-          .run=${this.projectState?.run}
           .themeStyles=${themeStyles}
           .disclaimerContent=${gc.graphIsMine
             ? GlobalStrings.from("LABEL_DISCLAIMER")
@@ -352,7 +344,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
     let themeEditor: HTMLTemplateResult | symbol = nothing;
     if (this.showThemeDesigner) {
       themeEditor = html`<bb-app-theme-creator
-        .projectState=${this.projectState}
         .graph=${gc.graph}
         .themeHash=${themeHash}
         .themeOptions=${this.#themeOptions}

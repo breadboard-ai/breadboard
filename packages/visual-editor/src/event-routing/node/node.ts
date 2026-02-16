@@ -5,35 +5,25 @@
  */
 
 /**
- * FIXME: Legacy node event route. This still depends on the legacy runtime
- * (runtime.project.run) which is not yet available through SCA services.
- * Migrate to SCA node-actions.ts (using stateEventTrigger) once the runtime
- * dependency is resolved, then delete this file.
+ * Node action event route. Sets the node action request on the SCA
+ * RunController, which triggers the `executeNodeAction` action via
+ * `onNodeActionRequested`.
  */
 
-import { ok } from "@breadboard-ai/utils";
 import { EventRoute } from "../types.js";
 
-// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const ActionRoute: EventRoute<"node.action"> = {
   event: "node.action",
 
-  async do({ runtime, sca, originalEvent }) {
-    sca.controller.global.main.blockingAction = true;
-    try {
-      const project = runtime.project;
-      if (!project) {
-        console.warn(`No project for "node.action"`);
-        return false;
-      }
-      const acting = await project.run.handleUserAction(originalEvent.payload);
-      if (!ok(acting)) {
-        console.warn(acting.$error);
-        return false;
-      }
-      return false;
-    } finally {
-      sca.controller.global.main.blockingAction = false;
-    }
+  async do({ sca, originalEvent }) {
+    const { nodeId, actionContext } = originalEvent.payload;
+    if (!actionContext) return false;
+    // Event uses "console" for step-list context; SCA uses "step".
+    const mapped = actionContext === "console" ? "step" : actionContext;
+    sca.controller.run.main.setNodeActionRequest({
+      nodeId,
+      actionContext: mapped,
+    });
+    return false;
   },
 };

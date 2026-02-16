@@ -5,7 +5,6 @@
  */
 
 import {
-  Capabilities,
   DataPart,
   InlineDataCapabilityPart,
   LLMContent,
@@ -146,7 +145,6 @@ function is(type: string, part: DataPart): part is RemappablePart {
 }
 
 async function renderConsistentUI(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   data: LLMContent,
   systemInstruction?: LLMContent
@@ -178,7 +176,7 @@ async function renderConsistentUI(
     return part;
   });
 
-  const prompt = new GeminiPrompt(caps, moduleArgs, {
+  const prompt = new GeminiPrompt(moduleArgs, {
     model: "gemini-2.5-flash",
     body: {
       contents: [data],

@@ -3,12 +3,7 @@
  */
 
 import { readFlags } from "../a2/settings.js";
-import {
-  Capabilities,
-  LLMContent,
-  RuntimeFlags,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, RuntimeFlags, Schema } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import {
   makeTextInstruction,
@@ -426,7 +421,6 @@ function resolveModes(
 
 async function invoke(
   { "generation-mode": mode, ...rest }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);
@@ -440,7 +434,7 @@ async function invoke(
         "b-ui-prompt": { parts: [] },
         ...rest,
       };
-      return agent(agentInputs, caps, moduleArgs);
+      return agent(agentInputs, moduleArgs);
     } else {
       // Other modes dispatch directly to their module
       const { type, modelName } = current;
@@ -448,7 +442,7 @@ async function invoke(
         rest["p-model-name"] = modelName;
       }
       const inputs = forwardPorts(type, rest);
-      return current.invoke(inputs, caps, moduleArgs);
+      return current.invoke(inputs, moduleArgs);
     }
   } else {
     const { type, modelName } = current;
@@ -459,13 +453,12 @@ async function invoke(
       rest["p-model-name"] = modelName;
     }
     const inputs = forwardPorts(type, rest);
-    return current.invoke(inputs, caps, moduleArgs);
+    return current.invoke(inputs, moduleArgs);
   }
 }
 
 async function describe(
   { inputs: { "generation-mode": mode, ...rest }, asType }: DescribeInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const metadata = {
@@ -501,10 +494,7 @@ async function describe(
     behavior = ["at-wireable"];
   } else {
     const transformedInputs = forwardPorts(type, rest);
-    const describing = await current.describe(
-      { inputs: transformedInputs },
-      caps
-    );
+    const describing = await current.describe({ inputs: transformedInputs });
     modeSchema = receivePorts(
       type,
       describing.inputSchema.properties || modeSchema

@@ -8,9 +8,8 @@ import {
 } from "../agent/progress-work-item.js";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import {
-  Capabilities,
-  FileSystemReadWritePath,
   LLMContent,
   Outcome,
   Schema,
@@ -479,7 +478,6 @@ function calculateDuration(model: string) {
 }
 
 async function callAPI(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   retries: number,
   model: string,
@@ -498,17 +496,12 @@ async function callAPI(
     reporter.addJson("Model Input", conformedBody, "upload");
     if (appScreen) {
       appScreen.progress = title;
-      appScreen.expectedDuration = calculateDuration(model);
+      setScreenDuration(appScreen, calculateDuration(model));
     }
 
     let $error: string = "Unknown error";
     const maxRetries = retries;
     while (retries) {
-      // Record model call with action tracker.
-      caps.write({
-        path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
-        data: [],
-      });
       const result = await moduleArgs.fetchWithCreds(endpointURL(model), {
         method: "POST",
         body: JSON.stringify(conformedBody),
@@ -881,7 +874,6 @@ async function streamGenerateContent(
 
 async function invoke(
   inputs: GeminiInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<GeminiOutputs>> {
   const validatingInputs = validateInputs(inputs);
@@ -905,7 +897,6 @@ async function invoke(
       // Public API is being used.
       // Behave as if we're wired in.
       const result = await callAPI(
-        caps,
         moduleArgs,
         retries,
         currentModel,
@@ -932,7 +923,6 @@ async function invoke(
       // Private API is being used.
       // Behave as if we're being invoked.
       const result = await callAPI(
-        caps,
         moduleArgs,
         retries,
         currentModel,

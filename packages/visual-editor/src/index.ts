@@ -225,7 +225,7 @@ class Main extends MainBase {
           ? this.#renderStatusUpdateModal()
           : nothing,
         this.sca.controller.global.main.show.has("GlobalSettings")
-          ? this.#renderGlobalSettingsModal(renderValues)
+          ? this.#renderGlobalSettingsModal()
           : nothing,
         this.sca.controller.global.main.show.has("WarmWelcome")
           ? this.#renderWarmWelcomeModal()
@@ -278,7 +278,6 @@ class Main extends MainBase {
       .graphIsEmpty=${graphIsEmpty}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
       .isMine=${this.tab?.graphIsMine ?? false}
-      .projectRun=${renderValues.projectState?.run}
       .readOnly=${true}
       .runtimeFlags=${this.sca.controller.global.flags}
       .settings=${this.settings}
@@ -295,7 +294,6 @@ class Main extends MainBase {
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .projectState=${renderValues.projectState}
       @bbshowvideomodal=${() => {
         this.sca.controller.global.main.show.add("VideoModal");
       }}
@@ -399,10 +397,9 @@ class Main extends MainBase {
     ></bb-status-update-modal>`;
   }
 
-  #renderGlobalSettingsModal(renderValues: RenderValues) {
+  #renderGlobalSettingsModal() {
     return html`<bb-global-settings-modal
       .flags=${this.sca.controller.global.flags.flags()}
-      .project=${renderValues.projectState}
       .uiState=${this.sca.controller.global.main}
       .emailPrefsManager=${this.sca.services.emailPrefsManager}
       @bbmodaldismissed=${() => {
