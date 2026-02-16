@@ -64,6 +64,7 @@ import { projectStateContext } from "../../contexts/contexts.js";
 import * as Theme from "../../../theme/index.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
+import { Utils } from "../../../sca/utils.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
@@ -464,7 +465,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
             ? html`<bb-prompt-view .prompt=${prompt}></bb-prompt-view>
                 <bb-step-list-view></bb-step-list-view>`
             : html`<bb-empty-state narrow></bb-empty-state>`}
-          ${!gc.graphIsMine
+          ${!gc.graphIsMine ||
+          Utils.Helpers.isHydrating(
+            () => this.sca.controller.global.flags.enableGraphEditorAgent
+          )
             ? nothing
             : this.sca.controller.global.flags.enableGraphEditorAgent
               ? html`<bb-graph-editing-chat
@@ -504,7 +508,12 @@ export class CanvasController extends SignalWatcher(LitElement) {
     // The empty state callouts reference the flowgen-editor-input which is not
     // rendered when the graph editing agent is active. Skip it to avoid both
     // misleading arrows and z-index overlap with the chat panel.
-    if (this.sca.controller.global.flags.enableGraphEditorAgent) {
+    if (
+      !Utils.Helpers.isHydrating(
+        () => this.sca.controller.global.flags.enableGraphEditorAgent
+      ) &&
+      this.sca.controller.global.flags.enableGraphEditorAgent
+    ) {
       return nothing;
     }
 
