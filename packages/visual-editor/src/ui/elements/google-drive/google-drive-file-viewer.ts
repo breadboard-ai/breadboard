@@ -57,6 +57,33 @@ export class GoogleDriveFileViewer extends LitElement {
         max-width: 540px;
       }
 
+      .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 540px;
+        aspect-ratio: 16/9;
+        background: #000;
+        border-radius: var(--bb-grid-size-3);
+        overflow: hidden;
+      }
+
+      .video-thumbnail {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        line-height: 0;
+        z-index: 1;
+
+        & img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
       .image-placeholder {
         display: flex;
         justify-content: center;
@@ -98,12 +125,10 @@ export class GoogleDriveFileViewer extends LitElement {
       }
     `,
     css`
-      iframe.video-embed {
+      .video-embed {
         width: 100%;
         height: 100%;
-        aspect-ratio: 16/9;
         border: none;
-        border-radius: var(--bb-grid-size-3);
       }
     `,
   ];
@@ -135,6 +160,8 @@ export class GoogleDriveFileViewer extends LitElement {
   @state()
   accessor #imageFailedToLoad = false;
 
+  #videoUrl: string | null = null;
+
   @property({ reflect: true, type: Boolean })
   accessor forcePlaceholder = false;
 
@@ -163,9 +190,45 @@ export class GoogleDriveFileViewer extends LitElement {
     args: () => [this.googleDriveClient, this.fileId],
   });
 
+  readonly #videoUrlTask = new Task(this, {
+    task: async ([googleDriveClient, fileId], { signal }) => {
+      if (!googleDriveClient || !fileId) {
+        return undefined;
+      }
+
+      if (this.#videoUrl) {
+        return this.#videoUrl;
+      }
+
+      const response = await googleDriveClient.getFileMedia(fileId, { signal });
+      if (!response.ok) {
+        throw new Error("Failed to load video content.");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      this.#videoUrl = url;
+      return url;
+    },
+    args: () => [this.googleDriveClient, this.fileId],
+  });
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#revokeVideoUrl();
+  }
+
+  #revokeVideoUrl() {
+    if (this.#videoUrl) {
+      URL.revokeObjectURL(this.#videoUrl);
+      this.#videoUrl = null;
+    }
+  }
+
   override willUpdate(changes: PropertyValues<this>) {
     if (changes.has("fileId")) {
       this.#imageFailedToLoad = false;
+      this.#revokeVideoUrl();
     }
   }
 
@@ -180,15 +243,42 @@ export class GoogleDriveFileViewer extends LitElement {
         }
 
         if (file.mimeType?.startsWith("video/")) {
-          const src = `https://drive.google.com/file/d/${file.id}/preview`;
-          return html`<iframe
-            class="video-embed"
-            src="${src}"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerpolicy="strict-origin-when-cross-origin"
-            allowfullscreen
-          ></iframe>`;
+          return html`
+            <div class="video-container">
+              ${this.#videoUrlTask.render({
+                pending: () =>
+                  html`<div
+                    class="video-thumbnail"
+                    @click=${() => {
+                      this.#videoUrl = null;
+                      this.#videoUrlTask.run();
+                    }}
+                  >
+                    <img
+                      cross-origin
+                      src=${file.thumbnailLink}
+                      alt=${file.name ?? "Google Document"}
+                      @error=${this.#onImageError}
+                    />
+                    <div
+                      class="loading"
+                      style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px;"
+                    >
+                      Loading...
+                    </div>
+                  </div>`,
+                error: () => html`<p>Error loading video source</p>`,
+                complete: (url) => html`
+                  <video
+                    class="video-embed"
+                    src="${url}"
+                    controls
+                    poster=${file.thumbnailLink}
+                  ></video>
+                `,
+              })}
+            </div>
+          `;
         }
 
         const openUrl =
