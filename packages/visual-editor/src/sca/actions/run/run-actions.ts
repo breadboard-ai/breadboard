@@ -7,11 +7,9 @@
 import type {
   ConsoleEntry,
   ErrorObject,
-  GraphDescriptor,
   NodeLifecycleState,
   NodeRunStatus,
-  RunConfig,
-  RuntimeFlagManager,
+  SimplifiedProjectRunState,
 } from "@breadboard-ai/types";
 import type {
   LLMContent,
@@ -21,15 +19,17 @@ import type {
 } from "@breadboard-ai/types";
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
-import { inputsFromSettings } from "../../../ui/data/inputs.js";
-import type { SettingsStore } from "../../../ui/data/settings-store.js";
 import { STATUS } from "../../../ui/types/types.js";
 import { getStepIcon } from "../../../ui/utils/get-step-icon.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
 import { RunController } from "../../controller/subcontrollers/run/run-controller.js";
-import { onGraphVersionForSync, onNodeActionRequested } from "./triggers.js";
+import {
+  onGraphVersionForSync,
+  onNodeActionRequested,
+  onTopologyChange,
+} from "./triggers.js";
 import { edgeToString } from "../../../ui/utils/workspace.js";
 import { decodeErrorData } from "../../utils/decode-error.js";
 import { createAppScreen, tickScreenProgress } from "../../utils/app-screen.js";
@@ -90,57 +90,53 @@ export const stop = asAction(
 // =============================================================================
 
 /**
- * Configuration for preparing a run.
- */
-export interface PrepareRunConfig {
-  /** The graph to run */
-  graph: GraphDescriptor;
-  /** The URL of the graph */
-  url: string;
-  /** User settings (for inputs) */
-  settings: SettingsStore;
-  /** Credentials fetch function */
-  fetchWithCreds: typeof fetch;
-  /** Runtime flags */
-  flags: RuntimeFlagManager;
-  /**
-   * FIXME: This is a shim that lets engine/A2 modules reach back into
-   * the SCA console and screen state. Find a better pattern — ideally the
-   * engine emits values and SCA actions write them to the console, rather
-   * than the engine pulling state via a callback.
-   */
-  getProjectRunState: RunConfig["getProjectRunState"];
-}
-
-/**
  * Prepares a run by building the RunConfig, creating the HarnessRunner,
  * and setting it on the controller.
+ *
+ * All configuration is pulled directly from the SCA bind (controller/services).
+ * Wired to `onTopologyChange` so the runner is re-created whenever nodes are
+ * added or removed, keeping the console in sync with the current graph.
+ *
+ * Skips re-preparation while a run is in progress — mid-run topology changes
+ * are handled by `syncConsoleFromRunner` instead.
  */
 export const prepare = asAction(
   "Run.prepare",
-  { mode: ActionMode.Immediate },
-  async (config: PrepareRunConfig): Promise<void> => {
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onTopologyChange(bind),
+  },
+  async (): Promise<void> => {
     const { controller, services } = bind;
     const logger = Utils.Logging.getLogger(controller);
     const LABEL = "Run Actions";
 
-    const { graph, url, settings, fetchWithCreds, flags, getProjectRunState } =
-      config;
+    // Don't re-prepare while a run is in progress.
+    if (controller.run.main.status === STATUS.RUNNING) {
+      return;
+    }
 
-    // Build the full RunConfig
-    const runConfig: RunConfig = {
+    const graph = controller.editor.graph.editor?.raw();
+    const url = controller.editor.graph.url;
+    if (!graph || !url) {
+      return;
+    }
+
+    const runConfig = {
       url,
       runner: graph,
-      diagnostics: true,
+      diagnostics: true as const,
       loader: services.loader,
       graphStore: controller.editor.graph,
       sandbox: services.sandbox,
-      // TODO: Remove this. Inputs from Settings is no longer a thing.
-      inputs: inputsFromSettings(settings),
-      fetchWithCreds,
-      getProjectRunState,
+      fetchWithCreds: services.fetchWithCreds,
+      getProjectRunState: () =>
+        ({
+          console: controller.run.main.console,
+          app: { screens: controller.run.screen.screens },
+        }) as unknown as SimplifiedProjectRunState,
       clientDeploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
-      flags,
+      flags: controller.global.flags,
     };
     logger.log(
       Utils.Logging.Formatter.info(`Created run config for ${url}`),

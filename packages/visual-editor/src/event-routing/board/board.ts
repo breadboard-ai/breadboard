@@ -13,12 +13,7 @@
 
 import { EventRoute } from "../types.js";
 
-import {
-  ConsentType,
-  ConsentUIType,
-  InputValues,
-  SimplifiedProjectRunState,
-} from "@breadboard-ai/types";
+import { ConsentType, ConsentUIType, InputValues } from "@breadboard-ai/types";
 
 import { StateEvent } from "../../ui/events/events.js";
 import { parseUrl } from "../../ui/utils/urls.js";
@@ -88,7 +83,7 @@ export const RunRoute: EventRoute<"board.run"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, sca, settings }) {
+  async do({ tab, sca }) {
     if (!tab) {
       return false;
     }
@@ -107,21 +102,7 @@ export const StopRoute: EventRoute<"board.stop"> = {
     sca.actions.run.stop();
 
     // Prepare the next run
-    const url = tab.graph.url;
-    if (url && settings) {
-      sca.actions.run.prepare({
-        graph: tab.graph,
-        url,
-        settings,
-        fetchWithCreds: sca.services.fetchWithCreds,
-        flags: sca.controller.global.flags,
-        getProjectRunState: () =>
-          ({
-            console: sca.controller.run.main.console,
-            app: { screens: sca.controller.run.screen.screens },
-          }) as unknown as SimplifiedProjectRunState,
-      });
-    }
+    sca.actions.run.prepare();
 
     return true;
   },

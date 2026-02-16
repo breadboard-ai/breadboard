@@ -45,3 +45,15 @@ export function onNodeActionRequested(bind: ActionBind): SignalTrigger {
     return controller.run.main.nodeActionRequest !== null;
   });
 }
+
+/**
+ * Creates a trigger that fires when graph topology changes.
+ * Used to re-prepare the runner so the console reflects the current graph.
+ */
+export function onTopologyChange(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Topology Change (Re-prepare)", () => {
+    const { controller } = bind;
+    // +1 so version 0 isn't falsy; each increment produces a unique value.
+    return controller.editor.graph.topologyVersion + 1;
+  });
+}
