@@ -9,7 +9,7 @@ import { defineFunction, mapDefinitions } from "../function-definition.js";
 import type { FunctionGroup } from "../types.js";
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 import { bind } from "../../../sca/actions/graph/graph-actions.js";
-import { graphOverviewYaml } from "./graph-overview.js";
+import { graphOverviewYaml, describeSelection } from "./graph-overview.js";
 import {
   takeSnapshot,
   diffSnapshots,
@@ -68,6 +68,12 @@ function getChatFunctionGroup(
           current_graph: z
             .string()
             .describe("The current graph overview (always included)."),
+          selected_steps: z
+            .string()
+            .optional()
+            .describe(
+              "Which steps are currently selected on the canvas, if any."
+            ),
           graph_changes: z
             .string()
             .optional()
@@ -116,9 +122,17 @@ function getChatFunctionGroup(
           lastSnapshot = currentSnapshot;
         }
 
+        // Include selection state.
+        const { controller } = bind;
+        const selectedNodes = controller.editor.selection.selection.nodes;
+        const selectionText = afterData
+          ? describeSelection(selectedNodes, afterData.nodes, translator)
+          : "";
+
         return {
           user_message: userMessage,
           current_graph: overview,
+          ...(selectionText ? { selected_steps: selectionText.trim() } : {}),
           ...(graph_changes ? { graph_changes } : {}),
         };
       }
@@ -132,6 +146,8 @@ function getChatFunctionGroup(
 After completing each user request, always call "wait_for_user_input" to receive the next instruction. Use the message parameter to tell the user what you did. Never stop without calling it — the conversation is ongoing.
 
 The response always includes "current_graph" with the latest graph overview. Use it to stay aware of the graph's current state.
+
+When "selected_steps" is present, it lists the steps the user has selected on the canvas. Use the selection as implicit context — for example, if the user says "edit this step" or "delete it", they likely mean the selected step. When no selection is present, ask the user to clarify which step they mean.
 
 When the response includes "graph_changes", the user manually edited the graph while you were waiting. Acknowledge those changes naturally — for example, "I see you added a new step" or "Looks like you changed the title of the Research step." Then address their message.`,
   };
