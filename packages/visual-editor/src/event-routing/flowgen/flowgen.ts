@@ -5,19 +5,17 @@
  */
 
 /**
- * FIXME: Legacy flowgen event route. This still depends on the legacy runtime
- * (runtime.project, tab, settings) which is not yet available through SCA
- * services. Migrate to SCA flowgen-actions.ts (using stateEventTrigger) once
- * the runtime dependency is resolved, then delete this file.
+ * Flowgen event route. Delegates core generation to SCA, then prepares
+ * a fresh runner so the step list populates from the new graph.
  */
 
+import type { SimplifiedProjectRunState } from "@breadboard-ai/types";
 import { EventRoute } from "../types.js";
 
-// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const GenerateRoute: EventRoute<"flowgen.generate"> = {
   event: "flowgen.generate",
 
-  async do({ originalEvent, sca, actionTracker, tab, settings, runtime }) {
+  async do({ originalEvent, sca, actionTracker, tab, settings }) {
     const { intent } = originalEvent.detail;
     const currentGraph = sca.controller.editor.graph.editor?.raw();
     if (!currentGraph) {
@@ -49,10 +47,11 @@ export const GenerateRoute: EventRoute<"flowgen.generate"> = {
         settings,
         fetchWithCreds: sca.services.fetchWithCreds,
         flags: sca.controller.global.flags,
-        getProjectRunState: () => runtime.project?.run,
-        connectToProject: (runner, abortSignal) => {
-          runtime.project?.connectHarnessRunner(runner, abortSignal);
-        },
+        getProjectRunState: () =>
+          ({
+            console: sca.controller.run.main.console,
+            app: { screens: sca.controller.run.screen.screens },
+          }) as unknown as SimplifiedProjectRunState,
       });
     }
 

@@ -7,7 +7,10 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import type { AppScreenOutput, BoardServer } from "@breadboard-ai/types";
+import type {
+  BoardServer,
+  SimplifiedProjectRunState,
+} from "@breadboard-ai/types";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, LitElement, nothing } from "lit";
@@ -47,7 +50,7 @@ import {
   FlowGenerator,
   flowGeneratorContext,
 } from "./ui/flow-gen/flow-generator.js";
-import { ReactiveAppScreen } from "./ui/state/app-screen.js";
+
 import {
   ActionTracker,
   RecentBoard,
@@ -72,7 +75,6 @@ export { MainBase };
 export type RenderValues = {
   canSave: boolean;
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
-  projectState: BreadboardUI.State.Project | null;
   showingOverlay: boolean;
   tabStatus: BreadboardUI.Types.STATUS;
 };
@@ -617,13 +619,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           settings: this.settings,
           fetchWithCreds: this.sca.services.fetchWithCreds,
           flags: this.sca.controller.global.flags,
-          getProjectRunState: () => this.runtime.project?.run,
-          connectToProject: (runner, abortSignal) => {
-            const project = this.runtime.project;
-            if (project) {
-              project.connectHarnessRunner(runner, abortSignal);
-            }
-          },
+          getProjectRunState: () =>
+            ({
+              console: this.sca.controller.run.main.console,
+              app: { screens: this.sca.controller.run.screen.screens },
+            }) as unknown as SimplifiedProjectRunState,
         });
       }
 
@@ -699,19 +699,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected getRenderValues(): RenderValues {
     const tabStatus = this.sca.controller.run.main.status;
 
-    const projectState = this.runtime.project;
-
-    if (projectState && this.tab?.finalOutputValues) {
-      const current = new ReactiveAppScreen("", undefined);
-      current.status = "complete";
-      const last: AppScreenOutput = {
-        output: this.tab.finalOutputValues,
-        schema: {},
-      };
-      current.outputs.set("final", last);
-      projectState.run.app.screens.set("final", current);
-    }
-
     // Inline canSave logic - use services directly
     let canSave = false;
     if (this.tab && !this.tab.readOnly) {
@@ -746,7 +733,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     return {
       canSave,
-      projectState,
       saveStatus,
       showingOverlay: this.sca.controller.global.main.show.size > 0,
       tabStatus,

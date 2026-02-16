@@ -8,7 +8,6 @@ import type {
   ConsoleEntry,
   ErrorObject,
   GraphDescriptor,
-  HarnessRunner,
   NodeLifecycleState,
   NodeRunStatus,
   RunConfig,
@@ -84,15 +83,6 @@ export const stop = asAction(
 // =============================================================================
 
 /**
- * Callback to connect the runner to the project.
- * Called after runner is created, allowing Runtime to bridge to Project.
- */
-export type ConnectToProjectCallback = (
-  runner: HarnessRunner,
-  abortSignal: AbortSignal
-) => void;
-
-/**
  * Configuration for preparing a run.
  */
 export interface PrepareRunConfig {
@@ -106,13 +96,13 @@ export interface PrepareRunConfig {
   fetchWithCreds: typeof fetch;
   /** Runtime flags */
   flags: RuntimeFlagManager;
-  /** Callback to get project run state */
-  getProjectRunState: RunConfig["getProjectRunState"];
   /**
-   * Callback to connect runner to project (bridging Runtime to SCA).
-   * @deprecated Remove once Project is moved into SCA structure.
+   * FIXME: This is a shim that lets engine/A2 modules reach back into
+   * the SCA console and screen state. Find a better pattern — ideally the
+   * engine emits values and SCA actions write them to the console, rather
+   * than the engine pulling state via a callback.
    */
-  connectToProject?: ConnectToProjectCallback;
+  getProjectRunState: RunConfig["getProjectRunState"];
 }
 
 /**
@@ -127,15 +117,8 @@ export const prepare = asAction(
     const logger = Utils.Logging.getLogger(controller);
     const LABEL = "Run Actions";
 
-    const {
-      graph,
-      url,
-      settings,
-      fetchWithCreds,
-      flags,
-      getProjectRunState,
-      connectToProject,
-    } = config;
+    const { graph, url, settings, fetchWithCreds, flags, getProjectRunState } =
+      config;
 
     // Build the fileSystem for this run
     const fileSystem = services.fileSystem.createRunFileSystem({
@@ -368,11 +351,6 @@ export const prepare = asAction(
 
     // Set on controller
     controller.run.main.setRunner(runner, abortController);
-
-    // Connect to project if callback provided
-    if (connectToProject) {
-      connectToProject(runner, abortController.signal);
-    }
 
     // Set status to stopped (ready to start)
     controller.run.main.setStatus(STATUS.STOPPED);
