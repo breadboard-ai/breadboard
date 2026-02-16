@@ -373,8 +373,6 @@ export type DescribeResultCacheArgs = {
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ): Promise<NodeDescriberResult>;
-  willUpdate(previous: NodeDescriberResult, current: NodeDescriberResult): void;
-  updated(graphId: GraphIdentifier, nodeId: NodeIdentifier): void;
 };
 
 /**
@@ -613,7 +611,6 @@ export type InspectableDescriberResultCache = {
     graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry;
   update(affectedNodes: AffectedNode[]): void;
-  clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
 
 export type InspectableGraphCache = {

@@ -19,7 +19,7 @@ export * from "./relative-path.js";
 export * from "./schema-differ.js";
 export * from "./schema.js";
 export * from "./semver.js";
-export * from "./snapshot-updater.js";
+
 export * from "./stubs.js";
 export * from "./notebooklm.js";
 export * from "./template.js";

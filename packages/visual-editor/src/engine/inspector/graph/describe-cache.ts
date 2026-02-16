@@ -4,70 +4,100 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Signal } from "signal-polyfill";
+
 import type {
   AffectedNode,
   DescribeResultCacheArgs,
   GraphIdentifier,
+  GraphStoreArgs,
   InspectableDescriberResultCache,
   InspectableDescriberResultCacheEntry,
+  MutableGraph,
   NodeDescriberResult,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import {
-  hash,
-  SnapshotUpdater,
-  SnapshotUpdaterArgs,
-} from "@breadboard-ai/utils";
+import { hash } from "@breadboard-ai/utils";
+import { NodeDescriberManager } from "./node-describer-manager.js";
 
 export { DescribeResultCache };
 
-type MapItem = SnapshotUpdater<NodeDescriberResult>;
+class SignalBackedEntry {
+  #current: Signal.State<NodeDescriberResult>;
+  #updating: Signal.State<boolean> = new Signal.State(true);
+  #latestPromise: Promise<NodeDescriberResult>;
+
+  #args: DescribeResultCacheArgs;
+  #graphId: GraphIdentifier;
+  #nodeId: NodeIdentifier;
+
+  constructor(
+    args: DescribeResultCacheArgs,
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ) {
+    this.#args = args;
+    this.#graphId = graphId;
+    this.#nodeId = nodeId;
+    this.#current = new Signal.State(args.initial(graphId, nodeId));
+    this.#latestPromise = this.#fetchLatest();
+  }
+
+  #fetchLatest(): Promise<NodeDescriberResult> {
+    this.#updating.set(true);
+    const promise = this.#args
+      .latest(this.#graphId, this.#nodeId)
+      .then((latest) => {
+        this.#current.set(latest);
+        this.#updating.set(false);
+        return latest;
+      })
+      .catch(() => {
+        this.#updating.set(false);
+        return this.#current.get();
+      });
+    this.#latestPromise = promise;
+    return promise;
+  }
+
+  refresh() {
+    this.#fetchLatest();
+  }
+
+  snapshot(): InspectableDescriberResultCacheEntry {
+    return {
+      current: this.#current.get(),
+      latest: this.#latestPromise,
+      updating: this.#updating.get(),
+    };
+  }
+}
 
 class DescribeResultCache implements InspectableDescriberResultCache {
-  #map = new Map<number, MapItem>();
+  #map = new Map<number, SignalBackedEntry>();
+  #args: DescribeResultCacheArgs;
 
-  constructor(public readonly args: DescribeResultCacheArgs) {}
-
-  #createSnapshotArgs(graphId: GraphIdentifier, nodeId: NodeIdentifier) {
-    return {
-      initial: () => this.args.initial(graphId, nodeId),
-      latest: () => this.args.latest(graphId, nodeId),
-      willUpdate: (previous, current) =>
-        this.args.willUpdate(previous, current),
-      updated: () => {
-        this.args.updated(graphId, nodeId);
-      },
-    } as SnapshotUpdaterArgs<NodeDescriberResult>;
+  constructor(mutable: MutableGraph, deps: GraphStoreArgs) {
+    this.#args = new NodeDescriberManager(mutable, deps);
   }
 
   get(
     id: NodeIdentifier,
     graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry {
-    const hash = computeHash({ id, graphId });
-    let result = this.#map.get(hash);
-    if (result) {
-      return result.snapshot();
+    const key = computeHash({ id, graphId });
+    let entry = this.#map.get(key);
+    if (!entry) {
+      entry = new SignalBackedEntry(this.#args, graphId, id);
+      this.#map.set(key, entry);
     }
-    result = new SnapshotUpdater(this.#createSnapshotArgs(graphId, id));
-    this.#map.set(hash, result);
-    return result.snapshot();
+    return entry.snapshot();
   }
 
   update(affectedNodes: AffectedNode[]) {
     affectedNodes.forEach((affected) => {
-      const hash = computeHash(affected);
-      this.#map.get(hash)?.refresh();
-    });
-  }
-
-  clear(visualOnly: boolean, affectedNodes: AffectedNode[]) {
-    if (visualOnly) {
-      return;
-    }
-    affectedNodes.forEach((node) => {
-      const hash = computeHash(node);
-      this.#map.delete(hash);
+      const key = computeHash(affected);
+      this.#map.get(key)?.refresh();
     });
   }
 }

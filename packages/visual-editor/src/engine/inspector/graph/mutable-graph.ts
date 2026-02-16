@@ -20,7 +20,6 @@ import type {
 import { DescribeResultCache } from "./describe-cache.js";
 
 import { Graph } from "./graph.js";
-import { NodeDescriberManager } from "./node-describer-manager.js";
 import { Node } from "./node.js";
 
 export { MutableGraphImpl };
@@ -64,9 +63,7 @@ class MutableGraphImpl implements MutableGraph {
 
   rebuild(graph: GraphDescriptor) {
     this.graph = graph;
-    this.describe = new DescribeResultCache(
-      new NodeDescriberManager(this, this.#deps)
-    );
+    this.describe = new DescribeResultCache(this, this.#deps);
     this.graphs = {
       get: (id: GraphIdentifier) => new Graph(id, this),
       graphs: () =>
