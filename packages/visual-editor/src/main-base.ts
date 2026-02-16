@@ -7,10 +7,7 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import type {
-  BoardServer,
-  SimplifiedProjectRunState,
-} from "@breadboard-ai/types";
+import type { BoardServer } from "@breadboard-ai/types";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, LitElement, nothing } from "lit";
@@ -571,18 +568,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
       const url = tab.graph.url;
       if (url) {
-        this.sca.actions.run.prepare({
-          graph: tab.graph,
-          url,
-          settings: this.settings,
-          fetchWithCreds: this.sca.services.fetchWithCreds,
-          flags: this.sca.controller.global.flags,
-          getProjectRunState: () =>
-            ({
-              console: this.sca.controller.run.main.console,
-              app: { screens: this.sca.controller.run.screen.screens },
-            }) as unknown as SimplifiedProjectRunState,
-        });
+        this.sca.actions.run.prepare();
       }
 
       if (tab.graph.url && tab.graphIsMine) {

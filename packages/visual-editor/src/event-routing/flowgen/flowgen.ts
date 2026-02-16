@@ -9,13 +9,12 @@
  * a fresh runner so the step list populates from the new graph.
  */
 
-import type { SimplifiedProjectRunState } from "@breadboard-ai/types";
 import { EventRoute } from "../types.js";
 
 export const GenerateRoute: EventRoute<"flowgen.generate"> = {
   event: "flowgen.generate",
 
-  async do({ originalEvent, sca, actionTracker, tab, settings }) {
+  async do({ originalEvent, sca, actionTracker }) {
     const { intent } = originalEvent.detail;
     const currentGraph = sca.controller.editor.graph.editor?.raw();
     if (!currentGraph) {
@@ -37,23 +36,7 @@ export const GenerateRoute: EventRoute<"flowgen.generate"> = {
     }
 
     // Prepare a fresh runner so the step list populates from the new graph.
-    // This mirrors the stop→prepare pattern used in StopRoute.
-    const updatedGraph = sca.controller.editor.graph.editor?.raw();
-    const url = tab?.graph.url;
-    if (updatedGraph && url && settings) {
-      sca.actions.run.prepare({
-        graph: updatedGraph,
-        url,
-        settings,
-        fetchWithCreds: sca.services.fetchWithCreds,
-        flags: sca.controller.global.flags,
-        getProjectRunState: () =>
-          ({
-            console: sca.controller.run.main.console,
-            app: { screens: sca.controller.run.screen.screens },
-          }) as unknown as SimplifiedProjectRunState,
-      });
-    }
+    sca.actions.run.prepare();
 
     return true;
   },
