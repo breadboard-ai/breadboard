@@ -21,7 +21,7 @@ import {
 import type { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createFileSystem } from "../../engine/file-system/index.js";
-import { envFromSettings } from "../../utils/env-from-settings.js";
+
 import { createFileSystemBackend } from "../../idb/index.js";
 import { createEphemeralBlobStore } from "../../engine/file-system/ephemeral-blob-store.js";
 import { composeFileSystemBackends } from "../../engine/file-system/composed-peristent-backend.js";
@@ -118,7 +118,7 @@ export function services(
     });
 
     const fileSystem = createFileSystem({
-      env: [...envFromSettings(config.settings), ...(config.env || [])],
+      env: config.env || [],
       local: createFileSystemBackend(createEphemeralBlobStore()),
       mnt: composeFileSystemBackends(new Map<string, PersistentBackend>()),
     });
