@@ -308,7 +308,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       }
 
       bb-floating-input {
-        --container-margin: 0;
+        --bb-floating-input-margin: 0px;
         width: 100%;
         padding-bottom: var(--bb-grid-size-6);
       }
