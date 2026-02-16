@@ -540,7 +540,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: "" };
     }
     // await this.sca.controller.global.flowgenInput.isHydrated;
-    let projectState = this.runtime.project;
+    let hasEditor = !!this.sca.controller.editor.graph.editor;
     this.sca.controller.global.flowgenInput.currentExampleIntent = intent;
 
     // Set generating state early so the UI shows the editor view throughout
@@ -548,18 +548,15 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     // loadState transitions to "Loaded" while the graph is still empty.
     this.sca.controller.global.flowgenInput.state = { status: "generating" };
 
-    if (!projectState) {
+    if (!hasEditor) {
       // Zero state: need to create the board first, then wait for load
       await this.invokeBoardCreateRoute();
       await this.#waitForLoadState();
 
-      // After the board has been created we should be okay to create
-      // projectState.
-      this.runtime.syncProjectState();
-      projectState = this.runtime.project;
-      if (!projectState) {
+      hasEditor = !!this.sca.controller.editor.graph.editor;
+      if (!hasEditor) {
         this.sca.controller.global.flowgenInput.state = { status: "initial" };
-        return { error: `Failed to create a new opal.` };
+        return { error: `Failed to create a new Opal.` };
       }
     }
 

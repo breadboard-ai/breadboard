@@ -22,7 +22,6 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
-import { Runtime } from "./runtime/runtime.js";
 import { RuntimeConfig, Tab } from "./runtime/types.js";
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
@@ -133,7 +132,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   // References.
   // NOTE: selectionState field removed. Selection is now managed
   // entirely by SelectionController via SCA.
-  protected runtime: Runtime;
+
   protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
   // Run status now tracked by this.sca.controller.run.main
@@ -206,10 +205,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    // Append SCA to the config.
-    config.sca = this.sca;
-    this.runtime = new Runtime(config);
-
     this.googleDriveClient = this.sca.services.googleDriveClient;
 
     // Asyncronously check if the user has an access restriction (e.g. geo) and
@@ -228,8 +223,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.flowGenerator = this.sca.services.flowGenerator;
     this.actionTracker = this.sca.services.actionTracker;
-
-    this.#addRuntimeEventHandlers();
 
     this.boardServer = this.sca.services.googleDriveBoardServer;
 
@@ -251,7 +244,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       this.googleDriveClient,
       this.sca.services.signinAdapter
     );
-    admin.runtime = this.runtime;
+
     admin.settingsHelper = this.settingsHelper;
 
     // Once we've determined the sign-in status, relay it to an embedder.
@@ -384,38 +377,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       this.sca.controller.global.main.subscriptionStatus = "error";
       this.sca.controller.global.main.subscriptionCredits = -2;
     }
-  }
-
-  #addRuntimeEventHandlers() {
-    if (!this.runtime) {
-      console.error("No runtime found");
-      return;
-    }
-
-    // NOTE: RuntimeSelectionChangeEvent listener removed.
-    // Selection is now managed by SelectionController via SCA.
-
-    // Note: runtime.board and runtime.edit listeners removed - these classes
-    // are now empty EventTargets. Functionality migrated to SCA:
-    // - RuntimeShareMissingEvent: handled elsewhere
-    // - RuntimeRequestSignInEvent: handled elsewhere
-    // - RuntimeVisualChangeEvent: handled by SCA triggers
-    // - RuntimeBoardLoadErrorEvent: handled by SCA
-    // - RuntimeErrorEvent: handled by SCA
-
-    // Note: RuntimeNewerSharedVersionEvent listener moved to
-    // SCA trigger: Board.registerNewerVersionTrigger()
-
-    // Note: RuntimeTabChangeEvent listener removed - logic moved to
-    // #handleBoardStateChanged() which is called directly after load/close
-
-    // Note: RuntimeTabCloseEvent listener removed - stop-run logic moved to
-    // before close() call in route handler
-
-    // Note: RuntimeBoardRunEvent listener removed -
-    // run status now tracked by runner event listeners
-    // set up in sca.actions.run.prepare() which updates
-    // controller.run.main.status directly
   }
 
   /**
@@ -602,9 +563,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
    * Calls syncProjectState directly instead of event dispatch.
    */
   async #handleBoardStateChanged(): Promise<void> {
-    // Sync project state (creates the Project object for the loaded graph)
-    this.runtime.syncProjectState();
-
     const tab = this.tab;
     this.#maybeShowWelcomePanel();
 
@@ -746,7 +704,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   ) {
     return {
       originalEvent: evt,
-      runtime: this.runtime,
+
       settings: this.settings,
       tab: this.tab,
       googleDriveClient: this.googleDriveClient,
@@ -853,7 +811,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "dismiss": {
-            this.runtime.project?.run?.dismissError();
+            this.sca.controller.run.main.dismissError();
             break;
           }
         }

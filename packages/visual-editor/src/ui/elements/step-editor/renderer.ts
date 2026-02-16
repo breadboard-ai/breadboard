@@ -68,7 +68,7 @@ import { EditorControls } from "./editor-controls.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants.js";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command.js";
-import { Project, RendererRunState } from "../../state/index.js";
+import { RendererRunState } from "../../state/index.js";
 
 import { baseColors } from "../../styles/host/base-colors.js";
 import { ItemSelect } from "../elements.js";
@@ -85,9 +85,6 @@ export class Renderer extends SignalWatcher(LitElement) {
   }
 
   // --- External state (set by canvas-controller) ---
-
-  @property()
-  accessor projectState: Project | null = null;
 
   @property()
   accessor runState: RendererRunState | null = null;
@@ -897,7 +894,7 @@ export class Renderer extends SignalWatcher(LitElement) {
       mainGraph.edges = graph.edges();
       mainGraph.graphAssets = this.#gc.graphAssets;
       mainGraph.readOnly = !this.#gc.graphIsMine;
-      mainGraph.projectState = this.projectState;
+
       mainGraph.assets = new Map(
         Array.from(graph.assets().entries()).filter(
           ([, asset]) => asset.type !== "connector"
@@ -926,7 +923,7 @@ export class Renderer extends SignalWatcher(LitElement) {
         subGraph.edges = subGraphData.edges();
         subGraph.graphAssets = this.#gc.graphAssets;
         subGraph.readOnly = !this.#gc.graphIsMine;
-        subGraph.projectState = this.projectState;
+
         subGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
         subGraph.resetTransform();
       }

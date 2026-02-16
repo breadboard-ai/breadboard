@@ -133,7 +133,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
 
   async do({
     tab,
-    runtime,
     settings,
     googleDriveClient,
     sca,
@@ -143,7 +142,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
   }) {
     await StopRoute.do({
       tab,
-      runtime,
       originalEvent: new StateEvent({
         eventType: "board.stop",
       }),
@@ -156,7 +154,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     actionTracker?.runApp(tab?.graph.url, "console");
     await RunRoute.do({
       tab,
-      runtime,
       originalEvent: new StateEvent({
         eventType: "board.run",
       }),
