@@ -477,6 +477,7 @@ export class GraphController
     this._myTools = new Map();
     this._agentModeTools = new Map();
     this._components = new Map();
+    this.#componentsUpdateGeneration++;
   }
 
   // =========================================================================
