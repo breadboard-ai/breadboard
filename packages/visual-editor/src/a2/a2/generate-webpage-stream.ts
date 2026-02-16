@@ -8,8 +8,8 @@ export type { StreamingRequestBody, StreamChunk };
 
 import {
   Capabilities,
-  FileSystemReadWritePath,
   LLMContent,
+  OPAL_BACKEND_API_PREFIX,
   Outcome,
 } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
@@ -17,12 +17,14 @@ import {
   getCurrentStepState,
   createReporter,
 } from "../agent/progress-work-item.js";
-import { err, ok, progressFromThought, toLLMContentInline } from "./utils.js";
+import { err, progressFromThought, toLLMContentInline } from "./utils.js";
 import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-const DEFAULT_STREAM_BACKEND_ENDPOINT =
-  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/generateWebpageStream";
+const STREAM_BACKEND_ENDPOINT = new URL(
+  "v1beta1/generateWebpageStream",
+  OPAL_BACKEND_API_PREFIX
+).href;
 
 type StreamChunk = {
   parts?: Array<{
@@ -51,24 +53,6 @@ type StreamingRequestBody = {
   }>;
   driveResourceKeys?: Record<string, string>;
 };
-
-async function getStreamBackendUrl(caps: Capabilities): Promise<string> {
-  type BackendSettings = { endpoint_url: string };
-  const reading = await caps.read({ path: "/env/settings/backend" });
-  if (ok(reading)) {
-    const part = reading.data?.at(0)?.parts?.at(0);
-    if (part && "json" in part) {
-      const settings = part.json as BackendSettings;
-      if (settings?.endpoint_url) {
-        // Extract base URL and append the streaming endpoint path
-        const url = new URL(settings.endpoint_url);
-        url.pathname = "/v1beta1/generateWebpageStream";
-        return url.toString();
-      }
-    }
-  }
-  return DEFAULT_STREAM_BACKEND_ENDPOINT;
-}
 
 /**
  * Build the request body for the streaming API.
@@ -193,7 +177,7 @@ function parseStoredDataUrl(handle: string): string {
  * Execute a streaming webpage generation request.
  */
 async function executeWebpageStream(
-  caps: Capabilities,
+  _caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   instruction: string,
   content: LLMContent[],
@@ -211,7 +195,7 @@ async function executeWebpageStream(
 
     if (appScreen) appScreen.progress = "Generating HTML";
 
-    const baseUrl = await getStreamBackendUrl(caps);
+    const baseUrl = STREAM_BACKEND_ENDPOINT;
     const url = new URL(baseUrl);
     url.searchParams.set("alt", "sse");
 
@@ -220,12 +204,6 @@ async function executeWebpageStream(
       content,
       modelName
     );
-
-    // Record model call with action tracker
-    caps.write({
-      path: `/mnt/track/call_${modelName}` as FileSystemReadWritePath,
-      data: [],
-    });
 
     const response = await moduleArgs.fetchWithCreds(url.toString(), {
       method: "POST",

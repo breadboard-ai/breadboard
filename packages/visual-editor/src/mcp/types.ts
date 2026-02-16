@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  FileSystem,
-  FunctionResponseCapabilityPart,
-  Outcome,
-} from "@breadboard-ai/types";
+import { FunctionResponseCapabilityPart, Outcome } from "@breadboard-ai/types";
 import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type {
@@ -151,7 +147,6 @@ export interface McpBuiltInClient extends McpClient {
 }
 
 export type McpBuiltInClientFactoryContext = {
-  fileSystem: FileSystem;
   fetchWithCreds: typeof fetch;
 };
 

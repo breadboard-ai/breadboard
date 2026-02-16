@@ -106,7 +106,7 @@ function createInputSchema(
  */
 async function askUser(
   inputs: AskUserInputs,
-  caps: Capabilities,
+  _caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AskUserOutputs>> {
   const {
@@ -117,7 +117,10 @@ async function askUser(
   } = inputs;
 
   // === text-entry phase: Build prompt and report status ===
-  const template = new Template(caps, description);
+  const template = new Template(
+    description,
+    moduleArgs.context.currentGraph
+  );
   let details = llm`Please provide input`.asContent();
   if (description) {
     const substituting = await template.substitute(params, async () => "");
@@ -184,10 +187,10 @@ type DescribeInputs = {
 
 async function describe(
   { inputs: { description, ["p-modality"]: modality } }: DescribeInputs,
-  caps: Capabilities
+  _caps: Capabilities
 ) {
   const icon = computeIcon(modality);
-  const template = new Template(caps, description);
+  const template = new Template(description);
   return {
     inputSchema: {
       type: "object",

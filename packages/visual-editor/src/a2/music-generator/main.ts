@@ -86,7 +86,10 @@ async function invoke(
   if (text) {
     instructionText = toText(text).trim();
   }
-  const template = new Template(caps, toLLMContent(instructionText));
+  const template = new Template(
+    toLLMContent(instructionText),
+    moduleArgs.context.currentGraph
+  );
   const toolManager = new ToolManager(
     caps,
     moduleArgs,
@@ -132,9 +135,9 @@ type DescribeInputs = {
 
 async function describe(
   { inputs: { text } }: DescribeInputs,
-  caps: Capabilities
+  _caps: Capabilities
 ) {
-  const template = new Template(caps, text);
+  const template = new Template(text);
   return {
     inputSchema: {
       type: "object",

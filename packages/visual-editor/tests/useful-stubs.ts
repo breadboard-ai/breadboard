@@ -18,17 +18,7 @@ import { type ConsentController } from "../src/sca/controller/subcontrollers/glo
 
 export { stubCaps, stubModuleArgs, stubMemoryManager };
 
-const stubCaps: Capabilities = {
-  query() {
-    throw new Error(`Not implemented`);
-  },
-  read() {
-    throw new Error(`Not implemented`);
-  },
-  async write() {
-    // Do nothing
-  },
-};
+const stubCaps: Capabilities = {};
 
 const stubModuleArgs: A2ModuleArgs = {
   mcpClientManager: {} as unknown as McpClientManager,

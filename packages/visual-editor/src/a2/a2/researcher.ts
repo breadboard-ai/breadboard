@@ -155,7 +155,7 @@ async function invoke(
   );
   let content = context || [toLLMContent("Start the research")];
 
-  const template = new Template(caps, plan);
+  const template = new Template(plan, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
   );
@@ -262,9 +262,9 @@ function researchExample(): string[] {
 
 async function describe(
   { inputs: { plan } }: DescribeInputs,
-  caps: Capabilities
+  _caps: Capabilities
 ) {
-  const template = new Template(caps, plan);
+  const template = new Template(plan);
   return {
     inputSchema: {
       type: "object",

@@ -217,10 +217,10 @@ async function invoke(
     moduleArgs,
     new ArgumentNameGenerator(caps, moduleArgs)
   );
-  const substituting = await new Template(caps, instruction).substitute(
-    params,
-    async (part) => toolManager.addTool(part)
-  );
+  const substituting = await new Template(
+    instruction,
+    moduleArgs.context.currentGraph
+  ).substitute(params, async (part) => toolManager.addTool(part));
   if (!ok(substituting)) {
     return substituting;
   }
@@ -283,9 +283,9 @@ type DescribeInputs = {
 
 async function describe(
   { inputs: { instruction } }: DescribeInputs,
-  caps: Capabilities
+  _caps: Capabilities
 ) {
-  const template = new Template(caps, instruction);
+  const template = new Template(instruction);
   return {
     inputSchema: {
       type: "object",

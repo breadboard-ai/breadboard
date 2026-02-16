@@ -149,7 +149,7 @@ async function invokeOpalAdk(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
-  const template = new Template(caps, query);
+  const template = new Template(query, moduleArgs.context.currentGraph);
   const toolManager = new ToolManager(
     caps,
     moduleArgs,
@@ -162,9 +162,10 @@ async function invokeOpalAdk(
     return substituting;
   }
   const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
-  const results = await opalAdkStream
-    .executeOpalAdkStream(DEEP_RESEARCH_KEY, [substituting]);
-  console.log("deep-research results", results)
+  const results = await opalAdkStream.executeOpalAdkStream(DEEP_RESEARCH_KEY, [
+    substituting,
+  ]);
+  console.log("deep-research results", results);
   return {
     context: [...(context || []), results],
   };
@@ -184,7 +185,7 @@ async function invokeLegacy(
   );
   let content = context || [toLLMContent("Start the research")];
 
-  const template = new Template(caps, query);
+  const template = new Template(query, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
   );
@@ -319,9 +320,9 @@ function researchExample(): string[] {
 
 async function describe(
   { inputs: { query } }: DescribeInputs,
-  caps: Capabilities
+  _caps: Capabilities
 ) {
-  const template = new Template(caps, query);
+  const template = new Template(query);
   return {
     inputSchema: {
       type: "object",

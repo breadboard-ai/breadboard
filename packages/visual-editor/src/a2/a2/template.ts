@@ -7,9 +7,8 @@ export { invoke as default, describe, Template };
 import type { Params } from "./common.js";
 import { ok, err, isLLMContent, isLLMContentArray } from "./utils.js";
 import type {
-  Capabilities,
   DataPart,
-  FileSystemPath,
+  GraphDescriptor,
   LLMContent,
   Outcome,
   Schema,
@@ -45,17 +44,7 @@ export type AssetParamPart = {
   mimeType?: string;
 };
 
-export type ParameterParamPart = {
-  type: "param";
-  path: string;
-  title: string;
-};
-
-export type ParamPart =
-  | InParamPart
-  | ToolParamPart
-  | AssetParamPart
-  | ParameterParamPart;
+export type ParamPart = InParamPart | ToolParamPart | AssetParamPart;
 
 export type TemplatePart = DataPart | ParamPart;
 
@@ -75,12 +64,8 @@ function isAsset(param: ParamPart): param is AssetParamPart {
   return param.type === "asset" && !!param.path;
 }
 
-function isParameter(param: ParamPart): param is ParameterParamPart {
-  return param.type === "param" && !!param.path;
-}
-
 function isParamPart(param: ParamPart): param is ParamPart {
-  return isTool(param) || isIn(param) || isAsset(param) || isParameter(param);
+  return isTool(param) || isIn(param) || isAsset(param);
 }
 
 const PARSING_REGEX = /{(?<json>{(?:.*?)})}/gim;
@@ -90,8 +75,8 @@ class Template {
   #role: LLMContent["role"];
 
   constructor(
-    private readonly caps: Capabilities,
-    public readonly template: LLMContent | undefined
+    public readonly template: LLMContent | undefined,
+    private readonly graph?: GraphDescriptor
   ) {
     if (!template) {
       this.#role = "user";
@@ -177,13 +162,12 @@ class Template {
     return null;
   }
 
-  async loadAsset(param: ParamPart): Promise<Outcome<LLMContent[]>> {
-    const path: FileSystemPath = `/assets/${param.path}`;
-    const reading = await this.caps.read({ path });
-    if (!ok(reading) || !reading.data) {
+  loadAsset(param: AssetParamPart): Outcome<LLMContent[]> {
+    const asset = this.graph?.assets?.[param.path];
+    if (!asset?.data) {
       return err(`Unable to find asset "${param.title}"`);
     }
-    return reading.data;
+    return asset.data as LLMContent[];
   }
 
   async #replaceParam(
@@ -204,14 +188,6 @@ class Template {
       const substituted = await whenTool(param);
       if (!ok(substituted)) return substituted;
       return substituted || param.title;
-    } else if (isParameter(param)) {
-      const path: FileSystemPath = `/env/parameters/${param.path}`;
-      const reading = await this.caps.read({ path });
-      if (!ok(reading)) {
-        console.error(`Unknown parameter "${param.title}"`);
-        return null;
-      }
-      return reading.data;
     }
     return null;
   }
@@ -401,9 +377,9 @@ type TestOutputs = {
  */
 async function invoke(
   { inputs: { content, params } }: TestInputs,
-  caps: Capabilities
+  _caps: unknown
 ): Promise<Outcome<TestOutputs>> {
-  const template = new Template(caps, content);
+  const template = new Template(content);
   const result = await template.substitute(
     fromTestParams(params),
     async (params) => {

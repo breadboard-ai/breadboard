@@ -6,7 +6,6 @@
 
 import { describe, it } from "node:test";
 import { EditingAgentPidginTranslator } from "../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
-import { stubCaps } from "../../useful-stubs.js";
 import { deepStrictEqual, strictEqual } from "node:assert";
 import { Template } from "../../../src/a2/a2/template.js";
 import {
@@ -16,7 +15,7 @@ import {
 import { llm } from "../../../src/a2/a2/utils.js";
 
 function makeTranslator(): EditingAgentPidginTranslator {
-  return new EditingAgentPidginTranslator(stubCaps);
+  return new EditingAgentPidginTranslator();
 }
 
 describe("EditingAgentPidginTranslator", () => {
@@ -142,18 +141,6 @@ describe("EditingAgentPidginTranslator", () => {
 
       const result = translator.toPidgin(content);
       strictEqual(result.text, `Use <tool name="memory" />`);
-    });
-
-    it("ignores param type parts", () => {
-      const translator = makeTranslator();
-      const content = llm`Hello ${Template.part({
-        type: "param",
-        path: "some-param",
-        title: "A Param",
-      })} world`.asContent();
-
-      const result = translator.toPidgin(content);
-      strictEqual(result.text, `Hello  world`);
     });
   });
 

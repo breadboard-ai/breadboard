@@ -4,15 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  FileSystemPath,
-  FileSystemQueryArguments,
-  FileSystemQueryResult,
-  FileSystemReadArguments,
-  FileSystemReadResult,
-  FileSystemWriteArguments,
-  FileSystemWriteResult,
-} from "./data.js";
+import { FileSystemPath } from "./data.js";
 import { GraphMetadata, NodeMetadata } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
 import { NodeDescriberExport } from "./node-handler.js";
@@ -102,8 +94,5 @@ export type DescribeOutputs = {
   exports?: Record<string, NodeDescriberExport>;
 };
 
-export type Capabilities = {
-  query(inputs: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
-  read(inputs: FileSystemReadArguments): Promise<FileSystemReadResult>;
-  write(inputs: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
-};
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type Capabilities = {};

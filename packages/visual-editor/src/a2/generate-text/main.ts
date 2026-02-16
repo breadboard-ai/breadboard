@@ -75,7 +75,10 @@ class GenerateText {
 
   async initialize(): Promise<Outcome<void>> {
     const { sharedContext } = this;
-    const template = new Template(this.caps, sharedContext.description);
+    const template = new Template(
+      sharedContext.description,
+      this.moduleArgs.context.currentGraph
+    );
     const toolManager = new ToolManager(
       this.caps,
       this.moduleArgs,
@@ -538,7 +541,7 @@ export type DescribeInputs = {
 
 async function describe(
   { inputs: { description } }: DescribeInputs,
-  caps: Capabilities
+  _caps: Capabilities
 ) {
   const chatSchema: Schema["properties"] = {
     "p-chat": {
@@ -563,7 +566,7 @@ async function describe(
       description: "The specific model version to generate with",
     },
   };
-  const template = new Template(caps, description);
+  const template = new Template(description);
 
   return {
     inputSchema: {
