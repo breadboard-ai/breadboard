@@ -117,7 +117,11 @@ async function askUser(
   } = inputs;
 
   // === text-entry phase: Build prompt and report status ===
-  const template = new Template(caps, description);
+  const template = new Template(
+    caps,
+    description,
+    moduleArgs.context.currentGraph
+  );
   let details = llm`Please provide input`.asContent();
   if (description) {
     const substituting = await template.substitute(params, async () => "");

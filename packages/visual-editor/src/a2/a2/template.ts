@@ -10,6 +10,7 @@ import type {
   Capabilities,
   DataPart,
   FileSystemPath,
+  GraphDescriptor,
   LLMContent,
   Outcome,
   Schema,
@@ -91,7 +92,8 @@ class Template {
 
   constructor(
     private readonly caps: Capabilities,
-    public readonly template: LLMContent | undefined
+    public readonly template: LLMContent | undefined,
+    private readonly graph?: GraphDescriptor
   ) {
     if (!template) {
       this.#role = "user";
@@ -177,13 +179,12 @@ class Template {
     return null;
   }
 
-  async loadAsset(param: ParamPart): Promise<Outcome<LLMContent[]>> {
-    const path: FileSystemPath = `/assets/${param.path}`;
-    const reading = await this.caps.read({ path });
-    if (!ok(reading) || !reading.data) {
+  loadAsset(param: AssetParamPart): Outcome<LLMContent[]> {
+    const asset = this.graph?.assets?.[param.path];
+    if (!asset?.data) {
       return err(`Unable to find asset "${param.title}"`);
     }
-    return reading.data;
+    return asset.data as LLMContent[];
   }
 
   async #replaceParam(

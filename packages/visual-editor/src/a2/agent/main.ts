@@ -152,7 +152,7 @@ async function describe(
 ) {
   const flags = await readFlags(moduleArgs);
   const uiSchemas = computeAgentSchema(flags, rest);
-  const template = new Template(caps, config$prompt);
+  const template = new Template(caps, config$prompt, moduleArgs.context.currentGraph);
   return {
     inputSchema: {
       type: "object",

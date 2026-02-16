@@ -65,7 +65,11 @@ async function invoke(
     moduleArgs,
     new ArgumentNameGenerator(caps, moduleArgs)
   );
-  const template = new Template(caps, objective);
+  const template = new Template(
+    caps,
+    objective,
+    moduleArgs.context.currentGraph
+  );
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
   );

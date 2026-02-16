@@ -114,7 +114,11 @@ async function invoke(
   if (text) {
     instructionText = toText(text).trim();
   }
-  const template = new Template(caps, toLLMContent(instructionText));
+  const template = new Template(
+    caps,
+    toLLMContent(instructionText),
+    moduleArgs.context.currentGraph
+  );
   const toolManager = new ToolManager(
     caps,
     moduleArgs,

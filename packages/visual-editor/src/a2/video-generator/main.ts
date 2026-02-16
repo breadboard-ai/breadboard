@@ -209,7 +209,11 @@ async function invoke(
   // Substitute variables and magic image reference.
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
-  const template = new Template(caps, toLLMContent(instructionText));
+  const template = new Template(
+    caps,
+    toLLMContent(instructionText),
+    moduleArgs.context.currentGraph
+  );
   const toolManager = new ToolManager(
     caps,
     moduleArgs,

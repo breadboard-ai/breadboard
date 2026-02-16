@@ -219,7 +219,11 @@ class PidginTranslator {
     params: Params,
     textAsFiles: boolean
   ): Promise<Outcome<ToPidginResult>> {
-    const template = new Template(this.caps, content);
+    const template = new Template(
+      this.caps,
+      content,
+      this.moduleArgs.context.currentGraph
+    );
     const toolManager = new ToolManager(this.caps, this.moduleArgs);
 
     const errors: string[] = [];

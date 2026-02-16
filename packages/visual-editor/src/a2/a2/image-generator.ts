@@ -117,10 +117,11 @@ async function invoke(
     moduleArgs,
     new ArgumentNameGenerator(caps, moduleArgs)
   );
-  const substituting = await new Template(caps, instruction).substitute(
-    params,
-    async (part) => toolManager.addTool(part)
-  );
+  const substituting = await new Template(
+    caps,
+    instruction,
+    moduleArgs.context.currentGraph
+  ).substitute(params, async (part) => toolManager.addTool(part));
   if (!ok(substituting)) {
     return substituting;
   }
