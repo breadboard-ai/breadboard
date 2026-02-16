@@ -458,9 +458,7 @@ export class GraphController
   }
 
   /**
-   * Here for migrations.
-   *
-   * @deprecated
+   * Resets the graph state when a board is closed.
    */
   resetAll() {
     this.id = null;
@@ -469,6 +467,7 @@ export class GraphController
     this._title = null;
     this.url = null;
     this.version = 0;
+    this.topologyVersion = 0;
     this.readOnly = false;
     this.graphIsMine = false;
     this.mainGraphId = null;

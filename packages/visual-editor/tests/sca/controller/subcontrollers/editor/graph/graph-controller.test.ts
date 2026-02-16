@@ -1063,4 +1063,96 @@ suite("GraphController", () => {
       }
     }
   });
+
+  // ==========================================================================
+  // topologyVersion
+  // ==========================================================================
+
+  test("topologyVersion increments on structural graph changes", async () => {
+    const store = new GraphController("Graph_Topo_Inc", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    assert.strictEqual(store.topologyVersion, 0);
+
+    // Adding a node is a structural change.
+    const result = await editableGraph.edit(
+      [
+        {
+          type: "addnode",
+          graphId: "",
+          node: { id: "topo-node", type: "test:secrets" },
+        },
+      ],
+      "Add node for topology test"
+    );
+    if (!result.success) assert.fail("Edit failed");
+    await store.isSettled;
+
+    assert.strictEqual(store.topologyVersion, 1);
+  });
+
+  test("topologyVersion does not increment on visual-only changes", async () => {
+    const store = new GraphController("Graph_Topo_Visual", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    assert.strictEqual(store.topologyVersion, 0);
+
+    // Moving a node is a visual-only change.
+    const result = await editableGraph.edit(
+      [
+        {
+          type: "changemetadata",
+          graphId: "",
+          id: "foo",
+          metadata: { visual: { x: 100, y: 200, icon: "generic" } },
+        },
+      ],
+      "Move node"
+    );
+    if (!result.success) assert.fail("Edit failed");
+    await store.isSettled;
+
+    // version should still tick, but topologyVersion should NOT.
+    assert.ok(store.version > 0, "version should have incremented");
+    assert.strictEqual(
+      store.topologyVersion,
+      0,
+      "topologyVersion should not increment on visual-only change"
+    );
+  });
+
+  test("topologyVersion resets to 0 on resetAll", async () => {
+    const store = new GraphController("Graph_Topo_Reset", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    // Bump topologyVersion with a structural edit.
+    await editableGraph.edit(
+      [
+        {
+          type: "addnode",
+          graphId: "",
+          node: { id: "reset-node", type: "test:secrets" },
+        },
+      ],
+      "Add node"
+    );
+    await store.isSettled;
+    assert.ok(store.topologyVersion > 0);
+
+    store.resetAll();
+    await store.isSettled;
+    assert.strictEqual(store.topologyVersion, 0);
+  });
 });
