@@ -59,9 +59,6 @@ class GraphEditingAgentController extends RootController {
   @field()
   accessor loopRunning = false;
 
-  @field({ deep: true })
-  private accessor _expandedGroups: Set<number> = new Set();
-
   /**
    * The flow ID that the current loop was started for.
    * Used to detect graph changes and restart the loop.
@@ -75,10 +72,6 @@ class GraphEditingAgentController extends RootController {
 
   get entries(): readonly ChatEntry[] {
     return this._entries;
-  }
-
-  get expandedGroups(): ReadonlySet<number> {
-    return this._expandedGroups;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -104,16 +97,6 @@ class GraphEditingAgentController extends RootController {
     }
   }
 
-  toggleGroup(index: number) {
-    const next = new Set(this._expandedGroups);
-    if (next.has(index)) {
-      next.delete(index);
-    } else {
-      next.add(index);
-    }
-    this._expandedGroups = next;
-  }
-
   /**
    * Show a random greeting if no entries exist yet.
    */
@@ -128,7 +111,6 @@ class GraphEditingAgentController extends RootController {
    */
   reset() {
     this._entries = [];
-    this._expandedGroups = new Set();
     this.open = false;
     this.waiting = false;
     this.processing = false;
