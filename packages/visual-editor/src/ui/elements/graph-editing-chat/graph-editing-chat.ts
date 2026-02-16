@@ -16,6 +16,7 @@ import type { SCA } from "../../../sca/sca.js";
 import type { ChatEntry } from "../../../sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
 import { markdown } from "../../directives/markdown.js";
 import { icons } from "../../styles/icons.js";
+import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing/main.js";
 
 export { GraphEditingChat };
 
@@ -409,7 +410,12 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     if (!service.resolveInput(text, this.sca.controller)) {
       // No pending resolve — this is the first message, start the loop
       agent.processing = true;
-      service.startLoop(text, this.sca.controller, this.sca.services);
+      service.startLoop(
+        text,
+        this.sca.controller,
+        this.sca.services,
+        invokeGraphEditingAgent
+      );
     }
   }
 

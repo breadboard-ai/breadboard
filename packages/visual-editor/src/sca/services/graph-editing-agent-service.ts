@@ -9,9 +9,12 @@ import type { LoopHooks } from "../../a2/agent/types.js";
 import type { A2ModuleFactory } from "../../a2/runnable-module-factory.js";
 import type { AppServices } from "./services.js";
 import type { AppController } from "../controller/controller.js";
-import { invokeGraphEditingAgent } from "../../a2/agent/graph-editing/main.js";
+import type { invokeGraphEditingAgent } from "../../a2/agent/graph-editing/main.js";
 
 export { GraphEditingAgentService };
+export type { InvokeFn };
+
+type InvokeFn = typeof invokeGraphEditingAgent;
 
 /**
  * Service managing the graph editing agent lifecycle.
@@ -30,7 +33,8 @@ class GraphEditingAgentService {
   startLoop(
     firstMessage: string,
     controller: AppController,
-    services: AppServices
+    services: AppServices,
+    invoke: InvokeFn
   ): void {
     const agent = controller.editor.graphEditingAgent;
     if (agent.loopRunning) return;
@@ -79,7 +83,7 @@ class GraphEditingAgentService {
       },
     };
 
-    invokeGraphEditingAgent(objective, moduleArgs, waitForInput, hooks)
+    invoke(objective, moduleArgs, waitForInput, hooks)
       .then((result) => {
         agent.loopRunning = false;
         if (result && "$error" in result) {
