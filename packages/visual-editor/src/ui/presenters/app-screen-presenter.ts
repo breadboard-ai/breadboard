@@ -8,7 +8,7 @@ import { signal } from "signal-utils";
 import { reactive } from "../../sca/reactive.js";
 import type { AppScreen } from "@breadboard-ai/types";
 import type { SCA } from "../../sca/sca.js";
-import type { ReactiveAppScreen } from "../state/app-screen.js";
+import type { AppScreenData } from "../../sca/utils/app-screen.js";
 
 /**
  * The high-level UI state of the app panel during a run.
@@ -53,7 +53,7 @@ class AppScreenPresenter {
   accessor current: ReadonlyMap<string, AppScreen> = new Map();
 
   @signal
-  accessor last: ReactiveAppScreen | null = null;
+  accessor last: AppScreenData | null = null;
 
   #disposeEffect: (() => void) | null = null;
   #sca: SCA | null = null;

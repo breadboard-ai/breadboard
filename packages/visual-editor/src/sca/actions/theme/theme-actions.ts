@@ -13,7 +13,7 @@ import {
   getThemeFromIntentGenerationPrompt,
 } from "../../../ui/prompts/theme-generation.js";
 import { AppTheme } from "../../../ui/types/types.js";
-import { ThemePromptArgs } from "../../../ui/state/types.js";
+import { ThemePromptArgs } from "../../types.js";
 import { generateImage, persistTheme } from "./theme-utils.js";
 
 export const bind = makeAction();

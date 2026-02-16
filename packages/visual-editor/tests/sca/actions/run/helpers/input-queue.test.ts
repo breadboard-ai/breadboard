@@ -15,7 +15,7 @@ import {
 } from "../../../../../src/sca/actions/run/helpers/input-queue.js";
 import type { Schema } from "@breadboard-ai/types";
 import type { AppController } from "../../../../../src/sca/controller/controller.js";
-import { ReactiveAppScreen } from "../../../../../src/ui/state/app-screen.js";
+import { createAppScreen } from "../../../../../src/sca/utils/app-screen.js";
 
 function makeRun(controller: AppController): AppController["run"] {
   return controller.run;
@@ -92,10 +92,7 @@ suite("input-queue helpers", () => {
       const run = makeRun(controller);
 
       // Create a screen first so bumpScreen has something to bump.
-      run.screen.setScreen(
-        "node-1",
-        new ReactiveAppScreen("node-1", undefined)
-      );
+      run.screen.setScreen("node-1", createAppScreen("node-1", undefined));
 
       handleInputRequested("node-1", SCHEMA, run);
 
@@ -232,10 +229,7 @@ suite("input-queue helpers", () => {
       const { controller } = makeTestController();
       const run = makeRun(controller);
 
-      run.screen.setScreen(
-        "node-1",
-        new ReactiveAppScreen("node-1", undefined)
-      );
+      run.screen.setScreen("node-1", createAppScreen("node-1", undefined));
       run.main.setConsoleEntry("node-1", {
         resolveInput() {},
         activateInput() {},
@@ -332,10 +326,7 @@ suite("input-queue helpers", () => {
       const { controller } = makeTestController();
       const run = makeRun(controller);
 
-      run.screen.setScreen(
-        "node-1",
-        new ReactiveAppScreen("node-1", undefined)
-      );
+      run.screen.setScreen("node-1", createAppScreen("node-1", undefined));
       run.main.setConsoleEntry("node-1", {
         activateInput() {},
       } as never);

@@ -64,6 +64,13 @@ export class RunController extends RootController {
   private accessor _status: STATUS = STATUS.STOPPED;
 
   /**
+   * Whether a run has ever been started in this session.
+   * Non-reactive, non-persisted — purely for progress calculation.
+   * Set to true when status becomes RUNNING, cleared on reset().
+   */
+  private _runEverStarted = false;
+
+  /**
    * The current HarnessRunner.
    * Set by actions when preparing a run.
    */
@@ -170,6 +177,9 @@ export class RunController extends RootController {
    */
   setStatus(status: STATUS): void {
     this._status = status;
+    if (status === STATUS.RUNNING) {
+      this._runEverStarted = true;
+    }
   }
 
   /**
@@ -394,6 +404,7 @@ export class RunController extends RootController {
     this._dismissedErrors.clear();
     this._estimatedEntryCount = 0;
     this._nodeActionRequest = null;
+    this._runEverStarted = false;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -402,11 +413,22 @@ export class RunController extends RootController {
 
   /**
    * Progress as a number between 0 and 1.
-   * Based on console entries vs estimated total.
+   * - Never ran (no run started in session): 0
+   * - In progress (running/paused): reached entries / total entries
+   * - Completed (stopped after a run): 1
    */
   get progress(): number {
-    if (this.estimatedEntryCount === 0) return 0;
-    return this._console.size / this.estimatedEntryCount;
+    if (this._status === STATUS.RUNNING || this._status === STATUS.PAUSED) {
+      if (this._console.size === 0) return 0;
+      let reached = 0;
+      for (const entry of this._console.values()) {
+        const status = entry.status?.status;
+        if (status && status !== "inactive") reached++;
+      }
+      return reached / this._console.size;
+    }
+    // Stopped: 1 if a run has completed, 0 if never ran.
+    return this._runEverStarted ? 1 : 0;
   }
 
   /**

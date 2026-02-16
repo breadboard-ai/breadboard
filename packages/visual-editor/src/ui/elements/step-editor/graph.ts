@@ -40,7 +40,7 @@ import { GRID_SIZE, MOVE_GRAPH_ID } from "./constants.js";
 import { GraphAsset } from "./graph-asset.js";
 import { AssetPath, NodeRunState } from "@breadboard-ai/types";
 import { RendererRunState } from "../../state/index.js";
-import { GraphAsset as GraphAssetState } from "../../state/types.js";
+import { GraphAsset as GraphAssetState } from "../../../sca/types.js";
 import { getStepIcon } from "../../utils/get-step-icon.js";
 import { toAssetEdgeIdentifier } from "../../../sca/utils/helpers/helpers.js";
 

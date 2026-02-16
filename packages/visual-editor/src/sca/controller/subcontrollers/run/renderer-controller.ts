@@ -5,7 +5,7 @@
  */
 
 import type { NodeIdentifier, NodeRunState } from "@breadboard-ai/types";
-import type { EdgeRunState } from "../../../../ui/state/types.js";
+import type { EdgeRunState } from "../../../types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 

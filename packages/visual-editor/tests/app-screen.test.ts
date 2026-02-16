@@ -6,19 +6,19 @@
 
 import { describe, it, before } from "node:test";
 import assert from "node:assert";
-import { Signal } from "signal-polyfill";
-import { SignalWatcher } from "./signal-watcher.js";
 
 describe("AppScreen", () => {
-  type AppScreenModule = typeof import("../src/ui/state/app-screen.js");
-  let ReactiveAppScreen: AppScreenModule["ReactiveAppScreen"];
-  let getElasticProgress: AppScreenModule["getElasticProgress"];
-  let intervalCallback: (() => void) | undefined;
+  type AppScreenModule = typeof import("../src/sca/utils/app-screen.js");
+  type ElasticProgressModule =
+    typeof import("../src/sca/utils/elastic-progress.js");
+  let createAppScreen: AppScreenModule["createAppScreen"];
+  let setScreenDuration: AppScreenModule["setScreenDuration"];
+  let tickScreenProgress: AppScreenModule["tickScreenProgress"];
+  let getElasticProgress: ElasticProgressModule["getElasticProgress"];
   let currentTime = 1000; // Start at non-zero time
 
   before(async () => {
     // Mock performance.now
-    // We need to do this on the global object for it to be picked up by the module
     Object.defineProperty(global, "performance", {
       value: {
         now: () => currentTime,
@@ -26,17 +26,14 @@ describe("AppScreen", () => {
       writable: true,
     });
 
-    // Mock setInterval to capture the callback
-    global.setInterval = ((callback: () => void) => {
-      intervalCallback = callback;
-      return {} as NodeJS.Timeout;
-    }) as unknown as typeof global.setInterval;
-
     // Dynamic import to ensure mocks are in place before module execution
-    // We use a query param to bypass cache if needed, though usually not needed in this context
-    const module = await import("../src/ui/state/app-screen.js");
-    ReactiveAppScreen = module.ReactiveAppScreen;
-    getElasticProgress = module.getElasticProgress;
+    const appScreenModule = await import("../src/sca/utils/app-screen.js");
+    createAppScreen = appScreenModule.createAppScreen;
+    setScreenDuration = appScreenModule.setScreenDuration;
+    tickScreenProgress = appScreenModule.tickScreenProgress;
+
+    const elasticModule = await import("../src/sca/utils/elastic-progress.js");
+    getElasticProgress = elasticModule.getElasticProgress;
   });
 
   describe("getElasticProgress", () => {
@@ -59,9 +56,9 @@ describe("AppScreen", () => {
     });
   });
 
-  describe("ReactiveAppScreen", () => {
+  describe("createAppScreen", () => {
     it("initializes with default values", () => {
-      const screen = new ReactiveAppScreen("test", undefined);
+      const screen = createAppScreen("test", undefined);
       assert.strictEqual(screen.title, "test");
       assert.strictEqual(screen.status, "processing");
       assert.strictEqual(screen.type, "progress");
@@ -69,7 +66,7 @@ describe("AppScreen", () => {
     });
 
     it("adds output correctly", () => {
-      const screen = new ReactiveAppScreen("test", undefined);
+      const screen = createAppScreen("test", undefined);
       const data = {
         node: { id: "node1", type: "test", configuration: {} },
         outputs: { foo: "bar" },
@@ -85,35 +82,13 @@ describe("AppScreen", () => {
     });
 
     it("marks as input", () => {
-      const screen = new ReactiveAppScreen("test", undefined);
+      const screen = createAppScreen("test", undefined);
       screen.markAsInput();
       assert.strictEqual(screen.type, "input");
     });
 
-    it("triggers watcher when status changes", async () => {
-      const screen = new ReactiveAppScreen("test", undefined);
-      const computed = new Signal.Computed(() => screen.status);
-      const watcher = new SignalWatcher(computed);
-      watcher.watch();
-
-      assert.strictEqual(watcher.count, 0);
-
-      // Change status
-      const data = {
-        node: { id: "node1", type: "test" },
-        outputs: { result: "done" },
-        path: [0],
-        timestamp: 0,
-        inputs: {},
-        newOpportunities: [],
-      };
-      screen.finalize(data);
-
-      assert.ok(watcher.count > 0, "Watcher should have been triggered");
-    });
-
     it("finalizes correctly", () => {
-      const screen = new ReactiveAppScreen("test", undefined);
+      const screen = createAppScreen("test", undefined);
       const data = {
         node: { id: "node1", type: "test" },
         outputs: { result: "done" },
@@ -128,72 +103,22 @@ describe("AppScreen", () => {
       assert.deepStrictEqual(screen.last?.output, { result: "done" });
     });
 
-    it("triggers watcher on progressCompletion updates", async () => {
-      const screen = new ReactiveAppScreen("test", undefined);
-      const computed = new Signal.Computed(() => screen.progressCompletion);
-      const watcher = new SignalWatcher(computed);
-      watcher.watch();
-
-      assert.strictEqual(watcher.count, 0);
-
-      // 1. Set expected duration
-      currentTime = 1000;
-      screen.expectedDuration = 10;
-      // Watcher should trigger because expectedDuration changed
-      assert.ok(
-        watcher.count > 0,
-        "Watcher should trigger after setting expectedDuration"
-      );
-      const countAfterSet = watcher.count;
-
-      // Re-watch if necessary (signal-polyfill watchers might be one-shot)
-      watcher.watch();
-
-      // 2. Advance time
-      currentTime = 2000;
-      assert.ok(intervalCallback, "intervalCallback should be defined");
-      if (intervalCallback) intervalCallback();
-
-      // This updates 'now' signal. progressCompletion depends on 'now'.
-      // Watcher should trigger.
-      assert.ok(
-        watcher.count > countAfterSet,
-        "Watcher should trigger after time update"
-      );
-      const countAfterTime = watcher.count;
-
-      // Re-watch if necessary
-      watcher.watch();
-
-      // 3. Reset expected duration
-      screen.expectedDuration = -1;
-      assert.ok(
-        watcher.count > countAfterTime,
-        "Watcher should trigger after resetting expectedDuration"
-      );
-    });
-
     it("handles expectedDuration updates and progress calculation", () => {
-      const screen = new ReactiveAppScreen("test", undefined);
+      const screen = createAppScreen("test", undefined);
       assert.strictEqual(screen.expectedDuration, -1);
       assert.strictEqual(screen.progressCompletion, -1);
 
-      // Set expected duration to 10 seconds
+      // Set expected duration to 10 seconds via setScreenDuration
       currentTime = 1000; // Reset time
-      screen.expectedDuration = 10;
+      setScreenDuration(screen, 10);
       assert.strictEqual(screen.expectedDuration, 10);
 
-      // At t=0 (relative to set time), progress should be 0
-      // We need to trigger the interval to update 'now' signal
-      if (intervalCallback) intervalCallback();
-
-      // progressCompletion = (now - lastSet) / (duration * 1000)
-      // (1000 - 1000) / 10000 = 0
+      // setScreenDuration records timestamp and sets progressCompletion = 0
       assert.strictEqual(screen.progressCompletion, 0);
 
       // Advance time by 5 seconds (50% progress)
       currentTime = 6000; // 1000 + 5000
-      if (intervalCallback) intervalCallback();
+      tickScreenProgress(screen);
 
       // (6000 - 1000) / 10000 = 0.5
       // getElasticProgress(0.5) = 0.5
@@ -202,7 +127,7 @@ describe("AppScreen", () => {
 
       // Advance time by 7.5 seconds (75% progress - knee)
       currentTime = 8500; // 1000 + 7500
-      if (intervalCallback) intervalCallback();
+      tickScreenProgress(screen);
 
       // (8500 - 1000) / 10000 = 0.75
       // getElasticProgress(0.75) = 0.75
@@ -211,23 +136,17 @@ describe("AppScreen", () => {
 
       // Advance time by 10 seconds (100% linear time, but elastic)
       currentTime = 11000; // 1000 + 10000
-      if (intervalCallback) intervalCallback();
+      tickScreenProgress(screen);
 
       // (11000 - 1000) / 10000 = 1.0
       // getElasticProgress(1.0) -> elastic phase
-      // overtime = 1.0 - 0.75 = 0.25
-      // remainingUI = 0.25
-      // result = 1.0 - 0.25 * exp(-0.25 * 5.0)
-      // exp(-1.25) ~= 0.2865
-      // 1.0 - 0.25 * 0.2865 = 1.0 - 0.0716 = 0.9284
-      // floor(92.84) = 92
       const progress = screen.progressCompletion;
       assert.ok(progress > 75);
       assert.ok(progress < 100);
       assert.strictEqual(progress, 92);
 
       // Reset expected duration
-      screen.expectedDuration = -1;
+      setScreenDuration(screen, -1);
       assert.strictEqual(screen.expectedDuration, -1);
       assert.strictEqual(screen.progressCompletion, -1);
     });

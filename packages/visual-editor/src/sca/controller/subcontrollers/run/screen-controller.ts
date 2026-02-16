@@ -7,7 +7,7 @@
 import type { NodeIdentifier } from "@breadboard-ai/types";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
-import { ReactiveAppScreen } from "../../../../ui/state/app-screen.js";
+import type { AppScreenData } from "../../../utils/app-screen.js";
 
 export { ScreenController };
 
@@ -23,15 +23,21 @@ export { ScreenController };
  * Updated by Actions in response to runner events (`nodestart` creates
  * a screen, `nodeend` finalizes or deletes screens, `output` adds data).
  *
- * Each screen is a `ReactiveAppScreen` instance owning its own
+ * Each screen is an `AppScreenData` POJO owning its own
  * outputs, status, and type.
+ *
+ * The underlying Map is a `DeepSignalMap` (produced by `wrap()` in the
+ * `@field({ deep: true })` decorator) which automatically deep-wraps
+ * values on `set()`. This means all property mutations on screens are
+ * tracked by the reactivity system, regardless of whether callers use
+ * in-place mutations or wholesale replacement.
  */
 class ScreenController extends RootController {
   /**
    * Map of node ID → screen state.
    */
   @field({ deep: true })
-  private accessor _screens: Map<NodeIdentifier, ReactiveAppScreen> = new Map();
+  private accessor _screens: Map<NodeIdentifier, AppScreenData> = new Map();
 
   constructor(controllerId: string, persistenceId: string) {
     super(controllerId, persistenceId);
@@ -44,7 +50,7 @@ class ScreenController extends RootController {
   /**
    * Gets the screens map.
    */
-  get screens(): Map<NodeIdentifier, ReactiveAppScreen> {
+  get screens(): Map<NodeIdentifier, AppScreenData> {
     return this._screens;
   }
   // ═══════════════════════════════════════════════════════════════════════════
@@ -57,7 +63,7 @@ class ScreenController extends RootController {
    * @param id The node identifier
    * @param screen The screen instance
    */
-  setScreen(id: NodeIdentifier, screen: ReactiveAppScreen): void {
+  setScreen(id: NodeIdentifier, screen: AppScreenData): void {
     this._screens.set(id, screen);
   }
 
