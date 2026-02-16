@@ -216,11 +216,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
 
   readonly requestLogger = new Logger();
 
-  readonly caps: Capabilities = {
-    read() {
-      throw new Error(`Not implemented`);
-    },
-  };
+  readonly caps: Capabilities = {};
 
   private fetchWithCreds = async (
     url: RequestInfo | URL,
