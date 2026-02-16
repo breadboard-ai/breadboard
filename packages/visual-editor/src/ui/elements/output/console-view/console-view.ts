@@ -507,7 +507,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           }
 
           const isLastItem = idx + 1 === runController.estimatedEntryCount;
-          const isOpen = item.open || this.#openItems.has(itemId) || isLastItem;
+          const isOpen =
+            item.open ||
+            !item.completed ||
+            this.#openItems.has(itemId) ||
+            isLastItem;
 
           return html`<details ?open=${isOpen} disabled>
           <summary @click=${(evt: Event) => {

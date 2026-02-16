@@ -45,7 +45,7 @@ suite("RunController status management", () => {
     assert.strictEqual(controller.status, STATUS.RUNNING);
   });
 
-  test("reset returns status to STOPPED", async () => {
+  test("reset does not change status", async () => {
     const controller = new RunController("RunTest_3", "RunController");
     await controller.isHydrated;
 
@@ -55,7 +55,8 @@ suite("RunController status management", () => {
     controller.reset();
     await controller.isSettled;
 
-    assert.strictEqual(controller.status, STATUS.STOPPED);
+    // reset() clears output state but does not modify status
+    assert.strictEqual(controller.status, STATUS.RUNNING);
   });
 });
 
@@ -116,8 +117,8 @@ suite("RunController status helpers", () => {
     await controller.isSettled;
     assert.strictEqual(controller.isStopped, false);
 
-    // Reset - stopped again
-    controller.reset();
+    // Set back to STOPPED
+    controller.setStatus(STATUS.STOPPED);
     await controller.isSettled;
     assert.strictEqual(controller.isStopped, true);
   });
@@ -192,7 +193,7 @@ suite("RunController console management", () => {
     assert.strictEqual(controller.consoleState, "entries");
   });
 
-  test("resetOutput clears console", async () => {
+  test("reset clears console", async () => {
     const controller = new RunController("RunTest_console_3", "RunController");
     await controller.isHydrated;
 
@@ -200,7 +201,7 @@ suite("RunController console management", () => {
     controller.setConsoleEntry("node-1", mockEntry);
     await controller.isSettled;
 
-    controller.resetOutput();
+    controller.reset();
     await controller.isSettled;
 
     assert.strictEqual(controller.console.size, 0);
@@ -249,7 +250,7 @@ suite("RunController input handling", () => {
     assert.strictEqual(controller.input, null);
   });
 
-  test("resetOutput clears input", async () => {
+  test("reset clears input", async () => {
     const controller = new RunController("RunTest_input_4", "RunController");
     await controller.isHydrated;
 
@@ -257,7 +258,7 @@ suite("RunController input handling", () => {
     controller.setInput(mockInput);
     await controller.isSettled;
 
-    controller.resetOutput();
+    controller.reset();
     await controller.isSettled;
 
     assert.strictEqual(controller.input, null);
@@ -320,7 +321,7 @@ suite("RunController error handling", () => {
     assert.strictEqual(controller.dismissedErrors.has("failed-node"), true);
   });
 
-  test("resetOutput clears error and dismissedErrors", async () => {
+  test("reset clears error and dismissedErrors", async () => {
     const controller = new RunController("RunTest_error_5", "RunController");
     await controller.isHydrated;
 
@@ -328,7 +329,7 @@ suite("RunController error handling", () => {
     controller.dismissError("node-1");
     await controller.isSettled;
 
-    controller.resetOutput();
+    controller.reset();
     await controller.isSettled;
 
     assert.strictEqual(controller.error, null);
@@ -403,14 +404,14 @@ suite("RunController progress tracking", () => {
     assert.strictEqual(controller.progress, 0.2); // 2/10
   });
 
-  test("resetOutput clears estimatedEntryCount", async () => {
+  test("reset clears estimatedEntryCount", async () => {
     const controller = new RunController("RunTest_progress_6", "RunController");
     await controller.isHydrated;
 
     controller.setEstimatedEntryCount(10);
     await controller.isSettled;
 
-    controller.resetOutput();
+    controller.reset();
     await controller.isSettled;
 
     assert.strictEqual(controller.estimatedEntryCount, 0);

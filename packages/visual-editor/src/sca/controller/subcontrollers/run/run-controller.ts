@@ -216,14 +216,7 @@ export class RunController extends RootController {
   clearRunner(): void {
     this.runner = null;
     this.abortController = null;
-  }
-
-  /**
-   * Resets the run status to stopped and clears runner.
-   */
-  reset(): void {
-    this._status = STATUS.STOPPED;
-    this.clearRunner();
+    this.onInputRequested = null;
   }
 
   /**
@@ -273,7 +266,9 @@ export class RunController extends RootController {
    * @param entry The console entry (with resolved metadata)
    */
   setConsoleEntry(id: string, entry: ConsoleEntry): void {
-    this._console.set(id, entry);
+    const updated = new Map(this._console);
+    updated.set(id, entry);
+    this._console = updated;
   }
 
   /**
@@ -283,10 +278,7 @@ export class RunController extends RootController {
    * @param entries The new console entries
    */
   replaceConsole(entries: Map<string, ConsoleEntry>): void {
-    this._console.clear();
-    for (const [id, entry] of entries) {
-      this._console.set(id, entry);
-    }
+    this._console = new Map(entries);
   }
 
   /**
@@ -461,16 +453,14 @@ export class RunController extends RootController {
   }
 
   /**
-   * Resets all output state for a new run.
-   * Clears console, input, errors, and estimate.
+   * Resets all output state: console, input, errors, and estimate.
    */
-  resetOutput(): void {
+  reset(): void {
     this._console.clear();
     this._input = null;
     this._pendingInputNodeIds.clear();
     this._inputSchemas.clear();
     this._pendingInputResolvers.clear();
-    this.onInputRequested = null;
     this._error = null;
     this._dismissedErrors.clear();
     this._estimatedEntryCount = 0;
