@@ -1,7 +1,7 @@
 /**
  * @fileoverview Searching the Internet according to your plan.
  */
-import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
+import { LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "./common.js";
 import invokeGemini, {
   defaultSafetySettings,
@@ -144,14 +144,12 @@ async function thought(
 
 async function invoke(
   { context, plan, summarize, ...params }: ResearcherInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   let content = context || [toLLMContent("Start the research")];
 
@@ -176,7 +174,6 @@ async function invoke(
   for (let i = 0; i <= MAX_ITERATIONS; i++) {
     const askingGemini = await invokeGemini(
       researcherPrompt(content, plan, toolManager.list(), i === 0),
-      caps,
       moduleArgs
     );
 
@@ -214,7 +211,6 @@ async function invoke(
   if (summarize) {
     const producingReport = await invokeGemini(
       reportWriterPrompt(plan, research),
-      caps,
       moduleArgs
     );
     if (!ok(producingReport)) {
@@ -262,7 +258,6 @@ function researchExample(): string[] {
 
 async function describe(
   { inputs: { plan } }: DescribeInputs,
-  _caps: Capabilities
 ) {
   const template = new Template(plan);
   return {

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types";
 import { mkdir, writeFile } from "fs/promises";
 import { mock } from "node:test";
 import { dirname, join } from "path";
@@ -37,7 +36,6 @@ const ROOT_DIR = join(MODULE_DIR, "..", "..", "..");
 const OUT_DIR = join(ROOT_DIR, "out");
 
 export type EvalHarnessRuntimeArgs = {
-  caps: Capabilities;
   moduleArgs: A2ModuleArgs;
   logger: EvalLogger;
 };
@@ -215,8 +213,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
   ) {}
 
   readonly requestLogger = new Logger();
-
-  readonly caps: Capabilities = {};
 
   private fetchWithCreds = async (
     url: RequestInfo | URL,

@@ -7,7 +7,6 @@ export { executeWebpageStream, buildStreamingRequestBody, parseStoredDataUrl };
 export type { StreamingRequestBody, StreamChunk };
 
 import {
-  Capabilities,
   LLMContent,
   OPAL_BACKEND_API_PREFIX,
   Outcome,
@@ -177,7 +176,6 @@ function parseStoredDataUrl(handle: string): string {
  * Execute a streaming webpage generation request.
  */
 async function executeWebpageStream(
-  _caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   instruction: string,
   content: LLMContent[],

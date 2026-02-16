@@ -10,12 +10,7 @@ import { err, ok } from "../a2/utils.js";
 
 import type { AutonameMode, Arguments } from "./types.js";
 import { NodeConfigurationUpdateMode } from "./node-configuration-update.js";
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
@@ -40,16 +35,12 @@ function cantAutoname() {
   return [{ parts: [{ json: { notEnoughContext: true } }] }];
 }
 
-const MODES: Record<
-  string,
-  new (caps: Capabilities, args: Arguments) => AutonameMode
-> = {
+const MODES: Record<string, new (args: Arguments) => AutonameMode> = {
   nodeConfigurationUpdate: NodeConfigurationUpdateMode,
 };
 
 async function invoke(
   { context }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const args = getArguments(context);
@@ -58,11 +49,11 @@ async function invoke(
   if (!mode) {
     return err(`Unknown mode: ${JSON.stringify(args)}`);
   }
-  const modeHandler = new mode(caps, args);
+  const modeHandler = new mode(args);
   if (!modeHandler.canAutoname()) {
     return { context: cantAutoname() };
   }
-  const naming = await new GeminiPrompt(caps, moduleArgs, {
+  const naming = await new GeminiPrompt(moduleArgs, {
     model: "gemini-2.5-flash-lite",
     body: {
       contents: modeHandler.prompt(),

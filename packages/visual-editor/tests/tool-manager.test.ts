@@ -7,11 +7,11 @@
 import { deepStrictEqual } from "node:assert";
 import { describe, it } from "node:test";
 import { ROUTE_TOOL_PATH, ToolManager } from "../src/a2/a2/tool-manager.js";
-import { stubCaps, stubModuleArgs } from "./useful-stubs.js";
+import { stubModuleArgs } from "./useful-stubs.js";
 
 describe("Tool Manager", () => {
   it("can add routes, but ignores them", async () => {
-    const manager = new ToolManager(stubCaps, stubModuleArgs);
+    const manager = new ToolManager(stubModuleArgs);
     deepStrictEqual(manager.list.length, 0);
     const result = await manager.addTool({
       type: "tool",

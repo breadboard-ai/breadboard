@@ -2,7 +2,7 @@
  * @fileoverview Search an enterprise search engine.
  */
 
-import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
+import { Outcome, Schema } from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils.js";
 import { executeTool } from "../a2/step-executor.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -19,7 +19,6 @@ type Outputs = {
 
 async function invoke(
   inputs: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const { query, search_engine_resource_name } = inputs;
@@ -27,7 +26,6 @@ async function invoke(
     return err(`Search engine resource name is required`);
   }
   const executing = await executeTool<string>(
-    caps,
     moduleArgs,
     "enterprise_search",
     {

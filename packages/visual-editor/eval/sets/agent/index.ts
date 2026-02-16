@@ -67,9 +67,8 @@ session({ name: "Agent" }, async (session) => {
     const { objective, title, userObjective } = await import(filename);
     const params: Parameters<typeof session.eval> = [
       title,
-      async ({ caps, moduleArgs }) => {
+      async ({ moduleArgs }) => {
         const agentConfigurator = createAgentConfigurator(
-          caps,
           moduleArgs,
           generators
         );
@@ -81,7 +80,6 @@ session({ name: "Agent" }, async (session) => {
         if (userObjective) {
           simulatedUser = new SimulatedUserChatManager(
             userObjective,
-            caps,
             moduleArgs
           );
           const simulatedUserConfigurator =
@@ -98,7 +96,6 @@ session({ name: "Agent" }, async (session) => {
         const setup = await buildAgentRun({
           objective,
           params: {},
-          caps,
           moduleArgs,
           configureFn,
           uiType,

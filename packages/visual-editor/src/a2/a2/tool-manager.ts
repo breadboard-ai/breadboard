@@ -5,7 +5,6 @@
  */
 
 import {
-  Capabilities,
   FunctionCallCapabilityPart,
   FunctionResponseCapabilityPart,
   LLMContent,
@@ -84,7 +83,6 @@ class ToolManager implements SimplifiedToolManager {
   errors: string[] = [];
 
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     private readonly describerResultTransformer?: DescriberResultTransformer
   ) {}
@@ -355,7 +353,6 @@ class ToolManager implements SimplifiedToolManager {
       }
       callingTool = await a2Tool.invoke(
         normalizeArgs(args, [], passContext),
-        this.caps,
         this.moduleArgs
       );
     }
@@ -433,7 +430,6 @@ class ToolManager implements SimplifiedToolManager {
           }
           callingTool = await a2Tool.invoke(
             normalizeArgs(args, context, passContext),
-            this.caps,
             this.moduleArgs
           );
         }

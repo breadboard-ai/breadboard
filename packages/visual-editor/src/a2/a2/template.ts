@@ -375,10 +375,9 @@ type TestOutputs = {
 /**
  * Only used for testing.
  */
-async function invoke(
-  { inputs: { content, params } }: TestInputs,
-  _caps: unknown
-): Promise<Outcome<TestOutputs>> {
+async function invoke({
+  inputs: { content, params },
+}: TestInputs): Promise<Outcome<TestOutputs>> {
   const template = new Template(content);
   const result = await template.substitute(
     fromTestParams(params),

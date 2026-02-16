@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { AgentFileSystem } from "../file-system.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
@@ -24,7 +24,6 @@ const SPEC_MODEL = "gemini-3-flash-preview";
 const TEMPLATE_MODEL = "gemini-3-flash-preview";
 
 export type SmartLayoutPipelineArgs = {
-  caps: Capabilities;
   moduleArgs: A2ModuleArgs;
   fileSystem: AgentFileSystem;
   translator: PidginTranslator;
@@ -85,12 +84,12 @@ class SmartLayoutPipeline {
   }
 
   async run(content: LLMContent, params: Params): Promise<Outcome<unknown[]>> {
-    const { caps, moduleArgs } = this.args;
+    const { moduleArgs } = this.args;
     const fileSystem = new AgentFileSystem({
       context: moduleArgs.context,
       memoryManager: null,
     });
-    const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
+    const translator = new PidginTranslator(moduleArgs, fileSystem);
 
     const translated = await translator.toPidgin(content, params, false);
     if (!ok(translated)) return translated;

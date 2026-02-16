@@ -3,7 +3,6 @@
  */
 
 import {
-  Capabilities,
   GraphDescriptor,
   LLMContent,
   Outcome,
@@ -246,7 +245,6 @@ function getPalettePrompt(colors: PaletteColors): string {
 }
 
 async function saveToGoogleDrive(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   content: LLMContent,
   mimeType: string,
@@ -282,7 +280,6 @@ async function saveToGoogleDrive(
         },
       },
     },
-    caps,
     moduleArgs
   ) as Promise<Outcome<SaveOutput>>;
 }
@@ -312,7 +309,6 @@ async function invoke(
     "b-slide-write-mode": slideWriteMode,
     ...params
   }: InvokeInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<InvokeOutputs>> {
   let { modelName } = getModel(modelType);
@@ -357,7 +353,6 @@ async function invoke(
       }
       console.log("SI :", systemText);
       const webPage = await callGenWebpage(
-        caps,
         moduleArgs,
         systemText,
         [context],
@@ -379,7 +374,6 @@ async function invoke(
     }
     case "GoogleDoc": {
       return saveToGoogleDrive(
-        caps,
         moduleArgs,
         out,
         "application/vnd.google-apps.document",
@@ -388,7 +382,6 @@ async function invoke(
     }
     case "GoogleSlides": {
       return saveToGoogleDrive(
-        caps,
         moduleArgs,
         out,
         "application/vnd.google-apps.presentation",
@@ -399,7 +392,6 @@ async function invoke(
     }
     case "GoogleSheets": {
       return saveToGoogleDrive(
-        caps,
         moduleArgs,
         out,
         "application/vnd.google-apps.spreadsheet",
@@ -408,7 +400,6 @@ async function invoke(
     }
     case "ConsistentUI": {
       const context = await renderConsistentUI(
-        caps,
         moduleArgs,
         out,
         systemInstruction
@@ -537,7 +528,6 @@ async function describe(
       "b-slide-deck-mode": slideDeckMode,
     },
   }: DescribeInputs,
-  _caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);

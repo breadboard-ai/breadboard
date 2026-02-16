@@ -2,7 +2,6 @@
  * @fileoverview Break an objective into tasks and then execute them.
  */
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -57,13 +56,11 @@ function findStrategist(name?: string): Strategist | undefined {
 
 async function invoke(
   { context, plan: objective, strategy, ...params }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   const template = new Template(objective, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async (part) =>
@@ -77,7 +74,7 @@ async function invoke(
   }
 
   // Process single item directly (list support removed)
-  const executor = new Runtime(caps, moduleArgs, context, toolManager);
+  const executor = new Runtime(moduleArgs, context, toolManager);
   const executingOne = await executor.executeStrategy(substituting, strategist);
   if (!ok(executingOne)) return executingOne;
 

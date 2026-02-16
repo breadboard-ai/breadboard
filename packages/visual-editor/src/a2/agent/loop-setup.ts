@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -38,7 +38,6 @@ export { buildAgentRun };
 async function buildAgentRun(args: {
   objective: LLMContent;
   params: Params;
-  caps: Capabilities;
   moduleArgs: A2ModuleArgs;
   configureFn: FunctionGroupConfigurator;
   uiType?: UIType;
@@ -52,7 +51,6 @@ async function buildAgentRun(args: {
   const {
     objective,
     params,
-    caps,
     moduleArgs,
     configureFn,
     uiType = "chat",
@@ -64,7 +62,7 @@ async function buildAgentRun(args: {
     context: moduleArgs.context,
     memoryManager: moduleArgs.agentContext.memoryManager,
   });
-  const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
+  const translator = new PidginTranslator(moduleArgs, fileSystem);
   const ui = new AgentUI(moduleArgs, translator);
   const runStateManager = new RunStateManager(
     moduleArgs.agentContext,

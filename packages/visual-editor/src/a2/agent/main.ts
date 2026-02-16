@@ -5,7 +5,6 @@
  */
 
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   RuntimeFlags,
@@ -106,17 +105,15 @@ async function invokeAgent(
     "b-ui-prompt": uiPrompt,
     ...rest
   }: AgentInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const configureFn = createAgentConfigurator(caps, moduleArgs, generators);
+  const configureFn = createAgentConfigurator(moduleArgs, generators);
   const setup = await buildAgentRun({
     objective,
     params,
-    caps,
     moduleArgs,
     configureFn,
     uiType: enableA2UI ? "a2ui" : "chat",
@@ -132,22 +129,20 @@ async function invokeAgent(
 
 async function invoke(
   inputs: AgentInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
   const flags = await moduleArgs.context.flags?.flags();
   const opalAdkEnabled = flags?.opalAdk || false;
 
   if (opalAdkEnabled) {
-    return invokeAgentAdk(inputs, caps, moduleArgs);
+    return invokeAgentAdk(inputs, moduleArgs);
   } else {
-    return invokeAgent(inputs, caps, moduleArgs);
+    return invokeAgent(inputs, moduleArgs);
   }
 }
 
 async function describe(
   { inputs: { config$prompt, ...rest } }: { inputs: AgentInputs },
-  _caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);

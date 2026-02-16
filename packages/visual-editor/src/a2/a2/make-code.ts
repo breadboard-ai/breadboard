@@ -3,7 +3,6 @@
  */
 
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -32,7 +31,6 @@ type CodeGeneratorOutputs = {
 export { invoke as default, describe };
 
 function gatheringRequest(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
@@ -48,7 +46,6 @@ ${toText(instruction)}
 
 Call the tools to gather the necessary information that could be used to create an accurate prompt.`;
   return new GeminiPrompt(
-    caps,
     moduleArgs,
     {
       model: "gemini-1.5-flash-latest",
@@ -66,7 +63,6 @@ to be used to create an accurate prompt for a text-to-${language} model.
 }
 
 function promptRequest(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
@@ -99,7 +95,7 @@ create the functionality as a standalone piece of EcmaScript JavaScript.
 
 You output will be fed directly into the text-to-${language} model, so it must be prompt only, no additional chit-chat
 `;
-  return new GeminiPrompt(caps, moduleArgs, {
+  return new GeminiPrompt(moduleArgs, {
     model: "gemini-1.5-flash-latest",
     body: {
       contents: addUserTurn(promptText, contents),
@@ -125,7 +121,6 @@ If writing JavaScript, and where a variable is private, use private fields (#fie
 }
 
 function codeRequest(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   prompt: LLMContent,
   language: string
@@ -135,7 +130,7 @@ function codeRequest(
     text: `Generate ${language} code based on this prompt. Output code only, no chit-chat`,
   });
 
-  return new GeminiPrompt(caps, moduleArgs, {
+  return new GeminiPrompt(moduleArgs, {
     body: {
       contents: [prompt],
       generationConfig: {
@@ -153,14 +148,13 @@ export type GeminiPromptOutput = {
 
 class GeminiPrompt {
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     public readonly inputs: GeminiInputs,
     public readonly toolManager?: ToolManager
   ) {}
 
   async invoke(): Promise<Outcome<GeminiPromptOutput>> {
-    const invoking = await gemini(this.inputs, this.caps, this.moduleArgs);
+    const invoking = await gemini(this.inputs, this.moduleArgs);
     if (!ok(invoking)) return invoking;
     if ("context" in invoking) {
       return err("Invalid output from Gemini -- must be candidates");
@@ -206,16 +200,14 @@ const MAX_RETRIES = 5;
 
 async function invoke(
   { context, instruction, language, ...params }: CodeGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<CodeGeneratorOutputs>> {
   context ??= [];
 
   // 1) Substitute params in instruction.
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   const substituting = await new Template(
     instruction,
@@ -230,7 +222,6 @@ async function invoke(
   // information via tools.
   if (toolManager.hasTools()) {
     const gatheringInformation = await gatheringRequest(
-      caps,
       moduleArgs,
       context,
       instruction,
@@ -246,7 +237,6 @@ async function invoke(
   while (retryCount--) {
     // 3) Call Gemini to generate prompt.
     const generatingPrompt = await promptRequest(
-      caps,
       moduleArgs,
       context,
       instruction,
@@ -258,7 +248,6 @@ async function invoke(
 
     // 4) Call Gemini to generate image.
     const generatingCode = await codeRequest(
-      caps,
       moduleArgs,
       generatingPrompt.last,
       language
@@ -283,7 +272,6 @@ type DescribeInputs = {
 
 async function describe(
   { inputs: { instruction } }: DescribeInputs,
-  _caps: Capabilities
 ) {
   const template = new Template(instruction);
   return {

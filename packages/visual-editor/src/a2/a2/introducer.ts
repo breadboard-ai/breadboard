@@ -3,7 +3,6 @@
  */
 
 import {
-  Capabilities,
   JSONPart,
   LLMContent,
   Outcome,
@@ -35,7 +34,6 @@ type NamingResult = {
  */
 class ArgumentNameGenerator implements DescriberResultTransformer {
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs
   ) {}
 
@@ -96,7 +94,7 @@ class ArgumentNameGenerator implements DescriberResultTransformer {
 
     // When no parameters found, try to discern the parameter name
     // from description and title.
-    const naming = await new GeminiPrompt(this.caps, this.moduleArgs, {
+    const naming = await new GeminiPrompt(this.moduleArgs, {
       body: {
         contents: [this.prompt(describerResult)],
         safetySettings: defaultSafetySettings(),

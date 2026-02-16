@@ -5,7 +5,6 @@
  */
 
 import {
-  Capabilities,
   Outcome,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
@@ -21,7 +20,6 @@ export async function invokeAgentAdk(
     "b-ui-prompt": uiPrompt,
     ...rest
   }: AgentInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   invocation_id?: string,
 
@@ -29,7 +27,7 @@ export async function invokeAgentAdk(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
+  const opalAdkStream = new OpalAdkStream(moduleArgs);
   const uiType = enableA2UI ? "a2ui" : "chat";
   const template = new Template(prompt_template, moduleArgs.context.currentGraph);
   const completed_prompt = await template.substitute(params);

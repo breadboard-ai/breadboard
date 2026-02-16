@@ -5,7 +5,6 @@
 
 import {
   BehaviorSchema,
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -106,7 +105,6 @@ function createInputSchema(
  */
 async function askUser(
   inputs: AskUserInputs,
-  _caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AskUserOutputs>> {
   const {
@@ -175,10 +173,9 @@ async function askUser(
  */
 async function invoke(
   inputs: AskUserInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AskUserOutputs>> {
-  return askUser(inputs, caps, moduleArgs);
+  return askUser(inputs, moduleArgs);
 }
 
 type DescribeInputs = {
@@ -187,7 +184,6 @@ type DescribeInputs = {
 
 async function describe(
   { inputs: { description, ["p-modality"]: modality } }: DescribeInputs,
-  _caps: Capabilities
 ) {
   const icon = computeIcon(modality);
   const template = new Template(description);

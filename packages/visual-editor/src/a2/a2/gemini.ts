@@ -10,7 +10,6 @@ import {
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
 import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -875,7 +874,6 @@ async function streamGenerateContent(
 
 async function invoke(
   inputs: GeminiInputs,
-  _caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<GeminiOutputs>> {
   const validatingInputs = validateInputs(inputs);
