@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeHandlerContext } from "@breadboard-ai/types";
-import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
 import {
   CapabilitiesManager,
   CapabilitySpec,
@@ -14,20 +12,7 @@ import {
 export { CapabilitiesManagerImpl };
 
 class CapabilitiesManagerImpl implements CapabilitiesManager {
-  constructor(public readonly context?: NodeHandlerContext) {}
-
   createSpec(): CapabilitySpec {
-    try {
-      if (this.context) {
-        const fs = new FileSystemHandlerFactory(this.context.fileSystem);
-        return {
-          read: fs.read(),
-          write: fs.write(),
-        };
-      }
-    } catch (e) {
-      console.warn(`Unable to create spec: ${(e as Error).message}`);
-    }
     return CapabilitiesManagerImpl.dummies();
   }
 

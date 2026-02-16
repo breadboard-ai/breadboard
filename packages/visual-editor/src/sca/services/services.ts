@@ -15,16 +15,11 @@ import {
   GraphLoader,
   NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
-  PersistentBackend,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import type { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { createFileSystem } from "../../engine/file-system/index.js";
 
-import { createFileSystemBackend } from "../../idb/index.js";
-import { createEphemeralBlobStore } from "../../engine/file-system/ephemeral-blob-store.js";
-import { composeFileSystemBackends } from "../../engine/file-system/composed-peristent-backend.js";
 import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
 import { IntegrationManagerService } from "./integration-managers.js";
@@ -63,7 +58,7 @@ export interface AppServices {
   guestConfig: GuestConfiguration;
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
-  fileSystem: ReturnType<typeof createFileSystem>;
+
   flowGenerator: FlowGenerator;
   googleDriveBoardServer: GoogleDriveBoardServer;
   googleDriveClient: GoogleDriveClient;
@@ -117,16 +112,9 @@ export function services(
       },
     });
 
-    const fileSystem = createFileSystem({
-      env: config.env || [],
-      local: createFileSystemBackend(createEphemeralBlobStore()),
-      mnt: composeFileSystemBackends(new Map<string, PersistentBackend>()),
-    });
-
     const mcpClientManager = new McpClientManager(
       builtInMcpClients,
       {
-        fileSystem: fileSystem,
         fetchWithCreds: fetchWithCreds,
       },
       OPAL_BACKEND_API_PREFIX
@@ -162,11 +150,10 @@ export function services(
     const graphStoreArgs = {
       loader,
       sandbox,
-      fileSystem,
       flags,
     };
 
-    const autonamer = new Autonamer(graphStoreArgs, fileSystem, sandbox);
+    const autonamer = new Autonamer(graphStoreArgs, sandbox);
     const apiClient = new AppCatalystApiClient(
       fetchWithCreds,
       OPAL_BACKEND_API_PREFIX
@@ -187,7 +174,7 @@ export function services(
       guestConfig: config.guestConfig,
       emailPrefsManager,
       fetchWithCreds,
-      fileSystem,
+
       flowGenerator,
       googleDriveBoardServer,
       googleDriveClient,

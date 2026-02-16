@@ -13,7 +13,6 @@ import type {
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
-import { makeFs } from "../test-file-system.js";
 
 export { makeTestGraphStore, makeTestGraphStoreArgs, loadGraphIntoStore };
 
@@ -21,7 +20,6 @@ function makeTestGraphStoreArgs(
   options: InspectableGraphOptions = {}
 ): GraphStoreArgs {
   return {
-    fileSystem: makeFs(),
     sandbox: options.sandbox || {
       createRunnableModule() {
         throw new Error("Do not use sandbox with test graph store");

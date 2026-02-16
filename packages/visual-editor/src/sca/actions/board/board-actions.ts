@@ -502,7 +502,6 @@ export const load = asAction(
       graphStoreArgs: {
         loader: services.loader,
         sandbox: services.sandbox,
-        fileSystem: services.fileSystem,
         flags: controller.global.flags,
       },
     });

@@ -62,7 +62,7 @@ export async function getHandler(
   const component = A2_COMPONENT_MAP.get(type);
   if (component && context.sandbox) {
     const factory = context.sandbox as A2ModuleFactory;
-    const capsManager = new CapabilitiesManagerImpl(context);
+    const capsManager = new CapabilitiesManagerImpl();
     const caps = createCallableCapabilities(capsManager.createSpec());
     return {
       invoke: async (inputs, invokeContext) =>

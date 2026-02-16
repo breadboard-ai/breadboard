@@ -37,7 +37,7 @@ import {
   computeControlState,
   computeSkipOutputs,
 } from "../../../runtime/control.js";
-import { assetsFromGraphDescriptor } from "../../../data/file-system.js";
+
 import { getLatestConfig as defaultGetLatestConfig } from "./get-latest-config.js";
 
 export { RunStateController };
@@ -113,11 +113,6 @@ class RunStateController {
       console.warn(working.$error);
     }
     const signal = this.#getOrCreateStopController(task.node.id).signal;
-    const fileSystem = context.fileSystem?.updateRunFileSystem({
-      graphUrl: this.graph.url!,
-      assets: assetsFromGraphDescriptor(this.graph),
-      env: context.fileSystem.env(),
-    });
     const nodeConfiguration = this.configProvider(
       task.node.id,
       this.graph,
@@ -137,7 +132,6 @@ class RunStateController {
           await this.invoker.invokeNode(
             {
               ...context,
-              fileSystem,
               signal,
               currentStep: task.node,
               currentGraph: this.graph,
@@ -306,7 +300,6 @@ function initializeNodeHandlerContext(
 ): NodeHandlerContext {
   const {
     loader,
-    fileSystem,
     base,
     signal,
     graphStore,
@@ -327,7 +320,6 @@ function initializeNodeHandlerContext(
   return {
     probe,
     loader,
-    fileSystem,
     base,
     signal,
     graphStore,

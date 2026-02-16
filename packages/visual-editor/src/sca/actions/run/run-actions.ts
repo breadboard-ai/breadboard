@@ -19,10 +19,7 @@ import type {
   Schema,
   WorkItem,
 } from "@breadboard-ai/types";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "../../../data/file-system.js";
+
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
 import { inputsFromSettings } from "../../../ui/data/inputs.js";
 import type { SettingsStore } from "../../../ui/data/settings-store.js";
@@ -130,13 +127,6 @@ export const prepare = asAction(
     const { graph, url, settings, fetchWithCreds, flags, getProjectRunState } =
       config;
 
-    // Build the fileSystem for this run
-    const fileSystem = services.fileSystem.createRunFileSystem({
-      graphUrl: url,
-      env: envFromGraphDescriptor(services.fileSystem.env(), graph),
-      assets: assetsFromGraphDescriptor(graph),
-    });
-
     // Build the full RunConfig
     const runConfig: RunConfig = {
       url,
@@ -145,7 +135,6 @@ export const prepare = asAction(
       loader: services.loader,
       graphStore: controller.editor.graph,
       sandbox: services.sandbox,
-      fileSystem,
       // TODO: Remove this. Inputs from Settings is no longer a thing.
       inputs: inputsFromSettings(settings),
       fetchWithCreds,

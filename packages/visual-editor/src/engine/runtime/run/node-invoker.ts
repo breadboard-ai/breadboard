@@ -21,16 +21,6 @@ import { callHandler, getHandler } from "../handler.js";
 export { NodeInvokerImpl };
 
 class NodeInvokerImpl implements NodeInvoker {
-  #updateStepInfo(context: NodeHandlerContext, graph: GraphToRun) {
-    const fileSystem = context.fileSystem?.createModuleFileSystem({
-      graphUrl: graph.graph.url!,
-    });
-    return {
-      ...context,
-      fileSystem,
-    };
-  }
-
   async invokeNode(
     args: RunArguments,
     graph: GraphToRun,
@@ -51,7 +41,7 @@ class NodeInvokerImpl implements NodeInvoker {
       outerGraph,
     });
 
-    let newContext: NodeHandlerContext = {
+    const newContext: NodeHandlerContext = {
       ...context,
       descriptor,
       board: resolveGraph(graph),
@@ -63,11 +53,6 @@ class NodeInvokerImpl implements NodeInvoker {
       base,
       invocationPath,
     };
-
-    // only for top-level steps, update env with the current step
-    if (invocationPath.length === 1) {
-      newContext = this.#updateStepInfo(newContext, graph);
-    }
 
     outputs = (await callHandler(
       handler,

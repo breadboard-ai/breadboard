@@ -203,11 +203,6 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     loader: {} as unknown as AppServices["loader"],
     // Mock sandbox for run config
     sandbox: (() => {}) as unknown as AppServices["sandbox"],
-    // Mock file system for run config
-    fileSystem: {
-      env: () => [],
-      createRunFileSystem: () => ({}),
-    } as unknown as AppServices["fileSystem"],
     // Event bus for event-triggered actions
     stateEventBus: new EventTarget(),
     // Flowgen mocks (optional)

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystem } from "./data.js";
 import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
 import { RuntimeFlagManager } from "./flags.js";
 import {
@@ -126,7 +125,6 @@ export type NodeDescriberContext = {
    * dependencies.
    */
   graphStore?: MutableGraphStore;
-  fileSystem?: FileSystem;
   /**
    * A hint that this describing operation is for a type, which allows the
    * describer to avoid doing extra work handling dynamic schemas, etc.
@@ -339,10 +337,7 @@ export interface NodeHandlerContext {
    * dependencies.
    */
   graphStore?: MutableGraphStore;
-  /**
-   * The file system, provided as module capability.
-   */
-  fileSystem?: FileSystem;
+
   /**
    * A way to see and manage runtime flags.
    */
