@@ -35,12 +35,21 @@ type ChatEntry =
       thoughts: { title: string | null; body: string }[];
     };
 
+const GREETINGS = [
+  "Hey there! What would you like to change?",
+  "Hi! How can I help you with this opal?",
+  "What would you like me to do?",
+  "Ready to help! What do you need?",
+  "Hi! Tell me what you'd like to change.",
+  "What can I do for you today?",
+];
+
 /**
  * A chat overlay for the graph editing agent.
  *
- * The agent loop is persistent — it starts when the user opens the panel
- * and runs for the session lifetime. Between interactions the agent parks
- * on `wait_for_user_input`, which resolves when the user sends a message.
+ * The agent loop starts when the user sends the first message.
+ * Between interactions the agent parks on `wait_for_user_input`,
+ * which resolves when the user sends subsequent messages.
  */
 @customElement("bb-graph-editing-chat")
 class GraphEditingChat extends SignalWatcher(LitElement) {
@@ -367,7 +376,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
             @focus=${() => {
               if (!this.#open) {
                 this.#open = true;
-                this.#ensureLoopRunning();
+                this.#showGreeting();
                 // Re-focus after Lit update completes
                 this.updateComplete.then(() => {
                   this.#inputRef.value?.focus();
@@ -507,22 +516,33 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     this.#addMessage("user", text);
 
     if (this.#pendingResolve) {
+      // Agent is already running and waiting for input
       const resolve = this.#pendingResolve;
       this.#pendingResolve = null;
       this.#waiting = false;
       this.#processing = true;
       resolve(text);
+    } else if (!this.#loopRunning) {
+      // First message — start the agent loop with this as the objective
+      this.#processing = true;
+      this.#startLoop(text);
     }
   }
 
-  #ensureLoopRunning() {
+  #showGreeting() {
+    if (this.#entries.length > 0) return;
+    const greeting = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+    this.#addMessage("model", greeting);
+  }
+
+  #startLoop(firstMessage: string) {
     if (this.#loopRunning) return;
     this.#loopRunning = true;
 
     const objective: LLMContent = {
       parts: [
         {
-          text: "You are a graph editing assistant. Greet the user briefly and call wait_for_user_input to receive their first instruction.",
+          text: `You are a graph editing assistant. The user's request is:\n\n${firstMessage}`,
         },
       ],
     };
