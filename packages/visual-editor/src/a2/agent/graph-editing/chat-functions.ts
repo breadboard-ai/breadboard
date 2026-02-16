@@ -65,11 +65,14 @@ function getChatFunctionGroup(
         },
         response: {
           user_message: z.string().describe("The user's message"),
+          current_graph: z
+            .string()
+            .describe("The current graph overview (always included)."),
           graph_changes: z
             .string()
             .optional()
             .describe(
-              "If the user edited the graph while you were waiting, describes what changed. Includes the current graph overview. Absent if no changes were made."
+              "If the user edited the graph while you were waiting, describes what changed. Absent if no changes were made."
             ),
         },
       },
@@ -90,6 +93,16 @@ function getChatFunctionGroup(
         const afterData = getGraphData();
         let graph_changes: string | undefined;
 
+        // Always include the current graph overview.
+        const overview = afterData
+          ? graphOverviewYaml(
+              afterData,
+              afterData.nodes,
+              afterData.edges,
+              translator
+            )
+          : "(no graph available)";
+
         if (lastSnapshot && afterData) {
           const currentSnapshot = takeSnapshot(
             afterData.nodes,
@@ -98,19 +111,14 @@ function getChatFunctionGroup(
           );
           const diff = diffSnapshots(lastSnapshot, currentSnapshot);
           if (diff) {
-            const overview = graphOverviewYaml(
-              afterData,
-              afterData.nodes,
-              afterData.edges,
-              translator
-            );
-            graph_changes = `${diff}\n\nCurrent graph:\n${overview}`;
+            graph_changes = diff;
           }
           lastSnapshot = currentSnapshot;
         }
 
         return {
           user_message: userMessage,
+          current_graph: overview,
           ...(graph_changes ? { graph_changes } : {}),
         };
       }
@@ -122,6 +130,8 @@ function getChatFunctionGroup(
     instruction: `## Conversation Flow
 
 After completing each user request, always call "wait_for_user_input" to receive the next instruction. Use the message parameter to tell the user what you did. Never stop without calling it — the conversation is ongoing.
+
+The response always includes "current_graph" with the latest graph overview. Use it to stay aware of the graph's current state.
 
 When the response includes "graph_changes", the user manually edited the graph while you were waiting. Acknowledge those changes naturally — for example, "I see you added a new step" or "Looks like you changed the title of the Research step." Then address their message.`,
   };

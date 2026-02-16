@@ -8,6 +8,9 @@ import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { Loop, AgentResult } from "../loop.js";
 import { buildGraphEditingFunctionGroups } from "./configurator.js";
+import { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
+import { graphOverviewYaml } from "./graph-overview.js";
+import { bind } from "../../../sca/actions/graph/graph-actions.js";
 import type { LoopHooks } from "../types.js";
 
 export { invokeGraphEditingAgent };
@@ -25,9 +28,29 @@ async function invokeGraphEditingAgent(
   waitForInput: (agentMessage: string) => Promise<string>,
   hooks?: LoopHooks
 ): Promise<Outcome<AgentResult>> {
+  const translator = new EditingAgentPidginTranslator();
   const functionGroups = buildGraphEditingFunctionGroups({
     waitForInput,
+    translator,
   });
+
+  // Inject the current graph overview into the objective so the agent
+  // knows the graph state from the start.
+  const { controller } = bind;
+  const editor = controller.editor.graph.editor;
+  if (editor) {
+    const graph = editor.raw();
+    const overview = graphOverviewYaml(
+      graph,
+      graph.nodes ?? [],
+      graph.edges ?? [],
+      translator
+    );
+    objective = {
+      parts: [...objective.parts, { text: `\n\nCurrent graph:\n${overview}` }],
+    };
+  }
+
   const loop = new Loop(moduleArgs);
 
   return loop.run({
