@@ -3,15 +3,15 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
-import { ModalDismissedEvent } from "../../events/events.js";
 
 @customElement("bb-global-edit-confirmation-modal")
-export class VEGlobalEditConfirmationModal extends LitElement {
+export class VEGlobalEditConfirmationModal extends SignalWatcher(LitElement) {
   static styles = css`
     :host {
       display: block;
@@ -39,17 +39,6 @@ export class VEGlobalEditConfirmationModal extends LitElement {
       .showCloseButton=${false}
       .showSaveCancel=${true}
       .saveButtonLabel=${"Confirm"}
-      @bbmodaldismissed=${(evt: ModalDismissedEvent) => {
-        if (evt.withSave) {
-          this.sca.controller.global.flowgenInput.seenConfirmationDialog = true;
-        }
-
-        this.dispatchEvent(
-          new CustomEvent("bbglobaleditconfirmation", {
-            detail: { confirmed: evt.withSave },
-          })
-        );
-      }}
     >
     </bb-modal>`;
   }

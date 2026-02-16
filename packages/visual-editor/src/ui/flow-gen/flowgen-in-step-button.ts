@@ -11,6 +11,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import {
   HideTooltipEvent,
+  ModalDismissedEvent,
   ShowTooltipEvent,
   StateEvent,
   UtteranceEvent,
@@ -240,11 +241,12 @@ export class FlowgenInStepButton extends LitElement {
   render() {
     const modal = this.#showConfirmation
       ? html`<bb-global-edit-confirmation-modal
-          @bbglobaleditconfirmation=${(
-            evt: CustomEvent<{ confirmed: boolean }>
-          ) => {
+          @bbmodaldismissed=${(evt: ModalDismissedEvent) => {
             this.#showConfirmation = false;
-            if (evt.detail.confirmed) {
+
+            if (evt.withSave) {
+              this.sca.controller.global.flowgenInput.seenConfirmationDialog = true;
+
               const description = this.#descriptionInput.value?.value;
               if (description && this.currentGraph) {
                 this.#proceedWithEdit(description, this.currentGraph);
