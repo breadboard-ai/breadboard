@@ -478,7 +478,6 @@ function calculateDuration(model: string) {
 }
 
 async function callAPI(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   retries: number,
   model: string,
@@ -875,7 +874,7 @@ async function streamGenerateContent(
 
 async function invoke(
   inputs: GeminiInputs,
-  caps: Capabilities,
+  _caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<GeminiOutputs>> {
   const validatingInputs = validateInputs(inputs);
@@ -899,7 +898,6 @@ async function invoke(
       // Public API is being used.
       // Behave as if we're wired in.
       const result = await callAPI(
-        caps,
         moduleArgs,
         retries,
         currentModel,
@@ -926,7 +924,6 @@ async function invoke(
       // Private API is being used.
       // Behave as if we're being invoked.
       const result = await callAPI(
-        caps,
         moduleArgs,
         retries,
         currentModel,
