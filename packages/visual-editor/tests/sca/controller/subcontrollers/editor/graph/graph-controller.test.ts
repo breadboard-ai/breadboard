@@ -12,7 +12,15 @@ import {
   loadGraphIntoStore,
 } from "../../../../../helpers/_graph-store.js";
 import { editGraphStore } from "../../../../../helpers/_editor.js";
-import { EditableGraph, MutableGraphStore } from "@breadboard-ai/types";
+import type {
+  AssetPath,
+  EditableGraph,
+  EditHistoryCreator,
+  GraphDescriptor,
+  MutableGraph,
+  MutableGraphStore,
+} from "@breadboard-ai/types";
+import type { GraphAsset } from "../../../../../../src/ui/state/types.js";
 import { ok } from "@breadboard-ai/utils";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
 import { Tab } from "../../../../../../src/runtime/types.js";
@@ -1154,5 +1162,268 @@ suite("GraphController", () => {
     store.resetAll();
     await store.isSettled;
     assert.strictEqual(store.topologyVersion, 0);
+  });
+
+  // ==========================================================================
+  // MutableGraphStore (set/get)
+  // ==========================================================================
+
+  test("set/get stores and returns MutableGraph", async () => {
+    const store = new GraphController("Graph_MGS_SetGet", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.get(), undefined, "initially undefined");
+
+    const mockMutableGraph = { id: "mock-mutable" } as unknown as MutableGraph;
+    store.set(mockMutableGraph);
+    assert.strictEqual(store.get(), mockMutableGraph);
+  });
+
+  // ==========================================================================
+  // Getters (graphUrl, graphAssets, title, graph, empty)
+  // ==========================================================================
+
+  test("graphUrl returns null when no URL", async () => {
+    const store = new GraphController("Graph_Url_Null", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.graphUrl, null);
+  });
+
+  test("graphUrl returns URL object when URL is set", async () => {
+    const store = new GraphController("Graph_Url_Set", "GraphController");
+    await store.isHydrated;
+
+    store.url = "https://example.com/board";
+    await store.isSettled;
+
+    const url = store.graphUrl;
+    assert.ok(url instanceof URL);
+    assert.strictEqual(url.href, "https://example.com/board");
+  });
+
+  test("graphAssets returns the assets map", async () => {
+    const store = new GraphController("Graph_Assets_Get", "GraphController");
+    await store.isHydrated;
+
+    assert.ok(store.graphAssets instanceof Map);
+    assert.strictEqual(store.graphAssets.size, 0);
+  });
+
+  test("setGraphAssets updates the assets map", async () => {
+    const store = new GraphController("Graph_Assets_Set", "GraphController");
+    await store.isHydrated;
+
+    const assets = new Map([
+      [
+        "asset-1" as AssetPath,
+        { metadata: { title: "Asset 1" } } as GraphAsset,
+      ],
+    ]);
+    store.setGraphAssets(assets);
+    await store.isSettled;
+
+    assert.strictEqual(store.graphAssets.size, 1);
+    assert.ok(store.graphAssets.has("asset-1" as AssetPath));
+  });
+
+  test("clearPendingGraphReplacement resets to null", async () => {
+    const store = new GraphController("Graph_ClearPGR", "GraphController");
+    await store.isHydrated;
+
+    store.pendingGraphReplacement = {
+      replacement: { nodes: [], edges: [] } as unknown as GraphDescriptor,
+      creator: {} as EditHistoryCreator,
+    };
+    await store.isSettled;
+
+    assert.ok(store.pendingGraphReplacement !== null);
+    store.clearPendingGraphReplacement();
+    await store.isSettled;
+    assert.strictEqual(store.pendingGraphReplacement, null);
+  });
+
+  test("title getter returns null initially", async () => {
+    const store = new GraphController("Graph_Title_Init", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.title, null);
+  });
+
+  test("title getter returns graph title after setEditor", async () => {
+    const store = new GraphController("Graph_Title_After", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    // title is derived from the graph's title property (may be null/string)
+    const title = store.title;
+    assert.ok(
+      title === null || typeof title === "string",
+      "title should be string or null"
+    );
+  });
+
+  test("graph getter returns null initially", async () => {
+    const store = new GraphController("Graph_Graph_Init", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.graph, null);
+  });
+
+  test("graph getter returns descriptor after setEditor", async () => {
+    const store = new GraphController("Graph_Graph_After", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    assert.ok(store.graph !== null);
+    assert.ok("nodes" in store.graph!);
+  });
+
+  test("empty returns true when no graph", async () => {
+    const store = new GraphController("Graph_Empty_NoGraph", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.empty, true);
+  });
+
+  test("empty returns false when graph has nodes", async () => {
+    const store = new GraphController("Graph_Empty_Nodes", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    // testGraph has at least one node
+    assert.strictEqual(store.empty, false);
+  });
+
+  // ==========================================================================
+  // findOutputPortId branch coverage
+  // ==========================================================================
+
+  test("findOutputPortId returns main-port when present", async () => {
+    const store = new GraphController("Graph_FOP_Main", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({ nodeId: "test-node" });
+    // Override nodeById to return a node with a main-port
+    (
+      mockEditor as unknown as {
+        inspect: () => { nodeById: (id: string) => unknown };
+      }
+    ).inspect = () => ({
+      graphs: () => ({}),
+      nodes: () => [],
+      raw: () => ({ nodes: [] }),
+      nodeById: (id: string) => {
+        if (id === "test-node") {
+          return {
+            descriptor: { id: "test-node" },
+            title: () => "Test",
+            currentPorts: () => ({
+              inputs: { ports: [] },
+              outputs: {
+                ports: [
+                  { name: "output-1", schema: { behavior: ["main-port"] } },
+                  { name: "output-2", schema: {} },
+                ],
+              },
+            }),
+          };
+        }
+        return undefined;
+      },
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const result = store.findOutputPortId("", "test-node");
+    assert.ok(ok(result), "Should succeed");
+    if (ok(result)) {
+      assert.strictEqual(result.id, "output-1");
+    }
+  });
+
+  test("findOutputPortId falls back to first port when no main-port", async () => {
+    const store = new GraphController("Graph_FOP_First", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({ nodeId: "test-node" });
+    (
+      mockEditor as unknown as {
+        inspect: () => { nodeById: (id: string) => unknown };
+      }
+    ).inspect = () => ({
+      graphs: () => ({}),
+      nodes: () => [],
+      raw: () => ({ nodes: [] }),
+      nodeById: (id: string) => {
+        if (id === "test-node") {
+          return {
+            descriptor: { id: "test-node" },
+            title: () => "Test",
+            currentPorts: () => ({
+              inputs: { ports: [] },
+              outputs: {
+                ports: [{ name: "fallback-port", schema: {} }],
+              },
+            }),
+          };
+        }
+        return undefined;
+      },
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const result = store.findOutputPortId("", "test-node");
+    assert.ok(ok(result), "Should succeed");
+    if (ok(result)) {
+      assert.strictEqual(result.id, "fallback-port");
+    }
+  });
+
+  test("findOutputPortId returns error when node has no ports", async () => {
+    const store = new GraphController("Graph_FOP_NoPorts", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({ nodeId: "test-node" });
+    (
+      mockEditor as unknown as {
+        inspect: () => { nodeById: (id: string) => unknown };
+      }
+    ).inspect = () => ({
+      graphs: () => ({}),
+      nodes: () => [],
+      raw: () => ({ nodes: [] }),
+      nodeById: (id: string) => {
+        if (id === "test-node") {
+          return {
+            descriptor: { id: "test-node" },
+            title: () => "Test",
+            currentPorts: () => ({
+              inputs: { ports: [] },
+              outputs: { ports: [] },
+            }),
+          };
+        }
+        return undefined;
+      },
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const result = store.findOutputPortId("", "test-node");
+    assert.ok(!ok(result), "Should return error when no ports");
   });
 });

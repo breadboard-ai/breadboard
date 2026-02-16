@@ -30,6 +30,15 @@ export type UserInput = {
 };
 
 /**
+ * Payload for a requested node action (run/stop/runFrom etc).
+ * Set on RunController to trigger pre-action orchestration.
+ */
+export type NodeActionRequest = {
+  nodeId: string;
+  actionContext: "graph" | "step";
+};
+
+/**
  * Status for an individual step in the step list.
  */
 export type StepStatus =
@@ -104,6 +113,26 @@ export class RunController extends RootController {
    */
   @field()
   private accessor _input: UserInput | null = null;
+
+  /**
+   * Set of node IDs that currently have pending input requests.
+   * Used to support multiple concurrent input requests from parallel nodes.
+   */
+  @field({ deep: true })
+  private accessor _pendingInputNodeIds: Set<NodeIdentifier> = new Set();
+
+  /**
+   * Per-node input schemas for pending input requests.
+   */
+  @field({ deep: true })
+  private accessor _inputSchemas: Map<NodeIdentifier, Schema> = new Map();
+
+  /**
+   * Pending node action request.
+   * Set by handleNodeAction, consumed by triggered actions.
+   */
+  @field()
+  private accessor _nodeActionRequest: NodeActionRequest | null = null;
 
   /**
    * Fatal error from the run (if any).
@@ -267,6 +296,90 @@ export class RunController extends RootController {
   }
 
   /**
+   * Gets the full list of pending input requests.
+   * Returns null if no inputs are pending.
+   */
+  get inputs(): UserInput[] | null {
+    if (this._pendingInputNodeIds.size === 0) {
+      return null;
+    }
+    return Array.from(this._pendingInputNodeIds)
+      .map((id) => {
+        const schema = this._inputSchemas.get(id);
+        if (!schema) return null;
+        return { id, schema };
+      })
+      .filter(Boolean) as UserInput[];
+  }
+
+  /**
+   * Gets the pending input node IDs set.
+   */
+  get pendingInputNodeIds(): ReadonlySet<NodeIdentifier> {
+    return this._pendingInputNodeIds;
+  }
+
+  /**
+   * Gets the input schemas map.
+   */
+  get inputSchemas(): ReadonlyMap<NodeIdentifier, Schema> {
+    return this._inputSchemas;
+  }
+
+  /**
+   * Adds a pending input request to the queue.
+   */
+  addPendingInput(id: NodeIdentifier, schema: Schema): void {
+    this._pendingInputNodeIds.add(id);
+    this._inputSchemas.set(id, schema);
+  }
+
+  /**
+   * Removes a pending input from the queue.
+   */
+  removePendingInput(id: NodeIdentifier): void {
+    this._pendingInputNodeIds.delete(id);
+    this._inputSchemas.delete(id);
+  }
+
+  /**
+   * Gets the next pending input ID from the queue.
+   * Returns undefined if no pending inputs remain.
+   */
+  get nextPendingInputId(): NodeIdentifier | undefined {
+    return this._pendingInputNodeIds.values().next().value;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // NODE ACTION REQUEST
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Gets the pending node action request (if any).
+   * Watched by triggers to coordinate pre-action orchestration.
+   */
+  get nodeActionRequest(): NodeActionRequest | null {
+    return this._nodeActionRequest;
+  }
+
+  /**
+   * Sets a pending node action request.
+   * Triggers pre-action orchestration (e.g. applying pending edits)
+   * followed by action dispatch.
+   */
+  setNodeActionRequest(request: NodeActionRequest): void {
+    this._nodeActionRequest = request;
+  }
+
+  /**
+   * Clears the pending node action request.
+   * Called after the action has been dispatched.
+   */
+  clearNodeActionRequest(): void {
+    this._nodeActionRequest = null;
+  }
+
+  /**
    * Gets the fatal error (if any).
    */
   get error(): RunError | null {
@@ -293,6 +406,14 @@ export class RunController extends RootController {
       this._dismissedErrors.add(nodeId);
     }
     this._error = null;
+  }
+
+  /**
+   * Removes a node from the dismissed errors set (un-dismiss).
+   * Called before re-running a node so its error becomes visible again.
+   */
+  undismissError(id: NodeIdentifier): void {
+    this._dismissedErrors.delete(id);
   }
 
   /**
@@ -327,9 +448,12 @@ export class RunController extends RootController {
   resetOutput(): void {
     this._console.clear();
     this._input = null;
+    this._pendingInputNodeIds.clear();
+    this._inputSchemas.clear();
     this._error = null;
     this._dismissedErrors.clear();
     this._estimatedEntryCount = 0;
+    this._nodeActionRequest = null;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

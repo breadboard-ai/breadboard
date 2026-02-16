@@ -8,6 +8,8 @@ import { mock } from "node:test";
 import type { EditableGraph } from "@breadboard-ai/types";
 import { AppController } from "../../../src/sca/controller/controller.js";
 import { RunController } from "../../../src/sca/controller/subcontrollers/run/run-controller.js";
+import { RendererController } from "../../../src/sca/controller/subcontrollers/run/renderer-controller.js";
+import { ScreenController } from "../../../src/sca/controller/subcontrollers/run/screen-controller.js";
 import type { FlowgenInputStatus } from "../../../src/sca/controller/subcontrollers/global/flowgen-input-controller.js";
 import { ShareController } from "../../../src/sca/controller/subcontrollers/editor/share-controller.js";
 import { SnackType, SnackbarUUID } from "../../../src/ui/types/types.js";
@@ -115,6 +117,8 @@ export function makeTestController(options: TestControllerOptions = {}) {
       main: editor
         ? { stop: runStop }
         : new RunController("test-run-controller", "test"),
+      renderer: new RendererController("test-renderer-controller", "test"),
+      screen: new ScreenController("test-screen-controller", "test"),
     },
     router: {
       updateFromCurrentUrl: () => {},

@@ -17,6 +17,7 @@ import type {
   HarnessRunner,
 } from "@breadboard-ai/types";
 import { coordination } from "../../../../src/sca/coordination.js";
+import { ReactiveAppScreen } from "../../../../src/ui/state/app-screen.js";
 
 /**
  * Creates a valid mock config for testing
@@ -1344,5 +1345,966 @@ suite("syncConsoleFromRunner async describe", () => {
     // Entry should still be created with fallback
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist even without node");
+  });
+});
+
+// =============================================================================
+// handleNodeAction
+// =============================================================================
+
+suite("handleNodeAction", () => {
+  beforeEach(() => {
+    setDOM();
+    coordination.reset();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("sets nodeActionRequest on controller", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    await RunActions.handleNodeAction({
+      nodeId: "node-1",
+      actionContext: "graph",
+    });
+
+    const request = controller.run.main.nodeActionRequest;
+    assert.ok(request, "nodeActionRequest should be set");
+    assert.strictEqual(request.nodeId, "node-1");
+    assert.strictEqual(request.actionContext, "graph");
+  });
+
+  test("sets 'step' actionContext", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    await RunActions.handleNodeAction({
+      nodeId: "node-2",
+      actionContext: "step",
+    });
+
+    const request = controller.run.main.nodeActionRequest;
+    assert.ok(request, "nodeActionRequest should be set");
+    assert.strictEqual(request.actionContext, "step");
+  });
+
+  test("no-ops and logs when actionContext is missing", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    await RunActions.handleNodeAction({ nodeId: "node-1" });
+
+    assert.strictEqual(
+      controller.run.main.nodeActionRequest,
+      null,
+      "nodeActionRequest should remain null"
+    );
+  });
+});
+
+// =============================================================================
+// executeNodeAction
+// =============================================================================
+
+suite("executeNodeAction", () => {
+  beforeEach(() => {
+    setDOM();
+    coordination.reset();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("returns early when no request", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Ensure no request is set
+    assert.strictEqual(controller.run.main.nodeActionRequest, null);
+
+    // Should not throw
+    await RunActions.executeNodeAction();
+
+    // Nothing should have changed
+    assert.strictEqual(controller.run.main.nodeActionRequest, null);
+  });
+
+  test("clears nodeActionRequest after execution", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Set up a runner with node state
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Set up runner state
+    (
+      controller.run.main.runner as unknown as { state: Map<string, unknown> }
+    ).state = new Map([["node-1", { state: "inactive" }]]);
+
+    // Set the request
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "graph",
+    });
+
+    await RunActions.executeNodeAction();
+
+    assert.strictEqual(
+      controller.run.main.nodeActionRequest,
+      null,
+      "request should be cleared"
+    );
+  });
+
+  test("no-ops for 'inactive' state", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    (
+      controller.run.main.runner as unknown as { state: Map<string, unknown> }
+    ).state = new Map([["node-1", { state: "inactive" }]]);
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "graph",
+    });
+
+    // Should complete without calling dispatchRun or dispatchStop
+    await RunActions.executeNodeAction();
+
+    // Verify renderer was NOT updated (no state change for inactive)
+    assert.strictEqual(
+      controller.run.renderer.nodes.get("node-1"),
+      undefined,
+      "renderer should not be updated for inactive"
+    );
+  });
+
+  test("dispatches run for 'ready' state with graph context", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Set up runner with runFrom method and state
+    let runFromCalled = false;
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+      runFrom: () => Promise<unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "ready" }]]);
+    runner.runFrom = () => {
+      runFromCalled = true;
+      return Promise.resolve({});
+    };
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "graph",
+    });
+
+    await RunActions.executeNodeAction();
+
+    assert.ok(runFromCalled, "runFrom should be called for graph context");
+  });
+
+  test("dispatches run for 'succeeded' state with step context", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    let runNodeCalled = false;
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+      runNode: () => Promise<unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "succeeded" }]]);
+    runner.runNode = () => {
+      runNodeCalled = true;
+      return Promise.resolve({});
+    };
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "step",
+    });
+
+    await RunActions.executeNodeAction();
+
+    assert.ok(runNodeCalled, "runNode should be called for step context");
+  });
+
+  test("dispatches run for 'failed' state with undismissError", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    let runNodeCalled = false;
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+      runNode: () => Promise<unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "failed" }]]);
+    runner.runNode = () => {
+      runNodeCalled = true;
+      return Promise.resolve({});
+    };
+
+    // Dismiss the error first, then re-run
+    controller.run.main.dismissError("node-1");
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "step",
+    });
+
+    await RunActions.executeNodeAction();
+
+    assert.ok(runNodeCalled, "runNode should be called for failed state");
+  });
+
+  test("dispatches run for 'interrupted' state", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    let runFromCalled = false;
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+      runFrom: () => Promise<unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "interrupted" }]]);
+    runner.runFrom = () => {
+      runFromCalled = true;
+      return Promise.resolve({});
+    };
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "graph",
+    });
+
+    await RunActions.executeNodeAction();
+
+    assert.ok(runFromCalled, "runFrom should be called for interrupted state");
+  });
+
+  test("stops working node and sets interrupted state", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    let stopCalled = false;
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+      stop: () => Promise<unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "working" }]]);
+    runner.stop = () => {
+      stopCalled = true;
+      return Promise.resolve({});
+    };
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "graph",
+    });
+
+    await RunActions.executeNodeAction();
+
+    assert.ok(stopCalled, "stop should be called for working state");
+    const nodeState = controller.run.renderer.nodes.get("node-1");
+    assert.ok(nodeState, "node state should be set");
+    assert.strictEqual(
+      nodeState.status,
+      "interrupted",
+      "node should be set to interrupted"
+    );
+  });
+
+  test("stops waiting node and sets interrupted state", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    let stopCalled = false;
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+      stop: () => Promise<unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "waiting" }]]);
+    runner.stop = () => {
+      stopCalled = true;
+      return Promise.resolve({});
+    };
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "step",
+    });
+
+    await RunActions.executeNodeAction();
+
+    assert.ok(stopCalled, "stop should be called for waiting state");
+  });
+
+  test("logs warning for 'skipped' state", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "skipped" }]]);
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "graph",
+    });
+
+    // Should complete without throwing
+    await RunActions.executeNodeAction();
+
+    // Request should be cleared
+    assert.strictEqual(controller.run.main.nodeActionRequest, null);
+  });
+
+  test("logs warning for unknown state", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "totally-unknown" }]]);
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "graph",
+    });
+
+    // Should complete without throwing
+    await RunActions.executeNodeAction();
+
+    assert.strictEqual(controller.run.main.nodeActionRequest, null);
+  });
+
+  test("logs warning when node state not found", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Runner state exists but doesn't have our node
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+    };
+    runner.state = new Map();
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "missing-node",
+      actionContext: "graph",
+    });
+
+    await RunActions.executeNodeAction();
+
+    // Should clear request and not throw
+    assert.strictEqual(controller.run.main.nodeActionRequest, null);
+  });
+});
+
+// =============================================================================
+// Event handlers: nodestatechange, edgestatechange, output
+// =============================================================================
+
+suite("runner event handlers", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("nodestatechange sets non-failed node state on renderer", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("nodestatechange", {
+      id: "node-1",
+      state: "working",
+    });
+
+    const nodeState = controller.run.renderer.nodes.get("node-1");
+    assert.ok(nodeState, "node state should be set");
+    assert.strictEqual(nodeState.status, "working");
+    assert.strictEqual(
+      "errorMessage" in nodeState,
+      false,
+      "no error message for non-failed"
+    );
+  });
+
+  test("nodestatechange decodes error for 'failed' state", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("nodestatechange", {
+      id: "node-x",
+      state: "failed",
+      message: { message: "Something broke" },
+    });
+
+    const nodeState = controller.run.renderer.nodes.get("node-x");
+    assert.ok(nodeState, "node state should be set");
+    assert.strictEqual(nodeState.status, "failed");
+    assert.ok(
+      nodeState.status === "failed" && nodeState.errorMessage,
+      "error message should be populated for failed state"
+    );
+  });
+
+  test("edgestatechange sets edge states on renderer", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("edgestatechange", {
+      edges: [{ from: "a", to: "b", out: "out", in: "in" }],
+      state: "active",
+    });
+
+    // Verify edge state was set (edgeToString produces the key)
+    assert.ok(
+      controller.run.renderer.edges.size > 0,
+      "at least one edge state should be set"
+    );
+  });
+
+  test("output event adds output to screen for bubbled events", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Create a screen for the node first
+    const screen = new ReactiveAppScreen("node-1", undefined);
+    controller.run.screen.setScreen("node-1", screen);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("output", {
+      bubbled: true,
+      node: { id: "node-1" },
+      outputs: { text: "hello" },
+      path: ["node-1"],
+    });
+
+    // If the screen has addOutput, it should have been called
+    const storedScreen = controller.run.screen.screens.get("node-1");
+    assert.ok(storedScreen, "screen should still exist");
+  });
+
+  test("output event ignores non-bubbled events", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    // Should not throw even with no matching screen
+    runner._fireEvent("output", {
+      bubbled: false,
+      node: { id: "non-existent" },
+    });
+
+    // No screen should be created
+    assert.strictEqual(controller.run.screen.screens.size, 0);
+  });
+});
+
+// =============================================================================
+// nodeend: deleteScreen for interrupted state
+// =============================================================================
+
+suite("runner nodeend deleteScreen", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("deletes screen when node state is interrupted", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Create a screen for the node
+    const screen = new ReactiveAppScreen("node-1", undefined);
+    controller.run.screen.setScreen("node-1", screen);
+
+    // Set up a console entry so nodeend handler has something to update
+    controller.run.main.setConsoleEntry("node-1", {
+      title: "Test Node",
+      status: { status: "working" },
+      completed: false,
+    } as ConsoleEntry);
+
+    // Set runner.state so the node appears interrupted
+    (
+      controller.run.main.runner as unknown as { state: Map<string, unknown> }
+    ).state = new Map([["node-1", { state: "interrupted" }]]);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("nodeend", {
+      path: ["node-1"],
+      node: { id: "node-1" },
+    });
+
+    // Screen should be deleted for interrupted nodes
+    assert.strictEqual(
+      controller.run.screen.screens.has("node-1"),
+      false,
+      "screen should be deleted for interrupted node"
+    );
+  });
+
+  test("finalizes screen when node is NOT interrupted", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Create a screen for the node
+    const screen = new ReactiveAppScreen("node-1", undefined);
+    let finalized = false;
+    screen.finalize = () => {
+      finalized = true;
+    };
+    controller.run.screen.setScreen("node-1", screen);
+
+    // Set up a console entry
+    controller.run.main.setConsoleEntry("node-1", {
+      title: "Test Node",
+      status: { status: "working" },
+      completed: false,
+    } as ConsoleEntry);
+
+    // Set runner.state to succeeded (not interrupted)
+    (
+      controller.run.main.runner as unknown as { state: Map<string, unknown> }
+    ).state = new Map([["node-1", { state: "succeeded" }]]);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("nodeend", {
+      path: ["node-1"],
+      node: { id: "node-1" },
+    });
+
+    // Screen should still exist (finalized, not deleted)
+    assert.strictEqual(
+      controller.run.screen.screens.has("node-1"),
+      true,
+      "screen should still exist for non-interrupted node"
+    );
+    assert.ok(finalized, "screen.finalize should be called");
+  });
+
+  test("sets renderer node state to succeeded on nodeend", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    // Set up a console entry
+    controller.run.main.setConsoleEntry("node-1", {
+      title: "Test Node",
+      status: { status: "working" },
+      completed: false,
+    } as ConsoleEntry);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("nodeend", {
+      path: ["node-1"],
+      node: { id: "node-1" },
+    });
+
+    const nodeState = controller.run.renderer.nodes.get("node-1");
+    assert.ok(nodeState, "renderer node state should be set");
+    assert.strictEqual(
+      nodeState.status,
+      "succeeded",
+      "renderer should show succeeded"
+    );
+  });
+});
+
+// =============================================================================
+// graphstart async describe fallback (via _fireEvent path)
+// =============================================================================
+
+suite("runner graphstart async describe fallback", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("async fetches describe when metadata has no tags during graphstart", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Create a node without tags initially
+    let describeCalled = false;
+    const mockNode = {
+      title: () => "Node 1",
+      describe: async () => {
+        describeCalled = true;
+        return { metadata: { icon: "async-icon", tags: ["async-tag"] } };
+      },
+      currentDescribe: () => ({ metadata: {} }), // No tags
+      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
+    };
+
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: () => mockNode }]]),
+      });
+
+    const config = makeMockConfig();
+    config.graph = { edges: [], nodes: [{ id: "node-1", type: "test" }] };
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("graphstart", { path: [] });
+
+    // Wait for async describe
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    assert.ok(
+      describeCalled,
+      "describe should be called async for tagless node"
+    );
+
+    const entry = controller.run.main.console.get("node-1");
+    assert.ok(entry, "entry should exist");
+    assert.deepStrictEqual(
+      entry.tags,
+      ["async-tag"],
+      "tags should be updated from async describe"
+    );
+  });
+
+  test("does NOT async fetch when tags are already present", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    let describeCalled = false;
+    const mockNode = {
+      title: () => "Node 1",
+      describe: async () => {
+        describeCalled = true;
+        return { metadata: { tags: ["should-not-see"] } };
+      },
+      currentDescribe: () => ({ metadata: { tags: ["existing-tag"] } }), // Has tags
+      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
+    };
+
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: () => mockNode }]]),
+      });
+
+    const config = makeMockConfig();
+    config.graph = { edges: [], nodes: [{ id: "node-1", type: "test" }] };
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("graphstart", { path: [] });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    assert.strictEqual(
+      describeCalled,
+      false,
+      "describe should NOT be called when tags exist"
+    );
+  });
+
+  test("graphstart falls back to nodeId when node is not found", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // nodeById returns null — triggers all ?? fallbacks
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: () => null }]]),
+      });
+
+    const config = makeMockConfig();
+    config.graph = { edges: [], nodes: [{ id: "node-1", type: "test" }] };
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("graphstart", { path: [] });
+
+    const entry = controller.run.main.console.get("node-1");
+    assert.ok(entry, "entry should exist even when node is not inspectable");
+    // Title falls back to nodeId when node is null
+    assert.strictEqual(
+      entry.title,
+      "node-1",
+      "title should fall back to nodeId"
+    );
+  });
+
+  test("graphstart handles null plan.stages by using empty array", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const config = makeMockConfig();
+    config.graph = { edges: [], nodes: [{ id: "node-1", type: "test" }] };
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+      plan: unknown;
+    };
+
+    // Set plan to null — triggers plan?.stages ?? [] fallback
+    runner.plan = null;
+
+    runner._fireEvent("graphstart", { path: [] });
+
+    // Should not throw, console should have 0 entries because stages is empty
+    assert.strictEqual(
+      controller.run.main.console.size,
+      0,
+      "no entries when plan has no stages"
+    );
+  });
+
+  test("graphstart uses empty metadata when currentDescribe returns null", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const mockNode = {
+      title: () => "Node 1",
+      describe: async () => ({ metadata: null }),
+      currentDescribe: () => null, // null describe — metadata ?? {} kicks in
+      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
+    };
+
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: () => mockNode }]]),
+      });
+
+    const config = makeMockConfig();
+    config.graph = { edges: [], nodes: [{ id: "node-1", type: "test" }] };
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("graphstart", { path: [] });
+
+    const entry = controller.run.main.console.get("node-1");
+    assert.ok(entry, "entry should exist");
+    // No tags because metadata was null
+    assert.strictEqual(entry.tags, undefined, "tags should be undefined");
+  });
+});
+
+// =============================================================================
+// nodestart fallback branches
+// =============================================================================
+
+suite("runner nodestart fallback branches", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("nodestart falls back to nodeId when node is not found", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // nodeById returns null
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: () => null }]]),
+      });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("nodestart", {
+      path: ["node-1"],
+      node: { id: "node-1" },
+      inputs: {},
+    });
+
+    const entry = controller.run.main.console.get("node-1");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.title,
+      "node-1",
+      "title should fall back to nodeId"
+    );
+  });
+
+  test("nodestart uses empty metadata when currentDescribe returns null", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    const mockNode = {
+      title: () => "Node 1",
+      currentDescribe: () => null,
+      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
+    };
+
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: () => mockNode }]]),
+      });
+
+    const config = makeMockConfig();
+    RunActions.prepare(config);
+
+    const runner = controller.run.main.runner! as unknown as {
+      _fireEvent: (e: string, data?: unknown) => void;
+    };
+
+    runner._fireEvent("nodestart", {
+      path: ["node-1"],
+      node: { id: "node-1" },
+      inputs: {},
+    });
+
+    const entry = controller.run.main.console.get("node-1");
+    assert.ok(entry, "entry should exist");
+    assert.deepStrictEqual(
+      entry.tags,
+      undefined,
+      "tags should be undefined when metadata is null"
+    );
   });
 });

@@ -10,20 +10,11 @@
  * Trigger definitions for Run actions.
  */
 
-import {
-  EventTrigger,
-  eventTrigger,
-  signalTrigger,
-  type SignalTrigger,
-} from "../../coordination.js";
+import { signalTrigger, type SignalTrigger } from "../../coordination.js";
 import type { AppController } from "../../controller/controller.js";
 import type { AppServices } from "../../services/services.js";
 
 type ActionBind = { controller: AppController; services: AppServices };
-
-export function onDblClick(): EventTrigger {
-  return eventTrigger("Double Click Test Handler", window, "dblclick");
-}
 
 // =============================================================================
 // Signal Triggers
@@ -38,5 +29,19 @@ export function onGraphVersionForSync(bind: ActionBind): SignalTrigger {
     const { controller } = bind;
     // Return true when version is valid - reactive system tracks changes
     return controller.editor.graph.version >= 0;
+  });
+}
+
+/**
+ * Creates a trigger that fires when a node action request is set.
+ *
+ * Watches RunController.nodeActionRequest and fires when it changes
+ * to a non-null value. Used by executeNodeAction to dispatch the
+ * run/stop/runFrom/runNode command.
+ */
+export function onNodeActionRequested(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Node Action Requested (Run)", () => {
+    const { controller } = bind;
+    return controller.run.main.nodeActionRequest !== null;
   });
 }

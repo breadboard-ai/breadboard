@@ -5,6 +5,8 @@
  */
 
 import type {
+  ConsoleEntry,
+  ErrorObject,
   GraphDescriptor,
   HarnessRunner,
   NodeLifecycleState,
@@ -25,24 +27,18 @@ import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
 import { RunController } from "../../controller/subcontrollers/run/run-controller.js";
-import { onDblClick, onGraphVersionForSync } from "./triggers.js";
+import { onGraphVersionForSync, onNodeActionRequested } from "./triggers.js";
+import { edgeToString } from "../../../ui/utils/workspace.js";
+import { decodeErrorData } from "../../../ui/state/utils/decode-error.js";
+import { ReactiveAppScreen } from "../../../ui/state/app-screen.js";
+import { computeControlState } from "../../../runtime/control.js";
+import {
+  cleanupStoppedInput,
+  dispatchRun,
+  dispatchStop,
+} from "./helpers/helpers.js";
 
 export const bind = makeAction();
-
-// =============================================================================
-// Coordinated Actions
-// =============================================================================
-
-export const testAction = asAction(
-  "Run.test",
-  {
-    mode: ActionMode.Immediate,
-    triggeredBy: () => onDblClick(),
-  },
-  async (): Promise<void> => {
-    return new Promise((r) => setTimeout(r, 3_000));
-  }
-);
 
 /**
  * Starts the current run.
@@ -232,6 +228,8 @@ export const prepare = asAction(
       // Only reset for top-level graph
       if (event.data.path.length === 0) {
         controller.run.main.resetOutput();
+        controller.run.renderer.reset();
+        controller.run.screen.reset();
 
         // Use runner.plan.stages for execution-ordered iteration
         // Flatten stages to get nodes in execution order
@@ -299,6 +297,15 @@ export const prepare = asAction(
         tags: metadata.tags,
       });
       controller.run.main.setConsoleEntry(nodeId, entry);
+      controller.run.renderer.setNodeState(nodeId, { status: "working" });
+
+      // Create screen for this node (unless it should be skipped)
+      const outputSchema = node?.currentDescribe()?.outputSchema;
+      const controlState = computeControlState(event.data.inputs ?? {});
+      if (!controlState.skip) {
+        const screen = new ReactiveAppScreen(title, outputSchema);
+        controller.run.screen.setScreen(nodeId, screen);
+      }
     });
 
     // Handle nodeend - update console entry status to succeeded
@@ -314,7 +321,49 @@ export const prepare = asAction(
           status: { status: "succeeded" },
           completed: true,
         });
+        controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
       }
+
+      // Finalize or delete screen based on node state
+      const nodeState = controller.run.main.runner?.state?.get(nodeId);
+      if (nodeState?.state === "interrupted") {
+        controller.run.screen.deleteScreen(nodeId);
+      } else {
+        controller.run.screen.screens.get(nodeId)?.finalize(event.data);
+      }
+    });
+
+    // ── Renderer state ────────────────────────────────────────────────────
+
+    runner.addEventListener("nodestatechange", (event) => {
+      const { id, state, message } = event.data;
+      if (state === "failed") {
+        const errorMessage =
+          decodeErrorData(services.actionTracker, message as ErrorObject) ??
+          "Unknown error";
+        controller.run.renderer.setNodeState(id, {
+          status: state,
+          errorMessage: errorMessage.message,
+        });
+        return;
+      }
+      controller.run.renderer.setNodeState(id, { status: state });
+    });
+
+    runner.addEventListener("edgestatechange", (event) => {
+      const { edges, state } = event.data;
+      edges?.forEach((edge) => {
+        const edgeId = edgeToString(edge);
+        controller.run.renderer.setEdgeState(edgeId, { status: state });
+      });
+    });
+
+    // ── Screen output ─────────────────────────────────────────────────────
+
+    runner.addEventListener("output", (event) => {
+      if (!event.data.bubbled) return;
+      const nodeId = event.data.node.id;
+      controller.run.screen.screens.get(nodeId)?.addOutput(event.data);
     });
 
     // Set on controller
@@ -412,10 +461,7 @@ export const syncConsoleFromRunner = asAction(
     }
 
     // Build console entries in a regular Map first
-    const newEntries = new Map<
-      string,
-      import("@breadboard-ai/types").ConsoleEntry
-    >();
+    const newEntries = new Map<string, ConsoleEntry>();
 
     for (const nodeId of nodeIds) {
       const node = inspectable.nodeById(nodeId);
@@ -453,5 +499,117 @@ export const syncConsoleFromRunner = asAction(
     // Replace the console atomically with new entries
     // This triggers @field signal due to reference change (immutable pattern)
     runController.replaceConsole(newEntries);
+  }
+);
+
+// =============================================================================
+// Node Action
+// =============================================================================
+
+/**
+ * Requests a node action (run/stop/runFrom/runNode).
+ *
+ * Sets the nodeActionRequest field on RunController, which triggers:
+ * 1. Step.applyPendingEditsForNodeAction (priority 100) — flushes pending edits
+ * 2. Run.executeNodeAction (priority 50) — dispatches the actual command
+ */
+export const handleNodeAction = asAction(
+  "Run.handleNodeAction",
+  { mode: ActionMode.Immediate },
+  async (payload: {
+    nodeId: string;
+    actionContext?: "graph" | "step";
+  }): Promise<void> => {
+    const { nodeId, actionContext } = payload;
+    if (!actionContext) {
+      Utils.Logging.getLogger().log(
+        Utils.Logging.Formatter.warning("Unknown action context"),
+        "handleNodeAction"
+      );
+      return;
+    }
+    const { controller } = bind;
+    controller.run.main.setNodeActionRequest({ nodeId, actionContext });
+  }
+);
+
+/**
+ * Executes a previously requested node action.
+ *
+ * Triggered by nodeActionRequest becoming non-null. Runs at priority 50
+ * so that step-actions' applyPendingEditsForNodeAction (priority 100)
+ * fires first, flushing any pending edits.
+ *
+ * **Triggers:**
+ * - `onNodeActionRequested`: Fires when nodeActionRequest is set
+ */
+export const executeNodeAction = asAction(
+  "Run.executeNodeAction",
+  {
+    mode: ActionMode.Immediate,
+    priority: 50, // Lower than applyPendingEditsForNodeAction (100)
+    triggeredBy: () => onNodeActionRequested(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const runController = controller.run.main;
+    const request = runController.nodeActionRequest;
+    if (!request) {
+      return;
+    }
+
+    // Clear the request immediately so it doesn't re-trigger.
+    runController.clearNodeActionRequest();
+
+    const { nodeId, actionContext } = request;
+    const runFromNode = actionContext === "graph";
+    const runner = runController.runner;
+    const nodeState = runner?.state?.get(nodeId);
+    if (!nodeState) {
+      Utils.Logging.getLogger().log(
+        Utils.Logging.Formatter.warning(
+          `Primary action: orchestrator state for node "${nodeId}" not found`
+        ),
+        "executeNodeAction"
+      );
+      return;
+    }
+
+    switch (nodeState.state) {
+      case "inactive":
+        break;
+
+      case "ready":
+      case "succeeded":
+      case "failed":
+      case "interrupted":
+        runController.undismissError(nodeId);
+        dispatchRun(runFromNode, nodeId, runner);
+        break;
+
+      case "working":
+      case "waiting":
+        controller.run.renderer.setNodeState(nodeId, {
+          status: "interrupted",
+        });
+        cleanupStoppedInput(nodeId, controller.run);
+        dispatchStop(nodeId, runner);
+        break;
+
+      case "skipped":
+        Utils.Logging.getLogger().log(
+          Utils.Logging.Formatter.warning(
+            `Action event is invalid for "skipped" state`
+          ),
+          "executeNodeAction"
+        );
+        break;
+
+      default:
+        Utils.Logging.getLogger().log(
+          Utils.Logging.Formatter.warning("Unknown state", nodeState.state),
+          "executeNodeAction"
+        );
+    }
   }
 );
