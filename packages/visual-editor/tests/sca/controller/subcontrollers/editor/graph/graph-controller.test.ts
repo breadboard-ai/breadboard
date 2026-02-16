@@ -20,7 +20,7 @@ import type {
   MutableGraph,
   MutableGraphStore,
 } from "@breadboard-ai/types";
-import type { GraphAsset } from "../../../../../../src/ui/state/types.js";
+import type { GraphAsset } from "../../../../../../src/sca/types.js";
 import { ok } from "@breadboard-ai/utils";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
 import { Tab } from "../../../../../../src/runtime/types.js";

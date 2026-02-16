@@ -7,7 +7,7 @@
 import assert from "node:assert";
 import { suite, test } from "node:test";
 import { IntegrationsController } from "../../../../../../src/sca/controller/subcontrollers/editor/integrations/integrations-controller.js";
-import type { IntegrationState } from "../../../../../../src/ui/state/types.js";
+import type { IntegrationState } from "../../../../../../src/ui/types/state-types.js";
 
 suite("IntegrationsController", () => {
   // ---------------------------------------------------------------------------

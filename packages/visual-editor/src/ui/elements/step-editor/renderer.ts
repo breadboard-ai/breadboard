@@ -68,7 +68,7 @@ import { EditorControls } from "./editor-controls.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants.js";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command.js";
-import { RendererRunState } from "../../state/index.js";
+import type { RendererRunState } from "../../../sca/types.js";
 
 import { baseColors } from "../../styles/host/base-colors.js";
 import { ItemSelect } from "../elements.js";
