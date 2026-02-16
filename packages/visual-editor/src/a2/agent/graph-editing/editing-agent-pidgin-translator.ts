@@ -189,6 +189,13 @@ class EditingAgentPidginTranslator {
     return this.#routeHandles.get(handle);
   }
 
+  /**
+   * Register a node ID and return (or reuse) its pidgin handle.
+   */
+  getOrCreateHandle(nodeId: string): string {
+    return this.#getOrCreateParentHandle(nodeId);
+  }
+
   // ---- Private helpers ----
 
   #getOrCreateParentHandle(nodePath: string): string {
