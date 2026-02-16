@@ -364,17 +364,6 @@ export type InspectableGraphOptions = {
   readonly fileSystem?: FileSystem;
 };
 
-export type DescribeResultCacheArgs = {
-  initial(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): NodeDescriberResult;
-  latest(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): Promise<NodeDescriberResult>;
-};
-
 /**
  * Options to supply to the `describeType` function.
  */
