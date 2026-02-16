@@ -334,6 +334,10 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     `,
   ];
 
+  override updated() {
+    this.#scrollToBottom();
+  }
+
   render() {
     const { parsedUrl } = this.sca.controller.router;
     const agent = this.sca.controller.editor.graphEditingAgent;
