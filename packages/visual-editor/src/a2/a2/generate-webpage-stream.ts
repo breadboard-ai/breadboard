@@ -6,14 +6,12 @@
 export { executeWebpageStream, buildStreamingRequestBody, parseStoredDataUrl };
 export type { StreamingRequestBody, StreamChunk };
 
-import {
-  Capabilities,
-  FileSystemReadWritePath,
-  LLMContent,
-  Outcome,
-} from "@breadboard-ai/types";
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
-import { getCurrentStepState, createReporter } from "../agent/progress-work-item.js";
+import {
+  getCurrentStepState,
+  createReporter,
+} from "../agent/progress-work-item.js";
 import { err, ok, progressFromThought, toLLMContentInline } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
@@ -216,12 +214,6 @@ async function executeWebpageStream(
       content,
       modelName
     );
-
-    // Record model call with action tracker
-    caps.write({
-      path: `/mnt/track/call_${modelName}` as FileSystemReadWritePath,
-      data: [],
-    });
 
     const response = await moduleArgs.fetchWithCreds(url.toString(), {
       method: "POST",

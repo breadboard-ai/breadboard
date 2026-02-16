@@ -8,10 +8,7 @@ import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-driv
 import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import { RuntimeConfig } from "../../runtime/types.js";
 import type { GlobalConfig } from "../../ui/contexts/global-config.js";
-import {
-  createActionTracker,
-  createActionTrackerBackend,
-} from "../../ui/utils/action-tracker.js";
+import { createActionTracker } from "../../ui/utils/action-tracker.js";
 import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
@@ -123,11 +120,7 @@ export function services(
     const fileSystem = createFileSystem({
       env: [...envFromSettings(config.settings), ...(config.env || [])],
       local: createFileSystemBackend(createEphemeralBlobStore()),
-      mnt: composeFileSystemBackends(
-        new Map<string, PersistentBackend>([
-          ["track", createActionTrackerBackend()],
-        ])
-      ),
+      mnt: composeFileSystemBackends(new Map<string, PersistentBackend>()),
     });
 
     const mcpClientManager = new McpClientManager(

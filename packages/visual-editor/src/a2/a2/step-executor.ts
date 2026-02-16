@@ -7,7 +7,6 @@ export type { ExecuteStepArgs };
 
 import {
   Capabilities,
-  FileSystemReadWritePath,
   InlineDataCapabilityPart,
   JsonSerializable,
   LLMContent,
@@ -242,11 +241,6 @@ async function executeStep(
     reporter.addJson("Step Input", elideEncodedData(body), "upload");
     // Call the API.
     const url = await getBackendUrl(caps);
-    // Record model call with action tracker.
-    caps.write({
-      path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
-      data: [],
-    });
     let response: ExecuteStepResponse;
     try {
       const fetchResponse = await fetchWithCreds(url, {

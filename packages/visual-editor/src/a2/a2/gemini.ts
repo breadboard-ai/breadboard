@@ -10,7 +10,6 @@ import {
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
 import {
   Capabilities,
-  FileSystemReadWritePath,
   LLMContent,
   Outcome,
   Schema,
@@ -504,11 +503,6 @@ async function callAPI(
     let $error: string = "Unknown error";
     const maxRetries = retries;
     while (retries) {
-      // Record model call with action tracker.
-      caps.write({
-        path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
-        data: [],
-      });
       const result = await moduleArgs.fetchWithCreds(endpointURL(model), {
         method: "POST",
         body: JSON.stringify(conformedBody),
