@@ -36,7 +36,6 @@ export type Capability = (
 
 export type CapabilitySpec = {
   input?: Capability;
-  query?: Capability;
   read?: Capability;
   write?: Capability;
 };

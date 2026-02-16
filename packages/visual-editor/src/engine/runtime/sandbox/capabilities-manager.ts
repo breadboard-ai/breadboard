@@ -21,7 +21,6 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
       if (this.context) {
         const fs = new FileSystemHandlerFactory(this.context.fileSystem);
         return {
-          query: fs.query(),
           read: fs.read(),
           write: fs.write(),
         };
@@ -38,7 +37,7 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
     if (this.#dummies) return this.#dummies;
 
     this.#dummies = Object.fromEntries(
-      ["query", "read", "write"].map((name) => {
+      ["read", "write"].map((name) => {
         return [name, () => ({ $error: "Capability not available" })];
       })
     );

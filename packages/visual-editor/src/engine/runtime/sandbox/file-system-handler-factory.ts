@@ -7,7 +7,6 @@
 import { Capability } from "@breadboard-ai/types/sandbox.js";
 import {
   FileSystem,
-  FileSystemQueryArguments,
   FileSystemReadArguments,
   FileSystemWriteArguments,
 } from "@breadboard-ai/types";
@@ -17,15 +16,6 @@ export { FileSystemHandlerFactory };
 
 class FileSystemHandlerFactory {
   constructor(public readonly fs?: FileSystem) {}
-
-  query(): Capability {
-    return async (inputs) => {
-      if (!this.fs) {
-        return err("File system capability is not available");
-      }
-      return this.fs.query(inputs as FileSystemQueryArguments);
-    };
-  }
 
   read(): Capability {
     return async (inputs) => {

@@ -6,8 +6,6 @@
 
 import {
   FileSystemPath,
-  FileSystemQueryArguments,
-  FileSystemQueryResult,
   FileSystemReadArguments,
   FileSystemReadResult,
   FileSystemWriteArguments,
@@ -103,7 +101,6 @@ export type DescribeOutputs = {
 };
 
 export type Capabilities = {
-  query(inputs: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(inputs: FileSystemReadArguments): Promise<FileSystemReadResult>;
   write(inputs: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
 };
