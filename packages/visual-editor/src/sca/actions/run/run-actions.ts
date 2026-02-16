@@ -35,6 +35,7 @@ import {
   cleanupStoppedInput,
   dispatchRun,
   dispatchStop,
+  handleInputRequested,
 } from "./helpers/helpers.js";
 
 export const bind = makeAction();
@@ -278,6 +279,8 @@ export const prepare = asAction(
       const entry = RunController.createConsoleEntry(title, "working", {
         icon: getStepIcon(metadata.icon, node?.currentPorts()),
         tags: metadata.tags,
+        id: nodeId,
+        controller: controller.run.main,
       });
       controller.run.main.setConsoleEntry(nodeId, entry);
       controller.run.renderer.setNodeState(nodeId, { status: "working" });
@@ -348,6 +351,11 @@ export const prepare = asAction(
       const nodeId = event.data.node.id;
       controller.run.screen.screens.get(nodeId)?.addOutput(event.data);
     });
+
+    // Wire input lifecycle: when a console entry calls requestInputForNode,
+    // notify the input queue to handle activation (bump screen, set input, etc.)
+    controller.run.main.onInputRequested = (id, schema) =>
+      handleInputRequested(id, schema, controller.run);
 
     // Set on controller
     controller.run.main.setRunner(runner, abortController);

@@ -9,8 +9,10 @@ import type {
   HarnessRunner,
   NodeIdentifier,
   NodeRunStatus,
+  OutputValues,
   RunError,
   Schema,
+  WorkItem,
 } from "@breadboard-ai/types";
 import { STATUS } from "../../../../ui/types/types.js";
 import { field } from "../../decorators/field.js";
@@ -126,6 +128,23 @@ export class RunController extends RootController {
    */
   @field({ deep: true })
   private accessor _inputSchemas: Map<NodeIdentifier, Schema> = new Map();
+
+  /**
+   * Per-node Promise resolve functions for pending input requests.
+   * Non-reactive: this is imperative plumbing, not UI-driving state.
+   */
+  private _pendingInputResolvers = new Map<
+    NodeIdentifier,
+    (values: OutputValues) => void
+  >();
+
+  /**
+   * Callback invoked when a node requests input.
+   * Set by the action layer to handle cross-controller coordination
+   * (bumping screens, setting renderer state, etc.).
+   */
+  onInputRequested: ((id: NodeIdentifier, schema: Schema) => void) | null =
+    null;
 
   /**
    * Pending node action request.
@@ -450,6 +469,8 @@ export class RunController extends RootController {
     this._input = null;
     this._pendingInputNodeIds.clear();
     this._inputSchemas.clear();
+    this._pendingInputResolvers.clear();
+    this.onInputRequested = null;
     this._error = null;
     this._dismissedErrors.clear();
     this._estimatedEntryCount = 0;
@@ -480,13 +501,79 @@ export class RunController extends RootController {
   // STATIC FACTORIES
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INPUT LIFECYCLE (instance methods)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Handles a requestInput call from a console entry.
+   * Stores the resolve callback and schema, returns a Promise that resolves
+   * when the user provides values via resolveInputForNode.
+   */
+  requestInputForNode(
+    id: NodeIdentifier,
+    schema: Schema
+  ): Promise<OutputValues> {
+    return new Promise((resolve) => {
+      this._pendingInputResolvers.set(id, resolve);
+      this._inputSchemas.set(id, schema);
+
+      // Notify the action layer so it can handle cross-controller
+      // coordination (bump screen, set renderer state, set reactive input).
+      this.onInputRequested?.(id, schema);
+    });
+  }
+
+  /**
+   * Makes a pending input request visible by creating a WorkItem
+   * on the console entry.
+   */
+  activateInputForNode(id: NodeIdentifier): void {
+    const schema = this._inputSchemas.get(id);
+    if (!schema) return;
+
+    const entry = this._console.get(id);
+    if (!entry) return;
+
+    const workId = crypto.randomUUID();
+    const item: WorkItem = {
+      title: "Input",
+      icon: "chat_mirror",
+      start: performance.now(),
+      end: null,
+      elapsed: 0,
+      awaitingUserInput: true,
+      schema,
+      product: new Map(),
+    };
+    entry.work.set(workId, item);
+    entry.current = item;
+  }
+
+  /**
+   * Resolves a pending input request with user-provided values.
+   * Clears the stored schema and resolve callback.
+   */
+  resolveInputForNode(id: NodeIdentifier, values: OutputValues): void {
+    const resolve = this._pendingInputResolvers.get(id);
+    this._pendingInputResolvers.delete(id);
+    resolve?.(values);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STATIC FACTORIES
+  // ═══════════════════════════════════════════════════════════════════════════
+
   /**
    * Creates a ConsoleEntry with all required fields initialized.
    * Use this factory to ensure entries have proper default values.
    *
+   * Input methods (requestInput, activateInput, resolveInput) delegate to
+   * the supplied RunController when provided.
+   *
    * @param title - Display title for the step
    * @param status - Current status (inactive, working, succeeded, failed, etc.)
-   * @param options - Optional icon and tags for the entry
+   * @param options - Optional icon, tags, id, and controller reference
    */
   static createConsoleEntry(
     title: string,
@@ -494,8 +581,13 @@ export class RunController extends RootController {
     options?: {
       icon?: string;
       tags?: string[];
+      id?: NodeIdentifier;
+      controller?: RunController;
     }
   ): ConsoleEntry {
+    const nodeId = options?.id;
+    const ctrl = options?.controller;
+
     return {
       title,
       icon: options?.icon,
@@ -509,11 +601,22 @@ export class RunController extends RootController {
       completed: status === "succeeded",
       current: null,
       addOutput() {},
-      requestInput() {
-        return Promise.reject(new Error("Input not supported in SCA path"));
+      requestInput(schema: Schema): Promise<OutputValues> {
+        if (!ctrl || !nodeId) {
+          return Promise.reject(new Error("No controller bound for input"));
+        }
+        return ctrl.requestInputForNode(nodeId, schema);
       },
-      activateInput() {},
-      resolveInput() {},
+      activateInput() {
+        if (ctrl && nodeId) {
+          ctrl.activateInputForNode(nodeId);
+        }
+      },
+      resolveInput(values: OutputValues) {
+        if (ctrl && nodeId) {
+          ctrl.resolveInputForNode(nodeId, values);
+        }
+      },
     };
   }
 }
