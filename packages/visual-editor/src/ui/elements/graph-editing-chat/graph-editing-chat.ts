@@ -280,6 +280,57 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
           color: var(--light-dark-n-50);
         }
       }
+
+      /* ── Selection indicator ── */
+
+      #selection-strip {
+        display: flex;
+        align-items: center;
+        gap: var(--bb-grid-size);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+        flex-wrap: wrap;
+        font-size: 12px;
+        border-top: 1px solid var(--light-dark-n-90);
+      }
+
+      #selection-strip .selection-label {
+        color: var(--light-dark-n-50);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .selection-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--bb-grid-size);
+        background: var(--light-dark-p-90);
+        color: var(--light-dark-n-10);
+        border-radius: var(--bb-grid-size-3);
+        padding: 2px var(--bb-grid-size) 2px var(--bb-grid-size-2);
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .selection-chip button {
+        background: none;
+        border: none;
+        color: var(--light-dark-n-50);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+      }
+
+      .selection-chip button:hover {
+        color: var(--light-dark-n-10);
+        background: var(--light-dark-n-90);
+      }
     `,
   ];
 
@@ -321,6 +372,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
                     ? html`<div class="message system">Thinking…</div>`
                     : nothing}
                 </div>
+                ${this.#renderSelectionStrip()}
               </div>
             `
           : nothing}
@@ -384,6 +436,42 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
           )}
         </div>
       </details>
+    `;
+  }
+
+  #renderSelectionStrip() {
+    const selection = this.sca.controller.editor.selection;
+    const selectedNodes = selection.selection.nodes;
+    if (selectedNodes.size === 0) return nothing;
+
+    const editor = this.sca.controller.editor.graph.editor;
+    if (!editor) return nothing;
+
+    const inspector = editor.inspect("");
+    const chips = [...selectedNodes].map((nodeId) => {
+      const node = inspector.nodeById(nodeId);
+      const title = node?.metadata()?.title ?? "(untitled)";
+      return html`
+        <span class="selection-chip">
+          ${title}
+          <button
+            @click=${() => {
+              selection.removeNode(nodeId);
+              this.#inputRef.value?.focus();
+            }}
+            title="Deselect ${title}"
+          >
+            <span class="g-icon">close</span>
+          </button>
+        </span>
+      `;
+    });
+
+    return html`
+      <div id="selection-strip">
+        <span class="selection-label">Selected</span>
+        ${chips}
+      </div>
     `;
   }
 

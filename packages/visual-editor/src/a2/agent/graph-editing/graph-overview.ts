@@ -7,7 +7,7 @@
 import type { Edge, LLMContent, NodeDescriptor } from "@breadboard-ai/types";
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 
-export { graphOverviewYaml };
+export { graphOverviewYaml, describeSelection };
 
 /**
  * Build a compact YAML-like overview of a graph using pidgin handles.
@@ -79,4 +79,25 @@ function graphOverviewYaml(
   }
 
   return lines.join("\n");
+}
+
+/**
+ * Describe the currently selected steps as a short text block.
+ * Returns an empty string when nothing is selected.
+ */
+function describeSelection(
+  selectedNodeIds: Set<string>,
+  nodes: NodeDescriptor[],
+  translator: EditingAgentPidginTranslator
+): string {
+  if (selectedNodeIds.size === 0) return "";
+
+  const items: string[] = [];
+  for (const nodeId of selectedNodeIds) {
+    const node = nodes.find((n) => n.id === nodeId);
+    const handle = translator.getOrCreateHandle(nodeId);
+    const title = node?.metadata?.title ?? "(untitled)";
+    items.push(`${handle} (${title})`);
+  }
+  return `\n\nSelected steps: ${items.join(", ")}`;
 }
