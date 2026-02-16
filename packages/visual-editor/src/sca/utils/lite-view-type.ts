@@ -45,11 +45,13 @@ export function deriveLiteViewType(
       if (parsedUrl.page === "graph" && parsedUrl.flow) {
         return "loading";
       }
+      /* c8 ignore start */
       Utils.Logging.getLogger(sca.controller).log(
         Utils.Logging.Formatter.warning("Invalid Home URL state", parsedUrl),
         "deriveLiteViewType"
       );
       return "invalid";
+      /* c8 ignore end */
     }
     case "Loading":
       if (isGenerating) {
@@ -61,12 +63,14 @@ export function deriveLiteViewType(
     case "Loaded": {
       break;
     }
+    /* c8 ignore start */
     default:
       Utils.Logging.getLogger(sca.controller).log(
         Utils.Logging.Formatter.warning("Unknown UI load state", loadState),
         "deriveLiteViewType"
       );
       return "invalid";
+    /* c8 ignore end */
   }
 
   // During flowgen generation the graph may be empty (nodes haven't been

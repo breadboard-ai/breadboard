@@ -17,7 +17,10 @@ import { LLMContent } from "@breadboard-ai/types";
 import { ToastType } from "../../../ui/events/events.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
-import { onSelectionOrSidebarChange } from "./triggers.js";
+import {
+  onSelectionOrSidebarChange,
+  onNodeActionRequested,
+} from "./triggers.js";
 import { UpdateNode } from "../../../ui/transforms/index.js";
 import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
 import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
@@ -212,6 +215,123 @@ export const applyPendingAssetEdit = asAction(
           LABEL
         );
         return;
+      }
+    }
+  }
+);
+
+// =============================================================================
+// Pre-action Orchestration
+// =============================================================================
+
+/**
+ * Applies pending node and asset edits when a node action is requested.
+ *
+ * This is the pre-action orchestration step: before executeNodeAction
+ * (in run-actions) dispatches the run/stop command, any pending step
+ * edits must be flushed first.
+ *
+ * **Triggers:**
+ * - `onNodeActionRequested`: Fires when nodeActionRequest is set AND
+ *   there are pending edits.
+ */
+export const applyPendingEditsForNodeAction = asAction(
+  "Step.applyPendingEditsForNodeAction",
+  {
+    mode: ActionMode.Immediate,
+    priority: 100, // Must run before executeNodeAction (priority 50)
+    triggeredBy: () => onNodeActionRequested(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+
+    // Apply pending node edit
+    const pendingEdit = controller.editor.step.pendingEdit;
+    if (pendingEdit) {
+      controller.editor.step.clearPendingEdit();
+
+      const currentVersion = controller.editor.graph.version;
+      if (pendingEdit.graphVersion !== currentVersion) {
+        controller.global.toasts.toast(
+          "Your edits were discarded because the steps changed",
+          ToastType.WARNING
+        );
+      } else {
+        const editor = controller.editor.graph.editor;
+        if (editor) {
+          const updateNodeTransform = new UpdateNode(
+            pendingEdit.nodeId,
+            pendingEdit.graphId,
+            pendingEdit.values,
+            null,
+            pendingEdit.ins ?? null
+          );
+          await editor.apply(updateNodeTransform);
+          controller.editor.graph.lastNodeConfigChange = {
+            nodeId: pendingEdit.nodeId,
+            graphId: pendingEdit.graphId,
+            configuration: pendingEdit.values,
+            titleUserModified: updateNodeTransform.titleUserModified,
+          };
+        }
+      }
+    }
+
+    // Apply pending asset edit
+    const pendingAssetEdit = controller.editor.step.pendingAssetEdit;
+    if (pendingAssetEdit) {
+      controller.editor.step.clearPendingAssetEdit();
+
+      const currentVersion = controller.editor.graph.version;
+      if (pendingAssetEdit.graphVersion !== currentVersion) {
+        controller.global.toasts.toast(
+          "Your edits were discarded because the graph changed",
+          ToastType.WARNING
+        );
+      } else {
+        const graphController = controller.editor.graph;
+        const editor = graphController.editor;
+        if (editor) {
+          const { services } = bind;
+          const asset = graphController.graphAssets.get(
+            pendingAssetEdit.assetPath
+          );
+          if (asset?.metadata) {
+            const metadata = {
+              ...asset.metadata,
+              title: pendingAssetEdit.title,
+            };
+
+            let persistedData: LLMContent[] | undefined;
+            if (pendingAssetEdit.dataPart) {
+              const data: LLMContent[] = [
+                { role: "user", parts: [pendingAssetEdit.dataPart] },
+              ];
+              persistedData = await persistDataParts(
+                graphController.url,
+                data,
+                services.googleDriveBoardServer.dataPartTransformer()
+              );
+            }
+
+            if (persistedData) {
+              await editor.apply(
+                new UpdateAssetData(
+                  pendingAssetEdit.assetPath,
+                  metadata,
+                  persistedData
+                )
+              );
+              await editor.apply(
+                new UpdateAssetWithRefs(pendingAssetEdit.assetPath, metadata)
+              );
+            } else {
+              await editor.apply(
+                new UpdateAssetWithRefs(pendingAssetEdit.assetPath, metadata)
+              );
+            }
+          }
+        }
       }
     }
   }

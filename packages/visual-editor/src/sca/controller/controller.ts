@@ -137,6 +137,11 @@ class Controller implements AppController {
 
     this.run = {
       main: new Run.RunController("Run", "RunController"),
+      renderer: new Run.RendererController(
+        "Run_Renderer",
+        "RendererController"
+      ),
+      screen: new Run.ScreenController("Run_Screen", "ScreenController"),
     };
 
     this.router = new RouterController();
@@ -247,6 +252,8 @@ export interface AppController extends DebuggableAppController {
   };
   run: {
     main: Run.RunController;
+    renderer: Run.RendererController;
+    screen: Run.ScreenController;
   };
   router: RouterController;
   isHydrated: Promise<number[]>;
