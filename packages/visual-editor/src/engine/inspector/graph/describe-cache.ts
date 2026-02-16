@@ -92,7 +92,7 @@ class SignalBackedEntry {
   }
 
   refresh() {
-    this.#fetchLatest();
+    this.#latestPromise = this.#fetchLatest();
   }
 
   snapshot(): InspectableDescriberResultCacheEntry {
