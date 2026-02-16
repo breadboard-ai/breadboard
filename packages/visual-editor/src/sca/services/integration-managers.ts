@@ -23,7 +23,7 @@ import type {
   McpServerIdentifier,
   Outcome,
 } from "@breadboard-ai/types";
-import type { IntegrationState, Tool } from "../../ui/state/types.js";
+import type { IntegrationState, Tool } from "../../ui/types/state-types.js";
 import { ok } from "@breadboard-ai/utils";
 import type {
   McpClient,

@@ -13,8 +13,12 @@ import {
   Outcome,
 } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
-import { getCurrentStepState, createReporter } from "../agent/progress-work-item.js";
+import {
+  getCurrentStepState,
+  createReporter,
+} from "../agent/progress-work-item.js";
 import { err, ok, progressFromThought, toLLMContentInline } from "./utils.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 const DEFAULT_STREAM_BACKEND_ENDPOINT =
@@ -257,7 +261,7 @@ async function executeWebpageStream(
 
           if (appScreen) {
             appScreen.progress = progressFromThought(text);
-            appScreen.expectedDuration = -1;
+            setScreenDuration(appScreen, -1);
           }
 
           reporter.addText(`Thinking (${thoughtCount})`, text, "spark");
@@ -281,7 +285,7 @@ async function executeWebpageStream(
   } finally {
     if (appScreen) {
       appScreen.progress = undefined;
-      appScreen.expectedDuration = -1;
+      setScreenDuration(appScreen, -1);
     }
     reporter.finish();
   }

@@ -34,10 +34,10 @@ import { Utils } from "../../utils.js";
 import { RunController } from "../../controller/subcontrollers/run/run-controller.js";
 import { onGraphVersionForSync, onNodeActionRequested } from "./triggers.js";
 import { edgeToString } from "../../../ui/utils/workspace.js";
-import { decodeErrorData } from "../../../ui/state/utils/decode-error.js";
-import { ReactiveAppScreen } from "../../../ui/state/app-screen.js";
+import { decodeErrorData } from "../../utils/decode-error.js";
+import { createAppScreen, tickScreenProgress } from "../../utils/app-screen.js";
 import { computeControlState } from "../../../runtime/control.js";
-import { toLLMContentArray } from "../../../ui/state/common.js";
+import { toLLMContentArray } from "../../utils/common.js";
 import {
   cleanupStoppedInput,
   dispatchRun,
@@ -162,6 +162,12 @@ export const prepare = asAction(
     const { runner, abortController } =
       services.runService.createRunner(runConfig);
 
+    // ─── Progress ticker ───
+    // Periodically update `progressCompletion` on screens with an active
+    // `expectedDuration`.  The old ReactiveAppScreen class had a setInterval
+    // internally; here we manage it in the action layer.
+    let progressTickerHandle: ReturnType<typeof setInterval> | null = null;
+
     // Register status listeners on the runner
     runner.addEventListener("start", () => {
       controller.run.main.setStatus(STATUS.RUNNING);
@@ -169,6 +175,13 @@ export const prepare = asAction(
         Utils.Logging.Formatter.verbose(`Runner started for ${url}`),
         LABEL
       );
+
+      // Start ticking progress every 250ms
+      progressTickerHandle = setInterval(() => {
+        for (const screen of controller.run.screen.screens.values()) {
+          tickScreenProgress(screen);
+        }
+      }, 250);
     });
 
     runner.addEventListener("resume", () => {
@@ -189,6 +202,10 @@ export const prepare = asAction(
 
     runner.addEventListener("end", () => {
       controller.run.main.setStatus(STATUS.STOPPED);
+      if (progressTickerHandle) {
+        clearInterval(progressTickerHandle);
+        progressTickerHandle = null;
+      }
       logger.log(
         Utils.Logging.Formatter.verbose(`Runner ended for ${url}`),
         LABEL
@@ -197,6 +214,10 @@ export const prepare = asAction(
 
     runner.addEventListener("error", () => {
       controller.run.main.setStatus(STATUS.STOPPED);
+      if (progressTickerHandle) {
+        clearInterval(progressTickerHandle);
+        progressTickerHandle = null;
+      }
       logger.log(
         Utils.Logging.Formatter.verbose(`Runner error for ${url}`),
         LABEL
@@ -298,7 +319,7 @@ export const prepare = asAction(
       const outputSchema = node?.currentDescribe()?.outputSchema;
       const controlState = computeControlState(event.data.inputs ?? {});
       if (!controlState.skip) {
-        const screen = new ReactiveAppScreen(title, outputSchema);
+        const screen = createAppScreen(title, outputSchema);
         controller.run.screen.setScreen(nodeId, screen);
       }
     });

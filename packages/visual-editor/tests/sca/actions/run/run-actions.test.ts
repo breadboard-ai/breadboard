@@ -17,7 +17,7 @@ import type {
   HarnessRunner,
 } from "@breadboard-ai/types";
 import { coordination } from "../../../../src/sca/coordination.js";
-import { ReactiveAppScreen } from "../../../../src/ui/state/app-screen.js";
+import { createAppScreen } from "../../../../src/sca/utils/app-screen.js";
 
 /**
  * Creates a valid mock config for testing
@@ -1829,7 +1829,7 @@ suite("runner event handlers", () => {
     RunActions.prepare(config);
 
     // Create a screen for the node first
-    const screen = new ReactiveAppScreen("node-1", undefined);
+    const screen = createAppScreen("node-1", undefined);
     controller.run.screen.setScreen("node-1", screen);
 
     const runner = controller.run.main.runner! as unknown as {
@@ -1893,7 +1893,7 @@ suite("runner nodeend deleteScreen", () => {
     RunActions.prepare(config);
 
     // Create a screen for the node
-    const screen = new ReactiveAppScreen("node-1", undefined);
+    const screen = createAppScreen("node-1", undefined);
     controller.run.screen.setScreen("node-1", screen);
 
     // Set up a console entry so nodeend handler has something to update
@@ -1934,7 +1934,7 @@ suite("runner nodeend deleteScreen", () => {
     RunActions.prepare(config);
 
     // Create a screen for the node
-    const screen = new ReactiveAppScreen("node-1", undefined);
+    const screen = createAppScreen("node-1", undefined);
     let finalized = false;
     screen.finalize = () => {
       finalized = true;

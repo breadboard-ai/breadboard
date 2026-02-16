@@ -34,11 +34,8 @@ import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-re
 import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
 import { RemoveAssetWithRefs } from "../../../ui/transforms/remove-asset-with-refs.js";
 import { isInlineData, transformDataParts } from "../../../data/common.js";
-import { GraphAssetImpl } from "../../../ui/state/graph-asset.js";
-import type {
-  GraphAsset,
-  GraphAssetDescriptor,
-} from "../../../ui/state/types.js";
+import { GraphAssetImpl } from "../../utils/graph-asset.js";
+import type { GraphAsset, GraphAssetDescriptor } from "../../types.js";
 
 export const bind = makeAction();
 

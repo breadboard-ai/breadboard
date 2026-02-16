@@ -321,27 +321,59 @@ suite("RunController progress tracking", () => {
     assert.strictEqual(controller.estimatedEntryCount, 8);
   });
 
-  test("progress is 0 when estimatedEntryCount is 0", async () => {
+  test("progress is 0 when no run (stopped, empty console)", async () => {
     const controller = new RunController("RunTest_progress_4", "RunController");
     await controller.isHydrated;
 
     assert.strictEqual(controller.progress, 0);
   });
 
-  test("progress computed from console size / estimatedEntryCount", async () => {
+  test("progress computed from reached entries during active run", async () => {
     const controller = new RunController("RunTest_progress_5", "RunController");
     await controller.isHydrated;
 
-    controller.setEstimatedEntryCount(10);
-    controller.setConsoleEntry("node-1", {
-      id: "node-1",
+    // Simulate run start
+    controller.setStatus(STATUS.RUNNING);
+
+    // Pre-populate with 5 entries as inactive (simulating graphstart)
+    for (let i = 0; i < 5; i++) {
+      controller.setConsoleEntry(`node-${i}`, {
+        completed: false,
+        status: { status: "inactive" },
+      } as unknown as ConsoleEntry);
+    }
+
+    // Mark 2 entries as reached (status moved beyond inactive)
+    controller.setConsoleEntry("node-0", {
+      completed: false,
+      status: { status: "succeeded" },
     } as unknown as ConsoleEntry);
-    controller.setConsoleEntry("node-2", {
-      id: "node-2",
+    controller.setConsoleEntry("node-1", {
+      completed: false,
+      status: { status: "working" },
     } as unknown as ConsoleEntry);
     await controller.isSettled;
 
-    assert.strictEqual(controller.progress, 0.2); // 2/10
+    assert.strictEqual(controller.progress, 0.4); // 2/5
+  });
+
+  test("progress is 1 when run completed (stopped after running)", async () => {
+    const controller = new RunController(
+      "RunTest_progress_5b",
+      "RunController"
+    );
+    await controller.isHydrated;
+
+    // Simulate a full run lifecycle: start then stop
+    controller.setStatus(STATUS.RUNNING);
+    controller.setConsoleEntry("node-1", {
+      completed: true,
+      status: { status: "succeeded" },
+    } as unknown as ConsoleEntry);
+    controller.setStatus(STATUS.STOPPED);
+    await controller.isSettled;
+
+    assert.strictEqual(controller.progress, 1);
   });
 
   test("reset clears estimatedEntryCount", async () => {
@@ -355,6 +387,190 @@ suite("RunController progress tracking", () => {
     await controller.isSettled;
 
     assert.strictEqual(controller.estimatedEntryCount, 0);
+  });
+
+  test("progress during PAUSED state counts reached entries", async () => {
+    const controller = new RunController("RunTest_progress_7", "RunController");
+    await controller.isHydrated;
+
+    controller.setStatus(STATUS.RUNNING);
+    controller.setConsoleEntry("node-0", {
+      status: { status: "succeeded" },
+    } as unknown as ConsoleEntry);
+    controller.setConsoleEntry("node-1", {
+      status: { status: "inactive" },
+    } as unknown as ConsoleEntry);
+    controller.setStatus(STATUS.PAUSED);
+    await controller.isSettled;
+
+    assert.strictEqual(controller.progress, 0.5); // 1/2
+  });
+
+  test("progress is 0 when RUNNING but console is empty", async () => {
+    const controller = new RunController("RunTest_progress_8", "RunController");
+    await controller.isHydrated;
+
+    controller.setStatus(STATUS.RUNNING);
+    await controller.isSettled;
+
+    assert.strictEqual(controller.progress, 0);
+  });
+
+  test("progress with entries missing status field treated as unreached", async () => {
+    const controller = new RunController("RunTest_progress_9", "RunController");
+    await controller.isHydrated;
+
+    controller.setStatus(STATUS.RUNNING);
+    controller.setConsoleEntry("node-0", {
+      status: { status: "succeeded" },
+    } as unknown as ConsoleEntry);
+    controller.setConsoleEntry("node-1", {
+      // no status field at all
+    } as unknown as ConsoleEntry);
+    await controller.isSettled;
+
+    assert.strictEqual(controller.progress, 0.5); // 1/2
+  });
+});
+
+suite("RunController nodeActionRequest", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("nodeActionRequest defaults to null", async () => {
+    const controller = new RunController("RunTest_nar_1", "RunController");
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.nodeActionRequest, null);
+  });
+
+  test("setNodeActionRequest sets request", async () => {
+    const controller = new RunController("RunTest_nar_2", "RunController");
+    await controller.isHydrated;
+
+    const request = { nodeId: "node-1", actionContext: "step" as const };
+    controller.setNodeActionRequest(request);
+    await controller.isSettled;
+
+    assert.deepStrictEqual(controller.nodeActionRequest, request);
+  });
+
+  test("clearNodeActionRequest clears request", async () => {
+    const controller = new RunController("RunTest_nar_3", "RunController");
+    await controller.isHydrated;
+
+    controller.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "step",
+    });
+    await controller.isSettled;
+
+    controller.clearNodeActionRequest();
+    await controller.isSettled;
+
+    assert.strictEqual(controller.nodeActionRequest, null);
+  });
+
+  test("reset clears nodeActionRequest", async () => {
+    const controller = new RunController("RunTest_nar_4", "RunController");
+    await controller.isHydrated;
+
+    controller.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "step",
+    });
+    await controller.isSettled;
+
+    controller.reset();
+    await controller.isSettled;
+
+    assert.strictEqual(controller.nodeActionRequest, null);
+  });
+});
+
+suite("RunController replaceConsole", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("replaces entire console with new entries", async () => {
+    const controller = new RunController("RunTest_replcon_1", "RunController");
+    await controller.isHydrated;
+
+    controller.setConsoleEntry("old", {
+      title: "old",
+    } as unknown as ConsoleEntry);
+    await controller.isSettled;
+    assert.strictEqual(controller.console.size, 1);
+
+    const newEntries = new Map<string, ConsoleEntry>([
+      ["a", { title: "A" } as unknown as ConsoleEntry],
+      ["b", { title: "B" } as unknown as ConsoleEntry],
+    ]);
+    controller.replaceConsole(newEntries);
+    await controller.isSettled;
+
+    assert.strictEqual(controller.console.size, 2);
+    assert.ok(controller.console.has("a"));
+    assert.ok(controller.console.has("b"));
+    assert.ok(!controller.console.has("old"));
+  });
+});
+
+suite("RunController undismissError", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("removes a node from dismissedErrors set", async () => {
+    const controller = new RunController("RunTest_undis_1", "RunController");
+    await controller.isHydrated;
+
+    controller.setError({ message: "err" });
+    controller.dismissError("node-1");
+    await controller.isSettled;
+
+    assert.ok(controller.dismissedErrors.has("node-1"));
+
+    controller.undismissError("node-1");
+    await controller.isSettled;
+
+    assert.ok(!controller.dismissedErrors.has("node-1"));
+  });
+});
+
+suite("RunController setRunner", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("sets runner and abortController", async () => {
+    const controller = new RunController("RunTest_setrun_1", "RunController");
+    await controller.isHydrated;
+
+    const mockRunner = { run: () => {} } as unknown as HarnessRunner;
+    const mockAbort = new AbortController();
+    controller.setRunner(mockRunner, mockAbort);
+
+    assert.strictEqual(controller.runner, mockRunner);
+    assert.strictEqual(controller.abortController, mockAbort);
   });
 });
 

@@ -29,6 +29,7 @@ import {
   toLLMContentStored,
 } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -232,10 +233,12 @@ async function executeStep(
     if (appScreen) {
       appScreen.progress = progressUpdateOptions?.message || title;
       if (progressUpdateOptions?.expectedDurationInSec) {
-        appScreen.expectedDuration =
-          progressUpdateOptions.expectedDurationInSec;
+        setScreenDuration(
+          appScreen,
+          progressUpdateOptions.expectedDurationInSec
+        );
       } else {
-        appScreen.expectedDuration = -1;
+        setScreenDuration(appScreen, -1);
       }
     }
 
@@ -292,7 +295,7 @@ async function executeStep(
     reporter.finish();
     if (appScreen) {
       appScreen.progress = undefined;
-      appScreen.expectedDuration = -1;
+      setScreenDuration(appScreen, -1);
     }
   }
 }
