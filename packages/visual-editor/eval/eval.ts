@@ -220,9 +220,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
     read() {
       throw new Error(`Not implemented`);
     },
-    async write() {
-      // Do nothing
-    },
   };
 
   private fetchWithCreds = async (

@@ -22,9 +22,6 @@ const stubCaps: Capabilities = {
   read() {
     throw new Error(`Not implemented`);
   },
-  async write() {
-    // Do nothing
-  },
 };
 
 const stubModuleArgs: A2ModuleArgs = {

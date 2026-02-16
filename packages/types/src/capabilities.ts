@@ -8,8 +8,6 @@ import {
   FileSystemPath,
   FileSystemReadArguments,
   FileSystemReadResult,
-  FileSystemWriteArguments,
-  FileSystemWriteResult,
 } from "./data.js";
 import { GraphMetadata, NodeMetadata } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
@@ -102,5 +100,4 @@ export type DescribeOutputs = {
 
 export type Capabilities = {
   read(inputs: FileSystemReadArguments): Promise<FileSystemReadResult>;
-  write(inputs: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
 };

@@ -9,7 +9,7 @@ import {
 } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
-import { readSettings } from "../a2/settings.js";
+
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { err, ok } from "../a2/utils.js";
@@ -65,10 +65,7 @@ async function invoke(
     moduleArgs,
     new ArgumentNameGenerator(caps, moduleArgs)
   );
-  const template = new Template(
-    objective,
-    moduleArgs.context.currentGraph
-  );
+  const template = new Template(objective, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
   );
@@ -100,27 +97,8 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { plan } }: DescribeInputs,
-  caps: Capabilities
-) {
+async function describe({ inputs: { plan } }: DescribeInputs) {
   const template = new Template(plan);
-  const settings = await readSettings(caps);
-  const experimental =
-    ok(settings) && !!settings["Show Experimental Components"];
-  let extra: Record<string, Schema> = {};
-  if (experimental) {
-    extra = {
-      // "z-list": {
-      //   type: "boolean",
-      //   title: "Make a list",
-      //   behavior: ["config", "hint-preview", "hint-advanced"],
-      //   icon: "summarize",
-      //   description:
-      //     "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
-      // },
-    };
-  }
   return {
     inputSchema: {
       type: "object",
@@ -150,7 +128,6 @@ async function describe(
           icon: "joiner",
           default: STRATEGISTS[0].name,
         },
-        ...extra,
         ...template.schemas(),
       },
       behavior: ["at-wireable"],

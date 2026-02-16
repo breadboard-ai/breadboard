@@ -2,11 +2,10 @@
  * @fileoverview Manages the entry point: describer, passing the inputs, etc.
  */
 
-import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
+import { LLMContent, Schema } from "@breadboard-ai/types";
 import { type AgentContext, type DescribeInputs } from "./common.js";
-import { readSettings } from "./settings.js";
 import { Template } from "./template.js";
-import { defaultLLMContent, ok } from "./utils.js";
+import { defaultLLMContent } from "./utils.js";
 
 export { invoke as default, describe };
 
@@ -50,35 +49,8 @@ async function invoke({
   };
 }
 
-async function describe(
-  { inputs: { description } }: DescribeInputs,
-  caps: Capabilities
-) {
-  const settings = await readSettings(caps);
-  const experimental =
-    ok(settings) && !!settings["Show Experimental Components"];
+async function describe({ inputs: { description } }: DescribeInputs) {
   const template = new Template(description);
-  let extra: Record<string, Schema> = {};
-  if (experimental) {
-    extra = {
-      "p-chat": {
-        type: "boolean",
-        title: "Chat with User",
-        behavior: ["config", "hint-preview"],
-        icon: "chat",
-        description:
-          "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
-      },
-      // "p-list": {
-      //   type: "boolean",
-      //   title: "Make a list",
-      //   behavior: ["config", "hint-preview"],
-      //   icon: "summarize",
-      //   description:
-      //     "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
-      // },
-    };
-  }
   return {
     inputSchema: {
       type: "object",
@@ -97,7 +69,6 @@ async function describe(
           title: "Context in",
           behavior: ["main-port"],
         },
-        ...extra,
         ...template.schemas(),
       },
       behavior: ["at-wireable"],

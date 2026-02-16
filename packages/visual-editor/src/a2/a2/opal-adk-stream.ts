@@ -3,9 +3,10 @@ export type { StreamingRequestBody, StreamChunk };
 import {
   Capabilities,
   LLMContent,
+  OPAL_BACKEND_API_PREFIX,
   Outcome,
 } from "@breadboard-ai/types";
-import { err, ok, toLLMContent } from "./utils.js";
+import { err, toLLMContent } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 import { ModelConstraint } from "../agent/functions/generate.js";
@@ -14,8 +15,10 @@ import { AgentUI } from "../agent/ui.js";
 import { AgentFileSystem } from "../agent/file-system.js";
 import { MemoryManager } from "../agent/types.js";
 
-const DEFAULT_OPAL_ADK_ENDPOINT =
-  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeAgentNodeStream";
+const OPAL_ADK_ENDPOINT = new URL(
+  "v1beta1/executeAgentNodeStream",
+  OPAL_BACKEND_API_PREFIX
+).href;
 
 const NODE_AGENT_KEY = "node_agent";
 const DEEP_RESEARCH_KEY = "deep_research";
@@ -53,7 +56,7 @@ export type ContentMap = {
   [key: string]: Content;
 };
 
-export { OpalAdkStream, NODE_AGENT_KEY, DEEP_RESEARCH_KEY }
+export { OpalAdkStream, NODE_AGENT_KEY, DEEP_RESEARCH_KEY };
 
 export type PlanStep = {
   stepName: string;
@@ -103,7 +106,7 @@ class OpalAdkStream {
   private readonly memoryManager: MemoryManager;
 
   constructor(
-    private readonly caps: Capabilities,
+    caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs
   ) {
     this.memoryManager = moduleArgs.agentContext.memoryManager;
@@ -113,24 +116,6 @@ class OpalAdkStream {
     });
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(moduleArgs, this.translator);
-  }
-
-  async getOpalAdkBackendUrl(caps: Capabilities) {
-    type BackendSettings = { endpoint_url: string };
-    const reading = await caps.read({ path: "/env/settings/opalAdkBackend" });
-    if (ok(reading)) {
-      const part = reading.data?.at(0)?.parts?.at(0);
-      if (part && "json" in part) {
-        const settings = part.json as BackendSettings;
-        if (settings?.endpoint_url) {
-          // Extract base URL and append the streaming endpoint path
-          const url = new URL(settings.endpoint_url);
-          url.pathname = "/v1beta1/executeAgentNodeStream";
-          return url.toString();
-        }
-      }
-    }
-    return DEFAULT_OPAL_ADK_ENDPOINT;
   }
 
   toProtoUIType(uiType: string): string {
@@ -146,7 +131,9 @@ class OpalAdkStream {
     }
   }
 
-  buildStreamingRequestBody(options: BuildStreamingRequestBodyOptions): StreamingRequestBody {
+  buildStreamingRequestBody(
+    options: BuildStreamingRequestBodyOptions
+  ): StreamingRequestBody {
     const {
       completedPrompt,
       uiType,
@@ -160,8 +147,8 @@ class OpalAdkStream {
 
     let textCount = 0;
     if (!completedPrompt.parts) {
-      console.error("opal-adk-stream: Missing required prompt.")
-    };
+      console.error("opal-adk-stream: Missing required prompt.");
+    }
     for (const part of completedPrompt.parts) {
       if ("text" in part) {
         textCount++;
@@ -183,7 +170,7 @@ class OpalAdkStream {
       contents,
     };
 
-    // 'node-agent' is specifically for agent mode while any other 
+    // 'node-agent' is specifically for agent mode while any other
     // node will be for legacy execution.
     if (nodeApi && nodeApi !== NODE_AGENT_KEY) {
       baseBody.node_config = {
@@ -204,11 +191,10 @@ class OpalAdkStream {
     }
 
     if (invocationId !== undefined) {
-      baseBody.invocation_id = invocationId
+      baseBody.invocation_id = invocationId;
     }
-  return baseBody;
-}
- 
+    return baseBody;
+  }
 
   async executeOpalAdkStream(
     opalAdkAgent?: string,
@@ -217,24 +203,27 @@ class OpalAdkStream {
     uiType?: string,
     uiPrompt?: LLMContent,
     invocationId?: string,
-    sessionId?: string): Promise<Outcome<LLMContent>> {
+    sessionId?: string
+  ): Promise<Outcome<LLMContent>> {
     const ui = this.ui;
 
     if (!params || params.length === 0) {
       return err("opal-adk-stream: No params provided");
-    } 
+    }
     if (modelConstraint === undefined) {
       modelConstraint = "none";
     }
     if (opalAdkAgent && !VALID_NODE_KEYS.includes(opalAdkAgent)) {
-      const error = err(`opal-adk-stream: Invalid node key: ${opalAdkAgent}, ` +
-        `valid keys are: ${ VALID_NODE_KEYS.join(", ") }`);
+      const error = err(
+        `opal-adk-stream: Invalid node key: ${opalAdkAgent}, ` +
+          `valid keys are: ${VALID_NODE_KEYS.join(", ")}`
+      );
       console.error(error);
       return error;
     }
-    ui.progress.startAgent(toLLMContent("Starting Opal ADK Agent."))
+    ui.progress.startAgent(toLLMContent("Starting Opal ADK Agent."));
     try {
-      const baseUrl = await this.getOpalAdkBackendUrl(this.caps);
+      const baseUrl = OPAL_ADK_ENDPOINT;
       const url = new URL(baseUrl);
       url.searchParams.set("alt", "sse");
       const requestBody = this.buildStreamingRequestBody({
@@ -243,10 +232,10 @@ class OpalAdkStream {
         uiPrompt,
         nodeApi: opalAdkAgent,
         invocationId,
-        sessionId
+        sessionId,
       });
 
-      ui.progress.sendOpalAdkRequest("", requestBody)
+      ui.progress.sendOpalAdkRequest("", requestBody);
       const response = await this.moduleArgs.fetchWithCreds(url.toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -257,7 +246,9 @@ class OpalAdkStream {
       console.log("response: ", response);
       if (!response.ok) {
         const errorText = await response.text();
-        const error = err(`Streaming request failed: ${ response.status } ${ errorText }`);
+        const error = err(
+          `Streaming request failed: ${response.status} ${errorText}`
+        );
         console.error(error);
         return error;
       }
@@ -271,7 +262,9 @@ class OpalAdkStream {
       // Process the SSE stream
       let agentResult = "";
       let thoughtCount = 0;
-      for await (const chunk of iteratorFromStream<StreamChunk>(response.body)) {
+      for await (const chunk of iteratorFromStream<StreamChunk>(
+        response.body
+      )) {
         console.log("chunk: ", chunk);
         const result = await this.parseStreamChunk(chunk, thoughtCount);
         if (result.thoughtCount !== undefined) {
@@ -351,7 +344,7 @@ class OpalAdkStream {
       } else if (type === "error") {
         console.error(err(text));
       } else {
-        console.log(`Received unknown chunk type: ${ type }`);
+        console.log(`Received unknown chunk type: ${type}`);
       }
     }
 
