@@ -16,6 +16,7 @@ import type { SCA } from "../../../sca/sca.js";
 import type { ChatEntry } from "../../../sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
 import { markdown } from "../../directives/markdown.js";
 import { icons } from "../../styles/icons.js";
+import { floatingPanelStyles } from "../../styles/floating-panel.js";
 import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing/main.js";
 
 export { GraphEditingChat };
@@ -36,6 +37,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
 
   static styles = [
     icons,
+    floatingPanelStyles,
     css`
       :host {
         position: fixed;
@@ -51,40 +53,37 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: var(--bb-grid-size-2);
       }
 
       #chat-panel {
         width: 380px;
         max-height: 420px;
-        background: white;
-        border-radius: 16px;
-        box-shadow:
-          0 4px 16px rgba(0, 0, 0, 0.12),
-          0 1px 4px rgba(0, 0, 0, 0.08);
+        border-radius: var(--bb-grid-size-4);
+        padding: 0;
         display: flex;
         flex-direction: column;
         overflow: hidden;
       }
 
       #chat-header {
-        padding: 12px 16px;
-        color: #202124;
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+        color: var(--light-dark-n-10);
         font-size: 14px;
         font-weight: 500;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #e8eaed;
+        border-bottom: 1px solid var(--light-dark-n-90);
       }
 
       #chat-header button {
         background: none;
         border: none;
-        color: #5f6368;
+        color: var(--light-dark-n-50);
         cursor: pointer;
         font-size: 18px;
-        padding: 4px;
+        padding: var(--bb-grid-size);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -92,16 +91,16 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       }
 
       #chat-header button:hover {
-        background: #f1f3f4;
+        background: var(--light-dark-n-95);
       }
 
       #chat-messages {
         flex: 1;
         overflow-y: auto;
-        padding: 16px;
+        padding: var(--bb-grid-size-4);
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: var(--bb-grid-size-3);
       }
 
       /* ── Messages ── */
@@ -115,20 +114,20 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       }
 
       .message.user {
-        background: #d3e3fd;
-        color: #1a1a1a;
-        padding: 8px 14px;
+        background: var(--light-dark-p-90);
+        color: var(--light-dark-n-10);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
         border-radius: 18px;
         align-self: flex-end;
       }
 
       .message.model {
-        color: #202124;
+        color: var(--light-dark-n-10);
         align-self: flex-start;
       }
 
       .message.model p {
-        margin: 0 0 8px 0;
+        margin: 0 0 var(--bb-grid-size-2) 0;
       }
 
       .message.model p:last-child {
@@ -137,23 +136,23 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
 
       .message.model ul,
       .message.model ol {
-        margin: 0 0 8px 0;
+        margin: 0 0 var(--bb-grid-size-2) 0;
         padding-left: 20px;
       }
 
       .message.model code {
-        background: #f1f3f4;
-        padding: 1px 4px;
-        border-radius: 4px;
+        background: var(--light-dark-n-95);
+        padding: 1px var(--bb-grid-size);
+        border-radius: var(--bb-grid-size);
         font-size: 13px;
       }
 
       .message.model pre {
-        background: #f1f3f4;
-        padding: 8px 12px;
-        border-radius: 8px;
+        background: var(--light-dark-n-95);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+        border-radius: var(--bb-grid-size-2);
         overflow-x: auto;
-        margin: 0 0 8px 0;
+        margin: 0 0 var(--bb-grid-size-2) 0;
       }
 
       .message.model pre code {
@@ -162,7 +161,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       }
 
       .message.system {
-        color: #5f6368;
+        color: var(--light-dark-n-50);
         align-self: flex-start;
         font-size: 13px;
       }
@@ -177,7 +176,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
         display: flex;
         align-items: center;
         cursor: pointer;
-        color: #5f6368;
+        color: var(--light-dark-n-50);
         font-size: 13px;
         user-select: none;
         list-style: none;
@@ -188,7 +187,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       }
 
       .thought-group-header .chevron {
-        margin-right: 4px;
+        margin-right: var(--bb-grid-size);
         opacity: 0.6;
       }
 
@@ -201,25 +200,25 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       }
 
       .thought-group-header:hover {
-        color: #202124;
+        color: var(--light-dark-n-10);
       }
 
       .thought-group-body {
-        padding: 4px 0 4px 24px;
+        padding: var(--bb-grid-size) 0 var(--bb-grid-size) var(--bb-grid-size-6);
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: var(--bb-grid-size);
       }
 
       .thought-item {
         font-size: 12px;
-        color: #5f6368;
+        color: var(--light-dark-n-50);
         line-height: 1.4;
       }
 
       .thought-item-title {
         font-weight: 500;
-        color: #3c4043;
+        color: var(--light-dark-n-30);
       }
 
       /* ── Input area ── */
@@ -278,13 +277,8 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
         }
 
         &::part(textarea)::placeholder {
-          color: #5f6368;
+          color: var(--light-dark-n-50);
         }
-      }
-
-      .icon {
-        font-family: "Google Symbols";
-        font-size: 20px;
       }
     `,
   ];
@@ -310,7 +304,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
       <div id="chat-container">
         ${agent.open
           ? html`
-              <div id="chat-panel">
+              <div id="chat-panel" class="bb-floating-panel">
                 <div id="chat-header">
                   <span>Chat</span>
                   <button
@@ -318,7 +312,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
                       agent.open = false;
                     }}
                   >
-                    <span class="icon">close</span>
+                    <span class="g-icon">close</span>
                   </button>
                 </div>
                 <div id="chat-messages">
@@ -351,7 +345,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
           >
             <span
               slot="submit"
-              class="icon ${this.#inputRef.value?.value ? "active" : ""}"
+              class="g-icon ${this.#inputRef.value?.value ? "active" : ""}"
               >send_spark</span
             >
           </bb-expanding-textarea>
