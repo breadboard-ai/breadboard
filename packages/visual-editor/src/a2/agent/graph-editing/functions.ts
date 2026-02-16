@@ -372,6 +372,12 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
         },
         response: {
           success: z.boolean(),
+          error: z
+            .string()
+            .optional()
+            .describe(
+              "If an error has occurred, will contain a description of the error"
+            ),
         },
       },
       async ({ step_id }) => {
@@ -385,7 +391,10 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
         );
 
         if (!result.success) {
-          return { $error: `Failed to remove step "${step_id}"` };
+          return {
+            success: false,
+            error: `Failed to remove step "${step_id}"`,
+          };
         }
 
         return { success: true };
@@ -413,7 +422,16 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
           prompt: z.string().describe(PROMPT_DESCRIPTION),
         },
         response: {
-          step_id: z.string().describe("The ID of the created or updated step"),
+          step_id: z
+            .string()
+            .describe("The handle of the created or updated step")
+            .optional(),
+          error: z
+            .string()
+            .optional()
+            .describe(
+              "If an error has occurred, will contain a description of the error"
+            ),
         },
       },
       async ({ step_id, title, prompt }) => {
@@ -433,7 +451,7 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
           const inspector = editor.inspect("");
           const node = inspector.nodeById(resolvedId);
           if (!node) {
-            return { $error: `Step "${step_id}" not found` };
+            return { error: `Step "${step_id}" not found` };
           }
 
           stepId = resolvedId;
