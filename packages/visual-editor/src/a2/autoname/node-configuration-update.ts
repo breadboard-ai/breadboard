@@ -188,7 +188,7 @@ class NodeConfigurationUpdateMode implements AutonameMode {
 }
 
 function textFromConfiguration(
-  caps: Capabilities,
+  _caps: Capabilities,
   configuration: Record<string, JsonSerializable> | undefined,
   allow: string[]
 ): string {
@@ -200,7 +200,7 @@ function textFromConfiguration(
     .map(([name, value]) => {
       if (!allow.includes(name)) return "";
       if (isLLMContent(value)) {
-        const template = new Template(caps, value);
+        const template = new Template(value);
         return toText(
           template.simpleSubstitute((part) => {
             if (part.type == "tool") return part.title;

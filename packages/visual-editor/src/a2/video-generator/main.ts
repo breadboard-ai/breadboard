@@ -210,7 +210,6 @@ async function invoke(
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
   const template = new Template(
-    caps,
     toLLMContent(instructionText),
     moduleArgs.context.currentGraph
   );
@@ -352,9 +351,9 @@ function expandVeoError(
 
 async function describe(
   { inputs: { instruction } }: DescribeInputs,
-  caps: Capabilities
+  _caps: Capabilities
 ) {
-  const template = new Template(caps, instruction);
+  const template = new Template(instruction);
   return {
     inputSchema: {
       type: "object",

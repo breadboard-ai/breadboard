@@ -57,7 +57,7 @@ async function describe(
   const settings = await readSettings(caps);
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];
-  const template = new Template(caps, description);
+  const template = new Template(description);
   let extra: Record<string, Schema> = {};
   if (experimental) {
     extra = {

@@ -31,7 +31,7 @@ export async function invokeAgentAdk(
   );
   const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
   const uiType = enableA2UI ? "a2ui" : "chat";
-  const template = new Template(caps, prompt_template, moduleArgs.context.currentGraph);
+  const template = new Template(prompt_template, moduleArgs.context.currentGraph);
   const completed_prompt = await template.substitute(params);
   if (!ok(completed_prompt)) {
     return completed_prompt;

@@ -115,7 +115,6 @@ async function invoke(
     instructionText = toText(text).trim();
   }
   const template = new Template(
-    caps,
     toLLMContent(instructionText),
     moduleArgs.context.currentGraph
   );
@@ -173,9 +172,9 @@ type DescribeInputs = {
 
 async function describe(
   { inputs: { text } }: DescribeInputs,
-  caps: Capabilities
+  _caps: Capabilities
 ) {
-  const template = new Template(caps, text);
+  const template = new Template(text);
   return {
     inputSchema: {
       type: "object",

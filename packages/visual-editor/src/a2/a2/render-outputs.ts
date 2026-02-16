@@ -322,7 +322,7 @@ async function invoke(
     text = toLLMContent("");
   }
   let systemText = toText(systemInstruction ?? defaultSystemInstruction());
-  const template = new Template(caps, text, moduleArgs.context.currentGraph);
+  const template = new Template(text, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async () => "");
   if (!ok(substituting)) {
     return substituting;
@@ -537,7 +537,7 @@ async function describe(
       "b-slide-deck-mode": slideDeckMode,
     },
   }: DescribeInputs,
-  caps: Capabilities,
+  _caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);
@@ -546,7 +546,7 @@ async function describe(
     ? MODES
     : MODES.filter(({ id }) => id !== "consistent-ui");
 
-  const template = new Template(caps, text, moduleArgs.context.currentGraph);
+  const template = new Template(text, moduleArgs.context.currentGraph);
   const { renderType, icon } = getMode(renderMode);
 
   return {

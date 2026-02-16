@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Capabilities, LLMContent } from "@breadboard-ai/types";
+import type { LLMContent } from "@breadboard-ai/types";
 import {
   Template,
   type ParamPart,
@@ -60,15 +60,10 @@ class EditingAgentPidginTranslator {
   #routeHandles = new Map<string, string>();
   #routeCounter = 0;
 
-  #caps: Capabilities;
-
-  constructor(caps?: Capabilities) {
-    // simpleSubstitute doesn't use caps, so a stub is fine.
-    this.#caps = caps ?? ({} as Capabilities);
-  }
+  constructor() {}
 
   toPidgin(content: LLMContent): ToPidginResult {
-    const template = new Template(this.#caps, content);
+    const template = new Template(content);
 
     const result = template.simpleSubstitute((param) => {
       const { type } = param;
@@ -83,8 +78,6 @@ class EditingAgentPidginTranslator {
         case "tool": {
           return this.#translateTool(param);
         }
-        case "param":
-          return "";
         default:
           return "";
       }

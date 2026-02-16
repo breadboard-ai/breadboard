@@ -220,7 +220,6 @@ class PidginTranslator {
     textAsFiles: boolean
   ): Promise<Outcome<ToPidginResult>> {
     const template = new Template(
-      this.caps,
       content,
       this.moduleArgs.context.currentGraph
     );
@@ -296,11 +295,6 @@ ${inner}
             }
             return param.title;
           }
-          case "param":
-            errors.push(
-              `Agent: Params aren't supported in template substitution`
-            );
-            return "";
           case "tool": {
             if (param.path === ROUTE_TOOL_PATH) {
               if (!param.instance) {

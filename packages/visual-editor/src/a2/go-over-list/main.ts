@@ -66,7 +66,6 @@ async function invoke(
     new ArgumentNameGenerator(caps, moduleArgs)
   );
   const template = new Template(
-    caps,
     objective,
     moduleArgs.context.currentGraph
   );
@@ -105,7 +104,7 @@ async function describe(
   { inputs: { plan } }: DescribeInputs,
   caps: Capabilities
 ) {
-  const template = new Template(caps, plan);
+  const template = new Template(plan);
   const settings = await readSettings(caps);
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];

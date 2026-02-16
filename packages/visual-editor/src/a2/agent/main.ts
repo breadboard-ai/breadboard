@@ -147,12 +147,12 @@ async function invoke(
 
 async function describe(
   { inputs: { config$prompt, ...rest } }: { inputs: AgentInputs },
-  caps: Capabilities,
+  _caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);
   const uiSchemas = computeAgentSchema(flags, rest);
-  const template = new Template(caps, config$prompt, moduleArgs.context.currentGraph);
+  const template = new Template(config$prompt, moduleArgs.context.currentGraph);
   return {
     inputSchema: {
       type: "object",
