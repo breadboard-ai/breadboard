@@ -97,6 +97,15 @@ export class GoogleDriveFileViewer extends LitElement {
         }
       }
     `,
+    css`
+      iframe.video-embed {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: 16/9;
+        border: none;
+        border-radius: var(--bb-grid-size-3);
+      }
+    `,
   ];
 
   @property({
@@ -136,7 +145,14 @@ export class GoogleDriveFileViewer extends LitElement {
       }
       try {
         return await googleDriveClient.getFileMetadata(fileId, {
-          fields: ["id", "name", "webViewLink", "thumbnailLink", "iconLink"],
+          fields: [
+            "id",
+            "name",
+            "mimeType",
+            "webViewLink",
+            "thumbnailLink",
+            "iconLink",
+          ],
           signal,
         });
       } catch (e) {
@@ -162,6 +178,19 @@ export class GoogleDriveFileViewer extends LitElement {
         if (!file) {
           return `Unable to find Google Drive document`;
         }
+
+        if (file.mimeType?.startsWith("video/")) {
+          const src = `https://drive.google.com/file/d/${file.id}/preview`;
+          return html`<iframe
+            class="video-embed"
+            src="${src}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>`;
+        }
+
         const openUrl =
           file.webViewLink ?? `https://drive.google.com/open?id=${file.id}`;
         const imageUrl = file.thumbnailLink || file.iconLink;
