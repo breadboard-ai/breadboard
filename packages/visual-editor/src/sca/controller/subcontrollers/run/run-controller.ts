@@ -41,28 +41,6 @@ export type NodeActionRequest = {
 };
 
 /**
- * Status for an individual step in the step list.
- */
-export type StepStatus =
-  | "loading"
-  | "working"
-  | "ready"
-  | "complete"
-  | "pending";
-
-/**
- * State for a step in the step list view.
- */
-export interface StepListStepState {
-  icon?: string;
-  title: string;
-  status: StepStatus;
-  prompt: string;
-  label: string;
-  tags?: string[];
-}
-
-/**
  * Controller for run lifecycle, status, and output state.
  *
  * This controller owns all state related to a single run of the board:
@@ -173,10 +151,6 @@ export class RunController extends RootController {
   @field()
   private accessor _estimatedEntryCount: number = 0;
 
-  constructor(controllerId: string, persistenceId: string) {
-    super(controllerId, persistenceId);
-  }
-
   // ═══════════════════════════════════════════════════════════════════════════
   // LIFECYCLE METHODS
   // ═══════════════════════════════════════════════════════════════════════════
@@ -217,34 +191,6 @@ export class RunController extends RootController {
     this.runner = null;
     this.abortController = null;
     this.onInputRequested = null;
-  }
-
-  /**
-   * Checks if the board is currently running.
-   */
-  get isRunning(): boolean {
-    return this._status === STATUS.RUNNING;
-  }
-
-  /**
-   * Checks if the board is currently paused.
-   */
-  get isPaused(): boolean {
-    return this._status === STATUS.PAUSED;
-  }
-
-  /**
-   * Checks if the board is stopped (idle).
-   */
-  get isStopped(): boolean {
-    return this._status === STATUS.STOPPED;
-  }
-
-  /**
-   * Checks if there's an active runner.
-   */
-  get hasRunner(): boolean {
-    return this.runner !== null;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -304,23 +250,6 @@ export class RunController extends RootController {
    */
   clearInput(): void {
     this._input = null;
-  }
-
-  /**
-   * Gets the full list of pending input requests.
-   * Returns null if no inputs are pending.
-   */
-  get inputs(): UserInput[] | null {
-    if (this._pendingInputNodeIds.size === 0) {
-      return null;
-    }
-    return Array.from(this._pendingInputNodeIds)
-      .map((id) => {
-        const schema = this._inputSchemas.get(id);
-        if (!schema) return null;
-        return { id, schema };
-      })
-      .filter(Boolean) as UserInput[];
   }
 
   /**
@@ -488,10 +417,6 @@ export class RunController extends RootController {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // STATIC FACTORIES
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // ═══════════════════════════════════════════════════════════════════════════
   // INPUT LIFECYCLE (instance methods)
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -560,6 +485,11 @@ export class RunController extends RootController {
    *
    * Input methods (requestInput, activateInput, resolveInput) delegate to
    * the supplied RunController when provided.
+   *
+   * Note: When stored via setConsoleEntry, the entry is wrapped in a
+   * SignalObject proxy (due to `@field({ deep: true })` on `_console`).
+   * This means mutations to nested Maps (work, output) are automatically
+   * tracked and trigger reactive updates in the UI.
    *
    * @param title - Display title for the step
    * @param status - Current status (inactive, working, succeeded, failed, etc.)

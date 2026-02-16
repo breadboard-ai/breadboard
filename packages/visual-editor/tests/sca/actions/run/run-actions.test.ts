@@ -59,11 +59,7 @@ suite("Run Actions", () => {
       controller.run.main.abortController,
       "abortController should be set on controller"
     );
-    assert.strictEqual(
-      controller.run.main.hasRunner,
-      true,
-      "hasRunner should return true"
-    );
+    assert.ok(controller.run.main.runner !== null, "runner should be set");
   });
 
   test("prepare sets status to STOPPED (ready)", () => {

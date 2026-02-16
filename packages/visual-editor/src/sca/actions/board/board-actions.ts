@@ -513,6 +513,8 @@ export const load = asAction(
     // 10. Reset run state for new graph (clear console entries from previous graph)
     controller.run.main.reset();
     controller.run.main.clearRunner();
+    controller.run.screen.reset();
+    controller.run.renderer.reset();
     controller.editor.share.reset();
 
     // 10. Update board controller state
@@ -541,6 +543,12 @@ export const close = asAction(
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
     const { controller } = bind;
+
+    // Reset run state
+    controller.run.main.reset();
+    controller.run.main.clearRunner();
+    controller.run.screen.reset();
+    controller.run.renderer.reset();
 
     // Reset the graph controller state
     controller.editor.graph.resetAll();

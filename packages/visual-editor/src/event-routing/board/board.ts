@@ -42,7 +42,7 @@ export const RunRoute: EventRoute<"board.run"> = {
       return false;
     }
 
-    if (!sca.controller.run.main.hasRunner) {
+    if (!sca.controller.run.main.runner) {
       console.warn(`Run not prepared - runner not available`);
       return false;
     }
