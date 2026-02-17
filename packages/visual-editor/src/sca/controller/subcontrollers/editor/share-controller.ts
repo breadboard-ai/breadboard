@@ -18,13 +18,7 @@ export type UnmanagedAssetProblem = {
   | { problem: "missing"; missing: gapi.client.drive.Permission[] }
 );
 
-export type SharePanelStatus =
-  | "closed"
-  | "loading"
-  | "readonly"
-  | "writable"
-  | "updating"
-  | "native-share";
+export type SharePanelStatus = "closed" | "open" | "native-share";
 
 export type ShareStatus = "initializing" | "idle" | "updating" | "error";
 

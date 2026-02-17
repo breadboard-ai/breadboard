@@ -64,6 +64,7 @@ export class FakeGoogleDriveApi {
   readonly #host: string;
   readonly #port: number;
   #session: FakeGoogleDriveApiSession = FakeGoogleDriveApi.#freshSession();
+  #pauseGate: PromiseWithResolvers<void> | null = null;
 
   /**
    * Tracks all requests made to the fake API since creation or last `reset()`.
@@ -146,6 +147,9 @@ export class FakeGoogleDriveApi {
    */
   reset(): void {
     this.#session = FakeGoogleDriveApi.#freshSession();
+    // Reject paused requests so they throw instead of resuming with stale state.
+    this.#pauseGate?.reject(new Error("FakeGoogleDriveApi was reset"));
+    this.#pauseGate = null;
   }
 
   /**
@@ -189,10 +193,34 @@ export class FakeGoogleDriveApi {
     this.#session.nextListFileIds = [...fileIds];
   }
 
+  /**
+   * Pause the fake API — all incoming requests will be held without responding
+   * until `unpause()` is called. Useful for testing intermediate states.
+   */
+  pause(): void {
+    this.#pauseGate = Promise.withResolvers<void>();
+  }
+
+  /**
+   * Unpause the fake API — allows all held requests to proceed.
+   */
+  unpause(): void {
+    this.#pauseGate?.resolve();
+    this.#pauseGate = null;
+  }
+
   async #routeRequest(
     req: IncomingMessage,
     res: ServerResponse
   ): Promise<void> {
+    try {
+      await this.#pauseGate?.promise;
+    } catch (e) {
+      console.error("FakeGoogleDriveApi: request aborted by reset()", e);
+      res.writeHead(500).end();
+      return;
+    }
+
     const body = await this.#readBody(req);
 
     // Detect and strip /proxy/ prefix for routing. The client uses a separate

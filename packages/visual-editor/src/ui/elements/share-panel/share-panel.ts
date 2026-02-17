@@ -568,16 +568,16 @@ export class SharePanel extends SignalWatcher(LitElement) {
     if (this.#controller.unmanagedAssetProblems.length > 0) {
       return this.#renderUnmanagedAssetsModalContents();
     }
-    const panel = this.#panel;
-    if (panel === "loading") {
+    const status = this.#controller.status;
+    if (status === "initializing") {
       return this.#renderLoading();
     }
-    if (panel === "writable" || panel === "updating") {
+    if (this.#controller.ownership === "owner") {
       return CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
         ? this.#renderWritableContentsV2()
         : this.#renderWritableContentsV1();
     }
-    if (panel === "readonly") {
+    if (this.#controller.ownership === "non-owner") {
       return this.#renderReadonlyModalContents();
     }
   }
@@ -602,7 +602,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      shared && this.#panel !== "updating" ? this.#renderAppLink() : nothing,
+      shared && this.#controller.status !== "updating"
+        ? this.#renderAppLink()
+        : nothing,
       this.#renderGranularSharingLink(),
       this.#renderAdvisory(),
     ];
@@ -632,7 +634,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </p>
         <button
           class="bb-button-text"
-          .disabled=${this.#panel !== "writable"}
+          .disabled=${this.#controller.status === "updating"}
           @click=${this.#onClickPublishStale}
         >
           Update
@@ -654,10 +656,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </span>
         <button
           class="bb-button-text"
-          .disabled=${this.#panel !== "writable"}
+          .disabled=${this.#controller.status === "updating"}
           @click=${this.#onClickPublishStale}
         >
-          ${this.#panel === "updating"
+          ${this.#controller.status === "updating"
             ? html`<span class="g-icon spin spinner">progress_activity</span>`
             : nothing}
           Update
@@ -687,8 +689,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderDisallowedPublishingNotice() {
-    const panel = this.#panel;
-    if (panel !== "writable" && panel !== "updating") {
+    const status = this.#controller.status;
+    if (status !== "idle" && status !== "updating") {
       return nothing;
     }
     const domain = this.#controller.userDomain;
@@ -748,7 +750,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         id="granular-sharing-link"
         href=""
         @click=${this.#onClickViewSharePermissions}
-        ?disabled=${this.#panel !== "writable"}
+        ?disabled=${this.#controller.status === "updating"}
       >
         View Share Permissions
       </a>
@@ -817,8 +819,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderPublishedSwitch() {
-    const panel = this.#panel;
-    if (panel !== "writable" && panel !== "updating") {
+    const status = this.#controller.status;
+    if (status !== "idle" && status !== "updating") {
       return nothing;
     }
     const published = this.#controller.published;
@@ -826,10 +828,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const { disallowPublicPublishing } =
       this.sca?.services.globalConfig?.domains?.[domain] ?? {};
 
-    const disabled = disallowPublicPublishing || panel === "updating";
+    const disabled = disallowPublicPublishing || status === "updating";
     return html`
       <div id="published-switch-container">
-        ${panel === "updating"
+        ${status === "updating"
           ? html`<span class="g-icon spin spinner">progress_activity</span>`
           : nothing}
         <md-switch

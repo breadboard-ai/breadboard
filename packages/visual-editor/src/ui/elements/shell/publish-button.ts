@@ -129,7 +129,7 @@ export class PublishButton extends SignalWatcher(LitElement) {
   }
 
   get #isPublishing() {
-    return this.#share?.panel === "updating";
+    return this.#share?.status === "updating";
   }
 
   get #label() {

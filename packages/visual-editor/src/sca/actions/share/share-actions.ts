@@ -26,6 +26,7 @@ import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
 import { makeUrl } from "../../../ui/utils/urls.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
+import { onGraphUrl } from "./triggers.js";
 
 export const bind = makeAction();
 
@@ -35,141 +36,161 @@ const LABEL = "Share";
 // Actions
 // =============================================================================
 
+/**
+ * Resets share state and fetches fresh data from Drive. Triggered automatically
+ * when a drive: graph URL is set (on initial board load and board swap).
+ *
+ * **Triggers:**
+ * - `onGraphUrl`: Fires when graph URL is a drive: URL
+ */
+export const initialize = asAction(
+  "Share.initialize",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onGraphUrl(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const share = controller.editor.share;
+
+    share.reset();
+    share.status = "initializing";
+    await fetchShareData();
+    share.status = "idle";
+  }
+);
+
+/**
+ * Fetches share data from Drive and populates the share controller fields.
+ * Does not reset or manage status transitions — callers are responsible for
+ * that.
+ */
+async function fetchShareData(): Promise<void> {
+  const { controller, services } = bind;
+  const share = controller.editor.share;
+  const googleDriveClient = services.googleDriveClient;
+  const boardServer = services.googleDriveBoardServer;
+
+  const graphUrl = getGraph()?.url;
+  if (!graphUrl) {
+    return;
+  }
+  const thisFileId = getGraphFileId(graphUrl);
+  if (!thisFileId) {
+    return;
+  }
+
+  // Technically these are global so don't need to be updated more than once
+  // ever, but it's super cheap so it doesn't matter.
+  share.userDomain = (await services.signinAdapter.domain) ?? "";
+  share.publicPublishingAllowed = !(
+    services.globalConfig.domains?.[share.userDomain]
+      ?.disallowPublicPublishing ?? false
+  );
+
+  // Ensure any pending changes are saved so that our Drive operations will be
+  // synchronized with those changes.
+  await boardServer.flushSaveQueue(graphUrl);
+
+  const thisFileMetadata = await googleDriveClient.getFileMetadata(thisFileId, {
+    fields: ["resourceKey", "properties", "ownedByMe", "version"],
+    // Sometimes we are working on the featured gallery items themselves. In
+    // that case, and for all such calls in this file, we should never use
+    // the gallery proxy, because otherwise we will get responses that are
+    // (1) potentially stale because of caching, (2) missing data because
+    // we're not using the owning user's credentials (e.g. permissions get
+    // masked out and appear empty).
+    bypassProxy: true,
+  });
+
+  const thisFileIsAShareableCopy =
+    thisFileMetadata.properties?.[DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN] !==
+    undefined;
+  if (thisFileIsAShareableCopy) {
+    share.ownership = "non-owner";
+    share.shareableFile = {
+      id: thisFileId,
+      resourceKey: thisFileMetadata.resourceKey,
+    };
+    return;
+  }
+
+  const shareableCopyFileId =
+    thisFileMetadata.properties?.[DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY];
+
+  if (!thisFileMetadata.ownedByMe) {
+    share.ownership = "non-owner";
+    share.shareableFile = shareableCopyFileId
+      ? {
+          id: shareableCopyFileId,
+          resourceKey: (
+            await googleDriveClient.getFileMetadata(shareableCopyFileId, {
+              fields: ["resourceKey"],
+              bypassProxy: true,
+            })
+          ).resourceKey,
+        }
+      : {
+          id: thisFileId,
+          resourceKey: thisFileMetadata.resourceKey,
+        };
+    return;
+  }
+
+  if (!shareableCopyFileId) {
+    share.ownership = "owner";
+    share.latestVersion = thisFileMetadata.version;
+    return;
+  }
+
+  const shareableCopyFileMetadata = await googleDriveClient.getFileMetadata(
+    shareableCopyFileId,
+    {
+      fields: ["resourceKey", "properties", "permissions"],
+      bypassProxy: true,
+    }
+  );
+  const publishPermissions = getRequiredPublishPermissions();
+  const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
+  const diff = diffAssetReadPermissions({
+    actual: allGraphPermissions,
+    expected: publishPermissions,
+  });
+
+  share.ownership = "owner";
+  share.published = diff.missing.length === 0;
+  // We're granularly shared if there is any permission that is neither
+  // one of the special publish permissions, nor the owner (since there
+  // will always be an owner).
+  share.granularlyShared =
+    diff.excess.find((permission) => permission.role !== "owner") !== undefined;
+  share.stale =
+    thisFileMetadata.version !==
+    shareableCopyFileMetadata.properties?.[
+      DRIVE_PROPERTY_LATEST_SHARED_VERSION
+    ];
+  share.publishedPermissions = allGraphPermissions.filter((permission) =>
+    permissionMatchesAnyOf(permission, publishPermissions)
+  );
+  share.shareableFile = {
+    id: shareableCopyFileId,
+    resourceKey: shareableCopyFileMetadata.resourceKey,
+  };
+  share.latestVersion = thisFileMetadata.version;
+}
+
+/** Opens the share panel. */
 export const open = asAction(
   "Share.open",
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
-    const { controller, services } = bind;
-
-    const logger = Utils.Logging.getLogger(controller);
+    const { controller } = bind;
     const share = controller.editor.share;
-    const googleDriveClient = services.googleDriveClient;
-    const boardServer = services.googleDriveBoardServer;
 
     if (share.panel !== "closed") {
       return;
     }
-
-    const graphUrl = getGraph()?.url;
-    if (!graphUrl) {
-      /* c8 ignore start */
-      logger.log(Utils.Logging.Formatter.error("No graph url"), LABEL);
-      return;
-      /* c8 ignore end */
-    }
-    const thisFileId = getGraphFileId(graphUrl);
-    if (!thisFileId) {
-      /* c8 ignore start */
-      logger.log(Utils.Logging.Formatter.error("No file id"), LABEL);
-      return;
-      /* c8 ignore end */
-    }
-
-    share.panel = "loading";
-
-    share.userDomain = (await services.signinAdapter.domain) ?? "";
-    share.publicPublishingAllowed = !(
-      services.globalConfig.domains?.[share.userDomain]
-        ?.disallowPublicPublishing ?? false
-    );
-
-    // Ensure any pending changes are saved so that our Drive operations will be
-    // synchronized with those changes.
-    await boardServer.flushSaveQueue(graphUrl);
-
-    const thisFileMetadata = await googleDriveClient.getFileMetadata(
-      thisFileId,
-      {
-        fields: ["resourceKey", "properties", "ownedByMe", "version"],
-        // Sometimes we are working on the featured gallery items themselves. In
-        // that case, and for all such calls in this file, we should never use
-        // the gallery proxy, because otherwise we will get responses that are
-        // (1) potentially stale because of caching, (2) missing data because
-        // we're not using the owning user's credentials (e.g. permissions get
-        // masked out and appear empty).
-        bypassProxy: true,
-      }
-    );
-
-    const thisFileIsAShareableCopy =
-      thisFileMetadata.properties?.[DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN] !==
-      undefined;
-    if (thisFileIsAShareableCopy) {
-      share.panel = "readonly";
-      share.ownership = "non-owner";
-      share.shareableFile = {
-        id: thisFileId,
-        resourceKey: thisFileMetadata.resourceKey,
-      };
-      return;
-    }
-
-    const shareableCopyFileId =
-      thisFileMetadata.properties?.[DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY];
-
-    if (!thisFileMetadata.ownedByMe) {
-      share.panel = "readonly";
-      share.ownership = "non-owner";
-      share.shareableFile = shareableCopyFileId
-        ? {
-            id: shareableCopyFileId,
-            resourceKey: (
-              await googleDriveClient.getFileMetadata(shareableCopyFileId, {
-                fields: ["resourceKey"],
-                bypassProxy: true,
-              })
-            ).resourceKey,
-          }
-        : {
-            id: thisFileId,
-            resourceKey: thisFileMetadata.resourceKey,
-          };
-      return;
-    }
-
-    if (!shareableCopyFileId) {
-      share.panel = "writable";
-      share.ownership = "owner";
-      share.latestVersion = thisFileMetadata.version;
-      return;
-    }
-
-    const shareableCopyFileMetadata = await googleDriveClient.getFileMetadata(
-      shareableCopyFileId,
-      {
-        fields: ["resourceKey", "properties", "permissions"],
-        bypassProxy: true,
-      }
-    );
-    const publishPermissions = getRequiredPublishPermissions();
-    const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
-    const diff = diffAssetReadPermissions({
-      actual: allGraphPermissions,
-      expected: publishPermissions,
-    });
-
-    share.panel = "writable";
-    share.ownership = "owner";
-    share.published = diff.missing.length === 0;
-    // We're granularly shared if there is any permission that is neither
-    // one of the special publish permissions, nor the owner (since there
-    // will always be an owner).
-    share.granularlyShared =
-      diff.excess.find((permission) => permission.role !== "owner") !==
-      undefined;
-    share.stale =
-      thisFileMetadata.version !==
-      shareableCopyFileMetadata.properties?.[
-        DRIVE_PROPERTY_LATEST_SHARED_VERSION
-      ];
-    share.publishedPermissions = allGraphPermissions.filter((permission) =>
-      permissionMatchesAnyOf(permission, publishPermissions)
-    );
-    share.shareableFile = {
-      id: shareableCopyFileId,
-      resourceKey: shareableCopyFileMetadata.resourceKey,
-    };
-    share.latestVersion = thisFileMetadata.version;
+    share.panel = "open";
   }
 );
 
@@ -552,9 +573,7 @@ export const publish = asAction(
     if (share.ownership !== "owner") {
       /* c8 ignore start */
       logger.log(
-        Utils.Logging.Formatter.error(
-          'Expected ownership to be "owner"'
-        ),
+        Utils.Logging.Formatter.error('Expected ownership to be "owner"'),
         LABEL
       );
       return;
@@ -567,7 +586,7 @@ export const publish = asAction(
       return;
     }
 
-    share.panel = "updating";
+    share.status = "updating";
     share.published = true;
 
     let newLatestVersion: string | undefined;
@@ -607,7 +626,7 @@ export const publish = asAction(
       /* c8 ignore end */
     }
 
-    share.panel = "writable";
+    share.status = "idle";
     share.published = true;
     share.publishedPermissions = graphPublishPermissions;
     share.latestVersion = newLatestVersion ?? share.latestVersion;
@@ -626,9 +645,7 @@ export const unpublish = asAction(
     if (share.ownership !== "owner") {
       /* c8 ignore start */
       logger.log(
-        Utils.Logging.Formatter.error(
-          'Expected ownership to be "owner"'
-        ),
+        Utils.Logging.Formatter.error('Expected ownership to be "owner"'),
         LABEL
       );
       return;
@@ -644,7 +661,7 @@ export const unpublish = asAction(
       logger.log(Utils.Logging.Formatter.error("No graph found"), LABEL);
       return;
     }
-    share.panel = "updating";
+    share.status = "updating";
     share.published = false;
 
     logger.log(
@@ -667,7 +684,7 @@ export const unpublish = asAction(
 
     await handleAssetPermissions(share.shareableFile!.id, graph);
 
-    share.panel = "writable";
+    share.status = "idle";
     share.published = false;
   }
 );
@@ -693,7 +710,7 @@ export const publishStale = asAction(
       return;
     }
 
-    share.panel = "updating";
+    share.status = "updating";
 
     const shareableFileUrl = new URL(`drive:/${share.shareableFile.id}`);
     const updatedShareableGraph = structuredClone(graph);
@@ -716,7 +733,7 @@ export const publishStale = asAction(
       handleAssetPermissions(share.shareableFile.id, graph),
     ]);
 
-    share.panel = "writable";
+    share.status = "idle";
     share.stale = false;
 
     Utils.Logging.getLogger(controller).log(
@@ -792,13 +809,19 @@ export const closePanel = asAction(
       return;
     }
 
-    if (panel === "closed" || panel === "readonly" || panel === "writable") {
+    if (share.status === "updating") {
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.warning(
+          `Cannot close panel while status is "updating"`
+        ),
+        "Share.closePanel"
+      );
+      return;
+    }
+
+    if (panel === "closed" || panel === "open") {
       share.panel = "closed";
-    } else if (
-      panel === "loading" ||
-      panel === "updating" ||
-      panel === "native-share"
-    ) {
+    } else if (panel === "native-share") {
       Utils.Logging.getLogger(controller).log(
         Utils.Logging.Formatter.warning(
           `Cannot close panel while in "${panel}" state`
@@ -818,7 +841,6 @@ export const closePanel = asAction(
       /* c8 ignore end */
     }
   }
-
 );
 
 export const viewSharePermissions = asAction(
@@ -832,10 +854,8 @@ export const viewSharePermissions = asAction(
       return;
     }
 
-    share.panel = "loading";
-
     // We must create the shareable copy now if it doesn't already exist, since
-    // that's the file we need to open the granular permissions dialog with.
+    // that's the file we need to open the native share permissions dialog with.
     const shareableCopyFileId =
       share.shareableFile?.id ??
       (await makeShareableCopy()).shareableCopyFileId;
@@ -856,7 +876,8 @@ export const onGoogleDriveSharePanelClose = asAction(
       return;
     }
     const graphFileId = share.shareableFile.id;
-    share.panel = "loading";
+    share.panel = "open";
+    share.status = "updating";
     const graph = getGraph();
     if (graph) {
       await handleAssetPermissions(graphFileId, graph);
@@ -869,7 +890,12 @@ export const onGoogleDriveSharePanelClose = asAction(
 
       /* c8 ignore end */
     }
-    share.panel = "closed";
-    await open();
+    // Re-sync share data to pick up any permission changes the user made.
+    // TODO: Optimize — only permissions can change here, but fetchShareData
+    // also re-fetches file metadata, flushes the save queue, etc. Factor out a
+    // lightweight refreshPermissions() that just re-reads the shareable copy's
+    // permissions and updates published/granularlyShared/publishedPermissions.
+    await fetchShareData();
+    share.status = "idle";
   }
 );
