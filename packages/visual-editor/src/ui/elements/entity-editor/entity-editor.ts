@@ -176,6 +176,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           &:focus {
             border: 1px solid var(--outer-border);
           }
+          &:not(:focus) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
         }
       }
 
