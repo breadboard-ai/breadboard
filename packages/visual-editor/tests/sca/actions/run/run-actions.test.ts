@@ -79,7 +79,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'start' event sets status to RUNNING", () => {
+  test("runner 'start' event sets status to RUNNING", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -88,10 +88,7 @@ suite("Run Actions", () => {
     RunActions.prepare();
 
     // Simulate runner emitting 'start' event
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string) => void;
-    };
-    runner._fireEvent("start");
+    await RunActions.onStart();
 
     assert.strictEqual(
       controller.run.main.status,
@@ -100,7 +97,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'resume' event sets status to RUNNING", () => {
+  test("runner 'resume' event sets status to RUNNING", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -110,10 +107,7 @@ suite("Run Actions", () => {
 
     // Simulate paused state then resume
     controller.run.main.setStatus(STATUS.PAUSED);
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string) => void;
-    };
-    runner._fireEvent("resume");
+    await RunActions.onResume();
 
     assert.strictEqual(
       controller.run.main.status,
@@ -122,7 +116,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'pause' event sets status to PAUSED", () => {
+  test("runner 'pause' event sets status to PAUSED", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -132,10 +126,7 @@ suite("Run Actions", () => {
 
     // Simulate running then pause
     controller.run.main.setStatus(STATUS.RUNNING);
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string) => void;
-    };
-    runner._fireEvent("pause");
+    await RunActions.onPause();
 
     assert.strictEqual(
       controller.run.main.status,
@@ -144,7 +135,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'end' event sets status to STOPPED", () => {
+  test("runner 'end' event sets status to STOPPED", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -154,10 +145,7 @@ suite("Run Actions", () => {
 
     // Simulate running then end
     controller.run.main.setStatus(STATUS.RUNNING);
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string) => void;
-    };
-    runner._fireEvent("end");
+    await RunActions.onEnd();
 
     assert.strictEqual(
       controller.run.main.status,
@@ -166,7 +154,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'error' event sets status to STOPPED", () => {
+  test("runner 'error' event sets status to STOPPED", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -176,10 +164,7 @@ suite("Run Actions", () => {
 
     // Simulate running then error
     controller.run.main.setStatus(STATUS.RUNNING);
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string) => void;
-    };
-    runner._fireEvent("error");
+    await RunActions.onError();
 
     assert.strictEqual(
       controller.run.main.status,
@@ -190,7 +175,7 @@ suite("Run Actions", () => {
 
   // ===== Error-related event tests =====
 
-  test("runner 'error' event sets error on controller with string message", () => {
+  test("runner 'error' event sets error on controller with string message", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -201,10 +186,9 @@ suite("Run Actions", () => {
     // Set input first so we can verify it's cleared
     controller.run.main.setInput({ id: "test", schema: {} });
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-    runner._fireEvent("error", { error: "Something went wrong" });
+    await RunActions.onError(
+      new CustomEvent("error", { detail: { error: "Something went wrong" } })
+    );
 
     assert.ok(controller.run.main.error, "error should be set");
     assert.strictEqual(
@@ -219,7 +203,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'error' event handles error object with message property", () => {
+  test("runner 'error' event handles error object with message property", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -227,10 +211,11 @@ suite("Run Actions", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-    runner._fireEvent("error", { error: { message: "Object error message" } });
+    await RunActions.onError(
+      new CustomEvent("error", {
+        detail: { error: { message: "Object error message" } },
+      })
+    );
 
     assert.ok(controller.run.main.error, "error should be set");
     assert.strictEqual(
@@ -240,7 +225,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'error' event handles missing error gracefully", () => {
+  test("runner 'error' event handles missing error gracefully", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -248,10 +233,7 @@ suite("Run Actions", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-    runner._fireEvent("error", {});
+    await RunActions.onError(new CustomEvent("error", { detail: {} }));
 
     assert.ok(controller.run.main.error, "error should be set");
     assert.strictEqual(
@@ -261,7 +243,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'end' event clears input", () => {
+  test("runner 'end' event clears input", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -273,10 +255,7 @@ suite("Run Actions", () => {
     controller.run.main.setInput({ id: "test", schema: {} });
     assert.ok(controller.run.main.input, "input should be set initially");
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string) => void;
-    };
-    runner._fireEvent("end");
+    await RunActions.onEnd();
 
     assert.strictEqual(
       controller.run.main.input,
@@ -285,7 +264,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'graphstart' event resets and pre-populates output for top-level graph", () => {
+  test("runner 'graphstart' event resets and pre-populates output for top-level graph", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -327,11 +306,10 @@ suite("Run Actions", () => {
     // Add some console entries to verify reset
     controller.run.main.setConsoleEntry("existing", {} as ConsoleEntry);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
     // Top-level graph has empty path
-    runner._fireEvent("graphstart", { path: [] });
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
 
     // Console should now have 3 entries (one per graph node with 'inactive' status)
     assert.strictEqual(
@@ -346,7 +324,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'graphstart' event ignores nested graphs", () => {
+  test("runner 'graphstart' event ignores nested graphs", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -358,11 +336,10 @@ suite("Run Actions", () => {
     controller.run.main.setConsoleEntry("existing", {} as ConsoleEntry);
     controller.run.main.setEstimatedEntryCount(5);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
     // Nested graph has non-empty path
-    runner._fireEvent("graphstart", { path: ["parent-node"] });
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: ["parent-node"] } })
+    );
 
     assert.strictEqual(
       controller.run.main.console.size,
@@ -376,7 +353,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'nodestart' event adds console entry", () => {
+  test("runner 'nodestart' event adds console entry", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -387,14 +364,15 @@ suite("Run Actions", () => {
     });
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
     // Top-level node has path with single element
-    runner._fireEvent("nodestart", {
-      path: ["test-node"],
-      node: { id: "test-node", type: "test" },
-    });
+    await RunActions.onNodeStartAction(
+      new CustomEvent("nodestart", {
+        detail: {
+          path: ["test-node"],
+          node: { id: "test-node", type: "test" },
+        },
+      })
+    );
 
     assert.strictEqual(
       controller.run.main.console.size,
@@ -405,7 +383,7 @@ suite("Run Actions", () => {
     assert.ok(entry, "entry should exist");
   });
 
-  test("runner 'nodestart' event ignores nested nodes", () => {
+  test("runner 'nodestart' event ignores nested nodes", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -413,14 +391,15 @@ suite("Run Actions", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
     // Nested node has path with more than one element
-    runner._fireEvent("nodestart", {
-      path: ["parent-node", "test-node"],
-      node: { id: "test-node", type: "test" },
-    });
+    await RunActions.onNodeStartAction(
+      new CustomEvent("nodestart", {
+        detail: {
+          path: ["parent-node", "test-node"],
+          node: { id: "test-node", type: "test" },
+        },
+      })
+    );
 
     assert.strictEqual(
       controller.run.main.console.size,
@@ -1058,7 +1037,7 @@ suite("runner nodeend event", () => {
     unsetDOM();
   });
 
-  test("updates existing console entry to succeeded on nodeend", () => {
+  test("updates existing console entry to succeeded on nodeend", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1077,15 +1056,15 @@ suite("runner nodeend event", () => {
       completed: false,
     } as ConsoleEntry);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
     // Fire nodeend for a top-level node (path.length === 1)
-    runner._fireEvent("nodeend", {
-      path: ["test-node"],
-      node: { id: "test-node" },
-    });
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["test-node"],
+          node: { id: "test-node" },
+        },
+      })
+    );
 
     const entry = controller.run.main.console.get("test-node");
     assert.ok(entry, "entry should exist");
@@ -1097,7 +1076,7 @@ suite("runner nodeend event", () => {
     assert.strictEqual(entry.completed, true, "completed should be true");
   });
 
-  test("ignores nodeend for nested nodes (path.length > 1)", () => {
+  test("ignores nodeend for nested nodes (path.length > 1)", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1113,15 +1092,15 @@ suite("runner nodeend event", () => {
       completed: false,
     } as ConsoleEntry);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
     // Fire nodeend for a nested node (path.length > 1)
-    runner._fireEvent("nodeend", {
-      path: ["parent-node", "nested-node"],
-      node: { id: "nested-node" },
-    });
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["parent-node", "nested-node"],
+          node: { id: "nested-node" },
+        },
+      })
+    );
 
     const entry = controller.run.main.console.get("nested-node");
     assert.ok(entry, "entry should exist");
@@ -1137,7 +1116,7 @@ suite("runner nodeend event", () => {
     );
   });
 
-  test("does nothing if node is not in console", () => {
+  test("does nothing if node is not in console", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1148,15 +1127,15 @@ suite("runner nodeend event", () => {
     // Ensure console is empty
     assert.strictEqual(controller.run.main.console.size, 0);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
     // Fire nodeend for a node that doesn't exist in console
-    runner._fireEvent("nodeend", {
-      path: ["nonexistent-node"],
-      node: { id: "nonexistent-node" },
-    });
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["nonexistent-node"],
+          node: { id: "nonexistent-node" },
+        },
+      })
+    );
 
     // Should not throw and console should still be empty
     assert.strictEqual(controller.run.main.console.size, 0);
@@ -1741,7 +1720,7 @@ suite("runner event handlers", () => {
     unsetDOM();
   });
 
-  test("nodestatechange sets non-failed node state on renderer", () => {
+  test("nodestatechange sets non-failed node state on renderer", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1749,14 +1728,14 @@ suite("runner event handlers", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("nodestatechange", {
-      id: "node-1",
-      state: "working",
-    });
+    await RunActions.onNodeStateChangeAction(
+      new CustomEvent("nodestatechange", {
+        detail: {
+          id: "node-1",
+          state: "working",
+        },
+      })
+    );
 
     const nodeState = controller.run.renderer.nodes.get("node-1");
     assert.ok(nodeState, "node state should be set");
@@ -1768,7 +1747,7 @@ suite("runner event handlers", () => {
     );
   });
 
-  test("nodestatechange decodes error for 'failed' state", () => {
+  test("nodestatechange decodes error for 'failed' state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1776,15 +1755,15 @@ suite("runner event handlers", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("nodestatechange", {
-      id: "node-x",
-      state: "failed",
-      message: { message: "Something broke" },
-    });
+    await RunActions.onNodeStateChangeAction(
+      new CustomEvent("nodestatechange", {
+        detail: {
+          id: "node-x",
+          state: "failed",
+          message: { message: "Something broke" },
+        },
+      })
+    );
 
     const nodeState = controller.run.renderer.nodes.get("node-x");
     assert.ok(nodeState, "node state should be set");
@@ -1795,7 +1774,7 @@ suite("runner event handlers", () => {
     );
   });
 
-  test("edgestatechange sets edge states on renderer", () => {
+  test("edgestatechange sets edge states on renderer", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1803,14 +1782,14 @@ suite("runner event handlers", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("edgestatechange", {
-      edges: [{ from: "a", to: "b", out: "out", in: "in" }],
-      state: "active",
-    });
+    await RunActions.onEdgeStateChangeAction(
+      new CustomEvent("edgestatechange", {
+        detail: {
+          edges: [{ from: "a", to: "b", out: "out", in: "in" }],
+          state: "active",
+        },
+      })
+    );
 
     // Verify edge state was set (edgeToString produces the key)
     assert.ok(
@@ -1819,7 +1798,7 @@ suite("runner event handlers", () => {
     );
   });
 
-  test("output event adds output to screen for bubbled events", () => {
+  test("output event adds output to screen for bubbled events", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1831,23 +1810,23 @@ suite("runner event handlers", () => {
     const screen = createAppScreen("node-1", undefined);
     controller.run.screen.setScreen("node-1", screen);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("output", {
-      bubbled: true,
-      node: { id: "node-1" },
-      outputs: { text: "hello" },
-      path: ["node-1"],
-    });
+    await RunActions.onOutputAction(
+      new CustomEvent("output", {
+        detail: {
+          bubbled: true,
+          node: { id: "node-1" },
+          outputs: { text: "hello" },
+          path: ["node-1"],
+        },
+      })
+    );
 
     // If the screen has addOutput, it should have been called
     const storedScreen = controller.run.screen.screens.get("node-1");
     assert.ok(storedScreen, "screen should still exist");
   });
 
-  test("output event ignores non-bubbled events", () => {
+  test("output event ignores non-bubbled events", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1855,15 +1834,15 @@ suite("runner event handlers", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
     // Should not throw even with no matching screen
-    runner._fireEvent("output", {
-      bubbled: false,
-      node: { id: "non-existent" },
-    });
+    await RunActions.onOutputAction(
+      new CustomEvent("output", {
+        detail: {
+          bubbled: false,
+          node: { id: "non-existent" },
+        },
+      })
+    );
 
     // No screen should be created
     assert.strictEqual(controller.run.screen.screens.size, 0);
@@ -1883,7 +1862,7 @@ suite("runner nodeend deleteScreen", () => {
     unsetDOM();
   });
 
-  test("deletes screen when node state is interrupted", () => {
+  test("deletes screen when node state is interrupted", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1907,14 +1886,14 @@ suite("runner nodeend deleteScreen", () => {
       controller.run.main.runner as unknown as { state: Map<string, unknown> }
     ).state = new Map([["node-1", { state: "interrupted" }]]);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("nodeend", {
-      path: ["node-1"],
-      node: { id: "node-1" },
-    });
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1" },
+        },
+      })
+    );
 
     // Screen should be deleted for interrupted nodes
     assert.strictEqual(
@@ -1924,7 +1903,7 @@ suite("runner nodeend deleteScreen", () => {
     );
   });
 
-  test("finalizes screen when node is NOT interrupted", () => {
+  test("finalizes screen when node is NOT interrupted", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1952,14 +1931,14 @@ suite("runner nodeend deleteScreen", () => {
       controller.run.main.runner as unknown as { state: Map<string, unknown> }
     ).state = new Map([["node-1", { state: "succeeded" }]]);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("nodeend", {
-      path: ["node-1"],
-      node: { id: "node-1" },
-    });
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1" },
+        },
+      })
+    );
 
     // Screen should still exist (finalized, not deleted)
     assert.strictEqual(
@@ -1970,7 +1949,7 @@ suite("runner nodeend deleteScreen", () => {
     assert.ok(finalized, "screen.finalize should be called");
   });
 
-  test("sets renderer node state to succeeded on nodeend", () => {
+  test("sets renderer node state to succeeded on nodeend", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -1985,14 +1964,14 @@ suite("runner nodeend deleteScreen", () => {
       completed: false,
     } as ConsoleEntry);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("nodeend", {
-      path: ["node-1"],
-      node: { id: "node-1" },
-    });
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1" },
+        },
+      })
+    );
 
     const nodeState = controller.run.renderer.nodes.get("node-1");
     assert.ok(nodeState, "renderer node state should be set");
@@ -2045,11 +2024,9 @@ suite("runner graphstart async describe fallback", () => {
     });
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("graphstart", { path: [] });
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
 
     // Wait for async describe
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -2095,11 +2072,9 @@ suite("runner graphstart async describe fallback", () => {
     });
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("graphstart", { path: [] });
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -2110,7 +2085,7 @@ suite("runner graphstart async describe fallback", () => {
     );
   });
 
-  test("graphstart falls back to nodeId when node is not found", () => {
+  test("graphstart falls back to nodeId when node is not found", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -2127,11 +2102,9 @@ suite("runner graphstart async describe fallback", () => {
     });
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("graphstart", { path: [] });
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist even when node is not inspectable");
@@ -2143,7 +2116,7 @@ suite("runner graphstart async describe fallback", () => {
     );
   });
 
-  test("graphstart handles null plan.stages by using empty array", () => {
+  test("graphstart handles null plan.stages by using empty array", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -2154,15 +2127,12 @@ suite("runner graphstart async describe fallback", () => {
     });
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-      plan: unknown;
-    };
-
     // Set plan to null — triggers plan?.stages ?? [] fallback
-    runner.plan = null;
+    (controller.run.main.runner as unknown as { plan: unknown }).plan = null;
 
-    runner._fireEvent("graphstart", { path: [] });
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
 
     // Should not throw, console should have 0 entries because stages is empty
     assert.strictEqual(
@@ -2172,7 +2142,7 @@ suite("runner graphstart async describe fallback", () => {
     );
   });
 
-  test("graphstart uses empty metadata when currentDescribe returns null", () => {
+  test("graphstart uses empty metadata when currentDescribe returns null", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -2195,11 +2165,9 @@ suite("runner graphstart async describe fallback", () => {
     });
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("graphstart", { path: [] });
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
@@ -2221,7 +2189,7 @@ suite("runner nodestart fallback branches", () => {
     unsetDOM();
   });
 
-  test("nodestart falls back to nodeId when node is not found", () => {
+  test("nodestart falls back to nodeId when node is not found", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -2235,15 +2203,15 @@ suite("runner nodestart fallback branches", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("nodestart", {
-      path: ["node-1"],
-      node: { id: "node-1" },
-      inputs: {},
-    });
+    await RunActions.onNodeStartAction(
+      new CustomEvent("nodestart", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1" },
+          inputs: {},
+        },
+      })
+    );
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
@@ -2254,7 +2222,7 @@ suite("runner nodestart fallback branches", () => {
     );
   });
 
-  test("nodestart uses empty metadata when currentDescribe returns null", () => {
+  test("nodestart uses empty metadata when currentDescribe returns null", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -2273,15 +2241,15 @@ suite("runner nodestart fallback branches", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
-    runner._fireEvent("nodestart", {
-      path: ["node-1"],
-      node: { id: "node-1" },
-      inputs: {},
-    });
+    await RunActions.onNodeStartAction(
+      new CustomEvent("nodestart", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1" },
+          inputs: {},
+        },
+      })
+    );
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
@@ -2454,12 +2422,8 @@ suite("progress ticker lifecycle", () => {
     const screen = createAppScreen("node-1", undefined);
     controller.run.screen.setScreen("node-1", screen);
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
     // Fire start to begin the progress ticker
-    runner._fireEvent("start");
+    await RunActions.onStart();
     assert.strictEqual(
       controller.run.main.status,
       STATUS.RUNNING,
@@ -2470,7 +2434,7 @@ suite("progress ticker lifecycle", () => {
     await new Promise((r) => setTimeout(r, 300));
 
     // Fire end — should clear the ticker
-    runner._fireEvent("end");
+    await RunActions.onEnd();
     assert.strictEqual(
       controller.run.main.status,
       STATUS.STOPPED,
@@ -2486,18 +2450,14 @@ suite("progress ticker lifecycle", () => {
     setupGraph(controller);
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
     // Fire start to begin the progress ticker
-    runner._fireEvent("start");
+    await RunActions.onStart();
 
     // Wait for at least one tick
     await new Promise((r) => setTimeout(r, 300));
 
     // Fire error — should clear the ticker
-    runner._fireEvent("error");
+    await RunActions.onError();
     assert.strictEqual(
       controller.run.main.status,
       STATUS.STOPPED,
@@ -2515,7 +2475,7 @@ suite("nodeend output population", () => {
     unsetDOM();
   });
 
-  test("nodeend populates output map when outputs have no $error", () => {
+  test("nodeend populates output map when outputs have no $error", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -2557,24 +2517,30 @@ suite("nodeend output population", () => {
 
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
     // Fire graphstart + nodestart to create the console entry
-    runner._fireEvent("graphstart", { path: [] });
-    runner._fireEvent("nodestart", {
-      path: ["node-1"],
-      node: { id: "node-1", type: "test" },
-      inputs: {},
-    });
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
+    await RunActions.onNodeStartAction(
+      new CustomEvent("nodestart", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1", type: "test" },
+          inputs: {},
+        },
+      })
+    );
 
     // Fire nodeend with outputs that do NOT contain $error
-    runner._fireEvent("nodeend", {
-      path: ["node-1"],
-      node: { id: "node-1", type: "test" },
-      outputs: { text: "hello world" },
-    });
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1", type: "test" },
+          outputs: { text: "hello world" },
+        },
+      })
+    );
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "console entry should exist");
@@ -2600,7 +2566,7 @@ suite("output event with console entry (addOutputWorkItem)", () => {
     unsetDOM();
   });
 
-  test("output event adds work item to existing console entry", () => {
+  test("output event adds work item to existing console entry", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({ controller, services });
@@ -2633,31 +2599,37 @@ suite("output event with console entry (addOutputWorkItem)", () => {
 
     RunActions.prepare();
 
-    const runner = controller.run.main.runner! as unknown as {
-      _fireEvent: (e: string, data?: unknown) => void;
-    };
-
     // Create the console entry via graphstart + nodestart
-    runner._fireEvent("graphstart", { path: [] });
-    runner._fireEvent("nodestart", {
-      path: ["node-1"],
-      node: { id: "node-1", type: "test" },
-      inputs: {},
-    });
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
+    await RunActions.onNodeStartAction(
+      new CustomEvent("nodestart", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1", type: "test" },
+          inputs: {},
+        },
+      })
+    );
 
     // Now fire output event with bubbled=true and a matching node id
-    runner._fireEvent("output", {
-      bubbled: true,
-      node: {
-        id: "node-1",
-        type: "test",
-        configuration: {},
-        metadata: { title: "Output Step", icon: "output" },
-      },
-      path: ["node-1"],
-      outputs: { result: "test-output" },
-      timestamp: 12345,
-    });
+    await RunActions.onOutputAction(
+      new CustomEvent("output", {
+        detail: {
+          bubbled: true,
+          node: {
+            id: "node-1",
+            type: "test",
+            configuration: {},
+            metadata: { title: "Output Step", icon: "output" },
+          },
+          path: ["node-1"],
+          outputs: { result: "test-output" },
+          timestamp: 12345,
+        },
+      })
+    );
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "console entry should exist");

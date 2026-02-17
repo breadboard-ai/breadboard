@@ -29,6 +29,17 @@ import {
   onGraphVersionForSync,
   onNodeActionRequested,
   onTopologyChange,
+  onRunnerStart,
+  onRunnerResume,
+  onRunnerPause,
+  onRunnerEnd,
+  onRunnerError,
+  onRunnerGraphStart,
+  onRunnerNodeStart,
+  onRunnerNodeEnd,
+  onRunnerNodeStateChange,
+  onRunnerEdgeStateChange,
+  onRunnerOutput,
 } from "./triggers.js";
 import { edgeToString } from "../../../ui/utils/workspace.js";
 import { decodeErrorData } from "../../utils/decode-error.js";
@@ -84,7 +95,8 @@ export const stop = asAction(
 
 /**
  * Prepares a run by building the RunConfig, creating the HarnessRunner,
- * and setting it on the controller.
+ * registering it on the service (for event forwarding), and setting it on
+ * the controller.
  *
  * All configuration is pulled directly from the SCA bind (controller/services).
  * Wired to `onTopologyChange` so the runner is re-created whenever nodes are
@@ -140,248 +152,8 @@ export const prepare = asAction(
     const { runner, abortController } =
       services.runService.createRunner(runConfig);
 
-    // ─── Progress ticker ───
-    // Periodically update `progressCompletion` on screens with an active
-    // `expectedDuration`.  The old ReactiveAppScreen class had a setInterval
-    // internally; here we manage it in the action layer.
-    let progressTickerHandle: ReturnType<typeof setInterval> | null = null;
-
-    // Register status listeners on the runner
-    runner.addEventListener("start", () => {
-      controller.run.main.setStatus(STATUS.RUNNING);
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner started for ${url}`),
-        LABEL
-      );
-
-      // Start ticking progress every 250ms
-      progressTickerHandle = setInterval(() => {
-        for (const screen of controller.run.screen.screens.values()) {
-          tickScreenProgress(screen);
-        }
-      }, 250);
-    });
-
-    runner.addEventListener("resume", () => {
-      controller.run.main.setStatus(STATUS.RUNNING);
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner resumed for ${url}`),
-        LABEL
-      );
-    });
-
-    runner.addEventListener("pause", () => {
-      controller.run.main.setStatus(STATUS.PAUSED);
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner paused for ${url}`),
-        LABEL
-      );
-    });
-
-    runner.addEventListener("end", () => {
-      controller.run.main.setStatus(STATUS.STOPPED);
-      if (progressTickerHandle) {
-        clearInterval(progressTickerHandle);
-        progressTickerHandle = null;
-      }
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner ended for ${url}`),
-        LABEL
-      );
-    });
-
-    runner.addEventListener("error", () => {
-      controller.run.main.setStatus(STATUS.STOPPED);
-      if (progressTickerHandle) {
-        clearInterval(progressTickerHandle);
-        progressTickerHandle = null;
-      }
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner error for ${url}`),
-        LABEL
-      );
-    });
-
-    runner.addEventListener("error", (event) => {
-      const error = event.data?.error;
-      const message =
-        typeof error === "string"
-          ? error
-          : ((error as { message?: string })?.message ?? "Unknown error");
-      controller.run.main.setError({ message });
-      controller.run.main.clearInput();
-    });
-
-    runner.addEventListener("end", () => {
-      controller.run.main.clearInput();
-    });
-
-    runner.addEventListener("graphstart", (event) => {
-      // Only reset for top-level graph
-      if (event.data.path.length === 0) {
-        controller.run.main.reset();
-        controller.run.renderer.reset();
-        controller.run.screen.reset();
-
-        // Use runner.plan.stages for execution-ordered iteration
-        // Flatten stages to get nodes in execution order
-        const nodeIds: string[] = [];
-        for (const stage of runner.plan?.stages ?? []) {
-          for (const planNode of stage) {
-            nodeIds.push(planNode.node.id);
-          }
-        }
-
-        controller.run.main.setEstimatedEntryCount(nodeIds.length);
-
-        // Pre-populate console with all graph nodes as "inactive" in execution order
-        const inspectable = controller.editor.graph.get()?.graphs.get("");
-        if (inspectable) {
-          for (const nodeId of nodeIds) {
-            const node = inspectable?.nodeById(nodeId);
-            const title = node?.title() ?? nodeId;
-            const metadata = node?.currentDescribe()?.metadata ?? {};
-            const icon = getStepIcon(metadata.icon, node?.currentPorts());
-
-            const entry = RunController.createConsoleEntry(title, "inactive", {
-              icon,
-              tags: metadata.tags,
-            });
-            controller.run.main.setConsoleEntry(nodeId, entry);
-
-            // If metadata wasn't ready (no tags), async fetch full describe
-            if (!metadata.tags && node) {
-              node.describe().then((result) => {
-                const { icon: asyncIcon, tags: asyncTags } =
-                  result.metadata || {};
-                const resolvedIcon = getStepIcon(
-                  asyncIcon,
-                  node.currentPorts()
-                );
-                const updatedEntry = RunController.createConsoleEntry(
-                  title,
-                  "inactive",
-                  {
-                    icon: resolvedIcon,
-                    tags: asyncTags,
-                  }
-                );
-                controller.run.main.setConsoleEntry(nodeId, updatedEntry);
-              });
-            }
-          }
-        }
-      }
-    });
-
-    runner.addEventListener("nodestart", (event) => {
-      // Only handle top-level nodes
-      if (event.data.path.length > 1) return;
-
-      const nodeId = event.data.node.id;
-      const inspectable = controller.editor.graph.get()?.graphs.get("");
-      const node = inspectable?.nodeById(nodeId);
-      const title = node?.title() ?? nodeId;
-      const metadata = node?.currentDescribe()?.metadata ?? {};
-
-      const entry = RunController.createConsoleEntry(title, "working", {
-        icon: getStepIcon(metadata.icon, node?.currentPorts()),
-        tags: metadata.tags,
-        id: nodeId,
-        controller: controller.run.main,
-      });
-      controller.run.main.setConsoleEntry(nodeId, entry);
-      controller.run.renderer.setNodeState(nodeId, { status: "working" });
-
-      // Create screen for this node (unless it should be skipped)
-      const outputSchema = node?.currentDescribe()?.outputSchema;
-      const controlState = computeControlState(event.data.inputs ?? {});
-      if (!controlState.skip) {
-        const screen = createAppScreen(title, outputSchema);
-        controller.run.screen.setScreen(nodeId, screen);
-      }
-    });
-
-    // Handle nodeend - update console entry status to succeeded
-    runner.addEventListener("nodeend", (event) => {
-      // Only handle top-level nodes
-      if (event.data.path.length > 1) return;
-
-      const nodeId = event.data.node.id;
-      const existing = controller.run.main.console.get(nodeId);
-      if (existing) {
-        // Populate the output map for completed step display.
-        const { outputs } = event.data;
-        if (outputs && !("$error" in outputs)) {
-          const inspectable = controller.editor.graph.get()?.graphs.get("");
-          const node = inspectable?.nodeById(nodeId);
-          const outputSchema = node?.currentDescribe()?.outputSchema ?? {};
-          const { products } = toLLMContentArray(
-            outputSchema as Schema,
-            outputs
-          );
-          for (const [name, product] of Object.entries(products)) {
-            existing.output.set(name, product as LLMContent);
-          }
-        }
-
-        controller.run.main.setConsoleEntry(nodeId, {
-          ...existing,
-          status: { status: "succeeded" },
-          completed: true,
-        });
-        controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
-      }
-
-      // Finalize or delete screen based on node state
-      const nodeState = controller.run.main.runner?.state?.get(nodeId);
-      if (nodeState?.state === "interrupted") {
-        controller.run.screen.deleteScreen(nodeId);
-      } else {
-        controller.run.screen.screens.get(nodeId)?.finalize(event.data);
-      }
-    });
-
-    // ── Renderer state ────────────────────────────────────────────────────
-
-    runner.addEventListener("nodestatechange", (event) => {
-      const { id, state, message } = event.data;
-      if (state === "failed") {
-        const errorMessage =
-          decodeErrorData(services.actionTracker, message as ErrorObject) ??
-          "Unknown error";
-        controller.run.renderer.setNodeState(id, {
-          status: state,
-          errorMessage: errorMessage.message,
-        });
-        return;
-      }
-      controller.run.renderer.setNodeState(id, { status: state });
-    });
-
-    runner.addEventListener("edgestatechange", (event) => {
-      const { edges, state } = event.data;
-      edges?.forEach((edge) => {
-        const edgeId = edgeToString(edge);
-        controller.run.renderer.setEdgeState(edgeId, { status: state });
-      });
-    });
-
-    // ── Output ────────────────────────────────────────────────────────────
-
-    runner.addEventListener("output", (event) => {
-      if (!event.data.bubbled) return;
-      const nodeId = event.data.node.id;
-
-      // Write to screen (app view).
-      controller.run.screen.screens.get(nodeId)?.addOutput(event.data);
-
-      // Write to console entry as a work item (console view live display).
-      const entry = controller.run.main.console.get(nodeId);
-      if (entry) {
-        addOutputWorkItem(entry, event.data);
-      }
-    });
+    // Register on service — this hooks up event forwarding to runnerEventBus.
+    services.runService.registerRunner(runner);
 
     // Wire input lifecycle: when a console entry calls requestInputForNode,
     // notify the input queue to handle activation (bump screen, set input, etc.)
@@ -398,6 +170,397 @@ export const prepare = asAction(
     await syncConsoleFromRunner();
   }
 );
+
+// =============================================================================
+// Runner Event-Triggered Actions
+// =============================================================================
+// Each runner event type gets its own triggered action, making it visible in
+// the coordination registry, testable in isolation, and independently loggable.
+
+/**
+ * Module-level progress ticker handle, shared between onStart (creates it)
+ * and onEnd/onError (clears it).
+ */
+let progressTickerHandle: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Runner "start" — sets status to RUNNING and starts the progress ticker.
+ */
+export const onStart = asAction(
+  "Run.onRunnerStart",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerStart(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const logger = Utils.Logging.getLogger(controller);
+    const url = controller.editor.graph.url ?? "(unknown)";
+
+    controller.run.main.setStatus(STATUS.RUNNING);
+    logger.log(
+      Utils.Logging.Formatter.verbose(`Runner started for ${url}`),
+      "Run Actions"
+    );
+
+    // Start ticking progress every 250ms
+    progressTickerHandle = setInterval(() => {
+      for (const screen of controller.run.screen.screens.values()) {
+        tickScreenProgress(screen);
+      }
+    }, 250);
+  }
+);
+
+/**
+ * Runner "resume" — sets status to RUNNING.
+ */
+export const onResume = asAction(
+  "Run.onRunnerResume",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerResume(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    controller.run.main.setStatus(STATUS.RUNNING);
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Runner resumed for ${controller.editor.graph.url ?? "(unknown)"}`
+      ),
+      "Run Actions"
+    );
+  }
+);
+
+/**
+ * Runner "pause" — sets status to PAUSED.
+ */
+export const onPause = asAction(
+  "Run.onRunnerPause",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerPause(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    controller.run.main.setStatus(STATUS.PAUSED);
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Runner paused for ${controller.editor.graph.url ?? "(unknown)"}`
+      ),
+      "Run Actions"
+    );
+  }
+);
+
+/**
+ * Runner "end" — sets status to STOPPED, clears ticker and input.
+ */
+export const onEnd = asAction(
+  "Run.onRunnerEnd",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerEnd(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    controller.run.main.setStatus(STATUS.STOPPED);
+    if (progressTickerHandle) {
+      clearInterval(progressTickerHandle);
+      progressTickerHandle = null;
+    }
+    controller.run.main.clearInput();
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Runner ended for ${controller.editor.graph.url ?? "(unknown)"}`
+      ),
+      "Run Actions"
+    );
+  }
+);
+
+/**
+ * Runner "error" — sets status to STOPPED, clears ticker, sets error + clears input.
+ */
+export const onError = asAction(
+  "Run.onRunnerError",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerError(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+
+    // Status + ticker cleanup
+    controller.run.main.setStatus(STATUS.STOPPED);
+    if (progressTickerHandle) {
+      clearInterval(progressTickerHandle);
+      progressTickerHandle = null;
+    }
+
+    // Extract error message from the event detail
+    const detail = (evt as CustomEvent)?.detail;
+    const error = detail?.error;
+    const message =
+      typeof error === "string"
+        ? error
+        : ((error as { message?: string })?.message ?? "Unknown error");
+    controller.run.main.setError({ message });
+    controller.run.main.clearInput();
+
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Runner error for ${controller.editor.graph.url ?? "(unknown)"}`
+      ),
+      "Run Actions"
+    );
+  }
+);
+
+/**
+ * Runner "graphstart" — resets controllers and pre-populates console.
+ */
+export const onGraphStartAction = asAction(
+  "Run.onGraphStart",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerGraphStart(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+    const path = detail?.path;
+
+    // Only reset for top-level graph
+    if (!path || path.length !== 0) return;
+
+    controller.run.main.reset();
+    controller.run.renderer.reset();
+    controller.run.screen.reset();
+
+    const runner = controller.run.main.runner;
+
+    // Use runner.plan.stages for execution-ordered iteration
+    // Flatten stages to get nodes in execution order
+    const nodeIds: string[] = [];
+    for (const stage of runner?.plan?.stages ?? []) {
+      for (const planNode of stage) {
+        nodeIds.push(planNode.node.id);
+      }
+    }
+
+    controller.run.main.setEstimatedEntryCount(nodeIds.length);
+
+    // Pre-populate console with all graph nodes as "inactive" in execution order
+    const inspectable = controller.editor.graph.get()?.graphs.get("");
+    if (inspectable) {
+      for (const nodeId of nodeIds) {
+        const node = inspectable?.nodeById(nodeId);
+        const title = node?.title() ?? nodeId;
+        const metadata = node?.currentDescribe()?.metadata ?? {};
+        const icon = getStepIcon(metadata.icon, node?.currentPorts());
+
+        const entry = RunController.createConsoleEntry(title, "inactive", {
+          icon,
+          tags: metadata.tags,
+        });
+        controller.run.main.setConsoleEntry(nodeId, entry);
+
+        // If metadata wasn't ready (no tags), async fetch full describe
+        if (!metadata.tags && node) {
+          node.describe().then((result) => {
+            const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
+            const resolvedIcon = getStepIcon(asyncIcon, node.currentPorts());
+            const updatedEntry = RunController.createConsoleEntry(
+              title,
+              "inactive",
+              {
+                icon: resolvedIcon,
+                tags: asyncTags,
+              }
+            );
+            controller.run.main.setConsoleEntry(nodeId, updatedEntry);
+          });
+        }
+      }
+    }
+  }
+);
+
+/**
+ * Runner "nodestart" — creates console entry, sets renderer state, creates screen.
+ */
+export const onNodeStartAction = asAction(
+  "Run.onNodeStart",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerNodeStart(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+
+    // Only handle top-level nodes
+    if (!detail || detail.path.length > 1) return;
+
+    const nodeId = detail.node.id;
+    const inspectable = controller.editor.graph.get()?.graphs.get("");
+    const node = inspectable?.nodeById(nodeId);
+    const title = node?.title() ?? nodeId;
+    const metadata = node?.currentDescribe()?.metadata ?? {};
+
+    const entry = RunController.createConsoleEntry(title, "working", {
+      icon: getStepIcon(metadata.icon, node?.currentPorts()),
+      tags: metadata.tags,
+      id: nodeId,
+      controller: controller.run.main,
+    });
+    controller.run.main.setConsoleEntry(nodeId, entry);
+    controller.run.renderer.setNodeState(nodeId, { status: "working" });
+
+    // Create screen for this node (unless it should be skipped)
+    const outputSchema = node?.currentDescribe()?.outputSchema;
+    const controlState = computeControlState(detail.inputs ?? {});
+    if (!controlState.skip) {
+      const screen = createAppScreen(title, outputSchema);
+      controller.run.screen.setScreen(nodeId, screen);
+    }
+  }
+);
+
+/**
+ * Runner "nodeend" — updates console entry status, finalizes screen.
+ */
+export const onNodeEndAction = asAction(
+  "Run.onNodeEnd",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerNodeEnd(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+
+    // Only handle top-level nodes
+    if (!detail || detail.path.length > 1) return;
+
+    const nodeId = detail.node.id;
+    const existing = controller.run.main.console.get(nodeId);
+    if (existing) {
+      // Populate the output map for completed step display.
+      const { outputs } = detail;
+      if (outputs && !("$error" in outputs)) {
+        const inspectable = controller.editor.graph.get()?.graphs.get("");
+        const node = inspectable?.nodeById(nodeId);
+        const outputSchema = node?.currentDescribe()?.outputSchema ?? {};
+        const { products } = toLLMContentArray(outputSchema as Schema, outputs);
+        for (const [name, product] of Object.entries(products)) {
+          existing.output.set(name, product as LLMContent);
+        }
+      }
+
+      controller.run.main.setConsoleEntry(nodeId, {
+        ...existing,
+        status: { status: "succeeded" },
+        completed: true,
+      });
+      controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
+    }
+
+    // Finalize or delete screen based on node state
+    const nodeState = controller.run.main.runner?.state?.get(nodeId);
+    if (nodeState?.state === "interrupted") {
+      controller.run.screen.deleteScreen(nodeId);
+    } else {
+      controller.run.screen.screens.get(nodeId)?.finalize(detail);
+    }
+  }
+);
+
+/**
+ * Runner "nodestatechange" — updates renderer node state.
+ */
+export const onNodeStateChangeAction = asAction(
+  "Run.onNodeStateChange",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerNodeStateChange(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller, services } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+    if (!detail) return;
+
+    const { id, state, message } = detail;
+    if (state === "failed") {
+      const errorMessage =
+        decodeErrorData(services.actionTracker, message as ErrorObject) ??
+        "Unknown error";
+      controller.run.renderer.setNodeState(id, {
+        status: state,
+        errorMessage: errorMessage.message,
+      });
+      return;
+    }
+    controller.run.renderer.setNodeState(id, { status: state });
+  }
+);
+
+/**
+ * Runner "edgestatechange" — updates renderer edge state.
+ */
+export const onEdgeStateChangeAction = asAction(
+  "Run.onEdgeStateChange",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerEdgeStateChange(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+    if (!detail) return;
+
+    const { edges, state } = detail;
+    edges?.forEach(
+      (edge: { from: string; to: string; out: string; in: string }) => {
+        const edgeId = edgeToString(edge);
+        controller.run.renderer.setEdgeState(edgeId, { status: state });
+      }
+    );
+  }
+);
+
+/**
+ * Runner "output" — writes to screen and console entry.
+ */
+export const onOutputAction = asAction(
+  "Run.onOutput",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerOutput(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail as OutputResponse | undefined;
+    if (!detail || !detail.bubbled) return;
+
+    const nodeId = detail.node.id;
+
+    // Write to screen (app view).
+    controller.run.screen.screens.get(nodeId)?.addOutput(detail);
+
+    // Write to console entry as a work item (console view live display).
+    const entry = controller.run.main.console.get(nodeId);
+    if (entry) {
+      addOutputWorkItem(entry, detail);
+    }
+  }
+);
+
+// =============================================================================
+// Console Sync
+// =============================================================================
 
 /**
  * Maps a NodeLifecycleState to a NodeRunStatus for console entries.
