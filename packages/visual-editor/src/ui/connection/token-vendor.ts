@@ -102,6 +102,7 @@ export class TokenVendor {
       name: expiredGrant.name,
       domain: expiredGrant.domain,
       scopes: expiredGrant.scopes,
+      authuser: expiredGrant.authuser,
     };
     await this.#store.set(JSON.stringify(updatedGrant));
     return { state: "valid", grant: updatedGrant };
