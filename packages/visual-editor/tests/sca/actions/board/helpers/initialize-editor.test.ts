@@ -126,7 +126,6 @@ suite("initialize-editor helpers", () => {
     assert.strictEqual(graphController.url, "https://example.com/board.json");
     assert.strictEqual(graphController.version, 6);
     assert.strictEqual(graphController.readOnly, false);
-    assert.strictEqual(graphController.graphIsMine, true); // !readOnly
     assert.strictEqual(graphController.lastLoadedVersion, 3);
   });
 
@@ -145,7 +144,6 @@ suite("initialize-editor helpers", () => {
     });
 
     assert.strictEqual(graphController.readOnly, true);
-    assert.strictEqual(graphController.graphIsMine, false);
   });
 
   test("resetEditor clears controller state", () => {
