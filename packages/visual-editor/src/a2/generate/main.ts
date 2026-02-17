@@ -96,7 +96,7 @@ type Mode = {
 };
 
 const PROMPT_PORT = "config$prompt";
-const ASK_USER_PORT = "config$ask-user";
+
 const LIMIT_MSG = "generation has a daily limit";
 
 const ALL_MODES: Mode[] = [
@@ -110,10 +110,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "none",
     invoke: makeText,
@@ -130,10 +127,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.0-flash",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
     invoke: makeText,
@@ -149,10 +143,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
     invoke: makeText,
@@ -168,10 +159,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
     invoke: makeText,
@@ -187,10 +175,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-pro",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
     invoke: makeText,
@@ -206,10 +191,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-3-pro-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
     invoke: makeText,

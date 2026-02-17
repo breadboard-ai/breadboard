@@ -12,7 +12,6 @@ export { invoke as default, describe };
 export type EntryInputs = {
   context: LLMContent[];
   description: LLMContent;
-  "p-chat": boolean;
   [key: `p-z-${string}`]: unknown;
 };
 
@@ -22,28 +21,22 @@ type Outputs = {
 
 async function invoke({
   context,
-  "p-chat": chat,
   description,
   ...params
 }: EntryInputs): Promise<Outputs> {
-  // Make sure it's a boolean.
-  chat = !!chat;
   context ??= [];
   const defaultModel = "";
   const type = "work";
   return {
     context: {
       id: Math.random().toString(36).substring(2, 5),
-      chat,
       context,
-      userInputs: [],
       defaultModel,
       model: "",
       description,
       tools: [],
       type,
       work: [],
-      userEndedChat: false,
       params,
     },
   };
