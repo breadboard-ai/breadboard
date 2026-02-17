@@ -29,9 +29,9 @@ export async function invokeAgentAdk(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
 
-  const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
+  const opalAdkStream = new OpalAdkStream(moduleArgs);
   const uiType = enableA2UI ? "a2ui" : "chat";
-  const template = new Template(caps, prompt_template);
+  const template = new Template(prompt_template);
   // TODO: This is going to need to be updated for Opal ADK subtitution.
   const completed_prompt = await template.substitute(params);
   if (!ok(completed_prompt)) {

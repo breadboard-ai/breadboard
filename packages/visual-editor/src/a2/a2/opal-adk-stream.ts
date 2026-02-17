@@ -5,7 +5,7 @@ import {
   OPAL_BACKEND_API_PREFIX,
   Outcome,
 } from "@breadboard-ai/types";
-import { err, toLLMContent } from "./utils.js";
+import { err, ok, toLLMContent } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 import { PidginTranslator } from "../agent/pidgin-translator.js";
