@@ -39,7 +39,7 @@ import { createActionTracker } from "./ui/utils/action-tracker.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { scaContext } from "./sca/context/context.js";
 import { sca, type SCA } from "./sca/sca.js";
-import { RuntimeConfig } from "./runtime/types.js";
+import { RuntimeConfig } from "./utils/graph-types.js";
 import { getLogger, Formatter } from "./sca/utils/logging/logger.js";
 
 const DELETE_BOARD_MESSAGE =

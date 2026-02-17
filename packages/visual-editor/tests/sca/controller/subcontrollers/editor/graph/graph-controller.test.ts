@@ -23,7 +23,7 @@ import type {
 import type { GraphAsset } from "../../../../../../src/sca/types.js";
 import { ok } from "@breadboard-ai/utils";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
-import { Tab } from "../../../../../../src/runtime/types.js";
+import { Tab } from "../../../../../../src/utils/graph-types.js";
 import { createMockEditor, makeFreshGraph } from "../../../../helpers/index.js";
 import { A2_TOOLS } from "../../../../../../src/a2/a2-registry.js";
 

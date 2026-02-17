@@ -33,7 +33,7 @@ import {
 import { edgeToString } from "../../../ui/utils/workspace.js";
 import { decodeErrorData } from "../../utils/decode-error.js";
 import { createAppScreen, tickScreenProgress } from "../../utils/app-screen.js";
-import { computeControlState } from "../../../runtime/control.js";
+import { computeControlState } from "../../../utils/control.js";
 import { toLLMContentArray } from "../../utils/common.js";
 import {
   cleanupStoppedInput,

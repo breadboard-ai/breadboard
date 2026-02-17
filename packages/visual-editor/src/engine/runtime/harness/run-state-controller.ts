@@ -33,7 +33,7 @@ import {
   augmentWithSkipOutputs,
   computeControlState,
   computeSkipOutputs,
-} from "../../../runtime/control.js";
+} from "../../../utils/control.js";
 
 import { getLatestConfig as defaultGetLatestConfig } from "./get-latest-config.js";
 

@@ -30,7 +30,7 @@ import {
   GraphSelectionState,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
-} from "../runtime/types.js";
+} from "./graph-types.js";
 import { GraphTheme } from "@breadboard-ai/types";
 import {
   generatePaletteFromColor,

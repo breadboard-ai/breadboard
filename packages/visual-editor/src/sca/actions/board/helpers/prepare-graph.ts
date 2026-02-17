@@ -9,7 +9,7 @@ import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google
 import {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
-} from "../../../../runtime/util.js";
+} from "../../../../utils/graph-utils.js";
 
 /**
  * Options for graph preparation.

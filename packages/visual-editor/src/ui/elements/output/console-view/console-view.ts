@@ -29,7 +29,7 @@ import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { sharedStyles } from "./shared-styles.js";
-import { hasControlPart } from "../../../../runtime/control.js";
+import { hasControlPart } from "../../../../utils/control.js";
 
 function isConsoleUpdate(
   item: LLMContent | SimplifiedA2UIClient | ConsoleUpdate
