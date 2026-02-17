@@ -14,7 +14,7 @@ import type {
 } from "@breadboard-ai/types";
 
 import type { NodeInvoker } from "../../types.js";
-import { resolveBoardCapabilitiesInInputs } from "../../loader/capability.js";
+
 import { resolveGraph, SENTINEL_BASE_URL } from "../../loader/loader.js";
 import { callHandler, getHandler } from "../handler.js";
 
@@ -54,11 +54,7 @@ class NodeInvokerImpl implements NodeInvoker {
       invocationPath,
     };
 
-    outputs = (await callHandler(
-      handler,
-      resolveBoardCapabilitiesInInputs(inputs, context, graph.graph.url),
-      newContext
-    )) as OutputValues;
+    outputs = (await callHandler(handler, inputs, newContext)) as OutputValues;
 
     return outputs;
   }
