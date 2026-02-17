@@ -26,7 +26,6 @@ import {
   StoredDataCapabilityPart,
 } from "./llm-content.js";
 import { GraphLoader } from "./loader.js";
-import { Probe } from "./probe.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
@@ -313,7 +312,6 @@ export interface NodeHandlerContext {
    * @see [GraphLoader]
    */
   readonly loader?: GraphLoader;
-  readonly probe?: Probe;
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */

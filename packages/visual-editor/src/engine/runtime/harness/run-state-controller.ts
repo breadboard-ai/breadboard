@@ -10,8 +10,6 @@ import {
   NodeHandlerContext,
   NodeIdentifier,
   Outcome,
-  Probe,
-  ProbeMessage,
   RunConfig,
   Task,
 } from "@breadboard-ai/types";
@@ -30,7 +28,6 @@ import {
   NodeEndEvent,
   NodeStartEvent,
   RunnerErrorEvent,
-  SkipEvent,
 } from "./events.js";
 import {
   augmentWithSkipOutputs,
@@ -61,15 +58,11 @@ class RunStateController {
     private readonly invoker: NodeInvoker,
     private readonly configProvider: ConfigProvider = defaultGetLatestConfig
   ) {
-    this.context = initializeNodeHandlerContext(
-      this.config,
-      (event: Event) => this.eventSink.dispatch(event),
-      () => {
-        this.#stopControllers.forEach((controller) => {
-          controller.abort();
-        });
-      }
-    );
+    this.context = initializeNodeHandlerContext(this.config, () => {
+      this.#stopControllers.forEach((controller) => {
+        controller.abort();
+      });
+    });
   }
 
   path(): number[] {
@@ -294,7 +287,6 @@ class RunStateController {
 
 function initializeNodeHandlerContext(
   config: RunConfig,
-  dispatch: (event: Event) => void,
   onAbort: () => void
 ): NodeHandlerContext {
   const {
@@ -308,16 +300,9 @@ function initializeNodeHandlerContext(
     flags,
   } = config;
 
-  const probe: Probe = {
-    async report(message: ProbeMessage) {
-      dispatchProbeMessage(dispatch, message);
-    },
-  };
-
   signal?.addEventListener("abort", onAbort);
 
   return {
-    probe,
     loader,
     base,
     signal,
@@ -328,27 +313,4 @@ function initializeNodeHandlerContext(
     clientDeploymentConfiguration,
     flags,
   };
-}
-
-function dispatchProbeMessage(
-  dispatch: (event: Event) => void,
-  message: ProbeMessage
-) {
-  switch (message.type) {
-    case "nodestart":
-      dispatch(new NodeStartEvent(structuredClone(message.data)));
-      break;
-    case "nodeend":
-      dispatch(new NodeEndEvent(structuredClone(message.data)));
-      break;
-    case "graphstart":
-      dispatch(new GraphStartEvent(structuredClone(message.data)));
-      break;
-    case "graphend":
-      dispatch(new GraphEndEvent(structuredClone(message.data)));
-      break;
-    case "skip":
-      dispatch(new SkipEvent(structuredClone(message.data)));
-      break;
-  }
 }
