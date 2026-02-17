@@ -6,7 +6,7 @@
 
 import { signal } from "signal-utils";
 import { reactive } from "../../sca/reactive.js";
-import type { AppScreen } from "@breadboard-ai/types";
+import type { AppScreen, OutputValues } from "@breadboard-ai/types";
 import type { SCA } from "../../sca/sca.js";
 import type { AppScreenData } from "../../sca/utils/app-screen.js";
 
@@ -38,6 +38,7 @@ export { AppScreenPresenter, type AppState };
  * - `state` — Overall app UI state: splash/error/input/progress/interactive/output
  * - `current` — Map of currently active (incomplete) screens
  * - `last` — The most recent non-input-complete screen, or null
+ * - `finalOutput` — The output values when in "output" state, or null
  *
  * ## Lifecycle
  *
@@ -141,5 +142,21 @@ class AppScreenPresenter {
     } else {
       this.state = "progress";
     }
+  }
+
+  /**
+   * Returns the final output values when in the "output" state.
+   *
+   * Sources (in priority order):
+   * 1. The last completed screen's output (normal run completion).
+   *    JSON round-tripped to strip signal proxies that can't be structuredClone'd.
+   * 2. Pre-loaded `finalOutputValues` from a shared results link.
+   */
+  get finalOutput(): OutputValues | null {
+    const screenOutput = this.last?.last?.output;
+    if (screenOutput) {
+      return JSON.parse(JSON.stringify(screenOutput));
+    }
+    return this.#sca?.controller.editor.graph.finalOutputValues || null;
   }
 }
