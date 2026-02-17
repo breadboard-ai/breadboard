@@ -76,7 +76,6 @@ class SignalBackedEntry {
           sandbox: this.#deps.sandbox,
           graphStore: this.#mutable.store,
           flags: this.#deps.flags,
-          wires: { incoming: {}, outgoing: {} },
           asType: false,
         }
       );

@@ -98,15 +98,6 @@ export type NodeDescriberResult = GraphInlineMetadata & {
  */
 export type NodeDescriberContext = {
   /**
-   * The base URL of the graph.
-   */
-  base?: URL;
-  /**
-   * Information about the wires currently connected to this node.
-   */
-  wires: NodeDescriberWires;
-
-  /**
    * JS Sandbox that will be used to run the module describers.
    */
   sandbox?: RunnableModuleFactory;
@@ -124,19 +115,6 @@ export type NodeDescriberContext = {
    * Runtime Flags
    */
   flags?: RuntimeFlagManager;
-};
-
-export type NodeDescriberWires = {
-  // Note we only include the output port of incoming wires, and the input port
-  // of outgoing wires, because this object is consumed by describe functions,
-  // and it wouldn't make sense to ask about ports on the node we're
-  // implementing the describe function for, because that would be recursive.
-  incoming: Record<string, { outputPort: NodeDescriberPort }>;
-  outgoing: Record<string, { inputPort: NodeDescriberPort }>;
-};
-
-export type NodeDescriberPort = {
-  describe(): Promise<Schema>;
 };
 
 /**
