@@ -42,7 +42,6 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
-
 import { ActionTracker, EnumValue } from "../../types/types.js";
 import {
   isControllerBehavior,
@@ -1407,10 +1406,27 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           return item.id === port.value && item.info !== undefined;
         });
 
+        let finalInfo = "";
+        if (extendedInfo && typeof extendedInfo !== "string") {
+          if (extendedInfo?.info) {
+            finalInfo = extendedInfo.info;
+          }
+
+          const dailyLimitReached = false; // @TODO Integrate the backend once the daily limit check is ready
+          const isGoogleUser = false; // @TODO Integrate the backend once the google user check is ready
+          if (
+            extendedInfo?.subscriberInfo &&
+            dailyLimitReached &&
+            isGoogleUser
+          ) {
+            finalInfo = extendedInfo?.subscriberInfo;
+          }
+        }
+
         const extendedInfoOutput =
           extendedInfo && typeof extendedInfo !== "string"
             ? html`<div class="info">
-                <span class="g-icon round">info</span>${extendedInfo.info}
+                <span class="g-icon round">info</span>${finalInfo}
               </div>`
             : nothing;
 
