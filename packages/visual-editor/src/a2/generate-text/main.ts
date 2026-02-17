@@ -89,8 +89,6 @@ class GenerateText {
    * Invokes the text generator.
    * Significant mode flags:
    * - tools: boolean -- whether or not has tools
-   * - makeList: boolean -- asked to generate a list
-   * - isList: boolean -- is currently in list mode
    * - model: string -- the model to generate with
    */
   async invoke(
@@ -282,7 +280,6 @@ async function invoke({ context }: Inputs, moduleArgs: A2ModuleArgs) {
   const initializing = await gen.initialize();
   if (!ok(initializing)) return initializing;
 
-  // Process single item directly (list support removed)
   const result = await gen.invoke(gen.description, gen.context);
   if (!ok(result)) return result;
   console.log("RESULT", result);
