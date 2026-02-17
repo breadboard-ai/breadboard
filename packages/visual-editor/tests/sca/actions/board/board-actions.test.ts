@@ -10,7 +10,10 @@ import * as Board from "../../../../src/sca/actions/board/board-actions.js";
 import { AppServices } from "../../../../src/sca/services/services.js";
 import { AppController } from "../../../../src/sca/controller/controller.js";
 import type { EditHistoryCreator, GraphTheme } from "@breadboard-ai/types";
-import { makeTestGraphStore, loadGraphIntoStore } from "../../../helpers/_graph-store.js";
+import {
+  makeTestGraphStore,
+  loadGraphIntoStore,
+} from "../../../helpers/_graph-store.js";
 import { editGraphStore } from "../../../helpers/_editor.js";
 import { SnackType } from "../../../../src/ui/types/types.js";
 import {
@@ -563,6 +566,10 @@ suite("Board Actions", () => {
 
       let resetAllCalled = false;
       let loadStateSet: string | null = null;
+      let mainResetCalled = false;
+      let clearRunnerCalled = false;
+      let screenResetCalled = false;
+      let rendererResetCalled = false;
 
       const mockController = {
         editor: {
@@ -573,6 +580,26 @@ suite("Board Actions", () => {
             url: null,
             readOnly: false,
             editor: null,
+          },
+        },
+        run: {
+          main: {
+            reset: () => {
+              mainResetCalled = true;
+            },
+            clearRunner: () => {
+              clearRunnerCalled = true;
+            },
+          },
+          screen: {
+            reset: () => {
+              screenResetCalled = true;
+            },
+          },
+          renderer: {
+            reset: () => {
+              rendererResetCalled = true;
+            },
           },
         },
         global: {
@@ -595,6 +622,22 @@ suite("Board Actions", () => {
 
       assert.strictEqual(resetAllCalled, true, "Should call resetAll");
       assert.strictEqual(loadStateSet, "Home", "Should set loadState to Home");
+      assert.strictEqual(mainResetCalled, true, "Should call run.main.reset");
+      assert.strictEqual(
+        clearRunnerCalled,
+        true,
+        "Should call run.main.clearRunner"
+      );
+      assert.strictEqual(
+        screenResetCalled,
+        true,
+        "Should call run.screen.reset"
+      );
+      assert.strictEqual(
+        rendererResetCalled,
+        true,
+        "Should call run.renderer.reset"
+      );
     });
   });
 

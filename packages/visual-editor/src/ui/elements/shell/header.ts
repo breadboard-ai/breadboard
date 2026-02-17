@@ -12,7 +12,7 @@ import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { discordIcon } from "../../styles/svg-icons.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+
 import {
   CloseEvent,
   OverflowMenuActionEvent,
@@ -20,13 +20,9 @@ import {
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
-import { UILoadState } from "../../state/types.js";
+import { UILoadState } from "../../types/state-types.js";
 import * as Styles from "../../styles/styles.js";
-import {
-  ActionTracker,
-  BOARD_SAVE_STATUS,
-  EnumValue,
-} from "../../types/types.js";
+import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
@@ -39,17 +35,16 @@ export class VEHeader extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined = undefined;
-
   @property()
   accessor signinAdapter: SigninAdapter | null = null;
 
-  @property({ reflect: true, type: Boolean })
-  accessor hasActiveTab = false;
+  get hasActiveTab() {
+    return this.sca.controller.editor.graph.graph !== null;
+  }
 
-  @property()
-  accessor tabTitle: string | null = null;
+  get tabTitle(): string | null {
+    return this.sca.controller.editor.graph.title ?? null;
+  }
 
   @property()
   accessor url: string | null = null;
@@ -756,7 +751,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           return;
         }
 
-        this.actionTracker?.remixApp(this.url, "editor");
+        this.sca?.services.actionTracker?.remixApp(this.url, "editor");
         this.dispatchEvent(
           new StateEvent({
             eventType: "board.remix",
@@ -880,6 +875,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
+    // Sync hasactivetab attribute for CSS :host([hasactivetab]) selector
+    this.toggleAttribute("hasactivetab", this.hasActiveTab);
+
     // If the user has opened a file that isn't theirs it must be Published, so
     // we update the status as such.
     if (changedProperties.has("isMine")) {

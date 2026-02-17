@@ -6,7 +6,10 @@
 
 import { suite, test } from "node:test";
 import assert from "node:assert";
-import { onGraphVersionForSync } from "../../../../src/sca/actions/run/triggers.js";
+import {
+  onGraphVersionForSync,
+  onNodeActionRequested,
+} from "../../../../src/sca/actions/run/triggers.js";
 
 suite("Run Triggers", () => {
   suite("onGraphVersionForSync", () => {
@@ -77,6 +80,68 @@ suite("Run Triggers", () => {
       const result = trigger.condition();
 
       assert.strictEqual(result, true, "Should return true for version 0");
+    });
+  });
+
+  suite("onNodeActionRequested", () => {
+    test("returns true when nodeActionRequest is non-null", () => {
+      const mockBind = {
+        controller: {
+          run: {
+            main: {
+              nodeActionRequest: {
+                nodeId: "node-1",
+                actionContext: "graph",
+              },
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onNodeActionRequested(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true when request is set"
+      );
+    });
+
+    test("returns false when nodeActionRequest is null", () => {
+      const mockBind = {
+        controller: {
+          run: {
+            main: {
+              nodeActionRequest: null,
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onNodeActionRequested(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when request is null"
+      );
+    });
+
+    test("has correct trigger name", () => {
+      const mockBind = {
+        controller: {
+          run: { main: { nodeActionRequest: null } },
+        },
+        services: {},
+      };
+
+      const trigger = onNodeActionRequested(mockBind as never);
+
+      assert.strictEqual(trigger.name, "Node Action Requested (Run)");
     });
   });
 });

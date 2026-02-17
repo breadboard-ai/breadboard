@@ -132,6 +132,8 @@ Triggers connect **reactive state changes** to **action execution**. They are de
 |------|---------|------------|
 | Signal | `signalTrigger(name, condition)` | Condition returns truthy value (and changes) |
 | Event | `eventTrigger(name, target, eventType)` | DOM/custom event fires |
+| StateEvent | `stateEventTrigger(name, target, eventType)` | Specific `StateEvent` dispatched to the event bus |
+| Keyboard | `keyboardTrigger(name, keys, guard?)` | Key combination pressed (e.g., `"Cmd+s"`, `"Delete"`) |
 
 ### Example: Signal Trigger
 
@@ -187,16 +189,21 @@ export const save = asAction(
 | Module | Domain | Key Actions |
 |--------|--------|-------------|
 | `agent` | Agent lifecycle | `invalidateResumableRuns` |
+| `asset` | Asset management | `updateAsset`, `deleteAsset` |
 | `board` | Board persistence | `load`, `close`, `save`, `saveAs`, `deleteBoard` |
 | `flowgen` | Flow generation | `generateFlow` |
 | `graph` | Graph mutations | `addNode`, `changeEdge`, `changeNodeConfiguration` |
+| `host` | Host/shell | `updatePageTitle`, `updateIcon` |
+| `integration` | Integration management | `register`, `unregister`, `syncFromGraph` |
 | `node` | Node operations | `autoname` |
 | `router` | URL handling | `updateUrl` |
 | `run` | Execution | `syncConsoleFromRunner` |
 | `screen-size` | Responsive | `updateScreenSize` |
 | `share` | Sharing | `shareToGoogleDrive` |
-| `shell` | Chrome/UI | `updatePageTitle` |
+| `shell` | Chrome/UI | `updateShellState` |
+| `sidebar` | Sidebar | `reconcileSidebar` |
 | `step` | Step editing | `applyPendingEdits` |
+| `theme` | Theme | `applyTheme` |
 
 ---
 
@@ -227,7 +234,7 @@ export const myTriggeredAction = asAction(
   "MyDomain.myTriggeredAction",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onSomeCondition(bind)],
+    triggeredBy: () => onSomeCondition(bind),
   },
   async (): Promise<void> => {
     const { controller } = bind;
@@ -284,6 +291,9 @@ actions/
 ├── agent/
 │   ├── agent-actions.ts
 │   └── triggers.ts
+├── asset/
+│   ├── asset-actions.ts
+│   └── triggers.ts
 ├── board/
 │   ├── board-actions.ts
 │   └── triggers.ts
@@ -291,6 +301,11 @@ actions/
 │   └── flowgen-actions.ts
 ├── graph/
 │   └── graph-actions.ts
+├── host/
+│   └── host-actions.ts
+├── integration/
+│   ├── integration-actions.ts
+│   └── triggers.ts
 ├── node/
 │   ├── node-actions.ts
 │   └── triggers.ts
@@ -308,8 +323,14 @@ actions/
 ├── shell/
 │   ├── shell-actions.ts
 │   └── triggers.ts
-└── step/
-    ├── step-actions.ts
+├── sidebar/
+│   ├── sidebar-actions.ts
+│   └── triggers.ts
+├── step/
+│   ├── step-actions.ts
+│   └── triggers.ts
+└── theme/
+    ├── theme-actions.ts
     └── triggers.ts
 ```
 

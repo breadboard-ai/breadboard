@@ -19,14 +19,13 @@ session({ name: "A2UI" }, async (session) => {
     const { objective, title } = await import(filename);
     const params: Parameters<typeof session.eval> = [
       title,
-      async ({ caps, moduleArgs, logger }) => {
+      async ({ moduleArgs, logger }) => {
         const fileSystem = new AgentFileSystem({
           context: moduleArgs.context,
           memoryManager: null,
         });
-        const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
+        const translator = new PidginTranslator(moduleArgs, fileSystem);
         const pipeline = new SmartLayoutPipeline({
-          caps,
           moduleArgs,
           fileSystem,
           translator,

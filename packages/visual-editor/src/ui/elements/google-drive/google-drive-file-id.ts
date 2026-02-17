@@ -4,18 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import {
   InputCancelEvent,
   InputChangeEvent,
 } from "../../plugins/input-plugin.js";
-import { opalShellContext } from "../../utils/opal-shell-guest.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 export type PickedValue = {
   // A special value recognized by the "GraphPortLabel": if present in an
@@ -70,7 +69,7 @@ const ALLOWED_MIME_TYPES = [
 ];
 
 @customElement("bb-google-drive-file-id")
-export class GoogleDriveFileId extends LitElement {
+export class GoogleDriveFileId extends SignalWatcher(LitElement) {
   static styles = css`
     :host {
       display: flex;
@@ -132,11 +131,8 @@ export class GoogleDriveFileId extends LitElement {
   @property()
   accessor autoTrigger = false;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient: GoogleDriveClient | undefined;
-
-  @consume({ context: opalShellContext })
-  accessor opalShell: OpalShellHostProtocol | undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   #autoTrigger = false;
   #inputRef: Ref<HTMLButtonElement> = createRef();
@@ -183,17 +179,17 @@ export class GoogleDriveFileId extends LitElement {
   }
 
   async #onCreateNewDoc() {
-    if (!this.googleDriveClient) {
+    const googleDriveClient = this.sca.services.googleDriveClient;
+    if (!googleDriveClient) {
       console.error("google drive client was not provided");
       return;
     }
-
     const name = this.metadata?.docName ?? this.docName ?? "Untitled Document";
     const mimeType = "application/vnd.google-apps.document";
 
     try {
       this.inProgress = true;
-      const file = await this.googleDriveClient.createFileMetadata(
+      const file = await googleDriveClient.createFileMetadata(
         { name, mimeType },
         { fields: ["id"] }
       );
@@ -211,10 +207,10 @@ export class GoogleDriveFileId extends LitElement {
   }
 
   async #onClickPickFiles() {
-    if (this.opalShell === undefined) {
+    if (this.sca.services.shellHost === undefined) {
       return;
     }
-    const result = await this.opalShell.pickDriveFiles({
+    const result = await this.sca.services.shellHost.pickDriveFiles({
       mimeTypes: ALLOWED_MIME_TYPES,
     });
     switch (result.action) {

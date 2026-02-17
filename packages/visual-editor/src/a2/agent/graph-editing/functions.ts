@@ -16,6 +16,7 @@ import {
   changeNodeConfiguration,
 } from "../../../sca/actions/graph/graph-actions.js";
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
+import { graphOverviewYaml } from "./graph-overview.js";
 import { layoutGraph } from "./layout-graph.js";
 
 export { getGraphEditingFunctionGroup };
@@ -26,8 +27,7 @@ export { getGraphEditingFunctionGroup };
 
 const GRAPH_GET_OVERVIEW = "graph_get_overview";
 const GRAPH_REMOVE_STEP = "graph_remove_step";
-const GRAPH_CREATE_STEP = "create_step";
-const GRAPH_EDIT_STEP_PROMPT = "edit_step_prompt";
+const GRAPH_UPSERT_AGENT_STEP = "upsert_agent_step";
 
 /**
  * The Generate component URL from A2_COMPONENTS.
@@ -82,10 +82,35 @@ Think "enthusiastic buddy who knows they're an AI" rather than "all-knowing \
 oracle." A little humility goes a long way — you're here to help, not to \
 impress.
 
-**Keep it short.** The chat window is small — long messages scroll away fast. \
-Aim for **1–2 sentences** per reply. Lead with the action you took or the \
-question you need answered, then add color only if there's room. Your \
+## Two Conversation Modes
+
+Seamlessly, and without revealing that you do, adapt your reply style to what the user needs:
+
+### Builder Mode (concrete instructions)
+
+When the user gives you a specific task — "add a step that generates an image", \
+"wire step A to step B", "remove the summarizer" — **get it done fast.**
+
+- Act first, confirm briefly.
+- **1–2 sentences** per reply. Lead with the action you took.
+- The chat window is small — long messages scroll away fast. Your \
 personality should come through in word choice, not paragraph count.
+
+### Guide Mode (open-ended questions)
+
+When the user asks a question — "how does routing work?", "what's the best \
+way to build a quiz?", "can Opal do X?" — **shift into teaching mode.**
+
+- Take the space you need to explain clearly.
+- Use examples, analogies, and short illustrations.
+- Structure longer answers with bullet points or numbered steps.
+- Still be concise — don't ramble — but don't artificially compress \
+a concept that needs breathing room.
+
+**How to tell:** If the user's message is an instruction or request, use \
+Builder Mode. If it's a question or exploration, use Guide Mode. When in \
+doubt, lean toward Builder Mode — you can always elaborate if the user \
+asks follow-up questions.
 
 ## Before You Build
 
@@ -175,12 +200,33 @@ artifact.
    - **Iterate with user** — Let the user review and critique, then revise. \
 Repeat until satisfied.
 
-3. **Output format** — End with what the step should return. Example: \
-"Output Format: header graphic and final blog post."
+3. **What to return** — End with what the step should return. Example: \
+"Return header graphic and final blog post." IMPORTANT: this is the just the final output of the step, not the whole user experience. For example, if the step is an interactive quiz, the return value might be the final grade or the quiz report. The quiz itself is the experience. 
 
 Not every prompt needs all phases — a simple request might just be the \
 objective line. But for richer tasks, this structure helps the agentic step \
 stay on track.
+
+### Prompt Crafting Quality
+
+When you write the \`prompt\` argument for a step, shift gears from conversation \
+to **craftsmanship**. The prompt is a product — it determines how well the \
+step performs. This is completely separate from your chat replies.
+
+- **Be detailed and specific.** Include all context the step needs. Don't \
+assume the step "knows" what you and the user discussed.
+- **Be meticulous.** Check that every tool tag, parent reference, and route \
+is correct and necessary.
+- **Write complete objectives.** A well-crafted prompt covers the full scope: \
+what to do, what to return, how to handle edge cases, and what tone to use.
+- **Don't rush.** Even when the user's request was brief ("add an image \
+generator"), the prompt you write should be thoughtful and thorough.
+- **Make prompts easily readable to the user.** Do not use markdown, because \
+it might be confusing to the user who isn't familiar with the formatting.
+
+Think of it this way: your chat replies are quick texts to a friend. \
+The prompts you write are careful instructions to a capable but literal \
+assistant. Different audiences, different standards.
 
 ### Available Tools
 ${TOOL_NAMES}
@@ -334,43 +380,24 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
         title: "Inspecting graph",
         icon: "visibility",
         description:
-          "Get an overview of the current graph structure: all steps, their configurations, and connections between them.",
+          "Get an overview of the current graph: steps (with titles, prompts) and connections.",
         parameters: {},
         response: {
-          overview: z.string().describe("JSON summary of the graph structure"),
+          overview: z
+            .string()
+            .describe("Compact YAML overview of the graph structure"),
         },
       },
       async () => {
         const editor = requireEditor();
         const graph = editor.raw();
-
-        const steps = (graph.nodes ?? []).map((node) => ({
-          id: node.id,
-          type: node.type,
-          title: node.metadata?.title,
-          description: node.metadata?.description,
-          configuration: node.configuration,
-        }));
-
-        const edges = (graph.edges ?? []).map((edge) => ({
-          from: edge.from,
-          to: edge.to,
-          from_port: edge.out,
-          to_port: edge.in,
-        }));
-
-        return {
-          overview: JSON.stringify(
-            {
-              title: graph.title,
-              description: graph.description,
-              steps,
-              edges,
-            },
-            null,
-            2
-          ),
-        };
+        const overview = graphOverviewYaml(
+          graph,
+          graph.nodes ?? [],
+          graph.edges ?? [],
+          translator
+        );
+        return { overview };
       }
     ),
 
@@ -385,22 +412,35 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
         description:
           "Remove a step from the graph. Also removes all edges connected to it.",
         parameters: {
-          step_id: z.string().describe("The ID of the step to remove"),
+          step_id: z
+            .string()
+            .describe("The handle of the step to remove (e.g. node-1)"),
         },
         response: {
           success: z.boolean(),
+          error: z
+            .string()
+            .optional()
+            .describe(
+              "If an error has occurred, will contain a description of the error"
+            ),
         },
       },
       async ({ step_id }) => {
+        // Resolve pidgin handle (e.g. "node-1") to raw ID if needed
+        const resolvedId = translator.getNodeId(step_id) ?? step_id;
         const editor = requireEditor();
 
         const result = await editor.edit(
-          [{ type: "removenode", id: step_id, graphId: "" }],
-          `Remove step: ${step_id}`
+          [{ type: "removenode", id: resolvedId, graphId: "" }],
+          `Remove step: ${resolvedId}`
         );
 
         if (!result.success) {
-          return { $error: `Failed to remove step "${step_id}"` };
+          return {
+            success: false,
+            error: `Failed to remove step "${step_id}"`,
+          };
         }
 
         return { success: true };
@@ -408,45 +448,59 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
     ),
 
     // =========================================================================
-    // create_step
+    // upsert_agent_step
     // =========================================================================
     defineFunction(
       {
-        name: GRAPH_CREATE_STEP,
-        title: "Creating step",
-        icon: "add_circle",
+        name: GRAPH_UPSERT_AGENT_STEP,
+        title: "Updating step",
+        icon: "edit",
         description:
-          "Create a new Generate step with a prompt. Use <parent> tags in the prompt to wire connections from existing steps.",
+          "Create or update an agent step. Omit step_id to create a new step; provide step_id to update an existing one.",
         parameters: {
+          step_id: z
+            .string()
+            .optional()
+            .describe(
+              "The handle of an existing step to update (e.g. node-1). Omit to create a new step."
+            ),
           title: z.string().describe("A descriptive title for the step"),
           prompt: z.string().describe(PROMPT_DESCRIPTION),
         },
         response: {
-          step_id: z.string().describe("The ID of the newly created step"),
+          step_id: z
+            .string()
+            .describe("The handle of the created or updated step")
+            .optional(),
+          error: z
+            .string()
+            .optional()
+            .describe(
+              "If an error has occurred, will contain a description of the error"
+            ),
         },
       },
-      async ({ title, prompt }) => {
+      async ({ step_id, title, prompt }) => {
         const promptContent = translator.fromPidgin(
           prompt,
           nodeTitleResolver()
         );
-
-        const stepId = globalThis.crypto.randomUUID();
-        const node: NodeDescriptor = {
-          id: stepId,
-          type: GENERATE_COMPONENT_URL,
-          metadata: { title },
-          configuration: {
-            "generation-mode": "agent",
-            config$prompt: promptContent as unknown as NodeValue,
-          },
-        };
-
-        await addNode(node, "");
-
-        // Auto-wire edges from <parent> references
         const ports = extractParentPorts(prompt, translator);
-        if (ports.length > 0) {
+
+        let stepId: string;
+
+        if (step_id) {
+          // Resolve pidgin handle to raw ID if needed
+          const resolvedId = translator.getNodeId(step_id) ?? step_id;
+          // Update existing step
+          const editor = requireEditor();
+          const inspector = editor.inspect("");
+          const node = inspector.nodeById(resolvedId);
+          if (!node) {
+            return { error: `Step "${step_id}" not found` };
+          }
+
+          stepId = resolvedId;
           await changeNodeConfiguration(
             stepId,
             "",
@@ -454,62 +508,40 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
             null,
             ports
           );
+        } else {
+          // Create new step
+          stepId = globalThis.crypto.randomUUID();
+          const node: NodeDescriptor = {
+            id: stepId,
+            type: GENERATE_COMPONENT_URL,
+            metadata: { title },
+            configuration: {
+              "generation-mode": "agent",
+              config$prompt: promptContent as unknown as NodeValue,
+            },
+          };
+
+          await addNode(node, "");
+
+          // Auto-wire edges from <parent> references
+          if (ports.length > 0) {
+            await changeNodeConfiguration(
+              stepId,
+              "",
+              { config$prompt: promptContent as unknown as NodeValue },
+              null,
+              ports
+            );
+          }
         }
 
         // Re-layout all nodes based on updated topology
         const graph = requireEditor().raw();
         await layoutGraph(graph.nodes ?? [], graph.edges ?? []);
 
-        return { step_id: stepId };
-      }
-    ),
-
-    // =========================================================================
-    // edit_step_prompt
-    // =========================================================================
-    defineFunction(
-      {
-        name: GRAPH_EDIT_STEP_PROMPT,
-        title: "Editing step prompt",
-        icon: "edit",
-        description:
-          "Update an existing step's prompt. Use <parent> tags to change connections.",
-        parameters: {
-          step_id: z.string().describe("The ID of the step to edit"),
-          prompt: z.string().describe(PROMPT_DESCRIPTION),
-        },
-        response: {
-          success: z.boolean(),
-        },
-      },
-      async ({ step_id, prompt }) => {
-        const editor = requireEditor();
-        const inspector = editor.inspect("");
-        const node = inspector.nodeById(step_id);
-        if (!node) {
-          return { $error: `Step "${step_id}" not found` };
-        }
-
-        const promptContent = translator.fromPidgin(
-          prompt,
-          nodeTitleResolver()
-        );
-        const ports = extractParentPorts(prompt, translator);
-
-        // Update configuration and auto-wire edges in one transform
-        await changeNodeConfiguration(
-          step_id,
-          "",
-          { config$prompt: promptContent as unknown as NodeValue },
-          null,
-          ports
-        );
-
-        // Re-layout all nodes based on updated topology
-        const graph = requireEditor().raw();
-        await layoutGraph(graph.nodes ?? [], graph.edges ?? []);
-
-        return { success: true };
+        // Return the pidgin handle so the agent stays in handle-land
+        const handle = translator.getOrCreateHandle(stepId);
+        return { step_id: handle };
       }
     ),
   ];

@@ -10,6 +10,7 @@ import {
   onVersionChange,
   onNewerVersionAvailable,
   onSaveStatusChange,
+  onSaveShortcut,
 } from "../../../../src/sca/actions/board/triggers.js";
 
 suite("Board Triggers", () => {
@@ -215,6 +216,48 @@ suite("Board Triggers", () => {
       assert.strictEqual(trigger.type, "event", "Should be an event trigger");
       assert.strictEqual(trigger.eventType, "savestatuschange");
       assert.strictEqual(trigger.target, mockEventTarget);
+    });
+  });
+
+  suite("onSaveShortcut", () => {
+    test("creates keyboard trigger with correct name and keys", () => {
+      const mockBind = {
+        controller: {
+          editor: { graph: { editor: {} } },
+        },
+        services: {},
+      };
+
+      const trigger = onSaveShortcut(mockBind as never);
+
+      assert.strictEqual(trigger.name, "Save Shortcut");
+      assert.deepStrictEqual(trigger.keys, ["Cmd+s", "Ctrl+s"]);
+    });
+
+    test("guard returns true when editor is available", () => {
+      const mockBind = {
+        controller: {
+          editor: { graph: { editor: {} } },
+        },
+        services: {},
+      };
+
+      const trigger = onSaveShortcut(mockBind as never);
+
+      assert.strictEqual(trigger.guard!(undefined as never), true);
+    });
+
+    test("guard returns false when no editor", () => {
+      const mockBind = {
+        controller: {
+          editor: { graph: { editor: null } },
+        },
+        services: {},
+      };
+
+      const trigger = onSaveShortcut(mockBind as never);
+
+      assert.strictEqual(trigger.guard!(undefined as never), false);
     });
   });
 });

@@ -109,7 +109,6 @@ export class FloatingInput extends SignalWatcher(LitElement) {
 
       :host {
         display: block;
-        max-width: 800px;
         width: 100%;
         opacity: 0;
         animation: fadeIn 0.8s cubic-bezier(0, 0, 0.3, 1) forwards;
@@ -133,7 +132,11 @@ export class FloatingInput extends SignalWatcher(LitElement) {
 
       #container {
         display: block;
-        margin: var(--container-margin, 0);
+        width: calc(
+          100% - var(--bb-floating-input-margin, var(--bb-grid-size-12))
+        );
+        max-width: 960px;
+        margin: 0 auto;
         padding: var(--bb-grid-size-4);
         border-radius: var(--bb-grid-size-4);
         border: 1px solid light-dark(var(--nv-80), var(--nv-35));

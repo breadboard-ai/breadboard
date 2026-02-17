@@ -60,9 +60,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     hostOrigin,
   };
 
-  const { SettingsStore } = await import("./ui/data/settings-store.js");
-  const settings = await SettingsStore.restoredInstance();
-
   const signinAdapter = new SigninAdapter(shellHost);
 
   const StringsHelper = await import("./ui/strings/helper.js");
@@ -106,7 +103,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     window.oncontextmenu = (evt) => evt.preventDefault();
 
     const mainArgs: MainArguments = {
-      settings,
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
       env: bootstrapArgs.env,

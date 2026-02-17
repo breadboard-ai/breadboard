@@ -3,7 +3,6 @@
  */
 
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -25,7 +24,6 @@ export { invoke as default, describe };
 
 async function invoke(
   { context }: AudioGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AudioGeneratorOutputs>> {
   // 1) Get last LLMContent from input.
@@ -49,7 +47,6 @@ async function invoke(
         safetySettings: defaultSafetySettings(),
       },
     },
-    caps,
     moduleArgs
   );
   if (!ok(result)) {

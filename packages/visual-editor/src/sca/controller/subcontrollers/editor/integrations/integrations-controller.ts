@@ -8,7 +8,7 @@ import type {
   McpServerDescriptor,
   McpServerIdentifier,
 } from "@breadboard-ai/types";
-import type { IntegrationState } from "../../../../../ui/state/types.js";
+import type { IntegrationState } from "../../../../../ui/types/state-types.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 

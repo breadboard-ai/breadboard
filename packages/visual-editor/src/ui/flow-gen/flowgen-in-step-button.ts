@@ -7,6 +7,7 @@
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import {
@@ -20,13 +21,11 @@ import { fabStyles } from "../styles/fab.js";
 import { floatingPanelStyles } from "../styles/floating-panel.js";
 import { icons } from "../styles/icons.js";
 import { multiLineInputStyles } from "../styles/multi-line-input.js";
-import {
-  flowGeneratorContext,
-  type FlowGenConstraint,
-  type FlowGenerator,
-} from "./flow-generator.js";
+import { type FlowGenConstraint } from "./flow-generator.js";
 import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
+import { scaContext } from "../../sca/context/context.js";
+import { type SCA } from "../../sca/sca.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -37,7 +36,7 @@ type State =
   | { status: "error"; error: unknown; abort: AbortController };
 
 @customElement("bb-flowgen-in-step-button")
-export class FlowgenInStepButton extends LitElement {
+export class FlowgenInStepButton extends SignalWatcher(LitElement) {
   static styles = [
     fabStyles,
     floatingPanelStyles,
@@ -205,8 +204,8 @@ export class FlowgenInStepButton extends LitElement {
     `,
   ];
 
-  @consume({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator | undefined = undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
@@ -406,10 +405,11 @@ export class FlowgenInStepButton extends LitElement {
     intent: string,
     currentFlow: GraphDescriptor
   ): Promise<GraphDescriptor> {
-    if (!this.flowGenerator) {
+    const flowGenerator = this.sca.services.flowGenerator;
+    if (!flowGenerator) {
       throw new Error(`No FlowGenerator was provided`);
     }
-    const generated = await this.flowGenerator.oneShot({
+    const generated = await flowGenerator.oneShot({
       intent,
       context: { flow: currentFlow },
       constraint: this.constraint,

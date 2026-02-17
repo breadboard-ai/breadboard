@@ -6,7 +6,6 @@
 
 import type { EmbedHandler } from "../ui/embed/embed.js";
 import type { GlobalConfig } from "../ui/contexts/global-config.js";
-import type { SettingsStore } from "../ui/data/settings-store.js";
 import type { FileSystemEntry } from "@breadboard-ai/types";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import type {
@@ -25,7 +24,6 @@ export type BootstrapArguments = {
 };
 
 export type MainArguments = {
-  settings: SettingsStore;
   languagePack?: string;
   /** If true enforces ToS acceptance by the user on the first visit. */
   enableTos?: boolean;

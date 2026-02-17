@@ -16,16 +16,10 @@ import { scaContext } from "../../../sca/context/context.js";
 import type { SharePanelStatus } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
 import animations from "../../app-templates/shared/styles/animations.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import {
-  globalConfigContext,
-  type GlobalConfig,
-} from "../../contexts/global-config.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
-import { ActionTracker } from "../../types/types.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 import type { VisibilityLevel } from "./share-visibility-selector.js";
@@ -491,16 +485,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @consume({ context: globalConfigContext })
-  @property({ attribute: false })
-  accessor globalConfig: GlobalConfig | undefined;
-
   @consume({ context: scaContext })
   @property({ attribute: false })
   accessor sca!: SCA;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
 
   get #graph() {
     return this.sca.controller.editor.graph.graph;
@@ -706,7 +693,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       return nothing;
     }
     const { disallowPublicPublishing, preferredUrl } =
-      this.globalConfig?.domains?.[domain] ?? {};
+      this.sca?.services.globalConfig?.domains?.[domain] ?? {};
     if (!disallowPublicPublishing) {
       return nothing;
     }
@@ -834,7 +821,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const published = this.#controller.published;
     const domain = this.#controller.userDomain;
     const { disallowPublicPublishing } =
-      this.globalConfig?.domains?.[domain] ?? {};
+      this.sca?.services.globalConfig?.domains?.[domain] ?? {};
 
     const disabled = disallowPublicPublishing || panel === "updating";
     return html`
@@ -979,7 +966,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     }
     const selected = input.selected;
     if (selected) {
-      this.actionTracker?.publishApp(this.#graph.url);
+      this.sca?.services.actionTracker?.publishApp(this.#graph.url);
       this.#actions.publish();
     } else {
       this.#actions.unpublish();

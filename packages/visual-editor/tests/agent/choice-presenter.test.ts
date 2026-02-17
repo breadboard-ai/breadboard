@@ -10,7 +10,6 @@ import { ChoicePresenter } from "../../src/a2/agent/choice-presenter.js";
 import { PidginTranslator } from "../../src/a2/agent/pidgin-translator.js";
 import { AgentFileSystem } from "../../src/a2/agent/file-system.js";
 import {
-  stubCaps,
   stubMemoryManager,
   stubModuleArgs,
 } from "../useful-stubs.js";
@@ -67,7 +66,7 @@ function createTranslator(): PidginTranslator {
     context: stubModuleArgs.context,
     memoryManager: stubMemoryManager,
   });
-  return new PidginTranslator(stubCaps, stubModuleArgs, fileSystem);
+  return new PidginTranslator(stubModuleArgs, fileSystem);
 }
 
 // Helper to find component by id in captured messages

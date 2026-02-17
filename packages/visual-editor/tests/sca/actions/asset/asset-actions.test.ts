@@ -14,7 +14,7 @@ import {
   makeTestServices,
 } from "../../helpers/index.js";
 import { GraphDescriptor, AssetPath } from "@breadboard-ai/types";
-import type { GraphAsset } from "../../../../src/ui/state/types.js";
+import type { GraphAsset } from "../../../../src/sca/types.js";
 import { onGraphVersionChange } from "../../../../src/sca/actions/asset/triggers.js";
 import { StateEvent } from "../../../../src/ui/events/events.js";
 import { coordination } from "../../../../src/sca/coordination.js";

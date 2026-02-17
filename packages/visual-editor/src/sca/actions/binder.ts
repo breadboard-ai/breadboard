@@ -7,6 +7,7 @@
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
 import { ToastType } from "../../ui/events/events.js";
+import { STATUS } from "../../ui/types/types.js";
 
 /**
  * Returns true if the keyboard event originated from within the graph renderer
@@ -120,7 +121,7 @@ export interface ToastConfig {
  * @param fn The async work to run while blocking
  * @param toast Optional toast notification config
  */
-export async function withBlockingAction(
+export async function withUIBlocking(
   controller: AppController,
   fn: () => Promise<void>,
   toast?: ToastConfig
@@ -172,4 +173,23 @@ export async function withBlockingAction(
     }
     controller.global.main.blockingAction = false;
   }
+}
+
+/**
+ * Aborts any in-progress run and resets all run-related controller state.
+ *
+ * This consolidates the abort → reset → setStatus(STOPPED) pattern that
+ * appears in multiple action domains (board, flowgen, run).
+ *
+ * @param controller App controller whose run sub-controllers to reset
+ */
+export function stopRun(controller: AppController): void {
+  const { run } = controller;
+  if (run.main.abortController) {
+    run.main.abortController.abort();
+  }
+  run.main.reset();
+  run.screen.reset();
+  run.renderer.reset();
+  run.main.setStatus(STATUS.STOPPED);
 }

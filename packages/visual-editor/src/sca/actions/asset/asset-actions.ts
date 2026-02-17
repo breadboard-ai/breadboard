@@ -27,18 +27,15 @@ import type { StateEvent } from "../../../ui/events/events.js";
 import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
 import { ChangeAssetEdge } from "../../../ui/transforms/index.js";
 
-import { makeAction, withBlockingAction } from "../binder.js";
+import { makeAction, withUIBlocking } from "../binder.js";
 import { asAction, ActionMode, stateEventTrigger } from "../../coordination.js";
 import { onGraphVersionChange } from "./triggers.js";
 import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
 import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
 import { RemoveAssetWithRefs } from "../../../ui/transforms/remove-asset-with-refs.js";
 import { isInlineData, transformDataParts } from "../../../data/common.js";
-import { GraphAssetImpl } from "../../../ui/state/graph-asset.js";
-import type {
-  GraphAsset,
-  GraphAssetDescriptor,
-} from "../../../ui/state/types.js";
+import { GraphAssetImpl } from "../../utils/graph-asset.js";
+import type { GraphAsset, GraphAssetDescriptor } from "../../types.js";
 
 export const bind = makeAction();
 
@@ -284,7 +281,7 @@ export const onChangeAssetEdge = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"asset.changeedge">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const graphId = detail.subGraphId ?? "";
       const transform = new ChangeAssetEdge(
         detail.changeType,

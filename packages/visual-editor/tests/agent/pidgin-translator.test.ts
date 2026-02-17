@@ -7,7 +7,6 @@
 import { describe, it } from "node:test";
 import { PidginTranslator } from "../../src/a2/agent/pidgin-translator.js";
 import {
-  stubCaps,
   stubMemoryManager,
   stubModuleArgs,
 } from "../useful-stubs.js";
@@ -28,7 +27,7 @@ function makeTranslator(): PidginTranslator {
     context: stubModuleArgs.context,
     memoryManager: stubMemoryManager,
   });
-  return new PidginTranslator(stubCaps, stubModuleArgs, fileSystem);
+  return new PidginTranslator(stubModuleArgs, fileSystem);
 }
 
 function makeTranslatorWithFileSystem(): {
@@ -40,7 +39,7 @@ function makeTranslatorWithFileSystem(): {
     memoryManager: stubMemoryManager,
   });
   return {
-    translator: new PidginTranslator(stubCaps, stubModuleArgs, fileSystem),
+    translator: new PidginTranslator(stubModuleArgs, fileSystem),
     fileSystem,
   };
 }
@@ -66,7 +65,6 @@ describe("Pidgin Translator", () => {
         memoryManager: stubMemoryManager,
       });
       const translator = new PidginTranslator(
-        stubCaps,
         stubModuleArgs,
         fileSystem
       );

@@ -21,13 +21,15 @@ import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 
-import { ProjectRun } from "../../../state/index.js";
+import { scaContext } from "../../../../sca/context/context.js";
+import { type SCA } from "../../../../sca/sca.js";
+import { consume } from "@lit/context";
 import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { sharedStyles } from "./shared-styles.js";
-import { hasControlPart } from "../../../../runtime/control.js";
+import { hasControlPart } from "../../../../utils/control.js";
 
 function isConsoleUpdate(
   item: LLMContent | SimplifiedA2UIClient | ConsoleUpdate
@@ -37,8 +39,8 @@ function isConsoleUpdate(
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
-  @property()
-  accessor run: ProjectRun | null = null;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property()
   accessor disclaimerContent = "";
@@ -308,7 +310,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       }
 
       bb-floating-input {
-        --container-margin: 0;
+        --bb-floating-input-margin: 0px;
         width: 100%;
         padding-bottom: var(--bb-grid-size-6);
       }
@@ -360,15 +362,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   #openWorkItems = new Set<string>();
   #currentEntries: [string, ConsoleEntry][] = [];
 
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("run")) {
-      this.#openItems.clear();
-      this.#openWorkItems.clear();
-    }
-  }
+  protected willUpdate(_changedProperties: PropertyValues): void {}
 
   #renderInput() {
-    const input = this.run?.input;
+    const input = this.sca.controller.run.main.input;
     if (!input) {
       this.style.setProperty("--input-clearance", `0px`);
       return nothing;
@@ -468,14 +465,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   #renderRun() {
-    if (!this.run) {
-      return nothing;
-    }
+    const runController = this.sca.controller.run.main;
 
     // 1. If the signal provides a non-empty array, we update our cache. This
     //    way we avoid flashes of content when the console entries are reset.
-    if (this.run.console.size > 0) {
-      this.#currentEntries = [...this.run.console.entries()];
+    if (runController.console.size > 0) {
+      this.#currentEntries = [...runController.console.entries()];
     }
 
     // 2. We then always use the cached version for rendering. If the signal
@@ -511,8 +506,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             }
           }
 
-          const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
-          const isOpen = item.open || this.#openItems.has(itemId) || isLastItem;
+          const isLastItem = idx + 1 === runController.estimatedEntryCount;
+          const isOpen =
+            item.open ||
+            !item.completed ||
+            this.#openItems.has(itemId) ||
+            isLastItem;
 
           return html`<details ?open=${isOpen} disabled>
           <summary @click=${(evt: Event) => {
@@ -658,10 +657,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       </details>`;
         }
       )}
-      ${this.run.error
+      ${runController.error
         ? html`<details class="error">
             <summary>Error</summary>
-            ${this.run.error.message}
+            ${runController.error.message}
           </details>`
         : nothing}
     </section>`;
@@ -672,11 +671,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       ${[
         html`<bb-app-header
           .neutral=${true}
-          .replayActive=${this.run?.consoleState === "entries"}
-          .running=${this.run?.status === "running" ||
-          this.run?.status === "paused"}
+          .replayActive=${this.sca.controller.run.main.consoleState ===
+          "entries"}
+          .running=${this.sca.controller.run.main.status === "running" ||
+          this.sca.controller.run.main.status === "paused"}
           .replayAutoStart=${true}
-          .progress=${this.run?.progress}
+          .progress=${this.sca.controller.run.main.progress}
         ></bb-app-header>`,
         this.#renderRun(),
       ]}

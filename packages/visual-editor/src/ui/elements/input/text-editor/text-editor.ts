@@ -9,7 +9,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events.js";
-import { Project } from "../../../state/index.js";
+
 import { FastAccessMenu } from "../../elements.js";
 import { isTemplatePart } from "@breadboard-ai/utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
@@ -181,9 +181,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
   @property()
   accessor subGraphId: string | null = null;
-
-  @property()
-  accessor projectState: Project | null = null;
 
   @property()
   accessor readOnly = false;
@@ -1193,7 +1190,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
           }
 
           if (
-            this.projectState &&
+            this.sca &&
             this.supportsFastAccess &&
             this.#showFastAccessMenuOnKeyUp
           ) {

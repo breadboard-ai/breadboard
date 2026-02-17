@@ -24,7 +24,7 @@ import { MAIN_BOARD_ID } from "../../../ui/constants/constants.js";
 
 import {
   makeAction,
-  withBlockingAction,
+  withUIBlocking,
   isFocusedOnGraphRenderer,
 } from "../binder.js";
 import { Utils } from "../../utils.js";
@@ -34,7 +34,11 @@ import {
   stateEventTrigger,
   keyboardTrigger,
 } from "../../coordination.js";
-import { onNodeConfigChange } from "./triggers.js";
+import {
+  onNodeConfigChange,
+  onNodeAction as onNodeActionTrigger,
+  onCopyShortcut,
+} from "./triggers.js";
 import { GraphUtils } from "../../../utils/graph-utils.js";
 import { ClipboardReader } from "../../../utils/clipboard-reader.js";
 import {
@@ -274,7 +278,7 @@ export const onNodeChange = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.change">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const transform = new UpdateNode(
         detail.id,
         detail.subGraphId ?? "",
@@ -317,7 +321,7 @@ export const onNodeAdd = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.add">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       await editor.edit(
         [{ type: "addnode", graphId: detail.graphId, node: detail.node }],
         `Add step: ${detail.node.metadata?.title ?? detail.node.id}`
@@ -351,7 +355,7 @@ export const onMoveSelection = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.moveselection">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const edits: EditSpec[] = [];
       for (const update of detail.updates) {
         if (update.type === "node") {
@@ -414,7 +418,7 @@ export const onChangeEdge = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.changeedge">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const graphId = detail.subGraphId ?? "";
       const transform = new ChangeEdge(
         detail.changeType,
@@ -454,7 +458,7 @@ export const onChangeEdgeAttachmentPoint = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.changeedgeattachmentpoint">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const transform = new ChangeEdgeAttachmentPoint(
         detail.graphId === MAIN_BOARD_ID ? "" : detail.graphId,
         detail.edge,
@@ -575,15 +579,7 @@ export const onCopy = asAction(
   "Node.onCopy",
   {
     mode: ActionMode.Awaits,
-    triggeredBy: () =>
-      keyboardTrigger("Copy Shortcut", ["Cmd+c", "Ctrl+c"], (evt) => {
-        // If text is selected, allow native copy behavior.
-        const selection = window.getSelection();
-        if (selection && selection.toString().length > 0) {
-          return false;
-        }
-        return isFocusedOnGraphRenderer(evt);
-      }),
+    triggeredBy: () => onCopyShortcut(),
   },
   async (): Promise<void> => {
     const { controller } = bind;
@@ -836,5 +832,37 @@ export const onRedoKeyboard = asAction(
     const history = controller.editor.graph.editor?.history();
     if (!history || !history.canRedo()) return;
     await history.redo();
+  }
+);
+
+// =============================================================================
+// State-Event-Triggered Actions
+// =============================================================================
+
+/**
+ * Handles a node action request from the console or graph.
+ *
+ * Maps the legacy "console" action context to "step" (the SCA-native name)
+ * and sets the request on the RunController, which triggers pre-action
+ * orchestration (e.g. applying pending edits) followed by action dispatch.
+ *
+ * **Triggers:** `node.action` StateEvent
+ */
+export const onNodeAction = asAction(
+  "Node.onNodeAction",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onNodeActionTrigger(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const detail = (evt as StateEvent<"node.action">).detail;
+    const { nodeId, actionContext } = detail;
+    if (!actionContext) return;
+
+    // Event uses "console" for step-list context; SCA uses "step".
+    const mapped = actionContext === "console" ? "step" : actionContext;
+
+    const { controller } = bind;
+    controller.run.main.setNodeActionRequest({ nodeId, actionContext: mapped });
   }
 );

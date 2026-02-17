@@ -18,7 +18,7 @@ import {
   SubscriptionStatus,
   UILoadState,
   UIOverlays,
-} from "../../../../ui/state/types.js";
+} from "../../../../ui/types/state-types.js";
 import { VisualEditorMode } from "../../../../ui/types/types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";

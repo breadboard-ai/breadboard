@@ -6,24 +6,14 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import {
-  GOOGLE_DRIVE_FILES_API_PREFIX,
-  type Outcome,
-  type UUID,
-} from "@breadboard-ai/types";
-import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { type Outcome, type UUID } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { GoogleDriveBoardServer } from "./board-server/server.js";
 import { MainArguments } from "./types/types.js";
-import { boardServerContext } from "./ui/contexts/board-server.js";
-import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
-import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
-import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
+
 import "./ui/elements/overflow-menu/overflow-menu.js";
 
 import type {
@@ -33,14 +23,10 @@ import type {
 } from "./ui/events/events.js";
 import * as BBLite from "./ui/lite/lite.js";
 import "./ui/lite/welcome-panel/project-listing.js";
-import { ActionTracker, SnackType } from "./ui/types/types.js";
-import { SigninAdapter } from "./ui/utils/signin-adapter.js";
-import { createActionTracker } from "./ui/utils/action-tracker.js";
-import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
+import { SnackType } from "./ui/types/types.js";
 import { scaContext } from "./sca/context/context.js";
 import { sca, type SCA } from "./sca/sca.js";
-import { RuntimeConfig } from "./runtime/types.js";
-import { getLogger, Formatter } from "./sca/utils/logging/logger.js";
+import { RuntimeConfig } from "./utils/graph-types.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -63,21 +49,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @provide({ context: globalConfigContext })
-  accessor globalConfig: GlobalConfig;
-
-  @provide({ context: boardServerContext })
-  accessor boardServer: GoogleDriveBoardServer | undefined;
-
-  @provide({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient;
-
-  @provide({ context: guestConfigurationContext })
-  protected accessor guestConfiguration: GuestConfiguration;
-
-  @provide({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker;
-
   @state()
   accessor compactView = false;
 
@@ -92,57 +63,17 @@ export class LiteHome extends SignalWatcher(LitElement) {
   constructor(mainArgs: MainArguments) {
     super();
     // Static deployment config
-    this.globalConfig = mainArgs.globalConfig;
+    const globalConfig = mainArgs.globalConfig;
 
     // Configuration provided by shell host
-    this.guestConfiguration = mainArgs.guestConfiguration;
+    const guestConfiguration = mainArgs.guestConfiguration;
 
     // Authentication
     const opalShell = mainArgs.shellHost;
-    const signinAdapter = new SigninAdapter(opalShell);
-
-    this.actionTracker = createActionTracker(opalShell);
-
-    // Board server
-    const proxyApiBaseUrl = new URL(
-      "/api/drive-proxy/drive/v3/files",
-      window.location.href
-    ).href;
-    const apiBaseUrl = signinAdapter.state.then((state) =>
-      state === "signedout" ? proxyApiBaseUrl : GOOGLE_DRIVE_FILES_API_PREFIX
-    );
-    this.googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl,
-      proxyApiBaseUrl,
-      fetchWithCreds: opalShell.fetchWithCreds,
-      log(level, ...args) {
-        const logger = getLogger();
-        const msg =
-          level === "warning"
-            ? Formatter.warning(...args)
-            : Formatter.verbose(...args);
-        logger.log(msg, "Google Drive");
-      },
-    });
-    const googleDrivePublishPermissions =
-      this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
-    const userFolderName =
-      this.globalConfig.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
-    this.boardServer = new GoogleDriveBoardServer(
-      // TODO: The first two args are not used but currently required
-      "",
-      signinAdapter,
-      this.googleDriveClient,
-      googleDrivePublishPermissions,
-      userFolderName,
-      opalShell.findUserOpalFolder,
-      opalShell.listUserOpals
-    );
 
     const config: RuntimeConfig = {
-      globalConfig: this.globalConfig,
-      guestConfig: this.guestConfiguration,
-      settings: mainArgs.settings,
+      globalConfig,
+      guestConfig: guestConfiguration,
       shellHost: opalShell,
       embedHandler: mainArgs.embedHandler,
       env: mainArgs.env,
@@ -162,7 +93,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     };
     sizeDetector.addEventListener("change", reactToScreenWidth);
     reactToScreenWidth();
-    this.actionTracker.load("landing");
+    this.sca.services.actionTracker?.load("landing");
   }
 
   connectedCallback() {
@@ -276,7 +207,8 @@ export class LiteHome extends SignalWatcher(LitElement) {
   }
 
   async deleteBoard(url: string): Promise<Outcome<void>> {
-    if (!this.boardServer) {
+    const boardServer = this.sca.services.googleDriveBoardServer;
+    if (!boardServer) {
       return err(`Board server is undefined. Likely a misconfiguration`);
     }
 
@@ -289,7 +221,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
       if (!confirm(DELETE_BOARD_MESSAGE)) {
         return;
       }
-      const result = await this.boardServer.delete(new URL(url));
+      const result = await boardServer.delete(new URL(url));
       if (!result.result) {
         return err(result.error || `Unable to delete "${url}"`);
       }
@@ -333,14 +265,14 @@ export class LiteHome extends SignalWatcher(LitElement) {
   render() {
     return html`<section id="home">
       <bb-project-listing-lite
-        .libraryTitle=${this.guestConfiguration.libraryTitle ?? null}
-        .libraryIcon=${this.guestConfiguration.libraryIcon ?? null}
-        .noLibraryAppsTitle=${this.guestConfiguration.noLibraryAppsTitle ??
-        null}
-        .galleryTitle=${this.guestConfiguration.galleryTitle ?? null}
-        .galleryIcon=${this.guestConfiguration.galleryIcon ?? null}
-        .createNewTitle=${this.guestConfiguration.createNewTitle ?? null}
-        .createNewIcon=${this.guestConfiguration.createNewIcon ?? null}
+        .libraryTitle=${this.sca.services.guestConfig.libraryTitle ?? null}
+        .libraryIcon=${this.sca.services.guestConfig.libraryIcon ?? null}
+        .noLibraryAppsTitle=${this.sca.services.guestConfig
+          .noLibraryAppsTitle ?? null}
+        .galleryTitle=${this.sca.services.guestConfig.galleryTitle ?? null}
+        .galleryIcon=${this.sca.services.guestConfig.galleryIcon ?? null}
+        .createNewTitle=${this.sca.services.guestConfig.createNewTitle ?? null}
+        .createNewIcon=${this.sca.services.guestConfig.createNewIcon ?? null}
         .allowCreate=${!this.compactView}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>

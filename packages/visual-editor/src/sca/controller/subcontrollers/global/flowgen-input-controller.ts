@@ -6,7 +6,7 @@
 
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
-import type { LiteModeIntentExample } from "../../../../ui/state/types.js";
+import type { LiteModeIntentExample } from "../../../types.js";
 
 /**
  * Status type for the flowgen input component.

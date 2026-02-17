@@ -55,3 +55,31 @@ export function onSelectionOrSidebarChange(bind: ActionBind): SignalTrigger {
     return !!(pendingEdit || pendingAssetEdit);
   });
 }
+
+/**
+ * Creates a trigger that fires when a node action is requested.
+ *
+ * Pre-action orchestration: when a node action is requested, pending
+ * step edits must be applied before the action can proceed. This trigger
+ * watches the nodeActionRequest field and returns true when there is both
+ * a pending action request AND pending edits to apply.
+ */
+export function onNodeActionRequested(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Node Action Requested (Step)", () => {
+    const { controller } = bind;
+
+    // Register dependency on the action request
+    const request = controller.run.main.nodeActionRequest;
+
+    // Read pending edits WITHOUT registering as dependency
+    const pendingEdit = Signal.subtle.untrack(
+      () => controller.editor.step.pendingEdit
+    );
+    const pendingAssetEdit = Signal.subtle.untrack(
+      () => controller.editor.step.pendingAssetEdit
+    );
+
+    // Fire when there's a request AND pending edits
+    return !!(request && (pendingEdit || pendingAssetEdit));
+  });
+}

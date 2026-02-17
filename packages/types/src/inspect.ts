@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystem, Outcome } from "./data.js";
+import { Outcome } from "./data.js";
 import { AffectedNode } from "./edit.js";
 
 import {
@@ -361,18 +361,6 @@ export type InspectableGraphOptions = {
    * The Javascript Sandbox that will be used to run custom describers.
    */
   readonly sandbox?: RunnableModuleFactory;
-  readonly fileSystem?: FileSystem;
-};
-
-export type DescribeResultCacheArgs = {
-  initial(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): NodeDescriberResult;
-  latest(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): Promise<NodeDescriberResult>;
 };
 
 /**

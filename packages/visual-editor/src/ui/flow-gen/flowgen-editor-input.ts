@@ -9,19 +9,16 @@ import { LitElement, type PropertyValues, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { projectStateContext } from "../contexts/project-state.js";
+
 import "../elements/input/expanding-textarea.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { StateEvent, UtteranceEvent } from "../events/events.js";
-import { Project } from "../state/types.js";
+
 import * as StringsHelper from "../strings/helper.js";
 import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
 import { icons } from "../styles/icons.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
-import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
-import { actionTrackerContext } from "../contexts/action-tracker-context.js";
-import { ActionTracker } from "../types/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
@@ -215,15 +212,6 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @consume({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator | undefined;
-
-  @consume({ context: projectStateContext })
-  accessor projectState: Project | undefined;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
 
   /**
    * Get state from controller (signal-backed for cross-breakpoint sync).
@@ -442,7 +430,6 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
         new StateEvent({
           eventType: "flowgen.generate",
           intent: description,
-          projectState: this.projectState,
         })
       );
     }

@@ -9,11 +9,7 @@ import { type GeminiSchema } from "../a2/gemini.js";
 import { Template } from "../a2/template.js";
 
 import type { AutonameMode, Arguments } from "./types.js";
-import {
-  Capabilities,
-  JsonSerializable,
-  LLMContent,
-} from "@breadboard-ai/types";
+import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 
 export { NodeConfigurationUpdateMode };
 
@@ -32,14 +28,14 @@ type StepMap = Map<
   (configuration: Record<string, JsonSerializable>) => StepHandler
 >;
 
-function createStepMap(caps: Capabilities): StepMap {
+function createStepMap(): StepMap {
   return new Map([
     [
       USER_INPUT_TYPE,
       (c) =>
         createStepHandler(
           "be presented to the application user to request their input",
-          textFromConfiguration(caps, c, ["description"])
+          textFromConfiguration(c, ["description"])
         ),
     ],
     [
@@ -47,7 +43,7 @@ function createStepMap(caps: Capabilities): StepMap {
       (c) =>
         createStepHandler(
           `be used by one of the steps as a prompt for an LLM that outputs ${outputFromConfiguration(c)}`,
-          textFromConfiguration(caps, c, ["config$prompt"])
+          textFromConfiguration(c, ["config$prompt"])
         ),
     ],
     [
@@ -55,7 +51,7 @@ function createStepMap(caps: Capabilities): StepMap {
       (c) =>
         createStepHandler(
           "be used by one of the steps as a prompt for an LLM to render HTML for display",
-          textFromConfiguration(caps, c, ["text"])
+          textFromConfiguration(c, ["text"])
         ),
     ],
   ]);
@@ -118,11 +114,11 @@ const DEFAULT_STEP_HANDLER: StepHandler = {
   prompt: [],
 };
 
-function stepHandlerFromArgs(caps: Capabilities, args: Arguments): StepHandler {
+function stepHandlerFromArgs(args: Arguments): StepHandler {
   const type = args.nodeConfigurationUpdate?.type;
   const configuration = args.nodeConfigurationUpdate?.configuration;
   if (!type || !configuration) return DEFAULT_STEP_HANDLER;
-  const factory = createStepMap(caps).get(type);
+  const factory = createStepMap().get(type);
   if (!factory) return DEFAULT_STEP_HANDLER;
   return factory(configuration);
 }
@@ -130,11 +126,8 @@ function stepHandlerFromArgs(caps: Capabilities, args: Arguments): StepHandler {
 class NodeConfigurationUpdateMode implements AutonameMode {
   #stepHandler: StepHandler;
 
-  constructor(
-    public readonly caps: Capabilities,
-    public readonly args: Arguments
-  ) {
-    this.#stepHandler = stepHandlerFromArgs(caps, args);
+  constructor(public readonly args: Arguments) {
+    this.#stepHandler = stepHandlerFromArgs(args);
   }
 
   canAutoname() {
@@ -188,7 +181,6 @@ class NodeConfigurationUpdateMode implements AutonameMode {
 }
 
 function textFromConfiguration(
-  caps: Capabilities,
   configuration: Record<string, JsonSerializable> | undefined,
   allow: string[]
 ): string {
@@ -200,7 +192,7 @@ function textFromConfiguration(
     .map(([name, value]) => {
       if (!allow.includes(name)) return "";
       if (isLLMContent(value)) {
-        const template = new Template(caps, value);
+        const template = new Template(value);
         return toText(
           template.simpleSubstitute((part) => {
             if (part.type == "tool") return part.title;

@@ -18,8 +18,11 @@
 import {
   signalTrigger,
   eventTrigger,
+  stateEventTrigger,
+  keyboardTrigger,
   type SignalTrigger,
   type EventTrigger,
+  type KeyboardTrigger,
 } from "../../coordination.js";
 import type { AppController } from "../../controller/controller.js";
 import type { AppServices } from "../../services/services.js";
@@ -78,5 +81,84 @@ export function onSaveStatusChange(bind: ActionBind): EventTrigger {
     "Save Status Change",
     services.googleDriveBoardServer,
     "savestatuschange"
+  );
+}
+
+// =============================================================================
+// Keyboard Triggers
+// =============================================================================
+
+/** Fires on Cmd+s / Ctrl+s when an editor is available. */
+export function onSaveShortcut(bind: ActionBind): KeyboardTrigger {
+  return keyboardTrigger("Save Shortcut", ["Cmd+s", "Ctrl+s"], () => {
+    const { controller } = bind;
+    return !!controller.editor.graph.editor;
+  });
+}
+
+// =============================================================================
+// State Event Triggers (Board Routes)
+// =============================================================================
+// Migrated from event-routing/board/board.ts.
+
+/** Fires when the user requests a board run. */
+export function onBoardRun(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return stateEventTrigger("Board Run", services.stateEventBus, "board.run");
+}
+
+/** Fires when the user requests a board stop. */
+export function onBoardStop(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return stateEventTrigger("Board Stop", services.stateEventBus, "board.stop");
+}
+
+/** Fires when the user requests a board restart. */
+export function onBoardRestart(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return stateEventTrigger(
+    "Board Restart",
+    services.stateEventBus,
+    "board.restart"
+  );
+}
+
+/** Fires when user input is provided during a run. */
+export function onBoardInput(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return stateEventTrigger(
+    "Board Input",
+    services.stateEventBus,
+    "board.input"
+  );
+}
+
+/** Fires when a new board is created. */
+export function onBoardCreate(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return stateEventTrigger(
+    "Board Create",
+    services.stateEventBus,
+    "board.create"
+  );
+}
+
+/** Fires when a board remix is requested. */
+export function onBoardRemix(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return stateEventTrigger(
+    "Board Remix",
+    services.stateEventBus,
+    "board.remix"
+  );
+}
+
+/** Fires when a board deletion is requested. */
+export function onBoardDelete(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return stateEventTrigger(
+    "Board Delete",
+    services.stateEventBus,
+    "board.delete"
   );
 }

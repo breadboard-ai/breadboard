@@ -7,7 +7,7 @@ import { llm, ok } from "../a2/utils.js";
 import { GeminiPrompt } from "../a2/gemini-prompt.js";
 import { type Invokable } from "./types.js";
 import { defaultSystemInstruction } from "./system-instruction.js";
-import { Capabilities, LLMContent } from "@breadboard-ai/types";
+import { LLMContent } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { organizerPrompt };
@@ -15,7 +15,6 @@ export { organizerPrompt };
 type InvokeReturnType = ReturnType<GeminiPrompt["invoke"]>;
 
 function organizerPrompt(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   results: LLMContent[],
   objective: LLMContent
@@ -45,7 +44,7 @@ ${research}
 \`\`\`
 `.asContent();
 
-  const geminiPrompt = new GeminiPrompt(caps, moduleArgs, {
+  const geminiPrompt = new GeminiPrompt(moduleArgs, {
     body: {
       systemInstruction: defaultSystemInstruction(),
       contents: [prompt],
