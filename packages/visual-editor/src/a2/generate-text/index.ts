@@ -9,14 +9,9 @@ import * as generateTextSystemInstruction from "./system-instruction.js";
 import * as generateTextSystemInstructionTs from "./system-instruction-ts.js";
 import * as generateTextTypes from "./types.js";
 
-import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl.js";
-
 export const exports = {
   main: generateTextMain,
   "system-instruction-ts": generateTextSystemInstructionTs,
   "system-instruction": generateTextSystemInstruction,
   types: generateTextTypes,
 };
-
-export const bgl = createBgl(descriptor, exports);
