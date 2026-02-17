@@ -24,7 +24,7 @@ import { MAIN_BOARD_ID } from "../../../ui/constants/constants.js";
 
 import {
   makeAction,
-  withBlockingAction,
+  withUIBlocking,
   isFocusedOnGraphRenderer,
 } from "../binder.js";
 import { Utils } from "../../utils.js";
@@ -274,7 +274,7 @@ export const onNodeChange = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.change">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const transform = new UpdateNode(
         detail.id,
         detail.subGraphId ?? "",
@@ -317,7 +317,7 @@ export const onNodeAdd = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.add">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       await editor.edit(
         [{ type: "addnode", graphId: detail.graphId, node: detail.node }],
         `Add step: ${detail.node.metadata?.title ?? detail.node.id}`
@@ -351,7 +351,7 @@ export const onMoveSelection = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.moveselection">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const edits: EditSpec[] = [];
       for (const update of detail.updates) {
         if (update.type === "node") {
@@ -414,7 +414,7 @@ export const onChangeEdge = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.changeedge">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const graphId = detail.subGraphId ?? "";
       const transform = new ChangeEdge(
         detail.changeType,
@@ -454,7 +454,7 @@ export const onChangeEdgeAttachmentPoint = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"node.changeedgeattachmentpoint">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const transform = new ChangeEdgeAttachmentPoint(
         detail.graphId === MAIN_BOARD_ID ? "" : detail.graphId,
         detail.edge,

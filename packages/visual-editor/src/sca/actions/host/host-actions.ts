@@ -13,7 +13,7 @@
  * that affect global application state (mode, flags, locks, auth).
  */
 
-import { makeAction, withBlockingAction } from "../binder.js";
+import { makeAction, withUIBlocking } from "../binder.js";
 import {
   asAction,
   ActionMode,
@@ -184,7 +184,7 @@ export const onToggleExperimentalComponents = asAction(
   },
   async (): Promise<void> => {
     const { controller } = bind;
-    await withBlockingAction(
+    await withUIBlocking(
       controller,
       async () => {
         controller.global.main.experimentalComponents =
@@ -213,7 +213,7 @@ export const onToggleDebug = asAction(
   },
   async (): Promise<void> => {
     const { controller } = bind;
-    await withBlockingAction(
+    await withUIBlocking(
       controller,
       async () => {
         controller.global.debug.enabled = !controller.global.debug.enabled;
@@ -241,7 +241,7 @@ export const onDownloadAgentTraces = asAction(
   },
   async (): Promise<void> => {
     const { controller, services } = bind;
-    await withBlockingAction(
+    await withUIBlocking(
       controller,
       async () => {
         const traces = services.agentContext.exportTraces();

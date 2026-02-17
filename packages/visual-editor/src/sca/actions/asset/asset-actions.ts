@@ -27,7 +27,7 @@ import type { StateEvent } from "../../../ui/events/events.js";
 import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
 import { ChangeAssetEdge } from "../../../ui/transforms/index.js";
 
-import { makeAction, withBlockingAction } from "../binder.js";
+import { makeAction, withUIBlocking } from "../binder.js";
 import { asAction, ActionMode, stateEventTrigger } from "../../coordination.js";
 import { onGraphVersionChange } from "./triggers.js";
 import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
@@ -281,7 +281,7 @@ export const onChangeAssetEdge = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"asset.changeedge">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const graphId = detail.subGraphId ?? "";
       const transform = new ChangeAssetEdge(
         detail.changeType,

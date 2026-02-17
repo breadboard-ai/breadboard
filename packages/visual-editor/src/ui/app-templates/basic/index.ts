@@ -270,11 +270,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       .fullScreenActive=${this.headerConfig.fullscreen}
       .small=${this.headerConfig.small}
       .appTitle=${this.graph?.title}
-      @bbevent=${(evt: StateEvent<"board.stop">) => {
-        if (evt.detail.eventType !== "board.stop") {
-          return;
-        }
-      }}
     ></bb-app-header>`;
   }
 

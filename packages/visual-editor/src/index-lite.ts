@@ -933,20 +933,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     );
   }
 
-  protected async invokeBoardCreateRoute() {
-    return eventRoutes.get("board.create")?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.create",
-          editHistoryCreator: { role: "user" },
-          graph: blankBoard(),
-          messages: {
-            start: "",
-            end: "",
-            error: "",
-          },
-        })
-      )
+  protected invokeBoardCreateRoute() {
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent({
+        eventType: "board.create",
+        editHistoryCreator: { role: "user" },
+        graph: blankBoard(),
+        messages: {
+          start: "",
+          end: "",
+          error: "",
+        },
+      })
     );
   }
 

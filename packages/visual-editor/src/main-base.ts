@@ -666,9 +666,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       originalEvent: evt,
 
       googleDriveClient: this.googleDriveClient,
-      askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
-        this.askUserToSignInIfNeeded(scopes),
-      boardServer: this.boardServer,
       actionTracker: this.actionTracker,
       sca: this.sca,
     };
@@ -690,7 +687,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html`<bb-tooltip ${ref(this.tooltipRef)}></bb-tooltip>`;
   }
 
-  protected async invokeRemixEventRouteWith(
+  protected invokeRemixEventRouteWith(
     url: string,
     messages = {
       start: Strings.from("STATUS_REMIXING_PROJECT"),
@@ -698,47 +695,28 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
     }
   ) {
-    const remixRoute = eventRoutes.get("board.remix");
-    const refresh = await remixRoute?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.remix",
-          messages,
-          url,
-        })
-      )
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent({
+        eventType: "board.remix",
+        messages,
+        url,
+      })
     );
-    if (refresh) {
-      requestAnimationFrame(() => {
-        this.requestUpdate();
-      });
-    }
   }
 
-  protected async invokeDeleteEventRouteWith(url: string) {
-    this.sca.controller.global.main.blockingAction = true;
-    const deleteRoute = eventRoutes.get("board.delete");
-    const refresh = await deleteRoute?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.delete",
-          messages: {
-            query: Strings.from("QUERY_DELETE_PROJECT"),
-            start: Strings.from("STATUS_DELETING_PROJECT"),
-            end: Strings.from("STATUS_PROJECT_DELETED"),
-            error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-          },
-          url,
-        })
-      )
+  protected invokeDeleteEventRouteWith(url: string) {
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent({
+        eventType: "board.delete",
+        messages: {
+          query: Strings.from("QUERY_DELETE_PROJECT"),
+          start: Strings.from("STATUS_DELETING_PROJECT"),
+          end: Strings.from("STATUS_PROJECT_DELETED"),
+          error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+        },
+        url,
+      })
     );
-    this.sca.controller.global.main.blockingAction = false;
-
-    if (refresh) {
-      requestAnimationFrame(() => {
-        this.requestUpdate();
-      });
-    }
   }
 
   protected renderSnackbar() {
