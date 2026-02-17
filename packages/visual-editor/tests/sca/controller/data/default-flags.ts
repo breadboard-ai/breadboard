@@ -12,7 +12,6 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableDrivePickerInLiteMode: false,
   force2DGraph: false,
   googleOne: false,
-  gulfRenderer: false,
   mcp: false,
   opalAdk: false,
   outputTemplates: false,

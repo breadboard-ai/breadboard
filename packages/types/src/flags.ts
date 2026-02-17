@@ -26,10 +26,6 @@ export type RuntimeFlags = {
    */
   force2DGraph: boolean;
   /**
-   * Use GULF for rendering.
-   */
-  gulfRenderer: boolean;
-  /**
    * Experimental Consistent UI output mode
    */
   consistentUI: boolean;
@@ -120,4 +116,83 @@ export type RuntimeFlagManager = {
    * Clear local override.
    */
   clearOverride(flag: keyof RuntimeFlags): Promise<void>;
+};
+
+/**
+ * Metadata for a runtime flag: a human-readable title and short description.
+ */
+export type RuntimeFlagMeta = {
+  title: string;
+  description: string;
+};
+
+/**
+ * Human-readable metadata for every runtime flag. Keyed by flag name so that
+ * TypeScript enforces an entry exists for each flag.
+ */
+export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
+  mcp: {
+    title: "MCP Support",
+    description: "Enable Model Context Protocol support",
+  },
+  force2DGraph: {
+    title: "2D Graph Rendering",
+    description: "Use 2D matrices for graph rendering",
+  },
+  consistentUI: {
+    title: "Consistent UI",
+    description: "Experimental consistent UI output mode",
+  },
+  agentMode: {
+    title: "Agent Mode",
+    description: "Enable agent mode",
+  },
+  googleOne: {
+    title: "Google One Quotas",
+    description: "Enable Google One quota limits",
+  },
+  opalAdk: {
+    title: "Opal-ADK",
+    description: "Enable Opal-ADK support",
+  },
+  outputTemplates: {
+    title: "Output Templates",
+    description: "Enable output templates for consistent output",
+  },
+  requireConsentForGetWebpage: {
+    title: "Consent for Get Webpage",
+    description: "Require user consent to use the get_webpage tool",
+  },
+  requireConsentForOpenWebpage: {
+    title: "Consent for Open Webpage",
+    description: "Require user consent to use the open_webpage tool",
+  },
+  streamPlanner: {
+    title: "Stream Planner",
+    description: "Enable SSE streaming for planner calls",
+  },
+  streamGenWebpage: {
+    title: "Stream Generate Webpage",
+    description: "Enable SSE streaming for HTML generation",
+  },
+  enableDrivePickerInLiteMode: {
+    title: "Drive Picker (Lite Mode)",
+    description: "Enable 'Add from Drive' in lite mode",
+  },
+  enableGoogleDriveTools: {
+    title: "Google Drive Tools",
+    description: "Enable 'export to Drive' capability",
+  },
+  enableResumeAgentRun: {
+    title: "Resume Agent Run",
+    description: "Enable auto-resumption of failed agent runs",
+  },
+  enableNotebookLm: {
+    title: "NotebookLM",
+    description: "Enable NotebookLM integration",
+  },
+  enableGraphEditorAgent: {
+    title: "Graph Editor Agent",
+    description: "Enable conversational graph building",
+  },
 };
