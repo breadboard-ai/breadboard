@@ -7,10 +7,6 @@ import type { Params } from "../a2/common.js";
 
 export type GenerateTextInputs = {
   /**
-   * Whether (true) or not (false) the agent is allowed to chat with user.
-   */
-  chat: boolean;
-  /**
    * The incoming conversation context.
    */
   context: LLMContent[];
@@ -56,12 +52,4 @@ export type SharedContext = GenerateTextInputs & {
    * Currently used to have a persistent part separator across conversation context
    */
   id: string;
-  /**
-   * Accumulating list of user inputs
-   */
-  userInputs: LLMContent[];
-  /**
-   * Indicator that the user ended chat.
-   */
-  userEndedChat: boolean;
 };
