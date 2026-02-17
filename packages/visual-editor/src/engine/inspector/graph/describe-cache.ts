@@ -62,7 +62,6 @@ class SignalBackedEntry {
       const context = {
         sandbox: this.#deps.sandbox,
         graphStore: this.#mutable.store,
-        outerGraph: this.#mutable.graph,
       };
       const handler = await getHandler(node.descriptor.type, context);
       if (!handler || !("describe" in handler) || !handler.describe) {
@@ -74,7 +73,6 @@ class SignalBackedEntry {
         { type: "object" },
         { type: "object" },
         {
-          outerGraph: this.#mutable.graph,
           sandbox: this.#deps.sandbox,
           graphStore: this.#mutable.store,
           flags: this.#deps.flags,

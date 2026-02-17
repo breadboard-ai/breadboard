@@ -51,10 +51,6 @@ export const removeHash = (url: URL): URL => {
   return newURL;
 };
 
-export const sameWithoutHash = (a: URL, b: URL): boolean => {
-  return removeHash(a).href === removeHash(b).href;
-};
-
 export const baseURLFromString = (urlString: string | undefined) => {
   if (urlString) {
     return new URL(urlString);
@@ -64,9 +60,7 @@ export const baseURLFromString = (urlString: string | undefined) => {
 
 export const baseURLFromContext = (context: GraphLoaderContext) => {
   let urlString;
-  if (context.outerGraph?.url) {
-    urlString = context.outerGraph.url;
-  } else if (context.board?.url) {
+  if (context.board?.url) {
     urlString = context.board?.url;
   }
   const baseURL = baseURLFromString(urlString);
@@ -142,17 +136,6 @@ export class Loader implements GraphLoader {
     path: string,
     context: GraphLoaderContext
   ): Promise<GraphLoaderResult> {
-    const supergraph = context.outerGraph;
-    // This is a special case, when we don't have URLs to resolve against.
-    // We are a hash path, and we are inside of a supergraph that doesn't
-    // have its own URL. We can only query the supergraph directly.
-    // No other URL resolution is possible.
-    const isEphemeralSupergraph =
-      path.startsWith("#") && supergraph && !supergraph.url;
-    if (isEphemeralSupergraph) {
-      return this.#getSubgraph(null, path.substring(1), supergraph);
-    }
-
     const url = getGraphUrl(path, context);
 
     // If we don't have a hash, just load the graph.
@@ -160,20 +143,7 @@ export class Loader implements GraphLoader {
       return await this.#loadWithProvider(url);
     }
 
-    // Check to see if we match a special case:
-    // We are inside of a supergraph (a graph that contains us), _and_ we
-    // are trying to load a peer subgraph.
-    // In this case, do not trigger a load, but instead return the subgraph.
-    if (supergraph) {
-      const supergraphURL = supergraph.url
-        ? new URL(supergraph.url)
-        : SENTINEL_BASE_URL;
-      if (sameWithoutHash(url, supergraphURL)) {
-        const hash = url.hash.substring(1);
-        return this.#getSubgraph(url, hash, supergraph);
-      }
-    }
-    // Otherwise, load the graph and then get its subgraph.
+    // Load the graph and then get its subgraph.
     const loadedSupergraphResult = await this.#loadWithProvider(
       removeHash(url)
     );

@@ -104,14 +104,6 @@ export type NodeDescriberContext = {
    */
   base?: URL;
   /**
-   * The graph in which the node is described.
-   */
-  outerGraph: GraphDescriptor;
-  /**
-   * The loader that can be used to load graphs.
-   */
-  loader?: GraphLoader;
-  /**
    * Information about the wires currently connected to this node.
    */
   wires: NodeDescriberWires;
@@ -321,7 +313,6 @@ export interface NodeHandlerContext {
    * @see [GraphLoader]
    */
   readonly loader?: GraphLoader;
-  readonly outerGraph?: GraphDescriptor;
   readonly probe?: Probe;
   readonly invocationPath?: number[];
   /**

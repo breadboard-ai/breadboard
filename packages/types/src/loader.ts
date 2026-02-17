@@ -22,7 +22,7 @@ export type GraphProviderItem = {
   mine: boolean;
   readonly: boolean;
   handle: unknown;
-  metadata?: {liteModeFeaturedIndex?: number};
+  metadata?: { liteModeFeaturedIndex?: number };
 };
 
 export type GraphProviderStore = {
@@ -171,12 +171,6 @@ export type GraphLoaderContext = {
    * The board that is loading this graph.
    */
   board?: GraphDescriptor;
-  /**
-   * The graph that contains the graph being loaded. Usually the same as
-   * `board`, but may be different in some cases.
-   * TODO: Figure out what those cases are.
-   */
-  outerGraph?: GraphDescriptor;
 };
 
 /**
@@ -244,8 +238,7 @@ export type BoardServerEventMap = {
 export type BoardServerEventTarget = TypedEventTarget<BoardServerEventMap>;
 
 export interface BoardServer
-  extends GraphProvider,
-    TypedEventTargetType<BoardServerEventMap> {
+  extends GraphProvider, TypedEventTargetType<BoardServerEventMap> {
   getLatestSharedVersion?(url: URL): number;
   capabilities: BoardServerCapabilities;
 }

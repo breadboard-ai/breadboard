@@ -34,22 +34,14 @@ class NodeInvokerImpl implements NodeInvoker {
     const { base = SENTINEL_BASE_URL } = context;
     let outputs: OutputValues | undefined = undefined;
 
-    const outerGraph = graph.graph;
-
     const handler = await getHandler(descriptor.type, {
       ...context,
-      outerGraph,
     });
 
     const newContext: NodeHandlerContext = {
       ...context,
       descriptor,
       board: resolveGraph(graph),
-      // This is important: outerGraph is the value of the parent graph
-      // if graph is a subgraph.
-      // Or it equals to "board" if this is not a subgraph
-      // TODO: Make this more elegant.
-      outerGraph,
       base,
       invocationPath,
     };
