@@ -6,8 +6,9 @@
 
 import { GraphDescriptor, GraphTheme, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
-import { makeAction } from "../binder.js";
+import { makeAction, withUIBlocking, stopRun } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
+import { onFlowgenGenerate as onFlowgenGenerateTrigger } from "./triggers.js";
 import type {
   FlowGenerator,
   OneShotFlowGenFailureResponse,
@@ -15,6 +16,7 @@ import type {
 } from "../../../ui/flow-gen/flow-generator.js";
 import { generateImage, persistTheme } from "../theme/theme-utils.js";
 import { getThemeFromIntentGenerationPrompt } from "../../../ui/prompts/theme-generation.js";
+import type { StateEvent } from "../../../ui/events/events.js";
 import type { AppController } from "../../controller/controller.js";
 import type { AppServices } from "../../services/services.js";
 
@@ -27,8 +29,9 @@ export type GenerateResult =
 /**
  * Core flowgen logic: generates a flow from user intent using FlowGen.
  *
- * NOTE: Board locking, status updates, and action tracking are handled
- * by the event-router (flowgen.generate). This action only contains core logic.
+ * This action only contains core generation logic. Orchestration
+ * (board locking, run stop, action tracking, and runner re-preparation)
+ * is handled by `onFlowgenGenerate`.
  *
  * @param intent - The user's description/intent for the flow
  */
@@ -189,3 +192,52 @@ async function generateThemeFromIntent(
   if (!ok(appTheme)) return appTheme;
   return persistTheme(appTheme, controller, services);
 }
+
+// =============================================================================
+// Event-Triggered Actions
+// =============================================================================
+
+/**
+ * Orchestrates a full flow generation cycle in response to a
+ * `flowgen.generate` StateEvent.
+ *
+ * Steps:
+ * 1. Lock the board (blockingAction = true)
+ * 2. Stop any active run
+ * 3. Set flowgen status to "generating"
+ * 4. Track the action for analytics
+ * 5. Invoke core generate logic
+ * 6. Unlock the board
+ *
+ * Runner re-preparation happens automatically after generation because
+ * the graph replacement triggers `onTopologyChange`, which fires
+ * `Run.prepare`.
+ *
+ * **Triggers:** `flowgen.generate` StateEvent
+ */
+export const onFlowgenGenerate = asAction(
+  "Flowgen.onFlowgenGenerate",
+  {
+    mode: ActionMode.Exclusive,
+    triggeredBy: () => onFlowgenGenerateTrigger(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller, services } = bind;
+    const { intent } = (evt as StateEvent<"flowgen.generate">).detail;
+
+    const url = controller.editor.graph.url;
+
+    // Stop any active run before generating.
+    stopRun(controller);
+
+    // Set generating status.
+    controller.global.flowgenInput.state = { status: "generating" };
+
+    // Analytics tracking.
+    services.actionTracker.flowGenEdit(url ?? "");
+
+    await withUIBlocking(controller, async () => {
+      await generate(intent);
+    });
+  }
+);

@@ -11,15 +11,11 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import { ConsentType, ConsentUIType } from "@breadboard-ai/types";
-import {
-  SnackType,
-  STATUS,
-  type SnackbarUUID,
-} from "../../../ui/types/types.js";
+import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
 import type { StateEvent } from "../../../ui/events/events.js";
 import { parseUrl } from "../../../ui/utils/urls.js";
 import { Utils } from "../../utils.js";
-import { makeAction, withUIBlocking } from "../binder.js";
+import { makeAction, withUIBlocking, stopRun } from "../binder.js";
 import { asAction, ActionMode, stateEventTrigger } from "../../coordination.js";
 import * as Helpers from "./helpers/helpers.js";
 import { provideInput } from "../run/helpers/input-queue.js";
@@ -989,14 +985,7 @@ export const onStop = asAction(
     }
 
     // Stop the run.
-    const { run } = controller;
-    if (run.main.abortController) {
-      run.main.abortController.abort();
-    }
-    run.main.reset();
-    run.screen.reset();
-    run.renderer.reset();
-    run.main.setStatus(STATUS.STOPPED);
+    stopRun(controller);
   }
 );
 
