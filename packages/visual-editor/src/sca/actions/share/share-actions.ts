@@ -503,12 +503,14 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
     return;
   }
   share.unmanagedAssetProblems = problems;
-  const previousPanel = share.panel;
-  share.panel = "unmanaged-assets";
 
   // Wait for the user to dismiss the unmanaged-assets dialog.
+  // The share panel UI will render the asset-review view while
+  // unmanagedAssetProblems.length > 0.
   await share.waitForUnmanagedAssetsResolution();
-  share.panel = previousPanel;
+  // Problems are cleared after each publish attempt. If the user dismissed
+  // without fixing, the same problems will be re-detected on the next
+  // publish/publishStale call.
   share.unmanagedAssetProblems = [];
 }
 
@@ -736,13 +738,17 @@ export const fixUnmanagedAssetProblems = asAction(
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
 
-    if (share.unmanagedAssetProblems.length === 0) {
+    const problems = share.unmanagedAssetProblems;
+    if (problems.length === 0) {
       return;
     }
-    share.panel = "loading";
+    // Clear problems immediately to dismiss the asset-review view.
+    // The underlying panel state ("updating" from publish) shows through,
+    // providing loading feedback while permissions are being fixed.
+    share.unmanagedAssetProblems = [];
 
     await Promise.all(
-      share.unmanagedAssetProblems.map(async (problem) => {
+      problems.map(async (problem) => {
         if (problem.problem === "missing") {
           await Promise.all(
             problem.missing.map((permission) =>
@@ -776,13 +782,22 @@ export const closePanel = asAction(
     const share = controller.editor.share;
     const panel = share.panel;
 
+    if (share.unmanagedAssetProblems.length > 0) {
+      Utils.Logging.getLogger(controller).log(
+        Utils.Logging.Formatter.warning(
+          `Cannot close panel while resolving unmanaged asset problems`
+        ),
+        "Share.closePanel"
+      );
+      return;
+    }
+
     if (panel === "closed" || panel === "readonly" || panel === "writable") {
       share.panel = "closed";
     } else if (
       panel === "loading" ||
       panel === "updating" ||
-      panel === "native-share" ||
-      panel === "unmanaged-assets"
+      panel === "native-share"
     ) {
       Utils.Logging.getLogger(controller).log(
         Utils.Logging.Formatter.warning(
@@ -803,6 +818,7 @@ export const closePanel = asAction(
       /* c8 ignore end */
     }
   }
+
 );
 
 export const viewSharePermissions = asAction(

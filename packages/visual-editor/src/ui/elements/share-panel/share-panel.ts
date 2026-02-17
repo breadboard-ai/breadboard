@@ -563,6 +563,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderModalContents() {
+    // Asset-review takes priority when there are unmanaged asset problems
+    // pending resolution (e.g. during publish).
+    if (this.#controller.unmanagedAssetProblems.length > 0) {
+      return this.#renderUnmanagedAssetsModalContents();
+    }
     const panel = this.#panel;
     if (panel === "loading") {
       return this.#renderLoading();
@@ -574,9 +579,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
     }
     if (panel === "readonly") {
       return this.#renderReadonlyModalContents();
-    }
-    if (panel === "unmanaged-assets") {
-      return this.#renderUnmanagedAssetsModalContents();
     }
   }
 

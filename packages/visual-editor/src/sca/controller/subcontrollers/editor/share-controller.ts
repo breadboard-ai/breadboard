@@ -24,8 +24,7 @@ export type SharePanelStatus =
   | "readonly"
   | "writable"
   | "updating"
-  | "native-share"
-  | "unmanaged-assets";
+  | "native-share";
 
 export type ShareStatus = "initializing" | "idle" | "updating" | "error";
 

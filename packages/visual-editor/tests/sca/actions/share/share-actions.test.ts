@@ -12,10 +12,7 @@ import { after, before, beforeEach, suite, test } from "node:test";
 import { GoogleDriveBoardServer } from "../../../../src/board-server/server.js";
 import * as ShareActions from "../../../../src/sca/actions/share/share-actions.js";
 import type * as Editor from "../../../../src/sca/controller/subcontrollers/editor/editor.js";
-import {
-  ShareController,
-  type SharePanelStatus,
-} from "../../../../src/sca/controller/subcontrollers/editor/share-controller.js";
+import { ShareController } from "../../../../src/sca/controller/subcontrollers/editor/share-controller.js";
 import { FakeGoogleDriveApi } from "../../helpers/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
 import { makeUrl } from "../../../../src/ui/utils/urls.js";
@@ -81,7 +78,7 @@ suite("Share Actions", () => {
         size: 0,
         entries: () => [][Symbol.iterator](),
         has: () => false,
-        put: () => {},
+        put: () => { },
         delete: () => false,
       }
     );
@@ -701,12 +698,15 @@ suite("Share Actions", () => {
     // Start publish - this will detect the unmanaged asset and pause
     const publishPromise = ShareActions.publish();
 
-    // Wait for the panel to transition to unmanaged-assets (polling to avoid race condition)
+    // Wait for the unmanaged asset problems to be populated
     for (let i = 0; i < 100; i++) {
-      if ((share.panel as SharePanelStatus) === "unmanaged-assets") break;
+      if (share.unmanagedAssetProblems.length > 0) break;
       await new Promise((r) => setTimeout(r, 10));
     }
-    assert.strictEqual(share.panel, "unmanaged-assets");
+    // Panel stays in "updating" state; unmanaged-assets view is driven by
+    // the problems array, not panel state.
+    assert.strictEqual(share.panel, "updating");
+    assert.ok(share.unmanagedAssetProblems.length > 0);
 
     // Verify we have both problems - one missing, one cant-share
     const missingProblem = share.unmanagedAssetProblems.find(
@@ -751,6 +751,131 @@ suite("Share Actions", () => {
       cantShareDomainPerm,
       undefined,
       "Cant-share asset should NOT have received domain permission"
+    );
+  });
+
+  test("closePanel is blocked while unmanaged asset problems are pending", async () => {
+    // Create the main file
+    const mainFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "main-file.bgl.json", mimeType: "application/json" }
+    );
+
+    // Create an unmanaged asset
+    const unmanagedAsset = await googleDriveClient.createFile(
+      new Blob(["asset data"]),
+      { name: "unmanaged-asset.bin", mimeType: "application/octet-stream" }
+    );
+    fakeDriveApi.forceSetFileMetadata(unmanagedAsset.id, {
+      name: "My Unmanaged File",
+      iconLink: "https://example.com/icon.png",
+      capabilities: { canShare: true },
+    });
+
+    const graph = {
+      edges: [],
+      nodes: [],
+      url: `drive:/${mainFile.id}`,
+      assets: {
+        "asset-1": makeAsset(
+          `drive:/${unmanagedAsset.id}`,
+          false,
+          "unmanaged-asset"
+        ),
+      },
+    };
+
+    setGraph(graph);
+    await ShareActions.open();
+    assert.strictEqual(share.panel, "writable");
+
+    // Start publish — will pause on unmanaged assets
+    const publishPromise = ShareActions.publish();
+
+    // Wait for problems to appear
+    for (let i = 0; i < 100; i++) {
+      if (share.unmanagedAssetProblems.length > 0) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    assert.ok(share.unmanagedAssetProblems.length > 0);
+
+    // Try to close panel — should be blocked
+    await ShareActions.closePanel();
+    assert.strictEqual(
+      share.panel,
+      "updating",
+      "Panel should still be updating (close blocked)"
+    );
+
+    // Dismiss to unblock publish
+    await ShareActions.dismissUnmanagedAssetProblems();
+    await publishPromise;
+  });
+
+  test("dismissUnmanagedAssetProblems resolves without fixing permissions", async () => {
+    // Create the main file
+    const mainFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "main-file.bgl.json", mimeType: "application/json" }
+    );
+
+    // Create an unmanaged asset with missing permissions
+    const unmanagedAsset = await googleDriveClient.createFile(
+      new Blob(["asset data"]),
+      { name: "unmanaged-asset.bin", mimeType: "application/octet-stream" }
+    );
+    fakeDriveApi.forceSetFileMetadata(unmanagedAsset.id, {
+      name: "My Unmanaged File",
+      iconLink: "https://example.com/icon.png",
+      capabilities: { canShare: true },
+    });
+
+    const graph = {
+      edges: [],
+      nodes: [],
+      url: `drive:/${mainFile.id}`,
+      assets: {
+        "asset-1": makeAsset(
+          `drive:/${unmanagedAsset.id}`,
+          false,
+          "unmanaged-asset"
+        ),
+      },
+    };
+
+    setGraph(graph);
+    await ShareActions.open();
+
+    // Start publish — will pause on unmanaged assets
+    const publishPromise = ShareActions.publish();
+
+    // Wait for problems to appear
+    for (let i = 0; i < 100; i++) {
+      if (share.unmanagedAssetProblems.length > 0) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    assert.ok(share.unmanagedAssetProblems.length > 0);
+
+    // Dismiss (ignore) instead of fixing
+    await ShareActions.dismissUnmanagedAssetProblems();
+    await publishPromise;
+
+    // After publish completes, problems are cleared. Dismiss is per-publish-
+    // attempt — the same problems will be re-detected on the next publish.
+    assert.strictEqual(share.unmanagedAssetProblems.length, 0);
+
+    // The unmanaged asset should NOT have received permissions
+    const assetMeta = await googleDriveClient.getFileMetadata(
+      unmanagedAsset.id,
+      { fields: ["permissions"] }
+    );
+    const domainPerm = assetMeta.permissions?.find(
+      (p) => p.type === "domain" && p.domain === "example.com"
+    );
+    assert.strictEqual(
+      domainPerm,
+      undefined,
+      "Dismissed asset should NOT have received domain permission"
     );
   });
 
