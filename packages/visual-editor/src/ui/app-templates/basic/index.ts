@@ -436,7 +436,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderSaveResultsButtons() {
-    if (!this.sca.controller.editor.graph.finalOutputValues) {
+    if (!this.#appPresenter.finalOutput) {
       return nothing;
     }
 
@@ -445,7 +445,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     const allowSharingOutputs = !parsedUrl.lite;
 
     const isBtnDisabled = isDocSlidesOrSheetsOutput(
-      this.sca.controller.editor.graph.finalOutputValues
+      this.#appPresenter.finalOutput
     );
 
     return html`
@@ -527,7 +527,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    if (!this.sca.controller.editor.graph.finalOutputValues) {
+    if (!this.#appPresenter.finalOutput) {
       unlockButton();
       return;
     }
@@ -547,7 +547,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const outputs = await inlineAllContent(
       boardServer.dataPartTransformer(),
-      this.sca.controller.editor.graph.finalOutputValues!,
+      this.#appPresenter.finalOutput!,
       currentGraphUrl
     );
     if (!ok(outputs)) {
@@ -713,7 +713,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       .getFileMetadata(shareableGraphFileId, { fields: ["resourceKey"] })
       .then(({ resourceKey }) => resourceKey);
 
-    if (!this.sca.controller.editor.graph.finalOutputValues) {
+    if (!this.#appPresenter.finalOutput) {
       unlockButton();
       unsnackbar();
       return;
@@ -735,7 +735,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
     const finalOutputValues = await inlineAllContent(
       boardServer.dataPartTransformer(),
-      this.sca.controller.editor.graph.finalOutputValues!,
+      this.#appPresenter.finalOutput!,
       shareableGraphUrl
     );
     if (!ok(finalOutputValues)) {
