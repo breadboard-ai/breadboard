@@ -59,7 +59,7 @@ const focusAppControllerWhenIn = ["canvas", "preview"];
 import "./empty-state.js";
 import "../../flow-gen/flowgen-editor-input.js";
 import "../../elements/graph-editing-chat/graph-editing-chat.js";
-import { isEmpty } from "../../utils/utils.js";
+
 import { SignalWatcher } from "@lit-labs/signals";
 
 import * as Theme from "../../../theme/index.js";
@@ -127,7 +127,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
     if (
       mainGraphId !== this.#prevMainGraphId &&
       mainGraphId &&
-      !this.sca.controller.editor.graph.graphIsMine
+      this.sca.controller.editor.graph.readOnly
     ) {
       this.sideNavItem = "preview";
     }
@@ -169,7 +169,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const gc = this.sca.controller.editor.graph;
 
     const graph = gc.editor?.inspect("") || null;
-    const graphIsEmpty = isEmpty(graph?.raw() ?? null);
+    const graphIsEmpty = gc.empty;
 
     const runState = this.runState;
 
@@ -293,8 +293,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
             .graph=${gc.graph}
             .graphIsEmpty=${graphIsEmpty}
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-            .isMine=${gc.graphIsMine}
-            .readOnly=${!gc.graphIsMine}
+            .isMine=${!gc.readOnly}
+            .readOnly=${gc.readOnly}
             .runtimeFlags=${this.sca.controller.global.flags}
             .showGDrive=${this.sca.services.signinAdapter.stateSignal
               ?.status === "signedin"}
@@ -322,7 +322,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             active: this.sideNavItem === "console",
           })}
           .themeStyles=${themeStyles}
-          .disclaimerContent=${gc.graphIsMine
+          .disclaimerContent=${!gc.readOnly
             ? GlobalStrings.from("LABEL_DISCLAIMER")
             : html`This content was created by another person. It may be
                 inaccurate or unsafe.
@@ -424,7 +424,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
                   "sans-flex": true,
                   "w-500": true,
                   round: true,
-                  invisible: !gc.graphIsMine,
+                  invisible: gc.readOnly,
                 })}
                 @click=${() => {
                   this.sideNavItem = "preview";
@@ -456,7 +456,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             ? html`<bb-prompt-view .prompt=${prompt}></bb-prompt-view>
                 <bb-step-list-view></bb-step-list-view>`
             : html`<bb-empty-state narrow></bb-empty-state>`}
-          ${!gc.graphIsMine ||
+          ${gc.readOnly ||
           Utils.Helpers.isHydrating(
             () => this.sca.controller.global.flags.enableGraphEditorAgent
           )

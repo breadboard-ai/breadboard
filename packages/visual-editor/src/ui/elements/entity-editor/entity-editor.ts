@@ -105,7 +105,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   }
 
   get #readOnly(): boolean {
-    return !this.sca.controller.editor.graph.graphIsMine;
+    return this.sca.controller.editor.graph.readOnly;
   }
 
   @property({ reflect: true, type: Boolean })

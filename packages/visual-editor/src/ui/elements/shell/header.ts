@@ -45,11 +45,13 @@ export class VEHeader extends SignalWatcher(LitElement) {
   @property()
   accessor signinAdapter: SigninAdapter | null = null;
 
-  @property({ reflect: true, type: Boolean })
-  accessor hasActiveTab = false;
+  get hasActiveTab() {
+    return this.sca.controller.editor.graph.graph !== null;
+  }
 
-  @property()
-  accessor tabTitle: string | null = null;
+  get tabTitle(): string | null {
+    return this.sca.controller.editor.graph.title ?? null;
+  }
 
   @property()
   accessor url: string | null = null;
@@ -880,6 +882,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
+    // Sync hasactivetab attribute for CSS :host([hasactivetab]) selector
+    this.toggleAttribute("hasactivetab", this.hasActiveTab);
+
     // If the user has opened a file that isn't theirs it must be Published, so
     // we update the status as such.
     if (changedProperties.has("isMine")) {
