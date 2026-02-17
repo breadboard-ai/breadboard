@@ -14,7 +14,7 @@ import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-driv
 
 import { Tab } from "../utils/graph-types.js";
 import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
-import { SettingsStore } from "../ui/data/settings-store.js";
+
 import type * as BreadboardUI from "../ui/index.js";
 import { ActionTracker, UserSignInResponse } from "../ui/types/types.js";
 import { type SCA } from "../sca/sca.js";
@@ -27,7 +27,6 @@ export interface EventRouteDeps<
 > {
   originalEvent: StateCustomEvent<K>;
 
-  settings: SettingsStore | null;
   tab: Tab | null;
   sca: SCA;
   googleDriveClient: GoogleDriveClient | null;

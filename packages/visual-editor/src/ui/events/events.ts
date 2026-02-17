@@ -17,7 +17,7 @@ import type {
   AppTemplateAdditionalOptionsAvailable,
   Command,
   EdgeData,
-  Settings,
+  Tokens,
   SnackType,
   SnackbarAction,
   SnackbarUUID,
@@ -341,7 +341,7 @@ export class OverlayDismissedEvent extends Event {
 export class SettingsUpdateEvent extends Event {
   static eventName = "bbsettingsupdate";
 
-  constructor(public readonly settings: Settings) {
+  constructor(public readonly settings: Tokens) {
     super(SettingsUpdateEvent.eventName, { ...eventInit });
   }
 }

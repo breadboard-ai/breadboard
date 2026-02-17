@@ -12,8 +12,6 @@ import { GraphDescriptor } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
-import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
-import { SettingsStore } from "./ui/data/settings-store.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
@@ -82,9 +80,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   @provide({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig;
 
-  @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
-  accessor settingsHelper: SettingsHelperImpl;
-
   @provide({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator;
 
@@ -140,7 +135,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
 
-  protected readonly settings: SettingsStore;
   protected readonly hostOrigin: URL;
   protected readonly logger: ReturnType<typeof Utils.Logging.getLogger> =
     Utils.Logging.getLogger();
@@ -161,10 +155,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Configuration provided by shell host
     this.guestConfiguration = args.guestConfiguration;
 
-    // User settings
-    this.settings = args.settings;
-    this.settingsHelper = new SettingsHelperImpl(this.settings);
-
     // Authentication
     this.opalShell = args.shellHost;
     this.hostOrigin = args.hostOrigin;
@@ -173,7 +163,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     const config: RuntimeConfig = {
       globalConfig: this.globalConfig,
       guestConfig: this.guestConfiguration,
-      settings: this.settings,
       shellHost: this.opalShell,
       embedHandler: args.embedHandler,
       env: args.env,
@@ -234,15 +223,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    // Admin.
-    const admin = new Admin(
+    // Admin — side-effect: exposes `window.o` when URL has #owner-tools.
+    new Admin(
       args,
       this.globalConfig,
       this.googleDriveClient,
       this.sca.services.signinAdapter
     );
-
-    admin.settingsHelper = this.settingsHelper;
 
     // Once we've determined the sign-in status, relay it to an embedder.
     this.sca.services.signinAdapter.state.then((state) =>
@@ -610,14 +597,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    const tooltips = this.settings.getItem(
-      BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-      "Show Tooltips"
-    );
-    if (!tooltips?.value) {
-      return;
-    }
-
     this.tooltipRef.value.x = tooltipEvent.x;
     this.tooltipRef.value.y = tooltipEvent.y;
     this.tooltipRef.value.message = tooltipEvent.message;
@@ -691,7 +670,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return {
       originalEvent: evt,
 
-      settings: this.settings,
       tab: this.tab,
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>

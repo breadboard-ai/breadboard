@@ -25,7 +25,7 @@ import {
   GuestConfiguration,
   OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { SettingsStore } from "../ui/types/types.js";
+
 import type { InPort } from "../ui/transforms/autowire-in-ports.js";
 import type { Tool, Component } from "../ui/types/state-types.js";
 
@@ -175,7 +175,6 @@ export interface ServicesConfig {
   globalConfig: GlobalConfig;
   guestConfig: GuestConfiguration;
   shellHost: OpalShellHostProtocol;
-  settings: SettingsStore;
   env?: FileSystemEntry[];
   appName: string;
   appSubName: string;

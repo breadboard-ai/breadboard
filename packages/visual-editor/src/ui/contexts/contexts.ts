@@ -5,5 +5,4 @@
  */
 
 export { globalConfigContext, type GlobalConfig } from "./global-config.js";
-export { settingsHelperContext } from "./settings-helper.js";
 export { embedderContext } from "./embedder.js";
