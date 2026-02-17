@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ToastType } from "../../events/events.js";
+import { ToastType } from "../../../sca/types.js";
 import { LitElement, html, css, PropertyValueMap } from "lit";
 import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";

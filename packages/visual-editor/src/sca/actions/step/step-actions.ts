@@ -14,7 +14,7 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types";
-import { ToastType } from "../../../ui/events/events.js";
+import { ToastType } from "../../types.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import {

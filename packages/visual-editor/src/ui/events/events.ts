@@ -18,26 +18,26 @@ import type {
   Command,
   EdgeData,
   Tokens,
-  SnackType,
-  SnackbarAction,
-  SnackbarUUID,
   UserOutputValues,
   Utterance,
   WorkspaceVisualChangeId,
 } from "../types/types.js";
+import {
+  ToastType,
+  type SnackType,
+  type SnackbarAction,
+  type SnackbarUUID,
+} from "../../sca/types.js";
+
+// Re-export ToastType for barrel compatibility (BreadboardUI.Events.ToastType).
+// Canonical source: sca/types.ts.
+export { ToastType };
 
 const eventInit = {
   bubbles: true,
   cancelable: true,
   composed: true,
 };
-
-export enum ToastType {
-  INFORMATION = "information",
-  WARNING = "warning",
-  ERROR = "error",
-  PENDING = "pending",
-}
 
 /** State Event System */
 

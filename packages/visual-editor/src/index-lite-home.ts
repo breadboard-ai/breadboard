@@ -23,7 +23,7 @@ import type {
 } from "./ui/events/events.js";
 import * as BBLite from "./ui/lite/lite.js";
 import "./ui/lite/welcome-panel/project-listing.js";
-import { SnackType } from "./ui/types/types.js";
+import { SnackType } from "./sca/types.js";
 import { scaContext } from "./sca/context/context.js";
 import { sca, type SCA } from "./sca/sca.js";
 import { RuntimeConfig } from "./utils/graph-types.js";

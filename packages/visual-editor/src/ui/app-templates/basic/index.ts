@@ -19,8 +19,8 @@ import {
   AppTemplate,
   AppTemplateOptions,
   FloatingInputFocusState,
-  SnackType,
 } from "../../types/types.js";
+import { SnackType } from "../../../sca/types.js";
 
 // Custom Elements for the App.
 import "./a2ui-custom-elements/index.js";

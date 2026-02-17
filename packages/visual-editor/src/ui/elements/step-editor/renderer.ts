@@ -31,7 +31,7 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { A2_COMPONENTS } from "../../../a2/a2-registry.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   CreateNewAssetsEvent,
   GraphEdgeAttachmentMoveEvent,

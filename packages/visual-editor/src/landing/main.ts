@@ -7,9 +7,9 @@
 import type {
   GraphUrlInit,
   LandingUrlInit,
-  LanguagePack,
   MakeUrlInit,
-} from "../ui/types/types.js";
+} from "../sca/types.js";
+import type { LanguagePack } from "../ui/types/types.js";
 import { createActionTracker } from "../ui/utils/action-tracker.js";
 import { connectToOpalShellHost } from "../ui/utils/opal-shell-guest.js";
 import { SigninAdapter } from "../ui/utils/signin-adapter.js";

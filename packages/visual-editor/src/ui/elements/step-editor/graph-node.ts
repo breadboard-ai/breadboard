@@ -46,7 +46,7 @@ import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import { NodeRunState } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { scaContext } from "../../../sca/context/context.js";

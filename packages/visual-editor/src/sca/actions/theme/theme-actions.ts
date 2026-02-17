@@ -12,7 +12,7 @@ import {
   createThemeGenerationPrompt,
   getThemeFromIntentGenerationPrompt,
 } from "../../../ui/prompts/theme-generation.js";
-import { AppTheme } from "../../../ui/types/types.js";
+import { AppTheme } from "../../types.js";
 import { ThemePromptArgs } from "../../types.js";
 import { generateImage, persistTheme } from "./theme-utils.js";
 

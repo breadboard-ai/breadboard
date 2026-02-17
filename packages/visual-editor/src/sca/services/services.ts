@@ -8,7 +8,7 @@ import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-driv
 import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { RuntimeConfig } from "../../utils/graph-types.js";
-import type { GlobalConfig } from "../../ui/contexts/global-config.js";
+import type { GlobalConfig } from "../types.js";
 import { createActionTracker } from "../../ui/utils/action-tracker.js";
 import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
@@ -33,7 +33,7 @@ import { Autonamer } from "./autonamer.js";
 import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
 import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";
-import { ActionTracker, UserSignInResponse } from "../../ui/types/types.js";
+import { ActionTracker, UserSignInResponse } from "../types.js";
 import { type ConsentController } from "../controller/subcontrollers/global/global.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { RunService } from "./run-service.js";

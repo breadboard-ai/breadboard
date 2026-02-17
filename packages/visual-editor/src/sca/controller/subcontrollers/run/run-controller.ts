@@ -14,7 +14,7 @@ import type {
   Schema,
   WorkItem,
 } from "@breadboard-ai/types";
-import { STATUS } from "../../../../ui/types/types.js";
+import { STATUS } from "../../../types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 

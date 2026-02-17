@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RecentBoard } from "../../../../ui/types/types.js";
+import { RecentBoard } from "../../../types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 

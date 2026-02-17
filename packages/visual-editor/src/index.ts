@@ -16,7 +16,7 @@ import * as BreadboardUI from "./ui/index.js";
 import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { MakeUrlInit } from "./ui/types/types.js";
+import { MakeUrlInit } from "./sca/types.js";
 import { repeat } from "lit/directives/repeat.js";
 import { Utils } from "./sca/utils.js";
 

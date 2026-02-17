@@ -5,7 +5,7 @@
  */
 
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { ActionTracker } from "../types/types.js";
+import { ActionTracker } from "../../sca/types.js";
 import { GuestActionTracker } from "./guest-action-tracker.js";
 
 export { createActionTracker };

@@ -7,7 +7,7 @@
 import { ErrorResponse, RunError, RunErrorEvent } from "@breadboard-ai/types";
 import type { ErrorMetadata } from "../types.js";
 import { formatError } from "./format-error.js";
-import { ActionTracker } from "../../ui/types/types.js";
+import { ActionTracker } from "../types.js";
 
 export { decodeError, decodeErrorData };
 

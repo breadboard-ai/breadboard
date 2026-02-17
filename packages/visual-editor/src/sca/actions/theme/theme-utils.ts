@@ -15,7 +15,7 @@ import {
   generatePaletteFromColor,
   generatePaletteFromImage,
 } from "../../../theme/index.js";
-import { AppTheme } from "../../../ui/types/types.js";
+import { AppTheme } from "../../types.js";
 import { isInlineData, transformDataParts } from "../../../data/common.js";
 import type { AppController } from "../../controller/controller.js";
 import type { AppServices } from "../../services/services.js";

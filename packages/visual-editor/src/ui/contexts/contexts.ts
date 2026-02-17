@@ -4,5 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { globalConfigContext, type GlobalConfig } from "./global-config.js";
+export { globalConfigContext } from "./global-config.js";
+export { type GlobalConfig } from "../../sca/types.js";
 export { embedderContext } from "./embedder.js";

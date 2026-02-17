@@ -6,8 +6,8 @@
 
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
-import { ToastType } from "../../ui/events/events.js";
-import { STATUS } from "../../ui/types/types.js";
+import { ToastType } from "../types.js";
+import { STATUS } from "../types.js";
 
 /**
  * Returns true if the keyboard event originated from within the graph renderer

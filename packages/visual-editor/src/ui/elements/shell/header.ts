@@ -20,7 +20,7 @@ import {
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
-import { UILoadState } from "../../types/state-types.js";
+import { UILoadState } from "../../../sca/types.js";
 import * as Styles from "../../styles/styles.js";
 import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
