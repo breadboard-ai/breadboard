@@ -18,6 +18,8 @@ import {
   toEdgeIdentifier,
 } from "../../../../utils/helpers/helpers.js";
 
+export type { Selection };
+
 interface Selection {
   nodes: Set<NodeIdentifier>;
   edges: Set<EdgeIdentifier>;
@@ -26,7 +28,14 @@ interface Selection {
 }
 
 export class SelectionController extends RootController {
+  /**
+   * Incremented when selection changes. Used by triggers to detect
+   * selection changes without reading the full selection state.
+   */
   @field()
+  private accessor _selectionId: number = 0;
+
+  @field({ deep: true })
   private accessor _selection: Selection = {
     nodes: new Set(),
     edges: new Set(),
@@ -34,8 +43,22 @@ export class SelectionController extends RootController {
     assetEdges: new Set(),
   };
 
+  get selectionId(): number {
+    return this._selectionId;
+  }
+
   get selection(): Readonly<Selection> {
     return this._selection;
+  }
+
+  /**
+   * Returns the single selected node when exactly one node is selected
+   * and nothing else is selected, or null otherwise.
+   */
+  get selectedNodeId(): NodeIdentifier | null {
+    if (this.size !== 1) return null;
+    if (this._selection.nodes.size !== 1) return null;
+    return [...this._selection.nodes][0];
   }
 
   get size(): number {
@@ -47,7 +70,8 @@ export class SelectionController extends RootController {
     );
   }
 
-  clear() {
+  deselectAll() {
+    this._selectionId++;
     this.removeNodes();
     this.removeEdges();
     this.removeAssets();
@@ -55,10 +79,12 @@ export class SelectionController extends RootController {
   }
 
   addNode(id: NodeIdentifier) {
+    this._selectionId++;
     this._selection.nodes.add(id);
   }
 
   removeNode(id: NodeIdentifier) {
+    this._selectionId++;
     this._selection.nodes.delete(id);
   }
 
@@ -66,11 +92,23 @@ export class SelectionController extends RootController {
     this._selection.nodes.clear();
   }
 
+  /**
+   * Clear the current selection and select the given nodes.
+   */
+  selectNodes(ids: NodeIdentifier[]) {
+    this.deselectAll();
+    for (const id of ids) {
+      this.addNode(id);
+    }
+  }
+
   addEdge(id: EdgeIdentifier) {
+    this._selectionId++;
     this._selection.edges.add(id);
   }
 
   removeEdge(id: EdgeIdentifier) {
+    this._selectionId++;
     this._selection.edges.delete(id);
   }
 
@@ -79,10 +117,12 @@ export class SelectionController extends RootController {
   }
 
   addAsset(id: AssetIdentifier) {
+    this._selectionId++;
     this._selection.assets.add(id);
   }
 
   removeAsset(id: AssetIdentifier) {
+    this._selectionId++;
     this._selection.assets.delete(id);
   }
 
@@ -91,10 +131,12 @@ export class SelectionController extends RootController {
   }
 
   addAssetEdge(id: AssetEdgeIdentifier) {
+    this._selectionId++;
     this._selection.assetEdges.add(id);
   }
 
   removeAssetEdge(id: AssetEdgeIdentifier) {
+    this._selectionId++;
     this._selection.assetEdges.delete(id);
   }
 
@@ -103,7 +145,7 @@ export class SelectionController extends RootController {
   }
 
   selectAll(graph: InspectableGraph) {
-    this.clear();
+    this.deselectAll();
     for (const node of graph.nodes()) {
       this.addNode(node.descriptor.id);
     }

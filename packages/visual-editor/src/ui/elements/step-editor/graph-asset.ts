@@ -5,16 +5,17 @@
  */
 
 import { AssetPath, InspectableAsset, LLMContent } from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
+import { consume } from "@lit/context";
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, nothing, PropertyValues } from "lit";
+import { css, html, HTMLTemplateResult, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
+import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { DragConnectorStartEvent } from "../../events/events.js";
-import { GraphAsset as GraphAssetState } from "../../state/types.js";
+import { GraphAsset as GraphAssetState } from "../../../sca/types.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
@@ -26,6 +27,8 @@ import {
 } from "./events/events.js";
 import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { toGridSize } from "./utils/to-grid-size.js";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SCA } from "../../../sca/sca.js";
 
 @customElement("bb-graph-asset")
 export class GraphAsset
@@ -61,6 +64,9 @@ export class GraphAsset
 
   @property()
   accessor state: GraphAssetState | null = null;
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = [
     type,
@@ -346,7 +352,7 @@ export class GraphAsset
       transform: toCSSMatrix(this.worldTransform, this.force2D),
     };
 
-    let icon = "text_fields";
+    let icon: string | HTMLTemplateResult = "text_fields";
     if (this.asset?.type === "file") {
       icon = "upload";
     }
@@ -361,6 +367,9 @@ export class GraphAsset
           break;
         case "gdrive":
           icon = "drive";
+          break;
+        case "notebooklm":
+          icon = notebookLmIcon;
           break;
       }
     }
@@ -482,7 +491,7 @@ export class GraphAsset
           ${this.updating
             ? html`<p class="loading">Loading asset details...</p>`
             : nothing}
-          ${html`<div id="content-container">
+          <div id="content-container">
             <bb-llm-output
               @outputsloaded=${() => {
                 this.updating = false;
@@ -496,7 +505,7 @@ export class GraphAsset
               .showExportControls=${false}
               .graphUrl=${this.graphUrl}
             ></bb-llm-output>
-          </div>`}
+          </div>
         </div>
       </section>
 
@@ -504,14 +513,7 @@ export class GraphAsset
   }
 
   #getPreviewValue(): LLMContent | null {
-    let context: LLMContent[] | undefined;
-    if (this.asset?.type === "connector") {
-      const preview = this.state?.connector?.preview;
-      if (!preview || !ok(preview)) return null;
-      context = preview;
-    } else {
-      context = this.asset?.data;
-    }
+    const context = this.asset?.data;
     return context?.at(-1) ?? null;
   }
 

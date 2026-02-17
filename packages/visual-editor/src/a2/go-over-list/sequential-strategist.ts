@@ -2,7 +2,7 @@
  * @fileoverview Executes sequential strategy.
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { report } from "../a2/output.js";
 import { ok, toLLMContent } from "../a2/utils.js";
 import { getPlan, plannerPrompt } from "./planner-prompt.js";
@@ -17,14 +17,12 @@ class SequentialStrategist implements Strategist {
 All tasks in the plan will be executed in sequence, building on each other.`;
 
   async execute(
-    caps: Capabilities,
     moduleArgs: A2ModuleArgs,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent
   ): Promise<Outcome<LLMContent[]>> {
     const planning = await plannerPrompt(
-      caps,
       moduleArgs,
       mutableContext,
       objective,
@@ -35,7 +33,7 @@ All tasks in the plan will be executed in sequence, building on each other.`;
     const plan = getPlan(planning.last);
     if (!ok(plan)) return plan;
 
-    await report(caps, {
+    await report(moduleArgs, {
       actor: "Planner",
       category: `Creating a list`,
       name: "Here's my list",
@@ -48,7 +46,7 @@ I will now go over the list in order.`,
 
     const results: LLMContent[] = [];
     for (const task of plan.todo) {
-      await report(caps, {
+      await report(moduleArgs, {
         actor: "Worker",
         category: "Working on a list item",
         name: "Item",

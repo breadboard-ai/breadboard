@@ -61,7 +61,7 @@ export const styles = [
         top: 50%;
         transform: translateY(-50%);
         right: var(--bb-grid-size-3);
-        z-index: 6;
+        z-index: 100;
         height: calc(100% - var(--bb-grid-size-6));
         width: 25svw;
         min-width: 280px;
@@ -70,13 +70,69 @@ export const styles = [
       }
     }
 
+    #content,
     #controls-activity,
-    #create-view {
+    #create-view,
+    #narrow-view {
       width: 100%;
       height: 100%;
       overflow: auto;
       position: relative;
       contain: strict;
+    }
+
+    #narrow-view {
+      display: flex;
+      flex-direction: column;
+      padding: var(--bb-grid-size-3);
+
+      & bb-prompt-view {
+        flex: 0 0 auto;
+        margin-bottom: var(--bb-grid-size-4);
+        background: light-dark(var(--n-100), var(--n-0));
+      }
+
+      & bb-step-list-view {
+        flex: 1 1 auto;
+        overflow: auto;
+      }
+
+      & bb-empty-state {
+        position: relative;
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 30vh;
+      }
+
+      & bb-flowgen-editor-input {
+        flex: 0 0 auto;
+        padding: var(--bb-grid-size-3) 0;
+      }
+    }
+
+    #content.welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--bb-grid-size-4);
+
+      & bb-empty-state {
+        position: relative;
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      & bb-flowgen-editor-input {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 540px;
+        padding-bottom: var(--bb-grid-size-4);
+      }
     }
 
     #create-view {

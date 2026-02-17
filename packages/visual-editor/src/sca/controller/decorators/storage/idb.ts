@@ -43,6 +43,8 @@ export class IdbStorageWrapper implements Storage {
     await db.delete(this.storeName, name);
   }
 
+  // Not tested because in tests we use the in-memory storage.
+  /* c8 ignore next 3 */
   async clear(): Promise<void> {
     const db = await this.#dbPromise;
     await db.clear(this.storeName);

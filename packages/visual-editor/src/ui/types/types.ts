@@ -24,7 +24,6 @@ import type {
   GraphMetadata,
   InlineDataCapabilityPart,
   LLMContent,
-  ModuleIdentifier,
   RuntimeFlags,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
@@ -239,7 +238,7 @@ export interface Command {
 export interface OverflowAction {
   title: string;
   name: string;
-  icon: string;
+  icon: string | HTMLTemplateResult;
   disabled?: boolean;
   value?: string;
   secondaryAction?: string;
@@ -280,7 +279,6 @@ export interface WorkspaceVisualStateWithChangeId {
 export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
 export type WorkspaceSelectionState = {
   graphs: Map<GraphIdentifier, GraphSelectionState>;
-  modules: Set<ModuleIdentifier>;
 };
 export interface WorkspaceSelectionStateWithChangeId {
   selectionChangeId: WorkspaceSelectionChangeId;
@@ -418,8 +416,7 @@ export interface AssetEdge {
 export type EnumValue = {
   title: string;
   id: string;
-  icon?: string;
-  svgIcon?: string;
+  icon?: string | HTMLTemplateResult;
   description?: string;
   tag?: string; // Typically used for keyboard shortcuts.
   hidden?: boolean;
@@ -562,7 +559,6 @@ export interface GraphUrlInit extends BaseUrlInit {
   remix?: boolean;
   resourceKey?: string | undefined;
   results?: string;
-  shared?: boolean;
   redirectFromLanding?: boolean;
 }
 
@@ -582,7 +578,7 @@ export interface OpenUrlInit extends BaseUrlInit {
 export type UserSignInResponse = "success" | "failure" | "dismissed";
 
 export interface ActionTracker {
-  load(type: "app" | "canvas" | "landing" | "home", shared: boolean): void;
+  load(type: "app" | "canvas" | "landing" | "home"): void;
   openApp(url: string, source: "gallery" | "user"): void;
   remixApp(url: string, source: "gallery" | "user" | "editor"): void;
   createNew(): void;

@@ -1,11 +1,10 @@
 /**
  * @fileoverview Recursively search the web for in-depth answers to your query.
  */
-import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
+import { LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { executeOpalAdkStream } from "../a2/opal-adk-stream.js";
 import invokeGemini, {
   type GeminiInputs,
   type Tool,
@@ -15,6 +14,7 @@ import { ArgumentNameGenerator } from "../a2/introducer.js";
 import { report } from "../a2/output.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils.js";
+import { OpalAdkStream, DEEP_RESEARCH_KEY } from "../a2/opal-adk-stream.js";
 
 export { invoke as default, describe, makeDeepResearchInstruction };
 
@@ -59,10 +59,10 @@ function systemInstruction(first: boolean): string {
 Your job is to use the provided query to produce raw research that will be later turned into a detailed research report.
 You are tasked with finding as much of relevant information as possible.
 
-You examine the conversation context so far and come up with the ${which} step to produce the report, 
+You examine the conversation context so far and come up with the ${which} step to produce the report,
 using the conversation context as the the guide of steps taken so far and the outcomes recorded.
 
-You do not ask user for feedback. You do not try to have a conversation with the user. 
+You do not ask user for feedback. You do not try to have a conversation with the user.
 You know that the user will only ask you to proceed to next step.
 
 Looking back at all that you've researched and the query/research plan, do you have enough to produce the detailed report? If so, you are done.
@@ -124,7 +124,7 @@ function reportWriterPrompt(
 }
 
 async function thought(
-  caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
   response: LLMContent,
   iteration: number
 ) {
@@ -132,7 +132,7 @@ async function thought(
   if (!first || !("text" in first)) {
     return;
   }
-  await report(caps, {
+  await report(moduleArgs, {
     actor: "Researcher",
     category: `Progress report, iteration ${iteration + 1}`,
     name: "Thought",
@@ -145,15 +145,13 @@ async function thought(
 }
 
 async function invokeOpalAdk(
-  { context, query, summarize, ...params }: ResearcherInputs,
-  caps: Capabilities,
+  { context, query, ...params }: ResearcherInputs,
   moduleArgs: A2ModuleArgs
 ) {
-  const template = new Template(caps, query);
+  const template = new Template(query, moduleArgs.context.currentGraph);
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
@@ -161,29 +159,29 @@ async function invokeOpalAdk(
   if (!ok(substituting)) {
     return substituting;
   }
-
-  const results = await executeOpalAdkStream(caps, moduleArgs, [substituting], "deep_research");
-  console.log("deep-research results", results)
+  const opalAdkStream = new OpalAdkStream(moduleArgs);
+  const results = await opalAdkStream.executeOpalAdkStream(DEEP_RESEARCH_KEY, [
+    substituting,
+  ]);
+  console.log("deep-research results", results);
   return {
-    context: [...(context || []), results]
+    context: [...(context || []), results],
   };
 }
 
 async function invokeLegacy(
   { context, query, summarize, ...params }: ResearcherInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
-  console.log('calling deep research agent.')
+  console.log("calling deep research agent.");
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   let content = context || [toLLMContent("Start the research")];
 
-  const template = new Template(caps, query);
+  const template = new Template(query, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
   );
@@ -205,7 +203,6 @@ async function invokeLegacy(
   for (let i = 0; i <= MAX_ITERATIONS; i++) {
     const askingGemini = await invokeGemini(
       researcherPrompt(content, query, toolManager.list(), i === 0),
-      caps,
       moduleArgs
     );
 
@@ -219,7 +216,7 @@ async function invokeLegacy(
     if (!response) {
       return err("No actionable response");
     }
-    await thought(caps, response, i);
+    await thought(moduleArgs, response, i);
 
     const callingTools = await toolManager.callTools(response, true, []);
     if (!ok(callingTools)) return callingTools;
@@ -234,7 +231,7 @@ async function invokeLegacy(
     content = [...content, response, ...toolResponses.flat()];
   }
   if (research.length === 0) {
-    await report(caps, {
+    await report(moduleArgs, {
       actor: "Researcher",
       category: "Error",
       name: "Error",
@@ -245,7 +242,6 @@ async function invokeLegacy(
   if (summarize) {
     const producingReport = await invokeGemini(
       reportWriterPrompt(query, research),
-      caps,
       moduleArgs
     );
     if (!ok(producingReport)) {
@@ -268,15 +264,20 @@ async function invokeLegacy(
 
 async function invoke(
   { context, query, summarize, ...params }: ResearcherInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await moduleArgs.context.flags?.flags();
   const opalAdkEnabled = flags?.opalAdk || false;
   if (opalAdkEnabled) {
-    return invokeOpalAdk({ context, query, summarize, ...params }, caps, moduleArgs);
+    return invokeOpalAdk(
+      { context, query, summarize, ...params },
+      moduleArgs
+    );
   } else {
-    return invokeLegacy({ context, query, summarize, ...params }, caps, moduleArgs);
+    return invokeLegacy(
+      { context, query, summarize, ...params },
+      moduleArgs
+    );
   }
 }
 
@@ -310,9 +311,8 @@ function researchExample(): string[] {
 
 async function describe(
   { inputs: { query } }: DescribeInputs,
-  caps: Capabilities
 ) {
-  const template = new Template(caps, query);
+  const template = new Template(query);
   return {
     inputSchema: {
       type: "object",

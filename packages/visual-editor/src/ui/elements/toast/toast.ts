@@ -6,6 +6,7 @@
 
 import { ToastType } from "../../events/events.js";
 import { LitElement, html, css, PropertyValueMap } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -14,7 +15,7 @@ import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-toast")
-export class Toast extends LitElement {
+export class Toast extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 

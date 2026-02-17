@@ -14,6 +14,8 @@ import {
   type DataPartTransformer,
   type GraphDescriptor,
   type GraphProviderCapabilities,
+  type ImmutableGraphCollection,
+  type MutableGraphCollection,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import {
@@ -39,6 +41,7 @@ import { DriveGalleryGraphCollection } from "./gallery-graph-collection.js";
 import { DriveUserGraphCollection } from "./user-graph-collection.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { getLogger, Formatter } from "../sca/utils/logging/logger.js";
 
 export { GoogleDriveBoardServer };
 
@@ -83,8 +86,8 @@ class GoogleDriveBoardServer
     }
   >();
 
-  readonly galleryGraphs: DriveGalleryGraphCollection;
-  readonly userGraphs: DriveUserGraphCollection;
+  readonly galleryGraphs: ImmutableGraphCollection;
+  readonly userGraphs: MutableGraphCollection;
 
   constructor(
     public readonly name: string,
@@ -93,7 +96,10 @@ class GoogleDriveBoardServer
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
     findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"],
-    listUserOpals: OpalShellHostProtocol["listUserOpals"]
+    listUserOpals: OpalShellHostProtocol["listUserOpals"],
+    // Optional graph collections for testing - if not provided, creates real ones
+    galleryGraphs?: ImmutableGraphCollection,
+    userGraphs?: MutableGraphCollection
   ) {
     super();
 
@@ -111,16 +117,28 @@ class GoogleDriveBoardServer
       userFolderName,
       googleDriveClient,
       publishPermissions,
-      findUserOpalFolder
+      findUserOpalFolder,
+      (level, ...args) => {
+        const logger = getLogger();
+        const formatter =
+          level === "error"
+            ? Formatter.error
+            : level === "warning"
+              ? Formatter.warning
+              : Formatter.verbose;
+        logger.log(formatter(...args), "DriveOperations");
+      }
     );
 
     this.capabilities = configuration.capabilities;
     this.#googleDriveClient = googleDriveClient;
-    this.galleryGraphs = new DriveGalleryGraphCollection(
-      signInInfo,
-      googleDriveClient.fetchWithCreds
-    );
-    this.userGraphs = new DriveUserGraphCollection(listUserOpals);
+    this.galleryGraphs =
+      galleryGraphs ??
+      new DriveGalleryGraphCollection(
+        signInInfo,
+        googleDriveClient.fetchWithCreds
+      );
+    this.userGraphs = userGraphs ?? new DriveUserGraphCollection(listUserOpals);
   }
 
   #saving = new Map<string, SaveDebouncer>();
@@ -210,7 +228,10 @@ class GoogleDriveBoardServer
     ]);
     if (metadata && media.status === 200) {
       const descriptor = await media.json();
-      console.debug(`[Google Drive Board Server] Loaded graph`, descriptor);
+      getLogger().log(
+        Formatter.verbose("Loaded graph", descriptor),
+        "GoogleDriveBoardServer"
+      );
       if (isGalleryGraph) {
         for (const asset of findGoogleDriveAssetsInGraph(descriptor)) {
           this.#googleDriveClient.markFileForReadingWithPublicProxy(
@@ -293,9 +314,9 @@ class GoogleDriveBoardServer
     const createDone = (async (): Promise<void> => {
       const parent = await this.ops.findOrCreateFolder();
       if (!ok(parent)) {
-        console.error(
-          `[drive board server] Error creating parent`,
-          parent.$error
+        getLogger().log(
+          Formatter.error("Error creating parent", parent.$error),
+          "GoogleDriveBoardServer"
         );
         return;
       }
@@ -305,9 +326,9 @@ class GoogleDriveBoardServer
         descriptor
       );
       if (writing.error) {
-        console.error(
-          `[drive board server] Error writing graph`,
-          writing.error
+        getLogger().log(
+          Formatter.error("Error writing graph", writing.error),
+          "GoogleDriveBoardServer"
         );
         return;
       }

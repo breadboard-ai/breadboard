@@ -6,9 +6,8 @@ import { defaultSafetySettings } from "../a2/gemini.js";
 import { llm, ok } from "../a2/utils.js";
 import { GeminiPrompt } from "../a2/gemini-prompt.js";
 import { type Invokable } from "./types.js";
-import { listPrompt, listSchema, toList } from "../a2/lists.js";
 import { defaultSystemInstruction } from "./system-instruction.js";
-import { Capabilities, LLMContent } from "@breadboard-ai/types";
+import { LLMContent } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { organizerPrompt };
@@ -16,39 +15,22 @@ export { organizerPrompt };
 type InvokeReturnType = ReturnType<GeminiPrompt["invoke"]>;
 
 function organizerPrompt(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   results: LLMContent[],
-  objective: LLMContent,
-  makeList: boolean
+  objective: LLMContent
 ): Invokable<InvokeReturnType> {
   const research = {
     parts: results.flatMap((item) => item.parts),
   };
-  const extra = makeList
-    ? `
-Your job is to examine in detail and organize the provided raw material into
-a thorough, detailed list of write-ups, so that the final list of write-ups
-is a perfect response to the objective. The number of write-ups in the list must be the same as
-asked in the objective.
-
-Make sure each write-up is complete as its own document, because these write-ups
-will be used separately from each other.
-
-
-`
-    : `
-Your job is to examine in detail and organize the provided raw material into
-a thorough, detailed write-up that captures all of it in one place, so that
-the final product is a perfect response to the objective.
-
-The final must product must contain references to the sources (always cite your sources).`;
-
   const prompt = llm`
 You are an expert organizer of raw material. This raw material was produced by 
 an AI agent that was tasked with satisfying the the provided objective.
 
-${extra}
+Your job is to examine in detail and organize the provided raw material into
+a thorough, detailed write-up that captures all of it in one place, so that
+the final product is a perfect response to the objective.
+
+The final must product must contain references to the sources (always cite your sources).
 
 ## Objective
 
@@ -62,45 +44,23 @@ ${research}
 \`\`\`
 `.asContent();
 
-  if (makeList) {
-    const geminiPrompt = new GeminiPrompt(caps, moduleArgs, {
-      body: {
-        contents: [listPrompt(prompt)],
-        safetySettings: defaultSafetySettings(),
-        generationConfig: {
-          responseSchema: listSchema(),
-          responseMimeType: "application/json",
-        },
-      },
-    });
-    return {
-      invoke: async () => {
-        const invoking = await geminiPrompt.invoke();
-        if (!ok(invoking)) return invoking;
-        const last = toList(invoking.last);
-        if (!ok(last)) return last;
-        return { ...invoking, last };
-      },
-    };
-  } else {
-    const geminiPrompt = new GeminiPrompt(caps, moduleArgs, {
-      body: {
-        systemInstruction: defaultSystemInstruction(),
-        contents: [prompt],
-        safetySettings: defaultSafetySettings(),
-      },
-    });
+  const geminiPrompt = new GeminiPrompt(moduleArgs, {
+    body: {
+      systemInstruction: defaultSystemInstruction(),
+      contents: [prompt],
+      safetySettings: defaultSafetySettings(),
+    },
+  });
 
-    return {
-      invoke: async () => {
-        const invoking = await geminiPrompt.invoke();
-        if (!ok(invoking)) return invoking;
-        const response = invoking.last;
-        return {
-          ...invoking,
-          last: response,
-        };
-      },
-    };
-  }
+  return {
+    invoke: async () => {
+      const invoking = await geminiPrompt.invoke();
+      if (!ok(invoking)) return invoking;
+      const response = invoking.last;
+      return {
+        ...invoking,
+        last: response,
+      };
+    },
+  };
 }

@@ -63,151 +63,12 @@ export type ModelProcessor = {
 };
 
 export type Theme = {
-  components: {
-    AudioPlayer: Record<string, boolean>;
-    Button: Record<string, boolean>;
-    Card: Record<string, boolean>;
-    Column: Record<string, boolean>;
-    CheckBox: {
-      container: Record<string, boolean>;
-      element: Record<string, boolean>;
-      label: Record<string, boolean>;
-    };
-    DateTimeInput: {
-      container: Record<string, boolean>;
-      element: Record<string, boolean>;
-      label: Record<string, boolean>;
-    };
-    Divider: Record<string, boolean>;
-    Image: {
-      all: Record<string, boolean>;
-      icon: Record<string, boolean>;
-      avatar: Record<string, boolean>;
-      smallFeature: Record<string, boolean>;
-      mediumFeature: Record<string, boolean>;
-      largeFeature: Record<string, boolean>;
-      header: Record<string, boolean>;
-    };
-    Icon: Record<string, boolean>;
-    List: Record<string, boolean>;
-    Modal: {
-      backdrop: Record<string, boolean>;
-      element: Record<string, boolean>;
-    };
-    MultipleChoice: {
-      container: Record<string, boolean>;
-      element: Record<string, boolean>;
-      label: Record<string, boolean>;
-    };
-    Row: Record<string, boolean>;
-    Slider: {
-      container: Record<string, boolean>;
-      element: Record<string, boolean>;
-      label: Record<string, boolean>;
-    };
-    Tabs: {
-      container: Record<string, boolean>;
-      element: Record<string, boolean>;
-      controls: {
-        all: Record<string, boolean>;
-        selected: Record<string, boolean>;
-      };
-    };
-    Text: {
-      all: Record<string, boolean>;
-      h1: Record<string, boolean>;
-      h2: Record<string, boolean>;
-      h3: Record<string, boolean>;
-      h4: Record<string, boolean>;
-      h5: Record<string, boolean>;
-      caption: Record<string, boolean>;
-      body: Record<string, boolean>;
-    };
-    TextField: {
-      container: Record<string, boolean>;
-      element: Record<string, boolean>;
-      label: Record<string, boolean>;
-    };
-    Video: Record<string, boolean>;
-  };
-  elements: {
-    a: Record<string, boolean>;
-    audio: Record<string, boolean>;
-    body: Record<string, boolean>;
-    button: Record<string, boolean>;
-    h1: Record<string, boolean>;
-    h2: Record<string, boolean>;
-    h3: Record<string, boolean>;
-    iframe: Record<string, boolean>;
-    input: Record<string, boolean>;
-    p: Record<string, boolean>;
-    pre: Record<string, boolean>;
-    textarea: Record<string, boolean>;
-    video: Record<string, boolean>;
-  };
-  markdown: {
-    p: string[];
-    h1: string[];
-    h2: string[];
-    h3: string[];
-    h4: string[];
-    h5: string[];
-    h6: string[];
-    ul: string[];
-    ol: string[];
-    li: string[];
-    a: string[];
-    strong: string[];
-    em: string[];
-  };
-  additionalStyles?: {
-    AudioPlayer?: Record<string, string>;
-    Button?: Record<string, string>;
-    Card?: Record<string, string>;
-    Column?: Record<string, string>;
-    CheckBox?: Record<string, string>;
-    DateTimeInput?: Record<string, string>;
-    Divider?: Record<string, string>;
-    Heading?: Record<string, string>;
-    Icon?: Record<string, string>;
-    Image?: Record<string, string>;
-    List?: Record<string, string>;
-    Modal?: Record<string, string>;
-    MultipleChoice?: Record<string, string>;
-    Row?: Record<string, string>;
-    Slider?: Record<string, string>;
-    Tabs?: Record<string, string>;
-    Text?: Record<string, string>;
-    TextField?: Record<string, string>;
-    Video?: Record<string, string>;
-  };
-};
+  /** Semantic token values — CSS custom properties set on the theme host. */
+  tokens: import("../styles/tokens.js").ThemeTokens;
 
-/**
- * Represents a user-initiated action, sent from the client to the server.
- */
-export interface UserAction {
-  /**
-   * The name of the action, taken from the component's `action.action`
-   * property.
-   */
-  actionName: string;
-  /**
-   * The `id` of the component that triggered the event.
-   */
-  sourceComponentId: string;
-  /**
-   * An ISO 8601 timestamp of when the event occurred.
-   */
-  timestamp: string;
-  /**
-   * A JSON object containing the key-value pairs from the component's
-   * `action.context`, after resolving all data bindings.
-   */
-  context?: {
-    [k: string]: unknown;
-  };
-}
+  /** Per-component CSS custom property overrides. */
+  overrides?: Partial<Record<string, Record<string, string>>>;
+};
 
 /** A recursive type for any valid JSON-like value in the data model. */
 export type DataValue =
@@ -450,7 +311,15 @@ export type ResolvedDivider = Divider;
 export type ResolvedCheckbox = Checkbox;
 export type ResolvedTextField = TextField;
 export type ResolvedDateTimeInput = DateTimeInput;
-export type ResolvedMultipleChoice = MultipleChoice;
+export interface ResolvedMultipleChoice {
+  selections: MultipleChoice["selections"];
+  options?: {
+    label?: { path?: string; literalString?: string };
+    value: string;
+    child?: AnyComponentNode;
+  }[];
+  maxAllowedSelections?: number;
+}
 export type ResolvedSlider = Slider;
 
 export interface ResolvedRow {
@@ -480,6 +349,7 @@ export interface ResolvedColumn {
 export interface ResolvedButton {
   child: AnyComponentNode;
   action: Button["action"];
+  primary?: boolean;
 }
 
 export interface ResolvedList {

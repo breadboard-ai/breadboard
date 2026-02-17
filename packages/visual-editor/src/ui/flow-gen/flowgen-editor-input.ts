@@ -4,36 +4,33 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { LitElement, type PropertyValues, css, html, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { projectStateContext } from "../contexts/project-state.js";
+
 import "../elements/input/expanding-textarea.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { StateEvent, UtteranceEvent } from "../events/events.js";
-import { Project } from "../state/types.js";
+
 import * as StringsHelper from "../strings/helper.js";
 import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
 import { icons } from "../styles/icons.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
 import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
-import { flowGenWithTheme } from "./flowgen-with-theme.js";
 import { actionTrackerContext } from "../contexts/action-tracker-context.js";
 import { ActionTracker } from "../types/types.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { scaContext } from "../../sca/context/context.js";
+import { type SCA } from "../../sca/sca.js";
+import type { FlowgenInputStatus } from "../../sca/controller/subcontrollers/global/flowgen-input-controller.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
-type State =
-  | { status: "initial" }
-  | { status: "generating" }
-  | { status: "error"; error: unknown; suggestedIntent?: string };
-
 @customElement("bb-flowgen-editor-input")
-export class FlowgenEditorInput extends LitElement {
+export class FlowgenEditorInput extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     baseColors,
@@ -84,13 +81,66 @@ export class FlowgenEditorInput extends LitElement {
         padding-right: var(--bb-grid-size-5);
         word-break: auto-phrase;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
         margin-bottom: var(--bb-grid-size-4);
+        max-height: 400px;
+        overflow-y: auto;
 
         > *:not(button) {
           user-select: text;
         }
+      }
+
+      #dismiss-button {
+        position: sticky;
+        top: var(--bb-grid-size-2);
+        margin-top: var(--bb-grid-size-2);
+        align-self: flex-start;
+      }
+
+      .error details {
+        margin-top: var(--bb-grid-size-2);
+      }
+
+      .error details summary {
+        cursor: pointer;
+        color: var(--light-dark-n-70);
+        font-size: 0.9em;
+      }
+
+      .suggestion-label {
+        display: block;
+        margin-top: var(--bb-grid-size-2);
+        font-weight: 500;
+      }
+
+      .suggested-prompt {
+        display: block;
+        background: var(--light-dark-n-30);
+        border-left: 3px solid var(--ui-custom-o-100);
+        padding: var(--bb-grid-size-3);
+        margin: var(--bb-grid-size-2) 0;
+        border-radius: var(--bb-grid-size);
+        font-style: italic;
+      }
+
+      .use-suggestion-button {
+        display: block;
+        margin-top: var(--bb-grid-size-2);
+        background: var(--ui-custom-o-100);
+        color: var(--light-dark-n-100);
+        border: none;
+        border-radius: var(--bb-grid-size-2);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+        cursor: pointer;
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        transition: background 0.2s ease;
+      }
+
+      .use-suggestion-button:hover {
+        background: var(--ui-custom-o-80);
       }
 
       #gradient-border-container {
@@ -144,6 +194,15 @@ export class FlowgenEditorInput extends LitElement {
           font-size: 30px;
           width: 30px;
           height: 30px;
+          transition: color 0.2s ease;
+          cursor: default;
+          pointer-events: none;
+
+          &.active {
+            color: light-dark(var(--n-0), var(--n-100)) !important;
+            cursor: pointer;
+            pointer-events: auto;
+          }
         }
 
         &::part(textarea)::placeholder {
@@ -154,20 +213,42 @@ export class FlowgenEditorInput extends LitElement {
     `,
   ];
 
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @consume({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator | undefined;
-
-  @consume({ context: projectStateContext })
-  accessor projectState: Project | undefined;
 
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
 
-  @property({ type: Object })
-  accessor currentGraph: GraphDescriptor | undefined;
+  /**
+   * Get state from controller (signal-backed for cross-breakpoint sync).
+   */
+  get #state(): FlowgenInputStatus {
+    return this.sca.controller.global.flowgenInput.state;
+  }
 
-  @state()
-  accessor #state: State = { status: "initial" };
+  /**
+   * Set state on controller.
+   */
+  set #state(value: FlowgenInputStatus) {
+    this.sca.controller.global.flowgenInput.state = value;
+  }
+
+  /**
+   * Get input value from controller.
+   */
+  get #inputValue(): string {
+    return this.sca.controller.global.flowgenInput.inputValue;
+  }
+
+  /**
+   * Set input value on controller.
+   */
+  set #inputValue(value: string) {
+    this.sca.controller.global.flowgenInput.inputValue = value;
+  }
 
   @property({ type: Boolean, reflect: true })
   accessor focused = false;
@@ -180,6 +261,11 @@ export class FlowgenEditorInput extends LitElement {
 
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
+
+  @property({ type: Boolean })
+  accessor hasInputText = false;
+
+  #lastStatus: FlowgenInputStatus["status"] = "initial";
 
   readonly #descriptionInput = createRef<ExpandingTextarea>();
 
@@ -195,11 +281,22 @@ export class FlowgenEditorInput extends LitElement {
   }
 
   override async updated(changes: PropertyValues) {
+    const currentStatus = this.#state.status;
+    if (this.#lastStatus === "generating" && currentStatus === "initial") {
+      if (this.#descriptionInput.value) {
+        this.#descriptionInput.value.value = "";
+        this.#inputValue = "";
+        this.hasInputText = false;
+      }
+    }
+
     if (changes.has("#state") && this.#state.status === "error") {
       this.#descriptionInput.value?.focus();
       this.highlighted = true;
       setTimeout(() => (this.highlighted = false), 2500);
     }
+
+    this.#lastStatus = currentStatus;
   }
 
   #renderFeedback() {
@@ -218,18 +315,64 @@ export class FlowgenEditorInput extends LitElement {
           // structure. Unwrap if needed.
           error = error.error;
         }
-        let message;
+        let message: string;
         if (typeof error === "object" && error !== null && "message" in error) {
-          message = error.message;
+          message = error.message ?? "";
         } else {
           message = String(error);
         }
+
+        // Check for "Feel free to try this instead: '...' Validation" pattern
+        const suggestionMatch = message.match(
+          /Feel free to try this instead:\s*'(.+?)'\s*Validation/
+        );
+        if (suggestionMatch) {
+          const suggestedPrompt = suggestionMatch[1];
+          const beforeSuggestion = message.slice(
+            0,
+            message.indexOf("Feel free to try this instead:")
+          );
+          const afterSuggestion = message.slice(
+            message.indexOf(suggestionMatch[0]) + suggestionMatch[0].length
+          );
+          return html`
+            <span class="error">
+              ${beforeSuggestion.trim()}
+              <span class="suggestion-label"
+                >Feel free to try this instead:</span
+              >
+              <span class="suggested-prompt">${suggestedPrompt}</span>
+              <button
+                class="use-suggestion-button"
+                @click=${() => this.#useSuggestedPrompt(suggestedPrompt)}
+              >
+                Use suggested prompt
+              </button>
+              ${afterSuggestion.trim()
+                ? html`<details>
+                    <summary>Show details</summary>
+                    Validation${afterSuggestion}
+                  </details>`
+                : nothing}
+            </span>
+          `;
+        }
+
         return html`<span class="error">${message}</span>`;
       }
       default: {
         this.#state satisfies never;
       }
     }
+  }
+
+  #useSuggestedPrompt(prompt: string) {
+    if (this.#descriptionInput.value) {
+      this.#descriptionInput.value.value = prompt;
+    }
+    this.#state = { status: "initial" };
+    // Trigger generation with the new prompt
+    this.#onInputChange();
   }
 
   #renderInput() {
@@ -239,9 +382,11 @@ export class FlowgenEditorInput extends LitElement {
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
           .disabled=${isGenerating}
+          .value=${this.#inputValue}
           .placeholder=${this.hasEmptyGraph
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
+          @input=${this.#onInputSync}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}
@@ -265,6 +410,7 @@ export class FlowgenEditorInput extends LitElement {
               filled: true,
               round: true,
               spin: isGenerating,
+              active: this.hasInputText || isGenerating,
             })}
             >${isGenerating ? "progress_activity" : "send"}</span
           >
@@ -284,35 +430,17 @@ export class FlowgenEditorInput extends LitElement {
         this.#state = { status: "initial" };
         return;
       }
-      this.#state = { status: "generating" };
 
-      this.actionTracker?.flowGenEdit(this.currentGraph?.url);
-
-      if (!this.flowGenerator) return;
-      if (!this.currentGraph) return;
-      if (!this.projectState) return;
-
-      this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
-      this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
-
-      flowGenWithTheme(
-        this.flowGenerator,
-        description,
-        this.currentGraph,
-        this.projectState
-      )
-        .then((response) => {
-          if ("error" in response) {
-            return this.#onGenerateError(
-              response.error,
-              response.suggestedIntent
-            );
-          }
-          return this.#onGenerateComplete(response.flow, response.theme);
+      // Dispatch StateEvent - event-router handles locking/tracking,
+      // SCA action handles core logic. This survives DOM changes during resize.
+      // Note: projectState may be undefined if context hasn't propagated yet;
+      // the event route has a fallback to runtime.project.
+      this.dispatchEvent(
+        new StateEvent({
+          eventType: "flowgen.generate",
+          intent: description,
         })
-        .finally(() => {
-          this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
-        });
+      );
     }
   }
 
@@ -320,36 +448,14 @@ export class FlowgenEditorInput extends LitElement {
     this.#state = { status: "initial" };
   }
 
-  #onGenerateComplete(graph: GraphDescriptor, theme?: GraphTheme) {
-    if (this.#state.status !== "generating") {
-      return;
-    }
-    this.dispatchEvent(
-      new StateEvent({
-        eventType: "board.replace",
-        replacement: graph,
-        theme,
-        creator: { role: "assistant" },
-      })
-    );
-    this.#state = { status: "initial" };
-    this.#clearInput();
-    this.generating = false;
-  }
-
-  #onGenerateError(error: unknown, suggestedIntent?: string) {
-    if (this.#state.status !== "generating") {
-      return;
-    }
-    console.error("Error generating board", error);
-    console.log("Suggested intent", suggestedIntent);
-    this.#state = { status: "error", error, suggestedIntent };
-    this.generating = false;
-  }
-
-  #clearInput() {
-    if (this.#descriptionInput.value) {
-      this.#descriptionInput.value.value = "";
+  /**
+   * Sync input value to controller on every keystroke.
+   */
+  #onInputSync() {
+    const input = this.#descriptionInput.value;
+    if (input) {
+      this.#inputValue = input.value;
+      this.hasInputText = input.value.trim().length > 0;
     }
   }
 

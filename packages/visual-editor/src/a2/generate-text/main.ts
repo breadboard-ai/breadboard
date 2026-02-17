@@ -8,28 +8,36 @@ import {
   createKeepChattingTool,
   type ChatTool,
 } from "./chat-tools.js";
-import { createSystemInstruction } from "./system-instruction.js";
+import {
+  createSystemInstruction,
+  defaultSystemInstruction,
+} from "./system-instruction.js";
 import type { SharedContext } from "./types.js";
 
 import { ArgumentNameGenerator } from "../a2/introducer.js";
-import { ListExpander, listSchema, toList } from "../a2/lists.js";
 import { report } from "../a2/output.js";
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
-import { defaultLLMContent, err, ok } from "../a2/utils.js";
+import { defaultLLMContent, err, ok, isEmpty } from "../a2/utils.js";
 
 import { defaultSafetySettings, type GeminiInputs } from "../a2/gemini.js";
 import { GeminiPrompt, type GeminiPromptOutput } from "../a2/gemini-prompt.js";
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
 import { filterUndefined } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { requestInput } from "../request-input.js";
 
-export { invoke as default, describe, makeTextInstruction };
+export {
+  invoke as default,
+  describe,
+  makeTextInstruction,
+  makeText,
+  GenerateText,
+};
 
 /**
  * Maximum amount of function-calling turns that we take before bailing.
@@ -54,11 +62,9 @@ class GenerateText {
   private keepChattingTool!: ChatTool;
   public description!: LLMContent;
   public context!: LLMContent[];
-  public listMode = false;
   #hasTools = false;
 
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     public readonly sharedContext: SharedContext
   ) {
@@ -67,11 +73,13 @@ class GenerateText {
 
   async initialize(): Promise<Outcome<void>> {
     const { sharedContext } = this;
-    const template = new Template(this.caps, sharedContext.description);
+    const template = new Template(
+      sharedContext.description,
+      this.moduleArgs.context.currentGraph
+    );
     const toolManager = new ToolManager(
-      this.caps,
       this.moduleArgs,
-      new ArgumentNameGenerator(this.caps, this.moduleArgs)
+      new ArgumentNameGenerator(this.moduleArgs)
     );
     const doneTool = createDoneTool();
     const keepChattingTool = createKeepChattingTool();
@@ -99,11 +107,8 @@ class GenerateText {
     this.context = [...sharedContext.context, ...sharedContext.work];
   }
 
-  createSystemInstruction(makeList: boolean) {
-    return createSystemInstruction(
-      this.sharedContext.systemInstruction,
-      makeList
-    );
+  createSystemInstruction() {
+    return createSystemInstruction(this.sharedContext.systemInstruction);
   }
 
   addKeepChattingResult(context: LLMContent[]) {
@@ -122,18 +127,15 @@ class GenerateText {
    */
   async invoke(
     description: LLMContent,
-    work: LLMContent[],
-    isList: boolean
+    work: LLMContent[]
   ): Promise<Outcome<LLMContent>> {
     const { sharedContext } = this;
     const toolManager = this.toolManager;
     const doneTool = this.doneTool;
     const keepChattingTool = this.keepChattingTool;
-    // Disallow making nested lists (for now).
-    const makeList = sharedContext.makeList && !isList;
 
     const safetySettings = defaultSafetySettings();
-    const systemInstruction = this.createSystemInstruction(makeList);
+    const systemInstruction = this.createSystemInstruction();
     const tools = toolManager.list();
     // Unless it's a very first turn, we always supply tools when chatting,
     // since we add the "Done" and "Keep Chatting" tools to figure out when
@@ -159,18 +161,9 @@ class GenerateText {
       if (this.toolManager.hasToolDeclarations()) {
         inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
       }
-    } else {
-      // When we have tools, the first call will not try to make a list,
-      // because JSON mode and tool-calling are incompatible.
-      if (makeList) {
-        inputs.body.generationConfig = {
-          responseSchema: listSchema(),
-          responseMimeType: "application/json",
-        };
-      }
     }
     inputs.body.systemInstruction = systemInstruction;
-    const prompt = new GeminiPrompt(this.caps, this.moduleArgs, inputs, {
+    const prompt = new GeminiPrompt(this.moduleArgs, inputs, {
       toolManager,
     });
     const result = await prompt.invoke();
@@ -186,18 +179,9 @@ class GenerateText {
       }
       const invokedSubgraph = prompt.calledCustomTools;
       if (invokedSubgraph) {
-        if (makeList && !this.chat) {
-          // This case might be unusual (making a list of images directly?),
-          // but handle it for completeness.
-          // TODO: support this case properly. This seems
-          const list = toList(result.last);
-          if (!ok(list)) return list;
-          product = list;
-        } else {
-          // Be careful to return subgraph output (which can be media) as-is
-          // without rewriting/summarizing it with gemini because gemini cannot generate media.
-          product = result.last;
-        }
+        // Be careful to return subgraph output (which can be media) as-is
+        // without rewriting/summarizing it with gemini because gemini cannot generate media.
+        product = result.last;
       } else {
         if (!keepChattingTool.invoked) {
           contents.push(...result.all);
@@ -206,20 +190,13 @@ class GenerateText {
           model: sharedContext.model,
           body: { contents, systemInstruction, safetySettings },
         };
-        if (makeList) {
-          inputs.body.generationConfig = {
-            responseSchema: listSchema(),
-            responseMimeType: "application/json",
-          };
-        } else {
-          if (shouldAddTools) {
-            // If we added function declarations (or saw a function call request) before, then we need to add them again so
-            // Gemini isn't confused by the presence of a function call request.
-            // However, set the mode to NONE so we don't call tools again.
-            inputs.body.tools = [...tools];
-            console.log("adding tools");
-            // Can't set to functionCallingConfig mode to NONE, as that seems to hallucinate tool use.
-          }
+        if (shouldAddTools) {
+          // If we added function declarations (or saw a function call request) before, then we need to add them again so
+          // Gemini isn't confused by the presence of a function call request.
+          // However, set the mode to NONE so we don't call tools again.
+          inputs.body.tools = [...tools];
+          console.log("adding tools");
+          // Can't set to functionCallingConfig mode to NONE, as that seems to hallucinate tool use.
         }
         const keepCallingGemini = true;
         let afterTools: GeminiPromptOutput | undefined = undefined;
@@ -233,7 +210,6 @@ class GenerateText {
             };
           }
           const nextTurn = new GeminiPrompt(
-            this.caps,
             this.moduleArgs,
             inputs,
             { toolManager }
@@ -259,22 +235,10 @@ class GenerateText {
             kind: "bug",
           });
         }
-        if (makeList && !this.chat) {
-          const list = toList(afterTools.last);
-          if (!ok(list)) return list;
-          product = list;
-        } else {
-          product = afterTools.last;
-        }
+        product = afterTools.last;
       }
     } else {
-      if (makeList && !this.chat) {
-        const list = toList(result.last);
-        if (!ok(list)) return list;
-        product = list;
-      } else {
-        product = result.last;
-      }
+      product = result.last;
     }
 
     return product;
@@ -285,9 +249,7 @@ class GenerateText {
   }
 
   get chat(): boolean {
-    // When we are in list mode, disable chat.
-    // Can't have chat inside of a list (yet).
-    return this.sharedContext.chat && !this.listMode;
+    return this.sharedContext.chat;
   }
 
   get doneChatting(): boolean {
@@ -295,12 +257,7 @@ class GenerateText {
   }
 }
 
-function done(result: LLMContent[], makeList: boolean = false) {
-  if (makeList) {
-    const list = toList(result.at(-1)!);
-    if (!ok(list)) return list;
-    result = [list];
-  }
+function done(result: LLMContent[]) {
   return { done: result };
 }
 
@@ -312,35 +269,17 @@ function scrubFunctionResponses(c: LLMContent): LLMContent {
 }
 
 async function keepChatting(
-  caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
   sharedContext: SharedContext,
-  result: LLMContent[],
-  isList: boolean
+  result: LLMContent[]
 ) {
   const last = result.at(-1)!;
-  let product = last;
-  if (isList) {
-    const list = toList(last);
-    if (!ok(list)) return list;
-    product = list;
-  }
-  await caps.output({
-    schema: {
-      type: "object",
-      properties: {
-        "a-product": {
-          type: "object",
-          behavior: ["llm-content", "hint-chat-mode"],
-          title: "Draft",
-        },
-      },
-    },
-    $metadata: {
-      title: "Writer",
-      description: "Asking user",
-      icon: "generative-text",
-    },
-    "a-product": product,
+  report(moduleArgs, {
+    actor: "Writer",
+    category: "Asking user",
+    name: "Draft",
+    details: last,
+    icon: "generative-text",
   });
 
   const toInput: Schema = {
@@ -365,14 +304,173 @@ async function keepChatting(
   };
 }
 
+/**
+ * Gets user feedback via direct input request.
+ * This replaces the graph's `input` node.
+ */
+async function getUserFeedback(moduleArgs: A2ModuleArgs): Promise<LLMContent> {
+  const inputSchema: Schema = {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        title: "Please provide feedback",
+        description: "Provide feedback or click submit to continue",
+        behavior: ["transient", "llm-content"],
+        examples: [defaultLLMContent()],
+      },
+    },
+  };
+  const response = await requestInput(moduleArgs, inputSchema);
+  if (!ok(response)) {
+    return { parts: [{ text: "" }], role: "user" } as LLMContent;
+  }
+  return (response as Record<string, unknown>).request as LLMContent;
+}
+
+/**
+ * Joins user input into the shared context.
+ * This replaces the graph's `join` module.
+ */
+function joinUserInput(
+  sharedContext: SharedContext,
+  request: LLMContent,
+  lastResult: LLMContent
+): void {
+  sharedContext.userEndedChat = isEmpty(request);
+  sharedContext.userInputs.push(request);
+  if (!sharedContext.userEndedChat) {
+    sharedContext.work.push(request);
+  }
+  sharedContext.last = lastResult;
+}
+
+/**
+ * Type for makeText inputs - mirrors EntryInputs from entry.ts
+ * Properties are optional because they come from port mapping and may have defaults.
+ */
+export type MakeTextInputs = {
+  context?: LLMContent[];
+  description?: LLMContent;
+  "p-chat"?: boolean;
+  "b-system-instruction"?: LLMContent;
+  "p-model-name"?: string;
+} & { [key: string]: unknown }; // Params
+
+/**
+ * Imperative replacement for the "Make Text" subgraph.
+ * Combines entry, main loop, and join into a single function.
+ */
+async function makeText(
+  inputs: MakeTextInputs,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<{ context: LLMContent[] }>> {
+  const {
+    context: inputContext,
+    description,
+    "p-chat": chat,
+    "b-system-instruction": systemInstruction,
+    "p-model-name": model = "",
+    ...params
+  } = inputs;
+
+  // === ENTRY phase: Initialize SharedContext ===
+  // When chat mode is enabled, downgrade to gemini-2.5-flash because
+  // gemini-3-flash-preview doesn't handle the chat argument structure well.
+  const effectiveModel = chat ? "gemini-2.5-flash" : model;
+
+  const sharedContext: SharedContext = {
+    id: Math.random().toString(36).substring(2, 5),
+    chat: !!chat,
+    context: inputContext ?? [],
+    userInputs: [],
+    defaultModel: effectiveModel,
+    model: effectiveModel,
+    description,
+    type: "work",
+    work: [],
+    userEndedChat: false,
+    params,
+    systemInstruction,
+  };
+
+  // === MAIN LOOP: Generate + optionally chat ===
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    // Check if user ended chat on previous iteration
+    if (sharedContext.userEndedChat) {
+      const last = sharedContext.last;
+      if (!last) {
+        return err("Chat ended without any work", {
+          origin: "client",
+          kind: "bug",
+        });
+      }
+      return { context: [...sharedContext.context, last] };
+    }
+
+    // Check for missing description
+    if (!sharedContext.description) {
+      const msg = "Please provide a prompt for the step";
+      await report(moduleArgs, {
+        actor: "Text Generator",
+        name: msg,
+        category: "Runtime error",
+        details: `In order to run, I need to have an instruction.`,
+      });
+      return err(msg, { origin: "client", kind: "config" });
+    }
+
+    const gen = new GenerateText(moduleArgs, sharedContext);
+    const initializing = await gen.initialize();
+    if (!ok(initializing)) return initializing;
+
+    const result = await gen.invoke(gen.description, gen.context);
+    if (!ok(result)) return result;
+
+    // If done tool was invoked, return previous result
+    if (gen.doneChatting) {
+      const previousResult = sharedContext.work.at(-2);
+      if (!previousResult) {
+        return err("Done chatting, but have nothing to pass along", {
+          origin: "client",
+          kind: "bug",
+        });
+      }
+      return { context: [previousResult] };
+    }
+
+    // If not in chat mode, we're done after first generation
+    if (!gen.chat) {
+      return { context: [result] };
+    }
+
+    // === CHAT MODE: Show output, get user input ===
+    await keepChatting(moduleArgs, sharedContext, [result]);
+
+    // Get user feedback (replaces the `input` node in the graph)
+    const request = await getUserFeedback(moduleArgs);
+
+    // === JOIN phase: Merge user input into context ===
+    joinUserInput(sharedContext, request, result);
+
+    // Update work for next iteration
+    sharedContext.work = [...sharedContext.work.slice(0, -1), result];
+    if (!sharedContext.userEndedChat) {
+      sharedContext.work.push(request);
+    }
+
+    // Loop continues...
+  }
+}
+
 async function invoke(
   { context }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   if (!context.description) {
     const msg = "Please provide a prompt for the step";
-    await report(caps, {
+    await report(moduleArgs, {
       actor: "Text Generator",
       name: msg,
       category: "Runtime error",
@@ -390,18 +488,15 @@ async function invoke(
         kind: "bug",
       });
     }
-    return done([...context.context, last], context.makeList);
+    return done([...context.context, last]);
   }
 
-  const gen = new GenerateText(caps, moduleArgs, context);
+  const gen = new GenerateText(moduleArgs, context);
   const initializing = await gen.initialize();
   if (!ok(initializing)) return initializing;
 
-  const expander = new ListExpander(gen.description, gen.context);
-  expander.expand();
-  gen.listMode = expander.list().length > 1;
-
-  const result = await expander.map(gen.invoke);
+  // Process single item directly (list support removed)
+  const result = await gen.invoke(gen.description, gen.context);
   if (!ok(result)) return result;
   console.log("RESULT", result);
   if (gen.doneChatting) {
@@ -414,30 +509,81 @@ async function invoke(
         { origin: "client", kind: "bug" }
       );
     }
-    return done([previousResult], context.makeList);
+    return done([previousResult]);
   }
 
-  // Use the gen.chat here, because it will correctly prevent
-  // chat mode when we're in list mode.
   if (gen.chat && !userEndedChat) {
-    return keepChatting(caps, gen.sharedContext, result, context.makeList);
+    return keepChatting(moduleArgs, gen.sharedContext, [result]);
   }
 
   // Fall through to default response.
-  return done(result);
+  return done([result]);
 }
 
-async function describe() {
+/**
+ * Describe inputs for the generate-text module.
+ */
+export type DescribeInputs = {
+  inputs: Partial<{
+    context: LLMContent[];
+    description: LLMContent;
+    "p-chat": boolean;
+    "b-system-instruction": LLMContent;
+    "p-model-name": string;
+  }>;
+};
+
+async function describe(
+  { inputs: { description } }: DescribeInputs,
+) {
+  const chatSchema: Schema["properties"] = {
+    "p-chat": {
+      type: "boolean",
+      title: "Review with user",
+      behavior: ["config", "hint-preview", "hint-advanced"],
+      icon: "chat",
+      description:
+        "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
+    },
+    "b-system-instruction": {
+      type: "object",
+      behavior: ["llm-content", "config", "hint-advanced"],
+      title: "System Instruction",
+      description: "The system instruction for the model",
+      default: JSON.stringify(defaultSystemInstruction()),
+    },
+    "p-model-name": {
+      type: "string",
+      behavior: ["llm-content"],
+      title: "Model",
+      description: "The specific model version to generate with",
+    },
+  };
+  const template = new Template(description);
+
   return {
     inputSchema: {
       type: "object",
       properties: {
+        description: {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-preview"],
+          title: "Prompt",
+          description:
+            "Give the model additional context on what to do, like specific rules/guidelines to adhere to or specify behavior separate from the provided context.",
+          default: defaultLLMContent(),
+        },
         context: {
           type: "array",
           items: { type: "object", behavior: ["llm-content"] },
           title: "Context in",
+          behavior: ["main-port"],
         },
+        ...chatSchema,
+        ...template.schemas(),
       },
+      behavior: ["at-wireable"],
+      ...template.requireds(),
     } satisfies Schema,
     outputSchema: {
       type: "object",
@@ -446,8 +592,15 @@ async function describe() {
           type: "array",
           items: { type: "object", behavior: ["llm-content"] },
           title: "Context out",
+          behavior: ["main-port", "hint-text"],
         },
       },
     } satisfies Schema,
+    title: "Make Text",
+    metadata: {
+      icon: "generative-text",
+      tags: ["quick-access", "generative"],
+      order: 1,
+    },
   };
 }

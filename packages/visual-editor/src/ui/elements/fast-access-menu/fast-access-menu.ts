@@ -3,25 +3,14 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, LitElement, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { Component, FastAccess, GraphAsset, Tool } from "../../state/index.js";
-import {
-  GraphIdentifier,
-  NodeIdentifier,
-  ParameterMetadata,
-} from "@breadboard-ai/types";
+import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import type { Component, Tool } from "../../types/state-types.js";
+import type { GraphAsset } from "../../../sca/types.js";
 import {
   FastAccessDismissedEvent,
   FastAccessSelectEvent,
-  ParamCreateEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -31,49 +20,25 @@ import {
   GlobalConfig,
   globalConfigContext,
 } from "../../contexts/global-config.js";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SCA } from "../../../sca/sca.js";
 import { getStepIcon } from "../../utils/get-step-icon.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
 import { repeat } from "lit/directives/repeat.js";
 import * as Styles from "../../styles/styles.js";
-import { ROUTE_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
+
+import type { DisplayItem } from "../../../sca/types.js";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
-  @property()
-  accessor state: FastAccess | null = null;
-
-  @property()
-  accessor graphId: GraphIdentifier | null = null;
-
-  @property()
-  accessor nodeId: NodeIdentifier | null = null;
-
   @state()
   accessor selectedIndex = 0;
 
-  @property()
-  accessor filter: string | null = null;
-
-  @property()
-  accessor showAssets = true;
-
-  @property()
-  accessor showTools = true;
-
-  @property()
-  accessor showControlFlowTools = true;
-
-  @property()
-  accessor showRoutes = false;
-
-  @property()
-  accessor showComponents = true;
-
-  @property()
-  accessor showParameters = false;
-
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -130,7 +95,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       #assets,
       #tools,
       #outputs,
-      #parameters,
       section.group {
         & h3 {
           font-size: 12px;
@@ -212,6 +176,45 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
       section.tools menu button {
         --background: var(--n-90);
+
+        &.generative,
+        &[icon="spark"],
+        &[icon="photo_spark"],
+        &[icon="audio_magic_eraser"],
+        &[icon="text_analysis"],
+        &[icon="button_magic"],
+        &[icon="generative-image-edit"],
+        &[icon="generative-code"],
+        &[icon="videocam_auto"],
+        &[icon="generative-search"],
+        &[icon="generative"],
+        &[icon="select_all"],
+        &[icon="laps"] {
+          --background: var(--ui-generate);
+        }
+
+        &.module {
+          --background: var(--ui-generate);
+        }
+
+        &.input,
+        &.output,
+        &.core,
+        &[icon="input"],
+        &[icon="ask-user"],
+        &[icon="chat_mirror"] {
+          --background: var(--ui-get-input);
+        }
+
+        &[icon="output"],
+        &[icon="docs"],
+        &[icon="drive_presentation"],
+        &[icon="sheets"],
+        &[icon="code"],
+        &[icon="web"],
+        &[icon="responsive_layout"] {
+          --background: var(--ui-display);
+        }
       }
 
       #outputs menu button {
@@ -220,11 +223,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         &[icon="photo_spark"],
         &[icon="audio_magic_eraser"],
         &[icon="text_analysis"],
+        &[icon="button_magic"],
         &[icon="generative-image-edit"],
         &[icon="generative-code"],
         &[icon="videocam_auto"],
         &[icon="generative-search"],
         &[icon="generative"],
+        &[icon="select_all"],
         &[icon="laps"] {
           --background: var(--ui-generate);
         }
@@ -256,35 +261,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       .integration menu button {
         --background: var(--n-90);
       }
-
-      #parameters {
-        & #create-new-param {
-          display: block;
-          white-space: nowrap;
-          max-width: 100%;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          border-radius: var(--bb-grid-size-16);
-          height: var(--bb-grid-size-7);
-          border: none;
-          background: var(--bb-icon-add) var(--n-98) 4px center / 20px 20px
-            no-repeat;
-          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
-          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-            var(--bb-font-family);
-          transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-          margin-top: var(--bb-grid-size-2);
-
-          &:not([disabled]) {
-            cursor: pointer;
-
-            &:hover,
-            &:focus {
-              background-color: var(--n-90);
-            }
-          }
-        }
-      }
     `,
   ];
 
@@ -293,12 +269,13 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onEscapeOrBackspaceBound = this.#onEscapeOrBackspace.bind(this);
 
-  #items: {
-    assets: GraphAsset[];
-    tools: Tool[];
-    components: Component[];
-    parameters: (ParameterMetadata & { id: string })[];
-  } = { assets: [], tools: [], components: [], parameters: [] };
+  /**
+   * Unified flat list of all displayable items. Built in willUpdate()
+   * from SCA data + legacy integrations. Eliminates the brittle
+   * index-offset arithmetic that was previously spread across
+   * render(), #emitCurrentItem(), and #onKeyDown().
+   */
+  #items: DisplayItem[] = [];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -319,86 +296,42 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   }
 
   protected willUpdate(): void {
-    const graphId = this.graphId || "";
-    let assets = [...(this.state?.graphAssets.values() || [])].filter(
-      (asset) =>
-        !asset.connector ||
-        asset.connector.type.load ||
-        asset.connector.type.save
-    );
-    let tools = [
-      ...(this.state?.tools.values() || []),
-      ...(this.state?.myTools.values() || []),
-    ].sort((tool1, tool2) => tool1.order! - tool2.order!);
-    let components = [...(this.state?.components.get(graphId)?.values() || [])];
-    let parameters = [...(this.state?.parameters.entries() || [])].map(
-      ([id, value]) => ({ id, ...value })
-    );
+    // Use the first selected node for routes/components filtering.
+    // We can't use selectedNodeId because it returns null when edges or
+    // assets are also selected (common when a node has connections).
+    const selectedNodes = this.sca?.controller.editor.selection.selection.nodes;
+    const selectedNodeId: string | null =
+      selectedNodes?.size === 1 ? [...selectedNodes][0] : null;
+    const graphController = this.sca?.controller.editor.graph;
+    const fastAccessController = this.sca?.controller.editor.fastAccess;
 
-    const { globalConfig } = this;
-    if (globalConfig?.environmentName) {
-      tools = tools.filter((tool) => {
-        if (tool.tags === undefined) {
-          return true;
-        }
-
-        for (const tag of tool.tags) {
-          if (
-            tag.startsWith("environment") &&
-            tag !== `environment-${globalConfig.environmentName}`
-          ) {
-            return false;
-          }
-        }
-
-        return true;
-      });
+    if (!graphController || !fastAccessController) {
+      this.#items = [];
+      return;
     }
 
-    if (this.filter) {
-      const filterStr = this.filter;
+    // Get the flat items from GraphController
+    const rawItems = graphController.getFastAccessItems(selectedNodeId);
 
-      assets = assets.filter((asset) => {
-        if (asset.path === "@@splash") {
-          return false;
-        }
+    // Delegate all filtering to FastAccessController
+    const items = fastAccessController.getDisplayItems(
+      rawItems,
+      graphController.agentModeTools,
+      {
+        environmentName: this.globalConfig?.environmentName,
+        enableNotebookLm:
+          this.sca?.controller.global.flags.enableNotebookLm ?? false,
+        integrationsController:
+          this.sca?.controller.editor.integrations ?? null,
+      }
+    );
 
-        const filter = new RegExp(filterStr, "gim");
-        return filter.test(asset.metadata?.title ?? asset.path);
-      });
-
-      tools = tools.filter((tool) => {
-        const filter = new RegExp(filterStr, "gim");
-        return filter.test(tool.title ?? "");
-      });
-
-      components = components.filter((component) => {
-        const filter = new RegExp(filterStr, "gim");
-        return filter.test(component.title);
-      });
-
-      parameters = parameters.filter((parameter) => {
-        const filter = new RegExp(filterStr, "gim");
-        return filter.test(parameter.title);
-      });
-    }
-
-    this.#items = {
-      assets: this.showAssets ? assets : [],
-      tools: this.showTools ? tools : [],
-      components: this.showComponents ? components : [],
-      parameters: this.showParameters ? parameters : [],
-    };
-
-    const totalSize =
-      this.#items.assets.length +
-      this.#items.tools.length +
-      this.#items.components.length +
-      this.#items.parameters.length +
-      (this.state?.controlFlow.results.size ?? 0) +
-      (this.state?.routes.results.size ?? 0);
-
-    this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
+    this.#items = items;
+    this.selectedIndex = this.#clamp(
+      this.selectedIndex,
+      0,
+      this.#items.length - 1
+    );
   }
 
   protected firstUpdated(): void {
@@ -423,14 +356,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   }
 
   updateFilter(filter: string) {
-    this.filter = filter;
-    if (!this.state) {
-      return;
+    if (this.sca) {
+      this.sca.controller.editor.fastAccess.filter = filter;
     }
-
-    this.state.integrations.filter = filter;
-    this.state.controlFlow.filter = filter;
-    this.state.routes.filter = filter;
   }
 
   #onEscapeOrBackspace(evt: KeyboardEvent): void {
@@ -447,7 +375,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     // In the case of Backspace/Delete we need to make sure the filter is empty
     // before we close the Fast Access Menu.
     if (evt.key !== "Escape") {
-      if (this.filter !== null && this.filter !== "") {
+      if (this.sca?.controller.editor.fastAccess.filter) {
         return;
       }
     }
@@ -461,14 +389,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       return;
     }
 
-    const totalSize =
-      this.#items.assets.length +
-      this.#items.tools.length +
-      this.#items.parameters.length +
-      this.#items.components.length +
-      (this.state?.controlFlow.results.size ?? 0) +
-      (this.state?.routes.results.size ?? 0);
-
     switch (evt.key) {
       case "Enter": {
         evt.stopImmediatePropagation();
@@ -481,7 +401,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         this.selectedIndex = this.#clamp(
           this.selectedIndex - 1,
           0,
-          totalSize - 1
+          this.#items.length - 1
         );
         break;
       }
@@ -493,7 +413,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         this.selectedIndex = this.#clamp(
           this.selectedIndex + 1,
           0,
-          totalSize - 1
+          this.#items.length - 1
         );
         break;
       }
@@ -512,111 +432,75 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     return value;
   }
 
+  /**
+   * Emits a selection event for the currently highlighted item.
+   * Uses a simple array lookup + switch on item kind — no manual
+   * subtraction through section lengths.
+   */
   #emitCurrentItem() {
-    let idx = this.selectedIndex;
-    const uniqueAndNew =
-      this.#items.assets.length === 0 &&
-      this.#items.components.length === 0 &&
-      this.#items.parameters.length === 0 &&
-      this.#items.tools.length === 0 &&
-      (this.state?.controlFlow.results.size ?? 0) === 0 &&
-      (this.state?.routes.results.size ?? 0) === 0 &&
-      this.filter !== "";
+    const item = this.#items[this.selectedIndex];
+    if (!item) {
+      return;
+    }
 
-    if (idx === -1) {
-      if (this.filter && uniqueAndNew && this.showParameters) {
-        // emit.
-        const paramPath = this.filter.toLocaleLowerCase().replace(/\W/gim, "-");
-        const title = toUpperCase(this.filter)!;
+    switch (item.kind) {
+      case "asset":
         this.dispatchEvent(
-          // TODO: Support params in subgraphs.
-          new ParamCreateEvent("", paramPath, title, "")
+          new FastAccessSelectEvent(
+            item.asset.path,
+            item.asset.metadata?.title ?? "Untitled asset",
+            "asset",
+            getMimeType(item.asset.data)
+          )
         );
+        break;
 
+      case "tool":
         this.dispatchEvent(
-          new FastAccessSelectEvent(paramPath, title, "param")
+          new FastAccessSelectEvent(
+            item.tool.url,
+            item.tool.title ?? "Untitled tool",
+            "tool",
+            undefined,
+            item.tool.id
+          )
         );
-      }
-      return;
-    }
+        break;
 
-    if (idx < this.#items.assets.length) {
-      const asset = this.#items.assets[idx];
-      this.dispatchEvent(
-        new FastAccessSelectEvent(
-          asset.path,
-          asset.metadata?.title ?? "Untitled asset",
-          "asset",
-          getMimeType(asset.data)
-        )
-      );
-      return;
-    }
+      case "component":
+        this.dispatchEvent(
+          new FastAccessSelectEvent(
+            item.component.id,
+            item.component.title,
+            "in"
+          )
+        );
+        break;
 
-    idx -= this.#items.assets.length;
-    if (idx < this.#items.parameters.length) {
-      const parameter = this.#items.parameters[idx];
-      this.dispatchEvent(
-        new FastAccessSelectEvent(
-          parameter.id,
-          parameter.title ?? "Untitled parameter",
-          "param"
-        )
-      );
-      return;
-    }
+      case "route":
+        this.dispatchEvent(
+          new FastAccessSelectEvent(
+            item.route.id,
+            item.route.title,
+            "tool",
+            undefined,
+            item.route.id
+          )
+        );
+        break;
 
-    idx -= this.#items.parameters.length;
-    if (idx < this.#items.tools.length) {
-      const tool = this.#items.tools[idx];
-      this.dispatchEvent(
-        new FastAccessSelectEvent(
-          tool.url,
-          tool.title ?? "Untitled tool",
-          "tool",
-          undefined,
-          tool.id
-        )
-      );
-      return;
+      case "integration-tool":
+        this.dispatchEvent(
+          new FastAccessSelectEvent(
+            item.url,
+            item.tool.title!,
+            "tool",
+            undefined,
+            item.tool.id
+          )
+        );
+        break;
     }
-
-    idx -= this.#items.tools.length;
-    if (idx < this.#items.components.length) {
-      const component = this.#items.components[idx];
-      this.dispatchEvent(
-        new FastAccessSelectEvent(component.id, component.title, "in")
-      );
-      return;
-    }
-
-    const controlFlowSize = this.state?.controlFlow.results.size ?? 0;
-    idx -= this.#items.components.length;
-    if (idx < controlFlowSize) {
-      const [id, tool] = [...this.state!.controlFlow.results][idx];
-      this.dispatchEvent(
-        new FastAccessSelectEvent(id, tool.title!, "tool", undefined, tool.id)
-      );
-      return;
-    }
-
-    const routeSize = this.state?.routes.results.size ?? 0;
-    idx -= controlFlowSize;
-    if (idx < routeSize) {
-      const [, route] = [...this.state!.routes.results][idx];
-      this.dispatchEvent(
-        new FastAccessSelectEvent(
-          ROUTE_TOOL_PATH,
-          route.title!,
-          "tool",
-          undefined,
-          route.id
-        )
-      );
-      return;
-    }
-
-    console.warn("Index out of bounds for fast access selection");
   }
 
   focusFilter() {
@@ -627,15 +511,188 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     this.#filterInputRef.value.select();
   }
 
+  // =========================================================================
+  // Rendering Helpers
+  // =========================================================================
+
+  /**
+   * Collects items of a given kind from the flat list, preserving their
+   * global indices for active-state tracking.
+   */
+  #itemsOfKind<K extends DisplayItem["kind"]>(
+    kind: K
+  ): { item: Extract<DisplayItem, { kind: K }>; globalIndex: number }[] {
+    const result: {
+      item: Extract<DisplayItem, { kind: K }>;
+      globalIndex: number;
+    }[] = [];
+    for (let i = 0; i < this.#items.length; i++) {
+      const entry = this.#items[i];
+      if (entry.kind === kind) {
+        result.push({
+          item: entry as Extract<DisplayItem, { kind: K }>,
+          globalIndex: i,
+        });
+      }
+    }
+    return result;
+  }
+
+  #renderAssetButton(
+    asset: GraphAsset,
+    globalIndex: number
+  ): HTMLTemplateResult {
+    let icon = getAssetType(getMimeType(asset.data));
+    if (!icon) {
+      icon = "text_fields";
+      if (asset.metadata?.type === "file") {
+        icon = "upload";
+      }
+    }
+
+    // Override icon based on subType (e.g., youtube, drawable, gdrive)
+    if (asset.metadata?.subType) {
+      switch (asset.metadata?.subType) {
+        case "youtube":
+          icon = "video_youtube";
+          break;
+        case "drawable":
+          icon = "draw";
+          break;
+        case "gdrive":
+          icon = "drive";
+          break;
+      }
+    }
+
+    return html`<li>
+      <button
+        class=${classMap({ active: globalIndex === this.selectedIndex })}
+        @pointerover=${() => {
+          this.selectedIndex = globalIndex;
+        }}
+        @click=${() => {
+          this.#emitCurrentItem();
+        }}
+      >
+        <span class="g-icon filled round">${icon}</span>
+        <span class="title">${asset.metadata?.title ?? "Untitled asset"}</span>
+      </button>
+    </li>`;
+  }
+
+  #renderToolButton(tool: Tool, globalIndex: number): HTMLTemplateResult {
+    // Special handling for routing and memory tool icons
+    let icon: string | HTMLTemplateResult | null | undefined;
+    if (tool.url === "control-flow/routing") {
+      icon = "start";
+    } else if (tool.url === "function-group/use-memory") {
+      icon = "database";
+    } else if (typeof tool.icon === "string") {
+      icon = iconSubstitute(tool.icon) ?? undefined;
+    } else {
+      icon = tool.icon;
+    }
+
+    return html`<li>
+      <button
+        class=${classMap({ active: globalIndex === this.selectedIndex })}
+        icon=${typeof icon === "string" ? icon : "tool"}
+        @pointerover=${() => {
+          this.selectedIndex = globalIndex;
+        }}
+        @click=${() => {
+          this.#emitCurrentItem();
+        }}
+      >
+        <span class="g-icon round filled">${icon}</span
+        ><span class="title"
+          >${tool.title}${tool.url === "control-flow/routing"
+            ? html`...`
+            : nothing}</span
+        >
+      </button>
+    </li>`;
+  }
+
+  #renderComponentButton(
+    component: Component,
+    globalIndex: number
+  ): HTMLTemplateResult {
+    const icon = getStepIcon(component.metadata?.icon, component.ports);
+
+    return html`<li>
+      <button
+        icon=${icon}
+        class=${classMap({ active: globalIndex === this.selectedIndex })}
+        @pointerover=${() => {
+          this.selectedIndex = globalIndex;
+        }}
+        @click=${() => {
+          this.#emitCurrentItem();
+        }}
+      >
+        <span class="g-icon filled round">${icon}</span>
+        <span class="title">${component.title}</span>
+      </button>
+    </li>`;
+  }
+
+  #renderRouteButton(
+    route: Component,
+    globalIndex: number
+  ): HTMLTemplateResult {
+    const icon = iconSubstitute(route.metadata?.icon);
+
+    return html`<li>
+      <button
+        icon=${icon}
+        class=${classMap({ active: globalIndex === this.selectedIndex })}
+        @pointerover=${() => {
+          this.selectedIndex = globalIndex;
+        }}
+        @click=${() => {
+          this.#emitCurrentItem();
+        }}
+      >
+        <span class="g-icon filled round">${icon}</span>
+        <span class="title">${route.title}</span>
+      </button>
+    </li>`;
+  }
+
   render() {
-    let idx = 0;
-    const uniqueAndNew =
-      this.#items.assets.length === 0 &&
-      this.#items.components.length === 0 &&
-      this.#items.parameters.length === 0 &&
-      this.#items.tools.length === 0 &&
-      this.filter !== "" &&
-      this.showParameters;
+    const mode = this.sca?.controller.editor.fastAccess.fastAccessMode;
+    const showAssets = mode === "browse";
+    const showTools = mode !== "route";
+    const showComponents = mode !== "route";
+    const showRoutes = mode === "route";
+
+    const assets = this.#itemsOfKind("asset");
+    const tools = this.#itemsOfKind("tool");
+    const components = this.#itemsOfKind("component");
+    const routes = this.#itemsOfKind("route");
+    const integrationTools = this.#itemsOfKind("integration-tool");
+
+    // Group integration tools by URL for section headers
+    const integrationsByUrl = new Map<
+      string,
+      { title: string; items: { tool: Tool; globalIndex: number }[] }
+    >();
+    for (const { item, globalIndex } of integrationTools) {
+      let group = integrationsByUrl.get(item.url);
+      if (!group) {
+        // Use the integration title from registered integrations
+        const integration =
+          this.sca?.controller.editor.integrations.registered.get(item.url);
+        group = {
+          title: integration?.title ?? item.url,
+          items: [],
+        };
+        integrationsByUrl.set(item.url, group);
+      }
+      group.items.push({ tool: item.tool, globalIndex });
+    }
 
     return html` <div ${ref(this.#itemContainerRef)}>
       <header>
@@ -644,7 +701,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           autocomplete="off"
           .placeholder=${"Search"}
           ${ref(this.#filterInputRef)}
-          .value=${this.filter}
+          .value=${this.sca?.controller.editor.fastAccess.filter ?? ""}
           @keydown=${(evt: KeyboardEvent) => {
             const isMac = navigator.platform.indexOf("Mac") === 0;
             const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
@@ -666,323 +723,94 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         />
       </header>
       <section id="assets">
-        ${this.showAssets
+        ${showAssets
           ? html`<h3 class="sans-flex w-400 round">Assets</h3>`
           : nothing}
-        ${this.#items.assets.length
+        ${assets.length
           ? html` <menu>
-              ${this.#items.assets.map((asset) => {
-                const classesDict: Record<string, boolean> = {
-                  active: idx === this.selectedIndex,
-                };
-
-                let icon = getAssetType(getMimeType(asset.data));
-                if (!icon) {
-                  icon = "text_fields";
-                  if (asset.metadata?.type === "file") {
-                    icon = "upload";
-                  }
-
-                  if (asset.metadata?.subType) {
-                    switch (asset.metadata?.subType) {
-                      case "youtube":
-                        icon = "video_youtube";
-                        break;
-                      case "drawable":
-                        icon = "draw";
-                        break;
-                      case "gdrive":
-                        icon = "drive";
-                        break;
-                    }
-                  }
-                }
-                const globalIndex = idx;
-                idx++;
-                return html`<li>
-                  <button
-                    class=${classMap(classesDict)}
-                    @pointerover=${() => {
-                      this.selectedIndex = globalIndex;
-                    }}
-                    @click=${() => {
-                      this.#emitCurrentItem();
-                    }}
-                  >
-                    <span class="g-icon filled round">${icon}</span>
-                    <span class="title"
-                      >${asset.metadata?.title ?? "Untitled asset"}</span
-                    >
-                  </button>
-                </li>`;
-              })}
+              ${assets.map(({ item, globalIndex }) =>
+                this.#renderAssetButton(item.asset, globalIndex)
+              )}
             </menu>`
-          : this.showAssets
+          : showAssets
             ? html`<div class="no-items">No assets</div>`
             : nothing}
       </section>
 
-      <section id="parameters">
-        ${this.showParameters
-          ? html`<h3 class="sans-flex w-400 round">Parameters</h3>`
-          : nothing}
-        ${this.#items.parameters.length
-          ? html` <menu>
-              ${this.#items.parameters.map((parameter) => {
-                const active = idx === this.selectedIndex;
-                const globalIndex = idx;
-                idx++;
-                return html`<li>
-                  <button
-                    class=${classMap({ active })}
-                    @pointerover=${() => {
-                      this.selectedIndex = globalIndex;
-                    }}
-                    @click=${() => {
-                      this.#emitCurrentItem();
-                    }}
-                  >
-                    <span class="title">${parameter.title}</span>
-                  </button>
-                </li>`;
-              })}
-            </menu>`
-          : this.showParameters
-            ? html`<div class="no-items">
-                No parameters
-                ${uniqueAndNew
-                  ? html`<button
-                      id="create-new-param"
-                      @click=${() => {
-                        this.#emitCurrentItem();
-                      }}
-                    >
-                      Add "${toUpperCase(this.filter)}"
-                    </button>`
-                  : nothing}
-              </div>`
-            : nothing}
-      </section>
-
       <section id="tools">
-        ${this.showTools
+        ${showTools
           ? html`<h3 class="sans-flex w-400 round">Tools</h3>`
           : nothing}
-        ${this.#items.tools.length
+        ${tools.length
           ? html` <menu>
-              ${this.#items.tools.map((tool) => {
-                const active = idx === this.selectedIndex;
-                const globalIndex = idx;
-                const icon = iconSubstitute(tool.icon);
-                idx++;
-                return html`<li>
-                  <button
-                    class=${classMap({ active })}
-                    icon=${icon}
-                    @pointerover=${() => {
-                      this.selectedIndex = globalIndex;
-                    }}
-                    @click=${() => {
-                      this.#emitCurrentItem();
-                    }}
-                  >
-                    <span class="g-icon round filled">${icon}</span
-                    ><span class="title">${tool.title}</span>
-                  </button>
-                </li>`;
-              })}
+              ${tools.map(({ item, globalIndex }) =>
+                this.#renderToolButton(item.tool, globalIndex)
+              )}
             </menu>`
-          : this.showTools
+          : showTools
             ? html`<div class="no-items">No tools</div>`
             : nothing}
       </section>
 
       <section id="outputs">
-        ${this.showComponents
+        ${showComponents
           ? html`<h3 class="sans-flex w-400 round">Steps</h3>`
           : nothing}
-        ${this.#items.components.length
+        ${components.length
           ? html` <menu>
-              ${this.#items.components.map((component) => {
-                const icon = getStepIcon(
-                  component.metadata?.icon,
-                  component.ports
-                );
-                const active = idx === this.selectedIndex;
-                const globalIndex = idx;
-                idx++;
-                return html`<li>
-                  <button
-                    icon=${icon}
-                    class=${classMap({ active })}
-                    @pointerover=${() => {
-                      this.selectedIndex = globalIndex;
-                    }}
-                    @click=${() => {
-                      this.#emitCurrentItem();
-                    }}
-                  >
-                    <span class="g-icon filled round">${icon}</span>
-                    <span class="title">${component.title}</span>
-                  </button>
-                </li>`;
-              })}
+              ${components.map(({ item, globalIndex }) =>
+                this.#renderComponentButton(item.component, globalIndex)
+              )}
             </menu>`
-          : this.showComponents
+          : showComponents
             ? html`<div class="no-items">No steps</div>`
             : nothing}
       </section>
 
       <section class="group tools">
-        ${this.showControlFlowTools
-          ? html`<h3 class="sans-flex w-400 round">Utility</h3>
-              ${this.state?.controlFlow.results.size
+        ${showRoutes
+          ? html`<h3 class="sans-flex w-400 round">Steps</h3>
+              ${routes.length
                 ? html`<menu>
-                    ${repeat(
-                      this.state.controlFlow.results,
-                      ([id]) => id,
-                      ([id, tool]) => {
-                        const active = idx === this.selectedIndex;
-                        const globalIndex = idx;
-                        idx++;
-
-                        return html`<li>
-                          <button
-                            class=${classMap({ active })}
-                            @pointerover=${() => {
-                              this.selectedIndex = globalIndex;
-                            }}
-                            @click=${() => {
-                              this.dispatchEvent(
-                                new FastAccessSelectEvent(
-                                  id,
-                                  tool.title!,
-                                  "tool",
-                                  undefined,
-                                  tool.id
-                                )
-                              );
-                            }}
-                          >
-                            ${tool.url === "routing"
-                              ? html`<span class="g-icon filled round"
-                                  >start</span
-                                >`
-                              : nothing}
-                            <span class="title"
-                              >${tool.title}${tool.url === "routing"
-                                ? html`...`
-                                : nothing}</span
-                            >
-                          </button>
-                        </li>`;
-                      }
-                    )}
-                  </menu>`
-                : html`<div class="no-items">No utilities</div>`}`
-          : nothing}
-      </section>
-
-      <section class="group tools">
-        ${this.showRoutes
-          ? html`<h3 class="sans-flex w-400 round">Routes</h3>
-              ${this.state?.routes.results.size
-                ? html`<menu>
-                    ${repeat(
-                      this.state.routes.results,
-                      ([id]) => id,
-                      ([_, route]) => {
-                        const active = idx === this.selectedIndex;
-                        const globalIndex = idx;
-                        idx++;
-                        const icon = iconSubstitute(route.metadata?.icon);
-
-                        return html`<li>
-                          <button
-                            class=${classMap({ active })}
-                            @pointerover=${() => {
-                              this.selectedIndex = globalIndex;
-                            }}
-                            @click=${() => {
-                              this.dispatchEvent(
-                                new FastAccessSelectEvent(
-                                  route.id,
-                                  route.title!,
-                                  "tool",
-                                  undefined,
-                                  route.id
-                                )
-                              );
-                            }}
-                          >
-                            <span class="g-icon filled round">${icon}</span>
-                            <span class="title">${route.title}</span>
-                          </button>
-                        </li>`;
-                      }
+                    ${routes.map(({ item, globalIndex }) =>
+                      this.#renderRouteButton(item.route, globalIndex)
                     )}
                   </menu>`
                 : html`<div class="no-items">No routes</div>`}`
           : nothing}
       </section>
 
-      ${this.state
-        ? repeat(
-            this.state.integrations.results,
-            ([url]) => url,
-            ([url, integration]) => {
-              const menu = () => {
-                switch (integration.status) {
-                  case "loading":
-                    return html`<li>Loading...</li>`;
-                  case "complete":
-                    return html`
-                      ${repeat(
-                        integration.tools,
-                        ([id]) => id,
-                        ([_id, tool]) => {
-                          return html`<li>
-                            <button
-                              @click=${() => {
-                                this.dispatchEvent(
-                                  new FastAccessSelectEvent(
-                                    url,
-                                    tool.title!,
-                                    "tool",
-                                    undefined,
-                                    tool.id
-                                  )
-                                );
-                              }}
-                              icon=${tool.icon}
-                            >
-                              <span class="g-icon filled round"
-                                >${tool.icon}</span
-                              >
-                              <span class="title">${tool.title}</span>
-                            </button>
-                          </li>`;
-                        }
-                      )}
-                    `;
-                  case "error":
-                    return html`<li>No integrations are available</li>`;
-                }
-              };
-              return html`<section class="group">
-                <h3 class="sans-flex w-400 round">${integration.title}</h3>
-                <menu>${menu()}</menu>
-              </section>`;
-            }
-          )
-        : nothing}
+      ${repeat(
+        integrationsByUrl,
+        ([url]) => url,
+        ([, group]) => {
+          return html`<section class="group">
+            <h3 class="sans-flex w-400 round">${group.title}</h3>
+            <menu>
+              ${group.items.map(
+                ({ tool, globalIndex }) =>
+                  html`<li>
+                    <button
+                      class=${classMap({
+                        active: globalIndex === this.selectedIndex,
+                      })}
+                      @pointerover=${() => {
+                        this.selectedIndex = globalIndex;
+                      }}
+                      @click=${() => {
+                        this.#emitCurrentItem();
+                      }}
+                      icon=${tool.icon}
+                    >
+                      <span class="g-icon filled round">${tool.icon}</span>
+                      <span class="title">${tool.title}</span>
+                    </button>
+                  </li>`
+              )}
+            </menu>
+          </section>`;
+        }
+      )}
     </div>`;
   }
-}
-
-function toUpperCase(s: string | null) {
-  if (!s) return s;
-  const trimmed = s.trim();
-  const cap = trimmed.charAt(0).toLocaleUpperCase("en-US");
-  return `${cap}${trimmed.slice(1)}`;
 }

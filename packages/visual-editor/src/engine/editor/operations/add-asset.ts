@@ -37,7 +37,6 @@ class AddAsset implements EditOperation {
     return {
       success: true,
       affectedGraphs: [],
-      affectedModules: [],
       affectedNodes: [],
     };
   }

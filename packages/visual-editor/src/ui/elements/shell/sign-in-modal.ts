@@ -5,6 +5,7 @@
  */
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing, type HTMLTemplateResult } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { type OAuthScope } from "../../connection/oauth-scopes.js";
@@ -45,7 +46,7 @@ function appName() {
 }
 
 @customElement("bb-sign-in-modal")
-export class VESignInModal extends LitElement {
+export class VESignInModal extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   @property({ attribute: false })
   accessor sca!: SCA;

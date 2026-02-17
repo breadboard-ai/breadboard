@@ -21,7 +21,8 @@
     "syncpack:check:prod": "wireit",
     "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts && npm install",
     "check": "wireit",
-    "markdown": "(find . -iname \"*.md\" -not -path \"*/.wireit/*\" -not -path \"*/node_modules/*\" -exec cat {} +) > all_markdown.md"
+    "markdown": "(find . -iname \"*.md\" -not -path \"*/.wireit/*\" -not -path \"*/node_modules/*\" -exec cat {} +) > all_markdown.md",
+    "prepare": "husky"
   },
   "wireit": {
     "build": {
@@ -105,15 +106,19 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
     "ava": "6.4.1",
     "eslint": "^8.57.1",
     "eslint-plugin-expect-type": "^0.6.2",
-    "prettier": "^3.7.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
     "syncpack": "^13.0.3",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.54.0",
     "wireit": "^0.15.0-pre.2"
   },
   "workspaces": [
@@ -121,6 +126,9 @@
     "./packages/*",
     "./experiments/*"
   ],
+  "lint-staged": {
+    "packages/**/*.ts": "prettier --write --config .prettierrc"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/breadboard-ai/breadboard.git"

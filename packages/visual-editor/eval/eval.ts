@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types";
 import { mkdir, writeFile } from "fs/promises";
 import { mock } from "node:test";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import type { callGeminiImage } from "../src/a2/a2/image-utils.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
+import { AgentContext } from "../src/a2/agent/agent-context.js";
 import { McpClientManager } from "../src/mcp/index.js";
 import { autoClearingInterval } from "./auto-clearing-interval.js";
 import { collateContexts } from "./collate-context.js";
@@ -28,7 +27,7 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
 import { getAuthenticatedClient } from "./authenticate.js";
-import { type ConsentController } from "../src/sca/controller/subcontrollers/consent-controller.js";
+import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
 
 export { session };
 
@@ -37,7 +36,6 @@ const ROOT_DIR = join(MODULE_DIR, "..", "..", "..");
 const OUT_DIR = join(ROOT_DIR, "out");
 
 export type EvalHarnessRuntimeArgs = {
-  caps: Capabilities;
   moduleArgs: A2ModuleArgs;
   logger: EvalLogger;
 };
@@ -96,25 +94,6 @@ class EvalHarness {
     } as Window;
 
     mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
-
-    mockFunction<typeof callGeminiImage>(
-      "../src/a2/a2/image-utils.js",
-      "callGeminiImage",
-      async () => {
-        return [
-          {
-            parts: [
-              {
-                storedData: {
-                  handle: "https://example.com/fakeurl",
-                  mimeType: "image/png",
-                },
-              },
-            ],
-          },
-        ];
-      }
-    );
 
     const runEvalFn = async (
       evalName: string,
@@ -193,23 +172,11 @@ class EvalHarness {
 
     mock.restoreAll();
     autoClearingInterval.clearAllIntervals();
+
+    // Exit explicitly since module-level setInterval calls (in now.ts, work-item.ts,
+    // app-screen.ts) can't be easily cleared and would keep the process alive.
+    process.exit(0);
   }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyFunction = (...args: any[]) => any;
-
-function mockFunction<T extends AnyFunction>(
-  moduleSpecifier: string,
-  functionName: string,
-  implementation?: T
-) {
-  const resolvedPath = import.meta.resolve(moduleSpecifier);
-  const mocked = mock.fn(implementation);
-
-  mock.module(resolvedPath, { namedExports: { [functionName]: mocked } });
-
-  return mocked;
 }
 
 async function ensureDir(dir: string) {
@@ -247,31 +214,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
 
   readonly requestLogger = new Logger();
 
-  readonly caps: Capabilities = {
-    invoke() {
-      throw new Error(`Not implemented`);
-    },
-    input() {
-      throw new Error(`Not implemented`);
-    },
-    async output(data) {
-      console.log(data.$metadata?.title);
-      return { delivered: true };
-    },
-    describe() {
-      throw new Error(`Not implemented`);
-    },
-    query() {
-      throw new Error(`Not implemented`);
-    },
-    read() {
-      throw new Error(`Not implemented`);
-    },
-    async write() {
-      // Do nothing
-    },
-  };
-
   private fetchWithCreds = async (
     url: RequestInfo | URL,
     init?: RequestInit
@@ -284,12 +226,16 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         Authorization: `Bearer ${this.accessToken}`,
       },
     });
-    this.requestLogger.response(entryId, response.clone());
+    await this.requestLogger.response(entryId, response.clone());
     return response;
   };
 
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
+    agentContext: new AgentContext({
+      shell: {} as unknown as OpalShellHostProtocol,
+      fetchWithCreds: this.fetchWithCreds,
+    }),
     fetchWithCreds: this.fetchWithCreds,
     getConsentController() {
       return {
@@ -298,6 +244,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         },
       } as Partial<ConsentController> as ConsentController;
     },
+    notebookLmApiClient: {} as never,
 
     context: {
       currentGraph: {
@@ -324,6 +271,14 @@ class EvalRun implements EvalHarnessRuntimeArgs {
                 error: null,
                 completed: false,
                 current: null,
+                addOutput() {},
+                requestInput() {
+                  return Promise.reject(
+                    new Error("Input not supported in eval")
+                  );
+                },
+                activateInput() {},
+                resolveInput() {},
               },
             ],
           ]),
@@ -341,6 +296,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
                   type: "progress",
                   outputs: new Map(),
                   last: null,
+                  addOutput() {},
                 },
               ],
             ]),

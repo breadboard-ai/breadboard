@@ -4,66 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type * as BreadboardUI from "../ui/index.js";
-import { RuntimeHostStatusUpdateEvent } from "./events.js";
-
-const UPDATE_REFRESH_TIMEOUT = 10 * 60 * 1000; // 10 minutes
-
-export class Shell extends EventTarget {
-  constructor(
-    private readonly appName: string,
-    private readonly appSubName: string
-  ) {
-    super();
-  }
-
-  setPageTitle(title: string | null) {
-    const suffix = `${this.appName} [${this.appSubName}]`;
-    if (title) {
-      title = title.trim();
-      window.document.title = `${title} - ${suffix}`;
-      return;
-    }
-
-    window.document.title = suffix;
-  }
-
-  async #fetchUpdates(): Promise<
-    BreadboardUI.Types.VisualEditorStatusUpdate[]
-  > {
-    const response = await fetch("/updates");
-    const updates = await response.json();
-    if (updates === "error") {
-      console.log("Unable to fetch updates from the server");
-      return [];
-    }
-    return updates as BreadboardUI.Types.VisualEditorStatusUpdate[];
-  }
-
-  #nextTick = 0;
-  async startTrackUpdates() {
-    const emitUpdate = async () => {
-      try {
-        const updates = await this.#fetchUpdates();
-        this.dispatchEvent(new RuntimeHostStatusUpdateEvent(updates));
-      } catch (err) {
-        console.warn(err);
-      } finally {
-        this.#nextTick = window.setTimeout(emitUpdate, UPDATE_REFRESH_TIMEOUT);
-      }
-
-      return this.#nextTick;
-    };
-
-    if (this.#nextTick !== 0) {
-      return;
-    }
-
-    this.#nextTick = await emitUpdate();
-  }
-
-  stopTrackUpdates() {
-    window.clearTimeout(this.#nextTick);
-    this.#nextTick = 0;
-  }
-}
+/**
+ * Legacy Shell class.
+ *
+ * @deprecated All Shell functionality has been migrated to SCA:
+ * - Page title: Handled by SCA page title trigger (shell-triggers.ts)
+ * - Status updates: Handled by StatusUpdatesController and StatusUpdatesService
+ *
+ * This class is retained only for API compatibility during the transition
+ * period and will be removed in a future release.
+ */
+export class Shell extends EventTarget {}

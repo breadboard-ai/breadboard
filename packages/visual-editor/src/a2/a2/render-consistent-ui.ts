@@ -5,18 +5,17 @@
  */
 
 import {
-  Capabilities,
   DataPart,
   InlineDataCapabilityPart,
   LLMContent,
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { isStoredData, ok, toJson } from "@breadboard-ai/utils";
+import { isStoredData, ok } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { A2UI_SCHEMA } from "./au2ui-schema.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
-import { StreamableReporter } from "./output.js";
+import { createReporter } from "../agent/progress-work-item.js";
 import { llm } from "./utils.js";
 import { isInlineData, isTextCapabilityPart } from "../../data/common.js";
 
@@ -146,7 +145,6 @@ function is(type: string, part: DataPart): part is RemappablePart {
 }
 
 async function renderConsistentUI(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   data: LLMContent,
   systemInstruction?: LLMContent
@@ -178,7 +176,7 @@ async function renderConsistentUI(
     return part;
   });
 
-  const prompt = new GeminiPrompt(caps, moduleArgs, {
+  const prompt = new GeminiPrompt(moduleArgs, {
     model: "gemini-2.5-flash",
     body: {
       contents: [data],
@@ -194,7 +192,7 @@ async function renderConsistentUI(
   });
   const generated = await prompt.invoke();
   if (!ok(generated)) return generated;
-  const reporter = new StreamableReporter(caps, {
+  const reporter = createReporter(moduleArgs, {
     title: "A2UI",
     icon: "web",
   });
@@ -208,8 +206,22 @@ async function renderConsistentUI(
       }
     }
 
-    await reporter.start();
-    await reporter.sendA2UI("Generated UI", toJson(generated.all), "download");
+    // Extract A2UI messages from generated.all (LLMContent[])
+    // Each json part contains the messages - Gemini may return full array in one part
+    const messages: unknown[] = [];
+    for (const content of generated.all) {
+      for (const part of content.parts) {
+        if ("json" in part) {
+          const json = part.json;
+          if (Array.isArray(json)) {
+            messages.push(...json);
+          } else {
+            messages.push(json);
+          }
+        }
+      }
+    }
+    reporter.addA2UI(messages);
 
     const textEncoder = new TextEncoder();
     const bytes = textEncoder.encode(JSON.stringify(generated.all));
@@ -232,6 +244,6 @@ async function renderConsistentUI(
       },
     ];
   } finally {
-    await reporter.close();
+    reporter.finish();
   }
 }

@@ -51,7 +51,6 @@ class ChangeEdgeMetadata implements EditOperation {
       success: true,
       affectedGraphs: [graphId],
       affectedNodes: [],
-      affectedModules: [],
     };
   }
 }

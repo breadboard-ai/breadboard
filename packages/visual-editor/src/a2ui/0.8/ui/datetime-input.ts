@@ -14,15 +14,20 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { classMap } from "lit/directives/class-map.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
+import { extractStringValue } from "./utils/utils.js";
 
+/**
+ * Date/time input component with two-way data binding.
+ *
+ * Supports date-only, time-only, or combined datetime-local input modes.
+ * Resolves its value from a `StringValue` and writes changes back via
+ * `processor.setData()`.
+ */
 @customElement("a2ui-datetimeinput")
 export class DateTimeInput extends Root {
   @property()
@@ -38,7 +43,6 @@ export class DateTimeInput extends Root {
   accessor enableTime = true;
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -53,10 +57,12 @@ export class DateTimeInput extends Root {
 
       input {
         display: block;
-        border-radius: 8px;
-        padding: 8px;
-        border: 1px solid #ccc;
         width: 100%;
+        padding: var(--a2ui-spacing-2) var(--a2ui-spacing-3);
+        border-radius: var(--a2ui-input-radius, var(--a2ui-border-radius-full));
+        border: var(--a2ui-border-width) solid var(--a2ui-color-border);
+        font-family: var(--a2ui-font-family);
+        color: var(--a2ui-color-on-surface);
       }
     `,
   ];
@@ -83,20 +89,10 @@ export class DateTimeInput extends Root {
   }
 
   #renderField(value: string) {
-    return html`<section
-      class=${classMap(this.theme.components.DateTimeInput.container)}
-    >
-      <label
-        for="data"
-        class=${classMap(this.theme.components.DateTimeInput.label)}
-        >${this.#getPlaceholderText()}</label
-      >
+    return html`<section>
+      <label for="data">${this.#getPlaceholderText()}</label>
       <input
         autocomplete="off"
-        class=${classMap(this.theme.components.DateTimeInput.element)}
-        style=${this.theme.additionalStyles?.DateTimeInput
-          ? styleMap(this.theme.additionalStyles?.DateTimeInput)
-          : nothing}
         @input=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
             return;
@@ -169,29 +165,13 @@ export class DateTimeInput extends Root {
   }
 
   render() {
-    if (this.value && typeof this.value === "object") {
-      if ("literalString" in this.value && this.value.literalString) {
-        return this.#renderField(this.value.literalString);
-      } else if ("literal" in this.value && this.value.literal !== undefined) {
-        return this.#renderField(this.value.literal);
-      } else if (this.value && "path" in this.value && this.value.path) {
-        if (!this.processor || !this.component) {
-          return html`(no model)`;
-        }
+    const value = extractStringValue(
+      this.value,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
 
-        const textValue = this.processor.getData(
-          this.component,
-          this.value.path,
-          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-        );
-        if (typeof textValue !== "string") {
-          return html`(invalid)`;
-        }
-
-        return this.#renderField(textValue);
-      }
-    }
-
-    return nothing;
+    return this.#renderField(value);
   }
 }

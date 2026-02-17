@@ -4,125 +4,39 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type BoardServer, type GraphDescriptor } from "@breadboard-ai/types";
-import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
-import type {
-  DriveFileId,
-  GoogleDriveClient,
-  NarrowedDriveFile,
-} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import {
-  DRIVE_PROPERTY_IS_SHAREABLE_COPY,
-  DRIVE_PROPERTY_LATEST_SHARED_VERSION,
-  DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
-  DRIVE_PROPERTY_OPAL_SHARE_SURFACE,
-  DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
-} from "@breadboard-ai/utils/google-drive/operations.js";
-import {
-  diffAssetReadPermissions,
-  extractGoogleDriveFileId,
-  findGoogleDriveAssetsInGraph,
-  permissionMatchesAnyOf,
-  type GoogleDriveAsset,
-} from "@breadboard-ai/utils/google-drive/utils.js";
+import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
-import { css, html, LitElement, nothing, type PropertyValues } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { css, html, LitElement, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { GoogleDriveBoardServer } from "../../../board-server/server.js";
-import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SharePanelStatus } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+import { SCA } from "../../../sca/sca.js";
 import animations from "../../app-templates/shared/styles/animations.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { boardServerContext } from "../../contexts/board-server.js";
 import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
-import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
 import { ActionTracker } from "../../types/types.js";
-import { makeUrl } from "../../utils/urls.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
-import { scaContext } from "../../../sca/context/context.js";
-import { SCA } from "../../../sca/sca.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
+import type { VisibilityLevel } from "./share-visibility-selector.js";
+import "./share-visibility-selector.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
-
-type State =
-  | { status: "closed" }
-  | { status: "opening" }
-  | { status: "loading" }
-  | {
-      status: "readonly";
-      shareableFile: { id: string; resourceKey: string | undefined };
-    }
-  | {
-      status: "writable";
-      published: true;
-      publishedPermissions: gapi.client.drive.Permission[];
-      granularlyShared: boolean;
-      shareableFile: {
-        id: string;
-        resourceKey: string | undefined;
-        stale: boolean;
-        permissions: gapi.client.drive.Permission[];
-        shareSurface: string | undefined;
-      };
-      latestVersion: string;
-      userDomain: string;
-    }
-  | {
-      status: "writable";
-      published: false;
-      granularlyShared: boolean;
-      shareableFile:
-        | {
-            id: string;
-            resourceKey: string | undefined;
-            stale: boolean;
-            permissions: gapi.client.drive.Permission[];
-            shareSurface: string | undefined;
-          }
-        | undefined;
-      latestVersion: string;
-      userDomain: string;
-    }
-  | {
-      status: "updating";
-      published: boolean;
-      granularlyShared: boolean;
-      shareableFile:
-        | { id: string; resourceKey: string | undefined; stale: boolean }
-        | undefined;
-      userDomain: string;
-    }
-  | {
-      status: "granular";
-      shareableFile: { id: string };
-    }
-  | {
-      status: "unmanaged-assets";
-      problems: UnmanagedAssetProblem[];
-      oldState: State;
-      closed: { promise: Promise<void>; resolve: () => void };
-    };
-
-type UnmanagedAssetProblem = {
-  asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
-} & (
-  | { problem: "cant-share" }
-  | { problem: "missing"; missing: gapi.client.drive.Permission[] }
-);
+const SHARING_V2 = CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2;
 
 @customElement("bb-share-panel")
-export class SharePanel extends LitElement {
+export class SharePanel extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     buttonStyles,
@@ -182,6 +96,155 @@ export class SharePanel extends LitElement {
         font-size: 24px;
       }
 
+      dialog.sharing-v2 {
+        padding: var(--bb-grid-size-6);
+
+        h2 {
+          font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+            var(--bb-font-family);
+          color: #243351;
+        }
+
+        #app-link {
+          align-items: center;
+
+          #app-link-text {
+            background: none;
+            color: #525252;
+            border: none;
+          }
+
+          #app-link-copy-button {
+            width: 150px;
+            height: 40px;
+            border: 1px solid #f1f1f1;
+            background: #fff;
+            padding: 10px 16px;
+            gap: var(--bb-grid-size-2);
+            font-family: var(--bb-font-family-flex);
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0;
+
+            &.bb-button-outlined {
+              color: #1b1b1b;
+            }
+
+            &:hover {
+              background: #f1f1f1;
+              border-color: #ababab;
+            }
+          }
+        }
+      }
+
+      #advisory-v2 {
+        color: var(--light-dark-n-40);
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        margin: var(--bb-grid-size-8) 0 0 0;
+
+        a {
+          color: #665ef6;
+          font-weight: 700;
+          letter-spacing: 0.1px;
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      #editor-access-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--bb-grid-size-9);
+
+        label {
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+          color: var(--Text, #1b1b1b);
+          font-family: var(--bb-font-family-flex);
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 24px;
+          letter-spacing: 0;
+        }
+
+        .info-icon {
+          position: relative;
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          overflow: visible;
+          color: #525252;
+          padding: 4px;
+          margin: -4px;
+          cursor: help;
+        }
+
+        .info-icon::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 50%;
+          transform: translateX(-50%);
+          background: #2e2e2e;
+          color: #f2f2f2;
+          font-family: var(--bb-font-family-flex);
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 16px;
+          letter-spacing: 0.1px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          width: max-content;
+          max-width: 300px;
+          white-space: normal;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.15s ease;
+        }
+
+        .info-icon:hover::after {
+          opacity: 1;
+        }
+
+        md-switch {
+          --md-sys-color-primary: #000;
+          --md-sys-color-primary-container: #fff;
+          --md-sys-color-surface-container-highest: #e0e0e0;
+          --md-switch-track-height: 24px;
+          --md-switch-track-width: 40px;
+          --md-switch-selected-handle-width: 20px;
+          --md-switch-selected-handle-height: 20px;
+        }
+      }
+
+      #editor-access-toggle + #app-link {
+        margin-top: 44px;
+      }
+
+      footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--bb-grid-size-12);
+
+        .bb-button-outlined {
+          flex-direction: column;
+          padding: 10px 16px;
+          border: 1px solid #ababab;
+          color: #1b1b1b;
+          font-family: var(--bb-font-family-flex);
+          font-size: 14px;
+          line-height: 20px;
+          letter-spacing: 0;
+        }
+      }
+
       #loading {
         flex: 1;
         display: flex;
@@ -221,6 +284,38 @@ export class SharePanel extends LitElement {
         button[disabled] {
           cursor: wait;
         }
+      }
+
+      #stale-v2 {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--bb-grid-size-4);
+        background: #f1f1f1;
+        margin: var(--bb-grid-size-4) calc(-1 * var(--bb-grid-size-6)) 0
+          calc(-1 * var(--bb-grid-size-6));
+        padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
+        font-family: var(--bb-font-family-flex);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: normal;
+        letter-spacing: 0;
+        color: #1a1a1a;
+
+        button {
+          font: 700 var(--bb-label-large) / 16px var(--bb-font-family);
+          color: #000;
+          letter-spacing: 0.25px;
+          flex-shrink: 0;
+        }
+
+        button[disabled] {
+          cursor: wait;
+        }
+      }
+
+      #stale-v2 + #advisory-v2 {
+        margin-top: var(--bb-grid-size-4);
       }
 
       #permissions {
@@ -404,43 +499,34 @@ export class SharePanel extends LitElement {
   @property({ attribute: false })
   accessor sca!: SCA;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient: GoogleDriveClient | undefined;
-
-  @consume({ context: boardServerContext, subscribe: true })
-  accessor boardServer: BoardServer | undefined;
-
-  @consume({ context: guestConfigurationContext })
-  accessor guestConfiguration: GuestConfiguration | undefined;
-
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
 
-  @property({ attribute: false })
-  accessor graph: GraphDescriptor | undefined;
+  get #graph() {
+    return this.sca.controller.editor.graph.graph;
+  }
 
-  @state()
-  accessor #state: State = { status: "closed" };
+  get #panel(): SharePanelStatus {
+    return this.#controller.panel;
+  }
+
+  get #actions() {
+    return this.sca.actions.share;
+  }
+
+  get #controller() {
+    return this.sca.controller.editor.share;
+  }
 
   #dialog = createRef<HTMLDialogElement>();
   #publishedSwitch = createRef<MdSwitch>();
   #googleDriveSharePanel = createRef<GoogleDriveSharePanel>();
 
-  override willUpdate(changes: PropertyValues<this>) {
-    super.willUpdate(changes);
-    if (changes.has("graph") && this.#state.status !== "closed") {
-      this.#state = { status: "opening" };
-    }
-    if (this.#state.status === "opening") {
-      this.#readPublishedState();
-    }
-  }
-
   override render() {
-    const { status } = this.#state;
-    if (status === "closed" || status === "opening") {
+    const panel = this.#panel;
+    if (panel === "closed") {
       return nothing;
-    } else if (status === "granular") {
+    } else if (panel === "granular") {
       return this.#renderGranularSharingModal();
     } else {
       return this.#renderModal();
@@ -448,25 +534,29 @@ export class SharePanel extends LitElement {
   }
 
   override updated() {
-    if (this.#state.status === "granular") {
+    if (this.#panel === "granular") {
       this.#googleDriveSharePanel.value?.open();
-    } else if (this.#state.status !== "closed") {
+    } else if (this.#panel !== "closed") {
       this.#dialog.value?.showModal();
     }
   }
 
   open(): void {
-    this.#state = { status: "opening" };
+    this.#actions.open();
   }
 
   close(): void {
-    this.#state = { status: "closed" };
+    this.#actions.closePanel();
   }
 
   #renderModal() {
-    const title = this.graph?.title;
+    const title = this.#graph?.title;
     return html`
-      <dialog ${ref(this.#dialog)} @close=${this.close}>
+      <dialog
+        class=${SHARING_V2 ? "sharing-v2" : ""}
+        ${ref(this.#dialog)}
+        @close=${this.close}
+      >
         <header>
           <h2>Share ${title ? `“${title}”` : ""}</h2>
           <button
@@ -485,17 +575,19 @@ export class SharePanel extends LitElement {
   }
 
   #renderModalContents() {
-    const { status } = this.#state;
-    if (status === "loading") {
+    const panel = this.#panel;
+    if (panel === "loading") {
       return this.#renderLoading();
     }
-    if (status === "writable" || status === "updating") {
-      return this.#renderModifiableModalContents();
+    if (panel === "writable" || panel === "updating") {
+      return CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
+        ? this.#renderWritableContentsV2()
+        : this.#renderWritableContentsV1();
     }
-    if (status === "readonly") {
+    if (panel === "readonly") {
       return this.#renderReadonlyModalContents();
     }
-    if (status === "unmanaged-assets") {
+    if (panel === "unmanaged-assets") {
       return this.#renderUnmanagedAssetsModalContents();
     }
   }
@@ -509,44 +601,35 @@ export class SharePanel extends LitElement {
     `;
   }
 
-  get #isShared(): boolean | undefined {
-    const state = this.#state;
-    const { status } = state;
-    if (status === "readonly") {
-      // If we're readonly, then we're not the owner. And if we're not the
-      // owner, and yet here we are, then it must be shared with us one way or
-      // the other.
-      return true;
-    }
-    if (status === "writable" || status === "updating") {
-      return state.published || state.granularlyShared;
-    }
-    return undefined;
-  }
-
-  get #isStale(): boolean | undefined {
-    const state = this.#state;
-    const { status } = state;
-    if (status === "writable" || status === "updating") {
-      return state.shareableFile?.stale ?? false;
-    }
-    return undefined;
-  }
-
-  #renderModifiableModalContents() {
+  #renderWritableContentsV1() {
+    const shared =
+      this.#controller.published || this.#controller.granularlyShared;
     return [
-      this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
+      this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
       html`
         <div id="permissions">
           Publish your ${APP_NAME} ${this.#renderPublishedSwitch()}
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      this.#isShared && this.#state.status !== "updating"
-        ? this.#renderAppLink()
-        : nothing,
+      shared && this.#panel !== "updating" ? this.#renderAppLink() : nothing,
       this.#renderGranularSharingLink(),
       this.#renderAdvisory(),
+    ];
+  }
+
+  #renderWritableContentsV2() {
+    const shared =
+      this.#controller.published || this.#controller.granularlyShared;
+    return [
+      this.#controller.stale && shared ? this.#renderStaleBannerV2() : nothing,
+      this.#renderAdvisoryV2(),
+      this.#renderVisibilityDropdown(),
+      this.#computedVisibility !== "only-you"
+        ? this.#renderEditorAccessToggle()
+        : nothing,
+      shared ? this.#renderAppLink() : nothing,
+      this.#renderDoneButton(),
     ];
   }
 
@@ -559,7 +642,7 @@ export class SharePanel extends LitElement {
         </p>
         <button
           class="bb-button-text"
-          .disabled=${this.#state.status !== "writable"}
+          .disabled=${this.#panel !== "writable"}
           @click=${this.#onClickPublishStale}
         >
           Update
@@ -569,65 +652,44 @@ export class SharePanel extends LitElement {
   }
 
   async #onClickPublishStale() {
-    const oldState = this.#state;
-    if (oldState.status !== "writable" || !oldState.shareableFile) {
-      return;
-    }
-    if (!this.googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    if (!this.boardServer) {
-      throw new Error(`No board server provided`);
-    }
-    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
-      throw new Error(`Provided board server was not Google Drive`);
-    }
-    if (!this.graph) {
-      throw new Error(`No graph`);
-    }
+    await this.#actions.publishStale();
+  }
 
-    this.#state = {
-      status: "updating",
-      published: oldState.published,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile: oldState.shareableFile,
-      userDomain: oldState.userDomain,
-    };
+  #renderStaleBannerV2() {
+    return html`
+      <div id="stale-v2">
+        <span>
+          Click update to push these changes. This will override previous
+          versions of the link that you shared.
+        </span>
+        <button
+          class="bb-button-text"
+          .disabled=${this.#panel !== "writable"}
+          @click=${this.#onClickPublishStale}
+        >
+          ${this.#panel === "updating"
+            ? html`<span class="g-icon spin spinner">progress_activity</span>`
+            : nothing}
+          Update
+        </button>
+      </div>
+    `;
+  }
 
-    const shareableFileUrl = new URL(`drive:/${oldState.shareableFile.id}`);
-    const updatedShareableGraph = structuredClone(this.graph);
-    delete updatedShareableGraph["url"];
-
-    await Promise.all([
-      // Update the contents of the shareable copy.
-      this.boardServer.ops.writeGraphToDrive(
-        shareableFileUrl,
-        updatedShareableGraph
-      ),
-      // Update the latest version property on the main file.
-      this.googleDriveClient.updateFileMetadata(oldState.shareableFile.id, {
-        properties: {
-          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: oldState.latestVersion,
-        },
-      }),
-      // Ensure all assets have the same permissions as the shareable file,
-      // since they might have been added since the last publish.
-      this.#handleAssetPermissions(oldState.shareableFile.id),
-    ]);
-
-    this.#state = {
-      ...oldState,
-      shareableFile: {
-        ...oldState.shareableFile,
-        stale: false,
-      },
-    };
-
-    console.debug(
-      `[Sharing] Updated stale shareable graph copy` +
-        ` "${oldState.shareableFile.id}" to version` +
-        ` "${oldState.latestVersion}".`
-    );
+  #renderEditorAccessToggle() {
+    return html`
+      <div id="editor-access-toggle">
+        <label>
+          Allow access to editor view and remix
+          <span
+            class="g-icon info-icon"
+            data-tooltip="Allows others to easily see your prompts and make a copy of your Opal"
+            >info</span
+          >
+        </label>
+        <md-switch></md-switch>
+      </div>
+    `;
   }
 
   #renderReadonlyModalContents() {
@@ -635,13 +697,11 @@ export class SharePanel extends LitElement {
   }
 
   #renderDisallowedPublishingNotice() {
-    if (
-      this.#state.status !== "writable" &&
-      this.#state.status !== "updating"
-    ) {
+    const panel = this.#panel;
+    if (panel !== "writable" && panel !== "updating") {
       return nothing;
     }
-    const domain = this.#state.userDomain;
+    const domain = this.#controller.userDomain;
     if (!domain) {
       return nothing;
     }
@@ -667,7 +727,7 @@ export class SharePanel extends LitElement {
   }
 
   #renderAppLink() {
-    const appUrl = this.#appUrl;
+    const appUrl = this.#actions.computeAppUrl(this.#controller.shareableFile);
     if (!appUrl) {
       return nothing;
     }
@@ -698,7 +758,7 @@ export class SharePanel extends LitElement {
         id="granular-sharing-link"
         href=""
         @click=${this.#onClickViewSharePermissions}
-        ?disabled=${this.#state.status !== "writable"}
+        ?disabled=${this.#panel !== "writable"}
       >
         View Share Permissions
       </a>
@@ -724,22 +784,62 @@ export class SharePanel extends LitElement {
     `;
   }
 
+  #renderAdvisoryV2() {
+    return html`
+      <p id="advisory-v2">
+        Sharing your ${APP_NAME} app makes it available to anyone with the link.
+        To restrict access to your app, you can edit your share permissions so
+        only you or specific people you specify can view it.
+        <a
+          href="https://policies.google.com/terms/generative-ai/use-policy"
+          target="_blank"
+          >Share responsibly</a
+        >.
+        <a href="https://developers.google.com/opal/faq" target="_blank"
+          >Learn more</a
+        >.
+      </p>
+    `;
+  }
+
+  #renderDoneButton() {
+    return html`
+      <footer>
+        <button class="bb-button-outlined" @click=${this.close}>Done</button>
+      </footer>
+    `;
+  }
+
+  #renderVisibilityDropdown() {
+    return html`<bb-share-visibility-selector
+      .value=${this.#computedVisibility}
+    ></bb-share-visibility-selector>`;
+  }
+
+  get #computedVisibility(): VisibilityLevel {
+    if (this.#controller.published) {
+      return "anyone";
+    }
+    if (this.#controller.granularlyShared) {
+      return "restricted";
+    }
+    return "only-you";
+  }
+
   #renderPublishedSwitch() {
-    const { status } = this.#state;
-    if (status !== "writable" && status !== "updating") {
+    const panel = this.#panel;
+    if (panel !== "writable" && panel !== "updating") {
       return nothing;
     }
-    const published =
-      (status === "writable" || status === "updating") && this.#state.published;
-
-    const domain = this.#state.userDomain;
+    const published = this.#controller.published;
+    const domain = this.#controller.userDomain;
     const { disallowPublicPublishing } =
       this.globalConfig?.domains?.[domain] ?? {};
 
-    const disabled = disallowPublicPublishing || status === "updating";
+    const disabled = disallowPublicPublishing || panel === "updating";
     return html`
       <div id="published-switch-container">
-        ${status === "updating"
+        ${panel === "updating"
           ? html`<span class="g-icon spin spinner">progress_activity</span>`
           : nothing}
         <md-switch
@@ -756,27 +856,28 @@ export class SharePanel extends LitElement {
   }
 
   #renderGranularSharingModal() {
-    if (this.#state.status !== "granular") {
+    const panel = this.#panel;
+    if (panel !== "granular" || !this.#controller.shareableFile) {
       return nothing;
     }
     return html`
       <bb-google-drive-share-panel
         ${ref(this.#googleDriveSharePanel)}
-        .fileIds=${[this.#state.shareableFile.id]}
+        .fileIds=${[this.#controller.shareableFile.id]}
         @close=${this.#onGoogleDriveSharePanelClose}
       ></bb-google-drive-share-panel>
     `;
   }
 
   #renderUnmanagedAssetsModalContents() {
-    const state = this.#state;
-    if (state.status !== "unmanaged-assets") {
+    const problems = this.#controller.unmanagedAssetProblems;
+    if (problems.length === 0) {
       return nothing;
     }
 
     const parts = [];
 
-    const missingProblems = state.problems.filter(
+    const missingProblems = problems.filter(
       ({ problem }) => problem === "missing"
     );
     if (missingProblems.length > 0) {
@@ -797,7 +898,7 @@ export class SharePanel extends LitElement {
       `);
     }
 
-    const cantShareProblems = state.problems.filter(
+    const cantShareProblems = problems.filter(
       ({ problem }) => problem === "cant-share"
     );
     if (cantShareProblems.length > 0) {
@@ -855,63 +956,15 @@ export class SharePanel extends LitElement {
   }
 
   async #onClickDismissUnmanagedAssetProblems() {
-    const state = this.#state;
-    if (state.status !== "unmanaged-assets") {
-      return;
-    }
-    state.closed.resolve();
+    await this.#actions.dismissUnmanagedAssetProblems();
   }
-
   async #onClickFixUnmanagedAssetProblems() {
-    const state = this.#state;
-    if (state.status !== "unmanaged-assets") {
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      console.error(`No google drive client provided`);
-      return;
-    }
-    this.#state = { status: "loading" };
-    await Promise.all(
-      state.problems.map(async (problem) => {
-        if (problem.problem === "missing") {
-          await Promise.all(
-            problem.missing.map((permission) =>
-              googleDriveClient.createPermission(problem.asset.id, permission, {
-                sendNotificationEmail: false,
-              })
-            )
-          );
-        }
-      })
-    );
-    state.closed.resolve();
+    await this.#actions.fixUnmanagedAssetProblems();
   }
 
   async #onClickViewSharePermissions(event: MouseEvent) {
     event.preventDefault();
-    if (this.#state.status !== "writable") {
-      return;
-    }
-    if (!this.graph?.url) {
-      console.error(`No graph url`);
-      return;
-    }
-
-    const oldState = this.#state;
-    this.#state = { status: "loading" };
-
-    // We must create the shareable copy now if it doesn't already exist, since
-    // that's the file we need to open the granular permissions dialog with.
-    const shareableCopyFileId =
-      oldState.shareableFile?.id ??
-      (await this.#makeShareableCopy()).shareableCopyFileId;
-
-    this.#state = {
-      status: "granular",
-      shareableFile: { id: shareableCopyFileId },
-    };
+    await this.#actions.viewSharePermissions();
   }
 
   #onPublishedSwitchChange() {
@@ -920,16 +973,16 @@ export class SharePanel extends LitElement {
       console.error("Expected input element to be rendered");
       return;
     }
-    if (!this.graph?.url) {
+    if (!this.#graph?.url) {
       console.error("No graph url");
       return;
     }
     const selected = input.selected;
     if (selected) {
-      this.actionTracker?.publishApp(this.graph.url);
-      this.#publish();
+      this.actionTracker?.publishApp(this.#graph.url);
+      this.#actions.publish();
     } else {
-      this.#unpublish();
+      this.#actions.unpublish();
     }
   }
 
@@ -938,10 +991,10 @@ export class SharePanel extends LitElement {
   }
 
   async #onClickCopyLinkButton() {
-    const appUrl = this.#appUrl;
+    const appUrl = this.#actions.computeAppUrl(this.#controller.shareableFile);
     if (!appUrl) {
       console.error("No app url");
-      return nothing;
+      return;
     }
     await navigator.clipboard.writeText(appUrl);
     this.dispatchEvent(
@@ -952,619 +1005,8 @@ export class SharePanel extends LitElement {
     );
   }
 
-  get #appUrl(): string | undefined {
-    const state = this.#state;
-    if (
-      (state.status === "writable" ||
-        state.status === "updating" ||
-        state.status === "readonly") &&
-      state.shareableFile
-    ) {
-      const shareSurface = this.guestConfiguration?.shareSurface;
-      const shareSurfaceUrlTemplate =
-        shareSurface &&
-        this.guestConfiguration?.shareSurfaceUrlTemplates?.[shareSurface];
-      if (shareSurfaceUrlTemplate) {
-        return makeShareLinkFromTemplate({
-          urlTemplate: shareSurfaceUrlTemplate,
-          fileId: state.shareableFile.id,
-          resourceKey: state.shareableFile.resourceKey,
-        });
-      }
-      return makeUrl(
-        {
-          page: "graph",
-          mode: "app",
-          flow: `drive:/${state.shareableFile.id}`,
-          resourceKey: state.shareableFile.resourceKey,
-          shared: true,
-          guestPrefixed: false,
-        },
-        this.globalConfig?.hostOrigin
-      );
-    }
-    return undefined;
-  }
-
   async #onGoogleDriveSharePanelClose() {
-    if (this.#state.status !== "granular") {
-      return;
-    }
-    const graphFileId = this.#state.shareableFile.id;
-    this.#state = { status: "loading" };
-    await this.#handleAssetPermissions(graphFileId);
-    this.#state = { status: "opening" };
-    this.open();
-  }
-
-  async #readPublishedState(): Promise<void> {
-    const graphUrl = this.graph?.url;
-    if (!graphUrl) {
-      console.error(`No graph url`);
-      return;
-    }
-    const thisFileId = this.#getGraphFileId();
-    if (!thisFileId) {
-      console.error(`No file id`);
-      return;
-    }
-    if (!this.googleDriveClient) {
-      console.error(`No google drive client provided`);
-      return;
-    }
-    if (!this.boardServer) {
-      console.error(`No board server provided`);
-      return;
-    }
-    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
-      console.error(`Provided board server was not Google Drive`);
-      return;
-    }
-
-    this.#state = { status: "loading" };
-
-    // Ensure any pending changes are saved so that our Drive operations will be
-    // synchronized with those changes.
-    await this.boardServer.flushSaveQueue(graphUrl);
-
-    const thisFileMetadata = await this.googleDriveClient.getFileMetadata(
-      thisFileId,
-      {
-        fields: ["resourceKey", "properties", "ownedByMe", "version"],
-        // Sometimes we are working on the featured gallery items themselves. In
-        // that case, and for all such calls in this file, we should never use
-        // the gallery proxy, because otherwise we will get responses that are
-        // (1) potentially stale because of caching, (2) missing data because
-        // we're not using the owning user's credentials (e.g. permissions get
-        // masked out and appear empty).
-        bypassProxy: true,
-      }
-    );
-
-    const thisFileIsAShareableCopy =
-      thisFileMetadata.properties?.[DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN] !==
-      undefined;
-    if (thisFileIsAShareableCopy) {
-      this.#state = {
-        status: "readonly",
-        shareableFile: {
-          id: thisFileId,
-          resourceKey: thisFileMetadata.resourceKey,
-        },
-      };
-      return;
-    }
-
-    const shareableCopyFileId =
-      thisFileMetadata.properties?.[DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY];
-
-    if (!thisFileMetadata.ownedByMe) {
-      this.#state = {
-        status: "readonly",
-        shareableFile: shareableCopyFileId
-          ? {
-              id: shareableCopyFileId,
-              resourceKey: (
-                await this.googleDriveClient.getFileMetadata(
-                  shareableCopyFileId,
-                  {
-                    fields: ["resourceKey"],
-                    bypassProxy: true,
-                  }
-                )
-              ).resourceKey,
-            }
-          : {
-              id: thisFileId,
-              resourceKey: thisFileMetadata.resourceKey,
-            },
-      };
-      return;
-    }
-
-    if (!shareableCopyFileId) {
-      this.#state = {
-        status: "writable",
-        published: false,
-        granularlyShared: false,
-        shareableFile: undefined,
-        latestVersion: thisFileMetadata.version,
-        userDomain: (await this.sca.services.signinAdapter.domain) ?? "",
-      };
-      return;
-    }
-
-    const shareableCopyFileMetadata =
-      await this.googleDriveClient.getFileMetadata(shareableCopyFileId, {
-        fields: ["resourceKey", "properties", "permissions"],
-        bypassProxy: true,
-      });
-    const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
-    const diff = diffAssetReadPermissions({
-      actual: allGraphPermissions,
-      expected: this.#getRequiredPublishPermissions(),
-    });
-
-    this.#state = {
-      status: "writable",
-      published: diff.missing.length === 0,
-      publishedPermissions: allGraphPermissions.filter((permission) =>
-        permissionMatchesAnyOf(
-          permission,
-          this.#getRequiredPublishPermissions()
-        )
-      ),
-      granularlyShared:
-        // We're granularly shared if there is any permission that is neither
-        // one of the special publish permissions, nor the owner (since there
-        // will always an owner).
-        diff.excess.find((permission) => permission.role !== "owner") !==
-        undefined,
-      shareableFile: {
-        id: shareableCopyFileId,
-        resourceKey: shareableCopyFileMetadata.resourceKey,
-        stale:
-          thisFileMetadata.version !==
-          shareableCopyFileMetadata.properties?.[
-            DRIVE_PROPERTY_LATEST_SHARED_VERSION
-          ],
-        permissions: shareableCopyFileMetadata.permissions ?? [],
-        shareSurface:
-          shareableCopyFileMetadata.properties?.[
-            DRIVE_PROPERTY_OPAL_SHARE_SURFACE
-          ],
-      },
-      latestVersion: thisFileMetadata.version,
-      userDomain: (await this.sca.services.signinAdapter.domain) ?? "",
-    };
-
-    console.debug(
-      `[Sharing] Found sharing state:` +
-        ` ${JSON.stringify(this.#state, null, 2)}`
-    );
-  }
-
-  async #publish() {
-    console.log(`[Sharing Panel] Publishing`);
-    const publishPermissions = this.#getRequiredPublishPermissions();
-    if (publishPermissions.length === 0) {
-      console.error("No publish permissions configured");
-      return;
-    }
-    if (this.#state.status !== "writable") {
-      console.error('Expected published status to be "writable"');
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      console.error(`No google drive client provided`);
-      return;
-    }
-
-    if (this.#state.published) {
-      // Already published!
-      return;
-    }
-
-    let { shareableFile } = this.#state;
-    const oldState = this.#state;
-    this.#state = {
-      status: "updating",
-      published: true,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile,
-      userDomain: oldState.userDomain,
-    };
-
-    let newLatestVersion: string | undefined;
-    if (!shareableFile) {
-      const copyResult = await this.#makeShareableCopy();
-      shareableFile = {
-        id: copyResult.shareableCopyFileId,
-        resourceKey: copyResult.shareableCopyResourceKey,
-        stale: false,
-        permissions: publishPermissions,
-        shareSurface: this.guestConfiguration?.shareSurface,
-      };
-      newLatestVersion = copyResult.newMainVersion;
-    }
-
-    const graphPublishPermissions = await Promise.all(
-      publishPermissions.map((permission) =>
-        googleDriveClient.createPermission(
-          shareableFile.id,
-          { ...permission, role: "reader" },
-          { sendNotificationEmail: false }
-        )
-      )
-    );
-
-    console.debug(
-      `[Sharing] Added ${publishPermissions.length} publish` +
-        ` permission(s) to shareable graph copy "${shareableFile.id}".`
-    );
-
-    await this.#handleAssetPermissions(shareableFile.id);
-
-    this.#state = {
-      status: "writable",
-      published: true,
-      publishedPermissions: graphPublishPermissions,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile,
-      latestVersion: newLatestVersion ?? oldState.latestVersion,
-      userDomain: oldState.userDomain,
-    };
-  }
-
-  async #handleAssetPermissions(graphFileId: string): Promise<void> {
-    const assets = this.#getAssets();
-    if (assets.length === 0) {
-      return;
-    }
-    const managedAssets: GoogleDriveAsset[] = [];
-    const unmanagedAssets: GoogleDriveAsset[] = [];
-    for (const asset of this.#getAssets()) {
-      if (asset.managed) {
-        managedAssets.push(asset);
-      } else {
-        unmanagedAssets.push(asset);
-      }
-    }
-
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    const graphPermissions =
-      (
-        await googleDriveClient.getFileMetadata(graphFileId, {
-          fields: ["permissions"],
-          bypassProxy: true,
-        })
-      ).permissions ?? [];
-    await Promise.all([
-      this.#autoSyncManagedAssetPermissions(managedAssets, graphPermissions),
-      this.#checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
-        unmanagedAssets,
-        graphPermissions
-      ),
-    ]);
-  }
-
-  async #autoSyncManagedAssetPermissions(
-    managedAssets: GoogleDriveAsset[],
-    graphPermissions: gapi.client.drive.Permission[]
-  ): Promise<void> {
-    if (managedAssets.length === 0) {
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    await Promise.all(
-      managedAssets.map(async (asset) => {
-        const { capabilities, permissions: assetPermissions } =
-          await googleDriveClient.getFileMetadata(asset.fileId, {
-            fields: ["capabilities", "permissions"],
-            bypassProxy: true,
-          });
-        if (!capabilities.canShare || !assetPermissions) {
-          console.error(
-            `[Sharing] Could not add permission to asset ` +
-              `"${asset.fileId.id}" because the current user does not have` +
-              ` sharing capability on it. Users who don't already have` +
-              ` access to this asset may not be able to run this graph.`
-          );
-          return;
-        }
-        const { missing, excess } = diffAssetReadPermissions({
-          actual: assetPermissions,
-          expected: graphPermissions,
-        });
-        if (missing.length === 0 && excess.length === 0) {
-          return;
-        }
-        console.log(
-          `[Sharing Panel] Managed asset ${asset.fileId.id}` +
-            ` has ${missing.length} missing permission(s)` +
-            ` and ${excess.length} excess permission(s). Synchronizing.`,
-          {
-            actual: assetPermissions,
-            needed: graphPermissions,
-            missing,
-            excess,
-          }
-        );
-        await Promise.all([
-          ...missing.map((permission) =>
-            googleDriveClient.createPermission(
-              asset.fileId.id,
-              { ...permission, role: "reader" },
-              { sendNotificationEmail: false }
-            )
-          ),
-          ...excess.map((permission) =>
-            googleDriveClient.deletePermission(asset.fileId.id, permission.id!)
-          ),
-        ]);
-      })
-    );
-  }
-
-  async #checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
-    unmanagedAssets: GoogleDriveAsset[],
-    graphPermissions: gapi.client.drive.Permission[]
-  ): Promise<void> {
-    if (unmanagedAssets.length === 0) {
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    const problems: UnmanagedAssetProblem[] = [];
-    await Promise.all(
-      unmanagedAssets.map(async (asset) => {
-        const assetMetadata = await googleDriveClient.getFileMetadata(
-          asset.fileId,
-          {
-            fields: [
-              "id",
-              "resourceKey",
-              "name",
-              "iconLink",
-              "capabilities",
-              "permissions",
-            ],
-            bypassProxy: true,
-          }
-        );
-        if (
-          !assetMetadata.capabilities.canShare ||
-          !assetMetadata.permissions
-        ) {
-          problems.push({ asset: assetMetadata, problem: "cant-share" });
-          return;
-        }
-        const { missing } = diffAssetReadPermissions({
-          actual: assetMetadata.permissions,
-          expected: graphPermissions,
-        });
-        if (missing.length > 0) {
-          problems.push({ asset: assetMetadata, problem: "missing", missing });
-          return;
-        }
-      })
-    );
-    if (problems.length === 0) {
-      return;
-    }
-    // TODO(aomarks) Bump es level so we can get Promise.withResolvers.
-    let closed: { promise: Promise<void>; resolve: () => void };
-    {
-      let resolve: () => void;
-      const promise = new Promise<void>((r) => (resolve = r));
-      closed = { promise, resolve: resolve! };
-    }
-    const oldState = this.#state;
-    this.#state = {
-      status: "unmanaged-assets",
-      problems,
-      oldState,
-      closed,
-    };
-    // Since the unmanaged asset dialog shows up in a few different flows, it's
-    // useful to make it so this function waits until it has been resolved.
-    // TODO(aomarks) This is a kinda weird pattern. Think about a refactor.
-    await closed.promise;
-    this.#state = oldState;
-  }
-
-  async #unpublish() {
-    if (this.#state.status !== "writable") {
-      console.error('Expected published status to be "writable"');
-      return;
-    }
-    if (!this.#state.published) {
-      // Already unpublished!
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    const { shareableFile } = this.#state;
-    const oldState = this.#state;
-    this.#state = {
-      status: "updating",
-      published: false,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile,
-      userDomain: this.#state.userDomain,
-    };
-
-    console.debug(
-      `[Sharing] Removing ${oldState.publishedPermissions.length} publish` +
-        ` permission(s) from shareable graph copy "${shareableFile.id}".`
-    );
-    await Promise.all(
-      oldState.publishedPermissions.map(async (permission) => {
-        if (permission.role !== "owner") {
-          await googleDriveClient.deletePermission(
-            shareableFile.id,
-            permission.id!
-          );
-        }
-      })
-    );
-
-    await this.#handleAssetPermissions(shareableFile.id);
-
-    this.#state = {
-      status: "writable",
-      published: false,
-      granularlyShared: oldState.granularlyShared,
-      shareableFile,
-      latestVersion: oldState.latestVersion,
-      userDomain: oldState.userDomain,
-    };
-  }
-
-  async #makeShareableCopy(): Promise<{
-    shareableCopyFileId: string;
-    shareableCopyResourceKey: string | undefined;
-    newMainVersion: string;
-  }> {
-    if (!this.googleDriveClient) {
-      throw new Error(`No google drive client provided`);
-    }
-    if (!this.boardServer) {
-      throw new Error(`No board server provided`);
-    }
-    if (!(this.boardServer instanceof GoogleDriveBoardServer)) {
-      throw new Error(`Provided board server was not Google Drive`);
-    }
-    if (!this.graph) {
-      throw new Error(`Graph was not provided`);
-    }
-    if (!this.graph.url) {
-      throw new Error(`Graph had no URL`);
-    }
-    const mainFileId = extractGoogleDriveFileId(this.graph.url);
-    if (!mainFileId) {
-      throw new Error(
-        `Graph URL did not contain a Google Drive file id: ${this.graph.url}`
-      );
-    }
-
-    const shareableFileName = `${mainFileId}-shared.bgl.json`;
-    const shareableGraph = structuredClone(this.graph);
-    delete shareableGraph["url"];
-
-    const createResult = await this.boardServer.create(
-      // Oddly, the title of the file is extracted from a URL that is passed in,
-      // even though URLs of this form are otherwise totally invalid.
-      //
-      // TODO(aomarks) This doesn't seem to actually work. The title is in fact
-      // taken from the descriptor. So what is the purpose of passing a URL
-      // here?
-      new URL(`drive:/${shareableFileName}`),
-      shareableGraph
-    );
-    const shareableCopyFileId = extractGoogleDriveFileId(
-      createResult.url ?? ""
-    );
-    if (!shareableCopyFileId) {
-      console.error(`Unexpected create result`, createResult);
-      throw new Error(`Error creating shareable file`);
-    }
-
-    // Update the latest version property on the main file.
-    const updateMainResult = await this.googleDriveClient.updateFileMetadata(
-      mainFileId,
-      {
-        properties: {
-          [DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY]: shareableCopyFileId,
-        },
-      },
-      { fields: ["version"] }
-    );
-
-    // Ensure the creation of the copy has fully completed.
-    //
-    // TODO(aomarks) Move more sharing logic into board server so that this
-    // create/update coordination doesn't need to be a concern of this
-    // component.
-    await this.boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
-
-    const shareSurface = this.guestConfiguration?.shareSurface;
-    const shareableCopyMetadata =
-      await this.googleDriveClient.updateFileMetadata(
-        shareableCopyFileId,
-        {
-          properties: {
-            [DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN]: mainFileId,
-            [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: updateMainResult.version,
-            [DRIVE_PROPERTY_IS_SHAREABLE_COPY]: "true",
-            ...(shareSurface
-              ? { [DRIVE_PROPERTY_OPAL_SHARE_SURFACE]: shareSurface }
-              : {}),
-          },
-        },
-        { fields: ["resourceKey"] }
-      );
-
-    console.debug(
-      `[Sharing] Made a new shareable graph copy "${shareableCopyFileId}"` +
-        ` at version "${updateMainResult.version}".`
-    );
-    return {
-      shareableCopyFileId,
-      shareableCopyResourceKey: shareableCopyMetadata.resourceKey,
-      newMainVersion: updateMainResult.version,
-    };
-  }
-
-  #getGraphFileId(): string | undefined {
-    const graphUrl = this.graph?.url;
-    if (!graphUrl) {
-      console.error("No graph URL");
-      return undefined;
-    }
-    if (!graphUrl.startsWith("drive:")) {
-      console.error(
-        `Expected "drive:" prefixed graph URL, got ${JSON.stringify(graphUrl)}`
-      );
-      return undefined;
-    }
-    const graphFileId = graphUrl.replace(/^drive:\/*/, "");
-    if (!graphFileId) {
-      console.error(`Graph file ID was empty`);
-    }
-    return graphFileId;
-  }
-
-  #getAssets(): GoogleDriveAsset[] {
-    const graph = this.graph;
-    if (!graph) {
-      console.error("No graph");
-      return [];
-    }
-    return findGoogleDriveAssetsInGraph(graph);
-  }
-
-  #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
-    if (!this.globalConfig) {
-      console.error(`No environment was provided`);
-      return [];
-    }
-    const permissions = this.globalConfig.googleDrive.publishPermissions;
-    if (permissions.length === 0) {
-      console.error(`Environment contained no googleDrive.publishPermissions`);
-    }
-    return permissions.map((permission) => ({ role: "reader", ...permission }));
+    await this.#actions.onGoogleDriveSharePanelClose();
   }
 }
 

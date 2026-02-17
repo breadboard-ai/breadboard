@@ -15,7 +15,6 @@ import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deploym
  * Also add it in packages/types/src/flags.ts
  */
 const DEFAULT_FLAG_VALUES: RuntimeFlags = {
-  generateForEach: false,
   mcp: false,
   force2DGraph: false,
   gulfRenderer: false,
@@ -30,6 +29,9 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   streamGenWebpage: false,
   enableDrivePickerInLiteMode: false,
   enableGoogleDriveTools: false,
+  enableResumeAgentRun: false,
+  enableNotebookLm: false,
+  enableGraphEditorAgent: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

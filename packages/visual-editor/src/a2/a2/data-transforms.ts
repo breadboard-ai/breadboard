@@ -13,13 +13,15 @@ import {
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { err, ok, isNotebookLmUrl } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { isFileDataCapabilityPart } from "../../data/common.js";
 
 export { createDataPartTansformer, driveFileToBlob, toGcsAwareChunk };
 
-const BLOB_PREFIX = new URL("/board/blobs/", window.location.href).href;
+function getBlobPrefix(): string {
+  return new URL("/board/blobs/", window.location.href).href;
+}
 
 const BACKEND_UPLOAD_BLOB_FILE_ENDPOINT = "/v1beta1/uploadBlobFile";
 
@@ -140,7 +142,10 @@ async function driveFileToBlob(
   part: StoredDataCapabilityPart
 ): Promise<Outcome<BlobStoredData>> {
   const existingHandle = part.storedData.handle;
-  if (existingHandle.startsWith(BLOB_PREFIX)) {
+  if (existingHandle.startsWith(getBlobPrefix())) {
+    return { part };
+  } else if (isNotebookLmUrl(existingHandle)) {
+    // NotebookLM references pass through as-is - no blob conversion needed
     return { part };
   } else if (!existingHandle.startsWith("drive:/")) {
     return err(`Unknown blob URL: "${existingHandle}`);
@@ -248,10 +253,10 @@ function createDataPartTansformer(
         }
       } else {
         // part is StoredDataCapabilityPart
-        const { handle, mimeType } = part.storedData;
+        const { handle, mimeType, resourceKey } = part.storedData;
         if (handle.startsWith(DRIVE_URL_PREFIX)) {
           return driveFileToGeminiFile(moduleArgs, {
-            fileData: { fileUri: handle, mimeType },
+            fileData: { fileUri: handle, mimeType, resourceKey },
           });
         } else {
           // check to see if it's a blob

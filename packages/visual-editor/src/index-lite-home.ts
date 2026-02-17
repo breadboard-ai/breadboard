@@ -18,7 +18,6 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { ref } from "lit/directives/ref.js";
 import { GoogleDriveBoardServer } from "./board-server/server.js";
 import { MainArguments } from "./types/types.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
@@ -26,7 +25,7 @@ import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
 import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 import "./ui/elements/overflow-menu/overflow-menu.js";
-import { EmbedHandler } from "./ui/embed/embed.js";
+
 import type {
   SnackbarActionEvent,
   StateEvent,
@@ -34,13 +33,14 @@ import type {
 } from "./ui/events/events.js";
 import * as BBLite from "./ui/lite/lite.js";
 import "./ui/lite/welcome-panel/project-listing.js";
-import { ActionTracker, SnackbarMessage, SnackType } from "./ui/types/types.js";
+import { ActionTracker, SnackType } from "./ui/types/types.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { createActionTracker } from "./ui/utils/action-tracker.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { scaContext } from "./sca/context/context.js";
 import { sca, type SCA } from "./sca/sca.js";
 import { RuntimeConfig } from "./runtime/types.js";
+import { getLogger, Formatter } from "./sca/utils/logging/logger.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -89,24 +89,10 @@ export class LiteHome extends SignalWatcher(LitElement) {
    */
   #busy = false;
 
-  /**
-   * The snackbar machinery
-   */
-  accessor #snackbar: BBLite.Snackbar | undefined;
-  #pendingSnackbarMessages: Array<{
-    message: SnackbarMessage;
-    replaceAll: boolean;
-  }> = [];
-
-  readonly #embedHandler?: EmbedHandler;
-
   constructor(mainArgs: MainArguments) {
     super();
     // Static deployment config
     this.globalConfig = mainArgs.globalConfig;
-
-    // Communication with embedder
-    this.#embedHandler = mainArgs.embedHandler;
 
     // Configuration provided by shell host
     this.guestConfiguration = mainArgs.guestConfiguration;
@@ -129,7 +115,14 @@ export class LiteHome extends SignalWatcher(LitElement) {
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: opalShell.fetchWithCreds,
-      isTestApi: !!mainArgs.guestConfiguration.isTestApi,
+      log(level, ...args) {
+        const logger = getLogger();
+        const msg =
+          level === "warning"
+            ? Formatter.warning(...args)
+            : Formatter.verbose(...args);
+        logger.log(msg, "Google Drive");
+      },
     });
     const googleDrivePublishPermissions =
       this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
@@ -151,6 +144,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
       guestConfig: this.guestConfiguration,
       settings: mainArgs.settings,
       shellHost: opalShell,
+      embedHandler: mainArgs.embedHandler,
       env: mainArgs.env,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
@@ -168,7 +162,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     };
     sizeDetector.addEventListener("change", reactToScreenWidth);
     reactToScreenWidth();
-    this.actionTracker.load("landing", false);
+    this.actionTracker.load("landing");
   }
 
   connectedCallback() {
@@ -195,7 +189,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
       clearTimeout(this.#debounceResizeNotify);
       this.#debounceResizeNotify = window.setTimeout(() => {
-        this.#embedHandler?.sendToEmbedder({
+        this.sca.services.embedHandler?.sendToEmbedder({
           type: "resize",
           width: this.offsetWidth,
           height: this.offsetHeight,
@@ -260,21 +254,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
   #renderSnackbar() {
     return html`<bb-snackbar
-      ${ref((el: Element | undefined) => {
-        if (!el) {
-          this.#snackbar = undefined;
-        }
-
-        this.#snackbar = el as BBLite.Snackbar;
-        for (const pendingMessage of this.#pendingSnackbarMessages) {
-          const { message, id, type } = pendingMessage.message;
-          if (message) {
-            this.snackbar(message, type, id);
-          }
-        }
-
-        this.#pendingSnackbarMessages.length = 0;
-      })}
       @bbsnackbaraction=${async (evt: SnackbarActionEvent) => {
         evt.callback?.();
       }}
@@ -282,28 +261,18 @@ export class LiteHome extends SignalWatcher(LitElement) {
   }
 
   snackbar(message: string | HTMLTemplateResult, type: SnackType, id: UUID) {
-    const replaceAll = true;
-    const snackbarMessage: SnackbarMessage = {
-      id,
+    this.sca.controller.global.snackbars.snackbar(
       message,
       type,
-      persistent: false,
-      actions: [],
-    };
-
-    if (!this.#snackbar) {
-      this.#pendingSnackbarMessages.push({
-        message: snackbarMessage,
-        replaceAll,
-      });
-      return;
-    }
-
-    return this.#snackbar.show(snackbarMessage, replaceAll);
+      [],
+      false,
+      id,
+      true // replaceAll
+    );
   }
 
   unsnackbar(id: UUID) {
-    this.#snackbar?.hide(id);
+    this.sca.controller.global.snackbars.unsnackbar(id);
   }
 
   async deleteBoard(url: string): Promise<Outcome<void>> {
@@ -332,21 +301,21 @@ export class LiteHome extends SignalWatcher(LitElement) {
   }
 
   async remixBoard(urlString: string) {
-    this.#embedHandler?.sendToEmbedder({
+    this.sca.services.embedHandler?.sendToEmbedder({
       type: "remix_board",
       boardId: urlString,
     });
   }
 
   async loadBoard(urlString: string) {
-    this.#embedHandler?.sendToEmbedder({
+    this.sca.services.embedHandler?.sendToEmbedder({
       type: "load_board",
       boardId: urlString,
     });
   }
 
   async createBoard() {
-    this.#embedHandler?.sendToEmbedder({
+    this.sca.services.embedHandler?.sendToEmbedder({
       type: "create_board",
     });
   }

@@ -2,7 +2,6 @@
  * @fileoverview Connector Save Export.
  */
 import {
-  Capabilities,
   DescribeOutputs,
   LLMContent,
   Outcome,
@@ -12,6 +11,7 @@ import { err, ok } from "../a2/utils.js";
 import {
   appendSpreadsheetValues,
   create,
+  createPresentation,
   getPresentation,
   getSpreadsheetMetadata,
   updateDoc,
@@ -50,7 +50,6 @@ function contextFromId(id: string, mimeType: string): LLMContent[] {
 
 async function invoke(
   { method, id: connectorId, context, title, graphId, info }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   graphId ??= "";
@@ -81,21 +80,55 @@ async function invoke(
         return { context: contextFromId(id, DOC_MIME_TYPE) };
       }
       case SLIDES_MIME_TYPE: {
+        const slideDeckMode = info?.configuration?.slideDeckMode || "same";
+        const slideWriteMode = info?.configuration?.slideWriteMode || "append";
+
         const [gettingCollector, result] = await Promise.all([
-          getCollector(
-            moduleArgs,
-            connectorId,
-            graphId,
-            title ?? "Untitled Presentation",
-            SLIDES_MIME_TYPE,
-            info?.configuration?.file?.id
-          ),
-          inferSlideStructure(caps, moduleArgs, context),
+          slideDeckMode === "new"
+            ? createNewPresentation(
+                moduleArgs,
+                connectorId,
+                graphId,
+                title ?? "Untitled Presentation"
+              )
+            : getCollector(
+                moduleArgs,
+                connectorId,
+                graphId,
+                title ?? "Untitled Presentation",
+                SLIDES_MIME_TYPE,
+                info?.configuration?.file?.id
+              ),
+          inferSlideStructure(moduleArgs, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
-        const { id, end, last } = gettingCollector;
-        const slideBuilder = new SimpleSlideBuilder(end, last);
+        const { id, end, last, slideIds } = gettingCollector;
+
+        // Determine insertion index and slides to delete based on write mode
+        let insertionIndex: number | undefined;
+        let deleteSlideIds: string[] = [];
+        if (slideDeckMode === "same") {
+          switch (slideWriteMode) {
+            case "prepend":
+              insertionIndex = 0;
+              break;
+            case "overwrite":
+              deleteSlideIds = slideIds || [];
+              break;
+            case "append":
+            default:
+              // Default behavior: append after existing slides
+              break;
+          }
+        }
+
+        const slideBuilder = new SimpleSlideBuilder(
+          end,
+          last,
+          insertionIndex,
+          deleteSlideIds
+        );
         for (const slide of result.slides) {
           slideBuilder.addSlide(slide);
         }
@@ -115,7 +148,7 @@ async function invoke(
             SHEETS_MIME_TYPE,
             info?.configuration?.file?.id
           ),
-          inferSheetValues(caps, moduleArgs, context),
+          inferSheetValues(moduleArgs, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
@@ -153,6 +186,7 @@ type CollectorData = {
   end?: number;
   last?: string;
   sheetName?: string;
+  slideIds?: string[];
 };
 
 /**
@@ -201,6 +235,9 @@ async function getCollector(
           id: gettingPresenation.presentationId!,
           end: 1,
           last: gettingPresenation.slides?.at(-1)?.objectId || undefined,
+          slideIds: (gettingPresenation.slides || [])
+            .map((s) => s.objectId)
+            .filter(Boolean) as string[],
         };
       } else if (mimeType === SHEETS_MIME_TYPE) {
         return { id: createdFile.id, end: 1 };
@@ -217,7 +254,10 @@ async function getCollector(
     const gettingPresentation = await getPresentation(moduleArgs, id);
     if (!ok(gettingPresentation)) return gettingPresentation;
     const end = gettingPresentation.slides?.length || 0;
-    return { id, end };
+    const slideIds = (gettingPresentation.slides || [])
+      .map((s) => s.objectId)
+      .filter(Boolean) as string[];
+    return { id, end, slideIds };
   } else if (mimeType === SHEETS_MIME_TYPE) {
     return { id, end: 1 };
   }
@@ -229,6 +269,28 @@ async function getCollector(
     if (mimeType === SLIDES_MIME_TYPE) return "slides";
     return "";
   }
+}
+
+/**
+ * Always creates a new presentation without looking up existing files.
+ * Used when slideDeckMode is "new".
+ */
+async function createNewPresentation(
+  moduleArgs: A2ModuleArgs,
+  _connectorId: string,
+  _graphId: string,
+  title: string
+): Promise<Outcome<CollectorData>> {
+  const gettingPresentation = await createPresentation(moduleArgs, title);
+  if (!ok(gettingPresentation)) return gettingPresentation;
+  return {
+    id: gettingPresentation.presentationId!,
+    end: 1,
+    last: gettingPresentation.slides?.at(-1)?.objectId || undefined,
+    slideIds: (gettingPresentation.slides || [])
+      .map((s) => s.objectId)
+      .filter(Boolean) as string[],
+  };
 }
 
 async function describe() {

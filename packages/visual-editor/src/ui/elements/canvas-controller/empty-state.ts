@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LitElement, html, css } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { type } from "../../styles/host/type.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { ShowVideoModalEvent } from "../../events/events.js";
 
 @customElement("bb-empty-state")
 export class EmptyState extends LitElement {
+  @property({ type: Boolean, reflect: true })
+  accessor narrow = false;
+
   static styles = [
     baseColors,
     type,
@@ -27,6 +30,10 @@ export class EmptyState extends LitElement {
         height: 100%;
         pointer-events: none;
         overflow: hidden;
+      }
+
+      :host([narrow]) {
+        justify-content: center;
       }
 
       .edu-sa-beginner {
@@ -46,6 +53,11 @@ export class EmptyState extends LitElement {
         & img {
           position: absolute;
         }
+      }
+
+      /* Hide message callouts on narrow screens */
+      :host([narrow]) .message {
+        display: none;
       }
 
       #top {
@@ -85,6 +97,12 @@ export class EmptyState extends LitElement {
         text-align: center;
       }
 
+      :host([narrow]) #headline {
+        translate: 0;
+        font-size: 36px;
+        line-height: 53px;
+      }
+
       #tag {
         translate: 0 -3.4svh;
         font-size: min(2svw, 24px);
@@ -95,6 +113,12 @@ export class EmptyState extends LitElement {
           text-decoration: none;
           pointer-events: auto;
         }
+      }
+
+      :host([narrow]) #tag {
+        translate: 0;
+        font-size: 20px;
+        line-height: 53px;
       }
 
       @keyframes fadeIn {

@@ -2,7 +2,7 @@
  * @fileoverview Common types.
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export type Task = {
@@ -25,12 +25,10 @@ export type ExecuteStepFunction = (
 export type Strategist = {
   name: string;
   execute(
-    caps: Capabilities,
     moduleArgs: A2ModuleArgs,
     singleStepExecutor: ExecuteStepFunction,
     mutableContext: LLMContent[],
-    objective: LLMContent,
-    makeList?: boolean
+    objective: LLMContent
   ): Promise<Outcome<LLMContent[]>>;
 };
 

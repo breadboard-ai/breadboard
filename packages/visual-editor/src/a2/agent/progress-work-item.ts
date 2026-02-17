@@ -1,31 +1,33 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import {
   AppScreen,
-  DataPart,
-  FunctionCallCapabilityPart,
-  GroupParticle,
+  ConsoleEntry,
+  ConsoleLink,
+  ConsoleUpdate,
   JsonSerializable,
   LLMContent,
-  Particle,
+  NodeMetadata,
+  SimplifiedA2UIClient,
   WorkItem,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
-import { now } from "./now.js";
 import { SignalMap } from "signal-utils/map";
-import { GeminiBody } from "../a2/gemini.js";
-import { AgentProgressManager } from "./types.js";
-import { llm, progressFromThought } from "../a2/utils.js";
-import { StatusUpdateCallbackOptions } from "./function-definition.js";
-import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
+import { now } from "./now.js";
+import type { ErrorMetadata } from "../a2/utils.js";
+import { v0_8 } from "../../a2ui/index.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import type { ProgressReporter } from "./types.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 
-export { ProgressWorkItem };
+export { ProgressWorkItem, createReporter, getCurrentStepState };
+export type { ProgressReporter };
 
-class ProgressWorkItem implements WorkItem, AgentProgressManager {
+export type Link = {
+  uri: string;
+  title: string;
+  iconUri: string;
+};
+
+class ProgressWorkItem implements WorkItem {
   @signal
   accessor end: number | null = null;
 
@@ -46,11 +48,11 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
 
   readonly chat = false;
 
-  readonly product: Map<string, Particle> = new SignalMap();
+  readonly workItemId = crypto.randomUUID();
 
-  index = 0;
+  readonly product: Map<string, ConsoleUpdate> = new SignalMap();
 
-  #previousStatus: string | undefined;
+  #updateCounter = 0;
 
   constructor(
     public readonly title: string,
@@ -60,108 +62,73 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     this.start = performance.now();
   }
 
-  #add(title: string, icon: string, content: unknown) {
-    return this.product.set(
-      `${this.index++}`,
-      createUpdate(title, icon, content)
-    );
-  }
-
-  #addParts(title: string, icon: string, parts: DataPart[]) {
-    return this.#add(title, icon, { parts });
+  #add(title: string, icon: string, body: LLMContent) {
+    const key = `update-${this.#updateCounter++}`;
+    this.product.set(key, { type: "text", title, icon, body });
   }
 
   /**
-   * The agent started execution.
+   * Add JSON data to the progress work item.
+   * Wraps the data in LLMContent format internally.
    */
-  startAgent(objective: LLMContent) {
-    if (this.screen) {
-      this.screen.progress = StarterPhraseVendor.instance.phrase();
-      this.screen.expectedDuration = -1;
-    }
-    this.#add("Objective", "summarize", objective);
-  }
-
-  generatingLayouts(uiPrompt: LLMContent | undefined) {
-    if (this.screen) {
-      this.screen.progress = "Generating layouts";
-      this.screen.expectedDuration = 70;
-    }
-    this.#add("Generating Layouts", "web", uiPrompt ?? llm``.asContent());
+  addJson(title: string, data: unknown, icon?: string) {
+    this.#add(title, icon ?? "info", {
+      parts: [{ json: data as JsonSerializable }],
+    });
   }
 
   /**
-   * The agent sent initial request.
+   * Add text to the progress work item.
+   * Wraps the text in LLMContent format internally.
    */
-  sendRequest(model: string, body: GeminiBody) {
-    this.#addParts("Send request", "upload", [
-      { text: `Calling model: ${model}` },
-      { json: body as JsonSerializable },
-    ]);
+  addText(title: string, text: string, icon?: string) {
+    this.#add(title, icon ?? "info", { parts: [{ text }] });
   }
 
   /**
-   * The agent produced a thought.
+   * Add LLMContent to the progress work item.
    */
-  thought(text: string) {
-    this.#add("Thought", "spark", llm`${text}`.asContent());
-    if (this.screen) {
-      this.#previousStatus = this.screen.progress;
-      this.screen.progress = progressFromThought(text);
-      this.screen.expectedDuration = -1;
-    }
+  addContent(title: string, body: LLMContent, icon?: string) {
+    this.#add(title, icon ?? "info", body);
   }
 
   /**
-   * The agent produced a function call.
+   * Add an error to the progress work item.
+   * Wraps the error message in LLMContent format internally.
    */
-  functionCall(part: FunctionCallCapabilityPart) {
-    this.#addParts(
-      `Calling function "${part.functionCall.name}"`,
-      "robot_server",
-      [part]
-    );
+  addError(error: { $error: string; metadata?: ErrorMetadata }) {
+    this.#add("Error", "warning", { parts: [{ text: error.$error }] });
+    return error;
   }
 
   /**
-   * The agent function call produced an update
+   * Add links to the progress work item.
    */
-  functionCallUpdate(
-    _part: FunctionCallCapabilityPart,
-    status: string | null,
-    options?: StatusUpdateCallbackOptions
-  ) {
-    if (options?.isThought) {
-      if (!status) return;
-      this.thought(status);
-    } else {
-      if (!this.screen) return;
-
-      if (status == null) {
-        if (this.#previousStatus) {
-          this.screen.progress = this.#previousStatus;
-        }
-        this.screen.expectedDuration = -1;
-      } else {
-        // Remove the occasional ellipsis from the status
-        status = status.replace(/\.+$/, "");
-        if (options?.expectedDurationInSec) {
-          this.screen.expectedDuration = options.expectedDurationInSec;
-        } else {
-          this.screen.expectedDuration = -1;
-        }
-
-        this.#previousStatus = this.screen.progress;
-        this.screen.progress = status;
-      }
-    }
+  addLinks(title: string, links: ConsoleLink[], icon?: string) {
+    const key = `update-${this.#updateCounter++}`;
+    this.product.set(key, {
+      type: "links",
+      title,
+      icon: icon ?? "link",
+      links,
+    });
   }
 
   /**
-   * The agent produced a function result.
+   * Add A2UI content to the progress work item.
+   * Creates a SimplifiedA2UIClient with a processor and no-op receiver.
+   * @param messages - A2UI ServerToClientMessage array (untyped from parsed JSON)
    */
-  functionResult(content: LLMContent) {
-    this.#add("Function response", "robot_server", content);
+  addA2UI(messages: unknown[]) {
+    const processor = v0_8.Data.createSignalA2UIModelProcessor();
+    processor.processMessages(messages as v0_8.Types.ServerToClientMessage[]);
+    const key = `a2ui-${this.#updateCounter++}`;
+    const client: SimplifiedA2UIClient = {
+      processor,
+      receiver: { sendMessage: () => {} }, // No-op receiver for display-only
+    };
+    // Cast to unknown first since product map type doesn't include SimplifiedA2UIClient directly
+    (this.product as Map<string, unknown>).set(key, client);
   }
 
   /**
@@ -170,33 +137,51 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   finish() {
     if (this.screen) {
       this.screen.progress = undefined;
-      this.screen.expectedDuration = -1;
+      setScreenDuration(this.screen, -1);
     }
     this.end = performance.now();
   }
 }
 
-function createUpdate(title: string, icon: string, body: unknown) {
-  let bodyParticle;
-  if (!body) {
-    bodyParticle = { text: "Empty content" };
-  } else if (typeof body === "string") {
-    bodyParticle = { text: body };
-  } else if (typeof body === "object" && "parts" in body) {
-    bodyParticle = {
-      text: JSON.stringify(body),
-      mimeType: "application/vnd.breadboard.llm-content",
-    };
-  } else {
-    bodyParticle = {
-      text: JSON.stringify(body),
-      mimeType: "application/json",
+type StepState = {
+  title: string;
+  appScreen: AppScreen | undefined;
+  consoleEntry: ConsoleEntry | undefined;
+};
+
+function getCurrentStepState(moduleArgs: A2ModuleArgs): StepState {
+  const { currentStep, getProjectRunState } = moduleArgs.context;
+  const stepId = currentStep?.id;
+  if (!stepId) {
+    return {
+      title: "",
+      appScreen: undefined,
+      consoleEntry: undefined,
     };
   }
-  const group: GroupParticle["group"] = new Map([
-    ["title", { text: title }],
-    ["body", bodyParticle],
-    ["icon", { text: icon }],
-  ]);
-  return { type: "update", group };
+  const runState = getProjectRunState?.();
+  return {
+    title: currentStep?.metadata?.title || "",
+    appScreen: runState?.app.screens.get(stepId),
+    consoleEntry: runState?.console.get(stepId),
+  };
+}
+
+/**
+ * Creates a reporter (ProgressWorkItem) and registers it with the console.
+ */
+function createReporter(
+  moduleArgs: A2ModuleArgs,
+  options: NodeMetadata
+): ProgressWorkItem {
+  const { consoleEntry, appScreen } = getCurrentStepState(moduleArgs);
+  const reporter = new ProgressWorkItem(
+    options.title ?? "Progress",
+    options.icon ?? "info",
+    appScreen
+  );
+  if (consoleEntry) {
+    consoleEntry.work.set(crypto.randomUUID(), reporter);
+  }
+  return reporter;
 }

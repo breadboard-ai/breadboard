@@ -12,7 +12,7 @@ import {
   plannerPrompt,
   thinkingPlannerPrompt,
 } from "./planner-prompt.js";
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { ThinkStrategist };
@@ -38,15 +38,12 @@ Now think real hard: do you need to organize or summarize results?
 `;
 
   async execute(
-    caps: Capabilities,
     moduleArgs: A2ModuleArgs,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
-    objective: LLMContent,
-    makeList: boolean
+    objective: LLMContent
   ): Promise<Outcome<LLMContent[]>> {
     const planning = await plannerPrompt(
-      caps,
       moduleArgs,
       mutableContext,
       objective,
@@ -69,7 +66,7 @@ Now think real hard: do you need to organize or summarize results?
         organizeResults = true;
       }
       if (!task) break;
-      await report(caps, {
+      await report(moduleArgs, {
         actor: "Planner",
         category: "Progress update",
         name: "Thinking",
@@ -94,7 +91,6 @@ and adjusting the plan if necessary.`,
       }
       this.tasks.push(task.task);
       const thinking = await thinkingPlannerPrompt(
-        caps,
         moduleArgs,
         mutableContext,
         objective,
@@ -109,7 +105,7 @@ and adjusting the plan if necessary.`,
       planDescription = "Here are the remaining steps in the plan";
     }
     if (organizeResults) {
-      await report(caps, {
+      await report(moduleArgs, {
         actor: "Planner",
         category: "Organizing work into a report",
         name: "Organizing work report",
@@ -118,11 +114,9 @@ and adjusting the plan if necessary.`,
       });
 
       const organizing = await organizerPrompt(
-        caps,
         moduleArgs,
         results,
-        objective,
-        makeList
+        objective
       ).invoke();
       if (!ok(organizing)) return organizing;
 

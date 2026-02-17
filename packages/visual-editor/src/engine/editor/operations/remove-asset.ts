@@ -40,7 +40,6 @@ class RemoveAsset implements EditOperation {
     return {
       success: true,
       affectedGraphs: [],
-      affectedModules: [],
       affectedNodes: [],
     };
   }

@@ -11,11 +11,10 @@ import {
   InspectableGraph,
   InspectableNode,
   InspectableNodePorts,
-  JsonSerializable,
   LLMContent,
-  MainGraphIdentifier,
-  MutableGraphStore,
+  NodeConfiguration,
   NodeIdentifier,
+  NodeMetadata,
   NodeValue,
   Outcome,
   Schema,
@@ -29,20 +28,13 @@ import {
   TemplatePart,
   TemplatePartTransformCallback,
 } from "@breadboard-ai/utils";
-import {
-  css,
-  html,
-  HTMLTemplateResult,
-  LitElement,
-  nothing,
-  PropertyValues,
-} from "lit";
+import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
-import { Project, StepEditorSurface } from "../../state/index.js";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
@@ -50,11 +42,7 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
-import {
-  ActionTracker,
-  EnumValue,
-  WorkspaceSelectionStateWithChangeId,
-} from "../../types/types.js";
+import { ActionTracker, EnumValue } from "../../types/types.js";
 import {
   isControllerBehavior,
   isLLMContentArrayBehavior,
@@ -79,9 +67,11 @@ import {
   isLLMContentArray,
   isTextCapabilityPart,
 } from "../../../data/common.js";
-import { ConnectorView } from "../../connectors/types.js";
+
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { embedderContext } from "../../contexts/embedder.js";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SCA } from "../../../sca/sca.js";
 import { embedState } from "../../embed/embed.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -108,33 +98,14 @@ const INVALID_ITEM = html`<div id="invalid-item">
 </div>`;
 
 @customElement("bb-entity-editor")
-export class EntityEditor
-  extends SignalWatcher(LitElement)
-  implements StepEditorSurface
-{
-  @property()
-  accessor graph: InspectableGraph | null = null;
+export class EntityEditor extends SignalWatcher(LitElement) {
+  get #graph(): InspectableGraph | null {
+    return this.sca.controller.editor.graph.editor?.inspect("") ?? null;
+  }
 
-  @property()
-  accessor graphTopologyUpdateId = 0;
-
-  @property()
-  accessor graphStore: MutableGraphStore | null = null;
-
-  @property()
-  accessor graphStoreUpdateId = 0;
-
-  @property()
-  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-
-  @property()
-  accessor mainGraphId: MainGraphIdentifier | null = null;
-
-  @property()
-  accessor projectState: Project | null = null;
-
-  @property({ reflect: true, type: Boolean })
-  accessor readOnly = false;
+  get #readOnly(): boolean {
+    return !this.sca.controller.editor.graph.graphIsMine;
+  }
 
   @property({ reflect: true, type: Boolean })
   accessor autoFocus = false;
@@ -144,6 +115,9 @@ export class EntityEditor
 
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @state()
   accessor values: InputValues | undefined;
@@ -442,6 +416,22 @@ export class EntityEditor
 
               & input {
                 display: none;
+              }
+            }
+
+            &.string:not(:has(.item-select-container)) {
+              & label {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--bb-grid-size);
+                width: 100%;
+              }
+
+              & input {
+                border: 1px solid var(--light-dark-n-80);
+                width: 100%;
+                box-sizing: border-box;
               }
             }
 
@@ -800,7 +790,7 @@ export class EntityEditor
   ];
 
   #lastUpdateTimes: Map<"nodes" | "assets", number> = new Map();
-  #connectorPorts: Map<AssetPath, PortLike[]> = new Map();
+
   #editorRef: Ref<TextEditor> = createRef();
   #edited = false;
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -813,17 +803,11 @@ export class EntityEditor
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("pointerdown", this.#onPointerDownBound);
-    if (this.projectState) {
-      this.projectState.stepEditor.surface = this;
-    }
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener("pointerdown", this.#onPointerDownBound);
-    if (this.projectState) {
-      this.projectState.stepEditor.surface = null;
-    }
   }
 
   #onPointerDown() {
@@ -854,27 +838,12 @@ export class EntityEditor
           ...this.values,
           [port.name]: value,
         };
+        // Reactive changes need to be saved immediately so the graph editor
+        // updates. Unlike regular edits (which wait for selection change),
+        // reactive controls should propagate their changes right away.
+        this.#save();
       }
     };
-  }
-
-  #calculateSelectionSize() {
-    if (!this.selectionState) {
-      return 0;
-    }
-
-    return [...this.selectionState.selectionState.graphs].reduce(
-      (prev, [, graph]) => {
-        return (
-          prev +
-          graph.assets.size +
-          graph.comments.size +
-          graph.nodes.size +
-          graph.references.size
-        );
-      },
-      0
-    );
   }
 
   /**
@@ -905,20 +874,18 @@ export class EntityEditor
         graphId,
         nodeId
       );
+      // The direct apply above incremented the graph version, so any
+      // pendingEdit captured earlier (via @input) is now stale.
+      // Clear it to prevent a false "edits were discarded" warning.
+      this.#edited = false;
+      this.sca?.controller.editor.step.clearPendingEdit();
       return;
     }
     const assetPath = data.get("asset-path") as string | null;
     if (assetPath !== null) {
       // When "asset-path" is submitted, we know that this is a an asset.
 
-      // 1) Get the right asset
-      const asset = this.projectState?.graphAssets.get(assetPath);
-      if (!asset) {
-        console.warn(`Unable to commit edits to asset "${assetPath}`);
-        return;
-      }
-
-      // 2) get title
+      // 1) get title
       const title = form.querySelector<HTMLInputElement>("#node-title")?.value;
       if (!title) {
         console.warn(
@@ -927,57 +894,66 @@ export class EntityEditor
         return;
       }
 
-      // 3) update connector configuration
-      const connector = asset.connector;
-      if (connector) {
-        const ports = this.#connectorPorts.get(assetPath) || [];
-        const { values } = this.#takePortValues(form, ports);
-        const commiting = await connector.commitEdits(
-          title,
-          values as Record<string, JsonSerializable>
-        );
-        if (!ok(commiting)) {
-          this.dispatchEvent(new ToastEvent(commiting.$error, ToastType.ERROR));
-        }
-      } else {
-        const dataPart =
-          form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
+      // 2) update asset using Asset action
+      const dataPart =
+        form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
 
-        let data: LLMContent[] | undefined = undefined;
-        if (dataPart) {
-          data = [{ role: "user", parts: [dataPart] }];
-        }
-
-        const updating = await asset.update(title, data);
-        if (!ok(updating)) {
-          this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
-        }
+      let assetData: LLMContent[] | undefined = undefined;
+      if (dataPart) {
+        assetData = [{ role: "user", parts: [dataPart] }];
       }
+
+      const updating = await this.sca.actions.asset.update(
+        assetPath,
+        title,
+        assetData
+      );
+      if (!ok(updating)) {
+        this.dispatchEvent(new ToastEvent(updating.$error, ToastType.ERROR));
+      }
+
+      // The direct apply above incremented the graph version, so any
+      // pendingAssetEdit captured earlier (via @input) is now stale.
+      // Clear it to prevent a false "edits were discarded" warning.
+      this.#edited = false;
+      this.sca.controller.editor.step.clearPendingAssetEdit();
     }
   }
 
-  async #emitUpdatedNodeConfiguration(
+  /**
+   * Prepares the node configuration by transforming form values.
+   * Returns the configuration, metadata, and ins for either dispatch or pendingEdit.
+   */
+  async #prepareNodeConfiguration(
     currentValues: InputValues | undefined,
     form: HTMLFormElement,
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
-  ) {
-    let targetGraph = this.graph;
+  ): Promise<{
+    configuration: NodeConfiguration;
+    metadata: NodeMetadata;
+    ins: TemplatePart[];
+    editGraphId: GraphIdentifier;
+  } | null> {
+    let targetGraph = this.#graph;
     if (!targetGraph) {
-      return;
+      return null;
     }
+
+    // Note: graphId from form is MAIN_BOARD_ID for main board, but API expects ""
+    const apiGraphId = graphId === MAIN_BOARD_ID ? "" : graphId;
 
     if (graphId !== MAIN_BOARD_ID) {
-      targetGraph = this.graph!.graphs()?.[graphId] ?? null;
+      targetGraph = this.#graph!.graphs()?.[graphId] ?? null;
     }
 
     if (!targetGraph) {
-      return;
+      return null;
     }
 
     const node = targetGraph.nodeById(nodeId);
     if (!node) {
-      return;
+      return null;
     }
 
     const metadata = { ...node.metadata() };
@@ -986,9 +962,7 @@ export class EntityEditor
       metadata.title = title.value;
     }
 
-    // Because the rest of the function is async and the values of the form
-    // element may change as the selection changes, let's copy the form values,
-    // so that we have a stable set of values to work with.
+    // Copy form values for stable async processing
     const formValues = this.#copyFormValues(form);
 
     const ports = (await node.ports(currentValues)).inputs.ports.filter(
@@ -1002,6 +976,26 @@ export class EntityEditor
     const { values, ins } = this.#takePortValues(formValues, ports);
     const configuration = { ...node.configuration(), ...values };
 
+    return { configuration, metadata, ins, editGraphId: apiGraphId };
+  }
+
+  async #emitUpdatedNodeConfiguration(
+    currentValues: InputValues | undefined,
+    form: HTMLFormElement,
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ) {
+    const prepared = await this.#prepareNodeConfiguration(
+      currentValues,
+      form,
+      graphId,
+      nodeId
+    );
+
+    if (!prepared) {
+      return;
+    }
+
     this.actionTracker?.editStep("manual");
 
     this.dispatchEvent(
@@ -1009,9 +1003,9 @@ export class EntityEditor
         eventType: "node.change",
         id: nodeId,
         subGraphId: graphId !== MAIN_BOARD_ID ? graphId : null,
-        configurationPart: configuration,
-        metadata,
-        ins,
+        configurationPart: prepared.configuration,
+        metadata: prepared.metadata,
+        ins: prepared.ins,
       })
     );
   }
@@ -1079,13 +1073,13 @@ export class EntityEditor
   }
 
   #renderNode(graphId: GraphIdentifier, nodeId: NodeIdentifier) {
-    let targetGraph = this.graph;
+    let targetGraph = this.#graph;
     if (!targetGraph) {
       return INVALID_ITEM;
     }
 
     if (graphId !== MAIN_BOARD_ID) {
-      targetGraph = this.graph!.graphs()?.[graphId] ?? null;
+      targetGraph = this.#graph!.graphs()?.[graphId] ?? null;
     }
 
     if (!targetGraph) {
@@ -1152,7 +1146,7 @@ export class EntityEditor
             name="node-title"
             class="sans-flex round w-500 md-title-medium"
             .value=${node.title()}
-            ?disabled=${this.readOnly}
+            ?disabled=${this.#readOnly}
             @keydown=${(evt: KeyboardEvent) => {
               if (evt.key !== "Enter") {
                 return;
@@ -1169,7 +1163,7 @@ export class EntityEditor
         </h1>
         <div id="type"></div>
         <div id="content">
-          ${this.#renderPorts(graphId, nodeId, inputPorts)}
+          ${this.#renderPorts(graphId, nodeId, inputPorts, node)}
         </div>
         <input type="hidden" name="graph-id" .value=${graphId} />
         <input type="hidden" name="node-id" .value=${nodeId} />
@@ -1186,7 +1180,7 @@ export class EntityEditor
   ) {
     // Note that the board URL here may not be a HTTP/HTTPS URL - it could
     // be a Drive URL of the form drive:/12345.
-    const boardUrl = this.graph?.raw().url ?? getBoardUrlFromCurrentWindow();
+    const boardUrl = this.#graph?.raw().url ?? getBoardUrlFromCurrentWindow();
     if (!boardUrl || !isGenerativeNode(node)) {
       return nothing;
     }
@@ -1226,7 +1220,8 @@ export class EntityEditor
     value: LLMContent | undefined,
     graphId: GraphIdentifier,
     fastAccess: boolean,
-    isReferenced: boolean
+    isReferenced: boolean,
+    agentMode: boolean
   ) {
     const portValue = getLLMContentPortValue(value, port.schema);
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
@@ -1234,16 +1229,16 @@ export class EntityEditor
       return html`Invalid value`;
     }
 
-    // Note that projectState and subGraphId must be set before value since
-    // value depends on the projectState & subGraphId to expand on chiclet
+    // Note that subGraphId must be set before value since
+    // value depends on the subGraphId to expand on chiclet
     // metadata.
     return html`<bb-text-editor
       ${isReferenced ? ref(this.#editorRef) : nothing}
-      .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
       .value=${textPart.text}
       .supportsFastAccess=${fastAccess}
-      .readOnly=${this.readOnly}
+      .readOnly=${this.#readOnly}
+      .isAgentMode=${agentMode}
       id=${port.name}
       name=${port.name}
       @keydown=${(evt: KeyboardEvent) => {
@@ -1251,7 +1246,7 @@ export class EntityEditor
           return;
         }
 
-        this.#submit(this.values);
+        this.#save();
       }}
     ></bb-text-editor>`;
   }
@@ -1259,7 +1254,8 @@ export class EntityEditor
   #renderPorts(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier,
-    inputPorts: PortLike[]
+    inputPorts: PortLike[],
+    node: InspectableNode
   ) {
     const hasTextEditor =
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
@@ -1288,7 +1284,8 @@ export class EntityEditor
                 isLLMContent(port.value) ? port.value : undefined,
                 graphId,
                 !advanced,
-                isReferenced
+                isReferenced,
+                isAgentMode(node, this.values)
               ),
             ];
           } else {
@@ -1309,7 +1306,8 @@ export class EntityEditor
                 : undefined,
               graphId,
               true,
-              true
+              true,
+              isAgentMode(node, this.values)
             );
           }
           break;
@@ -1384,7 +1382,11 @@ export class EntityEditor
           value = html`<label
             class=${classMap({ slim: isControllerBehavior(port.schema) })}
             >${!isControllerBehavior(port.schema) ? html`${port.title}: ` : ""}
-            <input type="text" name=${port.name} .value=${port.value ?? ""}
+            <input
+              type="text"
+              name=${port.name}
+              .value=${port.value ?? ""}
+              placeholder=${port.schema.description ?? ""}
           /></label>`;
           break;
         }
@@ -1424,7 +1426,7 @@ export class EntityEditor
         const extendedInfoOutput =
           extendedInfo && typeof extendedInfo !== "string"
             ? html`<div class="info">
-                <span class="g-icon round filled">warning</span>${finalInfo}
+                <span class="g-icon round">info</span>${finalInfo}
               </div>`
             : nothing;
 
@@ -1457,12 +1459,12 @@ export class EntityEditor
           </div>
 
           ${extendedInfoOutput}
-          ${this.graph
+          ${this.#graph
             ? html`<bb-flowgen-in-step-button
                 monochrome
                 popoverPosition="below"
                 .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
-                .currentGraph=${this.graph.raw() satisfies GraphDescriptor}
+                .currentGraph=${this.#graph.raw() satisfies GraphDescriptor}
                 .constraint=${{
                   kind: "EDIT_STEP_CONFIG",
                   stepId: nodeId,
@@ -1477,7 +1479,7 @@ export class EntityEditor
             : nothing}`;
       }
 
-      classes["read-only"] = this.readOnly;
+      classes["read-only"] = this.#readOnly;
 
       return [html`<div class=${classMap(classes)}>${value} ${controls}</div>`];
     };
@@ -1555,11 +1557,13 @@ export class EntityEditor
 
       this.#fastAccessRef.value.focusFilter();
     });
+    this.sca.controller.editor.fastAccess.fastAccessMode = "tools";
     this.#isUsingFastAccess = true;
   }
 
   #hideFastAccess() {
     this.#isUsingFastAccess = false;
+    this.sca.controller.editor.fastAccess.fastAccessMode = null;
     if (!this.#fastAccessRef.value) {
       return;
     }
@@ -1568,77 +1572,70 @@ export class EntityEditor
   }
 
   #renderAsset(assetPath: AssetPath) {
-    const asset = this.graph?.assets().get(assetPath);
+    const asset = this.#graph?.assets().get(assetPath);
     if (!asset) {
       return INVALID_ITEM;
     }
 
-    if (!this.graph) {
+    if (!this.#graph) {
       return INVALID_ITEM;
     }
 
-    let value;
-    if (asset.type === "connector") {
-      const view =
-        this.projectState?.graphAssets.get(assetPath)?.connector?.view;
-      if (!view || !ok(view)) return nothing;
-      const ports = portsFromView(view);
-      this.#connectorPorts.set(assetPath, ports);
-      value = this.#renderPorts("", "", ports);
+    const graphUrl = new URL(this.#graph.raw().url ?? window.location.href);
+    const itemData = asset?.data.at(-1) ?? null;
+    const dataPart = itemData?.parts[0] ?? null;
+    const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
+    const skipOutput = isTextCapabilityPart(dataPart) || isDrawable;
+
+    const partEditor = html`<bb-llm-part-input
+      class=${classMap({ fill: skipOutput })}
+      id="asset-value"
+      @submit=${(evt: SubmitEvent) => {
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+
+        this.#submit(this.values);
+      }}
+      @input=${() => {
+        this.#edited = true;
+      }}
+      .graphUrl=${graphUrl}
+      .subType=${asset.subType}
+      .dataPart=${dataPart}
+    ></bb-llm-part-input>`;
+
+    let input: HTMLTemplateResult | symbol = nothing;
+    if (skipOutput) {
+      input = html`<div class="stretch object">${partEditor}</div>`;
     } else {
-      const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
-      const itemData = asset?.data.at(-1) ?? null;
-      const dataPart = itemData?.parts[0] ?? null;
-      const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
-      const skipOutput = isTextCapabilityPart(dataPart) || isDrawable;
-
-      const partEditor = html`<bb-llm-part-input
-        class=${classMap({ fill: skipOutput })}
-        id="asset-value"
-        @submit=${(evt: SubmitEvent) => {
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-
-          this.#submit(this.values);
-        }}
-        @input=${() => {
-          this.#edited = true;
-        }}
-        .graphUrl=${graphUrl}
-        .subType=${asset.subType}
-        .projectState=${this.projectState}
-        .dataPart=${dataPart}
-      ></bb-llm-part-input>`;
-
-      let input: HTMLTemplateResult | symbol = nothing;
-      if (skipOutput) {
-        input = html`<div class="stretch object">${partEditor}</div>`;
-      } else {
-        input = partEditor;
-      }
-
-      let output: HTMLTemplateResult | symbol = nothing;
-      if (!skipOutput) {
-        output = html` <bb-llm-output
-          .value=${itemData}
-          .clamped=${false}
-          .lite=${true}
-          .showModeToggle=${false}
-          .showEntrySelector=${false}
-          .showExportControls=${false}
-          .graphUrl=${graphUrl}
-        ></bb-llm-output>`;
-      }
-
-      value = [input, output];
+      input = partEditor;
     }
 
-    let icon: string | undefined | null = "text_fields";
+    let output: HTMLTemplateResult | symbol = nothing;
+    if (!skipOutput) {
+      output = html` <bb-llm-output
+        .value=${itemData}
+        .clamped=${false}
+        .lite=${true}
+        .showModeToggle=${false}
+        .showEntrySelector=${false}
+        .showExportControls=${false}
+        .graphUrl=${graphUrl}
+      ></bb-llm-output>`;
+    }
+
+    const value = [input, output];
+
+    let icon: string | HTMLTemplateResult | undefined | null = "text_fields";
     if (asset.type) {
       icon = iconSubstitute(asset.type);
     }
     if (asset.subType) {
-      icon = iconSubstitute(asset.subType);
+      if (asset.subType === "notebooklm") {
+        icon = notebookLmIcon;
+      } else {
+        icon = iconSubstitute(asset.subType);
+      }
     }
 
     return html`<div class=${classMap({ asset: true })}>
@@ -1660,26 +1657,15 @@ export class EntityEditor
   }
 
   #renderSelectedItem() {
-    if (!this.selectionState) {
-      return;
-    }
+    const sel = this.sca.controller.editor.selection.selection;
 
-    const candidate = [...this.selectionState.selectionState.graphs].find(
-      ([, graph]) =>
-        graph.assets.size > 0 || graph.nodes.size > 0 || graph.comments.size > 0
-    );
     let value: HTMLTemplateResult | symbol = nothing;
-    if (!candidate) {
-      value = html`<div id="generic-status">Unsupported item</div>`;
+    if (sel.assets.size > 0) {
+      value = this.#renderAsset([...sel.assets][0]);
+    } else if (sel.nodes.size > 0) {
+      value = this.#renderNode(MAIN_BOARD_ID, [...sel.nodes][0]);
     } else {
-      const [id, graph] = candidate;
-      if (graph.assets.size) {
-        value = this.#renderAsset([...graph.assets][0]);
-      } else if (graph.nodes.size) {
-        value = this.#renderNode(id, [...graph.nodes][0]);
-      } else {
-        value = html`<div id="generic-status">Unsupported Item</div>`;
-      }
+      value = html`<div id="generic-status">Unsupported item</div>`;
     }
 
     return html`<form
@@ -1689,30 +1675,86 @@ export class EntityEditor
       }}
       @input=${() => {
         this.#edited = true;
+        this.#setPendingEditFromForm();
       }}
     >
       ${value}
     </form>`;
   }
 
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
-    // Auto-save both when a different step is selected
-    // and when the reactive change is triggered.
-    if (
-      (changedProperties.has("graphTopologyUpdateId") ||
-        changedProperties.has("selectionState") ||
-        changedProperties.has("values")) &&
-      this.#edited
-    ) {
-      this.save();
+  // NOTE: willUpdate no longer triggers autosave. Pending edits are set
+  // directly in the @input handler on the form.
+
+  /**
+   * Sets a pending edit on the SCA controller from current form state.
+   * The step autosave trigger will apply this when selection changes.
+   * Handles both node edits (node-id/graph-id) and asset edits (asset-path).
+   */
+  async #setPendingEditFromForm(): Promise<void> {
+    if (!this.#formRef.value || !this.sca) {
+      return;
+    }
+
+    const form = this.#formRef.value;
+    const data = new FormData(form);
+
+    // Check if this is a node edit
+    const formGraphId = data.get("graph-id") as string | null;
+    const nodeId = data.get("node-id") as string | null;
+
+    if (formGraphId !== null && nodeId !== null) {
+      // Handle node edit
+      const prepared = await this.#prepareNodeConfiguration(
+        this.values,
+        form,
+        formGraphId,
+        nodeId
+      );
+
+      if (!prepared) {
+        return;
+      }
+
+      this.sca.controller.editor.step.setPendingEdit({
+        graphId: prepared.editGraphId,
+        nodeId,
+        values: prepared.configuration,
+        ins: prepared.ins,
+        graphVersion: this.sca.controller.editor.graph.version,
+      });
+      return;
+    }
+
+    // Check if this is an asset edit
+    const assetPath = data.get("asset-path") as string | null;
+    if (assetPath !== null) {
+      const asset = this.sca.controller.editor.graph.graphAssets.get(assetPath);
+      if (!asset) {
+        return;
+      }
+
+      const title = form.querySelector<HTMLInputElement>("#node-title")?.value;
+      const dataPart =
+        form.querySelector<LLMPartInput>("#asset-value")?.dataPart;
+
+      if (!title) {
+        return;
+      }
+
+      this.sca.controller.editor.step.setPendingAssetEdit({
+        assetPath,
+        title,
+        dataPart,
+        graphVersion: this.sca.controller.editor.graph.version,
+      });
     }
   }
 
   /**
    * Implements the StepEditorSurface interface, so that this class could
-   * be used in Project state machinery.
+   * be used in step editing.
    */
-  async save(): Promise<Outcome<void>> {
+  async #save(): Promise<Outcome<void>> {
     if (!this.#edited) {
       return;
     }
@@ -1720,6 +1762,11 @@ export class EntityEditor
     // Autosave.
     this.#edited = false;
     const submitting = this.#submit(this.values);
+
+    // Clear pending edit since we're explicitly saving
+    // This prevents the stale edit warning when clicking away
+    this.sca?.controller.editor.step.clearPendingEdit();
+    this.sca?.controller.editor.step.clearPendingAssetEdit();
 
     // Reset the node value so that we don't receive incorrect port data.
     this.values = undefined;
@@ -1737,16 +1784,21 @@ export class EntityEditor
     });
   }
 
-  protected firstUpdated(changedProperties: PropertyValues): void {
-    if (!changedProperties.has("selectionState")) {
-      return;
-    }
-
+  protected firstUpdated(): void {
     this.focus();
   }
 
   render() {
-    const selectionCount = this.#calculateSelectionSize();
+    // Read graph version to subscribe to graph changes via SignalWatcher.
+    // This ensures we re-render when the graph is modified (e.g., wire drag).
+    void this.sca.controller.editor.graph.version;
+    // Subscribe to selection changes via SignalWatcher.
+    void this.sca.controller.editor.selection.selectionId;
+
+    // Count only primary editable items (nodes, assets).
+    // Edges and asset-edges are secondary and shouldn't inflate the count.
+    const sel = this.sca.controller.editor.selection.selection;
+    const selectionCount = sel.nodes.size + sel.assets.size;
     if (selectionCount === 0) {
       return html`<div id="generic-status">Please select an item to edit</div>`;
     }
@@ -1759,10 +1811,6 @@ export class EntityEditor
       this.#renderSelectedItem(),
       html`<bb-fast-access-menu
           ${ref(this.#fastAccessRef)}
-          .showTools=${true}
-          .showAssets=${false}
-          .showComponents=${false}
-          .showParameters=${false}
           @pointerdown=${(evt: PointerEvent) => {
             evt.stopImmediatePropagation();
           }}
@@ -1787,9 +1835,6 @@ export class EntityEditor
 
             this.#editorRef.value.addItem(part);
           }}
-          .graphId=${null}
-          .nodeId=${null}
-          .state=${this.projectState?.stepEditor.fastAccess}
         ></bb-fast-access-menu>
         <div ${ref(this.#proxyRef)} id="proxy"></div>`,
     ];
@@ -1821,18 +1866,6 @@ function enumValue(value: SchemaEnumValue): EnumValue {
   }
 
   return enumVal;
-}
-
-function portsFromView(view: ConnectorView): PortLike[] {
-  const { schema, values } = view;
-  return Object.entries(schema.properties || {}).map(([name, schema]) => {
-    return {
-      name,
-      title: schema.title || name,
-      schema,
-      value: (values as Record<string, NodeValue>)[name],
-    } satisfies PortLike;
-  });
 }
 
 function getLLMContentPortValue(
@@ -1895,6 +1928,19 @@ function extractModelId(ports: InspectableNodePorts): string | null {
 
 function isGenerativeNode(node: InspectableNode): boolean {
   return node.descriptor.type === "embed://a2/generate.bgl.json#module:main";
+}
+
+function isAgentMode(
+  node: InspectableNode,
+  pendingValues?: InputValues
+): boolean {
+  if (!isGenerativeNode(node)) return false;
+  // Check pending values first (for reactive updates), then fall back to persisted configuration
+  const mode =
+    pendingValues?.["generation-mode"] ??
+    node.configuration()?.["generation-mode"];
+  // undefined means "agent" mode (it's the default)
+  return mode === "agent" || mode === undefined;
 }
 
 // Returns true if LLM text part of node contains tools/assets or is absent.

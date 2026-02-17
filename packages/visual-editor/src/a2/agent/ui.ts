@@ -6,12 +6,14 @@
 
 import {
   AppScreen,
-  AppScreenOutput,
-  Capabilities,
   ConsoleEntry,
   DeepReadonly,
   LLMContent,
+  NodeHandlerContext,
   Outcome,
+  OutputValues,
+  Schema,
+  WorkItem,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator.js";
@@ -21,15 +23,22 @@ import { A2UIClientEventMessage } from "./a2ui/schemas.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { A2UIClient } from "./a2ui/client.js";
 import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
-import { ProgressWorkItem } from "./progress-work-item.js";
+import { ConsoleProgressManager } from "./console-progress-manager.js";
 import {
   A2UIRenderer,
+  ChatChoice,
+  ChatChoiceLayout,
+  ChatChoicesResponse,
+  ChatChoiceSelectionMode,
   ChatInputType,
   ChatManager,
   ChatResponse,
+  MemoryManager,
   VALID_INPUT_TYPES,
 } from "./types.js";
-import { getCurrentStepState } from "../a2/output.js";
+import { getCurrentStepState } from "./progress-work-item.js";
+import { ChoicePresenter } from "./choice-presenter.js";
+import { requestInput } from "../request-input.js";
 
 export { AgentUI };
 
@@ -48,28 +57,29 @@ export type UserResponse = {
 class AgentUI implements A2UIRenderer, ChatManager {
   readonly client: A2UIClient;
 
-  /**
-   * The id for the console work item and app output that shows the user-facing
-   * UI.
-   */
-  #outputId = crypto.randomUUID();
-
   readonly #consoleEntry: ConsoleEntry | undefined;
 
   /**
    * Handles the console updates for various parts of agent execution
    */
-  readonly progress;
+  readonly progress: ConsoleProgressManager;
 
-  #outputWorkItem: A2UIClientWorkItem | undefined;
+  /**
+   * The current work item for A2UI interaction. Each interaction creates a new
+   * work item with a unique ID, so multiple A2UI screens can be shown.
+   */
+  #currentWorkItem: A2UIClientWorkItem | undefined;
 
   readonly #appScreen: AppScreen | undefined;
-  #appScreenOutput: AppScreenOutput | undefined;
 
   readonly #chatLog: LLMContent[] = [];
+  readonly #sessionId = crypto.randomUUID();
+  #memoryManager: MemoryManager | null = null;
+  #context: NodeHandlerContext | null = null;
+
+  readonly #choicePresenter: ChoicePresenter;
 
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     private readonly translator: PidginTranslator
   ) {
@@ -82,48 +92,108 @@ class AgentUI implements A2UIRenderer, ChatManager {
         `Unable to find app screen for this agent. Trying to render UI will fail.`
       );
     }
-    this.progress = new ProgressWorkItem("Agent", "spark", this.#appScreen);
-    if (!this.#consoleEntry) {
-      console.warn(
-        `Unable to find console entry for this agent. Trying to render UI will fail.`
-      );
-    } else {
-      this.#consoleEntry.work.set(crypto.randomUUID(), this.progress);
-    }
+    this.progress = new ConsoleProgressManager(
+      this.#consoleEntry,
+      this.#appScreen
+    );
+    this.#choicePresenter = new ChoicePresenter(translator, this);
   }
 
-  #ensureAppScreenOutput(): Outcome<void> {
-    if (!this.#appScreen) {
-      return err(`Unable to create UI: App screen is not available`);
-    }
-    if (this.#appScreenOutput) return;
+  /**
+   * Starts a new A2UI interaction by creating a fresh work item and app screen
+   * output. This ensures each A2UI screen appears separately in the console
+   * view and the app view shows the latest screen.
+   */
+  #startNewInteraction(
+    title: string = "A2UI",
+    icon: string = "web"
+  ): Outcome<A2UIClientWorkItem> {
+    // Finish the previous work item if it exists
+    this.#currentWorkItem?.finish();
 
-    this.#appScreenOutput = new A2UIAppScreenOutput(this.client);
-    this.#appScreen.outputs.set(this.#outputId, this.#appScreenOutput);
-    this.#appScreen.type = "a2ui";
-  }
-
-  #createWorkItem(): Outcome<A2UIClientWorkItem> {
     if (!this.#consoleEntry) {
       return err(`Unable to create UI: Console is not available`);
     }
-    this.#outputWorkItem = new A2UIClientWorkItem(this.client, "A2UI", "web");
-    this.#consoleEntry.work.set(this.#outputId, this.#outputWorkItem);
-    return this.#outputWorkItem;
-  }
 
-  #updateWorkItem(): Outcome<A2UIClientWorkItem> {
-    if (!this.#outputWorkItem) {
-      return this.#createWorkItem();
+    const outputId = crypto.randomUUID();
+
+    // Create new work item for console view
+    this.#currentWorkItem = new A2UIClientWorkItem(this.client, title, icon);
+    this.#consoleEntry.work.set(outputId, this.#currentWorkItem);
+
+    // Create new app screen output for app view
+    if (this.#appScreen) {
+      const appScreenOutput = new A2UIAppScreenOutput(this.client);
+      this.#appScreen.outputs.set(outputId, appScreenOutput);
+      this.#appScreen.last = appScreenOutput;
+      this.#appScreen.type = "a2ui";
     }
-    if (!this.#consoleEntry) {
-      return err(`Unable to update UI: Console is not available`);
-    }
-    return this.#outputWorkItem;
+
+    return this.#currentWorkItem;
   }
 
   get chatLog(): DeepReadonly<LLMContent[]> {
     return this.#chatLog;
+  }
+
+  setMemoryManager(manager: MemoryManager, context: NodeHandlerContext) {
+    this.#memoryManager = manager;
+    this.#context = context;
+  }
+
+  /**
+   * Seeds the in-memory chat log with historical entries from the sheet.
+   * Each row is expected to be [timestamp, session_id, role, content].
+   * The first row (header) is skipped.
+   */
+  seedChatLog(rows: unknown[][]): void {
+    // Skip header row (row 0 = column names)
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length < 4) continue;
+      const role = String(row[2]) === "agent" ? "model" : "user";
+      const content = String(row[3]);
+      this.#chatLog.push({ role, parts: [{ text: content }] });
+    }
+  }
+
+  #appendChatLogEntry(role: "agent" | "user", content: string): void {
+    if (!this.#memoryManager || !this.#context) return;
+    const timestamp = new Date().toISOString();
+    this.#memoryManager
+      .appendToSheet(this.#context, {
+        range: "__chat_log__!A:D",
+        values: [[timestamp, this.#sessionId, role, content]],
+      })
+      .catch((e) => console.warn("Failed to append chat log entry:", e));
+  }
+
+  #addChatOutput(message: LLMContent): void {
+    const outputId = crypto.randomUUID();
+    const schema = {
+      properties: { message: { type: "object", behavior: ["llm-content"] } },
+    } satisfies Schema;
+
+    // Add to app screen outputs directly
+    if (this.#appScreen) {
+      const entry = { schema, output: { message } as OutputValues };
+      this.#appScreen.outputs.set(outputId, entry);
+      this.#appScreen.last = entry;
+    }
+
+    // Add to console entry as a work item
+    if (this.#consoleEntry) {
+      const product: WorkItem["product"] = new Map();
+      product.set("message", message);
+      this.#consoleEntry.work.set(outputId, {
+        title: "Response",
+        start: 0,
+        end: 0,
+        elapsed: 0,
+        awaitingUserInput: false,
+        product,
+      });
+    }
   }
 
   async chat(
@@ -138,25 +208,68 @@ class AgentUI implements A2UIRenderer, ChatManager {
     const message = await this.translator.fromPidginString(pidginString);
     if (!ok(message)) return message;
     this.#chatLog.push({ ...message, role: "model" });
-    await this.caps.output({
-      schema: {
-        properties: { message: { type: "object", behavior: ["llm-content"] } },
-      },
-      message,
-    });
-    const response = (await this.caps.input({
-      schema: {
-        properties: {
-          input: {
-            type: "object",
-            behavior: ["transient", "llm-content", "hint-required"],
-            format: computeFormat(typedInputType),
-          },
+    this.#appendChatLogEntry("agent", pidginString);
+    this.#addChatOutput(message);
+    const response = await requestInput(this.moduleArgs, {
+      properties: {
+        input: {
+          type: "object",
+          behavior: ["transient", "llm-content", "hint-required"],
+          format: computeFormat(typedInputType),
         },
       },
-    })) as Outcome<ChatResponse>;
+    });
     if (!ok(response)) return response;
-    this.#chatLog.push({ ...response.input, role: "user" });
+    const chatResponse = response as ChatResponse;
+    this.#chatLog.push({ ...chatResponse.input, role: "user" });
+    const userText =
+      chatResponse.input.parts
+        ?.map((p) => ("text" in p ? p.text : ""))
+        .join(" ") || "";
+    this.#appendChatLogEntry("user", userText);
+    return chatResponse;
+  }
+
+  /**
+   * Presents choices to the user and returns the selected choice IDs.
+   *
+   * For "single" mode: renders choice buttons - clicking one returns that ID.
+   * For "multiple" mode: renders checkboxes with a submit button.
+   *
+   * Both message and choice labels support pidgin format with file references.
+   */
+  async presentChoices(
+    message: string,
+    choices: ChatChoice[],
+    selectionMode: ChatChoiceSelectionMode,
+    layout: ChatChoiceLayout = "list",
+    noneOfTheAboveLabel?: string
+  ): Promise<Outcome<ChatChoicesResponse>> {
+    // Add the model's message to the chat log
+    const messageContent = await this.translator.fromPidginString(message);
+    if (!ok(messageContent)) return messageContent;
+    this.#chatLog.push({ ...messageContent, role: "model" });
+    this.#appendChatLogEntry("agent", message);
+
+    const response = await this.#choicePresenter.presentChoices(
+      message,
+      choices,
+      selectionMode,
+      layout,
+      noneOfTheAboveLabel
+    );
+    if (!ok(response)) return response;
+
+    // Build user response text from selected choice labels
+    const selectedLabels = response.selected
+      .map((id) => choices.find((c) => c.id === id)?.label ?? id)
+      .join(", ");
+    this.#chatLog.push({
+      role: "user",
+      parts: [{ text: selectedLabels }],
+    });
+    this.#appendChatLogEntry("user", selectedLabels);
+
     return response;
   }
 
@@ -170,31 +283,44 @@ class AgentUI implements A2UIRenderer, ChatManager {
     return this.awaitUserInput();
   }
 
-  private renderUserInterface(
-    messages: v0_8.Types.ServerToClientMessage[]
+  #onA2UIRender?: (messages: v0_8.Types.ServerToClientMessage[]) => void;
+
+  set onA2UIRender(cb: (messages: v0_8.Types.ServerToClientMessage[]) => void) {
+    this.#onA2UIRender = cb;
+  }
+
+  renderUserInterface(
+    messages: v0_8.Types.ServerToClientMessage[],
+    title: string = "A2UI",
+    icon: string = "web"
   ): Outcome<void> {
-    const workItem = this.#updateWorkItem();
+    const workItem = this.#startNewInteraction(title, icon);
     if (!ok(workItem)) return workItem;
     const translation = this.translator.fromPidginMessages(messages);
     this.client.processUpdates(translation);
 
-    const ensureAppScreenOutput = this.#ensureAppScreenOutput();
-    if (!ok(ensureAppScreenOutput)) return ensureAppScreenOutput;
+    this.#onA2UIRender?.(messages);
 
     workItem.renderUserInterface();
   }
 
-  private async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
-    const workItem = this.#updateWorkItem();
-    if (!ok(workItem)) return workItem;
+  async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
+    if (!this.#currentWorkItem) {
+      return err(`Unable to await user input: No active A2UI interaction`);
+    }
+    if (!this.#appScreen) {
+      return err(`Unable to await user input: App screen is not available`);
+    }
 
-    const ensureAppScreenOutput = this.#ensureAppScreenOutput();
-    if (!ok(ensureAppScreenOutput)) return ensureAppScreenOutput;
-
-    this.#appScreen!.status = "interactive";
+    this.#appScreen.status = "interactive";
     const result = await this.client.awaitUserInput();
-    this.#appScreen!.status = "processing";
+    this.#appScreen.status = "processing";
     return result;
+  }
+
+  finish() {
+    this.progress.finish();
+    this.#currentWorkItem?.finish();
   }
 }
 

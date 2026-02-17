@@ -4,19 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { baseURLFromString, SENTINEL_BASE_URL } from "../../loader/loader.js";
 import type {
   AssetPath,
   GraphDescriptor,
   GraphIdentifier,
-  ImportIdentifier,
   InspectableAsset,
   InspectableAssetEdge,
   InspectableEdge,
-  InspectableGraph,
   InspectableNode,
   InspectableNodeType,
-  ModuleIdentifier,
   MutableGraph,
   NodeConfiguration,
   NodeIdentifier,
@@ -24,10 +20,9 @@ import type {
   Outcome,
 } from "@breadboard-ai/types";
 import { err, graphUrlLike, TemplatePart } from "@breadboard-ai/utils";
-import { getModuleId, isModule } from "../utils.js";
-import { GraphNodeType } from "./graph-node-type.js";
+import { A2NodeType } from "./a2-node-type.js";
+import { Edge } from "./edge.js";
 import { InspectableAssetImpl } from "./inspectable-asset.js";
-import { VirtualNode } from "./virtual-node.js";
 import { scanConfiguration } from "../../../utils/scan-configuration.js";
 import { ROUTE_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
 
@@ -61,13 +56,13 @@ class GraphQueries {
   incoming(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph()
       .edges.filter((edge) => edge.to === id)
-      .map((edge) => this.#mutable.edges.getOrCreate(edge, this.#graphId));
+      .map((edge) => new Edge(this.#mutable, edge, this.#graphId));
   }
 
   outgoing(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph()
       .edges.filter((edge) => edge.from === id)
-      .map((edge) => this.#mutable.edges.getOrCreate(edge, this.#graphId));
+      .map((edge) => new Edge(this.#mutable, edge, this.#graphId));
   }
 
   entries(): InspectableNode[] {
@@ -78,13 +73,10 @@ class GraphQueries {
 
   isStart(id: NodeIdentifier): boolean {
     if (this.#graphId) return false;
-    return id === this.#mutable.representation.entries.at(0);
+    return id === findEntries(this.#mutable.graph).at(0);
   }
 
   nodeById(id: NodeIdentifier) {
-    if (this.#graph().virtual) {
-      return new VirtualNode({ id });
-    }
     return this.#mutable.nodes.get(id, this.#graphId);
   }
 
@@ -97,64 +89,16 @@ class GraphQueries {
   }
 
   typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
-    const knownNodeType = this.#mutable.kits.getType(id);
-    if (knownNodeType) {
-      return knownNodeType;
-    }
     if (!graphUrlLike(id)) {
       return undefined;
     }
-    return new GraphNodeType(id, this.#mutable);
-  }
-
-  moduleExports(): Set<ModuleIdentifier> {
-    const exports = this.#mutable.graph.exports;
-    if (!exports) return new Set();
-    return new Set(
-      exports.filter((e) => isModule(e)).map((e) => getModuleId(e))
-    );
+    return new A2NodeType(id);
   }
 
   graphExports(): Set<GraphIdentifier> {
     const exports = this.#mutable.graph.exports;
     if (!exports) return new Set();
-    return new Set(exports.filter((e) => !isModule(e)).map((e) => e.slice(1)));
-  }
-
-  async imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>> {
-    if (this.#graphId || !this.#mutable.graph.imports) return new Map();
-
-    const results: Map<ImportIdentifier, Outcome<InspectableGraph>> = new Map();
-    const entries = Object.entries(this.#mutable.graph.imports);
-    for (const [name, value] of entries) {
-      let outcome: Outcome<InspectableGraph> = err(
-        `Unknown error resolving import "${name}`
-      );
-      if (!value || !("url" in value)) {
-        outcome = err(`Invalid import value "${JSON.stringify(value)}`);
-      } else {
-        try {
-          const url = new URL(
-            value.url,
-            baseURLFromString(this.#mutable.graph.url) || SENTINEL_BASE_URL
-          ).href;
-          const store = this.#mutable.store;
-          const adding = store.addByURL(url, [this.#mutable.id], {});
-          const mutable = await store.getLatest(adding.mutable);
-          const inspectable = store.inspect(mutable.id, "");
-          if (!inspectable) {
-            outcome = err(`Unable to inspect graph at URL "${url}`);
-          } else {
-            outcome = inspectable;
-          }
-        } catch (e) {
-          outcome = err((e as Error).message);
-        } finally {
-          results.set(name, outcome);
-        }
-      }
-    }
-    return results;
+    return new Set(exports.map((e) => e.slice(1)));
   }
 
   assets(): Map<AssetPath, InspectableAsset> {
@@ -234,4 +178,42 @@ function routesFromConfiguration(configuration: NodeConfiguration) {
   return toolsFromConfiguration(configuration)
     .filter((part) => part.path === ROUTE_TOOL_PATH && part.instance)
     .map((part) => part.instance!);
+}
+
+function findEntries(graph: GraphDescriptor): NodeIdentifier[] {
+  const incomingEdges = new Set<NodeIdentifier>();
+  const outgoingEdges = new Set<NodeIdentifier>();
+
+  for (const edge of graph.edges) {
+    incomingEdges.add(edge.to);
+    outgoingEdges.add(edge.from);
+  }
+
+  const entries = graph.nodes.filter((node) => !incomingEdges.has(node.id));
+
+  if (entries.length === 0) return [];
+
+  const standalone: NodeIdentifier[] = [];
+  const connected: NodeIdentifier[] = [];
+  let onlyStandalone = true;
+
+  for (const node of entries) {
+    if (outgoingEdges.has(node.id)) {
+      onlyStandalone = false;
+      connected.push(node.id);
+    } else {
+      standalone.push(node.id);
+    }
+  }
+
+  if (standalone.length === 0) return entries.map((n) => n.id);
+
+  const start = standalone.find(
+    (id) => graph.nodes.find((n) => n.id === id)?.metadata?.start
+  );
+  if (start) return [start];
+
+  if (onlyStandalone) return [standalone[0]];
+
+  return connected;
 }

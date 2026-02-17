@@ -4,14 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isParticle } from "../../../../particles/index.js";
-import { ConsoleEntry } from "@breadboard-ai/types";
+import {
+  ConsoleEntry,
+  ConsoleUpdate,
+  LLMContent,
+  SimplifiedA2UIClient,
+} from "@breadboard-ai/types";
+
+type ProductMap = Map<
+  string,
+  LLMContent | SimplifiedA2UIClient | ConsoleUpdate
+>;
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
-import { ProjectRun } from "../../../state/index.js";
+
+import { scaContext } from "../../../../sca/context/context.js";
+import { type SCA } from "../../../../sca/sca.js";
+import { consume } from "@lit/context";
 import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
@@ -19,10 +31,16 @@ import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { sharedStyles } from "./shared-styles.js";
 import { hasControlPart } from "../../../../runtime/control.js";
 
+function isConsoleUpdate(
+  item: LLMContent | SimplifiedA2UIClient | ConsoleUpdate
+): item is ConsoleUpdate {
+  return "type" in item && (item.type === "text" || item.type === "links");
+}
+
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
-  @property()
-  accessor run: ProjectRun | null = null;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property()
   accessor disclaimerContent = "";
@@ -165,21 +183,39 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               align-items: center;
               justify-content: center;
               flex: 1;
+              min-width: 0;
+            }
+
+            &.code {
+              font-family: var(
+                --bb-font-family-flex,
+                var(--default-font-family)
+              );
             }
 
             & .title {
               display: flex;
               align-items: center;
               flex: 1 1 auto;
+              min-width: 0;
+
+              & .title-text {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
 
               & .g-icon {
+                flex-shrink: 0;
                 margin-left: var(--bb-grid-size);
                 animation: rotate 1s linear forwards infinite;
               }
 
               & .duration {
+                flex-shrink: 0;
                 color: light-dark(var(--n-70), var(--n-80));
-                margin-left: var(--bb-grid-size);
+                margin-left: auto;
+                padding-left: var(--bb-grid-size);
               }
             }
 
@@ -215,7 +251,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             opacity: 0.3;
             cursor: default;
           }
-            
+
           &[open] > summary {
             margin-bottom: var(--bb-grid-size-3);
 
@@ -259,6 +295,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             &.photo_spark,
             &.audio_magic_eraser,
             &.text_analysis,
+            &.button_magic,
             &.generative-image-edit,
             &.generative-code,
             &.videocam_auto,
@@ -287,6 +324,37 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           rotate: 360deg;
         }
       }
+
+      .links-list {
+        list-style: none;
+        padding: var(--bb-grid-size-2);
+        margin: 0;
+
+        & li {
+          display: flex;
+          align-items: center;
+          margin-bottom: var(--bb-grid-size-2);
+
+          a {
+            color: var(--light-dark-n-0);
+            display: flex;
+            align-items: center;
+          }
+
+          & .g-icon {
+            margin-left: var(--bb-grid-size-2);
+          }
+
+          img {
+            width: 20px;
+            height: 20px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-right: var(--bb-grid-size-2);
+            border: 1px solid var(--light-dark-n-90);
+          }
+        }
+      }
     `,
   ];
 
@@ -294,15 +362,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   #openWorkItems = new Set<string>();
   #currentEntries: [string, ConsoleEntry][] = [];
 
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("run")) {
-      this.#openItems.clear();
-      this.#openWorkItems.clear();
-    }
-  }
+  protected willUpdate(_changedProperties: PropertyValues): void {}
 
   #renderInput() {
-    const input = this.run?.input;
+    const input = this.sca.controller.run.main.input;
     if (!input) {
       this.style.setProperty("--input-clearance", `0px`);
       return nothing;
@@ -317,24 +380,97 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   #formatToSeconds(milliseconds: number) {
-    const secondsValue = milliseconds / 1_000;
-    const formatter = new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    });
+    const seconds = milliseconds / 1_000;
+    const rounded = Math.round(seconds * 2) / 2;
+    return `${rounded.toFixed(1)}s`;
+  }
 
-    return `${formatter.format(secondsValue)}s`;
+  #renderProducts(product: ProductMap) {
+    if (product.size === 0) {
+      return html`<div class="output" data-label="Output:">
+        <p>There are no outputs for this step's work item</p>
+      </div>`;
+    }
+
+    return html`<ul class="products">
+      ${repeat(
+        product,
+        ([key]) => key,
+        ([, item]) => {
+          // ConsoleUpdate (from ProgressWorkItem)
+          if (isConsoleUpdate(item)) {
+            if (item.type === "text") {
+              return html`<li class="output" data-label="${item.title}">
+                <span class="g-icon filled round">${item.icon}</span>
+                <bb-llm-output
+                  .lite=${true}
+                  .clamped=${false}
+                  .value=${item.body}
+                  .forceDrivePlaceholder=${true}
+                ></bb-llm-output>
+              </li>`;
+            }
+            if (item.type === "links") {
+              return html`<li class="output" data-label="${item.title}">
+                <span class="g-icon filled round">${item.icon}</span>
+                <ul class="links-list">
+                  ${item.links.map(
+                    (link) => html`
+                      <li>
+                        <a
+                          target="_blank"
+                          href=${link.uri}
+                          rel="noopener"
+                          class="sans-flex w-500 round md-body-small"
+                          ><img
+                            src="https://www.google.com/s2/favicons?domain=${link.iconUri}&sz=48"
+                          /><span>${link.title}</span
+                          ><span class="g-icon inline filled round"
+                            >open_in_new</span
+                          ></a
+                        >
+                      </li>
+                    `
+                  )}
+                </ul>
+              </li>`;
+            }
+          }
+          // SimplifiedA2UIClient
+          if ("processor" in item) {
+            const { processor, receiver } = item;
+            return html`<li>
+              <section id="surfaces">
+                <bb-a2ui-client-view
+                  .processor=${processor}
+                  .receiver=${receiver}
+                >
+                </bb-a2ui-client-view>
+              </section>
+            </li>`;
+          }
+
+          // LLMContent (fallback)
+          return html`<li class="output" data-label="Output">
+            <bb-llm-output
+              .lite=${true}
+              .clamped=${false}
+              .value=${item}
+              .forceDrivePlaceholder=${true}
+            ></bb-llm-output>
+          </li>`;
+        }
+      )}
+    </ul>`;
   }
 
   #renderRun() {
-    if (!this.run) {
-      return nothing;
-    }
+    const runController = this.sca.controller.run.main;
 
     // 1. If the signal provides a non-empty array, we update our cache. This
     //    way we avoid flashes of content when the console entries are reset.
-    if (this.run.console.size > 0) {
-      this.#currentEntries = [...this.run.console.entries()];
+    if (runController.console.size > 0) {
+      this.#currentEntries = [...runController.console.entries()];
     }
 
     // 2. We then always use the cached version for rendering. If the signal
@@ -370,8 +506,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             }
           }
 
-          const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
-          const isOpen = item.open || this.#openItems.has(itemId) || isLastItem;
+          const isLastItem = idx + 1 === runController.estimatedEntryCount;
+          const isOpen =
+            item.open ||
+            !item.completed ||
+            this.#openItems.has(itemId) ||
+            isLastItem;
 
           return html`<details ?open=${isOpen} disabled>
           <summary @click=${(evt: Event) => {
@@ -424,7 +564,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                       "sans-flex": true,
                       round: true,
                     };
-                    if (icon) {
+                    if (typeof icon === "string" && icon) {
                       workItemClasses[icon] = true;
                     }
 
@@ -465,7 +605,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                 >${icon}</span
                               >`
                             : nothing}<span class="title"
-                            >${workItem.title}<span class="duration"
+                            ><span class="title-text">${workItem.title}</span
+                            ><span class="duration"
                               >${this.#formatToSeconds(workItem.elapsed)}</span
                             ></span
                           >
@@ -474,49 +615,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
                       ${workItem.awaitingUserInput
                         ? this.#renderInput()
-                        : workItem.product.size > 0
-                          ? html`<ul class="products">
-                              ${repeat(
-                                workItem.product,
-                                ([key]) => key,
-                                ([, product]) => {
-                                  if ("processor" in product) {
-                                    const { processor, receiver } = product;
-                                    return html`<li>
-                                      <section id="surfaces">
-                                        <bb-a2ui-client-view
-                                          .processor=${processor}
-                                          .receiver=${receiver}
-                                        >
-                                        </bb-a2ui-client-view>
-                                      </section>
-                                    </li>`;
-                                  } else if (isParticle(product)) {
-                                    return html`<li>
-                                      <bb-particle-view
-                                        .particle=${product}
-                                      ></bb-particle-view>
-                                    </li>`;
-                                  }
-                                  return html`<li
-                                    class="output"
-                                    data-label="Output:"
-                                  >
-                                    <bb-llm-output
-                                      .lite=${true}
-                                      .clamped=${false}
-                                      .value=${product}
-                                      .forceDrivePlaceholder=${true}
-                                    ></bb-llm-output>
-                                  </li>`;
-                                }
-                              )}
-                            </ul>`
-                          : html`<div class="output" data-label="Output:">
-                              <p>
-                                There are no outputs for this step's work item
-                              </p>
-                            </div>`}
+                        : this.#renderProducts(workItem.product)}
                     </details>`;
                   }
                 )
@@ -558,10 +657,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       </details>`;
         }
       )}
-      ${this.run.error
+      ${runController.error
         ? html`<details class="error">
             <summary>Error</summary>
-            ${this.run.error.message}
+            ${runController.error.message}
           </details>`
         : nothing}
     </section>`;
@@ -572,11 +671,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       ${[
         html`<bb-app-header
           .neutral=${true}
-          .replayActive=${this.run?.consoleState === "entries"}
-          .running=${this.run?.status === "running" ||
-          this.run?.status === "paused"}
+          .replayActive=${this.sca.controller.run.main.consoleState ===
+          "entries"}
+          .running=${this.sca.controller.run.main.status === "running" ||
+          this.sca.controller.run.main.status === "paused"}
           .replayAutoStart=${true}
-          .progress=${this.run?.progress}
+          .progress=${this.sca.controller.run.main.progress}
         ></bb-app-header>`,
         this.#renderRun(),
       ]}

@@ -6,31 +6,24 @@
 
 import type {
   AssetPath,
-  Edge,
+  Edge as EdgeDescriptor,
   GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
-  ImportIdentifier,
-  InputValues,
   InspectableAsset,
   InspectableAssetEdge,
   InspectableEdge,
   InspectableGraph,
-  InspectableModules,
   InspectableNode,
   InspectableNodeType,
   InspectableSubgraphs,
-  ModuleIdentifier,
   MutableGraph,
-  NodeDescriberContext,
-  NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
   Outcome,
 } from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
-import { GraphDescriberManager } from "./graph-describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
+import { Edge, fixUpStarEdge } from "./edge.js";
 
 export { Graph };
 
@@ -56,14 +49,6 @@ class Graph implements InspectableGraph {
     return this.#mutable.graph;
   }
 
-  imperative(): boolean {
-    return !!this.main();
-  }
-
-  main(): string | undefined {
-    return this.#descriptor().main;
-  }
-
   metadata(): GraphMetadata | undefined {
     return this.#descriptor().metadata;
   }
@@ -80,20 +65,21 @@ class Graph implements InspectableGraph {
     return this.#mutable.nodes.nodes(this.#graphId);
   }
 
-  moduleById(id: ModuleIdentifier) {
-    return this.#mutable.modules.get(id);
-  }
-
-  modules(): InspectableModules {
-    return this.#mutable.modules.modules();
-  }
-
   edges(): InspectableEdge[] {
-    return this.#mutable.edges.edges(this.#graphId);
+    return this.#descriptor().edges.map(
+      (edge) => new Edge(this.#mutable, edge, this.#graphId)
+    );
   }
 
-  hasEdge(edge: Edge): boolean {
-    return this.#mutable.edges.hasByValue(edge, this.#graphId);
+  hasEdge(edge: EdgeDescriptor): boolean {
+    const fixed = fixUpStarEdge(edge);
+    return !!this.#descriptor().edges.find(
+      (e) =>
+        e.from === fixed.from &&
+        e.to === fixed.to &&
+        e.out === fixed.out &&
+        e.in === fixed.in
+    );
   }
 
   typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
@@ -116,17 +102,6 @@ class Graph implements InspectableGraph {
     return new GraphQueries(this.#mutable, this.#graphId).entries();
   }
 
-  async describe(
-    inputs?: InputValues,
-    context?: NodeDescriberContext
-  ): Promise<NodeDescriberResult> {
-    const manager = GraphDescriberManager.create(this.#graphId, this.#mutable);
-    if (!ok(manager)) {
-      throw new Error(`Inspect API Integrity Error: ${manager.$error}`);
-    }
-    return manager.describe(inputs, undefined, undefined, context);
-  }
-
   graphs(): InspectableSubgraphs | undefined {
     if (this.#graphId) return;
     return this.#mutable.graphs.graphs();
@@ -136,16 +111,8 @@ class Graph implements InspectableGraph {
     return this.#graphId;
   }
 
-  moduleExports(): Set<ModuleIdentifier> {
-    return new GraphQueries(this.#mutable, this.#graphId).moduleExports();
-  }
-
   graphExports(): Set<GraphIdentifier> {
     return new GraphQueries(this.#mutable, this.#graphId).graphExports();
-  }
-
-  imports(): Promise<Map<ImportIdentifier, Outcome<InspectableGraph>>> {
-    return new GraphQueries(this.#mutable, this.#graphId).imports();
   }
 
   assets(): Map<AssetPath, InspectableAsset> {

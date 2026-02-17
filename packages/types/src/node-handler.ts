@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystem } from "./data.js";
 import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
 import { RuntimeFlagManager } from "./flags.js";
 import {
@@ -15,7 +14,6 @@ import {
   GraphMetadata,
   InputValues,
   KitDescriptor,
-  ModuleIdentifier,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
@@ -27,12 +25,9 @@ import {
   InlineDataCapabilityPart,
   StoredDataCapabilityPart,
 } from "./llm-content.js";
-import { GraphLoader } from "./loader.js";
-import { Probe } from "./probe.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
-import { TraversalResult } from "./traversal.js";
 
 export type ErrorCapability = Capability & {
   readonly kind: "error";
@@ -103,26 +98,6 @@ export type NodeDescriberResult = GraphInlineMetadata & {
  */
 export type NodeDescriberContext = {
   /**
-   * The base URL of the graph.
-   */
-  base?: URL;
-  /**
-   * The graph in which the node is described.
-   */
-  outerGraph: GraphDescriptor;
-  /**
-   * The loader that can be used to load graphs.
-   */
-  loader?: GraphLoader;
-  /**
-   * Information about the wires currently connected to this node.
-   */
-  wires: NodeDescriberWires;
-  /**
-   * Kits that are available in the context of the node.
-   */
-  kits?: Kit[];
-  /**
    * JS Sandbox that will be used to run the module describers.
    */
   sandbox?: RunnableModuleFactory;
@@ -131,7 +106,6 @@ export type NodeDescriberContext = {
    * dependencies.
    */
   graphStore?: MutableGraphStore;
-  fileSystem?: FileSystem;
   /**
    * A hint that this describing operation is for a type, which allows the
    * describer to avoid doing extra work handling dynamic schemas, etc.
@@ -141,19 +115,6 @@ export type NodeDescriberContext = {
    * Runtime Flags
    */
   flags?: RuntimeFlagManager;
-};
-
-export type NodeDescriberWires = {
-  // Note we only include the output port of incoming wires, and the input port
-  // of outgoing wires, because this object is consumed by describe functions,
-  // and it wouldn't make sense to ask about ports on the node we're
-  // implementing the describe function for, because that would be recursive.
-  incoming: Record<string, { outputPort: NodeDescriberPort }>;
-  outgoing: Record<string, { inputPort: NodeDescriberPort }>;
-};
-
-export type NodeDescriberPort = {
-  describe(): Promise<Schema>;
 };
 
 /**
@@ -275,12 +236,6 @@ export interface BreadboardRunResult {
    */
   get outputs(): OutputValues;
   /**
-   * Current state of the underlying graph traversal.
-   * This property is useful for saving and restoring the state of
-   * graph traversal.
-   */
-  get state(): TraversalResult;
-  /**
    * The invocation id of the current node. This is useful for tracking
    * the node within the run, similar to an "index" property in map/forEach.
    * @deprecated Use `path` instead.
@@ -325,44 +280,6 @@ export type ErrorResponse = {
 };
 
 export interface NodeHandlerContext {
-  readonly board?: GraphDescriptor;
-  readonly descriptor?: NodeDescriptor;
-  readonly kits?: Kit[];
-  readonly base?: URL;
-  /**
-   * The loader that can be used to load graphs.
-   * @see [GraphLoader]
-   */
-  readonly loader?: GraphLoader;
-  readonly outerGraph?: GraphDescriptor;
-  readonly probe?: Probe;
-  /**
-   * Allows a step to request inputs mid-run (aka "bubbling inputs")
-   *
-   * @param schema - the schema of an object describing requested properties
-   * @param node - information about the node that requested properties
-   * @param path - path to the node that requested properties
-   * @param state - the curren run state
-   * @returns
-   */
-  readonly requestInput?: (
-    schema: Schema,
-    node: NodeDescriptor,
-    path: number[]
-  ) => Promise<OutputValues | undefined>;
-  /**
-   * Provide output directly to the user. This will bypass the normal output
-   * flow and will not be passed as outputs.
-   * @param output - The values to provide
-   * @param schema - The schema to use for the output
-   * @returns - Promise that resolves when the output is provided
-   */
-  readonly provideOutput?: (
-    outputs: OutputValues,
-    descriptor: NodeDescriptor,
-    path: number[]
-  ) => Promise<void>;
-  readonly invocationPath?: number[];
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */
@@ -376,10 +293,7 @@ export interface NodeHandlerContext {
    * dependencies.
    */
   graphStore?: MutableGraphStore;
-  /**
-   * The file system, provided as module capability.
-   */
-  fileSystem?: FileSystem;
+
   /**
    * A way to see and manage runtime flags.
    */
@@ -425,14 +339,4 @@ export type RunArguments = NodeHandlerContext & {
    * If not specified, runs the whole board.
    */
   stopAfter?: NodeIdentifier;
-};
-
-/**
- * The main argument to runGraph. Provides a way to point at a subgraph
- * within a graph, while making the whole graph available.
- */
-export type GraphToRun = {
-  graph: GraphDescriptor;
-  subGraphId?: GraphIdentifier;
-  moduleId?: ModuleIdentifier;
 };

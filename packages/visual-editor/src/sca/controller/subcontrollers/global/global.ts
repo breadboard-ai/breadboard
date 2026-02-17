@@ -4,15 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export { ConsentController } from "./consent-controller.js";
+export { DebugController } from "./debug-controller.js";
+export { FeedbackController } from "./feedback-controller.js";
+export { SnackbarController } from "./snackbar-controller.js";
+export { StatusUpdatesController } from "./status-updates-controller.js";
+export { ToastController } from "./toast-controller.js";
+export { FlagController } from "./flag-controller.js";
+export { FlowgenInputController } from "./flowgen-input-controller.js";
+export { ScreenSizeController } from "./screen-size-controller.js";
+
 import {
   SubscriptionStatus,
   UILoadState,
   UIOverlays,
-} from "../../../../ui/state/types.js";
+} from "../../../../ui/types/state-types.js";
 import { VisualEditorMode } from "../../../../ui/types/types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
-import { HTMLTemplateResult } from "lit";
 
 export class GlobalController extends RootController {
   @field({ persist: "local" })
@@ -47,17 +56,25 @@ export class GlobalController extends RootController {
   accessor loadState: UILoadState = "Home";
 
   @field()
-  accessor showStatusUpdateChip: boolean | null = null;
-
-  @field()
-  accessor lastSnackbarDetailsInfo: string | HTMLTemplateResult | null = null;
-
-  @field()
   accessor subscriptionStatus: SubscriptionStatus = "indeterminate";
 
   @field()
   accessor subscriptionCredits: number = -1;
 
-  @field()
+  @field({ deep: true })
   accessor show = new Set<UIOverlays>();
+
+  /**
+   * Error message to display in the current view (lite mode).
+   * Used for view-level errors like generation failures.
+   */
+  @field()
+  accessor viewError: string = "";
+
+  /**
+   * Last known pointer position, updated from the editor's pointer events.
+   * Used by paste/duplicate to position new nodes near the cursor.
+   */
+  @field({ deep: true })
+  accessor pointerLocation: { x: number; y: number } = { x: 0, y: 0 };
 }

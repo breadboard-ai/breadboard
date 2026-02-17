@@ -18,18 +18,21 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
-import { classMap } from "lit/directives/class-map.js";
-import { A2UIModelProcessor } from "../data/model-processor.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { structuralStyles } from "./styles.js";
+import { extractStringValue } from "./utils/utils.js";
 
+/**
+ * Material icon component.
+ *
+ * Resolves an icon name from a `StringValue` using `extractStringValue`,
+ * normalizes PascalCase to snake_case, and renders it via the Material
+ * Symbols font.
+ */
 @customElement("a2ui-icon")
 export class Icon extends Root {
   @property()
   accessor name: StringValue | null = null;
 
   static styles = [
-    structuralStyles,
     css`
       * {
         box-sizing: border-box;
@@ -45,54 +48,24 @@ export class Icon extends Root {
   ];
 
   #renderIcon() {
-    if (!this.name) {
+    const iconName = extractStringValue(
+      this.name,
+      this.component,
+      this.processor,
+      this.surfaceId
+    );
+
+    if (!iconName) {
       return nothing;
     }
 
-    const render = (url: string) => {
-      url = url.replace(/([A-Z])/gm, "_$1").toLocaleLowerCase();
-      return html`<span class="g-icon">${url}</span>`;
-    };
-
-    if (this.name && typeof this.name === "object") {
-      if ("literalString" in this.name) {
-        const iconName = this.name.literalString ?? "";
-        return render(iconName);
-      } else if ("literal" in this.name) {
-        const iconName = this.name.literal ?? "";
-        return render(iconName);
-      } else if (this.name && "path" in this.name && this.name.path) {
-        if (!this.processor || !this.component) {
-          return html`(no model)`;
-        }
-
-        const iconName = this.processor.getData(
-          this.component,
-          this.name.path,
-          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-        );
-        if (!iconName) {
-          return html`Invalid icon name`;
-        }
-
-        if (typeof iconName !== "string") {
-          return html`Invalid icon name`;
-        }
-        return render(iconName);
-      }
-    }
-
-    return html``;
+    const normalizedName = iconName
+      .replace(/([A-Z])/gm, "_$1")
+      .toLocaleLowerCase();
+    return html`<span class="g-icon">${normalizedName}</span>`;
   }
 
   render() {
-    return html`<section
-      class=${classMap(this.theme.components.Icon)}
-      style=${this.theme.additionalStyles?.Icon
-        ? styleMap(this.theme.additionalStyles?.Icon)
-        : nothing}
-    >
-      ${this.#renderIcon()}
-    </section>`;
+    return html`<section>${this.#renderIcon()}</section>`;
   }
 }

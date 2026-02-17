@@ -27,20 +27,35 @@ import {
 } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
-import { effect } from "signal-utils/subtle/microtask-effect";
+import { reactive } from "../../../sca/reactive.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { StringValue } from "../types/primitives.js";
 import { AnyComponentNode, CustomNode, SurfaceID } from "../types/types.js";
 import { Theme } from "../types/types.js";
 import { themeContext } from "./context/theme.js";
-import { structuralStyles } from "./styles.js";
 
 type NodeOfType<T extends AnyComponentNode["type"]> = Extract<
   AnyComponentNode,
   { type: T }
 >;
 
-// This is the base class all the components will inherit
+/**
+ * Base class for all A2UI components.
+ *
+ * Root extends `SignalWatcher(LitElement)` and provides the core rendering
+ * mechanism for the A2UI component tree. All components inherit from Root,
+ * gaining a uniform set of properties (surfaceId, processor, childComponents,
+ * etc.) and the **light DOM rendering** behavior.
+ *
+ * **Light DOM rendering**: When `childComponents` is set, Root creates a
+ * reactive effect that renders child elements into the component's own light
+ * DOM (not shadow DOM). Those children are then projected into the shadow
+ * DOM via `<slot>`. This design enables direct DOM interrogability — any
+ * parent can walk `this.children` to inspect its descendants without
+ * traversing shadow roots.
+ *
+ * @see {@link ../../../a2ui/A2UI.md} for full architectural documentation.
+ */
 @customElement("a2ui-root")
 export class Root extends SignalWatcher(LitElement) {
   @property()
@@ -61,8 +76,22 @@ export class Root extends SignalWatcher(LitElement) {
   @property()
   accessor dataContextPath: string = "";
 
+  /**
+   * Whether to allow rendering custom element types (non-built-in component
+   * types). When true, unknown types in the component tree fall through to the
+   * `default:` case in `renderComponentTree`, which uses `customElements.get()`
+   * to instantiate them.
+   */
   @property()
   accessor enableCustomElements = false;
+
+  /**
+   * Whether this component represents media content (image, video, audio).
+   * Custom elements override this to `true` to participate in parent-level
+   * media detection (e.g. Button's `detectMedia()`).
+   */
+  @property({ attribute: false })
+  accessor isMedia = false;
 
   @property()
   set weight(weight: string | number) {
@@ -77,7 +106,6 @@ export class Root extends SignalWatcher(LitElement) {
   #weight: string | number = 1;
 
   static styles = [
-    structuralStyles,
     css`
       :host {
         display: flex;
@@ -92,21 +120,27 @@ export class Root extends SignalWatcher(LitElement) {
    */
   #lightDomEffectDisposer: null | (() => void) = null;
 
+  /**
+   * Sets up a reactive effect that renders child components into the light DOM.
+   *
+   * When `childComponents` changes, the previous effect is disposed and a new
+   * one is created. The `reactive()` wrapper (from the SCA infrastructure)
+   * creates a signal effect — any `SignalMap`, `SignalArray`, etc. read during
+   * `renderComponentTree` automatically subscribes this effect to updates.
+   *
+   * The result is imperatively rendered into `this` (the element itself), not
+   * the shadow root. Children appear in the light DOM and are projected into
+   * the shadow DOM's `<slot>`.
+   */
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (changedProperties.has("childComponents")) {
       if (this.#lightDomEffectDisposer) {
         this.#lightDomEffectDisposer();
       }
 
-      // This effect watches the A2UI Children signal and updates the Light DOM.
-      this.#lightDomEffectDisposer = effect(() => {
-        // 1. Read the signal to create the subscription.
+      this.#lightDomEffectDisposer = reactive(() => {
         const allChildren = this.childComponents ?? null;
-
-        // 2. Generate the template for the children.
         const lightDomTemplate = this.renderComponentTree(allChildren);
-
-        // 3. Imperatively render that template into the component itself.
         render(lightDomTemplate, this, { host: this });
       });
     }
@@ -124,7 +158,12 @@ export class Root extends SignalWatcher(LitElement) {
   }
 
   /**
-   * Turns the SignalMap into a renderable TemplateResult for Lit.
+   * Maps `AnyComponentNode` types to their corresponding Lit templates.
+   *
+   * This is the single point where the component type → HTML element mapping
+   * lives. Built-in types dispatch to declarative Lit templates; unknown types
+   * (when `enableCustomElements` is true) fall through to imperative
+   * instantiation via `customElements.get()`.
    */
   private renderComponentTree(
     components: AnyComponentNode[] | AnyComponentNode | null
@@ -223,6 +262,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath ?? ""}
             .usageHint=${node.properties.usageHint}
             .enableCustomElements=${this.enableCustomElements}
+            .isMedia=${true}
           ></a2ui-image>`;
         }
 
@@ -253,6 +293,7 @@ export class Root extends SignalWatcher(LitElement) {
             .url=${node.properties.url ?? null}
             .dataContextPath=${node.dataContextPath ?? ""}
             .enableCustomElements=${this.enableCustomElements}
+            .isMedia=${true}
           ></a2ui-audioplayer>`;
         }
 
@@ -267,6 +308,7 @@ export class Root extends SignalWatcher(LitElement) {
             .surfaceId=${this.surfaceId}
             .dataContextPath=${node.dataContextPath ?? ""}
             .action=${node.properties.action}
+            .primary=${node.properties.primary ?? false}
             .childComponents=${[node.properties.child]}
             .enableCustomElements=${this.enableCustomElements}
           ></a2ui-button>`;
@@ -279,10 +321,9 @@ export class Root extends SignalWatcher(LitElement) {
             slot=${node.slotName ? node.slotName : nothing}
             .component=${node}
             .weight=${node.weight ?? "initial"}
-            .model=${this.processor}
             .surfaceId=${this.surfaceId}
             .processor=${this.processor}
-            .dataContextPath=${node.dataContextPath}
+            .dataContextPath=${node.dataContextPath ?? ""}
             .text=${node.properties.text}
             .usageHint=${node.properties.usageHint}
             .enableCustomElements=${this.enableCustomElements}
@@ -333,7 +374,7 @@ export class Root extends SignalWatcher(LitElement) {
             .weight=${node.weight ?? "initial"}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
-            .dataContextPath=${node.dataContextPath}
+            .dataContextPath=${node.dataContextPath ?? ""}
             .thickness=${node.properties.thickness}
             .axis=${node.properties.axis}
             .color=${node.properties.color}
@@ -342,8 +383,15 @@ export class Root extends SignalWatcher(LitElement) {
         }
 
         case "MultipleChoice": {
-          // TODO: maxAllowedSelections and selections.
           const node = component as NodeOfType<"MultipleChoice">;
+          const childComponents: AnyComponentNode[] = [];
+          if (node.properties.options) {
+            for (const opt of node.properties.options) {
+              if (opt.child) {
+                childComponents.push(opt.child);
+              }
+            }
+          }
           return html`<a2ui-multiplechoice
             id=${node.id}
             slot=${node.slotName ? node.slotName : nothing}
@@ -351,10 +399,11 @@ export class Root extends SignalWatcher(LitElement) {
             .weight=${node.weight ?? "initial"}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
-            .dataContextPath=${node.dataContextPath}
+            .dataContextPath=${node.dataContextPath ?? ""}
             .options=${node.properties.options}
             .maxAllowedSelections=${node.properties.maxAllowedSelections}
             .selections=${node.properties.selections}
+            .childComponents=${childComponents.length ? childComponents : null}
             .enableCustomElements=${this.enableCustomElements}
           ></a2ui-multiplechoice>`;
         }
@@ -368,7 +417,7 @@ export class Root extends SignalWatcher(LitElement) {
             .weight=${node.weight ?? "initial"}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
-            .dataContextPath=${node.dataContextPath}
+            .dataContextPath=${node.dataContextPath ?? ""}
             .value=${node.properties.value}
             .minValue=${node.properties.minValue}
             .maxValue=${node.properties.maxValue}
@@ -386,7 +435,7 @@ export class Root extends SignalWatcher(LitElement) {
             .weight=${node.weight ?? "initial"}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
-            .dataContextPath=${node.dataContextPath}
+            .dataContextPath=${node.dataContextPath ?? ""}
             .label=${node.properties.label}
             .text=${node.properties.text}
             .type=${node.properties.type}
@@ -404,9 +453,10 @@ export class Root extends SignalWatcher(LitElement) {
             .weight=${node.weight ?? "initial"}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
-            .dataContextPath=${node.dataContextPath}
+            .dataContextPath=${node.dataContextPath ?? ""}
             .url=${node.properties.url}
             .enableCustomElements=${this.enableCustomElements}
+            .isMedia=${true}
           ></a2ui-video>`;
         }
 
@@ -428,7 +478,7 @@ export class Root extends SignalWatcher(LitElement) {
             .weight=${node.weight ?? "initial"}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
-            .dataContextPath=${node.dataContextPath}
+            .dataContextPath=${node.dataContextPath ?? ""}
             .titles=${titles}
             .childComponents=${childComponents}
             .enableCustomElements=${this.enableCustomElements}
@@ -451,7 +501,7 @@ export class Root extends SignalWatcher(LitElement) {
             .weight=${node.weight ?? "initial"}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
-            .dataContextPath=${node.dataContextPath}
+            .dataContextPath=${node.dataContextPath ?? ""}
             .childComponents=${childComponents}
             .enableCustomElements=${this.enableCustomElements}
           ></a2ui-modal>`;

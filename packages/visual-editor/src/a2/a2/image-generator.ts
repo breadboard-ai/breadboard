@@ -3,7 +3,6 @@
  */
 
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -11,8 +10,8 @@ import {
 import { type DescriberResult, type Params } from "./common.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
 import { callImageGen, promptExpander } from "./image-utils.js";
+import { type ExecuteStepArgs } from "./step-executor.js";
 import { ArgumentNameGenerator } from "./introducer.js";
-import { ListExpander } from "./lists.js";
 import { Template } from "./template.js";
 import { ToolManager } from "./tool-manager.js";
 import {
@@ -29,6 +28,7 @@ import {
   toTextConcat,
 } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 const MAKE_IMAGE_ICON = "generative-image";
 const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];
@@ -58,7 +58,6 @@ function makeImageInstruction({ pro }: { pro: boolean }) {
 }
 
 function gatheringRequest(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
@@ -73,7 +72,6 @@ ${instruction}
 
 Call the tools to gather the necessary information that could be used to create an accurate prompt.`;
   return new GeminiPrompt(
-    caps,
     moduleArgs,
     {
       body: {
@@ -99,7 +97,6 @@ async function invoke(
     "p-aspect-ratio": aspectRatio,
     ...params
   }: ImageGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<ImageGeneratorOutputs>> {
   incomingContext ??= [];
@@ -112,80 +109,77 @@ async function invoke(
   let imageContext = extractMediaData(incomingContext);
   // Substitute params in instruction.
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
-  const substituting = await new Template(caps, instruction).substitute(
-    params,
-    async (part) => toolManager.addTool(part)
-  );
+  const substituting = await new Template(
+    instruction,
+    moduleArgs.context.currentGraph
+  ).substitute(params, async (part) => toolManager.addTool(part));
   if (!ok(substituting)) {
     return substituting;
   }
 
-  const fanningOut = await new ListExpander(substituting, incomingContext).map(
-    async (instruction, context) => {
-      // If there are tools in instruction, add an extra step of preparing
-      // information via tools.
-      if (toolManager.hasTools()) {
-        const gatheringInformation = await gatheringRequest(
-          caps,
+  // Process single item directly (list support removed)
+  const context = [...incomingContext];
+
+  // If there are tools in instruction, add an extra step of preparing
+  // information via tools.
+  if (toolManager.hasTools()) {
+    const gatheringInformation = await gatheringRequest(
+      moduleArgs,
+      context,
+      substituting,
+      toolManager
+    ).invoke();
+    if (!ok(gatheringInformation)) return gatheringInformation;
+    context.push(...gatheringInformation.all);
+  }
+
+  const refImages = extractMediaData([substituting]);
+  const refText = substituting
+    ? toLLMContent(toTextConcat(extractTextData([substituting])))
+    : toLLMContent("");
+  imageContext = imageContext.concat(refImages);
+
+  let retryCount = MAX_RETRIES;
+
+  while (retryCount--) {
+    if (imageContext.length > 0) {
+      return err(
+        `References images are not supported with Imagen. For image editing or style transfer, try Gemini Image Generation.`
+      );
+    } else {
+      console.log("Step has text only, using generation API");
+      let imagePrompt: LLMContent;
+      if (disablePromptRewrite) {
+        imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
+      } else {
+        const generatingPrompt = await promptExpander(
           moduleArgs,
           context,
-          instruction,
-          toolManager
+          refText
         ).invoke();
-        if (!ok(gatheringInformation)) return gatheringInformation;
-        context.push(...gatheringInformation.all);
+        if (!ok(generatingPrompt)) return generatingPrompt;
+        imagePrompt = generatingPrompt.last;
       }
-
-      const refImages = extractMediaData([instruction]);
-      const refText = instruction
-        ? toLLMContent(toTextConcat(extractTextData([instruction])))
-        : toLLMContent("");
-      imageContext = imageContext.concat(refImages);
-
-      let retryCount = MAX_RETRIES;
-
-      while (retryCount--) {
-        if (imageContext.length > 0) {
-          return err(
-            `References images are not supported with Imagen. For image editing or style transfer, try Gemini Image Generation.`
-          );
-        } else {
-          console.log("Step has text only, using generation API");
-          let imagePrompt: LLMContent;
-          if (disablePromptRewrite) {
-            imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
-          } else {
-            const generatingPrompt = await promptExpander(
-              caps,
-              moduleArgs,
-              context,
-              refText
-            ).invoke();
-            if (!ok(generatingPrompt)) return generatingPrompt;
-            imagePrompt = generatingPrompt.last;
-          }
-          const iPrompt = toText(imagePrompt).trim();
-          console.log("PROMPT", iPrompt);
-          const generatedImage = await callImageGen(
-            caps,
-            moduleArgs,
-            iPrompt,
-            aspectRatio
-          );
-          if (!ok(generatedImage)) return generatedImage;
-          return mergeContent(generatedImage, "model");
-        }
-      }
-      return err(`Failed to generate an image after ${MAX_RETRIES} tries.`);
+      const iPrompt = toText(imagePrompt).trim();
+      console.log("PROMPT", iPrompt);
+      const reporter = createReporter(moduleArgs, {
+        title: `Calling image_generation`,
+        icon: "spark",
+      });
+      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+      const generatedImage = await callImageGen(
+        args,
+        iPrompt,
+        aspectRatio
+      );
+      if (!ok(generatedImage)) return generatedImage;
+      return { context: [mergeContent(generatedImage, "model")] };
     }
-  );
-
-  if (!ok(fanningOut)) return fanningOut;
-  return { context: fanningOut };
+  }
+  return err(`Failed to generate an image after ${MAX_RETRIES} tries.`);
 }
 
 type DescribeInputs = {
@@ -196,9 +190,8 @@ type DescribeInputs = {
 
 async function describe(
   { inputs: { instruction } }: DescribeInputs,
-  caps: Capabilities
 ) {
-  const template = new Template(caps, instruction);
+  const template = new Template(instruction);
   return {
     inputSchema: {
       type: "object",

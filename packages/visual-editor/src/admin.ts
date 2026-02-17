@@ -9,11 +9,9 @@ import { MainArguments } from "./types/types.js";
 
 import { Types } from "./ui/index.js";
 
-import { Runtime } from "./runtime/runtime.js";
-import { RuntimeFlagManager } from "@breadboard-ai/types";
 import type { GlobalConfig } from "./ui/contexts/global-config.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
-import { Project } from "./ui/state/types.js";
+
 import { GoogleDriveBoardServer } from "./board-server/server.js";
 
 /**
@@ -37,8 +35,6 @@ export class Admin {
 
   settingsHelper?: Types.SettingsHelper;
   driveBoardServer?: GoogleDriveBoardServer;
-  runtime!: Runtime;
-  flags!: RuntimeFlagManager;
 
   help() {
     return {
@@ -52,14 +48,9 @@ export class Admin {
     };
   }
 
-  get project(): Project | null {
-    const tab = this.runtime.board.tabs.values().next().value;
-    if (!tab) return null;
-    return this.runtime.state.project;
-  }
-
   #gdriveBoardServer(): GoogleDriveBoardServer {
-    return this.runtime.board.googleDriveBoardServer;
+    // Use the driveBoardServer property set on this class
+    return this.driveBoardServer!;
   }
 
   get gdrive() {

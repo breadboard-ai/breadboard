@@ -4,7 +4,6 @@
 
 import { type DescriberResult } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
-import { ListExpander } from "../a2/lists.js";
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import {
@@ -27,9 +26,9 @@ import {
   executeStep,
   type ContentMap,
   type ExecuteStepRequest,
+  type ExecuteStepArgs,
 } from "../a2/step-executor.js";
 import {
-  Capabilities,
   InlineDataCapabilityPart,
   LLMContent,
   Outcome,
@@ -37,6 +36,7 @@ import {
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 type Model = {
   id: string;
@@ -103,8 +103,7 @@ function makeVideoInstruction(inputs: Record<string, unknown>) {
 }
 
 async function callVideoGen(
-  caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   prompt: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
@@ -136,7 +135,7 @@ async function callVideoGen(
       let imageChunk;
       if (isStoredData(element)) {
         const blobStoredData = await driveFileToBlob(
-          moduleArgs,
+          args,
           element.parts.at(-1)!
         );
         if (!ok(blobStoredData)) return blobStoredData;
@@ -174,7 +173,7 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body, {
+  const response = await executeStep(args, body, {
     expectedDurationInSec: 70,
   });
   if (!ok(response)) return response;
@@ -193,7 +192,6 @@ async function invoke(
     "b-model-name": modelId,
     ...params
   }: VideoGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<VideoGeneratorOutputs>> {
   const { modelName } = getModel(modelId);
@@ -208,11 +206,13 @@ async function invoke(
   // Substitute variables and magic image reference.
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
-  const template = new Template(caps, toLLMContent(instructionText));
+  const template = new Template(
+    toLLMContent(instructionText),
+    moduleArgs.context.currentGraph
+  );
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
@@ -227,45 +227,47 @@ async function invoke(
   console.log("substituting");
   console.log(substituting);
 
-  const results = await new ListExpander(substituting, context).map(
-    async (itemInstruction, itemContext) => {
-      // 1) Extract any image and text data from context (with history).
-      let imageContext = extractMediaData(itemContext);
-      const textContext = extractTextData(itemContext);
+  // Process single item directly (list support removed)
+  const itemContext = [...context];
 
-      // 3) Extract image and text data from (non-history) references.
-      const refImages = extractMediaData([itemInstruction]);
-      const refText = extractTextData([itemInstruction]);
+  // 1) Extract any image and text data from context (with history).
+  let imageContext = extractMediaData(itemContext);
+  const textContext = extractTextData(itemContext);
 
-      // 4) Combine with whatever data was extracted from context.
-      imageContext = imageContext.concat(refImages);
-      const combinedInstruction = toTextConcat(
-        joinContent(toTextConcat(refText), textContext, false)
-      );
-      if (!combinedInstruction) {
-        return err("Please provide the instruction to generate video.", {
-          kind: "config",
-          origin: "client",
-        });
-      }
+  // 3) Extract image and text data from (non-history) references.
+  const refImages = extractMediaData([substituting]);
+  const refText = extractTextData([substituting]);
 
-      console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
-
-      // 2) Call backend to generate video.
-      const content = await callVideoGen(
-        caps,
-        moduleArgs,
-        combinedInstruction,
-        imageContext,
-        disablePromptRewrite,
-        aspectRatio,
-        modelName
-      );
-      return content;
-    }
+  // 4) Combine with whatever data was extracted from context.
+  imageContext = imageContext.concat(refImages);
+  const combinedInstruction = toTextConcat(
+    joinContent(toTextConcat(refText), textContext, false)
   );
-  if (!ok(results)) return expandVeoError(results, modelName);
-  return { context: results };
+  if (!combinedInstruction) {
+    return err("Please provide the instruction to generate video.", {
+      kind: "config",
+      origin: "client",
+    });
+  }
+
+  console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
+
+  // 2) Call backend to generate video.
+  const reporter = createReporter(moduleArgs, {
+    title: `Generating Video`,
+    icon: "videocam_auto",
+  });
+  const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
+  const content = await callVideoGen(
+    executeStepArgs,
+    combinedInstruction,
+    imageContext,
+    disablePromptRewrite,
+    aspectRatio,
+    modelName
+  );
+  if (!ok(content)) return expandVeoError(content, modelName);
+  return { context: [content] };
 }
 
 type DescribeInputs = {
@@ -344,9 +346,8 @@ function expandVeoError(
 
 async function describe(
   { inputs: { instruction } }: DescribeInputs,
-  caps: Capabilities
 ) {
-  const template = new Template(caps, instruction);
+  const template = new Template(instruction);
   return {
     inputSchema: {
       type: "object",

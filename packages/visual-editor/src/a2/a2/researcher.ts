@@ -1,7 +1,7 @@
 /**
  * @fileoverview Searching the Internet according to your plan.
  */
-import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
+import { LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "./common.js";
 import invokeGemini, {
   defaultSafetySettings,
@@ -122,7 +122,7 @@ function reportWriterPrompt(
 }
 
 async function thought(
-  caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
   response: LLMContent,
   iteration: number
 ) {
@@ -130,7 +130,7 @@ async function thought(
   if (!first || !("text" in first)) {
     return;
   }
-  await report(caps, {
+  await report(moduleArgs, {
     actor: "Researcher",
     category: `Progress report, iteration ${iteration + 1}`,
     name: "Thought",
@@ -144,18 +144,16 @@ async function thought(
 
 async function invoke(
   { context, plan, summarize, ...params }: ResearcherInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   let content = context || [toLLMContent("Start the research")];
 
-  const template = new Template(caps, plan);
+  const template = new Template(plan, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
   );
@@ -176,7 +174,6 @@ async function invoke(
   for (let i = 0; i <= MAX_ITERATIONS; i++) {
     const askingGemini = await invokeGemini(
       researcherPrompt(content, plan, toolManager.list(), i === 0),
-      caps,
       moduleArgs
     );
 
@@ -190,7 +187,7 @@ async function invoke(
     if (!response) {
       return err("No actionable response");
     }
-    await thought(caps, response, i);
+    await thought(moduleArgs, response, i);
 
     const callingTools = await toolManager.callTools(response, true, []);
     if (!ok(callingTools)) return callingTools;
@@ -203,7 +200,7 @@ async function invoke(
     content = [...content, response, toLLMContent(toolResponses.join("\n\n"))];
   }
   if (research.length === 0) {
-    await report(caps, {
+    await report(moduleArgs, {
       actor: "Researcher",
       category: "Error",
       name: "Error",
@@ -214,7 +211,6 @@ async function invoke(
   if (summarize) {
     const producingReport = await invokeGemini(
       reportWriterPrompt(plan, research),
-      caps,
       moduleArgs
     );
     if (!ok(producingReport)) {
@@ -262,9 +258,8 @@ function researchExample(): string[] {
 
 async function describe(
   { inputs: { plan } }: DescribeInputs,
-  caps: Capabilities
 ) {
-  const template = new Template(caps, plan);
+  const template = new Template(plan);
   return {
     inputSchema: {
       type: "object",

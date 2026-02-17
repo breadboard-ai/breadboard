@@ -1,0 +1,29 @@
+{
+  "title": "Ask User",
+  "description": "Allows asking user for input that could be then used in next steps",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-ask-user",
+        "text": "Intentionally Left Blank - Imperative Module",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 531,
+            "y": 374,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "tags": ["published", "tool", "component"],
+    "icon": "ask-user"
+  },
+  "graphs": {},
+  "modules": {},
+  "exports": ["#module:main"]
+}

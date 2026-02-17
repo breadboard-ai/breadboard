@@ -11,7 +11,6 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   consistentUI: false,
   enableDrivePickerInLiteMode: false,
   force2DGraph: false,
-  generateForEach: false,
   googleOne: false,
   gulfRenderer: false,
   mcp: false,
@@ -22,4 +21,7 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   streamGenWebpage: false,
   streamPlanner: false,
   enableGoogleDriveTools: false,
+  enableNotebookLm: false,
+  enableResumeAgentRun: false,
+  enableGraphEditorAgent: false,
 };

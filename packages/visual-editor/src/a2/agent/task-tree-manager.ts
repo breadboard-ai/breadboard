@@ -75,9 +75,8 @@ class TaskTreeManager {
 
   private save() {
     return this.fileSystem.overwrite(
-      "task_tree",
-      JSON.stringify(this.tree),
-      "application/json"
+      "task_tree.json",
+      JSON.stringify(this.tree)
     );
   }
 

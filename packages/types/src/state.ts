@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ConsoleUpdate } from "./console-update.js";
 import { OutputValues } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
-import { Particle } from "./particles.js";
+import { OutputResponse } from "./remote.js";
 import { NodeRunState } from "./run-status.js";
 import { Schema } from "./schema.js";
 
@@ -52,7 +53,7 @@ export type ConsoleEntry = {
   /**
    * The final output of the step.
    */
-  output: Map<string, LLMContent /* Particle */>;
+  output: Map<string, LLMContent>;
 
   /**
    * The error message that might have occurred in this step
@@ -68,6 +69,33 @@ export type ConsoleEntry = {
    * A convenient pointer at the last work item.
    */
   current: WorkItem | null;
+
+  /**
+   * Adds an output to this console entry.
+   */
+  addOutput(data: OutputResponse): void;
+
+  /**
+   * Requests input from the user. Creates a WorkItem, updates the UI state,
+   * and returns a Promise that resolves when the user provides values.
+   *
+   * This is the direct-access path used by A2 modules via caps.input().
+   * It bypasses the old event-based bubbling machinery entirely.
+   */
+  requestInput(schema: Schema): Promise<OutputValues>;
+
+  /**
+   * Makes a pending input request visible by creating its WorkItem.
+   * Called by the parent run when this input becomes the "active" one
+   * (i.e., it's at the head of the queue).
+   */
+  activateInput(): void;
+
+  /**
+   * Resolves a pending input request with user-provided values.
+   * Called by the parent ProjectRun when the user submits input.
+   */
+  resolveInput(values: OutputValues): void;
 };
 
 export type A2UIServerReceiver = {
@@ -116,11 +144,6 @@ export type WorkItem = {
    */
   openByDefault?: boolean;
   /**
-   * If true, indicates that this work item was shown to the user as part
-   * of a chat interaction.
-   */
-  chat: boolean;
-  /**
    * Schema representing the product, if available. This is useful when
    * the WorkItem represents an input.
    */
@@ -129,9 +152,12 @@ export type WorkItem = {
    * Similar to the `output` of the `ConsoleEntry`, represents the work product
    * of this item.
    *
-   * The Map type represents the A2UI update.
+   * Values can be:
+   * - LLMContent for standard outputs
+   * - SimplifiedA2UIClient for A2UI
+   * - ConsoleUpdate for agent progress updates
    */
-  product: Map<string, LLMContent | Particle | SimplifiedA2UIClient>;
+  product: Map<string, LLMContent | SimplifiedA2UIClient | ConsoleUpdate>;
 };
 
 /**
@@ -217,6 +243,11 @@ export type AppScreen = {
    * The last output for the screen
    */
   last: AppScreenOutput | null;
+
+  /**
+   * Adds an output to this screen.
+   */
+  addOutput(data: OutputResponse): void;
 };
 
 /**

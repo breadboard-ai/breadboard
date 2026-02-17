@@ -24,14 +24,15 @@ import { icons } from "../../styles/icons.js";
 import { ActionTracker } from "../../types/types.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
-import "./homepage-search-button.js";
-import { HomepageSearchButton } from "./homepage-search-button.js";
+import "../shared/expanding-search-button.js";
+import { ExpandingSearchButton } from "../shared/expanding-search-button.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
-const PAGE_SIZE = 8;
+const NARROW_PAGE_SIZE = 4;
+const WIDE_PAGE_SIZE = 8;
 const URL_PARAMS = new URL(document.URL).searchParams;
 const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
 
@@ -55,6 +56,12 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
   @property()
   accessor featuredFilter: string | null = null;
+
+  get pageSize() {
+    return this.sca.controller.global.screenSize.size === "narrow"
+      ? NARROW_PAGE_SIZE
+      : WIDE_PAGE_SIZE;
+  }
 
   static styles = [
     icons,
@@ -220,6 +227,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             background: var(--light-dark-n-0);
             height: var(--bb-grid-size-10);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+            white-space: nowrap;
 
             > * {
               pointer-events: none;
@@ -295,7 +303,41 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             }
           }
         }
-      }
+
+        @media (max-width: 620px) {
+          padding: 0 var(--bb-grid-size-3) var(--bb-grid-size-6)
+            var(--bb-grid-size-3);
+
+          & #hero {
+            padding: 0 var(--bb-grid-size-4);
+
+            & h1 {
+              margin: var(--bb-grid-size-4) 0 0 0;
+              font-size: 24px;
+              line-height: 28px;
+            }
+          }
+
+          & bb-expanding-search-button {
+            display: none;
+          }
+
+          & #content .gallery-wrapper {
+            margin-top: 0;
+          }
+
+          & #board-listing {
+            #location-selector,
+            .gallery-title {
+              font-size: 20px;
+            }
+            & .gallery-wrapper {
+              & .gallery-header {
+                margin-bottom: var(--bb-grid-size-4);
+              }
+            }
+          }
+        }
 
       #app-version {
         font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
@@ -391,12 +433,13 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             </h2>
 
             <div id="buttons">
-              ${userGraphs.size > PAGE_SIZE
-                ? html`<bb-homepage-search-button
+              ${userGraphs.size > this.pageSize
+                ? html`<bb-expanding-search-button
+                    showLabel
                     @input=${(evt: InputEvent) => {
                       const inputs = evt.composedPath();
                       const input = inputs.find(
-                        (el) => el instanceof HomepageSearchButton
+                        (el) => el instanceof ExpandingSearchButton
                       );
                       if (!input) {
                         return;
@@ -404,7 +447,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
                       this.userFilter = input.value;
                     }}
-                  ></bb-homepage-search-button>`
+                  ></bb-expanding-search-button>`
                 : nothing}
               ${userHasAnyGraphs
                 ? this.#renderInlineCreateNewButton()
@@ -495,7 +538,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
     return html`
       <div class="gallery-wrapper">
-        <bb-gallery .items=${myItems} .pageSize=${PAGE_SIZE}></bb-gallery>
+        <bb-gallery .items=${myItems} .pageSize=${this.pageSize}></bb-gallery>
       </div>
     `;
   }
@@ -522,11 +565,12 @@ export class ProjectListing extends SignalWatcher(LitElement) {
           <h2 class="gallery-title md-headline-small sans-flex w-400 round">
             ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
           </h2>
-          <bb-homepage-search-button
+          <bb-expanding-search-button
+            showLabel
             @input=${(evt: InputEvent) => {
               const inputs = evt.composedPath();
               const input = inputs.find(
-                (el) => el instanceof HomepageSearchButton
+                (el) => el instanceof ExpandingSearchButton
               );
               if (!input) {
                 return;
@@ -534,7 +578,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
               this.featuredFilter = input.value;
             }}
-          ></bb-homepage-search-button>
+          ></bb-expanding-search-button>
         </section>
 
         ${sampleItems.length === 0

@@ -5,447 +5,70 @@
  */
 
 import { v0_8 } from "../../a2ui/index.js";
+import type { ThemeTokens } from "../../a2ui/0.8/styles/tokens.js";
 
-/** Elements */
+export { applyTokens } from "../../a2ui/0.8/styles/tokens.js";
 
-const a = {
-  "typography-f-sf": true,
-  "typography-fs-n": true,
-  "typography-w-500": true,
-  "layout-as-n": true,
-  "layout-dis-iflx": true,
-  "layout-al-c": true,
+const tokens: ThemeTokens = {
+  // Typography
+  "--a2ui-font-family": 'var(--font-family, "Helvetica Neue", sans-serif)',
+  "--a2ui-font-family-flex":
+    'var(--font-family-flex, "Helvetica Neue", sans-serif)',
+  "--a2ui-font-family-mono":
+    'var(--font-family-mono, "Courier New", monospace)',
+
+  // Semantic colors
+  "--a2ui-color-surface": "var(--light-dark-p-100)",
+  "--a2ui-color-on-surface": "var(--light-dark-n-10)",
+  "--a2ui-color-primary": "var(--light-dark-p-15)",
+  "--a2ui-color-on-primary":
+    "light-dark(var(--original-n-100), var(--original-n-0))",
+  "--a2ui-color-secondary": "var(--light-dark-p-20)",
+  "--a2ui-color-border": "var(--light-dark-s-70)",
+  "--a2ui-color-backdrop": "oklch(from var(--light-dark-n-0) l c h / 0.2)",
+
+  // Spacing scale (grid = 4px)
+  "--a2ui-spacing-1": "4px",
+  "--a2ui-spacing-2": "8px",
+  "--a2ui-spacing-3": "12px",
+  "--a2ui-spacing-4": "16px",
+  "--a2ui-spacing-5": "20px",
+  "--a2ui-spacing-6": "24px",
+
+  // Border
+  "--a2ui-border-radius": "8px",
+  "--a2ui-border-radius-lg": "24px",
+  "--a2ui-border-radius-xl": "36px",
+  "--a2ui-border-radius-full": "48px",
+  "--a2ui-border-width": "1px",
+
+  // Behavior
+  "--a2ui-hover-opacity": "0.95",
+  "--a2ui-transition-speed": "0.2s",
+
+  // Button
+  "--a2ui-button-radius": "var(--a2ui-border-radius-lg)",
 };
-
-const audio = {
-  "layout-w-100": true,
-};
-
-const body = {
-  "typography-f-s": true,
-  "typography-fs-n": true,
-  "typography-w-400": true,
-  "layout-mt-0": true,
-  "layout-mb-2": true,
-  "typography-sz-bm": true,
-  "color-c-n10": true,
-};
-
-const button = {
-  "typography-f-sf": true,
-  "typography-fs-n": true,
-  "typography-w-500": true,
-  "layout-pt-3": true,
-  "layout-pb-3": true,
-  "layout-pl-5": true,
-  "layout-pr-5": true,
-  "layout-mb-1": true,
-  "border-br-16": true,
-  "border-bw-0": true,
-  "border-c-n70": true,
-  "border-bs-s": true,
-  "behavior-ho-80": true,
-};
-
-const heading = {
-  "typography-f-sf": true,
-  "typography-fs-n": true,
-  "typography-w-500": true,
-  "layout-mt-0": true,
-  "layout-mb-2": true,
-};
-
-const h1 = {
-  ...heading,
-  "typography-sz-tl": true,
-};
-
-const h2 = {
-  ...heading,
-  "typography-sz-tm": true,
-};
-
-const h3 = {
-  ...heading,
-  "typography-sz-ts": true,
-};
-
-const iframe = {
-  "behavior-sw-n": true,
-};
-
-const input = {
-  "typography-f-sf": true,
-  "typography-fs-n": true,
-  "typography-w-400": true,
-  "layout-pl-4": true,
-  "layout-pr-4": true,
-  "layout-pt-2": true,
-  "layout-pb-2": true,
-  "border-br-6": true,
-  "border-bw-1": true,
-  "color-bc-s70": true,
-  "border-bs-s": true,
-  "layout-as-n": true,
-  "color-c-n10": true,
-};
-
-const p = {
-  "typography-f-s": true,
-  "typography-fs-n": true,
-  "typography-w-400": true,
-  "layout-m-0": true,
-  "typography-sz-bm": true,
-  "layout-as-n": true,
-  "typography-ws-p": true,
-};
-
-const orderedList = {
-  "typography-f-s": true,
-  "typography-fs-n": true,
-  "typography-w-400": true,
-  "layout-m-0": true,
-  "typography-sz-bm": true,
-  "layout-as-n": true,
-};
-
-const unorderedList = {
-  "typography-f-s": true,
-  "typography-fs-n": true,
-  "typography-w-400": true,
-  "layout-m-0": true,
-  "typography-sz-bm": true,
-  "layout-as-n": true,
-};
-
-const listItem = {
-  "typography-f-s": true,
-  "typography-fs-n": true,
-  "typography-w-400": true,
-  "layout-m-0": true,
-  "typography-sz-bm": true,
-  "layout-as-n": true,
-};
-
-const pre = {
-  "typography-f-c": true,
-  "typography-fs-n": true,
-  "typography-w-400": true,
-  "typography-sz-bm": true,
-  "typography-ws-p": true,
-  "layout-as-n": true,
-};
-
-const textarea = {
-  ...input,
-  "layout-r-none": true,
-  "layout-fs-c": true,
-};
-
-const video = {
-  "layout-el-cv": true,
-};
-
-const aLight = v0_8.Styles.merge(a, {});
-const inputLight = v0_8.Styles.merge(input, {});
-const textareaLight = v0_8.Styles.merge(textarea, {});
-const buttonLight = v0_8.Styles.merge(button, {});
-const h1Light = v0_8.Styles.merge(h1, {});
-const h2Light = v0_8.Styles.merge(h2, {});
-const h3Light = v0_8.Styles.merge(h3, {});
-const bodyLight = v0_8.Styles.merge(body, {});
-const pLight = v0_8.Styles.merge(p, {});
-const preLight = v0_8.Styles.merge(pre, {});
-const orderedListLight = v0_8.Styles.merge(orderedList, {});
-const unorderedListLight = v0_8.Styles.merge(unorderedList, {});
-const listItemLight = v0_8.Styles.merge(listItem, {});
 
 export const theme: v0_8.Types.Theme = {
-  additionalStyles: {
+  tokens,
+  overrides: {
     Button: {
-      "--light-dark-p-20":
-        "light-dark(var(--original-n-100), var(--original-n-0))",
+      "--a2ui-button-bg": "var(--a2ui-color-primary)",
+      "--a2ui-button-color": "var(--a2ui-color-on-primary)",
     },
-  },
-  components: {
-    AudioPlayer: {},
-    Button: {
-      "layout-pt-2": true,
-      "layout-pb-2": true,
-      "layout-pl-3": true,
-      "layout-pr-3": true,
-      "border-br-12": true,
-      "border-bw-0": true,
-      "border-bs-s": true,
-      "behavior-ho-70": true,
-      "color-bgc-p15": true,
-    },
-    Card: { "border-br-9": true, "color-bgc-p100": true, "layout-p-6": true },
-    CheckBox: {
-      element: {
-        "layout-m-0": true,
-        "layout-mr-2": true,
-        "layout-p-2": true,
-        "border-br-12": true,
-        "border-bw-1": true,
-        "border-bs-s": true,
-      },
-      label: {
-        "typography-f-sf": true,
-        "typography-v-r": true,
-        "typography-w-400": true,
-        "layout-flx-1": true,
-        "typography-sz-ll": true,
-      },
-      container: {
-        "layout-dsp-iflex": true,
-        "layout-al-c": true,
-      },
-    },
-    Column: {
-      "layout-g-4": true,
-      "layout-p-3": true,
-    },
-    DateTimeInput: {
-      element: {
-        "layout-pt-2": true,
-        "layout-pb-2": true,
-        "layout-pl-3": true,
-        "layout-pr-3": true,
-        "border-br-12": true,
-        "border-bw-1": true,
-        "border-bs-s": true,
-      },
-      container: {},
-      label: {},
-    },
-    Divider: {},
-    Image: {
-      all: {
-        "border-br-5": true,
-        "layout-el-cv": true,
-        "layout-w-100": true,
-        "layout-h-100": true,
-      },
-      avatar: {},
-      header: {},
-      icon: {},
-      largeFeature: {},
-      mediumFeature: {},
-      smallFeature: {},
-    },
-    Icon: {},
-    List: {
-      "layout-g-4": true,
-      "layout-p-2": true,
+    Card: {
+      "--a2ui-card-bg": "var(--a2ui-color-surface)",
+      "--a2ui-card-radius": "var(--a2ui-border-radius-xl)",
     },
     Modal: {
-      backdrop: { "color-bbgc-n0_20": true },
-      element: {
-        "border-br-2": true,
-        "color-bgc-p100": true,
-        "layout-p-4": true,
-        "border-bw-1": true,
-        "border-bs-s": true,
-        "color-bc-p80": true,
-      },
-    },
-    MultipleChoice: {
-      container: {
-        "layout-g-2": true,
-        "layout-dsp-flexhor": true,
-        "layout-p-4": true,
-        "border-br-3": true,
-        "layout-mt-2": true,
-        "layout-mb-2": true,
-        "layout-ml-0": true,
-        "layout-mr-0": true,
-        "border-bw-1": true,
-        "border-bs-s": true,
-      },
-      element: {
-        "layout-p-2": true,
-        "border-br-3": true,
-        "layout-mt-2": true,
-        "layout-mb-2": true,
-        "layout-ml-0": true,
-        "layout-mr-0": true,
-        "border-bw-1": true,
-        "border-bs-s": true,
-      },
-      label: {
-        "layout-dsp-flexhor": true,
-        "layout-al-c": true,
-        "layout-flx-0": true,
-        "typography-f-s": true,
-        "typography-fs-n": true,
-        "typography-w-400": true,
-        "layout-m-0": true,
-        "typography-sz-bm": true,
-        "layout-as-n": true,
-      },
-    },
-    Row: {
-      "layout-g-4": true,
-    },
-    Slider: {
-      container: {
-        "layout-g-2": true,
-        "layout-dsp-flexhor": true,
-        "layout-p-4": true,
-        "border-br-3": true,
-        "layout-mt-2": true,
-        "layout-mb-2": true,
-        "layout-ml-0": true,
-        "layout-mr-0": true,
-        "border-bw-1": true,
-        "border-bs-s": true,
-      },
-      element: {},
-      label: {},
-    },
-    Tabs: {
-      element: {
-        "layout-dsp-flexhor": true,
-        "layout-al-fs": true,
-        "layout-g-4": true,
-      },
-      controls: {
-        all: {
-          "typography-f-sf": true,
-          "typography-v-r": true,
-          "typography-w-400": true,
-          "color-bgc-transparent": true,
-          "border-bw-0": true,
-          "behavior-ho-80": true,
-          "typography-sz-ll": true,
-          "layout-p-0": true,
-        },
-        selected: {},
-      },
-      container: {
-        "layout-g-2": true,
-        "layout-dsp-flexvert": true,
-      },
-    },
-    Text: {
-      all: {
-        "layout-dsp-flexvert": true,
-        "layout-w-100": true,
-        "layout-g-2": true,
-      },
-      h1: {
-        "typography-f-sf": true,
-        "typography-ta-c": true,
-        "typography-v-r": true,
-        "typography-w-500": true,
-        "layout-m-0": true,
-        "typography-sz-hs": true,
-        "typography-fs-n": true,
-        "layout-as-n": true,
-        "layout-mb-2": true,
-      },
-      h2: {
-        "typography-f-sf": true,
-        "typography-ta-c": true,
-        "typography-v-r": true,
-        "typography-w-400": true,
-        "layout-m-0": true,
-        "typography-sz-tl": true,
-        "color-c-p20": true,
-      },
-      h3: {
-        "typography-f-sf": true,
-        "typography-ta-c": true,
-        "typography-v-r": true,
-        "typography-w-400": true,
-        "layout-m-0": true,
-        "typography-sz-ts": true,
-        "color-c-p20": true,
-      },
-      h4: {
-        "typography-f-sf": true,
-        "typography-ta-c": true,
-        "typography-v-r": true,
-        "typography-w-400": true,
-        "layout-m-0": true,
-        "typography-sz-bl": true,
-        "color-c-p20": true,
-      },
-      h5: {
-        "typography-f-sf": true,
-        "typography-ta-c": true,
-        "typography-v-r": true,
-        "typography-w-400": true,
-        "layout-m-0": true,
-        "typography-sz-bm": true,
-        "color-c-p20": true,
-      },
-      caption: {
-        "color-c-p20": true,
-      },
-      body: {
-        "color-c-p20": true,
-      },
+      "--a2ui-modal-bg": "var(--a2ui-color-surface)",
+      "--a2ui-modal-border-color": "var(--light-dark-p-80)",
     },
     TextField: {
-      container: {
-        "typography-sz-bm": true,
-        "layout-w-100": true,
-        "layout-g-2": true,
-        "layout-dsp-flexhor": true,
-        "layout-al-c": true,
-      },
-      label: {
-        "layout-flx-0": true,
-      },
-      element: {
-        "typography-sz-bm": true,
-        "layout-pt-2": true,
-        "layout-pb-2": true,
-        "layout-pl-3": true,
-        "layout-pr-3": true,
-        "border-br-12": true,
-        "border-bw-1": true,
-        "border-bs-s": true,
-        "color-bgc-p100": true,
-        "color-bc-p60": true,
-      },
+      "--a2ui-input-bg": "var(--a2ui-color-surface)",
+      "--a2ui-input-border-color": "var(--light-dark-p-60)",
+      "--a2ui-input-radius": "var(--a2ui-border-radius-full)",
     },
-    Video: {
-      "border-br-5": true,
-      "layout-el-cv": true,
-      "layout-w-100": true,
-    },
-  },
-  elements: {
-    a: aLight,
-    audio,
-    body: bodyLight,
-    button: buttonLight,
-    h1: h1Light,
-    h2: h2Light,
-    h3: h3Light,
-    iframe,
-    input: inputLight,
-    p: pLight,
-    pre: preLight,
-    textarea: textareaLight,
-    video,
-  },
-  markdown: {
-    p: [...Object.keys(pLight)],
-    h1: [...Object.keys(h1Light)],
-    h2: [...Object.keys(h2Light)],
-    h3: [...Object.keys(h3Light)],
-    h4: [],
-    h5: [],
-    h6: [],
-    ul: [...Object.keys(unorderedListLight)],
-    ol: [...Object.keys(orderedListLight)],
-    li: [...Object.keys(listItemLight)],
-    a: [...Object.keys(aLight)],
-    strong: [],
-    em: [],
   },
 };

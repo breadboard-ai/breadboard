@@ -3,7 +3,6 @@
  */
 
 import {
-  Capabilities,
   DataPart,
   LLMContent,
   Outcome,
@@ -32,11 +31,9 @@ class Runtime {
   readonly execute: ExecuteStepFunction;
 
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     context: LLMContent[] | undefined,
-    public readonly toolManager: ToolManager,
-    public readonly makeList: boolean
+    public readonly toolManager: ToolManager
   ) {
     this.context = context ? [...context] : [];
     this.execute = this.#execute.bind(this);
@@ -47,12 +44,10 @@ class Runtime {
     strategist: Strategist
   ): Promise<Outcome<LLMContent[]>> {
     return strategist.execute(
-      this.caps,
       this.moduleArgs,
       this.execute,
       this.context,
-      objective,
-      this.makeList
+      objective
     );
   }
 
@@ -74,7 +69,6 @@ class Runtime {
       contents = [...context, toLLMContent(item.task)];
     }
     const geminiPrompt = new GeminiPrompt(
-      this.caps,
       this.moduleArgs,
       {
         body: {

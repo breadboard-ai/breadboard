@@ -13,7 +13,6 @@ import type {
   FunctionResponseCapabilityPart,
   InlineDataCapabilityPart,
   JSONPart,
-  ListPart,
   LLMContent,
   NodeValue,
   OutputValues,
@@ -27,7 +26,7 @@ import {
   DataPartTransformType,
   Outcome,
 } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { err, ok, isNotebookLmUrl } from "@breadboard-ai/utils";
 // TODO: Remove this import once we move all deps of isStoredData to point to
 // utils.
 import { isStoredData } from "@breadboard-ai/utils";
@@ -75,11 +74,6 @@ export function isFunctionResponseCapabilityPart(
 export function isJSONPart(part: unknown): part is JSONPart {
   if (typeof part !== "object" || part === null) return false;
   return "json" in part;
-}
-
-export function isListPart(part: unknown): part is ListPart {
-  if (typeof part !== "object" || part === null) return false;
-  return "list" in part;
 }
 
 export function isLLMContent(nodeValue: unknown): nodeValue is LLMContent {
@@ -252,6 +246,8 @@ export async function retrieveAsBlob(
     if (url.protocol === "blob:") return true;
     // Allow drive:/ URLs
     if (url.protocol === "drive:") return true;
+    // Allow NotebookLM URLs
+    if (isNotebookLmUrl(url.href)) return true;
     // Allow board server URLs
     if (url.href.match(/https?:\/\/[^/]+\/board\/blobs\/([a-z0-9-]+)/)) {
       return true;

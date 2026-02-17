@@ -9,6 +9,7 @@ const Strings = StringsHelper.forSection("Global");
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { discordIcon } from "../../styles/svg-icons.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
@@ -19,7 +20,7 @@ import {
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
-import { UILoadState } from "../../state/types.js";
+import { UILoadState } from "../../types/state-types.js";
 import * as Styles from "../../styles/styles.js";
 import {
   ActionTracker,
@@ -27,10 +28,9 @@ import {
   EnumValue,
 } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
-import { hasEnabledGlobalSettings } from "./global-settings.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
-import { Utils } from "../../../sca/utils.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -45,7 +45,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
   @property()
   accessor signinAdapter: SigninAdapter | null = null;
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor hasActiveTab = false;
 
   @property()
@@ -74,6 +74,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   @property()
   accessor status: "Draft" | "Published" = "Draft";
+
+  @property({ type: Boolean })
+  accessor graphIsEmpty = true;
 
   @state()
   accessor #showAccountSwitcher = false;
@@ -155,13 +158,13 @@ export class VEHeader extends SignalWatcher(LitElement) {
             }
           }
 
-          & #app {
+          & #canvas {
             padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-4);
             border-radius: var(--bb-grid-size-16) var(--bb-grid-size-5)
               var(--bb-grid-size-5) var(--bb-grid-size-16);
           }
 
-          & #canvas {
+          & #app {
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
             border-radius: var(--bb-grid-size-5) var(--bb-grid-size-16)
               var(--bb-grid-size-16) var(--bb-grid-size-5);
@@ -172,7 +175,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
 
-          bb-homepage-search-button {
+          bb-expanding-search-button {
             margin: 0 var(--bb-grid-size-6) 0 0;
           }
 
@@ -186,12 +189,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
           }
 
           & #save-status-label {
-            display: none;
             font-size: 10px;
             line-height: 1;
             color: light-dark(var(--n-0), var(--n-70));
             margin: 0 0 0 var(--bb-grid-size-4);
-            min-width: 45px;
           }
 
           & #toggle-user-menu {
@@ -222,19 +223,20 @@ export class VEHeader extends SignalWatcher(LitElement) {
             }
           }
 
-          & #share {
-            display: flex;
+          & #share-button {
+            display: none;
             align-items: center;
             background: var(--light-dark-n-100);
             border: 1px solid var(--light-dark-n-95);
             border-radius: var(--bb-grid-size-16);
             margin: 0 0 0 var(--bb-grid-size-6);
-
             color: var(--light-dark-n-0);
             height: var(--bb-grid-size-8);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
             font-size: 12px;
-            transition: border 0.2s cubic-bezier(0, 0, 0.2, 1);
+            transition:
+              background 0.2s cubic-bezier(0, 0, 0.2, 1),
+              border 0.2s cubic-bezier(0, 0, 0.2, 1);
 
             & .g-icon {
               margin-right: var(--bb-grid-size-2);
@@ -247,9 +249,25 @@ export class VEHeader extends SignalWatcher(LitElement) {
                 border: 1px solid var(--light-dark-n-80);
               }
             }
+
+            &.owner {
+              background: var(--light-dark-n-0);
+              border: none;
+              color: var(--light-dark-n-100);
+              margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
+
+              &:not([disabled]):hover {
+                background: light-dark(var(--n-25), var(--n-90));
+                border: none;
+              }
+            }
+
+            &.sharing-v2 {
+              border-radius: 100px;
+              font-size: 14px;
+            }
           }
 
-          & #publish,
           & #remix {
             display: none;
             align-items: center;
@@ -257,7 +275,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
             border: none;
             border-radius: var(--bb-grid-size-16);
             margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
-
             color: var(--light-dark-n-100);
             height: var(--bb-grid-size-8);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
@@ -275,6 +292,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
                 background: light-dark(var(--n-25), var(--n-90));
               }
             }
+          }
+
+          & #publish-button {
+            display: none;
+            margin: 0 0 0 var(--bb-grid-size-2);
           }
 
           & #remix {
@@ -370,22 +392,36 @@ export class VEHeader extends SignalWatcher(LitElement) {
         }
       }
 
-      @media (min-width: 620px) {
-        section #right #save-status-label {
-          display: block;
-        }
-      }
-
-      @media (min-width: 820px) {
-        #experiment {
-          display: block;
+      @media (max-width: 620px) {
+        section {
+          #left {
+            padding-right: 0;
+          }
+          #tab-title {
+            display: none;
+          }
+          #mode-toggle {
+            left: 50%;
+          }
+          :host([hasactivetab]) & #global-item-select {
+            display: none;
+          }
+          #right #save-status-label {
+            display: none;
+          }
         }
       }
 
       @media (min-width: 830px) {
-        section #right #publish,
-        section #right #remix {
-          display: flex;
+        #experiment {
+          display: block;
+        }
+        section #right {
+          #remix,
+          #share-button,
+          #publish-button {
+            display: flex;
+          }
         }
       }
 
@@ -461,7 +497,8 @@ export class VEHeader extends SignalWatcher(LitElement) {
       <div id="right">
         ${[
           this.#renderSaveStatusLabel(),
-          this.#renderSharePublishButton(),
+          this.#renderPublishButton(),
+          this.#renderShareButton(),
           this.#renderRemixButton(),
           this.#renderGraphItemSelect(),
           this.#renderGlobalItemSelect(),
@@ -472,25 +509,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderModeToggle() {
-    return html`<span
-      id="mode-toggle"
-    >
-      <button
-        id="app"
-        @click=${() => {
-          this.dispatchEvent(
-            new StateEvent({ eventType: "host.modetoggle", mode: "app" })
-          );
-        }}
-        class=${classMap({
-          "sans-flex": true,
-          round: true,
-          "w-500": true,
-          "md-body-small": true,
-          selected: this.mode === "app",
-        })}
-        >App</button
-      >
+    if (this.graphIsEmpty) {
+      return nothing;
+    }
+    return html`<span id="mode-toggle">
       <button
         id="canvas"
         @click=${() => {
@@ -505,16 +527,30 @@ export class VEHeader extends SignalWatcher(LitElement) {
           "md-body-small": true,
           selected: this.mode === "canvas",
         })}
-        >Editor</button
       >
-    </button>`;
+        Editor
+      </button>
+      <button
+        id="app"
+        @click=${() => {
+          this.dispatchEvent(
+            new StateEvent({ eventType: "host.modetoggle", mode: "app" })
+          );
+        }}
+        class=${classMap({
+          "sans-flex": true,
+          round: true,
+          "w-500": true,
+          "md-body-small": true,
+          selected: this.mode === "app",
+        })}
+      >
+        App
+      </button>
+    </span>`;
   }
 
   #renderGraphItemSelect() {
-    if (!this.isMine) {
-      return nothing;
-    }
-
     const options: EnumValue[] = [
       {
         id: "more",
@@ -522,39 +558,71 @@ export class VEHeader extends SignalWatcher(LitElement) {
         icon: "more_vert",
         hidden: true,
       },
-      {
-        id: "edit-title-and-description",
-        title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
-        icon: "edit",
-      },
-      {
-        id: "delete",
-        title: Strings.from("COMMAND_DELETE_PROJECT"),
-        icon: "delete",
-      },
-      {
-        id: "duplicate",
-        title: Strings.from("COMMAND_COPY_PROJECT"),
-        icon: "file_copy",
-      },
-      {
-        id: "history",
-        title: Strings.from("COMMAND_SHOW_VERSION_HISTORY"),
-        icon: "history",
-      },
     ];
 
-    if (
-      !Utils.Helpers.isHydrating(
-        () => this.sca.controller.global.main.experimentalComponents
-      ) &&
-      this.sca.controller.global.main.experimentalComponents
-    ) {
+    const screenSize = this.sca.controller.global.screenSize.size;
+    // On medium and smaller screens (≤830px), the share/remix buttons are hidden via CSS,
+    // so include those options here
+    if (screenSize !== "wide") {
+      if (!this.isMine) {
+        options.push({
+          id: "remix",
+          title: "Remix",
+          icon: "gesture",
+        });
+      }
+      options.push({
+        id: "share",
+        title: Strings.from("COMMAND_COPY_APP_PREVIEW_URL"),
+        icon: "share",
+      });
+    }
+
+    if (this.isMine) {
+      options.push(
+        {
+          id: "edit-title-and-description",
+          title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
+          icon: "edit",
+        },
+        {
+          id: "delete",
+          title: Strings.from("COMMAND_DELETE_PROJECT"),
+          icon: "delete",
+        },
+        {
+          id: "duplicate",
+          title: Strings.from("COMMAND_COPY_PROJECT"),
+          icon: "file_copy",
+        }
+      );
+
+      // Version history is in the console view, so we don't currently
+      // have a mobile view for it
+      if (screenSize !== "narrow") {
+        options.push({
+          id: "history",
+          title: Strings.from("COMMAND_SHOW_VERSION_HISTORY"),
+          icon: "history",
+        });
+      }
+
       options.push({
         id: "copy-board-contents",
         title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
         icon: "content_copy",
       });
+    }
+
+    // On narrow screens (≤600px), the global item select is hidden via CSS,
+    // so include those options here
+    if (screenSize === "narrow") {
+      options.push(...this.#globalItemSelectOptions);
+    }
+
+    // Only show the menu if there are items beyond the hidden "more" button
+    if (options.length <= 1) {
+      return nothing;
     }
 
     return html`<bb-item-select
@@ -565,56 +633,52 @@ export class VEHeader extends SignalWatcher(LitElement) {
     ></bb-item-select>`;
   }
 
-  #renderGlobalItemSelect() {
-    const options: EnumValue[] = [
-      {
-        id: "settings",
-        title: "",
-        icon: "settings",
-        hidden: true,
-      },
-      {
-        id: "feedback",
-        title: Strings.from("COMMAND_SEND_FEEDBACK"),
-        icon: "flag",
-      },
-      {
-        id: "documentation",
-        title: Strings.from("COMMAND_DOCUMENTATION"),
-        icon: "quick_reference_all",
-      },
-      {
-        id: "status-update",
-        title: Strings.from("COMMAND_STATUS_UPDATE"),
-        icon: "bigtop_updates",
-      },
-      {
-        id: "chat",
-        title: Strings.from("COMMAND_JOIN_CHAT"),
-        svgIcon:
-          "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
-      },
-      ...(hasEnabledGlobalSettings(this.sca)
-        ? [
-            {
-              id: "show-global-settings",
-              title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
-              icon: "settings_2",
-            },
-          ]
-        : []),
-      {
-        id: "demo-video",
-        title: Strings.from("COMMAND_WATCH_DEMO_VIDEO"),
-        icon: "videocam",
-      },
-    ];
+  #globalItemSelectOptions: EnumValue[] = [
+    {
+      id: "settings",
+      title: "",
+      icon: "settings",
+      hidden: true,
+    },
+    {
+      id: "feedback",
+      title: Strings.from("COMMAND_SEND_FEEDBACK"),
+      icon: "flag",
+    },
+    {
+      id: "documentation",
+      title: Strings.from("COMMAND_DOCUMENTATION"),
+      icon: "quick_reference_all",
+    },
+    {
+      id: "status-update",
+      title: Strings.from("COMMAND_STATUS_UPDATE"),
+      icon: "bigtop_updates",
+    },
+    {
+      id: "chat",
+      title: Strings.from("COMMAND_JOIN_CHAT"),
+      icon: discordIcon,
+    },
+    {
+      id: "show-global-settings",
+      title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
+      icon: "settings_2",
+    },
+    {
+      id: "demo-video",
+      title: Strings.from("COMMAND_WATCH_DEMO_VIDEO"),
+      icon: "videocam",
+    },
+  ];
 
+  #renderGlobalItemSelect() {
     return html`<bb-item-select
+      id="global-item-select"
       .showDownArrow=${false}
       .freezeValue=${0}
       .transparent=${true}
-      .values=${options}
+      .values=${this.#globalItemSelectOptions}
     ></bb-item-select>`;
   }
 
@@ -725,31 +789,31 @@ export class VEHeader extends SignalWatcher(LitElement) {
     </button> `;
   }
 
-  #renderSharePublishButton() {
-    if (this.isMine) {
-      return html`<button
-        id="publish"
-        class="sans-flex round w-500"
-        @click=${() => {
-          this.dispatchEvent(new ShareRequestedEvent());
-        }}
-      >
-        <span class="g-icon">share</span>${Strings.from(
-          "COMMAND_COPY_APP_PREVIEW_URL"
-        )}
-      </button>`;
+  #renderPublishButton() {
+    if (!this.isMine || !CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+      return nothing;
     }
+    return html`<bb-publish-button id="publish-button"></bb-publish-button>`;
+  }
 
+  #renderShareButton() {
+    const label = CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
+      ? "Share"
+      : Strings.from("COMMAND_COPY_APP_PREVIEW_URL");
     return html`<button
-      id="share"
-      class="sans-flex round w-500"
+      id="share-button"
+      class=${classMap({
+        "sans-flex": true,
+        round: true,
+        "w-500": true,
+        owner: !!this.isMine,
+        "sharing-v2": !!CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2,
+      })}
       @click=${() => {
         this.dispatchEvent(new ShareRequestedEvent());
       }}
     >
-      <span class="g-icon">share</span>${Strings.from(
-        "COMMAND_COPY_APP_PREVIEW_URL"
-      )}
+      <span class="g-icon">share</span>${label}
     </button>`;
   }
 

@@ -6,10 +6,20 @@
 
 import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
-import { LitElement, PropertyValues, css, html, nothing, unsafeCSS } from "lit";
+import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { theme as uiTheme } from "./theme/theme.js";
+import {
+  theme as uiTheme,
+  applyTokens,
+} from "../../../src/ui/a2ui-theme/a2ui-theme.js";
+import { icons } from "../../../src/ui/styles/icons.js";
+import {
+  palette as defaultPalette,
+  uiColorMapping,
+} from "../../../src/ui/styles/host/base-colors.js";
+import * as Theme from "../../../src/theme/index.js";
+import "../../../src/ui/app-templates/basic/a2ui-custom-elements/index.js";
 import "./ui/ui.js";
 
 import { FileSystemPath, Outcome } from "@breadboard-ai/types";
@@ -28,21 +38,9 @@ import {
   ParsedFileMedata,
   parseFileName,
 } from "./parse-file-name.js";
-import { OutcomeData } from "./types.js";
+import { OutcomePayload, EvalFileData } from "../../../src/types/types.js";
 import "./ui/contexts-viewer.js";
 import "./ui/outcome-viewer.js";
-
-type EvalFileData = Array<FinalChainReport | A2UIData | OutcomePayload>;
-
-type A2UIData = {
-  type: "a2ui";
-  data: v0_8.Types.ServerToClientMessage[][];
-};
-
-type OutcomePayload = {
-  type: "outcome";
-  outcome: Outcome<OutcomeData>;
-};
 
 type RenderMode = "surfaces" | "messages" | "contexts" | "outcome";
 
@@ -52,6 +50,12 @@ const RENDER_MODE_KEY = "eval-inspector-render-mode";
 export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   @provide({ context: UI.Context.themeContext })
   accessor theme: v0_8.Types.Theme = uiTheme;
+
+  @signal
+  accessor #colorScheme: "light" | "dark" = "light";
+
+  @signal
+  accessor #baseColor: string = localStorage.getItem("eval-base-color") || "";
 
   @state()
   accessor #ready = true;
@@ -112,6 +116,47 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     super.connectedCallback();
     window.addEventListener("popstate", this.#onPopState);
     this.#restoreFromUrl();
+    this.#applyPaletteStyles();
+    this.#applyColorScheme();
+    applyTokens(this, this.theme.tokens);
+  }
+
+  #paletteSheet: CSSStyleSheet | null = null;
+
+  #applyPaletteStyles() {
+    const activePalette = this.#baseColor
+      ? Theme.generatePaletteFromColor(this.#baseColor)
+      : defaultPalette;
+    const styles = Theme.createThemeStyles(activePalette, uiColorMapping);
+    const originalStyles = Theme.createThemeStyles(
+      activePalette,
+      uiColorMapping,
+      "original-"
+    );
+
+    // Build a :host rule with all palette custom properties.
+    // Using a constructed stylesheet (rather than inline style.setProperty)
+    // ensures that light-dark() values inside the custom properties resolve
+    // correctly — inline styles treat light-dark() as a raw string.
+    const cssText = Object.entries({ ...styles, ...originalStyles })
+      .map(([key, value]) => `${key}: ${value};`)
+      .join("\n");
+
+    if (!this.#paletteSheet) {
+      this.#paletteSheet = new CSSStyleSheet();
+      this.shadowRoot!.adoptedStyleSheets = [
+        ...this.shadowRoot!.adoptedStyleSheets,
+        this.#paletteSheet,
+      ];
+    }
+    this.#paletteSheet.replaceSync(`:host { ${cssText} }`);
+  }
+
+  #applyColorScheme() {
+    document.documentElement.style.setProperty(
+      "color-scheme",
+      this.#colorScheme
+    );
   }
 
   disconnectedCallback(): void {
@@ -176,7 +221,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     window.history.pushState({}, "", url);
   }
   static styles = [
-    unsafeCSS(v0_8.Styles.structuralStyles),
+    icons,
     css`
       * {
         box-sizing: border-box;
@@ -238,13 +283,17 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           grid-template-rows: 32px 40px 1fr;
           gap: var(--bb-grid-size-3);
 
+          & #controls-title {
+            flex: 1;
+          }
+
           & #mount-dir,
           & #mount-dir > span {
             display: flex;
             align-items: center;
             background: none;
             border: none;
-            color: var(--light-dark-n-100);
+            color: var(--text-color);
             padding: 0;
           }
 
@@ -281,7 +330,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
             border-radius: var(--bb-grid-size-2);
             border: 1px solid var(--primary);
-            color: var(--light-dark-n-100);
+            color: var(--text-color);
             padding: 0;
           }
 
@@ -340,14 +389,19 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               flex-direction: column;
               gap: var(--bb-grid-size-2);
 
+              & h2 {
+                margin: var(--bb-grid-size-2) 0;
+              }
+
               li {
                 width: 100%;
                 overflow: auto;
+                margin-bottom: var(--bb-grid-size-2);
 
                 h2 {
                   font-size: 12px;
                   font-weight: normal;
-                  margin: 0;
+                  margin: 0 0 var(--bb-grid-size-2) 0;
                 }
 
                 ul {
@@ -360,7 +414,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                   );
                   border: none;
                   border-radius: var(--bb-grid-size-2);
-                  color: var(--light-dark-n-100);
+                  color: var(--text-color);
                   padding: var(--bb-grid-size-2);
                   font-family: var(--font-family-mono);
                   text-align: left;
@@ -404,6 +458,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           display: grid;
           grid-template-rows: 32px 1fr;
           gap: var(--bb-grid-size-4);
+
+          & #current-file {
+            flex: 1;
+          }
 
           & #render-mode,
           & #render-mode > button {
@@ -469,15 +527,54 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           }
 
           & #surfaces {
-            background: var(--light-dark-n-100);
+            background: var(--light-dark-s-90);
+            color: var(--light-dark-n-0);
 
-            & #surface-select {
+            & #surface-overlay {
               position: absolute;
               top: 10px;
               left: 10px;
-              padding: var(--bb-grid-size-2);
-              border: 1px solid var(--primary);
-              border-radius: var(--bb-grid-size-2);
+              display: flex;
+              gap: var(--bb-grid-size-2);
+              z-index: 1;
+
+              & select,
+              & input[type="color"] {
+                padding: var(--bb-grid-size-2);
+                border: 1px solid var(--primary);
+                border-radius: var(--bb-grid-size-2);
+                background: var(--light-dark-n-100);
+                color: var(--light-dark-n-0);
+                height: 100%;
+              }
+
+              & input[type="color"] {
+                width: 60px;
+                cursor: pointer;
+              }
+            }
+
+            #color-picker::-webkit-color-swatch-wrapper {
+              padding: 0;
+              border: none;
+              width: 40px;
+              height: 18px;
+            }
+
+            #color-picker::-webkit-color-swatch {
+              padding: 0;
+              border: none;
+              border-radius: var(--bb-grid-size);
+              width: 40px;
+              height: 18px;
+            }
+
+            #color-picker::-moz-color-swatch {
+              padding: 0;
+              border: none;
+              border-radius: var(--bb-grid-size);
+              width: 40px;
+              height: 18px;
             }
           }
 
@@ -491,6 +588,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             display: block;
             font-family: var(--font-family-mono);
             line-height: 1.5;
+            white-space: pre;
 
             & button {
               position: absolute;
@@ -589,6 +687,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   }
 
   async #loadFile(path: string) {
+    this.#selectedSurface = 0;
     this.#processor.clearSurfaces();
     const data = await this.#fileSystem.read(path as FileSystemPath);
     if (!ok(data)) {
@@ -689,38 +788,72 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
     if (this.renderMode === "surfaces") {
       return html`<section id="surfaces">
-        ${this.#surfaces
-          ? html`<select
-              @change=${(evt: Event) => {
-                if (!(evt.target instanceof HTMLSelectElement)) {
-                  return;
-                }
+        <div id="surface-overlay">
+          ${this.#surfaces
+            ? html`<select
+                @change=${(evt: Event) => {
+                  if (!(evt.target instanceof HTMLSelectElement)) {
+                    return;
+                  }
 
-                this.#selectedSurface = evt.target.selectedIndex;
-                this.#updateUrl();
-                this.#processor.clearSurfaces();
+                  this.#selectedSurface = evt.target.selectedIndex;
+                  this.#updateUrl();
+                  this.#processor.clearSurfaces();
 
-                const selectedSurface = this.#surfaces?.at(
-                  this.#selectedSurface
-                );
-                if (!selectedSurface) {
-                  return;
-                }
+                  const selectedSurface = this.#surfaces?.at(
+                    this.#selectedSurface
+                  );
+                  if (!selectedSurface) {
+                    return;
+                  }
 
-                this.#processor.processMessages(selectedSurface);
-              }}
-              id="surface-select"
-            >
-              ${map(this.#surfaces, (_, idx) => {
-                return html`<option>Surface ${idx + 1}</option>`;
-              })}
-            </select>`
-          : nothing}
+                  this.#processor.processMessages(selectedSurface);
+                }}
+                id="surface-select"
+              >
+                ${map(this.#surfaces, (_, idx) => {
+                  return html`<option>Surface ${idx + 1}</option>`;
+                })}
+              </select>`
+            : nothing}
+          <select
+            id="theme-select"
+            @change=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLSelectElement)) {
+                return;
+              }
+              this.#colorScheme = evt.target.value as "light" | "dark";
+              this.#applyColorScheme();
+            }}
+          >
+            <option value="light" ?selected=${this.#colorScheme === "light"}>
+              ☀️ Light
+            </option>
+            <option value="dark" ?selected=${this.#colorScheme === "dark"}>
+              🌙 Dark
+            </option>
+          </select>
+          <input
+            type="color"
+            id="color-picker"
+            .value=${this.#baseColor || "#6750a4"}
+            title="Base theme color"
+            @input=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLInputElement)) {
+                return;
+              }
+              this.#baseColor = evt.target.value;
+              localStorage.setItem("eval-base-color", this.#baseColor);
+              this.#applyPaletteStyles();
+            }}
+          />
+        </div>
         ${map(this.#processor.getSurfaces(), ([surfaceId, surface]) => {
           return html`<a2ui-surface
               .surfaceId=${surfaceId}
               .surface=${surface}
               .processor=${this.#processor}
+              .enableCustomElements=${true}
               ></a2-uisurface>`;
         })}
       </section>`;
@@ -859,7 +992,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           <h2
             class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
           >
-            Files
+            <div id="controls-title">Files</div>
             <button
               id="mount-dir"
               @click=${async () => {
@@ -878,7 +1011,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           <h2
             class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
           >
-            ${this.selectedFile?.name}
+            <div id="current-file">${this.selectedFile?.name}</div>
             <div id="render-mode">
               <button
                 class=${classMap({ active: this.#renderMode === "contexts" })}

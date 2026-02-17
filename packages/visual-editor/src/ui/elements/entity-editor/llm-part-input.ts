@@ -7,7 +7,7 @@ import { DataPart, InlineDataCapabilityPart } from "@breadboard-ai/types";
 import { isStoredData } from "@breadboard-ai/utils";
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Project } from "../../state/index.js";
+
 import { TextEditor } from "../input/text-editor/text-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
@@ -40,9 +40,6 @@ export class LLMPartInput extends LitElement {
 
   @property()
   accessor locked = false;
-
-  @property()
-  accessor projectState: Project | null = null;
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
@@ -189,7 +186,6 @@ export class LLMPartInput extends LitElement {
       return html`<div id="text-input">
         <bb-text-editor
           ${ref(this.#inputRef)}
-          .projectState=${this.projectState}
           .supportsFastAccess=${false}
           .value=${this.#dataPart.text.trim()}
           @input=${() => {

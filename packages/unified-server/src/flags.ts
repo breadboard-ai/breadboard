@@ -11,6 +11,16 @@ import type {
   GoogleDrivePermission,
 } from "@breadboard-ai/types/deployment-configuration.js";
 
+import {
+  getString,
+  getStringList,
+  getBoolean,
+  getJson,
+  getSecret,
+} from "./flag-utils.js";
+
+export { parseDomainConfig };
+
 export const ALLOW_3P_MODULES: boolean = getBoolean("ALLOW_3P_MODULES");
 
 export const ALLOWED_REDIRECT_ORIGINS: string[] = getStringList(
@@ -26,12 +36,10 @@ export const ENABLE_FORCE_2D_GRAPH: boolean = getBoolean(
   "ENABLE_FORCE_2D_GRAPH"
 );
 
+export const ENABLE_SHARING_2: boolean = getBoolean("ENABLE_SHARING_2");
+
 export const ENABLE_STREAM_GEN_WEBPAGE: boolean = getBoolean(
   "ENABLE_STREAM_GEN_WEBPAGE"
-);
-
-export const ENABLE_GENERATE_FOR_EACH: boolean = getBoolean(
-  "ENABLE_GENERATE_FOR_EACH"
 );
 
 export const ENABLE_AGENT_MODE: boolean = getBoolean("ENABLE_AGENT_MODE");
@@ -102,7 +110,7 @@ export const SERVER_URL: string = getString("SERVER_URL");
 
 export const SURVEY_MODE = getSurveyMode("SURVEY_MODE");
 
-export const SURVEY_API_KEY = getString("SURVEY_API_KEY");
+export const SURVEY_API_KEY = getSecret("SURVEY_API_KEY");
 
 export const SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID = getString(
   "SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID"
@@ -142,39 +150,13 @@ export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
   "ENABLE_GOOGLE_DRIVE_TOOLS"
 );
 
-/** Get the value of the given flag as a string, or empty string if absent. */
-function getString(flagName: string): string {
-  return process.env[flagName] ?? "";
-}
+export const ENABLE_RESUME_AGENT_RUN = getBoolean("ENABLE_RESUME_AGENT_RUN");
 
-/** Get the value of the given flag as a comma-delimited list of strings. */
-function getStringList(flagName: string): string[] {
-  return (
-    getString(flagName)
-      .split(",")
-      // Filter out empty strings (e.g. if the env value is empty)
-      .filter((x) => x)
-  );
-}
+export const ENABLE_NOTEBOOK_LM = getBoolean("ENABLE_NOTEBOOK_LM");
 
-/**
- * Get the value of the given flag as a boolean.
- *
- * Anything other than the literal string "true" (case-insensitive) will be
- * interpreted as false
- */
-function getBoolean(flagName: string): boolean {
-  return getString(flagName).toLowerCase() === "true";
-}
-
-function getJson(flagName: string): unknown {
-  const str = getString(flagName);
-  if (!str) {
-    return undefined;
-  }
-  console.log(`[unified-server startup] Parsing ${flagName}`);
-  return JSON.parse(str);
-}
+export const ENABLE_GRAPH_EDITOR_AGENT = getBoolean(
+  "ENABLE_GRAPH_EDITOR_AGENT"
+);
 
 function getDomainConfig(
   flagName: string
@@ -190,7 +172,7 @@ function getDomainConfig(
   return parseDomainConfig(domainConfig);
 }
 
-export function parseDomainConfig(domainConfig: string) {
+function parseDomainConfig(domainConfig: string) {
   return JSON.parse(domainConfig) as Record<string, DomainConfiguration>;
 }
 

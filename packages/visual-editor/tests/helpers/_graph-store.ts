@@ -5,18 +5,21 @@
  */
 
 import type {
+  GraphDescriptor,
+  GraphStoreArgs,
   InspectableGraphOptions,
+  MutableGraph,
+  MutableGraphStore,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { GraphStore } from "../../src/engine/inspector/graph-store.js";
-import { makeFs } from "../test-file-system.js";
+import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
 
-export { makeTestGraphStore };
+export { makeTestGraphStore, makeTestGraphStoreArgs, loadGraphIntoStore };
 
-function makeTestGraphStore(options: InspectableGraphOptions = {}) {
-  return new GraphStore({
-    kits: options.kits || [],
-    fileSystem: makeFs(),
+function makeTestGraphStoreArgs(
+  options: InspectableGraphOptions = {}
+): GraphStoreArgs {
+  return {
     sandbox: options.sandbox || {
       createRunnableModule() {
         throw new Error("Do not use sandbox with test graph store");
@@ -44,5 +47,40 @@ function makeTestGraphStore(options: InspectableGraphOptions = {}) {
         throw new Error("Do not use flags with test graph store");
       },
     } satisfies RuntimeFlagManager,
-  });
+  };
+}
+
+/**
+ * Creates a MutableGraphImpl from a descriptor and stores it in the given store.
+ * Convenience function for tests that need to populate a MutableGraphStore.
+ */
+function loadGraphIntoStore(
+  store: MutableGraphStore,
+  graph: GraphDescriptor,
+  args?: GraphStoreArgs
+): void {
+  const storeArgs = args ?? makeTestGraphStoreArgs();
+  const mutable = new MutableGraphImpl(graph, store, storeArgs);
+  store.set(mutable);
+}
+
+/**
+ * Creates a test MutableGraphStore for use in unit tests.
+ * This replaces the deleted GraphStore class with a minimal implementation.
+ */
+function makeTestGraphStore(
+  args?: GraphStoreArgs
+): MutableGraphStore & { _args: GraphStoreArgs } {
+  const storeArgs = args ?? makeTestGraphStoreArgs();
+  let mutableGraph: MutableGraph | undefined;
+  const store = {
+    _args: storeArgs,
+    set(graph: MutableGraph): void {
+      mutableGraph = graph;
+    },
+    get(): MutableGraph | undefined {
+      return mutableGraph;
+    },
+  };
+  return store;
 }

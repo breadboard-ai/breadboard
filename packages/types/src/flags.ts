@@ -18,10 +18,6 @@
  */
 export type RuntimeFlags = {
   /**
-   * Add "For each" capability to the "Generate" step.
-   */
-  generateForEach: boolean;
-  /**
    * Enable MCP support
    */
   mcp: boolean;
@@ -78,6 +74,20 @@ export type RuntimeFlags = {
    * Enables "export to Drive" capability for the agent
    */
   enableGoogleDriveTools: boolean;
+  /**
+   * Enables auto-resumption of failed agent runs
+   */
+  enableResumeAgentRun: boolean;
+
+  /**
+   * Enables NotebookLM integration
+   */
+  enableNotebookLm: boolean;
+
+  /**
+   * Enables the graph editor agent for conversational graph building
+   */
+  enableGraphEditorAgent: boolean;
 };
 
 /**

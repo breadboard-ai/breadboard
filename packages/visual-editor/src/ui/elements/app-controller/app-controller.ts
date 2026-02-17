@@ -22,13 +22,12 @@ import {
   STATUS,
 } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import { consume, provide } from "@lit/context";
+import { consume } from "@lit/context";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { generatePaletteFromColor } from "../../../theme/index.js";
 import { loadPartAsDataUrl } from "../../utils/data-parts.js";
-import { projectRunContext } from "../../contexts/project-run.js";
-import { ProjectRun } from "../../state/types.js";
+
 import { SignalWatcher } from "@lit-labs/signals";
 import { Template } from "../../app-templates/basic/index.js";
 
@@ -82,10 +81,6 @@ export class AppController extends SignalWatcher(LitElement) {
 
   @property()
   accessor isMine = false;
-
-  @property({ reflect: false })
-  @provide({ context: projectRunContext })
-  accessor projectRun: ProjectRun | null = null;
 
   @property()
   accessor settings: SettingsStore | null = null;

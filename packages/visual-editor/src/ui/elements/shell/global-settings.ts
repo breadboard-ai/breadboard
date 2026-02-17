@@ -8,13 +8,14 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
-import { Project } from "../../state/index.js";
+
 import "@material/web/tabs/primary-tab.js";
 import "@material/web/tabs/tabs.js";
 import "@material/web/checkbox/checkbox.js";
 import type { MdCheckbox } from "@material/web/checkbox/checkbox.js";
 import type { MdTabs } from "@material/web/tabs/tabs.js";
 import * as BreadboardUI from "../../../ui/index.js";
+import type { UI } from "../../types/state-types.js";
 import { EmailPrefsManager } from "../../utils/email-prefs-manager.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
@@ -49,23 +50,13 @@ function shouldShowTabs(enabledTabs: Record<TabId, boolean>) {
   return countEnabledTabs(enabledTabs) > 1;
 }
 
-/**
- * Returns whether there are any enabled global settings
- */
-export function hasEnabledGlobalSettings(sca: SCA | undefined) {
-  return countEnabledTabs(getTabEnabledMap(sca)) > 0;
-}
-
 @customElement("bb-global-settings-modal")
 export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
   @property()
-  accessor project: Project | null = null;
-
-  @property()
-  accessor uiState: BreadboardUI.State.UI | undefined = undefined;
+  accessor uiState: UI | undefined = undefined;
 
   @property()
   accessor emailPrefsManager: EmailPrefsManager | null = null;
@@ -218,8 +209,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
       [TabId.INTEGRATIONS]: {
         name: Strings.from("LABEL_SETTINGS_INTEGRATIONS"),
         template: () =>
-          html` <bb-mcp-servers-settings .project=${this.project}>
-          </bb-mcp-servers-settings>`,
+          html` <bb-mcp-servers-settings> </bb-mcp-servers-settings>`,
       },
       [TabId.EXPERIMENTAL]: {
         name: Strings.from("LABEL_SETTINGS_EXPERIMENTAL"),

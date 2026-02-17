@@ -50,9 +50,6 @@ jobs:
       - name: Checking the code formatting
         run: npm run check:format
 
-      - name: Running tests
-        run: npm run test
-
       - name: Running coverage
         run: npm run coverage
 
@@ -64,3 +61,12 @@ jobs:
             echo "### Coverage Details"
             echo "Stats: $STATS"
           } >> "$GITHUB_STEP_SUMMARY"
+
+
+      - name: Upload coverage artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report
+          path: packages/visual-editor/coverage/coverage-summary.json
+          retention-days: 7

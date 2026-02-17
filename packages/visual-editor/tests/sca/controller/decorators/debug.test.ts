@@ -5,19 +5,11 @@
  */
 
 import assert from "node:assert";
-import { before, mock, suite, test } from "node:test";
+import { mock, suite, test } from "node:test";
 import { debug } from "../../../../src/sca/controller/decorators/debug.js";
 import { RootController } from "../../../../src/sca/controller/subcontrollers/root-controller.js";
-import {
-  setDebuggableAppController,
-  stubAppController,
-} from "../../../../src/sca/utils/logging/logger.js";
 
 suite("Debug Decorator", () => {
-  before(() => {
-    setDebuggableAppController(stubAppController);
-  });
-
   test("should work", async () => {
     class DebugTestController extends RootController {
       @debug() get name() {
@@ -25,7 +17,10 @@ suite("Debug Decorator", () => {
       }
     }
 
-    const instance = new DebugTestController("DebugTest");
+    const instance = new DebugTestController(
+      "DebugTest",
+      "DebugTestController"
+    );
     assert.strictEqual(instance.name, "test");
   });
 
@@ -46,7 +41,10 @@ suite("Debug Decorator", () => {
     // Mock the console.info calls.
     const infoMock = mock.method(console, "info");
 
-    const instance = new DebugTestController("DebugTest_2");
+    const instance = new DebugTestController(
+      "DebugTest_2",
+      "DebugTestController"
+    );
     const name = instance.name;
     assert.strictEqual(name, "test");
     await instance.isSettled;
@@ -61,15 +59,15 @@ suite("Debug Decorator", () => {
     infoMock.mock.restore();
 
     assert.deepStrictEqual(callInfo[0].arguments, [
-      "[\x1B[104;97m name:get \x1B[m]",
+      "[\x1B[104;97m name: get \x1B[m]",
       "test",
     ]);
     assert.deepStrictEqual(callInfo[1].arguments, [
-      "[\x1B[104;97m name:set \x1B[m]",
+      "[\x1B[104;97m name: set \x1B[m]",
       "foo",
     ]);
     assert.deepStrictEqual(callInfo[2].arguments, [
-      "[\x1B[104;97m name:get \x1B[m]",
+      "[\x1B[104;97m name: get \x1B[m]",
       "foo",
     ]);
   });
@@ -105,7 +103,10 @@ suite("Debug Decorator", () => {
     // Mock the console.info calls.
     const infoMock = mock.method(console, "info");
 
-    const instance = new DebugTestController("DebugTest_3");
+    const instance = new DebugTestController(
+      "DebugTest_3",
+      "DebugTestController"
+    );
     const name = instance.name;
     assert.strictEqual(name, "test");
     await instance.isSettled;
@@ -120,15 +121,15 @@ suite("Debug Decorator", () => {
     infoMock.mock.restore();
 
     assert.deepStrictEqual(callInfo[0].arguments, [
-      "[\x1B[104;97m Custom Get Name:get \x1B[m]",
+      "[\x1B[104;97m Custom Get Name: get \x1B[m]",
       "test",
     ]);
     assert.deepStrictEqual(callInfo[1].arguments, [
-      "[\x1B[104;97m Custom Set Name:set \x1B[m]",
+      "[\x1B[104;97m Custom Set Name: set \x1B[m]",
       "foo",
     ]);
     assert.deepStrictEqual(callInfo[2].arguments, [
-      "[\x1B[104;97m Custom Get Name:get \x1B[m]",
+      "[\x1B[104;97m Custom Get Name: get \x1B[m]",
       "foo",
     ]);
   });

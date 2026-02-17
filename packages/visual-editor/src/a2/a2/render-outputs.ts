@@ -3,27 +3,16 @@
  */
 
 import {
-  Capabilities,
-  JSONPart,
+  GraphDescriptor,
   LLMContent,
   Outcome,
   Schema,
-  StoredDataCapabilityPart,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { ConnectorManager } from "./connector-manager.js";
+import connectorSave from "../google-drive/connector-save.js";
 import { callGenWebpage } from "./html-generator.js";
-import { flattenContext } from "./lists.js";
 import { Template } from "./template.js";
-import {
-  err,
-  llm,
-  mergeContent,
-  ok,
-  toJson,
-  toLLMContent,
-  toText,
-} from "./utils.js";
+import { err, llm, mergeContent, ok, toLLMContent, toText } from "./utils.js";
 import { readFlags } from "./settings.js";
 import { renderConsistentUI } from "./render-consistent-ui.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -149,6 +138,8 @@ type InvokeInputs = {
   "b-system-instruction"?: LLMContent;
   "b-render-model-name": string;
   "b-google-doc-title"?: string;
+  "b-slide-deck-mode"?: string;
+  "b-slide-write-mode"?: string;
 };
 
 type InvokeOutputs = {
@@ -163,47 +154,8 @@ type DescribeInputs = {
   inputs: {
     text?: LLMContent;
     "p-render-mode": string;
+    "b-slide-deck-mode"?: string;
   };
-};
-
-type GraphMetadata = {
-  title?: string;
-  description?: string;
-  version?: string;
-  url?: string;
-  icon?: string;
-  visual?: {
-    presentation?: Presentation;
-  };
-  userModified?: boolean;
-  tags?: string[];
-  comments: Comment[];
-};
-
-type Comment = {
-  id: string;
-  text: string;
-  metadata: {
-    title: string;
-    visual: {
-      x: number;
-      y: number;
-      collapsed: "expanded";
-      outputHeight: number;
-    };
-  };
-};
-
-type Presentation = {
-  themes?: Record<string, Theme>;
-  theme?: string;
-};
-
-type Theme = {
-  themeColors?: ThemeColors;
-  palette?: PaletteColors;
-  template?: string;
-  splashScreen?: StoredDataCapabilityPart;
 };
 
 type ThemeColors = {
@@ -242,34 +194,24 @@ function defaultThemeColors(): ThemeColors {
   };
 }
 
-async function getThemeColors(
-  read: Capabilities["read"]
-): Promise<ThemeColors> {
-  const readingMetadata = await read({ path: "/env/metadata" });
-  if (!ok(readingMetadata)) return defaultThemeColors();
-  const metadata = (readingMetadata.data?.at(0)?.parts?.at(0) as JSONPart)
-    ?.json as GraphMetadata;
-  if (!metadata) return defaultThemeColors();
-  const currentThemeId = metadata?.visual?.presentation?.theme;
+function getThemeColors(graph: GraphDescriptor | undefined): ThemeColors {
+  if (!graph) return defaultThemeColors();
+  const currentThemeId = graph.metadata?.visual?.presentation?.theme;
   if (!currentThemeId) return defaultThemeColors();
   const themeColors =
-    metadata?.visual?.presentation?.themes?.[currentThemeId]?.themeColors;
+    graph.metadata?.visual?.presentation?.themes?.[currentThemeId]?.themeColors;
   if (!themeColors) return defaultThemeColors();
   return { ...defaultThemeColors(), ...themeColors };
 }
 
-async function getPaletteColors(
-  read: Capabilities["read"]
-): Promise<PaletteColors | undefined> {
-  const readingMetadata = await read({ path: "/env/metadata" });
-  if (!ok(readingMetadata)) return;
-  const metadata = (readingMetadata.data?.at(0)?.parts?.at(0) as JSONPart)
-    ?.json as GraphMetadata;
-  if (!metadata) return;
-  const currentThemeId = metadata?.visual?.presentation?.theme;
+function getPaletteColors(
+  graph: GraphDescriptor | undefined
+): PaletteColors | undefined {
+  if (!graph) return;
+  const currentThemeId = graph.metadata?.visual?.presentation?.theme;
   if (!currentThemeId) return;
   const palette =
-    metadata?.visual?.presentation?.themes?.[currentThemeId]?.palette;
+    graph.metadata?.visual?.presentation?.themes?.[currentThemeId]?.palette;
   if (!palette) return {};
   return { ...palette };
 }
@@ -303,30 +245,43 @@ function getPalettePrompt(colors: PaletteColors): string {
 }
 
 async function saveToGoogleDrive(
-  caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
   content: LLMContent,
   mimeType: string,
-  title: string | undefined
+  title: string | undefined,
+  slideDeckMode?: string,
+  slideWriteMode?: string
 ): Promise<Outcome<SaveOutput>> {
+  const graph = moduleArgs.context.currentGraph;
   let graphId = "";
-  // Let's get the title from the graph
-  const readingMetadata = await caps.read({ path: "/env/metadata" });
-  if (ok(readingMetadata)) {
-    const metadata = toJson<GraphMetadata>(readingMetadata.data);
-    if (metadata) {
-      if (!title) {
-        title = `${metadata.title} (Opal App)`;
-      }
-      graphId = metadata.url?.replace("drive:/", "") || "";
+  if (graph) {
+    if (!title) {
+      title = `${graph.title} (Opal App)`;
     }
+    graphId = graph.url?.replace("drive:/", "") || "";
   }
-  const manager = new ConnectorManager(caps, {
-    url: "embed://a2/google-drive.bgl.json",
-    configuration: { file: { mimeType } },
-  });
-  return manager.save([content], { title, graphId }) as Promise<
-    Outcome<SaveOutput>
-  >;
+  const id = moduleArgs.context.currentStep?.id || "render-outputs";
+  return connectorSave(
+    {
+      method: "save",
+      id,
+      context: [content],
+      title,
+      graphId,
+      info: {
+        configuration: {
+          file: { mimeType, preview: "", id: "" },
+          slideDeckMode: slideDeckMode as "new" | "same" | undefined,
+          slideWriteMode: slideWriteMode as
+            | "prepend"
+            | "append"
+            | "overwrite"
+            | undefined,
+        },
+      },
+    },
+    moduleArgs
+  ) as Promise<Outcome<SaveOutput>>;
 }
 
 function paramsToContent(params: Params): LLMContent {
@@ -350,9 +305,10 @@ async function invoke(
     "b-system-instruction": systemInstruction,
     "b-render-model-name": modelType,
     "b-google-doc-title": googleDocTitle,
+    "b-slide-deck-mode": slideDeckMode,
+    "b-slide-write-mode": slideWriteMode,
     ...params
   }: InvokeInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<InvokeOutputs>> {
   let { modelName } = getModel(modelType);
@@ -362,16 +318,13 @@ async function invoke(
     text = toLLMContent("");
   }
   let systemText = toText(systemInstruction ?? defaultSystemInstruction());
-  const template = new Template(caps, text);
+  const template = new Template(text, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async () => "");
   if (!ok(substituting)) {
     return substituting;
   }
 
-  const context = mergeContent(
-    flattenContext([substituting], true, "\n\n"),
-    "user"
-  );
+  const context = mergeContent([substituting], "user");
   // If the step uses one of the deprecated modes that encodes model, trust this.
   if (renderMode == FLASH_MODE) {
     modelName = "gemini-2.5-flash";
@@ -390,16 +343,16 @@ async function invoke(
       return { context: [out] };
     }
     case "HTML": {
-      const palette = await getPaletteColors(caps.read);
+      const graph = moduleArgs.context.currentGraph;
+      const palette = getPaletteColors(graph);
       if (palette?.primary) {
         systemText += getPalettePrompt(palette);
       } else {
-        const themeColors = await getThemeColors(caps.read);
+        const themeColors = getThemeColors(graph);
         systemText += themeColorsPrompt(themeColors);
       }
       console.log("SI :", systemText);
       const webPage = await callGenWebpage(
-        caps,
         moduleArgs,
         systemText,
         [context],
@@ -421,7 +374,7 @@ async function invoke(
     }
     case "GoogleDoc": {
       return saveToGoogleDrive(
-        caps,
+        moduleArgs,
         out,
         "application/vnd.google-apps.document",
         googleDocTitle
@@ -429,15 +382,17 @@ async function invoke(
     }
     case "GoogleSlides": {
       return saveToGoogleDrive(
-        caps,
+        moduleArgs,
         out,
         "application/vnd.google-apps.presentation",
-        googleDocTitle
+        googleDocTitle,
+        slideDeckMode,
+        slideWriteMode
       );
     }
     case "GoogleSheets": {
       return saveToGoogleDrive(
-        caps,
+        moduleArgs,
         out,
         "application/vnd.google-apps.spreadsheet",
         googleDocTitle
@@ -445,7 +400,6 @@ async function invoke(
     }
     case "ConsistentUI": {
       const context = await renderConsistentUI(
-        caps,
         moduleArgs,
         out,
         systemInstruction
@@ -457,7 +411,10 @@ async function invoke(
   return { context: [out] };
 }
 
-function advancedSettings(renderType: RenderType): Record<string, Schema> {
+function advancedSettings(
+  renderType: RenderType,
+  slideDeckMode?: string
+): Record<string, Schema> {
   switch (renderType) {
     case "HTML":
       return {
@@ -487,15 +444,56 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
       };
     }
     case "GoogleSlides": {
-      return {
-        "b-google-doc-title": {
+      const settings: Record<string, Schema> = {
+        "b-slide-deck-mode": {
           type: "string",
-          behavior: ["config", "hint-advanced"],
-          title: "Google Presentation Title",
-          description:
-            "The title of a Google Drive Presentation that content will be saved to",
+          enum: [
+            {
+              id: "new",
+              title: "New slide deck",
+            },
+            {
+              id: "same",
+              title: "Same slide deck",
+            },
+          ],
+          behavior: ["config", "hint-advanced", "reactive"],
+          title: "Edit each time",
+          default: "new",
         },
       };
+      if (slideDeckMode === "same") {
+        settings["b-slide-write-mode"] = {
+          type: "string",
+          enum: [
+            {
+              id: "prepend",
+              title: "Prepend",
+              description: "Add to the beginning",
+            },
+            {
+              id: "append",
+              title: "Append",
+              description: "Add to the end",
+            },
+            {
+              id: "overwrite",
+              title: "Overwrite",
+              description: "Replace everything",
+            },
+          ],
+          behavior: ["config", "hint-advanced", "reactive"],
+          title: "Write mode",
+          default: "prepend",
+        };
+      }
+      settings["b-google-doc-title"] = {
+        type: "string",
+        behavior: ["config", "hint-advanced"],
+        title: "Slide deck name",
+        description: "Title of slide deck",
+      };
+      return settings;
     }
     case "GoogleSheets": {
       return {
@@ -523,8 +521,13 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
 }
 
 async function describe(
-  { inputs: { text, "p-render-mode": renderMode } }: DescribeInputs,
-  caps: Capabilities,
+  {
+    inputs: {
+      text,
+      "p-render-mode": renderMode,
+      "b-slide-deck-mode": slideDeckMode,
+    },
+  }: DescribeInputs,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);
@@ -533,7 +536,7 @@ async function describe(
     ? MODES
     : MODES.filter(({ id }) => id !== "consistent-ui");
 
-  const template = new Template(caps, text);
+  const template = new Template(text, moduleArgs.context.currentGraph);
   const { renderType, icon } = getMode(renderMode);
 
   return {
@@ -555,7 +558,7 @@ async function describe(
           default: MANUAL_MODE,
           description: "Choose how to combine and display the outputs",
         },
-        ...advancedSettings(renderType),
+        ...advancedSettings(renderType, slideDeckMode),
         ...template.schemas(),
       },
       behavior: ["at-wireable"],

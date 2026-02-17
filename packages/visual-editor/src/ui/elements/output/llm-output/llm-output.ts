@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type { DataPart, LLMContent } from "@breadboard-ai/types";
-import { isStoredData, Template } from "@breadboard-ai/utils";
+import {
+  isStoredData,
+  Template,
+  isNotebookLmUrl,
+  parseNotebookLmId,
+} from "@breadboard-ai/utils";
 import {
   HTMLTemplateResult,
   LitElement,
@@ -42,10 +47,10 @@ import {
   isFunctionResponseCapabilityPart,
   isInlineData,
   isJSONPart,
-  isListPart,
   isLLMContent,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
+import "../../notebooklm-viewer/notebooklm-viewer.js";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -740,6 +745,14 @@ export class LLMOutput extends LitElement {
             if (!url) {
               this.#outputLoaded();
               value = html`<div>Failed to retrieve stored data</div>`;
+            } else if (isNotebookLmUrl(url)) {
+              // NotebookLM reference - extract notebook ID and render viewer
+              const notebookId = parseNotebookLmId(url) ?? "";
+              this.#outputLoaded();
+              value = html`<bb-notebooklm-viewer
+                .notebookId=${notebookId}
+                .showExternalLink=${true}
+              ></bb-notebooklm-viewer>`;
             } else {
               const fileId = partToDriveFileId(part);
               if (fileId) {
@@ -893,21 +906,6 @@ export class LLMOutput extends LitElement {
           } else if (isJSONPart(part)) {
             this.#outputLoaded();
             value = html`<bb-json-tree .json=${part.json}></bb-json-tree>`;
-          } else if (isListPart(part)) {
-            this.#outputLoaded();
-            value = html`${part.list
-              .map((item) => {
-                const content = item.content.at(-1);
-                if (!content) return nothing;
-                return html`<bb-llm-output
-                  .showExportControls=${true}
-                  .graphUrl=${this.graphUrl}
-                  .lite=${true}
-                  .clamped=${false}
-                  .value=${content}
-                ></bb-llm-output>`;
-              })
-              .filter((item) => item !== null)}`;
           } else {
             value = html`Unrecognized part`;
           }

@@ -3,7 +3,6 @@
  */
 
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -11,8 +10,8 @@ import {
 import { type DescriberResult, type Params } from "./common.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
 import { callGeminiImage } from "./image-utils.js";
+import { type ExecuteStepArgs } from "./step-executor.js";
 import { ArgumentNameGenerator } from "./introducer.js";
-import { ListExpander } from "./lists.js";
 import { Template } from "./template.js";
 import { ToolManager } from "./tool-manager.js";
 import {
@@ -30,6 +29,7 @@ import {
   toTextConcat,
 } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 const MAKE_IMAGE_ICON = "generative-image";
 const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];
@@ -48,7 +48,6 @@ type ImageGeneratorOutputs = {
 export { invoke as default, describe };
 
 function gatheringRequest(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
@@ -63,7 +62,6 @@ ${instruction}
 
 Call the tools to gather the necessary information that could be used to create an accurate prompt.`;
   return new GeminiPrompt(
-    caps,
     moduleArgs,
     {
       body: {
@@ -89,7 +87,6 @@ async function invoke(
     "p-model-name": modelName,
     ...params
   }: ImageGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<ImageGeneratorOutputs>> {
   incomingContext ??= [];
@@ -103,95 +100,95 @@ async function invoke(
   const textContext = extractTextData(incomingContext);
   // Substitute params in instruction.
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
-  const substituting = await new Template(caps, instruction).substitute(
-    params,
-    async (part) => toolManager.addTool(part)
-  );
+  const substituting = await new Template(
+    instruction,
+    moduleArgs.context.currentGraph
+  ).substitute(params, async (part) => toolManager.addTool(part));
   if (!ok(substituting)) {
     return substituting;
   }
 
-  const fanningOut = await new ListExpander(substituting, incomingContext).map(
-    async (instruction, context) => {
-      // If there are tools in instruction, add an extra step of preparing
-      // information via tools.
-      if (toolManager.hasTools()) {
-        const gatheringInformation = await gatheringRequest(
-          caps,
-          moduleArgs,
-          context,
-          instruction,
-          toolManager
-        ).invoke();
-        if (!ok(gatheringInformation)) return gatheringInformation;
-        context.push(...gatheringInformation.all);
+  // Process single item directly (list support removed)
+  const context = [...incomingContext];
+
+  // If there are tools in instruction, add an extra step of preparing
+  // information via tools.
+  if (toolManager.hasTools()) {
+    const gatheringInformation = await gatheringRequest(
+      moduleArgs,
+      context,
+      substituting,
+      toolManager
+    ).invoke();
+    if (!ok(gatheringInformation)) return gatheringInformation;
+    context.push(...gatheringInformation.all);
+  }
+
+  const refImages = extractMediaData([substituting]);
+  const refText = substituting
+    ? toLLMContent(toTextConcat(extractTextData([substituting])))
+    : toLLMContent("");
+  imageContext = imageContext.concat(refImages);
+
+  let retryCount = MAX_RETRIES;
+
+  while (retryCount--) {
+    // Image editing case.
+    if (imageContext.length > 0) {
+      console.log("Step has reference image, using Gemini Image API: i2i");
+      const instructionText = refText ? toText(refText) : "";
+      const combinedInstruction = toTextConcat(
+        joinContent(instructionText, textContext, false)
+      ).trim();
+      if (!combinedInstruction) {
+        return err(
+          `An image editing instruction must be provided along side the reference image.`
+        );
       }
-
-      const refImages = extractMediaData([instruction]);
-      const refText = instruction
-        ? toLLMContent(toTextConcat(extractTextData([instruction])))
-        : toLLMContent("");
-      imageContext = imageContext.concat(refImages);
-
-      let retryCount = MAX_RETRIES;
-
-      while (retryCount--) {
-        // Image editing case.
-        if (imageContext.length > 0) {
-          console.log("Step has reference image, using Gemini Image API: i2i");
-          const instructionText = refText ? toText(refText) : "";
-          const combinedInstruction = toTextConcat(
-            joinContent(instructionText, textContext, false)
-          ).trim();
-          if (!combinedInstruction) {
-            return err(
-              `An image editing instruction must be provided along side the reference image.`
-            );
-          }
-          const finalInstruction =
-            combinedInstruction + "\nAspect ratio: " + aspectRatio;
-          console.log("PROMPT: " + finalInstruction);
-          const generatedImage = await callGeminiImage(
-            caps,
-            moduleArgs,
-            modelName,
-            finalInstruction,
-            imageContext,
-            true,
-            aspectRatio
-          );
-          if (!ok(generatedImage)) return generatedImage;
-          return mergeContent(generatedImage, "model");
-        } else {
-          console.log("Step has text only, using Gemini Image API: t2i");
-          const imagePrompt = toLLMContent(
-            toText(addUserTurn(refText, context))
-          );
-          const iPrompt = toText(imagePrompt).trim();
-          console.log("PROMPT", iPrompt);
-          const generatedImage = await callGeminiImage(
-            caps,
-            moduleArgs,
-            modelName,
-            iPrompt,
-            [],
-            true,
-            aspectRatio
-          );
-          if (!ok(generatedImage)) return generatedImage;
-          return mergeContent(generatedImage, "model");
-        }
-      }
-      return err(`Failed to generate an image after ${MAX_RETRIES} tries.`);
+      const finalInstruction =
+        combinedInstruction + "\nAspect ratio: " + aspectRatio;
+      console.log("PROMPT: " + finalInstruction);
+      const reporter = createReporter(moduleArgs, {
+        title: `Calling ai_image_tool`,
+        icon: "spark",
+      });
+      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+      const generatedImage = await callGeminiImage(
+        args,
+        modelName,
+        finalInstruction,
+        imageContext,
+        true,
+        aspectRatio
+      );
+      if (!ok(generatedImage)) return generatedImage;
+      return { context: [mergeContent(generatedImage, "model")] };
+    } else {
+      console.log("Step has text only, using Gemini Image API: t2i");
+      const imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
+      const iPrompt = toText(imagePrompt).trim();
+      console.log("PROMPT", iPrompt);
+      const reporter = createReporter(moduleArgs, {
+        title: `Calling ai_image_tool`,
+        icon: "spark",
+      });
+      const args: ExecuteStepArgs = { ...moduleArgs, reporter };
+      const generatedImage = await callGeminiImage(
+        args,
+        modelName,
+        iPrompt,
+        [],
+        true,
+        aspectRatio
+      );
+      if (!ok(generatedImage)) return generatedImage;
+      return { context: [mergeContent(generatedImage, "model")] };
     }
-  );
-
-  if (!ok(fanningOut)) return fanningOut;
-  return { context: fanningOut };
+  }
+  return err(`Failed to generate an image after ${MAX_RETRIES} tries.`);
 }
 
 type DescribeInputs = {
@@ -202,9 +199,8 @@ type DescribeInputs = {
 
 async function describe(
   { inputs: { instruction } }: DescribeInputs,
-  caps: Capabilities
 ) {
-  const template = new Template(caps, instruction);
+  const template = new Template(instruction);
   return {
     inputSchema: {
       type: "object",

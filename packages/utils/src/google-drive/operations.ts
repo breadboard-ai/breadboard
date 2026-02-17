@@ -20,16 +20,16 @@ import { type AppProperties } from "./utils.js";
 
 export { DriveOperations, PROTOCOL };
 
-  import {
-    extractGoogleDriveFileId,
-    readProperties,
-    truncateValueForUtf8,
-  } from "./utils.js";
-  import type { GoogleDriveClient } from "./google-drive-client.js";
-  import { DriveLookupCache } from "./drive-lookup-cache.js";
-  import { purgeStoredDataInMemoryValues } from "@breadboard-ai/utils";
-  import { err } from "@breadboard-ai/utils";
-  import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import {
+  extractGoogleDriveFileId,
+  readProperties,
+  truncateValueForUtf8,
+} from "./utils.js";
+import type { GoogleDriveClient } from "./google-drive-client.js";
+import { DriveLookupCache } from "./drive-lookup-cache.js";
+import { purgeStoredDataInMemoryValues } from "@breadboard-ai/utils";
+import { err } from "@breadboard-ai/utils";
+import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 const PROTOCOL = "drive:";
 
@@ -111,6 +111,7 @@ class DriveOperations {
   );
   readonly #googleDriveClient: GoogleDriveClient;
   readonly #publishPermissions: gapi.client.drive.Permission[];
+  readonly #log: (level: string, ...args: unknown[]) => void;
 
   /**
    * @param refreshProjectListCallback will be called when project list may have to be updated.
@@ -120,7 +121,8 @@ class DriveOperations {
     userFolderName: string,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
-    private readonly findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"]
+    private readonly findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"],
+    log?: (level: string, ...args: unknown[]) => void
   ) {
     if (!userFolderName) {
       throw new Error(`userFolderName was empty`);
@@ -128,6 +130,7 @@ class DriveOperations {
     this.#userFolderName = userFolderName;
     this.#googleDriveClient = googleDriveClient;
     this.#publishPermissions = publishPermissions;
+    this.#log = log ?? (() => {});
   }
 
   /** Invalidates all the caches. */
@@ -185,11 +188,11 @@ class DriveOperations {
           mimeType: GRAPH_MIME_TYPE,
         }
       );
-      console.debug(`[Google Drive Board Server] Saved graph`, descriptor);
+      this.#log("verbose", "Saved graph", descriptor);
 
       return { result: true };
     } catch (err) {
-      console.warn(err);
+      this.#log("warning", err);
       return { result: false, error: "Unable to save" };
     }
   }
@@ -227,10 +230,10 @@ class DriveOperations {
         { fields: ["id"] }
       );
 
-      console.log("[Google Drive] Created new board", url.href);
+      this.#log("verbose", "Created new board", url.href);
       return { result: true, url: url.href };
     } catch (err) {
-      console.warn(err);
+      this.#log("warning", err);
       return { result: false, error: "Unable to create" };
     }
   }
@@ -419,7 +422,8 @@ class DriveOperations {
         this.#googleDriveClient
           .deleteFile(thumbnailFileId) // No need to await.
           .catch((e) => {
-            console.error(
+            this.#log(
+              "error",
               "Failed to delete thumbnail file",
               thumbnailFileId,
               e
@@ -491,7 +495,7 @@ class DriveOperations {
           },
           { fields: ["id"] }
         );
-        console.log("[Google Drive] Created new root folder", id);
+        this.#log("verbose", "Created new root folder", id);
         this.#cachedFolderId = id;
         return id;
       } catch (e) {
@@ -507,7 +511,7 @@ class DriveOperations {
     try {
       await this.#googleDriveClient.deleteFile(fileId);
     } catch (e) {
-      console.warn(e);
+      this.#log("warning", e);
       return err("Unable to delete");
     }
   }

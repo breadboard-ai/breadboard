@@ -8,8 +8,10 @@
 
 import { Outcome, Schema } from "@breadboard-ai/types";
 import { z, ZodObject, ZodType } from "zod";
+import type { HTMLTemplateResult } from "lit";
 import { FunctionDeclaration, GeminiSchema } from "../a2/gemini.js";
 import { MappedDefinitions } from "./types.js";
+import type { ProgressReporter } from "./types.js";
 
 export {
   defineFunction,
@@ -24,7 +26,9 @@ export type ZodFunctionDefinition<
   TResponse extends ArgsRawShape,
 > = {
   name: string;
+  title?: string;
   description: string;
+  icon?: string | HTMLTemplateResult;
   parameters: TParams;
   response?: TResponse;
 };
@@ -61,13 +65,16 @@ export type Handler<
   TResponse extends ArgsRawShape,
 > = (
   args: z.infer<ZodObject<TParams>>,
-  statusUpdateCallback: StatusUpdateCallback
+  statusUpdateCallback: StatusUpdateCallback,
+  reporter: ProgressReporter | null
 ) => Promise<Outcome<z.infer<ZodObject<TResponse>>>>;
 
 type TypedFunctionDefinition<
   TParams extends ArgsRawShape,
   TResponse extends ArgsRawShape,
 > = FunctionDeclaration & {
+  title?: string;
+  icon?: string | HTMLTemplateResult;
   handler: Handler<TParams, TResponse>;
 };
 
@@ -80,12 +87,14 @@ function defineFunction<
   definition: ZodFunctionDefinition<TParams, TResponse>,
   handler: Handler<TParams, TResponse>
 ): TypedFunctionDefinition<TParams, TResponse> {
-  const { parameters, response, name, description } = definition;
+  const { parameters, response, name, title, description, icon } = definition;
   // Convert Zod schemas to JSON Schema
   const parametersJsonSchema = z.object(parameters).toJSONSchema();
   const result: TypedFunctionDefinition<TParams, TResponse> = {
     name,
+    title,
     description,
+    icon,
     parametersJsonSchema,
     handler,
   };
@@ -104,17 +113,25 @@ function defineResponseSchema<TSchema extends ArgsRawShape>(
 }
 
 function defineFunctionLoose(
-  definition: FunctionDeclaration,
+  definition: FunctionDeclaration & { icon: string; title?: string },
   handler: (
     args: Record<string, unknown>,
     statusUpdateCallback: StatusUpdateCallback
   ) => Promise<Outcome<Record<string, unknown>>>
 ): FunctionDefinition {
-  const { parametersJsonSchema, responseJsonSchema, name, description } =
-    definition;
+  const {
+    parametersJsonSchema,
+    responseJsonSchema,
+    name,
+    title,
+    description,
+    icon,
+  } = definition;
   const result: FunctionDefinition = {
     name,
+    title,
     description,
+    icon,
     parametersJsonSchema,
     handler,
   };
@@ -130,7 +147,8 @@ function mapDefinitions(functions: FunctionDefinition[]): MappedDefinitions {
     item,
   ]);
   const declarations = functions.map(
-    ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
+    ({ handler: _handler, icon: _icon, title: _title, ...rest }) =>
+      rest as FunctionDeclaration
   );
 
   return { definitions, declarations };

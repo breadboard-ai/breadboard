@@ -3,7 +3,6 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types";
-import { listPrompt } from "../a2/lists.js";
 import { llm } from "../a2/utils.js";
 
 export { createSystemInstruction, defaultSystemInstruction };
@@ -13,14 +12,11 @@ function defaultSystemInstruction(): LLMContent {
 DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please.`.asContent();
 }
 
-function createSystemInstruction(
-  existing: LLMContent | undefined,
-  makeList: boolean
-) {
+function createSystemInstruction(existing: LLMContent | undefined) {
   if (!existing) {
     existing = defaultSystemInstruction();
   }
-  const builtIn = llm`
+  return llm`
 
 Today is ${new Date().toLocaleString("en-US", {
     month: "long",
@@ -31,6 +27,4 @@ Today is ${new Date().toLocaleString("en-US", {
   })}
     
 ${existing}`.asContent();
-  if (!makeList) return builtIn;
-  return listPrompt(builtIn);
 }

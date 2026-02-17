@@ -5,6 +5,9 @@
  */
 
 import type { BoardServer, OutputValues } from "@breadboard-ai/types";
+import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
+import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
+import { type UserSignInResponse } from "../ui/types/types.js";
 import {
   AssetPath,
   EditHistoryCreator,
@@ -14,7 +17,6 @@ import {
   GraphIdentifier,
   GraphMetadata,
   MainGraphIdentifier,
-  ModuleIdentifier,
   NodeIdentifier,
   PortIdentifier,
 } from "@breadboard-ai/types";
@@ -40,7 +42,6 @@ export interface Tab {
   graph: GraphDescriptor;
   graphIsMine: boolean;
   subGraphId: string | null;
-  moduleId: ModuleIdentifier | null;
   version: number;
   lastLoadedVersion: number;
   readOnly: boolean;
@@ -63,9 +64,13 @@ export interface RuntimeConfig {
   guestConfig: GuestConfiguration;
   settings: SettingsStore;
   shellHost: OpalShellHostProtocol;
+  embedHandler?: EmbedHandler;
   env?: FileSystemEntry[];
   appName: string;
   appSubName: string;
+  askUserToSignInIfNeeded?: (
+    scopes?: OAuthScope[]
+  ) => Promise<UserSignInResponse>;
 }
 
 export type ReferenceIdentifier =
@@ -103,7 +108,6 @@ export interface WorkspaceVisualStateWithChangeId {
 export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
 export type WorkspaceSelectionState = {
   graphs: Map<GraphIdentifier, GraphSelectionState>;
-  modules: Set<ModuleIdentifier>;
 };
 export interface WorkspaceSelectionStateWithChangeId {
   selectionChangeId: WorkspaceSelectionChangeId;

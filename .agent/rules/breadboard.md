@@ -14,6 +14,14 @@ example:
 - `npm run test` first invokes build (or `build:tsc`) for all dependencies, then
   runs testing.
 
+## Build Verification Workflow
+
+When making code changes, check if the user already has a build running in watch
+mode (look for a running terminal like `npm run build --watch`). If not, prompt
+the user to start one before making changes. Use the running build terminal
+output to verify compilation instead of running separate `tsc --noEmit`
+commands.
+
 ## Packages
 
 These are some significant packages:
@@ -30,13 +38,15 @@ These are some significant packages:
   -- contain the core runtime engine for the project and all the data
   transformation/processing code.
 
-- `packages/visual-editor` -- contains the majority of the frontend code for the project.
+- `packages/visual-editor` -- contains the majority of the frontend code for the
+  project.
 
 - `unified-server` -- contains the nodejs server, the backend of the project.
 
 ## Signals
 
-The repo is using `signal-polyfil` and `signal-utils` as its signal infrastructure.
+The repo is using `signal-polyfil` and `signal-utils` as its signal
+infrastructure.
 
 ## Coding Conventions
 
@@ -68,12 +78,22 @@ function quz() {
 
 ## Tests
 
-To write tests, use node's built-in test framework. Use the `npm run test` command within the package to run tests.
+To write tests, use node's built-in test framework. Use the `npm run test`
+command within the package to run tests.
 
 Name tests as `[name of tested file].test.ts` and place it into
 `packages/[package name]/tests/` directory. All packages are configured to pick
 up that file with `npm run test`.
 
-If you're writing a test in `packages/visual-editor/tests` and the code-to-be-tested
-contains signals, use the `packages/visual-editor/tests/signal-watcher.ts` helper
-for easy reactivity testing.
+If you're writing a test in `packages/visual-editor/tests` and the
+code-to-be-tested contains signals, use the
+`packages/visual-editor/tests/signal-watcher.ts` helper for easy reactivity
+testing.
+
+In `packages/visual-editor`, use `npm run test:file` to run subsets of tests or
+individual tests:
+
+```bash
+npm run test:file -- './dist/tsc/tests/sca/actions/share/**/*.js'
+
+```

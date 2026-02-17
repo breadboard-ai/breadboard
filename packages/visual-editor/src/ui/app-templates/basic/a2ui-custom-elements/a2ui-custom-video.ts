@@ -5,7 +5,7 @@
  */
 
 import * as A2UI from "../../../../a2ui/index.js";
-import { html, css, nothing } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   convertShareUriToEmbedUri,
@@ -15,10 +15,7 @@ import {
   isShortsUri,
   isWatchUri,
 } from "../../../utils/youtube.js";
-import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { unsafeCSS } from "lit";
 
 @customElement("a2ui-custom-video")
 export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
@@ -28,8 +25,9 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
   @property()
   accessor url: A2UI.v0_8.Primitives.StringValue | null = null;
 
+  override accessor isMedia = true;
+
   static styles = [
-    unsafeCSS(A2UI.v0_8.Styles.structuralStyles),
     css`
       :host {
         display: block;
@@ -39,14 +37,20 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
       video {
         display: block;
         width: 100%;
+        border-radius: var(--a2ui-video-radius, 20px);
       }
 
       iframe {
         aspect-ratio: 16/9;
+        border: none;
 
         &.vertical {
           aspect-ratio: 9/16;
         }
+      }
+
+      video {
+        object-fit: cover;
       }
     `,
   ];
@@ -63,9 +67,7 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
 
   #renderVideoElement(videoUri: string) {
     let uri: string | null = videoUri;
-    const frameClasses: Record<string, boolean> = isShortsUri(uri)
-      ? { vertical: true }
-      : {};
+    const isVertical = isShortsUri(uri);
     if (isWatchUri(uri) || isShortsUri(uri)) {
       uri = convertWatchOrShortsUriToEmbedUri(uri);
     } else if (isShareUri(uri)) {
@@ -74,9 +76,7 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
 
     if (isEmbedUri(uri)) {
       return html`<iframe
-        class=${classMap(
-          A2UI.v0_8.Styles.merge(this.theme.elements.iframe, frameClasses)
-        )}
+        class=${isVertical ? "vertical" : ""}
         src="${uri}"
         frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -85,9 +85,7 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
       ></iframe>`;
     } else {
       if (!uri) {
-        return html`<p class=${classMap(this.theme.elements.p)}>
-          Unable to obtain video.
-        </p>`;
+        return html`<p>Unable to obtain video.</p>`;
       }
 
       const videoUrl = fetch(uri)
@@ -98,11 +96,7 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
           return blobUrl;
         });
 
-      return html`<video
-        class=${classMap(this.theme.elements.video)}
-        src=${until(videoUrl)}
-        controls
-      ></video>`;
+      return html`<video src=${until(videoUrl)} controls></video>`;
     }
   }
 
@@ -122,22 +116,13 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
 
     const videoUrl = fileUri || url;
     if (!videoUrl) {
-      return html`<p class=${classMap(this.theme.elements.p)}>
-        Unable to obtain video.
-      </p>`;
+      return html`<p>Unable to obtain video.</p>`;
     }
 
     return this.#renderVideoElement(videoUrl);
   }
 
   render() {
-    return html`<section
-      class=${classMap(this.theme.components.Video)}
-      style=${this.theme.additionalStyles?.Video
-        ? styleMap(this.theme.additionalStyles?.Video)
-        : nothing}
-    >
-      ${this.#renderVideo()}
-    </section>`;
+    return html`<section>${this.#renderVideo()}</section>`;
   }
 }

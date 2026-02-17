@@ -21,3 +21,7 @@ export function verbose(...args: unknown[]): DebugLog {
 export function warning(...args: unknown[]): DebugLog {
   return { type: "warning", args } as DebugLog;
 }
+
+export function group(title: string, ...args: unknown[]): DebugLog {
+  return { type: "group", title, args } as DebugLog;
+}

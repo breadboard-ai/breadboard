@@ -7,18 +7,23 @@ export { executeWebpageStream, buildStreamingRequestBody, parseStoredDataUrl };
 export type { StreamingRequestBody, StreamChunk };
 
 import {
-  Capabilities,
-  FileSystemReadWritePath,
   LLMContent,
+  OPAL_BACKEND_API_PREFIX,
   Outcome,
 } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
-import { getCurrentStepState, StreamableReporter } from "./output.js";
-import { err, ok, progressFromThought, toLLMContentInline } from "./utils.js";
+import {
+  getCurrentStepState,
+  createReporter,
+} from "../agent/progress-work-item.js";
+import { err, progressFromThought, toLLMContentInline } from "./utils.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-const DEFAULT_STREAM_BACKEND_ENDPOINT =
-  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/generateWebpageStream";
+const STREAM_BACKEND_ENDPOINT = new URL(
+  "v1beta1/generateWebpageStream",
+  OPAL_BACKEND_API_PREFIX
+).href;
 
 type StreamChunk = {
   parts?: Array<{
@@ -47,24 +52,6 @@ type StreamingRequestBody = {
   }>;
   driveResourceKeys?: Record<string, string>;
 };
-
-async function getStreamBackendUrl(caps: Capabilities): Promise<string> {
-  type BackendSettings = { endpoint_url: string };
-  const reading = await caps.read({ path: "/env/settings/backend" });
-  if (ok(reading)) {
-    const part = reading.data?.at(0)?.parts?.at(0);
-    if (part && "json" in part) {
-      const settings = part.json as BackendSettings;
-      if (settings?.endpoint_url) {
-        // Extract base URL and append the streaming endpoint path
-        const url = new URL(settings.endpoint_url);
-        url.pathname = "/v1beta1/generateWebpageStream";
-        return url.toString();
-      }
-    }
-  }
-  return DEFAULT_STREAM_BACKEND_ENDPOINT;
-}
 
 /**
  * Build the request body for the streaming API.
@@ -189,13 +176,12 @@ function parseStoredDataUrl(handle: string): string {
  * Execute a streaming webpage generation request.
  */
 async function executeWebpageStream(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   instruction: string,
   content: LLMContent[],
   modelName: string
 ): Promise<Outcome<LLMContent>> {
-  const reporter = new StreamableReporter(caps, {
+  const reporter = createReporter(moduleArgs, {
     title: `Generating webpage with ${modelName}`,
     icon: "web",
   });
@@ -203,12 +189,11 @@ async function executeWebpageStream(
   const { appScreen } = getCurrentStepState(moduleArgs);
 
   try {
-    await reporter.start();
-    await reporter.sendUpdate("Preparing request", { modelName }, "upload");
+    reporter.addJson("Preparing request", { modelName }, "upload");
 
     if (appScreen) appScreen.progress = "Generating HTML";
 
-    const baseUrl = await getStreamBackendUrl(caps);
+    const baseUrl = STREAM_BACKEND_ENDPOINT;
     const url = new URL(baseUrl);
     url.searchParams.set("alt", "sse");
 
@@ -217,12 +202,6 @@ async function executeWebpageStream(
       content,
       modelName
     );
-
-    // Record model call with action tracker
-    caps.write({
-      path: `/mnt/track/call_${modelName}` as FileSystemReadWritePath,
-      data: [],
-    });
 
     const response = await moduleArgs.fetchWithCreds(url.toString(), {
       method: "POST",
@@ -233,13 +212,13 @@ async function executeWebpageStream(
 
     if (!response.ok) {
       const errorText = await response.text();
-      return reporter.sendError(
+      return reporter.addError(
         err(`Streaming request failed: ${response.status} ${errorText}`)
       );
     }
 
     if (!response.body) {
-      return reporter.sendError(err("No response body from streaming API"));
+      return reporter.addError(err("No response body from streaming API"));
     }
 
     // Process the SSE stream
@@ -258,40 +237,32 @@ async function executeWebpageStream(
 
           if (appScreen) {
             appScreen.progress = progressFromThought(text);
-            appScreen.expectedDuration = -1;
+            setScreenDuration(appScreen, -1);
           }
 
-          await reporter.sendUpdate(
-            `Thinking (${thoughtCount})`,
-            text,
-            "spark"
-          );
+          reporter.addText(`Thinking (${thoughtCount})`, text, "spark");
         } else if (chunkType === "html") {
           htmlResult = text;
-          await reporter.sendUpdate(
-            "Generated HTML",
-            "HTML output ready",
-            "download"
-          );
+          reporter.addText("Generated HTML", "HTML output ready", "download");
         } else if (chunkType === "error") {
-          return reporter.sendError(err(`Generation error: ${text}`));
+          return reporter.addError(err(`Generation error: ${text}`));
         }
       }
     }
 
     if (!htmlResult) {
-      return reporter.sendError(err("No HTML content received from stream"));
+      return reporter.addError(err("No HTML content received from stream"));
     }
 
     // Return HTML as inlineData with text/html mimeType to match legacy behavior
     return toLLMContentInline("text/html", htmlResult, "model");
   } catch (e) {
-    return reporter.sendError(err((e as Error).message));
+    return reporter.addError(err((e as Error).message));
   } finally {
     if (appScreen) {
       appScreen.progress = undefined;
-      appScreen.expectedDuration = -1;
+      setScreenDuration(appScreen, -1);
     }
-    reporter.close();
+    reporter.finish();
   }
 }

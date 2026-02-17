@@ -5,10 +5,11 @@
  */
 import { Template, TemplatePart } from "@breadboard-ai/utils";
 import { css, html, LitElement } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events.js";
-import { Project } from "../../../state/index.js";
+
 import { FastAccessMenu } from "../../elements.js";
 import { isTemplatePart } from "@breadboard-ai/utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
@@ -16,20 +17,30 @@ import { getAssetType } from "../../../utils/mime-type.js";
 import { icons } from "../../../styles/icons.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { jsonStringify } from "../../../utils/json-stringify.js";
-import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js";
-import { ROUTE_TOOL_PATH } from "../../../../a2/a2/tool-manager.js";
+import {
+  createTrustedChicletHTML,
+  setTrustedHTML,
+} from "../../../trusted-types/chiclet-html.js";
+import {
+  ROUTE_TOOL_PATH,
+  MEMORY_TOOL_PATH,
+} from "../../../../a2/a2/tool-manager.js";
+import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
+import { SCA } from "../../../../sca/sca.js";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../../sca/context/context.js";
 
 export function chicletHtml(
   part: TemplatePart,
-  projectState: Project | null,
-  subGraphId: string | null
+  subGraphId: string | null,
+  sca?: SCA
 ) {
   const { type, invalid, mimeType } = part;
   const assetType = getAssetType(mimeType) ?? "";
   const { icon: srcIcon, tags: metadataTags } = expandChiclet(
     part,
-    projectState,
-    subGraphId
+    subGraphId,
+    sca
   );
 
   const { title, path, instance } = part;
@@ -63,6 +74,12 @@ export function chicletHtml(
     label.dataset.parameter = "step";
     sourceTitle = "Go to";
     metadataIcon = "start";
+  } else if (path === MEMORY_TOOL_PATH) {
+    sourceTitle = "Use Memory";
+    metadataIcon = "database";
+  } else if (path === NOTEBOOKLM_TOOL_PATH) {
+    sourceTitle = "Use NotebookLM";
+    metadataIcon = "notebooklm";
   }
 
   label.setAttribute("contenteditable", "false");
@@ -70,6 +87,9 @@ export function chicletHtml(
   if (metadataIcon) {
     const icon = document.createElement("span");
     icon.classList.add("g-icon", "filled", "round");
+    if (metadataIcon === "notebooklm") {
+      icon.classList.add("notebooklm");
+    }
     icon.dataset.icon = metadataIcon;
 
     label.appendChild(icon);
@@ -95,8 +115,8 @@ export function chicletHtml(
     if (instance) {
       const { icon, title } = expandChiclet(
         { path: instance, type: "in", title: "unknown" },
-        projectState,
-        subGraphId
+        subGraphId,
+        sca
       );
 
       targetTitle = title;
@@ -126,15 +146,22 @@ export function chicletHtml(
 }
 
 @customElement("bb-text-editor")
-export class TextEditor extends LitElement {
+export class TextEditor extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property()
   set value(value: string) {
     this.#rawValue = value;
     this.#renderableValue = createTrustedChicletHTML(
       value,
-      this.projectState,
+      this.sca,
       this.subGraphId
     );
+    // If SCA wasn't available yet, chiclets that depend on graph lookups
+    // (e.g. routing chip targets) will render incomplete. Flag for refresh
+    // once the context arrives.
+    this.#needsChicletRefresh = !this.sca;
     this.#updateEditorValue();
   }
 
@@ -156,10 +183,10 @@ export class TextEditor extends LitElement {
   accessor subGraphId: string | null = null;
 
   @property()
-  accessor projectState: Project | null = null;
-
-  @property()
   accessor readOnly = false;
+
+  @property({ type: Boolean })
+  accessor isAgentMode = false;
 
   static styles = [
     icons,
@@ -237,6 +264,7 @@ export class TextEditor extends LitElement {
 
   #rawValue = "";
   #renderableValue: TrustedHTML = createTrustedChicletHTML("");
+  #needsChicletRefresh = false;
   #isUsingFastAccess = false;
   #showFastAccessMenuOnKeyUp = false;
   #fastAccessTarget: TemplatePart | null = null;
@@ -413,12 +441,13 @@ export class TextEditor extends LitElement {
 
       const fragment = document.createDocumentFragment();
       const tempEl = document.createElement("div");
-      (tempEl as { innerHTML: string | TrustedHTML }).innerHTML =
-        createTrustedChicletHTML(
-          `{${JSON.stringify(part)}}`,
-          this.projectState,
-          this.subGraphId
-        );
+      const chicletHtml = createTrustedChicletHTML(
+        `{${JSON.stringify(part)}}`,
+        this.sca,
+        this.subGraphId
+      );
+
+      setTrustedHTML(tempEl, chicletHtml);
       let appendedEl: ChildNode | undefined;
       if (tempEl.firstChild) {
         // We can just take the last item even though this is using a while.
@@ -892,14 +921,13 @@ export class TextEditor extends LitElement {
 
     const fragment = document.createDocumentFragment();
     const tempEl = document.createElement("div");
-    (
-      tempEl as {
-        innerHTML: string | TrustedHTML;
-      }
-    ).innerHTML = createTrustedChicletHTML(
-      evt.clipboardData.getData("text"),
-      this.projectState,
-      this.subGraphId
+    setTrustedHTML(
+      tempEl,
+      createTrustedChicletHTML(
+        evt.clipboardData.getData("text"),
+        this.sca,
+        this.subGraphId
+      )
     );
 
     while (tempEl.firstChild) {
@@ -999,6 +1027,11 @@ export class TextEditor extends LitElement {
     const containerBounds = this.getBoundingClientRect();
     const proxyBounds = this.#proxyRef.value.getBoundingClientRect();
     let top = Math.round(bounds.top - proxyBounds.top);
+    // When targeting a chiclet (routes/steps mode), shift the menu down
+    // to keep the triggering chip visible above.
+    if (this.#fastAccessTarget !== null) {
+      top += Math.round(bounds.height) + 4;
+    }
     let left = Math.round(bounds.left - proxyBounds.left);
 
     // If the fast access menu is about to go off the right, bring it back.
@@ -1030,17 +1063,19 @@ export class TextEditor extends LitElement {
     const hasTarget = this.#fastAccessTarget !== null;
 
     this.#fastAccessRef.value.selectedIndex = 0;
-    this.#fastAccessRef.value.showAssets = !hasTarget;
-    this.#fastAccessRef.value.showTools = !hasTarget;
-    this.#fastAccessRef.value.showComponents = !hasTarget;
-    this.#fastAccessRef.value.showRoutes = hasTarget;
-    this.#fastAccessRef.value.showParameters = false;
-    this.#fastAccessRef.value.showControlFlowTools = !hasTarget;
+    if (this.sca) {
+      this.sca.controller.editor.fastAccess.fastAccessMode = hasTarget
+        ? "route"
+        : "browse";
+    }
     this.#isUsingFastAccess = true;
   }
 
   #hideFastAccess() {
     this.#isUsingFastAccess = false;
+    if (this.sca) {
+      this.sca.controller.editor.fastAccess.fastAccessMode = null;
+    }
     if (!this.#fastAccessRef.value) {
       return;
     }
@@ -1060,11 +1095,7 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    (
-      this.#editorRef.value as {
-        innerHTML: string | TrustedHTML;
-      }
-    ).innerHTML = this.#renderableValue;
+    setTrustedHTML(this.#editorRef.value, this.#renderableValue);
     this.#ensureAllChicletsHaveSpace();
     this.#togglePlaceholder();
   }
@@ -1074,6 +1105,21 @@ export class TextEditor extends LitElement {
 
     if (this.#focusOnFirstRender) {
       this.focus();
+    }
+  }
+
+  protected updated(): void {
+    // The value setter may fire before @consume resolves the SCA context.
+    // Once SCA arrives, recompute the chiclet HTML so graph-dependent lookups
+    // (e.g. routing chip target titles) render correctly.
+    if (this.#needsChicletRefresh && this.sca) {
+      this.#needsChicletRefresh = false;
+      this.#renderableValue = createTrustedChicletHTML(
+        this.#rawValue,
+        this.sca,
+        this.subGraphId
+      );
+      this.#updateEditorValue();
     }
   }
 
@@ -1144,7 +1190,7 @@ export class TextEditor extends LitElement {
           }
 
           if (
-            this.projectState &&
+            this.sca &&
             this.supportsFastAccess &&
             this.#showFastAccessMenuOnKeyUp
           ) {
@@ -1205,12 +1251,6 @@ export class TextEditor extends LitElement {
           this.#captureEditorValue();
           this.#togglePlaceholder();
         }}
-        .graphId=${this.subGraphId}
-        .nodeId=${this.nodeId}
-        .showControlFlowTools=${this.#fastAccessTarget === null}
-        .showAssets=${this.#fastAccessTarget === null}
-        .showTools=${this.#fastAccessTarget === null}
-        .state=${this.projectState?.stepEditor.fastAccess}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;
   }

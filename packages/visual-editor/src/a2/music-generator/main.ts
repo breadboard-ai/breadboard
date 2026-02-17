@@ -2,19 +2,14 @@
  * @fileoverview Generates music output using supplied context.
  */
 
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { type DescriberResult } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
-import { ListExpander } from "../a2/lists.js";
 import {
   executeStep,
   type ContentMap,
   type ExecuteStepRequest,
+  type ExecuteStepArgs,
 } from "../a2/step-executor.js";
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
@@ -28,6 +23,7 @@ import {
   toTextConcat,
 } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createReporter } from "../agent/progress-work-item.js";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];
@@ -45,8 +41,7 @@ function makeMusicInstruction() {
 }
 
 async function callMusicGen(
-  caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
+  args: ExecuteStepArgs,
   prompt: string
 ): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
@@ -69,7 +64,7 @@ async function callMusicGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body);
+  const response = await executeStep(args, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
@@ -77,7 +72,6 @@ async function callMusicGen(
 
 async function invoke(
   { context, text, ...params }: AudioGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AudioGeneratorOutputs>> {
   context ??= [];
@@ -85,11 +79,13 @@ async function invoke(
   if (text) {
     instructionText = toText(text).trim();
   }
-  const template = new Template(caps, toLLMContent(instructionText));
+  const template = new Template(
+    toLLMContent(instructionText),
+    moduleArgs.context.currentGraph
+  );
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
@@ -104,20 +100,23 @@ async function invoke(
   console.log(text);
   console.log("substituting");
   console.log(substituting);
-  const results = await new ListExpander(substituting, context).map(
-    async (itemInstruction, itemContext) => {
-      const combinedInstruction = toTextConcat(
-        joinContent(toText(itemInstruction), itemContext, false)
-      );
-      if (!combinedInstruction) {
-        return toLLMContent("Please provide the music prompt.");
-      }
-      console.log("PROMPT: ", combinedInstruction);
-      return callMusicGen(caps, moduleArgs, combinedInstruction);
-    }
+  // Process single item directly (list support removed)
+  const itemContext = [...context];
+  const combinedInstruction = toTextConcat(
+    joinContent(toText(substituting), itemContext, false)
   );
-  if (!ok(results)) return results;
-  return { context: results };
+  if (!combinedInstruction) {
+    return { context: [toLLMContent("Please provide the music prompt.")] };
+  }
+  console.log("PROMPT: ", combinedInstruction);
+  const reporter = createReporter(moduleArgs, {
+    title: `Generating Music`,
+    icon: "audio_magic_eraser",
+  });
+  const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
+  const result = await callMusicGen(executeStepArgs, combinedInstruction);
+  if (!ok(result)) return result;
+  return { context: [result] };
 }
 
 type DescribeInputs = {
@@ -126,11 +125,8 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { text } }: DescribeInputs,
-  caps: Capabilities
-) {
-  const template = new Template(caps, text);
+async function describe({ inputs: { text } }: DescribeInputs) {
+  const template = new Template(text);
   return {
     inputSchema: {
       type: "object",

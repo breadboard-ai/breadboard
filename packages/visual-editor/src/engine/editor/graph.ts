@@ -21,24 +21,16 @@ import type {
   GraphDescriptor,
   GraphIdentifier,
   MutableGraph,
-  NodeIdentifier,
   RejectionReason,
   SingleEditResult,
 } from "@breadboard-ai/types";
-import { ModuleIdentifier } from "@breadboard-ai/types";
-import {
-  isImperativeGraph,
-  PromiseQueue,
-  toDeclarativeGraph,
-  toImperativeGraph,
-} from "@breadboard-ai/utils";
+import { PromiseQueue } from "@breadboard-ai/utils";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { GraphEditHistory } from "./history.js";
 import { AddAsset } from "./operations/add-asset.js";
 import { AddEdge } from "./operations/add-edge.js";
 import { AddGraph } from "./operations/add-graph.js";
-import { AddModule } from "./operations/add-module.js";
 import { AddNode } from "./operations/add-node.js";
 import { ChangeAssetMetadata } from "./operations/change-asset-metadata.js";
 import { ChangeConfiguration } from "./operations/change-configuration.js";
@@ -46,24 +38,14 @@ import { ChangeEdgeMetadata } from "./operations/change-edge-metadata.js";
 import { ChangeEdge } from "./operations/change-edge.js";
 import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
 import { ChangeMetadata } from "./operations/change-metadata.js";
-import { ChangeModule } from "./operations/change-module.js";
 import { RemoveAsset } from "./operations/remove-asset.js";
 import { RemoveEdge } from "./operations/remove-edge.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
-import { RemoveModule } from "./operations/remove-module.js";
 import { RemoveNode } from "./operations/remove-node.js";
 import { ReplaceGraph } from "./operations/replace-graph.js";
 import { ToggleExport } from "./operations/toggle-export.js";
 import { UpsertInteration } from "./operations/upsert-integration.js";
 import { RemoveIntegration } from "./operations/remove-integration.js";
-
-const validImperativeEdits: EditSpec["type"][] = [
-  "addmodule",
-  "changegraphmetadata",
-  "removemodule",
-  "changemodule",
-  "toggleexport",
-];
 
 const operations = new Map<EditSpec["type"], EditOperation>([
   ["addnode", new AddNode()],
@@ -75,9 +57,6 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["changeconfiguration", new ChangeConfiguration()],
   ["changemetadata", new ChangeMetadata()],
   ["changegraphmetadata", new ChangeGraphMetadata()],
-  ["addmodule", new AddModule()],
-  ["removemodule", new RemoveModule()],
-  ["changemodule", new ChangeModule()],
   ["addgraph", new AddGraph()],
   ["removegraph", new RemoveGraph()],
   ["toggleexport", new ToggleExport()],
@@ -90,21 +69,14 @@ const operations = new Map<EditSpec["type"], EditOperation>([
 ]);
 
 export class Graph implements EditableGraph {
-  #mutable: MutableGraphImpl;
+  #mutable: MutableGraph;
   #graph: GraphDescriptor;
   #eventTarget: EventTarget = new EventTarget();
   #history: GraphEditHistory;
-  #imperativeMain: string | null = null;
   #edits: PromiseQueue<EditResult> = new PromiseQueue();
 
   constructor(mutable: MutableGraph, options: EditableGraphOptions) {
-    const graph = mutable.graph;
-    if (isImperativeGraph(graph)) {
-      this.#imperativeMain = graph.main;
-      this.#graph = toDeclarativeGraph(graph);
-    } else {
-      this.#graph = graph;
-    }
+    this.#graph = mutable.graph;
     this.#mutable = mutable;
     this.#history = new GraphEditHistory({
       graph: () => {
@@ -118,7 +90,6 @@ export class Graph implements EditableGraph {
             this.raw(),
             false,
             "history",
-            [],
             [],
             [],
             true,
@@ -151,26 +122,18 @@ export class Graph implements EditableGraph {
   #updateGraph(
     visualOnly: boolean,
     affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[],
     affectedGraphs: GraphIdentifier[],
     topologyChange: boolean,
     integrationsChange: boolean,
     label: string
   ) {
-    this.#mutable.update(
-      this.#graph,
-      visualOnly,
-      affectedNodes,
-      affectedModules,
-      topologyChange
-    );
+    this.#mutable.update(this.#graph, visualOnly, affectedNodes);
     this.#eventTarget.dispatchEvent(
       new ChangeEvent(
         this.#graph,
         visualOnly,
         "edit",
         affectedNodes,
-        affectedModules,
         affectedGraphs,
         topologyChange,
         integrationsChange,
@@ -208,13 +171,6 @@ export class Graph implements EditableGraph {
 
   removeEventListener(eventName: string, listener: EventListener): void {
     this.#eventTarget.removeEventListener(eventName, listener);
-  }
-
-  #shouldDiscardEdit(edit: EditSpec) {
-    if (this.#imperativeMain) {
-      return !validImperativeEdits.includes(edit.type);
-    }
-    return false;
   }
 
   async #singleEdit(
@@ -255,9 +211,7 @@ export class Graph implements EditableGraph {
   }
 
   raw() {
-    return this.#imperativeMain
-      ? toImperativeGraph(this.#imperativeMain, this.#graph)
-      : this.#graph;
+    return this.#graph;
   }
 
   inspect(id: GraphIdentifier) {
@@ -286,8 +240,6 @@ export class Graph implements EditableGraph {
     let visualOnly = true;
     // Collect affected nodes
     const affectedNodes: AffectedNode[][] = [];
-    // Collect affected modules
-    const affectedModules: NodeIdentifier[][] = [];
     // Collect affected graphs
     const affectedGraphs: GraphIdentifier[][] = [];
     // Presume that there were no integration changes.
@@ -302,9 +254,6 @@ export class Graph implements EditableGraph {
       if (error) return { success: false, error };
       label = editLabel;
       for (const edit of edits) {
-        if (this.#shouldDiscardEdit(edit)) {
-          continue;
-        }
         const result = await this.#singleEdit(edit, context);
         log.push({ edit: edit.type, result });
         if (!result.success) {
@@ -312,7 +261,6 @@ export class Graph implements EditableGraph {
           return { success: false, error };
         }
         affectedNodes.push(result.affectedNodes);
-        affectedModules.push(result.affectedModules);
         affectedGraphs.push(result.affectedGraphs);
         if (!result.noChange) {
           noChange = false;
@@ -335,7 +283,11 @@ export class Graph implements EditableGraph {
 
     if (dryRun) {
       const graph = checkpoint;
-      const mutable = new MutableGraphImpl(graph, this.#mutable.store);
+      const mutable = new MutableGraphImpl(
+        graph,
+        this.#mutable.store,
+        this.#mutable.deps
+      );
       context = { graph, mutable, apply };
     } else {
       context = { graph: this.#graph, mutable: this.#mutable, apply };
@@ -364,7 +316,6 @@ export class Graph implements EditableGraph {
       this.#updateGraph(
         visualOnly,
         unique(affectedNodes.flat()),
-        [...new Set(affectedModules.flat())],
         [...new Set(affectedGraphs.flat())],
         topologyChange,
         integrationsChange,

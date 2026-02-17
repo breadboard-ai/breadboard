@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert";
-import { after, before, suite, test } from "node:test";
+import { suite, test } from "node:test";
 import {
   isHydratedController,
   isHydrating,
@@ -14,20 +14,8 @@ import {
 import { PENDING_HYDRATION } from "../../../../src/sca/utils/sentinel.js";
 import { RootController } from "../../../../src/sca/controller/subcontrollers/root-controller.js";
 import { field } from "../../../../src/sca/controller/decorators/field.js";
-import {
-  setDebuggableAppController,
-  stubAppController,
-} from "../../../../src/sca/utils/logging/logger.js";
 
 suite("Hydration", () => {
-  before(() => {
-    setDebuggableAppController(stubAppController);
-  });
-
-  after(() => {
-    setDebuggableAppController(null);
-  });
-
   test("isHydrating", async () => {
     assert.ok(isHydrating(() => PENDING_HYDRATION));
     assert.ok(!isHydrating(() => "foo"));
@@ -59,7 +47,7 @@ suite("Hydration", () => {
       accessor person = { name: "default" };
     }
 
-    const h = new HydratingController("Controller");
+    const h = new HydratingController("Controller", "HydratingController");
     assert.throws(() => {
       // Accessing h.person.name before hydration should throw an Error.
       const name = h.person.name;
@@ -73,7 +61,7 @@ suite("Hydration", () => {
       accessor item = "foo";
     }
 
-    const h = new HydratingController("Controller");
+    const h = new HydratingController("Controller", "HydratingController");
     assert.throws(() => {
       // Accessing h.person.name before hydration should throw an Error.
       const name = h.item;

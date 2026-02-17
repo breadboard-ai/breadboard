@@ -69,9 +69,21 @@ export const INTERCEPT_POPUPS_SCRIPT = scriptifyFunction(() => {
     (evt) => {
       const anchor = findAncestorTag(evt, "a");
       if (anchor) {
-        requestPopup(new URL(anchor.href));
         evt.preventDefault();
         evt.stopImmediatePropagation();
+        // Allow same-page hash links (e.g., href="#section") to navigate
+        // without requiring popup consent
+        const href = anchor.getAttribute("href");
+        if (href?.startsWith("#")) {
+          const targetId = href.substring(1);
+          const targetElement = document.getElementById(targetId);
+
+          if (targetElement) {
+            targetElement.scrollIntoView({ behavior: "smooth" });
+          }
+        } else {
+          requestPopup(new URL(anchor.href));
+        }
       }
     },
     true

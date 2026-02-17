@@ -18,7 +18,7 @@
     "docker-run": "docker run --name=unified-server --publish=3000:3000 --detach --rm unified-server",
     "docker-run:no-rm": "docker run --name=unified-server --publish=3000:3000 --detach unified-server",
     "docker-stop": "docker stop unified-server",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts",
+    "lint": "FORCE_COLOR=1 eslint 'src/**/*.ts' 'tests/**/*.ts'",
     "serve": "wireit",
     "start": "NODE_ENV=production node .",
     "test": "wireit",
@@ -102,7 +102,7 @@
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
     "dotenv": "^17.2.3",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.1",
     "typescript": "^5.8.3",
     "wireit": "^0.15.0-pre.2"
   },

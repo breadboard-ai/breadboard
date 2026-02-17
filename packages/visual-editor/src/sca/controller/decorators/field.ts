@@ -43,9 +43,13 @@ function getName<Context extends WeakKey, Value extends PrimitiveValue>(
   target: Context,
   context: ClassAccessorDecoratorContext<Context, Value>
 ) {
-  const id = (target as unknown as { controllerId?: string }).controllerId;
-  const suffix = id ? `_${id}` : "";
-  return `${target.constructor.name}_${String(context.name)}${suffix}`;
+  const { controllerId, persistenceId } = target as unknown as {
+    controllerId?: string;
+    persistenceId?: string;
+  };
+  const suffix = controllerId ? `_${controllerId}` : "";
+  const prefix = persistenceId ? persistenceId : target.constructor.name;
+  return `${prefix}_${String(context.name)}${suffix}`;
 }
 
 function throwIfPersistingTheUnpersistable<Value extends PrimitiveValue>(
@@ -78,7 +82,7 @@ export function field<Value extends PrimitiveValue>(
   ): ClassAccessorDecoratorResult<Context, Value> {
     const signals = new WeakMap<Context, Signal.State<Value | pending>>();
     const createDeep =
-      typeof apiOpts.deep === "undefined" ? true : apiOpts.deep;
+      typeof apiOpts.deep === "undefined" ? false : apiOpts.deep;
 
     return {
       get(this: Context) {
@@ -168,6 +172,7 @@ export function field<Value extends PrimitiveValue>(
             // finished. This is made available through the RootController.
             const write = store
               .set(name, dataToStore as Value)
+              // eslint-disable-next-line no-console -- storage write error handler
               .catch(console.error);
             const writes = pendingStorageWrites.get(this) ?? [];
             writes.push(write);

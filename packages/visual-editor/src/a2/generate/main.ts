@@ -2,28 +2,42 @@
  * @fileoverview Mega step for generation capabilities.
  */
 
-import { ok } from "../a2/utils.js";
 import { readFlags } from "../a2/settings.js";
-import { forEach } from "../a2/for-each.js";
-import {
-  BehaviorSchema,
-  Capabilities,
-  InputValues,
-  LLMContent,
-  Outcome,
-  OutputValues,
-  RuntimeFlags,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, RuntimeFlags, Schema } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { makeTextInstruction } from "../generate-text/main.js";
-import { makeGoOverListInstruction } from "../go-over-list/main.js";
+import {
+  makeTextInstruction,
+  makeText,
+  describe as describeGenerateText,
+} from "../generate-text/main.js";
+import goOverList, {
+  makeGoOverListInstruction,
+  describe as describeGoOverList,
+} from "../go-over-list/main.js";
 import agent, { computeAgentSchema, type AgentInputs } from "../agent/main.js";
-import { makeDeepResearchInstruction } from "../deep-research/main.js";
-import { makeImageInstruction } from "../a2/image-generator.js";
-import { makeSpeechInstruction } from "../audio-generator/main.js";
-import { makeVideoInstruction } from "../video-generator/main.js";
-import { makeMusicInstruction } from "../music-generator/main.js";
+import deepResearch, {
+  makeDeepResearchInstruction,
+  describe as describeDeepResearch,
+} from "../deep-research/main.js";
+import imageGenerator, {
+  makeImageInstruction,
+  describe as describeImageGenerator,
+} from "../a2/image-generator.js";
+import imageEditor, {
+  describe as describeImageEditor,
+} from "../a2/image-editor.js";
+import audioGenerator, {
+  makeSpeechInstruction,
+  describe as describeAudioGenerator,
+} from "../audio-generator/main.js";
+import videoGenerator, {
+  makeVideoInstruction,
+  describe as describeVideoGenerator,
+} from "../video-generator/main.js";
+import musicGenerator, {
+  makeMusicInstruction,
+  describe as describeMusicGenerator,
+} from "../music-generator/main.js";
 import type { ModelConstraint } from "../agent/functions/generate.js";
 
 export { invoke as default, describe };
@@ -31,7 +45,6 @@ export { invoke as default, describe };
 type Inputs = {
   context?: LLMContent[];
   "generation-mode"?: string;
-  "p-for-each"?: boolean;
   [PROMPT_PORT]: LLMContent;
 } & Record<string, unknown>;
 
@@ -80,11 +93,14 @@ type Mode = {
    * when in this mode.
    */
   modelConstraint: ModelConstraint;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  invoke: (...args: any[]) => Promise<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  describe: (...args: any[]) => Promise<any>;
 };
 
 const PROMPT_PORT = "config$prompt";
 const ASK_USER_PORT = "config$ask-user";
-const LIST_PORT = "config$list";
 const LIMIT_MSG = "generation has a daily limit";
 
 const ALL_MODES: Mode[] = [
@@ -92,19 +108,20 @@ const ALL_MODES: Mode[] = [
     id: "agent",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-    title: "Any Models",
+    title: "Agent",
     description: "Agent can use any models",
-    icon: "select_all",
+    icon: "button_magic",
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "none",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text-2.0-flash",
@@ -120,17 +137,18 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text-3-flash",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 3 Flash",
-    description: "Use for everyday tasks",
+    description: "Best for everyday tasks",
     icon: "text_analysis",
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
@@ -138,17 +156,18 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Flash",
-    description: "For everyday tasks, plus more",
+    description: "Good model for everyday tasks",
     icon: "text_analysis",
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
@@ -156,17 +175,18 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text-2.5-pro",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Pro",
-    description: "Best for complex tasks",
+    description: "Good model for complex tasks",
     icon: "text_analysis",
     modelName: "gemini-2.5-pro",
     promptPlaceholderText:
@@ -174,17 +194,18 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "text-3-pro",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 3 Pro",
-    description: "Latest and greatest",
+    description: "Best for complex tasks",
     icon: "text_analysis",
     modelName: "gemini-3-pro-preview",
     promptPlaceholderText:
@@ -192,10 +213,11 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([
       [PROMPT_PORT, "description"],
       [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
+    invoke: makeText,
+    describe: describeGenerateText,
   },
   {
     id: "think",
@@ -207,12 +229,11 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your goal here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "plan"],
-      [LIST_PORT, "z-list"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "plan"]]),
     makeInstruction: makeGoOverListInstruction,
     modelConstraint: "none",
+    invoke: goOverList,
+    describe: describeGoOverList,
   },
   {
     id: "deep-research",
@@ -224,12 +245,11 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your research query here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "query"],
-      [LIST_PORT, "z-list"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "query"]]),
     makeInstruction: makeDeepResearchInstruction,
     modelConstraint: "none",
+    invoke: deepResearch,
+    describe: describeDeepResearch,
   },
   {
     id: "image-gen",
@@ -244,13 +264,15 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: false }),
     modelConstraint: "image",
+    invoke: imageGenerator,
+    describe: describeImageGenerator,
   },
   {
     id: "image",
     type: "image",
     url: "embed://a2/a2.bgl.json#module:image-editor",
-    title: "Gemini 2.5 Flash Image (Nano Banana)",
-    description: "Generates images from text and images",
+    title: "Nano Banana",
+    description: "For image editing and generation",
     icon: "photo_spark",
     modelName: "ai_image_tool",
     promptPlaceholderText:
@@ -259,13 +281,15 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: false }),
     modelConstraint: "image",
+    invoke: imageEditor,
+    describe: describeImageEditor,
   },
   {
     id: "image-pro",
     type: "image",
     url: "embed://a2/a2.bgl.json#module:image-editor",
-    title: "Gemini 3 Pro Image (Nano Banana)",
-    description: "Optimized for professional asset production",
+    title: "Nano Banana Pro",
+    description: "For complex visuals with text",
     icon: "photo_spark",
     modelName: "gemini-3-pro-image-preview",
     promptPlaceholderText:
@@ -274,6 +298,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
     makeInstruction: makeImageInstruction({ pro: true }),
     modelConstraint: "image",
+    invoke: imageEditor,
+    describe: describeImageEditor,
   },
   {
     id: "audio",
@@ -288,6 +314,8 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "text"]]),
     makeInstruction: makeSpeechInstruction,
     modelConstraint: "speech",
+    invoke: audioGenerator,
+    describe: describeAudioGenerator,
   },
   {
     id: "video",
@@ -304,6 +332,8 @@ const ALL_MODES: Mode[] = [
       "Each video you create will use 20 AI credits from your Google AI plan because you’ve reached the daily limit",
     makeInstruction: makeVideoInstruction,
     modelConstraint: "video",
+    invoke: videoGenerator,
+    describe: describeVideoGenerator,
   },
   {
     id: "music",
@@ -318,25 +348,23 @@ const ALL_MODES: Mode[] = [
     portMap: new Map([[PROMPT_PORT, "text"]]),
     makeInstruction: makeMusicInstruction,
     modelConstraint: "music",
+    invoke: musicGenerator,
+    describe: describeMusicGenerator,
   },
 ] as const;
 
-const AGENT_MODE_IDS = [
-  "agent",
-  "text-3-flash",
-  "text-3-pro",
-  "image",
-  "image-pro",
-  "audio",
-  "video",
-  "music",
-];
+// Modes only available in agent mode (hidden when agentMode is off)
+const AGENT_ONLY_IDS = new Set(["agent"]);
 
-const AGENT_MODES = ALL_MODES.filter(({ id }) => AGENT_MODE_IDS.includes(id));
-
-const PRE_AGENT_MODES = ALL_MODES.filter(({ id }) => id !== "agent");
-
-const modeMap = new Map(ALL_MODES.map((mode) => [mode.id, mode]));
+// Modes NOT available in agent mode (hidden when agentMode is on)
+const NON_AGENT_IDS = new Set([
+  "text-2.0-flash",
+  "text",
+  "text-2.5-pro",
+  "think",
+  "deep-research",
+  "image-gen",
+]);
 
 // Maps the prompt port to various names of the other ports.
 const portMapForward = new Map<string, Map<string, string>>(
@@ -384,55 +412,59 @@ function resolveModes(
   modeId: string | undefined,
   flags: Readonly<RuntimeFlags> | undefined
 ): ResolvedModes {
-  const modes = flags?.agentMode ? AGENT_MODES : PRE_AGENT_MODES;
-  const defaultMode = modes[0];
-  const current = modeMap.get(modeId || defaultMode.id) || defaultMode;
+  const agentMode = flags?.agentMode;
+  const modes = ALL_MODES.map((mode) => ({
+    ...mode,
+    hidden:
+      mode.hidden ||
+      (agentMode ? NON_AGENT_IDS.has(mode.id) : AGENT_ONLY_IDS.has(mode.id)),
+  }));
+  const defaultMode = modes.find((m) => !m.hidden) || modes[0];
+  const current =
+    modes.find((m) => m.id === (modeId || defaultMode.id)) || defaultMode;
   return { modes, current };
 }
 
 async function invoke(
-  { "generation-mode": mode, "p-for-each": useForEach, ...rest }: Inputs,
-  caps: Capabilities,
+  { "generation-mode": mode, ...rest }: Inputs,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);
   const { current } = resolveModes(mode, flags);
 
   if (flags?.agentMode) {
-    const agentInputs: AgentInputs = {
-      "b-ui-consistent": false,
-      "b-ui-prompt": { parts: [] },
-      ...rest,
-      "b-si-instruction": current.makeInstruction(rest),
-      "b-si-constraint": current.modelConstraint,
-    };
-    return agent(agentInputs, caps, moduleArgs);
+    if (current.id === "agent") {
+      // Only "agent" mode gets full agentic behavior
+      const agentInputs: AgentInputs = {
+        "b-ui-consistent": false,
+        "b-ui-prompt": { parts: [] },
+        ...rest,
+      };
+      return agent(agentInputs, moduleArgs);
+    } else {
+      // Other modes dispatch directly to their module
+      const { type, modelName } = current;
+      if (modelName) {
+        rest["p-model-name"] = modelName;
+      }
+      const inputs = forwardPorts(type, rest);
+      return current.invoke(inputs, moduleArgs);
+    }
   } else {
-    const { url: $board, type, modelName } = current;
-    const generateForEach = (flags?.generateForEach && !!useForEach) ?? false;
+    const { type, modelName } = current;
     // Model is treated as part of the Mode, but actually maps N:1
     // on actual underlying step type.
     if (modelName) {
       console.log(`Generating with ${modelName}`);
       rest["p-model-name"] = modelName;
     }
-    if (generateForEach) {
-      return forEach(caps, moduleArgs, rest, async (prompt) => {
-        const ports = { ...rest };
-        ports[PROMPT_PORT] = prompt;
-        return caps.invoke({ $board, ...forwardPorts(type, ports) }) as Promise<
-          Outcome<OutputValues>
-        >;
-      });
-    } else {
-      return caps.invoke({ $board, ...forwardPorts(type, rest) });
-    }
+    const inputs = forwardPorts(type, rest);
+    return current.invoke(inputs, moduleArgs);
   }
 }
 
 async function describe(
   { inputs: { "generation-mode": mode, ...rest }, asType }: DescribeInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const metadata = {
@@ -456,44 +488,24 @@ async function describe(
   }
 
   const flags = await readFlags(moduleArgs);
-  let generateForEachSchema: Schema["properties"] = {};
-  const generateForEachBehavior: BehaviorSchema[] = [];
-  if (flags?.generateForEach && !flags.agentMode) {
-    generateForEachSchema = {
-      "p-for-each": {
-        type: "boolean",
-        title: "Generate for each input",
-        behavior: ["config", "hint-preview", "hint-advanced"],
-        icon: "summarize",
-        description:
-          "When checked, this step will try to detect a list of items as its input and run for each item in the list",
-      },
-    };
-    if (rest["p-for-each"]) {
-      generateForEachBehavior.push("hint-for-each-mode");
-    }
-  }
 
   const { current, modes } = resolveModes(mode, flags);
-  const { url, type } = current;
+  const { type } = current;
   let modeSchema: Schema["properties"] = {};
-  let behavior: BehaviorSchema[] = [];
-  behavior = [...generateForEachBehavior];
-  const describing = await caps.describe({
-    url,
-    inputs: rest as InputValues,
-  });
-  if (ok(describing)) {
+  let behavior: Schema["behavior"] = [];
+
+  if (flags?.agentMode && current.id === "agent") {
+    // Agent mode has its own schema; skip text-generation describe entirely.
+    modeSchema = computeAgentSchema(flags, rest);
+    behavior = ["at-wireable"];
+  } else {
+    const transformedInputs = forwardPorts(type, rest);
+    const describing = await current.describe({ inputs: transformedInputs });
     modeSchema = receivePorts(
       type,
       describing.inputSchema.properties || modeSchema
     );
-    behavior.push(...(describing.inputSchema.behavior || []));
-  }
-  if (flags?.agentMode) {
-    const agentSchema = computeAgentSchema(flags, rest);
-    modeSchema = { ...modeSchema, ...agentSchema };
-    behavior = [...behavior];
+    behavior = describing.inputSchema.behavior || [];
   }
 
   return {
@@ -519,7 +531,6 @@ async function describe(
           title: "Context in",
           behavior: ["main-port"],
         },
-        ...generateForEachSchema,
         ...modeSchema,
       },
       behavior,

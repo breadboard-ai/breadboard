@@ -6,11 +6,9 @@ export { invoke as default, describe, Template };
 
 import type { Params } from "./common.js";
 import { ok, err, isLLMContent, isLLMContentArray } from "./utils.js";
-import { ConnectorManager } from "./connector-manager.js";
 import type {
-  Capabilities,
   DataPart,
-  FileSystemPath,
+  GraphDescriptor,
   LLMContent,
   Outcome,
   Schema,
@@ -43,19 +41,10 @@ export type AssetParamPart = {
   type: "asset";
   path: string;
   title: string;
+  mimeType?: string;
 };
 
-export type ParameterParamPart = {
-  type: "param";
-  path: string;
-  title: string;
-};
-
-export type ParamPart =
-  | InParamPart
-  | ToolParamPart
-  | AssetParamPart
-  | ParameterParamPart;
+export type ParamPart = InParamPart | ToolParamPart | AssetParamPart;
 
 export type TemplatePart = DataPart | ParamPart;
 
@@ -75,12 +64,8 @@ function isAsset(param: ParamPart): param is AssetParamPart {
   return param.type === "asset" && !!param.path;
 }
 
-function isParameter(param: ParamPart): param is ParameterParamPart {
-  return param.type === "param" && !!param.path;
-}
-
 function isParamPart(param: ParamPart): param is ParamPart {
-  return isTool(param) || isIn(param) || isAsset(param) || isParameter(param);
+  return isTool(param) || isIn(param) || isAsset(param);
 }
 
 const PARSING_REGEX = /{(?<json>{(?:.*?)})}/gim;
@@ -90,8 +75,8 @@ class Template {
   #role: LLMContent["role"];
 
   constructor(
-    private readonly caps: Capabilities,
-    public readonly template: LLMContent | undefined
+    public readonly template: LLMContent | undefined,
+    private readonly graph?: GraphDescriptor
   ) {
     if (!template) {
       this.#role = "user";
@@ -177,19 +162,18 @@ class Template {
     return null;
   }
 
-  async loadAsset(param: ParamPart): Promise<Outcome<LLMContent[]>> {
-    const path: FileSystemPath = `/assets/${param.path}`;
-    const reading = await this.caps.read({ path });
-    if (!ok(reading) || !reading.data) {
+  loadAsset(param: AssetParamPart): Outcome<LLMContent[]> {
+    const asset = this.graph?.assets?.[param.path];
+    if (!asset?.data) {
       return err(`Unable to find asset "${param.title}"`);
     }
-    return reading.data;
+    return asset.data as LLMContent[];
   }
 
   async #replaceParam(
     param: ParamPart,
     params: Params,
-    whenTool: ToolCallback
+    whenTool?: ToolCallback
   ): Promise<Outcome<unknown>> {
     if (isIn(param)) {
       const { title: name, path } = param;
@@ -199,22 +183,11 @@ class Template {
       }
       return name;
     } else if (isAsset(param)) {
-      if (ConnectorManager.isConnector(param)) {
-        return new ConnectorManager(this.caps, param).materialize();
-      }
       return this.loadAsset(param);
-    } else if (isTool(param)) {
+    } else if (whenTool && isTool(param)) {
       const substituted = await whenTool(param);
       if (!ok(substituted)) return substituted;
       return substituted || param.title;
-    } else if (isParameter(param)) {
-      const path: FileSystemPath = `/env/parameters/${param.path}`;
-      const reading = await this.caps.read({ path });
-      if (!ok(reading)) {
-        console.error(`Unknown parameter "${param.title}"`);
-        return null;
-      }
-      return reading.data;
     }
     return null;
   }
@@ -284,7 +257,7 @@ class Template {
 
   async substitute(
     params: Params,
-    whenTool: ToolCallback
+    whenTool?: ToolCallback
   ): Promise<Outcome<LLMContent>> {
     const replaced: DataPart[] = [];
     for (const part of this.#parts) {
@@ -377,49 +350,6 @@ class Template {
       instance,
     });
   }
-
-  /**
-   * This is roughly the same method as `schemas`, but for connectors.
-   * TODO: UNIFY
-   */
-  async schemaProperties(): Promise<Record<string, Schema>> {
-    let result: Record<string, Schema> = {};
-    for (const part of this.#parts) {
-      if (!("type" in part)) continue;
-      if (!isAsset(part)) continue;
-      if (!ConnectorManager.isConnector(part)) continue;
-      const props = await new ConnectorManager(
-        this.caps,
-        part
-      ).schemaProperties();
-      result = { ...result, ...props };
-    }
-    return result;
-  }
-
-  async save(
-    context?: LLMContent[],
-    options?: Record<string, unknown>
-  ): Promise<Outcome<void>> {
-    if (!context) return;
-
-    const errors: string[] = [];
-    for (const part of this.#parts) {
-      if (!("type" in part)) continue;
-      if (!isAsset(part)) continue;
-      if (!ConnectorManager.isConnector(part)) continue;
-      const saving = await new ConnectorManager(this.caps, part).save(
-        context,
-        options || {}
-      );
-      if (!ok(saving)) {
-        errors.push((saving as { $error: string }).$error);
-      }
-    }
-    if (errors.length > 0) {
-      return err(errors.join("\n"));
-    }
-  }
 }
 
 /**
@@ -445,11 +375,10 @@ type TestOutputs = {
 /**
  * Only used for testing.
  */
-async function invoke(
-  { inputs: { content, params } }: TestInputs,
-  caps: Capabilities
-): Promise<Outcome<TestOutputs>> {
-  const template = new Template(caps, content);
+async function invoke({
+  inputs: { content, params },
+}: TestInputs): Promise<Outcome<TestOutputs>> {
+  const template = new Template(content);
   const result = await template.substitute(
     fromTestParams(params),
     async (params) => {

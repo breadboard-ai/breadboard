@@ -61,9 +61,9 @@ export async function createClientConfig(opts: {
     ENABLE_EMAIL_OPT_IN: flags.ENABLE_EMAIL_OPT_IN,
     SHARE_SURFACE_URL_TEMPLATES: flags.SHARE_SURFACE_URL_TEMPLATES,
     ENABLE_NEW_URL_SCHEME: flags.ENABLE_NEW_URL_SCHEME,
+    ENABLE_SHARING_2: flags.ENABLE_SHARING_2,
     domains: flags.DOMAIN_CONFIG,
     flags: {
-      generateForEach: flags.ENABLE_GENERATE_FOR_EACH,
       mcp: flags.ENABLE_MCP,
       force2DGraph: flags.ENABLE_FORCE_2D_GRAPH,
       gulfRenderer: flags.ENABLE_GULF_RENDERER,
@@ -79,6 +79,9 @@ export async function createClientConfig(opts: {
       streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
       enableDrivePickerInLiteMode: flags.ENABLE_DRIVE_PICKER_IN_LITE_MODE,
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
+      enableNotebookLm: flags.ENABLE_NOTEBOOK_LM,
+      enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
+      enableGraphEditorAgent: flags.ENABLE_GRAPH_EDITOR_AGENT,
     },
   };
 }

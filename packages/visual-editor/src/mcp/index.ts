@@ -12,4 +12,3 @@ export { mcpErr, mcpText } from "./utils.js";
 export { createGoogleCalendarClient } from "./built-in/gcal-client.js";
 export { createGmailClient } from "./built-in/gmail-client.js";
 export { createGdriveClient } from "./built-in/gdrive-client.js";
-export { createFileSystemClient } from "./built-in/filesystem-client.js";

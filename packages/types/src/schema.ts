@@ -57,18 +57,6 @@ export type BehaviorSchema =
    */
   | "hint-advanced"
   /**
-   * Hints that the node is in a chat mode: it interacts with the user
-   * as part of its invocation.
-   * When applied to a port, hints that this port participates in user
-   * interaction.
-   */
-  | "hint-chat-mode"
-  /**
-   * Hints that the node is in "for each" mode: itwill try to detect a list of
-   * items as its input and run for each item in the list
-   */
-  | "hint-for-each-mode"
-  /**
    * Hints that the text is short (e.g. a query) and needs a single line treatment.
    */
   | "hint-single-line"

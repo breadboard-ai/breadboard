@@ -4,14 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  html,
-  css,
-  PropertyValues,
-  nothing,
-  HTMLTemplateResult,
-  svg,
-} from "lit";
+import { html, css, PropertyValues, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -51,14 +44,13 @@ import {
 } from "../../events/events.js";
 import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
-import { baseColors, palette, custom } from "../../styles/host/base-colors.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { NodeRunState } from "@breadboard-ai/types";
-
-const EDGE_STANDARD = palette.neutral.n70;
-const EDGE_SELECTED = custom.c100;
-const arrowSize = 4;
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import { SCA } from "../../../sca/sca.js";
 
 // In theory we should be able to just declare @property in the CSS but that
 // doesn't seem to be panning out. So instead we declare the property globally,
@@ -74,7 +66,16 @@ if ("CSS" in window && "registerProperty" in window.CSS) {
 }
 
 @customElement("bb-graph-node")
+// In this instance we don't need GraphNode to access any signals from SCA, but
+// rather it access it indirectly for the tools. As such we have an exception
+// to the usual lint rule that asserts a consumer of SCA as a SignalWatcher.
+// This may change in the future, but for now that's why this exception exists.
+//
+// eslint-disable-next-line local-rules/sca-consume-requires-signalwatcher
 export class GraphNode extends Box implements DragConnectorReceiver {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property()
   accessor ownerGraph = "";
 
@@ -98,12 +99,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   @property()
   accessor hasMainPort = false;
-
-  @property({ reflect: true, type: Boolean })
-  accessor hasChatAdornment = false;
-
-  @property({ reflect: true, type: Boolean })
-  accessor hasForEachAdornment = false;
 
   @property({ reflect: true, type: String })
   accessor highlightType: "user" | "model" = "model";
@@ -205,6 +200,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host([icon="photo_spark"]),
       :host([icon="audio_magic_eraser"]),
       :host([icon="text_analysis"]),
+      :host([icon="button_magic"]),
       :host([icon="generative-image-edit"]),
       :host([icon="generative-code"]),
       :host([icon="videocam_auto"]),
@@ -242,8 +238,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         display: none;
       }
 
-      :host([selected]) #container #outline,
-      :host([selected]) #container #chat-adornment {
+      :host([selected]) #container #outline {
         transition: outline 0.15s cubic-bezier(0, 0, 0.3, 1);
         outline: 3px solid var(--light-dark-n-0);
       }
@@ -264,8 +259,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         cursor: grabbing;
       }
 
-      :host([selected][active="error"]) #container #outline,
-      :host([selected][active="error"]) #container #chat-adornment {
+      :host([selected][active="error"]) #container #outline {
         outline: 3px solid var(--light-dark-e-40);
       }
 
@@ -283,49 +277,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           pointer-events: none;
         }
 
-        #adornment-surround {
-          position: absolute;
-          top: calc(-1 * var(--bb-grid-size-4));
-          left: calc(-1 * var(--bb-grid-size-4));
-          pointer-events: none;
-        }
-
-        & #fe-1 {
-          position: absolute;
-          top: calc(var(--bb-grid-size-6) + 2px);
-          left: calc(-1 * var(--bb-grid-size-3) + 1px);
-          z-index: 0;
-          height: calc(100% - var(--bb-grid-size-6) - var(--bb-grid-size-6));
-        }
-
-        & #fe-2 {
-          position: absolute;
-          top: calc(var(--bb-grid-size-12) + 2px);
-          left: calc(-1 * var(--bb-grid-size-6) + 2px);
-          z-index: 0;
-          height: calc(100% - var(--bb-grid-size-12) - var(--bb-grid-size-12));
-        }
-
-        & .for-each-adornment {
-          pointer-events: none;
-          width: 7px;
-          border-radius: calc(var(--bb-grid-size-3) + 1px) 0 0
-            calc(var(--bb-grid-size-3) + 1px);
-          outline: 2px solid transparent;
-          color: var(--light-dark-n-10);
-          position: absolute;
-          cursor: pointer;
-          background: var(--light-dark-n-90);
-
-          & header {
-            background: color-mix(in lab, var(--background), white 50%);
-            height: var(--bb-grid-size-12);
-            width: 100%;
-            padding: 0 var(--bb-grid-size-4);
-            border-radius: var(--bb-grid-size-3) var(--bb-grid-size-3) 0 0;
-          }
-        }
-
         & #outline {
           position: absolute;
           top: 0;
@@ -336,33 +287,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           border-radius: var(--bb-grid-size-3);
           outline: 2px solid transparent;
           z-index: 2;
-        }
-
-        & #chat-adornment {
-          position: absolute;
-          top: calc(100% + var(--bb-grid-size-10));
-          width: 100%;
-          border: 1px solid light-dark(var(--n-90), var(--n-30));
-          border-radius: var(--bb-grid-size-3);
-          color: var(--light-dark-n-10);
-          cursor: pointer;
-
-          header {
-            --background: var(--ui-get-input);
-
-            &::before {
-              display: none;
-            }
-
-            .g-icon {
-              margin-right: var(--bb-grid-size-2);
-            }
-          }
-
-          #content {
-            text-align: left;
-            pointer-events: none;
-          }
         }
 
         & header {
@@ -647,7 +571,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   #translateStart: DOMPoint | null = null;
   #dragStart: DOMPoint | null = null;
   #containerRef: Ref<HTMLElement> = createRef();
-  #adornmentRef: Ref<HTMLElement> = createRef();
   #lastBounds: DOMRect | null = null;
   #ports: InspectableNodePorts | null = null;
   #resizeObserver = new ResizeObserver(() => {
@@ -674,23 +597,12 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       return;
     }
 
-    if (!this.#adornmentRef.value) {
-      this.#lastBounds = new DOMRect(
-        0,
-        0,
-        this.#containerRef.value.offsetWidth,
-        this.#containerRef.value.offsetHeight
-      );
-    } else {
-      this.#lastBounds = new DOMRect(
-        0,
-        0,
-        this.#containerRef.value.offsetWidth,
-        this.#containerRef.value.offsetHeight +
-          this.#adornmentRef.value.offsetHeight +
-          40
-      );
-    }
+    this.#lastBounds = new DOMRect(
+      0,
+      0,
+      this.#containerRef.value.offsetWidth,
+      this.#containerRef.value.offsetHeight
+    );
   }
 
   #watchingResize = false;
@@ -703,10 +615,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         this.cullable = true;
         this.dispatchEvent(new NodeBoundsUpdateRequestEvent());
       });
-    }
-
-    if (changedProperties.has("hasChatAdornment")) {
-      this.#getSize();
     }
 
     if (!this.#watchingResize) {
@@ -782,10 +690,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                       chiclets.push(
                         ...createChiclets(
                           port,
-                          this.projectState,
                           this.ownerGraph !== MAIN_BOARD_ID
                             ? this.ownerGraph
-                            : ""
+                            : "",
+                          this.sca
                         )
                       );
 
@@ -887,56 +795,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       transform: toCSSMatrix(this.worldTransform, this.force2D),
     };
 
-    let chatAdornment: HTMLTemplateResult[] | symbol = nothing;
-    if (this.hasChatAdornment) {
-      chatAdornment = [
-        html`${svg`
-        <svg id="edge" version="1.1"
-          width="300" height="40" viewBox="0 0 300 40"
-          xmlns="http://www.w3.org/2000/svg">
-          <path d="M 150 4 L 150 4 L 150 36"
-            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD}
-            stroke-width="2" fill="none" stroke-linecap="round" />
-
-          <line x1="150"
-            y1="4"
-            x2=${150 - arrowSize}
-            y2=${4 + arrowSize}
-            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
-
-          <line x1="150"
-            y1="4"
-            x2=${150 + arrowSize}
-            y2=${4 + arrowSize}
-            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
-
-          <line x1="150"
-            y1="36"
-            x2=${150 - arrowSize}
-            y2=${36 - arrowSize}
-            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
-
-          <line x1="150"
-            y1="36"
-            x2=${150 + arrowSize}
-            y2=${36 - arrowSize}
-            stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
-        </svg>`}`,
-        html`<div id="chat-adornment" ${ref(this.#adornmentRef)}>
-          <header class="sans-flex round w-500">
-            <span class="g-icon filled">chat_mirror</span>User input
-          </header>
-          <div id="content">(${this.nodeTitle} chats with the user)</div>
-        </div>`,
-      ];
-    }
-
-    let forEachAdornment: HTMLTemplateResult | symbol = nothing;
-    if (this.hasForEachAdornment) {
-      forEachAdornment = html`<div id="fe-1" class="for-each-adornment"></div>
-        <div id="fe-2" class="for-each-adornment"></div>`;
-    }
-
     const renderableIcon = this.icon;
 
     return html` <section
@@ -948,7 +806,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           this.dispatchEvent(new AutoFocusEditorRequest());
         }}
       >
-        ${forEachAdornment}
         <div id="outline"></div>
         <header
           class="sans-flex w-500 round"
@@ -1103,18 +960,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             ? html`<p class="loading">Loading step details...</p>`
             : this.#renderPorts()}
         </div>
-        ${this.#maybeRenderRunStatus()} ${chatAdornment}
-        ${this.updating || !this.hasChatAdornment
-          ? nothing
-          : html`${svg`
-              <svg id="adornment-surround" version="1.1"
-                width=${this.bounds.width + 32} height=${this.bounds.height + 32} viewBox="0 0 ${this.bounds.width + 32} ${this.bounds.height + 32}"
-                xmlns="http://www.w3.org/2000/svg">
-                <rect x="1" y="1" width=${this.bounds.width + 30} height=${this.bounds.height + 30} rx="24"
-                  stroke=${this.selected ? EDGE_SELECTED : EDGE_STANDARD}
-                  stroke-width="2" fill="none" stroke-dasharray="4 4" />
-              </svg>
-            `}`}
+        ${this.#maybeRenderRunStatus()}
       </section>
       ${this.renderBounds()}`;
   }

@@ -40,7 +40,7 @@ export const SHELL_CSP = {
     "'self'",
     "https://*.google.com",
     "https://*.googleapis.com",
-    "https://www.google-analytics.com",
+    "https://*.google-analytics.com",
     flags.BACKEND_API_ENDPOINT,
     // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
     // to the frontend server.
@@ -71,6 +71,7 @@ export const SHELL_CSP = {
     "opal-gapi-url",
     "gapi#gapi",
     "goog#html",
+    "'allow-duplicates'",
   ],
 };
 
@@ -79,7 +80,7 @@ export const MAIN_APP_CSP = {
   ["script-src"]: [
     "'self'",
     "https://support.google.com",
-    "https://www.google-analytics.com",
+    "https://*.google-analytics.com",
     "https://www.google.com", // Feedback
     "https://www.googletagmanager.com",
     "https://www.gstatic.com",

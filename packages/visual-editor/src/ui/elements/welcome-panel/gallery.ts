@@ -60,11 +60,6 @@ export class Gallery extends SignalWatcher(LitElement) {
           --items-per-column: 2;
         }
       }
-      @media (min-width: 0px) and (max-width: 480px) {
-        :host {
-          --items-per-column: 1;
-        }
-      }
 
       bb-overflow-menu {
         position: fixed;
@@ -152,8 +147,10 @@ export class Gallery extends SignalWatcher(LitElement) {
           transition:
             box-shadow 0.2s cubic-bezier(0, 0, 0.3, 1),
             opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-          opacity: 0;
-          pointer-events: none;
+          @media (min-width: 620px) {
+            opacity: 0;
+            pointer-events: none;
+          }
 
           & .g-icon {
             margin-right: var(--bb-grid-size-2);
@@ -196,9 +193,12 @@ export class Gallery extends SignalWatcher(LitElement) {
 
         .overflow-pin {
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-          opacity: 0;
-          pointer-events: none;
-          opacity: 0;
+          font-variation-settings: "FILL" 0;
+          opacity: 0.3;
+          @media (min-width: 620px) {
+            opacity: 0;
+            pointer-events: none;
+          }
           right: auto;
           left: var(--bb-grid-size-4);
 
@@ -213,6 +213,9 @@ export class Gallery extends SignalWatcher(LitElement) {
         }
 
         &:hover {
+          & .overflow-pin {
+            font-variation-settings: "FILL" 1;
+          }
           & .overflow-pin,
           & .remix-button {
             opacity: 1;
@@ -390,6 +393,100 @@ export class Gallery extends SignalWatcher(LitElement) {
 
           &#next {
             padding: 0 var(--bb-grid-size-2);
+          }
+        }
+      }
+
+      @media (max-width: 620px) {
+        :host {
+          --items-per-column: 2;
+          --column-gap: var(--bb-grid-size-3);
+          --row-gap: var(--bb-grid-size-3);
+        }
+
+        .board .info {
+          left: var(--bb-grid-size-3);
+          bottom: var(--bb-grid-size-3);
+          width: calc(100% - var(--bb-grid-size-6));
+        }
+
+        .board .info .title {
+          font-size: 14px;
+          line-height: 18px;
+          max-height: 54px;
+          margin-bottom: var(--bb-grid-size);
+        }
+
+        .board .info .description {
+          font-size: 12px;
+          line-height: 14px;
+        }
+
+        .board .remix-button {
+          top: var(--bb-grid-size-3);
+          left: var(--bb-grid-size-3);
+          height: var(--bb-grid-size-7);
+          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-2);
+          font-size: 11px;
+        }
+
+        .board .remix-button .g-icon {
+          font-size: 16px;
+          margin-right: var(--bb-grid-size);
+        }
+
+        .board .overflow-pin,
+        .board .overflow-menu {
+          top: var(--bb-grid-size-3);
+          right: var(--bb-grid-size-2);
+        }
+
+        .board .overflow-pin {
+          left: var(--bb-grid-size-2);
+        }
+
+        .board .creator {
+          margin-bottom: var(--bb-grid-size);
+        }
+
+        .board .creator .pic .g-icon,
+        .board .creator .pic .signed-in {
+          width: 20px;
+          height: 20px;
+          font-size: 16px;
+        }
+
+        .board .creator .name {
+          font-size: 11px;
+          margin-left: var(--bb-grid-size);
+        }
+
+        /* Pagination: larger touch targets and arrow icons on narrow screens */
+        #pagination {
+          & button {
+            width: 48px;
+            height: 48px;
+            font-size: 16px;
+          }
+
+          & #prev,
+          & #next {
+            font-size: 0;
+            width: 48px;
+            padding: 0;
+
+            &::before {
+              font-family: "Google Symbols";
+              font-size: 24px;
+            }
+          }
+
+          & #prev::before {
+            content: "arrow_left_alt";
+          }
+
+          & #next::before {
+            content: "arrow_right_alt";
           }
         }
       }

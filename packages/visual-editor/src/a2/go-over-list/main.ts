@@ -2,18 +2,16 @@
  * @fileoverview Break an objective into tasks and then execute them.
  */
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
-import { fanOutContext } from "../a2/lists.js";
-import { readSettings } from "../a2/settings.js";
+
 import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
-import { err, generateId, ok } from "../a2/utils.js";
+import { err, ok } from "../a2/utils.js";
 import { ParallelStrategist } from "./parallel-strategist.js";
 import { Runtime } from "./runtime.js";
 import { SequentialStrategist } from "./sequential-strategist.js";
@@ -39,7 +37,6 @@ type Inputs = {
   context: LLMContent[];
   plan: LLMContent;
   strategy: string;
-  "z-list": boolean;
 } & Params;
 
 type Outputs = {
@@ -58,16 +55,14 @@ function findStrategist(name?: string): Strategist | undefined {
 }
 
 async function invoke(
-  { context, plan: objective, strategy, "z-list": makeList, ...params }: Inputs,
-  caps: Capabilities,
+  { context, plan: objective, strategy, ...params }: Inputs,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
-  const template = new Template(caps, objective);
+  const template = new Template(objective, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
   );
@@ -78,51 +73,19 @@ async function invoke(
     return err(`Unknown strategy: "${strategy}"`);
   }
 
-  const result = await fanOutContext(
-    substituting,
-    context,
-    async (objective, context, isList) => {
-      const disallowNestedLists = makeList && !isList;
-      const executor = new Runtime(
-        caps,
-        moduleArgs,
-        context,
-        toolManager,
-        disallowNestedLists
-      );
-      const executingOne = await executor.executeStrategy(
-        objective,
-        strategist
-      );
-      if (!ok(executingOne)) return executingOne;
+  // Process single item directly (list support removed)
+  const executor = new Runtime(moduleArgs, context, toolManager);
+  const executingOne = await executor.executeStrategy(substituting, strategist);
+  if (!ok(executingOne)) return executingOne;
 
-      // Disallow making a list when already inside of a make list
-      if (disallowNestedLists) {
-        return {
-          role: "model",
-          parts: [
-            {
-              id: generateId(),
-              list: executingOne.map((item) => {
-                return { content: [item] };
-              }),
-            },
-          ],
-        };
-      }
+  const oneContent = {
+    role: "model",
+    parts: executingOne.flatMap((item) => {
+      return item.parts;
+    }),
+  };
 
-      const oneContent = {
-        role: "model",
-        parts: executingOne.flatMap((item) => {
-          return item.parts;
-        }),
-      };
-
-      return oneContent;
-    }
-  );
-  if (!ok(result)) return result;
-  return { context: result };
+  return { context: [oneContent] };
 }
 
 type DescribeInputs = {
@@ -131,27 +94,8 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { plan } }: DescribeInputs,
-  caps: Capabilities
-) {
-  const template = new Template(caps, plan);
-  const settings = await readSettings(caps);
-  const experimental =
-    ok(settings) && !!settings["Show Experimental Components"];
-  let extra: Record<string, Schema> = {};
-  if (experimental) {
-    extra = {
-      // "z-list": {
-      //   type: "boolean",
-      //   title: "Make a list",
-      //   behavior: ["config", "hint-preview", "hint-advanced"],
-      //   icon: "summarize",
-      //   description:
-      //     "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
-      // },
-    };
-  }
+async function describe({ inputs: { plan } }: DescribeInputs) {
+  const template = new Template(plan);
   return {
     inputSchema: {
       type: "object",
@@ -181,7 +125,6 @@ async function describe(
           icon: "joiner",
           default: STRATEGISTS[0].name,
         },
-        ...extra,
         ...template.schemas(),
       },
       behavior: ["at-wireable"],

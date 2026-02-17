@@ -1,0 +1,298 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import {
+  AppScreen,
+  ConsoleEntry,
+  FunctionCallCapabilityPart,
+  JsonSerializable,
+  LLMContent,
+} from "@breadboard-ai/types";
+import { GeminiBody } from "../a2/gemini.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
+import { AgentProgressManager } from "./types.js";
+import { llm, progressFromThought } from "../a2/utils.js";
+import { StatusUpdateCallbackOptions } from "./function-definition.js";
+import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
+import { ConsoleWorkItem } from "./console-work-item.js";
+import { ProgressReporter } from "./types.js";
+import { StreamingRequestBody } from "../a2/opal-adk-stream.js";
+import { parseThought } from "./thought-parser.js";
+
+export { ConsoleProgressManager };
+
+/**
+ * Functions that should not create a work item because
+ * they are handled by other UI mechanisms.
+ */
+const SKIP_WORK_ITEM_FUNCTIONS = new Set(["chat_present_choices"]);
+
+/**
+ * Trim trailing ellipsis ("...") from a string.
+ */
+function trimEllipsis(text: string): string {
+  return text.replace(/\.{3}$/, "");
+}
+
+/**
+ * Convert a string to Title Case.
+ */
+function toTitleCase(text: string): string {
+  return text.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Manages console progress updates for agent execution.
+ * Creates individual WorkItems for each progress update and adds them to the
+ * console entry. Also manages AppScreen updates for the app view.
+ */
+class ConsoleProgressManager implements AgentProgressManager {
+  readonly #consoleEntry: ConsoleEntry | undefined;
+  readonly #screen: AppScreen | undefined;
+  #previousStatus: string | undefined;
+  #agentSession: ConsoleWorkItem | undefined;
+  #pendingCalls: Map<string, ConsoleWorkItem> = new Map();
+  #lastTimestamp: number = performance.now();
+
+  constructor(
+    consoleEntry: ConsoleEntry | undefined,
+    screen: AppScreen | undefined
+  ) {
+    this.#consoleEntry = consoleEntry;
+    this.#screen = screen;
+  }
+
+  #addWorkItem(
+    itemTitle: string,
+    productTitle: string,
+    icon: string,
+    body: LLMContent,
+    start?: number
+  ) {
+    if (!this.#consoleEntry) return;
+
+    const update = { type: "text" as const, title: productTitle, icon, body };
+    const workItem = new ConsoleWorkItem(
+      toTitleCase(itemTitle),
+      icon,
+      update,
+      start
+    );
+    workItem.finish(); // Mark as done immediately
+    this.#consoleEntry.work.set(crypto.randomUUID(), workItem);
+  }
+
+  /**
+   * The agent started execution.
+   * Creates the agent session WorkItem that accumulates early updates.
+   */
+  startAgent(objective: LLMContent) {
+    if (this.#screen) {
+      this.#screen.progress = StarterPhraseVendor.instance.phrase();
+      setScreenDuration(this.#screen, -1);
+    }
+    if (this.#consoleEntry) {
+      const update = {
+        type: "text" as const,
+        title: "Objective",
+        icon: "summarize",
+        body: objective,
+      };
+      this.#agentSession = new ConsoleWorkItem(
+        "Agent Session",
+        "button_magic",
+        update
+      );
+      this.#consoleEntry.work.set(crypto.randomUUID(), this.#agentSession);
+    }
+  }
+
+  /**
+   * The agent is generating layouts.
+   */
+  generatingLayouts(uiPrompt: LLMContent | undefined) {
+    if (this.#screen) {
+      this.#screen.progress = "Generating layouts";
+      setScreenDuration(this.#screen, 70);
+    }
+    this.#addWorkItem(
+      "Generating Layouts",
+      "Generating Layouts",
+      "web",
+      uiPrompt ?? llm``.asContent()
+    );
+  }
+
+  sendOpalAdkRequest(model: string, body: StreamingRequestBody) {
+    this.sendRequestCommon(model, body as JsonSerializable);
+  }
+
+  /**
+   * The agent sent initial request.
+   * Appends to the agent session WorkItem.
+   */
+  sendRequest(model: string, body: GeminiBody) {
+    this.sendRequestCommon(model, body as JsonSerializable);
+  }
+
+  private sendRequestCommon(model: string, body: JsonSerializable) {
+    if (this.#agentSession) {
+      this.#agentSession.addProduct({
+        type: "text",
+        title: "Send request",
+        icon: "upload",
+        body: {
+          parts: [{ text: `Calling model: ${model}` }, { json: body }],
+        },
+      });
+    }
+    this.#lastTimestamp = performance.now();
+  }
+
+  /**
+   * The agent produced a thought.
+   */
+  thought(text: string) {
+    const { title, body } = parseThought(text);
+    const start = this.#lastTimestamp;
+    this.#lastTimestamp = performance.now();
+    this.#addWorkItem(
+      title ?? "Thought",
+      "Thought",
+      "spark",
+      llm`${body}`.asContent(),
+      start
+    );
+    if (this.#screen) {
+      this.#previousStatus = this.#screen.progress;
+      this.#screen.progress = progressFromThought(text);
+      setScreenDuration(this.#screen, -1);
+    }
+  }
+
+  /**
+   * The agent produced a function call.
+   * Returns a unique ID for matching with the corresponding function result,
+   * and a reporter for progress updates scoped to this function call.
+   */
+  functionCall(
+    part: FunctionCallCapabilityPart,
+    icon?: string,
+    title?: string
+  ): { callId: string; reporter: ProgressReporter | null } {
+    const callId = crypto.randomUUID();
+    // Skip work item for functions handled by other UI mechanisms
+    if (SKIP_WORK_ITEM_FUNCTIONS.has(part.functionCall.name)) {
+      return { callId, reporter: null };
+    }
+    const effectiveIcon = icon ?? "robot_server";
+    if (this.#consoleEntry) {
+      const args = part.functionCall.args as Record<string, unknown>;
+      const statusUpdate =
+        typeof args.status_update === "string" ? args.status_update : null;
+      const itemTitle = trimEllipsis(
+        statusUpdate ?? title ?? `Function: ${part.functionCall.name}`
+      );
+      const update = {
+        type: "text" as const,
+        title: `Calling function "${part.functionCall.name}"`,
+        icon: effectiveIcon,
+        body: { parts: [part] },
+      };
+      const workItem = new ConsoleWorkItem(
+        toTitleCase(itemTitle),
+        effectiveIcon,
+        update
+      );
+      // Don't finish yet - will be finished when result arrives
+      this.#pendingCalls.set(callId, workItem);
+      this.#consoleEntry.work.set(callId, workItem);
+      return { callId, reporter: workItem };
+    }
+    return { callId, reporter: null };
+  }
+
+  /**
+   * The agent function call produced an update.
+   * If it's a thought, adds it as a product to the function's work item.
+   * Otherwise, updates the screen progress.
+   */
+  functionCallUpdate(
+    callId: string,
+    status: string | null,
+    options?: StatusUpdateCallbackOptions
+  ) {
+    if (options?.isThought) {
+      if (!status) return;
+      const workItem = this.#pendingCalls.get(callId);
+      if (workItem) {
+        const { title, body } = parseThought(status);
+        workItem.addProduct({
+          type: "text",
+          title: title ?? "Thought",
+          icon: "spark",
+          body: llm`${body}`.asContent(),
+        });
+      }
+      // Also update the screen progress
+      if (this.#screen) {
+        this.#previousStatus = this.#screen.progress;
+        this.#screen.progress = progressFromThought(status);
+        setScreenDuration(this.#screen, -1);
+      }
+    } else {
+      if (!this.#screen) return;
+
+      if (status == null) {
+        if (this.#previousStatus) {
+          this.#screen.progress = this.#previousStatus;
+        }
+        setScreenDuration(this.#screen, -1);
+      } else {
+        // Remove the occasional ellipsis from the status
+        status = trimEllipsis(status);
+        if (options?.expectedDurationInSec) {
+          setScreenDuration(this.#screen, options.expectedDurationInSec);
+        } else {
+          setScreenDuration(this.#screen, -1);
+        }
+
+        this.#previousStatus = this.#screen.progress;
+        this.#screen.progress = status;
+      }
+    }
+  }
+
+  /**
+   * The agent produced a function result.
+   * Finds the WorkItem by callId and appends the result.
+   */
+  functionResult(callId: string, content: LLMContent) {
+    const workItem = this.#pendingCalls.get(callId);
+    if (workItem) {
+      workItem.addProduct({
+        type: "text",
+        title: "Function response",
+        icon: "robot_server",
+        body: content,
+      });
+      workItem.finish();
+      this.#pendingCalls.delete(callId);
+    }
+  }
+
+  /**
+   * The agent finished executing.
+   * Closes the agent session WorkItem.
+   */
+  finish() {
+    if (this.#screen) {
+      this.#screen.progress = undefined;
+      setScreenDuration(this.#screen, -1);
+    }
+    this.#agentSession?.finish();
+  }
+}

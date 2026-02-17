@@ -30,7 +30,6 @@ const COLOR_SCHEME = "color-scheme" as const;
 const COLOR_SCHEME_LIGHT = "light" as const;
 const COLOR_SCHEME_DARK = "dark" as const;
 const RESULTS = "results";
-const SHARED = "shared";
 const GEO_RESTRICTION = "geo-restriction";
 const MISSING_SCOPES = "missing-scopes";
 const RESOURCE_KEY = "resourcekey";
@@ -80,9 +79,6 @@ export function makeUrl(
     }
     if (init.remix) {
       url.searchParams.set(REMIX, init.remix ? "true" : "false");
-    }
-    if (init.shared) {
-      url.searchParams.set(SHARED, "");
     }
     if (init.results) {
       url.searchParams.set(RESULTS, init.results);
@@ -175,7 +171,6 @@ export function makeUrl(
       // A little extra cleanup. The URL class escapes search params very
       // strictly, and does not allow bare search params.
       .replace("drive%3A%2F", "drive:/")
-      .replace(/([?&])shared=/, "$1shared")
   );
 }
 
@@ -303,9 +298,6 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     const results = url.searchParams.get(RESULTS);
     if (results) {
       graph.results = results;
-    }
-    if (url.searchParams.has(SHARED)) {
-      graph.shared = true;
     }
     if (dev) {
       graph.dev = dev;

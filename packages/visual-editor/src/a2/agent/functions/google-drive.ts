@@ -16,6 +16,7 @@ import { asBlob } from "../../../data/common.js";
 import { create, upload } from "../../google-drive/api.js";
 import { getMimeTypeMapping } from "../../google-drive/get-mime-type-mapping.js";
 import { GOOGLE_DRIVE_FOLDER_MIME_TYPE } from "@breadboard-ai/utils/google-drive/operations.js";
+import { statusUpdateSchema } from "./system.js";
 
 export { getGoogleDriveFunctionGroup };
 
@@ -36,8 +37,10 @@ function defineGoogleDriveFunctions(args: GoogleDriveFunctionsGroupArgs) {
     defineFunction(
       {
         name: "google_drive_upload_file",
+        icon: "cloud_upload",
+        title: "Uploading a File to Google Drive",
         description: tr`
-Uploads a VFS file to Google Drive. Supports automatic conversion of office formats (like PPTX, DOCX, XLSX) into Google Workspace formats.
+Uploads a file to Google Drive. Supports automatic conversion of office formats (like PPTX, DOCX, XLSX) into Google Workspace formats.
 
 `,
         parameters: {
@@ -46,7 +49,7 @@ The user-friendly name of the file that will show up in Drive list
 `),
           file_path: z.string().describe(tr`
 
-The VFS path to the file to upload.
+The file path to the file to upload.
 
 `),
           convert: z
@@ -67,13 +70,14 @@ If true, converts Office documents or CSVs into Google Docs/Slides/Sheets.
 The Google Drive folder that will be the parent of this newly uploaded file`
             )
             .optional(),
+          ...statusUpdateSchema,
         },
         response: {
           file_path: z
             .string()
             .describe(
               tr`
-The VFS path that points at the generated Google Doc.
+The file path that points at the generated Google Doc.
 `
             )
             .optional(),
@@ -88,7 +92,11 @@ If an error has occurred, will contain a description of the error
             .optional(),
         },
       },
-      async ({ file_path, name, convert, parent }) => {
+      async (
+        { file_path, name, convert, parent, status_update },
+        statusUpdater
+      ) => {
+        statusUpdater(status_update || `Uploading "${name}" to Google Drive`);
         const files = await fileSystem.get(file_path);
         if (!ok(files)) {
           return { error: files.$error };
@@ -134,6 +142,8 @@ If an error has occurred, will contain a description of the error
     defineFunction(
       {
         name: "google_drive_create_folder",
+        icon: "folder",
+        title: "Creating a Folder in Google Drive",
         description: tr`
 Creates a new Google Drive folder.
 `,
@@ -149,6 +159,7 @@ The user-friendly name of the file that will show up in Drive list
 The Google Drive folder that will be the parent of this newly created folder`
             )
             .optional(),
+          ...statusUpdateSchema,
         },
         response: {
           folder_id: z
@@ -169,7 +180,10 @@ If an error has occurred, will contain a description of the error
             .optional(),
         },
       },
-      async ({ name, parent }) => {
+      async ({ name, parent, status_update }, statusUpdater) => {
+        statusUpdater(
+          status_update || `Creating "${name}" folder in Google Drive`
+        );
         const parents = parent ? [parent] : undefined;
         const creating = await create(moduleArgs, {
           name,

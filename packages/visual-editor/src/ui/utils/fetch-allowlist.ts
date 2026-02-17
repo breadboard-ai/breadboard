@@ -101,6 +101,12 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
     // Not currently configurable
     remapOrigin: undefined,
   },
+  {
+    canonicalPrefix: new URL(CANONICAL.NOTEBOOKLM_API_PREFIX),
+    scopes: GENAI_SCOPES,
+    // Not currently configurable
+    remapOrigin: undefined,
+  },
 ];
 
 export interface FetchAllowlistInfo {
