@@ -7,7 +7,7 @@ import {
 } from "@breadboard-ai/types";
 import { err, toLLMContent } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { iteratorFromStream } from "@breadboard-ai/utils";
+import { iteratorFromStream, ok} from "@breadboard-ai/utils";
 import { PidginTranslator } from "../agent/pidgin-translator.js";
 import { AgentUI } from "../agent/ui.js";
 import { AgentFileSystem } from "../agent/file-system.js";
@@ -145,7 +145,6 @@ class OpalAdkStream {
       sessionId,
     } = options;
     const execution_inputs: NonNullable<StreamingRequestBody["execution_inputs"]> = {};
-    let inputCount = 0;
     if (!completedPrompt.parts) {
       const error = err("opal-adk-stream: Missing required prompt.");
       console.error(error);
@@ -164,7 +163,6 @@ class OpalAdkStream {
           return error;
         }
         const part = content.parts[0];
-        inputCount++;
         let inputName = "";
         const requestPart: StreamingRequestPart = {};
 
