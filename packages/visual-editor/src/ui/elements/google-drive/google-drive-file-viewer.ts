@@ -219,7 +219,7 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
       this.#videoUrl = url;
       return url;
     },
-    args: () => [this.googleDriveClient, this.fileId],
+    args: () => [this.sca.services.googleDriveClient, this.fileId],
   });
 
   override disconnectedCallback(): void {
@@ -269,7 +269,7 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
                       alt=${file.name ?? "Google Document"}
                       @error=${this.#onImageError}
                     />
-                    <div class="loading video-loading">Loading...</div>
+                    <div class="video-loading">Loading...</div>
                   </div>`,
                 error: () => html`<p>Error loading video source</p>`,
                 complete: (url) => html`
