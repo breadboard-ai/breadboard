@@ -7,24 +7,14 @@
 import type {
   GraphDescriptor,
   GraphLoader,
-  GraphLoaderContext,
   GraphLoaderResult,
   GraphProvider,
-  GraphToRun,
 } from "@breadboard-ai/types";
 
-export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
+export { getGraphUrl, getGraphUrlComponents, urlComponentsFromString };
 
-export {
-  getGraphUrl,
-  getGraphUrlComponents,
-  resolveGraph,
-  urlComponentsFromString,
-};
-
-function getGraphUrl(path: string, context: GraphLoaderContext): URL {
-  const base = baseURLFromContext(context);
-  return new URL(path, base);
+function getGraphUrl(path: string): URL {
+  return new URL(path);
 }
 
 function getGraphUrlComponents(url: URL): {
@@ -40,86 +30,49 @@ function getGraphUrlComponents(url: URL): {
   return { mainGraphUrl, graphId: "" };
 }
 
-function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
-  const { graph, subGraphId } = graphToRun;
-  return subGraphId ? graph.graphs![subGraphId] : graph;
-}
-
 export const removeHash = (url: URL): URL => {
   const newURL = new URL(url.href);
   newURL.hash = "";
   return newURL;
 };
 
-export const sameWithoutHash = (a: URL, b: URL): boolean => {
-  return removeHash(a).href === removeHash(b).href;
-};
-
-export const baseURLFromString = (urlString: string | undefined) => {
-  if (urlString) {
-    return new URL(urlString);
-  }
-  return null;
-};
-
-export const baseURLFromContext = (context: GraphLoaderContext) => {
-  let urlString;
-  if (context.outerGraph?.url) {
-    urlString = context.outerGraph.url;
-  } else if (context.board?.url) {
-    urlString = context.board?.url;
-  }
-  const baseURL = baseURLFromString(urlString);
-  if (baseURL) return baseURL;
-  if (context.base) return context.base;
-  return SENTINEL_BASE_URL;
-};
-
-function urlComponentsFromString(
-  urlString: string,
-  context: GraphLoaderContext = {}
-): {
+function urlComponentsFromString(urlString: string): {
   mainGraphUrl: string;
   graphId: string;
 } {
-  return getGraphUrlComponents(getGraphUrl(urlString, context));
+  return getGraphUrlComponents(getGraphUrl(urlString));
 }
 
 export class Loader implements GraphLoader {
-  #graphProviders: GraphProvider[];
+  #graphProvider: GraphProvider;
 
-  constructor(graphProviders: GraphProvider[]) {
-    this.#graphProviders = graphProviders;
+  constructor(graphProvider: GraphProvider) {
+    this.#graphProvider = graphProvider;
   }
 
-  async #loadWithProviders(url: URL): Promise<GraphLoaderResult> {
-    for (const provider of this.#graphProviders) {
-      const capabilities = provider.canProvide(url);
-      if (capabilities === false) {
-        continue;
-      }
-      if (capabilities.load) {
-        const response = await provider.load(url);
-        const graph: GraphDescriptor =
-          typeof response == "string" ? JSON.parse(response) : response;
-        if (graph !== null) {
-          // TODO(aomarks) This is a bit weird. We stick the resourcekey onto
-          // the URL for the purposes of loading, because there isn't another
-          // way to pass it through the loading process currently. But, most of
-          // our code doesn't expect to see a resource key in the URL, so we
-          // need to remove it from the graph JSON.
-          graph.url = url.href.replace(/\?resourcekey=[^/?&#]*/, "");
-          return { success: true, graph };
-        }
-      }
+  async #loadWithProvider(url: URL): Promise<GraphLoaderResult> {
+    const provider = this.#graphProvider;
+    const capabilities = provider.canProvide(url);
+    if (capabilities === false || !capabilities.load) {
+      const error = `Unable to load graph from "${url.href}"`;
+      console.warn(error);
+      return { success: false, error };
+    }
+    const response = await provider.load(url);
+    const graph: GraphDescriptor =
+      typeof response == "string" ? JSON.parse(response) : response;
+    if (graph !== null) {
+      // TODO(aomarks) This is a bit weird. We stick the resourcekey onto
+      // the URL for the purposes of loading, because there isn't another
+      // way to pass it through the loading process currently. But, most of
+      // our code doesn't expect to see a resource key in the URL, so we
+      // need to remove it from the graph JSON.
+      graph.url = url.href.replace(/\?resourcekey=[^/?&#]*/, "");
+      return { success: true, graph };
     }
     const error = `Unable to load graph from "${url.href}"`;
     console.warn(error);
     return { success: false, error };
-  }
-
-  async #loadOrWarn(url: URL): Promise<GraphLoaderResult> {
-    return this.#loadWithProviders(url);
   }
 
   #getSubgraph(
@@ -143,43 +96,18 @@ export class Loader implements GraphLoader {
     return { success: true, graph: supergraph, subGraphId: hash };
   }
 
-  async load(
-    path: string,
-    context: GraphLoaderContext
-  ): Promise<GraphLoaderResult> {
-    const supergraph = context.outerGraph;
-    // This is a special case, when we don't have URLs to resolve against.
-    // We are a hash path, and we are inside of a supergraph that doesn't
-    // have its own URL. We can only query the supergraph directly.
-    // No other URL resolution is possible.
-    const isEphemeralSupergraph =
-      path.startsWith("#") && supergraph && !supergraph.url;
-    if (isEphemeralSupergraph) {
-      return this.#getSubgraph(null, path.substring(1), supergraph);
-    }
-
-    const url = getGraphUrl(path, context);
+  async load(path: string): Promise<GraphLoaderResult> {
+    const url = getGraphUrl(path);
 
     // If we don't have a hash, just load the graph.
     if (!url.hash) {
-      return await this.#loadOrWarn(url);
+      return await this.#loadWithProvider(url);
     }
 
-    // Check to see if we match a special case:
-    // We are inside of a supergraph (a graph that contains us), _and_ we
-    // are trying to load a peer subgraph.
-    // In this case, do not trigger a load, but instead return the subgraph.
-    if (supergraph) {
-      const supergraphURL = supergraph.url
-        ? new URL(supergraph.url)
-        : SENTINEL_BASE_URL;
-      if (sameWithoutHash(url, supergraphURL)) {
-        const hash = url.hash.substring(1);
-        return this.#getSubgraph(url, hash, supergraph);
-      }
-    }
-    // Otherwise, load the graph and then get its subgraph.
-    const loadedSupergraphResult = await this.#loadOrWarn(removeHash(url));
+    // Load the graph and then get its subgraph.
+    const loadedSupergraphResult = await this.#loadWithProvider(
+      removeHash(url)
+    );
     if (!loadedSupergraphResult.success) {
       return loadedSupergraphResult;
     }

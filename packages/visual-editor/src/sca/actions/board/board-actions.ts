@@ -274,7 +274,7 @@ export const remix = asAction(
       // Fall back to loading from the store (for gallery remixes, etc.)
       logger.log(Utils.Logging.Formatter.verbose("Using graph store"), LABEL);
 
-      const loadResult = await services.loader.load(url, {});
+      const loadResult = await services.loader.load(url);
 
       if (
         !loadResult.success ||

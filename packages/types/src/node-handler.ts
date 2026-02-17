@@ -25,8 +25,6 @@ import {
   InlineDataCapabilityPart,
   StoredDataCapabilityPart,
 } from "./llm-content.js";
-import { GraphLoader } from "./loader.js";
-import { Probe } from "./probe.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
@@ -100,23 +98,6 @@ export type NodeDescriberResult = GraphInlineMetadata & {
  */
 export type NodeDescriberContext = {
   /**
-   * The base URL of the graph.
-   */
-  base?: URL;
-  /**
-   * The graph in which the node is described.
-   */
-  outerGraph: GraphDescriptor;
-  /**
-   * The loader that can be used to load graphs.
-   */
-  loader?: GraphLoader;
-  /**
-   * Information about the wires currently connected to this node.
-   */
-  wires: NodeDescriberWires;
-
-  /**
    * JS Sandbox that will be used to run the module describers.
    */
   sandbox?: RunnableModuleFactory;
@@ -134,19 +115,6 @@ export type NodeDescriberContext = {
    * Runtime Flags
    */
   flags?: RuntimeFlagManager;
-};
-
-export type NodeDescriberWires = {
-  // Note we only include the output port of incoming wires, and the input port
-  // of outgoing wires, because this object is consumed by describe functions,
-  // and it wouldn't make sense to ask about ports on the node we're
-  // implementing the describe function for, because that would be recursive.
-  incoming: Record<string, { outputPort: NodeDescriberPort }>;
-  outgoing: Record<string, { inputPort: NodeDescriberPort }>;
-};
-
-export type NodeDescriberPort = {
-  describe(): Promise<Schema>;
 };
 
 /**
@@ -312,18 +280,6 @@ export type ErrorResponse = {
 };
 
 export interface NodeHandlerContext {
-  readonly board?: GraphDescriptor;
-  readonly descriptor?: NodeDescriptor;
-
-  readonly base?: URL;
-  /**
-   * The loader that can be used to load graphs.
-   * @see [GraphLoader]
-   */
-  readonly loader?: GraphLoader;
-  readonly outerGraph?: GraphDescriptor;
-  readonly probe?: Probe;
-  readonly invocationPath?: number[];
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */
@@ -383,13 +339,4 @@ export type RunArguments = NodeHandlerContext & {
    * If not specified, runs the whole board.
    */
   stopAfter?: NodeIdentifier;
-};
-
-/**
- * The main argument to runGraph. Provides a way to point at a subgraph
- * within a graph, while making the whole graph available.
- */
-export type GraphToRun = {
-  graph: GraphDescriptor;
-  subGraphId?: GraphIdentifier;
 };

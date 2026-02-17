@@ -11,7 +11,6 @@ export type {
   GraphDescriptor,
   GraphIdentifier,
   GraphInlineMetadata,
-  GraphToRun,
   InputIdentifier,
   InputResponse,
   InputValues,
@@ -34,7 +33,6 @@ export type * from "@breadboard-ai/types/schema.js";
 
 import type {
   GraphDescriptor,
-  GraphToRun,
   InputValues,
   NodeConfiguration,
   NodeDescriptor,
@@ -51,10 +49,8 @@ export type { NodeInvoker };
 interface NodeInvoker {
   invokeNode(
     args: RunArguments,
-    graph: GraphToRun,
     descriptor: NodeDescriptor,
-    inputs: InputValues,
-    invocationPath: number[]
+    inputs: InputValues
   ): Promise<OutputValues>;
 }
 

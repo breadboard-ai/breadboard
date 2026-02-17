@@ -76,7 +76,7 @@ class ClipboardReader {
   }
 
   async isGraphUrl(url: string) {
-    const loading = await this.loader.load(url, {});
+    const loading = await this.loader.load(url);
     return loading.success;
   }
 
