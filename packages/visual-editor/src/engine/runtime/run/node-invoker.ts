@@ -39,7 +39,6 @@ class NodeInvokerImpl implements NodeInvoker {
 
     const newContext: NodeHandlerContext = {
       ...context,
-      descriptor,
       board: resolveGraph(graph),
       base,
     };

@@ -304,7 +304,6 @@ export type ErrorResponse = {
 
 export interface NodeHandlerContext {
   readonly board?: GraphDescriptor;
-  readonly descriptor?: NodeDescriptor;
 
   readonly base?: URL;
   /**
