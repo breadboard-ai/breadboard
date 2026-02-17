@@ -19,9 +19,6 @@ import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
 import { icons } from "../styles/icons.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
-import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
-import { actionTrackerContext } from "../contexts/action-tracker-context.js";
-import { ActionTracker } from "../types/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
@@ -215,12 +212,6 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @consume({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator | undefined;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
 
   /**
    * Get state from controller (signal-backed for cross-breakpoint sync).

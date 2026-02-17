@@ -16,7 +16,6 @@ import {
 } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import {
-  ActionTracker,
   AppTemplate,
   AppTemplateOptions,
   FloatingInputFocusState,
@@ -38,7 +37,6 @@ import {
   theme as a2uiTheme,
   applyTokens,
 } from "../../a2ui-theme/a2ui-theme.js";
-import { boardServerContext } from "../../contexts/board-server.js";
 
 import {
   ResizeEvent,
@@ -51,20 +49,18 @@ import { emptyStyles } from "../../styles/host/colors-empty.js";
 import { appScreenToA2UIProcessor } from "../shared/utils/app-screen-to-a2ui.js";
 import { styles as appStyles } from "./index.styles.js";
 
-import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
   DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl, parseUrl } from "../../utils/urls.js";
 
 import {
   AppScreenOutput,
-  BoardServer,
   ConsentAction,
   GraphDescriptor,
   RuntimeFlags,
@@ -78,11 +74,7 @@ import {
   extensionFromMimeType,
   saveOutputsAsFile,
 } from "../../../data/save-outputs-as-file.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import {
-  GlobalConfig,
-  globalConfigContext,
-} from "../../contexts/global-config.js";
+
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 import { CONSENT_RENDER_INFO } from "../../utils/consent-content-items.js";
 import { isDocSlidesOrSheetsOutput } from "../../../a2/a2/utils.js";
@@ -126,10 +118,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     splashImage: false,
   };
 
-  @consume({ context: globalConfigContext })
-  @property({ attribute: false })
-  accessor globalConfig: GlobalConfig | undefined;
-
   @provide({ context: A2UI.Context.themeContext })
   accessor a2uitheme: v0_8.Types.Theme = a2uiTheme;
 
@@ -149,10 +137,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor sca!: SCA;
 
   readonly #appPresenter = new AppScreenPresenter();
-
-  @state()
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined = undefined;
 
   @property()
   accessor focusWhenIn: FloatingInputFocusState = ["app"];
@@ -200,17 +184,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     small: false,
   };
 
-  @consume({ context: boardServerContext, subscribe: true })
-  accessor boardServer: BoardServer | undefined;
-
   @state()
   accessor showAddAssetModal = false;
 
   @state()
   accessor resultsUrl: string | null = null;
-
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
 
   @query("#export-output-button")
   accessor exportOutputsButton: HTMLButtonElement | null = null;
@@ -513,7 +491,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     await navigator.clipboard.writeText(decodeURIComponent(this.resultsUrl));
 
-    this.actionTracker?.shareResults("copy_share_link");
+    this.sca.services.actionTracker?.shareResults("copy_share_link");
 
     this.dispatchEvent(
       new SnackbarEvent(
@@ -554,7 +532,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    const boardServer = this.boardServer as GoogleDriveBoardServer;
+    const boardServer = this.sca.services.googleDriveBoardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
@@ -597,7 +575,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     unlockButton();
 
-    this.actionTracker?.shareResults("download");
+    this.sca.services.actionTracker?.shareResults("download");
 
     function lockButton() {
       btn!.disabled = true;
@@ -643,7 +621,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     lockButton();
 
     // Check if we're published. We can only share results for published graphs.
-    if (!this.googleDriveClient) {
+    if (!this.sca.services.googleDriveClient) {
       console.error(`No google drive client`);
       unlockButton();
       unsnackbar();
@@ -666,10 +644,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     let shareableGraphFileId;
-    const currentGraphMetadata = await this.googleDriveClient.getFileMetadata(
-      currentGraphFileId,
-      { fields: ["properties", "capabilities"] }
-    );
+    const currentGraphMetadata =
+      await this.sca.services.googleDriveClient.getFileMetadata(
+        currentGraphFileId,
+        { fields: ["properties", "capabilities"] }
+      );
     const isShareableCopy =
       !!currentGraphMetadata.properties?.[
         DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN
@@ -730,7 +709,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         shareableGraphFileId = currentGraphFileId;
       }
     }
-    const shareableGraphResourceKeyPromise = this.googleDriveClient
+    const shareableGraphResourceKeyPromise = this.sca.services.googleDriveClient
       .getFileMetadata(shareableGraphFileId, { fields: ["resourceKey"] })
       .then(({ resourceKey }) => resourceKey);
 
@@ -739,7 +718,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       unsnackbar();
       return;
     }
-    const boardServer = this.boardServer;
+    const boardServer = this.sca.services.googleDriveBoardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
@@ -844,10 +823,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         results: resultsFileId,
         guestPrefixed: false,
       },
-      this.globalConfig?.hostOrigin
+      this.sca.services.globalConfig?.hostOrigin
     );
 
-    this.actionTracker?.shareResults("save_to_drive");
+    this.sca.services.actionTracker?.shareResults("save_to_drive");
 
     unlockButton();
 
@@ -1035,7 +1014,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 @click=${() => {
                   this.showFirstRunMessage = false;
 
-                  this.actionTracker?.runApp(this.graph?.url, "app_preview");
+                  this.sca.services.actionTracker?.runApp(
+                    this.graph?.url,
+                    "app_preview"
+                  );
                   this.dispatchEvent(
                     new StateEvent({ eventType: "board.run" })
                   );
@@ -1094,12 +1076,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             break;
 
           case "output":
-            if (this.graph && this.boardServer) {
+            if (this.graph && this.sca.services.googleDriveBoardServer) {
               void maybeTriggerNlToOpalSatisfactionSurvey(
                 this.#appPresenter,
                 this.sca.controller.editor.graph,
                 this.graph,
-                this.boardServer
+                this.sca.services.googleDriveBoardServer
               );
             }
             content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];

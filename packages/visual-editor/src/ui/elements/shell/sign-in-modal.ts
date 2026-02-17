@@ -9,13 +9,13 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { type OAuthScope } from "../../connection/oauth-scopes.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+
 import { markdown } from "../../directives/markdown.js";
 import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
-import { ActionTracker, UserSignInResponse } from "../../types/types.js";
+import { UserSignInResponse } from "../../types/types.js";
 import { devUrlParams } from "../../utils/urls.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { SCA } from "../../../sca/sca.js";
@@ -50,9 +50,6 @@ export class VESignInModal extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   @property({ attribute: false })
   accessor sca!: SCA;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined = undefined;
 
   @property()
   accessor consentMessage: string | undefined = undefined;
@@ -384,7 +381,7 @@ export class VESignInModal extends SignalWatcher(LitElement) {
     if (this.#state.status !== "consent-only") {
       return this.#onClickSignIn();
     }
-    this.actionTracker?.signInSuccess();
+    this.sca?.services.actionTracker?.signInSuccess();
     this.#close("success");
   }
 
@@ -414,7 +411,7 @@ export class VESignInModal extends SignalWatcher(LitElement) {
       }
       return;
     } else {
-      this.actionTracker?.signInSuccess();
+      this.sca?.services.actionTracker?.signInSuccess();
     }
     if (status === "sign-in") {
       // TODO(aomarks) Remove the reload after the app is fully reactive to a

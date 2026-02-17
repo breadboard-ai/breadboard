@@ -43,7 +43,7 @@ import {
   ToastType,
 } from "../../events/events.js";
 
-import { ActionTracker, EnumValue } from "../../types/types.js";
+import { EnumValue } from "../../types/types.js";
 import {
   isControllerBehavior,
   isLLMContentArrayBehavior,
@@ -69,7 +69,6 @@ import {
   isTextCapabilityPart,
 } from "../../../data/common.js";
 
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { embedderContext } from "../../contexts/embedder.js";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
@@ -113,9 +112,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
   @consume({ context: embedderContext })
   accessor embedState: EmbedState = embedState();
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
@@ -997,7 +993,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.actionTracker?.editStep("manual");
+    this.sca?.services.actionTracker?.editStep("manual");
 
     this.dispatchEvent(
       new StateEvent({
@@ -1454,7 +1450,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                   stepId: nodeId,
                 } satisfies FlowGenConstraint}
                 @bbgraphreplace=${() => {
-                  this.actionTracker?.editStep("flowgen");
+                  this.sca?.services.actionTracker?.editStep("flowgen");
                   // Ignore all edits to this point so that we don't issue
                   // a submit and stomp the new values.
                   this.#edited = false;

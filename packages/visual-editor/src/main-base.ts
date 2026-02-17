@@ -7,7 +7,6 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import type { BoardServer } from "@breadboard-ai/types";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, LitElement, nothing } from "lit";
@@ -19,45 +18,28 @@ import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
 import { RuntimeConfig } from "./utils/graph-types.js";
 
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-
 import {
   canonicalizeOAuthScope,
   type OAuthScope,
 } from "./ui/connection/oauth-scopes.js";
-import { boardServerContext } from "./ui/contexts/board-server.js";
-import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
-import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
+
 import { VESignInModal } from "./ui/elements/elements.js";
 import { embedState, EmbedState } from "./ui/embed/embed.js";
 
 import type {
   CheckAppAccessResult,
-  GuestConfiguration,
-  OpalShellHostProtocol,
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { reactive } from "./sca/reactive.js";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
-import {
-  FlowGenerator,
-  flowGeneratorContext,
-} from "./ui/flow-gen/flow-generator.js";
 
-import {
-  ActionTracker,
-  RecentBoard,
-  UserSignInResponse,
-} from "./ui/types/types.js";
-import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
+import { RecentBoard, UserSignInResponse } from "./ui/types/types.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 
 import { Admin } from "./admin.js";
 
 import { MainArguments } from "./types/types.js";
-import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
-import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 
 import { sca, SCA } from "./sca/sca.js";
 import { Utils } from "./sca/utils.js";
@@ -73,32 +55,11 @@ export type RenderValues = {
 };
 
 const LOADING_TIMEOUT = 1250;
-
 const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
+
 abstract class MainBase extends SignalWatcher(LitElement) {
-  @provide({ context: globalConfigContext })
-  accessor globalConfig: GlobalConfig;
-
-  @provide({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator;
-
-  @provide({ context: googleDriveClientContext })
-  accessor googleDriveClient: GoogleDriveClient;
-
   @provide({ context: BreadboardUI.Contexts.embedderContext })
   accessor embedState!: EmbedState;
-
-  @provide({ context: boardServerContext })
-  accessor boardServer: BoardServer;
-
-  @provide({ context: opalShellContext })
-  accessor opalShell: OpalShellHostProtocol;
-
-  @provide({ context: guestConfigurationContext })
-  protected accessor guestConfiguration: GuestConfiguration;
-
-  @provide({ context: actionTrackerContext })
-  protected accessor actionTracker: ActionTracker;
 
   @provide({ context: scaContext })
   protected accessor sca: SCA;
@@ -144,20 +105,20 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     super();
 
     // Static deployment config
-    this.globalConfig = args.globalConfig;
+    const globalConfig = args.globalConfig;
 
     // Configuration provided by shell host
-    this.guestConfiguration = args.guestConfiguration;
+    const guestConfiguration = args.guestConfiguration;
 
     // Authentication
-    this.opalShell = args.shellHost;
+    const opalShell = args.shellHost;
     this.hostOrigin = args.hostOrigin;
 
     // Controller
     const config: RuntimeConfig = {
-      globalConfig: this.globalConfig,
-      guestConfig: this.guestConfiguration,
-      shellHost: this.opalShell,
+      globalConfig,
+      guestConfig: guestConfiguration,
+      shellHost: opalShell,
       embedHandler: args.embedHandler,
       env: args.env,
       appName: Strings.from("APP_NAME"),
@@ -165,9 +126,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       askUserToSignInIfNeeded: (scopes) => this.askUserToSignInIfNeeded(scopes),
     };
     this.sca = sca(config, args.globalConfig.flags);
-    this.sca.controller.global.debug.isHydrated.then(() => {
-      this.sca.controller.global.debug.enabled = true;
-    });
 
     // If the router encountered an invalid URL (e.g. unsupported flow ID),
     // show a warning snackbar once the controllers are hydrated.
@@ -185,28 +143,19 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    this.googleDriveClient = this.sca.services.googleDriveClient;
-
-    // Asyncronously check if the user has an access restriction (e.g. geo) and
-    // if they are signed in with all required scopes.
     this.sca.services.signinAdapter.state.then((state) => {
       if (state === "signedin") {
-        this.actionTracker.updateSignedInStatus(true);
+        this.sca.services.actionTracker.updateSignedInStatus(true);
         this.sca.services.signinAdapter
           .checkAppAccess()
           .then(this.handleAppAccessCheckResult.bind(this));
-        this.opalShell
+        this.sca.services.shellHost
           .validateScopes()
           .then(this.handleValidateScopesResult.bind(this));
       }
     });
 
-    this.flowGenerator = this.sca.services.flowGenerator;
-    this.actionTracker = this.sca.services.actionTracker;
-
-    this.boardServer = this.sca.services.googleDriveBoardServer;
-
-    if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
+    if (this.sca.services.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.sca.services.emailPrefsManager.refreshPrefs().then(() => {
         if (
           this.sca.services.emailPrefsManager.prefsValid &&
@@ -220,8 +169,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Admin — side-effect: exposes `window.o` when URL has #owner-tools.
     new Admin(
       args,
-      this.globalConfig,
-      this.googleDriveClient,
+      this.sca.services.globalConfig,
+      this.sca.services.googleDriveClient,
       this.sca.services.signinAdapter
     );
 
@@ -492,7 +441,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
-    const generated = await this.flowGenerator.oneShot({ intent });
+    const generated = await this.sca.services.flowGenerator.oneShot({ intent });
     if ("error" in generated) {
       throw new Error(generated.error);
     }
@@ -761,7 +710,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     if ((await this.sca.services.signinAdapter.state) === "signedin") {
       if (await verifyScopes()) {
-        if (!this.guestConfiguration.consentMessage) {
+        if (!this.sca.services.guestConfig.consentMessage) {
           return "success";
         }
         if (checkSignInConsent()) {
@@ -803,7 +752,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html`
       <bb-sign-in-modal
         ${ref(this.signInModalRef)}
-        .consentMessage=${this.guestConfiguration.consentMessage}
+        .consentMessage=${this.sca.services.guestConfig.consentMessage}
         .blurBackground=${blurBackground}
         @bbmodaldismissed=${() => {
           this.sca.controller.global.main.show.delete("SignInModal");

@@ -16,10 +16,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { getAssetType, getMimeType } from "../../utils/mime-type.js";
 import { consume } from "@lit/context";
-import {
-  GlobalConfig,
-  globalConfigContext,
-} from "../../contexts/global-config.js";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
 import { getStepIcon } from "../../utils/get-step-icon.js";
@@ -33,9 +29,6 @@ import type { DisplayItem } from "../../../sca/types.js";
 export class FastAccessMenu extends SignalWatcher(LitElement) {
   @state()
   accessor selectedIndex = 0;
-
-  @consume({ context: globalConfigContext })
-  accessor globalConfig: GlobalConfig | undefined;
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
@@ -318,7 +311,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       rawItems,
       graphController.agentModeTools,
       {
-        environmentName: this.globalConfig?.environmentName,
+        environmentName: this.sca?.services.globalConfig?.environmentName,
         enableNotebookLm:
           this.sca?.controller.global.flags.enableNotebookLm ?? false,
         integrationsController:

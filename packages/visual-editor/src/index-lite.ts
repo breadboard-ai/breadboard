@@ -485,7 +485,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       // This is a bit hacky and indirect, but an easy way to tell if something
       // is from the public gallery is to check if the GoogleDriveClient has
       // been configured to use the proxy for it.
-      this.googleDriveClient.fileIsMarkedForReadingWithPublicProxy(fileId);
+      this.sca.services.googleDriveClient.fileIsMarkedForReadingWithPublicProxy(
+        fileId
+      );
     if (!isMine && !isFeaturedGalleryItem) {
       this.showAppFullscreen = true;
     }
@@ -512,7 +514,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void> {
-    this.actionTracker.updateCanAccessStatus(result.canAccess);
+    this.sca.services.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       this.accessStatus = result;
       this.sca.controller.global.main.show.add("NoAccessModal");
@@ -567,7 +569,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: "No current graph detected, exting flow generation" };
     }
 
-    if (!this.flowGenerator) {
+    if (!this.sca.services.flowGenerator) {
       this.sca.controller.global.flowgenInput.state = { status: "initial" };
       return { error: `No FlowGenerator was provided` };
     }
@@ -593,7 +595,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   protected renderNoAccessModal() {
     const content = getNoAccessModalContent(
       this.accessStatus,
-      this.guestConfiguration
+      this.sca.services.guestConfig
     );
     if (!content) return nothing;
     const { title, message } = content;
@@ -708,7 +710,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           ${ref(this.#advancedEditorLink)}
           class="w-400 md-title-small sans-flex unvaried"
           id="open-advanced-editor"
-          href="${this.guestConfiguration.advancedEditorOrigin ||
+          href="${this.sca.services.guestConfig.advancedEditorOrigin ||
           this.hostOrigin}?mode=canvas&flow=${this.#graph?.url}"
           target="_blank"
         >

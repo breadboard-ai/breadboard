@@ -22,10 +22,10 @@ import {
 } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { generatePaletteFromColor } from "../../../theme/index.js";
 import { loadPartAsDataUrl } from "../../utils/data-parts.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 import { SignalWatcher } from "@lit-labs/signals";
 import { Template } from "../../app-templates/basic/index.js";
@@ -113,8 +113,8 @@ export class AppController extends SignalWatcher(LitElement) {
   @state()
   accessor _originalTheme: AppTheme | null = null;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = appPreviewStyles;
 
@@ -314,7 +314,12 @@ export class AppController extends SignalWatcher(LitElement) {
         this.#retrievingSplashFor = requestKey;
         // Stored Data splash screen.
         Promise.resolve()
-          .then(() => loadPartAsDataUrl(this.googleDriveClient!, splashScreen))
+          .then(() =>
+            loadPartAsDataUrl(
+              this.sca.services.googleDriveClient!,
+              splashScreen
+            )
+          )
           .then((base64DataUrl) => {
             if (!base64DataUrl) return;
             return fetch(base64DataUrl).then((r) => r.blob());
