@@ -4,20 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  DriveFileId,
-  GoogleDriveClient,
-} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { consume } from "@lit/context";
 import { Task } from "@lit/task";
 import { LitElement, type PropertyValues, css, html } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { icons } from "../../styles/icons.js";
 import { HideTooltipEvent, ShowTooltipEvent } from "../../events/events.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-google-drive-file-viewer")
-export class GoogleDriveFileViewer extends LitElement {
+export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     css`
@@ -119,9 +118,8 @@ export class GoogleDriveFileViewer extends LitElement {
   })
   accessor fileId: DriveFileId | string | null = null;
 
-  @consume({ context: googleDriveClientContext })
-  @property({ attribute: false })
-  accessor googleDriveClient: GoogleDriveClient | undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @state()
   accessor #imageFailedToLoad = false;
@@ -144,7 +142,7 @@ export class GoogleDriveFileViewer extends LitElement {
         throw e;
       }
     },
-    args: () => [this.googleDriveClient, this.fileId],
+    args: () => [this.sca.services.googleDriveClient, this.fileId],
   });
 
   override willUpdate(changes: PropertyValues<this>) {

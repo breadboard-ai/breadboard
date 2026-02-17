@@ -27,7 +27,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { A2_COMPONENTS } from "../../../a2/a2-registry.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+
 import {
   HideTooltipEvent,
   ShowTooltipEvent,
@@ -40,7 +40,7 @@ import {
 } from "../../events/events.js";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
-import { ActionTracker, NewAsset } from "../../types/types.js";
+import { NewAsset } from "../../types/types.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
 import {
   GoogleDriveFileId,
@@ -59,9 +59,6 @@ import "../../elements/graph-editing-chat/graph-editing-chat.js";
 export class EditorControls extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker!: ActionTracker | undefined;
 
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
@@ -585,11 +582,11 @@ export class EditorControls extends SignalWatcher(LitElement) {
         draggable="true"
         class=${classMap(classes)}
         @click=${() => {
-          this.actionTracker?.addNewStep(item.title);
+          this.sca?.services.actionTracker?.addNewStep(item.title);
           this.#handleChosenKitItem(item.url);
         }}
         @dragstart=${(evt: DragEvent) => {
-          this.actionTracker?.addNewStep(item.title);
+          this.sca?.services.actionTracker?.addNewStep(item.title);
           if (!evt.dataTransfer) {
             return;
           }

@@ -12,7 +12,7 @@ import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { discordIcon } from "../../styles/svg-icons.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+
 import {
   CloseEvent,
   OverflowMenuActionEvent,
@@ -22,11 +22,7 @@ import {
 } from "../../events/events.js";
 import { UILoadState } from "../../types/state-types.js";
 import * as Styles from "../../styles/styles.js";
-import {
-  ActionTracker,
-  BOARD_SAVE_STATUS,
-  EnumValue,
-} from "../../types/types.js";
+import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
@@ -38,9 +34,6 @@ const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 export class VEHeader extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined = undefined;
 
   @property()
   accessor signinAdapter: SigninAdapter | null = null;
@@ -758,7 +751,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           return;
         }
 
-        this.actionTracker?.remixApp(this.url, "editor");
+        this.sca?.services.actionTracker?.remixApp(this.url, "editor");
         this.dispatchEvent(
           new StateEvent({
             eventType: "board.remix",

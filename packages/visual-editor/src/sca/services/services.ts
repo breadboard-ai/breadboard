@@ -6,6 +6,7 @@
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
+import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { RuntimeConfig } from "../../utils/graph-types.js";
 import type { GlobalConfig } from "../../ui/contexts/global-config.js";
 import { createActionTracker } from "../../ui/utils/action-tracker.js";
@@ -78,6 +79,7 @@ export interface AppServices {
    */
   stateEventBus: EventTarget;
   statusUpdates: StatusUpdatesService;
+  shellHost: OpalShellHostProtocol;
 }
 
 let instance: AppServices | null = null;
@@ -189,6 +191,7 @@ export function services(
       signinAdapter,
       stateEventBus: new EventTarget(),
       statusUpdates: new StatusUpdatesService(),
+      shellHost: config.shellHost,
     } satisfies AppServices;
   }
 

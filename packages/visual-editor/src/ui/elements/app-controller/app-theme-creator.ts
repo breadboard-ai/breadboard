@@ -7,7 +7,6 @@
 import * as Strings from "../../strings/helper.js";
 const GlobalStrings = Strings.forSection("Global");
 
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   generatePaletteFromColor,
   generatePaletteFromImage,
@@ -27,7 +26,7 @@ import { guard } from "lit/directives/guard.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { until } from "lit/directives/until.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+
 import { OverlayDismissedEvent, SnackbarEvent } from "../../events/events.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
@@ -66,9 +65,6 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
 
   @state()
   accessor templates: Array<{ title: string; value: string }> = [];
-
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
 
   @state()
   accessor #generating = false;
@@ -583,7 +579,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
     const showLoader = !theme.isDefaultTheme && !!url;
     return await renderThumbnail(
       url,
-      this.googleDriveClient!,
+      this.sca.services.googleDriveClient!,
       {},
       "Theme thumbnail",
       showLoader

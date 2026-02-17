@@ -100,7 +100,7 @@ class Main extends MainBase {
     if (!domain) {
       return;
     }
-    const url = this.globalConfig.domains?.[domain]?.preferredUrl;
+    const url = this.sca.services.globalConfig.domains?.[domain]?.preferredUrl;
     if (!url) {
       return;
     }
@@ -119,7 +119,7 @@ class Main extends MainBase {
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void> {
-    this.actionTracker.updateCanAccessStatus(result.canAccess);
+    this.sca.services.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       await this.sca.services.signinAdapter.signOut();
       window.history.pushState(
@@ -654,7 +654,9 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            this.sca.controller.global.feedback.open(this.globalConfig);
+            this.sca.controller.global.feedback.open(
+              this.sca.services.globalConfig
+            );
             break;
           }
 

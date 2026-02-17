@@ -10,13 +10,13 @@ import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+
 import "../../elements/input/expanding-textarea.js";
 import { SnackbarEvent, UnsnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
 import * as StringsHelper from "../../strings/helper.js";
 import * as Styles from "../../styles/styles.js";
-import { ActionTracker, SnackType } from "../../types/types.js";
+import { SnackType } from "../../types/types.js";
 import type { SCA } from "../../../sca/sca.js";
 import { scaContext } from "../../../sca/context/context.js";
 
@@ -28,9 +28,6 @@ export type LiteEditInputController = {
 
 @customElement("bb-editor-input-lite")
 export class EditorInputLite extends SignalWatcher(LitElement) {
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker!: ActionTracker;
-
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
@@ -163,7 +160,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     const description = input?.value;
     if (!description) return;
 
-    this.actionTracker?.flowGenEdit(this.#graphUrl);
+    this.sca?.services.actionTracker?.flowGenEdit(this.#graphUrl);
 
     this.sca.controller.global.flowgenInput.startGenerating();
 

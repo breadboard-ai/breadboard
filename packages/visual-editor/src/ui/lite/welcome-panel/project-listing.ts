@@ -6,29 +6,21 @@
 
 import {
   MutableGraphCollection,
-  type BoardServer,
   type GraphProviderItem,
 } from "@breadboard-ai/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { boardServerContext } from "../../contexts/board-server.js";
-import {
-  globalConfigContext,
-  type GlobalConfig,
-} from "../../contexts/global-config.js";
+import { customElement, property } from "lit/decorators.js";
 import "../../elements/shared/expanding-search-button.js";
 import { StateEvent } from "../../events/events.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import * as StringsHelper from "../../strings/helper.js";
-import type { ActionTracker } from "../../types/types.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 
 import * as Styles from "../../styles/styles.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
@@ -40,18 +32,8 @@ const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
 
 @customElement("bb-project-listing-lite")
 export class ProjectListingLite extends SignalWatcher(LitElement) {
-  @consume({ context: globalConfigContext })
-  accessor globalConfig: GlobalConfig | undefined;
-
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @consume({ context: boardServerContext, subscribe: true })
-  @state()
-  accessor boardServer: BoardServer | undefined;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
 
   @property()
   accessor featuredFilter: string | null = null;
@@ -274,7 +256,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   ];
 
   override render() {
-    const { boardServer } = this;
+    const boardServer = this.sca.services.googleDriveBoardServer;
     if (!boardServer) {
       return html`<nav id="menu">
         ${Strings.from("ERROR_LOADING_PROJECTS")}
@@ -289,7 +271,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   }
 
   #renderBoardListing() {
-    const server = this.boardServer;
+    const server = this.sca.services.googleDriveBoardServer;
     if (!server) {
       console.error(`[homepage] No board server provided`);
       return nothing;
@@ -464,7 +446,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.actionTracker?.createNew();
+    this.sca?.services.actionTracker?.createNew();
 
     evt.target.disabled = true;
     this.dispatchEvent(

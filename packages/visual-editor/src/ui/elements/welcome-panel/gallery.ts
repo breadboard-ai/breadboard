@@ -5,7 +5,6 @@
  */
 
 import type { GraphProviderItem } from "@breadboard-ai/types";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
@@ -16,14 +15,12 @@ import { keyed } from "lit/directives/keyed.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
-import { ActionTracker, OverflowAction } from "../../types/types.js";
+import { OverflowAction } from "../../types/types.js";
 import { renderThumbnail } from "../../utils/image.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
@@ -508,12 +505,6 @@ export class Gallery extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker!: ActionTracker | undefined;
-
   @property({ attribute: false })
   accessor items: [string, GraphProviderItem][] | null = null;
 
@@ -658,9 +649,13 @@ export class Gallery extends SignalWatcher(LitElement) {
   }
 
   async #renderThumbnail(thumbnail: string | null | undefined) {
-    return await renderThumbnail(thumbnail, this.googleDriveClient!, {
-      thumbnail: true,
-    });
+    return await renderThumbnail(
+      thumbnail,
+      this.sca.services.googleDriveClient!,
+      {
+        thumbnail: true,
+      }
+    );
   }
 
   #renderBoard([name, item]: [string, GraphProviderItem], isPinned = false) {
@@ -875,7 +870,7 @@ export class Gallery extends SignalWatcher(LitElement) {
   }
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
-    this.actionTracker?.openApp(
+    this.sca?.services.actionTracker?.openApp(
       url,
       this.forceCreatorToBeTeam ? "gallery" : "user"
     );
@@ -898,7 +893,7 @@ export class Gallery extends SignalWatcher(LitElement) {
     event: PointerEvent | KeyboardEvent | OverflowMenuActionEvent,
     url: string
   ) {
-    this.actionTracker?.remixApp(
+    this.sca?.services.actionTracker?.remixApp(
       url,
       this.forceCreatorToBeTeam ? "gallery" : "user"
     );
