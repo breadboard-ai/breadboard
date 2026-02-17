@@ -54,7 +54,6 @@ import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 
 import { Admin } from "./admin.js";
-import { eventRoutes } from "./event-routing/event-routing.js";
 
 import { MainArguments } from "./types/types.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
@@ -657,20 +656,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     } satisfies RenderValues;
   }
 
-  protected collectEventRouteDeps(
-    evt: BreadboardUI.Events.StateEvent<
-      keyof BreadboardUI.Events.StateEventDetailMap
-    >
-  ) {
-    return {
-      originalEvent: evt,
-
-      googleDriveClient: this.googleDriveClient,
-      actionTracker: this.actionTracker,
-      sca: this.sca,
-    };
-  }
-
   protected willUpdate(): void {
     if (!this.sca.controller.global.main) {
       return;
@@ -859,27 +844,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.sca.services.stateEventBus.dispatchEvent(
       new BreadboardUI.Events.StateEvent(evt.detail)
     );
-
-    // FIXME: Legacy event route fallthrough. These routes still depend on the
-    // legacy runtime — remove when all routes are migrated to SCA actions.
-    const eventRoute = eventRoutes.get(evt.detail.eventType);
-    if (!eventRoute) {
-      return;
-    }
-
-    // Pass the handler everything it may need in order to function. Usually
-    // the most important of these are the runtime, originalEvent (which
-    // contains the data needed) and the tab so that the runtime can locate
-    // the appropriate editor etc.
-    const shouldRender = await eventRoute.do(this.collectEventRouteDeps(evt));
-
-    // Some legacy actions require an update after running, so if the event
-    // handler returns with a true, schedule an update.
-    if (shouldRender) {
-      requestAnimationFrame(() => {
-        this.requestUpdate();
-      });
-    }
   }
 }
 

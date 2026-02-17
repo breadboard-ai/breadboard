@@ -16,9 +16,9 @@ import { MainBase } from "./main-base.js";
 import { classMap } from "lit/directives/class-map.js";
 import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
-import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
+
 import { reactive } from "./sca/reactive.js";
-import { eventRoutes } from "./event-routing/event-routing.js";
+
 import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -572,7 +572,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: `No FlowGenerator was provided` };
     }
 
-    this.dispatchEvent(
+    this.sca.services.stateEventBus.dispatchEvent(
       new StateEvent({ eventType: "flowgen.generate", intent })
     );
   }
@@ -915,22 +915,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #onUnSnackbar(event: BreadboardUI.Events.UnsnackbarEvent) {
     this.sca.controller.global.snackbars.unsnackbar(event.snackbarId);
-  }
-
-  protected async invokeBoardReplaceRoute(
-    replacement: GraphDescriptor,
-    theme: GraphTheme | undefined
-  ) {
-    return eventRoutes.get("board.replace")?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.replace",
-          replacement,
-          theme,
-          creator: { role: "assistant" },
-        })
-      )
-    );
   }
 
   protected invokeBoardCreateRoute() {
