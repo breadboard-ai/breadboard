@@ -34,15 +34,15 @@ import {
   canonicalizeOAuthScope,
 } from "../connection/oauth-scopes.js";
 import { TokenVendor } from "../connection/token-vendor.js";
-import { SettingsHelperImpl } from "../data/settings-helper.js";
-import { SettingsStore } from "../data/settings-store.js";
+import { TokenStoreHelper } from "../data/tokens-helper.js";
+import { TokenStore } from "../data/tokens-store.js";
 import { type OAuthStateParameter } from "../elements/connection/connection-common.js";
 import {
   loadDrivePicker,
   loadDriveShareClient,
   type ShareClient,
 } from "../elements/google-drive/google-apis.js";
-import { SETTINGS_TYPE } from "../types/types.js";
+import { TOKEN_TYPE } from "../types/types.js";
 import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
@@ -68,27 +68,23 @@ const AUTH_ENDPOINT =
 // property assignment to arrow functions instead of with method declarations.
 
 export class OAuthBasedOpalShell implements OpalShellHostProtocol {
-  readonly #settingsStore = SettingsStore.restoredInstance();
-  readonly #settingsHelper = this.#settingsStore.then(
-    (settings) => new SettingsHelperImpl(settings)
+  readonly #tokenStore = TokenStore.restoredInstance();
+  readonly #tokensHelper = this.#tokenStore.then(
+    (tokens) => new TokenStoreHelper(tokens)
   );
 
-  readonly #tokenVendor = this.#settingsHelper.then(
-    (settingsHelper) =>
+  readonly #tokenVendor = this.#tokensHelper.then(
+    (tokensHelper) =>
       new TokenVendor(
         {
           get: () =>
-            settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)
+            tokensHelper.get(TOKEN_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)
               ?.value as string,
           set: async (grant: string) =>
-            settingsHelper.set(
-              SETTINGS_TYPE.CONNECTIONS,
-              SIGN_IN_CONNECTION_ID,
-              {
-                name: SIGN_IN_CONNECTION_ID,
-                value: grant,
-              }
-            ),
+            tokensHelper.set(TOKEN_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID, {
+              name: SIGN_IN_CONNECTION_ID,
+              value: grant,
+            }),
         },
         { OAUTH_CLIENT: CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT }
       )
@@ -140,19 +136,16 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       // TODO(aomarks) This might not be necessary now, but I think there is a
       // spot elsewhere where we read these scopes that needs to be
       // removed/updated first.
-      const settingsHelper = await this.#settingsHelper;
+      const settingsHelper = await this.#tokensHelper;
       const settingsValueStr = (
-        await settingsHelper.get(
-          SETTINGS_TYPE.CONNECTIONS,
-          SIGN_IN_CONNECTION_ID
-        )
+        await settingsHelper.get(TOKEN_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)
       )?.value as string | undefined;
       if (settingsValueStr) {
         const settingsValue = JSON.parse(settingsValueStr) as TokenGrant;
         if (!settingsValue.scopes) {
           console.info(`[signin] Upgrading signin storage to include scopes`);
           await settingsHelper.set(
-            SETTINGS_TYPE.CONNECTIONS,
+            TOKEN_TYPE.CONNECTIONS,
             SIGN_IN_CONNECTION_ID,
             {
               name: SIGN_IN_CONNECTION_ID,
@@ -529,9 +522,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     };
     console.info("[shell host] Updating storage");
 
-    const settingsHelper = await this.#settingsHelper;
+    const settingsHelper = await this.#tokensHelper;
     const writeSettings = () =>
-      settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID, {
+      settingsHelper.set(TOKEN_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID, {
         name: SIGN_IN_CONNECTION_ID,
         value: JSON.stringify(settingsValue),
       });
@@ -543,7 +536,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         e1
       );
       try {
-        const settingsStore = await this.#settingsStore;
+        const settingsStore = await this.#tokenStore;
         await settingsStore.delete();
         await writeSettings();
       } catch (e2) {
@@ -584,11 +577,8 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if ((await this.getSignInState()).status === "signedout") {
       return;
     }
-    const settingsHelper = await this.#settingsHelper;
-    await settingsHelper.delete(
-      SETTINGS_TYPE.CONNECTIONS,
-      SIGN_IN_CONNECTION_ID
-    );
+    const settingsHelper = await this.#tokensHelper;
+    await settingsHelper.delete(TOKEN_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID);
     this.#state = Promise.resolve({ status: "signedout" });
   };
 

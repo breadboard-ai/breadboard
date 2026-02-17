@@ -87,15 +87,11 @@ export interface AllowedLLMContentTypes {
   textInline: boolean;
 }
 
-export enum SETTINGS_TYPE {
-  SECRETS = "Secrets",
-  GENERAL = "General",
-  INPUTS = "Inputs",
-  NODE_PROXY_SERVERS = "Node Proxy Servers",
+export enum TOKEN_TYPE {
   CONNECTIONS = "Connections",
 }
 
-export interface SettingEntry {
+export interface TokenEntry {
   key: string;
   value: {
     id?: string;
@@ -105,21 +101,14 @@ export interface SettingEntry {
   };
 }
 
-export interface SettingsList {
-  [SETTINGS_TYPE.GENERAL]: SettingEntry;
-  [SETTINGS_TYPE.SECRETS]: SettingEntry;
-  [SETTINGS_TYPE.INPUTS]: SettingEntry;
-  [SETTINGS_TYPE.NODE_PROXY_SERVERS]: SettingEntry;
-  [SETTINGS_TYPE.CONNECTIONS]: SettingEntry;
+export interface TokensList {
+  [TOKEN_TYPE.CONNECTIONS]: TokenEntry;
 }
 
-export type SettingsItems = Map<
-  SettingEntry["value"]["name"],
-  SettingEntry["value"]
->;
+export type TokenItems = Map<TokenEntry["value"]["name"], TokenEntry["value"]>;
 
-export type Settings = {
-  [K in keyof SettingsList]: {
+export type Tokens = {
+  [K in keyof TokensList]: {
     configuration: {
       extensible: boolean;
       description: string;
@@ -132,28 +121,22 @@ export type Settings = {
        */
       customElement?: string;
     };
-    items: SettingsItems;
+    items: TokenItems;
   };
 };
 
-export type CustomSettingsElement = HTMLElement & {
-  settingsType?: SETTINGS_TYPE | undefined;
-  settingsItems?: Settings[SETTINGS_TYPE]["items"] | undefined;
-};
-
 /**
- * A simplified interface over {@link SettingsStore} that reads/writes
- * immediately and can be consumed by elements using
- * {@link settingsHelperContext}.
+ * A simplified interface over {@link TokenStore} for reading/writing
+ * token grants to IndexedDB.
  */
-export interface SettingsHelper {
-  get(section: SETTINGS_TYPE, name: string): SettingEntry["value"] | undefined;
+export interface TokensHelper {
+  get(section: TOKEN_TYPE, name: string): TokenEntry["value"] | undefined;
   set(
-    section: SETTINGS_TYPE,
+    section: TOKEN_TYPE,
     name: string,
-    value: SettingEntry["value"]
+    value: TokenEntry["value"]
   ): Promise<void>;
-  delete(section: SETTINGS_TYPE, name: string): Promise<void>;
+  delete(section: TOKEN_TYPE, name: string): Promise<void>;
 }
 
 /**
@@ -207,15 +190,6 @@ export interface RecentBoard {
   url: string;
   pinned?: boolean;
   [key: string]: unknown;
-}
-
-export interface SettingsStore {
-  values: Settings;
-  getSection(section: SETTINGS_TYPE): Settings[typeof section];
-  getItem(section: SETTINGS_TYPE, name: string): void;
-  save(settings: Settings): Promise<void>;
-  restore(): Promise<void>;
-  delete(): Promise<void>;
 }
 
 export interface UserMessage {

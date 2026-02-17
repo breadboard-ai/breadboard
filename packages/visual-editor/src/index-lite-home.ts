@@ -142,7 +142,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
     const config: RuntimeConfig = {
       globalConfig: this.globalConfig,
       guestConfig: this.guestConfiguration,
-      settings: mainArgs.settings,
       shellHost: opalShell,
       embedHandler: mainArgs.embedHandler,
       env: mainArgs.env,

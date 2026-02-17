@@ -6,7 +6,7 @@
 
 export * as Constants from "./constants/constants.js";
 export * as Contexts from "./contexts/contexts.js";
-export * as Data from "./data/inputs.js";
+
 export * as Directives from "./directives/directives.js";
 export * as Elements from "./elements/elements.js";
 export * as Events from "./events/events.js";

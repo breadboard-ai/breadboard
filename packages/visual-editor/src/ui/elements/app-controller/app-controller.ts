@@ -18,7 +18,6 @@ import {
   AppTemplateOptions,
   AppTheme,
   FloatingInputFocusState,
-  SettingsStore,
   STATUS,
 } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -81,9 +80,6 @@ export class AppController extends SignalWatcher(LitElement) {
 
   @property()
   accessor isMine = false;
-
-  @property()
-  accessor settings: SettingsStore | null = null;
 
   @property({ reflect: true })
   accessor status = STATUS.RUNNING;

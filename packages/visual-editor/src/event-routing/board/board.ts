@@ -24,13 +24,9 @@ import { provideInput } from "../../sca/actions/run/helpers/input-queue.js";
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({ tab, settings, askUserToSignInIfNeeded, boardServer, sca }) {
+  async do({ tab, askUserToSignInIfNeeded, boardServer, sca }) {
     if (!tab) {
       console.warn(`Unable to prepare run: no Tab provided`);
-      return false;
-    }
-    if (!settings) {
-      console.warn(`Unable to prepare run: no settings store provided`);
       return false;
     }
     if ((await askUserToSignInIfNeeded()) !== "success") {
@@ -114,7 +110,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
 
   async do({
     tab,
-    settings,
     googleDriveClient,
     sca,
     askUserToSignInIfNeeded,
@@ -126,7 +121,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       originalEvent: new StateEvent({
         eventType: "board.stop",
       }),
-      settings,
       googleDriveClient,
       sca,
       askUserToSignInIfNeeded,
@@ -138,7 +132,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       originalEvent: new StateEvent({
         eventType: "board.run",
       }),
-      settings,
       googleDriveClient,
       sca,
       askUserToSignInIfNeeded,
@@ -151,8 +144,8 @@ export const RestartRoute: EventRoute<"board.restart"> = {
 export const InputRoute: EventRoute<"board.input"> = {
   event: "board.input",
 
-  async do({ tab, settings, originalEvent, sca }) {
-    if (!settings || !tab) {
+  async do({ tab, originalEvent, sca }) {
+    if (!tab) {
       return false;
     }
 

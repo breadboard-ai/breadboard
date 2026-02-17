@@ -22,7 +22,6 @@ import {
 } from "@breadboard-ai/types";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { GlobalConfig } from "../ui/contexts/global-config.js";
-import { SettingsStore } from "../ui/data/settings-store.js";
 import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SCA } from "../sca/sca.js";
 
@@ -62,7 +61,7 @@ export interface RuntimeConfig {
   sca?: Readonly<SCA>;
   globalConfig: GlobalConfig;
   guestConfig: GuestConfiguration;
-  settings: SettingsStore;
+
   shellHost: OpalShellHostProtocol;
   embedHandler?: EmbedHandler;
   env?: FileSystemEntry[];

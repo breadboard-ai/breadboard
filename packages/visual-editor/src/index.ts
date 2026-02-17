@@ -280,7 +280,6 @@ class Main extends MainBase {
       .isMine=${this.tab?.graphIsMine ?? false}
       .readOnly=${true}
       .runtimeFlags=${this.sca.controller.global.flags}
-      .settings=${this.settings}
       .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
       "signedin"}
       .status=${renderValues.tabStatus}
