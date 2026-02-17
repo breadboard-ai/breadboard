@@ -24,15 +24,20 @@ export type SharePanelStatus =
   | "readonly"
   | "writable"
   | "updating"
-  | "granular"
+  | "native-share"
   | "unmanaged-assets";
+
+export type ShareStatus = "initializing" | "idle" | "updating" | "error";
 
 export class ShareController extends RootController {
   @field()
   accessor panel: SharePanelStatus = "closed";
 
   @field()
-  accessor access: "unknown" | "readonly" | "writable" = "unknown";
+  accessor status: ShareStatus = "initializing";
+
+  @field()
+  accessor ownership: "unknown" | "owner" | "non-owner" = "unknown";
 
   @field()
   accessor published = false;
@@ -74,7 +79,8 @@ export class ShareController extends RootController {
    */
   reset() {
     this.panel = "closed";
-    this.access = "unknown";
+    this.status = "initializing";
+    this.ownership = "unknown";
     this.published = false;
     this.stale = false;
     this.granularlyShared = false;

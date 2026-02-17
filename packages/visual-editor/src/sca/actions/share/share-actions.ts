@@ -96,7 +96,7 @@ export const open = asAction(
       undefined;
     if (thisFileIsAShareableCopy) {
       share.panel = "readonly";
-      share.access = "readonly";
+      share.ownership = "non-owner";
       share.shareableFile = {
         id: thisFileId,
         resourceKey: thisFileMetadata.resourceKey,
@@ -109,7 +109,7 @@ export const open = asAction(
 
     if (!thisFileMetadata.ownedByMe) {
       share.panel = "readonly";
-      share.access = "readonly";
+      share.ownership = "non-owner";
       share.shareableFile = shareableCopyFileId
         ? {
             id: shareableCopyFileId,
@@ -129,7 +129,7 @@ export const open = asAction(
 
     if (!shareableCopyFileId) {
       share.panel = "writable";
-      share.access = "writable";
+      share.ownership = "owner";
       share.latestVersion = thisFileMetadata.version;
       return;
     }
@@ -149,7 +149,7 @@ export const open = asAction(
     });
 
     share.panel = "writable";
-    share.access = "writable";
+    share.ownership = "owner";
     share.published = diff.missing.length === 0;
     // We're granularly shared if there is any permission that is neither
     // one of the special publish permissions, nor the owner (since there
@@ -547,11 +547,11 @@ export const publish = asAction(
       );
       return;
     }
-    if (share.access !== "writable") {
+    if (share.ownership !== "owner") {
       /* c8 ignore start */
       logger.log(
         Utils.Logging.Formatter.error(
-          'Expected published status to be "writable"'
+          'Expected ownership to be "owner"'
         ),
         LABEL
       );
@@ -621,11 +621,11 @@ export const unpublish = asAction(
     const googleDriveClient = services.googleDriveClient;
 
     const logger = Utils.Logging.getLogger(controller);
-    if (share.access !== "writable") {
+    if (share.ownership !== "owner") {
       /* c8 ignore start */
       logger.log(
         Utils.Logging.Formatter.error(
-          'Expected published status to be "writable"'
+          'Expected ownership to be "owner"'
         ),
         LABEL
       );
@@ -679,7 +679,7 @@ export const publishStale = asAction(
     const googleDriveClient = services.googleDriveClient;
     const boardServer = services.googleDriveBoardServer;
 
-    if (share.access !== "writable" || !share.shareableFile) {
+    if (share.ownership !== "owner" || !share.shareableFile) {
       return;
     }
     const graph = getGraph();
@@ -781,7 +781,7 @@ export const closePanel = asAction(
     } else if (
       panel === "loading" ||
       panel === "updating" ||
-      panel === "granular" ||
+      panel === "native-share" ||
       panel === "unmanaged-assets"
     ) {
       Utils.Logging.getLogger(controller).log(
@@ -812,7 +812,7 @@ export const viewSharePermissions = asAction(
     const { controller } = bind;
     const share = controller.editor.share;
 
-    if (share.access !== "writable") {
+    if (share.ownership !== "owner") {
       return;
     }
 
@@ -824,7 +824,7 @@ export const viewSharePermissions = asAction(
       share.shareableFile?.id ??
       (await makeShareableCopy()).shareableCopyFileId;
 
-    share.panel = "granular";
+    share.panel = "native-share";
     share.shareableFile = { id: shareableCopyFileId };
   }
 );
@@ -836,7 +836,7 @@ export const onGoogleDriveSharePanelClose = asAction(
     const { controller } = bind;
     const share = controller.editor.share;
 
-    if (share.panel !== "granular" || !share.shareableFile) {
+    if (share.panel !== "native-share" || !share.shareableFile) {
       return;
     }
     const graphFileId = share.shareableFile.id;

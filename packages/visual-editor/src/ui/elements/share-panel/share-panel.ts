@@ -514,7 +514,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const panel = this.#panel;
     if (panel === "closed") {
       return nothing;
-    } else if (panel === "granular") {
+    } else if (panel === "native-share") {
       return this.#renderGranularSharingModal();
     } else {
       return this.#renderModal();
@@ -522,7 +522,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   override updated() {
-    if (this.#panel === "granular") {
+    if (this.#panel === "native-share") {
       this.#googleDriveSharePanel.value?.open();
     } else if (this.#panel !== "closed") {
       this.#dialog.value?.showModal();
@@ -845,7 +845,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderGranularSharingModal() {
     const panel = this.#panel;
-    if (panel !== "granular" || !this.#controller.shareableFile) {
+    if (panel !== "native-share" || !this.#controller.shareableFile) {
       return nothing;
     }
     return html`
