@@ -50,8 +50,6 @@ export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
 
 export const ENABLE_CONSISTENT_UI: boolean = getBoolean("ENABLE_CONSISTENT_UI");
 
-export const ENABLE_GULF_RENDERER: boolean = getBoolean("ENABLE_GULF_RENDERER");
-
 export const ENABLE_MCP: boolean = getBoolean("ENABLE_MCP");
 
 export const ENVIRONMENT_NAME: string = getString("ENVIRONMENT_NAME");

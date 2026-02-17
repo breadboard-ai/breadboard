@@ -34,9 +34,6 @@ export class FlagController
   private accessor _googleOne: boolean | null = null;
 
   @field({ persist: "idb" })
-  private accessor _gulfRenderer: boolean | null = null;
-
-  @field({ persist: "idb" })
   private accessor _mcp: boolean | null = null;
 
   @field({ persist: "idb" })
@@ -105,12 +102,6 @@ export class FlagController
     if (this._googleOne === null)
       throw new Error("googleOne was not set by environment");
     return this._googleOne;
-  }
-
-  get gulfRenderer() {
-    if (this._gulfRenderer === null)
-      throw new Error("gulfRenderer was not set by environment");
-    return this._gulfRenderer;
   }
 
   get mcp() {
@@ -225,12 +216,6 @@ export class FlagController
         return;
       }
 
-      case "gulfRenderer": {
-        if (onlyIfNull && this._gulfRenderer !== null) return;
-        this._gulfRenderer = value;
-        return;
-      }
-
       case "mcp": {
         if (onlyIfNull && this._mcp !== null) return;
         this._mcp = value;
@@ -326,7 +311,6 @@ export class FlagController
       );
       this.#set("force2DGraph", env.force2DGraph, onlyIfNull);
       this.#set("googleOne", env.googleOne, onlyIfNull);
-      this.#set("gulfRenderer", env.gulfRenderer, onlyIfNull);
       this.#set("mcp", env.mcp, onlyIfNull);
       this.#set("opalAdk", env.opalAdk, onlyIfNull);
       this.#set("outputTemplates", env.outputTemplates, onlyIfNull);
