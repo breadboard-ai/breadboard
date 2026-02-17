@@ -18,8 +18,8 @@
     "tsx": "^4.20.6"
   },
   "dependencies": {
-    "@google/genai": "^1.27.0",
-    "dotenv": "^17.2.3",
+    "@google/genai": "^1.39.0",
+    "dotenv": "^17.2.4",
     "lit": "^3.3.1",
     "vite": "^7.2.6"
   }
