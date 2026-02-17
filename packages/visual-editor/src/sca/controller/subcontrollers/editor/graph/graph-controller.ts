@@ -32,7 +32,7 @@ import {
 import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
-import { Tab } from "../../../../../runtime/types.js";
+import { Tab } from "../../../../../utils/graph-types.js";
 import { Tool, Component } from "../../../../../ui/types/state-types.js";
 import type { Components, GraphAsset } from "../../../../types.js";
 import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
