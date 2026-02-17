@@ -100,7 +100,7 @@ suite("Share Actions", () => {
         size: 0,
         entries: () => [][Symbol.iterator](),
         has: () => false,
-        put: () => {},
+        put: () => { },
         delete: () => false,
       }
     );
@@ -628,6 +628,41 @@ suite("Share Actions", () => {
     // Back to idle after completion.
     assert.strictEqual(share.status, "idle");
     assert.strictEqual(share.panel, "open");
+  });
+
+  test("viewSharePermissions shows updating while creating shareable copy", async () => {
+    await ShareActions.initialize();
+    await ShareActions.open();
+    assert.strictEqual(share.status, "idle");
+    assert.strictEqual(share.shareableFile, null);
+
+    // Pause the API so we can observe the intermediate "updating" status
+    // while makeShareableCopy is in-flight.
+    fakeDriveApi.pause();
+
+    const viewPromise = ShareActions.viewSharePermissions();
+
+    // While the shareable copy is being created, status should be "creating-shared-copy".
+    assert.strictEqual(share.status, "creating-shared-copy");
+
+    // Let the API respond and finish creation.
+    fakeDriveApi.unpause();
+    await viewPromise;
+
+    // After completion, status is idle and the native dialog is shown.
+    assert.strictEqual(share.status, "idle");
+    assert.strictEqual(share.panel, "native-share");
+    assert.ok(share.shareableFile !== null, "shareableFile should be populated");
+
+    // Close and re-open — this time the copy already exists, so no loading.
+    await ShareActions.onGoogleDriveSharePanelClose();
+    assert.strictEqual(share.status, "idle");
+
+    // Second viewSharePermissions should NOT show "updating" since copy exists.
+    await ShareActions.viewSharePermissions();
+    assert.strictEqual(share.panel, "native-share");
+    // Status stayed idle the whole time (no create needed).
+    assert.strictEqual(share.status, "idle");
   });
 
   test("managed assets get permissions synced during publish", async () => {

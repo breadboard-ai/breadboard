@@ -569,7 +569,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       return this.#renderUnmanagedAssetsModalContents();
     }
     const status = this.#controller.status;
-    if (status === "initializing") {
+    if (status === "initializing" || status === "creating-shared-copy") {
       return this.#renderLoading();
     }
     if (this.#controller.ownership === "owner") {
@@ -660,8 +660,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
           @click=${this.#onClickPublishStale}
         >
           ${this.#controller.status === "updating"
-            ? html`<span class="g-icon spin spinner">progress_activity</span>`
-            : nothing}
+        ? html`<span class="g-icon spin spinner">progress_activity</span>`
+        : nothing}
           Update
         </button>
       </div>
@@ -708,12 +708,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
         Publishing is disabled for all users from ${domain}.
         <br />
         ${preferredUrl
-          ? html`Please use
+        ? html`Please use
               <a href="${preferredUrl}" target="_blank"
                 >${new URL(preferredUrl).hostname}</a
               >
               to share with other ${domain} users.`
-          : nothing}
+        : nothing}
       </p>
     `;
   }
@@ -832,8 +832,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return html`
       <div id="published-switch-container">
         ${status === "updating"
-          ? html`<span class="g-icon spin spinner">progress_activity</span>`
-          : nothing}
+        ? html`<span class="g-icon spin spinner">progress_activity</span>`
+        : nothing}
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}

@@ -14,13 +14,13 @@ import { RootController } from "../root-controller.js";
 export type UnmanagedAssetProblem = {
   asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
 } & (
-  | { problem: "cant-share" }
-  | { problem: "missing"; missing: gapi.client.drive.Permission[] }
-);
+    | { problem: "cant-share" }
+    | { problem: "missing"; missing: gapi.client.drive.Permission[] }
+  );
 
 export type SharePanelStatus = "closed" | "open" | "native-share";
 
-export type ShareStatus = "initializing" | "idle" | "updating" | "error";
+export type ShareStatus = "initializing" | "idle" | "updating" | "creating-shared-copy" | "error";
 
 export class ShareController extends RootController {
   @field()
