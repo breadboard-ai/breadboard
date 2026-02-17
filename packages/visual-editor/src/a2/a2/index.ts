@@ -25,9 +25,6 @@ import * as a2Template from "./template.js";
 import * as a2ToolManager from "./tool-manager.js";
 import * as a2Utils from "./utils.js";
 
-import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl.js";
-
 export const exports = {
   "audio-generator": a2AudioGenerator,
   "combine-outputs": a2CombineOutputs,
@@ -50,5 +47,3 @@ export const exports = {
   "tool-manager": a2ToolManager,
   utils: a2Utils,
 };
-
-export const bgl = createBgl(descriptor, exports);
