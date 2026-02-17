@@ -21,12 +21,19 @@ Think of SCA as three collaborating layers, each with a distinct responsibility:
 │                           CONTROLLERS                               │
 │                   (Signal-backed reactive state)                    │
 │                                                                     │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐    │
-│   │   editor.*  │  │   home.*    │  │        global.*         │    │
-│   │  graph      │  │  recent     │  │  flags, toasts, consent │    │
-│   │  selection  │  │             │  │  debug, feedback, etc.  │    │
-│   │  splitter   │  │             │  │                         │    │
-│   └─────────────┘  └─────────────┘  └─────────────────────────┘    │
+│  ┌──────────────┐ ┌────────┐ ┌────────────────────────────────────┐ │
+│  │   editor.*   │ │ home.* │ │           global.*                │ │
+│  │ graph,select │ │ recent │ │ flags, toasts, consent, snackbars │ │
+│  │ splitter,    │ └────────┘ │ debug, feedback, flowgenInput,    │ │
+│  │ sidebar,step │            │ screenSize, statusUpdates         │ │
+│  │ share,theme  │ ┌────────┐ └────────────────────────────────────┘ │
+│  │ fastAccess,  │ │board.* │ ┌────────────────────────────────────┐ │
+│  │ integrations │ │ main   │ │   run.*                           │ │
+│  │ graphEditing │ └────────┘ │   main, renderer, screen          │ │
+│  │ Agent        │            └────────────────────────────────────┘ │
+│  └──────────────┘ ┌─────────────────┐                              │
+│                   │ router (single) │                              │
+│                   └─────────────────┘                              │
 └───────────────────────────────┬─────────────────────────────────────┘
                                 │ mutated by
                                 ▼
@@ -42,7 +49,7 @@ Think of SCA as three collaborating layers, each with a distinct responsibility:
 │                            SERVICES                                 │
 │                  (Infrastructure & External APIs)                   │
 │                                                                     │
-│   Examples: graphStore, fileSystem, googleDriveClient, autonamer    │
+│   Examples: googleDriveClient, autonamer, signinAdapter, sandbox    │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -64,12 +71,16 @@ Services provide access to external capabilities: file system, network, graph pr
 
 | Service | Purpose |
 |---------|---------|
-| `graphStore` | Central repository and cache for graph definitions |
-| `fileSystem` | Local and persistent file system access |
-| `googleDriveClient` | Google Drive API interactions |
+| `actionTracker` | Records user actions for analytics |
 | `autonamer` | Automatic name generation for nodes |
-| `signinAdapter` | Unified auth provider abstraction |
+| `googleDriveClient` | Google Drive API interactions |
+| `googleDriveBoardServer` | Board server backed by Google Drive |
+| `flowGenerator` | AI-powered flow/graph generation |
 | `mcpClientManager` | MCP (Model Context Protocol) client lifecycle |
+| `signinAdapter` | Unified auth provider abstraction |
+| `shellHost` | Communication with the host shell (Opal) |
+| `sandbox` | Sandboxed module execution factory |
+| `agentContext` | Agent lifecycle and trace management |
 
 📁 See [`services/README.md`](./services/README.md)
 
@@ -103,6 +114,8 @@ Triggers connect **reactive state changes** to **action execution**. They are de
 **Trigger types:**
 - **Signal triggers** (`signalTrigger`): Fire when reactive conditions become truthy
 - **Event triggers** (`eventTrigger`): Fire on DOM/custom events
+- **State event triggers** (`stateEventTrigger`): Fire on specific `StateEvent` types dispatched to the event bus
+- **Keyboard triggers** (`keyboardTrigger`): Fire on key combinations (e.g., `"Cmd+s"`, `"Delete"`)
 
 **Example:**
 ```typescript
@@ -110,7 +123,7 @@ export const autoname = asAction(
   "Node.autoname",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onNodeConfigChange(bind)],  // Inline trigger
+    triggeredBy: () => onNodeConfigChange(bind),  // Single factory function
   },
   async () => { /* action logic */ }
 );
@@ -133,17 +146,27 @@ sca/
 ├── actions/            # Business logic functions
 │   ├── actions.ts      # AppActions interface & factory
 │   ├── binder.ts       # makeAction() dependency injection
-│   ├── board/          # Board actions + triggers
-│   │   ├── board-actions.ts
-│   │   └── triggers.ts
+│   ├── agent/          # Agent lifecycle actions
+│   ├── asset/          # Asset management actions
+│   ├── board/          # Board persistence actions + triggers
+│   ├── flowgen/        # Flow generation actions
+│   ├── graph/          # Graph mutation actions
+│   ├── host/           # Host/shell actions
+│   ├── integration/    # Integration management actions
 │   ├── node/           # Node actions + triggers
-│   │   ├── node-actions.ts
-│   │   └── triggers.ts
-│   └── ...             # Other action domains
+│   ├── router/         # URL routing actions + triggers
+│   ├── run/            # Run execution actions + triggers
+│   ├── screen-size/    # Responsive layout actions + triggers
+│   ├── share/          # Sharing actions
+│   ├── shell/          # Shell/chrome actions + triggers
+│   ├── sidebar/        # Sidebar actions + triggers
+│   ├── step/           # Step editing actions + triggers
+│   └── theme/          # Theme actions + triggers
 │
 ├── controller/         # Signal-backed state management
 │   ├── controller.ts   # AppController interface & factory
 │   ├── decorators/     # @field decorator implementation
+│   ├── migration/      # State migration utilities
 │   └── subcontrollers/ # Domain-specific controllers
 │
 ├── context/            # Lit Context for SCA injection
@@ -151,11 +174,17 @@ sca/
 │
 ├── services/           # Infrastructure services
 │   ├── services.ts     # AppServices interface & factory
-│   └── autonamer.ts    # Node autonaming service
+│   ├── autonamer.ts    # Node autonaming service
+│   ├── graph-editing-agent-service.ts
+│   ├── integration-managers.ts
+│   ├── notebooklm-api-client.ts
+│   ├── run-service.ts
+│   └── status-updates-service.ts
 │
 └── utils/              # Helper utilities
     ├── helpers/        # isHydrating, PendingHydrationError
     ├── logging/        # Debug logging infrastructure
+    ├── sentinel.ts     # PENDING_HYDRATION symbol
     └── serialization.ts # Storage serialization
 ```
 

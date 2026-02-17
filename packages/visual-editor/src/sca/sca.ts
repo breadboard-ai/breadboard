@@ -73,7 +73,7 @@
  * ```typescript
  * export const save = asAction("Board.save", {
  *   mode: ActionMode.Awaits,
- *   triggeredBy: [() => onVersionChange(bind)],
+ *   triggeredBy: () => onVersionChange(bind),
  * }, async () => { ... });
  * ```
  *

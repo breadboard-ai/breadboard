@@ -65,11 +65,17 @@ Utilities for serializing/deserializing data for storage.
 ```
 utils/
 ├── utils.ts            # Re-exports (Helpers, Logging)
+├── app-screen.ts       # Screen/view mode utilities
+├── common.ts           # Common utility functions
+├── decode-error.ts     # Error decoding utilities
+├── elastic-progress.ts # Progress bar utility
+├── format-error.ts     # Error formatting
+├── graph-asset.ts      # Graph asset helpers
+├── lite-view-type.ts   # Lite mode view type utilities
 ├── helpers/
 │   └── helpers.ts      # isHydrating, PendingHydrationError
 ├── logging/
-│   ├── logger.ts       # getLogger, Formatter
-│   └── ...
+│   └── logger.ts       # getLogger, Formatter
 ├── sentinel.ts         # PENDING_HYDRATION symbol
 └── serialization.ts    # Storage serialization
 ```

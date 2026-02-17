@@ -11,22 +11,42 @@ This directory contains all the concrete controller implementations that make up
 ```
 AppController
 ├── editor/
-│   ├── graph/      GraphController       # Active graph, editor instance
-│   ├── selection/  SelectionController   # Selected nodes/edges/assets
-│   ├── splitter/   SplitterController    # Panel resizer positions
-│   └── sidebar/    SidebarController     # Sidebar visibility/content
+│   ├── graph/          GraphController           # Active graph, editor instance
+│   ├── selection/      SelectionController       # Selected nodes/edges/assets
+│   ├── splitter/       SplitterController        # Panel resizer positions
+│   ├── sidebar/        SidebarController         # Sidebar visibility/content
+│   ├── step/           StepController            # Step editing state
+│   ├── share/          ShareController           # Sharing state
+│   ├── theme/          ThemeController           # Theme customization
+│   ├── fast-access/    FastAccessController      # Quick-access menu
+│   ├── integrations/   IntegrationsController    # MCP/integration state
+│   └──               GraphEditingAgentController
 │
 ├── home/
-│   └── RecentBoardsController            # Recently accessed boards
+│   └── RecentBoardsController                    # Recently accessed boards
 │
-└── global/
-    ├── GlobalController                  # Top-level app state
-    ├── FlagController                    # Feature flags
-    ├── DebugController                   # Developer tools
-    ├── FeedbackController                # Feedback collection
-    ├── ToastController                   # Toast notifications
-    ├── SnackbarController                # Actionable snackbars
-    └── ConsentController                 # User consent management
+├── global/
+│   ├── GlobalController                          # Top-level app state
+│   ├── FlagController                            # Feature flags
+│   ├── DebugController                           # Developer tools
+│   ├── FeedbackController                        # Feedback collection
+│   ├── FlowgenInputController                    # Flow gen prompt state
+│   ├── ToastController                           # Toast notifications
+│   ├── SnackbarController                        # Actionable snackbars
+│   ├── StatusUpdatesController                    # Status updates
+│   ├── ConsentController                         # User consent management
+│   └── ScreenSizeController                      # Responsive breakpoints
+│
+├── board/
+│   └── BoardController                           # Current board metadata
+│
+├── run/
+│   ├── RunController                             # Run lifecycle
+│   ├── RendererController                        # Graph render state during run
+│   └── ScreenController                          # Run view mode
+│
+└── router
+    └── RouterController                          # URL routing
 ```
 
 ---
@@ -202,9 +222,29 @@ Notification systems:
 - `toast(message)` — Show a simple toast
 - `snackbar(options)` — Show an actionable snackbar with buttons
 
-### `ConsentController`
+### `BoardController`
 
-User consent management:
-- `queryConsent(request)` — Check/request consent
-- `pendingRequests` — Map of pending UI consent dialogs
-- Persists decisions to IndexedDB
+Manages the current board's metadata:
+- `boardServerUrl` — URL of the board server
+
+### `RunController`
+
+Manages execution lifecycle:
+- `runStatus` — Current run state (`idle`, `running`, `paused`, `stopping`)
+- `events` — Console entries from the run
+
+### `RendererController`
+
+Manages graph render state during runs:
+- `runState` — Per-node and per-edge visual state
+
+### `ScreenController`
+
+Manages run view mode:
+- `mode` — Current screen mode
+
+### `RouterController`
+
+Manages URL routing state:
+- `url` — Current parsed URL
+- `urlError` — Error from invalid URL
