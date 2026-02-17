@@ -145,7 +145,6 @@ class OpalAdkStream {
       sessionId,
     } = options;
     const execution_inputs: NonNullable<StreamingRequestBody["execution_inputs"]> = {};
-    let inputCount = 0;
     if (!completedPrompt.parts) {
       const error = err("opal-adk-stream: Missing required prompt.");
       console.error(error);
@@ -164,7 +163,6 @@ class OpalAdkStream {
           return error;
         }
         const part = content.parts[0];
-        inputCount++;
         let inputName = "";
         const requestPart: StreamingRequestPart = {};
 
