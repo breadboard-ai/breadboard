@@ -271,7 +271,7 @@ export class GoogleDriveFileViewer extends LitElement {
                       alt=${file.name ?? "Google Document"}
                       @error=${this.#onImageError}
                     />
-                    <div class="video-loading">Loading...</div>
+                    <div class="loading video-loading">Loading...</div>
                   </div>`,
                 error: () => html`<p>Error loading video source</p>`,
                 complete: (url) => html`
