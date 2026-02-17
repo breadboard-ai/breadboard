@@ -240,7 +240,8 @@ class OpalAdkStream {
     params?: LLMContent[],
     uiType?: string,
     uiPrompt?: LLMContent,
-    invocationId?: string): Promise<Outcome<LLMContent>> {
+    invocationId?: string,
+    sessionId?: string): Promise<Outcome<LLMContent>> {
     const ui = this.ui;
 
     if (opalAdkAgent && !VALID_NODE_KEYS.includes(opalAdkAgent)) {
@@ -261,7 +262,7 @@ class OpalAdkStream {
         uiPrompt,
         nodeApi: opalAdkAgent,
         invocationId,
-        sessionId: '10'
+        sessionId
       });
 
       if (!ok(requestBodyOrError)) {
