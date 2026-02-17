@@ -7,8 +7,7 @@ import {
 } from "@breadboard-ai/types";
 import { err, toLLMContent } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { iteratorFromStream } from "@breadboard-ai/utils";
-import { ModelConstraint } from "../agent/functions/generate.js";
+import { iteratorFromStream, ok} from "@breadboard-ai/utils";
 import { PidginTranslator } from "../agent/pidgin-translator.js";
 import { AgentUI } from "../agent/ui.js";
 import { AgentFileSystem } from "../agent/file-system.js";
@@ -66,6 +65,7 @@ export type PlanStep = {
 
 export interface BuildStreamingRequestBodyOptions {
   completedPrompt: LLMContent;
+  executionInputs?: LLMContent[];
   modelConstraint?: string;
   uiType?: string;
   uiPrompt?: LLMContent;
@@ -76,15 +76,21 @@ export interface BuildStreamingRequestBodyOptions {
 
 type StreamingRequestPart = {
   text?: string;
-  partMetadata?: { input_name: string };
+  inline_data?: {
+    mime_type: string;
+    data: string;
+  };
+  file_data?: {
+    mime_type: string;
+    file_uri: string;
+  };
 };
 
 type StreamingRequestBody = {
   session_id?: string;
   objective?: LLMContent;
-  model_name?: string;
   invocation_id?: string;
-  contents?: Array<{
+  execution_inputs?: Record<string, {
     parts: StreamingRequestPart[];
     role: string;
   }>;
@@ -92,7 +98,6 @@ type StreamingRequestBody = {
     node_api?: string;
   };
   agent_mode_node_config?: {
-    model_constraint?: string;
     ui_type?: string;
     ui_prompt?: LLMContent;
   };
@@ -129,43 +134,76 @@ class OpalAdkStream {
     }
   }
 
-  buildStreamingRequestBody(
-    options: BuildStreamingRequestBodyOptions
-  ): StreamingRequestBody {
+  buildStreamingRequestBody(options: BuildStreamingRequestBodyOptions): Outcome<StreamingRequestBody> {
     const {
       completedPrompt,
+      executionInputs,
       uiType,
       uiPrompt,
       nodeApi,
       invocationId,
       sessionId,
     } = options;
-    console.log("uiType: ", uiType);
-    const contents: NonNullable<StreamingRequestBody["contents"]> = [];
-
-    let textCount = 0;
+    const execution_inputs: NonNullable<StreamingRequestBody["execution_inputs"]> = {};
     if (!completedPrompt.parts) {
-      console.error("opal-adk-stream: Missing required prompt.");
-    }
-    for (const part of completedPrompt.parts) {
-      if ("text" in part) {
-        textCount++;
-        contents.push({
-          parts: [
-            {
-              text: part.text,
-              partMetadata: { input_name: `text_${textCount}` },
-            },
-          ],
+      const error = err("opal-adk-stream: Missing required prompt.");
+      console.error(error);
+      return error;
+    };
+    if (executionInputs) {
+      for (const content of executionInputs) {
+        if (!content.parts) {
+          const error = err("opal-adk-stream: Execution input has no parts.");
+          console.error(error);
+          return error;
+        }
+        if (content.parts.length > 1) {
+          const error = err("opal-adk-stream: Execution input has multiple part.");
+          console.error(error);
+          return error;
+        }
+        const part = content.parts[0];
+        let inputName = "";
+        const requestPart: StreamingRequestPart = {};
+
+        if ("text" in part) {
+          inputName = "input_text";
+          requestPart.text = part.text;
+        } else if ("inlineData" in part) {
+          const mime_type = part.inlineData.mimeType;
+          if (mime_type.startsWith("image/")) {
+            inputName = "input_image";
+          } else if (mime_type.startsWith("audio/")) {
+            inputName = "input_audio";
+          } else if (mime_type.startsWith("video/")) {
+            inputName = "input_video";
+          } else {
+            inputName = "input_data";
+          }
+          requestPart.inline_data = {
+            mime_type: part.inlineData.mimeType,
+            data: part.inlineData.data,
+          };
+        } else if ("fileData" in part) {
+          inputName = "input_file";
+          requestPart.file_data = {
+            mime_type: part.fileData.mimeType,
+            file_uri: part.fileData.fileUri,
+          };
+        } else {
+          continue;
+        }
+
+        execution_inputs[inputName] = {
+          parts: [requestPart],
           role: "user",
-        });
+        };
       }
     }
 
     const baseBody: StreamingRequestBody = {
       objective: completedPrompt,
-      model_name: undefined,
-      contents,
+      execution_inputs,
     };
 
     // 'node-agent' is specifically for agent mode while any other
@@ -195,9 +233,9 @@ class OpalAdkStream {
   }
 
   async executeOpalAdkStream(
+    objective: LLMContent,
     opalAdkAgent?: string,
     params?: LLMContent[],
-    modelConstraint?: ModelConstraint,
     uiType?: string,
     uiPrompt?: LLMContent,
     invocationId?: string,
@@ -205,17 +243,9 @@ class OpalAdkStream {
   ): Promise<Outcome<LLMContent>> {
     const ui = this.ui;
 
-    if (!params || params.length === 0) {
-      return err("opal-adk-stream: No params provided");
-    }
-    if (modelConstraint === undefined) {
-      modelConstraint = "none";
-    }
     if (opalAdkAgent && !VALID_NODE_KEYS.includes(opalAdkAgent)) {
-      const error = err(
-        `opal-adk-stream: Invalid node key: ${opalAdkAgent}, ` +
-          `valid keys are: ${VALID_NODE_KEYS.join(", ")}`
-      );
+      const error = err(`opal-adk-stream: Invalid node key: ${opalAdkAgent}, ` +
+        `valid keys are: ${VALID_NODE_KEYS.join(", ")}`);
       console.error(error);
       return error;
     }
@@ -224,8 +254,9 @@ class OpalAdkStream {
       const baseUrl = OPAL_ADK_ENDPOINT;
       const url = new URL(baseUrl);
       url.searchParams.set("alt", "sse");
-      const requestBody = this.buildStreamingRequestBody({
-        completedPrompt: params[0],
+      const requestBodyOrError = this.buildStreamingRequestBody({
+        completedPrompt: objective,
+        executionInputs: params,
         uiType,
         uiPrompt,
         nodeApi: opalAdkAgent,
@@ -233,7 +264,11 @@ class OpalAdkStream {
         sessionId,
       });
 
-      ui.progress.sendOpalAdkRequest("", requestBody);
+      if (!ok(requestBodyOrError)) {
+        return requestBodyOrError;
+      }
+      const requestBody = requestBodyOrError;
+      ui.progress.sendOpalAdkRequest("", requestBody)
       const response = await this.moduleArgs.fetchWithCreds(url.toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -244,9 +279,7 @@ class OpalAdkStream {
       console.log("response: ", response);
       if (!response.ok) {
         const errorText = await response.text();
-        const error = err(
-          `Streaming request failed: ${response.status} ${errorText}`
-        );
+        const error = err(`Streaming request failed: ${response.status} ${errorText}`);
         console.error(error);
         return error;
       }
