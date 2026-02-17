@@ -41,6 +41,17 @@ export class GoogleDriveFileViewer extends LitElement {
           no-repeat;
       }
 
+      .video-loading {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+      }
+
       a {
         display: flex;
         flex: 1;
@@ -260,12 +271,7 @@ export class GoogleDriveFileViewer extends LitElement {
                       alt=${file.name ?? "Google Document"}
                       @error=${this.#onImageError}
                     />
-                    <div
-                      class="loading"
-                      style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px;"
-                    >
-                      Loading...
-                    </div>
+                    <div class="video-loading">Loading...</div>
                   </div>`,
                 error: () => html`<p>Error loading video source</p>`,
                 complete: (url) => html`
