@@ -11,10 +11,7 @@
  */
 
 import { stateEventTrigger, type EventTrigger } from "../../coordination.js";
-import type { AppController } from "../../controller/controller.js";
-import type { AppServices } from "../../services/services.js";
-
-type ActionBind = { controller: AppController; services: AppServices };
+import { type ActionBind } from "../binder.js";
 
 // =============================================================================
 // State Event Triggers

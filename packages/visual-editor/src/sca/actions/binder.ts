@@ -27,10 +27,12 @@ export function isFocusedOnGraphRenderer(evt: KeyboardEvent): boolean {
     );
 }
 
-type DefaultBindings = {
+export type ActionBind = {
   controller: AppController;
   services: AppServices;
 };
+
+type DefaultBindings = ActionBind;
 
 /**
  * Defines the hybrid type:

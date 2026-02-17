@@ -18,11 +18,7 @@ import {
   type EventTrigger,
   type KeyboardTrigger,
 } from "../../coordination.js";
-import { isFocusedOnGraphRenderer } from "../binder.js";
-import type { AppController } from "../../controller/controller.js";
-import type { AppServices } from "../../services/services.js";
-
-type ActionBind = { controller: AppController; services: AppServices };
+import { isFocusedOnGraphRenderer, type ActionBind } from "../binder.js";
 
 // =============================================================================
 // Signal Triggers

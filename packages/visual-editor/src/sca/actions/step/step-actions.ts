@@ -24,7 +24,7 @@ import {
 import { UpdateNode } from "../../../ui/transforms/index.js";
 import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
 import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
-import { persistDataParts } from "../asset/asset-actions.js";
+import { persistDataParts } from "../../utils/persist-data-parts.js";
 import { Utils } from "../../utils.js";
 
 export const bind = makeAction();
