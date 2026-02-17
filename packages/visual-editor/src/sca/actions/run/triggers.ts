@@ -8,9 +8,18 @@
  * @fileoverview
  *
  * Trigger definitions for Run actions.
+ *
+ * Signal triggers watch controller state (topology version, action requests).
+ * Event triggers listen on the stable `runnerEventBus` proxy, bridging
+ * ephemeral HarnessRunner events into the SCA coordination system.
  */
 
-import { signalTrigger, type SignalTrigger } from "../../coordination.js";
+import {
+  signalTrigger,
+  eventTrigger,
+  type SignalTrigger,
+  type EventTrigger,
+} from "../../coordination.js";
 import type { AppController } from "../../controller/controller.js";
 import type { AppServices } from "../../services/services.js";
 
@@ -56,4 +65,120 @@ export function onTopologyChange(bind: ActionBind): SignalTrigger {
     // +1 so version 0 isn't falsy; each increment produces a unique value.
     return controller.editor.graph.topologyVersion + 1;
   });
+}
+
+// =============================================================================
+// Runner Event Triggers
+// =============================================================================
+
+/**
+ * All runner event triggers listen on the stable `runnerEventBus` owned by
+ * `RunService`. Events are forwarded from the ephemeral HarnessRunner as
+ * `CustomEvent` instances, with the original event `data` in `event.detail`.
+ */
+
+/** Fires when the runner starts. */
+export function onRunnerStart(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Start",
+    services.runService.runnerEventBus,
+    "start"
+  );
+}
+
+/** Fires when the runner resumes from a pause. */
+export function onRunnerResume(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Resume",
+    services.runService.runnerEventBus,
+    "resume"
+  );
+}
+
+/** Fires when the runner pauses. */
+export function onRunnerPause(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Pause",
+    services.runService.runnerEventBus,
+    "pause"
+  );
+}
+
+/** Fires when the runner ends. */
+export function onRunnerEnd(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger("Runner End", services.runService.runnerEventBus, "end");
+}
+
+/** Fires when the runner reports an error. */
+export function onRunnerError(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Error",
+    services.runService.runnerEventBus,
+    "error"
+  );
+}
+
+/** Fires when a graph starts execution. */
+export function onRunnerGraphStart(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Graph Start",
+    services.runService.runnerEventBus,
+    "graphstart"
+  );
+}
+
+/** Fires when a node starts execution. */
+export function onRunnerNodeStart(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Node Start",
+    services.runService.runnerEventBus,
+    "nodestart"
+  );
+}
+
+/** Fires when a node finishes execution. */
+export function onRunnerNodeEnd(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Node End",
+    services.runService.runnerEventBus,
+    "nodeend"
+  );
+}
+
+/** Fires when a node's lifecycle state changes. */
+export function onRunnerNodeStateChange(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Node State Change",
+    services.runService.runnerEventBus,
+    "nodestatechange"
+  );
+}
+
+/** Fires when edge states change. */
+export function onRunnerEdgeStateChange(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Edge State Change",
+    services.runService.runnerEventBus,
+    "edgestatechange"
+  );
+}
+
+/** Fires when the runner produces output. */
+export function onRunnerOutput(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Runner Output",
+    services.runService.runnerEventBus,
+    "output"
+  );
 }

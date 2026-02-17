@@ -188,8 +188,10 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     globalConfig,
     guestConfig,
     signinAdapter: signinAdapter ?? {},
-    // Mock RunService that returns a testable mock runner
+    // Mock RunService that returns a testable mock runner and provides
+    // a stable runnerEventBus for event triggers.
     runService: {
+      runnerEventBus: new EventTarget(),
       createRunner: (config: {
         runner?: { nodes?: Array<{ id: string }> };
       }) => {
@@ -198,6 +200,8 @@ export function makeTestServices(options: TestServicesOptions = {}) {
         const abortController = new AbortController();
         return { runner: mockRunner, abortController };
       },
+      registerRunner: () => {},
+      unregisterRunner: () => {},
     },
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],
