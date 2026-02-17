@@ -120,7 +120,7 @@ export interface ToastConfig {
  * @param fn The async work to run while blocking
  * @param toast Optional toast notification config
  */
-export async function withBlockingAction(
+export async function withUIBlocking(
   controller: AppController,
   fn: () => Promise<void>,
   toast?: ToastConfig

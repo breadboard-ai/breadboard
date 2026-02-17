@@ -9,13 +9,10 @@
  * to SCA actions.
  */
 
-import { BoardServer } from "@breadboard-ai/types";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
-import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
-
 import type * as BreadboardUI from "../ui/index.js";
-import { ActionTracker, UserSignInResponse } from "../ui/types/types.js";
+import { ActionTracker } from "../ui/types/types.js";
 import { type SCA } from "../sca/sca.js";
 
 type StateCustomEvent<K extends keyof BreadboardUI.Events.StateEventDetailMap> =
@@ -28,8 +25,6 @@ export interface EventRouteDeps<
 
   sca: SCA;
   googleDriveClient: GoogleDriveClient | null;
-  askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<UserSignInResponse>;
-  boardServer: BoardServer;
   actionTracker?: ActionTracker;
 }
 
