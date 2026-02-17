@@ -134,22 +134,26 @@ export class VEHeader extends SignalWatcher(LitElement) {
             align-items: center;
 
             color: var(--light-dark-n-0);
-            background: var(--light-dark-n-90);
+            background: var(--light-dark-n-95);
             cursor: pointer;
             height: var(--bb-grid-size-8);
             border: none;
             transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
-            &:not([disabled]):hover,
-            &.selected {
+            &:not([disabled]):not(.selected):hover {
               background: light-dark(
-                var(--ui-custom-o-25),
-                var(--ui-custom-o-30)
+                var(--ui-custom-o-5),
+                var(--ui-custom-o-5)
               );
             }
 
             &.selected {
               cursor: auto;
+              background: light-dark(
+                var(--ui-custom-o-25),
+                var(--ui-custom-o-25)
+              );
+              border: 1px solid var(--ui-custom-o-100);
             }
           }
 
