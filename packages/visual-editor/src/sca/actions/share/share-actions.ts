@@ -26,6 +26,7 @@ import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
 import { makeUrl } from "../../../ui/utils/urls.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
 import { onGraphUrl } from "./triggers.js";
 
 export const bind = makeAction();
@@ -56,7 +57,7 @@ export const initialize = asAction(
     share.reset();
     share.status = "initializing";
     await fetchShareData();
-    share.status = "idle";
+    share.status = "ready";
   }
 );
 
@@ -195,6 +196,13 @@ export const open = asAction(
       return;
     }
     share.panel = "open";
+
+    // When SHARING_2 is off, always re-sync on open to match legacy behavior.
+    if (!CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+      share.status = "initializing";
+      await fetchShareData();
+      share.status = "ready";
+    }
   }
 );
 
@@ -596,7 +604,7 @@ export const publish = asAction(
       return;
     }
 
-    share.status = "updating";
+    share.status = "changing-visibility";
     share.published = true;
 
     let newLatestVersion: string | undefined;
@@ -636,7 +644,7 @@ export const publish = asAction(
       /* c8 ignore end */
     }
 
-    share.status = "idle";
+    share.status = "ready";
     share.published = true;
     share.publishedPermissions = graphPublishPermissions;
     share.latestVersion = newLatestVersion ?? share.latestVersion;
@@ -671,7 +679,7 @@ export const unpublish = asAction(
       logger.log(Utils.Logging.Formatter.error("No graph found"), LABEL);
       return;
     }
-    share.status = "updating";
+    share.status = "changing-visibility";
     share.published = false;
 
     logger.log(
@@ -694,7 +702,7 @@ export const unpublish = asAction(
 
     await handleAssetPermissions(share.shareableFile!.id, graph);
 
-    share.status = "idle";
+    share.status = "ready";
     share.published = false;
   }
 );
@@ -720,7 +728,7 @@ export const publishStale = asAction(
       return;
     }
 
-    share.status = "updating";
+    share.status = "publishing-stale";
 
     const shareableFileUrl = new URL(`drive:/${share.shareableFile.id}`);
     const updatedShareableGraph = structuredClone(graph);
@@ -743,7 +751,7 @@ export const publishStale = asAction(
       handleAssetPermissions(share.shareableFile.id, graph),
     ]);
 
-    share.status = "idle";
+    share.status = "ready";
     share.stale = false;
 
     Utils.Logging.getLogger(controller).log(
@@ -769,9 +777,7 @@ export const fixUnmanagedAssetProblems = asAction(
     if (problems.length === 0) {
       return;
     }
-    // Clear problems immediately to dismiss the asset-review view.
-    // The underlying panel state ("updating" from publish) shows through,
-    // providing loading feedback while permissions are being fixed.
+    share.status = "syncing-assets";
     share.unmanagedAssetProblems = [];
 
     await Promise.all(
@@ -819,10 +825,10 @@ export const closePanel = asAction(
       return;
     }
 
-    if (share.status === "updating") {
+    if (share.status !== "ready") {
       Utils.Logging.getLogger(controller).log(
         Utils.Logging.Formatter.warning(
-          `Cannot close panel while status is "updating"`
+          `Cannot close panel while status is "${share.status}"`
         ),
         "Share.closePanel"
       );
@@ -868,9 +874,9 @@ export const viewSharePermissions = asAction(
     // that's the file we need to open the native share permissions dialog with.
     let shareableCopyFileId = share.shareableFile?.id;
     if (!shareableCopyFileId) {
-      share.status = "creating-shared-copy";
+      share.status = "syncing-native-share";
       shareableCopyFileId = (await makeShareableCopy()).shareableCopyFileId;
-      share.status = "idle";
+      share.status = "ready";
     }
 
     share.panel = "native-share";
@@ -890,7 +896,7 @@ export const onGoogleDriveSharePanelClose = asAction(
     }
     const graphFileId = share.shareableFile.id;
     share.panel = "open";
-    share.status = "updating";
+    share.status = "syncing-native-share";
     const graph = getGraph();
     if (graph) {
       await handleAssetPermissions(graphFileId, graph);
@@ -909,6 +915,6 @@ export const onGoogleDriveSharePanelClose = asAction(
     // lightweight refreshPermissions() that just re-reads the shareable copy's
     // permissions and updates published/granularlyShared/publishedPermissions.
     await fetchShareData();
-    share.status = "idle";
+    share.status = "ready";
   }
 );

@@ -569,7 +569,17 @@ export class SharePanel extends SignalWatcher(LitElement) {
       return this.#renderUnmanagedAssetsModalContents();
     }
     const status = this.#controller.status;
-    if (status === "initializing" || status === "creating-shared-copy") {
+    // V2 has inline spinners for changing-visibility and publishing-stale,
+    // so only show the full-panel loader for statuses without those affordances.
+    if (SHARING_V2 &&
+      (status === "initializing" || status === "syncing-native-share" ||
+        status === "syncing-assets")) {
+      return this.#renderLoading();
+      // V1 has an inline spinner for changing-visibility on the publish switch,
+      // so only show the full-panel loader for statuses without inline affordances.
+    } else if (!SHARING_V2 &&
+      (status === "initializing" || status === "syncing-native-share" ||
+        status === "publishing-stale" || status === "syncing-assets")) {
       return this.#renderLoading();
     }
     if (this.#controller.ownership === "owner") {
@@ -602,7 +612,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      shared && this.#controller.status !== "updating"
+      shared && this.#controller.status === "ready"
         ? this.#renderAppLink()
         : nothing,
       this.#renderGranularSharingLink(),
@@ -634,7 +644,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </p>
         <button
           class="bb-button-text"
-          .disabled=${this.#controller.status === "updating"}
+          .disabled=${this.#controller.status === "publishing-stale"}
           @click=${this.#onClickPublishStale}
         >
           Update
@@ -656,10 +666,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </span>
         <button
           class="bb-button-text"
-          .disabled=${this.#controller.status === "updating"}
+          .disabled=${this.#controller.status === "publishing-stale"}
           @click=${this.#onClickPublishStale}
         >
-          ${this.#controller.status === "updating"
+          ${this.#controller.status === "publishing-stale"
         ? html`<span class="g-icon spin spinner">progress_activity</span>`
         : nothing}
           Update
@@ -690,7 +700,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderDisallowedPublishingNotice() {
     const status = this.#controller.status;
-    if (status !== "idle" && status !== "updating") {
+    if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
     const domain = this.#controller.userDomain;
@@ -750,7 +760,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         id="granular-sharing-link"
         href=""
         @click=${this.#onClickViewSharePermissions}
-        ?disabled=${this.#controller.status === "updating"}
+        ?disabled=${this.#controller.status !== "ready"}
       >
         View Share Permissions
       </a>
@@ -820,7 +830,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderPublishedSwitch() {
     const status = this.#controller.status;
-    if (status !== "idle" && status !== "updating") {
+    if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
     const published = this.#controller.published;
@@ -828,10 +838,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const { disallowPublicPublishing } =
       this.sca?.services.globalConfig?.domains?.[domain] ?? {};
 
-    const disabled = disallowPublicPublishing || status === "updating";
+    const disabled = disallowPublicPublishing || status === "changing-visibility";
     return html`
       <div id="published-switch-container">
-        ${status === "updating"
+        ${status === "changing-visibility"
         ? html`<span class="g-icon spin spinner">progress_activity</span>`
         : nothing}
         <md-switch

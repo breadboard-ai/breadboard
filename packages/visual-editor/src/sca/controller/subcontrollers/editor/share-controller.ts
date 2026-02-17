@@ -20,14 +20,29 @@ export type UnmanagedAssetProblem = {
 
 export type SharePanelStatus = "closed" | "open" | "native-share";
 
-export type ShareStatus = "initializing" | "idle" | "updating" | "creating-shared-copy" | "error";
+export type ShareStatus =
+  /** Fetching basic share state (ownership, permissions) on board load. */
+  | "initializing"
+  /** Nothing in progress. */
+  | "ready"
+  /** Creating the shareable copy before opening the native Drive share dialog,
+   *  or re-reading permissions after the user closes it. */
+  | "syncing-native-share"
+  /** Publishing, unpublishing, or changing the visibility dropdown. */
+  | "changing-visibility"
+  /** Updating the shareable copy with the latest board content. */
+  | "publishing-stale"
+  /** Syncing asset permissions after the user approves fixing unmanaged assets. */
+  | "syncing-assets"
+  /** An error occurred. */
+  | "error";
 
 export class ShareController extends RootController {
   @field()
-  accessor panel: SharePanelStatus = "closed";
+  accessor status: ShareStatus = "initializing";
 
   @field()
-  accessor status: ShareStatus = "initializing";
+  accessor panel: SharePanelStatus = "closed";
 
   @field()
   accessor ownership: "unknown" | "owner" | "non-owner" = "unknown";
