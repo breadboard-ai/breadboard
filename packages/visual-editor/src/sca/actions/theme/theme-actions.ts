@@ -68,35 +68,39 @@ async function updateGraphWithTheme(
 /**
  * Adds a provided theme (e.g. from an uploaded image) to the graph
  * and sets it as current.
+ *
+ * This is the non-coordinated implementation used by both `add` (coordinated)
+ * and `generate` (to avoid nested coordination).
  */
+async function addImpl(theme: AppTheme): Promise<Outcome<void>> {
+  const { controller } = bind;
+
+  const editor = controller.editor.graph.editor;
+  if (!editor) {
+    return err(`Unable to add theme: can't edit the graph`);
+  }
+  if (controller.editor.theme.status !== "idle") {
+    return err(
+      `Unable to add theme: theming is not idle. Current status: "${controller.editor.theme.status}"`
+    );
+  }
+  const graphTheme = await persistTheme(theme, bind.controller, bind.services);
+  if (!ok(graphTheme)) return graphTheme;
+
+  return updateGraphWithTheme(graphTheme);
+}
+
 export const add = asAction(
   "Theme.add",
   { mode: ActionMode.Immediate },
-  async (theme: AppTheme): Promise<Outcome<void>> => {
-    const { controller } = bind;
-
-    const editor = controller.editor.graph.editor;
-    if (!editor) {
-      return err(`Unable to add theme: can't edit the graph`);
-    }
-    if (controller.editor.theme.status !== "idle") {
-      return err(
-        `Unable to add theme: theming is not idle. Current status: "${controller.editor.theme.status}"`
-      );
-    }
-    const graphTheme = await persistTheme(
-      theme,
-      bind.controller,
-      bind.services
-    );
-    if (!ok(graphTheme)) return graphTheme;
-
-    return updateGraphWithTheme(graphTheme);
-  }
+  addImpl
 );
 
 /**
  * Generates a new theme from a prompt and adds it to the graph.
+ *
+ * Calls `addImpl` directly (not the coordinated `add` wrapper) to avoid
+ * nested coordination tracking.
  */
 export const generate = asAction(
   "Theme.generate",
@@ -112,7 +116,7 @@ export const generate = asAction(
       bind.services
     );
     if (!ok(theme)) return theme;
-    return add(theme);
+    return addImpl(theme);
   }
 );
 

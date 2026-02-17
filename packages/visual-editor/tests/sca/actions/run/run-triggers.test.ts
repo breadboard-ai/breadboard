@@ -13,7 +13,7 @@ import {
 
 suite("Run Triggers", () => {
   suite("onGraphVersionForSync", () => {
-    test("returns true when version is valid (>= 0)", () => {
+    test("returns version + 1 when version is valid (>= 0)", () => {
       const mockBind = {
         controller: {
           editor: {
@@ -28,7 +28,11 @@ suite("Run Triggers", () => {
       const trigger = onGraphVersionForSync(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true for valid version");
+      assert.strictEqual(
+        result,
+        43,
+        "Should return version + 1 for valid version"
+      );
     });
 
     test("returns false when version is -1", () => {
@@ -64,7 +68,7 @@ suite("Run Triggers", () => {
       assert.strictEqual(trigger.name, "Graph Version (Sync)");
     });
 
-    test("returns true for version 0", () => {
+    test("returns 1 for version 0", () => {
       const mockBind = {
         controller: {
           editor: {
@@ -79,7 +83,7 @@ suite("Run Triggers", () => {
       const trigger = onGraphVersionForSync(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, true, "Should return true for version 0");
+      assert.strictEqual(result, 1, "Should return 1 for version 0");
     });
   });
 
