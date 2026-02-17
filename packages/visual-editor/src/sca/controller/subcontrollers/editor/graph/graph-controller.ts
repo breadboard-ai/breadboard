@@ -32,7 +32,7 @@ import {
 import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
-import { Tab } from "../../../../../utils/graph-types.js";
+
 import { Tool, Component } from "../../../../../ui/types/state-types.js";
 import type { Components, GraphAsset } from "../../../../types.js";
 import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
@@ -247,13 +247,6 @@ export class GraphController
    * @deprecated
    */
   @field()
-  accessor graphIsMine = false;
-
-  /**
-   * Here for migrations.
-   * @deprecated
-   */
-  @field()
   accessor mainGraphId: ReturnType<typeof globalThis.crypto.randomUUID> | null =
     null;
 
@@ -281,10 +274,16 @@ export class GraphController
   }
 
   /**
-   * Whether the graph is empty (has no nodes).
+   * Whether the graph is empty (has no nodes, assets, or sub-graphs).
    */
   get empty() {
-    return (this._graph?.nodes?.length ?? 0) === 0;
+    const g = this._graph;
+    if (!g) return true;
+    return (
+      (g.nodes?.length ?? 0) === 0 &&
+      Object.keys(g.assets ?? {}).length === 0 &&
+      Object.keys(g.graphs ?? {}).length === 0
+    );
   }
 
   get editor() {
@@ -344,30 +343,6 @@ export class GraphController
     if (evt.reason.type === "error") {
       this.lastEditError = evt.reason.error;
     }
-  }
-
-  /**
-   * Here for migrations.
-   *
-   * @deprecated
-   */
-  asTab(): Tab | null {
-    if (!this._graph || !this.id || !this.mainGraphId) return null;
-
-    return {
-      id: this.id,
-      graph: this._graph,
-      graphIsMine: this.graphIsMine,
-      readOnly: !this.graphIsMine,
-      boardServer: null,
-      lastLoadedVersion: this.lastLoadedVersion,
-      mainGraphId: this.mainGraphId,
-      name: this._graph.title ?? "Untitled app",
-      subGraphId: null,
-      type: 0,
-      version: this.version,
-      finalOutputValues: this.finalOutputValues,
-    } satisfies Tab;
   }
 
   // =========================================================================
@@ -465,7 +440,6 @@ export class GraphController
     this.version = 0;
     this.topologyVersion = 0;
     this.readOnly = false;
-    this.graphIsMine = false;
     this.mainGraphId = null;
     this.lastLoadedVersion = 0;
     this.lastNodeConfigChange = null;

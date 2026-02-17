@@ -469,7 +469,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #goFullScreenIfGraphIsProbablyShared() {
-    const url = this.tab?.graph.url;
+    const gc = this.sca.controller.editor.graph;
+    const url = gc.url;
     if (!url) {
       return;
     }
@@ -578,8 +579,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderOriginalPrompt() {
     const prompt =
-      this.tab?.graph.metadata?.raw_intent ??
-      this.tab?.graph.metadata?.intent ??
+      this.sca.controller.editor.graph.graph?.metadata?.raw_intent ??
+      this.sca.controller.editor.graph.graph?.metadata?.intent ??
       this.sca.controller.global.flowgenInput.currentExampleIntent ??
       null;
 
@@ -610,7 +611,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderUserInput() {
     const editable =
-      (this.tab?.graphIsMine ?? false) || this.#viewType !== "editor";
+      !this.sca.controller.editor.graph.readOnly || this.#viewType !== "editor";
     return html`<bb-editor-input-lite
       ?inert=${this.#isInert()}
       .controller=${this}
@@ -622,7 +623,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderMessage() {
     const editable =
-      (this.tab?.graphIsMine ?? false) || this.#viewType !== "editor";
+      !this.sca.controller.editor.graph.readOnly || this.#viewType !== "editor";
     return html`<div
       ?disabled=${!editable}
       id="message"
@@ -689,10 +690,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
     const title =
       this.#viewType === "editor"
-        ? (this.tab?.graph.title ?? "Untitled app")
+        ? (this.sca.controller.editor.graph.title ?? "Untitled app")
         : "...";
 
-    const graphIsMine = this.tab?.graphIsMine ?? false;
+    const graphIsMine = !this.sca.controller.editor.graph.readOnly;
     const isGenerating = this.#status === "generating";
     const isFreshGraph =
       isGenerating &&
@@ -766,12 +767,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .graph=${this.#graph ?? null}
         .graphIsEmpty=${false}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-        .isMine=${this.tab?.graphIsMine ?? false}
+        .isMine=${!this.sca.controller.editor.graph.readOnly}
         .readOnly=${true}
         .runtimeFlags=${this.sca.controller.global.flags}
         .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
         "signedin"}
-        .status=${renderValues.tabStatus}
+        .status=${renderValues.runStatus}
         .shouldShowFirstRunMessage=${true}
         .firstRunMessage=${Strings.from("LABEL_FIRST_RUN_LITE")}
         .themeHash=${this.sca.controller.editor.theme.themeHash}

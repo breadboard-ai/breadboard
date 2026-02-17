@@ -23,7 +23,7 @@ import type {
 import type { GraphAsset } from "../../../../../../src/sca/types.js";
 import { ok } from "@breadboard-ai/utils";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
-import { Tab } from "../../../../../../src/utils/graph-types.js";
+
 import { createMockEditor, makeFreshGraph } from "../../../../helpers/index.js";
 import { A2_TOOLS } from "../../../../../../src/a2/a2-registry.js";
 
@@ -134,49 +134,6 @@ suite("GraphController", () => {
     if (!result2.success) assert.fail("Update failed");
     await store.isSettled;
     assert.strictEqual(store.lastEditError, null);
-  });
-
-  test("provides legacy tab info (deprecated)", async () => {
-    const store = new GraphController("Graph_4", "GraphController");
-    await store.isHydrated;
-
-    // Nothing set, should get a null tab
-    assert.deepStrictEqual(store.asTab(), null);
-
-    // Apply the default editor.
-    if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-
-    const expected = {
-      id: globalThis.crypto.randomUUID(),
-      graph: editableGraph.raw(),
-      graphIsMine: true,
-      readOnly: false,
-      boardServer: null,
-      lastLoadedVersion: 20,
-      mainGraphId: globalThis.crypto.randomUUID(),
-      name: "Untitled app",
-      subGraphId: null,
-      type: 0,
-      version: 10,
-      finalOutputValues: undefined,
-    } satisfies Tab;
-
-    store.id = expected.id;
-    store.version = expected.version;
-    store.lastLoadedVersion = expected.lastLoadedVersion;
-    store.url = expected.graph.url ?? "http://example.com";
-    store.readOnly = expected.readOnly;
-    store.graphIsMine = expected.graphIsMine;
-    store.mainGraphId = expected.mainGraphId;
-
-    await store.isSettled;
-    assert.deepStrictEqual(store.asTab(), expected);
-
-    // Reset.
-    store.resetAll();
-    await store.isSettled;
-    assert.deepStrictEqual(store.asTab(), null);
   });
 
   test("exposes static A2 tools", async () => {

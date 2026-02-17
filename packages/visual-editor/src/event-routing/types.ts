@@ -12,7 +12,6 @@
 import { BoardServer } from "@breadboard-ai/types";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
-import { Tab } from "../utils/graph-types.js";
 import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
 
 import type * as BreadboardUI from "../ui/index.js";
@@ -27,7 +26,6 @@ export interface EventRouteDeps<
 > {
   originalEvent: StateCustomEvent<K>;
 
-  tab: Tab | null;
   sca: SCA;
   googleDriveClient: GoogleDriveClient | null;
   askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<UserSignInResponse>;

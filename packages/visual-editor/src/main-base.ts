@@ -17,7 +17,7 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
-import { RuntimeConfig, Tab } from "./utils/graph-types.js";
+import { RuntimeConfig } from "./utils/graph-types.js";
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
@@ -70,7 +70,7 @@ export type RenderValues = {
   canSave: boolean;
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
   showingOverlay: boolean;
-  tabStatus: BreadboardUI.Types.STATUS;
+  runStatus: BreadboardUI.Types.STATUS;
 };
 
 const LOADING_TIMEOUT = 1250;
@@ -103,11 +103,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @provide({ context: scaContext })
   protected accessor sca: SCA;
-
-  // Computed from SCA controller - no longer stored
-  protected get tab(): Tab | null {
-    return this.sca.controller.editor.graph.asTab();
-  }
 
   /**
    * @deprecated Use sca.controller.editor.graph.topologyVersion instead.
@@ -398,11 +393,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       );
     }
 
-    // Close tab, go to the home page.
+    // Close board, go to the home page.
     if (parsedUrl.page === "home") {
       // Stop any running board before closing
-      const closingTabId = this.tab?.id;
-      if (closingTabId) {
+      if (this.sca.controller.editor.graph.graph) {
         this.sca.controller.run.main.setStatus(
           BreadboardUI.Types.STATUS.STOPPED
         );
@@ -413,9 +407,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       await this.#handleBoardStateChanged();
       return;
     } else {
-      // Load the tab.
+      // Load the board.
       const boardUrl = parsedUrl.page === "graph" ? parsedUrl.flow : undefined;
-      if (!boardUrl || boardUrl === this.tab?.graph.url) {
+      if (!boardUrl || boardUrl === this.sca.controller.editor.graph.url) {
         return;
       }
 
@@ -547,20 +541,20 @@ abstract class MainBase extends SignalWatcher(LitElement) {
    * Calls syncProjectState directly instead of event dispatch.
    */
   async #handleBoardStateChanged(): Promise<void> {
-    const tab = this.tab;
+    const gc = this.sca.controller.editor.graph;
     this.#maybeShowWelcomePanel();
 
-    if (tab) {
+    if (gc.graph) {
       // Page title is now handled by the page title trigger in SCA
 
-      const url = tab.graph.url;
+      const url = gc.url;
       if (url) {
         this.sca.actions.run.prepare();
       }
 
-      if (tab.graph.url && tab.graphIsMine) {
-        const board: RecentBoard = { url: tab.graph.url };
-        if (tab.graph.title) board.title = tab.graph.title;
+      if (url && !gc.readOnly) {
+        const board: RecentBoard = { url };
+        if (gc.title) board.title = gc.title;
         this.sca.controller.home.recent.add(board);
       }
 
@@ -572,7 +566,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   #maybeShowWelcomePanel() {
-    if (this.tab === null) {
+    if (this.sca.controller.editor.graph.graph === null) {
       this.sca.controller.global.main.loadState = "Home";
     }
 
@@ -620,12 +614,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   protected getRenderValues(): RenderValues {
-    const tabStatus = this.sca.controller.run.main.status;
+    const runStatus = this.sca.controller.run.main.status;
+    const gc = this.sca.controller.editor.graph;
 
     // Inline canSave logic - use services directly
     let canSave = false;
-    if (this.tab && !this.tab.readOnly) {
-      const graphUrl = this.sca.controller.editor.graph.url;
+    if (gc.graph && !gc.readOnly) {
+      const graphUrl = gc.url;
       if (graphUrl) {
         const boardServer = this.sca.services.googleDriveBoardServer;
         const capabilities = boardServer?.canProvide(new URL(graphUrl));
@@ -636,8 +631,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Get saveStatus from controller and map to enum
     let saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS =
       BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
-    if (this.tab) {
-      const status = this.sca.controller.editor.graph.saveStatus;
+    if (gc.graph) {
+      const status = gc.saveStatus;
       switch (status) {
         case "saving":
           saveStatus = BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING;
@@ -658,7 +653,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       canSave,
       saveStatus,
       showingOverlay: this.sca.controller.global.main.show.size > 0,
-      tabStatus,
+      runStatus,
     } satisfies RenderValues;
   }
 
@@ -670,7 +665,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return {
       originalEvent: evt,
 
-      tab: this.tab,
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.askUserToSignInIfNeeded(scopes),

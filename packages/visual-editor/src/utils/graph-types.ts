@@ -4,19 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { BoardServer, OutputValues } from "@breadboard-ai/types";
 import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
 import { type UserSignInResponse } from "../ui/types/types.js";
 import {
   AssetPath,
-  EditHistoryCreator,
-  EditHistoryEntry,
   FileSystemEntry,
-  GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
-  MainGraphIdentifier,
   NodeIdentifier,
   PortIdentifier,
 } from "@breadboard-ai/types";
@@ -24,38 +19,6 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 import type { GlobalConfig } from "../ui/contexts/global-config.js";
 import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SCA } from "../sca/sca.js";
-
-export enum TabType {
-  URL,
-  DESCRIPTOR,
-  RUN,
-}
-
-export type TabId = `${string}-${string}-${string}-${string}-${string}`;
-export type TabURL = string;
-export type TabName = string;
-export interface Tab {
-  id: TabId;
-  name: TabName;
-  mainGraphId: MainGraphIdentifier;
-  graph: GraphDescriptor;
-  graphIsMine: boolean;
-  subGraphId: string | null;
-  version: number;
-  lastLoadedVersion: number;
-  readOnly: boolean;
-  type: TabType;
-  /**
-   * The board server for this tab. Since we know what
-   * the graph is, we also know what the board server
-   * will be (if any).
-   */
-  boardServer: BoardServer | null;
-  creator?: EditHistoryCreator;
-  history?: EditHistoryEntry[];
-  onHistoryChanged?: (history: readonly EditHistoryEntry[]) => void;
-  finalOutputValues?: OutputValues;
-}
 
 export interface RuntimeConfig {
   sca?: Readonly<SCA>;
@@ -114,7 +77,6 @@ export interface WorkspaceSelectionStateWithChangeId {
   moveToSelection: "immediate" | "animated" | false;
 }
 
-export type TabSelectionState = Map<TabId, WorkspaceSelectionState>;
 export type EditChangeId = ReturnType<typeof crypto.randomUUID>;
 export type MoveToSelection = "immediate" | "animated" | false;
 

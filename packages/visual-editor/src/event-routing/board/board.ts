@@ -6,7 +6,7 @@
 
 /**
  * FIXME: Legacy board event routes. These still depend on the legacy runtime
- * (e.g. runtime.project, tab) which is not yet available through SCA services.
+ * which is not yet available through SCA services.
  * Migrate to SCA board-actions.ts (using stateEventTrigger) once the runtime
  * dependency is resolved, then delete this file.
  */
@@ -24,9 +24,10 @@ import { provideInput } from "../../sca/actions/run/helpers/input-queue.js";
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({ tab, askUserToSignInIfNeeded, boardServer, sca }) {
-    if (!tab) {
-      console.warn(`Unable to prepare run: no Tab provided`);
+  async do({ askUserToSignInIfNeeded, boardServer, sca }) {
+    const gc = sca.controller.editor.graph;
+    if (!gc.graph) {
+      console.warn(`Unable to prepare run: no board loaded`);
       return false;
     }
     if ((await askUserToSignInIfNeeded()) !== "success") {
@@ -43,24 +44,25 @@ export const RunRoute: EventRoute<"board.run"> = {
     if (
       (await sca.controller.global.flags.flags()).requireConsentForGetWebpage
     ) {
-      const editor = sca.controller.editor.graph.editor;
+      const editor = gc.editor;
       const graph = editor?.inspect("");
-      const url = tab.graph.url;
+      const url = gc.url;
       const isGalleryApp =
         boardServer instanceof GoogleDriveBoardServer &&
         url &&
         boardServer.galleryGraphs.has(url);
       if (
         !isGalleryApp &&
-        !tab.graphIsMine &&
+        gc.readOnly &&
         graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
       ) {
         if (
+          !url ||
           !(await sca.controller.global.consent.queryConsent(
             {
               type: ConsentType.GET_ANY_WEBPAGE,
               scope: {},
-              graphUrl: tab.graph.url!,
+              graphUrl: url,
             },
             ConsentUIType.IN_APP
           ))
@@ -79,14 +81,15 @@ export const RunRoute: EventRoute<"board.run"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, sca }) {
-    if (!tab) {
+  async do({ sca }) {
+    const gc = sca.controller.editor.graph;
+    if (!gc.graph) {
       return false;
     }
 
-    if (tab.finalOutputValues) {
+    if (gc.finalOutputValues) {
       // Special case. We are displaying a fixed final result screen.
-      tab.finalOutputValues = undefined;
+      gc.finalOutputValues = undefined;
       const url = new URL(document.URL);
       if (url.searchParams.has("results")) {
         url.searchParams.delete("results");
@@ -109,7 +112,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
   event: "board.restart",
 
   async do({
-    tab,
     googleDriveClient,
     sca,
     askUserToSignInIfNeeded,
@@ -117,7 +119,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     actionTracker,
   }) {
     await StopRoute.do({
-      tab,
       originalEvent: new StateEvent({
         eventType: "board.stop",
       }),
@@ -126,9 +127,11 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       askUserToSignInIfNeeded,
       boardServer,
     });
-    actionTracker?.runApp(tab?.graph.url, "console");
+    actionTracker?.runApp(
+      sca.controller.editor.graph.url ?? undefined,
+      "console"
+    );
     await RunRoute.do({
-      tab,
       originalEvent: new StateEvent({
         eventType: "board.run",
       }),
@@ -144,8 +147,8 @@ export const RestartRoute: EventRoute<"board.restart"> = {
 export const InputRoute: EventRoute<"board.input"> = {
   event: "board.input",
 
-  async do({ tab, originalEvent, sca }) {
-    if (!tab) {
+  async do({ originalEvent, sca }) {
+    if (!sca.controller.editor.graph.graph) {
       return false;
     }
 
