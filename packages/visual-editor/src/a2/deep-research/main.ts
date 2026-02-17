@@ -159,11 +159,10 @@ async function invokeOpalAdk(
   if (!ok(substituting)) {
     return substituting;
   }
-  const opalAdkStream = new OpalAdkStream(moduleArgs);
-  const results = await opalAdkStream.executeOpalAdkStream(DEEP_RESEARCH_KEY, [
-    substituting,
-  ]);
-  console.log("deep-research results", results);
+  const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
+  const results = await opalAdkStream
+    .executeOpalAdkStream(substituting, DEEP_RESEARCH_KEY);
+  console.log("deep-research results", results)
   return {
     context: [...(context || []), results],
   };
