@@ -19,7 +19,7 @@ import type {
 } from "@breadboard-ai/types";
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
-import { STATUS } from "../../../ui/types/types.js";
+import { STATUS } from "../../types.js";
 import { getStepIcon } from "../../../ui/utils/get-step-icon.js";
 import { makeAction, stopRun } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";

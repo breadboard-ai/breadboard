@@ -23,7 +23,7 @@ import type {
 } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
 import type { StateEvent } from "../../../ui/events/events.js";
-import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
+import { SnackType, type SnackbarUUID } from "../../types.js";
 import { ChangeAssetEdge } from "../../../ui/transforms/index.js";
 
 import { makeAction, withUIBlocking } from "../binder.js";

@@ -32,12 +32,9 @@ const eventInit = {
   composed: true,
 };
 
-export enum ToastType {
-  INFORMATION = "information",
-  WARNING = "warning",
-  ERROR = "error",
-  PENDING = "pending",
-}
+// Re-exported from SCA (canonical location)
+export { ToastType } from "../../sca/types.js";
+import { ToastType } from "../../sca/types.js";
 
 /** State Event System */
 

@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2023 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   Schema,
   InspectableEdgeType,
@@ -22,12 +16,40 @@ import type {
   AssetType,
   GraphIdentifier,
   GraphMetadata,
-  InlineDataCapabilityPart,
   LLMContent,
   RuntimeFlags,
-  StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import type { HTMLTemplateResult, LitElement } from "lit";
+
+// Re-exported from SCA (canonical location)
+export {
+  STATUS,
+  SnackType,
+  type SnackbarUUID,
+  type SnackbarAction,
+  type AppTheme,
+  type AppThemeColors,
+  type VisualEditorMode,
+  type VisualEditorStatusUpdate,
+  type RecentBoard,
+  type ActionTracker,
+  type UserSignInResponse,
+  type ParsedUrlProvider,
+  type MakeUrlInit,
+  type BaseUrlInit,
+  type HomeUrlInit,
+  type GraphUrlInit,
+  type LandingUrlInit,
+  type OpenUrlInit,
+} from "../../sca/types.js";
+
+// Also import locally for types used within this file
+import type {
+  AppThemeColors,
+  SnackbarAction,
+  SnackbarUUID,
+  SnackType,
+} from "../../sca/types.js";
 
 export type InputCallback = (data: Record<string, unknown>) => void;
 
@@ -36,12 +58,6 @@ export type Board = {
   url: string;
   version: string;
 };
-
-export enum STATUS {
-  RUNNING = "running",
-  PAUSED = "paused",
-  STOPPED = "stopped",
-}
 
 export enum BOARD_LOAD_STATUS {
   PENDING = "pending",
@@ -185,13 +201,6 @@ export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
   ) as T;
 }
 
-export interface RecentBoard {
-  title?: string;
-  url: string;
-  pinned?: boolean;
-  [key: string]: unknown;
-}
-
 export interface UserMessage {
   srcset: string;
   src: string;
@@ -306,22 +315,6 @@ export interface LanguagePack {
   WorkspaceOutline: LanguagePackEntry;
 }
 
-/**
- * @deprecated Replaced with AppPalette
- */
-export interface AppThemeColors {
-  primaryColor: string;
-  secondaryColor: string;
-  backgroundColor: string;
-  textColor: string;
-  primaryTextColor: string;
-}
-
-export type AppTheme = AppPalette &
-  AppThemeColors & {
-    splashScreen?: InlineDataCapabilityPart | StoredDataCapabilityPart | null;
-  };
-
 export interface AppTemplateAdditionalOption {
   values: Array<{ value: string; title: string }>;
   title: string;
@@ -401,23 +394,6 @@ export type EnumValue = {
   info?: string;
 };
 
-export enum SnackType {
-  NONE = "none",
-  INFORMATION = "information",
-  WARNING = "warning",
-  ERROR = "error",
-  PENDING = "pending",
-}
-
-export type SnackbarUUID = ReturnType<typeof globalThis.crypto.randomUUID>;
-
-export type SnackbarAction = {
-  title: string;
-  action: string;
-  value?: HTMLTemplateResult | string;
-  callback?: () => Promise<void> | void;
-};
-
 export type SnackbarMessage = {
   id: SnackbarUUID;
   type: SnackType;
@@ -477,118 +453,6 @@ export type ColorPalettes = {
   error: CreatePalette<"e">;
 };
 
-export type VisualEditorMode = "app" | "canvas";
-
-export interface VisualEditorStatusUpdate {
-  date: string;
-  text: string;
-  type: "info" | "warning" | "urgent";
-}
-
 export type FloatingInputFocusState =
   | ["canvas", "preview" | "console"]
   | ["app"];
-
-export type ParsedUrlProvider = {
-  readonly parsedUrl: MakeUrlInit;
-};
-
-export type MakeUrlInit =
-  | HomeUrlInit
-  | GraphUrlInit
-  | LandingUrlInit
-  | OpenUrlInit;
-
-export interface BaseUrlInit {
-  /**
-   * Any `dev-` prefixed search-param will be stored here (e.g.
-   * `?dev-fooBar=baz` becomes`{dev: {fooBar: "baz"}}` and vice-versa).
-   * Prefer camelCase names for consistency, and be sure to make all properties
-   * ?optional.
-   */
-  dev?: {
-    forceSignInState?:
-      | "sign-in"
-      | "add-scope"
-      | "geo-restriction"
-      | "missing-scopes";
-    forceSurveySelection?: "true";
-  };
-  oauthRedirect?: string;
-  lite?: boolean;
-  colorScheme?: "light" | "dark";
-  guestPrefixed: boolean;
-}
-
-export interface HomeUrlInit extends BaseUrlInit {
-  page: "home";
-  new?: boolean;
-  redirectFromLanding?: boolean;
-}
-
-export interface GraphUrlInit extends BaseUrlInit {
-  page: "graph";
-  mode: VisualEditorMode;
-  flow: string;
-  remix?: boolean;
-  resourceKey?: string | undefined;
-  results?: string;
-  redirectFromLanding?: boolean;
-}
-
-export interface LandingUrlInit extends BaseUrlInit {
-  page: "landing";
-  redirect: MakeUrlInit;
-  missingScopes?: boolean;
-  geoRestriction?: boolean;
-}
-
-export interface OpenUrlInit extends BaseUrlInit {
-  page: "open";
-  fileId: string;
-  resourceKey?: string;
-}
-
-export type UserSignInResponse = "success" | "failure" | "dismissed";
-
-export interface ActionTracker {
-  load(type: "app" | "canvas" | "landing" | "home"): void;
-  openApp(url: string, source: "gallery" | "user"): void;
-  remixApp(url: string, source: "gallery" | "user" | "editor"): void;
-  createNew(): void;
-  flowGenCreate(): void;
-  flowGenEdit(url: string | undefined): void;
-  runApp(
-    url: string | undefined,
-    source: "app_preview" | "app_view" | "console"
-  ): void;
-  publishApp(url: string | undefined): void;
-  signOutSuccess(): void;
-  signInSuccess(): void;
-  errorUnknown(): void;
-  errorConfig(): void;
-  errorRecitation(): void;
-  errorCapacity(medium: string): void;
-  errorSafety(): void;
-  addNewStep(type?: string): void;
-  editStep(type: "manual" | "flowgen"): void;
-  shareResults(type: "download" | "save_to_drive" | "copy_share_link"): void;
-
-  // Updates GA properties
-
-  /**
-   * Updates the current status of the user. Call it whenever the sign in
-   * status of the user is determined.
-   *
-   * Will also be automatically called by:
-   * - `signInSuccess`
-   * - `signOutSuccess`
-   */
-  updateSignedInStatus(signedIn: boolean): void;
-
-  /**
-   * Updates the current eligibility status of the user. Call right after the
-   * checkAppAccess call.
-   */
-  updateCanAccessStatus(canAccess: boolean): void;
-}

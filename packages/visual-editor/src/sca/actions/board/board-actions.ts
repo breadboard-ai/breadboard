@@ -11,7 +11,7 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import { ConsentType, ConsentUIType } from "@breadboard-ai/types";
-import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
+import { SnackType, type SnackbarUUID } from "../../types.js";
 import type { StateEvent } from "../../../ui/events/events.js";
 import { parseUrl } from "../../../ui/utils/urls.js";
 import { Utils } from "../../utils.js";

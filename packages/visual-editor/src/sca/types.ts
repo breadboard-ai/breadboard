@@ -9,25 +9,298 @@
 import type { Signal } from "@lit-labs/signals";
 import { type BaseBladeParams } from "tweakpane";
 import {
+  AppPalette,
   AssetMetadata,
   AssetPath,
   ConsentRequest,
   ConsentUIType,
   DataPart,
   GraphIdentifier,
+  InlineDataCapabilityPart,
+  InspectableNodePorts,
   InputValues,
   LLMContent,
   NodeIdentifier,
+  NodeMetadata,
   NodeRunState,
+  StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { GlobalConfig } from "../ui/contexts/global-config.js";
 import {
   GuestConfiguration,
   OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 import type { InPort } from "../ui/transforms/autowire-in-ports.js";
-import type { Tool, Component } from "../ui/types/state-types.js";
+
+// ── Types migrated from ui/types/types.ts ──────────────────────────────────
+
+export enum STATUS {
+  RUNNING = "running",
+  PAUSED = "paused",
+  STOPPED = "stopped",
+}
+
+export enum SnackType {
+  NONE = "none",
+  INFORMATION = "information",
+  WARNING = "warning",
+  ERROR = "error",
+  PENDING = "pending",
+}
+
+export type SnackbarUUID = ReturnType<typeof globalThis.crypto.randomUUID>;
+
+export type SnackbarAction = {
+  title: string;
+  action: string;
+  value?: import("lit").HTMLTemplateResult | string;
+  callback?: () => Promise<void> | void;
+};
+
+/**
+ * @deprecated Replaced with AppPalette
+ */
+export interface AppThemeColors {
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  primaryTextColor: string;
+}
+
+export type AppTheme = AppPalette &
+  AppThemeColors & {
+    splashScreen?: InlineDataCapabilityPart | StoredDataCapabilityPart | null;
+  };
+
+export type VisualEditorMode = "app" | "canvas";
+
+export interface VisualEditorStatusUpdate {
+  date: string;
+  text: string;
+  type: "info" | "warning" | "urgent";
+}
+
+export interface RecentBoard {
+  title?: string;
+  url: string;
+  pinned?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ActionTracker {
+  load(type: "app" | "canvas" | "landing" | "home"): void;
+  openApp(url: string, source: "gallery" | "user"): void;
+  remixApp(url: string, source: "gallery" | "user" | "editor"): void;
+  createNew(): void;
+  flowGenCreate(): void;
+  flowGenEdit(url: string | undefined): void;
+  runApp(
+    url: string | undefined,
+    source: "app_preview" | "app_view" | "console"
+  ): void;
+  publishApp(url: string | undefined): void;
+  signOutSuccess(): void;
+  signInSuccess(): void;
+  errorUnknown(): void;
+  errorConfig(): void;
+  errorRecitation(): void;
+  errorCapacity(medium: string): void;
+  errorSafety(): void;
+  addNewStep(type?: string): void;
+  editStep(type: "manual" | "flowgen"): void;
+  shareResults(type: "download" | "save_to_drive" | "copy_share_link"): void;
+  updateSignedInStatus(signedIn: boolean): void;
+  updateCanAccessStatus(canAccess: boolean): void;
+}
+
+export type UserSignInResponse = "success" | "failure" | "dismissed";
+
+export type ParsedUrlProvider = {
+  readonly parsedUrl: MakeUrlInit;
+};
+
+export type MakeUrlInit =
+  | HomeUrlInit
+  | GraphUrlInit
+  | LandingUrlInit
+  | OpenUrlInit;
+
+export interface BaseUrlInit {
+  dev?: {
+    forceSignInState?:
+      | "sign-in"
+      | "add-scope"
+      | "geo-restriction"
+      | "missing-scopes";
+    forceSurveySelection?: "true";
+  };
+  oauthRedirect?: string;
+  lite?: boolean;
+  colorScheme?: "light" | "dark";
+  guestPrefixed: boolean;
+}
+
+export interface HomeUrlInit extends BaseUrlInit {
+  page: "home";
+  new?: boolean;
+  redirectFromLanding?: boolean;
+}
+
+export interface GraphUrlInit extends BaseUrlInit {
+  page: "graph";
+  mode: VisualEditorMode;
+  flow: string;
+  remix?: boolean;
+  resourceKey?: string | undefined;
+  results?: string;
+  redirectFromLanding?: boolean;
+}
+
+export interface LandingUrlInit extends BaseUrlInit {
+  page: "landing";
+  redirect: MakeUrlInit;
+  missingScopes?: boolean;
+  geoRestriction?: boolean;
+}
+
+export interface OpenUrlInit extends BaseUrlInit {
+  page: "open";
+  fileId: string;
+  resourceKey?: string;
+}
+
+// ── Types migrated from ui/events/events.ts ────────────────────────────────
+
+export enum ToastType {
+  INFORMATION = "information",
+  WARNING = "warning",
+  ERROR = "error",
+  PENDING = "pending",
+}
+
+// ── Types migrated from ui/contexts/global-config.ts ────────────────────────
+
+import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
+
+// TODO Replace this with the version in the types package
+export type GoogleDrivePermission =
+  | { id: string; type: "user"; emailAddress: string }
+  | { id: string; type: "group"; emailAddress: string }
+  | { id: string; type: "domain"; domain: string }
+  | { id: string; type: "anyone" };
+
+export interface BuildInfo {
+  packageJsonVersion: string;
+  gitCommitHash: string;
+}
+
+export type GlobalConfig = {
+  environmentName: string | undefined;
+  hostOrigin: URL;
+  googleDrive: {
+    publishPermissions: GoogleDrivePermission[];
+  };
+  buildInfo: BuildInfo;
+} & ClientDeploymentConfiguration;
+
+// ── Types migrated from ui/types/state-types.ts ─────────────────────────────
+
+import type { AsyncComputedStatus } from "signal-utils/async-computed";
+import { HTMLTemplateResult } from "lit";
+
+/**
+ * Represents the result of AsyncComputed signals helper.
+ */
+export type AsyncComputedResult<T> = {
+  value: T | undefined;
+  status: AsyncComputedStatus;
+};
+
+export type Tool = {
+  url: string;
+  title?: string;
+  description?: string;
+  icon?: string | HTMLTemplateResult;
+  /**
+   * The identifier of the tool. This is useful in cases when URL points at a
+   * tool server, not the actual tool.
+   */
+  id?: string;
+  order?: number;
+  tags?: string[];
+};
+
+export type Component = {
+  id: NodeIdentifier;
+  title: string;
+  description?: string;
+  ports?: InspectableNodePorts;
+  metadata?: NodeMetadata;
+};
+
+export type TitledItem = {
+  title?: string;
+};
+
+export type FilterableMap<T extends TitledItem> = {
+  results: ReadonlyMap<string, T>;
+  filter: string;
+};
+
+export type UIOverlays =
+  | "BoardEditModal"
+  | "BetterOnDesktopModal"
+  | "SnackbarDetailsModal"
+  | "MissingShare"
+  | "GlobalSettings"
+  | "TOS"
+  | "VideoModal"
+  | "StatusUpdateModal"
+  | "SignInModal"
+  | "WarmWelcome"
+  | "NoAccessModal";
+
+export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
+
+export type SubscriptionStatus =
+  | "indeterminate"
+  | "error"
+  | "subscribed"
+  | "not-subscribed";
+
+export type UI = {
+  mode: VisualEditorMode;
+  boardServer: string;
+  boardLocation: string;
+  editorSection: "console" | "preview";
+
+  /**
+   * Indicates whether or not the UI can currently run a flow or not.
+   * This is useful in situations where we're doing some work on the
+   * board and want to prevent the user from triggering the start
+   * of the flow.
+   */
+  canRunMain: boolean;
+  loadState: UILoadState;
+  show: Set<UIOverlays>;
+  showStatusUpdateChip: boolean | null;
+  blockingAction: boolean;
+  lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionCredits: number;
+};
+
+export type IntegrationState = {
+  title: string;
+  url: string;
+
+  status: "loading" | "complete" | "error";
+
+  tools: Map<string, Tool>;
+
+  message: string | null;
+};
 
 // ── Types migrated from ui/state/types.ts ──────────────────────────────────
 

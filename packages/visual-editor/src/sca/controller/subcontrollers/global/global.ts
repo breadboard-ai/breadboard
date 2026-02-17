@@ -14,12 +14,8 @@ export { FlagController } from "./flag-controller.js";
 export { FlowgenInputController } from "./flowgen-input-controller.js";
 export { ScreenSizeController } from "./screen-size-controller.js";
 
-import {
-  SubscriptionStatus,
-  UILoadState,
-  UIOverlays,
-} from "../../../../ui/types/state-types.js";
-import { VisualEditorMode } from "../../../../ui/types/types.js";
+import { SubscriptionStatus, UILoadState, UIOverlays } from "../../../types.js";
+import { VisualEditorMode } from "../../../types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 
