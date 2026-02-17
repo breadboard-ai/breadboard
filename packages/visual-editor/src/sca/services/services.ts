@@ -26,7 +26,7 @@ import { IntegrationManagerService } from "./integration-managers.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
-import { createA2Server } from "../../a2/index.js";
+
 import { createLoader } from "../../engine/loader/index.js";
 import { Autonamer } from "./autonamer.js";
 import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
@@ -147,8 +147,7 @@ export function services(
       config.shellHost.findUserOpalFolder,
       config.shellHost.listUserOpals
     );
-    const a2Server = createA2Server();
-    const loader = createLoader([googleDriveBoardServer, a2Server]);
+    const loader = createLoader(googleDriveBoardServer);
     const graphStoreArgs = {
       loader,
       sandbox,
