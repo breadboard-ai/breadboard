@@ -53,8 +53,7 @@ interface NodeInvoker {
     args: RunArguments,
     graph: GraphToRun,
     descriptor: NodeDescriptor,
-    inputs: InputValues,
-    invocationPath: number[]
+    inputs: InputValues
   ): Promise<OutputValues>;
 }
 

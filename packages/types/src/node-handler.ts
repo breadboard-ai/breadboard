@@ -314,7 +314,6 @@ export interface NodeHandlerContext {
    */
   readonly loader?: GraphLoader;
   readonly probe?: Probe;
-  readonly invocationPath?: number[];
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */

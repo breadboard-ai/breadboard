@@ -138,8 +138,7 @@ class RunStateController {
             },
             { graph: this.graph },
             task.node,
-            { ...nodeConfiguration, ...controlState.adjustedInputs },
-            path
+            { ...nodeConfiguration, ...controlState.adjustedInputs }
           )
         );
       }

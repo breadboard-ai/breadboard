@@ -107,8 +107,7 @@ function makeInvoker(
       _args: RunArguments,
       _graph: GraphToRun,
       descriptor: NodeDescriptor,
-      inputs: InputValues,
-      _path: number[]
+      inputs: InputValues
     ) => {
       return (outputsFn || defaultFn)(descriptor, inputs);
     },

@@ -25,8 +25,7 @@ class NodeInvokerImpl implements NodeInvoker {
     args: RunArguments,
     graph: GraphToRun,
     descriptor: NodeDescriptor,
-    inputs: InputValues,
-    invocationPath: number[]
+    inputs: InputValues
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { inputs: _inputs, start, stopAfter, ...context } = args;
@@ -43,7 +42,6 @@ class NodeInvokerImpl implements NodeInvoker {
       descriptor,
       board: resolveGraph(graph),
       base,
-      invocationPath,
     };
 
     outputs = (await callHandler(handler, inputs, newContext)) as OutputValues;
