@@ -25,7 +25,6 @@ import {
   InlineDataCapabilityPart,
   StoredDataCapabilityPart,
 } from "./llm-content.js";
-import { GraphLoader } from "./loader.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
@@ -306,11 +305,6 @@ export interface NodeHandlerContext {
   readonly board?: GraphDescriptor;
 
   readonly base?: URL;
-  /**
-   * The loader that can be used to load graphs.
-   * @see [GraphLoader]
-   */
-  readonly loader?: GraphLoader;
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */

@@ -290,7 +290,6 @@ function initializeNodeHandlerContext(
   onAbort: () => void
 ): NodeHandlerContext {
   const {
-    loader,
     base,
     signal,
     graphStore,
@@ -303,7 +302,6 @@ function initializeNodeHandlerContext(
   signal?.addEventListener("abort", onAbort);
 
   return {
-    loader,
     base,
     signal,
     graphStore,
