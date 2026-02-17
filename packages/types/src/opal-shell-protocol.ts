@@ -75,6 +75,7 @@ export declare type SignInState =
       name: string | undefined;
       picture: string | undefined;
       scopes: string[];
+    authuser: string | undefined;
     };
 
 export declare type ValidateScopesResult =
