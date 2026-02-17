@@ -20,7 +20,6 @@ import type {
   InputValues,
   OutputValues,
   RunArguments,
-  GraphToRun,
 } from "@breadboard-ai/types";
 import type {
   NodeInvoker,
@@ -105,7 +104,6 @@ function makeInvoker(
   return {
     invokeNode: async (
       _args: RunArguments,
-      _graph: GraphToRun,
       descriptor: NodeDescriptor,
       inputs: InputValues
     ) => {

@@ -302,9 +302,6 @@ export type ErrorResponse = {
 };
 
 export interface NodeHandlerContext {
-  readonly board?: GraphDescriptor;
-
-  readonly base?: URL;
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */
@@ -364,13 +361,4 @@ export type RunArguments = NodeHandlerContext & {
    * If not specified, runs the whole board.
    */
   stopAfter?: NodeIdentifier;
-};
-
-/**
- * The main argument to runGraph. Provides a way to point at a subgraph
- * within a graph, while making the whole graph available.
- */
-export type GraphToRun = {
-  graph: GraphDescriptor;
-  subGraphId?: GraphIdentifier;
 };

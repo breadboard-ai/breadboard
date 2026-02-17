@@ -7,24 +7,14 @@
 import type {
   GraphDescriptor,
   GraphLoader,
-  GraphLoaderContext,
   GraphLoaderResult,
   GraphProvider,
-  GraphToRun,
 } from "@breadboard-ai/types";
 
-export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
+export { getGraphUrl, getGraphUrlComponents, urlComponentsFromString };
 
-export {
-  getGraphUrl,
-  getGraphUrlComponents,
-  resolveGraph,
-  urlComponentsFromString,
-};
-
-function getGraphUrl(path: string, context: GraphLoaderContext): URL {
-  const base = baseURLFromContext(context);
-  return new URL(path, base);
+function getGraphUrl(path: string): URL {
+  return new URL(path);
 }
 
 function getGraphUrlComponents(url: URL): {
@@ -40,43 +30,17 @@ function getGraphUrlComponents(url: URL): {
   return { mainGraphUrl, graphId: "" };
 }
 
-function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
-  const { graph, subGraphId } = graphToRun;
-  return subGraphId ? graph.graphs![subGraphId] : graph;
-}
-
 export const removeHash = (url: URL): URL => {
   const newURL = new URL(url.href);
   newURL.hash = "";
   return newURL;
 };
 
-export const baseURLFromString = (urlString: string | undefined) => {
-  if (urlString) {
-    return new URL(urlString);
-  }
-  return null;
-};
-
-export const baseURLFromContext = (context: GraphLoaderContext) => {
-  let urlString;
-  if (context.board?.url) {
-    urlString = context.board?.url;
-  }
-  const baseURL = baseURLFromString(urlString);
-  if (baseURL) return baseURL;
-  if (context.base) return context.base;
-  return SENTINEL_BASE_URL;
-};
-
-function urlComponentsFromString(
-  urlString: string,
-  context: GraphLoaderContext = {}
-): {
+function urlComponentsFromString(urlString: string): {
   mainGraphUrl: string;
   graphId: string;
 } {
-  return getGraphUrlComponents(getGraphUrl(urlString, context));
+  return getGraphUrlComponents(getGraphUrl(urlString));
 }
 
 export class Loader implements GraphLoader {
@@ -132,11 +96,8 @@ export class Loader implements GraphLoader {
     return { success: true, graph: supergraph, subGraphId: hash };
   }
 
-  async load(
-    path: string,
-    context: GraphLoaderContext
-  ): Promise<GraphLoaderResult> {
-    const url = getGraphUrl(path, context);
+  async load(path: string): Promise<GraphLoaderResult> {
+    const url = getGraphUrl(path);
 
     // If we don't have a hash, just load the graph.
     if (!url.hash) {

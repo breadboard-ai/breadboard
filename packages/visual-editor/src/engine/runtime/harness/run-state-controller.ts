@@ -129,7 +129,6 @@ class RunStateController {
               currentStep: task.node,
               currentGraph: this.graph,
             },
-            { graph: this.graph },
             task.node,
             { ...nodeConfiguration, ...controlState.adjustedInputs }
           )
@@ -290,7 +289,6 @@ function initializeNodeHandlerContext(
   onAbort: () => void
 ): NodeHandlerContext {
   const {
-    base,
     signal,
     graphStore,
     fetchWithCreds,
@@ -302,7 +300,6 @@ function initializeNodeHandlerContext(
   signal?.addEventListener("abort", onAbort);
 
   return {
-    base,
     signal,
     graphStore,
     sandbox: config.sandbox,
