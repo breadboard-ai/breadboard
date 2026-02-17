@@ -6,7 +6,8 @@
 
 import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ToastEvent, ToastType } from "../../events/events.js";
+import { ToastEvent } from "../../events/events.js";
+import { ToastType } from "../../../sca/types.js";
 
 type JSONObjectValue =
   | null

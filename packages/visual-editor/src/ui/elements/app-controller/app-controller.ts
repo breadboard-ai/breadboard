@@ -16,10 +16,9 @@ import { isStoredData } from "@breadboard-ai/utils";
 import { styles as appPreviewStyles } from "./app-controller.styles.js";
 import {
   AppTemplateOptions,
-  AppTheme,
   FloatingInputFocusState,
-  STATUS,
 } from "../../types/types.js";
+import { AppTheme, STATUS } from "../../../sca/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { generatePaletteFromColor } from "../../../theme/index.js";

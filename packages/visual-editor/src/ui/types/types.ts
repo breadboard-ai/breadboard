@@ -21,34 +21,34 @@ import type {
 } from "@breadboard-ai/types";
 import type { HTMLTemplateResult, LitElement } from "lit";
 
-// Re-exported from SCA (canonical location)
+import type {
+  AppThemeColors,
+  SnackbarAction,
+  SnackbarUUID,
+  SnackType,
+} from "../../sca/types.js";
+
+// Re-export migrated types from sca/types.ts for barrel compatibility
+// (BreadboardUI.Types.* namespace access). Canonical source: sca/types.ts.
 export {
   STATUS,
   SnackType,
   type SnackbarUUID,
   type SnackbarAction,
   type AppTheme,
-  type AppThemeColors,
   type VisualEditorMode,
   type VisualEditorStatusUpdate,
-  type RecentBoard,
-  type ActionTracker,
   type UserSignInResponse,
-  type ParsedUrlProvider,
+  type ActionTracker,
+  type RecentBoard,
   type MakeUrlInit,
   type BaseUrlInit,
-  type HomeUrlInit,
   type GraphUrlInit,
+  type HomeUrlInit,
   type LandingUrlInit,
   type OpenUrlInit,
-} from "../../sca/types.js";
-
-// Also import locally for types used within this file
-import type {
-  AppThemeColors,
-  SnackbarAction,
-  SnackbarUUID,
-  SnackType,
+  type GlobalConfig,
+  type AppThemeColors,
 } from "../../sca/types.js";
 
 export type InputCallback = (data: Record<string, unknown>) => void;

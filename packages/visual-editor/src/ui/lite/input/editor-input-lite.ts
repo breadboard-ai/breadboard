@@ -16,7 +16,7 @@ import { SnackbarEvent, UnsnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
 import * as StringsHelper from "../../strings/helper.js";
 import * as Styles from "../../styles/styles.js";
-import { SnackType } from "../../types/types.js";
+import { SnackType } from "../../../sca/types.js";
 import type { SCA } from "../../../sca/sca.js";
 import { scaContext } from "../../../sca/context/context.js";
 

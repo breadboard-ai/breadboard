@@ -34,14 +34,14 @@ import { classMap } from "lit/directives/class-map.js";
 import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
   StateEvent,
   ToastEvent,
-  ToastType,
 } from "../../events/events.js";
+import { ToastType } from "../../../sca/types.js";
 
 import { EnumValue } from "../../types/types.js";
 import {

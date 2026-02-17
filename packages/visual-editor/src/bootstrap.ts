@@ -7,8 +7,9 @@
 import * as pkg from "../package.json" with { type: "json" };
 import type { BootstrapArguments, MainArguments } from "./types/types.js";
 
-import { LandingUrlInit, type LanguagePack } from "./ui/types/types.js";
-import type { GlobalConfig } from "./ui/contexts/global-config.js";
+import { LandingUrlInit } from "./sca/types.js";
+import { type LanguagePack } from "./ui/types/types.js";
+import type { GlobalConfig } from "./sca/types.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";

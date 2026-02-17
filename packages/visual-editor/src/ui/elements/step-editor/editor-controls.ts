@@ -33,11 +33,11 @@ import {
   ShowTooltipEvent,
   StateEvent,
   ToastEvent,
-  ToastType,
   ZoomInEvent,
   ZoomOutEvent,
   ZoomToFitEvent,
 } from "../../events/events.js";
+import { ToastType } from "../../../sca/types.js";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
 import { NewAsset } from "../../types/types.js";

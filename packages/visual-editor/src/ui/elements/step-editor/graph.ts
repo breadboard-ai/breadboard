@@ -29,7 +29,7 @@ import {
 import { css, html } from "lit";
 import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   SelectGraphContentsEvent,
   SelectionTranslateEvent,

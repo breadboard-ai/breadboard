@@ -34,7 +34,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { reactive } from "./sca/reactive.js";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 
-import { RecentBoard, UserSignInResponse } from "./ui/types/types.js";
+import { RecentBoard, UserSignInResponse } from "./sca/types.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 
 import { Admin } from "./admin.js";

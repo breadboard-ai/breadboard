@@ -28,10 +28,8 @@ import {
   StateEvent,
   ThemeEditRequestEvent,
 } from "../../events/events.js";
-import {
-  COMMAND_SET_GRAPH_EDITOR,
-  MAIN_BOARD_ID,
-} from "../../constants/constants.js";
+import { COMMAND_SET_GRAPH_EDITOR } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import { classMap } from "lit/directives/class-map.js";
 import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
 import { RendererRunState } from "../../../sca/types.js";

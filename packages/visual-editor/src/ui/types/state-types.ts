@@ -4,23 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * UI-layer types that depend on `lit` or `signal-utils`.
- *
- * Canonical definitions now live in `sca/types.ts`.
- * This file re-exports them for backward compatibility with UI consumers.
- */
-
-// Re-exported from SCA (canonical location)
-export type {
-  AsyncComputedResult,
-  Component,
-  FilterableMap,
-  IntegrationState,
-  SubscriptionStatus,
-  TitledItem,
-  Tool,
-  UI,
-  UILoadState,
-  UIOverlays,
+// Re-export migrated types from sca/types.ts for backward compatibility.
+// Canonical source: sca/types.ts.
+export {
+  type IntegrationState,
+  type Tool,
+  type Component,
+  type UILoadState,
+  type UI,
 } from "../../sca/types.js";
