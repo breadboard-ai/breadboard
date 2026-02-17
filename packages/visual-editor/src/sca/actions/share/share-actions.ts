@@ -88,6 +88,10 @@ async function fetchShareData(): Promise<void> {
       ?.disallowPublicPublishing ?? false
   );
 
+  // Ensure the graph file has been fully created on Drive (board creation is
+  // async — file ID is allocated instantly but the full write takes seconds).
+  await boardServer.graphIsFullyCreated(graphUrl);
+
   // Ensure any pending changes are saved so that our Drive operations will be
   // synchronized with those changes.
   await boardServer.flushSaveQueue(graphUrl);
@@ -304,6 +308,11 @@ async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
     );
   }
 
+  // Ensure the main file has been fully created on Drive before we try to
+  // set properties on it or create a shareable copy from it.
+  await boardServer.graphIsFullyCreated(graph.url);
+  await boardServer.flushSaveQueue(graph.url);
+
   const shareableFileName = `${mainFileId}-shared.bgl.json`;
   const shareableGraph = structuredClone(graph);
   delete shareableGraph["url"];
@@ -345,6 +354,7 @@ async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
   // TODO(aomarks) Move more sharing logic into board server so that this
   // create/update coordination doesn't need to be a concern of this
   // component.
+  await boardServer.graphIsFullyCreated(`drive:/${shareableCopyFileId}`);
   await boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
 
   const shareSurface = services.guestConfig.shareSurface;

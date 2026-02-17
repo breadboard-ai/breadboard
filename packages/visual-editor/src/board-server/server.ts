@@ -256,11 +256,25 @@ class GoogleDriveBoardServer
     }
   }
 
-  async flushSaveQueue(url: string): Promise<void> {
+  /**
+   * Waits for the graph at the given URL to be fully created on Drive.
+   *
+   * Board creation is asynchronous — `create()` allocates a file ID instantly
+   * but the full Drive write (folder creation, file upload, metadata) happens
+   * in the background and can take several seconds. This method blocks until
+   * that background work completes.
+   *
+   * No-op if the graph was not created during this session or has already
+   * finished creating.
+   */
+  async graphIsFullyCreated(url: string): Promise<void> {
     const create = this.#pendingCreates.get(url);
     if (create) {
       await create.createDone;
     }
+  }
+
+  async flushSaveQueue(url: string): Promise<void> {
     const debouncer = this.#saving.get(url);
     if (!debouncer) {
       return;
