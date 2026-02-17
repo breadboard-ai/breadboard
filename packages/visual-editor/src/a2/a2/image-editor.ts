@@ -3,7 +3,6 @@
  */
 
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -49,7 +48,6 @@ type ImageGeneratorOutputs = {
 export { invoke as default, describe };
 
 function gatheringRequest(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
@@ -64,7 +62,6 @@ ${instruction}
 
 Call the tools to gather the necessary information that could be used to create an accurate prompt.`;
   return new GeminiPrompt(
-    caps,
     moduleArgs,
     {
       body: {
@@ -90,7 +87,6 @@ async function invoke(
     "p-model-name": modelName,
     ...params
   }: ImageGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<ImageGeneratorOutputs>> {
   incomingContext ??= [];
@@ -104,14 +100,13 @@ async function invoke(
   const textContext = extractTextData(incomingContext);
   // Substitute params in instruction.
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
-  const substituting = await new Template(caps, instruction).substitute(
-    params,
-    async (part) => toolManager.addTool(part)
-  );
+  const substituting = await new Template(
+    instruction,
+    moduleArgs.context.currentGraph
+  ).substitute(params, async (part) => toolManager.addTool(part));
   if (!ok(substituting)) {
     return substituting;
   }
@@ -123,7 +118,6 @@ async function invoke(
   // information via tools.
   if (toolManager.hasTools()) {
     const gatheringInformation = await gatheringRequest(
-      caps,
       moduleArgs,
       context,
       substituting,
@@ -163,7 +157,6 @@ async function invoke(
       });
       const args: ExecuteStepArgs = { ...moduleArgs, reporter };
       const generatedImage = await callGeminiImage(
-        caps,
         args,
         modelName,
         finalInstruction,
@@ -184,7 +177,6 @@ async function invoke(
       });
       const args: ExecuteStepArgs = { ...moduleArgs, reporter };
       const generatedImage = await callGeminiImage(
-        caps,
         args,
         modelName,
         iPrompt,
@@ -207,9 +199,8 @@ type DescribeInputs = {
 
 async function describe(
   { inputs: { instruction } }: DescribeInputs,
-  caps: Capabilities
 ) {
-  const template = new Template(caps, instruction);
+  const template = new Template(instruction);
   return {
     inputSchema: {
       type: "object",

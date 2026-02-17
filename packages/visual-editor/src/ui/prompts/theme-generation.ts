@@ -5,24 +5,24 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types";
-import { ThemePromptArgs } from "../state/types.js";
+import { ThemePromptArgs } from "../../sca/types.js";
 
 export { createThemeGenerationPrompt, getThemeFromIntentGenerationPrompt };
 
 function getInstruction(context: string, userInstruction?: string): string {
   return `## Objective
-  
+
   Create a sophisticated and impactful visual metaphor or representation for the given input, ensuring the image communicates professionalism, innovation, and clarity, suitable for a mobile web app splash screen. Generate a high-resolution, visually stunning splash screen that is beautiful, exceptionally well-designed, and sleek, intended to represent a specific concept. In some cases, depending on the prompt it may be appropriate to show a literal item as part of the image. Use your artistic and aesthetic judgment.
 
 ## Context
 
 ${context}
 
-Art Medium: 
-- Emphasize matte finishes and soft-touch materials. 
+Art Medium:
+- Emphasize matte finishes and soft-touch materials.
 - Use crisp, high-fidelity details to suggest precision, not just sharp geometric edges.
 
-Lighting: 
+Lighting:
 - Soft, diffused studio lighting, reminiscent of high-end product photography.
 - Use gentle ambient occlusion and subtle gradients to define form, creating a clean, modern feel without harsh edge lights.
 
@@ -35,13 +35,13 @@ Lighting & Color Palette:
 - Lighting: Dramatic yet clean. Backlighting and edge lighting can enhance the sleekness.
 
 Texture & Details:
-- Detail Level: High level of detail in the image, ensuring crispness and clarity even in subtle elements. Every component should appear intentionally placed and meticulously crafted. Do not clutter the image with too many elements. 
+- Detail Level: High level of detail in the image, ensuring crispness and clarity even in subtle elements. Every component should appear intentionally placed and meticulously crafted. Do not clutter the image with too many elements.
 
 Aspect Ratio: 1:1
 - Constraint: The image must evoke a sense of intelligence and refined elegance. It should be visually engaging without being distracting, and immediately convey a sense of the topic's importance and modernity.
 
-IMPORTANT: 
-- If the user has provided stylistic instructions below you MUST incorporate those into the image! 
+IMPORTANT:
+- If the user has provided stylistic instructions below you MUST incorporate those into the image!
 - Do not render text or titles on the splash image. It will be laid over separately and if you do, you'll create a weird double-text rendering.
 - You must never under any circumstances a phone surround on the image
 - No sci-fi, futuristic, glowing lines, neon, circuits, circuit board, cybernetic, biomechanical, chrome, shiny metal, hexagonal grid, HUD interface

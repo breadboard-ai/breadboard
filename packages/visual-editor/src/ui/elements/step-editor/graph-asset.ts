@@ -15,7 +15,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { DragConnectorStartEvent } from "../../events/events.js";
-import { GraphAsset as GraphAssetState } from "../../state/types.js";
+import { GraphAsset as GraphAssetState } from "../../../sca/types.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";

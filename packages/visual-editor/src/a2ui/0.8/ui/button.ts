@@ -22,24 +22,7 @@ import { Action } from "../types/components.js";
 
 export { Button };
 
-/**
- * Recursively walks the DOM tree to detect media content.
- *
- * A component is considered media if it is a `Root` instance with
- * `isMedia === true`. This enables both built-in media components (Image,
- * Video, AudioPlayer set `isMedia` in `renderComponentTree`) and custom
- * elements (which override `isMedia = true`) to be discovered.
- *
- * @param el - The root element to search from.
- * @returns `true` if any descendant is a media component.
- */
-function detectMedia(el: Element): boolean {
-  if (el instanceof Root && el.isMedia) return true;
-  for (const child of el.children) {
-    if (detectMedia(child)) return true;
-  }
-  return false;
-}
+import { detectMedia } from "./utils/detect-media.js";
 
 /**
  * Interactive button component that dispatches `a2ui.action` events.
@@ -157,6 +140,13 @@ class Button extends Root {
           --a2ui-button-color,
           var(--light-dark-n-100)
         );
+      }
+
+      /* Non-media buttons: fixed height + side padding. */
+      :host(:not([has-media])) button {
+        height: var(--a2ui-button-height, 40px);
+        padding: var(--a2ui-button-padding, 0 16px);
+        --a2ui-text-padding: 0;
       }
 
       /* Non-media hover: background change. */

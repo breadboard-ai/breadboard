@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types/capabilities.js";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
 import { AgentContext } from "../src/a2/agent/agent-context.js";
@@ -16,19 +15,7 @@ import {
 import { Outcome } from "@breadboard-ai/types";
 import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
 
-export { stubCaps, stubModuleArgs, stubMemoryManager };
-
-const stubCaps: Capabilities = {
-  query() {
-    throw new Error(`Not implemented`);
-  },
-  read() {
-    throw new Error(`Not implemented`);
-  },
-  async write() {
-    // Do nothing
-  },
-};
+export { stubModuleArgs, stubMemoryManager };
 
 const stubModuleArgs: A2ModuleArgs = {
   mcpClientManager: {} as unknown as McpClientManager,
@@ -57,14 +44,20 @@ const stubMemoryManager: MemoryManager = {
   createSheet: () => {
     throw new Error(`Not implemented`);
   },
-  readSheet: () => {
-    throw new Error(`Not implemented`);
+  readSheet: async () => {
+    return { values: [] };
   },
   updateSheet: () => {
     throw new Error(`Not implemented`);
   },
   deleteSheet: () => {
     throw new Error(`Not implemented`);
+  },
+  appendToSheet: async () => {
+    return { success: true };
+  },
+  ensureSystemSheet: async () => {
+    return { success: true };
   },
   getSheetMetadata: function (): Promise<
     Outcome<{ sheets: SheetMetadataWithFilePath[] }>

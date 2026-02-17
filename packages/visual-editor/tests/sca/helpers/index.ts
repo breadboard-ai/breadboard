@@ -12,7 +12,7 @@
  */
 
 // Fixtures
-export { makeFreshGraph, makeTestProjectState } from "./fixtures.js";
+export { makeFreshGraph } from "./fixtures.js";
 
 // Controller mocks
 export {
@@ -34,7 +34,7 @@ export {
 } from "./mock-services.js";
 
 import type { FlowGenerator } from "../../../src/ui/flow-gen/flow-generator.js";
-import type { AppServices } from "../../../src/sca/services/services.js";
+
 import { makeTestController } from "./mock-controller.js";
 import {
   makeTestServices,
@@ -61,20 +61,17 @@ export interface TestFixturesOptions {
 export function makeTestFixtures(options: TestFixturesOptions = {}) {
   const { withEditor = false, flowGeneratorMock, agentContext } = options;
 
-  let graphStore: AppServices["graphStore"] | undefined;
   let editor:
     | ReturnType<typeof makeTestGraphStoreWithEditor>["editor"]
     | undefined;
 
   if (withEditor) {
     const result = makeTestGraphStoreWithEditor();
-    graphStore = result.graphStore;
     editor = result.editor;
   }
 
   const { controller, mocks: controllerMocks } = makeTestController({ editor });
   const { services, mocks: serviceMocks } = makeTestServices({
-    graphStore,
     flowGeneratorMock,
     agentContext,
   });

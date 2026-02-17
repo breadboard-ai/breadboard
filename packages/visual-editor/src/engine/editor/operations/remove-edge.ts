@@ -36,7 +36,6 @@ export class RemoveEdge implements EditOperation {
         { id: spec.from, graphId },
         { id: spec.to, graphId },
       ],
-      affectedModules: [],
       affectedGraphs: [],
       topologyChange: true,
     };
@@ -72,15 +71,13 @@ export class RemoveEdge implements EditOperation {
     edge = fixUpStarEdge(edge);
     const edges = graph.edges;
     const index = findEdgeIndex(graph, edge);
-    const foundEdge = edges.splice(index, 1)[0];
-    mutable.edges.remove(foundEdge, graphId);
+    edges.splice(index, 1);
     return {
       success: true,
       affectedNodes: [
         { id: edge.from, graphId },
         { id: edge.to, graphId },
       ],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };

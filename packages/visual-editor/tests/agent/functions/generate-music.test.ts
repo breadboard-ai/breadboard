@@ -31,12 +31,10 @@ describe("generate_music_from_text", () => {
     it("passes prompt to generator", async () => {
       let capturedPrompt = "";
       const generators = createMockGenerators({
-        callMusic: mock.fn(
-          async (_caps: unknown, _moduleArgs: unknown, prompt: string) => {
-            capturedPrompt = prompt;
-            return fixtures.musicSuccess;
-          }
-        ) as unknown as Generators["callMusic"],
+        callMusic: mock.fn(async (_moduleArgs: unknown, prompt: string) => {
+          capturedPrompt = prompt;
+          return fixtures.musicSuccess;
+        }) as unknown as Generators["callMusic"],
       });
 
       const args = createTestArgs({ generators });

@@ -5,62 +5,78 @@
  */
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import { RuntimeConfig } from "../../runtime/types.js";
-import {
-  createActionTracker,
-  createActionTrackerBackend,
-} from "../../ui/utils/action-tracker.js";
+import type { GlobalConfig } from "../../ui/contexts/global-config.js";
+import { createActionTracker } from "../../ui/utils/action-tracker.js";
 import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
   GraphLoader,
   NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
-  PersistentBackend,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { createFileSystem } from "../../engine/file-system/index.js";
-import { envFromSettings } from "../../utils/env-from-settings.js";
-import { createFileSystemBackend } from "../../idb/index.js";
-import { createEphemeralBlobStore } from "../../engine/file-system/ephemeral-blob-store.js";
-import { composeFileSystemBackends } from "../../engine/file-system/composed-peristent-backend.js";
+import type { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
+import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+
 import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
+import { IntegrationManagerService } from "./integration-managers.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
-import { createA2Server } from "../../a2/index.js";
+
 import { createLoader } from "../../engine/loader/index.js";
-import { createGraphStore } from "../../engine/inspector/index.js";
 import { Autonamer } from "./autonamer.js";
 import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
 import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";
-import { ActionTracker } from "../../ui/types/types.js";
+import { ActionTracker, UserSignInResponse } from "../../ui/types/types.js";
 import { type ConsentController } from "../controller/subcontrollers/global/global.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { RunService } from "./run-service.js";
 import { StatusUpdatesService } from "./status-updates-service.js";
 import { getLogger, Formatter } from "../utils/logging/logger.js";
 import { NotebookLmApiClient } from "./notebooklm-api-client.js";
+import type { OAuthScope } from "../../ui/connection/oauth-scopes.js";
+import { GraphEditingAgentService } from "./graph-editing-agent-service.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
+  /**
+   * A function reference for prompting the user to sign in.
+   * Set by MainBase during initialization. DOM-coupled (uses sign-in modal).
+   */
+  askUserToSignInIfNeeded: (
+    scopes?: OAuthScope[]
+  ) => Promise<UserSignInResponse>;
+  embedHandler: EmbedHandler | undefined;
   agentContext: AgentContext;
   apiClient: AppCatalystApiClient;
   autonamer: Autonamer;
+  globalConfig: GlobalConfig;
+  guestConfig: GuestConfiguration;
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
-  fileSystem: ReturnType<typeof createFileSystem>;
+
   flowGenerator: FlowGenerator;
   googleDriveBoardServer: GoogleDriveBoardServer;
   googleDriveClient: GoogleDriveClient;
-  graphStore: ReturnType<typeof createGraphStore>;
   loader: GraphLoader;
   mcpClientManager: McpClientManager;
+  integrationManagers: IntegrationManagerService;
   notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
+  graphEditingAgentService: GraphEditingAgentService;
+  sandbox: RunnableModuleFactory;
   signinAdapter: SigninAdapter;
+  /**
+   * An EventTarget for dispatching StateEvents into the SCA trigger system.
+   * handleRoutedEvent re-dispatches its events onto this bus so that
+   * SCA actions with eventTrigger can listen for them.
+   */
+  stateEventBus: EventTarget;
   statusUpdates: StatusUpdatesService;
 }
 
@@ -98,20 +114,9 @@ export function services(
       },
     });
 
-    const fileSystem = createFileSystem({
-      env: [...envFromSettings(config.settings), ...(config.env || [])],
-      local: createFileSystemBackend(createEphemeralBlobStore()),
-      mnt: composeFileSystemBackends(
-        new Map<string, PersistentBackend>([
-          ["track", createActionTrackerBackend()],
-        ])
-      ),
-    });
-
     const mcpClientManager = new McpClientManager(
       builtInMcpClients,
       {
-        fileSystem: fileSystem,
         fetchWithCreds: fetchWithCreds,
       },
       OPAL_BACKEND_API_PREFIX
@@ -142,21 +147,14 @@ export function services(
       config.shellHost.findUserOpalFolder,
       config.shellHost.listUserOpals
     );
-    const a2Server = createA2Server();
-    const loader = createLoader([googleDriveBoardServer, a2Server]);
+    const loader = createLoader(googleDriveBoardServer);
     const graphStoreArgs = {
       loader,
       sandbox,
-      fileSystem,
       flags,
     };
 
-    const graphStore = createGraphStore(graphStoreArgs);
-    for (const [, item] of a2Server.userGraphs?.entries() || []) {
-      graphStore.addByURL(item.url, [], {});
-    }
-
-    const autonamer = new Autonamer(graphStoreArgs, fileSystem, sandbox);
+    const autonamer = new Autonamer(graphStoreArgs, sandbox);
     const apiClient = new AppCatalystApiClient(
       fetchWithCreds,
       OPAL_BACKEND_API_PREFIX
@@ -166,21 +164,30 @@ export function services(
 
     instance = {
       actionTracker,
+      askUserToSignInIfNeeded:
+        config.askUserToSignInIfNeeded ??
+        (async () => "failure" as UserSignInResponse),
+      embedHandler: config.embedHandler,
       agentContext,
       apiClient,
       autonamer,
+      globalConfig: config.globalConfig,
+      guestConfig: config.guestConfig,
       emailPrefsManager,
       fetchWithCreds,
-      fileSystem,
+
       flowGenerator,
       googleDriveBoardServer,
       googleDriveClient,
-      graphStore,
+      integrationManagers: new IntegrationManagerService(),
       loader,
       mcpClientManager,
       notebookLmApiClient,
       runService: new RunService(),
+      graphEditingAgentService: new GraphEditingAgentService(),
+      sandbox,
       signinAdapter,
+      stateEventBus: new EventTarget(),
       statusUpdates: new StatusUpdatesService(),
     } satisfies AppServices;
   }

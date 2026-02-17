@@ -6,7 +6,7 @@
 
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
-import { PendingEdit, PendingAssetEdit } from "../../../../types.js";
+import type { PendingEdit, PendingAssetEdit } from "../../../../types.js";
 
 export { StepController };
 

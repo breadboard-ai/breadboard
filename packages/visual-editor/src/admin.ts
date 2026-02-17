@@ -9,11 +9,9 @@ import { MainArguments } from "./types/types.js";
 
 import { Types } from "./ui/index.js";
 
-import { Runtime } from "./runtime/runtime.js";
-import { RuntimeFlagManager } from "@breadboard-ai/types";
 import type { GlobalConfig } from "./ui/contexts/global-config.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
-import { Project } from "./ui/state/types.js";
+
 import { GoogleDriveBoardServer } from "./board-server/server.js";
 
 /**
@@ -37,8 +35,6 @@ export class Admin {
 
   settingsHelper?: Types.SettingsHelper;
   driveBoardServer?: GoogleDriveBoardServer;
-  runtime!: Runtime;
-  flags!: RuntimeFlagManager;
 
   help() {
     return {
@@ -50,11 +46,6 @@ export class Admin {
       gdrive: this.gdrive.help(),
       cache: this.cache.help(),
     };
-  }
-
-  get project(): Project | null {
-    // Return project directly - no longer need to check tabs
-    return this.runtime.project;
   }
 
   #gdriveBoardServer(): GoogleDriveBoardServer {

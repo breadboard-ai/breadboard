@@ -13,7 +13,7 @@ import {
   getThemeFromIntentGenerationPrompt,
 } from "../../../ui/prompts/theme-generation.js";
 import { AppTheme } from "../../../ui/types/types.js";
-import { ThemePromptArgs } from "../../../ui/state/types.js";
+import { ThemePromptArgs } from "../../types.js";
 import { generateImage, persistTheme } from "./theme-utils.js";
 
 export const bind = makeAction();
@@ -56,6 +56,7 @@ async function updateGraphWithTheme(
       return err(edit.error);
     }
   } finally {
+    controller.editor.theme.updateHash(controller.editor.graph.graph);
     controller.editor.theme.status = "idle";
   }
 }
@@ -202,6 +203,7 @@ export const deleteTheme = asAction(
         return err(editing.error);
       }
     } finally {
+      controller.editor.theme.updateHash(controller.editor.graph.graph);
       controller.editor.theme.status = "idle";
     }
   }
@@ -246,6 +248,7 @@ export const setCurrent = asAction(
         return err(editing.error);
       }
     } finally {
+      controller.editor.theme.updateHash(controller.editor.graph.graph);
       controller.editor.theme.status = "idle";
     }
   }

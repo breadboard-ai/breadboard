@@ -1,11 +1,4 @@
-/**
- * @license
- * Copyright 2024 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
-  GraphToRun,
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
@@ -13,73 +6,32 @@ import type {
   RunArguments,
 } from "@breadboard-ai/types";
 
-import { resolveBoardCapabilitiesInInputs } from "../../loader/capability.js";
-import { resolveGraph, SENTINEL_BASE_URL } from "../../loader/loader.js";
+import type { NodeInvoker } from "../../types.js";
+
 import { callHandler, getHandler } from "../handler.js";
 
-export class NodeInvoker {
-  #graph: GraphToRun;
-  #context: NodeHandlerContext;
+export { NodeInvokerImpl };
 
-  constructor(args: RunArguments, graph: GraphToRun) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { inputs, start, stopAfter, ...context } = args;
-    this.#graph = graph;
-    this.#context = context;
-  }
-
-  #updateStepInfo(context: NodeHandlerContext) {
-    const fileSystem = context.fileSystem?.createModuleFileSystem({
-      graphUrl: this.#graph.graph.url!,
-    });
-    return {
-      ...context,
-      fileSystem,
-    };
-  }
-
+class NodeInvokerImpl implements NodeInvoker {
   async invokeNode(
+    args: RunArguments,
     descriptor: NodeDescriptor,
-    inputs: InputValues,
-    invocationPath: number[]
+    inputs: InputValues
   ) {
-    const { base = SENTINEL_BASE_URL } = this.#context;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { inputs: _inputs, start, stopAfter, ...context } = args;
+
     let outputs: OutputValues | undefined = undefined;
 
-    const outerGraph = this.#graph.graph;
-
     const handler = await getHandler(descriptor.type, {
-      ...this.#context,
-      outerGraph,
+      ...context,
     });
 
-    let newContext: NodeHandlerContext = {
-      ...this.#context,
-      descriptor,
-      board: resolveGraph(this.#graph),
-      // This is important: outerGraph is the value of the parent graph
-      // if this.#graph is a subgraph.
-      // Or it equals to "board" it this is not a subgraph
-      // TODO: Make this more elegant.
-      outerGraph,
-      base,
-      invocationPath,
+    const newContext: NodeHandlerContext = {
+      ...context,
     };
 
-    // only for top-level steps, update env with the current step
-    if (invocationPath.length === 1) {
-      newContext = this.#updateStepInfo(newContext);
-    }
-
-    outputs = (await callHandler(
-      handler,
-      resolveBoardCapabilitiesInInputs(
-        inputs,
-        this.#context,
-        this.#graph.graph.url
-      ),
-      newContext
-    )) as OutputValues;
+    outputs = (await callHandler(handler, inputs, newContext)) as OutputValues;
 
     return outputs;
   }

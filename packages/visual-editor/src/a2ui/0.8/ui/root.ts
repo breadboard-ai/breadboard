@@ -383,8 +383,15 @@ export class Root extends SignalWatcher(LitElement) {
         }
 
         case "MultipleChoice": {
-          // TODO: maxAllowedSelections and selections.
           const node = component as NodeOfType<"MultipleChoice">;
+          const childComponents: AnyComponentNode[] = [];
+          if (node.properties.options) {
+            for (const opt of node.properties.options) {
+              if (opt.child) {
+                childComponents.push(opt.child);
+              }
+            }
+          }
           return html`<a2ui-multiplechoice
             id=${node.id}
             slot=${node.slotName ? node.slotName : nothing}
@@ -396,6 +403,7 @@ export class Root extends SignalWatcher(LitElement) {
             .options=${node.properties.options}
             .maxAllowedSelections=${node.properties.maxAllowedSelections}
             .selections=${node.properties.selections}
+            .childComponents=${childComponents.length ? childComponents : null}
             .enableCustomElements=${this.enableCustomElements}
           ></a2ui-multiplechoice>`;
         }

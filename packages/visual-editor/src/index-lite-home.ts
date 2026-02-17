@@ -25,7 +25,7 @@ import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
 import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 import "./ui/elements/overflow-menu/overflow-menu.js";
-import { EmbedHandler } from "./ui/embed/embed.js";
+
 import type {
   SnackbarActionEvent,
   StateEvent,
@@ -89,15 +89,10 @@ export class LiteHome extends SignalWatcher(LitElement) {
    */
   #busy = false;
 
-  readonly #embedHandler?: EmbedHandler;
-
   constructor(mainArgs: MainArguments) {
     super();
     // Static deployment config
     this.globalConfig = mainArgs.globalConfig;
-
-    // Communication with embedder
-    this.#embedHandler = mainArgs.embedHandler;
 
     // Configuration provided by shell host
     this.guestConfiguration = mainArgs.guestConfiguration;
@@ -149,6 +144,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
       guestConfig: this.guestConfiguration,
       settings: mainArgs.settings,
       shellHost: opalShell,
+      embedHandler: mainArgs.embedHandler,
       env: mainArgs.env,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
@@ -193,7 +189,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
       clearTimeout(this.#debounceResizeNotify);
       this.#debounceResizeNotify = window.setTimeout(() => {
-        this.#embedHandler?.sendToEmbedder({
+        this.sca.services.embedHandler?.sendToEmbedder({
           type: "resize",
           width: this.offsetWidth,
           height: this.offsetHeight,
@@ -305,21 +301,21 @@ export class LiteHome extends SignalWatcher(LitElement) {
   }
 
   async remixBoard(urlString: string) {
-    this.#embedHandler?.sendToEmbedder({
+    this.sca.services.embedHandler?.sendToEmbedder({
       type: "remix_board",
       boardId: urlString,
     });
   }
 
   async loadBoard(urlString: string) {
-    this.#embedHandler?.sendToEmbedder({
+    this.sca.services.embedHandler?.sendToEmbedder({
       type: "load_board",
       boardId: urlString,
     });
   }
 
   async createBoard() {
-    this.#embedHandler?.sendToEmbedder({
+    this.sca.services.embedHandler?.sendToEmbedder({
       type: "create_board",
     });
   }

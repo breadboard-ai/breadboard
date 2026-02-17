@@ -2,7 +2,7 @@
  * @fileoverview Search using internal search engine.
  */
 
-import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
+import { Outcome, Schema } from "@breadboard-ai/types";
 import { ok } from "../a2/utils.js";
 import { executeTool } from "../a2/step-executor.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -18,11 +18,9 @@ type Outputs = {
 
 async function invoke(
   { query }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const executing = await executeTool<string>(
-    caps,
     moduleArgs,
     "enterprise_search",
     {

@@ -2,7 +2,6 @@
  * @fileoverview Connector Save Export.
  */
 import {
-  Capabilities,
   DescribeOutputs,
   LLMContent,
   Outcome,
@@ -51,7 +50,6 @@ function contextFromId(id: string, mimeType: string): LLMContent[] {
 
 async function invoke(
   { method, id: connectorId, context, title, graphId, info }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   graphId ??= "";
@@ -101,7 +99,7 @@ async function invoke(
                 SLIDES_MIME_TYPE,
                 info?.configuration?.file?.id
               ),
-          inferSlideStructure(caps, moduleArgs, context),
+          inferSlideStructure(moduleArgs, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
@@ -150,7 +148,7 @@ async function invoke(
             SHEETS_MIME_TYPE,
             info?.configuration?.file?.id
           ),
-          inferSheetValues(caps, moduleArgs, context),
+          inferSheetValues(moduleArgs, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;

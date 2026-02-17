@@ -66,6 +66,19 @@ class Controller implements AppController {
         "Editor_Theme",
         "ThemeController"
       ),
+      fastAccess: new Editor.FastAccess.FastAccessController(
+        "Editor_FastAccess",
+        "FastAccessController"
+      ),
+      integrations: new Editor.Integrations.IntegrationsController(
+        "Editor_Integrations",
+        "IntegrationsController"
+      ),
+      graphEditingAgent:
+        new Editor.GraphEditingAgent.GraphEditingAgentController(
+          "Editor_GraphEditingAgent",
+          "GraphEditingAgentController"
+        ),
     };
 
     this.home = {
@@ -118,6 +131,7 @@ class Controller implements AppController {
         await Migrations.statusUpdatesMigration(
           controller.global.statusUpdates
         );
+        await Migrations.mcpServersMigration(controller.editor.integrations);
       },
       /* c8 ignore end */
     };
@@ -128,6 +142,11 @@ class Controller implements AppController {
 
     this.run = {
       main: new Run.RunController("Run", "RunController"),
+      renderer: new Run.RendererController(
+        "Run_Renderer",
+        "RendererController"
+      ),
+      screen: new Run.ScreenController("Run_Screen", "ScreenController"),
     };
 
     this.router = new RouterController();
@@ -214,6 +233,9 @@ export interface AppController extends DebuggableAppController {
     step: Editor.Step.StepController;
     share: Editor.Share.ShareController;
     theme: Editor.Theme.ThemeController;
+    fastAccess: Editor.FastAccess.FastAccessController;
+    integrations: Editor.Integrations.IntegrationsController;
+    graphEditingAgent: Editor.GraphEditingAgent.GraphEditingAgentController;
   };
   home: {
     recent: Home.RecentBoardsController;
@@ -236,6 +258,8 @@ export interface AppController extends DebuggableAppController {
   };
   run: {
     main: Run.RunController;
+    renderer: Run.RendererController;
+    screen: Run.ScreenController;
   };
   router: RouterController;
   isHydrated: Promise<number[]>;

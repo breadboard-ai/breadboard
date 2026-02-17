@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystem, Outcome } from "./data.js";
-import { AffectedNode, EditableGraph, EditableGraphOptions } from "./edit.js";
-import type { Result } from "./result.js";
+import { Outcome } from "./data.js";
+import { AffectedNode } from "./edit.js";
+
 import {
   AssetPath,
   AssetType,
@@ -17,10 +17,6 @@ import {
   GraphMetadata,
   InputValues,
   KitDescriptor,
-  Module,
-  ModuleCode,
-  ModuleIdentifier,
-  ModuleMetadata,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
@@ -30,14 +26,11 @@ import {
   OutputValues,
 } from "./graph-descriptor.js";
 import { LLMContent } from "./llm-content.js";
-import { GraphLoader, GraphLoaderContext } from "./loader.js";
+import { GraphLoader } from "./loader.js";
 import { NodeDescriberResult, NodeHandlerMetadata } from "./node-handler.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
-import {
-  TypedEventTarget,
-  TypedEventTargetType,
-} from "./typed-event-target.js";
+
 import { UUID } from "./uuid.js";
 import { RuntimeFlagManager } from "./flags.js";
 
@@ -139,13 +132,6 @@ export type InspectableNode = {
   ): InspectableNodePorts;
 
   /**
-   * Returns `true` if the node has been deleted from the graph and this
-   * instance of `InspectableNode` no longer represents a valid node in
-   * a graph. Returns `false` otherwise.
-   */
-  deleted(): boolean;
-
-  /**
    * Returns all routes used in this step
    */
   routes(): NodeIdentifier[];
@@ -225,13 +211,6 @@ export type InspectableEdge = {
    * Get the inspectable input port.
    */
   inPort(): Promise<InspectablePort>;
-
-  /**
-   * Returns `true` if the edge has been deleted from the graph and this
-   * instance of `InspectableEdge` no longer represents a valid edge in
-   * a graph. Returns `false` otherwise.
-   */
-  deleted(): boolean;
 };
 
 export type ValidateResult =
@@ -320,30 +299,6 @@ export type InspectableGraph = {
    */
   graphId(): GraphIdentifier;
   /**
-   * Returns a module by name.
-   */
-  moduleById(id: ModuleIdentifier): InspectableModule | undefined;
-  /**
-   * Returns the modules that are embedded in this graph.
-   */
-  modules(): InspectableModules;
-  /**
-   * Returns true if the graph represents an `ImperativeGraph` instance.
-   * Imperative `InspectableGraph` will still show nodes and edges, but
-   * it is just a fixed topology that represents how the graph is run.
-   */
-  imperative(): boolean;
-  /**
-   * Returns the name of the designated "main" module if this is an
-   * `ImperativeGraph` instance and `undefined` if it is not yet set or
-   * this is a `DeclarativeGraph` instance.
-   */
-  main(): string | undefined;
-  /**
-   * Returns all module exports
-   */
-  moduleExports(): Set<ModuleIdentifier>;
-  /**
    * Returns all graph exports
    */
   graphExports(): Set<GraphIdentifier>;
@@ -406,20 +361,6 @@ export type InspectableGraphOptions = {
    * The Javascript Sandbox that will be used to run custom describers.
    */
   readonly sandbox?: RunnableModuleFactory;
-  readonly fileSystem?: FileSystem;
-};
-
-export type DescribeResultCacheArgs = {
-  initial(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): NodeDescriberResult;
-  latest(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): Promise<NodeDescriberResult>;
-  willUpdate(previous: NodeDescriberResult, current: NodeDescriberResult): void;
-  updated(graphId: GraphIdentifier, nodeId: NodeIdentifier): void;
 };
 
 /**
@@ -626,58 +567,13 @@ export type InspectableNodeType = {
   ports(): Promise<InspectableNodePorts>;
 };
 
-export type InspectableModule = {
-  /**
-   * Returns the metadata, associated with this node type.
-   */
-  metadata(): ModuleMetadata;
-
-  /**
-   *
-   */
-  code(): ModuleCode;
-};
-
-export type InspectableModules = Record<ModuleIdentifier, InspectableModule>;
-
-export type NodeStoreMutator = {
-  add(node: NodeDescriptor, graphId: GraphIdentifier): void;
-  remove(id: NodeIdentifier, graphId: GraphIdentifier): void;
-  addSubgraphNodes(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraphNodes(graphId: GraphIdentifier): void;
-};
-
-export type EdgeStoreMutator = {
-  add(edge: Edge, graphId: GraphIdentifier): void;
-  remove(edge: Edge, graphId: GraphIdentifier): void;
-  addSubgraphEdges(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraphEdges(graphId: GraphIdentifier): void;
-};
-
-export type InspectableEdgeCache = EdgeStoreMutator & {
-  get(edge: Edge, graphId: GraphIdentifier): InspectableEdge | undefined;
-  getOrCreate(edge: Edge, graphId: GraphIdentifier): InspectableEdge;
-  hasByValue(edge: Edge, graphId: GraphIdentifier): boolean;
-  edges(graphId: GraphIdentifier): InspectableEdge[];
-  rebuild(graph: GraphDescriptor): void;
-};
-
-export type InspectableNodeCache = NodeStoreMutator & {
+export type InspectableNodeCache = {
   byType(type: NodeTypeIdentifier, graphId: GraphIdentifier): InspectableNode[];
   get(
     id: NodeIdentifier,
     graphId: GraphIdentifier
   ): InspectableNode | undefined;
   nodes(graphId: GraphIdentifier): InspectableNode[];
-  rebuild(graph: GraphDescriptor): void;
-};
-
-export type InspectableModuleCache = {
-  get(id: string): InspectableModule | undefined;
-  add(id: string, module: Module): void;
-  remove(id: ModuleIdentifier): void;
-  modules(): InspectableModules;
-  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableDescriberResultCacheEntry = {
@@ -697,34 +593,17 @@ export type InspectableDescriberResultCacheEntry = {
   updating: boolean;
 };
 
-export type DescribeResultTypeCacheArgs = {
-  initial(): NodeDescriberResult;
-  latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult>;
-  updated(type: NodeTypeIdentifier): void;
-};
-
-export type InspectableDescriberResultTypeCache = {
-  get(type: NodeTypeIdentifier): InspectableDescriberResultCacheEntry;
-  update(affectedTypes: NodeTypeIdentifier[]): void;
-  clear(): void;
-};
-
 export type InspectableDescriberResultCache = {
   get(
     id: NodeIdentifier,
     graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry;
   update(affectedNodes: AffectedNode[]): void;
-  clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
 
 export type InspectableGraphCache = {
-  add(id: GraphIdentifier): void;
   get(id: GraphIdentifier): InspectableGraph | undefined;
   graphs(): InspectableSubgraphs;
-  remove(id: GraphIdentifier): void;
-  rebuild(graph: GraphDescriptor): void;
-  clear(): void;
 };
 
 export type MainGraphIdentifier = UUID;
@@ -747,83 +626,12 @@ export type GraphStoreArgs = Required<InspectableGraphOptions> & {
   flags: RuntimeFlagManager;
 };
 
-export type GraphStoreUpdateEvent = Event & {
-  mainGraphId: MainGraphIdentifier;
-  affectedGraphs: MainGraphIdentifier[];
-  graphId: GraphIdentifier;
-  nodeId: NodeIdentifier;
-  topologyChange: boolean;
+export type MutableGraphStore = {
+  set(graph: MutableGraph): void;
+  get(): MutableGraph | undefined;
 };
-
-type GraphsStoreEventMap = {
-  update: GraphStoreUpdateEvent;
-};
-
-export type GraphStoreEventTarget = TypedEventTarget<GraphsStoreEventMap>;
-
-export type AddResult = {
-  mutable: MutableGraph;
-  graphId: GraphIdentifier;
-  // NEED THIS, because describing is different for graphs and modules
-  moduleId?: ModuleIdentifier;
-  updating: boolean;
-};
-
-export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
-  GraphLoader & {
-    readonly sandbox: RunnableModuleFactory;
-    readonly loader: GraphLoader;
-    readonly fileSystem: FileSystem;
-    readonly types: InspectableDescriberResultTypeCache;
-    readonly flags: RuntimeFlagManager;
-
-    get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
-
-    addByURL(
-      url: string,
-      dependencies: MainGraphIdentifier[],
-      context: GraphLoaderContext
-    ): AddResult;
-
-    getLatest(mutable: MutableGraph): Promise<MutableGraph>;
-
-    getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
-    editByDescriptor(
-      graph: GraphDescriptor,
-      options?: EditableGraphOptions
-    ): EditableGraph | undefined;
-    inspect(
-      id: MainGraphIdentifier,
-      graphId: GraphIdentifier
-    ): InspectableGraph | undefined;
-  };
 
 export type PortIdentifier = string;
-
-export type PortChanges = {
-  fixedChanged: boolean;
-  deleted: PortIdentifier[];
-  added: InspectablePort[];
-  updated: InspectablePort[];
-};
-
-export type NodePortChanges = {
-  input: PortChanges;
-  output: PortChanges;
-  side: PortChanges;
-};
-
-export type InspectablePortCache = {
-  getChanges(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    port: InspectableNodePorts
-  ): NodePortChanges;
-  current(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier
-  ): InspectableNodePorts | undefined;
-};
 
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
@@ -831,28 +639,18 @@ export type InspectablePortCache = {
  */
 export type MutableGraph = {
   graph: GraphDescriptor;
-  legacyKitMetadata: KitDescriptor | null;
   readonly id: MainGraphIdentifier;
+  readonly deps: GraphStoreArgs;
   readonly graphs: InspectableGraphCache;
   readonly store: MutableGraphStore;
   readonly nodes: InspectableNodeCache;
-  readonly edges: InspectableEdgeCache;
-  readonly modules: InspectableModuleCache;
   readonly describe: InspectableDescriberResultCache;
-
-  readonly ports: InspectablePortCache;
-  readonly entries: NodeIdentifier[];
 
   update(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[],
-    topologyChange: boolean
+    affectedNodes: AffectedNode[]
   ): void;
-
-  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraph(graphId: GraphIdentifier): void;
 
   rebuild(graph: GraphDescriptor): void;
 };

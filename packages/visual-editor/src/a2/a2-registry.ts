@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Tool } from "../ui/state/types.js";
+import type { Tool } from "../ui/types/state-types.js";
 
 // Tool module imports
 import * as toolsGetWeather from "./tools/get-weather.js";

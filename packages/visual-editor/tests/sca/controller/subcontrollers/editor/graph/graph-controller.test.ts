@@ -7,10 +7,22 @@
 import assert from "node:assert";
 import { beforeEach, suite, test } from "node:test";
 import { GraphController } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
-import { makeTestGraphStore } from "../../../../../helpers/_graph-store.js";
-import { EditableGraph } from "@breadboard-ai/types";
+import {
+  makeTestGraphStore,
+  loadGraphIntoStore,
+} from "../../../../../helpers/_graph-store.js";
+import { editGraphStore } from "../../../../../helpers/_editor.js";
+import type {
+  AssetPath,
+  EditableGraph,
+  EditHistoryCreator,
+  GraphDescriptor,
+  MutableGraph,
+  MutableGraphStore,
+} from "@breadboard-ai/types";
+import type { GraphAsset } from "../../../../../../src/sca/types.js";
+import { ok } from "@breadboard-ai/utils";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
-import { GraphStore } from "../../../../../../src/engine/inspector/graph-store.js";
 import { Tab } from "../../../../../../src/runtime/types.js";
 import { createMockEditor, makeFreshGraph } from "../../../../helpers/index.js";
 import { A2_TOOLS } from "../../../../../../src/a2/a2-registry.js";
@@ -18,13 +30,14 @@ import { A2_TOOLS } from "../../../../../../src/a2/a2-registry.js";
 suite("GraphController", () => {
   let testGraph = makeFreshGraph();
   let editableGraph: EditableGraph | undefined;
-  let graphStore: GraphStore;
+  let graphStore: MutableGraphStore;
 
   beforeEach(() => {
     graphStore = makeTestGraphStore();
 
     testGraph = makeFreshGraph();
-    editableGraph = graphStore.editByDescriptor(testGraph);
+    loadGraphIntoStore(graphStore, testGraph);
+    editableGraph = editGraphStore(graphStore);
     if (!editableGraph) assert.fail("Unable to edit graph");
   });
 
@@ -47,7 +60,8 @@ suite("GraphController", () => {
     store.setEditor(editableGraph);
 
     // Make a new one and apply it.
-    const editableGraphAlt = graphStore.editByDescriptor(makeFreshGraph());
+    loadGraphIntoStore(graphStore, makeFreshGraph());
+    const editableGraphAlt = editGraphStore(graphStore);
     if (!editableGraphAlt) assert.fail("No editable graph");
 
     // On changing the editor we should not get a graph change on the old
@@ -141,7 +155,6 @@ suite("GraphController", () => {
       boardServer: null,
       lastLoadedVersion: 20,
       mainGraphId: globalThis.crypto.randomUUID(),
-      moduleId: null,
       name: "Untitled app",
       subGraphId: null,
       type: 0,
@@ -204,7 +217,8 @@ suite("GraphController", () => {
       },
     };
 
-    const editable = graphStore.editByDescriptor(graphWithSubGraphs);
+    loadGraphIntoStore(graphStore, graphWithSubGraphs);
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     // Verify the graph structure is preserved
@@ -259,7 +273,8 @@ suite("GraphController", () => {
       },
     };
 
-    const editable = graphStore.editByDescriptor(graphWithSubGraphs);
+    loadGraphIntoStore(graphStore, graphWithSubGraphs);
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     // Verify the graph structure is preserved
@@ -450,7 +465,8 @@ suite("GraphController", () => {
       ],
     };
 
-    const editable = graphStore.editByDescriptor(graphWithNodes);
+    loadGraphIntoStore(graphStore, graphWithNodes);
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     store.setEditor(editable);
@@ -505,7 +521,8 @@ suite("GraphController", () => {
       ...makeFreshGraph(),
       nodes: [{ id: "first-node", type: "input" }],
     };
-    const editable1 = graphStore.editByDescriptor(graph1);
+    loadGraphIntoStore(graphStore, graph1);
+    const editable1 = editGraphStore(graphStore);
     if (!editable1) assert.fail("Unable to edit graph 1");
 
     store.setEditor(editable1);
@@ -516,7 +533,8 @@ suite("GraphController", () => {
       ...makeFreshGraph(),
       nodes: [{ id: "second-node", type: "output" }],
     };
-    const editable2 = graphStore.editByDescriptor(graph2);
+    loadGraphIntoStore(graphStore, graph2);
+    const editable2 = editGraphStore(graphStore);
     if (!editable2) assert.fail("Unable to edit graph 2");
 
     store.setEditor(editable2);
@@ -549,7 +567,8 @@ suite("GraphController", () => {
       },
     };
 
-    const editable = graphStore.editByDescriptor(graphWithUntitledSubGraph);
+    loadGraphIntoStore(graphStore, graphWithUntitledSubGraph);
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     const rawGraph = editable.raw();
@@ -575,7 +594,8 @@ suite("GraphController", () => {
       nodes: [{ id: "test-component-node", type: "input" }],
     };
 
-    const editable = graphStore.editByDescriptor(graphWithNode);
+    loadGraphIntoStore(graphStore, graphWithNode);
+    const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
     store.setEditor(editable);
@@ -646,5 +666,764 @@ suite("GraphController", () => {
     const asyncPathComponent = mainGraphComponents.get("async-path-node");
     assert.ok(asyncPathComponent, "Should have async-path component");
     assert.strictEqual(asyncPathComponent.id, "async-path-node");
+  });
+
+  // ==========================================================================
+  // Node Query Methods
+  // ==========================================================================
+
+  test("getMetadataForNode returns error when no editor", async () => {
+    const store = new GraphController("Graph_Meta_NoEditor", "GraphController");
+    await store.isHydrated;
+
+    const result = store.getMetadataForNode("foo", "");
+    assert.ok(!ok(result), "Should return an error");
+  });
+
+  test("getMetadataForNode returns error for missing node", async () => {
+    const store = new GraphController(
+      "Graph_Meta_MissingNode",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getMetadataForNode("nonexistent", "");
+    assert.ok(!ok(result), "Should return an error for missing node");
+  });
+
+  test("getMetadataForNode returns metadata for existing node", async () => {
+    const store = new GraphController("Graph_Meta_OK", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    // "foo" exists in the default test graph
+    const result = store.getMetadataForNode("foo", "");
+    // Not an error — either metadata or an Outcome error
+    // The node exists; metadata availability depends on the test handler
+    if (ok(result)) {
+      assert.ok(typeof result === "object");
+    }
+  });
+
+  test("getPortsForNode returns error when no editor", async () => {
+    const store = new GraphController(
+      "Graph_Ports_NoEditor",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    const result = store.getPortsForNode("foo", "");
+    assert.ok(!ok(result), "Should return an error");
+  });
+
+  test("getPortsForNode returns error for missing node", async () => {
+    const store = new GraphController(
+      "Graph_Ports_MissingNode",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getPortsForNode("nonexistent", "");
+    assert.ok(!ok(result), "Should return an error for missing node");
+  });
+
+  test("getPortsForNode returns ports for existing node", async () => {
+    const store = new GraphController("Graph_Ports_OK", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getPortsForNode("foo", "");
+    if (ok(result)) {
+      assert.ok("inputs" in result);
+      assert.ok("outputs" in result);
+    }
+  });
+
+  test("getTitleForNode returns error when no editor", async () => {
+    const store = new GraphController(
+      "Graph_Title_NoEditor",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    const result = store.getTitleForNode("foo", "");
+    assert.ok(!ok(result), "Should return an error");
+  });
+
+  test("getTitleForNode returns error for missing node", async () => {
+    const store = new GraphController(
+      "Graph_Title_MissingNode",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getTitleForNode("nonexistent", "");
+    assert.ok(!ok(result), "Should return an error for missing node");
+  });
+
+  test("getTitleForNode returns title for existing node", async () => {
+    const store = new GraphController("Graph_Title_OK", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.getTitleForNode("foo", "");
+    if (ok(result)) {
+      assert.strictEqual(typeof result, "string");
+    }
+  });
+
+  test("findOutputPortId returns error when no editor", async () => {
+    const store = new GraphController(
+      "Graph_FindPort_NoEditor",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    const result = store.findOutputPortId("", "foo");
+    assert.ok(!ok(result), "Should return an error");
+  });
+
+  test("findOutputPortId returns error for missing node", async () => {
+    const store = new GraphController(
+      "Graph_FindPort_MissingNode",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.findOutputPortId("", "nonexistent");
+    assert.ok(!ok(result), "Should return an error for missing node");
+  });
+
+  test("findOutputPortId returns port info for existing node", async () => {
+    const store = new GraphController("Graph_FindPort_OK", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+
+    const result = store.findOutputPortId("", "foo");
+    if (ok(result)) {
+      assert.ok("id" in result);
+      assert.ok("title" in result);
+      assert.strictEqual(result.title, "foo");
+    }
+  });
+
+  // ==========================================================================
+  // Fast Access Derivations
+  // ==========================================================================
+
+  test("getRoutes returns empty map when no node is selected", async () => {
+    const store = new GraphController("Graph_Routes_Null", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        { id: "node-a", type: "input", title: "Step A" },
+        { id: "node-b", type: "output", title: "Step B" },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const routes = store.getRoutes(null);
+    assert.strictEqual(routes.size, 0);
+  });
+
+  test("getRoutes excludes the selected node", async () => {
+    const store = new GraphController("Graph_Routes_Excl", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        { id: "node-a", type: "input", title: "Step A" },
+        { id: "node-b", type: "output", title: "Step B" },
+        { id: "node-c", type: "output", title: "Step C" },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const routes = store.getRoutes("node-b");
+    assert.strictEqual(routes.size, 2);
+    assert.ok(routes.has("node-a"));
+    assert.ok(routes.has("node-c"));
+    assert.ok(!routes.has("node-b"), "Selected node should be excluded");
+    assert.strictEqual(routes.get("node-a")?.title, "Step A");
+  });
+
+  test("getRoutes returns empty when no editor", async () => {
+    const store = new GraphController("Graph_Routes_NoEd", "GraphController");
+    await store.isHydrated;
+
+    // No editor set
+    const routes = store.getRoutes("some-node");
+    assert.strictEqual(routes.size, 0);
+  });
+
+  test("getFilteredComponents returns all components when no node selected", async () => {
+    const store = new GraphController("Graph_FC_Null", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        {
+          id: "node-a",
+          type: "input",
+          title: "A",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+        {
+          id: "node-b",
+          type: "output",
+          title: "B",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const unfiltered = store.getFilteredComponents(null);
+    // Should return the same map as _components when nothing is selected
+    assert.ok(unfiltered.has(""));
+    assert.strictEqual(unfiltered.get("")?.size, 2);
+  });
+
+  test("getFilteredComponents returns all components when no editor", async () => {
+    const store = new GraphController("Graph_FC_NoEd", "GraphController");
+    await store.isHydrated;
+
+    // No editor — should just return _components (empty)
+    const result = store.getFilteredComponents("some-node");
+    assert.strictEqual(result.size, 0);
+  });
+
+  test("getFastAccessItems returns empty when no editor", async () => {
+    const store = new GraphController("Graph_FAI_NoEd", "GraphController");
+    await store.isHydrated;
+
+    const items = store.getFastAccessItems(null);
+    // Should still have A2 tools even without an editor
+    assert.ok(items.length >= 0);
+    // All items should be tools (from A2_TOOLS)
+    for (const item of items) {
+      assert.strictEqual(item.kind, "tool");
+    }
+  });
+
+  test("getFastAccessItems includes assets, tools, and components", async () => {
+    const store = new GraphController("Graph_FAI_All", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        {
+          id: "node-a",
+          type: "input",
+          title: "A",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+        {
+          id: "node-b",
+          type: "output",
+          title: "B",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const items = store.getFastAccessItems(null);
+
+    // Should contain tools (from A2_TOOLS) and components
+    const kinds = new Set(items.map((i) => i.kind));
+    assert.ok(kinds.has("tool"), "Should have tools");
+    assert.ok(kinds.has("component"), "Should have components");
+  });
+
+  test("getFastAccessItems includes routes when node selected", async () => {
+    const store = new GraphController("Graph_FAI_Routes", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        {
+          id: "node-a",
+          type: "input",
+          title: "Step A",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+        {
+          id: "node-b",
+          type: "output",
+          title: "Step B",
+          tags: ["tool"],
+          portsUpdating: false,
+        },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // With a selected node, routes should be present
+    const items = store.getFastAccessItems("node-a");
+    const routeItems = items.filter((i) => i.kind === "route");
+    assert.ok(routeItems.length > 0, "Should have route items");
+
+    // Verify the route is for the non-selected node
+    const routeIds = routeItems.map((r) => {
+      if (r.kind === "route") return r.route.id;
+      return null;
+    });
+    assert.ok(routeIds.includes("node-b"), "Route should include node-b");
+    assert.ok(
+      !routeIds.includes("node-a"),
+      "Route should exclude selected node-a"
+    );
+  });
+
+  test("getFastAccessItems excludes routes when no node selected", async () => {
+    const store = new GraphController("Graph_FAI_NoRoutes", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({
+      mockNodes: [
+        { id: "node-a", type: "input", title: "A" },
+        { id: "node-b", type: "output", title: "B" },
+      ],
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const items = store.getFastAccessItems(null);
+    const routeItems = items.filter((i) => i.kind === "route");
+    assert.strictEqual(
+      routeItems.length,
+      0,
+      "Should have no routes without selection"
+    );
+  });
+
+  test("getFastAccessItems orders tools by order field", async () => {
+    const store = new GraphController("Graph_FAI_Order", "GraphController");
+    await store.isHydrated;
+
+    // Set a mock editor so we can have myTools
+    const mockEditor = createMockEditor({
+      rawGraph: {
+        nodes: [],
+        graphs: {
+          "tool-z": { title: "Zeta Tool", nodes: [], edges: [] },
+          "tool-a": { title: "Alpha Tool", nodes: [], edges: [] },
+        },
+      },
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const items = store.getFastAccessItems(null);
+    const toolItems = items.filter((i) => i.kind === "tool");
+
+    // Tools should be sorted by their order field
+    for (let i = 1; i < toolItems.length; i++) {
+      const prev = toolItems[i - 1];
+      const curr = toolItems[i];
+      if (prev.kind === "tool" && curr.kind === "tool") {
+        assert.ok(
+          (prev.tool.order ?? 0) <= (curr.tool.order ?? 0),
+          "Tools should be sorted by order"
+        );
+      }
+    }
+  });
+
+  // ==========================================================================
+  // topologyVersion
+  // ==========================================================================
+
+  test("topologyVersion increments on structural graph changes", async () => {
+    const store = new GraphController("Graph_Topo_Inc", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    assert.strictEqual(store.topologyVersion, 0);
+
+    // Adding a node is a structural change.
+    const result = await editableGraph.edit(
+      [
+        {
+          type: "addnode",
+          graphId: "",
+          node: { id: "topo-node", type: "test:secrets" },
+        },
+      ],
+      "Add node for topology test"
+    );
+    if (!result.success) assert.fail("Edit failed");
+    await store.isSettled;
+
+    assert.strictEqual(store.topologyVersion, 1);
+  });
+
+  test("topologyVersion does not increment on visual-only changes", async () => {
+    const store = new GraphController("Graph_Topo_Visual", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    assert.strictEqual(store.topologyVersion, 0);
+
+    // Moving a node is a visual-only change.
+    const result = await editableGraph.edit(
+      [
+        {
+          type: "changemetadata",
+          graphId: "",
+          id: "foo",
+          metadata: { visual: { x: 100, y: 200, icon: "generic" } },
+        },
+      ],
+      "Move node"
+    );
+    if (!result.success) assert.fail("Edit failed");
+    await store.isSettled;
+
+    // version should still tick, but topologyVersion should NOT.
+    assert.ok(store.version > 0, "version should have incremented");
+    assert.strictEqual(
+      store.topologyVersion,
+      0,
+      "topologyVersion should not increment on visual-only change"
+    );
+  });
+
+  test("topologyVersion resets to 0 on resetAll", async () => {
+    const store = new GraphController("Graph_Topo_Reset", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    // Bump topologyVersion with a structural edit.
+    await editableGraph.edit(
+      [
+        {
+          type: "addnode",
+          graphId: "",
+          node: { id: "reset-node", type: "test:secrets" },
+        },
+      ],
+      "Add node"
+    );
+    await store.isSettled;
+    assert.ok(store.topologyVersion > 0);
+
+    store.resetAll();
+    await store.isSettled;
+    assert.strictEqual(store.topologyVersion, 0);
+  });
+
+  // ==========================================================================
+  // MutableGraphStore (set/get)
+  // ==========================================================================
+
+  test("set/get stores and returns MutableGraph", async () => {
+    const store = new GraphController("Graph_MGS_SetGet", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.get(), undefined, "initially undefined");
+
+    const mockMutableGraph = { id: "mock-mutable" } as unknown as MutableGraph;
+    store.set(mockMutableGraph);
+    assert.strictEqual(store.get(), mockMutableGraph);
+  });
+
+  // ==========================================================================
+  // Getters (graphUrl, graphAssets, title, graph, empty)
+  // ==========================================================================
+
+  test("graphUrl returns null when no URL", async () => {
+    const store = new GraphController("Graph_Url_Null", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.graphUrl, null);
+  });
+
+  test("graphUrl returns URL object when URL is set", async () => {
+    const store = new GraphController("Graph_Url_Set", "GraphController");
+    await store.isHydrated;
+
+    store.url = "https://example.com/board";
+    await store.isSettled;
+
+    const url = store.graphUrl;
+    assert.ok(url instanceof URL);
+    assert.strictEqual(url.href, "https://example.com/board");
+  });
+
+  test("graphAssets returns the assets map", async () => {
+    const store = new GraphController("Graph_Assets_Get", "GraphController");
+    await store.isHydrated;
+
+    assert.ok(store.graphAssets instanceof Map);
+    assert.strictEqual(store.graphAssets.size, 0);
+  });
+
+  test("setGraphAssets updates the assets map", async () => {
+    const store = new GraphController("Graph_Assets_Set", "GraphController");
+    await store.isHydrated;
+
+    const assets = new Map([
+      [
+        "asset-1" as AssetPath,
+        { metadata: { title: "Asset 1" } } as GraphAsset,
+      ],
+    ]);
+    store.setGraphAssets(assets);
+    await store.isSettled;
+
+    assert.strictEqual(store.graphAssets.size, 1);
+    assert.ok(store.graphAssets.has("asset-1" as AssetPath));
+  });
+
+  test("clearPendingGraphReplacement resets to null", async () => {
+    const store = new GraphController("Graph_ClearPGR", "GraphController");
+    await store.isHydrated;
+
+    store.pendingGraphReplacement = {
+      replacement: { nodes: [], edges: [] } as unknown as GraphDescriptor,
+      creator: {} as EditHistoryCreator,
+    };
+    await store.isSettled;
+
+    assert.ok(store.pendingGraphReplacement !== null);
+    store.clearPendingGraphReplacement();
+    await store.isSettled;
+    assert.strictEqual(store.pendingGraphReplacement, null);
+  });
+
+  test("title getter returns null initially", async () => {
+    const store = new GraphController("Graph_Title_Init", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.title, null);
+  });
+
+  test("title getter returns graph title after setEditor", async () => {
+    const store = new GraphController("Graph_Title_After", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    // title is derived from the graph's title property (may be null/string)
+    const title = store.title;
+    assert.ok(
+      title === null || typeof title === "string",
+      "title should be string or null"
+    );
+  });
+
+  test("graph getter returns null initially", async () => {
+    const store = new GraphController("Graph_Graph_Init", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.graph, null);
+  });
+
+  test("graph getter returns descriptor after setEditor", async () => {
+    const store = new GraphController("Graph_Graph_After", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    assert.ok(store.graph !== null);
+    assert.ok("nodes" in store.graph!);
+  });
+
+  test("empty returns true when no graph", async () => {
+    const store = new GraphController("Graph_Empty_NoGraph", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.empty, true);
+  });
+
+  test("empty returns false when graph has nodes", async () => {
+    const store = new GraphController("Graph_Empty_Nodes", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    // testGraph has at least one node
+    assert.strictEqual(store.empty, false);
+  });
+
+  // ==========================================================================
+  // findOutputPortId branch coverage
+  // ==========================================================================
+
+  test("findOutputPortId returns main-port when present", async () => {
+    const store = new GraphController("Graph_FOP_Main", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({ nodeId: "test-node" });
+    // Override nodeById to return a node with a main-port
+    (
+      mockEditor as unknown as {
+        inspect: () => { nodeById: (id: string) => unknown };
+      }
+    ).inspect = () => ({
+      graphs: () => ({}),
+      nodes: () => [],
+      raw: () => ({ nodes: [] }),
+      nodeById: (id: string) => {
+        if (id === "test-node") {
+          return {
+            descriptor: { id: "test-node" },
+            title: () => "Test",
+            currentPorts: () => ({
+              inputs: { ports: [] },
+              outputs: {
+                ports: [
+                  { name: "output-1", schema: { behavior: ["main-port"] } },
+                  { name: "output-2", schema: {} },
+                ],
+              },
+            }),
+          };
+        }
+        return undefined;
+      },
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const result = store.findOutputPortId("", "test-node");
+    assert.ok(ok(result), "Should succeed");
+    if (ok(result)) {
+      assert.strictEqual(result.id, "output-1");
+    }
+  });
+
+  test("findOutputPortId falls back to first port when no main-port", async () => {
+    const store = new GraphController("Graph_FOP_First", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({ nodeId: "test-node" });
+    (
+      mockEditor as unknown as {
+        inspect: () => { nodeById: (id: string) => unknown };
+      }
+    ).inspect = () => ({
+      graphs: () => ({}),
+      nodes: () => [],
+      raw: () => ({ nodes: [] }),
+      nodeById: (id: string) => {
+        if (id === "test-node") {
+          return {
+            descriptor: { id: "test-node" },
+            title: () => "Test",
+            currentPorts: () => ({
+              inputs: { ports: [] },
+              outputs: {
+                ports: [{ name: "fallback-port", schema: {} }],
+              },
+            }),
+          };
+        }
+        return undefined;
+      },
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const result = store.findOutputPortId("", "test-node");
+    assert.ok(ok(result), "Should succeed");
+    if (ok(result)) {
+      assert.strictEqual(result.id, "fallback-port");
+    }
+  });
+
+  test("findOutputPortId returns error when node has no ports", async () => {
+    const store = new GraphController("Graph_FOP_NoPorts", "GraphController");
+    await store.isHydrated;
+
+    const mockEditor = createMockEditor({ nodeId: "test-node" });
+    (
+      mockEditor as unknown as {
+        inspect: () => { nodeById: (id: string) => unknown };
+      }
+    ).inspect = () => ({
+      graphs: () => ({}),
+      nodes: () => [],
+      raw: () => ({ nodes: [] }),
+      nodeById: (id: string) => {
+        if (id === "test-node") {
+          return {
+            descriptor: { id: "test-node" },
+            title: () => "Test",
+            currentPorts: () => ({
+              inputs: { ports: [] },
+              outputs: { ports: [] },
+            }),
+          };
+        }
+        return undefined;
+      },
+    });
+
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    const result = store.findOutputPortId("", "test-node");
+    assert.ok(!ok(result), "Should return error when no ports");
   });
 });

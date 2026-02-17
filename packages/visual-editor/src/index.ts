@@ -225,7 +225,7 @@ class Main extends MainBase {
           ? this.#renderStatusUpdateModal()
           : nothing,
         this.sca.controller.global.main.show.has("GlobalSettings")
-          ? this.#renderGlobalSettingsModal(renderValues)
+          ? this.#renderGlobalSettingsModal()
           : nothing,
         this.sca.controller.global.main.show.has("WarmWelcome")
           ? this.#renderWarmWelcomeModal()
@@ -278,14 +278,13 @@ class Main extends MainBase {
       .graphIsEmpty=${graphIsEmpty}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
       .isMine=${this.tab?.graphIsMine ?? false}
-      .projectRun=${renderValues.projectState?.run}
       .readOnly=${true}
       .runtimeFlags=${this.sca.controller.global.flags}
       .settings=${this.settings}
       .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
       "signedin"}
       .status=${renderValues.tabStatus}
-      .themeHash=${renderValues.themeHash}
+      .themeHash=${this.sca.controller.editor.theme.themeHash}
     >
     </bb-app-controller>`;
   }
@@ -294,21 +293,7 @@ class Main extends MainBase {
     return html` <bb-canvas-controller
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
-      .canRun=${this.sca.controller.global.main.canRunMain}
-      .editor=${this.sca.controller.editor.graph.editor}
-      .graph=${this.tab?.graph ?? null}
-      .graphIsMine=${this.tab?.graphIsMine ?? false}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .history=${this.sca.controller.editor.graph.editor?.history() ?? null}
-      .mainGraphId=${this.tab?.mainGraphId}
-      .projectState=${renderValues.projectState}
-      .readOnly=${this.tab?.readOnly ?? true}
-      .selectionState=${this.selectionState}
-      .settings=${this.settings}
-      .signedIn=${this.sca.services.signinAdapter.stateSignal?.status ===
-      "signedin"}
-      .status=${renderValues.tabStatus}
-      .themeHash=${renderValues.themeHash}
       @bbshowvideomodal=${() => {
         this.sca.controller.global.main.show.add("VideoModal");
       }}
@@ -317,6 +302,8 @@ class Main extends MainBase {
       ) => {
         this.lastPointerPosition.x = evt.x;
         this.lastPointerPosition.y = evt.y;
+        this.sca.controller.global.main.pointerLocation.x = evt.x;
+        this.sca.controller.global.main.pointerLocation.y = evt.y;
       }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
         const message: IterateOnPromptMessage = {
@@ -327,7 +314,7 @@ class Main extends MainBase {
           nodeId: iterateOnPromptEvent.nodeId,
           modelId: iterateOnPromptEvent.modelId,
         };
-        this.embedHandler?.sendToEmbedder(message);
+        this.sca.services.embedHandler?.sendToEmbedder(message);
       }}
     ></bb-canvas-controller>`;
   }
@@ -410,10 +397,9 @@ class Main extends MainBase {
     ></bb-status-update-modal>`;
   }
 
-  #renderGlobalSettingsModal(renderValues: RenderValues) {
+  #renderGlobalSettingsModal() {
     return html`<bb-global-settings-modal
       .flags=${this.sca.controller.global.flags.flags()}
-      .project=${renderValues.projectState}
       .uiState=${this.sca.controller.global.main}
       .emailPrefsManager=${this.sca.services.emailPrefsManager}
       @bbmodaldismissed=${() => {
@@ -588,7 +574,7 @@ class Main extends MainBase {
         if (!this.tab) {
           return;
         }
-        this.embedHandler?.sendToEmbedder({
+        this.sca.services.embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
         const homepage: MakeUrlInit = {

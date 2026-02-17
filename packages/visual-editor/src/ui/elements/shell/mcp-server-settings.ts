@@ -9,18 +9,20 @@ import { HTMLTemplateResult, LitElement, css, html, nothing } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { markdown } from "../../directives/markdown.js";
-import { Project } from "../../state/index.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import type { SCA } from "../../../sca/sca.js";
 
 @customElement("bb-mcp-servers-settings")
 export class VEMCPServersSettings extends SignalWatcher(LitElement) {
   @property()
-  accessor project: Project | null = null;
-
-  @property()
   accessor mode: "list" | "add" | "added" = "list";
+
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @state()
   accessor #loading = false;
@@ -222,7 +224,7 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
 
   async #processForm() {
     this.#status = null;
-    if (!this.project || !this.#form) {
+    if (!this.#form) {
       return;
     }
 
@@ -256,7 +258,7 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
     try {
       this.#loading = true;
 
-      const outcome = await this.project.integrations.add(
+      const outcome = await this.sca.actions.integration.add(
         url,
         title,
         authToken
@@ -334,23 +336,26 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
   }
 
   #renderList() {
-    if (!this.project) {
+    const integrationsController = this.sca?.controller.editor.integrations;
+    if (!integrationsController) {
       return html`MCP Server configuration unavailable`;
     }
 
-    const servers = this.project.integrations.known;
-    if (!servers.value) {
-      if (servers.status === "error") {
-        return html`<p>Error loading MCP server list</p>`;
-      }
+    const knownStatus = integrationsController.knownStatus;
+    if (knownStatus === "error") {
+      return html`<p>Error loading MCP server list</p>`;
+    }
+    if (knownStatus === "pending") {
       return html`<p>Loading ...</p>`;
     }
 
-    return html` ${servers.value.size === 0
+    const servers = integrationsController.known;
+
+    return html` ${servers.size === 0
         ? html`<p>There are no MCP servers available</p>`
         : html`<ul>
             ${repeat(
-              servers.value,
+              servers,
               ([id]) => id,
               ([id, server]) => {
                 return html`<li>
@@ -373,7 +378,7 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
                           return;
                         }
                         const removing =
-                          await this.project?.integrations.remove(id);
+                          await this.sca?.actions.integration.remove(id);
                         if (!ok(removing)) {
                           // TODO: Expose this in UI somehow.
                           console.error(
@@ -391,17 +396,14 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
                     id=${id}
                     .checked=${!!server.registered}
                     @change=${(evt: Event) => {
-                      if (
-                        !(evt.target instanceof HTMLInputElement) ||
-                        !this.project
-                      ) {
+                      if (!(evt.target instanceof HTMLInputElement)) {
                         return;
                       }
 
                       if (evt.target.checked) {
-                        this.project.integrations.register(id);
+                        this.sca.actions.integration.register(id);
                       } else {
-                        this.project.integrations.unregister(id);
+                        this.sca.actions.integration.unregister(id);
                       }
                     }}
                   />
@@ -453,10 +455,6 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
   }
 
   render() {
-    if (!this.project) {
-      return nothing;
-    }
-
     return this.mode === "add"
       ? this.#renderAddForm()
       : this.mode === "added"

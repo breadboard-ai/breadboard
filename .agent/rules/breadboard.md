@@ -14,6 +14,14 @@ example:
 - `npm run test` first invokes build (or `build:tsc`) for all dependencies, then
   runs testing.
 
+## Build Verification Workflow
+
+When making code changes, check if the user already has a build running in watch
+mode (look for a running terminal like `npm run build --watch`). If not, prompt
+the user to start one before making changes. Use the running build terminal
+output to verify compilation instead of running separate `tsc --noEmit`
+commands.
+
 ## Packages
 
 These are some significant packages:
@@ -82,13 +90,10 @@ code-to-be-tested contains signals, use the
 `packages/visual-editor/tests/signal-watcher.ts` helper for easy reactivity
 testing.
 
-In `packages/visual-editor`, use `npm run test:pattern` to run tests with direct
-control over node's test runner flags:
+In `packages/visual-editor`, use `npm run test:file` to run subsets of tests or
+individual tests:
 
 ```bash
-# Filter tests by name pattern
-npm run test:pattern -- --test-name-pattern="ChoicePresenter"
+npm run test:file -- './dist/tsc/tests/sca/actions/share/**/*.js'
 
-# Run only tests marked with .only
-npm run test:pattern -- --test-only
 ```

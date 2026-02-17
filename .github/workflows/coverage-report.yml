@@ -30,12 +30,58 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: main
+          # Fetch enough history so we can checkout the base SHA commit.
+          # If the base SHA is too old, the baseline step will fall back
+          # gracefully via continue-on-error.
+          fetch-depth: 100
 
       - name: Use Node.js 24.x
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
           cache: "npm"
+
+      # Look up the PR using the pulls list API filtered by head branch.
+      # This works for ALL PR types including fork PRs and survives squash
+      # merges (unlike /commits/{sha}/pulls, which fails when the original
+      # head SHA isn't in the default branch after squash).
+      #
+      # Why not use github.event.workflow_run.pull_requests[0]?
+      # That field is EMPTY for fork PRs (cross-repo PRs) as a GitHub
+      # security measure. Since the team primarily works from personal
+      # forks, we query the pulls API with the fork owner + branch instead.
+      - name: Get PR info from branch
+        id: pr-info
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FORK_OWNER='${{ github.event.workflow_run.head_repository.owner.login }}'
+          FORK_BRANCH='${{ github.event.workflow_run.head_branch }}'
+          API_URL="repos/${{ github.repository }}/pulls?state=all&head=${FORK_OWNER}:${FORK_BRANCH}&sort=updated&direction=desc&per_page=1"
+          PR_NUMBER=$(gh api "$API_URL" --jq '.[0].number // empty')
+
+          if [ -n "$PR_NUMBER" ]; then
+            echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            BASE_SHA=$(gh api "$API_URL" --jq '.[0].base.sha // empty')
+
+            if [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "sha=$BASE_SHA" >> $GITHUB_OUTPUT
+            else
+              echo "::warning::Invalid base SHA format, using HEAD of main"
+              echo "sha=" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "::warning::No PR found for ${FORK_OWNER}:${FORK_BRANCH}"
+            echo "number=" >> $GITHUB_OUTPUT
+            echo "sha=" >> $GITHUB_OUTPUT
+          fi
+
+      # If we have a base SHA, checkout that commit for the baseline.
+      # This avoids the automerge race where main already contains the PR
+      # changes by the time this workflow runs.
+      - name: Checkout baseline commit
+        if: steps.pr-info.outputs.sha != ''
+        run: git checkout ${{ steps.pr-info.outputs.sha }}
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -47,8 +93,14 @@ jobs:
           npm run coverage
         continue-on-error: true
 
-      # Download artifacts AFTER checkout/build to isolate them from the
-      # trusted codebase. The artifact only contains JSON data files.
+      # Restore main's scripts for the comparison step. Coverage data in
+      # gitignored directories (packages/*/coverage/) survives this checkout.
+      - name: Restore trusted scripts
+        if: steps.pr-info.outputs.sha != ''
+        run: git checkout main -- scripts/
+
+      # Download artifacts AFTER the baseline build to keep them isolated
+      # from the trusted codebase. The artifact only contains JSON data files.
       - name: Download coverage artifact
         id: download
         uses: actions/download-artifact@v7
@@ -65,32 +117,33 @@ jobs:
           echo "::warning::Coverage artifact not found. Skipping coverage report."
           exit 0
 
-      - name: Read PR number
-        if: steps.download.outcome == 'success'
-        id: pr
+      - name: Skip if no PR number
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number == ''
+        run: exit 0
+
+      # upload-artifact flattens directory structure when uploading a single
+      # file vs multiple files, so we locate it dynamically to be safe.
+      - name: Locate PR coverage file
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != ''
+        id: pr-coverage
         run: |
-          if [ -f pr-artifact/pr-number.txt ]; then
-            echo "number=$(cat pr-artifact/pr-number.txt)" >> $GITHUB_OUTPUT
+          PR_COV=$(find pr-artifact -name coverage-summary.json -type f | head -1)
+          if [ -n "$PR_COV" ]; then
+            echo "path=$PR_COV" >> $GITHUB_OUTPUT
           else
-            echo "::warning::PR number file not found"
-            echo "number=" >> $GITHUB_OUTPUT
+            echo "::warning::coverage-summary.json not found in artifact"
+            echo "path=" >> $GITHUB_OUTPUT
           fi
 
-      - name: Skip if no PR number
-        if: steps.download.outcome == 'success' && steps.pr.outputs.number == ''
-        run: |
-          echo "::warning::No PR number found. Skipping coverage report."
-          exit 0
-
       - name: Generate coverage comparison
-        if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && steps.baseline.outcome == 'success'
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && steps.baseline.outcome == 'success' && steps.pr-coverage.outputs.path != ''
         id: coverage
         # compare-coverage.js only parses JSON data, it does not execute artifact contents
-        run: node scripts/compare-coverage.js pr-artifact/packages/visual-editor/coverage/coverage-summary.json packages/visual-editor/coverage/coverage-summary.json
+        run: node scripts/compare-coverage.js ${{ steps.pr-coverage.outputs.path }} packages/visual-editor/coverage/coverage-summary.json
         continue-on-error: true
 
       - name: Generate fallback comment on comparison failure
-        if: steps.download.outcome == 'success' && steps.pr.outputs.number != '' && (steps.baseline.outcome == 'failure' || steps.coverage.outcome == 'failure')
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && (steps.baseline.outcome == 'failure' || steps.coverage.outcome == 'failure')
         run: |
           echo "## 📊 Coverage Report" > coverage-comment.md
           echo "" >> coverage-comment.md
@@ -98,12 +151,12 @@ jobs:
           echo "- Build failure on main branch" >> coverage-comment.md
           echo "- Missing coverage data" >> coverage-comment.md
           echo "" >> coverage-comment.md
-          if [ -f pr-artifact/packages/visual-editor/coverage/coverage-summary.json ]; then
+          if [ -n "${{ steps.pr-coverage.outputs.path }}" ]; then
             echo "**PR Coverage data was uploaded successfully.**" >> coverage-comment.md
           fi
 
       - name: Post coverage comment
-        if: steps.download.outcome == 'success' && steps.pr.outputs.number != ''
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != ''
         uses: actions/github-script@v7
         with:
           script: |
@@ -116,7 +169,7 @@ jobs:
             const marker = '<!-- breadboard-coverage-report -->';
             const commentBody = fs.readFileSync('coverage-comment.md', 'utf8');
             const body = marker + '\n' + commentBody;
-            const prNumber = ${{ steps.pr.outputs.number }};
+            const prNumber = ${{ steps.pr-info.outputs.number }};
 
             // Find existing coverage comment
             const { data: comments } = await github.rest.issues.listComments({

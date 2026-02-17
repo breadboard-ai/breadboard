@@ -53,6 +53,7 @@ import { DATA_TYPE } from "./constants.js";
 import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
+import "../../elements/graph-editing-chat/graph-editing-chat.js";
 
 @customElement("bb-editor-controls")
 export class EditorControls extends SignalWatcher(LitElement) {
@@ -111,7 +112,8 @@ export class EditorControls extends SignalWatcher(LitElement) {
 
       :host([readonly]) {
         #top-shelf,
-        bb-flowgen-editor-input {
+        bb-flowgen-editor-input,
+        bb-graph-editing-chat {
           display: none;
         }
       }
@@ -875,16 +877,22 @@ export class EditorControls extends SignalWatcher(LitElement) {
     </div>`;
 
     const shelf = html`<div id="shelf">
-      <bb-flowgen-editor-input
-        .hasEmptyGraph=${this.graph.raw().nodes.length === 0}
-        @pointerdown=${(evt: PointerEvent) => {
-          // <bb-renderer> listens for pointerdown and retains focus so that
-          // after selection updates the user can do things like delete nodes
-          // with the keyboard. The corresponding effect makes it impossible to
-          // interact with this element so we catch the event here first.
-          evt.stopPropagation();
-        }}
-      ></bb-flowgen-editor-input>
+      ${this.sca.controller.global.flags.enableGraphEditorAgent
+        ? html`<bb-graph-editing-chat
+            @pointerdown=${(evt: PointerEvent) => {
+              evt.stopPropagation();
+            }}
+          ></bb-graph-editing-chat>`
+        : html`<bb-flowgen-editor-input
+            .hasEmptyGraph=${this.graph.raw().nodes.length === 0}
+            @pointerdown=${(evt: PointerEvent) => {
+              // <bb-renderer> listens for pointerdown and retains focus so that
+              // after selection updates the user can do things like delete nodes
+              // with the keyboard. The corresponding effect makes it impossible to
+              // interact with this element so we catch the event here first.
+              evt.stopPropagation();
+            }}
+          ></bb-flowgen-editor-input>`}
     </div>`;
 
     const graphControls = html`<div id="graph-controls">

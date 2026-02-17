@@ -7,60 +7,27 @@
 import type {
   GraphDescriptor,
   GraphLoader,
-  GraphLoaderContext,
   GraphLoaderResult,
   GraphProvider,
-  GraphToRun,
 } from "@breadboard-ai/types";
-import { ModuleIdentifier } from "@breadboard-ai/types";
 
-export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
-const MODULE_PREFIX = "module:";
+export { getGraphUrl, getGraphUrlComponents, urlComponentsFromString };
 
-export {
-  getGraphUrl,
-  getGraphUrlComponents,
-  resolveGraph,
-  urlComponentsFromString,
-};
-
-function getGraphUrl(path: string, context: GraphLoaderContext): URL {
-  const base = baseURLFromContext(context);
-  return new URL(path, base);
+function getGraphUrl(path: string): URL {
+  return new URL(path);
 }
 
 function getGraphUrlComponents(url: URL): {
   mainGraphUrl: string;
   graphId: string;
-  moduleId?: string;
 } {
   const noHash = removeHash(url);
   const mainGraphUrl = noHash.href;
   const graphId = url.hash.slice(1);
-  if (graphId.startsWith(MODULE_PREFIX)) {
-    return {
-      mainGraphUrl,
-      graphId: "",
-      moduleId: graphId.slice(MODULE_PREFIX.length),
-    };
-  } else if (graphId) {
+  if (graphId) {
     return { mainGraphUrl, graphId };
   }
   return { mainGraphUrl, graphId: "" };
-}
-
-function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
-  const { graph, subGraphId, moduleId } = graphToRun;
-  if (moduleId) {
-    const title = graph.modules?.[moduleId]?.metadata?.title || moduleId;
-    const description =
-      graph.modules?.[moduleId]?.metadata?.description || undefined;
-    const url = graph.url?.startsWith(MODULE_PREFIX)
-      ? graph.url
-      : `${MODULE_PREFIX}${moduleId}:${graph.url}`;
-    return { ...graph, main: moduleId, url, title, description };
-  }
-  return subGraphId ? graph.graphs![subGraphId] : graph;
 }
 
 export const removeHash = (url: URL): URL => {
@@ -69,90 +36,43 @@ export const removeHash = (url: URL): URL => {
   return newURL;
 };
 
-export const sameWithoutHash = (a: URL, b: URL): boolean => {
-  return removeHash(a).href === removeHash(b).href;
-};
-
-export const baseURLFromString = (urlString: string | undefined) => {
-  if (urlString) {
-    // Account for generated module URL, created in `resolveGraph`.
-    if (urlString.startsWith(MODULE_PREFIX)) {
-      // remove MODULE_PREFIX and moduleId
-      urlString = urlString.split(":").slice(2).join(":");
-    }
-    return new URL(urlString);
-  }
-  return null;
-};
-
-export const baseURLFromContext = (context: GraphLoaderContext) => {
-  let urlString;
-  if (context.outerGraph?.url) {
-    urlString = context.outerGraph.url;
-  } else if (context.board?.url) {
-    urlString = context.board?.url;
-  }
-  const baseURL = baseURLFromString(urlString);
-  if (baseURL) return baseURL;
-  if (context.base) return context.base;
-  return SENTINEL_BASE_URL;
-};
-
-function urlComponentsFromString(
-  urlString: string,
-  context: GraphLoaderContext = {}
-): {
+function urlComponentsFromString(urlString: string): {
   mainGraphUrl: string;
   graphId: string;
-  moduleId?: string;
 } {
-  if (urlString.startsWith(MODULE_PREFIX)) {
-    const parts = urlString.split(":");
-    const moduleId = parts[1];
-    return {
-      graphId: "",
-      moduleId,
-      mainGraphUrl: parts.slice(2).join(":"),
-    };
-  }
-  return getGraphUrlComponents(getGraphUrl(urlString, context));
+  return getGraphUrlComponents(getGraphUrl(urlString));
 }
 
 export class Loader implements GraphLoader {
-  #graphProviders: GraphProvider[];
+  #graphProvider: GraphProvider;
 
-  constructor(graphProviders: GraphProvider[]) {
-    this.#graphProviders = graphProviders;
+  constructor(graphProvider: GraphProvider) {
+    this.#graphProvider = graphProvider;
   }
 
-  async #loadWithProviders(url: URL): Promise<GraphLoaderResult> {
-    for (const provider of this.#graphProviders) {
-      const capabilities = provider.canProvide(url);
-      if (capabilities === false) {
-        continue;
-      }
-      if (capabilities.load) {
-        const response = await provider.load(url);
-        const graph: GraphDescriptor =
-          typeof response == "string" ? JSON.parse(response) : response;
-        if (graph !== null) {
-          // TODO(aomarks) This is a bit weird. We stick the resourcekey onto
-          // the URL for the purposes of loading, because there isn't another
-          // way to pass it through the loading process currently. But, most of
-          // our code doesn't expect to see a resource key in the URL, so we
-          // need to remove it from the graph JSON.
-          graph.url = url.href.replace(/\?resourcekey=[^/?&#]*/, "");
-          return { success: true, graph };
-        }
-      }
+  async #loadWithProvider(url: URL): Promise<GraphLoaderResult> {
+    const provider = this.#graphProvider;
+    const capabilities = provider.canProvide(url);
+    if (capabilities === false || !capabilities.load) {
+      const error = `Unable to load graph from "${url.href}"`;
+      console.warn(error);
+      return { success: false, error };
+    }
+    const response = await provider.load(url);
+    const graph: GraphDescriptor =
+      typeof response == "string" ? JSON.parse(response) : response;
+    if (graph !== null) {
+      // TODO(aomarks) This is a bit weird. We stick the resourcekey onto
+      // the URL for the purposes of loading, because there isn't another
+      // way to pass it through the loading process currently. But, most of
+      // our code doesn't expect to see a resource key in the URL, so we
+      // need to remove it from the graph JSON.
+      graph.url = url.href.replace(/\?resourcekey=[^/?&#]*/, "");
+      return { success: true, graph };
     }
     const error = `Unable to load graph from "${url.href}"`;
     console.warn(error);
     return { success: false, error };
-  }
-
-  async #loadOrWarn(url: URL): Promise<GraphLoaderResult> {
-    return this.#loadWithProviders(url);
   }
 
   #getSubgraph(
@@ -160,24 +80,6 @@ export class Loader implements GraphLoader {
     hash: string,
     supergraph: GraphDescriptor
   ): GraphLoaderResult {
-    const isModule = hash.startsWith(MODULE_PREFIX);
-    if (isModule) {
-      const modules = supergraph.modules;
-      const moduleId: ModuleIdentifier = hash.slice(MODULE_PREFIX.length);
-      if (!modules) {
-        const error = `No modules to load "${moduleId}" from`;
-        console.warn(error);
-        return { success: false, error };
-      }
-      const module = modules[moduleId];
-      if (!module) {
-        const error = `No module found for module ID: ${moduleId}`;
-        console.warn(error);
-        return { success: false, error };
-      }
-      return { success: true, graph: supergraph, moduleId };
-    }
-
     const subgraphs = supergraph.graphs;
     if (!subgraphs) {
       const error = `No subgraphs to load "#${hash}" from`;
@@ -194,43 +96,18 @@ export class Loader implements GraphLoader {
     return { success: true, graph: supergraph, subGraphId: hash };
   }
 
-  async load(
-    path: string,
-    context: GraphLoaderContext
-  ): Promise<GraphLoaderResult> {
-    const supergraph = context.outerGraph;
-    // This is a special case, when we don't have URLs to resolve against.
-    // We are a hash path, and we are inside of a supergraph that doesn't
-    // have its own URL. We can only query the supergraph directly.
-    // No other URL resolution is possible.
-    const isEphemeralSupergraph =
-      path.startsWith("#") && supergraph && !supergraph.url;
-    if (isEphemeralSupergraph) {
-      return this.#getSubgraph(null, path.substring(1), supergraph);
-    }
-
-    const url = getGraphUrl(path, context);
+  async load(path: string): Promise<GraphLoaderResult> {
+    const url = getGraphUrl(path);
 
     // If we don't have a hash, just load the graph.
     if (!url.hash) {
-      return await this.#loadOrWarn(url);
+      return await this.#loadWithProvider(url);
     }
 
-    // Check to see if we match a special case:
-    // We are inside of a supergraph (a graph that contains us), _and_ we
-    // are trying to load a peer subgraph.
-    // In this case, do not trigger a load, but instead return the subgraph.
-    if (supergraph) {
-      const supergraphURL = supergraph.url
-        ? new URL(supergraph.url)
-        : SENTINEL_BASE_URL;
-      if (sameWithoutHash(url, supergraphURL)) {
-        const hash = url.hash.substring(1);
-        return this.#getSubgraph(url, hash, supergraph);
-      }
-    }
-    // Otherwise, load the graph and then get its subgraph.
-    const loadedSupergraphResult = await this.#loadOrWarn(removeHash(url));
+    // Load the graph and then get its subgraph.
+    const loadedSupergraphResult = await this.#loadWithProvider(
+      removeHash(url)
+    );
     if (!loadedSupergraphResult.success) {
       return loadedSupergraphResult;
     }

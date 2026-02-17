@@ -154,6 +154,10 @@ export const ENABLE_RESUME_AGENT_RUN = getBoolean("ENABLE_RESUME_AGENT_RUN");
 
 export const ENABLE_NOTEBOOK_LM = getBoolean("ENABLE_NOTEBOOK_LM");
 
+export const ENABLE_GRAPH_EDITOR_AGENT = getBoolean(
+  "ENABLE_GRAPH_EDITOR_AGENT"
+);
+
 function getDomainConfig(
   flagName: string
 ): Record<string, DomainConfiguration> {

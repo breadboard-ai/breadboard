@@ -2,7 +2,7 @@
  * @fileoverview Executes a parallel strategy.
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { report } from "../a2/output.js";
 import { ok } from "../a2/utils.js";
 import { getPlan, plannerPrompt } from "./planner-prompt.js";
@@ -19,7 +19,6 @@ Think carefully: for every task in the list, does any task depend on another tas
 until all tasks are indepedent`;
 
   async execute(
-    caps: Capabilities,
     moduleArgs: A2ModuleArgs,
 
     execute: ExecuteStepFunction,
@@ -27,7 +26,6 @@ until all tasks are indepedent`;
     objective: LLMContent
   ): Promise<Outcome<LLMContent[]>> {
     const planning = await plannerPrompt(
-      caps,
       moduleArgs,
       mutableContext,
       objective,

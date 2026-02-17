@@ -39,7 +39,6 @@ export class AddNode implements EditOperation {
     return {
       success: true,
       affectedNodes: [],
-      affectedModules: [],
       affectedGraphs: [],
       topologyChange: true,
     };
@@ -73,11 +72,9 @@ export class AddNode implements EditOperation {
     }
 
     handle.result.graph().nodes.push(node);
-    mutable.nodes.add(node, graphId);
     return {
       success: true,
       affectedNodes: [{ id: node.id, graphId }],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };

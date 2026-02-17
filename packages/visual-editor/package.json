@@ -19,7 +19,6 @@
     "build:vite": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
-    "test:pattern": "wireit",
     "test:file": "wireit",
     "eval:agent": "wireit",
     "eval:a2ui": "wireit",
@@ -127,19 +126,6 @@
     "test:file": {
       "#": "Template for running a specific set of test files, usage: `npm run test:file --watch -- './dist/tsc/tests/sca/actions/share/**/*.js'`",
       "command": "node --import ./tests/controller-setup.js --test-reporter=spec --test --enable-source-maps",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "tests/controller-setup.js"
-      ],
-      "output": [
-        "test-storage"
-      ]
-    },
-    "test:pattern": {
-      "#": "Run tests matching --test-name-pattern arg, usage: `npm run test:pattern -- --test-name-pattern=\"pattern\"`",
-      "command": "node --import ./tests/controller-setup.js --test-reporter=spec --test --enable-source-maps './dist/tsc/tests/**/*.js' './dist/tsc/tests/*.js'",
       "dependencies": [
         "build:tsc"
       ],

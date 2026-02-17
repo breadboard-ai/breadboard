@@ -5,7 +5,6 @@
  */
 
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   RuntimeFlags,
@@ -15,7 +14,7 @@ import { ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { Loop } from "./loop.js";
+import { buildAgentRun } from "./loop-setup.js";
 import { createAgentConfigurator } from "./agent-function-configurator.js";
 import { readFlags } from "../a2/settings.js";
 import { conformGeminiBody, streamGenerateContent } from "../a2/gemini.js";
@@ -54,22 +53,22 @@ function computeAgentSchema(
   const uiPromptSchema: Schema["properties"] =
     flags?.consistentUI && enableA2UI
       ? {
-        "b-ui-prompt": {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "UI Layout instructions",
-          description: "Instructions for UI layout",
-        },
-      }
+          "b-ui-prompt": {
+            type: "object",
+            behavior: ["llm-content", "config", "hint-advanced"],
+            title: "UI Layout instructions",
+            description: "Instructions for UI layout",
+          },
+        }
       : {};
   const uiConsistent: Schema["properties"] = flags?.consistentUI
     ? {
-      "b-ui-consistent": {
-        type: "boolean",
-        title: "Use A2UI",
-        behavior: ["config", "hint-advanced", "reactive"],
-      },
-    }
+        "b-ui-consistent": {
+          type: "boolean",
+          title: "Use A2UI",
+          behavior: ["config", "hint-advanced", "reactive"],
+        },
+      }
     : {};
   return {
     config$prompt: {
@@ -83,7 +82,10 @@ function computeAgentSchema(
   } satisfies Schema["properties"];
 }
 
-export async function toAgentOutputs(results?: LLMContent, href?: string): Promise<AgentOutputs> {
+export async function toAgentOutputs(
+  results?: LLMContent,
+  href?: string
+): Promise<AgentOutputs> {
   const context: LLMContent[] = [];
   if (results) {
     context.push(results);
@@ -103,20 +105,23 @@ async function invokeAgent(
     "b-ui-prompt": uiPrompt,
     ...rest
   }: AgentInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const configureFn = createAgentConfigurator(caps, moduleArgs, generators);
-  const loop = new Loop(caps, moduleArgs, configureFn);
-  const result = await loop.run({
+  const configureFn = createAgentConfigurator(moduleArgs, generators);
+  const setup = await buildAgentRun({
     objective,
     params,
+    moduleArgs,
+    configureFn,
     uiType: enableA2UI ? "a2ui" : "chat",
     uiPrompt,
   });
+  if (!ok(setup)) return setup;
+  const { loop, runArgs } = setup;
+  const result = await loop.run(runArgs);
   if (!ok(result)) return result;
   console.log("LOOP", result);
   return toAgentOutputs(result.outcomes, result.href);
@@ -124,27 +129,25 @@ async function invokeAgent(
 
 async function invoke(
   inputs: AgentInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
   const flags = await moduleArgs.context.flags?.flags();
   const opalAdkEnabled = flags?.opalAdk || false;
 
   if (opalAdkEnabled) {
-    return invokeAgentAdk(inputs, caps, moduleArgs);
+    return invokeAgentAdk(inputs, moduleArgs);
   } else {
-    return invokeAgent(inputs, caps, moduleArgs);
+    return invokeAgent(inputs, moduleArgs);
   }
 }
 
 async function describe(
   { inputs: { config$prompt, ...rest } }: { inputs: AgentInputs },
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);
   const uiSchemas = computeAgentSchema(flags, rest);
-  const template = new Template(caps, config$prompt);
+  const template = new Template(config$prompt, moduleArgs.context.currentGraph);
   return {
     inputSchema: {
       type: "object",

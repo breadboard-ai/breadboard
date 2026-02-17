@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Flowgen event route. Delegates core generation to SCA, then prepares
+ * a fresh runner so the step list populates from the new graph.
+ */
+
 import { EventRoute } from "../types.js";
 
 export const GenerateRoute: EventRoute<"flowgen.generate"> = {
@@ -29,6 +34,9 @@ export const GenerateRoute: EventRoute<"flowgen.generate"> = {
     } finally {
       sca.controller.global.main.blockingAction = false;
     }
+
+    // Prepare a fresh runner so the step list populates from the new graph.
+    sca.actions.run.prepare();
 
     return true;
   },

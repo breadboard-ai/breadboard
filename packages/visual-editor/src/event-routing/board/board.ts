@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * FIXME: Legacy board event routes. These still depend on the legacy runtime
+ * (e.g. runtime.project, tab) which is not yet available through SCA services.
+ * Migrate to SCA board-actions.ts (using stateEventTrigger) once the runtime
+ * dependency is resolved, then delete this file.
+ */
+
 import { EventRoute } from "../types.js";
 
 import { ConsentType, ConsentUIType, InputValues } from "@breadboard-ai/types";
@@ -11,8 +18,9 @@ import { ConsentType, ConsentUIType, InputValues } from "@breadboard-ai/types";
 import { StateEvent } from "../../ui/events/events.js";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
-import { Utils } from "../../sca/utils.js";
+import { provideInput } from "../../sca/actions/run/helpers/input-queue.js";
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
@@ -29,7 +37,7 @@ export const RunRoute: EventRoute<"board.run"> = {
       return false;
     }
 
-    if (!sca.controller.run.main.hasRunner) {
+    if (!sca.controller.run.main.runner) {
       console.warn(`Run not prepared - runner not available`);
       return false;
     }
@@ -71,69 +79,11 @@ export const RunRoute: EventRoute<"board.run"> = {
   },
 };
 
-export const LoadRoute: EventRoute<"board.load"> = {
-  event: "board.load",
-
-  async do({ originalEvent, sca }) {
-    if (Utils.Helpers.isHydrating(() => sca.controller.global.main.mode)) {
-      await sca.controller.global.main.isHydrated;
-    }
-
-    sca.controller.router.go({
-      page: "graph",
-      mode: sca.controller.global.main.mode,
-      flow: originalEvent.detail.url,
-      resourceKey: undefined,
-      dev: parseUrl(window.location.href).dev,
-      guestPrefixed: true,
-    });
-    sca.controller.home.recent.add({ url: originalEvent.detail.url });
-    return false;
-  },
-};
-
-export const UndoRoute: EventRoute<"board.undo"> = {
-  event: "board.undo",
-
-  async do({ tab, sca }) {
-    if (tab?.readOnly || !tab?.graphIsMine) {
-      return false;
-    }
-
-    sca.actions.graph.undo();
-    return false;
-  },
-};
-
-export const RedoRoute: EventRoute<"board.redo"> = {
-  event: "board.redo",
-
-  async do({ sca, tab }) {
-    if (tab?.readOnly || !tab?.graphIsMine) {
-      return false;
-    }
-
-    sca.actions.graph.redo();
-    return false;
-  },
-};
-
-export const TogglePinRoute: EventRoute<"board.togglepin"> = {
-  event: "board.togglepin",
-
-  async do({ sca, originalEvent }) {
-    sca.controller.home.recent.setPin(
-      originalEvent.detail.url,
-      originalEvent.detail.status === "pin"
-    );
-    return false;
-  },
-};
-
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, runtime, sca, settings }) {
+  async do({ tab, sca }) {
     if (!tab) {
       return false;
     }
@@ -151,35 +101,19 @@ export const StopRoute: EventRoute<"board.stop"> = {
     // Stop the run via controller
     sca.actions.run.stop();
 
-    // Reset project run state
-    runtime.project?.resetRun();
-
     // Prepare the next run
-    const url = tab.graph.url;
-    if (url && settings) {
-      sca.actions.run.prepare({
-        graph: tab.graph,
-        url,
-        settings,
-        fetchWithCreds: sca.services.fetchWithCreds,
-        flags: sca.controller.global.flags,
-        getProjectRunState: () => runtime.project?.run,
-        connectToProject: (runner, abortSignal) => {
-          runtime.project?.connectHarnessRunner(runner, abortSignal);
-        },
-      });
-    }
+    sca.actions.run.prepare();
 
     return true;
   },
 };
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const RestartRoute: EventRoute<"board.restart"> = {
   event: "board.restart",
 
   async do({
     tab,
-    runtime,
     settings,
     googleDriveClient,
     sca,
@@ -189,7 +123,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
   }) {
     await StopRoute.do({
       tab,
-      runtime,
       originalEvent: new StateEvent({
         eventType: "board.stop",
       }),
@@ -202,7 +135,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     actionTracker?.runApp(tab?.graph.url, "console");
     await RunRoute.do({
       tab,
-      runtime,
       originalEvent: new StateEvent({
         eventType: "board.run",
       }),
@@ -219,49 +151,22 @@ export const RestartRoute: EventRoute<"board.restart"> = {
 export const InputRoute: EventRoute<"board.input"> = {
   event: "board.input",
 
-  async do({ tab, settings, originalEvent, runtime }) {
+  async do({ tab, settings, originalEvent, sca }) {
     if (!settings || !tab) {
       return false;
     }
 
     const data = originalEvent.detail.data as InputValues;
-
-    // Direct path: resolve the pending Promise in the console entry.
-    // This replaces the old flow where we called runner.resumeWithInputs()
-    // and the data flowed back through the PlanRunner event loop.
-    const projectRun = runtime.project?.run;
-    if (projectRun && "provideInput" in projectRun) {
-      (
-        projectRun as unknown as { provideInput(values: InputValues): void }
-      ).provideInput(data);
-    }
-
+    provideInput(data, sca.controller.run);
     return false;
   },
 };
 
-export const RenameRoute: EventRoute<"board.rename"> = {
-  event: "board.rename",
-
-  async do({ originalEvent, sca }) {
-    try {
-      sca.controller.global.main.blockingAction = true;
-      // Page title is now handled by the page title trigger in SCA
-      await sca.actions.graph.updateBoardTitleAndDescription(
-        originalEvent.detail.title,
-        originalEvent.detail.description
-      );
-    } finally {
-      sca.controller.global.main.blockingAction = false;
-    }
-    return false;
-  },
-};
-
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const CreateRoute: EventRoute<"board.create"> = {
   event: "board.create",
 
-  async do({ sca, originalEvent, askUserToSignInIfNeeded, embedHandler }) {
+  async do({ sca, originalEvent, askUserToSignInIfNeeded }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
       // The user didn't sign in, so hide any snackbars.
       sca.controller.global.snackbars.unsnackbar();
@@ -269,104 +174,112 @@ export const CreateRoute: EventRoute<"board.create"> = {
     }
 
     sca.controller.global.main.blockingAction = true;
-    const result = await sca.actions.board.saveAs(
-      originalEvent.detail.graph,
-      originalEvent.detail.messages
-    );
-    sca.controller.global.main.blockingAction = false;
+    try {
+      const result = await sca.actions.board.saveAs(
+        originalEvent.detail.graph,
+        originalEvent.detail.messages
+      );
 
-    if (!result?.url) {
-      return false;
+      if (!result?.url) {
+        return false;
+      }
+
+      const { lite, dev } = parseUrl(window.location.href);
+
+      sca.controller.router.go({
+        page: "graph",
+        // Ensure we always go back to the canvas when a board is created.
+        mode: "canvas",
+        // Ensure that we correctly preserve the "lite" mode.
+        lite,
+        flow: result.url.href,
+        // Resource key not required because we know the current user
+        // created it.
+        resourceKey: undefined,
+        dev,
+        guestPrefixed: true,
+      });
+      sca.services.embedHandler?.sendToEmbedder({
+        type: "board_id_created",
+        id: result.url.href,
+      });
+    } finally {
+      sca.controller.global.main.blockingAction = false;
     }
-
-    const { lite, dev } = parseUrl(window.location.href);
-
-    sca.controller.router.go({
-      page: "graph",
-      // Ensure we always go back to the canvas when a board is created.
-      mode: "canvas",
-      // Ensure that we correctly preserve the "lite" mode.
-      lite,
-      flow: result.url.href,
-      // Resource key not required because we know the current user
-      // created it.
-      resourceKey: undefined,
-      dev,
-      guestPrefixed: true,
-    });
-    embedHandler?.sendToEmbedder({
-      type: "board_id_created",
-      id: result.url.href,
-    });
 
     return false;
   },
 };
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
   async do(deps) {
-    const { originalEvent, sca, embedHandler } = deps;
+    const { originalEvent, sca } = deps;
 
     sca.controller.global.main.blockingAction = true;
+    try {
+      // Remix action handles snackbar, graph resolution, and saveAs
+      const result = await sca.actions.board.remix(
+        originalEvent.detail.url,
+        originalEvent.detail.messages
+      );
 
-    // Remix action handles snackbar, graph resolution, and saveAs
-    const result = await sca.actions.board.remix(
-      originalEvent.detail.url,
-      originalEvent.detail.messages
-    );
-    sca.controller.global.main.blockingAction = false;
+      if (!result?.success) {
+        return false;
+      }
 
-    if (!result?.success) {
-      return false;
+      const { lite, dev } = parseUrl(window.location.href);
+
+      sca.controller.router.go({
+        page: "graph",
+        // Ensure we always go back to the canvas when a board is created.
+        mode: "canvas",
+        // Ensure that we correctly preserve the "lite" mode.
+        lite,
+        flow: result.url.href,
+        // Resource key not required because we know the current user
+        // created it.
+        resourceKey: undefined,
+        dev,
+        guestPrefixed: true,
+      });
+      sca.services.embedHandler?.sendToEmbedder({
+        type: "board_id_created",
+        id: result.url.href,
+      });
+    } finally {
+      sca.controller.global.main.blockingAction = false;
     }
-
-    const { lite, dev } = parseUrl(window.location.href);
-
-    sca.controller.router.go({
-      page: "graph",
-      // Ensure we always go back to the canvas when a board is created.
-      mode: "canvas",
-      // Ensure that we correctly preserve the "lite" mode.
-      lite,
-      flow: result.url.href,
-      // Resource key not required because we know the current user
-      // created it.
-      resourceKey: undefined,
-      dev,
-      guestPrefixed: true,
-    });
-    embedHandler?.sendToEmbedder({
-      type: "board_id_created",
-      id: result.url.href,
-    });
 
     return false;
   },
 };
 
+// FIXME: Migrate to SCA action (blocked on legacy runtime dependency)
 export const DeleteRoute: EventRoute<"board.delete"> = {
   event: "board.delete",
 
   async do(deps) {
-    const { tab, runtime, originalEvent, sca } = deps;
+    const { originalEvent, sca } = deps;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
     }
 
     sca.controller.global.main.blockingAction = true;
-    await sca.actions.board.deleteBoard(
-      originalEvent.detail.url,
-      originalEvent.detail.messages
-    );
-    sca.controller.home.recent.remove(originalEvent.detail.url);
-    await sca.controller.home.recent.isSettled;
-    sca.controller.global.main.blockingAction = false;
-
-    if (tab) {
-      runtime.select.deselectAll(tab.id, runtime.select.generateId());
+    try {
+      await sca.actions.board.deleteBoard(
+        originalEvent.detail.url,
+        originalEvent.detail.messages
+      );
+      sca.controller.home.recent.remove(originalEvent.detail.url);
+      await sca.controller.home.recent.isSettled;
+    } finally {
+      sca.controller.global.main.blockingAction = false;
     }
+
+    sca.controller.editor.selection.deselectAll();
 
     if (sca.controller.router.parsedUrl.page === "home") return false;
 
@@ -376,25 +289,6 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
       lite,
       dev,
       guestPrefixed: true,
-    });
-
-    return false;
-  },
-};
-
-export const ReplaceRoute: EventRoute<"board.replace"> = {
-  event: "board.replace",
-
-  async do(deps) {
-    const { originalEvent, googleDriveClient, sca } = deps;
-    const { replacement, theme, creator } = originalEvent.detail;
-
-    // Theme handling is centralized in the SCA action
-    await sca.actions.graph.replaceWithTheme({
-      replacement,
-      theme,
-      creator,
-      googleDriveClient,
     });
 
     return false;

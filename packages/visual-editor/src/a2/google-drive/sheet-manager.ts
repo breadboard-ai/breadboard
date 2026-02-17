@@ -7,6 +7,7 @@
 import { NodeHandlerContext, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils/outcome.js";
 import {
+  appendSpreadsheetValues,
   getSpreadsheetMetadata,
   getSpreadsheetValues,
   setSpreadsheetValues,
@@ -20,7 +21,7 @@ import {
 } from "../agent/types.js";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
-export { SheetManager, parseSheetName };
+export { SheetManager, parseSheetName, isSystemSheet, SYSTEM_SHEET_PREFIX };
 export type { SheetManagerConfig };
 
 type SheetManagerConfig = {
@@ -41,6 +42,16 @@ function parseSheetName(range: string): string | null {
   const match = range.match(/^(?:'([^']+)'|([^!]+))!/);
   if (!match) return null;
   return match[1] || match[2];
+}
+
+const SYSTEM_SHEET_PREFIX = "__";
+
+/**
+ * Returns true if the sheet name uses the system prefix convention (e.g. "__chat_log__").
+ * System sheets are managed mechanically and hidden from the agent's normal memory functions.
+ */
+function isSystemSheet(name: string): boolean {
+  return name.startsWith(SYSTEM_SHEET_PREFIX);
 }
 
 type GraphCache = {
@@ -204,6 +215,48 @@ class SheetManager implements MemoryManager {
     return { success: true };
   }
 
+  async appendToSheet(
+    context: NodeHandlerContext,
+    args: { range: string; values: string[][] }
+  ): Promise<Outcome<{ success: boolean; error?: string }>> {
+    const { range, values } = args;
+
+    const sheetId = await this.ensureSheetId(context);
+    if (!ok(sheetId)) return sheetId;
+
+    const appending = await appendSpreadsheetValues(
+      this.makeModuleArgs(context),
+      sheetId,
+      range,
+      { values }
+    );
+    if (!ok(appending)) {
+      return appending;
+    }
+
+    const sheetName = parseSheetName(range);
+    if (sheetName) this.clearSheetCache(context, sheetName);
+    return { success: true };
+  }
+
+  async ensureSystemSheet(
+    context: NodeHandlerContext,
+    name: string,
+    columns: string[]
+  ): Promise<Outcome<{ success: boolean; error?: string }>> {
+    const sheetId = await this.ensureSheetId(context);
+    if (!ok(sheetId)) return sheetId;
+
+    const moduleArgs = this.makeModuleArgs(context);
+    const metadata = await getSpreadsheetMetadata(moduleArgs, sheetId);
+    if (!ok(metadata)) return metadata;
+
+    const exists = metadata.sheets.some((s) => s.properties.title === name);
+    if (exists) return { success: true };
+
+    return this.createSheet(context, { name, columns });
+  }
+
   async getSheetMetadata(
     context: NodeHandlerContext
   ): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>> {
@@ -226,7 +279,7 @@ class SheetManager implements MemoryManager {
     const errors: string[] = [];
     const sheetDetailsPromises = metadata.sheets.map(async (sheet) => {
       const { title: name, sheetId: id } = sheet.properties;
-      if (id === 0) return null;
+      if (id === 0 || isSystemSheet(name)) return null;
       const file_path = `/mnt/memory/${encodeURIComponent(name)}`;
 
       const valuesRes = await getSpreadsheetValues(

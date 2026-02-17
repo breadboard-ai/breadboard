@@ -6,7 +6,6 @@
 
 export { formatError } from "./format-error.js";
 export { getBoardUrlFromCurrentWindow } from "./board-id.js";
-export { getModuleId } from "./module-id.js";
 export * as Workspace from "./workspace.js";
 export { SigninAdapter } from "./signin-adapter.js";
 export * as Color from "./color.js";

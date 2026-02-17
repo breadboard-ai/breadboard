@@ -32,7 +32,6 @@ export class RemoveNode implements EditOperation {
     return {
       success: true,
       affectedNodes: [{ id, graphId }],
-      affectedModules: [],
       affectedGraphs: [],
       topologyChange: true,
     };
@@ -66,18 +65,13 @@ export class RemoveNode implements EditOperation {
     // Remove any edges that are connected to the removed node.
     graph.edges = graph.edges.filter((edge) => {
       const shouldRemove = edge.from === id || edge.to === id;
-      if (shouldRemove) {
-        mutable.edges.remove(edge, graphId);
-      }
       return !shouldRemove;
     });
     // Remove the node from the graph.
     graph.nodes = graph.nodes.filter((node) => node.id != id);
-    mutable.nodes.remove(id, graphId);
     return {
       success: true,
       affectedNodes: [{ id, graphId }],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };

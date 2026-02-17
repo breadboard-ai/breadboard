@@ -39,7 +39,7 @@ import {
   applyTokens,
 } from "../../a2ui-theme/a2ui-theme.js";
 import { boardServerContext } from "../../contexts/board-server.js";
-import { projectRunContext } from "../../contexts/project-run.js";
+
 import {
   ResizeEvent,
   ShareRequestedEvent,
@@ -47,7 +47,6 @@ import {
   StateEvent,
   UnsnackbarEvent,
 } from "../../events/events.js";
-import { ProjectRun } from "../../state/types.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 import { appScreenToA2UIProcessor } from "../shared/utils/app-screen-to-a2ui.js";
 import { styles as appStyles } from "./index.styles.js";
@@ -89,6 +88,7 @@ import { CONSENT_RENDER_INFO } from "../../utils/consent-content-items.js";
 import { isDocSlidesOrSheetsOutput } from "../../../a2/a2/utils.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { SCA } from "../../../sca/sca.js";
+import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
 
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -136,15 +136,19 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   connectedCallback(): void {
     super.connectedCallback();
     applyTokens(this, this.a2uitheme.tokens);
+    this.#appPresenter.connect(this.sca);
   }
 
-  @state()
-  @consume({ context: projectRunContext, subscribe: true })
-  accessor run: ProjectRun | null = null;
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#appPresenter.disconnect();
+  }
 
   @state()
   @consume({ context: scaContext })
   accessor sca!: SCA;
+
+  readonly #appPresenter = new AppScreenPresenter();
 
   @state()
   @consume({ context: actionTrackerContext })
@@ -260,7 +264,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   #renderControls() {
     return html`<bb-app-header
       .isEmpty=${this.isEmpty}
-      .progress=${this.run?.progress}
+      .progress=${this.sca.controller.run.main.progress}
       .replayActive=${this.headerConfig.replay}
       .menuActive=${this.headerConfig.menu}
       .fullScreenActive=${this.headerConfig.fullscreen}
@@ -275,13 +279,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderOutputs() {
-    if (!this.run) return nothing;
-
     let activityContents:
       | HTMLTemplateResult
       | Array<HTMLTemplateResult | symbol>
       | symbol = nothing;
-    const lastScreen = this.run.app.last;
+    const lastScreen = this.#appPresenter.last;
     const last = lastScreen?.last;
     if (last) {
       const htmlOutput = getHTMLOutput(last);
@@ -344,9 +346,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           receiver = last.a2ui.receiver;
         } else {
           // Likely a raw LLM Content that needs to be converted to A2UI.
-          processor = appScreenToA2UIProcessor(last, {
-            isInput: lastScreen?.type === "input",
-          });
+          processor = appScreenToA2UIProcessor(last);
           receiver = null;
         }
 
@@ -360,13 +360,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     return html`<div id="activity">${[activityContents]}</div>`;
   }
   #renderProgress(active: boolean) {
-    if (!this.run) return nothing;
-
-    const titles = Array.from(this.run.app.current.values()).map((screen) => {
-      if (!screen.progress) return screen.title;
-      if (screen.progressCompletion < 0) return screen.progress;
-      return `${screen.progress}: ${screen.progressCompletion}%`;
-    });
+    const titles = Array.from(this.#appPresenter.current.values()).map(
+      (screen) => {
+        if (!screen.progress) return screen.title;
+        if (screen.progressCompletion < 0) return screen.progress;
+        return `${screen.progress}: ${screen.progressCompletion}%`;
+      }
+    );
 
     const titleList = new Intl.ListFormat("en-US", {
       style: "long",
@@ -385,8 +385,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderError() {
-    if (!this.run) return nothing;
-    const error = this.run.error;
+    const error = this.sca.controller.run.main.error;
     if (!error) {
       console.warn("Asked to render error, but no error was found");
       return nothing;
@@ -464,7 +463,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderSaveResultsButtons() {
-    if (!this.run?.finalOutput) {
+    if (!this.sca.controller.editor.graph.finalOutputValues) {
       return nothing;
     }
 
@@ -472,7 +471,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const allowSharingOutputs = !parsedUrl.lite;
 
-    const isBtnDisabled = isDocSlidesOrSheetsOutput(this.run.finalOutput);
+    const isBtnDisabled = isDocSlidesOrSheetsOutput(
+      this.sca.controller.editor.graph.finalOutputValues
+    );
 
     return html`
       <div id="save-results-button-container">
@@ -540,8 +541,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     lockButton();
 
-    if (!this.run) {
-      console.error(`No project run`);
+    if (!this.sca) {
+      console.error(`No SCA`);
       unlockButton();
       return;
     }
@@ -553,7 +554,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    if (!this.run.finalOutput) {
+    if (!this.sca.controller.editor.graph.finalOutputValues) {
       unlockButton();
       return;
     }
@@ -573,7 +574,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const outputs = await inlineAllContent(
       boardServer.dataPartTransformer(),
-      this.run.finalOutput,
+      this.sca.controller.editor.graph.finalOutputValues!,
       currentGraphUrl
     );
     if (!ok(outputs)) {
@@ -645,13 +646,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     };
 
     lockButton();
-
-    if (!this.run) {
-      console.error(`No project run`);
-      unlockButton();
-      unsnackbar();
-      return;
-    }
 
     // Check if we're published. We can only share results for published graphs.
     if (!this.googleDriveClient) {
@@ -745,7 +739,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       .getFileMetadata(shareableGraphFileId, { fields: ["resourceKey"] })
       .then(({ resourceKey }) => resourceKey);
 
-    if (!this.run.finalOutput) {
+    if (!this.sca.controller.editor.graph.finalOutputValues) {
       unlockButton();
       unsnackbar();
       return;
@@ -767,7 +761,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
     const finalOutputValues = await inlineAllContent(
       boardServer.dataPartTransformer(),
-      this.run.finalOutput,
+      this.sca.controller.editor.graph.finalOutputValues!,
       shareableGraphUrl
     );
     if (!ok(finalOutputValues)) {
@@ -866,7 +860,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderInput() {
-    const input = this.run?.input;
+    const input = this.sca.controller.run.main.input;
     if (!input) {
       this.style.setProperty("--input-clearance", `0px`);
 
@@ -888,7 +882,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   protected willUpdate(_changedProperties: PropertyValues): void {
-    if (this.run?.status === "running" && this.resultsUrl) {
+    if (this.sca.controller.run.main.status === "running" && this.resultsUrl) {
       this.resultsUrl = null;
     }
   }
@@ -898,10 +892,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       "app-template": true,
       [this.options.mode]: true,
     };
-
-    if (!this.run) {
-      return nothing;
-    }
 
     if (this.options.additionalOptions) {
       for (const [name, value] of Object.entries(
@@ -941,7 +931,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     if (!this.options.title) {
-      if (!this.run || this.run.status === "stopped") {
+      if (this.sca.controller.run.main.status === "stopped") {
         return html`<section
           class=${classMap(classes)}
           style=${styleMap(styles)}
@@ -1083,7 +1073,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     `;
 
     const shouldRenderProgress =
-      this.run.app.state === "progress" &&
+      this.#appPresenter.state === "progress" &&
       this.sca.controller.global.consent.pendingInApp.length === 0;
     let content: Array<HTMLTemplateResult | symbol> = [];
     if (this.isEmpty) {
@@ -1092,7 +1082,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       if (this.sca.controller.global.consent.pendingInApp.length > 0) {
         content = [this.#renderConsent()];
       } else {
-        switch (this.run.app.state) {
+        switch (this.#appPresenter.state) {
           case "splash":
             content = [splashScreen];
             break;
@@ -1111,7 +1101,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           case "output":
             if (this.graph && this.boardServer) {
               void maybeTriggerNlToOpalSatisfactionSurvey(
-                this.run,
+                this.#appPresenter,
+                this.sca.controller.editor.graph,
                 this.graph,
                 this.boardServer
               );
@@ -1130,7 +1121,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           default: {
             console.warn(
               "Unknown state",
-              this.run.app.state,
+              this.#appPresenter.state,
               "rendering splash screen"
             );
             content = [splashScreen];

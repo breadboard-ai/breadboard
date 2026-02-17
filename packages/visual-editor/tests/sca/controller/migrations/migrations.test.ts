@@ -15,6 +15,7 @@ import {
   FlagController,
   StatusUpdatesController,
 } from "../../../../src/sca/controller/subcontrollers/global/global.js";
+import { IntegrationsController } from "../../../../src/sca/controller/subcontrollers/editor/integrations/integrations.js";
 
 suite("Migrations", () => {
   test("recentBoardsMigration", async () => {
@@ -158,5 +159,106 @@ suite("Migrations", () => {
 
     // Should still be marked as migrated even with no hash
     assert.strictEqual(controller2.isMigrated, true);
+  });
+
+  test("mcpServersMigration", async () => {
+    const { openDB, deleteDB } = await import("idb");
+
+    // Helper: seed the legacy IDB database.
+    async function seedLegacyDb(
+      entries: Array<{ url: string; title?: string; authToken?: string }>
+    ) {
+      const db = await openDB("mcp-servers", 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("servers")) {
+            db.createObjectStore("servers");
+          }
+        },
+      });
+      const tx = db.transaction("servers", "readwrite");
+      for (const entry of entries) {
+        await tx.store.put(
+          { title: entry.title, authToken: entry.authToken },
+          entry.url
+        );
+      }
+      await tx.done;
+      db.close();
+    }
+
+    // TEST 1: Migrate entries from legacy DB.
+    await seedLegacyDb([
+      { url: "https://mcp-1.example.com", title: "MCP 1" },
+      {
+        url: "https://mcp-2.example.com",
+        title: "MCP 2",
+        authToken: "tok-2",
+      },
+    ]);
+
+    const ctrl = new IntegrationsController(
+      "IC_Migration_1",
+      "IntegrationsController"
+    );
+    await ctrl.isHydrated;
+
+    await Migrations.mcpServersMigration(ctrl);
+    await ctrl.isSettled;
+
+    assert.strictEqual(ctrl.isMigrated, true);
+    assert.strictEqual(ctrl.storedServers.size, 2);
+    assert.strictEqual(
+      ctrl.storedServers.get("https://mcp-1.example.com")?.title,
+      "MCP 1"
+    );
+    assert.strictEqual(
+      ctrl.storedServers.get("https://mcp-2.example.com")?.authToken,
+      "tok-2"
+    );
+
+    // The legacy database should have been deleted.
+    // Verify by trying to open it — the upgrade callback should fire for
+    // version 1, which means it was freshly created (i.e. deleted before).
+    let upgradeRan = false;
+    const probe = await openDB("mcp-servers", 1, {
+      upgrade() {
+        upgradeRan = true;
+      },
+    });
+    probe.close();
+    assert.ok(upgradeRan, "Legacy DB should have been deleted");
+    await deleteDB("mcp-servers");
+
+    // TEST 2: No-op when already migrated.
+    await seedLegacyDb([{ url: "https://mcp-3.example.com", title: "MCP 3" }]);
+
+    await Migrations.mcpServersMigration(ctrl);
+    await ctrl.isSettled;
+
+    assert.strictEqual(
+      ctrl.storedServers.size,
+      2,
+      "Should not have added new server"
+    );
+    assert.ok(!ctrl.storedServers.has("https://mcp-3.example.com"));
+
+    // Cleanup seeded data left behind.
+    await deleteDB("mcp-servers");
+
+    // TEST 3: Graceful handling when DB doesn't exist / is empty.
+    const ctrl2 = new IntegrationsController(
+      "IC_Migration_2",
+      "IntegrationsController"
+    );
+    await ctrl2.isHydrated;
+
+    // Delete the legacy DB to ensure it doesn't exist.
+    await deleteDB("mcp-servers");
+
+    await Migrations.mcpServersMigration(ctrl2);
+    await ctrl2.isSettled;
+
+    assert.strictEqual(ctrl2.isMigrated, true);
+    assert.strictEqual(ctrl2.storedServers.size, 0);
   });
 });

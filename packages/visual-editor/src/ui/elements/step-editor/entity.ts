@@ -9,7 +9,6 @@ import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { intersects } from "./utils/rect-intersection.js";
-import { Project } from "../../state/index.js";
 
 @customElement("bb-graph-entity")
 export class Entity extends LitElement {
@@ -18,18 +17,6 @@ export class Entity extends LitElement {
 
   @property()
   accessor bounds = new DOMRect();
-
-  @property()
-  set projectState(projectState: Project | null) {
-    this.#projectState = projectState;
-    for (const entity of this.entities.values()) {
-      entity.projectState = projectState;
-    }
-  }
-  get projectState() {
-    return this.#projectState;
-  }
-  #projectState: Project | null = null;
 
   @property()
   accessor worldBounds: DOMRect | null = null;

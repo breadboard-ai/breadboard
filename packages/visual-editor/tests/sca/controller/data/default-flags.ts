@@ -23,4 +23,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableGoogleDriveTools: false,
   enableNotebookLm: false,
   enableResumeAgentRun: false,
+  enableGraphEditorAgent: false,
 };

@@ -177,16 +177,6 @@ export class ExpandingTextarea extends LitElement {
         cursor: pointer;
       }
 
-      :host([ispopulated]) #submit {
-        opacity: 0.7;
-
-        &:not([disabled]) {
-          &:hover {
-            opacity: 1;
-          }
-        }
-      }
-
       ::slotted(.g-icon) {
         font-size: 22px;
       }

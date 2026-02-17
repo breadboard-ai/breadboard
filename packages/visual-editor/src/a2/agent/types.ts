@@ -20,11 +20,16 @@ import type { callMusicGen } from "../music-generator/main.js";
 import type {
   FunctionDefinition,
   StatusUpdateCallback,
+  StatusUpdateCallbackOptions,
 } from "./function-definition.js";
 import type { SimplifiedToolManager } from "../a2/tool-manager.js";
 import type { SpreadsheetValueRange } from "../google-drive/api.js";
 import type { ErrorMetadata } from "../a2/utils.js";
 import type { ServerToClientMessage } from "../../a2ui/0.8/types/types.js";
+import type { AgentFileSystem } from "./file-system.js";
+import type { PidginTranslator } from "./pidgin-translator.js";
+import type { AgentUI } from "./ui.js";
+import type { Params } from "../a2/common.js";
 
 /**
  * Interface for reporting step execution progress.
@@ -159,9 +164,18 @@ export type MemoryManager = {
     context: NodeHandlerContext,
     args: { name: string }
   ): Promise<Outcome<AgentOutcome>>;
+  appendToSheet(
+    context: NodeHandlerContext,
+    args: { range: string; values: string[][] }
+  ): Promise<Outcome<AgentOutcome>>;
+  ensureSystemSheet(
+    context: NodeHandlerContext,
+    name: string,
+    columns: string[]
+  ): Promise<Outcome<AgentOutcome>>;
 };
 
-export type UIType = "chat" | "a2ui";
+export type UIType = "chat" | "a2ui" | "simulated";
 
 export const VALID_INPUT_TYPES = ["any", "text", "file-upload"] as const;
 
@@ -209,6 +223,156 @@ export type MappedDefinitions = {
 export type FunctionGroup = MappedDefinitions & {
   instruction?: string;
 };
+
+/**
+ * Dependencies that the configurator receives to build function groups.
+ * These are created by the caller — not by the Loop.
+ */
+export type LoopDeps = {
+  fileSystem: AgentFileSystem;
+  translator: PidginTranslator;
+  ui: AgentUI;
+};
+
+/**
+ * Configuration flags the configurator uses to decide which function
+ * groups to include and how to wire them.
+ */
+export type FunctionGroupConfiguratorFlags = {
+  uiType: UIType;
+  useMemory: boolean;
+  useNotebookLM: boolean;
+  objective: LLMContent;
+  uiPrompt?: LLMContent;
+  params: Params;
+  onSuccess: (href: string, pidginString: string) => Promise<Outcome<void>>;
+  onFailure: (message: string) => void;
+};
+
+/**
+ * A function that builds the set of function groups for an agent run.
+ * The caller creates deps and flags, invokes this function, and passes
+ * the resulting groups to the Loop.
+ */
+export type FunctionGroupConfigurator = (
+  deps: LoopDeps,
+  flags: FunctionGroupConfiguratorFlags
+) => Promise<Outcome<FunctionGroup[]>>;
+
+/**
+ * Optional lifecycle hooks the Loop invokes at key points.
+ * Each agent type opts in to whichever hooks it needs.
+ *
+ * - A full-featured content generation agent provides all hooks
+ *   (progress UI, run state tracking, A2UI surfaces).
+ * - A lightweight graph-editing agent may provide none.
+ * - A headless eval agent may provide only run-state hooks.
+ */
+export type LoopHooks = {
+  /**
+   * Called once before the loop begins.
+   * Use for setup: initializing progress UI, starting run state tracking.
+   */
+  onStart?(objective: LLMContent): void;
+
+  /**
+   * Called once after the loop ends (success or failure).
+   * Use for cleanup: closing progress UI, finalizing run state.
+   */
+  onFinish?(): void;
+
+  /**
+   * Called each time Gemini returns a content chunk.
+   * Use for run state tracking (content persistence).
+   */
+  onContent?(content: LLMContent): void;
+
+  /**
+   * Called when the model produces a thought.
+   * Use for progress UI (showing agent reasoning).
+   */
+  onThought?(text: string): void;
+
+  /**
+   * Called when the model produces a function call.
+   * Use for progress UI (showing function call status).
+   * Returns a callId and optional reporter for nested progress.
+   */
+  onFunctionCall?(
+    part: FunctionCallCapabilityPart,
+    icon?: string,
+    title?: string
+  ): { callId: string; reporter: ProgressReporter | null };
+
+  /**
+   * Called when a function call produces a status update.
+   * Use for progress UI (updating function call status).
+   */
+  onFunctionCallUpdate?(
+    callId: string,
+    status: string | null,
+    opts?: StatusUpdateCallbackOptions
+  ): void;
+
+  /**
+   * Called when a function call produces a result.
+   * Use for progress UI (showing function call results).
+   */
+  onFunctionResult?(callId: string, content: LLMContent): void;
+
+  /**
+   * Called when a complete turn finishes (request + function results).
+   * Use for run state tracking (incrementing turn index).
+   */
+  onTurnComplete?(): void;
+
+  /**
+   * Called when the request body is sent to Gemini.
+   * Use for run state tracking (capturing the first request).
+   */
+  onSendRequest?(model: string, body: GeminiBody): void;
+};
+
+/**
+ * Combines multiple LoopHooks into one, fanning out each call to all
+ * providers. For hooks that return values (`onFunctionCall`), the first
+ * provider that defines the hook wins.
+ */
+export function mergeHooks(...hookSets: LoopHooks[]): LoopHooks {
+  return {
+    onStart(objective) {
+      hookSets.forEach((h) => h.onStart?.(objective));
+    },
+    onFinish() {
+      hookSets.forEach((h) => h.onFinish?.());
+    },
+    onContent(content) {
+      hookSets.forEach((h) => h.onContent?.(content));
+    },
+    onThought(text) {
+      hookSets.forEach((h) => h.onThought?.(text));
+    },
+    onFunctionCall(part, icon?, title?) {
+      for (const h of hookSets) {
+        if (h.onFunctionCall) return h.onFunctionCall(part, icon, title);
+      }
+      // Fallback: generate an ID but no reporter
+      return { callId: crypto.randomUUID(), reporter: null };
+    },
+    onFunctionCallUpdate(callId, status, opts?) {
+      hookSets.forEach((h) => h.onFunctionCallUpdate?.(callId, status, opts));
+    },
+    onFunctionResult(callId, content) {
+      hookSets.forEach((h) => h.onFunctionResult?.(callId, content));
+    },
+    onTurnComplete() {
+      hookSets.forEach((h) => h.onTurnComplete?.());
+    },
+    onSendRequest(model, body) {
+      hookSets.forEach((h) => h.onSendRequest?.(model, body));
+    },
+  };
+}
 
 /**
  * Status of an agent loop run.

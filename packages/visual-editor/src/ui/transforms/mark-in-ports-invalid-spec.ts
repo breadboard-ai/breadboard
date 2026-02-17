@@ -20,6 +20,8 @@ export { MarkInPortsInvalidSpec };
 type InvalidItems = {
   nodes: Set<NodeIdentifier>;
   edges: Map<NodeIdentifier, NodeIdentifier>;
+  /** Routing edges: source node → set of removed route target node IDs. */
+  routeEdges: Map<NodeIdentifier, Set<NodeIdentifier>>;
 };
 
 /**
@@ -35,6 +37,19 @@ class MarkInPortsInvalidSpec implements EditTransform {
     for (const edit of this.spec) {
       if (edit.type === "removeedge") {
         const { graphId, edge } = edit;
+        // Routing edges have out === to (the out port is the target node ID).
+        // They don't use the p-z- prefix convention so must be tracked
+        // separately.
+        if (edge.out === edge.to) {
+          const items = upsert(graphId);
+          let targets = items.routeEdges.get(edge.from);
+          if (!targets) {
+            targets = new Set();
+            items.routeEdges.set(edge.from, targets);
+          }
+          targets.add(edge.to);
+          continue;
+        }
         if (!edge.in?.startsWith("p-z-")) continue;
         upsert(graphId).edges.set(edge.from, edge.to);
       } else if (edit.type === "removenode") {
@@ -57,9 +72,13 @@ class MarkInPortsInvalidSpec implements EditTransform {
           if (
             type === "tool" &&
             path === ROUTE_TOOL_PATH &&
-            instance === items.edges.get(nodeId)
+            instance &&
+            items.routeEdges.get(nodeId)?.has(instance)
           ) {
-            return { ...part, invalid: true };
+            // Unset the route target — the user explicitly deleted the edge,
+            // so the "Go to..." chip should revert to an untargeted state
+            // rather than disappear or stay dangling.
+            return { type, path, title: "Target" };
           }
           return null;
         },
@@ -75,7 +94,11 @@ class MarkInPortsInvalidSpec implements EditTransform {
     function upsert(graphId: GraphIdentifier) {
       let items = removedItems.get(graphId);
       if (!items) {
-        items = { nodes: new Set(), edges: new Map() };
+        items = {
+          nodes: new Set(),
+          edges: new Map(),
+          routeEdges: new Map(),
+        };
         removedItems.set(graphId, items);
       }
       return items;

@@ -11,3 +11,6 @@ export * as Graph from "./graph/graph.js";
 export * as Step from "./step/step-controller.js";
 export * as Share from "./share-controller.js";
 export * as Theme from "./theme-controller.js";
+export * as FastAccess from "./fast-access/fast-access.js";
+export * as Integrations from "./integrations/integrations.js";
+export * as GraphEditingAgent from "./graph-editing-agent-controller.js";

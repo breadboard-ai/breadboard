@@ -6,9 +6,17 @@
 
 import { signal } from "signal-utils";
 import { reactive } from "../../sca/reactive.js";
-import type { ConsoleEntry, GraphDescriptor, LLMContent, TextCapabilityPart } from "@breadboard-ai/types";
+import type {
+  ConsoleEntry,
+  GraphDescriptor,
+  LLMContent,
+  TextCapabilityPart,
+} from "@breadboard-ai/types";
 import type { SCA } from "../../sca/sca.js";
-import type { FlowGenGenerationStatus, StepListStepState } from "../state/types.js";
+import type {
+  FlowGenGenerationStatus,
+  StepListStepState,
+} from "../../sca/types.js";
 
 export { StepListPresenter };
 
@@ -156,7 +164,10 @@ class StepListPresenter {
   /**
    * Gets the label for an input step from the graph.
    */
-  #labelFromInput(id: string, graph: GraphDescriptor | null): string | undefined {
+  #labelFromInput(
+    id: string,
+    graph: GraphDescriptor | null
+  ): string | undefined {
     if (!graph) return undefined;
     const node = graph.nodes.find((n) => n.id === id);
     if (!node) return undefined;
@@ -175,7 +186,10 @@ class StepListPresenter {
   /**
    * Extracts prompt text from a node's intent or configuration.
    */
-  #promptFromIntent(id: string, graph: GraphDescriptor | null): string | undefined {
+  #promptFromIntent(
+    id: string,
+    graph: GraphDescriptor | null
+  ): string | undefined {
     if (!graph) return undefined;
     const node = graph.nodes.find((n) => n.id === id);
     if (!node) return undefined;

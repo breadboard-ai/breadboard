@@ -31,12 +31,10 @@ describe("generate_images", () => {
     it("uses flash image model when model='flash'", async () => {
       let capturedModel = "";
       const generators = createMockGenerators({
-        callImage: mock.fn(
-          async (_caps: unknown, _moduleArgs: unknown, model: string) => {
-            capturedModel = model;
-            return fixtures.imageSuccess;
-          }
-        ) as unknown as Generators["callImage"],
+        callImage: mock.fn(async (_moduleArgs: unknown, model: string) => {
+          capturedModel = model;
+          return fixtures.imageSuccess;
+        }) as unknown as Generators["callImage"],
       });
 
       const args = createTestArgs({ generators });
@@ -57,12 +55,10 @@ describe("generate_images", () => {
     it("uses pro image model when model='pro'", async () => {
       let capturedModel = "";
       const generators = createMockGenerators({
-        callImage: mock.fn(
-          async (_caps: unknown, _moduleArgs: unknown, model: string) => {
-            capturedModel = model;
-            return fixtures.imageSuccess;
-          }
-        ) as unknown as Generators["callImage"],
+        callImage: mock.fn(async (_moduleArgs: unknown, model: string) => {
+          capturedModel = model;
+          return fixtures.imageSuccess;
+        }) as unknown as Generators["callImage"],
       });
 
       const args = createTestArgs({ generators });

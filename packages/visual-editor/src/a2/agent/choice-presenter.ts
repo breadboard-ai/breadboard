@@ -54,16 +54,17 @@ class ChoicePresenter {
   /**
    * Presents choices to the user and returns the selected choice IDs.
    *
-   * For "single" mode: renders choice buttons - clicking one returns that ID.
-   * For "multiple" mode: renders checkboxes with a submit button.
+   * Both single and multiple selection modes use the MultipleChoice component.
+   * Single mode sets `maxAllowedSelections: 1`.
    *
-   * Both message and choice labels support pidgin format with file references.
+   * Choice labels support rich content: each choice's LLMContent is converted
+   * to a component tree and referenced via the option's `child` property.
    */
   async presentChoices(
     message: string,
     choices: ChatChoice[],
     selectionMode: ChatChoiceSelectionMode,
-    layout: ChatChoiceLayout = "list",
+    _layout: ChatChoiceLayout = "list",
     noneOfTheAboveLabel?: string
   ): Promise<Outcome<ChatChoicesResponse>> {
     const surfaceId = "@choices";
@@ -81,85 +82,20 @@ class ChoicePresenter {
       translatedChoices.push({ id: choice.id, content: labelContent });
     }
 
-    if (selectionMode === "single") {
-      return this.#presentSingleChoice(
-        messageContent,
-        translatedChoices,
-        surfaceId,
-        layout,
-        noneOfTheAboveLabel
-      );
-    } else {
-      return this.#presentMultipleChoice(
-        messageContent,
-        translatedChoices,
-        surfaceId,
-        layout,
-        noneOfTheAboveLabel
-      );
-    }
+    return this.#presentChoicesAsMultipleChoice(
+      messageContent,
+      translatedChoices,
+      surfaceId,
+      selectionMode,
+      noneOfTheAboveLabel
+    );
   }
 
-  /**
-   * Builds a container component for choices based on layout.
-   * - "list": Column (vertical stack)
-   * - "row": Row (horizontal inline)
-   * - "grid": Row with flex-wrap (adapts to space)
-   *
-   * @param stretchToFill - If true, stretch items to fill available space (for complex content)
-   */
-  #buildChoicesContainer(
-    id: string,
-    childIds: string[],
-    layout: ChatChoiceLayout,
-    stretchToFill: boolean = false
-  ): v0_8.Types.ComponentInstance {
-    switch (layout) {
-      case "row":
-        return {
-          id,
-          component: {
-            Row: {
-              children: { explicitList: childIds },
-              distribution: "start",
-              alignment: stretchToFill ? "stretch" : "center",
-            },
-          },
-        };
-      case "grid":
-        // Row with wrap behavior - using custom styles for flex-wrap
-        return {
-          id,
-          component: {
-            Row: {
-              children: { explicitList: childIds },
-              distribution: "start",
-              alignment: stretchToFill ? "stretch" : "start",
-            },
-          },
-          // Note: flex-wrap would need custom CSS or A2UI extension
-          // For now, treating grid same as row but could be enhanced
-        };
-      case "list":
-      default:
-        return {
-          id,
-          component: {
-            Column: {
-              children: { explicitList: childIds },
-              distribution: "start",
-              alignment: "stretch",
-            },
-          },
-        };
-    }
-  }
-
-  async #presentSingleChoice(
+  async #presentChoicesAsMultipleChoice(
     messageContent: LLMContent,
     choices: { id: string; content: LLMContent }[],
     surfaceId: string,
-    layout: ChatChoiceLayout,
+    selectionMode: ChatChoiceSelectionMode,
     noneOfTheAboveLabel?: string
   ): Promise<Outcome<ChatChoicesResponse>> {
     const allParts: v0_8.Types.ComponentInstance[] = [];
@@ -187,10 +123,14 @@ class ChoicePresenter {
       topLevelIds.push(messageComponents.ids[0]);
     }
 
-    // Build buttons for each choice
-    // Track if any choice has complex content (multi-part) to determine layout behavior
-    const buttonIds: string[] = [];
-    let hasComplexContent = false;
+    // Build the options list for the MultipleChoice component.
+    // Each option's LLMContent is converted to a component tree
+    // and referenced via the `child` property.
+    const multipleChoiceOptions: {
+      label?: { literalString: string };
+      value: string;
+      child?: string;
+    }[] = [];
 
     for (let i = 0; i < choices.length; i++) {
       const choice = choices[i];
@@ -199,14 +139,9 @@ class ChoicePresenter {
       });
       allParts.push(...choiceComponents.parts);
 
-      // Create container for the choice content
-      // Use Column when there are multiple parts (e.g., image + text) for stacked layout
-      // Use Row for single-part content
+      // Build a container for the choice content
       const choiceContentId = `choice-content-${i}`;
       const useStacked = choiceComponents.ids.length > 1;
-      if (useStacked) {
-        hasComplexContent = true;
-      }
 
       allParts.push({
         id: choiceContentId,
@@ -214,7 +149,7 @@ class ChoicePresenter {
           ? {
               Column: {
                 children: { explicitList: choiceComponents.ids },
-                alignment: "center",
+                alignment: "stretch",
                 distribution: "start",
               },
             }
@@ -225,65 +160,22 @@ class ChoicePresenter {
             },
       });
 
-      // Create button wrapping the choice content
-      // For row/grid layout with complex content, give buttons equal weight
-      const buttonId = `choice-btn-${i}`;
-      const buttonComponent: v0_8.Types.ComponentInstance = {
-        id: buttonId,
-        component: {
-          Button: {
-            child: choiceContentId,
-            action: {
-              name: "select",
-              context: [
-                {
-                  key: "choiceId",
-                  value: { literalString: choice.id },
-                },
-              ],
-            },
-          },
-        },
-      };
-      buttonIds.push(buttonId);
-      allParts.push(buttonComponent);
-    }
+      // Extract text for the label as a fallback
+      const textPart = choice.content.parts.find(isTextCapabilityPart);
+      const labelText = textPart?.text.trim() ?? `Choice ${choice.id}`;
 
-    // Apply weights for equal sizing only when content is complex
-    if (hasComplexContent && (layout === "row" || layout === "grid")) {
-      for (const part of allParts) {
-        if (buttonIds.includes(part.id)) {
-          part.weight = 1;
-        }
-      }
-    }
-
-    // Build the choices container based on layout
-    // Use stretch alignment only for complex content (cards with images)
-    const choicesContainerId = "choices-container";
-    const choicesContainer = this.#buildChoicesContainer(
-      choicesContainerId,
-      buttonIds,
-      layout,
-      hasComplexContent
-    );
-    allParts.push(choicesContainer);
-
-    // Build the "none of the above" section if provided
-    const noneOfTheAboveIds: string[] = [];
-    if (noneOfTheAboveLabel) {
-      // Add a separator
-      const separatorId = "none-separator";
-      allParts.push({
-        id: separatorId,
-        component: {
-          Divider: {},
-        },
+      multipleChoiceOptions.push({
+        label: { literalString: labelText },
+        value: choice.id,
+        child: choiceContentId,
       });
-      noneOfTheAboveIds.push(separatorId);
+    }
 
-      // Create text for the "none" button
-      const noneTextId = "none-text";
+    // Include "none of the above" as a non-primary button if provided.
+    if (noneOfTheAboveLabel) {
+      const noneTextId = "none-of-the-above-text";
+      const noneBtnId = "none-of-the-above-btn";
+
       allParts.push({
         id: noneTextId,
         component: {
@@ -294,137 +186,41 @@ class ChoicePresenter {
         },
       });
 
-      // Create secondary-styled button for "none of the above"
-      const noneButtonId = "none-btn";
       allParts.push({
-        id: noneButtonId,
+        id: noneBtnId,
         component: {
           Button: {
             child: noneTextId,
-            variant: "secondary",
+            primary: false,
             action: {
-              name: "select",
+              name: "submit",
               context: [
                 {
-                  key: "choiceId",
-                  value: { literalString: NONE_OF_THE_ABOVE_ID },
+                  key: "selections",
+                  value: {
+                    literalString: JSON.stringify([NONE_OF_THE_ABOVE_ID]),
+                  },
                 },
               ],
             },
           },
         },
       });
-      noneOfTheAboveIds.push(noneButtonId);
     }
 
-    // Build the root column layout (message on top, choices below, optional "none" section)
-    const rootComponent: v0_8.Types.ComponentInstance = {
-      id: "root",
-      weight: 1,
+    // Build the native MultipleChoice component.
+    const multipleChoiceId = "multiple-choice";
+    allParts.push({
+      id: multipleChoiceId,
       component: {
-        Column: {
-          children: {
-            explicitList: [
-              ...topLevelIds,
-              choicesContainerId,
-              ...noneOfTheAboveIds,
-            ],
-          },
-          distribution: "center",
-          alignment: "center",
+        MultipleChoice: {
+          options: multipleChoiceOptions,
+          selections: { path: "/selections" },
+          maxAllowedSelections: selectionMode === "single" ? 1 : choices.length,
         },
       },
-    };
-    allParts.push(rootComponent);
-
-    const messages: v0_8.Types.ServerToClientMessage[] = [
-      {
-        surfaceUpdate: {
-          surfaceId,
-          components: allParts,
-        },
-      },
-      {
-        beginRendering: {
-          surfaceId,
-          root: "root",
-        },
-      },
-    ];
-
-    // Render the UI and await user input
-    const rendering = this.#renderer.renderUserInterface(
-      messages,
-      "Presenting choices",
-      "list"
-    );
-    if (!ok(rendering)) return rendering;
-
-    const userAction = await this.#renderer.awaitUserInput();
-    if (!ok(userAction)) return userAction;
-
-    // Extract the selected choice ID from the action context
-    const choiceId = userAction.userAction?.context?.choiceId;
-    if (typeof choiceId !== "string") {
-      return err("No choice was selected");
-    }
-
-    return { selected: [choiceId] };
-  }
-
-  async #presentMultipleChoice(
-    messageContent: LLMContent,
-    choices: { id: string; content: LLMContent }[],
-    surfaceId: string,
-    layout: ChatChoiceLayout,
-    noneOfTheAboveLabel?: string
-  ): Promise<Outcome<ChatChoicesResponse>> {
-    const allParts: v0_8.Types.ComponentInstance[] = [];
-    const topLevelIds: string[] = [];
-
-    // Convert message to components
-    const messageComponents = llmContentToA2UIComponents(messageContent, {
-      idPrefix: "message",
     });
-    allParts.push(...messageComponents.parts);
-
-    // Wrap message components in a container if there are multiple
-    if (messageComponents.ids.length > 1) {
-      const messageContainerId = "message-container";
-      allParts.push({
-        id: messageContainerId,
-        component: {
-          Column: {
-            children: { explicitList: messageComponents.ids },
-          },
-        },
-      });
-      topLevelIds.push(messageContainerId);
-    } else if (messageComponents.ids.length === 1) {
-      topLevelIds.push(messageComponents.ids[0]);
-    }
-
-    // Build checkbox components for each choice
-    // Note: CheckBox uses a string label, so we extract text from the first text part
-    const checkboxIds: string[] = [];
-    for (let i = 0; i < choices.length; i++) {
-      const choice = choices[i];
-      // Extract text from LLMContent for the label
-      const textPart = choice.content.parts.find(isTextCapabilityPart);
-      const labelText = textPart?.text.trim() ?? `Choice ${choice.id}`;
-
-      const checkboxId = `choice-checkbox-${i}`;
-      allParts.push({
-        id: checkboxId,
-        component: {
-          CheckBox: {
-            label: { literalString: labelText },
-            value: { path: `/selections/${choice.id}` },
-          },
-        },
-      });
-      checkboxIds.push(checkboxId);
-    }
+    topLevelIds.push(multipleChoiceId);
 
     // Build submit button
     const submitButtonText: v0_8.Types.ComponentInstance = {
@@ -443,91 +239,65 @@ class ChoicePresenter {
       component: {
         Button: {
           child: "submit-text",
+          primary: true,
           action: {
             name: "submit",
-            context: choices.map((choice) => ({
-              key: choice.id,
-              value: { path: `/selections/${choice.id}` },
-            })),
+            context: [
+              {
+                key: "selections",
+                value: { path: "/selections" },
+              },
+            ],
           },
         },
       },
     };
     allParts.push(submitButton);
 
-    // Build the choices container based on layout
-    const choicesContainerId = "choices-container";
-    const choicesContainer = this.#buildChoicesContainer(
-      choicesContainerId,
-      checkboxIds,
-      layout
-    );
-    allParts.push(choicesContainer);
-
-    // Build the "none of the above" section if provided
-    const noneOfTheAboveIds: string[] = [];
+    // Build a row for the action buttons (optional none-of-the-above + submit)
+    const buttonRowChildren: string[] = [];
     if (noneOfTheAboveLabel) {
-      // Add a separator
-      const separatorId = "none-separator";
-      allParts.push({
-        id: separatorId,
-        component: {
-          Divider: {},
-        },
-      });
-      noneOfTheAboveIds.push(separatorId);
-
-      // Add checkbox for "none of the above"
-      const noneCheckboxId = "none-checkbox";
-      allParts.push({
-        id: noneCheckboxId,
-        component: {
-          CheckBox: {
-            label: { literalString: noneOfTheAboveLabel },
-            value: { path: `/selections/${NONE_OF_THE_ABOVE_ID}` },
-          },
-        },
-      });
-      noneOfTheAboveIds.push(noneCheckboxId);
+      buttonRowChildren.push("none-of-the-above-btn");
     }
+    buttonRowChildren.push("submit-btn");
 
-    // Build the root column layout (message, choices, submit button)
+    allParts.push({
+      id: "button-row",
+      weight: 1,
+      component: {
+        Row: {
+          children: { explicitList: buttonRowChildren },
+          distribution: "end",
+        },
+      },
+    });
+
+    // Build the root column layout (message, multiple choice, button row)
     const rootComponent: v0_8.Types.ComponentInstance = {
       id: "root",
       weight: 1,
       component: {
         Column: {
           children: {
-            explicitList: [
-              ...topLevelIds,
-              choicesContainerId,
-              ...noneOfTheAboveIds,
-              "submit-btn",
-            ],
+            explicitList: [...topLevelIds, "button-row"],
           },
           distribution: "center",
-          alignment: "center",
+          alignment: "stretch",
         },
       },
     };
     allParts.push(rootComponent);
 
-    // Initialize selection state in data model (all unchecked)
-    const dataContents = choices.map((choice) => ({
-      key: choice.id,
-      valueBoolean: false,
-    }));
-    // Add none-of-the-above to data model if provided
-    if (noneOfTheAboveLabel) {
-      dataContents.push({
-        key: NONE_OF_THE_ABOVE_ID,
-        valueBoolean: false,
-      });
-    }
+    // Initialize selection state in data model (empty array)
     const dataInit: v0_8.Types.DataModelUpdate = {
       surfaceId,
-      path: "/selections",
-      contents: dataContents,
+      path: "/",
+      contents: [
+        {
+          key: "selections",
+          valueString: "[]",
+        },
+      ],
     };
 
     const messages: v0_8.Types.ServerToClientMessage[] = [
@@ -563,14 +333,13 @@ class ChoicePresenter {
       return err("No selections received");
     }
 
-    // Build list of all choice IDs (including none-of-the-above if present)
-    const allChoiceIds = choices.map((choice) => choice.id);
-    if (noneOfTheAboveLabel) {
-      allChoiceIds.push(NONE_OF_THE_ABOVE_ID);
+    // The selections come back as an array of choice IDs
+    const selections = context.selections;
+    if (Array.isArray(selections)) {
+      return { selected: selections as string[] };
     }
 
-    const selected = allChoiceIds.filter((id) => context[id] === true);
-
-    return { selected };
+    // Fallback: if selections is not an array, return empty
+    return { selected: [] };
   }
 }

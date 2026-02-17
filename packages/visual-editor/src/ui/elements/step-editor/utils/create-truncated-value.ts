@@ -159,7 +159,7 @@ function createTruncatedValue(port: InspectablePort | null) {
   }
 
   const template = new Template(valStr);
-  template.substitute((part) => (part.type === "tool" ? "" : part.title));
+  template.substitute((part) => part.title);
 
   return truncateString(template.renderable);
 }

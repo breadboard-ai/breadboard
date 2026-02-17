@@ -60,10 +60,15 @@ class UpdateNode implements EditTransform {
         // Mode change: "routing" -> "broadcast"
         console.log("MODE CHANGE: Routing -> Broadcast");
         outWireTransform = new ChangeEdgesToBroadcastMode(id, graphId);
-      } else if (newRoutes.length > 0 && existingRoutes.length === 0) {
-        // Mode change: "broadcast" -> "routing"
-        console.log("MODE CHANGE: Broadcast -> Routing");
-        outWireTransform = new ChangeEdgesToRoutingMode(id, graphId);
+      } else if (newRoutes.length > 0) {
+        // Ensure all route targets have outgoing edges.
+        // Handles broadcast->routing transition, adding new routes while
+        // already in routing mode, and loaded graphs with missing edges.
+        outWireTransform = new ChangeEdgesToRoutingMode(
+          id,
+          graphId,
+          configuration
+        );
       }
 
       const existingConfiguration =

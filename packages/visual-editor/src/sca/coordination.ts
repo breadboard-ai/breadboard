@@ -88,9 +88,26 @@ export interface EventTrigger {
 }
 
 /**
+ * A keyboard shortcut trigger that fires on key combinations.
+ *
+ * Key strings follow the format used by commands: "Cmd+s", "Ctrl+Shift+z", etc.
+ * Modifier order is always: Shift → Cmd → Ctrl.
+ */
+export interface KeyboardTrigger {
+  type: "keyboard";
+  name: string;
+  /** Key combinations that activate this trigger, e.g. ["Cmd+s", "Ctrl+s"] */
+  keys: string[];
+  /** Optional guard: if provided, trigger only fires when guard returns true */
+  guard?: (evt: KeyboardEvent) => boolean;
+  /** Target element to listen on (default: window) */
+  target?: EventTarget;
+}
+
+/**
  * Union of all trigger types.
  */
-export type TriggerDefinition = SignalTrigger | EventTrigger;
+export type TriggerDefinition = SignalTrigger | EventTrigger | KeyboardTrigger;
 
 /**
  * A factory function that creates a trigger definition.
@@ -151,6 +168,104 @@ export function eventTrigger(
   filter?: (evt: Event) => boolean
 ): EventTrigger {
   return { type: "event", name, target, eventType, filter };
+}
+
+/**
+ * Creates a trigger that listens for a specific `StateEvent` on a bus.
+ *
+ * StateEvent always dispatches with `.type === "bbevent"`. This helper
+ * listens for `"bbevent"` and filters by `detail.eventType` to match
+ * the specific event (e.g. `"node.change"`).
+ *
+ * @param name Human-readable name for debugging/logging
+ * @param target The EventTarget (typically `stateEventBus`)
+ * @param eventType The logical event type (e.g. `"node.change"`)
+ * @returns An EventTrigger definition
+ */
+export function stateEventTrigger(
+  name: string,
+  target: EventTarget,
+  eventType: string
+): EventTrigger {
+  return {
+    type: "event",
+    name,
+    target,
+    eventType: "bbevent",
+    filter: (evt: Event) =>
+      (evt as CustomEvent).detail?.eventType === eventType,
+  };
+}
+
+/**
+ * Creates a keyboard shortcut trigger definition.
+ *
+ * @param name Human-readable name for debugging/logging
+ * @param keys Array of key combinations (e.g., ["Cmd+s", "Ctrl+s"])
+ * @param guard Optional guard function — action only fires when guard returns true
+ * @param target Optional event target (defaults to window)
+ * @returns A KeyboardTrigger definition
+ *
+ * @example
+ * ```typescript
+ * const onSave = keyboardTrigger("Save Shortcut", ["Cmd+s", "Ctrl+s"]);
+ * const onDelete = keyboardTrigger(
+ *   "Delete Shortcut",
+ *   ["Delete", "Backspace"],
+ *   (evt) => isFocusedOnGraphRenderer(evt)
+ * );
+ * ```
+ */
+export function keyboardTrigger(
+  name: string,
+  keys: string[],
+  guard?: (evt: KeyboardEvent) => boolean,
+  target?: EventTarget
+): KeyboardTrigger {
+  return { type: "keyboard", name, keys, guard, target };
+}
+
+// =============================================================================
+// Keyboard Helpers
+// =============================================================================
+
+/**
+ * Returns true if the event target is an element that has input preference
+ * (text inputs, textareas, selects, canvas, contenteditable elements).
+ * When these elements are focused, keyboard shortcuts should not fire.
+ */
+function receivesInputPreference(target: EventTarget): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLCanvasElement ||
+    (target instanceof HTMLElement &&
+      (target.contentEditable === "true" ||
+        target.contentEditable === "plaintext-only"))
+  );
+}
+
+/**
+ * Normalizes a KeyboardEvent into the key string format used by triggers.
+ * Format: modifiers are prepended in order Shift → Cmd → Ctrl.
+ * Examples: "s", "Shift+z", "Cmd+s", "Ctrl+Shift+z"
+ */
+export function normalizeKeyCombo(evt: KeyboardEvent): string {
+  let key = evt.key;
+  if (key === "Meta" || key === "Ctrl" || key === "Shift") {
+    return "";
+  }
+  if (evt.shiftKey) {
+    key = `Shift+${key}`;
+  }
+  if (evt.metaKey) {
+    key = `Cmd+${key}`;
+  }
+  if (evt.ctrlKey) {
+    key = `Ctrl+${key}`;
+  }
+  return key;
 }
 
 // =============================================================================
@@ -586,6 +701,60 @@ class CoordinationRegistry {
           ),
           LABEL
         );
+      } else if (trigger.type === "keyboard") {
+        // Keyboard trigger: listen for keydown and match key combos
+        const target = trigger.target ?? globalThis.window;
+        if (!target) {
+          // SSR or test environment — skip
+          continue;
+        }
+
+        const handler = async (rawEvt: Event) => {
+          const evt = rawEvt as KeyboardEvent;
+
+          // Skip when focused on inputs/textareas/etc.
+          if (evt.composedPath().some((t) => receivesInputPreference(t))) {
+            return;
+          }
+
+          // Normalize and match
+          const normalized = normalizeKeyCombo(evt);
+          if (!normalized || !trigger.keys.includes(normalized)) {
+            return;
+          }
+
+          // Apply guard if provided
+          if (trigger.guard && !trigger.guard(evt)) {
+            return;
+          }
+
+          evt.preventDefault();
+          evt.stopImmediatePropagation();
+
+          try {
+            await (action as (evt: KeyboardEvent) => Promise<unknown>)(evt);
+          } catch (err) {
+            this.#logger.log(
+              Utils.Logging.Formatter.error(
+                `Trigger ${trigger.name} -> ${actionName} failed:`,
+                err
+              ),
+              LABEL
+            );
+          }
+        };
+
+        target.addEventListener("keydown", handler);
+        disposers.push(() => {
+          target.removeEventListener("keydown", handler);
+        });
+
+        this.#logger.log(
+          Utils.Logging.Formatter.verbose(
+            `Activated keyboard trigger: ${trigger.name} (${trigger.keys.join(", ")}) -> ${actionName}`
+          ),
+          LABEL
+        );
       }
     }
 
@@ -639,6 +808,13 @@ export interface ActionOptions {
    * (like applying pending edits before autosave) activate in the right order.
    */
   priority?: number;
+  /**
+   * If true, the action is called once immediately after activation.
+   * Use this to reconcile persisted controller state with current reality
+   * on boot (e.g., sidebar section may be persisted as "editor" but
+   * there's no selection after a page refresh).
+   */
+  runOnActivate?: boolean;
 }
 
 /**
@@ -680,6 +856,8 @@ export interface ActionWithTriggers<T extends AppAction<never[]>> {
   readonly actionName: string;
   /** Activation priority (higher = activates first, default 0) */
   readonly priority: number;
+  /** Whether the action should run once immediately after activation */
+  readonly runOnActivate: boolean;
   /** Start listening for trigger. Returns a dispose function. */
   activate: () => () => void;
   /** The trigger factory, if any (for debugging/inspection) */
@@ -741,7 +919,12 @@ export function asAction<T extends AppAction<never[]>>(
   const normalizedOptions: ActionOptions =
     typeof options === "string" ? { mode: options } : options;
 
-  const { mode, triggeredBy, priority: rawPriority = 0 } = normalizedOptions;
+  const {
+    mode,
+    triggeredBy,
+    priority: rawPriority = 0,
+    runOnActivate = false,
+  } = normalizedOptions;
 
   // Clamp priority to reasonable bounds to prevent gaming
   const MIN_PRIORITY = -1000;
@@ -766,6 +949,7 @@ export function asAction<T extends AppAction<never[]>>(
   const actionWithTriggers = Object.assign(wrapped, {
     actionName: name,
     priority,
+    runOnActivate,
     trigger: triggeredBy,
     activate: () => {
       // Resolve trigger factory lazily here, not at import time

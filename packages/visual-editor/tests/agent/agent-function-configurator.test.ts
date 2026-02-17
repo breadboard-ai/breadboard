@@ -7,7 +7,10 @@
 import { describe, it, mock } from "node:test";
 import { ok as assert, strictEqual } from "node:assert";
 import { createAgentConfigurator } from "../../src/a2/agent/agent-function-configurator.js";
-import { stubCaps, stubModuleArgs } from "../useful-stubs.js";
+import {
+  stubModuleArgs,
+  stubMemoryManager,
+} from "../useful-stubs.js";
 import {
   createMockGenerators,
   createMockFileSystem,
@@ -28,6 +31,8 @@ function createMockDeps() {
     translator: createMockTranslator(),
     ui: {
       chatLog: [] as LLMContent[],
+      setMemoryManager: mock.fn(),
+      seedChatLog: mock.fn(),
     } as unknown as AgentUI,
   };
 }
@@ -59,7 +64,6 @@ function hasFunction(
 describe("createAgentConfigurator", () => {
   it("returns a function", () => {
     const configureFn = createAgentConfigurator(
-      stubCaps,
       stubModuleArgs,
       createMockGenerators()
     );
@@ -69,7 +73,6 @@ describe("createAgentConfigurator", () => {
   describe("base function groups", () => {
     it("always includes system and generate groups", async () => {
       const configureFn = createAgentConfigurator(
-        stubCaps,
         stubModuleArgs,
         createMockGenerators()
       );
@@ -95,9 +98,16 @@ describe("createAgentConfigurator", () => {
 
   describe("memory group", () => {
     it("includes memory group when useMemory is true", async () => {
+      // Override the agentContext's memoryManager with a stub that doesn't
+      // try real network calls (the default uses a real SheetManager).
+      const agentContext = Object.create(stubModuleArgs.agentContext);
+      agentContext.memoryManager = stubMemoryManager;
+      const moduleArgsWithMemory = {
+        ...stubModuleArgs,
+        agentContext,
+      } as typeof stubModuleArgs;
       const configureFn = createAgentConfigurator(
-        stubCaps,
-        stubModuleArgs,
+        moduleArgsWithMemory,
         createMockGenerators()
       );
       const result = await configureFn(
@@ -115,7 +125,6 @@ describe("createAgentConfigurator", () => {
 
     it("excludes memory group when useMemory is false", async () => {
       const configureFn = createAgentConfigurator(
-        stubCaps,
         stubModuleArgs,
         createMockGenerators()
       );
@@ -151,7 +160,6 @@ describe("createAgentConfigurator", () => {
     it("includes NLM group when useNotebookLM and runtime flag are both true", async () => {
       const moduleArgs = createModuleArgsWithFlags(true);
       const configureFn = createAgentConfigurator(
-        stubCaps,
         moduleArgs,
         createMockGenerators()
       );
@@ -171,7 +179,6 @@ describe("createAgentConfigurator", () => {
     it("excludes NLM group when runtime flag is false", async () => {
       const moduleArgs = createModuleArgsWithFlags(false);
       const configureFn = createAgentConfigurator(
-        stubCaps,
         moduleArgs,
         createMockGenerators()
       );
@@ -191,7 +198,6 @@ describe("createAgentConfigurator", () => {
     it("excludes NLM group when useNotebookLM is false", async () => {
       const moduleArgs = createModuleArgsWithFlags(true);
       const configureFn = createAgentConfigurator(
-        stubCaps,
         moduleArgs,
         createMockGenerators()
       );
@@ -212,7 +218,6 @@ describe("createAgentConfigurator", () => {
   describe("UI groups", () => {
     it("includes chat group when uiType is 'chat'", async () => {
       const configureFn = createAgentConfigurator(
-        stubCaps,
         stubModuleArgs,
         createMockGenerators()
       );
@@ -231,7 +236,6 @@ describe("createAgentConfigurator", () => {
 
     it("excludes chat and a2ui functions when uiType forces no-ui path", async () => {
       const configureFn = createAgentConfigurator(
-        stubCaps,
         stubModuleArgs,
         createMockGenerators()
       );

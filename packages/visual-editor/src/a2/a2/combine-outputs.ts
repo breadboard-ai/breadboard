@@ -5,7 +5,6 @@
 import { Template } from "./template.js";
 import { ok } from "./utils.js";
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   Schema,
@@ -29,9 +28,8 @@ type DescribeInputs = {
 
 async function invoke(
   { text, ...params }: InvokeInputs,
-  caps: Capabilities
 ): Promise<Outcome<Outputs>> {
-  const template = new Template(caps, text);
+  const template = new Template(text);
   const substituting = await template.substitute(params, async () => "");
   if (!ok(substituting)) {
     return substituting;
@@ -42,9 +40,8 @@ async function invoke(
 
 async function describe(
   { inputs: { text } }: DescribeInputs,
-  caps: Capabilities
 ) {
-  const template = new Template(caps, text);
+  const template = new Template(text);
   return {
     inputSchema: {
       type: "object",

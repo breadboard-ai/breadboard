@@ -7,7 +7,12 @@
 import { suite, it, beforeEach, mock } from "node:test";
 import assert from "node:assert";
 
-import { coordination, ActionMode } from "../../src/sca/coordination.js";
+import {
+  coordination,
+  ActionMode,
+  normalizeKeyCombo,
+  keyboardTrigger,
+} from "../../src/sca/coordination.js";
 
 /** Helper to yield to the microtask queue */
 const microtask = () => new Promise<void>((resolve) => queueMicrotask(resolve));
@@ -729,6 +734,246 @@ suite("CoordinationRegistry", () => {
       assert.deepStrictEqual(coordination.listActiveTriggers(), []);
       assert.deepStrictEqual(coordination.listRegisteredActions(), []);
       assert.deepStrictEqual(coordination.getCallStack(), []);
+    });
+  });
+
+  // =========================================================================
+  // Keyboard Trigger
+  // =========================================================================
+
+  suite("Keyboard Trigger", () => {
+    function makeKeyEvent(
+      key: string,
+      opts: { meta?: boolean; ctrl?: boolean; shift?: boolean } = {}
+    ): KeyboardEvent {
+      return {
+        key,
+        metaKey: opts.meta ?? false,
+        ctrlKey: opts.ctrl ?? false,
+        shiftKey: opts.shift ?? false,
+        composedPath: () => [],
+        preventDefault: mock.fn(),
+        stopImmediatePropagation: mock.fn(),
+      } as unknown as KeyboardEvent;
+    }
+
+    suite("normalizeKeyCombo", () => {
+      it("returns plain key for no modifiers", () => {
+        assert.strictEqual(normalizeKeyCombo(makeKeyEvent("s")), "s");
+      });
+
+      it("returns Cmd+key for meta", () => {
+        assert.strictEqual(
+          normalizeKeyCombo(makeKeyEvent("s", { meta: true })),
+          "Cmd+s"
+        );
+      });
+
+      it("returns Ctrl+key for ctrl", () => {
+        assert.strictEqual(
+          normalizeKeyCombo(makeKeyEvent("s", { ctrl: true })),
+          "Ctrl+s"
+        );
+      });
+
+      it("returns Shift+key for shift", () => {
+        assert.strictEqual(
+          normalizeKeyCombo(makeKeyEvent("z", { shift: true })),
+          "Shift+z"
+        );
+      });
+
+      it("returns Cmd+Shift+key for meta+shift", () => {
+        assert.strictEqual(
+          normalizeKeyCombo(makeKeyEvent("z", { meta: true, shift: true })),
+          "Cmd+Shift+z"
+        );
+      });
+
+      it("returns Ctrl+Shift+key for ctrl+shift", () => {
+        assert.strictEqual(
+          normalizeKeyCombo(makeKeyEvent("z", { ctrl: true, shift: true })),
+          "Ctrl+Shift+z"
+        );
+      });
+
+      it("returns empty for bare Meta key", () => {
+        assert.strictEqual(normalizeKeyCombo(makeKeyEvent("Meta")), "");
+      });
+
+      it("returns empty for bare Ctrl key", () => {
+        assert.strictEqual(normalizeKeyCombo(makeKeyEvent("Ctrl")), "");
+      });
+
+      it("returns empty for bare Shift key", () => {
+        assert.strictEqual(normalizeKeyCombo(makeKeyEvent("Shift")), "");
+      });
+
+      it("handles special keys like Delete and Backspace", () => {
+        assert.strictEqual(normalizeKeyCombo(makeKeyEvent("Delete")), "Delete");
+        assert.strictEqual(
+          normalizeKeyCombo(makeKeyEvent("Backspace")),
+          "Backspace"
+        );
+      });
+    });
+
+    suite("keyboardTrigger factory", () => {
+      it("creates a KeyboardTrigger", () => {
+        const trigger = keyboardTrigger("Save", ["Cmd+s", "Ctrl+s"]);
+        assert.strictEqual(trigger.type, "keyboard");
+        assert.strictEqual(trigger.name, "Save");
+        assert.deepStrictEqual(trigger.keys, ["Cmd+s", "Ctrl+s"]);
+        assert.strictEqual(trigger.guard, undefined);
+        assert.strictEqual(trigger.target, undefined);
+      });
+
+      it("accepts a guard function", () => {
+        const guard = () => true;
+        const trigger = keyboardTrigger("Delete", ["Delete"], guard);
+        assert.strictEqual(trigger.guard, guard);
+      });
+    });
+
+    suite("activateTriggers with keyboard trigger", () => {
+      it("fires action when matching key is pressed", async () => {
+        const actionCalls: KeyboardEvent[] = [];
+        const target = new EventTarget();
+
+        const trigger = keyboardTrigger(
+          "Save",
+          ["Cmd+s", "Ctrl+s"],
+          undefined,
+          target
+        );
+
+        const action = mock.fn(async (evt?: KeyboardEvent) => {
+          if (evt) actionCalls.push(evt);
+        });
+
+        const dispose = coordination.activateTriggers(
+          "Test.save",
+          [trigger],
+          action as (...args: never[]) => Promise<unknown>
+        );
+
+        // Fire matching event
+        target.dispatchEvent(
+          Object.assign(new Event("keydown"), {
+            key: "s",
+            metaKey: true,
+            ctrlKey: false,
+            shiftKey: false,
+            composedPath: () => [],
+            preventDefault: mock.fn(),
+            stopImmediatePropagation: mock.fn(),
+          })
+        );
+
+        await microtask();
+
+        assert.strictEqual(action.mock.callCount(), 1);
+
+        dispose();
+      });
+
+      it("does not fire action for non-matching key", async () => {
+        const target = new EventTarget();
+
+        const trigger = keyboardTrigger("Save", ["Cmd+s"], undefined, target);
+
+        const action = mock.fn(async () => {});
+
+        const dispose = coordination.activateTriggers(
+          "Test.save",
+          [trigger],
+          action as (...args: never[]) => Promise<unknown>
+        );
+
+        // Fire non-matching event (Cmd+x)
+        target.dispatchEvent(
+          Object.assign(new Event("keydown"), {
+            key: "x",
+            metaKey: true,
+            ctrlKey: false,
+            shiftKey: false,
+            composedPath: () => [],
+          })
+        );
+
+        await microtask();
+
+        assert.strictEqual(action.mock.callCount(), 0);
+
+        dispose();
+      });
+
+      it("respects guard function", async () => {
+        const target = new EventTarget();
+
+        const trigger = keyboardTrigger(
+          "Delete",
+          ["Delete"],
+          () => false, // Guard always rejects
+          target
+        );
+
+        const action = mock.fn(async () => {});
+
+        const dispose = coordination.activateTriggers(
+          "Test.delete",
+          [trigger],
+          action as (...args: never[]) => Promise<unknown>
+        );
+
+        // Fire matching key, but guard rejects
+        target.dispatchEvent(
+          Object.assign(new Event("keydown"), {
+            key: "Delete",
+            metaKey: false,
+            ctrlKey: false,
+            shiftKey: false,
+            composedPath: () => [],
+          })
+        );
+
+        await microtask();
+
+        assert.strictEqual(action.mock.callCount(), 0);
+
+        dispose();
+      });
+
+      it("dispose removes keyboard listener", async () => {
+        const target = new EventTarget();
+
+        const trigger = keyboardTrigger("Save", ["Cmd+s"], undefined, target);
+
+        const action = mock.fn(async () => {});
+
+        const dispose = coordination.activateTriggers(
+          "Test.save",
+          [trigger],
+          action as (...args: never[]) => Promise<unknown>
+        );
+
+        dispose();
+
+        // Fire matching event - should not trigger
+        target.dispatchEvent(
+          Object.assign(new Event("keydown"), {
+            key: "s",
+            metaKey: true,
+            ctrlKey: false,
+            shiftKey: false,
+            composedPath: () => [],
+          })
+        );
+
+        await microtask();
+
+        assert.strictEqual(action.mock.callCount(), 0);
+      });
     });
   });
 });

@@ -29,7 +29,6 @@ import {
   type ExecuteStepArgs,
 } from "../a2/step-executor.js";
 import {
-  Capabilities,
   InlineDataCapabilityPart,
   LLMContent,
   Outcome,
@@ -104,7 +103,6 @@ function makeVideoInstruction(inputs: Record<string, unknown>) {
 }
 
 async function callVideoGen(
-  caps: Capabilities,
   args: ExecuteStepArgs,
   prompt: string,
   imageContent: LLMContent[],
@@ -175,7 +173,7 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, args, body, {
+  const response = await executeStep(args, body, {
     expectedDurationInSec: 70,
   });
   if (!ok(response)) return response;
@@ -194,7 +192,6 @@ async function invoke(
     "b-model-name": modelId,
     ...params
   }: VideoGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<VideoGeneratorOutputs>> {
   const { modelName } = getModel(modelId);
@@ -209,11 +206,13 @@ async function invoke(
   // Substitute variables and magic image reference.
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
-  const template = new Template(caps, toLLMContent(instructionText));
+  const template = new Template(
+    toLLMContent(instructionText),
+    moduleArgs.context.currentGraph
+  );
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
@@ -260,7 +259,6 @@ async function invoke(
   });
   const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
   const content = await callVideoGen(
-    caps,
     executeStepArgs,
     combinedInstruction,
     imageContext,
@@ -348,9 +346,8 @@ function expandVeoError(
 
 async function describe(
   { inputs: { instruction } }: DescribeInputs,
-  caps: Capabilities
 ) {
-  const template = new Template(caps, instruction);
+  const template = new Template(instruction);
   return {
     inputSchema: {
       type: "object",

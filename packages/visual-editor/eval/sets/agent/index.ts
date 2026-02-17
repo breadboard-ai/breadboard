@@ -4,11 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ok } from "@breadboard-ai/utils";
 import { session } from "../../eval.js";
+import {
+  SimulatedUserChatManager,
+  createSimulatedUserConfigurator,
+} from "../../simulated-user.js";
+import type {
+  FunctionGroupConfigurator,
+  LoopDeps,
+  FunctionGroupConfiguratorFlags,
+  FunctionGroup,
+} from "../../../src/a2/agent/types.js";
 
 session({ name: "Agent" }, async (session) => {
   // Need to import dynamically to let the mocks do their job.
-  const Loop = (await import("../../../src/a2/agent/loop.js")).Loop;
+  const { buildAgentRun } = await import("../../../src/a2/agent/loop-setup.js");
   const { createAgentConfigurator } =
     await import("../../../src/a2/agent/agent-function-configurator.js");
   const { streamGenerateContent, conformGeminiBody } =
@@ -38,18 +49,66 @@ session({ name: "Agent" }, async (session) => {
     callMusic: async () => fakeContent("music", "audio/mp3", musicCount++),
   };
 
+  function composeConfigurators(
+    ...configurators: FunctionGroupConfigurator[]
+  ): FunctionGroupConfigurator {
+    return async (deps: LoopDeps, flags: FunctionGroupConfiguratorFlags) => {
+      const groups: FunctionGroup[] = [];
+      for (const configurator of configurators) {
+        const result = await configurator(deps, flags);
+        if (!ok(result)) return result;
+        groups.push(...result);
+      }
+      return groups;
+    };
+  }
+
   async function evalObjective(filename: string, only = false) {
-    const { objective, title } = await import(filename);
+    const { objective, title, userObjective } = await import(filename);
     const params: Parameters<typeof session.eval> = [
       title,
-      async ({ caps, moduleArgs }) => {
-        const configureFn = createAgentConfigurator(
-          caps,
+      async ({ moduleArgs }) => {
+        const agentConfigurator = createAgentConfigurator(
           moduleArgs,
           generators
         );
-        const loop = new Loop(caps, moduleArgs, configureFn);
-        return loop.run({ objective, params: {}, uiType: "chat" });
+
+        let configureFn: FunctionGroupConfigurator;
+        let uiType: "chat" | "simulated" = "chat";
+        let simulatedUser: SimulatedUserChatManager | null = null;
+
+        if (userObjective) {
+          simulatedUser = new SimulatedUserChatManager(
+            userObjective,
+            moduleArgs
+          );
+          const simulatedUserConfigurator =
+            createSimulatedUserConfigurator(simulatedUser);
+          configureFn = composeConfigurators(
+            agentConfigurator,
+            simulatedUserConfigurator
+          );
+          uiType = "simulated";
+        } else {
+          configureFn = agentConfigurator;
+        }
+
+        const setup = await buildAgentRun({
+          objective,
+          params: {},
+          moduleArgs,
+          configureFn,
+          uiType,
+        });
+        if (!ok(setup)) return setup;
+        const { loop, runArgs } = setup;
+        const result = await loop.run(runArgs);
+
+        if (simulatedUser) {
+          await simulatedUser.close();
+        }
+
+        return result;
       },
     ];
 
@@ -71,4 +130,5 @@ session({ name: "Agent" }, async (session) => {
   await evalObjective("./state-detector.js");
   await evalObjective("./news-tracker.js");
   await evalObjective("./get-recipe.js");
+  await evalObjective("./recipe-assistant.js");
 });
