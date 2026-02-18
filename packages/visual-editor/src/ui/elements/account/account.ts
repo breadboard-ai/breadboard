@@ -356,7 +356,7 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
                     );
                   }}
                 >
-                  Upgrade
+                  Get AI credits
                 </button>
               </section>
               <button
