@@ -20,6 +20,7 @@ jobs:
       contents: read       # To checkout main branch
       pull-requests: write # To post comments on the PR
       actions: read        # To download artifacts from the triggering workflow
+      checks: write        # To create a coverage status check on the PR
     if: >
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success'
@@ -197,3 +198,34 @@ jobs:
                 body: body
               });
             }
+
+      - name: Create coverage check
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let conclusion = 'neutral';
+            let title = 'Coverage data unavailable';
+            let summary = 'Could not determine coverage status.';
+
+            if (fs.existsSync('coverage-status.json')) {
+              const status = JSON.parse(fs.readFileSync('coverage-status.json', 'utf8'));
+              conclusion = status.failed ? 'failure' : 'success';
+              title = status.failed ? 'Coverage dropped' : 'Coverage OK';
+              summary = status.details;
+            }
+
+            // Use the full markdown table as the summary if available.
+            if (fs.existsSync('coverage-comment.md')) {
+              summary = fs.readFileSync('coverage-comment.md', 'utf8');
+            }
+
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Coverage',
+              head_sha: '${{ github.event.workflow_run.head_sha }}',
+              conclusion,
+              output: { title, summary }
+            });
