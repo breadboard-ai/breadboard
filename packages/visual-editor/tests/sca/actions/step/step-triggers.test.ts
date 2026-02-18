@@ -9,6 +9,7 @@ import assert from "node:assert";
 import {
   onSelectionOrSidebarChange,
   onNodeActionRequested,
+  onGraphChangeWithMemory,
 } from "../../../../src/sca/actions/step/triggers.js";
 
 suite("Step Triggers", () => {
@@ -363,6 +364,118 @@ suite("Step Triggers", () => {
       const trigger = onNodeActionRequested(mockBind as never);
 
       assert.strictEqual(trigger.name, "Node Action Requested (Step)");
+    });
+  });
+
+  suite("onGraphChangeWithMemory", () => {
+    test("returns graph URL when graph has memory tool", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              url: "drive:/abc123",
+              agentModeTools: new Set(["function-group/use-memory"]),
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphChangeWithMemory(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(
+        result,
+        "drive:/abc123",
+        "Should return the graph URL when memory tool is present"
+      );
+    });
+
+    test("returns false when graph has no memory tool", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              url: "drive:/abc123",
+              agentModeTools: new Set(),
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphChangeWithMemory(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when no memory tool"
+      );
+    });
+
+    test("returns false when graph URL is null", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              url: null,
+              agentModeTools: new Set(["function-group/use-memory"]),
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphChangeWithMemory(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when graph URL is null"
+      );
+    });
+
+    test("returns false when both URL is null and no memory tool", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              url: null,
+              agentModeTools: new Set(),
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphChangeWithMemory(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when both URL and memory tool are missing"
+      );
+    });
+
+    test("has correct trigger name", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              url: null,
+              agentModeTools: new Set(),
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphChangeWithMemory(mockBind as never);
+
+      assert.strictEqual(trigger.name, "Graph Change (Memory)");
     });
   });
 });
