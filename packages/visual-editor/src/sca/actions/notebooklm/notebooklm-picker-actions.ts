@@ -7,6 +7,9 @@
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import type { NotebookPickedValue } from "../../../ui/elements/notebooklm-picker/notebooklm-picker.js";
+import { Utils } from "../../utils.js";
+
+const LABEL = "NotebookLmPicker";
 
 export { bind, fetchNotebooks, confirmSelection };
 
@@ -31,7 +34,10 @@ const fetchNotebooks = asAction(
       nlm.notebooks = response.notebooks || [];
       nlm.pickerState = "idle";
     } catch (err) {
-      console.error("Failed to fetch notebooks:", err);
+      Utils.Logging.getLogger().log(
+        Utils.Logging.Formatter.error("Failed to fetch notebooks:", err),
+        LABEL
+      );
       nlm.pickerState = "error";
       nlm.errorMessage =
         err instanceof Error ? err.message : "Failed to fetch notebooks";
