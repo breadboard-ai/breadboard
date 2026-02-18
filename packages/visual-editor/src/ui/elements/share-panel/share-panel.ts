@@ -567,8 +567,13 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderModalContents() {
     // Asset-review takes priority when there are unmanaged asset problems
-    // pending resolution (e.g. during publish).
-    if (this.#controller.unmanagedAssetProblems.length > 0) {
+    // pending resolution (e.g. during publish), OR when notebook domain-sharing
+    // limitations need to be surfaced. The action layer blocks on
+    // waitForUnmanagedAssetsResolution() in both cases.
+    if (
+      this.#controller.unmanagedAssetProblems.length > 0 ||
+      this.#controller.notebookDomainSharingLimited
+    ) {
       return this.#renderUnmanagedAssetsModalContents();
     }
     const status = this.#controller.status;
