@@ -1083,4 +1083,201 @@ suite("Step Actions", () => {
       );
     });
   });
+
+  suite("lookupMemorySheet", () => {
+    test("sets memorySheetUrl when Drive API returns a sheet", async () => {
+      const mockController = {
+        editor: {
+          step: {
+            memorySheetUrl: null as string | null,
+          },
+          graph: {
+            url: "drive:/abc123",
+          },
+        },
+        global: {
+          toasts: {
+            toast: () => {},
+          },
+        },
+      };
+
+      stepActions.bind({
+        services: {
+          shellHost: {
+            getDriveCollectorFile: async () => ({ ok: true, id: "sheet-xyz" }),
+          },
+        } as never,
+        controller: mockController as never,
+      });
+
+      await stepActions.lookupMemorySheet();
+
+      assert.strictEqual(
+        mockController.editor.step.memorySheetUrl,
+        "https://docs.google.com/spreadsheets/d/sheet-xyz",
+        "Should construct the correct spreadsheet URL"
+      );
+    });
+
+    test("sets memorySheetUrl to null when Drive API returns no result", async () => {
+      const mockController = {
+        editor: {
+          step: {
+            memorySheetUrl: "old-value" as string | null,
+          },
+          graph: {
+            url: "drive:/abc123",
+          },
+        },
+        global: {
+          toasts: {
+            toast: () => {},
+          },
+        },
+      };
+
+      stepActions.bind({
+        services: {
+          shellHost: {
+            getDriveCollectorFile: async () => ({ ok: false }),
+          },
+        } as never,
+        controller: mockController as never,
+      });
+
+      await stepActions.lookupMemorySheet();
+
+      assert.strictEqual(
+        mockController.editor.step.memorySheetUrl,
+        null,
+        "Should set memorySheetUrl to null when API returns not ok"
+      );
+    });
+
+    test("sets memorySheetUrl to null when graph URL is missing", async () => {
+      let apiCalled = false;
+
+      const mockController = {
+        editor: {
+          step: {
+            memorySheetUrl: "old-value" as string | null,
+          },
+          graph: {
+            url: null,
+          },
+        },
+        global: {
+          toasts: {
+            toast: () => {},
+          },
+        },
+      };
+
+      stepActions.bind({
+        services: {
+          shellHost: {
+            getDriveCollectorFile: async () => {
+              apiCalled = true;
+              return { ok: true, id: "should-not-reach" };
+            },
+          },
+        } as never,
+        controller: mockController as never,
+      });
+
+      await stepActions.lookupMemorySheet();
+
+      assert.strictEqual(
+        mockController.editor.step.memorySheetUrl,
+        null,
+        "Should set memorySheetUrl to null when no graph URL"
+      );
+      assert.strictEqual(
+        apiCalled,
+        false,
+        "Should not call Drive API when graph URL is missing"
+      );
+    });
+
+    test("sets memorySheetUrl to null when Drive API throws", async () => {
+      const mockController = {
+        editor: {
+          step: {
+            memorySheetUrl: "old-value" as string | null,
+          },
+          graph: {
+            url: "drive:/abc123",
+          },
+        },
+        global: {
+          toasts: {
+            toast: () => {},
+          },
+        },
+      };
+
+      stepActions.bind({
+        services: {
+          shellHost: {
+            getDriveCollectorFile: async () => {
+              throw new Error("Network error");
+            },
+          },
+        } as never,
+        controller: mockController as never,
+      });
+
+      await stepActions.lookupMemorySheet();
+
+      assert.strictEqual(
+        mockController.editor.step.memorySheetUrl,
+        null,
+        "Should set memorySheetUrl to null when API throws"
+      );
+    });
+
+    test('strips "drive:/" prefix from graph URL when calling API', async () => {
+      let capturedGraphId: string | undefined;
+
+      const mockController = {
+        editor: {
+          step: {
+            memorySheetUrl: null as string | null,
+          },
+          graph: {
+            url: "drive:/my-board-id-456",
+          },
+        },
+        global: {
+          toasts: {
+            toast: () => {},
+          },
+        },
+      };
+
+      stepActions.bind({
+        services: {
+          shellHost: {
+            getDriveCollectorFile: async (
+              _mimeType: string,
+              graphId: string
+            ) => {
+              capturedGraphId = graphId;
+              return { ok: true, id: "sheet-1" };
+            },
+          },
+        } as never,
+        controller: mockController as never,
+      });
+
+      await stepActions.lookupMemorySheet();
+
+      assert.strictEqual(
+        capturedGraphId,
+        "my-board-id-456",
+        'Should strip "drive:/" prefix from graph URL'
+      );
+    });
+  });
 });
