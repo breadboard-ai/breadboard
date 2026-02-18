@@ -144,8 +144,8 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "closed");
     assert.strictEqual(share.status, "ready");
     assert.strictEqual(share.ownership, "owner");
-    assert.strictEqual(share.published, false);
-    assert.strictEqual(share.granularlyShared, false);
+    assert.strictEqual(share.hasPublicPermissions, false);
+    assert.strictEqual(share.hasOtherPermissions, false);
     assert.strictEqual(share.editableVersion, "1");
     assert.strictEqual(share.shareableFile, null);
     assert.strictEqual(share.userDomain, "example.com");
@@ -216,20 +216,20 @@ suite("Share Actions", () => {
     await ShareActions.initialize();
     await ShareActions.open();
     assert.strictEqual(share.panel, "open");
-    assert.strictEqual(share.published, false);
+    assert.strictEqual(share.hasPublicPermissions, false);
 
     // Publish
     const publishPromise = ShareActions.publish();
 
     // Verify intermediate changing-visibility state
     assert.strictEqual(share.status, "changing-visibility");
-    assert.strictEqual(share.published, true);
+    assert.strictEqual(share.hasPublicPermissions, true);
 
     await publishPromise;
 
     // Verify state is now published
     assert.strictEqual(share.status, "ready");
-    assert.strictEqual(share.published, true);
+    assert.strictEqual(share.hasPublicPermissions, true);
     assert.ok(share.shareableFile, "shareableFile should be set after publish");
     const shareableFileId = share.shareableFile.id;
 
@@ -309,7 +309,7 @@ suite("Share Actions", () => {
     // Attempt to publish — should be a no-op
     await ShareActions.publish();
     assert.strictEqual(share.status, "ready");
-    assert.strictEqual(share.published, false);
+    assert.strictEqual(share.hasPublicPermissions, false);
   });
 
   test("unpublish", async () => {
@@ -317,7 +317,7 @@ suite("Share Actions", () => {
     await ShareActions.initialize();
     await ShareActions.publish();
     assert.strictEqual(share.status, "ready");
-    assert.strictEqual(share.published, true);
+    assert.strictEqual(share.hasPublicPermissions, true);
     assert.ok(share.shareableFile, "shareableFile should be set after publish");
     const shareableFileId = share.shareableFile.id;
 
@@ -334,7 +334,7 @@ suite("Share Actions", () => {
     // Verify state is now unpublished
     assert.strictEqual(share.status, "ready");
     assert.strictEqual(share.ownership, "owner");
-    assert.strictEqual(share.published, false);
+    assert.strictEqual(share.hasPublicPermissions, false);
 
     // Verify permission was deleted from the shareable copy
     const afterMetadata = await googleDriveClient.getFileMetadata(
@@ -549,8 +549,8 @@ suite("Share Actions", () => {
     await ShareActions.open();
     assert.strictEqual(share.panel, "open");
     assert.strictEqual(share.ownership, "owner");
-    assert.strictEqual(share.published, false);
-    assert.strictEqual(share.granularlyShared, false);
+    assert.strictEqual(share.hasPublicPermissions, false);
+    assert.strictEqual(share.hasOtherPermissions, false);
 
     // User opens granular sharing dialog
     await ShareActions.viewSharePermissions();
@@ -573,8 +573,8 @@ suite("Share Actions", () => {
 
     // We should now be granularly shared, but not published
     assert.strictEqual(share.panel, "open");
-    assert.strictEqual(share.granularlyShared, true);
-    assert.strictEqual(share.published, false);
+    assert.strictEqual(share.hasOtherPermissions, true);
+    assert.strictEqual(share.hasPublicPermissions, false);
 
     // User opens granular sharing again
     await ShareActions.viewSharePermissions();
@@ -596,8 +596,8 @@ suite("Share Actions", () => {
 
     // We should now be granularly shared and published
     assert.strictEqual(share.panel, "open");
-    assert.strictEqual(share.granularlyShared, true);
-    assert.strictEqual(share.published, true);
+    assert.strictEqual(share.hasOtherPermissions, true);
+    assert.strictEqual(share.hasPublicPermissions, true);
   });
 
   test("closing native share dialog shows updating indicator, not initializing flash", async () => {
@@ -735,7 +735,7 @@ suite("Share Actions", () => {
     setGraph(graph);
     await ShareActions.initialize();
     assert.strictEqual(share.ownership, "owner");
-    assert.strictEqual(share.published, false);
+    assert.strictEqual(share.hasPublicPermissions, false);
 
     // Publish
     await ShareActions.publish();
@@ -1042,10 +1042,10 @@ suite("Share Actions", () => {
     share.panel = "open";
     share.status = "ready";
     share.ownership = "owner";
-    share.published = true;
+    share.hasPublicPermissions = true;
     share.editableVersion = "42";
     share.sharedVersion = "1";
-    share.granularlyShared = true;
+    share.hasOtherPermissions = true;
     share.userDomain = "example.com";
     share.publicPublishingAllowed = false;
     share.publishedPermissions = [{ type: "anyone", role: "reader" }];
@@ -1069,11 +1069,11 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "closed");
     assert.strictEqual(share.status, "initializing");
     assert.strictEqual(share.ownership, "unknown");
-    assert.strictEqual(share.published, false);
+    assert.strictEqual(share.hasPublicPermissions, false);
     assert.strictEqual(share.stale, false);
     assert.strictEqual(share.editableVersion, "");
     assert.strictEqual(share.sharedVersion, "");
-    assert.strictEqual(share.granularlyShared, false);
+    assert.strictEqual(share.hasOtherPermissions, false);
     assert.strictEqual(share.userDomain, "");
     assert.strictEqual(share.publicPublishingAllowed, true);
     assert.deepStrictEqual(share.publishedPermissions, []);

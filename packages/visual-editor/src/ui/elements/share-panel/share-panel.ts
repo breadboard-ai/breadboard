@@ -618,7 +618,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderWritableContentsV1() {
     const shared =
-      this.#controller.published || this.#controller.granularlyShared;
+      this.#controller.hasPublicPermissions ||
+      this.#controller.hasOtherPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
       html`
@@ -637,7 +638,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderWritableContentsV2() {
     const shared =
-      this.#controller.published || this.#controller.granularlyShared;
+      this.#controller.hasPublicPermissions ||
+      this.#controller.hasOtherPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBannerV2() : nothing,
       this.#renderAdvisoryV2(),
@@ -834,10 +836,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   get #computedVisibility(): VisibilityLevel {
-    if (this.#controller.published) {
+    if (this.#controller.hasPublicPermissions) {
       return "anyone";
     }
-    if (this.#controller.granularlyShared) {
+    if (this.#controller.hasOtherPermissions) {
       return "restricted";
     }
     return "only-you";
@@ -848,7 +850,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
-    const published = this.#controller.published;
+    const published = this.#controller.hasPublicPermissions;
     const domain = this.#controller.userDomain;
     const { disallowPublicPublishing } =
       this.sca?.services.globalConfig?.domains?.[domain] ?? {};

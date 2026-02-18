@@ -198,11 +198,11 @@ async function fetchShareData(): Promise<void> {
   });
 
   share.ownership = "owner";
-  share.published = diff.missing.length === 0;
+  share.hasPublicPermissions = diff.missing.length === 0;
   // We're granularly shared if there is any permission that is neither
   // one of the special publish permissions, nor the owner (since there
   // will always be an owner).
-  share.granularlyShared =
+  share.hasOtherPermissions =
     diff.excess.find((permission) => permission.role !== "owner") !== undefined;
   share.editableVersion = thisFileMetadata.version;
   share.sharedVersion =
@@ -747,13 +747,13 @@ export const publish = asAction(
       /* c8 ignore end */
     }
 
-    if (share.published) {
+    if (share.hasPublicPermissions) {
       // Already published!
       return;
     }
 
     share.status = "changing-visibility";
-    share.published = true;
+    share.hasPublicPermissions = true;
 
     let newLatestVersion: string | undefined;
     if (!share.shareableFile) {
@@ -793,7 +793,7 @@ export const publish = asAction(
     }
 
     share.status = "ready";
-    share.published = true;
+    share.hasPublicPermissions = true;
     share.publishedPermissions = graphPublishPermissions;
     share.sharedVersion = newLatestVersion ?? share.sharedVersion;
   }
@@ -818,7 +818,7 @@ export const unpublish = asAction(
 
       /* c8 ignore end */
     }
-    if (!share.published) {
+    if (!share.hasPublicPermissions) {
       // Already unpublished!
       return;
     }
@@ -828,7 +828,7 @@ export const unpublish = asAction(
       return;
     }
     share.status = "changing-visibility";
-    share.published = false;
+    share.hasPublicPermissions = false;
 
     logger.log(
       Utils.Logging.Formatter.verbose(
@@ -851,7 +851,7 @@ export const unpublish = asAction(
     await handleAssetPermissions(share.shareableFile!.id, graph);
 
     share.status = "ready";
-    share.published = false;
+    share.hasPublicPermissions = false;
   }
 );
 

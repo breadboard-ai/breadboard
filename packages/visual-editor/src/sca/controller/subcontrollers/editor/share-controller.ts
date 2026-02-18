@@ -62,7 +62,7 @@ export class ShareController extends RootController {
   accessor ownership: "unknown" | "owner" | "non-owner" = "unknown";
 
   @field()
-  accessor published = false;
+  accessor hasPublicPermissions = false;
 
   @field()
   accessor editableVersion = "";
@@ -72,7 +72,7 @@ export class ShareController extends RootController {
 
   get stale(): boolean {
     return (
-      this.published &&
+      this.hasPublicPermissions &&
       this.editableVersion !== this.sharedVersion &&
       this.editableVersion !== "" &&
       this.sharedVersion !== ""
@@ -80,7 +80,7 @@ export class ShareController extends RootController {
   }
 
   @field()
-  accessor granularlyShared = false;
+  accessor hasOtherPermissions = false;
 
   @field()
   accessor userDomain = "";
@@ -115,10 +115,10 @@ export class ShareController extends RootController {
     this.panel = "closed";
     this.status = "initializing";
     this.ownership = "unknown";
-    this.published = false;
+    this.hasPublicPermissions = false;
     this.editableVersion = "";
     this.sharedVersion = "";
-    this.granularlyShared = false;
+    this.hasOtherPermissions = false;
     this.userDomain = "";
     this.publicPublishingAllowed = true;
     this.publishedPermissions = [];
