@@ -80,3 +80,25 @@ export function onNodeActionRequested(bind: ActionBind): SignalTrigger {
     return !!(request && (pendingEdit || pendingAssetEdit));
   });
 }
+
+/**
+ * Creates a trigger that fires when a graph with the memory tool is loaded.
+ *
+ * Returns the graph URL as the stamp so the trigger fires exactly once
+ * per graph load, only when `agentModeTools` includes "use-memory".
+ */
+const MEMORY_TOOL_PATH = "function-group/use-memory";
+export function onGraphChangeWithMemory(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Graph Change (Memory)", () => {
+    const { controller } = bind;
+
+    const graphUrl = controller.editor.graph.url;
+    const hasMemory =
+      controller.editor.graph.agentModeTools.has(MEMORY_TOOL_PATH);
+
+    if (graphUrl && hasMemory) {
+      return graphUrl;
+    }
+    return false;
+  });
+}
