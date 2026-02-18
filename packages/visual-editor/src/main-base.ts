@@ -476,7 +476,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       // So, we need to wait for full initialization before we broadcast.
       const { url } = saveResult;
       const boardServer = this.sca.services.googleDriveBoardServer;
-      await boardServer.flushSaveQueue(url.href);
+      await boardServer.graphIsFullyCreated(url.href);
       this.sca.services.embedHandler.sendToEmbedder({
         type: "board_id_created",
         id: url.href,

@@ -514,7 +514,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const panel = this.#panel;
     if (panel === "closed") {
       return nothing;
-    } else if (panel === "granular") {
+    } else if (panel === "native-share") {
       return this.#renderGranularSharingModal();
     } else {
       return this.#renderModal();
@@ -522,7 +522,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   override updated() {
-    if (this.#panel === "granular") {
+    if (this.#panel === "native-share") {
       this.#googleDriveSharePanel.value?.open();
     } else if (this.#panel !== "closed") {
       this.#dialog.value?.showModal();
@@ -563,20 +563,32 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderModalContents() {
-    const panel = this.#panel;
-    if (panel === "loading") {
+    // Asset-review takes priority when there are unmanaged asset problems
+    // pending resolution (e.g. during publish).
+    if (this.#controller.unmanagedAssetProblems.length > 0) {
+      return this.#renderUnmanagedAssetsModalContents();
+    }
+    const status = this.#controller.status;
+    // V2 has inline spinners for changing-visibility and publishing-stale,
+    // so only show the full-panel loader for statuses without those affordances.
+    if (SHARING_V2 &&
+      (status === "initializing" || status === "syncing-native-share" ||
+        status === "syncing-assets")) {
+      return this.#renderLoading();
+      // V1 has an inline spinner for changing-visibility on the publish switch,
+      // so only show the full-panel loader for statuses without inline affordances.
+    } else if (!SHARING_V2 &&
+      (status === "initializing" || status === "syncing-native-share" ||
+        status === "publishing-stale" || status === "syncing-assets")) {
       return this.#renderLoading();
     }
-    if (panel === "writable" || panel === "updating") {
+    if (this.#controller.ownership === "owner") {
       return CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
         ? this.#renderWritableContentsV2()
         : this.#renderWritableContentsV1();
     }
-    if (panel === "readonly") {
+    if (this.#controller.ownership === "non-owner") {
       return this.#renderReadonlyModalContents();
-    }
-    if (panel === "unmanaged-assets") {
-      return this.#renderUnmanagedAssetsModalContents();
     }
   }
 
@@ -600,7 +612,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      shared && this.#panel !== "updating" ? this.#renderAppLink() : nothing,
+      shared && this.#controller.status === "ready"
+        ? this.#renderAppLink()
+        : nothing,
       this.#renderGranularSharingLink(),
       this.#renderAdvisory(),
     ];
@@ -630,7 +644,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </p>
         <button
           class="bb-button-text"
-          .disabled=${this.#panel !== "writable"}
+          .disabled=${this.#controller.status === "publishing-stale"}
           @click=${this.#onClickPublishStale}
         >
           Update
@@ -652,12 +666,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </span>
         <button
           class="bb-button-text"
-          .disabled=${this.#panel !== "writable"}
+          .disabled=${this.#controller.status === "publishing-stale"}
           @click=${this.#onClickPublishStale}
         >
-          ${this.#panel === "updating"
-            ? html`<span class="g-icon spin spinner">progress_activity</span>`
-            : nothing}
+          ${this.#controller.status === "publishing-stale"
+        ? html`<span class="g-icon spin spinner">progress_activity</span>`
+        : nothing}
           Update
         </button>
       </div>
@@ -685,8 +699,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderDisallowedPublishingNotice() {
-    const panel = this.#panel;
-    if (panel !== "writable" && panel !== "updating") {
+    const status = this.#controller.status;
+    if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
     const domain = this.#controller.userDomain;
@@ -704,12 +718,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
         Publishing is disabled for all users from ${domain}.
         <br />
         ${preferredUrl
-          ? html`Please use
+        ? html`Please use
               <a href="${preferredUrl}" target="_blank"
                 >${new URL(preferredUrl).hostname}</a
               >
               to share with other ${domain} users.`
-          : nothing}
+        : nothing}
       </p>
     `;
   }
@@ -746,7 +760,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         id="granular-sharing-link"
         href=""
         @click=${this.#onClickViewSharePermissions}
-        ?disabled=${this.#panel !== "writable"}
+        ?disabled=${this.#controller.status !== "ready"}
       >
         View Share Permissions
       </a>
@@ -815,8 +829,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderPublishedSwitch() {
-    const panel = this.#panel;
-    if (panel !== "writable" && panel !== "updating") {
+    const status = this.#controller.status;
+    if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
     const published = this.#controller.published;
@@ -824,12 +838,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const { disallowPublicPublishing } =
       this.sca?.services.globalConfig?.domains?.[domain] ?? {};
 
-    const disabled = disallowPublicPublishing || panel === "updating";
+    const disabled = disallowPublicPublishing || status === "changing-visibility";
     return html`
       <div id="published-switch-container">
-        ${panel === "updating"
-          ? html`<span class="g-icon spin spinner">progress_activity</span>`
-          : nothing}
+        ${status === "changing-visibility"
+        ? html`<span class="g-icon spin spinner">progress_activity</span>`
+        : nothing}
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}
@@ -845,7 +859,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderGranularSharingModal() {
     const panel = this.#panel;
-    if (panel !== "granular" || !this.#controller.shareableFile) {
+    if (panel !== "native-share" || !this.#controller.shareableFile) {
       return nothing;
     }
     return html`

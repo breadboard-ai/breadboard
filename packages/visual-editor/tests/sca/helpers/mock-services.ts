@@ -180,6 +180,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     googleDriveBoardServer: googleDriveBoardServer ?? {
       addEventListener: () => {},
       removeEventListener: () => {},
+      graphIsFullyCreated: async () => {},
       flushSaveQueue: async () => {},
       dataPartTransformer: () => ({}),
     },

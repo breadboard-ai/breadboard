@@ -14,8 +14,9 @@ import * as ShareActions from "../../../../src/sca/actions/share/share-actions.j
 import type * as Editor from "../../../../src/sca/controller/subcontrollers/editor/editor.js";
 import {
   ShareController,
-  type SharePanelStatus,
+  type ShareStatus,
 } from "../../../../src/sca/controller/subcontrollers/editor/share-controller.js";
+import { reactive } from "../../../../src/sca/reactive.js";
 import { FakeGoogleDriveApi } from "../../helpers/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
 import { makeUrl } from "../../../../src/ui/utils/urls.js";
@@ -37,6 +38,24 @@ suite("Share Actions", () => {
   function setGraph(graph: GraphDescriptor | null): void {
     (controller.editor.graph as { graph: GraphDescriptor | null }).graph =
       graph;
+    controller.editor.graph.url = graph?.url ?? null;
+  }
+
+  /** Returns a promise that resolves when share.status becomes the target. */
+  function waitForShareStatus(target: ShareStatus): Promise<void> {
+    if (share.status === target) {
+      return Promise.resolve();
+    }
+    return new Promise<void>((resolve) => {
+      const dispose = reactive(() => {
+        if (share.status === target) {
+          queueMicrotask(() => {
+            dispose();
+            resolve();
+          });
+        }
+      });
+    });
   }
 
   before(async () => {
@@ -81,7 +100,7 @@ suite("Share Actions", () => {
         size: 0,
         entries: () => [][Symbol.iterator](),
         has: () => false,
-        put: () => {},
+        put: () => { },
         delete: () => false,
       }
     );
@@ -116,47 +135,101 @@ suite("Share Actions", () => {
     });
   });
 
-  test("open -> load -> close", async () => {
-    // Panel is initially closed
+  test("initialize fetches data, open sets panel", async () => {
+    // Panel is initially closed, status is initializing
     assert.strictEqual(share.panel, "closed");
+    assert.strictEqual(share.status, "initializing");
 
-    // User opens panel
-    const loaded = ShareActions.open();
-    assert.strictEqual(share.panel, "loading");
-    ShareActions.closePanel();
-    assert.strictEqual(share.panel, "loading");
-
-    // Finish loading
-    await loaded;
-    assert.strictEqual(share.panel, "writable");
+    // Initialize fetches data (does not open panel)
+    await ShareActions.initialize();
+    assert.strictEqual(share.panel, "closed");
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.published, false);
     assert.strictEqual(share.granularlyShared, false);
     assert.strictEqual(share.latestVersion, "1");
     assert.strictEqual(share.shareableFile, null);
     assert.strictEqual(share.userDomain, "example.com");
 
+    // User opens panel
+    await ShareActions.open();
+    assert.strictEqual(share.panel, "open");
+
     // User closes panel
     ShareActions.closePanel();
     assert.strictEqual(share.panel, "closed");
   });
 
+  test("initialize fires automatically via onGraphUrl trigger", async () => {
+    // Status is initializing before trigger is activated
+    assert.strictEqual(share.status, "initializing");
+
+    // In production, bootstrap calls activate() on all actions once at startup.
+    // Here we call it manually to set up the signal watcher that makes the
+    // trigger listen for url changes — it doesn't fire the action by itself.
+    const dispose = ShareActions.initialize.activate();
+
+    // setGraph (called in beforeEach) already set the url signal.
+    // The reactive effect evaluates on the next microtask, sees the drive: URL,
+    // and fires initialize().
+    await waitForShareStatus("ready");
+
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.ownership, "owner");
+    assert.strictEqual(share.panel, "closed");
+
+    // --- Board swap: load a second board (not owned by us) ---
+    const secondFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "second-board.bgl.json", mimeType: "application/json" }
+    );
+    fakeDriveApi.forceSetFileMetadata(secondFile.id, { ownedByMe: false });
+
+    // Pause the API so we can assert intermediate state before initialize
+    // completes.
+    fakeDriveApi.pause();
+
+    setGraph({
+      edges: [],
+      nodes: [],
+      url: `drive:/${secondFile.id}`,
+    });
+
+    // Wait for the trigger to fire — status transitions to "initializing"
+    // while the API is paused.
+    await waitForShareStatus("initializing");
+
+    assert.strictEqual(share.status, "initializing");
+
+    // Unpause the API — initialize completes and sets final state.
+    fakeDriveApi.unpause();
+    await waitForShareStatus("ready");
+
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.ownership, "non-owner");
+    assert.strictEqual(share.panel, "closed");
+
+    dispose();
+  });
+
   test("publish", async () => {
-    // Open and load to get to writable state
+    // Initialize and open
+    await ShareActions.initialize();
     await ShareActions.open();
-    assert.strictEqual(share.panel, "writable");
+    assert.strictEqual(share.panel, "open");
     assert.strictEqual(share.published, false);
 
     // Publish
     const publishPromise = ShareActions.publish();
 
-    // Verify intermediate updating state
-    assert.strictEqual(share.panel, "updating");
+    // Verify intermediate changing-visibility state
+    assert.strictEqual(share.status, "changing-visibility");
     assert.strictEqual(share.published, true);
 
     await publishPromise;
 
     // Verify state is now published
-    assert.strictEqual(share.panel, "writable");
+    assert.strictEqual(share.status, "ready");
     assert.strictEqual(share.published, true);
     assert.ok(share.shareableFile, "shareableFile should be set after publish");
     const shareableFileId = share.shareableFile.id;
@@ -226,25 +299,25 @@ suite("Share Actions", () => {
     });
     ShareActions.bind({ controller, services });
 
-    // Open and load
+    // Initialize
     setGraph(graph);
-    await ShareActions.open();
+    await ShareActions.initialize();
 
     // Verify publicPublishingAllowed is false
     assert.strictEqual(share.publicPublishingAllowed, false);
-    assert.strictEqual(share.panel, "writable");
+    assert.strictEqual(share.ownership, "owner");
 
     // Attempt to publish — should be a no-op
     await ShareActions.publish();
-    assert.strictEqual(share.panel, "writable");
+    assert.strictEqual(share.status, "ready");
     assert.strictEqual(share.published, false);
   });
 
   test("unpublish", async () => {
-    // Open, load, and publish to get to published state
-    await ShareActions.open();
+    // Initialize and publish to get to published state
+    await ShareActions.initialize();
     await ShareActions.publish();
-    assert.strictEqual(share.panel, "writable");
+    assert.strictEqual(share.status, "ready");
     assert.strictEqual(share.published, true);
     assert.ok(share.shareableFile, "shareableFile should be set after publish");
     const shareableFileId = share.shareableFile.id;
@@ -260,8 +333,8 @@ suite("Share Actions", () => {
     await ShareActions.unpublish();
 
     // Verify state is now unpublished
-    assert.strictEqual(share.panel, "writable");
-    assert.strictEqual(share.access, "writable");
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.published, false);
 
     // Verify permission was deleted from the shareable copy
@@ -292,10 +365,10 @@ suite("Share Actions", () => {
       nodes: [],
       url: `drive:/${createdFile.id}`,
     });
-    await ShareActions.open();
+    await ShareActions.initialize();
 
-    assert.strictEqual(share.panel, "readonly");
-    assert.strictEqual(share.access, "readonly");
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.ownership, "non-owner");
     assert.strictEqual(share.shareableFile?.id, createdFile.id);
     // resourceKey is auto-generated by fake, verify it exists
     assert.ok(share.shareableFile?.resourceKey, "resourceKey should be set");
@@ -328,10 +401,10 @@ suite("Share Actions", () => {
       nodes: [],
       url: `drive:/${mainFile.id}`,
     });
-    await ShareActions.open();
+    await ShareActions.initialize();
 
-    assert.strictEqual(share.panel, "readonly");
-    assert.strictEqual(share.access, "readonly");
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.ownership, "non-owner");
     // Should use the shareable copy's id and resourceKey, not the main file's
     assert.strictEqual(share.shareableFile?.id, shareableCopy.id);
     assert.ok(share.shareableFile?.resourceKey, "resourceKey should be set");
@@ -356,10 +429,10 @@ suite("Share Actions", () => {
       nodes: [],
       url: `drive:/${createdFile.id}`,
     });
-    await ShareActions.open();
+    await ShareActions.initialize();
 
-    assert.strictEqual(share.panel, "readonly");
-    assert.strictEqual(share.access, "readonly");
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.ownership, "non-owner");
     assert.strictEqual(share.shareableFile?.id, createdFile.id);
     // resourceKey is auto-generated by fake, verify it exists
     assert.ok(share.shareableFile?.resourceKey, "resourceKey should be set");
@@ -409,8 +482,8 @@ suite("Share Actions", () => {
       nodes: [],
       url: `drive:/${mainFile.id}`,
     });
-    await ShareActions.open();
-    assert.strictEqual(share.panel, "writable");
+    await ShareActions.initialize();
+    assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.stale, true);
     assert.strictEqual(share.latestVersion, "5");
 
@@ -446,8 +519,8 @@ suite("Share Actions", () => {
     );
 
     // Verify stale flag is now false
-    assert.strictEqual(share.panel, "writable");
-    assert.strictEqual(share.access, "writable");
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.stale, false);
   });
 
@@ -473,15 +546,16 @@ suite("Share Actions", () => {
 
     // Open and load - initially not published
     setGraph(graph);
+    await ShareActions.initialize();
     await ShareActions.open();
-    assert.strictEqual(share.panel, "writable");
-    assert.strictEqual(share.access, "writable");
+    assert.strictEqual(share.panel, "open");
+    assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.published, false);
     assert.strictEqual(share.granularlyShared, false);
 
     // User opens granular sharing dialog
     await ShareActions.viewSharePermissions();
-    assert.strictEqual(share.panel, "granular");
+    assert.strictEqual(share.panel, "native-share");
 
     // Simulate user adding individual permission via the native Drive share dialog
     // We add the permission directly to the fake
@@ -499,13 +573,13 @@ suite("Share Actions", () => {
     await ShareActions.onGoogleDriveSharePanelClose();
 
     // We should now be granularly shared, but not published
-    assert.strictEqual(share.panel, "writable");
+    assert.strictEqual(share.panel, "open");
     assert.strictEqual(share.granularlyShared, true);
     assert.strictEqual(share.published, false);
 
     // User opens granular sharing again
     await ShareActions.viewSharePermissions();
-    assert.strictEqual(share.panel, "granular");
+    assert.strictEqual(share.panel, "native-share");
 
     // User adds domain permission
     await googleDriveClient.createPermission(
@@ -522,9 +596,73 @@ suite("Share Actions", () => {
     await ShareActions.onGoogleDriveSharePanelClose();
 
     // We should now be granularly shared and published
-    assert.strictEqual(share.panel, "writable");
+    assert.strictEqual(share.panel, "open");
     assert.strictEqual(share.granularlyShared, true);
     assert.strictEqual(share.published, true);
+  });
+
+  test("closing native share dialog shows updating indicator, not initializing flash", async () => {
+    // Set up an initialized board with share panel open.
+    await ShareActions.initialize();
+    await ShareActions.open();
+    assert.strictEqual(share.panel, "open");
+    assert.strictEqual(share.status, "ready");
+
+    // Open the native sharing dialog.
+    await ShareActions.viewSharePermissions();
+    assert.strictEqual(share.panel, "native-share");
+
+    // Pause the API so we can observe intermediate state.
+    fakeDriveApi.pause();
+
+    const closePromise = ShareActions.onGoogleDriveSharePanelClose();
+
+    // While API is paused, status should be "syncing-native-share".
+    assert.strictEqual(share.status, "syncing-native-share");
+    assert.strictEqual(share.panel, "open");
+
+    // Let the API respond.
+    fakeDriveApi.unpause();
+    await closePromise;
+
+    // Back to idle after completion.
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.panel, "open");
+  });
+
+  test("viewSharePermissions shows syncing-native-share while creating shareable copy", async () => {
+    await ShareActions.initialize();
+    await ShareActions.open();
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.shareableFile, null);
+
+    // Pause the API so we can observe the intermediate "syncing-native-share" status
+    // while makeShareableCopy is in-flight.
+    fakeDriveApi.pause();
+
+    const viewPromise = ShareActions.viewSharePermissions();
+
+    // While the shareable copy is being created, status should be "syncing-native-share".
+    assert.strictEqual(share.status, "syncing-native-share");
+
+    // Let the API respond and finish creation.
+    fakeDriveApi.unpause();
+    await viewPromise;
+
+    // After completion, status is idle and the native dialog is shown.
+    assert.strictEqual(share.status, "ready");
+    assert.strictEqual(share.panel, "native-share");
+    assert.ok(share.shareableFile !== null, "shareableFile should be populated");
+
+    // Close and re-open — this time the copy already exists, so no loading.
+    await ShareActions.onGoogleDriveSharePanelClose();
+    assert.strictEqual(share.status, "ready");
+
+    // Second viewSharePermissions should NOT show "syncing-native-share" since copy exists.
+    await ShareActions.viewSharePermissions();
+    assert.strictEqual(share.panel, "native-share");
+    // Status stayed idle the whole time (no create needed).
+    assert.strictEqual(share.status, "ready");
   });
 
   test("managed assets get permissions synced during publish", async () => {
@@ -591,11 +729,10 @@ suite("Share Actions", () => {
       },
     };
 
-    // Open and load
+    // Initialize
     setGraph(graph);
-    await ShareActions.open();
-    assert.strictEqual(share.panel, "writable");
-    assert.strictEqual(share.access, "writable");
+    await ShareActions.initialize();
+    assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.published, false);
 
     // Publish
@@ -692,21 +829,25 @@ suite("Share Actions", () => {
       },
     };
 
-    // Open and load
+    // Initialize and open
     setGraph(graph);
+    await ShareActions.initialize();
     await ShareActions.open();
-    assert.strictEqual(share.panel, "writable");
-    assert.strictEqual(share.access, "writable");
+    assert.strictEqual(share.panel, "open");
+    assert.strictEqual(share.ownership, "owner");
 
     // Start publish - this will detect the unmanaged asset and pause
     const publishPromise = ShareActions.publish();
 
-    // Wait for the panel to transition to unmanaged-assets (polling to avoid race condition)
+    // Wait for the unmanaged asset problems to be populated
     for (let i = 0; i < 100; i++) {
-      if ((share.panel as SharePanelStatus) === "unmanaged-assets") break;
+      if (share.unmanagedAssetProblems.length > 0) break;
       await new Promise((r) => setTimeout(r, 10));
     }
-    assert.strictEqual(share.panel, "unmanaged-assets");
+    // Panel stays in "changing-visibility" state; unmanaged-assets view is driven by
+    // the problems array, not panel state.
+    assert.strictEqual(share.status, "changing-visibility");
+    assert.ok(share.unmanagedAssetProblems.length > 0);
 
     // Verify we have both problems - one missing, one cant-share
     const missingProblem = share.unmanagedAssetProblems.find(
@@ -720,8 +861,14 @@ suite("Share Actions", () => {
     assert.strictEqual(missingProblem.asset.id, unmanagedAsset.id);
     assert.strictEqual(cantShareProblem.asset.id, cantShareAsset.id);
 
-    // Fix the unmanaged asset problems
-    await ShareActions.fixUnmanagedAssetProblems();
+    // Fix the unmanaged asset problems — status transitions to syncing-assets.
+    const fixPromise = ShareActions.fixUnmanagedAssetProblems();
+    assert.strictEqual(
+      share.status,
+      "syncing-assets",
+      "Status should be syncing-assets while asset permissions are being fixed"
+    );
+    await fixPromise;
 
     // Wait for publish to complete
     await publishPromise;
@@ -754,12 +901,139 @@ suite("Share Actions", () => {
     );
   });
 
+  test("closePanel is blocked while unmanaged asset problems are pending", async () => {
+    // Create the main file
+    const mainFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "main-file.bgl.json", mimeType: "application/json" }
+    );
+
+    // Create an unmanaged asset
+    const unmanagedAsset = await googleDriveClient.createFile(
+      new Blob(["asset data"]),
+      { name: "unmanaged-asset.bin", mimeType: "application/octet-stream" }
+    );
+    fakeDriveApi.forceSetFileMetadata(unmanagedAsset.id, {
+      name: "My Unmanaged File",
+      iconLink: "https://example.com/icon.png",
+      capabilities: { canShare: true },
+    });
+
+    const graph = {
+      edges: [],
+      nodes: [],
+      url: `drive:/${mainFile.id}`,
+      assets: {
+        "asset-1": makeAsset(
+          `drive:/${unmanagedAsset.id}`,
+          false,
+          "unmanaged-asset"
+        ),
+      },
+    };
+
+    setGraph(graph);
+    await ShareActions.initialize();
+    await ShareActions.open();
+    assert.strictEqual(share.panel, "open");
+
+    // Start publish — will pause on unmanaged assets
+    const publishPromise = ShareActions.publish();
+
+    // Wait for problems to appear
+    for (let i = 0; i < 100; i++) {
+      if (share.unmanagedAssetProblems.length > 0) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    assert.ok(share.unmanagedAssetProblems.length > 0);
+
+    // Try to close panel — should be blocked
+    await ShareActions.closePanel();
+    assert.strictEqual(
+      share.status,
+      "changing-visibility",
+      "Status should still be changing-visibility (close blocked)"
+    );
+
+    // Dismiss to unblock publish.
+    await ShareActions.dismissUnmanagedAssetProblems();
+    await publishPromise;
+  });
+
+  test("dismissUnmanagedAssetProblems resolves without fixing permissions", async () => {
+    // Create the main file
+    const mainFile = await googleDriveClient.createFile(
+      new Blob(["{}"], { type: "application/json" }),
+      { name: "main-file.bgl.json", mimeType: "application/json" }
+    );
+
+    // Create an unmanaged asset with missing permissions
+    const unmanagedAsset = await googleDriveClient.createFile(
+      new Blob(["asset data"]),
+      { name: "unmanaged-asset.bin", mimeType: "application/octet-stream" }
+    );
+    fakeDriveApi.forceSetFileMetadata(unmanagedAsset.id, {
+      name: "My Unmanaged File",
+      iconLink: "https://example.com/icon.png",
+      capabilities: { canShare: true },
+    });
+
+    const graph = {
+      edges: [],
+      nodes: [],
+      url: `drive:/${mainFile.id}`,
+      assets: {
+        "asset-1": makeAsset(
+          `drive:/${unmanagedAsset.id}`,
+          false,
+          "unmanaged-asset"
+        ),
+      },
+    };
+
+    setGraph(graph);
+    await ShareActions.initialize();
+
+    // Start publish — will pause on unmanaged assets
+    const publishPromise = ShareActions.publish();
+
+    // Wait for problems to appear
+    for (let i = 0; i < 100; i++) {
+      if (share.unmanagedAssetProblems.length > 0) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    assert.ok(share.unmanagedAssetProblems.length > 0);
+
+    // Dismiss (ignore) instead of fixing
+    await ShareActions.dismissUnmanagedAssetProblems();
+    await publishPromise;
+
+    // After publish completes, problems are cleared. Dismiss is per-publish-
+    // attempt — the same problems will be re-detected on the next publish.
+    assert.strictEqual(share.unmanagedAssetProblems.length, 0);
+
+    // The unmanaged asset should NOT have received permissions
+    const assetMeta = await googleDriveClient.getFileMetadata(
+      unmanagedAsset.id,
+      { fields: ["permissions"] }
+    );
+    const domainPerm = assetMeta.permissions?.find(
+      (p) => p.type === "domain" && p.domain === "example.com"
+    );
+    assert.strictEqual(
+      domainPerm,
+      undefined,
+      "Dismissed asset should NOT have received domain permission"
+    );
+  });
+
   test("reset() restores all fields to their defaults", () => {
     const share = new ShareController("test", "test");
 
     // Dirty every field
-    share.panel = "writable";
-    share.access = "writable";
+    share.panel = "open";
+    share.status = "ready";
+    share.ownership = "owner";
     share.published = true;
     share.stale = true;
     share.granularlyShared = true;
@@ -783,7 +1057,8 @@ suite("Share Actions", () => {
     share.reset();
 
     assert.strictEqual(share.panel, "closed");
-    assert.strictEqual(share.access, "unknown");
+    assert.strictEqual(share.status, "initializing");
+    assert.strictEqual(share.ownership, "unknown");
     assert.strictEqual(share.published, false);
     assert.strictEqual(share.stale, false);
     assert.strictEqual(share.granularlyShared, false);

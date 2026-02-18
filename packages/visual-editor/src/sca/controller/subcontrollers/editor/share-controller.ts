@@ -14,25 +14,38 @@ import { RootController } from "../root-controller.js";
 export type UnmanagedAssetProblem = {
   asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
 } & (
-  | { problem: "cant-share" }
-  | { problem: "missing"; missing: gapi.client.drive.Permission[] }
-);
+    | { problem: "cant-share" }
+    | { problem: "missing"; missing: gapi.client.drive.Permission[] }
+  );
 
-export type SharePanelStatus =
-  | "closed"
-  | "loading"
-  | "readonly"
-  | "writable"
-  | "updating"
-  | "granular"
-  | "unmanaged-assets";
+export type SharePanelStatus = "closed" | "open" | "native-share";
+
+export type ShareStatus =
+  /** Fetching basic share state (ownership, permissions) on board load. */
+  | "initializing"
+  /** Nothing in progress. */
+  | "ready"
+  /** Creating the shareable copy before opening the native Drive share dialog,
+   *  or re-reading permissions after the user closes it. */
+  | "syncing-native-share"
+  /** Publishing, unpublishing, or changing the visibility dropdown. */
+  | "changing-visibility"
+  /** Updating the shareable copy with the latest board content. */
+  | "publishing-stale"
+  /** Syncing asset permissions after the user approves fixing unmanaged assets. */
+  | "syncing-assets"
+  /** An error occurred. */
+  | "error";
 
 export class ShareController extends RootController {
+  @field()
+  accessor status: ShareStatus = "initializing";
+
   @field()
   accessor panel: SharePanelStatus = "closed";
 
   @field()
-  accessor access: "unknown" | "readonly" | "writable" = "unknown";
+  accessor ownership: "unknown" | "owner" | "non-owner" = "unknown";
 
   @field()
   accessor published = false;
@@ -74,7 +87,8 @@ export class ShareController extends RootController {
    */
   reset() {
     this.panel = "closed";
-    this.access = "unknown";
+    this.status = "initializing";
+    this.ownership = "unknown";
     this.published = false;
     this.stale = false;
     this.granularlyShared = false;

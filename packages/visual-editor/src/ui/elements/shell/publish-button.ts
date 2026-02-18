@@ -83,7 +83,7 @@ export class PublishButton extends SignalWatcher(LitElement) {
 
       .spinner {
         animation: spin 1s linear infinite;
-        color: #575B5F;
+        color: #575b5f;
       }
     `,
   ];
@@ -99,17 +99,20 @@ export class PublishButton extends SignalWatcher(LitElement) {
     return html`
       <button
         class=${classMap({
-          "sans-flex": true,
-          round: true,
-          "w-500": true,
-          "has-red-dot": this.#hasRedDot,
-        })}
+      "sans-flex": true,
+      round: true,
+      "w-500": true,
+      "has-red-dot": this.#hasRedDot,
+    })}
         ?disabled=${this.#isDisabled}
       >
-        <span class=${classMap({
-          "g-icon": true,
-          spinner: this.#isPublishing,
-        })}>${this.#icon}</span>
+        <span
+          class=${classMap({
+      "g-icon": true,
+      spinner: this.#isPublishing,
+    })}
+          >${this.#icon}</span
+        >
         ${this.#label}
       </button>
     `;
@@ -126,7 +129,7 @@ export class PublishButton extends SignalWatcher(LitElement) {
   }
 
   get #isPublishing() {
-    return this.#share?.panel === "updating";
+    return this.#share?.status === "publishing-stale";
   }
 
   get #label() {
@@ -136,7 +139,6 @@ export class PublishButton extends SignalWatcher(LitElement) {
   get #icon() {
     return this.#isPublishing ? "progress_activity" : "cloud_upload";
   }
-
 }
 
 declare global {
