@@ -264,6 +264,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         & h1 {
           --outer-border: oklch(from var(--ui-asset) calc(l - 0.2) c h);
           background: var(--ui-asset);
+          color: var(--n-0);
+        }
+        & input {
+          color: var(--n-0);
         }
 
         bb-llm-output {
