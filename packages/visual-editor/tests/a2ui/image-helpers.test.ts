@@ -6,6 +6,8 @@
 
 import assert from "node:assert";
 import { suite, test, beforeEach, afterEach, mock } from "node:test";
+import { setDOM, unsetDOM } from "../fake-dom.js";
+
 import {
   toImageBlob,
   triggerDownload,
@@ -15,11 +17,13 @@ import {
 
 suite("toImageBlob", () => {
   beforeEach(() => {
+    setDOM();
     resetForTesting();
   });
 
   afterEach(() => {
     mock.restoreAll();
+    unsetDOM();
   });
 
   test("resolves with a PNG blob after drawing the image", async () => {
@@ -147,11 +151,13 @@ suite("toImageBlob", () => {
 
 suite("triggerDownload", () => {
   beforeEach(() => {
+    setDOM();
     resetForTesting();
   });
 
   afterEach(() => {
     mock.restoreAll();
+    unsetDOM();
   });
 
   test("converts to blob URL, creates anchor, clicks, and revokes", async () => {
@@ -251,11 +257,13 @@ suite("triggerDownload", () => {
 
 suite("triggerClipboardCopy", () => {
   beforeEach(() => {
+    setDOM();
     resetForTesting();
   });
 
   afterEach(() => {
     mock.restoreAll();
+    unsetDOM();
   });
 
   test("converts to blob and writes to clipboard", async () => {
