@@ -80,6 +80,10 @@ export class Toast extends SignalWatcher(LitElement) {
 
       .g-icon {
         margin-right: var(--bb-grid-size-2);
+
+        .rotate {
+          animation: rotate 1s linear infinite;
+        }
       }
 
       @keyframes slideIn {
@@ -103,6 +107,16 @@ export class Toast extends SignalWatcher(LitElement) {
         to {
           transform: translateY(-20px);
           opacity: 0;
+        }
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
         }
       }
     `,

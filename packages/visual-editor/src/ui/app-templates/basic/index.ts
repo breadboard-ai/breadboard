@@ -20,7 +20,7 @@ import {
   AppTemplateOptions,
   FloatingInputFocusState,
 } from "../../types/types.js";
-import { SnackType } from "../../../sca/types.js";
+import { SnackType, ToastType } from "../../../sca/types.js";
 
 // Custom Elements for the App.
 import "./a2ui-custom-elements/index.js";
@@ -324,7 +324,23 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         }
 
         activityContents = html`<section id="surfaces">
-          <bb-a2ui-client-view .processor=${processor} .receiver=${receiver}>
+          <bb-a2ui-client-view
+            .processor=${processor}
+            .receiver=${receiver}
+            @a2uistatus=${(evt: v0_8.Events.StateEvent<"a2ui.status">) => {
+              const STATUS_TO_TOAST: Record<string, ToastType> = {
+                pending: ToastType.PENDING,
+                success: ToastType.INFORMATION,
+                error: ToastType.ERROR,
+              };
+              this.sca.controller.global.toasts.toast(
+                evt.detail.message,
+                STATUS_TO_TOAST[evt.detail.status] ?? ToastType.INFORMATION,
+                false,
+                evt.detail.id
+              );
+            }}
+          >
           </bb-a2ui-client-view>
         </section>`;
       }

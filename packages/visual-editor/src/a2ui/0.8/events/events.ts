@@ -40,27 +40,38 @@ type EnforceEventTypeMatch<T extends Record<string, BaseEventDetail<string>>> =
  */
 export type StateEventDetailMap = EnforceEventTypeMatch<{
   "a2ui.action": A2UI.A2UIAction;
+  "a2ui.status": A2UI.A2UIStatus;
 }>;
 
 /**
- * Typed custom event for A2UI user interactions.
+ * Converts an event type key like `"a2ui.action"` into a DOM event name
+ * like `"a2uiaction"` (strips dots).
+ */
+function toEventName(eventType: string): string {
+  return eventType.replaceAll(".", "");
+}
+
+/**
+ * Typed custom event for A2UI interactions.
  *
- * Dispatched by interactive components (e.g. Button) and registered globally
- * on `HTMLElementEventMap` as `"a2uiaction"`. The event bubbles, is composed
- * (crosses shadow boundaries), and is cancelable.
+ * Dispatched by interactive components (e.g. Button, Image) and registered
+ * globally on `HTMLElementEventMap`. The DOM event name is derived from
+ * the event type (e.g. `"a2ui.action"` → `"a2uiaction"`).
+ *
+ * The event bubbles, is composed (crosses shadow boundaries), and is
+ * cancelable.
  */
 export class StateEvent<
   T extends keyof StateEventDetailMap,
 > extends CustomEvent<StateEventDetailMap[T]> {
-  static eventName = "a2uiaction";
-
   constructor(readonly payload: StateEventDetailMap[T]) {
-    super(StateEvent.eventName, { detail: payload, ...eventInit });
+    super(toEventName(payload.eventType), { detail: payload, ...eventInit });
   }
 }
 
 declare global {
   interface HTMLElementEventMap {
     a2uiaction: StateEvent<"a2ui.action">;
+    a2uistatus: StateEvent<"a2ui.status">;
   }
 }
