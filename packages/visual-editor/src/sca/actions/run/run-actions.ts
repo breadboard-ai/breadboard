@@ -462,9 +462,19 @@ export const onNodeEndAction = asAction(
     const nodeId = detail.node.id;
     const existing = controller.run.main.console.get(nodeId);
     if (existing) {
-      // Populate the output map for completed step display.
       const { outputs } = detail;
-      if (outputs && !("$error" in outputs)) {
+      const hasFailed = outputs && "$error" in outputs;
+
+      if (hasFailed) {
+        // Extract error message from the $error field.
+        const errorData = outputs.$error;
+        const message =
+          typeof errorData === "string"
+            ? errorData
+            : ((errorData as { message?: string })?.message ?? "Unknown error");
+        existing.error = { message };
+      } else if (outputs) {
+        // Populate the output map for completed step display.
         const inspectable = controller.editor.graph.get()?.graphs.get("");
         const node = inspectable?.nodeById(nodeId);
         const outputSchema = node?.currentDescribe()?.outputSchema ?? {};
@@ -476,10 +486,19 @@ export const onNodeEndAction = asAction(
 
       controller.run.main.setConsoleEntry(nodeId, {
         ...existing,
-        status: { status: "succeeded" },
+        status: hasFailed
+          ? { status: "failed", errorMessage: existing.error!.message }
+          : { status: "succeeded" },
         completed: true,
       });
-      controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
+      if (hasFailed) {
+        controller.run.renderer.setNodeState(nodeId, {
+          status: "failed",
+          errorMessage: existing.error!.message,
+        });
+      } else {
+        controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
+      }
     }
 
     // Finalize or delete screen based on node state
