@@ -971,7 +971,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
             class="bb-button-filled"
             @click=${this.#onClickDismissUnmanagedAssetProblems}
           >
-            Confirm
+            I understand
           </button>
         </div>
       `);
