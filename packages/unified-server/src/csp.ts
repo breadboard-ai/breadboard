@@ -111,6 +111,10 @@ export const MAIN_APP_CSP = {
     "data:",
     "https://*.google.com",
     "https://*.google-analytics.com",
+    // The main app runs in a guest iframe (e.g. guest.localhost:3100), but
+    // needs to reach the drive proxy on the shell host (e.g. localhost:3100)
+    // to load gallery thumbnails and other Drive-backed content.
+    ...flags.SHELL_HOST_ORIGINS,
   ],
   ["frame-src"]: [
     "'self'",

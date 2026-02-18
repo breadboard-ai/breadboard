@@ -24,7 +24,6 @@ import {
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 import {
-  extractGoogleDriveFileId,
   findGoogleDriveAssetsInGraph,
   readProperties,
   type AppProperties,
@@ -51,8 +50,7 @@ export { GoogleDriveBoardServer };
 // Good use case.
 class GoogleDriveBoardServer
   extends (EventTarget as BoardServerEventTarget)
-  implements BoardServer
-{
+  implements BoardServer {
   static PROTOCOL = PROTOCOL;
 
   public readonly url = new URL(PROTOCOL);
@@ -136,25 +134,13 @@ class GoogleDriveBoardServer
       galleryGraphs ??
       new DriveGalleryGraphCollection(
         signInInfo,
-        googleDriveClient.fetchWithCreds
+        googleDriveClient.fetchWithCreds,
+        googleDriveClient
       );
     this.userGraphs = userGraphs ?? new DriveUserGraphCollection(listUserOpals);
   }
 
   #saving = new Map<string, SaveDebouncer>();
-
-  #googleDriveClientSeeded?: Promise<void>;
-  async #seedGoogleDriveClientWithFeaturedGraphIdsOnce() {
-    return (this.#googleDriveClientSeeded ??= (async () => {
-      await this.galleryGraphs.loaded;
-      for (const [, graph] of this.galleryGraphs.entries()) {
-        const driveId = extractGoogleDriveFileId(graph.url);
-        if (driveId) {
-          this.#googleDriveClient.markFileForReadingWithPublicProxy(driveId);
-        }
-      }
-    })());
-  }
 
   /**
    * See {@link GoogleDriveBoardServer.#pendingCreates} for explanation.
@@ -216,7 +202,7 @@ class GoogleDriveBoardServer
       id: getFileId(url.href),
       resourceKey: url.searchParams.get("resourcekey") ?? undefined,
     };
-    await this.#seedGoogleDriveClientWithFeaturedGraphIdsOnce();
+    await this.galleryGraphs.loaded;
     const [metadata, media, isGalleryGraph] = await Promise.all([
       this.#googleDriveClient
         .getFileMetadata(fileId, { fields: ["ownedByMe", "properties"] })
@@ -251,7 +237,7 @@ class GoogleDriveBoardServer
     } else {
       throw new Error(
         `Received ${media.status} error loading graph from Google Drive` +
-          ` with file id ${JSON.stringify(fileId)}: ${await media.text()}`
+        ` with file id ${JSON.stringify(fileId)}: ${await media.text()}`
       );
     }
   }

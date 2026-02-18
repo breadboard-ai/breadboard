@@ -11,7 +11,11 @@ import type {
 import { OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 import type { NarrowedDriveFile } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import {
+  extractGoogleDriveFileId,
+  readProperties,
+} from "@breadboard-ai/utils/google-drive/utils.js";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { parseUrl } from "../ui/utils/urls.js";
@@ -48,7 +52,8 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
 
   constructor(
     private readonly signInInfo: SignInInfo,
-    private readonly fetchWithCreds: typeof globalThis.fetch
+    private readonly fetchWithCreds: typeof globalThis.fetch,
+    private readonly googleDriveClient: GoogleDriveClient
   ) {
     void this.#initialize();
   }
@@ -96,16 +101,27 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     for (const file of files) {
       const url = `drive:/${file.id}`;
       const properties = readProperties(file);
+      const thumbnail = properties.thumbnailUrl;
       this.#graphs.set(url, {
         url,
         title: file.name,
         description: properties.description,
-        thumbnail: properties.thumbnailUrl,
+        thumbnail,
         mine: false,
         readonly: true,
         handle: null,
         metadata: { liteModeFeaturedIndex: file.liteModeFeaturedIndex },
       });
+
+      // Mark both the graph file ID and the thumbnail image file ID for
+      // public proxy reading.
+      this.googleDriveClient.markFileForReadingWithPublicProxy(file.id);
+      const thumbFileId = thumbnail
+        ? extractGoogleDriveFileId(thumbnail)
+        : undefined;
+      if (thumbFileId) {
+        this.googleDriveClient.markFileForReadingWithPublicProxy(thumbFileId);
+      }
     }
     this.#loading = false;
     this.#loaded.resolve();
