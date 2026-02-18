@@ -67,6 +67,20 @@ export function onTopologyChange(bind: ActionBind): SignalTrigger {
   });
 }
 
+/**
+ * Creates a trigger that fires when a run is stopped.
+ * Used to re-prepare the runner so the console is repopulated with "inactive"
+ * entries and the Start button stays active after stop.
+ */
+export function onRunStopped(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Run Stopped (Re-prepare)", () => {
+    const { controller } = bind;
+    const v = controller.run.main.stopVersion;
+    // +1 so version 0 isn't falsy (same pattern as other version triggers).
+    return v > 0 ? v + 1 : false;
+  });
+}
+
 // =============================================================================
 // Runner Event Triggers
 // =============================================================================

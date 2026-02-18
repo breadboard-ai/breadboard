@@ -194,4 +194,5 @@ export function stopRun(controller: AppController): void {
   run.screen.reset();
   run.renderer.reset();
   run.main.setStatus(STATUS.STOPPED);
+  run.main.bumpStopVersion();
 }

@@ -178,6 +178,7 @@ suite("onFlowgenGenerate", () => {
     runMain.setStatus = (status: string) => {
       runMocks.setStatusCalled = status;
     };
+    runMain.bumpStopVersion = () => {};
     // Ensure screen and renderer have reset
     (controller.run.screen as unknown as Record<string, unknown>).reset ??=
       () => {};
