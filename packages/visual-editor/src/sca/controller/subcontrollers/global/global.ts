@@ -12,6 +12,7 @@ export { StatusUpdatesController } from "./status-updates-controller.js";
 export { ToastController } from "./toast-controller.js";
 export { FlagController } from "./flag-controller.js";
 export { FlowgenInputController } from "./flowgen-input-controller.js";
+export { OnboardingController } from "./onboarding-controller.js";
 export { ScreenSizeController } from "./screen-size-controller.js";
 
 import { SubscriptionStatus, UILoadState, UIOverlays } from "../../../types.js";

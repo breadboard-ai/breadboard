@@ -469,6 +469,21 @@ export interface DebuggableAppController {
   };
 }
 
+/** Modes an onboarding item can appear in. */
+export type OnboardingMode = "lite" | "standalone" | "both";
+
+/** Descriptor for a single onboarding item in the registry. */
+export interface OnboardingItemDescriptor {
+  /** Unique stable ID, used as the persistence key. */
+  id: string;
+  /** Which mode(s) this item applies to. */
+  mode: OnboardingMode;
+  /** Strings key for the tooltip text. Resolved via Strings.from(). */
+  textKey: string;
+  /** Optional Strings key for the tooltip title. */
+  titleKey?: string;
+}
+
 export type PrimitiveType =
   | string
   | number

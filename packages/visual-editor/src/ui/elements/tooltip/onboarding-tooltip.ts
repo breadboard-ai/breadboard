@@ -9,14 +9,26 @@ import { icons } from "../../styles/icons.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { OnboardingAcknowledgedEvent } from "../../events/events.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
+import * as StringsHelper from "../../strings/helper.js";
+
+const Strings = StringsHelper.forSection("Global");
 
 @customElement("bb-onboarding-tooltip")
-export class OnboardingTooltip extends LitElement {
-  @property()
-  accessor tooltipTitle: string | null = null;
+export class OnboardingTooltip extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
+  /**
+   * The onboarding item ID from the registry.
+   * When set, text and title are pulled from the OnboardingController,
+   * and the tooltip self-hides when the item is dismissed.
+   */
   @property()
-  accessor text: string | null = null;
+  accessor onboardingId: string | null = null;
 
   @property({ reflect: true, type: Boolean })
   accessor delayed = false;
@@ -37,11 +49,17 @@ export class OnboardingTooltip extends LitElement {
       }
 
       :host {
-        user-select: none;
-        cursor: auto;
         position: absolute;
         right: var(--right, -12px);
         top: var(--top, calc(100% + var(--bb-grid-size-8)));
+        pointer-events: none;
+      }
+
+      .container {
+        pointer-events: auto;
+        user-select: none;
+        cursor: auto;
+        position: relative;
         background: var(--light-dark-n-0);
         color: var(--light-dark-n-100);
         border-radius: var(--bb-grid-size-5);
@@ -54,7 +72,7 @@ export class OnboardingTooltip extends LitElement {
         animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1) 0s 1 backwards;
       }
 
-      :host([delayed]) {
+      :host([delayed]) .container {
         animation-delay: 1s;
       }
 
@@ -65,13 +83,18 @@ export class OnboardingTooltip extends LitElement {
         margin: 0 0 var(--bb-grid-size-3) 0;
       }
 
-      span {
+      button {
         cursor: pointer;
-        font-weight: bold;
+        font-weight: 500;
         align-self: flex-end;
+        background: none;
+        padding: 0;
+        margin: 0;
+        border: none;
+        color: var(--light-dark-n-100);
       }
 
-      :host::after {
+      .container::after {
         content: "";
         position: absolute;
         width: 20px;
@@ -86,23 +109,23 @@ export class OnboardingTooltip extends LitElement {
       :host([stackright]) {
         right: auto;
         left: var(--left, -12px);
+      }
 
-        &::after {
-          left: 16px;
-          right: auto;
-        }
+      :host([stackright]) .container::after {
+        left: 16px;
+        right: auto;
       }
 
       :host([stacktop]) {
         transform: translateY(-100%);
-
-        &::after {
-          top: auto;
-          bottom: -6px;
-        }
       }
 
-      :host::before {
+      :host([stacktop]) .container::after {
+        top: auto;
+        bottom: -6px;
+      }
+
+      .container::before {
         content: "";
         position: absolute;
         width: 100%;
@@ -142,33 +165,59 @@ export class OnboardingTooltip extends LitElement {
   }
 
   #renderTitle() {
-    if (!this.tooltipTitle) {
+    const item = this.onboardingId
+      ? this.sca.controller.global.onboarding.getItem(this.onboardingId)
+      : null;
+
+    if (!item?.titleKey) {
       return nothing;
     }
 
-    return html`<h1 class="md-label-large">${this.tooltipTitle}</h1>`;
+    return html`<h1 class="md-label-large">${Strings.from(item.titleKey)}</h1>`;
   }
 
   #renderText() {
-    if (!this.text) {
+    const item = this.onboardingId
+      ? this.sca.controller.global.onboarding.getItem(this.onboardingId)
+      : null;
+
+    if (!item?.textKey) {
       return nothing;
     }
 
-    return html`<p class="md-body-medium">${this.text}</p>`;
+    return html`<p class="md-body-medium sans">
+      ${Strings.from(item.textKey)}
+    </p>`;
   }
 
   #renderButton() {
-    return html`<span
-      aria-role="button"
+    return html`<button
+      class="md-body-medium sans"
       @click=${(evt: Event) => {
         this.#onClickBound(evt);
+
+        if (this.onboardingId) {
+          this.sca.controller.global.onboarding.dismiss(this.onboardingId);
+        }
+
         this.dispatchEvent(new OnboardingAcknowledgedEvent());
       }}
-      >Got it</span
-    >`;
+    >
+      Got it
+    </button>`;
   }
 
   render() {
-    return [this.#renderTitle(), this.#renderText(), this.#renderButton()];
+    // Only render when this item is the current sequential item for the app's mode.
+    if (
+      this.onboardingId &&
+      !this.sca.controller.global.onboarding.isCurrentItem(this.onboardingId)
+    ) {
+      return nothing;
+    }
+
+    return html`<div class="container">
+      ${this.#renderTitle()}${this.#renderText()}${this.#renderButton()}
+    </div>`;
   }
 }

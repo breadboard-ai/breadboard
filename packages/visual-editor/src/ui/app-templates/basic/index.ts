@@ -107,7 +107,6 @@ function getHTMLOutput(screen: AppScreenOutput): string | null {
 }
 
 const parsedUrl = parseUrl(window.location.href);
-const FIRST_RUN_KEY = "bb-first-run-warning";
 
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
@@ -193,22 +192,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @query("#export-output-button")
   accessor exportOutputsButton: HTMLButtonElement | null = null;
 
-  @property()
-  accessor shouldShowFirstRunMessage = false;
-
-  @property()
-  accessor firstRunMessage = Strings.from("LABEL_FIRST_RUN");
-
-  @state()
-  set showFirstRunMessage(show: boolean) {
-    this.#showFirstRunMessage = show;
-    globalThis.localStorage.setItem(FIRST_RUN_KEY, String(show));
-  }
-  get showFirstRunMessage() {
-    return this.#showFirstRunMessage;
-  }
-  #showFirstRunMessage = false;
-
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
   get additionalOptions() {
@@ -234,9 +217,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   constructor() {
     super();
-
-    this.showFirstRunMessage =
-      (globalThis.localStorage.getItem(FIRST_RUN_KEY) ?? "true") === "true";
   }
 
   #renderControls() {
@@ -1028,8 +1008,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 id="run"
                 class=${classMap({ invisible: this.isFreshGraph })}
                 @click=${() => {
-                  this.showFirstRunMessage = false;
-
                   this.sca.services.actionTracker?.runApp(
                     this.graph?.url,
                     "app_preview"
@@ -1044,19 +1022,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                   ? "Updating..."
                   : "Start"}
               </button>
-              ${this.shouldShowFirstRunMessage &&
-              this.showFirstRunMessage &&
-              !this.isFreshGraph
+              ${!this.isFreshGraph
                 ? html`<bb-onboarding-tooltip
-                    @bbonboardingacknowledged=${() => {
-                      this.showFirstRunMessage = false;
-                    }}
+                    .onboardingId=${"first-run"}
                     style=${styleMap({
-                      "--top": `-12px`,
-                      "--right": "8px",
+                      "--top": `-24px`,
+                      "--right": "0px",
                     })}
                     .stackTop=${true}
-                    .text=${this.firstRunMessage}
                   ></bb-onboarding-tooltip>`
                 : nothing}
             </div>

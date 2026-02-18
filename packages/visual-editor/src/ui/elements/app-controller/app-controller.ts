@@ -140,38 +140,6 @@ export class AppController extends SignalWatcher(LitElement) {
   }
 
   @property()
-  set shouldShowFirstRunMessage(showFirstRunMessage: boolean) {
-    if (!this.#appTemplate) {
-      return;
-    }
-
-    this.#appTemplate.shouldShowFirstRunMessage = showFirstRunMessage;
-  }
-  get shouldShowFirstRunMessage() {
-    if (!this.#appTemplate) {
-      return false;
-    }
-
-    return this.#appTemplate.showFirstRunMessage;
-  }
-
-  @property()
-  set firstRunMessage(firstRunMessage: string) {
-    if (!this.#appTemplate) {
-      return;
-    }
-
-    this.#appTemplate.firstRunMessage = firstRunMessage;
-  }
-  get firstRunMessage() {
-    if (!this.#appTemplate) {
-      return "";
-    }
-
-    return this.#appTemplate.firstRunMessage;
-  }
-
-  @property()
   set isFreshGraph(refreshing: boolean) {
     if (!this.#appTemplate) {
       return;
