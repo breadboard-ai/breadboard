@@ -268,7 +268,7 @@ class Main extends MainBase {
 
   #renderAppController(renderValues: RenderValues) {
     const gc = this.sca.controller.editor.graph;
-    const graphIsEmpty = gc.empty;
+    const graphContentState = gc.graphContentState;
     const active =
       this.sca.controller.global.main.mode === "app" &&
       this.sca.controller.global.main.loadState !== "Home";
@@ -276,7 +276,7 @@ class Main extends MainBase {
     return html`<bb-app-controller
       class=${classMap({ active })}
       .graph=${gc.graph ?? null}
-      .graphIsEmpty=${graphIsEmpty}
+      .graphContentState=${graphContentState}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
       .isMine=${!gc.readOnly}
       .readOnly=${true}
@@ -556,7 +556,7 @@ class Main extends MainBase {
         : false}
       .saveStatus=${renderValues.saveStatus}
       .mode=${this.sca.controller.global.main.mode}
-      .graphIsEmpty=${gc.empty}
+      .graphContentState=${gc.graphContentState}
       @bbsignout=${async () => {
         await this.sca.services.signinAdapter.signOut();
         this.sca.services.actionTracker.signOutSuccess();

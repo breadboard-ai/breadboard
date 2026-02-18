@@ -767,7 +767,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ?inert=${this.#isInert()}
         class=${classMap({ active: true })}
         .graph=${this.#graph ?? null}
-        .graphIsEmpty=${false}
+        .graphContentState=${"loaded"}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .isMine=${!this.sca.controller.editor.graph.readOnly}
         .readOnly=${true}
