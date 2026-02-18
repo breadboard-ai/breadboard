@@ -307,6 +307,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
         color: light-dark(var(--n-0), var(--n-90));
         display: flex;
         align-items: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
 
         &#app-title {
           font-size: 26px;
