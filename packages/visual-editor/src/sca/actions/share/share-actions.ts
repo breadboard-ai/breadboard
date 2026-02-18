@@ -19,8 +19,19 @@ import {
   permissionMatchesAnyOf,
   type GoogleDriveAsset,
 } from "@breadboard-ai/utils/google-drive/utils.js";
+import {
+  findNotebookAssetsInGraph,
+  type NotebookAsset,
+} from "@breadboard-ai/utils";
 import type { UnmanagedAssetProblem } from "../../controller/subcontrollers/editor/share-controller.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import {
+  ApplicationPlatform,
+  DeviceType,
+  NotebookAccessRole,
+  OriginProductType,
+  type NotebookPermission,
+} from "../../services/notebooklm-api-client.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
@@ -410,17 +421,20 @@ async function handleAssetPermissions(
   const { services } = bind;
   const googleDriveClient = services.googleDriveClient;
 
-  const assets = findGoogleDriveAssetsInGraph(graph);
-  if (assets.length === 0) {
+  const driveAssets = findGoogleDriveAssetsInGraph(graph);
+  const notebookAssets = findNotebookAssetsInGraph(graph);
+
+  if (driveAssets.length === 0 && notebookAssets.length === 0) {
     return;
   }
-  const managedAssets: GoogleDriveAsset[] = [];
-  const unmanagedAssets: GoogleDriveAsset[] = [];
-  for (const asset of assets) {
+
+  const managedDriveAssets: GoogleDriveAsset[] = [];
+  const unmanagedDriveAssets: GoogleDriveAsset[] = [];
+  for (const asset of driveAssets) {
     if (asset.managed) {
-      managedAssets.push(asset);
+      managedDriveAssets.push(asset);
     } else {
-      unmanagedAssets.push(asset);
+      unmanagedDriveAssets.push(asset);
     }
   }
 
@@ -431,13 +445,43 @@ async function handleAssetPermissions(
         bypassProxy: true,
       })
     ).permissions ?? [];
+
+  const notebookPermissions =
+    drivePermissionsToNotebookPermissions(graphPermissions);
+
   await Promise.all([
-    autoSyncManagedAssetPermissions(managedAssets, graphPermissions),
+    autoSyncManagedAssetPermissions(managedDriveAssets, graphPermissions),
     checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
-      unmanagedAssets,
-      graphPermissions
+      unmanagedDriveAssets,
+      graphPermissions,
+      notebookAssets,
+      notebookPermissions
     ),
   ]);
+}
+
+/**
+ * Converts Drive permissions to NotebookLM permissions. Only user/group
+ * permissions with email addresses can be mapped; domain-wide and "anyone"
+ * permissions are not supported by the NotebookLM API and are skipped.
+ */
+function drivePermissionsToNotebookPermissions(
+  drivePermissions: gapi.client.drive.Permission[]
+): NotebookPermission[] {
+  const permissions: NotebookPermission[] = [];
+  for (const p of drivePermissions) {
+    if (
+      (p.type === "user" || p.type === "group") &&
+      p.emailAddress &&
+      p.role !== "owner"
+    ) {
+      permissions.push({
+        email: p.emailAddress,
+        accessRole: NotebookAccessRole.VIEWER,
+      });
+    }
+  }
+  return permissions;
 }
 
 async function autoSyncManagedAssetPermissions(
@@ -507,15 +551,27 @@ async function autoSyncManagedAssetPermissions(
 
 async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
   unmanagedAssets: GoogleDriveAsset[],
-  graphPermissions: gapi.client.drive.Permission[]
+  graphPermissions: gapi.client.drive.Permission[],
+  unmanagedNotebooks: NotebookAsset[],
+  notebookPermissions: NotebookPermission[]
 ): Promise<void> {
-  if (unmanagedAssets.length === 0) {
+  if (unmanagedAssets.length === 0 && unmanagedNotebooks.length === 0) {
     return;
   }
   const { controller, services } = bind;
   const share = controller.editor.share;
   const googleDriveClient = services.googleDriveClient;
+  const nlmClient = services.notebookLmApiClient;
+  const nlmProvenance = {
+    originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
+    clientInfo: {
+      applicationPlatform: ApplicationPlatform.WEB,
+      device: DeviceType.DESKTOP,
+    },
+  };
   const problems: UnmanagedAssetProblem[] = [];
+
+  // Check Drive assets
   await Promise.all(
     unmanagedAssets.map(async (asset) => {
       const assetMetadata = await googleDriveClient.getFileMetadata(
@@ -533,7 +589,11 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
         }
       );
       if (!assetMetadata.capabilities.canShare || !assetMetadata.permissions) {
-        problems.push({ asset: assetMetadata, problem: "cant-share" });
+        problems.push({
+          type: "drive",
+          asset: assetMetadata,
+          problem: "cant-share",
+        });
         return;
       }
       const { missing } = diffAssetReadPermissions({
@@ -541,12 +601,77 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
         expected: graphPermissions,
       });
       if (missing.length > 0) {
-        problems.push({ asset: assetMetadata, problem: "missing", missing });
+        problems.push({
+          type: "drive",
+          asset: assetMetadata,
+          problem: "missing",
+          missing,
+        });
         return;
       }
     })
   );
-  if (problems.length === 0) {
+
+  // Check Notebook assets
+  if (notebookPermissions.length > 0) {
+    await Promise.all(
+      unmanagedNotebooks.map(async (notebook) => {
+        try {
+          const existing = await nlmClient.listNotebookPermissions({
+            parent: `notebooks/${notebook.notebookId}`,
+            provenance: nlmProvenance,
+          });
+          const existingEmails = new Set(
+            (existing.permissions ?? []).flatMap((p) =>
+              "email" in p ? [p.email] : []
+            )
+          );
+          const missingEmails = notebookPermissions
+            .filter((p) => "email" in p && !existingEmails.has(p.email))
+            .map((p) => (p as { email: string }).email);
+          if (missingEmails.length > 0) {
+            // Get the notebook name for display
+            let notebookName = notebook.notebookId;
+            try {
+              const nb = await nlmClient.getNotebook({
+                name: `notebooks/${notebook.notebookId}`,
+                provenance: nlmProvenance,
+              });
+              notebookName = nb.displayName ?? notebookName;
+            } catch {
+              // Use ID as fallback name
+            }
+            problems.push({
+              type: "notebook",
+              notebookId: notebook.notebookId,
+              notebookName,
+              problem: "missing",
+              missingEmails,
+            });
+          }
+        } catch {
+          // If we can't list permissions, treat as cant-share
+          problems.push({
+            type: "notebook",
+            notebookId: notebook.notebookId,
+            notebookName: notebook.notebookId,
+            problem: "cant-share",
+          });
+        }
+      })
+    );
+  }
+
+  // Flag if there are domain/anyone permissions that can't be applied to
+  // notebooks (independent of individual permission problems).
+  if (unmanagedNotebooks.length > 0) {
+    const hasDomainOrAnyonePerms = graphPermissions.some(
+      (p) => p.role !== "owner" && (p.type === "domain" || p.type === "anyone")
+    );
+    share.notebookDomainSharingLimited = hasDomainOrAnyonePerms;
+  }
+
+  if (problems.length === 0 && !share.notebookDomainSharingLimited) {
     return;
   }
   share.unmanagedAssetProblems = problems;
@@ -559,6 +684,7 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
   // without fixing, the same problems will be re-detected on the next
   // publish/publishStale call.
   share.unmanagedAssetProblems = [];
+  share.notebookDomainSharingLimited = false;
 }
 
 // =============================================================================
@@ -780,6 +906,7 @@ export const fixUnmanagedAssetProblems = asAction(
     const { controller, services } = bind;
     const share = controller.editor.share;
     const googleDriveClient = services.googleDriveClient;
+    const nlmClient = services.notebookLmApiClient;
 
     const problems = share.unmanagedAssetProblems;
     if (problems.length === 0) {
@@ -790,7 +917,10 @@ export const fixUnmanagedAssetProblems = asAction(
 
     await Promise.all(
       problems.map(async (problem) => {
-        if (problem.problem === "missing") {
+        if (problem.problem !== "missing") {
+          return;
+        }
+        if (problem.type === "drive") {
           await Promise.all(
             problem.missing.map((permission) =>
               googleDriveClient.createPermission(problem.asset.id, permission, {
@@ -798,6 +928,25 @@ export const fixUnmanagedAssetProblems = asAction(
               })
             )
           );
+        } else if (problem.type === "notebook") {
+          const permissions: NotebookPermission[] = problem.missingEmails.map(
+            (email) => ({
+              email,
+              accessRole: NotebookAccessRole.VIEWER,
+            })
+          );
+          await nlmClient.batchUpdateNotebookPermissions({
+            name: `notebooks/${problem.notebookId}`,
+            permissions,
+            provenance: {
+              originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
+              clientInfo: {
+                applicationPlatform: ApplicationPlatform.WEB,
+                device: DeviceType.DESKTOP,
+              },
+            },
+            sendEmailNotification: false,
+          });
         }
       })
     );

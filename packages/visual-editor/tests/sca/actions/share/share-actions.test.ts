@@ -860,8 +860,14 @@ suite("Share Actions", () => {
     );
     assert.ok(missingProblem, "Should have a missing permission problem");
     assert.ok(cantShareProblem, "Should have a cant-share problem");
-    assert.strictEqual(missingProblem.asset.id, unmanagedAsset.id);
-    assert.strictEqual(cantShareProblem.asset.id, cantShareAsset.id);
+    assert.strictEqual(
+      missingProblem.type === "drive" ? missingProblem.asset.id : undefined,
+      unmanagedAsset.id
+    );
+    assert.strictEqual(
+      cantShareProblem.type === "drive" ? cantShareProblem.asset.id : undefined,
+      cantShareAsset.id
+    );
 
     // Fix the unmanaged asset problems — status transitions to syncing-assets.
     const fixPromise = ShareActions.fixUnmanagedAssetProblems();
@@ -1046,6 +1052,7 @@ suite("Share Actions", () => {
     share.shareableFile = "file-id" as unknown as DriveFileId;
     share.unmanagedAssetProblems = [
       {
+        type: "drive",
         asset: {
           id: "a",
           resourceKey: "k",
@@ -1055,6 +1062,7 @@ suite("Share Actions", () => {
         problem: "cant-share",
       },
     ];
+    share.notebookDomainSharingLimited = true;
 
     share.reset();
 
@@ -1070,6 +1078,7 @@ suite("Share Actions", () => {
     assert.deepStrictEqual(share.publishedPermissions, []);
     assert.strictEqual(share.shareableFile, null);
     assert.deepStrictEqual(share.unmanagedAssetProblems, []);
+    assert.strictEqual(share.notebookDomainSharingLimited, false);
   });
 });
 

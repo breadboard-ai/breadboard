@@ -233,6 +233,17 @@ export interface RetrieveRelevantChunksResponse {
   sourceContexts: SourceContext[];
 }
 
+/** Request for ListNotebookPermissions RPC. */
+export interface ListNotebookPermissionsRequest {
+  parent: string;
+  provenance: Provenance;
+}
+
+/** Response for ListNotebookPermissions RPC. */
+export interface ListNotebookPermissionsResponse {
+  permissions: NotebookPermission[];
+}
+
 /** Request for BatchUpdateNotebookPermissions RPC. */
 export interface BatchUpdateNotebookPermissionsRequest {
   name: string;
@@ -417,6 +428,34 @@ export class NotebookLmApiClient {
     }
 
     return (await response.json()) as RetrieveRelevantChunksResponse;
+  }
+
+  /**
+   * Lists all users and their access levels for a specific Notebook.
+   * @param request - The request containing the parent notebook resource name
+   */
+  async listNotebookPermissions(
+    request: ListNotebookPermissionsRequest
+  ): Promise<ListNotebookPermissionsResponse> {
+    // parent format: "notebooks/{notebook_id}"
+    const url = new URL(`v1/${request.parent}/permissions`, this.#apiBaseUrl);
+
+    this.#appendProvenanceParams(url, request.provenance);
+
+    const response = await this.#fetchWithCreds(url, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to list notebook permissions: ${response.statusText}`
+      );
+    }
+
+    return (await response.json()) as ListNotebookPermissionsResponse;
   }
 
   /**
