@@ -29,7 +29,7 @@ import {
   readProperties,
   type AppProperties,
 } from "@breadboard-ai/utils/google-drive/utils.js";
-import { RefreshEvent, SaveEvent } from "./events.js";
+import { RefreshEvent, SaveCompleteEvent, SaveEvent } from "./events.js";
 import {
   DriveOperations,
   getFileId,
@@ -294,6 +294,9 @@ class GoogleDriveBoardServer
       saving = new SaveDebouncer(this.ops, {
         savestatuschange: (status, url) => {
           this.dispatchEvent(new SaveEvent(status, url));
+        },
+        savecomplete: (url, version) => {
+          this.dispatchEvent(new SaveCompleteEvent(url, version));
         },
       });
       this.#saving = this.#saving.set(url.href, saving);

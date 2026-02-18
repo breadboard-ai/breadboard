@@ -161,7 +161,9 @@ class DriveOperations {
   async writeGraphToDrive(
     url: URL,
     descriptor: GraphDescriptor
-  ): Promise<{ result: boolean; error?: string }> {
+  ): Promise<
+    { result: true; version: string } | { result: false; error: string }
+  > {
     await purgeStoredDataInMemoryValues(descriptor);
     const file = this.fileIdFromUrl(url);
     const name = getFileTitle(descriptor);
@@ -172,7 +174,7 @@ class DriveOperations {
         descriptor
       );
 
-      await this.#googleDriveClient.updateFile(
+      const updated = await this.#googleDriveClient.updateFile(
         file,
         new Blob([JSON.stringify(descriptor)], {
           type: GRAPH_MIME_TYPE,
@@ -186,11 +188,12 @@ class DriveOperations {
             tags: descriptor.metadata?.tags ?? [],
           }),
           mimeType: GRAPH_MIME_TYPE,
-        }
+        },
+        { fields: ["version"] }
       );
       this.#log("verbose", "Saved graph", descriptor);
 
-      return { result: true };
+      return { result: true, version: updated.version };
     } catch (err) {
       this.#log("warning", err);
       return { result: false, error: "Unable to save" };

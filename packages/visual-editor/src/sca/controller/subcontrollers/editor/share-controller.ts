@@ -65,7 +65,19 @@ export class ShareController extends RootController {
   accessor published = false;
 
   @field()
-  accessor stale = false;
+  accessor editableVersion = "";
+
+  @field()
+  accessor sharedVersion = "";
+
+  get stale(): boolean {
+    return (
+      this.published &&
+      this.editableVersion !== this.sharedVersion &&
+      this.editableVersion !== "" &&
+      this.sharedVersion !== ""
+    );
+  }
 
   @field()
   accessor granularlyShared = false;
@@ -75,9 +87,6 @@ export class ShareController extends RootController {
 
   @field()
   accessor publicPublishingAllowed = true;
-
-  @field()
-  accessor latestVersion = "";
 
   @field({ deep: false })
   accessor publishedPermissions: gapi.client.drive.Permission[] = [];
@@ -107,11 +116,11 @@ export class ShareController extends RootController {
     this.status = "initializing";
     this.ownership = "unknown";
     this.published = false;
-    this.stale = false;
+    this.editableVersion = "";
+    this.sharedVersion = "";
     this.granularlyShared = false;
     this.userDomain = "";
     this.publicPublishingAllowed = true;
-    this.latestVersion = "";
     this.publishedPermissions = [];
     this.shareableFile = null;
     this.unmanagedAssetProblems = [];

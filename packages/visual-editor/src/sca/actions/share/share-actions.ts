@@ -35,7 +35,8 @@ import { Utils } from "../../utils.js";
 import { makeUrl } from "../../../ui/utils/urls.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
-import { onGraphUrl } from "./triggers.js";
+import { onGraphUrl, onSaveComplete } from "./triggers.js";
+import { SaveCompleteEvent } from "../../../board-server/events.js";
 
 export const bind = makeAction();
 
@@ -66,6 +67,32 @@ export const initialize = asAction(
     share.status = "initializing";
     await fetchShareData();
     share.status = "ready";
+  }
+);
+
+/**
+ * Updates the editable version when a graph is saved to Google Drive.
+ */
+export const updateEditableVersion = asAction(
+  "Share.updateEditableVersion",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onSaveComplete(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const event = evt as SaveCompleteEvent | undefined;
+    if (!event) return;
+
+    const { controller } = bind;
+    const share = controller.editor.share;
+    const currentUrl = controller.editor.graph.url;
+
+    // Only update if this event is for the currently open graph.
+    if (!currentUrl || currentUrl !== event.url) {
+      return;
+    }
+
+    share.editableVersion = event.version;
   }
 );
 
@@ -152,7 +179,7 @@ async function fetchShareData(): Promise<void> {
 
   if (!shareableCopyFileId) {
     share.ownership = "owner";
-    share.latestVersion = thisFileMetadata.version;
+    share.editableVersion = thisFileMetadata.version;
     return;
   }
 
@@ -177,11 +204,11 @@ async function fetchShareData(): Promise<void> {
   // will always be an owner).
   share.granularlyShared =
     diff.excess.find((permission) => permission.role !== "owner") !== undefined;
-  share.stale =
-    thisFileMetadata.version !==
+  share.editableVersion = thisFileMetadata.version;
+  share.sharedVersion =
     shareableCopyFileMetadata.properties?.[
       DRIVE_PROPERTY_LATEST_SHARED_VERSION
-    ];
+    ] ?? "";
   share.publishedPermissions = allGraphPermissions.filter((permission) =>
     permissionMatchesAnyOf(permission, publishPermissions)
   );
@@ -189,7 +216,6 @@ async function fetchShareData(): Promise<void> {
     id: shareableCopyFileId,
     resourceKey: shareableCopyFileMetadata.resourceKey,
   };
-  share.latestVersion = thisFileMetadata.version;
 }
 
 /** Opens the share panel. */
@@ -769,7 +795,7 @@ export const publish = asAction(
     share.status = "ready";
     share.published = true;
     share.publishedPermissions = graphPublishPermissions;
-    share.latestVersion = newLatestVersion ?? share.latestVersion;
+    share.sharedVersion = newLatestVersion ?? share.sharedVersion;
   }
 );
 
@@ -865,7 +891,7 @@ export const publishStale = asAction(
       // Update the latest version property on the main file.
       googleDriveClient.updateFileMetadata(share.shareableFile.id, {
         properties: {
-          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: share.latestVersion,
+          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: share.editableVersion,
         },
       }),
       // Ensure all assets have the same permissions as the shareable file,
@@ -874,13 +900,13 @@ export const publishStale = asAction(
     ]);
 
     share.status = "ready";
-    share.stale = false;
+    share.sharedVersion = share.editableVersion;
 
     Utils.Logging.getLogger(controller).log(
       Utils.Logging.Formatter.verbose(
         `Updated stale shareable graph copy` +
           ` "${share.shareableFile!.id}" to version` +
-          ` "${share.latestVersion}".`
+          ` "${share.editableVersion}".`
       ),
       "Share.publishStale"
     );

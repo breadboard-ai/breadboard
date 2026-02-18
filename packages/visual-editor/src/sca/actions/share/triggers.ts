@@ -13,7 +13,12 @@
  * They take `bind` as a parameter to avoid circular dependencies.
  */
 
-import { signalTrigger, type SignalTrigger } from "../../coordination.js";
+import {
+  eventTrigger,
+  signalTrigger,
+  type EventTrigger,
+  type SignalTrigger,
+} from "../../coordination.js";
 import type { AppController } from "../../controller/controller.js";
 import type { AppServices } from "../../services/services.js";
 
@@ -31,4 +36,21 @@ export function onGraphUrl(bind: ActionBind): SignalTrigger {
     const { controller } = bind;
     return controller.editor.graph.url;
   });
+}
+
+// =============================================================================
+// Event Triggers
+// =============================================================================
+
+/**
+ * Creates a trigger that fires when a save to Google Drive completes
+ * successfully, carrying the new file version.
+ */
+export function onSaveComplete(bind: ActionBind): EventTrigger {
+  const { services } = bind;
+  return eventTrigger(
+    "Save Complete",
+    services.googleDriveBoardServer,
+    "savecomplete"
+  );
 }

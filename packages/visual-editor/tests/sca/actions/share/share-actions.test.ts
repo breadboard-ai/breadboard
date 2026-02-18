@@ -146,7 +146,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.published, false);
     assert.strictEqual(share.granularlyShared, false);
-    assert.strictEqual(share.latestVersion, "1");
+    assert.strictEqual(share.editableVersion, "1");
     assert.strictEqual(share.shareableFile, null);
     assert.strictEqual(share.userDomain, "example.com");
 
@@ -484,7 +484,7 @@ suite("Share Actions", () => {
     await ShareActions.initialize();
     assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.stale, true);
-    assert.strictEqual(share.latestVersion, "5");
+    assert.strictEqual(share.editableVersion, "5");
 
     // Publish stale with a graph that has identifiable content
     setGraph({
@@ -1043,11 +1043,11 @@ suite("Share Actions", () => {
     share.status = "ready";
     share.ownership = "owner";
     share.published = true;
-    share.stale = true;
+    share.editableVersion = "42";
+    share.sharedVersion = "1";
     share.granularlyShared = true;
     share.userDomain = "example.com";
     share.publicPublishingAllowed = false;
-    share.latestVersion = "42";
     share.publishedPermissions = [{ type: "anyone", role: "reader" }];
     share.shareableFile = "file-id" as unknown as DriveFileId;
     share.unmanagedAssetProblems = [
@@ -1071,10 +1071,11 @@ suite("Share Actions", () => {
     assert.strictEqual(share.ownership, "unknown");
     assert.strictEqual(share.published, false);
     assert.strictEqual(share.stale, false);
+    assert.strictEqual(share.editableVersion, "");
+    assert.strictEqual(share.sharedVersion, "");
     assert.strictEqual(share.granularlyShared, false);
     assert.strictEqual(share.userDomain, "");
     assert.strictEqual(share.publicPublishingAllowed, true);
-    assert.strictEqual(share.latestVersion, "");
     assert.deepStrictEqual(share.publishedPermissions, []);
     assert.strictEqual(share.shareableFile, null);
     assert.deepStrictEqual(share.unmanagedAssetProblems, []);
