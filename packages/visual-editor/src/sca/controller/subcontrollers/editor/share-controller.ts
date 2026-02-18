@@ -14,9 +14,9 @@ import { RootController } from "../root-controller.js";
 export type UnmanagedAssetProblem = {
   asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
 } & (
-    | { problem: "cant-share" }
-    | { problem: "missing"; missing: gapi.client.drive.Permission[] }
-  );
+  | { problem: "cant-share" }
+  | { problem: "missing"; missing: gapi.client.drive.Permission[] }
+);
 
 export type SharePanelStatus = "closed" | "open" | "native-share";
 

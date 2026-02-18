@@ -115,10 +115,7 @@ async function askUser(
   } = inputs;
 
   // === text-entry phase: Build prompt and report status ===
-  const template = new Template(
-    description,
-    moduleArgs.context.currentGraph
-  );
+  const template = new Template(description, moduleArgs.context.currentGraph);
   let details = llm`Please provide input`.asContent();
   if (description) {
     const substituting = await template.substitute(params, async () => "");
@@ -182,9 +179,9 @@ type DescribeInputs = {
   inputs: AskUserInputs;
 };
 
-async function describe(
-  { inputs: { description, ["p-modality"]: modality } }: DescribeInputs,
-) {
+async function describe({
+  inputs: { description, ["p-modality"]: modality },
+}: DescribeInputs) {
   const icon = computeIcon(modality);
   const template = new Template(description);
   return {

@@ -99,7 +99,7 @@ suite("Share Actions", () => {
         size: 0,
         entries: () => [][Symbol.iterator](),
         has: () => false,
-        put: () => { },
+        put: () => {},
         delete: () => false,
       }
     );
@@ -651,7 +651,10 @@ suite("Share Actions", () => {
     // After completion, status is idle and the native dialog is shown.
     assert.strictEqual(share.status, "ready");
     assert.strictEqual(share.panel, "native-share");
-    assert.ok(share.shareableFile !== null, "shareableFile should be populated");
+    assert.ok(
+      share.shareableFile !== null,
+      "shareableFile should be populated"
+    );
 
     // Close and re-open — this time the copy already exists, so no loading.
     await ShareActions.onGoogleDriveSharePanelClose();

@@ -1,3 +1,3 @@
 import test from "ava";
 
-test('dummy', (t) => t.pass());
+test("dummy", (t) => t.pass());

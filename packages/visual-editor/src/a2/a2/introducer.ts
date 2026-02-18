@@ -2,12 +2,7 @@
  * @fileoverview Handles introduction of the step.
  */
 
-import {
-  JSONPart,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { JSONPart, LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import {
   type DescriberResult,
   type DescriberResultTransformer,
@@ -33,9 +28,7 @@ type NamingResult = {
  * and parameters
  */
 class ArgumentNameGenerator implements DescriberResultTransformer {
-  constructor(
-    private readonly moduleArgs: A2ModuleArgs
-  ) {}
+  constructor(private readonly moduleArgs: A2ModuleArgs) {}
 
   #containsContext(describerResult: DescriberResult): boolean {
     if (!describerResult.inputSchema?.properties) return true;

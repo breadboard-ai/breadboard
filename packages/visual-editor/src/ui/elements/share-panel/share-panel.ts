@@ -571,15 +571,22 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const status = this.#controller.status;
     // V2 has inline spinners for changing-visibility and publishing-stale,
     // so only show the full-panel loader for statuses without those affordances.
-    if (SHARING_V2 &&
-      (status === "initializing" || status === "syncing-native-share" ||
-        status === "syncing-assets")) {
+    if (
+      SHARING_V2 &&
+      (status === "initializing" ||
+        status === "syncing-native-share" ||
+        status === "syncing-assets")
+    ) {
       return this.#renderLoading();
       // V1 has an inline spinner for changing-visibility on the publish switch,
       // so only show the full-panel loader for statuses without inline affordances.
-    } else if (!SHARING_V2 &&
-      (status === "initializing" || status === "syncing-native-share" ||
-        status === "publishing-stale" || status === "syncing-assets")) {
+    } else if (
+      !SHARING_V2 &&
+      (status === "initializing" ||
+        status === "syncing-native-share" ||
+        status === "publishing-stale" ||
+        status === "syncing-assets")
+    ) {
       return this.#renderLoading();
     }
     if (this.#controller.ownership === "owner") {
@@ -670,8 +677,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
           @click=${this.#onClickPublishStale}
         >
           ${this.#controller.status === "publishing-stale"
-        ? html`<span class="g-icon spin spinner">progress_activity</span>`
-        : nothing}
+            ? html`<span class="g-icon spin spinner">progress_activity</span>`
+            : nothing}
           Update
         </button>
       </div>
@@ -718,12 +725,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
         Publishing is disabled for all users from ${domain}.
         <br />
         ${preferredUrl
-        ? html`Please use
+          ? html`Please use
               <a href="${preferredUrl}" target="_blank"
                 >${new URL(preferredUrl).hostname}</a
               >
               to share with other ${domain} users.`
-        : nothing}
+          : nothing}
       </p>
     `;
   }
@@ -838,12 +845,13 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const { disallowPublicPublishing } =
       this.sca?.services.globalConfig?.domains?.[domain] ?? {};
 
-    const disabled = disallowPublicPublishing || status === "changing-visibility";
+    const disabled =
+      disallowPublicPublishing || status === "changing-visibility";
     return html`
       <div id="published-switch-container">
         ${status === "changing-visibility"
-        ? html`<span class="g-icon spin spinner">progress_activity</span>`
-        : nothing}
+          ? html`<span class="g-icon spin spinner">progress_activity</span>`
+          : nothing}
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}

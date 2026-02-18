@@ -2,11 +2,7 @@
  * @fileoverview Generates audio (tts) output using supplied context.
  */
 
-import {
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { type DescriberResult } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
 import {
@@ -165,9 +161,7 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { text } }: DescribeInputs,
-) {
+async function describe({ inputs: { text } }: DescribeInputs) {
   const template = new Template(text);
   return {
     inputSchema: {

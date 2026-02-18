@@ -20,13 +20,9 @@ async function invoke(
   { query }: Inputs,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
-  const executing = await executeTool<string>(
-    moduleArgs,
-    "enterprise_search",
-    {
-      query,
-    }
-  );
+  const executing = await executeTool<string>(moduleArgs, "enterprise_search", {
+    query,
+  });
   if (!ok(executing)) return executing;
 
   return { results: executing };

@@ -2,11 +2,7 @@
  * @fileoverview Generates code using supplied context.
  */
 
-import {
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { type Params } from "./common.js";
 import gemini, { defaultSafetySettings, type GeminiInputs } from "./gemini.js";
 import { ArgumentNameGenerator } from "./introducer.js";
@@ -270,9 +266,7 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { instruction } }: DescribeInputs,
-) {
+async function describe({ inputs: { instruction } }: DescribeInputs) {
   const template = new Template(instruction);
   return {
     inputSchema: {
