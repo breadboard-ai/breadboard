@@ -58,8 +58,8 @@ jobs:
           GITHUB_EVENT_WORKFLOW_RUN_HEAD_REPOSITORY_OWNER_LOGIN: ${{ github.event.workflow_run.head_repository.owner.login }}
           GITHUB_EVENT_WORKFLOW_RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
-          FORK_OWNER='${GITHUB_EVENT_WORKFLOW_RUN_HEAD_REPOSITORY_OWNER_LOGIN}'
-          FORK_BRANCH='${GITHUB_EVENT_WORKFLOW_RUN_HEAD_BRANCH}'
+          FORK_OWNER="${GITHUB_EVENT_WORKFLOW_RUN_HEAD_REPOSITORY_OWNER_LOGIN}"
+          FORK_BRANCH="${GITHUB_EVENT_WORKFLOW_RUN_HEAD_BRANCH}"
           API_URL="repos/${{ github.repository }}/pulls?state=all&head=${FORK_OWNER}:${FORK_BRANCH}&sort=updated&direction=desc&per_page=1"
           PR_NUMBER=$(gh api "$API_URL" --jq '.[0].number // empty')
 
