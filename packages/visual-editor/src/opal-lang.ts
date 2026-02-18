@@ -88,6 +88,9 @@ export default {
     LABEL_SHARE: {
       str: "An Opal mini-app has been shared with you",
     },
+    ONBOARDING_STANDALONE_REMIX_TEXT: {
+      str: 'You can only run this Opal app. To edit, click the "Remix" button to make a copy.',
+    },
   },
   ProjectListing: {
     ...DefaultLangPack.ProjectListing,

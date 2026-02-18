@@ -111,6 +111,10 @@ class Controller implements AppController {
         "StatusUpdatesController"
       ),
       consent: new Global.ConsentController("Consent", "ConsentController"),
+      onboarding: new Global.OnboardingController(
+        "Onboarding",
+        "OnboardingController"
+      ),
       screenSize: new Global.ScreenSizeController(
         "ScreenSize",
         "ScreenSizeController"
@@ -255,6 +259,7 @@ export interface AppController extends DebuggableAppController {
     snackbars: Global.SnackbarController;
     statusUpdates: Global.StatusUpdatesController;
     consent: Global.ConsentController;
+    onboarding: Global.OnboardingController;
     screenSize: Global.ScreenSizeController;
     performMigrations(): Promise<void>;
   };

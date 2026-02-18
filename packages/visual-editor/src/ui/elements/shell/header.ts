@@ -29,8 +29,6 @@ import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 
-const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
-
 @customElement("bb-ve-header")
 export class VEHeader extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
@@ -76,9 +74,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   @state()
   accessor #showAccountSwitcher = false;
-
-  @state()
-  accessor #showRemixInfo = false;
 
   static styles = [
     Styles.HostType.type,
@@ -438,9 +433,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   constructor() {
     super();
-
-    const showRemixInfo = globalThis.localStorage.getItem(REMIX_INFO_KEY);
-    this.#showRemixInfo = showRemixInfo === null;
   }
 
   #handleTitleUpdate(evt: Event) {
@@ -778,19 +770,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
       <span class="g-icon">gesture</span>
       <span class="round w-500">Remix</span>
 
-      ${this.#showRemixInfo
-        ? html`<bb-onboarding-tooltip
-            delayed
-            .tooltipTitle="Remix to Edit"
-            .text='You can only run this ${Strings.from(
-              "APP_NAME"
-            )} app. To edit, click the "Remix" button to make a copy.'
-            @bbonboardingacknowledged=${() => {
-              globalThis.localStorage.setItem(REMIX_INFO_KEY, "false");
-              this.#showRemixInfo = false;
-            }}
-          ></bb-onboarding-tooltip>`
-        : nothing}
+      ${html`<bb-onboarding-tooltip
+        delayed
+        .onboardingId=${"standalone-remix"}
+      ></bb-onboarding-tooltip>`}
     </button> `;
   }
 

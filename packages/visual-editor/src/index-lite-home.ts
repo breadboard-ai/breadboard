@@ -82,6 +82,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     };
 
     this.sca = sca(config, mainArgs.globalConfig.flags);
+    this.sca.controller.global.onboarding.appMode = "lite";
 
     const sizeDetector = window.matchMedia("(max-width: 500px)");
     const reactToScreenWidth = () => {
