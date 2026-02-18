@@ -15,7 +15,8 @@ import {
   isShortsUri,
   isWatchUri,
 } from "../../../utils/youtube.js";
-import { until } from "lit/directives/until.js";
+import { Task } from "@lit/task";
+import { icons } from "../../../../a2ui/0.8/styles/icons.js";
 
 @customElement("a2ui-custom-video")
 export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
@@ -28,6 +29,7 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
   override accessor isMedia = true;
 
   static styles = [
+    icons,
     css`
       :host {
         display: block;
@@ -52,10 +54,34 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
       video {
         object-fit: cover;
       }
+
+      .loading-message {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        aspect-ratio: 16 / 9;
+        border-radius: var(--a2ui-video-radius, 20px);
+        color: var(--a2ui-loading-color, light-dark(var(--p-20), var(--n-100)));
+      }
+
+      .rotate {
+        animation: rotate 1s linear infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+        to {
+          rotate: 360deg;
+        }
+      }
     `,
   ];
 
   #blobUrls: string[] = [];
+  #videoTasks = new Map<string, Task>();
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
@@ -63,6 +89,12 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
     for (const url of this.#blobUrls) {
       URL.revokeObjectURL(url);
     }
+
+    for (const task of this.#videoTasks.values()) {
+      task.abort();
+    }
+
+    this.#videoTasks.clear();
   }
 
   #renderVideoElement(videoUri: string) {
@@ -88,15 +120,38 @@ export class A2UICustomVideo extends A2UI.v0_8.UI.Root {
         return html`<p>Unable to obtain video.</p>`;
       }
 
-      const videoUrl = fetch(uri)
-        .then((res) => res.blob())
-        .then((blob) => {
-          const blobUrl = URL.createObjectURL(blob);
-          this.#blobUrls.push(blobUrl);
-          return blobUrl;
+      let videoTask = this.#videoTasks.get(uri);
+      if (!videoTask) {
+        videoTask = new Task(this, {
+          task: async ([url]) => {
+            const res = await fetch(url);
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            this.#blobUrls.push(blobUrl);
+            return blobUrl;
+          },
+          args: () => [uri!],
         });
 
-      return html`<video src=${until(videoUrl)} controls></video>`;
+        videoTask.autoRun = false;
+        this.#videoTasks.set(uri, videoTask);
+        videoTask.run();
+      }
+
+      return videoTask.render({
+        initial: () =>
+          html`<div class="loading-message">
+            <span class="g-icon round rotate">progress_activity</span>
+            Loading video…
+          </div>`,
+        pending: () =>
+          html`<div class="loading-message">
+            <span class="g-icon round rotate">progress_activity</span>
+            Loading video…
+          </div>`,
+        complete: (blobUrl) => html`<video src=${blobUrl} controls></video>`,
+        error: () => html`<p>Unable to load video.</p>`,
+      });
     }
   }
 
