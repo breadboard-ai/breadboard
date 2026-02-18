@@ -9,6 +9,7 @@ import { Task } from "@lit/task";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { icons } from "../../styles/icons.js";
+import { HideTooltipEvent, ShowTooltipEvent } from "../../events/events.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA, type Notebook } from "../../../sca/sca.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -39,28 +40,24 @@ export class NotebookLmViewer extends SignalWatcher(LitElement) {
         min-height: 100px;
       }
 
-      .external-link-button {
+      .link-out {
         position: absolute;
-        top: var(--bb-grid-size-4);
-        right: var(--bb-grid-size-4);
-        background: var(--n-10, #1a1a1a);
-        border: none;
-        cursor: pointer;
-        padding: var(--bb-grid-size);
-        border-radius: var(--bb-grid-size-2);
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: opacity 0.15s ease;
+        width: var(--bb-grid-size-8);
+        height: var(--bb-grid-size-8);
+        border-radius: var(--bb-grid-size-3);
+        background: var(--light-dark-n-0);
+        color: var(--light-dark-n-100);
+        top: var(--bb-grid-size-3);
+        right: var(--bb-grid-size-3);
+        cursor: pointer;
         pointer-events: auto;
 
-        &:hover {
-          opacity: 0.8;
-        }
-
         & > .g-icon {
-          font-size: 20px;
-          color: white;
+          pointer-events: none;
+          font-size: 18px;
         }
       }
 
@@ -270,16 +267,28 @@ export class NotebookLmViewer extends SignalWatcher(LitElement) {
     const notebookId = notebook.name.replace("notebooks/", "");
     const notebookUrl = `https://notebooklm.google.com/notebook/${notebookId}`;
     return html`
-      <button
-        class="external-link-button"
-        @click=${(e: Event) => {
-          e.stopPropagation();
-          window.open(notebookUrl, "_blank");
-        }}
-        title="Open in NotebookLM"
-      >
-        <span class="g-icon">open_in_new</span>
-      </button>
+      <a href=${notebookUrl} target="_blank">
+        <span
+          class="link-out"
+          @pointerover=${(evt: PointerEvent) => {
+            this.dispatchEvent(
+              new ShowTooltipEvent(
+                "Open in NotebookLM",
+                evt.clientX,
+                evt.clientY
+              )
+            );
+          }}
+          @pointerout=${() => {
+            this.dispatchEvent(new HideTooltipEvent());
+          }}
+          @click=${() => {
+            this.dispatchEvent(new HideTooltipEvent());
+          }}
+        >
+          <span class="g-icon filled-heavy round">open_in_new</span>
+        </span>
+      </a>
     `;
   }
 }
