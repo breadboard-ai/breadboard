@@ -74,45 +74,57 @@ async function invoke(
         const docWriteMode =
           info?.configuration?.docWriteMode || DocWriteMode.Append;
 
-        console.log("doc config", docEditMode, docWriteMode);
-
-        const [gettingCollector] = await Promise.all([
-          docEditMode === DocEditMode.New
-            ? createNewPresentation(
-                moduleArgs,
-                connectorId,
-                graphId,
-                title ?? "Untitled Presentation"
-              )
-            : getCollector(
-                moduleArgs,
-                connectorId,
-                graphId,
-                title ?? "Untitled Document",
-                DOC_MIME_TYPE,
-                info?.configuration?.file?.id
-              ),
-        ]);
+        const gettingCollector = await (docEditMode === DocEditMode.New
+          ? createNewDoc(
+              moduleArgs,
+              connectorId,
+              graphId,
+              title ?? "Untitled Document"
+            )
+          : getCollector(
+              moduleArgs,
+              connectorId,
+              graphId,
+              title ?? "Untitled Document",
+              DOC_MIME_TYPE,
+              info?.configuration?.file?.id
+            ));
 
         if (!ok(gettingCollector)) return gettingCollector;
-        const { id, end, last, docId } = gettingCollector;
+        const { id, end } = gettingCollector;
 
-        // Determine insertion index and slides to delete based on write mode
-        let insertionIndex: number | undefined;
-        // let deleteSlideIds: string[] = [];
+        // Determine insertion index and extra requests based on write mode.
+        // For a brand-new doc (DocEditMode.New) we always append from index 1.
+        // The Docs API requires insert index < segment end index.
+        // end is body.content.at(-1).endIndex (the end-of-body marker).
+        // Valid insert range is [1, end - 1]. For an empty doc end=1, so we clamp to 1.
+        let startIndex = Math.max(1, end! - 1); // default: append just before the end-of-body marker
+        const extraRequests: unknown[] = [];
+
         if (docEditMode === DocEditMode.Same) {
           switch (docWriteMode) {
-            case "prepend":
-              insertionIndex = 0;
+            case DocWriteMode.Prepend:
+              startIndex = 1;
               break;
-            case "overwrite":
-              // deleteSlideIds = slideIds || [];
+            case DocWriteMode.Overwrite:
+              startIndex = 1;
+              // Delete all existing body content before inserting.
+              // The range { startIndex: 1, endIndex: end - 1 } is only non-empty
+              // when end - 1 > 1, i.e. end > 2. A doc with only the trailing
+              // paragraph marker has end === 2 and nothing to delete.
+              if (end! > 2) {
+                extraRequests.push({
+                  deleteContentRange: {
+                    range: { startIndex: 1, endIndex: end! - 1 },
+                  },
+                });
+              }
               break;
           }
         }
 
-        console.log("doc", last, docId);
-        const requests = await contextToRequests(context, end!);
+        const insertRequests = await contextToRequests(context, startIndex);
+        const requests = [...extraRequests, ...insertRequests];
         const updating = await updateDoc(moduleArgs, id, { requests });
         if (!ok(updating)) return updating;
         return { context: contextFromId(id, DOC_MIME_TYPE) };
@@ -263,10 +275,9 @@ async function getCollector(
         const gettingDoc = await getDoc(moduleArgs, createdFile.id);
         if (!ok(gettingDoc)) return gettingDoc;
 
-        console.log("doc1", gettingDoc);
         return {
           id: createdFile.id,
-          end: 1,
+          end: gettingDoc.body?.content?.at(-1)?.endIndex ?? 1,
         };
       } else if (mimeType === SLIDES_MIME_TYPE) {
         const gettingPresenation = await getPresentation(
@@ -292,15 +303,13 @@ async function getCollector(
     id = fileId;
   }
   if (mimeType === DOC_MIME_TYPE) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const gettingDoc: any = await getDoc(moduleArgs, id);
+    const gettingDoc = await getDoc(moduleArgs, id);
     if (!ok(gettingDoc)) return gettingDoc;
 
-    console.log("doc2", gettingDoc);
-
-    // const end = gettingDoc.body?.content?.length || 0;
-
-    return { id, end: 1, docId: undefined };
+    return {
+      id,
+      end: gettingDoc.body?.content?.at(-1)?.endIndex ?? 1,
+    };
   } else if (mimeType === SLIDES_MIME_TYPE) {
     const gettingPresentation = await getPresentation(moduleArgs, id);
     if (!ok(gettingPresentation)) return gettingPresentation;
@@ -320,6 +329,31 @@ async function getCollector(
     if (mimeType === SLIDES_MIME_TYPE) return "slides";
     return "";
   }
+}
+
+/**
+ * Always creates a new Google Doc without looking up existing files.
+ * Used when docEditMode is "new".
+ */
+async function createNewDoc(
+  moduleArgs: A2ModuleArgs,
+  connectorId: string,
+  graphId: string,
+  title: string
+): Promise<Outcome<CollectorData>> {
+  const fileKey = `doc${connectorId}${graphId}`;
+  const createdFile = await create(moduleArgs, {
+    name: title,
+    mimeType: DOC_MIME_TYPE,
+    appProperties: {
+      "google-drive-connector": fileKey,
+    },
+  });
+  if (!ok(createdFile)) return createdFile;
+  const gettingDoc = await getDoc(moduleArgs, createdFile.id);
+  if (!ok(gettingDoc)) return gettingDoc;
+  const end = gettingDoc.body?.content?.at(-1)?.endIndex ?? 1;
+  return { id: createdFile.id, end };
 }
 
 /**
