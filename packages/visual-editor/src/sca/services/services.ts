@@ -97,7 +97,7 @@ export function services(
 
     const proxyBaseUrl = new URL("/api/drive-proxy", window.location.href).href;
     const apiBaseUrl =
-      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT ??
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT ||
       signinAdapter.state.then((state) =>
         state === "signedout" ? proxyBaseUrl : undefined
       );
