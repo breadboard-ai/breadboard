@@ -12,6 +12,7 @@
     "build:vite": "wireit",
     "dev": "npm run serve --watch",
     "dev:fake": "npm run serve:fake --watch",
+    "serve:fake": "wireit",
     "dev-drive": "VITE_BOARD_SERVICE='drive:' npm run serve --watch",
     "docker-build": "docker build --build-context=breadboard=../.. --tag=unified-server .",
     "docker-clean": "docker image rm unified-server",
