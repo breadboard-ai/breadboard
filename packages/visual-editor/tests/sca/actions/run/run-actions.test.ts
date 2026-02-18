@@ -1376,6 +1376,164 @@ suite("runner nodeend event", () => {
     // Should not throw and console should still be empty
     assert.strictEqual(controller.run.main.console.size, 0);
   });
+
+  test("sets error on console entry when outputs contain $error (string)", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("error-node", {
+      title: "Error Node",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+      error: null,
+    } as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["error-node"],
+          node: { id: "error-node" },
+          outputs: { $error: "Simulated 503: model overloaded" },
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("error-node");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.status?.status,
+      "failed",
+      "status should be failed"
+    );
+    assert.ok(entry.error, "error should be set");
+    assert.strictEqual(
+      entry.error?.message,
+      "Simulated 503: model overloaded",
+      "error message should match"
+    );
+    assert.strictEqual(entry.completed, true, "completed should be true");
+  });
+
+  test("sets error on console entry when $error is an object with message", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("error-node-2", {
+      title: "Error Node 2",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+      error: null,
+    } as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["error-node-2"],
+          node: { id: "error-node-2" },
+          outputs: { $error: { message: "Rate limit exceeded" } },
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("error-node-2");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.status?.status,
+      "failed",
+      "status should be failed"
+    );
+    assert.strictEqual(
+      entry.error?.message,
+      "Rate limit exceeded",
+      "error message should be extracted from object"
+    );
+  });
+
+  test("does not populate output map when outputs contain $error", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("error-node-3", {
+      title: "Error Node 3",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+      error: null,
+      output: new Map(),
+    } as unknown as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["error-node-3"],
+          node: { id: "error-node-3" },
+          outputs: { $error: "Something went wrong" },
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("error-node-3");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.output.size,
+      0,
+      "output map should remain empty for failed nodes"
+    );
+  });
+
+  test("includes errorMessage in failed status", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("renderer-error-node", {
+      title: "Renderer Error",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+      error: null,
+    } as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["renderer-error-node"],
+          node: { id: "renderer-error-node" },
+          outputs: { $error: "API failure" },
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("renderer-error-node");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.status?.status,
+      "failed",
+      "status should be failed"
+    );
+    assert.strictEqual(
+      (entry.status as { status: "failed"; errorMessage: string }).errorMessage,
+      "API failure",
+      "errorMessage should be set on the failed status"
+    );
+  });
 });
 
 suite("syncConsoleFromRunner async describe", () => {

@@ -179,8 +179,8 @@ class RunStateController {
   postamble() {
     if (this.orchestrator.progress !== "finished") return;
     if (this.orchestrator.failed) {
-      this.eventSink.pause();
-      return;
+      // Dispatch error event so the SCA onError action can set run-level error.
+      this.error({ $error: "A step encountered an error" });
     }
 
     this.eventSink.dispatch(
