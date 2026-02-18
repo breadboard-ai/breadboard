@@ -71,6 +71,7 @@ class PlanRunner
       await this.#controller.restart();
       return;
     }
+    this.#orchestrator.reset();
     this.#createController();
     this.dispatchEvent(new StartEvent({ timestamp: timestamp() }));
     await this.#controller!.run();
