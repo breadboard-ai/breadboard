@@ -14,8 +14,8 @@
  limitations under the License.
  */
 
-import { html, css, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { html, css, nothing, type PropertyValues } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
 import { ResolvedImage } from "../types/types.js";
@@ -26,6 +26,7 @@ import {
 } from "./utils/image-helpers.js";
 import { StateEvent } from "../events/events.js";
 import { icons } from "../styles/icons.js";
+import { classMap } from "lit/directives/class-map.js";
 
 /**
  * Renders an image from a URL (literal or data-bound).
@@ -44,6 +45,15 @@ export class Image extends Root {
 
   @property()
   accessor usageHint: ResolvedImage["usageHint"] | null = null;
+
+  @state()
+  accessor #loaded = false;
+
+  willUpdate(changedProperties: PropertyValues<this>) {
+    if (changedProperties.has("url")) {
+      this.#loaded = false;
+    }
+  }
 
   static styles = [
     icons,
@@ -108,6 +118,36 @@ export class Image extends Root {
         border-radius: inherit;
         object-fit: cover;
       }
+
+      img.loading {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loading-message {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: inherit;
+        color: var(--a2ui-loading-color, light-dark(var(--p-20), var(--n-100)));
+      }
+
+      .rotate {
+        animation: rotate 1s linear infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+        to {
+          rotate: 360deg;
+        }
+      }
     `,
   ];
 
@@ -116,7 +156,19 @@ export class Image extends Root {
       return nothing;
     }
 
-    return html`<img src=${imageUrl} />`;
+    return html`${!this.#loaded
+        ? html`<div class="loading-message">
+            <span class="g-icon round rotate">progress_activity</span>
+            Loading image…
+          </div>`
+        : nothing}
+      <img
+        class=${classMap({ loading: !this.#loaded })}
+        src=${imageUrl}
+        @load=${() => {
+          this.#loaded = true;
+        }}
+      />`;
   }
 
   #renderControls(imageUrl: string) {
@@ -138,7 +190,7 @@ export class Image extends Root {
           }
         }}
       >
-        <span class="g-icon filled round">content_copy</span>
+        <span class="g-icon heavy round">content_copy</span>
       </button>
       <button
         @click=${async (evt: Event) => {
@@ -153,7 +205,7 @@ export class Image extends Root {
           }
         }}
       >
-        <span class="g-icon filled round">download</span>
+        <span class="g-icon heavy round">download</span>
       </button>
     </div>`;
   }
