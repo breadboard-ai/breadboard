@@ -10,6 +10,7 @@ import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive
 import assert from "node:assert";
 import { after, before, beforeEach, suite, test } from "node:test";
 import { GoogleDriveBoardServer } from "../../../../src/board-server/server.js";
+import { SaveCompleteEvent } from "../../../../src/board-server/events.js";
 import * as ShareActions from "../../../../src/sca/actions/share/share-actions.js";
 import type * as Editor from "../../../../src/sca/controller/subcontrollers/editor/editor.js";
 import {
@@ -157,6 +158,33 @@ suite("Share Actions", () => {
     // User closes panel
     ShareActions.closePanel();
     assert.strictEqual(share.panel, "closed");
+  });
+
+  suite("updateEditableVersion", () => {
+    test("updates editableVersion when save event URL matches", async () => {
+      await ShareActions.initialize();
+      assert.strictEqual(share.editableVersion, "1");
+
+      const event = new SaveCompleteEvent(`drive:/${graphDriveFile.id}`, "42");
+      await ShareActions.updateEditableVersion(event);
+      assert.strictEqual(share.editableVersion, "42");
+    });
+
+    test("ignores save event for a different graph", async () => {
+      await ShareActions.initialize();
+      assert.strictEqual(share.editableVersion, "1");
+
+      const event = new SaveCompleteEvent("drive:/some-other-file", "99");
+      await ShareActions.updateEditableVersion(event);
+      assert.strictEqual(share.editableVersion, "1");
+    });
+
+    test("ignores save event when no graph URL is set", async () => {
+      // Don't initialize — no graph URL is set on the controller
+      const event = new SaveCompleteEvent("drive:/anything", "99");
+      await ShareActions.updateEditableVersion(event);
+      assert.strictEqual(share.editableVersion, "");
+    });
   });
 
   test("initialize fires automatically via onGraphUrl trigger", async () => {
@@ -450,29 +478,40 @@ suite("Share Actions", () => {
       { name: "shareable-copy.bgl.json", mimeType: "application/json" }
     );
 
-    // Set up the main file -> shareable copy relationship with stale version
-    fakeDriveApi.forceSetFileMetadata(mainFile.id, {
-      ownedByMe: true,
-      version: "5",
-      properties: {
-        mainToShareableCopy: shareableFile.id,
-      },
+    // Bump the main file's version organically via content updates.
+    // createFile starts at version "1", and each updateFile increments it.
+    // Combined with the updateFileMetadata below (which also increments),
+    // we reach version "5": create("1") + 3 updates("2","3","4") + metadata("5").
+    for (let i = 0; i < 3; i++) {
+      await googleDriveClient.updateFile(
+        mainFile.id,
+        new Blob([`{"v":${i}}`], { type: "application/json" }),
+        undefined,
+        { fields: ["version"] }
+      );
+    }
+
+    // Link the main file to the shareable copy
+    await googleDriveClient.updateFileMetadata(mainFile.id, {
+      properties: { mainToShareableCopy: shareableFile.id },
     });
 
     // Shareable copy has older version (stale)
-    fakeDriveApi.forceSetFileMetadata(shareableFile.id, {
+    await googleDriveClient.updateFileMetadata(shareableFile.id, {
       properties: {
-        latestSharedVersion: "3", // older than main's version 5
+        latestSharedVersion: "3", // older than main's version
       },
-      permissions: [
-        {
-          type: "domain",
-          domain: "example.com",
-          role: "reader",
-          id: "existing-perm",
-        },
-      ],
     });
+    // Pre-populate permissions (simulates a prior publish)
+    await googleDriveClient.createPermission(
+      shareableFile.id,
+      {
+        type: "domain",
+        domain: "example.com",
+        role: "reader",
+      },
+      { sendNotificationEmail: false }
+    );
     fakeDriveApi.createFileGeneratesResourceKey(true);
 
     // Open and load to get to writable state with stale shareable copy
@@ -968,6 +1007,36 @@ suite("Share Actions", () => {
     await publishPromise;
   });
 
+  test("closePanel is blocked while status is changing-visibility", async () => {
+    await ShareActions.initialize();
+    await ShareActions.open();
+    assert.strictEqual(share.panel, "open");
+
+    // Pause the fake API so changeVisibility hangs mid-flight
+    fakeDriveApi.pause();
+    const changePromise = ShareActions.changeVisibility("anyone");
+
+    // Wait for status to flip to changing-visibility
+    for (let i = 0; i < 100; i++) {
+      if (share.status === "changing-visibility") break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    assert.strictEqual(share.status, "changing-visibility");
+
+    // Try to close — should be blocked
+    await ShareActions.closePanel();
+    assert.strictEqual(share.panel, "open", "Panel should remain open");
+
+    // Unblock and let changeVisibility finish
+    fakeDriveApi.unpause();
+    await changePromise;
+    assert.strictEqual(share.status, "ready");
+
+    // Now close should work
+    await ShareActions.closePanel();
+    assert.strictEqual(share.panel, "closed");
+  });
+
   test("dismissUnmanagedAssetProblems resolves without fixing permissions", async () => {
     // Create the main file
     const mainFile = await googleDriveClient.createFile(
@@ -1035,6 +1104,524 @@ suite("Share Actions", () => {
     );
   });
 
+  suite("changeVisibility transitions", () => {
+    async function getNonOwnerPermissions(
+      fileId: string
+    ): Promise<gapi.client.drive.Permission[]> {
+      const meta = await googleDriveClient.getFileMetadata(fileId, {
+        fields: ["permissions"],
+      });
+      return (meta.permissions ?? []).filter((p) => p.role !== "owner");
+    }
+
+    test("only-you → anyone", async () => {
+      await ShareActions.initialize();
+      assert.strictEqual(share.visibility, "only-you");
+
+      await ShareActions.changeVisibility("anyone");
+
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.visibility, "anyone");
+      assert.strictEqual(share.hasPublicPermissions, true);
+      assert.strictEqual(share.hasOtherPermissions, false);
+      assert.ok(share.shareableFile, "shareableFile should exist");
+
+      // Verify actual Drive permissions
+      const perms = await getNonOwnerPermissions(share.shareableFile.id);
+      assert.strictEqual(perms.length, 1);
+      assert.strictEqual(perms[0].type, "domain");
+      assert.strictEqual(perms[0].domain, "example.com");
+      assert.strictEqual(perms[0].role, "reader");
+    });
+
+    suite("only-you → restricted", () => {
+      test("opens native share dialog", async () => {
+        await ShareActions.initialize();
+        assert.strictEqual(share.visibility, "only-you");
+
+        await ShareActions.changeVisibility("restricted");
+
+        // "restricted" opens the native share dialog instead of going to "ready"
+        assert.strictEqual(share.panel, "native-share");
+        // The visibility is still "only-you" because no granular permissions
+        // have been added yet (the native dialog is where the user adds them).
+        assert.strictEqual(share.visibility, "only-you");
+        assert.strictEqual(share.hasPublicPermissions, false);
+        assert.strictEqual(share.hasOtherPermissions, false);
+        assert.ok(share.shareableFile, "shareableFile should exist");
+
+        // Verify no permissions were added
+        const perms = await getNonOwnerPermissions(share.shareableFile.id);
+        assert.strictEqual(perms.length, 0);
+      });
+
+      test("user adds a person via native dialog → restricted", async () => {
+        await ShareActions.initialize();
+        await ShareActions.changeVisibility("restricted");
+        assert.ok(share.shareableFile);
+
+        // User adds someone via the native Drive share dialog
+        await googleDriveClient.createPermission(
+          share.shareableFile.id,
+          {
+            type: "user",
+            emailAddress: "colleague@example.com",
+            role: "writer",
+          },
+          { sendNotificationEmail: false }
+        );
+
+        // User closes the native dialog — triggers re-sync
+        await ShareActions.onGoogleDriveSharePanelClose();
+
+        assert.strictEqual(share.panel, "open");
+        assert.strictEqual(share.status, "ready");
+        assert.strictEqual(share.visibility, "restricted");
+        assert.strictEqual(share.hasPublicPermissions, false);
+        assert.strictEqual(share.hasOtherPermissions, true);
+      });
+
+      test("user adds domain permission via native dialog → anyone", async () => {
+        await ShareActions.initialize();
+        await ShareActions.changeVisibility("restricted");
+        assert.ok(share.shareableFile);
+
+        // User adds the domain permission (same as "publish") via native dialog
+        await googleDriveClient.createPermission(
+          share.shareableFile.id,
+          {
+            type: "domain",
+            domain: "example.com",
+            role: "reader",
+          },
+          { sendNotificationEmail: false }
+        );
+
+        await ShareActions.onGoogleDriveSharePanelClose();
+
+        assert.strictEqual(share.panel, "open");
+        assert.strictEqual(share.status, "ready");
+        // The domain permission matches the publish permissions → "anyone"
+        assert.strictEqual(share.visibility, "anyone");
+        assert.strictEqual(share.hasPublicPermissions, true);
+        assert.strictEqual(share.hasOtherPermissions, false);
+      });
+
+      test("user adds nothing and closes → only-you", async () => {
+        await ShareActions.initialize();
+        await ShareActions.changeVisibility("restricted");
+        assert.ok(share.shareableFile);
+
+        // User closes without adding anyone
+        await ShareActions.onGoogleDriveSharePanelClose();
+
+        assert.strictEqual(share.panel, "open");
+        assert.strictEqual(share.status, "ready");
+        assert.strictEqual(share.visibility, "only-you");
+        assert.strictEqual(share.hasPublicPermissions, false);
+        assert.strictEqual(share.hasOtherPermissions, false);
+      });
+
+      test("user removes a previously shared person → only-you", async () => {
+        await ShareActions.initialize();
+        await ShareActions.changeVisibility("restricted");
+        assert.ok(share.shareableFile);
+
+        // Add a person first
+        const perm = await googleDriveClient.createPermission(
+          share.shareableFile.id,
+          {
+            type: "user",
+            emailAddress: "colleague@example.com",
+            role: "reader",
+          },
+          { sendNotificationEmail: false }
+        );
+        await ShareActions.onGoogleDriveSharePanelClose();
+        assert.strictEqual(share.visibility, "restricted");
+
+        // Re-open native dialog and remove the person
+        await ShareActions.viewSharePermissions();
+        await googleDriveClient.deletePermission(
+          share.shareableFile.id,
+          perm.id!
+        );
+        await ShareActions.onGoogleDriveSharePanelClose();
+
+        assert.strictEqual(share.panel, "open");
+        assert.strictEqual(share.status, "ready");
+        assert.strictEqual(share.visibility, "only-you");
+        assert.strictEqual(share.hasOtherPermissions, false);
+      });
+    });
+
+    test("anyone → only-you", async () => {
+      // Set up published state
+      await ShareActions.initialize();
+      await ShareActions.changeVisibility("anyone");
+      assert.strictEqual(share.visibility, "anyone");
+
+      await ShareActions.changeVisibility("only-you");
+
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.visibility, "only-you");
+      assert.strictEqual(share.hasPublicPermissions, false);
+      assert.strictEqual(share.hasOtherPermissions, false);
+
+      // Verify all permissions removed from Drive
+      const perms = await getNonOwnerPermissions(share.shareableFile!.id);
+      assert.strictEqual(perms.length, 0);
+    });
+
+    test("anyone → restricted", async () => {
+      // Set up published state
+      await ShareActions.initialize();
+      await ShareActions.changeVisibility("anyone");
+      assert.strictEqual(share.visibility, "anyone");
+
+      await ShareActions.changeVisibility("restricted");
+
+      // Opens the native share dialog
+      assert.strictEqual(share.panel, "native-share");
+      // Publish permissions were stripped, so visibility drops to "only-you"
+      // because no granular permissions remain. The native dialog is where
+      // the user will add specific people.
+      assert.strictEqual(share.hasPublicPermissions, false);
+      assert.strictEqual(share.hasOtherPermissions, false);
+
+      // Verify publish permissions were removed from Drive
+      const perms = await getNonOwnerPermissions(share.shareableFile!.id);
+      assert.strictEqual(perms.length, 0);
+    });
+
+    test("restricted → only-you", async () => {
+      // Set up: initialize, create shareable copy, add a granular permission
+      await ShareActions.initialize();
+      await ShareActions.changeVisibility("restricted");
+      assert.ok(share.shareableFile);
+      // Simulate user adding a person via the native dialog
+      await googleDriveClient.createPermission(
+        share.shareableFile.id,
+        {
+          type: "user",
+          emailAddress: "colleague@example.com",
+          role: "reader",
+        },
+        { sendNotificationEmail: false }
+      );
+      // Sync state by closing the native dialog
+      await ShareActions.onGoogleDriveSharePanelClose();
+      assert.strictEqual(share.visibility, "restricted");
+      assert.strictEqual(share.hasOtherPermissions, true);
+
+      await ShareActions.changeVisibility("only-you");
+
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.visibility, "only-you");
+      assert.strictEqual(share.hasPublicPermissions, false);
+      assert.strictEqual(share.hasOtherPermissions, false);
+
+      // Verify all permissions removed
+      const perms = await getNonOwnerPermissions(share.shareableFile.id);
+      assert.strictEqual(perms.length, 0);
+    });
+
+    test("restricted → anyone", async () => {
+      // Set up: initialize, create shareable copy, add a granular permission
+      await ShareActions.initialize();
+      await ShareActions.changeVisibility("restricted");
+      assert.ok(share.shareableFile);
+      // Simulate user adding a person
+      await googleDriveClient.createPermission(
+        share.shareableFile.id,
+        {
+          type: "user",
+          emailAddress: "colleague@example.com",
+          role: "reader",
+        },
+        { sendNotificationEmail: false }
+      );
+      await ShareActions.onGoogleDriveSharePanelClose();
+      assert.strictEqual(share.visibility, "restricted");
+
+      await ShareActions.changeVisibility("anyone");
+
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.visibility, "anyone");
+      assert.strictEqual(share.hasPublicPermissions, true);
+      // The granular user permission is removed because "anyone" sets desired
+      // permissions to only the publish permissions. The diff treats the
+      // user permission as excess.
+      assert.strictEqual(share.hasOtherPermissions, false);
+
+      // Verify Drive: only the domain perm exists
+      const perms = await getNonOwnerPermissions(share.shareableFile.id);
+      assert.strictEqual(perms.length, 1);
+      const domainPerm = perms.find(
+        (p) => p.type === "domain" && p.domain === "example.com"
+      );
+      assert.ok(domainPerm, "Domain publish permission should exist");
+    });
+
+    test("no-op when target matches current visibility", async () => {
+      await ShareActions.initialize();
+      assert.strictEqual(share.visibility, "only-you");
+
+      // Should not create a shareable copy or change anything
+      await ShareActions.changeVisibility("only-you");
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.shareableFile, null);
+    });
+
+    test("no-op: anyone → anyone", async () => {
+      await ShareActions.initialize();
+      await ShareActions.changeVisibility("anyone");
+      assert.strictEqual(share.visibility, "anyone");
+
+      await ShareActions.changeVisibility("anyone");
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.visibility, "anyone");
+    });
+
+    test("no-op: restricted → restricted", async () => {
+      await ShareActions.initialize();
+      await ShareActions.changeVisibility("restricted");
+      assert.ok(share.shareableFile);
+      // Add a user so we're actually in "restricted" state
+      await googleDriveClient.createPermission(
+        share.shareableFile.id,
+        {
+          type: "user",
+          emailAddress: "colleague@example.com",
+          role: "reader",
+        },
+        { sendNotificationEmail: false }
+      );
+      await ShareActions.onGoogleDriveSharePanelClose();
+      assert.strictEqual(share.visibility, "restricted");
+
+      await ShareActions.changeVisibility("restricted");
+      // No-op: panel stays open, visibility unchanged
+      assert.strictEqual(share.panel, "open");
+      assert.strictEqual(share.visibility, "restricted");
+    });
+
+    test("managed assets get permissions synced on only-you → anyone", async () => {
+      const mainFile = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "main-board.bgl.json", mimeType: "application/json" }
+      );
+      const managedAsset = await googleDriveClient.createFile(
+        new Blob(["asset data"]),
+        { name: "managed-asset.bin", mimeType: "application/octet-stream" }
+      );
+      fakeDriveApi.forceSetFileMetadata(managedAsset.id, {
+        capabilities: { canShare: true },
+      });
+
+      setGraph({
+        edges: [],
+        nodes: [],
+        url: `drive:/${mainFile.id}`,
+        assets: {
+          "asset-1": makeAsset(`drive:/${managedAsset.id}`, true, "test-asset"),
+        },
+      });
+      await ShareActions.initialize();
+
+      await ShareActions.changeVisibility("anyone");
+
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.visibility, "anyone");
+
+      // Verify asset got the domain permission
+      const assetMeta = await googleDriveClient.getFileMetadata(
+        managedAsset.id,
+        { fields: ["permissions"] }
+      );
+      const domainPerm = assetMeta.permissions?.find(
+        (p) => p.type === "domain" && p.domain === "example.com"
+      );
+      assert.ok(
+        domainPerm,
+        "Managed asset should have received domain permission"
+      );
+    });
+
+    test("managed asset permissions stripped on anyone → only-you", async () => {
+      const mainFile = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "main-board.bgl.json", mimeType: "application/json" }
+      );
+      const managedAsset = await googleDriveClient.createFile(
+        new Blob(["asset data"]),
+        { name: "managed-asset.bin", mimeType: "application/octet-stream" }
+      );
+      fakeDriveApi.forceSetFileMetadata(managedAsset.id, {
+        capabilities: { canShare: true },
+      });
+
+      setGraph({
+        edges: [],
+        nodes: [],
+        url: `drive:/${mainFile.id}`,
+        assets: {
+          "asset-1": makeAsset(`drive:/${managedAsset.id}`, true, "test-asset"),
+        },
+      });
+      await ShareActions.initialize();
+
+      // First go to "anyone" so asset gets the permission
+      await ShareActions.changeVisibility("anyone");
+      const midMeta = await googleDriveClient.getFileMetadata(managedAsset.id, {
+        fields: ["permissions"],
+      });
+      assert.ok(
+        midMeta.permissions?.some(
+          (p) => p.type === "domain" && p.domain === "example.com"
+        ),
+        "Asset should have domain permission after publishing"
+      );
+
+      // Now go back to "only-you" — asset permission should be removed
+      await ShareActions.changeVisibility("only-you");
+      assert.strictEqual(share.visibility, "only-you");
+
+      const afterMeta = await googleDriveClient.getFileMetadata(
+        managedAsset.id,
+        { fields: ["permissions"] }
+      );
+      const remaining = (afterMeta.permissions ?? []).filter(
+        (p) => p.role !== "owner"
+      );
+      assert.strictEqual(
+        remaining.length,
+        0,
+        "Managed asset should have no non-owner permissions after only-you"
+      );
+    });
+
+    test("unmanaged assets prompt during changeVisibility to anyone", async () => {
+      const mainFile = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "main-file.bgl.json", mimeType: "application/json" }
+      );
+      const unmanagedAsset = await googleDriveClient.createFile(
+        new Blob(["asset data"]),
+        { name: "unmanaged-asset.bin", mimeType: "application/octet-stream" }
+      );
+      fakeDriveApi.forceSetFileMetadata(unmanagedAsset.id, {
+        name: "Unmanaged File",
+        iconLink: "https://example.com/icon.png",
+        capabilities: { canShare: true },
+      });
+
+      setGraph({
+        edges: [],
+        nodes: [],
+        url: `drive:/${mainFile.id}`,
+        assets: {
+          "asset-1": makeAsset(
+            `drive:/${unmanagedAsset.id}`,
+            false,
+            "unmanaged-asset"
+          ),
+        },
+      });
+      await ShareActions.initialize();
+      await ShareActions.open();
+
+      // changeVisibility to "anyone" — should pause for unmanaged assets
+      const visibilityPromise = ShareActions.changeVisibility("anyone");
+
+      // Wait for unmanaged asset problems to appear
+      for (let i = 0; i < 100; i++) {
+        if (share.unmanagedAssetProblems.length > 0) break;
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      assert.ok(share.unmanagedAssetProblems.length > 0);
+      assert.strictEqual(share.status, "changing-visibility");
+
+      // Fix the problems
+      await ShareActions.fixUnmanagedAssetProblems();
+      await visibilityPromise;
+
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.visibility, "anyone");
+
+      // Verify the unmanaged asset got the permission
+      const assetMeta = await googleDriveClient.getFileMetadata(
+        unmanagedAsset.id,
+        { fields: ["permissions"] }
+      );
+      const domainPerm = assetMeta.permissions?.find(
+        (p) => p.type === "domain" && p.domain === "example.com"
+      );
+      assert.ok(
+        domainPerm,
+        "Unmanaged asset should have received domain permission"
+      );
+    });
+
+    test("anyone blocked when public publishing disallowed", async () => {
+      // Re-bind with domain config that disallows public publishing.
+      // Must include googleDriveBoardServer since changeVisibility may
+      // create a shareable copy before checking the domain restriction.
+      const googleDriveBoardServer = new GoogleDriveBoardServer(
+        "FakeGoogleDrive",
+        { state: Promise.resolve("signedin") },
+        googleDriveClient,
+        [{ type: "domain", domain: "example.com", role: "reader" }],
+        "Breadboard",
+        async () => ({ ok: true, id: "fake-folder-id" }),
+        async () => ({ ok: true as const, files: [] }),
+        {
+          loading: false,
+          loaded: Promise.resolve(),
+          error: undefined,
+          size: 0,
+          entries: () => [][Symbol.iterator](),
+          has: () => false,
+        },
+        {
+          loading: false,
+          loaded: Promise.resolve(),
+          error: undefined,
+          size: 0,
+          entries: () => [][Symbol.iterator](),
+          has: () => false,
+          put: () => {},
+          delete: () => false,
+        }
+      );
+      const { services } = makeTestServices({
+        googleDriveClient,
+        googleDriveBoardServer,
+        signinAdapter: { domain: Promise.resolve("example.com") },
+        globalConfig: {
+          googleDrive: {
+            publishPermissions: [
+              { id: "123", type: "domain", domain: "example.com" },
+            ],
+          },
+          domains: {
+            "example.com": { disallowPublicPublishing: true },
+          },
+        },
+      });
+      ShareActions.bind({ controller, services });
+
+      await ShareActions.initialize();
+      assert.strictEqual(share.publicPublishingAllowed, false);
+
+      await ShareActions.changeVisibility("anyone");
+
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.visibility, "only-you");
+      assert.strictEqual(share.hasPublicPermissions, false);
+    });
+  });
+
   test("reset() restores all fields to their defaults", () => {
     const share = new ShareController("test", "test");
 
@@ -1048,7 +1635,7 @@ suite("Share Actions", () => {
     share.hasOtherPermissions = true;
     share.userDomain = "example.com";
     share.publicPublishingAllowed = false;
-    share.publishedPermissions = [{ type: "anyone", role: "reader" }];
+    share.actualPermissions = [{ type: "anyone", role: "reader" }];
     share.shareableFile = "file-id" as unknown as DriveFileId;
     share.unmanagedAssetProblems = [
       {
@@ -1076,7 +1663,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.hasOtherPermissions, false);
     assert.strictEqual(share.userDomain, "");
     assert.strictEqual(share.publicPublishingAllowed, true);
-    assert.deepStrictEqual(share.publishedPermissions, []);
+    assert.deepStrictEqual(share.actualPermissions, []);
     assert.strictEqual(share.shareableFile, null);
     assert.deepStrictEqual(share.unmanagedAssetProblems, []);
     assert.strictEqual(share.notebookDomainSharingLimited, false);

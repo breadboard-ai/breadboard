@@ -26,7 +26,7 @@ import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
-import type { VisibilityLevel } from "./share-visibility-selector.js";
+import type { ShareVisibilitySelector } from "./share-visibility-selector.js";
 import "./share-visibility-selector.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
@@ -240,6 +240,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
           font-size: 14px;
           line-height: 20px;
           letter-spacing: 0;
+
+          &[disabled] {
+            opacity: 0.4;
+            cursor: wait;
+          }
         }
       }
 
@@ -308,6 +313,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         }
 
         button[disabled] {
+          opacity: 0.4;
           cursor: wait;
         }
       }
@@ -547,6 +553,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
         class=${SHARING_V2 ? "sharing-v2" : ""}
         ${ref(this.#dialog)}
         @close=${this.close}
+        @cancel=${(e: Event) => {
+          if (this.#controller.status !== "ready") {
+            e.preventDefault();
+          }
+        }}
       >
         <header>
           <h2>Share ${title ? `“${title}”` : ""}</h2>
@@ -554,6 +565,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
             id="close-button"
             class="g-icon"
             aria-label="Close"
+            .disabled=${this.#controller.status !== "ready"}
             @click=${this.close}
           >
             close
@@ -644,7 +656,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       this.#controller.stale && shared ? this.#renderStaleBannerV2() : nothing,
       this.#renderAdvisoryV2(),
       this.#renderVisibilityDropdown(),
-      this.#computedVisibility !== "only-you"
+      this.#controller.visibility !== "only-you"
         ? this.#renderEditorAccessToggle()
         : nothing,
       shared ? this.#renderAppLink() : nothing,
@@ -683,7 +695,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </span>
         <button
           class="bb-button-text"
-          .disabled=${this.#controller.status === "publishing-stale"}
+          .disabled=${this.#controller.status !== "ready"}
           @click=${this.#onClickPublishStale}
         >
           ${this.#controller.status === "publishing-stale"
@@ -706,7 +718,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
             >info</span
           >
         </label>
-        <md-switch></md-switch>
+        <md-switch .disabled=${this.#controller.status !== "ready"}></md-switch>
       </div>
     `;
   }
@@ -824,25 +836,33 @@ export class SharePanel extends SignalWatcher(LitElement) {
   #renderDoneButton() {
     return html`
       <footer>
-        <button class="bb-button-outlined" @click=${this.close}>Done</button>
+        <button
+          class="bb-button-outlined"
+          .disabled=${this.#controller.status !== "ready"}
+          @click=${this.close}
+        >
+          Done
+        </button>
       </footer>
     `;
   }
 
   #renderVisibilityDropdown() {
     return html`<bb-share-visibility-selector
-      .value=${this.#computedVisibility}
+      .value=${this.#controller.visibility}
+      .loading=${this.#controller.status === "changing-visibility"}
+      @change=${this.#onVisibilityChange}
+      @edit-access=${this.#onEditAccess}
     ></bb-share-visibility-selector>`;
   }
 
-  get #computedVisibility(): VisibilityLevel {
-    if (this.#controller.hasPublicPermissions) {
-      return "anyone";
-    }
-    if (this.#controller.hasOtherPermissions) {
-      return "restricted";
-    }
-    return "only-you";
+  async #onVisibilityChange(event: Event) {
+    const selector = event.target as ShareVisibilitySelector;
+    await this.#actions.changeVisibility(selector.value);
+  }
+
+  async #onEditAccess() {
+    await this.#actions.viewSharePermissions();
   }
 
   #renderPublishedSwitch() {

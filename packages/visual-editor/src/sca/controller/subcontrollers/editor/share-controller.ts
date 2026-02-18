@@ -34,6 +34,8 @@ export type UnmanagedNotebookAssetProblem = {
 
 export type SharePanelStatus = "closed" | "open" | "native-share";
 
+export type VisibilityLevel = "only-you" | "restricted" | "anyone";
+
 export type ShareStatus =
   /** Fetching basic share state (ownership, permissions) on board load. */
   | "initializing"
@@ -82,6 +84,12 @@ export class ShareController extends RootController {
   @field()
   accessor hasOtherPermissions = false;
 
+  get visibility(): VisibilityLevel {
+    if (this.hasPublicPermissions) return "anyone";
+    if (this.hasOtherPermissions) return "restricted";
+    return "only-you";
+  }
+
   @field()
   accessor userDomain = "";
 
@@ -89,7 +97,7 @@ export class ShareController extends RootController {
   accessor publicPublishingAllowed = true;
 
   @field({ deep: false })
-  accessor publishedPermissions: gapi.client.drive.Permission[] = [];
+  accessor actualPermissions: gapi.client.drive.Permission[] = [];
 
   @field()
   accessor shareableFile: DriveFileId | null = null;
@@ -121,7 +129,7 @@ export class ShareController extends RootController {
     this.hasOtherPermissions = false;
     this.userDomain = "";
     this.publicPublishingAllowed = true;
-    this.publishedPermissions = [];
+    this.actualPermissions = [];
     this.shareableFile = null;
     this.unmanagedAssetProblems = [];
     this.notebookDomainSharingLimited = false;

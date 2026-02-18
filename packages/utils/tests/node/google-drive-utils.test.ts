@@ -7,7 +7,7 @@
 import { deepEqual, equal } from "node:assert";
 import { suite, test } from "node:test";
 import {
-  diffAssetReadPermissions,
+  diffPermissionsIgnoringRole,
   truncateValueForUtf8,
 } from "../../src/google-drive/utils.js";
 
@@ -30,14 +30,14 @@ suite("truncateValueForUtf8", () => {
 
 suite("stringifyPermissionIgnoringRole", () => {
   test("both empty", () =>
-    deepEqual(diffAssetReadPermissions({ actual: [], expected: [] }), {
+    deepEqual(diffPermissionsIgnoringRole({ actual: [], expected: [] }), {
       missing: [],
       excess: [],
     }));
 
   test("no change", () =>
     deepEqual(
-      diffAssetReadPermissions({
+      diffPermissionsIgnoringRole({
         actual: [
           { type: "anyone" },
           { type: "domain", domain: "good.example.com" },
@@ -57,7 +57,7 @@ suite("stringifyPermissionIgnoringRole", () => {
 
   test("zero to anyone", () =>
     deepEqual(
-      diffAssetReadPermissions({
+      diffPermissionsIgnoringRole({
         actual: [],
         expected: [{ type: "anyone" }],
       }),
@@ -69,7 +69,7 @@ suite("stringifyPermissionIgnoringRole", () => {
 
   test("changed domain", () =>
     deepEqual(
-      diffAssetReadPermissions({
+      diffPermissionsIgnoringRole({
         actual: [{ id: "bad", type: "domain", domain: "bad.example.com" }],
         expected: [{ type: "domain", domain: "good.example.com" }],
       }),
@@ -81,7 +81,7 @@ suite("stringifyPermissionIgnoringRole", () => {
 
   test("changed user", () =>
     deepEqual(
-      diffAssetReadPermissions({
+      diffPermissionsIgnoringRole({
         actual: [{ id: "bad", type: "user", emailAddress: "bad@example.com" }],
         expected: [{ type: "user", emailAddress: "good@example.com" }],
       }),
