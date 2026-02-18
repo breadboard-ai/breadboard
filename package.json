@@ -12,6 +12,7 @@
     "build": "wireit",
     "lint": "wireit",
     "dev": "npm run dev -w packages/unified-server --watch",
+    "dev:nofake": "npm run dev:nofake -w packages/unified-server --watch",
     "dev:next": "npm run dev:next:nowatch --watch",
     "dev:next:nowatch": "wireit",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",

@@ -59,7 +59,7 @@ export async function connectToOpalShellHost(): Promise<{
   // Initialize bi-directional comlink APIs
   logger.log(Utils.Logging.Formatter.info("Connecting to host API"), label);
   const shellHost = comlink.wrap<OpalShellHostProtocol>(shellPort);
-  beginSyncronizingUrls(shellHost);
+  beginSynchronizingUrls(shellHost);
   logger.log(Utils.Logging.Formatter.info("Exposing guest API"), label);
   const embedHandler = new EmbedHandlerImpl(shellHost);
   comlink.expose(
@@ -230,7 +230,7 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
   );
 }
 
-function beginSyncronizingUrls(host: OpalShellHostProtocol) {
+function beginSynchronizingUrls(host: OpalShellHostProtocol) {
   const setUrl = () => {
     const url = new URL(window.location.href);
     url.pathname = url.pathname.replace(/^\/_app/, "");

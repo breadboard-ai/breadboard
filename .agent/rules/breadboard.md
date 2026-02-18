@@ -22,6 +22,13 @@ the user to start one before making changes. Use the running build terminal
 output to verify compilation instead of running separate `tsc --noEmit`
 commands.
 
+## Browser
+
+Opal can be accessed by agents at `http://localhost:3110`, as long as the user is
+is running `npm run dev` in the root of the repository. This mode is automatically
+signed in with a fake user, because it is difficult for agents to authenticate.
+Google Drive and other external services are replaced with fakes or stubs.
+
 ## Packages
 
 These are some significant packages:

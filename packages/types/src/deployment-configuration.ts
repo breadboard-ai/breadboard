@@ -36,6 +36,7 @@ export type ClientDeploymentConfiguration = {
    */
   ALLOW_3P_MODULES?: boolean;
   ENABLE_EMAIL_OPT_IN?: boolean;
+  FAKE_MODE?: boolean;
   SHARE_SURFACE_URL_TEMPLATES: Record<string, string>;
   domains?: Record<string, DomainConfiguration>;
   flags: RuntimeFlags;

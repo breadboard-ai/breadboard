@@ -74,9 +74,13 @@ export const GOOGLE_SLIDES_API_ENDPOINT: string = getString(
   "GOOGLE_SLIDES_API_ENDPOINT"
 );
 
-export const GOOGLE_DRIVE_API_ENDPOINT: string = getString(
-  "GOOGLE_DRIVE_API_ENDPOINT"
-);
+export const FAKE_MODE = getBoolean("FAKE_MODE");
+
+export const FAKE_DRIVE_PORT = Number(process.env["FAKE_DRIVE_PORT"] || 3110);
+
+export const GOOGLE_DRIVE_API_ENDPOINT: string = FAKE_MODE
+  ? `http://localhost:${FAKE_DRIVE_PORT}`
+  : getString("GOOGLE_DRIVE_API_ENDPOINT");
 
 export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"

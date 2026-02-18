@@ -62,6 +62,7 @@ export async function createClientConfig(opts: {
     SHARE_SURFACE_URL_TEMPLATES: flags.SHARE_SURFACE_URL_TEMPLATES,
     ENABLE_NEW_URL_SCHEME: flags.ENABLE_NEW_URL_SCHEME,
     ENABLE_SHARING_2: flags.ENABLE_SHARING_2,
+    FAKE_MODE: flags.FAKE_MODE,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       mcp: flags.ENABLE_MCP,
