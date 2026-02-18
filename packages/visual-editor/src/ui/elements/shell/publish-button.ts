@@ -104,7 +104,8 @@ export class PublishButton extends SignalWatcher(LitElement) {
           "w-500": true,
           "has-red-dot": this.#hasRedDot,
         })}
-        ?disabled=${this.#isDisabled}
+        ?disabled=${!this.#isEnabled}
+        @click=${this.#onClickPublish}
       >
         <span
           class=${classMap({
@@ -123,9 +124,14 @@ export class PublishButton extends SignalWatcher(LitElement) {
     return share?.published && share?.stale;
   }
 
-  get #isDisabled() {
+  get #isEnabled() {
     const share = this.#share;
-    return !share?.published || !share?.stale;
+    return (
+      share?.published &&
+      share?.stale &&
+      share?.panel === "closed" &&
+      !this.#isPublishing
+    );
   }
 
   get #isPublishing() {
@@ -138,6 +144,12 @@ export class PublishButton extends SignalWatcher(LitElement) {
 
   get #icon() {
     return this.#isPublishing ? "progress_activity" : "cloud_upload";
+  }
+
+  async #onClickPublish() {
+    if (this.#isEnabled) {
+      await this.sca.actions.share.publishStale();
+    }
   }
 }
 
