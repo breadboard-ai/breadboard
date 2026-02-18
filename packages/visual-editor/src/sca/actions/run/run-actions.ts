@@ -166,6 +166,19 @@ export const prepare = asAction(
     // Set status to stopped (ready to start)
     controller.run.main.setStatus(STATUS.STOPPED);
 
+    // Pre-populate renderer node states from the orchestrator's initial state
+    // so that the graph shows run buttons immediately.
+    controller.run.renderer.reset();
+    for (const [nodeId, nodeState] of runner.state) {
+      const state = nodeState.state;
+      controller.run.renderer.setNodeState(
+        nodeId,
+        state === "failed"
+          ? { status: "failed", errorMessage: "" }
+          : { status: state }
+      );
+    }
+
     // Pre-populate console with all graph nodes as "inactive" on initial load
     await syncConsoleFromRunner();
   }

@@ -64,6 +64,45 @@ suite("Run Actions", () => {
     assert.ok(controller.run.main.runner !== null, "runner should be set");
   });
 
+  test("prepare pre-populates renderer with node states from orchestrator", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller, {
+      edges: [],
+      nodes: [
+        { id: "node-a", type: "test" },
+        { id: "node-b", type: "test" },
+      ],
+    });
+    RunActions.prepare();
+
+    // The renderer controller should have node states for each node
+    const rendererNodes = controller.run.renderer.nodes;
+    assert.strictEqual(
+      rendererNodes.size,
+      2,
+      "renderer should have 2 node states"
+    );
+
+    const nodeA = rendererNodes.get("node-a");
+    assert.ok(nodeA, "node-a should have a renderer state");
+    assert.strictEqual(
+      nodeA.status,
+      "ready",
+      "node-a should be 'ready' (single stage, no dependencies)"
+    );
+
+    const nodeB = rendererNodes.get("node-b");
+    assert.ok(nodeB, "node-b should have a renderer state");
+    assert.strictEqual(
+      nodeB.status,
+      "ready",
+      "node-b should be 'ready' (single stage, no dependencies)"
+    );
+  });
+
   test("prepare sets status to STOPPED (ready)", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();

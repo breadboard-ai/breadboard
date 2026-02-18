@@ -66,6 +66,11 @@ export function createMockRunner(
             stages: [nodes.map((n) => ({ node: n }))],
           }
         : undefined,
+    // State map mirroring the orchestrator's per-node lifecycle state.
+    // All nodes in a single stage default to "ready".
+    state: new Map(
+      nodes.map((n) => [n.id, { state: "ready" as const, stage: 0 }])
+    ),
     // Helper for tests to fire events with optional data
     _fireEvent: (event: string, data?: unknown) => {
       if (listeners[event]) {
