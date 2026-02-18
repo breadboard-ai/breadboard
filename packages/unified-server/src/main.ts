@@ -173,18 +173,9 @@ ViteExpress.static({
 });
 
 ViteExpress.listen(server, serverConfig.port, () => {
-  const url = `http://localhost:${serverConfig.port}`;
-  const label = flags.FAKE_MODE ? "Fake Opal" : "Real Opal";
-  const subtitle = flags.FAKE_MODE ? "(For agents)" : "(For humans)";
-  const yellow = "\x1b[33m";
-  const blue = "\x1b[34m";
-  const bold = "\x1b[1m";
-  const inverse = "\x1b[7m";
-  const reset = "\x1b[0m";
-  const color = flags.FAKE_MODE ? yellow : blue;
-  console.log("");
-  console.log(`  ${color}${inverse}${bold} ${label} ${reset}  ${color}${bold}${url}${reset}  ${subtitle}`);
-  console.log("");
+  console.log(
+    `[unified-server startup] Listening for requests on port ${serverConfig.port}`
+  );
 });
 
 function escape(s: string) {

@@ -10,12 +10,8 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "build:vite": "wireit",
-    "dev": "npm run _dev --watch",
-    "dev:fake": "npm run _dev:fake --watch",
-    "dev:nofake": "npm run _dev:nofake --watch",
-    "_dev": "wireit",
-    "_dev:fake": "wireit",
-    "_dev:nofake": "wireit",
+    "dev": "npm run serve --watch",
+    "dev:fake": "npm run serve:fake --watch",
     "dev-drive": "VITE_BOARD_SERVICE='drive:' npm run serve --watch",
     "docker-build": "docker build --build-context=breadboard=../.. --tag=unified-server .",
     "docker-clean": "docker image rm unified-server",
@@ -71,22 +67,6 @@
           "script": "../visual-editor#check:tsc",
           "cascade": false
         }
-      ]
-    },
-    "_dev": {
-      "dependencies": [
-        "serve",
-        "serve:fake"
-      ]
-    },
-    "_dev:fake": {
-      "dependencies": [
-        "serve:fake"
-      ]
-    },
-    "_dev:nofake": {
-      "dependencies": [
-        "serve"
       ]
     },
     "serve:fake": {

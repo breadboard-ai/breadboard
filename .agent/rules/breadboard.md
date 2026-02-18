@@ -24,10 +24,12 @@ commands.
 
 ## Browser
 
-Opal can be accessed by agents at `http://localhost:3110`, as long as the user is
-is running `npm run dev` in the root of the repository. This mode is automatically
-signed in with a fake user, because it is difficult for agents to authenticate.
-Google Drive and other external services are replaced with fakes or stubs.
+[EXPERIMENTAL] Opal can be accessed by agents at `http://localhost:3100`,
+but the user must first run `npm run dev:fake -w packages/unified-server`
+in a new terminal. This mode is automatically signed in with a fake user.
+Google Drive is faked with an in-memory backend, but other services are not
+yet available, so usefulness of this mode is currently limited to basic
+navigation, and creating/sharing Opals.
 
 ## Packages
 
