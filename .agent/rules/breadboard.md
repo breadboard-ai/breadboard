@@ -22,6 +22,15 @@ the user to start one before making changes. Use the running build terminal
 output to verify compilation instead of running separate `tsc --noEmit`
 commands.
 
+## Browser
+
+[EXPERIMENTAL] Opal can be accessed by agents at `http://localhost:3100`,
+but the user must first run `npm run dev:fake -w packages/unified-server`
+in a new terminal. This mode is automatically signed in with a fake user.
+Google Drive is faked with an in-memory backend, but other services are not
+yet available, so usefulness of this mode is currently limited to basic
+navigation, and creating/sharing Opals.
+
 ## Packages
 
 These are some significant packages:

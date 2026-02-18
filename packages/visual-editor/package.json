@@ -42,6 +42,7 @@
         "src/**/*.ts",
         "src/a2/**/*.bgl.json",
         "tests/**/*.ts",
+        "fake/**/*.ts",
         "tsconfig.json",
         "vite.config.ts",
         "../../core/tsconfig/base.json",

@@ -35,62 +35,78 @@ server.use(makeCspHandler(FALLBACK_CSP));
 
 console.log("[unified-server startup] Creating server config");
 const serverConfig = createServerConfig();
-const connectionServerConfig = await connectionServer.createServerConfig();
 server.use(express.json({ limit: "2GB", type: "*/*" }));
 
-console.log("[unified-server startup] Mounting blobs handler");
-server.use("/board/blobs", makeBlobsHandler(serverConfig));
+let oauthClientId;
 
-console.log("[unified-server startup] Mounting connection server");
-server.use(
-  "/connection",
-  connectionServer.createServer(connectionServerConfig)
-);
+if (flags.FAKE_MODE) {
+  console.log("[unified-server startup] FAKE_MODE enabled");
+  oauthClientId = "fake-oauth-client";
+  const { FakeGoogleDriveApi } =
+    await import("@breadboard-ai/utils/google-drive/fake-google-drive-api.js");
+  const fakeDrive = await FakeGoogleDriveApi.start(flags.FAKE_DRIVE_PORT);
+  fakeDrive.latencyMs = 100;
+  console.log(
+    `[unified-server startup] Fake Drive API running at: ${fakeDrive.apiBaseUrl}`
+  );
+} else {
+  const connectionServerConfig = await connectionServer.createServerConfig();
+  oauthClientId = connectionServerConfig.connection.oauth.client_id;
 
-console.log("[unified-server startup] Mounting updates handler");
-server.use("/updates", createUpdatesHandler());
+  console.log("[unified-server startup] Mounting blobs handler");
+  server.use("/board/blobs", makeBlobsHandler(serverConfig));
 
-console.log("[unified-server startup] Creating Google Drive client");
-const googleAuth = new GoogleAuth({
-  scopes: ["https://www.googleapis.com/auth/drive.readonly"],
-});
-const authClient = await googleAuth.getClient();
-const driveClient = new GoogleDriveClient({
-  fetchWithCreds: createFetchWithCreds(async () => {
-    const { token } = await authClient.getAccessToken();
-    if (!token) {
-      return err(`Unable to obtain auth token`);
-    }
-    return token;
-  }),
-});
+  console.log("[unified-server startup] Mounting connection server");
+  server.use(
+    "/connection",
+    connectionServer.createServer(connectionServerConfig)
+  );
 
-console.log("[unified-server startup] Mounting gallery");
-const cachingGallery = await CachingFeaturedGallery.makeReady({
-  driveClient,
-  cacheRefreshSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
-});
+  console.log("[unified-server startup] Mounting updates handler");
+  server.use("/updates", createUpdatesHandler());
 
-server.use(
-  "/api/gallery",
-  await makeGalleryMiddleware({ gallery: cachingGallery })
-);
+  console.log("[unified-server startup] Creating Google Drive client");
+  const googleAuth = new GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+  });
+  const authClient = await googleAuth.getClient();
+  const driveClient = new GoogleDriveClient({
+    fetchWithCreds: createFetchWithCreds(async () => {
+      const { token } = await authClient.getAccessToken();
+      if (!token) {
+        return err(`Unable to obtain auth token`);
+      }
+      return token;
+    }),
+  });
 
-console.log("[unified-server startup] Mounting Drive proxy");
-server.use(
-  "/api/drive-proxy",
-  makeDriveProxyMiddleware({
-    shouldCacheMedia: (fileId) =>
-      cachingGallery.isFeaturedGalleryGraph(fileId) ||
-      cachingGallery.isFeaturedGalleryAsset(fileId),
-    mediaCacheMaxAgeSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
-  })
-);
+  console.log("[unified-server startup] Mounting gallery");
+  const cachingGallery = await CachingFeaturedGallery.makeReady({
+    driveClient,
+    cacheRefreshSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
+  });
+
+  server.use(
+    "/api/gallery",
+    await makeGalleryMiddleware({ gallery: cachingGallery })
+  );
+
+  console.log("[unified-server startup] Mounting Drive proxy");
+  server.use(
+    "/api/drive-proxy",
+    makeDriveProxyMiddleware({
+      shouldCacheMedia: (fileId) =>
+        cachingGallery.isFeaturedGalleryGraph(fileId) ||
+        cachingGallery.isFeaturedGalleryAsset(fileId),
+      mediaCacheMaxAgeSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
+    })
+  );
+}
 
 console.log("[unified-server startup] Mounting static content");
 
 const clientConfig = await createClientConfig({
-  OAUTH_CLIENT: connectionServerConfig.connection.oauth.client_id,
+  OAUTH_CLIENT: oauthClientId,
 });
 
 server.get(

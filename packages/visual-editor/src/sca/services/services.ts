@@ -26,6 +26,7 @@ import { IntegrationManagerService } from "./integration-managers.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 
 import { createLoader } from "../../engine/loader/index.js";
 import { Autonamer } from "./autonamer.js";
@@ -95,9 +96,11 @@ export function services(
     const actionTracker = createActionTracker(config.shellHost);
 
     const proxyBaseUrl = new URL("/api/drive-proxy", window.location.href).href;
-    const apiBaseUrl = signinAdapter.state.then((state) =>
-      state === "signedout" ? proxyBaseUrl : undefined
-    );
+    const apiBaseUrl =
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT ??
+      signinAdapter.state.then((state) =>
+        state === "signedout" ? proxyBaseUrl : undefined
+      );
     const googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyBaseUrl,

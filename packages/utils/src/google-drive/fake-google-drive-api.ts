@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference types="urlpattern-polyfill" />
+
 import {
   createServer,
   type IncomingHttpHeaders,
@@ -26,6 +28,7 @@ interface FakeGoogleDriveApiSession {
   nextListFileIds: string[];
   listFilesIterators: Map<string, DriveFile[]>;
   nextIteratorId: number;
+  latencyMs: number;
 }
 
 /**
@@ -80,6 +83,7 @@ export class FakeGoogleDriveApi {
       nextListFileIds: [],
       listFilesIterators: new Map(),
       nextIteratorId: 0,
+      latencyMs: 0,
     };
   }
 
@@ -94,11 +98,21 @@ export class FakeGoogleDriveApi {
   }
 
   /**
-   * Creates and starts a fake API server.
+   * Sets an artificial delay (in ms) added before each response.
+   * Defaults to 0.
    */
-  static async start(): Promise<FakeGoogleDriveApi> {
-    const host = "127.0.0.1";
-    const port = 0; // random
+  set latencyMs(ms: number) {
+    this.#session.latencyMs = ms;
+  }
+
+  /**
+   * Creates and starts a fake API server.
+   *
+   * @param port - TCP port to listen on. Defaults to 0 (OS-assigned random
+   *   port).
+   */
+  static async start(port = 0): Promise<FakeGoogleDriveApi> {
+    const host = "localhost";
     return new Promise((resolve, reject) => {
       const server = createServer();
       server.on("error", reject);
@@ -207,12 +221,33 @@ export class FakeGoogleDriveApi {
     req: IncomingMessage,
     res: ServerResponse
   ): Promise<void> {
+    // The browser's fetch API sends requests directly from the app (e.g.
+    // localhost:3000) to this fake Drive API (e.g. localhost:3110). Because
+    // these are different origins (different ports), the browser enforces
+    // same-origin policy and blocks the requests unless the server responds
+    // with permissive CORS headers.
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    );
+    res.setHeader("Access-Control-Allow-Headers", "*");
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
     try {
       await this.#pauseGate?.promise;
     } catch (e) {
       console.error("FakeGoogleDriveApi: request aborted by reset()", e);
       res.writeHead(500).end();
       return;
+    }
+
+    if (this.#session.latencyMs > 0) {
+      await new Promise((r) => setTimeout(r, this.#session.latencyMs));
     }
 
     const body = await this.#readBody(req);

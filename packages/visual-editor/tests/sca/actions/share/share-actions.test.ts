@@ -17,7 +17,7 @@ import {
   type ShareStatus,
 } from "../../../../src/sca/controller/subcontrollers/editor/share-controller.js";
 import { reactive } from "../../../../src/sca/reactive.js";
-import { FakeGoogleDriveApi } from "../../helpers/fake-google-drive-api.js";
+import { FakeGoogleDriveApi } from "@breadboard-ai/utils/google-drive/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
 import { makeUrl } from "../../../../src/ui/utils/urls.js";
 

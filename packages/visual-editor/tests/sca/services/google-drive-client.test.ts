@@ -10,7 +10,7 @@ import {
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import assert from "node:assert";
 import { after, before, beforeEach, suite, test } from "node:test";
-import { FakeGoogleDriveApi } from "../helpers/fake-google-drive-api.js";
+import { FakeGoogleDriveApi } from "@breadboard-ai/utils/google-drive/fake-google-drive-api.js";
 
 suite("GoogleDriveClient", () => {
   let fakeApi: FakeGoogleDriveApi;
