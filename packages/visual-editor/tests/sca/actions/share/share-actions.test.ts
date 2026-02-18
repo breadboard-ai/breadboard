@@ -69,8 +69,7 @@ suite("Share Actions", () => {
   beforeEach(async () => {
     fakeDriveApi.reset();
     googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl: fakeDriveApi.filesApiUrl,
-      uploadApiBaseUrl: fakeDriveApi.uploadApiUrl,
+      apiBaseUrl: fakeDriveApi.apiBaseUrl,
       fetchWithCreds: globalThis.fetch,
     });
     const googleDriveBoardServer = new GoogleDriveBoardServer(
