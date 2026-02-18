@@ -7,6 +7,7 @@
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
 import * as Agent from "./agent/agent-actions.js";
+import * as GraphEditingAgent from "./agent/graph-editing-agent-actions.js";
 import * as Asset from "./asset/asset-actions.js";
 import * as Board from "./board/board-actions.js";
 import * as Flowgen from "./flowgen/flowgen-actions.js";
@@ -28,6 +29,7 @@ import { Utils } from "../utils.js";
 
 export interface AppActions {
   agent: typeof Agent;
+  graphEditingAgent: typeof GraphEditingAgent;
   asset: typeof Asset;
   board: typeof Board;
   flowgen: typeof Flowgen;
@@ -52,6 +54,7 @@ let triggerDisposers: Array<() => void> = [];
 export function actions(controller: AppController, services: AppServices) {
   if (!instance) {
     Agent.bind({ controller, services });
+    GraphEditingAgent.bind({ controller, services });
     Asset.bind({ controller, services });
     Board.bind({ controller, services });
     Flowgen.bind({ controller, services });
@@ -70,6 +73,7 @@ export function actions(controller: AppController, services: AppServices) {
     Theme.bind({ controller, services });
     instance = {
       agent: Agent,
+      graphEditingAgent: GraphEditingAgent,
       asset: Asset,
       board: Board,
       flowgen: Flowgen,
@@ -108,6 +112,7 @@ export function activateTriggers(): () => void {
   // Collect all actions from all modules
   const allActions = [
     ...Object.values(Agent),
+    ...Object.values(GraphEditingAgent),
     ...Object.values(Asset),
     ...Object.values(Board),
     ...Object.values(Flowgen),
@@ -213,6 +218,7 @@ export function cleanActions(): void {
 // Re-export individual modules for direct access in tests
 export {
   Agent,
+  GraphEditingAgent,
   Asset,
   Board,
   Flowgen,

@@ -17,7 +17,6 @@ import type { ChatEntry } from "../../../sca/controller/subcontrollers/editor/gr
 import { markdown } from "../../directives/markdown.js";
 import { icons } from "../../styles/icons.js";
 import { floatingPanelStyles } from "../../styles/floating-panel.js";
-import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing/main.js";
 
 export { GraphEditingChat };
 
@@ -349,7 +348,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
 
     // If the graph changed, reset the loop
     if (agent.currentFlow !== parsedUrl.flow) {
-      this.sca.services.graphEditingAgentService.resetLoop(this.sca.controller);
+      this.sca.actions.graphEditingAgent.resetGraphEditingAgent();
       agent.currentFlow = parsedUrl.flow ?? null;
     }
 
@@ -488,20 +487,14 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
 
     input.value = "";
     const agent = this.sca.controller.editor.graphEditingAgent;
-    const service = this.sca.services.graphEditingAgentService;
 
     agent.addMessage("user", text);
     this.#scrollToBottom();
 
-    if (!service.resolveInput(text, this.sca.controller)) {
+    if (!this.sca.actions.graphEditingAgent.resolveGraphEditingInput(text)) {
       // No pending resolve — this is the first message, start the loop
       agent.processing = true;
-      service.startLoop(
-        text,
-        this.sca.controller,
-        this.sca.services,
-        invokeGraphEditingAgent
-      );
+      this.sca.actions.graphEditingAgent.startGraphEditingAgent(text);
     }
   }
 

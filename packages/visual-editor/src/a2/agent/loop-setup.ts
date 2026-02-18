@@ -16,8 +16,9 @@ import { ConsoleProgressManager } from "./console-progress-manager.js";
 import { llm } from "../a2/utils.js";
 import { FunctionGroupConfigurator, LoopHooks, UIType } from "./types.js";
 import { Loop, AgentRunArgs } from "./loop.js";
+import type { AgentEventSink } from "./agent-event-sink.js";
 
-export { buildAgentRun };
+export { buildAgentRun, buildHooksFromSink };
 
 /**
  * Builds everything needed for a full-featured agent run:
@@ -198,6 +199,57 @@ function buildHooks(
     onSendRequest(model, body) {
       progress.sendRequest(model, body);
       runStateManager.captureRequestBody(model, body);
+    },
+  };
+}
+
+/**
+ * Builds LoopHooks that emit AgentEvents through a sink.
+ *
+ * This is the sink-based equivalent of `buildHooks`. Instead of
+ * calling ConsoleProgressManager / RunStateManager directly, each hook
+ * emits an AgentEvent. The consumer on the other end of the sink
+ * dispatches events to the appropriate managers.
+ *
+ * Reporter is null because detailed nested progress telemetry is a
+ * producer-side concern — the consumer sees high-level events only.
+ */
+function buildHooksFromSink(sink: AgentEventSink): LoopHooks {
+  return {
+    onStart(objective: LLMContent) {
+      sink.emit({ type: "start", objective });
+    },
+    onFinish() {
+      sink.emit({ type: "finish" });
+    },
+    onContent(content: LLMContent) {
+      sink.emit({ type: "content", content });
+    },
+    onThought(text: string) {
+      sink.emit({ type: "thought", text });
+    },
+    onFunctionCall(part, icon?, title?) {
+      const callId = crypto.randomUUID();
+      sink.emit({
+        type: "functionCall",
+        callId,
+        name: part.functionCall.name,
+        icon: typeof icon === "string" ? icon : undefined,
+        title,
+      });
+      return { callId, reporter: null };
+    },
+    onFunctionCallUpdate(callId, status, opts?) {
+      sink.emit({ type: "functionCallUpdate", callId, status, opts });
+    },
+    onFunctionResult(callId, content) {
+      sink.emit({ type: "functionResult", callId, content });
+    },
+    onTurnComplete() {
+      sink.emit({ type: "turnComplete" });
+    },
+    onSendRequest(model, body) {
+      sink.emit({ type: "sendRequest", model, body });
     },
   };
 }

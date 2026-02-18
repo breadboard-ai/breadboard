@@ -41,7 +41,7 @@ import { StatusUpdatesService } from "./status-updates-service.js";
 import { getLogger, Formatter } from "../utils/logging/logger.js";
 import { NotebookLmApiClient } from "./notebooklm-api-client.js";
 import type { OAuthScope } from "../../ui/connection/oauth-scopes.js";
-import { GraphEditingAgentService } from "./graph-editing-agent-service.js";
+import { AgentService } from "../../a2/agent/agent-service.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
@@ -69,7 +69,7 @@ export interface AppServices {
   integrationManagers: IntegrationManagerService;
   notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
-  graphEditingAgentService: GraphEditingAgentService;
+  agentService: AgentService;
   sandbox: RunnableModuleFactory;
   signinAdapter: SigninAdapter;
   /**
@@ -185,7 +185,7 @@ export function services(
       mcpClientManager,
       notebookLmApiClient,
       runService: new RunService(),
-      graphEditingAgentService: new GraphEditingAgentService(),
+      agentService: new AgentService(),
       sandbox,
       signinAdapter,
       stateEventBus: new EventTarget(),
