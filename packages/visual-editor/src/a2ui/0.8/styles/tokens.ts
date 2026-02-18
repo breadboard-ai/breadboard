@@ -59,6 +59,12 @@ export const TOKENS = {
 
   // Button
   buttonRadius: "--a2ui-button-radius",
+
+  // Image controls
+  imageButtonBg: "--a2ui-image-button-bg",
+  imageButtonBgHover: "--a2ui-image-button-bg-hover",
+  imageButtonColor: "--a2ui-image-button-color",
+  imageButtonSize: "--a2ui-image-button-size",
 } as const;
 
 /** The values for each token. Keys match the property names in TOKENS. */

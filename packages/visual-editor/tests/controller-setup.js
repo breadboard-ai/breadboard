@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* global process */
+
 import {
   indexedDB,
   IDBKeyRange,
@@ -33,6 +35,7 @@ globalThis.localStorage = new LocalStorage("./test-storage/local-storage");
 globalThis.sessionStorage = new LocalStorage("./test-storage/session-storage");
 
 globalThis.window ??= {};
+globalThis.document ??= { createElement: () => ({}) };
 
 // Mock setInterval to prevent module-level intervals from causing test hangs
 // This uses a tracked interval approach similar to eval's autoClearingInterval
