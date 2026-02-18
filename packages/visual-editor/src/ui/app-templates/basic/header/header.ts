@@ -391,7 +391,7 @@ export class Header extends SignalWatcher(LitElement) {
       id="replay"
       ?disabled=${!this.replayActive}
       @pointerover=${(evt: PointerEvent) => {
-      if (showReplayWarning || this.isEmpty) {
+        if (showReplayWarning || this.isEmpty) {
           return;
         }
         this.dispatchEvent(
