@@ -21,6 +21,7 @@ import {
   StateEvent,
 } from "../../events/events.js";
 import { UILoadState } from "../../../sca/types.js";
+import type { GraphContentState } from "../../../sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import * as Styles from "../../styles/styles.js";
 import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
@@ -70,8 +71,8 @@ export class VEHeader extends SignalWatcher(LitElement) {
   @property()
   accessor status: "Draft" | "Published" = "Draft";
 
-  @property({ type: Boolean })
-  accessor graphIsEmpty = true;
+  @property()
+  accessor graphContentState: GraphContentState = "loading";
 
   @state()
   accessor #showAccountSwitcher = false;
@@ -508,7 +509,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderModeToggle() {
-    if (this.graphIsEmpty) {
+    // Hide the mode toggle only when the graph is genuinely empty.
+    // During "loading", we still show the toggle to avoid a flash.
+    if (this.graphContentState === "empty") {
       return nothing;
     }
     return html`<span id="mode-toggle">

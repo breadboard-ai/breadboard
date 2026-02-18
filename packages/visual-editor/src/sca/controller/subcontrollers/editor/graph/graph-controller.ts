@@ -63,6 +63,15 @@ export interface PendingGraphReplacement {
 }
 
 /**
+ * Tri-state describing the content state of a graph.
+ *
+ * - `"loading"` — graph descriptor hasn't been set yet (initial state).
+ * - `"empty"`   — graph is loaded but contains no nodes, assets, or sub-graphs.
+ * - `"loaded"`  — graph has at least one node, asset, or sub-graph.
+ */
+export type GraphContentState = "loading" | "empty" | "loaded";
+
+/**
  * Tool definition for the "Go to" routing action.
  * Only available when the graph has more than one node.
  */
@@ -274,16 +283,37 @@ export class GraphController
   }
 
   /**
+   * The content state of the graph. Distinguishes between three states:
+   *
+   * - `"loading"` — the graph descriptor hasn't been set yet
+   *   (`_graph` is null). This is the initial state before `setEditor()`
+   *   is called. UI consumers should avoid showing the "empty" message
+   *   during this transient phase to prevent a flash of empty content.
+   *
+   * - `"empty"` — the graph is loaded but has no nodes, assets,
+   *   or sub-graphs. This is the genuine empty state where the user
+   *   hasn't added any content yet.
+   *
+   * - `"loaded"` — the graph has at least one node, asset,
+   *   or sub-graph. Normal editing/preview state.
+   */
+  get graphContentState(): GraphContentState {
+    const g = this._graph;
+    if (!g) return "loading";
+    const hasContent =
+      (g.nodes?.length ?? 0) > 0 ||
+      Object.keys(g.assets ?? {}).length > 0 ||
+      Object.keys(g.graphs ?? {}).length > 0;
+    return hasContent ? "loaded" : "empty";
+  }
+
+  /**
    * Whether the graph is empty (has no nodes, assets, or sub-graphs).
+   * @deprecated Use `graphContentState` instead, which distinguishes
+   * "loading" from "empty".
    */
   get empty() {
-    const g = this._graph;
-    if (!g) return true;
-    return (
-      (g.nodes?.length ?? 0) === 0 &&
-      Object.keys(g.assets ?? {}).length === 0 &&
-      Object.keys(g.graphs ?? {}).length === 0
-    );
+    return this.graphContentState === "empty";
   }
 
   get editor() {

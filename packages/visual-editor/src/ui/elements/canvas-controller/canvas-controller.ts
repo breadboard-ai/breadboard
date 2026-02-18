@@ -167,7 +167,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const gc = this.sca.controller.editor.graph;
 
     const graph = gc.editor?.inspect("") || null;
-    const graphIsEmpty = gc.empty;
+    // The canvas treats "loading" the same as "empty" — both show the
+    // onboarding state. Only "loaded" hides the empty state.
+    const graphContentState = gc.graphContentState;
+    const graphIsEmpty = graphContentState !== "loaded";
 
     const runState = this.runState;
 
@@ -289,7 +292,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             })}
             .focusWhenIn=${focusAppControllerWhenIn}
             .graph=${gc.graph}
-            .graphIsEmpty=${graphIsEmpty}
+            .graphContentState=${graphContentState}
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}
             .isMine=${!gc.readOnly}
             .readOnly=${gc.readOnly}
