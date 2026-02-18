@@ -53,8 +53,9 @@ jobs:
         id: pr-info
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_EVENT_WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          HEAD_SHA='${{ github.event.workflow_run.head_sha }}'
+          HEAD_SHA='${GITHUB_EVENT_WORKFLOW_RUN_HEAD_SHA}'
           API_URL="repos/${{ github.repository }}/commits/${HEAD_SHA}/pulls"
           PR_NUMBER=$(gh api "$API_URL" --jq '.[0].number // empty')
 
@@ -79,7 +80,9 @@ jobs:
       # changes by the time this workflow runs.
       - name: Checkout baseline commit
         if: steps.pr-info.outputs.sha != ''
-        run: git checkout ${{ steps.pr-info.outputs.sha }}
+        run: git checkout ${STEPS_PR_INFO_OUTPUTS_SHA}
+        env:
+          STEPS_PR_INFO_OUTPUTS_SHA: ${{ steps.pr-info.outputs.sha }}
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
