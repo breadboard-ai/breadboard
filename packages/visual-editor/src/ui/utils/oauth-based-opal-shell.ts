@@ -565,7 +565,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (grant.authuser === undefined) {
       console.warn(
         `[shell host] authuser is not available in stored sign-in data. ` +
-        `User will need to sign out and sign back in to populate authuser and access G1 status.`
+          `User will need to sign out and sign back in to populate authuser and access G1 status.`
       );
     }
     return {

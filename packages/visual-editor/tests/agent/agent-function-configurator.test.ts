@@ -7,10 +7,7 @@
 import { describe, it, mock } from "node:test";
 import { ok as assert, strictEqual } from "node:assert";
 import { createAgentConfigurator } from "../../src/a2/agent/agent-function-configurator.js";
-import {
-  stubModuleArgs,
-  stubMemoryManager,
-} from "../useful-stubs.js";
+import { stubModuleArgs, stubMemoryManager } from "../useful-stubs.js";
 import {
   createMockGenerators,
   createMockFileSystem,

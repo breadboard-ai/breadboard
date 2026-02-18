@@ -4,11 +4,7 @@
 
 import { Template } from "./template.js";
 import { ok } from "./utils.js";
-import {
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 
 export { invoke as default, describe };
 
@@ -26,9 +22,10 @@ type DescribeInputs = {
   };
 };
 
-async function invoke(
-  { text, ...params }: InvokeInputs,
-): Promise<Outcome<Outputs>> {
+async function invoke({
+  text,
+  ...params
+}: InvokeInputs): Promise<Outcome<Outputs>> {
   const template = new Template(text);
   const substituting = await template.substitute(params, async () => "");
   if (!ok(substituting)) {
@@ -38,9 +35,7 @@ async function invoke(
   return { context: [substituting] };
 }
 
-async function describe(
-  { inputs: { text } }: DescribeInputs,
-) {
+async function describe({ inputs: { text } }: DescribeInputs) {
   const template = new Template(text);
   return {
     inputSchema: {

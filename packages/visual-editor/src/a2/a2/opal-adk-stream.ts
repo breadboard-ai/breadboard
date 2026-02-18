@@ -7,7 +7,7 @@ import {
 } from "@breadboard-ai/types";
 import { err, toLLMContent } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { iteratorFromStream, ok} from "@breadboard-ai/utils";
+import { iteratorFromStream, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "../agent/pidgin-translator.js";
 import { AgentUI } from "../agent/ui.js";
 import { AgentFileSystem } from "../agent/file-system.js";
@@ -90,10 +90,13 @@ type StreamingRequestBody = {
   session_id?: string;
   objective?: LLMContent;
   invocation_id?: string;
-  execution_inputs?: Record<string, {
-    parts: StreamingRequestPart[];
-    role: string;
-  }>;
+  execution_inputs?: Record<
+    string,
+    {
+      parts: StreamingRequestPart[];
+      role: string;
+    }
+  >;
   node_config?: {
     node_api?: string;
   };
@@ -109,9 +112,7 @@ class OpalAdkStream {
   private readonly ui: AgentUI;
   private readonly memoryManager: MemoryManager;
 
-  constructor(
-    private readonly moduleArgs: A2ModuleArgs
-  ) {
+  constructor(private readonly moduleArgs: A2ModuleArgs) {
     this.memoryManager = moduleArgs.agentContext.memoryManager;
     this.fileSystem = new AgentFileSystem({
       context: moduleArgs.context,
@@ -134,7 +135,9 @@ class OpalAdkStream {
     }
   }
 
-  buildStreamingRequestBody(options: BuildStreamingRequestBodyOptions): Outcome<StreamingRequestBody> {
+  buildStreamingRequestBody(
+    options: BuildStreamingRequestBodyOptions
+  ): Outcome<StreamingRequestBody> {
     const {
       completedPrompt,
       executionInputs,
@@ -144,12 +147,14 @@ class OpalAdkStream {
       invocationId,
       sessionId,
     } = options;
-    const execution_inputs: NonNullable<StreamingRequestBody["execution_inputs"]> = {};
+    const execution_inputs: NonNullable<
+      StreamingRequestBody["execution_inputs"]
+    > = {};
     if (!completedPrompt.parts) {
       const error = err("opal-adk-stream: Missing required prompt.");
       console.error(error);
       return error;
-    };
+    }
     if (executionInputs) {
       for (const content of executionInputs) {
         if (!content.parts) {
@@ -158,7 +163,9 @@ class OpalAdkStream {
           return error;
         }
         if (content.parts.length > 1) {
-          const error = err("opal-adk-stream: Execution input has multiple part.");
+          const error = err(
+            "opal-adk-stream: Execution input has multiple part."
+          );
           console.error(error);
           return error;
         }
@@ -244,8 +251,10 @@ class OpalAdkStream {
     const ui = this.ui;
 
     if (opalAdkAgent && !VALID_NODE_KEYS.includes(opalAdkAgent)) {
-      const error = err(`opal-adk-stream: Invalid node key: ${opalAdkAgent}, ` +
-        `valid keys are: ${VALID_NODE_KEYS.join(", ")}`);
+      const error = err(
+        `opal-adk-stream: Invalid node key: ${opalAdkAgent}, ` +
+          `valid keys are: ${VALID_NODE_KEYS.join(", ")}`
+      );
       console.error(error);
       return error;
     }
@@ -268,7 +277,7 @@ class OpalAdkStream {
         return requestBodyOrError;
       }
       const requestBody = requestBodyOrError;
-      ui.progress.sendOpalAdkRequest("", requestBody)
+      ui.progress.sendOpalAdkRequest("", requestBody);
       const response = await this.moduleArgs.fetchWithCreds(url.toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -279,7 +288,9 @@ class OpalAdkStream {
       console.log("response: ", response);
       if (!response.ok) {
         const errorText = await response.text();
-        const error = err(`Streaming request failed: ${response.status} ${errorText}`);
+        const error = err(
+          `Streaming request failed: ${response.status} ${errorText}`
+        );
         console.error(error);
         return error;
       }

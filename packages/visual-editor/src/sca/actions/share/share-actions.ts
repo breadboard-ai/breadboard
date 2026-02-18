@@ -127,18 +127,18 @@ async function fetchShareData(): Promise<void> {
     share.ownership = "non-owner";
     share.shareableFile = shareableCopyFileId
       ? {
-        id: shareableCopyFileId,
-        resourceKey: (
-          await googleDriveClient.getFileMetadata(shareableCopyFileId, {
-            fields: ["resourceKey"],
-            bypassProxy: true,
-          })
-        ).resourceKey,
-      }
+          id: shareableCopyFileId,
+          resourceKey: (
+            await googleDriveClient.getFileMetadata(shareableCopyFileId, {
+              fields: ["resourceKey"],
+              bypassProxy: true,
+            })
+          ).resourceKey,
+        }
       : {
-        id: thisFileId,
-        resourceKey: thisFileMetadata.resourceKey,
-      };
+          id: thisFileId,
+          resourceKey: thisFileMetadata.resourceKey,
+        };
     return;
   }
 
@@ -172,7 +172,7 @@ async function fetchShareData(): Promise<void> {
   share.stale =
     thisFileMetadata.version !==
     shareableCopyFileMetadata.properties?.[
-    DRIVE_PROPERTY_LATEST_SHARED_VERSION
+      DRIVE_PROPERTY_LATEST_SHARED_VERSION
     ];
   share.publishedPermissions = allGraphPermissions.filter((permission) =>
     permissionMatchesAnyOf(permission, publishPermissions)
@@ -392,7 +392,7 @@ async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
   Utils.Logging.getLogger().log(
     Utils.Logging.Formatter.verbose(
       `Made a new shareable graph copy "${shareableCopyFileId}"` +
-      ` at version "${updateMainResult.version}".`
+        ` at version "${updateMainResult.version}".`
     ),
     "Share.makeShareableCopy"
   );
@@ -460,9 +460,9 @@ async function autoSyncManagedAssetPermissions(
         Utils.Logging.getLogger().log(
           Utils.Logging.Formatter.error(
             `Could not add permission to asset ` +
-            `"${asset.fileId.id}" because the current user does not have` +
-            ` sharing capability on it. Users who don't already have` +
-            ` access to this asset may not be able to run this graph.`
+              `"${asset.fileId.id}" because the current user does not have` +
+              ` sharing capability on it. Users who don't already have` +
+              ` access to this asset may not be able to run this graph.`
           ),
           "Share.autoSyncManagedAssetPermissions"
         );
@@ -478,8 +478,8 @@ async function autoSyncManagedAssetPermissions(
       Utils.Logging.getLogger().log(
         Utils.Logging.Formatter.verbose(
           `Managed asset ${asset.fileId.id}` +
-          ` has ${missing.length} missing permission(s)` +
-          ` and ${excess.length} excess permission(s). Synchronizing.`,
+            ` has ${missing.length} missing permission(s)` +
+            ` and ${excess.length} excess permission(s). Synchronizing.`,
           {
             actual: assetPermissions,
             needed: graphPermissions,
@@ -638,7 +638,7 @@ export const publish = asAction(
     logger.log(
       Utils.Logging.Formatter.verbose(
         `Added ${publishPermissions.length} publish` +
-        ` permission(s) to shareable graph copy "${share.shareableFile!.id}".`
+          ` permission(s) to shareable graph copy "${share.shareableFile!.id}".`
       ),
       LABEL
     );
@@ -693,7 +693,7 @@ export const unpublish = asAction(
     logger.log(
       Utils.Logging.Formatter.verbose(
         `Removing ${share.publishedPermissions.length} publish` +
-        ` permission(s) from shareable graph copy "${share.shareableFile!.id}".`
+          ` permission(s) from shareable graph copy "${share.shareableFile!.id}".`
       ),
       LABEL
     );
@@ -765,8 +765,8 @@ export const publishStale = asAction(
     Utils.Logging.getLogger(controller).log(
       Utils.Logging.Formatter.verbose(
         `Updated stale shareable graph copy` +
-        ` "${share.shareableFile!.id}" to version` +
-        ` "${share.latestVersion}".`
+          ` "${share.shareableFile!.id}" to version` +
+          ` "${share.latestVersion}".`
       ),
       "Share.publishStale"
     );

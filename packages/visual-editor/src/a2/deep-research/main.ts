@@ -160,9 +160,11 @@ async function invokeOpalAdk(
     return substituting;
   }
   const opalAdkStream = new OpalAdkStream(moduleArgs);
-  const results = await opalAdkStream
-    .executeOpalAdkStream(substituting, DEEP_RESEARCH_KEY);
-  console.log("deep-research results", results)
+  const results = await opalAdkStream.executeOpalAdkStream(
+    substituting,
+    DEEP_RESEARCH_KEY
+  );
+  console.log("deep-research results", results);
   return {
     context: [...(context || []), results],
   };
@@ -268,15 +270,9 @@ async function invoke(
   const flags = await moduleArgs.context.flags?.flags();
   const opalAdkEnabled = flags?.opalAdk || false;
   if (opalAdkEnabled) {
-    return invokeOpalAdk(
-      { context, query, summarize, ...params },
-      moduleArgs
-    );
+    return invokeOpalAdk({ context, query, summarize, ...params }, moduleArgs);
   } else {
-    return invokeLegacy(
-      { context, query, summarize, ...params },
-      moduleArgs
-    );
+    return invokeLegacy({ context, query, summarize, ...params }, moduleArgs);
   }
 }
 
@@ -308,9 +304,7 @@ function researchExample(): string[] {
   ];
 }
 
-async function describe(
-  { inputs: { query } }: DescribeInputs,
-) {
+async function describe({ inputs: { query } }: DescribeInputs) {
   const template = new Template(query);
   return {
     inputSchema: {

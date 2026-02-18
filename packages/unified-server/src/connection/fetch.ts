@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {exec} from 'child_process';
-import {promisify} from 'util';
-import * as flags from './flags.js';
+import { exec } from "child_process";
+import { promisify } from "util";
+import * as flags from "./flags.js";
 
 /**
  * By default, fetches the URL using the default fetch.
@@ -14,7 +14,10 @@ import * as flags from './flags.js';
  * If OAUTH_FETCH_COMMAND is set, the server will shell out to the provided
  * cURL-like command to fetch the URL.
  */
-export async function oauthFetch(url: URL, init: RequestInit): Promise<Response> {
+export async function oauthFetch(
+  url: URL,
+  init: RequestInit
+): Promise<Response> {
   if (!flags.OAUTH_FETCH_COMMAND) {
     return fetch(url, init);
   }
