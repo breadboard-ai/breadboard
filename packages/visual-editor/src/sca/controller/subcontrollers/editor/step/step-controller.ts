@@ -70,4 +70,12 @@ class StepController extends RootController {
   clearPendingAssetEdit(): void {
     this._pendingAssetEdit = null;
   }
+
+  /**
+   * The URL of the memory spreadsheet for the currently selected node's graph.
+   * Set by the lookupMemorySheet action when a node with "use-memory" is selected.
+   * Null when no memory sheet exists or the node doesn't use memory.
+   */
+  @field()
+  accessor memorySheetUrl: string | null = null;
 }
