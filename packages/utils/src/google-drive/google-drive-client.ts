@@ -6,10 +6,6 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import {
-  GOOGLE_DRIVE_FILES_API_PREFIX,
-  GOOGLE_DRIVE_UPLOAD_API_PREFIX,
-} from "@breadboard-ai/types";
 import { fetchWithRetry } from "../fetch-with-retry.js";
 
 type File = gapi.client.drive.File;
@@ -18,10 +14,14 @@ type Permission = gapi.client.drive.Permission;
 export type LogLevel = "verbose" | "warning";
 
 export interface GoogleDriveClientOptions {
-  apiBaseUrl?: string | Promise<string>;
-  uploadApiBaseUrl?: string | Promise<string>;
+  /**
+   * The base URL for Drive API requests. Standard path suffixes
+   * (`/drive/v3/files` and `/upload/drive/v3/files`) are appended
+   * automatically. Defaults to `https://www.googleapis.com`.
+   */
+  apiBaseUrl?: string | Promise<string | undefined>;
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
-  proxyApiBaseUrl?: string;
+  proxyBaseUrl?: string;
   fetchWithCreds: typeof globalThis.fetch;
   /** Optional logging callback. When provided, all log output routes here. */
   log?: (level: LogLevel, ...args: unknown[]) => void;
@@ -191,15 +191,14 @@ export class GoogleDriveClient {
   readonly #log: (level: LogLevel, ...args: unknown[]) => void;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.#apiUrl = Promise.resolve(
-      options.apiBaseUrl ?? GOOGLE_DRIVE_FILES_API_PREFIX
+    const base = Promise.resolve(options.apiBaseUrl).then(
+      (url) => url ?? "https://www.googleapis.com"
     );
-    this.#uploadApiUrl = Promise.resolve(
-      options.uploadApiBaseUrl ?? GOOGLE_DRIVE_UPLOAD_API_PREFIX
-    );
-    this.#publicProxy = options.proxyApiBaseUrl
+    this.#apiUrl = base.then((o) => `${o}/drive/v3/files`);
+    this.#uploadApiUrl = base.then((o) => `${o}/upload/drive/v3/files`);
+    this.#publicProxy = options.proxyBaseUrl
       ? {
-          apiUrl: options.proxyApiBaseUrl,
+          apiUrl: `${options.proxyBaseUrl}/drive/v3/files`,
           marked: new Set(),
         }
       : undefined;

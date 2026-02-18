@@ -19,9 +19,8 @@ suite("GoogleDriveClient", () => {
   before(async () => {
     fakeApi = await FakeGoogleDriveApi.start();
     client = new GoogleDriveClient({
-      apiBaseUrl: fakeApi.filesApiUrl,
-      uploadApiBaseUrl: fakeApi.uploadApiUrl,
-      proxyApiBaseUrl: fakeApi.proxyApiUrl,
+      apiBaseUrl: fakeApi.apiBaseUrl,
+      proxyBaseUrl: fakeApi.proxyBaseUrl,
       fetchWithCreds: globalThis.fetch,
     });
   });
@@ -566,22 +565,6 @@ suite("GoogleDriveClient", () => {
 
       assert.strictEqual(fakeApi.requests.length, 0);
       await assert.rejects(() => client.getFileMetadata(created.id!), /404/);
-    });
-  });
-
-  suite("URL accessors", () => {
-    test("filesApiUrl has correct format", () => {
-      assert.match(
-        fakeApi.filesApiUrl,
-        /^http:\/\/127\.0\.0\.1:\d+\/drive\/v3\/files$/
-      );
-    });
-
-    test("uploadApiUrl has correct format", () => {
-      assert.match(
-        fakeApi.uploadApiUrl,
-        /^http:\/\/127\.0\.0\.1:\d+\/upload\/drive\/v3\/files$/
-      );
     });
   });
 

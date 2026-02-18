@@ -12,7 +12,6 @@ import type { GlobalConfig } from "../types.js";
 import { createActionTracker } from "../../ui/utils/action-tracker.js";
 import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
-  GOOGLE_DRIVE_FILES_API_PREFIX,
   GraphLoader,
   NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
@@ -95,16 +94,13 @@ export function services(
 
     const actionTracker = createActionTracker(config.shellHost);
 
-    const proxyApiBaseUrl = new URL(
-      "/api/drive-proxy/drive/v3/files",
-      window.location.href
-    ).href;
+    const proxyBaseUrl = new URL("/api/drive-proxy", window.location.href).href;
     const apiBaseUrl = signinAdapter.state.then((state) =>
-      state === "signedout" ? proxyApiBaseUrl : GOOGLE_DRIVE_FILES_API_PREFIX
+      state === "signedout" ? proxyBaseUrl : undefined
     );
     const googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
-      proxyApiBaseUrl,
+      proxyBaseUrl,
       fetchWithCreds: fetchWithCreds,
       log(level, ...args) {
         const logger = getLogger();

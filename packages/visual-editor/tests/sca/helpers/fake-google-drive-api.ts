@@ -36,9 +36,8 @@ interface FakeGoogleDriveApiSession {
  * const fakeApi = await FakeGoogleDriveApi.start();
  *
  * const client = new GoogleDriveClient({
- *   apiBaseUrl: fakeApi.filesApiUrl,
- *   uploadApiBaseUrl: fakeApi.uploadApiUrl,
- *   proxyApiBaseUrl: fakeApi.proxyApiUrl,
+ *   apiBaseUrl: fakeApi.apiBaseUrl,
+ *   proxyBaseUrl: fakeApi.proxyBaseUrl,
  *   fetchWithCreds: fetch,
  * });
  *
@@ -121,24 +120,19 @@ export class FakeGoogleDriveApi {
   }
 
   /**
-   * The base URL for the main Drive Files API.
+   * The base URL for this fake server (scheme + host + port).
+   * Use with `apiBaseUrl` option on `GoogleDriveClient`.
    */
-  get filesApiUrl(): string {
-    return `http://${this.#host}:${this.#port}/drive/v3/files`;
+  get apiBaseUrl(): string {
+    return `http://${this.#host}:${this.#port}`;
   }
 
   /**
-   * The base URL for the Drive Upload API.
+   * The base URL for the proxy (simulates public proxy access).
+   * Use with `proxyBaseUrl` option on `GoogleDriveClient`.
    */
-  get uploadApiUrl(): string {
-    return `http://${this.#host}:${this.#port}/upload/drive/v3/files`;
-  }
-
-  /**
-   * The base URL for the Proxy API (simulates public proxy access).
-   */
-  get proxyApiUrl(): string {
-    return `http://${this.#host}:${this.#port}/proxy/drive/v3/files`;
+  get proxyBaseUrl(): string {
+    return `${this.apiBaseUrl}/proxy`;
   }
 
   /**
