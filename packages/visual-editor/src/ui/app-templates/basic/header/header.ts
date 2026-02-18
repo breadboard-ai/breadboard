@@ -229,6 +229,21 @@ export class Header extends LitElement {
         }
       }
 
+      :host([isempty]) #fullscreen,
+      :host([isempty]) #menu,
+      :host([isempty]) #replay,
+      :host([isempty]) #replay-autostart {
+        color: light-dark(
+          oklch(from var(--n-10) l c h / 38%),
+          oklch(from var(--n-80) l c h / 38%)
+        );
+        pointer-events: none;
+      }
+
+      :host([isempty]) #progress-container {
+        visibility: hidden;
+      }
+
       ul {
         padding: 0;
         margin: 0;
@@ -378,7 +393,7 @@ export class Header extends LitElement {
       id="replay"
       ?disabled=${!this.replayActive}
       @pointerover=${(evt: PointerEvent) => {
-        if (showReplayWarning) {
+      if (showReplayWarning || this.isEmpty) {
           return;
         }
         this.dispatchEvent(
