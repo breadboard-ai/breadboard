@@ -193,7 +193,9 @@ export const open = asAction(
     const share = controller.editor.share;
 
     if (share.panel !== "closed") {
+      /* c8 ignore start */
       return;
+      /* c8 ignore end */
     }
     share.panel = "open";
 
@@ -218,8 +220,8 @@ function getGraph(): GraphDescriptor | null {
 function getGraphFileId(graphUrl: string): string | undefined {
   const logger = Utils.Logging.getLogger();
 
-  /* c8 ignore start */
   if (!graphUrl.startsWith("drive:")) {
+    /* c8 ignore start */
     logger.log(
       Utils.Logging.Formatter.error(
         `Expected "drive:" prefixed graph URL, got ${JSON.stringify(graphUrl)}`
@@ -227,12 +229,14 @@ function getGraphFileId(graphUrl: string): string | undefined {
       LABEL
     );
     return undefined;
+    /* c8 ignore end */
   }
   const graphFileId = graphUrl.replace(/^drive:\/*/, "");
   if (!graphFileId) {
+    /* c8 ignore start */
     logger.log(Utils.Logging.Formatter.error("Graph file ID was empty"), LABEL);
+    /* c8 ignore end */
   }
-  /* c8 ignore end */
   return graphFileId;
 }
 
@@ -301,13 +305,17 @@ async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
   const { services } = bind;
   const graph = getGraph();
   if (!graph) {
+    /* c8 ignore start */
     throw new Error(`No graph available`);
+    /* c8 ignore end */
   }
   const googleDriveClient = services.googleDriveClient;
   const boardServer = services.googleDriveBoardServer;
 
   if (!graph.url) {
+    /* c8 ignore start */
     throw new Error(`Graph had no URL`);
+    /* c8 ignore end */
   }
   const mainFileId = extractGoogleDriveFileId(graph.url);
   if (!mainFileId) {
