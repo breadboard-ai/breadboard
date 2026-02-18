@@ -149,7 +149,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
                 var(--ui-custom-o-25),
                 var(--ui-custom-o-25)
               );
-              border: 1px solid var(--ui-custom-o-100);
+              outline: 1px solid var(--ui-custom-o-100);
             }
           }
 
