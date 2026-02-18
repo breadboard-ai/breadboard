@@ -98,13 +98,8 @@ import * as Actions from "./actions/actions.js";
 import { type RuntimeFlags } from "@breadboard-ai/types";
 import { RuntimeConfig } from "../utils/graph-types.js";
 
-// Re-export NotebookLM API client types and enums for UI components
-export {
-  type Notebook,
-  OriginProductType,
-  ApplicationPlatform,
-  DeviceType,
-} from "./services/notebooklm-api-client.js";
+// Re-export NotebookLM API client types for UI components
+export { type Notebook } from "./services/notebooklm-api-client.js";
 
 export interface SCA {
   services: ReturnType<typeof Services.services>;

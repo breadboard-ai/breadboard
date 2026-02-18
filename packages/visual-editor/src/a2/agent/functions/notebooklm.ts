@@ -19,13 +19,10 @@ import { statusUpdateSchema, taskIdSchema } from "./system.js";
 import { notebookLmIcon } from "../../../ui/styles/svg-icons.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 import {
-  ApplicationPlatform,
   AudioReference,
   ContentPiece,
-  DeviceType,
   ImageReference,
   NotebookLmApiClient,
-  OriginProductType,
   ResponseContentType,
   RetrieveRelevantChunksResponse,
   SourceContext,
@@ -196,13 +193,6 @@ specific about what information you're looking for.`
               query,
               // TODO: decide what to do about budget
               contextTokenBudget: 1000000,
-              provenance: {
-                originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
-                clientInfo: {
-                  applicationPlatform: ApplicationPlatform.WEB,
-                  device: DeviceType.DESKTOP,
-                },
-              },
             });
 
           // Format the response for LLM consumption
@@ -272,13 +262,6 @@ specific about what information you're looking for.`
             name: `notebooks/${notebook_id}/chatSessions/${sessionId}`,
             query,
             responseContentType: ResponseContentType.MARKDOWN,
-            provenance: {
-              originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
-              clientInfo: {
-                applicationPlatform: ApplicationPlatform.WEB,
-                device: DeviceType.DESKTOP,
-              },
-            },
           });
 
           return { answer: response.markdownContent || "" };
