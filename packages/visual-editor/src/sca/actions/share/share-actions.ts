@@ -26,10 +26,7 @@ import {
 import type { UnmanagedAssetProblem } from "../../controller/subcontrollers/editor/share-controller.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
-  ApplicationPlatform,
-  DeviceType,
   NotebookAccessRole,
-  OriginProductType,
   type NotebookPermission,
 } from "../../services/notebooklm-api-client.js";
 import { makeAction } from "../binder.js";
@@ -562,13 +559,6 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
   const share = controller.editor.share;
   const googleDriveClient = services.googleDriveClient;
   const nlmClient = services.notebookLmApiClient;
-  const nlmProvenance = {
-    originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
-    clientInfo: {
-      applicationPlatform: ApplicationPlatform.WEB,
-      device: DeviceType.DESKTOP,
-    },
-  };
   const problems: UnmanagedAssetProblem[] = [];
 
   // Check Drive assets
@@ -619,7 +609,6 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
         try {
           const existing = await nlmClient.listNotebookPermissions({
             parent: `notebooks/${notebook.notebookId}`,
-            provenance: nlmProvenance,
           });
           const existingEmails = new Set(
             (existing.permissions ?? []).flatMap((p) =>
@@ -635,7 +624,6 @@ async function checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
             try {
               const nb = await nlmClient.getNotebook({
                 name: `notebooks/${notebook.notebookId}`,
-                provenance: nlmProvenance,
               });
               notebookName = nb.displayName ?? notebookName;
             } catch {
@@ -938,13 +926,6 @@ export const fixUnmanagedAssetProblems = asAction(
           await nlmClient.batchUpdateNotebookPermissions({
             name: `notebooks/${problem.notebookId}`,
             permissions,
-            provenance: {
-              originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
-              clientInfo: {
-                applicationPlatform: ApplicationPlatform.WEB,
-                device: DeviceType.DESKTOP,
-              },
-            },
             sendEmailNotification: false,
           });
         }

@@ -6,7 +6,7 @@
 
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import {
@@ -14,13 +14,7 @@ import {
   InputChangeEvent,
 } from "../../plugins/input-plugin.js";
 import { scaContext } from "../../../sca/context/context.js";
-import {
-  type SCA,
-  type Notebook,
-  OriginProductType,
-  ApplicationPlatform,
-  DeviceType,
-} from "../../../sca/sca.js";
+import { type SCA, type Notebook } from "../../../sca/sca.js";
 import { ModalDismissedEvent } from "../../events/events.js";
 import { icons } from "../../styles/icons.js";
 import "../shell/modal.js";
@@ -39,8 +33,6 @@ export type NotebookPickedValue = {
   /** Optional emoji for display. */
   emoji?: string;
 };
-
-type PickerState = "idle" | "loading" | "error";
 
 @customElement("bb-notebooklm-picker")
 export class NotebookLmPicker extends SignalWatcher(LitElement) {
@@ -120,26 +112,8 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @property({ type: Boolean })
-  accessor open = false;
-
   @property()
   accessor value: NotebookPickedValue[] = [];
-
-  @state()
-  accessor #pickerState: PickerState = "idle";
-
-  @state()
-  accessor #notebooks: Notebook[] = [];
-
-  @state()
-  accessor #errorMessage = "";
-
-  @state()
-  accessor #selectedNotebooks: Set<string> = new Set();
-
-  @state()
-  accessor #searchQuery = "";
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
@@ -148,97 +122,41 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
 
   /** Opens the picker dialog and fetches notebooks. */
   triggerFlow() {
-    this.open = true;
-    this.#selectedNotebooks = new Set();
-    this.#searchQuery = "";
+    const nlm = this.sca.controller.editor.notebookLmPicker;
+    nlm.reset();
+    nlm.pickerOpen = true;
     this.#searchRef.value?.collapse();
-    this.#fetchNotebooks();
-  }
-
-  async #fetchNotebooks() {
-    this.#pickerState = "loading";
-    this.#notebooks = [];
-    this.#errorMessage = "";
-
-    try {
-      const response =
-        await this.sca.services.notebookLmApiClient.listNotebooks({
-          provenance: {
-            originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
-            clientInfo: {
-              applicationPlatform: ApplicationPlatform.WEB,
-              device: DeviceType.DESKTOP,
-            },
-          },
-        });
-      this.#notebooks = response.notebooks || [];
-      this.#pickerState = "idle";
-    } catch (err) {
-      console.error("Failed to fetch notebooks:", err);
-      this.#pickerState = "error";
-      this.#errorMessage =
-        err instanceof Error ? err.message : "Failed to fetch notebooks";
-    }
+    this.sca.actions.notebookLmPicker.fetchNotebooks();
   }
 
   #handleClose() {
-    this.open = false;
-    this.#selectedNotebooks = new Set();
-    this.#searchQuery = "";
+    this.sca.controller.editor.notebookLmPicker.reset();
     this.#searchRef.value?.collapse();
     this.dispatchEvent(new InputCancelEvent());
   }
 
-  #handleConfirm() {
-    if (this.#selectedNotebooks.size === 0) {
+  async #handleConfirm() {
+    const nlm = this.sca.controller.editor.notebookLmPicker;
+    if (nlm.selectedNotebooks.size === 0) {
       return;
     }
-    // Convert selected notebooks to NotebookPickedValue array
-    const values: NotebookPickedValue[] = this.#notebooks
-      .filter((notebook) => this.#selectedNotebooks.has(notebook.name))
-      .map((notebook) => {
-        const id = notebook.name.replace("notebooks/", "");
-        return {
-          id,
-          name: notebook.name,
-          preview: notebook.displayName || id,
-          emoji: notebook.emoji,
-        };
-      });
-
+    const values = await this.sca.actions.notebookLmPicker.confirmSelection();
     this.value = values;
-    this.open = false;
-    this.#selectedNotebooks = new Set();
     this.dispatchEvent(new InputChangeEvent(values));
   }
 
   #handleToggleNotebook(notebook: Notebook) {
-    const newSelected = new Set(this.#selectedNotebooks);
-    if (newSelected.has(notebook.name)) {
-      newSelected.delete(notebook.name);
-    } else {
-      newSelected.add(notebook.name);
-    }
-    this.#selectedNotebooks = newSelected;
+    this.sca.controller.editor.notebookLmPicker.toggleSelection(notebook.name);
   }
 
   #handleSearchInput(evt: Event) {
     const target = evt.target as ExpandingSearchButton;
-    this.#searchQuery = target.value;
-  }
-
-  get #filteredNotebooks(): Notebook[] {
-    if (!this.#searchQuery.trim()) {
-      return this.#notebooks;
-    }
-    const query = this.#searchQuery.toLowerCase().trim();
-    return this.#notebooks.filter((notebook) =>
-      (notebook.displayName || "").toLowerCase().includes(query)
-    );
+    this.sca.controller.editor.notebookLmPicker.searchQuery = target.value;
   }
 
   override render() {
-    if (!this.open) {
+    const nlm = this.sca.controller.editor.notebookLmPicker;
+    if (!nlm.pickerOpen) {
       return nothing;
     }
 
@@ -248,7 +166,7 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
         .showCloseButton=${true}
         .showSaveCancel=${true}
         .saveButtonLabel=${"Add"}
-        .saveButtonDisabled=${this.#selectedNotebooks.size === 0}
+        .saveButtonDisabled=${nlm.selectedNotebooks.size === 0}
         @bbmodaldismissed=${(evt: ModalDismissedEvent) => {
           if (evt.withSave) {
             this.#handleConfirm();
@@ -261,7 +179,7 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
           <bb-expanding-search-button
             ${ref(this.#searchRef)}
             placeholder="Search notebooks..."
-            .value=${this.#searchQuery}
+            .value=${nlm.searchQuery}
             @input=${this.#handleSearchInput}
           ></bb-expanding-search-button>
         </div>
@@ -271,20 +189,22 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
   }
 
   #renderContent() {
-    switch (this.#pickerState) {
+    const nlm = this.sca.controller.editor.notebookLmPicker;
+    switch (nlm.pickerState) {
       case "loading":
         return html`<div class="loading">Loading notebooks...</div>`;
       case "error":
-        return html`<div class="error">${this.#errorMessage}</div>`;
+        return html`<div class="error">${nlm.errorMessage}</div>`;
       default:
         return this.#renderNotebookList();
     }
   }
 
   #renderNotebookList() {
-    const notebooks = this.#filteredNotebooks;
+    const nlm = this.sca.controller.editor.notebookLmPicker;
+    const notebooks = nlm.filteredNotebooks;
 
-    if (this.#notebooks.length === 0) {
+    if (nlm.notebooks.length === 0) {
       return html`<div class="empty-state">
         No notebooks found. Create a notebook in NotebookLM first.
       </div>`;
@@ -303,7 +223,7 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
             <div
               class=${classMap({
                 "notebook-item": true,
-                selected: this.#selectedNotebooks.has(notebook.name),
+                selected: nlm.selectedNotebooks.has(notebook.name),
               })}
               @click=${() => this.#handleToggleNotebook(notebook)}
             >

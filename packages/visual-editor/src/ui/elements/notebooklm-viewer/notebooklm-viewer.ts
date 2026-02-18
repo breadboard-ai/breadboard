@@ -10,13 +10,7 @@ import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { icons } from "../../styles/icons.js";
 import { scaContext } from "../../../sca/context/context.js";
-import {
-  type SCA,
-  type Notebook,
-  OriginProductType,
-  ApplicationPlatform,
-  DeviceType,
-} from "../../../sca/sca.js";
+import { type SCA, type Notebook } from "../../../sca/sca.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
 /**
@@ -197,13 +191,6 @@ export class NotebookLmViewer extends SignalWatcher(LitElement) {
       const fetchedNotebook =
         await this.sca.services.notebookLmApiClient.getNotebook({
           name: notebookName,
-          provenance: {
-            originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
-            clientInfo: {
-              applicationPlatform: ApplicationPlatform.WEB,
-              device: DeviceType.DESKTOP,
-            },
-          },
         });
 
       return fetchedNotebook;

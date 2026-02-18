@@ -79,6 +79,10 @@ class Controller implements AppController {
           "Editor_GraphEditingAgent",
           "GraphEditingAgentController"
         ),
+      notebookLmPicker: new Editor.NotebookLmPicker.NotebookLmPickerController(
+        "Editor_NotebookLmPicker",
+        "NotebookLmPickerController"
+      ),
     };
 
     this.home = {
@@ -236,6 +240,7 @@ export interface AppController extends DebuggableAppController {
     fastAccess: Editor.FastAccess.FastAccessController;
     integrations: Editor.Integrations.IntegrationsController;
     graphEditingAgent: Editor.GraphEditingAgent.GraphEditingAgentController;
+    notebookLmPicker: Editor.NotebookLmPicker.NotebookLmPickerController;
   };
   home: {
     recent: Home.RecentBoardsController;

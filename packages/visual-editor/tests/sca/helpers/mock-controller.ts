@@ -13,6 +13,7 @@ import { ScreenController } from "../../../src/sca/controller/subcontrollers/run
 import type { FlowgenInputStatus } from "../../../src/sca/controller/subcontrollers/global/flowgen-input-controller.js";
 import { ShareController } from "../../../src/sca/controller/subcontrollers/editor/share-controller.js";
 import { field } from "../../../src/sca/controller/decorators/field.js";
+import { NotebookLmPickerController } from "../../../src/sca/controller/subcontrollers/editor/notebooklm-picker-controller.js";
 import { SnackType, SnackbarUUID } from "../../../src/ui/types/types.js";
 
 /**
@@ -163,6 +164,10 @@ export function makeTestController(options: TestControllerOptions = {}) {
       // behaviors in tests, since we'd be testing the real behavior of
       // controllers directly.
       share: new ShareController("test-share", "test"),
+      notebookLmPicker: new NotebookLmPickerController(
+        "test-notebookLmPicker",
+        "test"
+      ),
       theme: {
         status: "idle" as string,
       },

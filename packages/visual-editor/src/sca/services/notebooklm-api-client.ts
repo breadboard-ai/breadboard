@@ -198,13 +198,26 @@ export interface SourceContext {
 }
 
 // =============================================================================
+// Default Provenance
+// =============================================================================
+
+const DEFAULT_PROVENANCE: Provenance = {
+  originProductType: OriginProductType.GOOGLE_NOTEBOOKLM_EVALS,
+  clientInfo: {
+    applicationPlatform: ApplicationPlatform.WEB,
+    device: DeviceType.DESKTOP,
+  },
+};
+
+// =============================================================================
 // Request/Response Types
 // =============================================================================
 
 /** Request for ListNotebooks RPC. */
+
 export interface ListNotebooksRequest {
   filter?: string;
-  provenance: Provenance;
+  provenance?: Provenance;
   notebookExpansion?: NotebookExpansion;
 }
 
@@ -216,7 +229,7 @@ export interface ListNotebooksResponse {
 /** Request for GetNotebook RPC. */
 export interface GetNotebookRequest {
   name: string;
-  provenance: Provenance;
+  provenance?: Provenance;
   notebookExpansion?: NotebookExpansion;
 }
 
@@ -225,7 +238,7 @@ export interface RetrieveRelevantChunksRequest {
   name: string;
   query: string;
   contextTokenBudget?: number;
-  provenance: Provenance;
+  provenance?: Provenance;
 }
 
 /** Response for RetrieveRelevantChunks RPC. */
@@ -236,7 +249,7 @@ export interface RetrieveRelevantChunksResponse {
 /** Request for ListNotebookPermissions RPC. */
 export interface ListNotebookPermissionsRequest {
   parent: string;
-  provenance: Provenance;
+  provenance?: Provenance;
 }
 
 /** Response for ListNotebookPermissions RPC. */
@@ -248,7 +261,7 @@ export interface ListNotebookPermissionsResponse {
 export interface BatchUpdateNotebookPermissionsRequest {
   name: string;
   permissions: NotebookPermission[];
-  provenance: Provenance;
+  provenance?: Provenance;
   sendEmailNotification?: boolean;
 }
 
@@ -272,7 +285,7 @@ export interface GenerateAnswerRequest {
   /** The content type of the response. */
   responseContentType: ResponseContentType;
   /** Provenance information for the API call. */
-  provenance: Provenance;
+  provenance?: Provenance;
 }
 
 /** Response for GenerateAnswer RPC. */
@@ -308,24 +321,19 @@ export class NotebookLmApiClient {
    * Appends provenance fields to URL as query parameters using dot notation.
    * E.g., provenance.originProductType=GOOGLE_NOTEBOOKLM_EVALS
    */
-  #appendProvenanceParams(url: URL, provenance: Provenance): void {
-    url.searchParams.set(
-      "provenance.originProductType",
-      provenance.originProductType
-    );
-    if (provenance.clientInfo) {
+  #appendProvenanceParams(url: URL, provenance?: Provenance): void {
+    const p = provenance ?? DEFAULT_PROVENANCE;
+    url.searchParams.set("provenance.originProductType", p.originProductType);
+    if (p.clientInfo) {
       url.searchParams.set(
         "provenance.clientInfo.applicationPlatform",
-        provenance.clientInfo.applicationPlatform
+        p.clientInfo.applicationPlatform
       );
-      url.searchParams.set(
-        "provenance.clientInfo.device",
-        provenance.clientInfo.device
-      );
-      if (provenance.clientInfo.applicationVersion) {
+      url.searchParams.set("provenance.clientInfo.device", p.clientInfo.device);
+      if (p.clientInfo.applicationVersion) {
         url.searchParams.set(
           "provenance.clientInfo.applicationVersion",
-          provenance.clientInfo.applicationVersion
+          p.clientInfo.applicationVersion
         );
       }
     }
@@ -406,7 +414,7 @@ export class NotebookLmApiClient {
     if (this.#backendApiBaseUrl) {
       body["notebook"] = request.name;
     } else {
-      body["provenance"] = request.provenance;
+      body["provenance"] = request.provenance ?? DEFAULT_PROVENANCE;
     }
 
     if (request.contextTokenBudget !== undefined) {
@@ -473,7 +481,7 @@ export class NotebookLmApiClient {
 
     const body: Record<string, unknown> = {
       permissions: request.permissions,
-      provenance: request.provenance,
+      provenance: request.provenance ?? DEFAULT_PROVENANCE,
     };
 
     if (request.sendEmailNotification !== undefined) {
@@ -510,7 +518,7 @@ export class NotebookLmApiClient {
     const body: Record<string, unknown> = {
       query: request.query,
       responseContentType: request.responseContentType,
-      provenance: request.provenance,
+      provenance: request.provenance ?? DEFAULT_PROVENANCE,
     };
 
     const response = await this.#fetchWithCreds(url, {
