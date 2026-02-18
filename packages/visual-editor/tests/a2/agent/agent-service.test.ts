@@ -139,4 +139,73 @@ suite("AgentRunHandle (via AgentRun)", () => {
 
     service.endRun(handle.runId);
   });
+
+  test("subagent events flow from sink to consumer", () => {
+    const service = new AgentService();
+    const handle = service.startRun({ kind: "test", objective: OBJECTIVE });
+    const received: { type: string; callId: string }[] = [];
+
+    handle.events
+      .on("subagentAddJson", (event) => {
+        received.push({ type: event.type, callId: event.callId });
+      })
+      .on("subagentError", (event) => {
+        received.push({ type: event.type, callId: event.callId });
+      })
+      .on("subagentFinish", (event) => {
+        received.push({ type: event.type, callId: event.callId });
+      });
+
+    handle.sink.emit({
+      type: "subagentAddJson",
+      callId: "c1",
+      title: "Step 1",
+      data: { progress: 0.5 },
+      icon: "hourglass",
+    });
+    handle.sink.emit({
+      type: "subagentError",
+      callId: "c1",
+      error: { $error: "timeout" },
+    });
+    handle.sink.emit({ type: "subagentFinish", callId: "c1" });
+
+    assert.strictEqual(received.length, 3);
+    assert.deepStrictEqual(
+      received.map((r) => r.type),
+      ["subagentAddJson", "subagentError", "subagentFinish"]
+    );
+    // All scoped to same callId
+    for (const r of received) {
+      assert.strictEqual(r.callId, "c1");
+    }
+
+    service.endRun(handle.runId);
+  });
+
+  test("functionCall event with args survives sink→consumer round-trip", () => {
+    const service = new AgentService();
+    const handle = service.startRun({ kind: "test", objective: OBJECTIVE });
+    const received: Array<{ name: string; args: Record<string, unknown> }> = [];
+
+    handle.events.on("functionCall", (event) => {
+      received.push({ name: event.name, args: event.args });
+    });
+
+    handle.sink.emit({
+      type: "functionCall",
+      callId: "fc-1",
+      name: "generate_text",
+      args: { prompt: "hello world", status_update: "Writing text" },
+    });
+
+    assert.strictEqual(received.length, 1);
+    assert.strictEqual(received[0].name, "generate_text");
+    assert.deepStrictEqual(received[0].args, {
+      prompt: "hello world",
+      status_update: "Writing text",
+    });
+
+    service.endRun(handle.runId);
+  });
 });

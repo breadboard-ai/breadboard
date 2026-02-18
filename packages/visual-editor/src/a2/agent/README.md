@@ -52,7 +52,7 @@ keeps prompts and logic out of the client bundle.
 
 ### Wire Format: `AgentEvent` ([agent-event.ts](./agent-event.ts))
 
-A union of 14 event types covering the full agent lifecycle:
+A union of 17 event types covering the full agent lifecycle:
 
 | Event                | Direction | Purpose                        |
 | -------------------- | --------- | ------------------------------ |
@@ -61,6 +61,9 @@ A union of 14 event types covering the full agent lifecycle:
 | `functionCall`       | → client  | Tool invocation started        |
 | `functionCallUpdate` | → client  | Tool status update             |
 | `functionResult`     | → client  | Tool result                    |
+| `subagentAddJson`    | → client  | Nested progress from function  |
+| `subagentError`      | → client  | Nested error from function     |
+| `subagentFinish`     | → client  | Nested progress complete       |
 | `content`            | → client  | Model output content           |
 | `turnComplete`       | → client  | Full turn finished             |
 | `sendRequest`        | → client  | Gemini request sent            |
@@ -93,17 +96,32 @@ SCA Service managing concurrent runs. Each `startRun()` returns an
 Maps `LoopHooks` callbacks to `AgentEvent` emissions. This is the bridge that
 lets existing `Loop.run()` code emit events without changes.
 
+For `onFunctionCall`, the adapter returns a **proxy `ProgressReporter`** that
+emits `subagentAddJson`/`subagentError`/`subagentFinish` events through the
+sink. Function handlers (image gen, video gen, etc.) call reporter methods as
+usual — the events travel through the event layer to the consumer, which
+dispatches them to the real `ConsoleWorkItem` reporter.
+
 ## How It's Wired Today
 
-The graph-editing agent flows through the event layer end-to-end:
+Both agents flow through the event layer end-to-end:
+
+**Graph-editing agent:**
 
 1. User types in `GraphEditingChat`
 2. `startGraphEditingAgent` action creates a run via `AgentService`
-3. Consumer handlers wire `thought`/`functionCall` →
-   `GraphEditingAgentController`
+3. Consumer handlers wire events → `GraphEditingAgentController`
 4. `buildHooksFromSink(handle.sink)` creates hooks for the loop
-5. `invokeGraphEditingAgent` runs with those hooks
-6. Events flow: Loop → sink → bridge → consumer → controller → UI
+5. Events flow: Loop → sink → bridge → consumer → controller → UI
+
+**Content generation agent:**
+
+1. `invokeAgent` creates a run via `AgentService`
+2. Consumer handlers wire events → `ConsoleProgressManager` + `RunStateManager`
+3. `buildHooksFromSink(handle.sink)` creates hooks (including proxy reporters)
+4. Subagent events (image/video/audio gen) dispatch to stashed reporters via
+   `reporterMap`
+5. Events flow: Loop → sink → bridge → consumer → progress + run state
 
 ## Roadmap: What's Next
 
@@ -114,10 +132,14 @@ The graph-editing agent flows through the event layer end-to-end:
 - [x] `AgentService` + `AgentRunHandle`
 - [x] Strangler-fig `GraphEditingAgentService` → Actions
 
-### Phase 2: Content Generation Agent
+### Phase 2: Content Generation Agent ✅ (done)
 
-- [ ] Strangler-fig the content generation agent to use `AgentService`
-- [ ] Wire `ConsoleProgressManager` + `RunStateManager` as consumer handlers
+- [x] Strangler-fig the content generation agent to use `AgentService`
+- [x] Wire `ConsoleProgressManager` + `RunStateManager` as consumer handlers
+- [x] Subagent reporter events (`subagentAddJson`, `subagentError`,
+      `subagentFinish`)
+- [x] Proxy `ProgressReporter` preserves nested progress for media gen functions
+- [x] `FunctionCallEvent` carries `args` for custom work item titles
 
 ### Phase 3: Suspend/Resume via Events
 

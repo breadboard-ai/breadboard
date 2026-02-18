@@ -28,6 +28,7 @@ import {
 import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
 import { getAuthenticatedClient } from "./authenticate.js";
 import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
+import { AgentService } from "../src/a2/agent/agent-service.js";
 
 export { session };
 
@@ -245,6 +246,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
       } as Partial<ConsentController> as ConsentController;
     },
     notebookLmApiClient: {} as never,
+    agentService: new AgentService(),
 
     context: {
       currentGraph: {
