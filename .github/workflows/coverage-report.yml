@@ -175,7 +175,7 @@ jobs:
 
       - name: Post coverage comment
         if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -218,7 +218,7 @@ jobs:
 
       - name: Create coverage check
         if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && steps.pr-info.outputs.head_sha != ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
