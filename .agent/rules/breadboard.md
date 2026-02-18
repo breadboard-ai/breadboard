@@ -99,9 +99,13 @@ function baz() { /* ... */ }
 
 Use Node's built-in test framework (`node:test`). Tests run in Node, not a
 browser. If the code under test references DOM globals (`document`, `window`,
-etc.), call `setDOM()` from `tests/fake-dom.ts` **before** importing the module
-under test. Name tests as `[source-file].test.ts` in `packages/[package]/tests/`.
-In `packages/visual-editor`, mirror `src/sca/` structure under `tests/sca/`.
+etc.), call `setDOM()` from `tests/fake-dom.ts` in `beforeEach` and
+`unsetDOM()` in `afterEach` to ensure a clean environment between tests.
+Modules must never access DOM globals at the module level (e.g., top-level
+`document.createElement`) — defer all DOM access to function bodies so the
+module can be imported safely in Node.
+Name tests as `[source-file].test.ts` in `packages/[package]/tests/`. In
+`packages/visual-editor`, mirror `src/sca/` structure under `tests/sca/`.
 
 ### Mocking
 
