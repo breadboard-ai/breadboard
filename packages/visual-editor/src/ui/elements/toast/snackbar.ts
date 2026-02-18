@@ -87,7 +87,10 @@ export class Snackbar extends SignalWatcher(LitElement) {
       #messages {
         color: var(--text-color);
         flex: 1 1 auto;
-        margin-right: var(--bb-grid-size-11);
+        max-height: 120px;
+        overflow-y: auto;
+        margin: 0;
+
         a,
         a:visited {
           color: var(--light-dark-p-40);
