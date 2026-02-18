@@ -12,6 +12,7 @@ import {
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common.js";
+import type { ProgressReporter } from "./types.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { buildAgentRun } from "./loop-setup.js";
@@ -111,6 +112,13 @@ async function invokeAgent(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
   const configureFn = createAgentConfigurator(moduleArgs, generators);
+
+  // Create a run handle for this content agent execution
+  const handle = moduleArgs.agentService.startRun({
+    kind: "content",
+    objective,
+  });
+
   const setup = await buildAgentRun({
     objective,
     params,
@@ -118,10 +126,79 @@ async function invokeAgent(
     configureFn,
     uiType: enableA2UI ? "a2ui" : "chat",
     uiPrompt,
+    sink: handle.sink,
   });
-  if (!ok(setup)) return setup;
-  const { loop, runArgs } = setup;
+  if (!ok(setup)) {
+    moduleArgs.agentService.endRun(handle.runId);
+    return setup;
+  }
+
+  const { loop, runArgs, progress, runStateManager } = setup;
+
+  // Maps event-layer callIds → progress-manager callIds.
+  // Both sides generate UUIDs independently; this map correlates them.
+  const callIdMap = new Map<string, string>();
+
+  // Maps event-layer callIds → real ProgressReporters from progress.functionCall().
+  // Subagent events dispatch to these reporters.
+  const reporterMap = new Map<string, ProgressReporter>();
+
+  // Wire consumer handlers to progress manager and run state manager
+  handle.events
+    .on("start", (event) => {
+      progress.startAgent(event.objective);
+    })
+    .on("finish", () => {
+      progress.finish();
+    })
+    .on("content", (event) => {
+      runStateManager.pushContent(event.content);
+    })
+    .on("thought", (event) => {
+      progress.thought(event.text);
+    })
+    .on("functionCall", (event) => {
+      const { callId: progressCallId, reporter } = progress.functionCall(
+        { functionCall: { name: event.name, args: event.args } },
+        event.icon,
+        event.title
+      );
+      callIdMap.set(event.callId, progressCallId);
+      if (reporter) {
+        reporterMap.set(event.callId, reporter);
+      }
+    })
+    .on("functionCallUpdate", (event) => {
+      const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+      progress.functionCallUpdate(progressCallId, event.status, event.opts);
+    })
+    .on("functionResult", (event) => {
+      const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+      progress.functionResult(progressCallId, event.content);
+      callIdMap.delete(event.callId);
+      reporterMap.delete(event.callId);
+    })
+    .on("turnComplete", () => {
+      runStateManager.completeTurn();
+    })
+    .on("sendRequest", (event) => {
+      progress.sendRequest(event.model, event.body);
+      runStateManager.captureRequestBody(event.model, event.body);
+    })
+    .on("subagentAddJson", (event) => {
+      reporterMap
+        .get(event.callId)
+        ?.addJson(event.title, event.data, event.icon);
+    })
+    .on("subagentError", (event) => {
+      reporterMap.get(event.callId)?.addError(event.error);
+    })
+    .on("subagentFinish", (event) => {
+      reporterMap.get(event.callId)?.finish();
+    });
+
   const result = await loop.run(runArgs);
+  moduleArgs.agentService.endRun(handle.runId);
   if (!ok(result)) return result;
   console.log("LOOP", result);
   return toAgentOutputs(result.outcomes, result.href);

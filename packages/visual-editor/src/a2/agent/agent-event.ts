@@ -7,6 +7,7 @@
 import type { LLMContent, EditSpec } from "@breadboard-ai/types";
 import type { StatusUpdateCallbackOptions } from "./function-definition.js";
 import type { GeminiBody } from "../a2/gemini.js";
+import type { ErrorMetadata } from "../a2/utils.js";
 import type {
   ChatChoiceLayout,
   ChatChoiceSelectionMode,
@@ -32,6 +33,9 @@ export type {
   CompleteEvent,
   ErrorEvent,
   FinishEvent,
+  SubagentAddJsonEvent,
+  SubagentErrorEvent,
+  SubagentFinishEvent,
 };
 
 type StartEvent = {
@@ -48,6 +52,7 @@ type FunctionCallEvent = {
   type: "functionCall";
   callId: string;
   name: string;
+  args: Record<string, unknown>;
   icon?: string;
   title?: string;
 };
@@ -122,6 +127,30 @@ type FinishEvent = {
   type: "finish";
 };
 
+/**
+ * Progress events emitted by sub-processes (image/video/audio/music gen)
+ * running inside a function call. Scoped to a `callId` so the consumer
+ * can dispatch to the correct work item.
+ */
+type SubagentAddJsonEvent = {
+  type: "subagentAddJson";
+  callId: string;
+  title: string;
+  data: unknown;
+  icon?: string;
+};
+
+type SubagentErrorEvent = {
+  type: "subagentError";
+  callId: string;
+  error: { $error: string; metadata?: ErrorMetadata };
+};
+
+type SubagentFinishEvent = {
+  type: "subagentFinish";
+  callId: string;
+};
+
 type AgentEvent =
   | StartEvent
   | ThoughtEvent
@@ -136,7 +165,10 @@ type AgentEvent =
   | GraphEditEvent
   | CompleteEvent
   | ErrorEvent
-  | FinishEvent;
+  | FinishEvent
+  | SubagentAddJsonEvent
+  | SubagentErrorEvent
+  | SubagentFinishEvent;
 
 /**
  * The response the client sends back to resume a suspended request.

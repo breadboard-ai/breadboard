@@ -135,4 +135,79 @@ suite("LocalAgentEventBridge", () => {
 
     assert.strictEqual(result, "reply from UI");
   });
+
+  test("emits subagent events through the bridge intact", () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const received: AgentEvent[] = [];
+
+    consumer
+      .on("subagentAddJson", (event) => {
+        received.push(event);
+      })
+      .on("subagentError", (event) => {
+        received.push(event);
+      })
+      .on("subagentFinish", (event) => {
+        received.push(event);
+      });
+
+    bridge.emit({
+      type: "subagentAddJson",
+      callId: "c1",
+      title: "Image ready",
+      data: { url: "http://img" },
+      icon: "photo",
+    });
+    bridge.emit({
+      type: "subagentError",
+      callId: "c1",
+      error: { $error: "fail" },
+    });
+    bridge.emit({ type: "subagentFinish", callId: "c1" });
+
+    assert.strictEqual(received.length, 3);
+    assert.strictEqual(received[0].type, "subagentAddJson");
+    assert.strictEqual(received[1].type, "subagentError");
+    assert.strictEqual(received[2].type, "subagentFinish");
+
+    if (received[0].type === "subagentAddJson") {
+      assert.strictEqual(received[0].callId, "c1");
+      assert.strictEqual(received[0].title, "Image ready");
+      assert.deepStrictEqual(received[0].data, { url: "http://img" });
+      assert.strictEqual(received[0].icon, "photo");
+    }
+  });
+
+  test("functionCall event preserves args through the bridge", () => {
+    const consumer = new AgentEventConsumer();
+    const bridge = new LocalAgentEventBridge(consumer);
+    const received: AgentEvent[] = [];
+
+    consumer.on("functionCall", (event) => {
+      received.push(event);
+    });
+
+    bridge.emit({
+      type: "functionCall",
+      callId: "call-99",
+      name: "generate_text",
+      args: { prompt: "hello", status_update: "Writing a poem" },
+      icon: "text_analysis",
+      title: "Generating Text",
+    });
+
+    assert.strictEqual(received.length, 1);
+    const event = received[0];
+    assert.strictEqual(event.type, "functionCall");
+    if (event.type === "functionCall") {
+      assert.deepStrictEqual(event.args, {
+        prompt: "hello",
+        status_update: "Writing a poem",
+      });
+      assert.strictEqual(event.name, "generate_text");
+      assert.strictEqual(event.icon, "text_analysis");
+      assert.strictEqual(event.title, "Generating Text");
+    }
+  });
 });

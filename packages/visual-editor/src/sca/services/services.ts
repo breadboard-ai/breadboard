@@ -134,12 +134,15 @@ export function services(
       OPAL_BACKEND_API_PREFIX
     );
 
+    const agentService = new AgentService();
+
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,
       shell: config.shellHost,
       getConsentController,
       agentContext,
+      agentService,
       notebookLmApiClient,
     });
     const googleDriveBoardServer = createGoogleDriveBoardServer(
@@ -185,7 +188,7 @@ export function services(
       mcpClientManager,
       notebookLmApiClient,
       runService: new RunService(),
-      agentService: new AgentService(),
+      agentService,
       sandbox,
       signinAdapter,
       stateEventBus: new EventTarget(),

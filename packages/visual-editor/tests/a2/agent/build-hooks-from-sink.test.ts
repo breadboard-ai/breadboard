@@ -96,7 +96,64 @@ suite("buildHooksFromSink", () => {
       assert.ok(event.callId, "Should have a callId");
       assert.strictEqual(result.callId, event.callId);
     }
-    assert.strictEqual(result.reporter, null);
+    assert.ok(result.reporter, "Should return a proxy reporter");
+    assert.strictEqual(typeof result.reporter.addJson, "function");
+    assert.strictEqual(typeof result.reporter.addError, "function");
+    assert.strictEqual(typeof result.reporter.finish, "function");
+  });
+
+  test("proxy reporter emits subagentAddJson", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+    const part = { functionCall: { name: "gen_image", args: {} } };
+
+    const { callId, reporter } = hooks.onFunctionCall!(part);
+    reporter!.addJson("Image result", { url: "http://img" }, "photo");
+
+    assert.strictEqual(sink.emitted.length, 2);
+    const event = sink.emitted[1];
+    assert.strictEqual(event.type, "subagentAddJson");
+    if (event.type === "subagentAddJson") {
+      assert.strictEqual(event.callId, callId);
+      assert.strictEqual(event.title, "Image result");
+      assert.deepStrictEqual(event.data, { url: "http://img" });
+      assert.strictEqual(event.icon, "photo");
+    }
+  });
+
+  test("proxy reporter emits subagentError", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+    const part = { functionCall: { name: "gen_video", args: {} } };
+
+    const { callId, reporter } = hooks.onFunctionCall!(part);
+    const errorObj = { $error: "Video gen failed" };
+    const returned = reporter!.addError(errorObj);
+
+    assert.strictEqual(returned, errorObj, "addError should return the error");
+    assert.strictEqual(sink.emitted.length, 2);
+    const event = sink.emitted[1];
+    assert.strictEqual(event.type, "subagentError");
+    if (event.type === "subagentError") {
+      assert.strictEqual(event.callId, callId);
+      assert.deepStrictEqual(event.error, errorObj);
+    }
+  });
+
+  test("proxy reporter emits subagentFinish", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+    const part = { functionCall: { name: "gen_audio", args: {} } };
+
+    const { callId, reporter } = hooks.onFunctionCall!(part);
+    reporter!.finish();
+
+    assert.strictEqual(sink.emitted.length, 2);
+    const event = sink.emitted[1];
+    assert.strictEqual(event.type, "subagentFinish");
+    if (event.type === "subagentFinish") {
+      assert.strictEqual(event.callId, callId);
+    }
   });
 
   test("onFunctionCall handles non-string icon", () => {
@@ -167,6 +224,156 @@ suite("buildHooksFromSink", () => {
     if (event.type === "sendRequest") {
       assert.strictEqual(event.model, "gemini-2.0-flash");
       assert.deepStrictEqual(event.body, body);
+    }
+  });
+  test("onFunctionCall forwards args in the event", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+    const args = { prompt: "paint a cat", status_update: "Drawing cats" };
+    const part = { functionCall: { name: "generate_images", args } };
+
+    hooks.onFunctionCall!(part, "photo_spark", "Generating Image(s)");
+
+    const event = sink.emitted[0];
+    if (event.type === "functionCall") {
+      assert.deepStrictEqual(event.args, args);
+    }
+  });
+
+  test("onFunctionCall uses empty args when part has no args", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+    const part = { functionCall: { name: "test_fn", args: undefined } };
+
+    hooks.onFunctionCall!(part as never);
+
+    const event = sink.emitted[0];
+    if (event.type === "functionCall") {
+      assert.deepStrictEqual(event.args, {});
+    }
+  });
+
+  test("onFunctionCallUpdate forwards opts", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+    const opts = { expectedDurationInSec: 30 };
+
+    hooks.onFunctionCallUpdate!("call-1", "Researching", opts);
+
+    const event = sink.emitted[0];
+    if (event.type === "functionCallUpdate") {
+      assert.strictEqual(event.status, "Researching");
+      assert.deepStrictEqual(event.opts, opts);
+    }
+  });
+
+  test("onFunctionCallUpdate forwards null status", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+
+    hooks.onFunctionCallUpdate!("call-1", null);
+
+    const event = sink.emitted[0];
+    if (event.type === "functionCallUpdate") {
+      assert.strictEqual(event.status, null);
+      assert.strictEqual(event.opts, undefined);
+    }
+  });
+
+  test("onFunctionCallUpdate forwards isThought opt", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+
+    hooks.onFunctionCallUpdate!("call-1", "thinking about it", {
+      isThought: true,
+    });
+
+    const event = sink.emitted[0];
+    if (event.type === "functionCallUpdate") {
+      assert.deepStrictEqual(event.opts, { isThought: true });
+    }
+  });
+
+  test("subagentAddJson without icon omits it", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+    const part = { functionCall: { name: "gen_image", args: {} } };
+
+    const { reporter } = hooks.onFunctionCall!(part);
+    reporter!.addJson("Result", { ok: true });
+
+    const event = sink.emitted[1];
+    if (event.type === "subagentAddJson") {
+      assert.strictEqual(event.icon, undefined);
+    }
+  });
+
+  test("multiple function calls get independent reporters", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+
+    const call1 = hooks.onFunctionCall!({
+      functionCall: { name: "fn1", args: {} },
+    });
+    const call2 = hooks.onFunctionCall!({
+      functionCall: { name: "fn2", args: {} },
+    });
+
+    call1.reporter!.addJson("from fn1", { n: 1 });
+    call2.reporter!.addJson("from fn2", { n: 2 });
+
+    // Events: functionCall, functionCall, subagentAddJson, subagentAddJson
+    const sub1 = sink.emitted[2];
+    const sub2 = sink.emitted[3];
+    if (sub1.type === "subagentAddJson" && sub2.type === "subagentAddJson") {
+      assert.strictEqual(sub1.callId, call1.callId);
+      assert.strictEqual(sub2.callId, call2.callId);
+      assert.strictEqual(sub1.title, "from fn1");
+      assert.strictEqual(sub2.title, "from fn2");
+    }
+  });
+
+  test("full lifecycle: functionCall → subagent events → result", () => {
+    const sink = createSpySink();
+    const hooks = buildHooksFromSink(sink);
+
+    // Start
+    hooks.onStart!({ parts: [{ text: "Generate art" }] });
+
+    // Function call
+    const { callId, reporter } = hooks.onFunctionCall!(
+      { functionCall: { name: "gen_image", args: { prompt: "a dog" } } },
+      "photo_spark",
+      "Generating Image(s)"
+    );
+
+    // Subagent progress
+    reporter!.addJson("Preparing", { step: 1 }, "hourglass");
+    reporter!.addJson("Rendering", { step: 2 }, "brush");
+    reporter!.finish();
+
+    // Function result
+    hooks.onFunctionResult!(callId, {
+      parts: [{ text: "Image generated" }],
+    });
+
+    // Verify event sequence
+    const types = sink.emitted.map((e) => e.type);
+    assert.deepStrictEqual(types, [
+      "start",
+      "functionCall",
+      "subagentAddJson",
+      "subagentAddJson",
+      "subagentFinish",
+      "functionResult",
+    ]);
+
+    // Verify all subagent events scoped to the same callId
+    const subEvents = sink.emitted.filter((e) => e.type.startsWith("subagent"));
+    for (const event of subEvents) {
+      if ("callId" in event) {
+        assert.strictEqual(event.callId, callId);
+      }
     }
   });
 });
