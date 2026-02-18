@@ -41,6 +41,7 @@ export class Divider extends Root {
     `,
   ];
 
+  // Test change
   render() {
     return html`<hr />`;
   }
