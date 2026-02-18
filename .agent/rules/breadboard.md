@@ -24,12 +24,12 @@ commands.
 
 ## Browser
 
-[EXPERIMENTAL] Opal can be accessed by agents at `http://localhost:3100`,
-but the user must first run `npm run dev:fake -w packages/unified-server`
-in a new terminal. This mode is automatically signed in with a fake user.
-Google Drive is faked with an in-memory backend, but other services are not
-yet available, so usefulness of this mode is currently limited to basic
-navigation, and creating/sharing Opals.
+[EXPERIMENTAL] Opal can be accessed by agents at `http://localhost:3100`, but
+the user must first run `npm run dev:fake -w packages/unified-server` in a new
+terminal. This mode is automatically signed in with a fake user. Google Drive is
+faked with an in-memory backend, but other services are not yet available, so
+usefulness of this mode is currently limited to basic navigation, and
+creating/sharing Opals.
 
 ## Packages
 
@@ -43,14 +43,10 @@ These are some significant packages:
   looking to implement a helper function, first look in `packages/utils` to see
   if it might be already present there.
 
-- `packages/breadboard`, `packages/runtime`, `packages/data`, `packages/loader`
-  -- contain the core runtime engine for the project and all the data
-  transformation/processing code.
+- `packages/visual-editor` -- contains the frontend code for the project.
 
-- `packages/visual-editor` -- contains the majority of the frontend code for the
+- `packages/unified-server` -- contains the nodejs server, the backend of the
   project.
-
-- `unified-server` -- contains the nodejs server, the backend of the project.
 
 ## Signals
 
