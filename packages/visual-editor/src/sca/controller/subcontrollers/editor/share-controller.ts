@@ -34,6 +34,8 @@ export type UnmanagedNotebookAssetProblem = {
 
 export type SharePanelStatus = "closed" | "open" | "native-share";
 
+export type VisibilityLevel = "only-you" | "restricted" | "anyone";
+
 export type ShareStatus =
   /** Fetching basic share state (ownership, permissions) on board load. */
   | "initializing"
@@ -62,13 +64,31 @@ export class ShareController extends RootController {
   accessor ownership: "unknown" | "owner" | "non-owner" = "unknown";
 
   @field()
-  accessor published = false;
+  accessor hasPublicPermissions = false;
 
   @field()
-  accessor stale = false;
+  accessor editableVersion = "";
 
   @field()
-  accessor granularlyShared = false;
+  accessor sharedVersion = "";
+
+  get stale(): boolean {
+    return (
+      this.hasPublicPermissions &&
+      this.editableVersion !== this.sharedVersion &&
+      this.editableVersion !== "" &&
+      this.sharedVersion !== ""
+    );
+  }
+
+  @field()
+  accessor hasOtherPermissions = false;
+
+  get visibility(): VisibilityLevel {
+    if (this.hasPublicPermissions) return "anyone";
+    if (this.hasOtherPermissions) return "restricted";
+    return "only-you";
+  }
 
   @field()
   accessor userDomain = "";
@@ -76,11 +96,8 @@ export class ShareController extends RootController {
   @field()
   accessor publicPublishingAllowed = true;
 
-  @field()
-  accessor latestVersion = "";
-
   @field({ deep: false })
-  accessor publishedPermissions: gapi.client.drive.Permission[] = [];
+  accessor actualPermissions: gapi.client.drive.Permission[] = [];
 
   @field()
   accessor shareableFile: DriveFileId | null = null;
@@ -106,13 +123,13 @@ export class ShareController extends RootController {
     this.panel = "closed";
     this.status = "initializing";
     this.ownership = "unknown";
-    this.published = false;
-    this.stale = false;
-    this.granularlyShared = false;
+    this.hasPublicPermissions = false;
+    this.editableVersion = "";
+    this.sharedVersion = "";
+    this.hasOtherPermissions = false;
     this.userDomain = "";
     this.publicPublishingAllowed = true;
-    this.latestVersion = "";
-    this.publishedPermissions = [];
+    this.actualPermissions = [];
     this.shareableFile = null;
     this.unmanagedAssetProblems = [];
     this.notebookDomainSharingLimited = false;

@@ -714,6 +714,7 @@ export class FakeGoogleDriveApi {
     }
 
     // Deep merge properties to avoid losing existing properties when only some are updated
+    const currentVersion = parseInt(existingFile.metadata.version ?? "1", 10);
     const updatedMetadata: DriveFile = {
       ...existingFile.metadata,
       ...metadata,
@@ -722,6 +723,7 @@ export class FakeGoogleDriveApi {
         ...metadata.properties,
       },
       id: fileId,
+      version: String(currentVersion + 1),
     };
 
     this.#session.files.set(fileId, { metadata: updatedMetadata, data });
