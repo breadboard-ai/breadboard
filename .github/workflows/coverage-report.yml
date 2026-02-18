@@ -55,9 +55,11 @@ jobs:
         id: pr-info
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_EVENT_WORKFLOW_RUN_HEAD_REPOSITORY_OWNER_LOGIN: ${{ github.event.workflow_run.head_repository.owner.login }}
+          GITHUB_EVENT_WORKFLOW_RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
-          FORK_OWNER='${{ github.event.workflow_run.head_repository.owner.login }}'
-          FORK_BRANCH='${{ github.event.workflow_run.head_branch }}'
+          FORK_OWNER='${GITHUB_EVENT_WORKFLOW_RUN_HEAD_REPOSITORY_OWNER_LOGIN}'
+          FORK_BRANCH='${GITHUB_EVENT_WORKFLOW_RUN_HEAD_BRANCH}'
           API_URL="repos/${{ github.repository }}/pulls?state=all&head=${FORK_OWNER}:${FORK_BRANCH}&sort=updated&direction=desc&per_page=1"
           PR_NUMBER=$(gh api "$API_URL" --jq '.[0].number // empty')
 
@@ -91,7 +93,9 @@ jobs:
       # changes by the time this workflow runs.
       - name: Checkout baseline commit
         if: steps.pr-info.outputs.sha != ''
-        run: git checkout ${{ steps.pr-info.outputs.sha }}
+        run: git checkout ${STEPS_PR_INFO_OUTPUTS_SHA}
+        env:
+          STEPS_PR_INFO_OUTPUTS_SHA: ${{ steps.pr-info.outputs.sha }}
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -149,8 +153,10 @@ jobs:
         if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && steps.baseline.outcome == 'success' && steps.pr-coverage.outputs.path != ''
         id: coverage
         # compare-coverage.js only parses JSON data, it does not execute artifact contents
-        run: node scripts/compare-coverage.js ${{ steps.pr-coverage.outputs.path }} packages/visual-editor/coverage/coverage-summary.json
+        run: node scripts/compare-coverage.js ${STEPS_PR_COVERAGE_OUTPUTS_PATH} packages/visual-editor/coverage/coverage-summary.json
         continue-on-error: true
+        env:
+          STEPS_PR_COVERAGE_OUTPUTS_PATH: ${{ steps.pr-coverage.outputs.path }}
 
       - name: Generate fallback comment on comparison failure
         if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && (steps.baseline.outcome == 'failure' || steps.coverage.outcome == 'failure')
@@ -161,9 +167,11 @@ jobs:
           echo "- Build failure on main branch" >> coverage-comment.md
           echo "- Missing coverage data" >> coverage-comment.md
           echo "" >> coverage-comment.md
-          if [ -n "${{ steps.pr-coverage.outputs.path }}" ]; then
+          if [ -n "${STEPS_PR_COVERAGE_OUTPUTS_PATH}" ]; then
             echo "**PR Coverage data was uploaded successfully.**" >> coverage-comment.md
           fi
+        env:
+          STEPS_PR_COVERAGE_OUTPUTS_PATH: ${{ steps.pr-coverage.outputs.path }}
 
       - name: Post coverage comment
         if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != ''
