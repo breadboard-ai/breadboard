@@ -64,6 +64,7 @@ jobs:
           if [ -n "$PR_NUMBER" ]; then
             echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
             BASE_SHA=$(gh api "$API_URL" --jq '.[0].base.sha // empty')
+            HEAD_SHA=$(gh api "$API_URL" --jq '.[0].head.sha // empty')
 
             if [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
               echo "sha=$BASE_SHA" >> $GITHUB_OUTPUT
@@ -71,10 +72,18 @@ jobs:
               echo "::warning::Invalid base SHA format, using HEAD of main"
               echo "sha=" >> $GITHUB_OUTPUT
             fi
+
+            if [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+            else
+              echo "::warning::Could not determine PR head SHA for check"
+              echo "head_sha=" >> $GITHUB_OUTPUT
+            fi
           else
             echo "::warning::No PR found for ${FORK_OWNER}:${FORK_BRANCH}"
             echo "number=" >> $GITHUB_OUTPUT
             echo "sha=" >> $GITHUB_OUTPUT
+            echo "head_sha=" >> $GITHUB_OUTPUT
           fi
 
       # If we have a base SHA, checkout that commit for the baseline.
@@ -200,7 +209,7 @@ jobs:
             }
 
       - name: Create coverage check
-        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != ''
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && steps.pr-info.outputs.head_sha != ''
         uses: actions/github-script@v7
         with:
           script: |
@@ -225,7 +234,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: 'Coverage',
-              head_sha: '${{ github.event.workflow_run.head_sha }}',
+              head_sha: '${{ steps.pr-info.outputs.head_sha }}',
               conclusion,
               output: { title, summary }
             });
