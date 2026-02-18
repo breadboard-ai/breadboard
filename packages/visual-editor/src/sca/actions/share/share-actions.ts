@@ -105,14 +105,25 @@ async function fetchShareData(): Promise<void> {
   // synchronized with those changes.
   await boardServer.flushSaveQueue(graphUrl);
 
+  // We already know ownership from load(). For graphs we don't own (e.g.
+  // gallery items), skip all Drive metadata fetching — just mark as non-owner
+  // and set the shareable file so the UI can display a share URL.
+  if (!boardServer.isMine(new URL(graphUrl))) {
+    share.ownership = "non-owner";
+    share.shareableFile = {
+      id: thisFileId,
+      resourceKey: new URL(graphUrl).searchParams.get("resourcekey") ?? undefined,
+    };
+    return;
+  }
+
   const thisFileMetadata = await googleDriveClient.getFileMetadata(thisFileId, {
     fields: ["resourceKey", "properties", "ownedByMe", "version"],
     // Sometimes we are working on the featured gallery items themselves. In
-    // that case, and for all such calls in this file, we should never use
-    // the gallery proxy, because otherwise we will get responses that are
-    // (1) potentially stale because of caching, (2) missing data because
-    // we're not using the owning user's credentials (e.g. permissions get
-    // masked out and appear empty).
+    // that case, we should never use the gallery proxy, because otherwise we
+    // will get responses that are (1) potentially stale because of caching,
+    // (2) missing data because we're not using the owning user's credentials
+    // (e.g. permissions get masked out and appear empty).
     bypassProxy: true,
   });
 
@@ -135,18 +146,18 @@ async function fetchShareData(): Promise<void> {
     share.ownership = "non-owner";
     share.shareableFile = shareableCopyFileId
       ? {
-          id: shareableCopyFileId,
-          resourceKey: (
-            await googleDriveClient.getFileMetadata(shareableCopyFileId, {
-              fields: ["resourceKey"],
-              bypassProxy: true,
-            })
-          ).resourceKey,
-        }
+        id: shareableCopyFileId,
+        resourceKey: (
+          await googleDriveClient.getFileMetadata(shareableCopyFileId, {
+            fields: ["resourceKey"],
+            bypassProxy: true,
+          })
+        ).resourceKey,
+      }
       : {
-          id: thisFileId,
-          resourceKey: thisFileMetadata.resourceKey,
-        };
+        id: thisFileId,
+        resourceKey: thisFileMetadata.resourceKey,
+      };
     return;
   }
 
@@ -180,7 +191,7 @@ async function fetchShareData(): Promise<void> {
   share.stale =
     thisFileMetadata.version !==
     shareableCopyFileMetadata.properties?.[
-      DRIVE_PROPERTY_LATEST_SHARED_VERSION
+    DRIVE_PROPERTY_LATEST_SHARED_VERSION
     ];
   share.publishedPermissions = allGraphPermissions.filter((permission) =>
     permissionMatchesAnyOf(permission, publishPermissions)
@@ -400,7 +411,7 @@ async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
   Utils.Logging.getLogger().log(
     Utils.Logging.Formatter.verbose(
       `Made a new shareable graph copy "${shareableCopyFileId}"` +
-        ` at version "${updateMainResult.version}".`
+      ` at version "${updateMainResult.version}".`
     ),
     "Share.makeShareableCopy"
   );
@@ -501,9 +512,9 @@ async function autoSyncManagedAssetPermissions(
         Utils.Logging.getLogger().log(
           Utils.Logging.Formatter.error(
             `Could not add permission to asset ` +
-              `"${asset.fileId.id}" because the current user does not have` +
-              ` sharing capability on it. Users who don't already have` +
-              ` access to this asset may not be able to run this graph.`
+            `"${asset.fileId.id}" because the current user does not have` +
+            ` sharing capability on it. Users who don't already have` +
+            ` access to this asset may not be able to run this graph.`
           ),
           "Share.autoSyncManagedAssetPermissions"
         );
@@ -519,8 +530,8 @@ async function autoSyncManagedAssetPermissions(
       Utils.Logging.getLogger().log(
         Utils.Logging.Formatter.verbose(
           `Managed asset ${asset.fileId.id}` +
-            ` has ${missing.length} missing permission(s)` +
-            ` and ${excess.length} excess permission(s). Synchronizing.`,
+          ` has ${missing.length} missing permission(s)` +
+          ` and ${excess.length} excess permission(s). Synchronizing.`,
           {
             actual: assetPermissions,
             needed: graphPermissions,
@@ -752,7 +763,7 @@ export const publish = asAction(
     logger.log(
       Utils.Logging.Formatter.verbose(
         `Added ${publishPermissions.length} publish` +
-          ` permission(s) to shareable graph copy "${share.shareableFile!.id}".`
+        ` permission(s) to shareable graph copy "${share.shareableFile!.id}".`
       ),
       LABEL
     );
@@ -807,7 +818,7 @@ export const unpublish = asAction(
     logger.log(
       Utils.Logging.Formatter.verbose(
         `Removing ${share.publishedPermissions.length} publish` +
-          ` permission(s) from shareable graph copy "${share.shareableFile!.id}".`
+        ` permission(s) from shareable graph copy "${share.shareableFile!.id}".`
       ),
       LABEL
     );
@@ -879,8 +890,8 @@ export const publishStale = asAction(
     Utils.Logging.getLogger(controller).log(
       Utils.Logging.Formatter.verbose(
         `Updated stale shareable graph copy` +
-          ` "${share.shareableFile!.id}" to version` +
-          ` "${share.latestVersion}".`
+        ` "${share.shareableFile!.id}" to version` +
+        ` "${share.latestVersion}".`
       ),
       "Share.publishStale"
     );
