@@ -284,6 +284,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     try {
       await this.sca.controller.isHydrated;
       const flags = await this.sca.controller.global.flags.flags();
+
+      if (this.sca.services.signinAdapter.stateSignal?.status === "signedin") {
+        if (
+          this.sca.services.signinAdapter.stateSignal.authuser === undefined
+        ) {
+          this.sca.controller.global.main.subscriptionStatus = "not-subscribed";
+          return;
+        }
+      }
+
       if (flags.googleOne) {
         this.logger.log(
           Utils.Logging.Formatter.verbose(`Checking subscriber status`),
