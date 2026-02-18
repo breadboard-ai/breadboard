@@ -11,11 +11,25 @@ import type {
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 
-export type UnmanagedAssetProblem = {
+export type UnmanagedAssetProblem =
+  | UnmanagedDriveAssetProblem
+  | UnmanagedNotebookAssetProblem;
+
+export type UnmanagedDriveAssetProblem = {
+  type: "drive";
   asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
 } & (
   | { problem: "cant-share" }
   | { problem: "missing"; missing: gapi.client.drive.Permission[] }
+);
+
+export type UnmanagedNotebookAssetProblem = {
+  type: "notebook";
+  notebookId: string;
+  notebookName: string;
+} & (
+  | { problem: "cant-share" }
+  | { problem: "missing"; missingEmails: string[] }
 );
 
 export type SharePanelStatus = "closed" | "open" | "native-share";
@@ -74,6 +88,9 @@ export class ShareController extends RootController {
   @field({ deep: false })
   accessor unmanagedAssetProblems: UnmanagedAssetProblem[] = [];
 
+  @field()
+  accessor notebookDomainSharingLimited = false;
+
   /**
    * Resets all fields to their defaults. Called when loading a new opal.
    *
@@ -98,6 +115,7 @@ export class ShareController extends RootController {
     this.publishedPermissions = [];
     this.shareableFile = null;
     this.unmanagedAssetProblems = [];
+    this.notebookDomainSharingLimited = false;
   }
 
   #resolveUnmanagedAssets?: () => void;

@@ -13,7 +13,10 @@ import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
-import type { SharePanelStatus } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+import type {
+  SharePanelStatus,
+  UnmanagedAssetProblem,
+} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
 import animations from "../../app-templates/shared/styles/animations.js";
 import { ToastEvent } from "../../events/events.js";
@@ -564,8 +567,13 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderModalContents() {
     // Asset-review takes priority when there are unmanaged asset problems
-    // pending resolution (e.g. during publish).
-    if (this.#controller.unmanagedAssetProblems.length > 0) {
+    // pending resolution (e.g. during publish), OR when notebook domain-sharing
+    // limitations need to be surfaced. The action layer blocks on
+    // waitForUnmanagedAssetsResolution() in both cases.
+    if (
+      this.#controller.unmanagedAssetProblems.length > 0 ||
+      this.#controller.notebookDomainSharingLimited
+    ) {
       return this.#renderUnmanagedAssetsModalContents();
     }
     const status = this.#controller.status;
@@ -881,9 +889,26 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderUnmanagedAssetsModalContents() {
     const problems = this.#controller.unmanagedAssetProblems;
-    if (problems.length === 0) {
+    const domainLimited = this.#controller.notebookDomainSharingLimited;
+    if (problems.length === 0 && !domainLimited) {
       return nothing;
     }
+
+    const renderAssetChip = (p: UnmanagedAssetProblem) => {
+      const name = p.type === "drive" ? p.asset.name : p.notebookName;
+      const url =
+        p.type === "drive"
+          ? driveOpenUrl(p.asset)
+          : `https://notebooklm.google.com/notebook/${p.notebookId}`;
+      const icon =
+        p.type === "drive" ? html`<img src=${p.asset.iconLink} />` : html`📓`;
+      return html`
+        <span class="asset-chip">
+          ${icon}
+          <a href=${url} target="_blank">${name}</a>
+        </span>
+      `;
+    };
 
     const parts = [];
 
@@ -891,20 +916,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
       ({ problem }) => problem === "missing"
     );
     if (missingProblems.length > 0) {
-      const missingChips = missingProblems.map(({ asset }) => {
-        return html`
-          <span class="asset-chip">
-            <img src=${asset.iconLink} />
-            <a href=${driveOpenUrl(asset)} target="_blank">${asset.name}</a>
-          </span>
-        `;
-      });
       parts.push(html`
         <p>
           The following assets are editable by you, but are not yet shared with
           all users of this app. To share them now, choose "Share my assets".
         </p>
-        <div id="asset-chips">${missingChips}</div>
+        <div id="asset-chips">${missingProblems.map(renderAssetChip)}</div>
       `);
     }
 
@@ -912,14 +929,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
       ({ problem }) => problem === "cant-share"
     );
     if (cantShareProblems.length > 0) {
-      const cantShareChips = cantShareProblems.map(({ asset }) => {
-        return html`
-          <span class="asset-chip">
-            <img src=${asset.iconLink} />
-            <a href=${driveOpenUrl(asset)} target="_blank">${asset.name}</a>
-          </span>
-        `;
-      });
       parts.push(html`
         <p>
           The following assets are <strong>not</strong> editable by you, and we
@@ -928,7 +937,17 @@ export class SharePanel extends SignalWatcher(LitElement) {
           safely ignore this warning. If you are unsure, contact the owner of
           the asset, or replace it with an asset you do own.
         </p>
-        <div id="asset-chips">${cantShareChips}</div>
+        <div id="asset-chips">${cantShareProblems.map(renderAssetChip)}</div>
+      `);
+    }
+
+    if (this.#controller.notebookDomainSharingLimited) {
+      parts.push(html`
+        <p>
+          <strong>Note:</strong> NotebookLM notebooks cannot be shared with
+          domain-wide or public access. They must be shared individually with
+          each user.
+        </p>
       `);
     }
 
