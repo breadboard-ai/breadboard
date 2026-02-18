@@ -64,44 +64,44 @@ if (flags.FAKE_MODE) {
 
   console.log("[unified-server startup] Mounting updates handler");
   server.use("/updates", createUpdatesHandler());
-
-  console.log("[unified-server startup] Creating Google Drive client");
-  const googleAuth = new GoogleAuth({
-    scopes: ["https://www.googleapis.com/auth/drive.readonly"],
-  });
-  const authClient = await googleAuth.getClient();
-  const driveClient = new GoogleDriveClient({
-    fetchWithCreds: createFetchWithCreds(async () => {
-      const { token } = await authClient.getAccessToken();
-      if (!token) {
-        return err(`Unable to obtain auth token`);
-      }
-      return token;
-    }),
-  });
-
-  console.log("[unified-server startup] Mounting gallery");
-  const cachingGallery = await CachingFeaturedGallery.makeReady({
-    driveClient,
-    cacheRefreshSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
-  });
-
-  server.use(
-    "/api/gallery",
-    await makeGalleryMiddleware({ gallery: cachingGallery })
-  );
-
-  console.log("[unified-server startup] Mounting Drive proxy");
-  server.use(
-    "/api/drive-proxy",
-    makeDriveProxyMiddleware({
-      shouldCacheMedia: (fileId) =>
-        cachingGallery.isFeaturedGalleryGraph(fileId) ||
-        cachingGallery.isFeaturedGalleryAsset(fileId),
-      mediaCacheMaxAgeSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
-    })
-  );
 }
+
+console.log("[unified-server startup] Creating Google Drive client");
+const googleAuth = new GoogleAuth({
+  scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+});
+const authClient = await googleAuth.getClient();
+const driveClient = new GoogleDriveClient({
+  fetchWithCreds: createFetchWithCreds(async () => {
+    const { token } = await authClient.getAccessToken();
+    if (!token) {
+      return err(`Unable to obtain auth token`);
+    }
+    return token;
+  }),
+});
+
+console.log("[unified-server startup] Mounting gallery");
+const cachingGallery = await CachingFeaturedGallery.makeReady({
+  driveClient,
+  cacheRefreshSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
+});
+
+server.use(
+  "/api/gallery",
+  await makeGalleryMiddleware({ gallery: cachingGallery })
+);
+
+console.log("[unified-server startup] Mounting Drive proxy");
+server.use(
+  "/api/drive-proxy",
+  makeDriveProxyMiddleware({
+    shouldCacheMedia: (fileId) =>
+      cachingGallery.isFeaturedGalleryGraph(fileId) ||
+      cachingGallery.isFeaturedGalleryAsset(fileId),
+    mediaCacheMaxAgeSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
+  })
+);
 
 console.log("[unified-server startup] Mounting static content");
 
