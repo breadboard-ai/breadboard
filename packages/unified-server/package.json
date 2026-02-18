@@ -76,7 +76,7 @@
       "env": {
         "PORT": "3100",
         "FAKE_MODE": "true",
-        "SHELL_GUEST_ORIGIN": "http://guest.localhost:3100",
+        "SHELL_GUEST_ORIGIN": "http://localhost:3100",
         "SHELL_HOST_ORIGINS": "http://localhost:3100"
       },
       "files": [
