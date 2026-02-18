@@ -624,6 +624,49 @@ suite("Run.stop action", () => {
 
     done();
   });
+
+  test("stop bumps stopVersion", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Prepare a runner
+    setupGraph(controller);
+    RunActions.prepare();
+
+    const versionBefore = controller.run.main.stopVersion;
+
+    await RunActions.stop();
+
+    assert.strictEqual(
+      controller.run.main.stopVersion,
+      versionBefore + 1,
+      "stopVersion should be bumped after stop"
+    );
+  });
+
+  test("stop bumps stopVersion on each call", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    await RunActions.stop();
+    const v1 = controller.run.main.stopVersion;
+
+    // Re-prepare so there's a runner to stop again
+    RunActions.prepare();
+    await RunActions.stop();
+    const v2 = controller.run.main.stopVersion;
+
+    assert.strictEqual(
+      v2,
+      v1 + 1,
+      "stopVersion should increment monotonically"
+    );
+  });
 });
 
 suite("syncConsoleFromRunner", () => {
@@ -998,6 +1041,160 @@ suite("syncConsoleFromRunner", () => {
       controller.run.main.console.size,
       0,
       "console should be empty"
+    );
+  });
+});
+
+suite("reprepareAfterStop", () => {
+  beforeEach(() => {
+    setDOM();
+    coordination.reset();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("stop re-populates console entries (regression test for 2bfbc6bf5)", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Set up a graph with nodes
+    setupGraph(controller, {
+      edges: [],
+      nodes: [
+        { id: "node-a", type: "test" },
+        { id: "node-b", type: "test" },
+      ],
+    });
+
+    // Provide graph inspection so syncConsoleFromRunner can populate entries
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => ({
+                title: () => id,
+                currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                currentPorts: () => ({
+                  inputs: { ports: [] },
+                  outputs: { ports: [] },
+                }),
+                describe: () =>
+                  Promise.resolve({ metadata: { tags: ["test"] } }),
+              }),
+            },
+          ],
+        ]),
+      });
+
+    // Prepare populates console with "inactive" entries
+    RunActions.prepare();
+    assert.ok(controller.run.main.runner, "runner should be set after prepare");
+    assert.ok(
+      controller.run.main.console.size > 0,
+      "console should be populated after prepare"
+    );
+
+    // Simulate a run (set status to RUNNING)
+    controller.run.main.setStatus(STATUS.RUNNING);
+
+    // Stop clears console and bumps stopVersion, which should trigger
+    // reprepareAfterStop → prepare(). We call stop() directly since triggers
+    // are tested at integration level.
+    await RunActions.stop();
+
+    // The stopVersion should have been bumped
+    assert.ok(
+      controller.run.main.stopVersion > 0,
+      "stopVersion should be bumped"
+    );
+
+    // Simulate what the trigger does: call reprepareAfterStop
+    await RunActions.reprepareAfterStop();
+
+    // After re-preparation, runner should be set again
+    assert.ok(
+      controller.run.main.runner,
+      "runner should be re-set after reprepareAfterStop"
+    );
+
+    // Console should be re-populated with entries
+    assert.ok(
+      controller.run.main.console.size > 0,
+      "console should be re-populated after reprepareAfterStop"
+    );
+
+    // consoleState should be "entries" (not "start"), keeping Start button active
+    assert.strictEqual(
+      controller.run.main.consoleState,
+      "entries",
+      "consoleState should be 'entries' after reprepareAfterStop"
+    );
+
+    // Status should be STOPPED (ready to start again)
+    assert.strictEqual(
+      controller.run.main.status,
+      STATUS.STOPPED,
+      "status should be STOPPED after reprepareAfterStop"
+    );
+  });
+
+  test("console is empty after stop but before reprepareAfterStop", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller, {
+      edges: [],
+      nodes: [{ id: "node-a", type: "test" }],
+    });
+
+    // Provide graph inspection
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => ({
+                title: () => id,
+                currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                currentPorts: () => ({
+                  inputs: { ports: [] },
+                  outputs: { ports: [] },
+                }),
+                describe: () =>
+                  Promise.resolve({ metadata: { tags: ["test"] } }),
+              }),
+            },
+          ],
+        ]),
+      });
+
+    RunActions.prepare();
+
+    assert.ok(
+      controller.run.main.console.size > 0,
+      "console should have entries before stop"
+    );
+
+    // Stop clears the console via reset()
+    await RunActions.stop();
+
+    // Console should be empty immediately after stop (before trigger fires)
+    assert.strictEqual(
+      controller.run.main.console.size,
+      0,
+      "console should be empty after stop"
+    );
+    assert.strictEqual(
+      controller.run.main.consoleState,
+      "start",
+      "consoleState should be 'start' when console is empty"
     );
   });
 });

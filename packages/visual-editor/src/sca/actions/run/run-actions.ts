@@ -28,6 +28,7 @@ import { RunController } from "../../controller/subcontrollers/run/run-controlle
 import {
   onGraphVersionForSync,
   onNodeActionRequested,
+  onRunStopped,
   onTopologyChange,
   onRunnerStart,
   onRunnerResume,
@@ -692,6 +693,26 @@ export const syncConsoleFromRunner = asAction(
     // Replace the console atomically with new entries
     // This triggers @field signal due to reference change (immutable pattern)
     runController.replaceConsole(newEntries);
+  }
+);
+
+/**
+ * Re-prepares the runner after a run is stopped.
+ *
+ * Restores the behavior from the pre-SCA StopRoute (removed in 2bfbc6bf5)
+ * which called prepare() after stop() to re-populate the console with
+ * "inactive" entries.
+ *
+ * **Triggers:** `onRunStopped` — fires when stopVersion is bumped
+ */
+export const reprepareAfterStop = asAction(
+  "Run.reprepareAfterStop",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunStopped(bind),
+  },
+  async (): Promise<void> => {
+    await prepare();
   }
 );
 
