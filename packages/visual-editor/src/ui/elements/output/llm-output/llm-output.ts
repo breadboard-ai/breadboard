@@ -34,7 +34,7 @@ import {
   isShortsUri,
   isWatchUri,
 } from "../../../utils/youtube.js";
-import { Task } from "@lit/task";
+
 import { icons } from "../../../styles/icons.js";
 import { OverflowAction } from "../../../types/types.js";
 import { OverflowMenuActionEvent } from "../../../events/events.js";
@@ -79,7 +79,6 @@ export class LLMOutput extends LitElement {
   accessor forceDrivePlaceholder = false;
 
   #partDataURLs = new Map<number, string>();
-  #partTask = new Map<number, Task>();
 
   static styles = [
     icons,
@@ -450,7 +449,6 @@ export class LLMOutput extends LitElement {
     }
 
     this.#partDataURLs.clear();
-    this.#partTask.clear();
   }
 
   #renderableParts = 0;
@@ -483,20 +481,6 @@ export class LLMOutput extends LitElement {
     }
 
     this.dispatchEvent(new Event("outputsloaded"));
-  }
-
-  #createPDFLoadTask(url: string) {
-    const task = new Task(this, {
-      task: async ([url]) => {
-        const response = await fetch(url);
-        const data = await response.arrayBuffer();
-        return data;
-      },
-      args: () => [url],
-    });
-
-    task.autoRun = false;
-    return task;
   }
 
   #overflowMenuConfiguration = {
@@ -707,28 +691,20 @@ export class LLMOutput extends LitElement {
                 );
               }
               if (part.inlineData.mimeType === "application/pdf") {
-                let partTask = this.#partTask.get(idx);
-
-                if (!partTask) {
-                  partTask = this.#createPDFLoadTask(url);
-                  this.#partTask.set(idx, partTask);
-                  partTask.run();
+                // Decode inline base64 directly to ArrayBuffer — can't fetch
+                // blob URLs under the app's CSP.
+                const binary = atob(part.inlineData.data);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                  bytes[i] = binary.charCodeAt(i);
                 }
-
-                return partTask.render({
-                  initial: () => html`Waiting to load PDF...`,
-                  pending: () => html`Loading PDF`,
-                  complete: (pdfData) => {
-                    return html`<bb-pdf-viewer
-                      @pdfinitialrender=${() => {
-                        this.#outputLoaded();
-                      }}
-                      .showControls=${this.showPDFControls}
-                      .data=${pdfData}
-                    ></bb-pdf-viewer>`;
-                  },
-                  error: () => html`Unable to load PDF`,
-                });
+                return html`<bb-pdf-viewer
+                  @load=${() => {
+                    this.#outputLoaded();
+                  }}
+                  .showControls=${this.showPDFControls}
+                  .data=${bytes.buffer}
+                ></bb-pdf-viewer>`;
               }
             });
             value = html`${until(tmpl)}`;
@@ -825,28 +801,13 @@ export class LLMOutput extends LitElement {
                   }
                 }
                 if (part.storedData.mimeType === "application/pdf") {
-                  let partTask = this.#partTask.get(idx);
-
-                  if (!partTask) {
-                    partTask = this.#createPDFLoadTask(url);
-                    this.#partTask.set(idx, partTask);
-                    partTask.run();
-                  }
-
-                  value = partTask.render({
-                    initial: () => html`Waiting to load PDF...`,
-                    pending: () => html`Loading PDF`,
-                    complete: (pdfData) => {
-                      return html`<bb-pdf-viewer
-                        @pdfinitialrender=${() => {
-                          this.#outputLoaded();
-                        }}
-                        .showControls=${this.showPDFControls}
-                        .data=${pdfData}
-                      ></bb-pdf-viewer>`;
-                    },
-                    error: () => html`Unable to load PDF`,
-                  });
+                  value = html`<bb-pdf-viewer
+                    @load=${() => {
+                      this.#outputLoaded();
+                    }}
+                    .showControls=${this.showPDFControls}
+                    .url=${url}
+                  ></bb-pdf-viewer>`;
                 }
               }
             }
