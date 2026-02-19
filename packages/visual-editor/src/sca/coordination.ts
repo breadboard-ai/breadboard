@@ -320,6 +320,7 @@ class CoordinationRegistry {
   #inProgressActions = new Set<{
     id: number;
     name: string;
+    mode: ActionMode;
     promise: Promise<unknown>;
     resolve: () => void;
   }>();
@@ -459,11 +460,16 @@ class CoordinationRegistry {
     // then wait for existing in-progress actions. This prevents race conditions
     // where multiple exclusive calls check in-progress at the same time.
 
-    // Capture what was in-progress BEFORE we register (for Exclusive waiting)
-    // Exclusive waits for ALL in-progress actions (serialization)
+    // Capture what was in-progress BEFORE we register (for Exclusive waiting).
+    // Exclusive waits for other Awaits/Exclusive actions (serialization),
+    // but NOT for Immediate actions — they are fire-and-forget by design.
+    // Without this filter, a slow Immediate action (e.g. a network call)
+    // would block every Exclusive action queued behind it.
     const existingInProgressPromises =
       mode === ActionMode.Exclusive
-        ? [...this.#inProgressActions].map((a) => a.promise)
+        ? [...this.#inProgressActions]
+            .filter((a) => a.mode !== ActionMode.Immediate)
+            .map((a) => a.promise)
         : [];
 
     // Register as in-progress FIRST (before waiting)
@@ -474,6 +480,7 @@ class CoordinationRegistry {
     const inProgressEntry = {
       id: this.#nextInProgressId++,
       name,
+      mode,
       promise: inProgressPromise,
       resolve: resolveInProgress!,
     };
