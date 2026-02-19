@@ -286,7 +286,7 @@ export class NotebookLmViewer extends SignalWatcher(LitElement) {
             this.dispatchEvent(new HideTooltipEvent());
           }}
         >
-          <span class="g-icon filled-heavy round">open_in_new</span>
+          <span class="g-icon filled heavy round">open_in_new</span>
         </span>
       </a>
     `;

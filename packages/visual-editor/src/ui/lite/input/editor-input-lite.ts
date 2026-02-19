@@ -125,7 +125,8 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   override render() {
     const iconClasses = {
       "g-icon": true,
-      "filled-heavy": true,
+      filled: true,
+      heavy: true,
       round: true,
       rotate: this.#isGenerating,
     };

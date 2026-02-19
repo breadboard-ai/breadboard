@@ -682,7 +682,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         <h2 class="gallery-title md-title-medium sans-flex w-400">
           ${this.headerText}
           ${this.headerIcon
-            ? html`<span class="g-icon filled-heavy round"
+            ? html`<span class="g-icon filled heavy round"
                 >${this.headerIcon}</span
               >`
             : nothing}
@@ -810,7 +810,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
                   );
                 }}
               >
-                <span class="g-icon filled-heavy"></span>
+                <span class="g-icon filled heavy"></span>
               </button>
               <button
                 class="overflow-menu"
@@ -836,7 +836,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
                   this.showOverflowMenu = true;
                 }}
               >
-                <span class="g-icon filled-heavy w-500">more_vert</span>
+                <span class="g-icon filled heavy w-500">more_vert</span>
               </button>`
           : html` <button
               class=${classMap({
@@ -912,14 +912,14 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           ?disabled=${this.page === 0}
           @click=${this.#onClickPrevPage}
         >
-          <span class="g-icon filled-heavy round">chevron_left</span>
+          <span class="g-icon filled heavy round">chevron_left</span>
         </button>
         <button
           id="next"
           ?disabled=${this.page === pages - 1}
           @click=${this.#onClickNextPage}
         >
-          <span class="g-icon filled-heavy round">chevron_right</span>
+          <span class="g-icon filled heavy round">chevron_right</span>
         </button>
       </menu>
     `;

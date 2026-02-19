@@ -753,7 +753,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
                 }}
               >
                 <span class="example-icon">
-                  <span class="g-icon filled-heavy round">pentagon</span>
+                  <span class="g-icon filled heavy round">pentagon</span>
                 </span>
                 <span>${example.intent}</span>
               </button>
