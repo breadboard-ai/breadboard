@@ -45,6 +45,7 @@ export const DRIVE_PROPERTY_LATEST_SHARED_VERSION = "latestSharedVersion";
 export const DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY = "mainToShareableCopy";
 export const DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN = "shareableCopyToMain";
 export const DRIVE_PROPERTY_OPAL_SHARE_SURFACE = "opalShareSurface";
+export const DRIVE_PROPERTY_VIEWER_MODE = "opal.viewerMode";
 
 export interface MakeGraphListQueryInit {
   kind: "editable" | "shareable";

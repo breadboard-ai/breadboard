@@ -36,6 +36,8 @@ export type SharePanelStatus = "closed" | "open" | "native-share";
 
 export type VisibilityLevel = "only-you" | "restricted" | "anyone";
 
+export type ViewerMode = "full" | "app-only";
+
 export type ShareStatus =
   /** Fetching basic share state (ownership, permissions) on board load. */
   | "initializing"
@@ -46,6 +48,8 @@ export type ShareStatus =
   | "syncing-native-share"
   /** Publishing, unpublishing, or changing the visibility dropdown. */
   | "changing-visibility"
+  /** Updating the viewer access level on the shareable copy. */
+  | "changing-access"
   /** Updating the shareable copy with the latest board content. */
   | "publishing-stale"
   /** Syncing asset permissions after the user approves fixing unmanaged assets. */
@@ -108,6 +112,9 @@ export class ShareController extends RootController {
   @field()
   accessor notebookDomainSharingLimited = false;
 
+  @field()
+  accessor viewerMode: ViewerMode = "full";
+
   /**
    * Resets all fields to their defaults. Called when loading a new opal.
    *
@@ -133,6 +140,7 @@ export class ShareController extends RootController {
     this.shareableFile = null;
     this.unmanagedAssetProblems = [];
     this.notebookDomainSharingLimited = false;
+    this.viewerMode = "full";
   }
 
   #resolveUnmanagedAssets?: () => void;
