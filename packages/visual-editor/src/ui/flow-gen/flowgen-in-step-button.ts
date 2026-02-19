@@ -27,7 +27,6 @@ import { multiLineInputStyles } from "../styles/multi-line-input.js";
 import { type FlowGenConstraint } from "./flow-generator.js";
 import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
-import { isEmpty } from "@tweakpane/core";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -417,7 +416,8 @@ export class FlowgenInStepButton extends SignalWatcher(LitElement) {
       // Check if this is the first time the user is making a suggested edit
       const seenConfirmationDialog =
         this.sca.controller.global.flowgenInput.seenConfirmationDialog;
-      const graphIsEmpty = isEmpty(this.currentGraph ?? null);
+      const graphIsEmpty =
+        this.sca.controller.editor.graph.graphContentState === "empty";
 
       if (!seenConfirmationDialog && !graphIsEmpty) {
         this.#showConfirmation = true;
