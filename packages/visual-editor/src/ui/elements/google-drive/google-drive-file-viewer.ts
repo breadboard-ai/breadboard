@@ -257,14 +257,13 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
             <div class="video-container">
               ${this.#videoUrlTask.render({
                 error: () => html`<p>Error loading video source</p>`,
-                complete: (url) => {
-                  return html`<a2ui-video
+                complete: (url) =>
+                  html`<a2ui-video
                     class="video-embed"
                     .url=${{
                       literalString: url,
                     }}
-                  ></a2ui-video>`;
-                },
+                  ></a2ui-video>`,
               })}
             </div>
           `;
