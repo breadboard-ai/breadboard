@@ -6,11 +6,6 @@
 
 import * as videoGeneratorMain from "./main.js";
 
-import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl.js";
-
 export const exports = {
   main: videoGeneratorMain,
 };
-
-export const bgl = createBgl(descriptor, exports);

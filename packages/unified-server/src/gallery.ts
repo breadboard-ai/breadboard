@@ -177,10 +177,12 @@ export class CachingFeaturedGallery {
         const line = lines[i];
         const id = line.split(",")[0]?.trim();
         if (id) {
-          map.set(id, i-1);
+          map.set(id, i - 1);
         }
       }
-      console.log(`[gallery middleware] Fetched lite mode featured indices:`, [...map.keys()]);
+      console.log(`[gallery middleware] Fetched lite mode featured indices:`, [
+        ...map.keys(),
+      ]);
       return map;
     } catch (e) {
       console.warn(

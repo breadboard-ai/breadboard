@@ -100,8 +100,6 @@ export function initializeEditor(
   graphController.url = url;
   graphController.version = version;
   graphController.readOnly = readOnly;
-  // Derive graphIsMine from readOnly for legacy compat (deprecated)
-  graphController.graphIsMine = !readOnly;
   graphController.mainGraphId = id;
   graphController.lastLoadedVersion = lastLoadedVersion;
   graphController.finalOutputValues = options.finalOutputValues;

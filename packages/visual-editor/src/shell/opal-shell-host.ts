@@ -49,7 +49,14 @@ async function initializeOpalShellGuest() {
   guestUrl.searchParams.set(SHELL_ORIGIN_URL_PARAMETER, window.location.origin);
   iframe.src = guestUrl.href;
 
-  const shellHost = new OAuthBasedOpalShell();
+  let shellHost: OpalShellHostProtocol;
+  if (CLIENT_DEPLOYMENT_CONFIG.FAKE_MODE) {
+    const { FakeModeOpalShell } =
+      await import("../../fake/fake-mode-opal-shell.js");
+    shellHost = new FakeModeOpalShell();
+  } else {
+    shellHost = new OAuthBasedOpalShell();
+  }
 
   const boxedState: {
     value?: {

@@ -7,7 +7,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
-import { VisualEditorStatusUpdate } from "../../types/types.js";
+import { VisualEditorStatusUpdate } from "../../../sca/types.js";
 import { repeat } from "lit/directives/repeat.js";
 import { markdown } from "../../directives/markdown.js";
 import { icons } from "../../styles/icons.js";

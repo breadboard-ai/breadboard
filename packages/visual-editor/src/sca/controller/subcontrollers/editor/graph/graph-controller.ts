@@ -32,8 +32,8 @@ import {
 import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
-import { Tab } from "../../../../../runtime/types.js";
-import { Tool, Component } from "../../../../../ui/types/state-types.js";
+
+import { Tool, Component } from "../../../../types.js";
 import type { Components, GraphAsset } from "../../../../types.js";
 import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
 import type { FastAccessItem } from "../../../../types.js";
@@ -61,6 +61,15 @@ export interface PendingGraphReplacement {
   /** Edit history creator info */
   creator: EditHistoryCreator;
 }
+
+/**
+ * Tri-state describing the content state of a graph.
+ *
+ * - `"loading"` — graph descriptor hasn't been set yet (initial state).
+ * - `"empty"`   — graph is loaded but contains no nodes, assets, or sub-graphs.
+ * - `"loaded"`  — graph has at least one node, asset, or sub-graph.
+ */
+export type GraphContentState = "loading" | "empty" | "loaded";
 
 /**
  * Tool definition for the "Go to" routing action.
@@ -247,13 +256,6 @@ export class GraphController
    * @deprecated
    */
   @field()
-  accessor graphIsMine = false;
-
-  /**
-   * Here for migrations.
-   * @deprecated
-   */
-  @field()
   accessor mainGraphId: ReturnType<typeof globalThis.crypto.randomUUID> | null =
     null;
 
@@ -281,10 +283,37 @@ export class GraphController
   }
 
   /**
-   * Whether the graph is empty (has no nodes).
+   * The content state of the graph. Distinguishes between three states:
+   *
+   * - `"loading"` — the graph descriptor hasn't been set yet
+   *   (`_graph` is null). This is the initial state before `setEditor()`
+   *   is called. UI consumers should avoid showing the "empty" message
+   *   during this transient phase to prevent a flash of empty content.
+   *
+   * - `"empty"` — the graph is loaded but has no nodes, assets,
+   *   or sub-graphs. This is the genuine empty state where the user
+   *   hasn't added any content yet.
+   *
+   * - `"loaded"` — the graph has at least one node, asset,
+   *   or sub-graph. Normal editing/preview state.
+   */
+  get graphContentState(): GraphContentState {
+    const g = this._graph;
+    if (!g) return "loading";
+    const hasContent =
+      (g.nodes?.length ?? 0) > 0 ||
+      Object.keys(g.assets ?? {}).length > 0 ||
+      Object.keys(g.graphs ?? {}).length > 0;
+    return hasContent ? "loaded" : "empty";
+  }
+
+  /**
+   * Whether the graph is empty (has no nodes, assets, or sub-graphs).
+   * @deprecated Use `graphContentState` instead, which distinguishes
+   * "loading" from "empty".
    */
   get empty() {
-    return (this._graph?.nodes?.length ?? 0) === 0;
+    return this.graphContentState === "empty";
   }
 
   get editor() {
@@ -344,30 +373,6 @@ export class GraphController
     if (evt.reason.type === "error") {
       this.lastEditError = evt.reason.error;
     }
-  }
-
-  /**
-   * Here for migrations.
-   *
-   * @deprecated
-   */
-  asTab(): Tab | null {
-    if (!this._graph || !this.id || !this.mainGraphId) return null;
-
-    return {
-      id: this.id,
-      graph: this._graph,
-      graphIsMine: this.graphIsMine,
-      readOnly: !this.graphIsMine,
-      boardServer: null,
-      lastLoadedVersion: this.lastLoadedVersion,
-      mainGraphId: this.mainGraphId,
-      name: this._graph.title ?? "Untitled app",
-      subGraphId: null,
-      type: 0,
-      version: this.version,
-      finalOutputValues: this.finalOutputValues,
-    } satisfies Tab;
   }
 
   // =========================================================================
@@ -465,7 +470,6 @@ export class GraphController
     this.version = 0;
     this.topologyVersion = 0;
     this.readOnly = false;
-    this.graphIsMine = false;
     this.mainGraphId = null;
     this.lastLoadedVersion = 0;
     this.lastNodeConfigChange = null;

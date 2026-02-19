@@ -66,6 +66,11 @@ export function createMockRunner(
             stages: [nodes.map((n) => ({ node: n }))],
           }
         : undefined,
+    // State map mirroring the orchestrator's per-node lifecycle state.
+    // All nodes in a single stage default to "ready".
+    state: new Map(
+      nodes.map((n) => [n.id, { state: "ready" as const, stage: 0 }])
+    ),
     // Helper for tests to fire events with optional data
     _fireEvent: (event: string, data?: unknown) => {
       if (listeners[event]) {
@@ -180,6 +185,7 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     googleDriveBoardServer: googleDriveBoardServer ?? {
       addEventListener: () => {},
       removeEventListener: () => {},
+      graphIsFullyCreated: async () => {},
       flushSaveQueue: async () => {},
       dataPartTransformer: () => ({}),
     },
@@ -188,8 +194,10 @@ export function makeTestServices(options: TestServicesOptions = {}) {
     globalConfig,
     guestConfig,
     signinAdapter: signinAdapter ?? {},
-    // Mock RunService that returns a testable mock runner
+    // Mock RunService that returns a testable mock runner and provides
+    // a stable runnerEventBus for event triggers.
     runService: {
+      runnerEventBus: new EventTarget(),
       createRunner: (config: {
         runner?: { nodes?: Array<{ id: string }> };
       }) => {
@@ -198,6 +206,8 @@ export function makeTestServices(options: TestServicesOptions = {}) {
         const abortController = new AbortController();
         return { runner: mockRunner, abortController };
       },
+      registerRunner: () => {},
+      unregisterRunner: () => {},
     },
     // Mock loader for run actions
     loader: {} as unknown as AppServices["loader"],

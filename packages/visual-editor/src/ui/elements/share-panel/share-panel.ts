@@ -13,22 +13,20 @@ import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
-import type { SharePanelStatus } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+import type {
+  SharePanelStatus,
+  UnmanagedAssetProblem,
+} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
 import animations from "../../app-templates/shared/styles/animations.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import {
-  globalConfigContext,
-  type GlobalConfig,
-} from "../../contexts/global-config.js";
-import { ToastEvent, ToastType } from "../../events/events.js";
+import { ToastEvent } from "../../events/events.js";
+import { ToastType } from "../../../sca/types.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
-import { ActionTracker } from "../../types/types.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
-import type { VisibilityLevel } from "./share-visibility-selector.js";
+import type { ShareVisibilitySelector } from "./share-visibility-selector.js";
 import "./share-visibility-selector.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
@@ -222,6 +220,27 @@ export class SharePanel extends SignalWatcher(LitElement) {
           --md-switch-selected-handle-width: 20px;
           --md-switch-selected-handle-height: 20px;
         }
+
+        .toggle-spinner {
+          animation: rotate 1s linear infinite;
+          font-size: 18px;
+          color: #525252;
+        }
+
+        .toggle-group {
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+        }
+
+        @keyframes rotate {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
       }
 
       #editor-access-toggle + #app-link {
@@ -242,6 +261,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
           font-size: 14px;
           line-height: 20px;
           letter-spacing: 0;
+
+          &[disabled] {
+            opacity: 0.4;
+            cursor: wait;
+          }
         }
       }
 
@@ -310,6 +334,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         }
 
         button[disabled] {
+          opacity: 0.4;
           cursor: wait;
         }
       }
@@ -491,16 +516,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @consume({ context: globalConfigContext })
-  @property({ attribute: false })
-  accessor globalConfig: GlobalConfig | undefined;
-
   @consume({ context: scaContext })
   @property({ attribute: false })
   accessor sca!: SCA;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
 
   get #graph() {
     return this.sca.controller.editor.graph.graph;
@@ -526,7 +544,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     const panel = this.#panel;
     if (panel === "closed") {
       return nothing;
-    } else if (panel === "granular") {
+    } else if (panel === "native-share") {
       return this.#renderGranularSharingModal();
     } else {
       return this.#renderModal();
@@ -534,7 +552,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   override updated() {
-    if (this.#panel === "granular") {
+    if (this.#panel === "native-share") {
       this.#googleDriveSharePanel.value?.open();
     } else if (this.#panel !== "closed") {
       this.#dialog.value?.showModal();
@@ -556,6 +574,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
         class=${SHARING_V2 ? "sharing-v2" : ""}
         ${ref(this.#dialog)}
         @close=${this.close}
+        @cancel=${(e: Event) => {
+          if (this.#controller.status !== "ready") {
+            e.preventDefault();
+          }
+        }}
       >
         <header>
           <h2>Share ${title ? `“${title}”` : ""}</h2>
@@ -563,6 +586,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
             id="close-button"
             class="g-icon"
             aria-label="Close"
+            .disabled=${this.#controller.status !== "ready"}
             @click=${this.close}
           >
             close
@@ -575,20 +599,44 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderModalContents() {
-    const panel = this.#panel;
-    if (panel === "loading") {
+    // Asset-review takes priority when there are unmanaged asset problems
+    // pending resolution (e.g. during publish), OR when notebook domain-sharing
+    // limitations need to be surfaced. The action layer blocks on
+    // waitForUnmanagedAssetsResolution() in both cases.
+    if (
+      this.#controller.unmanagedAssetProblems.length > 0 ||
+      this.#controller.notebookDomainSharingLimited
+    ) {
+      return this.#renderUnmanagedAssetsModalContents();
+    }
+    const status = this.#controller.status;
+    // V2 has inline spinners for changing-visibility and publishing-stale,
+    // so only show the full-panel loader for statuses without those affordances.
+    if (
+      SHARING_V2 &&
+      (status === "initializing" ||
+        status === "syncing-native-share" ||
+        status === "syncing-assets")
+    ) {
+      return this.#renderLoading();
+      // V1 has an inline spinner for changing-visibility on the publish switch,
+      // so only show the full-panel loader for statuses without inline affordances.
+    } else if (
+      !SHARING_V2 &&
+      (status === "initializing" ||
+        status === "syncing-native-share" ||
+        status === "publishing-stale" ||
+        status === "syncing-assets")
+    ) {
       return this.#renderLoading();
     }
-    if (panel === "writable" || panel === "updating") {
+    if (this.#controller.ownership === "owner") {
       return CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
         ? this.#renderWritableContentsV2()
         : this.#renderWritableContentsV1();
     }
-    if (panel === "readonly") {
+    if (this.#controller.ownership === "non-owner") {
       return this.#renderReadonlyModalContents();
-    }
-    if (panel === "unmanaged-assets") {
-      return this.#renderUnmanagedAssetsModalContents();
     }
   }
 
@@ -603,7 +651,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderWritableContentsV1() {
     const shared =
-      this.#controller.published || this.#controller.granularlyShared;
+      this.#controller.hasPublicPermissions ||
+      this.#controller.hasOtherPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
       html`
@@ -612,7 +661,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      shared && this.#panel !== "updating" ? this.#renderAppLink() : nothing,
+      shared && this.#controller.status === "ready"
+        ? this.#renderAppLink()
+        : nothing,
       this.#renderGranularSharingLink(),
       this.#renderAdvisory(),
     ];
@@ -620,12 +671,13 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderWritableContentsV2() {
     const shared =
-      this.#controller.published || this.#controller.granularlyShared;
+      this.#controller.hasPublicPermissions ||
+      this.#controller.hasOtherPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBannerV2() : nothing,
       this.#renderAdvisoryV2(),
       this.#renderVisibilityDropdown(),
-      this.#computedVisibility !== "only-you"
+      this.#controller.visibility !== "only-you"
         ? this.#renderEditorAccessToggle()
         : nothing,
       shared ? this.#renderAppLink() : nothing,
@@ -642,7 +694,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </p>
         <button
           class="bb-button-text"
-          .disabled=${this.#panel !== "writable"}
+          .disabled=${this.#controller.status === "publishing-stale"}
           @click=${this.#onClickPublishStale}
         >
           Update
@@ -664,10 +716,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </span>
         <button
           class="bb-button-text"
-          .disabled=${this.#panel !== "writable"}
+          .disabled=${this.#controller.status !== "ready"}
           @click=${this.#onClickPublishStale}
         >
-          ${this.#panel === "updating"
+          ${this.#controller.status === "publishing-stale"
             ? html`<span class="g-icon spin spinner">progress_activity</span>`
             : nothing}
           Update
@@ -677,6 +729,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderEditorAccessToggle() {
+    const changing = this.#controller.status === "changing-access";
     return html`
       <div id="editor-access-toggle">
         <label>
@@ -687,9 +740,23 @@ export class SharePanel extends SignalWatcher(LitElement) {
             >info</span
           >
         </label>
-        <md-switch></md-switch>
+        <span class="toggle-group">
+          ${changing
+            ? html`<span class="g-icon toggle-spinner">progress_activity</span>`
+            : nothing}
+          <md-switch
+            .disabled=${this.#controller.status !== "ready"}
+            ?selected=${this.#controller.viewerMode === "full"}
+            @change=${this.#onViewerModeToggle}
+          ></md-switch>
+        </span>
       </div>
     `;
+  }
+
+  async #onViewerModeToggle(event: Event) {
+    const selected = (event.target as MdSwitch).selected;
+    await this.#actions.setViewerAccess(selected ? "full" : "app-only");
   }
 
   #renderReadonlyModalContents() {
@@ -697,8 +764,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderDisallowedPublishingNotice() {
-    const panel = this.#panel;
-    if (panel !== "writable" && panel !== "updating") {
+    const status = this.#controller.status;
+    if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
     const domain = this.#controller.userDomain;
@@ -706,7 +773,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       return nothing;
     }
     const { disallowPublicPublishing, preferredUrl } =
-      this.globalConfig?.domains?.[domain] ?? {};
+      this.sca?.services.globalConfig?.domains?.[domain] ?? {};
     if (!disallowPublicPublishing) {
       return nothing;
     }
@@ -758,7 +825,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         id="granular-sharing-link"
         href=""
         @click=${this.#onClickViewSharePermissions}
-        ?disabled=${this.#panel !== "writable"}
+        ?disabled=${this.#controller.status !== "ready"}
       >
         View Share Permissions
       </a>
@@ -805,41 +872,50 @@ export class SharePanel extends SignalWatcher(LitElement) {
   #renderDoneButton() {
     return html`
       <footer>
-        <button class="bb-button-outlined" @click=${this.close}>Done</button>
+        <button
+          class="bb-button-outlined"
+          .disabled=${this.#controller.status !== "ready"}
+          @click=${this.close}
+        >
+          Done
+        </button>
       </footer>
     `;
   }
 
   #renderVisibilityDropdown() {
     return html`<bb-share-visibility-selector
-      .value=${this.#computedVisibility}
+      .value=${this.#controller.visibility}
+      .loading=${this.#controller.status === "changing-visibility"}
+      @change=${this.#onVisibilityChange}
+      @edit-access=${this.#onEditAccess}
     ></bb-share-visibility-selector>`;
   }
 
-  get #computedVisibility(): VisibilityLevel {
-    if (this.#controller.published) {
-      return "anyone";
-    }
-    if (this.#controller.granularlyShared) {
-      return "restricted";
-    }
-    return "only-you";
+  async #onVisibilityChange(event: Event) {
+    const selector = event.target as ShareVisibilitySelector;
+    await this.#actions.changeVisibility(selector.value);
+  }
+
+  async #onEditAccess() {
+    await this.#actions.viewSharePermissions();
   }
 
   #renderPublishedSwitch() {
-    const panel = this.#panel;
-    if (panel !== "writable" && panel !== "updating") {
+    const status = this.#controller.status;
+    if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
-    const published = this.#controller.published;
+    const published = this.#controller.hasPublicPermissions;
     const domain = this.#controller.userDomain;
     const { disallowPublicPublishing } =
-      this.globalConfig?.domains?.[domain] ?? {};
+      this.sca?.services.globalConfig?.domains?.[domain] ?? {};
 
-    const disabled = disallowPublicPublishing || panel === "updating";
+    const disabled =
+      disallowPublicPublishing || status === "changing-visibility";
     return html`
       <div id="published-switch-container">
-        ${panel === "updating"
+        ${status === "changing-visibility"
           ? html`<span class="g-icon spin spinner">progress_activity</span>`
           : nothing}
         <md-switch
@@ -857,7 +933,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderGranularSharingModal() {
     const panel = this.#panel;
-    if (panel !== "granular" || !this.#controller.shareableFile) {
+    if (panel !== "native-share" || !this.#controller.shareableFile) {
       return nothing;
     }
     return html`
@@ -871,9 +947,26 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderUnmanagedAssetsModalContents() {
     const problems = this.#controller.unmanagedAssetProblems;
-    if (problems.length === 0) {
+    const domainLimited = this.#controller.notebookDomainSharingLimited;
+    if (problems.length === 0 && !domainLimited) {
       return nothing;
     }
+
+    const renderAssetChip = (p: UnmanagedAssetProblem) => {
+      const name = p.type === "drive" ? p.asset.name : p.notebookName;
+      const url =
+        p.type === "drive"
+          ? driveOpenUrl(p.asset)
+          : `https://notebooklm.google.com/notebook/${p.notebookId}`;
+      const icon =
+        p.type === "drive" ? html`<img src=${p.asset.iconLink} />` : html`📓`;
+      return html`
+        <span class="asset-chip">
+          ${icon}
+          <a href=${url} target="_blank">${name}</a>
+        </span>
+      `;
+    };
 
     const parts = [];
 
@@ -881,20 +974,12 @@ export class SharePanel extends SignalWatcher(LitElement) {
       ({ problem }) => problem === "missing"
     );
     if (missingProblems.length > 0) {
-      const missingChips = missingProblems.map(({ asset }) => {
-        return html`
-          <span class="asset-chip">
-            <img src=${asset.iconLink} />
-            <a href=${driveOpenUrl(asset)} target="_blank">${asset.name}</a>
-          </span>
-        `;
-      });
       parts.push(html`
         <p>
           The following assets are editable by you, but are not yet shared with
           all users of this app. To share them now, choose "Share my assets".
         </p>
-        <div id="asset-chips">${missingChips}</div>
+        <div id="asset-chips">${missingProblems.map(renderAssetChip)}</div>
       `);
     }
 
@@ -902,14 +987,6 @@ export class SharePanel extends SignalWatcher(LitElement) {
       ({ problem }) => problem === "cant-share"
     );
     if (cantShareProblems.length > 0) {
-      const cantShareChips = cantShareProblems.map(({ asset }) => {
-        return html`
-          <span class="asset-chip">
-            <img src=${asset.iconLink} />
-            <a href=${driveOpenUrl(asset)} target="_blank">${asset.name}</a>
-          </span>
-        `;
-      });
       parts.push(html`
         <p>
           The following assets are <strong>not</strong> editable by you, and we
@@ -918,7 +995,17 @@ export class SharePanel extends SignalWatcher(LitElement) {
           safely ignore this warning. If you are unsure, contact the owner of
           the asset, or replace it with an asset you do own.
         </p>
-        <div id="asset-chips">${cantShareChips}</div>
+        <div id="asset-chips">${cantShareProblems.map(renderAssetChip)}</div>
+      `);
+    }
+
+    if (this.#controller.notebookDomainSharingLimited) {
+      parts.push(html`
+        <p>
+          <strong>Note:</strong> NotebookLM notebooks cannot be shared with
+          domain-wide or public access. They must be shared individually with
+          each user.
+        </p>
       `);
     }
 
@@ -979,7 +1066,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     }
     const selected = input.selected;
     if (selected) {
-      this.actionTracker?.publishApp(this.#graph.url);
+      this.sca?.services.actionTracker?.publishApp(this.#graph.url);
       this.#actions.publish();
     } else {
       this.#actions.unpublish();

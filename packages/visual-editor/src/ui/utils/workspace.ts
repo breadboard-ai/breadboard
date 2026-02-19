@@ -11,7 +11,7 @@ import {
   InspectableGraph,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { MAIN_BOARD_ID } from "../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../sca/constants.js";
 import {
   GraphHighlightState,
   GraphSelectionState,

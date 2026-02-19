@@ -6,11 +6,10 @@
 
 import { RuntimeFlags } from "@breadboard-ai/types";
 import {
-  UserSignInResponse,
-  VisualEditorMode,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
 } from "../../types/types.js";
+import { UserSignInResponse, VisualEditorMode } from "../../../sca/types.js";
 import { BaseEventDetail } from "../base.js";
 
 type MoveToSelection = "immediate" | "animated" | false;
@@ -31,8 +30,7 @@ export interface ModeToggle extends BaseEventDetail<`${Namespace}.modetoggle`> {
   readonly mode: VisualEditorMode;
 }
 
-export interface SelectionStateChange
-  extends BaseEventDetail<`${Namespace}.selectionstatechange`> {
+export interface SelectionStateChange extends BaseEventDetail<`${Namespace}.selectionstatechange`> {
   readonly selectionChangeId: WorkspaceSelectionChangeId;
   readonly selections: WorkspaceSelectionState | null;
   readonly replaceExistingSelections: boolean;

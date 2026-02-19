@@ -13,15 +13,17 @@
  * that affect global application state (mode, flags, locks, auth).
  */
 
-import { makeAction, withBlockingAction } from "../binder.js";
+import { makeAction, withUIBlocking } from "../binder.js";
+import { asAction, ActionMode, keyboardTrigger } from "../../coordination.js";
 import {
-  asAction,
-  ActionMode,
-  stateEventTrigger,
-  keyboardTrigger,
-} from "../../coordination.js";
+  onModeToggle,
+  onLock,
+  onUnlock,
+  onFlagChange,
+  onUserSignIn,
+} from "./triggers.js";
 import type { StateEvent } from "../../../ui/events/events.js";
-import { ToastType } from "../../../ui/events/events.js";
+import { ToastType } from "../../types.js";
 import { parseUrl } from "../../../ui/utils/urls.js";
 
 export { bind };
@@ -41,14 +43,7 @@ export const modeToggle = asAction(
   "Host.modeToggle",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: () => {
-      const { services } = bind;
-      return stateEventTrigger(
-        "Host Mode Toggle",
-        services.stateEventBus,
-        "host.modetoggle"
-      );
-    },
+    triggeredBy: () => onModeToggle(bind),
   },
   async (evt?: Event): Promise<void> => {
     const { controller } = bind;
@@ -72,14 +67,7 @@ export const lock = asAction(
   "Host.lock",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: () => {
-      const { services } = bind;
-      return stateEventTrigger(
-        "Host Lock",
-        services.stateEventBus,
-        "host.lock"
-      );
-    },
+    triggeredBy: () => onLock(bind),
   },
   async (): Promise<void> => {
     const { controller } = bind;
@@ -96,14 +84,7 @@ export const unlock = asAction(
   "Host.unlock",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: () => {
-      const { services } = bind;
-      return stateEventTrigger(
-        "Host Unlock",
-        services.stateEventBus,
-        "host.unlock"
-      );
-    },
+    triggeredBy: () => onUnlock(bind),
   },
   async (): Promise<void> => {
     const { controller } = bind;
@@ -120,14 +101,7 @@ export const flagChange = asAction(
   "Host.flagChange",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: () => {
-      const { services } = bind;
-      return stateEventTrigger(
-        "Host Flag Change",
-        services.stateEventBus,
-        "host.flagchange"
-      );
-    },
+    triggeredBy: () => onFlagChange(bind),
   },
   async (evt?: Event): Promise<void> => {
     const { controller } = bind;
@@ -149,14 +123,7 @@ export const userSignIn = asAction(
   "Host.userSignIn",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: () => {
-      const { services } = bind;
-      return stateEventTrigger(
-        "Host User Sign In",
-        services.stateEventBus,
-        "host.usersignin"
-      );
-    },
+    triggeredBy: () => onUserSignIn(bind),
   },
   async (): Promise<void> => {
     // Noop for main routing. This event is only handled in Lite mode.
@@ -184,7 +151,7 @@ export const onToggleExperimentalComponents = asAction(
   },
   async (): Promise<void> => {
     const { controller } = bind;
-    await withBlockingAction(
+    await withUIBlocking(
       controller,
       async () => {
         controller.global.main.experimentalComponents =
@@ -213,7 +180,7 @@ export const onToggleDebug = asAction(
   },
   async (): Promise<void> => {
     const { controller } = bind;
-    await withBlockingAction(
+    await withUIBlocking(
       controller,
       async () => {
         controller.global.debug.enabled = !controller.global.debug.enabled;
@@ -241,7 +208,7 @@ export const onDownloadAgentTraces = asAction(
   },
   async (): Promise<void> => {
     const { controller, services } = bind;
-    await withBlockingAction(
+    await withUIBlocking(
       controller,
       async () => {
         const traces = services.agentContext.exportTraces();

@@ -15,6 +15,7 @@ import type {
   LoopDeps,
   FunctionGroupConfiguratorFlags,
   FunctionGroup,
+  ProgressReporter,
 } from "../../../src/a2/agent/types.js";
 
 session({ name: "Agent" }, async (session) => {
@@ -93,16 +94,88 @@ session({ name: "Agent" }, async (session) => {
           configureFn = agentConfigurator;
         }
 
+        const handle = moduleArgs.agentService.startRun({
+          kind: "content-eval",
+          objective,
+        });
+
         const setup = await buildAgentRun({
           objective,
           params: {},
           moduleArgs,
           configureFn,
           uiType,
+          sink: handle.sink,
         });
-        if (!ok(setup)) return setup;
-        const { loop, runArgs } = setup;
+        if (!ok(setup)) {
+          moduleArgs.agentService.endRun(handle.runId);
+          return setup;
+        }
+        const { loop, runArgs, progress, runStateManager } = setup;
+
+        // Maps event-layer callIds → progress-manager callIds.
+        const callIdMap = new Map<string, string>();
+        const reporterMap = new Map<string, ProgressReporter>();
+
+        handle.events
+          .on("start", (event) => {
+            progress.startAgent(event.objective);
+          })
+          .on("finish", () => {
+            progress.finish();
+          })
+          .on("content", (event) => {
+            runStateManager.pushContent(event.content);
+          })
+          .on("thought", (event) => {
+            progress.thought(event.text);
+          })
+          .on("functionCall", (event) => {
+            const { callId: progressCallId, reporter } = progress.functionCall(
+              { functionCall: { name: event.name, args: event.args } },
+              event.icon,
+              event.title
+            );
+            callIdMap.set(event.callId, progressCallId);
+            if (reporter) {
+              reporterMap.set(event.callId, reporter);
+            }
+          })
+          .on("functionCallUpdate", (event) => {
+            const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+            progress.functionCallUpdate(
+              progressCallId,
+              event.status,
+              event.opts
+            );
+          })
+          .on("functionResult", (event) => {
+            const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+            progress.functionResult(progressCallId, event.content);
+            callIdMap.delete(event.callId);
+            reporterMap.delete(event.callId);
+          })
+          .on("turnComplete", () => {
+            runStateManager.completeTurn();
+          })
+          .on("sendRequest", (event) => {
+            progress.sendRequest(event.model, event.body);
+            runStateManager.captureRequestBody(event.model, event.body);
+          })
+          .on("subagentAddJson", (event) => {
+            reporterMap
+              .get(event.callId)
+              ?.addJson(event.title, event.data, event.icon);
+          })
+          .on("subagentError", (event) => {
+            reporterMap.get(event.callId)?.addError(event.error);
+          })
+          .on("subagentFinish", (event) => {
+            reporterMap.get(event.callId)?.finish();
+          });
+
         const result = await loop.run(runArgs);
+        moduleArgs.agentService.endRun(handle.runId);
 
         if (simulatedUser) {
           await simulatedUser.close();

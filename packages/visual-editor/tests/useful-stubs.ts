@@ -14,6 +14,7 @@ import {
 } from "../src/a2/agent/types.js";
 import { Outcome } from "@breadboard-ai/types";
 import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
+import { AgentService } from "../src/a2/agent/agent-service.js";
 
 export { stubModuleArgs, stubMemoryManager };
 
@@ -25,6 +26,7 @@ const stubModuleArgs: A2ModuleArgs = {
       throw new Error(`fetchWithCreds not implemented`);
     },
   }),
+  agentService: new AgentService(),
   fetchWithCreds: () => {
     throw new Error(`fetchWithCreds not implemented`);
   },

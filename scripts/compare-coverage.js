@@ -281,3 +281,31 @@ if (baseCoverage && prCoverage.lines > baseCoverage.lines) {
 
 writeFileSync("coverage-comment.md", comment);
 console.log("✅ Coverage comment written to coverage-comment.md");
+
+// --- Coverage gate ---
+// Determine whether coverage dropped enough to fail a check.
+// Threshold: fail if lines coverage drops by more than this percentage.
+const DROP_THRESHOLD = -2;
+
+let failed = false;
+let details = "";
+
+if (baseCoverage) {
+  const linesDelta = prCoverage.lines - baseCoverage.lines;
+  if (linesDelta < DROP_THRESHOLD) {
+    failed = true;
+    details = `Lines coverage dropped by ${linesDelta.toFixed(2)}% (threshold: ${DROP_THRESHOLD}%)`;
+  } else {
+    details = `Lines coverage delta: ${linesDelta >= 0 ? "+" : ""}${linesDelta.toFixed(2)}% (threshold: ${DROP_THRESHOLD}%)`;
+  }
+} else {
+  details = "No baseline available — skipping coverage gate.";
+}
+
+writeFileSync(
+  "coverage-status.json",
+  JSON.stringify({ failed, details }, null, 2)
+);
+console.log(
+  `${failed ? "❌" : "✅"} Coverage status: ${details}`
+);

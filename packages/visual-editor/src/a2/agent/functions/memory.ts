@@ -44,7 +44,9 @@ You have access to a persistent data store that allows you to recall and remembe
 
 The data store is stored in a Google Spreadsheet. 
 
-You can create new sheets within this spreadsheet using the "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete existing sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. You can also get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
+Unless the objective explicitly calls for creating new sheets and  specifies names for them, keep all memory data in a single sheet named "memory". Populate it with the columns that make sense for a wide range of data. Typically, you will want to include "Date", "Title", and "Details" columns. Look at the objective for hints on what columns to use. If there is a sheet that already exists, reuse it instead of creating a new one.
+
+Create new sheets within this spreadsheet using the "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. Get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
 
 To retrieve data from memory, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a file using the "/mnt/memory/sheet_name" path.
 

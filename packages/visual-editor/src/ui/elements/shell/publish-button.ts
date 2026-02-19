@@ -83,7 +83,7 @@ export class PublishButton extends SignalWatcher(LitElement) {
 
       .spinner {
         animation: spin 1s linear infinite;
-        color: #575B5F;
+        color: #575b5f;
       }
     `,
   ];
@@ -104,29 +104,32 @@ export class PublishButton extends SignalWatcher(LitElement) {
           "w-500": true,
           "has-red-dot": this.#hasRedDot,
         })}
-        ?disabled=${this.#isDisabled}
+        ?disabled=${!this.#isEnabled}
+        @click=${this.#onClickPublish}
       >
-        <span class=${classMap({
-          "g-icon": true,
-          spinner: this.#isPublishing,
-        })}>${this.#icon}</span>
+        <span
+          class=${classMap({
+            "g-icon": true,
+            spinner: this.#isPublishing,
+          })}
+          >${this.#icon}</span
+        >
         ${this.#label}
       </button>
     `;
   }
 
   get #hasRedDot() {
-    const share = this.#share;
-    return share?.published && share?.stale;
+    return this.#share?.stale;
   }
 
-  get #isDisabled() {
+  get #isEnabled() {
     const share = this.#share;
-    return !share?.published || !share?.stale;
+    return share?.stale && share?.panel === "closed" && !this.#isPublishing;
   }
 
   get #isPublishing() {
-    return this.#share?.panel === "updating";
+    return this.#share?.status === "publishing-stale";
   }
 
   get #label() {
@@ -137,6 +140,11 @@ export class PublishButton extends SignalWatcher(LitElement) {
     return this.#isPublishing ? "progress_activity" : "cloud_upload";
   }
 
+  async #onClickPublish() {
+    if (this.#isEnabled) {
+      await this.sca.actions.share.publishStale();
+    }
+  }
 }
 
 declare global {

@@ -10,7 +10,7 @@ export { willCreateCycle };
 
 /**
  * Determines if adding the given edge to the graph will create a cycle.
- * 
+ *
  * @param edge - The edge to be added to the graph
  * @param graph - The graph to check for cycles
  * @returns true if adding the edge will create a cycle, false otherwise
@@ -46,13 +46,17 @@ function willCreateCycle(edge: Edge, graph: GraphDescriptor): boolean {
 
 /**
  * Checks if there's a path from source to target in the graph using DFS.
- * 
+ *
  * @param graph - The graph to search in
  * @param source - The source node
  * @param target - The target node
  * @returns true if a path exists, false otherwise
  */
-function hasPath(graph: GraphDescriptor, source: string, target: string): boolean {
+function hasPath(
+  graph: GraphDescriptor,
+  source: string,
+  target: string
+): boolean {
   if (source === target) {
     return true;
   }
@@ -62,20 +66,21 @@ function hasPath(graph: GraphDescriptor, source: string, target: string): boolea
 
   while (stack.length > 0) {
     const current = stack.pop()!;
-    
+
     if (visited.has(current)) {
       continue;
     }
-    
+
     visited.add(current);
-    
+
     if (current === target) {
       return true;
     }
 
     // Find all outgoing edges from current node
-    const outgoingEdges = graph.edges?.filter((edge) => edge.from === current) || [];
-    
+    const outgoingEdges =
+      graph.edges?.filter((edge) => edge.from === current) || [];
+
     for (const edge of outgoingEdges) {
       if (!visited.has(edge.to)) {
         stack.push(edge.to);

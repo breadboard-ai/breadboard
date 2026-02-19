@@ -45,6 +45,7 @@ export const SHELL_CSP = {
     // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
     // to the frontend server.
     flags.SHELL_GUEST_ORIGIN,
+    ...(flags.FAKE_MODE ? [flags.GOOGLE_DRIVE_API_ENDPOINT] : []),
   ],
   ["default-src"]: ["'none'"],
   ["font-src"]: ["https://fonts.gstatic.com"],
@@ -67,6 +68,7 @@ export const SHELL_CSP = {
   ],
   ["require-trusted-types-for"]: ["'script'"],
   ["trusted-types"]: [
+    "lit-html",
     "opal-analytics-url",
     "opal-gapi-url",
     "gapi#gapi",

@@ -42,7 +42,7 @@ export class Tabs extends Root {
         display: block;
         flex: var(--weight);
         min-height: 0;
-        overflow: auto;
+        overflow: hidden;
       }
 
       section {

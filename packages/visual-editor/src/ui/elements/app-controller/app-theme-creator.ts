@@ -7,7 +7,6 @@
 import * as Strings from "../../strings/helper.js";
 const GlobalStrings = Strings.forSection("Global");
 
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   generatePaletteFromColor,
   generatePaletteFromImage,
@@ -27,16 +26,13 @@ import { guard } from "lit/directives/guard.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { until } from "lit/directives/until.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+
 import { OverlayDismissedEvent, SnackbarEvent } from "../../events/events.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
-import {
-  AppTemplateAdditionalOptionsAvailable,
-  AppTheme,
-  SnackType,
-} from "../../types/types.js";
+import { AppTemplateAdditionalOptionsAvailable } from "../../types/types.js";
+import { AppTheme, SnackType } from "../../../sca/types.js";
 import { renderThumbnail } from "../../utils/image.js";
 import { convertImageToInlineData } from "./image-convert.js";
 import { scaContext } from "../../../sca/context/context.js";
@@ -66,9 +62,6 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
 
   @state()
   accessor templates: Array<{ title: string; value: string }> = [];
-
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
 
   @state()
   accessor #generating = false;
@@ -583,7 +576,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
     const showLoader = !theme.isDefaultTheme && !!url;
     return await renderThumbnail(
       url,
-      this.googleDriveClient!,
+      this.sca.services.googleDriveClient!,
       {},
       "Theme thumbnail",
       showLoader

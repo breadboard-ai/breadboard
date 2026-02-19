@@ -5,7 +5,7 @@
  */
 
 import { RootController } from "../root-controller.js";
-import { GlobalConfig } from "../../../../ui/contexts/global-config.js";
+import { GlobalConfig } from "../../../types.js";
 import { createTrustedFeedbackURL } from "../../../../ui/trusted-types/feedback-url.js";
 import { field } from "../../decorators/field.js";
 import type { TrustedScriptURL } from "trusted-types/lib/index.js";

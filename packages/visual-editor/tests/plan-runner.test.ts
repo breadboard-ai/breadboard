@@ -170,6 +170,35 @@ suite("PlanRunner", () => {
       await runner.start();
       assert.ok(!runner.running(), "should not be running after completion");
     });
+
+    it("second start() after completion resets orchestrator and re-runs", async () => {
+      const runner = makePlanRunner(makeSingleNodeGraph("node"));
+      const events = collectEvents(runner);
+
+      // First run — completes normally.
+      await runner.start();
+      const firstNodeStarts = eventNames(events).filter(
+        (n) => n === "nodestart"
+      );
+      assert.strictEqual(firstNodeStarts.length, 1, "first run: 1 nodestart");
+
+      // Clear events for second run.
+      events.length = 0;
+
+      // Second start() — should reset orchestrator and run again,
+      // not speed through with stale "succeeded" states.
+      await runner.start();
+
+      const secondNames = eventNames(events);
+      const secondNodeStarts = secondNames.filter((n) => n === "nodestart");
+      assert.strictEqual(
+        secondNodeStarts.length,
+        1,
+        "second run should start the node again (not skip due to stale state)"
+      );
+      assert.ok(secondNames.includes("start"), "should dispatch start event");
+      assert.ok(secondNames.includes("end"), "should dispatch end event");
+    });
   });
 
   // -----------------------------------------------------------------------

@@ -12,7 +12,7 @@ import {
   OverflowAction,
   WorkspaceSelectionStateWithChangeId,
 } from "../../types/types.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import { icons } from "../../styles/icons.js";
 import { OverflowMenuActionEvent } from "../../events/events.js";
 

@@ -29,6 +29,7 @@ import { a2 } from "./a2.js";
 import { type ConsentController } from "../sca/controller/subcontrollers/global/global.js";
 import { AgentContext } from "./agent/agent-context.js";
 import { NotebookLmApiClient } from "../sca/services/notebooklm-api-client.js";
+import { AgentService } from "./agent/agent-service.js";
 
 export { createA2ModuleFactory, A2ModuleFactory };
 
@@ -41,6 +42,7 @@ export type A2ModuleFactoryArgs = {
   shell: OpalShellHostProtocol;
   getConsentController: () => ConsentController;
   agentContext: AgentContext;
+  agentService: AgentService;
   notebookLmApiClient: NotebookLmApiClient;
 };
 

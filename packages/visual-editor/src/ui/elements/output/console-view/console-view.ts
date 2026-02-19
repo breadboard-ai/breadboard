@@ -16,6 +16,7 @@ type ProductMap = Map<
   LLMContent | SimplifiedA2UIClient | ConsoleUpdate
 >;
 import { SignalWatcher } from "@lit-labs/signals";
+import { v0_8 } from "../../../../a2ui/index.js";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -23,13 +24,14 @@ import { repeat } from "lit/directives/repeat.js";
 
 import { scaContext } from "../../../../sca/context/context.js";
 import { type SCA } from "../../../../sca/sca.js";
+import { ToastType } from "../../../../sca/types.js";
 import { consume } from "@lit/context";
 import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { sharedStyles } from "./shared-styles.js";
-import { hasControlPart } from "../../../../runtime/control.js";
+import { hasControlPart } from "../../../../utils/control.js";
 
 function isConsoleUpdate(
   item: LLMContent | SimplifiedA2UIClient | ConsoleUpdate
@@ -310,7 +312,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       }
 
       bb-floating-input {
-        --container-margin: 0;
+        --bb-floating-input-margin: 0px;
         width: 100%;
         padding-bottom: var(--bb-grid-size-6);
       }
@@ -444,6 +446,22 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                 <bb-a2ui-client-view
                   .processor=${processor}
                   .receiver=${receiver}
+                  @a2uistatus=${(
+                    evt: v0_8.Events.StateEvent<"a2ui.status">
+                  ) => {
+                    const STATUS_TO_TOAST: Record<string, ToastType> = {
+                      pending: ToastType.PENDING,
+                      success: ToastType.INFORMATION,
+                      error: ToastType.ERROR,
+                    };
+                    this.sca.controller.global.toasts.toast(
+                      evt.detail.message,
+                      STATUS_TO_TOAST[evt.detail.status] ??
+                        ToastType.INFORMATION,
+                      false,
+                      evt.detail.id
+                    );
+                  }}
                 >
                 </bb-a2ui-client-view>
               </section>

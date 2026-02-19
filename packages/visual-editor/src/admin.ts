@@ -7,9 +7,7 @@
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { MainArguments } from "./types/types.js";
 
-import { Types } from "./ui/index.js";
-
-import type { GlobalConfig } from "./ui/contexts/global-config.js";
+import type { GlobalConfig } from "./sca/types.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 
 import { GoogleDriveBoardServer } from "./board-server/server.js";
@@ -33,7 +31,6 @@ export class Admin {
     this.testing = new TestingHarness();
   }
 
-  settingsHelper?: Types.SettingsHelper;
   driveBoardServer?: GoogleDriveBoardServer;
 
   help() {

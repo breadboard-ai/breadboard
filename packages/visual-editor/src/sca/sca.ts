@@ -73,7 +73,7 @@
  * ```typescript
  * export const save = asAction("Board.save", {
  *   mode: ActionMode.Awaits,
- *   triggeredBy: [() => onVersionChange(bind)],
+ *   triggeredBy: () => onVersionChange(bind),
  * }, async () => { ... });
  * ```
  *
@@ -96,15 +96,10 @@ import * as Services from "./services/services.js";
 import * as Controller from "./controller/controller.js";
 import * as Actions from "./actions/actions.js";
 import { type RuntimeFlags } from "@breadboard-ai/types";
-import { RuntimeConfig } from "../runtime/types.js";
+import { RuntimeConfig } from "../utils/graph-types.js";
 
-// Re-export NotebookLM API client types and enums for UI components
-export {
-  type Notebook,
-  OriginProductType,
-  ApplicationPlatform,
-  DeviceType,
-} from "./services/notebooklm-api-client.js";
+// Re-export NotebookLM API client types for UI components
+export { type Notebook } from "./services/notebooklm-api-client.js";
 
 export interface SCA {
   services: ReturnType<typeof Services.services>;

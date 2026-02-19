@@ -7,60 +7,40 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import type { BoardServer } from "@breadboard-ai/types";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
-import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
-import { SettingsStore } from "./ui/data/settings-store.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
-import { RuntimeConfig, Tab } from "./runtime/types.js";
-
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import "./ui/elements/notebooklm-picker/notebooklm-picker.js";
+import { RuntimeConfig } from "./utils/graph-types.js";
 
 import {
   canonicalizeOAuthScope,
   type OAuthScope,
 } from "./ui/connection/oauth-scopes.js";
-import { boardServerContext } from "./ui/contexts/board-server.js";
-import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
-import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
+
 import { VESignInModal } from "./ui/elements/elements.js";
 import { embedState, EmbedState } from "./ui/embed/embed.js";
 
 import type {
   CheckAppAccessResult,
-  GuestConfiguration,
-  OpalShellHostProtocol,
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { reactive } from "./sca/reactive.js";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
-import {
-  FlowGenerator,
-  flowGeneratorContext,
-} from "./ui/flow-gen/flow-generator.js";
 
-import {
-  ActionTracker,
-  RecentBoard,
-  UserSignInResponse,
-} from "./ui/types/types.js";
-import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
+import { RecentBoard, UserSignInResponse } from "./sca/types.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 
 import { Admin } from "./admin.js";
-import { eventRoutes } from "./event-routing/event-routing.js";
 
 import { MainArguments } from "./types/types.js";
-import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
-import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 
 import { sca, SCA } from "./sca/sca.js";
 import { Utils } from "./sca/utils.js";
@@ -72,47 +52,18 @@ export type RenderValues = {
   canSave: boolean;
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
   showingOverlay: boolean;
-  tabStatus: BreadboardUI.Types.STATUS;
+  runStatus: BreadboardUI.Types.STATUS;
 };
 
 const LOADING_TIMEOUT = 1250;
-
 const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
+
 abstract class MainBase extends SignalWatcher(LitElement) {
-  @provide({ context: globalConfigContext })
-  accessor globalConfig: GlobalConfig;
-
-  @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
-  accessor settingsHelper: SettingsHelperImpl;
-
-  @provide({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator;
-
-  @provide({ context: googleDriveClientContext })
-  accessor googleDriveClient: GoogleDriveClient;
-
   @provide({ context: BreadboardUI.Contexts.embedderContext })
   accessor embedState!: EmbedState;
 
-  @provide({ context: boardServerContext })
-  accessor boardServer: BoardServer;
-
-  @provide({ context: opalShellContext })
-  accessor opalShell: OpalShellHostProtocol;
-
-  @provide({ context: guestConfigurationContext })
-  protected accessor guestConfiguration: GuestConfiguration;
-
-  @provide({ context: actionTrackerContext })
-  protected accessor actionTracker: ActionTracker;
-
   @provide({ context: scaContext })
   protected accessor sca: SCA;
-
-  // Computed from SCA controller - no longer stored
-  protected get tab(): Tab | null {
-    return this.sca.controller.editor.graph.asTab();
-  }
 
   /**
    * @deprecated Use sca.controller.editor.graph.topologyVersion instead.
@@ -140,7 +91,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
 
-  protected readonly settings: SettingsStore;
   protected readonly hostOrigin: URL;
   protected readonly logger: ReturnType<typeof Utils.Logging.getLogger> =
     Utils.Logging.getLogger();
@@ -156,25 +106,20 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     super();
 
     // Static deployment config
-    this.globalConfig = args.globalConfig;
+    const globalConfig = args.globalConfig;
 
     // Configuration provided by shell host
-    this.guestConfiguration = args.guestConfiguration;
-
-    // User settings
-    this.settings = args.settings;
-    this.settingsHelper = new SettingsHelperImpl(this.settings);
+    const guestConfiguration = args.guestConfiguration;
 
     // Authentication
-    this.opalShell = args.shellHost;
+    const opalShell = args.shellHost;
     this.hostOrigin = args.hostOrigin;
 
     // Controller
     const config: RuntimeConfig = {
-      globalConfig: this.globalConfig,
-      guestConfig: this.guestConfiguration,
-      settings: this.settings,
-      shellHost: this.opalShell,
+      globalConfig,
+      guestConfig: guestConfiguration,
+      shellHost: opalShell,
       embedHandler: args.embedHandler,
       env: args.env,
       appName: Strings.from("APP_NAME"),
@@ -182,9 +127,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       askUserToSignInIfNeeded: (scopes) => this.askUserToSignInIfNeeded(scopes),
     };
     this.sca = sca(config, args.globalConfig.flags);
-    this.sca.controller.global.debug.isHydrated.then(() => {
-      this.sca.controller.global.debug.enabled = true;
-    });
 
     // If the router encountered an invalid URL (e.g. unsupported flow ID),
     // show a warning snackbar once the controllers are hydrated.
@@ -202,28 +144,19 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    this.googleDriveClient = this.sca.services.googleDriveClient;
-
-    // Asyncronously check if the user has an access restriction (e.g. geo) and
-    // if they are signed in with all required scopes.
     this.sca.services.signinAdapter.state.then((state) => {
       if (state === "signedin") {
-        this.actionTracker.updateSignedInStatus(true);
+        this.sca.services.actionTracker.updateSignedInStatus(true);
         this.sca.services.signinAdapter
           .checkAppAccess()
           .then(this.handleAppAccessCheckResult.bind(this));
-        this.opalShell
+        this.sca.services.shellHost
           .validateScopes()
           .then(this.handleValidateScopesResult.bind(this));
       }
     });
 
-    this.flowGenerator = this.sca.services.flowGenerator;
-    this.actionTracker = this.sca.services.actionTracker;
-
-    this.boardServer = this.sca.services.googleDriveBoardServer;
-
-    if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
+    if (this.sca.services.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.sca.services.emailPrefsManager.refreshPrefs().then(() => {
         if (
           this.sca.services.emailPrefsManager.prefsValid &&
@@ -234,15 +167,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    // Admin.
-    const admin = new Admin(
+    // Admin — side-effect: exposes `window.o` when URL has #owner-tools.
+    new Admin(
       args,
-      this.globalConfig,
-      this.googleDriveClient,
+      this.sca.services.globalConfig,
+      this.sca.services.googleDriveClient,
       this.sca.services.signinAdapter
     );
-
-    admin.settingsHelper = this.settingsHelper;
 
     // Once we've determined the sign-in status, relay it to an embedder.
     this.sca.services.signinAdapter.state.then((state) =>
@@ -354,6 +285,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     try {
       await this.sca.controller.isHydrated;
       const flags = await this.sca.controller.global.flags.flags();
+
+      if (this.sca.services.signinAdapter.stateSignal?.status === "signedin") {
+        if (
+          this.sca.services.signinAdapter.stateSignal.authuser === undefined
+        ) {
+          this.sca.controller.global.main.subscriptionStatus = "not-subscribed";
+          return;
+        }
+      }
+
       if (flags.googleOne) {
         this.logger.log(
           Utils.Logging.Formatter.verbose(`Checking subscriber status`),
@@ -411,11 +352,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       );
     }
 
-    // Close tab, go to the home page.
+    // Close board, go to the home page.
     if (parsedUrl.page === "home") {
       // Stop any running board before closing
-      const closingTabId = this.tab?.id;
-      if (closingTabId) {
+      if (this.sca.controller.editor.graph.graph) {
         this.sca.controller.run.main.setStatus(
           BreadboardUI.Types.STATUS.STOPPED
         );
@@ -426,9 +366,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       await this.#handleBoardStateChanged();
       return;
     } else {
-      // Load the tab.
+      // Load the board.
       const boardUrl = parsedUrl.page === "graph" ? parsedUrl.flow : undefined;
-      if (!boardUrl || boardUrl === this.tab?.graph.url) {
+      if (!boardUrl || boardUrl === this.sca.controller.editor.graph.url) {
         return;
       }
 
@@ -512,7 +452,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
-    const generated = await this.flowGenerator.oneShot({ intent });
+    const generated = await this.sca.services.flowGenerator.oneShot({ intent });
     if ("error" in generated) {
       throw new Error(generated.error);
     }
@@ -547,7 +487,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       // So, we need to wait for full initialization before we broadcast.
       const { url } = saveResult;
       const boardServer = this.sca.services.googleDriveBoardServer;
-      await boardServer.flushSaveQueue(url.href);
+      await boardServer.graphIsFullyCreated(url.href);
       this.sca.services.embedHandler.sendToEmbedder({
         type: "board_id_created",
         id: url.href,
@@ -560,20 +500,20 @@ abstract class MainBase extends SignalWatcher(LitElement) {
    * Calls syncProjectState directly instead of event dispatch.
    */
   async #handleBoardStateChanged(): Promise<void> {
-    const tab = this.tab;
+    const gc = this.sca.controller.editor.graph;
     this.#maybeShowWelcomePanel();
 
-    if (tab) {
+    if (gc.graph) {
       // Page title is now handled by the page title trigger in SCA
 
-      const url = tab.graph.url;
+      const url = gc.url;
       if (url) {
         this.sca.actions.run.prepare();
       }
 
-      if (tab.graph.url && tab.graphIsMine) {
-        const board: RecentBoard = { url: tab.graph.url };
-        if (tab.graph.title) board.title = tab.graph.title;
+      if (url && !gc.readOnly) {
+        const board: RecentBoard = { url };
+        if (gc.title) board.title = gc.title;
         this.sca.controller.home.recent.add(board);
       }
 
@@ -585,7 +525,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   #maybeShowWelcomePanel() {
-    if (this.tab === null) {
+    if (this.sca.controller.editor.graph.graph === null) {
       this.sca.controller.global.main.loadState = "Home";
     }
 
@@ -607,14 +547,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   #onShowTooltip(evt: Event) {
     const tooltipEvent = evt as BreadboardUI.Events.ShowTooltipEvent;
     if (!this.tooltipRef.value) {
-      return;
-    }
-
-    const tooltips = this.settings.getItem(
-      BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-      "Show Tooltips"
-    );
-    if (!tooltips?.value) {
       return;
     }
 
@@ -641,12 +573,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   protected getRenderValues(): RenderValues {
-    const tabStatus = this.sca.controller.run.main.status;
+    const runStatus = this.sca.controller.run.main.status;
+    const gc = this.sca.controller.editor.graph;
 
     // Inline canSave logic - use services directly
     let canSave = false;
-    if (this.tab && !this.tab.readOnly) {
-      const graphUrl = this.sca.controller.editor.graph.url;
+    if (gc.graph && !gc.readOnly) {
+      const graphUrl = gc.url;
       if (graphUrl) {
         const boardServer = this.sca.services.googleDriveBoardServer;
         const capabilities = boardServer?.canProvide(new URL(graphUrl));
@@ -657,8 +590,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Get saveStatus from controller and map to enum
     let saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS =
       BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
-    if (this.tab) {
-      const status = this.sca.controller.editor.graph.saveStatus;
+    if (gc.graph) {
+      const status = gc.saveStatus;
       switch (status) {
         case "saving":
           saveStatus = BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING;
@@ -679,27 +612,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       canSave,
       saveStatus,
       showingOverlay: this.sca.controller.global.main.show.size > 0,
-      tabStatus,
+      runStatus,
     } satisfies RenderValues;
-  }
-
-  protected collectEventRouteDeps(
-    evt: BreadboardUI.Events.StateEvent<
-      keyof BreadboardUI.Events.StateEventDetailMap
-    >
-  ) {
-    return {
-      originalEvent: evt,
-
-      settings: this.settings,
-      tab: this.tab,
-      googleDriveClient: this.googleDriveClient,
-      askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
-        this.askUserToSignInIfNeeded(scopes),
-      boardServer: this.boardServer,
-      actionTracker: this.actionTracker,
-      sca: this.sca,
-    };
   }
 
   protected willUpdate(): void {
@@ -718,7 +632,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html`<bb-tooltip ${ref(this.tooltipRef)}></bb-tooltip>`;
   }
 
-  protected async invokeRemixEventRouteWith(
+  protected invokeRemixEventRouteWith(
     url: string,
     messages = {
       start: Strings.from("STATUS_REMIXING_PROJECT"),
@@ -726,47 +640,28 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
     }
   ) {
-    const remixRoute = eventRoutes.get("board.remix");
-    const refresh = await remixRoute?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.remix",
-          messages,
-          url,
-        })
-      )
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent({
+        eventType: "board.remix",
+        messages,
+        url,
+      })
     );
-    if (refresh) {
-      requestAnimationFrame(() => {
-        this.requestUpdate();
-      });
-    }
   }
 
-  protected async invokeDeleteEventRouteWith(url: string) {
-    this.sca.controller.global.main.blockingAction = true;
-    const deleteRoute = eventRoutes.get("board.delete");
-    const refresh = await deleteRoute?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.delete",
-          messages: {
-            query: Strings.from("QUERY_DELETE_PROJECT"),
-            start: Strings.from("STATUS_DELETING_PROJECT"),
-            end: Strings.from("STATUS_PROJECT_DELETED"),
-            error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-          },
-          url,
-        })
-      )
+  protected invokeDeleteEventRouteWith(url: string) {
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent({
+        eventType: "board.delete",
+        messages: {
+          query: Strings.from("QUERY_DELETE_PROJECT"),
+          start: Strings.from("STATUS_DELETING_PROJECT"),
+          end: Strings.from("STATUS_PROJECT_DELETED"),
+          error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+        },
+        url,
+      })
     );
-    this.sca.controller.global.main.blockingAction = false;
-
-    if (refresh) {
-      requestAnimationFrame(() => {
-        this.requestUpdate();
-      });
-    }
   }
 
   protected renderSnackbar() {
@@ -805,6 +700,20 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     ></bb-snackbar>`;
   }
 
+  protected renderNotebookLmPicker() {
+    if (
+      Utils.Helpers.isHydrating(
+        () => this.sca.controller.global.flags?.enableNotebookLm
+      )
+    ) {
+      return nothing;
+    }
+    if (!this.sca.controller.global.flags?.enableNotebookLm) {
+      return nothing;
+    }
+    return html`<bb-notebooklm-picker></bb-notebooklm-picker>`;
+  }
+
   protected async askUserToSignInIfNeeded(
     scopes?: OAuthScope[]
   ): Promise<UserSignInResponse> {
@@ -826,7 +735,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     if ((await this.sca.services.signinAdapter.state) === "signedin") {
       if (await verifyScopes()) {
-        if (!this.guestConfiguration.consentMessage) {
+        if (!this.sca.services.guestConfig.consentMessage) {
           return "success";
         }
         if (checkSignInConsent()) {
@@ -868,7 +777,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html`
       <bb-sign-in-modal
         ${ref(this.signInModalRef)}
-        .consentMessage=${this.guestConfiguration.consentMessage}
+        .consentMessage=${this.sca.services.guestConfig.consentMessage}
         .blurBackground=${blurBackground}
         @bbmodaldismissed=${() => {
           this.sca.controller.global.main.show.delete("SignInModal");
@@ -909,27 +818,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.sca.services.stateEventBus.dispatchEvent(
       new BreadboardUI.Events.StateEvent(evt.detail)
     );
-
-    // FIXME: Legacy event route fallthrough. These routes still depend on the
-    // legacy runtime — remove when all routes are migrated to SCA actions.
-    const eventRoute = eventRoutes.get(evt.detail.eventType);
-    if (!eventRoute) {
-      return;
-    }
-
-    // Pass the handler everything it may need in order to function. Usually
-    // the most important of these are the runtime, originalEvent (which
-    // contains the data needed) and the tab so that the runtime can locate
-    // the appropriate editor etc.
-    const shouldRender = await eventRoute.do(this.collectEventRouteDeps(evt));
-
-    // Some legacy actions require an update after running, so if the event
-    // handler returns with a true, schedule an update.
-    if (shouldRender) {
-      requestAnimationFrame(() => {
-        this.requestUpdate();
-      });
-    }
   }
 }
 

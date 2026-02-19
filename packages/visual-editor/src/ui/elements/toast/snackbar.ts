@@ -5,7 +5,8 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { SnackbarMessage, SnackbarUUID, SnackType } from "../../types/types.js";
+import { SnackbarMessage } from "../../types/types.js";
+import { SnackbarUUID, SnackType } from "../../../sca/types.js";
 import { repeat } from "lit/directives/repeat.js";
 import { SnackbarActionEvent } from "../../events/events.js";
 import * as Styles from "../../styles/styles.js";
@@ -86,7 +87,10 @@ export class Snackbar extends SignalWatcher(LitElement) {
       #messages {
         color: var(--text-color);
         flex: 1 1 auto;
-        margin-right: var(--bb-grid-size-11);
+        max-height: 120px;
+        overflow-y: auto;
+        margin: 0;
+
         a,
         a:visited {
           color: var(--light-dark-p-40);
@@ -188,7 +192,7 @@ export class Snackbar extends SignalWatcher(LitElement) {
     this.active = messages.length > 0;
     this.error = messages.some((msg) => msg.type === SnackType.ERROR);
 
-  // Handle auto-dismiss timeout
+    // Handle auto-dismiss timeout
     window.clearTimeout(this.#timeout);
     if (messages.length > 0 && !messages.every((msg) => msg.persistent)) {
       this.#timeout = window.setTimeout(() => {
@@ -220,7 +224,8 @@ export class Snackbar extends SignalWatcher(LitElement) {
             class=${classMap({
               "g-icon": true,
               round: true,
-              "filled-heavy": true,
+              filled: true,
+              heavy: true,
               rotate,
             })}
             >${icon}</span
@@ -274,7 +279,7 @@ export class Snackbar extends SignalWatcher(LitElement) {
           this.dispatchEvent(new SnackbarActionEvent("dismiss"));
         }}
       >
-        <span class="g-icon filled-heavy round">close</span>
+        <span class="g-icon filled heavy round">close</span>
       </button>`;
   }
 }

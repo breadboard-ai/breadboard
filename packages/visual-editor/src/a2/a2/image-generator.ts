@@ -2,11 +2,7 @@
  * @fileoverview Generates an image using supplied context (generation only).
  */
 
-import {
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { type DescriberResult, type Params } from "./common.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
 import { callImageGen, promptExpander } from "./image-utils.js";
@@ -170,11 +166,7 @@ async function invoke(
         icon: "spark",
       });
       const args: ExecuteStepArgs = { ...moduleArgs, reporter };
-      const generatedImage = await callImageGen(
-        args,
-        iPrompt,
-        aspectRatio
-      );
+      const generatedImage = await callImageGen(args, iPrompt, aspectRatio);
       if (!ok(generatedImage)) return generatedImage;
       return { context: [mergeContent(generatedImage, "model")] };
     }
@@ -188,9 +180,7 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { instruction } }: DescribeInputs,
-) {
+async function describe({ inputs: { instruction } }: DescribeInputs) {
   const template = new Template(instruction);
   return {
     inputSchema: {

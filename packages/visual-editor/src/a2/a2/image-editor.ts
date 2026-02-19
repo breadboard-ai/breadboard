@@ -2,11 +2,7 @@
  * @fileoverview Generates an image using supplied context (generation and editing).
  */
 
-import {
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { type DescriberResult, type Params } from "./common.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
 import { callGeminiImage } from "./image-utils.js";
@@ -197,9 +193,7 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { instruction } }: DescribeInputs,
-) {
+async function describe({ inputs: { instruction } }: DescribeInputs) {
   const template = new Template(instruction);
   return {
     inputSchema: {

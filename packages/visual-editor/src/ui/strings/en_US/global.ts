@@ -173,6 +173,24 @@ export default {
   LABEL_FIRST_RUN_LITE: {
     str: "Click start to try this app",
   },
+  ONBOARDING_ADVANCED_EDITOR: {
+    str: "To edit or view full prompt, open in advanced editor",
+  },
+  ONBOARDING_LITE_REMIX: {
+    str: "Remix to make a copy and edit the steps",
+  },
+  ONBOARDING_STANDALONE_REMIX_TITLE: {
+    str: "Remix to Edit",
+  },
+  ONBOARDING_STANDALONE_REMIX_TEXT: {
+    str: 'You can only run this Breadboard app. To edit, click the "Remix" button to make a copy.',
+  },
+  ONBOARDING_REPLAY_WARNING_TITLE: {
+    str: "Are you sure you want to refresh?",
+  },
+  ONBOARDING_REPLAY_WARNING_TEXT: {
+    str: "Share or download results, otherwise output will be lost.",
+  },
 
   // Statuses.
   STATUS_REMIXING_PROJECT: {

@@ -148,12 +148,7 @@ async function callGenWebpage(
 
   if (useStreaming) {
     console.log("[html-generator] Using streaming API for GenerateWebpage");
-    return executeWebpageStream(
-      moduleArgs,
-      instruction,
-      content,
-      modelName
-    );
+    return executeWebpageStream(moduleArgs, instruction, content, modelName);
   } else {
     console.log(
       "[html-generator] Using legacy executeStep for GenerateWebpage"

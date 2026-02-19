@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* global process */
+
 import {
   indexedDB,
   IDBKeyRange,

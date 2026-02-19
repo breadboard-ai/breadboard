@@ -43,15 +43,11 @@ import {
   isTextCapabilityPart,
 } from "../../../../data/common.js";
 import { parseUrl } from "../../../utils/urls.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../../../sca/context/context.js";
 import { type SCA } from "../../../../sca/sca.js";
 import { NOTEBOOKLM_MIMETYPE, toNotebookLmUrl } from "@breadboard-ai/utils";
-import { NotebookLmPicker } from "../../notebooklm-picker/notebooklm-picker.js";
-import type { NotebookPickedValue } from "../../notebooklm-picker/notebooklm-picker.js";
-import { InputChangeEvent } from "../../../plugins/input-plugin.js";
-import "../../notebooklm-picker/notebooklm-picker.js";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -109,7 +105,6 @@ export class FloatingInput extends SignalWatcher(LitElement) {
 
       :host {
         display: block;
-        max-width: 800px;
         width: 100%;
         opacity: 0;
         animation: fadeIn 0.8s cubic-bezier(0, 0, 0.3, 1) forwards;
@@ -133,7 +128,11 @@ export class FloatingInput extends SignalWatcher(LitElement) {
 
       #container {
         display: block;
-        margin: var(--container-margin, 0);
+        width: calc(
+          100% - var(--bb-floating-input-margin, var(--bb-grid-size-12))
+        );
+        max-width: 960px;
+        margin: 0 auto;
         padding: var(--bb-grid-size-4);
         border-radius: var(--bb-grid-size-4);
         border: 1px solid light-dark(var(--nv-80), var(--nv-35));
@@ -247,7 +246,6 @@ export class FloatingInput extends SignalWatcher(LitElement) {
   ];
 
   readonly #reportingButton = createRef<HTMLButtonElement>();
-  #addNotebookLmInputRef: Ref<NotebookLmPicker> = createRef();
   #addAssetType: string | null = null;
   #allowedMimeTypes: string | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
@@ -270,15 +268,23 @@ export class FloatingInput extends SignalWatcher(LitElement) {
   }
 
   #attemptNotebookLMPickerFlow() {
-    if (!this.#addNotebookLmInputRef.value) {
-      return;
-    }
-
-    try {
-      this.#addNotebookLmInputRef.value.triggerFlow();
-    } catch (err) {
-      console.warn(err);
-    }
+    this.sca.actions.notebookLmPicker.open((notebooks) => {
+      if (!this.assetShelf) return;
+      for (const notebook of notebooks) {
+        const asset: LLMContent = {
+          role: "user",
+          parts: [
+            {
+              storedData: {
+                handle: toNotebookLmUrl(notebook.id),
+                mimeType: NOTEBOOKLM_MIMETYPE,
+              },
+            },
+          ],
+        };
+        this.assetShelf.addAsset(asset);
+      }
+    });
   }
 
   #determineSupportedActions(props: [string, Schema][]): SupportedActions {
@@ -524,33 +530,6 @@ export class FloatingInput extends SignalWatcher(LitElement) {
     return true;
   }
 
-  #renderNotebookLmPicker() {
-    return html`<bb-notebooklm-picker
-      ${ref(this.#addNotebookLmInputRef)}
-      @bb-input-change=${(evt: InputChangeEvent) => {
-        if (!this.assetShelf) {
-          return;
-        }
-
-        const notebooks = evt.value as NotebookPickedValue[];
-        for (const notebook of notebooks) {
-          const asset: LLMContent = {
-            role: "user",
-            parts: [
-              {
-                storedData: {
-                  handle: toNotebookLmUrl(notebook.id),
-                  mimeType: NOTEBOOKLM_MIMETYPE,
-                },
-              },
-            ],
-          };
-          this.assetShelf.addAsset(asset);
-        }
-      }}
-    ></bb-notebooklm-picker>`;
-  }
-
   render() {
     let inputContents: HTMLTemplateResult | symbol = nothing;
     const showGDrive =
@@ -696,7 +675,6 @@ export class FloatingInput extends SignalWatcher(LitElement) {
         </section>
       </section>`,
       addAssetModal,
-      this.#renderNotebookLmPicker(),
       this.disclaimerContent
         ? html`<p id="disclaimer">${this.disclaimerContent}</p>`
         : nothing,

@@ -14,17 +14,18 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types";
-import { ToastType } from "../../../ui/events/events.js";
+import { ToastType } from "../../types.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import {
   onSelectionOrSidebarChange,
   onNodeActionRequested,
+  onGraphChangeWithMemory,
 } from "./triggers.js";
 import { UpdateNode } from "../../../ui/transforms/index.js";
 import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
 import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
-import { persistDataParts } from "../asset/asset-actions.js";
+import { persistDataParts } from "../../utils/persist-data-parts.js";
 import { Utils } from "../../utils.js";
 
 export const bind = makeAction();
@@ -333,6 +334,61 @@ export const applyPendingEditsForNodeAction = asAction(
           }
         }
       }
+    }
+  }
+);
+
+// =============================================================================
+// Memory Sheet Lookup
+// =============================================================================
+
+const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
+
+/**
+ * Looks up the memory spreadsheet URL for the currently loaded graph.
+ *
+ * The trigger fires only when a new graph is loaded that has the "use-memory"
+ * tool in its `agentModeTools`, so the Drive API is called at most once per
+ * graph load.
+ *
+ * **Triggers:**
+ * - `onGraphChangeWithMemory`: Fires on graph load when memory is enabled
+ */
+export const lookupMemorySheet = asAction(
+  "Step.lookupMemorySheet",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onGraphChangeWithMemory(bind),
+  },
+  async (): Promise<void> => {
+    const { controller, services } = bind;
+    const graphController = controller.editor.graph;
+
+    // Derive the graph ID from the URL (strip "drive:/" prefix)
+    const graphUrl = graphController.url;
+    if (!graphUrl) {
+      controller.editor.step.memorySheetUrl = null;
+      return;
+    }
+    const graphId = graphUrl.replace("drive:/", "");
+
+    // Look up the memory spreadsheet via the Drive API.
+    // Use shellHost.getDriveCollectorFile which bypasses the fetchWithCreds
+    // URL allowlist by creating its own token-based fetch.
+    try {
+      const result = await services.shellHost.getDriveCollectorFile(
+        SHEETS_MIME_TYPE,
+        graphId,
+        graphId
+      );
+
+      if (result.ok && result.id) {
+        controller.editor.step.memorySheetUrl = `https://docs.google.com/spreadsheets/d/${result.id}`;
+      } else {
+        controller.editor.step.memorySheetUrl = null;
+      }
+    } catch {
+      controller.editor.step.memorySheetUrl = null;
     }
   }
 );

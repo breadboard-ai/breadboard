@@ -36,3 +36,13 @@ export class RefreshEvent extends Event implements BoardServerListRefreshed {
     super(RefreshEvent.eventName, eventInit);
   }
 }
+
+export class SaveCompleteEvent extends Event {
+  static eventName = "savecomplete";
+  constructor(
+    public readonly url: string,
+    public readonly version: string
+  ) {
+    super(SaveCompleteEvent.eventName, { ...eventInit });
+  }
+}

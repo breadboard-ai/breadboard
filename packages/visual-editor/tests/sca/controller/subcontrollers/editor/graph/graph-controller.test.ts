@@ -23,7 +23,7 @@ import type {
 import type { GraphAsset } from "../../../../../../src/sca/types.js";
 import { ok } from "@breadboard-ai/utils";
 import { unwrap } from "../../../../../../src/sca/controller/decorators/utils/wrap-unwrap.js";
-import { Tab } from "../../../../../../src/runtime/types.js";
+
 import { createMockEditor, makeFreshGraph } from "../../../../helpers/index.js";
 import { A2_TOOLS } from "../../../../../../src/a2/a2-registry.js";
 
@@ -134,49 +134,6 @@ suite("GraphController", () => {
     if (!result2.success) assert.fail("Update failed");
     await store.isSettled;
     assert.strictEqual(store.lastEditError, null);
-  });
-
-  test("provides legacy tab info (deprecated)", async () => {
-    const store = new GraphController("Graph_4", "GraphController");
-    await store.isHydrated;
-
-    // Nothing set, should get a null tab
-    assert.deepStrictEqual(store.asTab(), null);
-
-    // Apply the default editor.
-    if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-
-    const expected = {
-      id: globalThis.crypto.randomUUID(),
-      graph: editableGraph.raw(),
-      graphIsMine: true,
-      readOnly: false,
-      boardServer: null,
-      lastLoadedVersion: 20,
-      mainGraphId: globalThis.crypto.randomUUID(),
-      name: "Untitled app",
-      subGraphId: null,
-      type: 0,
-      version: 10,
-      finalOutputValues: undefined,
-    } satisfies Tab;
-
-    store.id = expected.id;
-    store.version = expected.version;
-    store.lastLoadedVersion = expected.lastLoadedVersion;
-    store.url = expected.graph.url ?? "http://example.com";
-    store.readOnly = expected.readOnly;
-    store.graphIsMine = expected.graphIsMine;
-    store.mainGraphId = expected.mainGraphId;
-
-    await store.isSettled;
-    assert.deepStrictEqual(store.asTab(), expected);
-
-    // Reset.
-    store.resetAll();
-    await store.isSettled;
-    assert.deepStrictEqual(store.asTab(), null);
   });
 
   test("exposes static A2 tools", async () => {
@@ -1285,11 +1242,14 @@ suite("GraphController", () => {
     assert.ok("nodes" in store.graph!);
   });
 
-  test("empty returns true when no graph", async () => {
+  test("empty returns false when no graph (loading state)", async () => {
     const store = new GraphController("Graph_Empty_NoGraph", "GraphController");
     await store.isHydrated;
 
-    assert.strictEqual(store.empty, true);
+    // Before setEditor(), _graph is null → "loading" state.
+    // The deprecated `empty` getter now returns false for "loading"
+    // (only returns true for the "empty" state).
+    assert.strictEqual(store.empty, false);
   });
 
   test("empty returns false when graph has nodes", async () => {
@@ -1425,5 +1385,167 @@ suite("GraphController", () => {
 
     const result = store.findOutputPortId("", "test-node");
     assert.ok(!ok(result), "Should return error when no ports");
+  });
+
+  // ==========================================================================
+  // graphContentState
+  // ==========================================================================
+
+  test("graphContentState returns 'loading' before setEditor()", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_Loading",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    // Before setEditor(), _graph is null → "loading"
+    assert.strictEqual(store.graphContentState, "loading");
+  });
+
+  test("graphContentState returns 'empty' for a graph with no nodes/assets/subgraphs", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_Empty",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    // Create a genuinely empty graph: no nodes, no assets, no sub-graphs
+    const emptyGraph: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+    };
+
+    const mockEditor = createMockEditor({ rawGraph: emptyGraph });
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    assert.strictEqual(store.graphContentState, "empty");
+  });
+
+  test("graphContentState returns 'loaded' for a graph with nodes", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_HasNodes",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    // Default testGraph has at least one node ("foo")
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    assert.strictEqual(store.graphContentState, "loaded");
+  });
+
+  test("graphContentState returns 'loaded' for a graph with only assets", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_HasAssets",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    // Graph with no nodes but has assets
+    const graphWithAssets: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      assets: {
+        "file://my-doc.txt": {
+          data: { inlineData: { data: "abc", mimeType: "text/plain" } },
+        },
+      },
+    };
+
+    const mockEditor = createMockEditor({ rawGraph: graphWithAssets });
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    assert.strictEqual(store.graphContentState, "loaded");
+  });
+
+  test("graphContentState returns 'loaded' for a graph with only sub-graphs", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_HasSubGraphs",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    // Graph with no nodes but has sub-graphs
+    const graphWithSubGraphs: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      graphs: {
+        "my-tool": { title: "A Tool", nodes: [], edges: [] },
+      },
+    };
+
+    const mockEditor = createMockEditor({ rawGraph: graphWithSubGraphs });
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    assert.strictEqual(store.graphContentState, "loaded");
+  });
+
+  test("graphContentState transitions from 'loading' to 'loaded' after setEditor()", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_Transition",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    // Initially "loading"
+    assert.strictEqual(store.graphContentState, "loading");
+
+    // After setting an editor with a non-empty graph, becomes "loaded"
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    assert.strictEqual(store.graphContentState, "loaded");
+  });
+
+  test("graphContentState returns 'loading' after resetAll()", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_Reset",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+    assert.strictEqual(store.graphContentState, "loaded");
+
+    // After reset, _graph is null → "loading"
+    store.resetAll();
+    await store.isSettled;
+    assert.strictEqual(store.graphContentState, "loading");
+  });
+
+  test("deprecated empty getter returns true only for 'empty' state", async () => {
+    const store = new GraphController(
+      "Graph_ContentState_Deprecated",
+      "GraphController"
+    );
+    await store.isHydrated;
+
+    // Before setEditor: graphContentState is "loading", empty should be false
+    // (this is the key behavioral change — "loading" is not "empty")
+    assert.strictEqual(store.empty, false);
+
+    // Set an empty graph
+    const emptyGraph: GraphDescriptor = { nodes: [], edges: [] };
+    const mockEditor = createMockEditor({ rawGraph: emptyGraph });
+    store.setEditor(mockEditor);
+    await store.isSettled;
+
+    // Now genuinely empty
+    assert.strictEqual(store.empty, true);
+
+    // Set a graph with content
+    if (!editableGraph) assert.fail("No editable graph");
+    store.setEditor(editableGraph);
+    await store.isSettled;
+
+    assert.strictEqual(store.empty, false);
   });
 });

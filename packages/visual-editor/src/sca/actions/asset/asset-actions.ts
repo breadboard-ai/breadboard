@@ -21,19 +21,18 @@ import type {
   NodeValue,
   Outcome,
 } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
-import { getLogger, Formatter } from "../../utils/logging/logger.js";
+import { err } from "@breadboard-ai/utils";
 import type { StateEvent } from "../../../ui/events/events.js";
-import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
+import { SnackType, type SnackbarUUID } from "../../types.js";
 import { ChangeAssetEdge } from "../../../ui/transforms/index.js";
 
-import { makeAction, withBlockingAction } from "../binder.js";
+import { makeAction, withUIBlocking } from "../binder.js";
 import { asAction, ActionMode, stateEventTrigger } from "../../coordination.js";
 import { onGraphVersionChange } from "./triggers.js";
 import { UpdateAssetWithRefs } from "../../../ui/transforms/update-asset-with-refs.js";
 import { UpdateAssetData } from "../../../ui/transforms/update-asset-data.js";
 import { RemoveAssetWithRefs } from "../../../ui/transforms/remove-asset-with-refs.js";
-import { isInlineData, transformDataParts } from "../../../data/common.js";
+import { isInlineData } from "../../../data/common.js";
 import { GraphAssetImpl } from "../../utils/graph-asset.js";
 import type { GraphAsset, GraphAssetDescriptor } from "../../types.js";
 
@@ -153,42 +152,11 @@ export const update = asAction(
   }
 );
 
-/**
- * Persists data parts to storage.
- */
-export async function persistDataParts(
-  urlString: string | null,
-  contents: LLMContent[],
-  transformer: ReturnType<
-    typeof bind.services.googleDriveBoardServer.dataPartTransformer
-  >
-): Promise<LLMContent[]> {
-  if (!urlString) {
-    getLogger().log(
-      Formatter.warning("Can't persist blob without graph URL"),
-      "Asset.persistDataParts"
-    );
-    return contents;
-  }
-
-  const url = new URL(urlString);
-
-  const transformed = await transformDataParts(
-    url,
-    contents,
-    "persistent",
-    transformer
-  );
-  if (!ok(transformed)) {
-    getLogger().log(
-      Formatter.warning(`Failed to persist a blob: "${transformed.$error}"`),
-      "Asset.persistDataParts"
-    );
-    return contents;
-  }
-
-  return transformed;
-}
+// Imported from the shared utility for local use and re-exported for
+// backwards compatibility. New callers should import from
+// "../../utils/persist-data-parts.js" directly.
+import { persistDataParts } from "../../utils/persist-data-parts.js";
+export { persistDataParts };
 
 /**
  * Adds a new graph asset. Persists data parts first, then edits the graph.
@@ -281,7 +249,7 @@ export const onChangeAssetEdge = asAction(
     if (!editor) return;
 
     const detail = (evt as StateEvent<"asset.changeedge">).detail;
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       const graphId = detail.subGraphId ?? "";
       const transform = new ChangeAssetEdge(
         detail.changeType,

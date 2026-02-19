@@ -2,11 +2,7 @@
  * @fileoverview Searches weather information on Google Search.
  */
 
-import {
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { err, ok, toLLMContent } from "../a2/utils.js";
 import { executeTool } from "../a2/step-executor.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";

@@ -6,6 +6,7 @@
 import { DataPart, InlineDataCapabilityPart } from "@breadboard-ai/types";
 import { isStoredData } from "@breadboard-ai/utils";
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
 
 import { TextEditor } from "../input/text-editor/text-editor.js";
@@ -14,8 +15,8 @@ import { icons } from "../../styles/icons.js";
 import { DrawableInput } from "../input/drawable/drawable.js";
 import { resolveImage } from "../../utils/image.js";
 import { consume } from "@lit/context";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 import {
   isFileDataCapabilityPart,
   isInlineData,
@@ -23,7 +24,7 @@ import {
 } from "../../../data/common.js";
 
 @customElement("bb-llm-part-input")
-export class LLMPartInput extends LitElement {
+export class LLMPartInput extends SignalWatcher(LitElement) {
   @property()
   accessor graphUrl: URL | null = null;
 
@@ -41,8 +42,8 @@ export class LLMPartInput extends LitElement {
   @property()
   accessor locked = false;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = [
     icons,
@@ -271,10 +272,15 @@ export class LLMPartInput extends LitElement {
         if (handle.startsWith(".") && this.graphUrl) {
           url = new URL(handle, this.graphUrl);
         } else if (handle.startsWith("drive:")) {
-          if (!this.googleDriveClient) {
+          if (!this.sca.services.googleDriveClient) {
+            // If googleDriveClient is not available, we can't resolve the image.
+            // The original code set url to "about:blank", which is a valid URL.
+            // To maintain similar behavior without a `continue` in render,
+            // we can set it to a blank URL or handle it as an error state.
+            // For now, setting to about:blank to avoid breaking the flow.
             url = new URL("about:blank");
           } else {
-            url = resolveImage(this.googleDriveClient, handle);
+            url = resolveImage(this.sca.services.googleDriveClient, handle);
           }
         } else {
           url = new URL(handle);
