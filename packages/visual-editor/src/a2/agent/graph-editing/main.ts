@@ -9,10 +9,10 @@ import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { Loop, AgentResult } from "../loop.js";
 import { buildGraphEditingFunctionGroups } from "./configurator.js";
 import { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
-import { graphOverviewYaml, describeSelection } from "./graph-overview.js";
-import { bind } from "../../../sca/actions/graph/graph-actions.js";
+import { graphOverviewYaml } from "./graph-overview.js";
 import type { LoopHooks } from "../types.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
+import type { ReadGraphResponse } from "./types.js";
 
 export { invokeGraphEditingAgent };
 
@@ -35,33 +35,29 @@ async function invokeGraphEditingAgent(
     translator,
   });
 
-  // Inject the current graph overview and selection into the objective
-  // so the agent knows the graph state from the start.
-  const { controller } = bind;
-  const editor = controller.editor.graph.editor;
-  if (editor) {
-    const graph = editor.raw();
-    const overview = graphOverviewYaml(
-      graph,
-      graph.nodes ?? [],
-      graph.edges ?? [],
-      translator
-    );
+  // Read the current graph via suspend so the agent knows the state.
+  const { graph } = await sink.suspend<ReadGraphResponse>({
+    type: "readGraph",
+    requestId: crypto.randomUUID(),
+  });
 
-    const selectedNodes = controller.editor.selection.selection.nodes;
-    const selectionInfo = describeSelection(
-      selectedNodes,
-      graph.nodes ?? [],
-      translator
-    );
+  const overview = graphOverviewYaml(
+    graph,
+    graph.nodes ?? [],
+    graph.edges ?? [],
+    translator
+  );
 
-    objective = {
-      parts: [
-        ...objective.parts,
-        { text: `\n\nCurrent graph:\n${overview}${selectionInfo}` },
-      ],
-    };
-  }
+  // TODO: Selection info comes from the controller — needs a suspend event
+  // for "readSelection" or similar. For now, skip selection info.
+  const selectionInfo = "";
+
+  objective = {
+    parts: [
+      ...objective.parts,
+      { text: `\n\nCurrent graph:\n${overview}${selectionInfo}` },
+    ],
+  };
 
   const loop = new Loop(moduleArgs);
 

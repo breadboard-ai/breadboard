@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  AgentEvent,
-  WaitForInputEvent,
-  WaitForChoiceEvent,
-} from "./agent-event.js";
+import type { AgentEvent, SuspendEvent } from "./agent-event.js";
 
 export type { AgentEventSink };
 
@@ -33,9 +29,9 @@ interface AgentEventSink {
    * The `requestId` inside the event correlates the eventual response
    * back to this pending request.
    *
-   * Returns the client's reply — the concrete type depends on the event:
-   *   - `waitForInput`  → resolves with `ChatResponse`
-   *   - `waitForChoice` → resolves with `ChatChoicesResponse`
+   * Returns the client's reply — the concrete type depends on the event
+   * (e.g., `ChatResponse` for `waitForInput`, `GraphDescriptor` for
+   * `readGraph`, `boolean` for `queryConsent`).
    */
-  suspend<T>(event: WaitForInputEvent | WaitForChoiceEvent): Promise<T>;
+  suspend<T>(event: SuspendEvent): Promise<T>;
 }

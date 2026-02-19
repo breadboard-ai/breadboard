@@ -14,13 +14,20 @@
  * (Controller), which is exactly what Actions are for.
  */
 
-import type { LLMContent } from "@breadboard-ai/types";
+import type {
+  LLMContent,
+  NodeConfiguration,
+  NodeMetadata,
+} from "@breadboard-ai/types";
 import { makeAction } from "../binder.js";
 import { buildHooksFromSink } from "../../../a2/agent/loop-setup.js";
 import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing/main.js";
 import type { AgentRunHandle } from "../../../a2/agent/agent-service.js";
 import type { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
 import type { ChatResponse } from "../../../a2/agent/types.js";
+import { UpdateNode } from "../../../ui/transforms/update-node.js";
+import { layoutGraph } from "../../../a2/agent/graph-editing/layout-graph.js";
+import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 
 export {
   bind,
@@ -110,6 +117,73 @@ function startGraphEditingAgent(firstMessage: string): void {
     return new Promise<ChatResponse>((resolve) => {
       pendingResolve = resolve;
     });
+  });
+
+  // Graph read: return the current graph structure
+  handle.events.on("readGraph", () => {
+    const { controller } = bind;
+    const editor = controller.editor.graph.editor;
+    if (!editor) {
+      return Promise.resolve({ graph: { edges: [], nodes: [] } });
+    }
+    return Promise.resolve({ graph: editor.raw() });
+  });
+
+  // Graph write: apply edits or transforms and return success/failure
+  handle.events.on("applyEdits", async (event) => {
+    const { controller } = bind;
+    const editor = controller.editor.graph.editor;
+    if (!editor) {
+      return { success: false, error: "No active graph to edit" };
+    }
+
+    if (event.edits) {
+      // Raw EditSpec[] — apply directly
+      const result = await editor.edit(event.edits, event.label);
+      if (!result.success) {
+        return { success: false, error: "Failed to apply edits" };
+      }
+      return { success: true };
+    }
+
+    if (event.transform) {
+      // Transform descriptor — instantiate and apply
+      const { transform } = event;
+      switch (transform.kind) {
+        case "updateNode": {
+          const t = new UpdateNode(
+            transform.nodeId,
+            transform.graphId,
+            transform.configuration as NodeConfiguration | null,
+            transform.metadata as NodeMetadata | null,
+            transform.portsToAutowire as InPort[] | null
+          );
+          const result = await editor.apply(t);
+
+          // Side effect: trigger autoname if config changed
+          if (transform.configuration) {
+            controller.editor.graph.lastNodeConfigChange = {
+              nodeId: transform.nodeId,
+              graphId: transform.graphId,
+              configuration: transform.configuration as NodeConfiguration,
+              titleUserModified: t.titleUserModified,
+            };
+          }
+
+          if (!result.success) {
+            return { success: false, error: result.error };
+          }
+          return { success: true };
+        }
+        case "layoutGraph": {
+          const graph = editor.raw();
+          await layoutGraph(graph.nodes ?? [], graph.edges ?? []);
+          return { success: true };
+        }
+      }
+    }
+
+    return { success: false, error: "Invalid applyEdits event" };
   });
 
   const context = {
