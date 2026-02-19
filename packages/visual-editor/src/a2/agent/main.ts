@@ -25,6 +25,7 @@ import { callAudioGen } from "../audio-generator/main.js";
 import { callMusicGen } from "../music-generator/main.js";
 import { Generators } from "./types.js";
 import { invokeAgentAdk } from "./agent-adk.js";
+import { requestInput } from "../request-input.js";
 
 export { invoke as default, computeAgentSchema, describe };
 
@@ -133,7 +134,7 @@ async function invokeAgent(
     return setup;
   }
 
-  const { loop, runArgs, progress, runStateManager } = setup;
+  const { loop, runArgs, progress, runStateManager, choicePresenter } = setup;
 
   // Maps event-layer callIds → progress-manager callIds.
   // Both sides generate UUIDs independently; this map correlates them.
@@ -195,6 +196,37 @@ async function invokeAgent(
     })
     .on("subagentFinish", (event) => {
       reporterMap.get(event.callId)?.finish();
+    })
+    .on("waitForInput", (event) => {
+      return requestInput(moduleArgs, {
+        properties: {
+          input: {
+            type: "object",
+            behavior: ["transient", "llm-content", "hint-required"],
+            format: event.inputType,
+          },
+        },
+      }) as Promise<unknown>;
+    })
+    .on("waitForChoice", (event) => {
+      const promptText = event.prompt.parts
+        .filter((p): p is { text: string } => "text" in p)
+        .map((p) => p.text)
+        .join("\n");
+      const choices = event.choices.map((c) => ({
+        id: c.id,
+        label: c.content.parts
+          .filter((p): p is { text: string } => "text" in p)
+          .map((p) => p.text)
+          .join("\n"),
+      }));
+      return choicePresenter.presentChoices(
+        promptText,
+        choices,
+        event.selectionMode,
+        event.layout,
+        event.noneOfTheAboveLabel
+      ) as Promise<unknown>;
     });
 
   const result = await loop.run(runArgs);

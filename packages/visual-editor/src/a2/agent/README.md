@@ -121,7 +121,10 @@ Both agents flow through the event layer end-to-end:
 3. `buildHooksFromSink(handle.sink)` creates hooks (including proxy reporters)
 4. Subagent events (image/video/audio gen) dispatch to stashed reporters via
    `reporterMap`
-5. Events flow: Loop → sink → bridge → consumer → progress + run state
+5. `waitForInput` handler calls `requestInput()` to collect user text/file input
+6. `waitForChoice` handler calls `choicePresenter.presentChoices()` for A2UI
+   choices
+7. Events flow: Loop → sink → bridge → consumer → progress + run state
 
 ## Roadmap: What's Next
 
@@ -141,10 +144,15 @@ Both agents flow through the event layer end-to-end:
 - [x] Proxy `ProgressReporter` preserves nested progress for media gen functions
 - [x] `FunctionCallEvent` carries `args` for custom work item titles
 
-### Phase 3: Suspend/Resume via Events
+### Phase 3: Suspend/Resume via Events ✅ (done)
 
-- [ ] Replace `waitForInput` callback with `sink.suspend()` + consumer handler
-- [ ] Replace `#pendingResolve` pattern with `AgentRunHandle.resolveInput()`
+- [x] `AgentUI.chat()` → `sink.suspend<ChatResponse>()` with `waitForInput`
+- [x] `AgentUI.presentChoices()` → `sink.suspend<ChatChoicesResponse>()` with
+      `waitForChoice`
+- [x] Consumer handlers: `requestInput()` for text, `ChoicePresenter` for
+      choices
+- [x] `buildAgentRun` returns `choicePresenter` (clean backend/consumer split)
+- [x] Graph-editing agent: `sink.suspend()` in chat-functions + consumer handler
 
 ### Phase 4: Server-Side Implementation
 
