@@ -357,6 +357,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         border-radius: var(--bb-grid-size-16);
         border: 1px solid light-dark(var(--n-0), var(--n-70));
         text-transform: uppercase;
+        color: light-dark(var(--n-0), var(--n-70));
 
         &.has-overrides {
           font-size: 12px;
