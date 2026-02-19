@@ -24,7 +24,7 @@ function buildGraphEditingFunctionGroups(args: {
 }): FunctionGroup[] {
   const { translator } = args;
   return [
-    getGraphEditingFunctionGroup(translator),
+    getGraphEditingFunctionGroup(args.sink, translator),
     getChatFunctionGroup(args.sink, translator),
   ];
 }

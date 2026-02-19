@@ -52,7 +52,7 @@ keeps prompts and logic out of the client bundle.
 
 ### Wire Format: `AgentEvent` ([agent-event.ts](./agent-event.ts))
 
-A union of 17 event types covering the full agent lifecycle:
+A union of 21 event types covering the full agent lifecycle:
 
 | Event                | Direction | Purpose                        |
 | -------------------- | --------- | ------------------------------ |
@@ -67,9 +67,13 @@ A union of 17 event types covering the full agent lifecycle:
 | `content`            | → client  | Model output content           |
 | `turnComplete`       | → client  | Full turn finished             |
 | `sendRequest`        | → client  | Gemini request sent            |
-| `waitForInput`       | → client  | **Suspend**: needs user text   |
-| `waitForChoice`      | → client  | **Suspend**: needs user choice |
-| `graphEdit`          | → client  | Apply edit specs to graph      |
+| `waitForInput`       | ⇄ suspend | **Suspend**: needs user text   |
+| `waitForChoice`      | ⇄ suspend | **Suspend**: needs user choice |
+| `readGraph`          | ⇄ suspend | **Suspend**: read graph data   |
+| `inspectNode`        | ⇄ suspend | **Suspend**: inspect a node    |
+| `applyEdits`         | ⇄ suspend | **Suspend**: confirmed edits   |
+| `queryConsent`       | ⇄ suspend | **Suspend**: user consent      |
+| `graphEdit`          | → client  | Apply edit specs (fire-forget) |
 | `complete`           | → client  | Loop finished with result      |
 | `error`              | → client  | Loop error                     |
 | `finish`             | → client  | Cleanup signal                 |
@@ -154,16 +158,37 @@ Both agents flow through the event layer end-to-end:
 - [x] `buildAgentRun` returns `choicePresenter` (clean backend/consumer split)
 - [x] Graph-editing agent: `sink.suspend()` in chat-functions + consumer handler
 
+### Phase 3.5: Generalize Client Calls (in progress)
+
+Formalize all server→client function calls through `sink.suspend()` so Phase 4
+is a transport swap, not a refactor.
+
+- [x] Extract `SuspendEvent` union from `AgentEvent`
+- [x] Widen `suspend()` to accept any `SuspendEvent`
+- [x] Add typed suspend events: `ReadGraphEvent`, `InspectNodeEvent`,
+      `ApplyEditsEvent`, `QueryConsentEvent`
+- [ ] Graph-editing functions: replace direct `editor.raw()` / `inspect()` calls
+      with `sink.suspend("readGraph")` / `sink.suspend("inspectNode")`
+- [ ] Graph-editing functions: replace direct `applyTransform()` with
+      `sink.suspend("applyEdits")` for confirmed graph writes
+- [ ] Generate functions: replace direct `queryConsent()` with
+      `sink.suspend("queryConsent")`
+- [ ] Consumer handlers for each new suspend event
+
 ### Phase 4: Server-Side Implementation
 
 - [ ] `SSEAgentEventSink` — writes events to SSE response stream
 - [ ] `SSEAgentEventSource` — client reads SSE stream → consumer
 - [ ] `PendingRequestMap` — server-side suspend/resume keyed by `requestId`
 - [ ] Server endpoints: `POST /run`, `GET /events`, `POST /input`, `POST /abort`
+- [ ] `EventReplayBuffer` — per-run log for reconnection / "tab closed" replay
 - [ ] Move `Loop`, `FunctionCaller`, function definitions to unified-server
 
-### Phase 5: Graph Editing Over the Wire
+### Phase 5: Integration & Polish
 
-- [ ] `GraphEditApplicator` interface — client applies `EditSpec[]` from events
-- [ ] Graph read operations (overview, inspect) via server-side graph access
-- [ ] `ChatInputBroker` — client handles input/choice UI from events
+Phase 3.5 + 4 enable graph editing over the wire automatically. This phase
+covers edge cases, testing, and any remaining integration work.
+
+- [ ] End-to-end testing of graph editing via SSE
+- [ ] File upload flow via `LLMContent` `inlineData`/`storedData`
+- [ ] Reconnection with event replay

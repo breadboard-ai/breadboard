@@ -4,20 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NodeDescriptor, NodeValue } from "@breadboard-ai/types";
+import type {
+  GraphDescriptor,
+  NodeDescriptor,
+  NodeValue,
+} from "@breadboard-ai/types";
 import type { InPort } from "../../../ui/transforms/autowire-in-ports.js";
 import z from "zod";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
 import type { FunctionGroup } from "../types.js";
 import { A2_TOOLS } from "../../a2-registry.js";
-import {
-  bind,
-  addNode,
-  changeNodeConfiguration,
-} from "../../../sca/actions/graph/graph-actions.js";
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 import { graphOverviewYaml } from "./graph-overview.js";
-import { layoutGraph } from "./layout-graph.js";
+import type { AgentEventSink } from "../agent-event-sink.js";
+import type { ApplyEditsResponse, ReadGraphResponse } from "./types.js";
 
 export { getGraphEditingFunctionGroup };
 
@@ -348,25 +348,89 @@ For example, if the user asks "how do I add memory to my step?", say \
 // Function definitions
 // =============================================================================
 
-function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
-  function requireEditor() {
-    const { controller } = bind;
-    const editor = controller.editor.graph.editor;
-    if (!editor) {
-      throw new Error("No active graph to edit");
-    }
-    return editor;
+function defineGraphEditingFunctions(
+  sink: AgentEventSink,
+  translator: EditingAgentPidginTranslator
+) {
+  /**
+   * Reads the current graph via the suspend mechanism.
+   */
+  async function readGraph(): Promise<GraphDescriptor> {
+    return sink
+      .suspend<ReadGraphResponse>({
+        type: "readGraph",
+        requestId: crypto.randomUUID(),
+      })
+      .then((r) => r.graph);
+  }
+
+  /**
+   * Applies edits via the suspend mechanism, waiting for confirmation.
+   */
+  async function applyEdits(
+    edits: import("@breadboard-ai/types").EditSpec[],
+    label: string
+  ): Promise<ApplyEditsResponse> {
+    return sink.suspend<ApplyEditsResponse>({
+      type: "applyEdits",
+      requestId: crypto.randomUUID(),
+      edits,
+      label,
+    });
+  }
+
+  /**
+   * Applies a complex transform (UpdateNode) via the suspend mechanism.
+   */
+  async function applyUpdateNode(
+    nodeId: string,
+    graphId: string,
+    configuration: Record<string, unknown> | null,
+    metadata: Record<string, unknown> | null,
+    portsToAutowire: InPort[] | null
+  ): Promise<ApplyEditsResponse> {
+    return sink.suspend<ApplyEditsResponse>({
+      type: "applyEdits",
+      requestId: crypto.randomUUID(),
+      label: `Update step: ${nodeId}`,
+      transform: {
+        kind: "updateNode",
+        nodeId,
+        graphId,
+        configuration,
+        metadata,
+        portsToAutowire:
+          portsToAutowire?.map((p) => ({
+            path: p.path,
+            title: p.title,
+          })) ?? null,
+      },
+    });
+  }
+
+  /**
+   * Triggers a layout via the suspend mechanism.
+   */
+  async function applyLayout(): Promise<ApplyEditsResponse> {
+    return sink.suspend<ApplyEditsResponse>({
+      type: "applyEdits",
+      requestId: crypto.randomUUID(),
+      label: "Layout graph",
+      transform: { kind: "layoutGraph" },
+    });
   }
 
   /**
    * Creates a resolver that looks up node titles from the current graph.
+   * Reads the graph via suspend to get the current state.
    */
-  function nodeTitleResolver(): (nodeId: string) => string | undefined {
-    const editor = requireEditor();
-    const inspector = editor.inspect("");
+  async function nodeTitleResolver(): Promise<
+    (nodeId: string) => string | undefined
+  > {
+    const graph = await readGraph();
     return (nodeId: string) => {
-      const node = inspector.nodeById(nodeId);
-      return node?.metadata()?.title;
+      const node = graph.nodes?.find((n) => n.id === nodeId);
+      return node?.metadata?.title;
     };
   }
 
@@ -389,8 +453,7 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
         },
       },
       async () => {
-        const editor = requireEditor();
-        const graph = editor.raw();
+        const graph = await readGraph();
         const overview = graphOverviewYaml(
           graph,
           graph.nodes ?? [],
@@ -429,9 +492,8 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
       async ({ step_id }) => {
         // Resolve pidgin handle (e.g. "node-1") to raw ID if needed
         const resolvedId = translator.getNodeId(step_id) ?? step_id;
-        const editor = requireEditor();
 
-        const result = await editor.edit(
+        const result = await applyEdits(
           [{ type: "removenode", id: resolvedId, graphId: "" }],
           `Remove step: ${resolvedId}`
         );
@@ -481,10 +543,8 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
         },
       },
       async ({ step_id, title, prompt }) => {
-        const promptContent = translator.fromPidgin(
-          prompt,
-          nodeTitleResolver()
-        );
+        const resolver = await nodeTitleResolver();
+        const promptContent = translator.fromPidgin(prompt, resolver);
         const ports = extractParentPorts(prompt, translator);
 
         let stepId: string;
@@ -492,19 +552,24 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
         if (step_id) {
           // Resolve pidgin handle to raw ID if needed
           const resolvedId = translator.getNodeId(step_id) ?? step_id;
-          // Update existing step
-          const editor = requireEditor();
-          const inspector = editor.inspect("");
-          const node = inspector.nodeById(resolvedId);
+
+          // Check if step exists
+          const graph = await readGraph();
+          const node = graph.nodes?.find((n) => n.id === resolvedId);
           if (!node) {
             return { error: `Step "${step_id}" not found` };
           }
 
           stepId = resolvedId;
-          await changeNodeConfiguration(
+          await applyUpdateNode(
             stepId,
             "",
-            { config$prompt: promptContent as unknown as NodeValue },
+            {
+              config$prompt: promptContent as unknown as Record<
+                string,
+                unknown
+              >,
+            },
             null,
             ports
           );
@@ -521,14 +586,22 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
             },
           };
 
-          await addNode(node, "");
+          await applyEdits(
+            [{ type: "addnode", graphId: "", node }],
+            `Add step: ${title}`
+          );
 
           // Auto-wire edges from <parent> references
           if (ports.length > 0) {
-            await changeNodeConfiguration(
+            await applyUpdateNode(
               stepId,
               "",
-              { config$prompt: promptContent as unknown as NodeValue },
+              {
+                config$prompt: promptContent as unknown as Record<
+                  string,
+                  unknown
+                >,
+              },
               null,
               ports
             );
@@ -536,8 +609,7 @@ function defineGraphEditingFunctions(translator: EditingAgentPidginTranslator) {
         }
 
         // Re-layout all nodes based on updated topology
-        const graph = requireEditor().raw();
-        await layoutGraph(graph.nodes ?? [], graph.edges ?? []);
+        await applyLayout();
 
         // Return the pidgin handle so the agent stays in handle-land
         const handle = translator.getOrCreateHandle(stepId);
@@ -581,10 +653,11 @@ function extractParentPorts(
 // =============================================================================
 
 function getGraphEditingFunctionGroup(
+  sink: AgentEventSink,
   translator: EditingAgentPidginTranslator
 ): FunctionGroup {
   return {
-    ...mapDefinitions(defineGraphEditingFunctions(translator)),
+    ...mapDefinitions(defineGraphEditingFunctions(sink, translator)),
     instruction: buildInstruction(),
   };
 }
