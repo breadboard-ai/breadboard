@@ -64,11 +64,20 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   @state()
   accessor enabledTabs: Record<TabId, boolean> | undefined = undefined;
 
+  @property()
+  accessor initialTab: string | null = null;
+
   @state()
   accessor activeTabId: TabId = TabId.GENERAL;
 
   connectedCallback() {
     super.connectedCallback();
+    if (
+      this.initialTab &&
+      Object.values(TabId).includes(this.initialTab as TabId)
+    ) {
+      this.activeTabId = this.initialTab as TabId;
+    }
     if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN) {
       this.emailPrefsManager?.refreshPrefs();
     }
@@ -216,6 +225,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
         template: () =>
           html` <bb-runtime-flags
             .flags=${this.sca.controller.global.flags.flags()}
+            .envDefaults=${this.sca.controller.global.flags.env()}
           >
           </bb-runtime-flags>`,
       },

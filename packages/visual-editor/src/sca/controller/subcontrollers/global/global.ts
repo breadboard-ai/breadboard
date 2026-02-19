@@ -74,4 +74,11 @@ export class GlobalController extends RootController {
    */
   @field({ deep: true })
   accessor pointerLocation: { x: number; y: number } = { x: 0, y: 0 };
+
+  /**
+   * When set, the GlobalSettings modal will open on this tab.
+   * Cleared when the modal is dismissed.
+   */
+  @field()
+  accessor globalSettingsTab: string | null = null;
 }

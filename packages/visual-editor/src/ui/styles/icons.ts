@@ -66,6 +66,15 @@ export const icons = css`
 
     &.round {
       --icon-rond: 100;
+
+      /* Re-declare to prevent the standalone .round class in type.ts from
+         clobbering font-variation-settings (it omits FILL, wght, opsz). */
+      font-variation-settings:
+        "FILL" var(--icon-fill),
+        "wght" var(--icon-wght),
+        "GRAD" var(--icon-grad),
+        "opsz" var(--icon-opsz),
+        "ROND" var(--icon-rond);
     }
 
     & > svg {
