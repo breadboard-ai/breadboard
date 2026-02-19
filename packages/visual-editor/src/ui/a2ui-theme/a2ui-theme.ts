@@ -54,6 +54,42 @@ const tokens: ThemeTokens = {
   "--a2ui-image-button-bg-hover": "oklch(0 0 0 / 0.7)",
   "--a2ui-image-button-color": "white",
   "--a2ui-image-button-size": "36px",
+
+  // Text: input-prompt variant
+  "--a2ui-text-input-prompt-font-family": "var(--a2ui-font-family-flex)",
+  "--a2ui-text-input-prompt-font-size": "24px",
+  "--a2ui-text-input-prompt-line-height": "32px",
+  "--a2ui-text-input-prompt-font-weight": "500",
+  "--a2ui-text-input-prompt-text-align": "center",
+  "--a2ui-text-input-prompt-font-variation": '"ROND" 100',
+
+  // Text: h1 variant
+  "--a2ui-text-h1-font-family": "var(--a2ui-font-family-flex)",
+  "--a2ui-text-h1-font-size": "24px",
+  "--a2ui-text-h1-line-height": "32px",
+  "--a2ui-text-h1-font-weight": "500",
+  "--a2ui-text-h1-text-align": "center",
+  "--a2ui-text-h1-font-variation": '"ROND" 100',
+
+  // Text: h2-h5 shared base
+  "--a2ui-text-subheading-font-family": "var(--a2ui-font-family-flex)",
+  "--a2ui-text-subheading-font-weight": "400",
+  "--a2ui-text-subheading-text-align": "center",
+  "--a2ui-text-subheading-font-variation": '"ROND" 100',
+  "--a2ui-text-subheading-color": "var(--a2ui-color-secondary)",
+
+  // Text: individual heading sizes
+  "--a2ui-text-h2-font-size": "22px",
+  "--a2ui-text-h2-line-height": "28px",
+  "--a2ui-text-h3-font-size": "14px",
+  "--a2ui-text-h3-line-height": "20px",
+  "--a2ui-text-h4-font-size": "16px",
+  "--a2ui-text-h4-line-height": "24px",
+  "--a2ui-text-h5-font-size": "14px",
+  "--a2ui-text-h5-line-height": "20px",
+
+  // Text: caption/body
+  "--a2ui-text-body-color": "var(--a2ui-color-secondary)",
 };
 
 export const theme: v0_8.Types.Theme = {

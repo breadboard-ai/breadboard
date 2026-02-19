@@ -66,7 +66,6 @@ import {
   RuntimeFlags,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
-import { repeat } from "lit/directives/repeat.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 import { isInlineData, isLLMContentArray } from "../../../data/common.js";
 import { inlineAllContent } from "../../../data/inline-all-content.js";
@@ -247,48 +246,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             .graphUrl=${this.graph?.url ?? ""}
           ></bb-app-sandbox>
         `;
-      } else if (
-        isLLMContentArray(last.output.context) &&
-        isInlineData(last.output.context[0]?.parts[0]) &&
-        last.output.context[0].parts[0].inlineData.mimeType === "text/a2ui"
-      ) {
-        const a2UI = last.output.context[0].parts[0];
-        try {
-          const binaryString = atob(a2UI.inlineData.data);
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-
-          const decoder = new TextDecoder("utf-8");
-          const rawData = decoder.decode(bytes);
-          const data = JSON.parse(rawData);
-          let messages = data[0].parts[0].json;
-          if (!Array.isArray(messages)) {
-            messages = [messages];
-          }
-
-          const processor = new v0_8.Data.A2UIModelProcessor();
-          processor.clearSurfaces();
-          processor.processMessages(messages);
-
-          activityContents = html`<section id="surfaces">
-            ${repeat(
-              processor.getSurfaces(),
-              ([surfaceId]) => surfaceId,
-              ([surfaceId, surface]) => {
-                return html`<a2ui-surface
-                    .surfaceId=${surfaceId}
-                    .surface=${surface}
-                    .processor=${processor}
-                  ></a2-uisurface>`;
-              }
-            )}
-          </section>`;
-        } catch (err) {
-          console.warn(err);
-          activityContents = html`Unable to parse response`;
-        }
       } else {
         let processor;
         let receiver;
@@ -299,7 +256,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           receiver = last.a2ui.receiver;
         } else {
           // Likely a raw LLM Content that needs to be converted to A2UI.
-          processor = appScreenToA2UIProcessor(last);
+          processor = appScreenToA2UIProcessor(last, lastScreen?.type);
           receiver = null;
         }
 
