@@ -13,7 +13,6 @@ import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { map } from "lit/directives/map.js";
 import { makeUrl } from "../ui/utils/urls.js";
-import { googleIcon } from "../ui/styles/svg-icons.js";
 
 @customElement("landing-carousel-modal")
 export class LandingCarouselModal extends LitElement {
@@ -406,7 +405,7 @@ export class LandingCarouselModal extends LitElement {
               guestPrefixed: true,
             })}
           >
-            ${googleIcon} Sign in to try app
+            Try now
           </a>
 
           <button

@@ -14,7 +14,6 @@ import { fonts } from "./fonts.js";
 import "./carousel-modal.js";
 import { shortestPath, toCSSMatrix } from "./utils.js";
 import { makeUrl } from "../ui/utils/urls.js";
-import { googleIcon } from "../ui/styles/svg-icons.js";
 
 @customElement("landing-carousel")
 export class LandingCarousel extends LitElement {
@@ -285,7 +284,7 @@ export class LandingCarousel extends LitElement {
           guestPrefixed: true,
         })}
       >
-        ${googleIcon} Sign in to try app
+        Try now
       </a>
     </div>`;
   }
