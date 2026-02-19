@@ -319,6 +319,6 @@ export default {
     str: "Let us know if you’d like to be involved with future research studies or hear about the latest and greatest from Opal!",
   },
   TEXT_EXPERIMENT_MODE: {
-    str: "You have {{count}} experiment{{suffix}} enabled. To deactivate, go to settings.",
+    str: "You are using experiment mode. You have {{count}} experiment{{suffix}} enabled. To deactivate, go to settings.",
   },
 } as LanguagePackEntry;

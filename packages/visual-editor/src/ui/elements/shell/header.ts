@@ -361,8 +361,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
         &.has-overrides {
           cursor: pointer;
+          border: none;
+          padding: var(--bb-grid-size) var(--bb-grid-size-2);
           background-color: light-dark(var(--e-95), var(--e-15));
-          color: light-dark(var(--e-40), var(--e-70));
+          color: light-dark(var(--e-20), var(--e-70));
           font-weight: 500;
           font-family: Google Sans Code;
         }
