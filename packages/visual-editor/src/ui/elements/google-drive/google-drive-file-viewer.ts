@@ -40,17 +40,6 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
           no-repeat;
       }
 
-      .video-loading {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        background: rgba(0, 0, 0, 0.5);
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 10px;
-      }
-
       a {
         display: flex;
         flex: 1;
