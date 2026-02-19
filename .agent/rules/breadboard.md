@@ -1,6 +1,7 @@
 ---
 trigger: always_on
 ---
+
 ## Build System
 
 Monorepo using wireit. `package.json` commands invoke the full build system.
@@ -133,9 +134,3 @@ Use `npm run test:file` to run subsets:
 ```bash
 npm run test:file -- './dist/tsc/tests/sca/actions/share/**/*.js'
 ```
-
-## Browser
-
-[EXPERIMENTAL] Opal at `http://localhost:3100` requires
-`npm run dev:fake -w packages/unified-server`. Signed in as a fake user; Drive
-is an in-memory backend. Limited to basic navigation and creating/sharing Opals.
