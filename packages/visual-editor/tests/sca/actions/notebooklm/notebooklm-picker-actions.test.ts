@@ -163,5 +163,67 @@ suite("NotebookLmPicker Actions", () => {
 
       assert.strictEqual(values.length, 0);
     });
+
+    test("invokes onConfirm callback with selected values", async () => {
+      const { nlm } = setupNotebookLmPickerTest();
+      nlm.notebooks = [makeNotebook("abc", "Alpha")];
+      nlm.selectedNotebooks = new Set(["notebooks/abc"]);
+      nlm.pickerOpen = true;
+
+      let receivedValues: unknown[] = [];
+      nlm.onConfirm = (values) => {
+        receivedValues = values;
+      };
+
+      await NotebookLmPickerActions.confirmSelection();
+
+      assert.strictEqual(receivedValues.length, 1);
+      assert.strictEqual(nlm.onConfirm, null); // Callback cleared by reset
+    });
+  });
+
+  suite("open", () => {
+    test("sets pickerOpen to true and stores callback", async () => {
+      const { nlm, fakeClient } = setupNotebookLmPickerTest();
+      fakeClient.addNotebook(makeNotebook("abc", "Alpha"));
+
+      const callback = () => {};
+      await NotebookLmPickerActions.open(callback);
+
+      assert.strictEqual(nlm.pickerOpen, true);
+      assert.strictEqual(nlm.onConfirm, callback);
+    });
+
+    test("resets state before opening", async () => {
+      const { nlm, fakeClient } = setupNotebookLmPickerTest();
+      fakeClient.addNotebook(makeNotebook("abc", "Alpha"));
+
+      // Set some prior state
+      nlm.selectedNotebooks = new Set(["old-selection"]);
+      nlm.searchQuery = "old query";
+      nlm.errorMessage = "old error";
+
+      await NotebookLmPickerActions.open(() => {});
+
+      // State should be reset (except pickerOpen which is set to true)
+      assert.strictEqual(nlm.selectedNotebooks.size, 0);
+      assert.strictEqual(nlm.searchQuery, "");
+      assert.strictEqual(nlm.errorMessage, "");
+      assert.strictEqual(nlm.pickerOpen, true);
+    });
+
+    test("fetches notebooks when opening", async () => {
+      const { nlm, fakeClient } = setupNotebookLmPickerTest();
+      fakeClient.addNotebook(makeNotebook("abc", "Alpha"));
+      fakeClient.addNotebook(makeNotebook("def", "Beta"));
+
+      await NotebookLmPickerActions.open(() => {});
+
+      assert.strictEqual(nlm.notebooks.length, 2);
+      assert.strictEqual(
+        fakeClient.calls.filter((c) => c.method === "listNotebooks").length,
+        1
+      );
+    });
   });
 });

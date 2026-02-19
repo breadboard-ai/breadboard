@@ -236,6 +236,7 @@ class Main extends MainBase {
         this.renderTooltip(),
         this.#renderToasts(),
         this.renderSnackbar(),
+        this.renderNotebookLmPicker(),
         this.#renderFeedbackPanel(),
         this.renderConsentRequests(),
         this.#maybeRenderDebugPanel(),

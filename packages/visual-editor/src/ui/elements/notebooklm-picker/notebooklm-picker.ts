@@ -6,13 +6,9 @@
 
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import {
-  InputCancelEvent,
-  InputChangeEvent,
-} from "../../plugins/input-plugin.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA, type Notebook } from "../../../sca/sca.js";
 import { ModalDismissedEvent } from "../../events/events.js";
@@ -23,24 +19,22 @@ import "../shared/expanding-search-button.js";
 import { ExpandingSearchButton } from "../shared/expanding-search-button.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
-export type NotebookPickedValue = {
-  /** A special value recognized by the "GraphPortLabel": if present, used as the preview. */
-  preview: string;
-  /** The notebook ID (without notebooks/ prefix). */
-  id: string;
-  /** The full resource name (notebooks/{id}). */
-  name: string;
-  /** Optional emoji for display. */
-  emoji?: string;
-};
+// Re-export the type for backward compatibility
+export type { NotebookPickedValue } from "../../../sca/controller/subcontrollers/editor/notebooklm-picker-controller.js";
 
+/**
+ * Singleton NotebookLM picker component.
+ *
+ * Renders the picker modal when `notebookLmPicker.pickerOpen` is true.
+ * Open via `sca.actions.notebookLmPicker.open(callback)`.
+ */
 @customElement("bb-notebooklm-picker")
 export class NotebookLmPicker extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     css`
       :host {
-        display: block;
+        display: contents;
       }
 
       bb-modal {
@@ -101,7 +95,14 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
         color: var(--light-dark-n-40);
         font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
-        min-width: 400px;
+        max-width: 400px;
+        margin: 0 auto;
+        word-wrap: break-word;
+
+        & a {
+          color: inherit;
+          text-decoration: underline;
+        }
       }
 
       .search-container {
@@ -112,37 +113,24 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @property()
-  accessor value: NotebookPickedValue[] = [];
-
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
   #searchRef = createRef<ExpandingSearchButton>();
 
-  /** Opens the picker dialog and fetches notebooks. */
-  triggerFlow() {
-    const nlm = this.sca.controller.editor.notebookLmPicker;
-    nlm.reset();
-    nlm.pickerOpen = true;
-    this.#searchRef.value?.collapse();
-    this.sca.actions.notebookLmPicker.fetchNotebooks();
-  }
-
   #handleClose() {
     this.sca.controller.editor.notebookLmPicker.reset();
     this.#searchRef.value?.collapse();
-    this.dispatchEvent(new InputCancelEvent());
   }
 
-  async #handleConfirm() {
+  #handleConfirm() {
     const nlm = this.sca.controller.editor.notebookLmPicker;
     if (nlm.selectedNotebooks.size === 0) {
       return;
     }
-    const values = await this.sca.actions.notebookLmPicker.confirmSelection();
-    this.value = values;
-    this.dispatchEvent(new InputChangeEvent(values));
+    // This invokes the onConfirm callback and resets
+    this.sca.actions.notebookLmPicker.confirmSelection();
+    this.#searchRef.value?.collapse();
   }
 
   #handleToggleNotebook(notebook: Notebook) {
@@ -206,7 +194,11 @@ export class NotebookLmPicker extends SignalWatcher(LitElement) {
 
     if (nlm.notebooks.length === 0) {
       return html`<div class="empty-state">
-        No notebooks found. Create a notebook in NotebookLM first.
+        No notebooks found. Create a notebook in
+        <a href="https://notebooklm.google.com" target="_blank" rel="noopener"
+          >NotebookLM</a
+        >
+        first.
       </div>`;
     }
 
