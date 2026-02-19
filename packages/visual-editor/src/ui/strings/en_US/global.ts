@@ -318,4 +318,7 @@ export default {
   TEXT_WARM_WELCOME_EMAIL_UPDATES: {
     str: "Let us know if you’d like to be involved with future research studies or hear about the latest and greatest from Opal!",
   },
+  TEXT_EXPERIMENT_MODE: {
+    str: "Experiment is a beta feature.\nYou have {{count}} experiments on.\nTo deactivate, go to settings.",
+  },
 } as LanguagePackEntry;

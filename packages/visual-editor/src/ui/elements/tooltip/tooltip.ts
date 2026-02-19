@@ -89,6 +89,9 @@ export class Tooltip extends LitElement {
   @property({ reflect: true })
   accessor status: { title: string } | false = false;
 
+  @property({ reflect: true })
+  accessor isMultiLine: boolean = false;
+
   #animationStartBound = this.#animationStart.bind(this);
   #animationStart() {
     // Force the setters to run *now* that the element has a non-zero size
@@ -127,6 +130,13 @@ export class Tooltip extends LitElement {
         animation: none;
         pointer-events: none;
         white-space: nowrap;
+
+        .multiline {
+          p {
+            max-width: 170px;
+            white-space: pre-line !important;
+          }
+        }
       }
 
       :host(:not([status="false"])) {
@@ -180,6 +190,10 @@ export class Tooltip extends LitElement {
       classes["md-body-medium"] = true;
     } else {
       classes["md-body-small"] = true;
+    }
+
+    if (this.isMultiLine !== false) {
+      classes["multiline"] = true;
     }
 
     return html`<div class=${classMap(classes)} aria-live="polite">

@@ -15,8 +15,10 @@ import { classMap } from "lit/directives/class-map.js";
 
 import {
   CloseEvent,
+  HideTooltipEvent,
   OverflowMenuActionEvent,
   ShareRequestedEvent,
+  ShowTooltipEvent,
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
@@ -27,6 +29,7 @@ import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
+import { until } from "lit/directives/until.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 
 @customElement("bb-ve-header")
@@ -355,6 +358,17 @@ export class VEHeader extends SignalWatcher(LitElement) {
         border: 1px solid light-dark(var(--n-0), var(--n-70));
         text-transform: uppercase;
         color: light-dark(var(--n-0), var(--n-70));
+
+        &.has-overrides {
+          font-size: 12px;
+          line-height: normal;
+          padding: 2px 6px;
+          color: #60150f;
+          background-color: #ffecee;
+          color: light-dark(var(--n-0), var(--n-70));
+          font-weight: 500;
+          font-family: Google Sans Code;
+        }
       }
 
       #status {
@@ -739,10 +753,50 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderExperimentalLabel() {
-    return html`${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
-    Strings.from("PROVIDER_NAME") !== ""
-      ? html`<span class="sans" id="experiment">Experiment</span>`
-      : nothing}`;
+    const hasOverrides = this.sca.controller.global.flags
+      .overrides()
+      .then((overrides) => {
+        const count = Object.keys(overrides).length;
+
+        if (
+          Strings.from("PROVIDER_NAME") === "PROVIDER_NAME" ||
+          Strings.from("PROVIDER_NAME") === ""
+        ) {
+          return nothing;
+        }
+
+        return html`<span
+          class="sans ${count > 0 ? "has-overrides" : ""}"
+          id="experiment"
+          @pointerover=${(evt: PointerEvent) => {
+            if (count <= 0) {
+              return;
+            }
+
+            this.dispatchEvent(
+              new ShowTooltipEvent(
+                Strings.from("TEXT_EXPERIMENT_MODE").replace(
+                  "{{count}}",
+                  count.toString()
+                ),
+                evt.clientX,
+                evt.clientY + 90,
+                { status: false, isMultiLine: true }
+              )
+            );
+          }}
+          @pointerout=${() => {
+            if (count <= 0) {
+              return;
+            }
+
+            this.dispatchEvent(new HideTooltipEvent());
+          }}
+          >${count > 0 ? "Experiment mode" : "Experiment"}</span
+        >`;
+      });
+
+    return html`${until(hasOverrides, nothing)}`;
   }
 
   #renderStatusLabel() {
