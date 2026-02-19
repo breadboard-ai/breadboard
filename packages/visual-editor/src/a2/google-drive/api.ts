@@ -700,8 +700,6 @@ export type Metadata = {
   description?: string;
 };
 
-// ─── Google Docs API types ────────────────────────────────────────────────────
-
 export interface DocsRgbColor {
   red?: number;
   green?: number;
@@ -852,10 +850,6 @@ export interface DocsNamedStyles {
   styles?: DocsNamedStyle[];
 }
 
-/**
- * The response shape returned by the Google Docs `documents.get` API.
- * See: https://developers.google.com/docs/api/reference/rest/v1/documents#Document
- */
 export interface DocsDocument {
   documentId?: string;
   title?: string;
