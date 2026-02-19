@@ -16,7 +16,7 @@ import { until } from "lit/directives/until.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { icons } from "../../../styles/icons.js";
 import { Task, TaskStatus } from "@lit/task";
-import type { RenderTask, PageViewport, PDFDocumentProxy } from "pdfjs-dist";
+import type { RenderTask, PDFDocumentProxy } from "pdfjs-dist";
 
 type PDFJS = typeof import("pdfjs-dist");
 
@@ -29,9 +29,6 @@ async function loadPDFJS(): Promise<PDFJS> {
   }
 
   const pdfjs = await import("pdfjs-dist");
-  // Must use unminified worker — it includes a critical vite-ignore
-  // comment. Without it, vite attempts to import wasm files up front
-  // and that fails.
   const workerUrl = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url);
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl.href;
   pdfjsLib = pdfjs;
@@ -72,6 +69,7 @@ export class PDFViewer extends LitElement {
 
       :host {
         display: block;
+        contain: size;
         overflow: hidden;
         width: 100%;
         height: 100%;
@@ -83,36 +81,25 @@ export class PDFViewer extends LitElement {
         position: relative;
         width: 100%;
         height: 100%;
-        overflow: auto;
       }
 
       #container {
-        display: block;
         width: 100%;
         height: 100%;
-
         padding: 8px;
-        border: 1px solid var(--light-dark-nv-98);
-        background: var(--light-dark-nv-98);
         overflow: auto;
         scrollbar-width: none;
         -ms-overflow-style: none;
-
-        & #inner-container {
-          display: block;
-          overflow: auto;
-
-          & canvas {
-            display: block;
-            object-fit: contain;
-            image-rendering: smooth;
-            margin: auto;
-          }
-        }
       }
 
       #container::-webkit-scrollbar {
         display: none;
+      }
+
+      canvas {
+        display: block;
+        margin: auto;
+        image-rendering: smooth;
       }
 
       #controls {
@@ -191,9 +178,11 @@ export class PDFViewer extends LitElement {
 
   #containerRef: Ref<HTMLDivElement> = createRef();
   #canvas: HTMLCanvasElement | null = null;
-  #baseViewport: PageViewport | null = null;
   #activeRender: RenderTask | null = null;
   #loadDispatched = false;
+  #hasInitialZoom = false;
+  #pageWidth = 0;
+  #pageHeight = 0;
 
   /** Resolved ArrayBuffer for download, whether supplied or fetched. */
   #resolvedBytes: ArrayBuffer | null = null;
@@ -258,10 +247,6 @@ export class PDFViewer extends LitElement {
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("page")) {
-      this.#baseViewport = null;
-    }
-
     // Clamp zoom so the stored value always matches what's rendered.
     if (changedProperties.has("zoom")) {
       this.zoom = Math.max(0.1, Math.min(10, this.zoom));
@@ -298,19 +283,28 @@ export class PDFViewer extends LitElement {
     const pdfPage = await pdf.getPage(this.page);
     const dPR = window.devicePixelRatio ?? 1;
 
-    // Compute base viewport for fit-to-screen on first render of a page.
-    if (!this.#baseViewport) {
-      this.#baseViewport = pdfPage.getViewport({ scale: dPR });
-      this.#zoomToFit();
-    }
-
     if (!this.#canvas) {
       this.#canvas = document.createElement("canvas");
     }
 
+    // On first render, calculate zoom so the page fits the container.
+    if (!this.#hasInitialZoom) {
+      this.#hasInitialZoom = true;
+      const baseViewport = pdfPage.getViewport({ scale: 1 });
+      this.#zoomToFit(baseViewport.width, baseViewport.height);
+    }
+
+    // Zoom is baked into the viewport scale — the canvas grows on zoom-in,
+    // and #container (overflow: auto) handles scrolling. contain: size on
+    // :host prevents the canvas from pushing ancestors larger.
     const viewport = pdfPage.getViewport({ scale: this.zoom * dPR });
+
     this.#canvas.width = viewport.width;
     this.#canvas.height = viewport.height;
+
+    // CSS dimensions = pixel dimensions / dPR so zoom=1 displays at 1x.
+    this.#canvas.style.width = `${viewport.width / dPR}px`;
+    this.#canvas.style.height = `${viewport.height / dPR}px`;
 
     const ctx = this.#canvas.getContext("2d")!;
     const renderTask = pdfPage.render({
@@ -344,9 +338,12 @@ export class PDFViewer extends LitElement {
     return html`${this.#canvas}`;
   }
 
-  #zoomToFit(): void {
+  #zoomToFit(pageWidth?: number, pageHeight?: number): void {
+    if (pageWidth) this.#pageWidth = pageWidth;
+    if (pageHeight) this.#pageHeight = pageHeight;
+
     const container = this.#containerRef.value;
-    if (!container || !this.#baseViewport) {
+    if (!container || !this.#pageWidth || !this.#pageHeight) {
       return;
     }
 
@@ -355,9 +352,13 @@ export class PDFViewer extends LitElement {
       return;
     }
 
+    // Account for container padding (8px each side).
+    const availWidth = clientWidth - 16;
+    const availHeight = clientHeight - 16;
+
     this.zoom = Math.min(
-      clientWidth / this.#baseViewport.width,
-      clientHeight / this.#baseViewport.height
+      availWidth / this.#pageWidth,
+      availHeight / this.#pageHeight
     );
   }
 
@@ -390,7 +391,7 @@ export class PDFViewer extends LitElement {
   render(): HTMLTemplateResult {
     return html`<div id="wrapper">
       <div id="container" ${ref(this.#containerRef)}>
-        <div id="inner-container">${until(this.#content)}</div>
+        ${until(this.#content)}
       </div>
       ${this.showControls
         ? html`<div id="controls">
