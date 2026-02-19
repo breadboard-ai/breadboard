@@ -256,31 +256,15 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
           return html`
             <div class="video-container">
               ${this.#videoUrlTask.render({
-                pending: () =>
-                  html`<div
-                    class="video-thumbnail"
-                    @click=${() => {
-                      this.#videoUrl = null;
-                      this.#videoUrlTask.run();
-                    }}
-                  >
-                    <img
-                      cross-origin
-                      src=${file.thumbnailLink}
-                      alt=${file.name ?? "Google Document"}
-                      @error=${this.#onImageError}
-                    />
-                    <div class="video-loading">Loading...</div>
-                  </div>`,
                 error: () => html`<p>Error loading video source</p>`,
-                complete: (url) => html`
-                  <video
+                complete: (url) => {
+                  return html`<a2ui-video
                     class="video-embed"
-                    src="${url}"
-                    controls
-                    poster=${file.thumbnailLink}
-                  ></video>
-                `,
+                    .url=${{
+                      literalString: url,
+                    }}
+                  ></a2ui-video>`;
+                },
               })}
             </div>
           `;
