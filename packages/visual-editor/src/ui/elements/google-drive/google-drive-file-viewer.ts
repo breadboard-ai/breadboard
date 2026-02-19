@@ -56,6 +56,16 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
         max-width: 540px;
       }
 
+      .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 540px;
+        aspect-ratio: 16/9;
+        background: #000;
+        border-radius: var(--bb-grid-size-3);
+        overflow: hidden;
+      }
+
       .image-placeholder {
         display: flex;
         justify-content: center;
@@ -97,6 +107,13 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
         }
       }
     `,
+    css`
+      .video-embed {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    `,
   ];
 
   @property({
@@ -125,6 +142,8 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
   @state()
   accessor #imageFailedToLoad = false;
 
+  #videoUrl: string | null = null;
+
   @property({ reflect: true, type: Boolean })
   accessor forcePlaceholder = false;
 
@@ -135,7 +154,14 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
       }
       try {
         return await googleDriveClient.getFileMetadata(fileId, {
-          fields: ["id", "name", "webViewLink", "thumbnailLink", "iconLink"],
+          fields: [
+            "id",
+            "name",
+            "mimeType",
+            "webViewLink",
+            "thumbnailLink",
+            "iconLink",
+          ],
           signal,
         });
       } catch (e) {
@@ -146,9 +172,45 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
     args: () => [this.sca.services.googleDriveClient, this.fileId],
   });
 
+  readonly #videoUrlTask = new Task(this, {
+    task: async ([googleDriveClient, fileId], { signal }) => {
+      if (!googleDriveClient || !fileId) {
+        return undefined;
+      }
+
+      if (this.#videoUrl) {
+        return this.#videoUrl;
+      }
+
+      const response = await googleDriveClient.getFileMedia(fileId, { signal });
+      if (!response.ok) {
+        throw new Error("Failed to load video content.");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      this.#videoUrl = url;
+      return url;
+    },
+    args: () => [this.sca.services.googleDriveClient, this.fileId],
+  });
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#revokeVideoUrl();
+  }
+
+  #revokeVideoUrl() {
+    if (this.#videoUrl) {
+      URL.revokeObjectURL(this.#videoUrl);
+      this.#videoUrl = null;
+    }
+  }
+
   override willUpdate(changes: PropertyValues<this>) {
     if (changes.has("fileId")) {
       this.#imageFailedToLoad = false;
+      this.#revokeVideoUrl();
     }
   }
 
@@ -161,6 +223,24 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
         if (!file) {
           return `Unable to find Google Drive document`;
         }
+
+        if (file.mimeType?.startsWith("video/")) {
+          return html`
+            <div class="video-container">
+              ${this.#videoUrlTask.render({
+                error: () => html`<p>Error loading video source</p>`,
+                complete: (url) =>
+                  html`<a2ui-video
+                    class="video-embed"
+                    .url=${{
+                      literalString: url,
+                    }}
+                  ></a2ui-video>`,
+              })}
+            </div>
+          `;
+        }
+
         const openUrl =
           file.webViewLink ?? `https://drive.google.com/open?id=${file.id}`;
         const imageUrl = file.thumbnailLink || file.iconLink;
