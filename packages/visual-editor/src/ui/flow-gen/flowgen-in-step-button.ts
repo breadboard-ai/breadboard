@@ -19,7 +19,6 @@ import {
 } from "../events/events.js";
 import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
-import { isEmpty } from "../utils/utils.js";
 import * as StringsHelper from "../strings/helper.js";
 import { fabStyles } from "../styles/fab.js";
 import { floatingPanelStyles } from "../styles/floating-panel.js";
@@ -28,8 +27,7 @@ import { multiLineInputStyles } from "../styles/multi-line-input.js";
 import { type FlowGenConstraint } from "./flow-generator.js";
 import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
-import { scaContext } from "../../sca/context/context.js";
-import { type SCA } from "../../sca/sca.js";
+import { isEmpty } from "@tweakpane/core";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -207,9 +205,6 @@ export class FlowgenInStepButton extends SignalWatcher(LitElement) {
       }
     `,
   ];
-
-  @consume({ context: scaContext })
-  accessor sca!: SCA;
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
