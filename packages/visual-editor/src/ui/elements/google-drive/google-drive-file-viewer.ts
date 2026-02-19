@@ -66,23 +66,6 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
         overflow: hidden;
       }
 
-      .video-thumbnail {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        line-height: 0;
-        z-index: 1;
-
-        & img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-      }
-
       .image-placeholder {
         display: flex;
         justify-content: center;
