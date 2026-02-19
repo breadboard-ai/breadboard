@@ -244,12 +244,12 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
   #renderCreditCount() {
     const innerRender = () => {
       if (this.sca.controller.global.main.subscriptionCredits === -2) {
-        return html` <span class="g-icon filled-heavy round">error</span>Failed
+        return html` <span class="g-icon filled heavy round">error</span>Failed
           to retrieve`;
       }
 
       if (this.sca.controller.global.main.subscriptionCredits === -1) {
-        return html` <span class="g-icon rotate filled-heavy round"
+        return html` <span class="g-icon rotate filled heavy round"
             >progress_activity</span
           >Updating...`;
       }
@@ -257,7 +257,7 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
       const credits = this.#formatter.format(
         this.sca.controller.global.main.subscriptionCredits
       );
-      return html`<span class="g-icon circle filled-heavy round">spark</span
+      return html`<span class="g-icon circle filled heavy round">spark</span
         >${credits} AI
         Credit${this.sca.controller.global.main.subscriptionCredits !== 1
           ? "s"

@@ -1017,7 +1017,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                   );
                 }}
               >
-                <span class="g-icon filled-heavy round"></span>${this
+                <span class="g-icon filled heavy round"></span>${this
                   .isRefreshingAppTheme
                   ? "Updating..."
                   : "Start"}

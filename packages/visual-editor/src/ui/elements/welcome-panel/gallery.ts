@@ -170,6 +170,7 @@ export class Gallery extends SignalWatcher(LitElement) {
           position: absolute;
           top: var(--bb-grid-size-6);
           right: var(--bb-grid-size-4);
+          z-index: 10;
           width: 20px;
           height: 20px;
           border-radius: 50%;
@@ -177,7 +178,6 @@ export class Gallery extends SignalWatcher(LitElement) {
           border: none;
           background: transparent;
           color: var(--n-100);
-          z-index: 10;
 
           > * {
             pointer-events: none;
@@ -189,40 +189,53 @@ export class Gallery extends SignalWatcher(LitElement) {
         }
 
         .overflow-pin {
-          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-          font-variation-settings: "FILL" 0;
+          top: var(--bb-grid-size-4);
+          right: auto;
+          left: var(--bb-grid-size-4);
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           opacity: 0.3;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
           @media (min-width: 620px) {
             opacity: 0;
             pointer-events: none;
           }
-          right: auto;
-          left: var(--bb-grid-size-4);
 
-          & .g-icon::before {
-            content: "keep";
+          & .g-icon {
+            font-size: 20px;
+
+            &::before {
+              content: "keep";
+            }
           }
 
           &.pinned {
             opacity: 1;
             pointer-events: auto;
+
+            &:hover {
+              background: oklch(from var(--light-dark-n-0) l c h / 38%);
+
+              & .g-icon::before {
+                content: "keep_off";
+              }
+            }
           }
         }
 
         &:hover {
-          & .overflow-pin {
-            font-variation-settings: "FILL" 1;
+          & .overflow-pin .g-icon {
+            --icon-fill: 1;
           }
+
           & .overflow-pin,
           & .remix-button {
             opacity: 1;
             pointer-events: auto;
-          }
-
-          & .overflow-pin.pinned {
-            & .g-icon::before {
-              content: "keep_off";
-            }
           }
         }
 
@@ -691,7 +704,7 @@ export class Gallery extends SignalWatcher(LitElement) {
                   );
                 }}
               >
-                <span class="g-icon filled-heavy round"></span>
+                <span class="g-icon filled heavy round"></span>
               </button>
               <button
                 class="overflow-menu"
@@ -717,7 +730,7 @@ export class Gallery extends SignalWatcher(LitElement) {
                   this.showOverflowMenu = true;
                 }}
               >
-                <span class="g-icon filled-heavy w-500 round">more_vert</span>
+                <span class="g-icon filled heavy w-500 round">more_vert</span>
               </button>`
           : html` <button
               class=${classMap({

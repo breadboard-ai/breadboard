@@ -224,7 +224,8 @@ export class Snackbar extends SignalWatcher(LitElement) {
             class=${classMap({
               "g-icon": true,
               round: true,
-              "filled-heavy": true,
+              filled: true,
+              heavy: true,
               rotate,
             })}
             >${icon}</span
@@ -278,7 +279,7 @@ export class Snackbar extends SignalWatcher(LitElement) {
           this.dispatchEvent(new SnackbarActionEvent("dismiss"));
         }}
       >
-        <span class="g-icon filled-heavy round">close</span>
+        <span class="g-icon filled heavy round">close</span>
       </button>`;
   }
 }
