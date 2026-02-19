@@ -402,4 +402,19 @@ suite("FlowgenInputController", () => {
     assert.strictEqual(controller.currentExampleIntent, "");
     assert.strictEqual(controller.state.status, "initial");
   });
+
+  test("seenConfirmationDialog has initial value and is reactive", async () => {
+    const controller = new FlowgenInputController(
+      "FlowgenInput",
+      "FlowgenInput_18"
+    );
+    await controller.isHydrated;
+
+    assert.strictEqual(controller.seenConfirmationDialog, false);
+
+    controller.seenConfirmationDialog = true;
+    await controller.isSettled;
+
+    assert.strictEqual(controller.seenConfirmationDialog, true);
+  });
 });

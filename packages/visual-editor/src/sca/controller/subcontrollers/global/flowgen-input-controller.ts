@@ -86,6 +86,12 @@ export class FlowgenInputController extends RootController {
   accessor plannerThought: string = "Planning ...";
 
   /**
+   * Whether the user has seen the global confirmation dialog.
+   */
+  @field({ persist: "local" })
+  accessor seenConfirmationDialog: boolean = false;
+
+  /**
    * Example intents for the home screen.
    */
   get examples() {
