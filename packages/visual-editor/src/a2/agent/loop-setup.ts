@@ -13,6 +13,7 @@ import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
 import { RunStateManager } from "./run-state-manager.js";
 import { ConsoleProgressManager } from "./console-progress-manager.js";
+import { ChoicePresenter } from "./choice-presenter.js";
 import { llm } from "../a2/utils.js";
 import {
   FunctionGroupConfigurator,
@@ -55,6 +56,7 @@ async function buildAgentRun(args: {
     runArgs: AgentRunArgs;
     progress: ConsoleProgressManager;
     runStateManager: RunStateManager;
+    choicePresenter: ChoicePresenter;
   }>
 > {
   const {
@@ -73,7 +75,7 @@ async function buildAgentRun(args: {
     memoryManager: moduleArgs.agentContext.memoryManager,
   });
   const translator = new PidginTranslator(moduleArgs, fileSystem);
-  const ui = new AgentUI(moduleArgs, translator);
+  const ui = new AgentUI(moduleArgs, translator, sink);
   const runStateManager = new RunStateManager(
     moduleArgs.agentContext,
     fileSystem
@@ -170,7 +172,13 @@ async function buildAgentRun(args: {
     customTools: objectivePidgin.tools,
   };
 
-  return { loop, runArgs, progress: ui.progress, runStateManager };
+  return {
+    loop,
+    runArgs,
+    progress: ui.progress,
+    runStateManager,
+    choicePresenter: new ChoicePresenter(translator, ui),
+  };
 }
 
 /**

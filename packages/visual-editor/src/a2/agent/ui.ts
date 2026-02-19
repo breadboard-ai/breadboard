@@ -37,8 +37,7 @@ import {
   VALID_INPUT_TYPES,
 } from "./types.js";
 import { getCurrentStepState } from "./progress-work-item.js";
-import { ChoicePresenter } from "./choice-presenter.js";
-import { requestInput } from "../request-input.js";
+import type { AgentEventSink } from "./agent-event-sink.js";
 
 export { AgentUI };
 
@@ -77,12 +76,14 @@ class AgentUI implements A2UIRenderer, ChatManager {
   #memoryManager: MemoryManager | null = null;
   #context: NodeHandlerContext | null = null;
 
-  readonly #choicePresenter: ChoicePresenter;
+  readonly #sink: AgentEventSink | undefined;
 
   constructor(
     private readonly moduleArgs: A2ModuleArgs,
-    private readonly translator: PidginTranslator
+    private readonly translator: PidginTranslator,
+    sink?: AgentEventSink
   ) {
+    this.#sink = sink;
     this.client = new A2UIClient();
     const { appScreen, consoleEntry } = getCurrentStepState(this.moduleArgs);
     this.#consoleEntry = consoleEntry;
@@ -96,7 +97,6 @@ class AgentUI implements A2UIRenderer, ChatManager {
       this.#consoleEntry,
       this.#appScreen
     );
-    this.#choicePresenter = new ChoicePresenter(translator, this);
   }
 
   /**
@@ -210,17 +210,15 @@ class AgentUI implements A2UIRenderer, ChatManager {
     this.#chatLog.push({ ...message, role: "model" });
     this.#appendChatLogEntry("agent", pidginString);
     this.#addChatOutput(message);
-    const response = await requestInput(this.moduleArgs, {
-      properties: {
-        input: {
-          type: "object",
-          behavior: ["transient", "llm-content", "hint-required"],
-          format: computeFormat(typedInputType),
-        },
-      },
+    if (!this.#sink) {
+      return err(`Unable to request chat input: no event sink available`);
+    }
+    const chatResponse = await this.#sink.suspend<ChatResponse>({
+      type: "waitForInput",
+      requestId: crypto.randomUUID(),
+      prompt: message,
+      inputType: computeFormat(typedInputType),
     });
-    if (!ok(response)) return response;
-    const chatResponse = response as ChatResponse;
     this.#chatLog.push({ ...chatResponse.input, role: "user" });
     const userText =
       chatResponse.input.parts
@@ -251,18 +249,26 @@ class AgentUI implements A2UIRenderer, ChatManager {
     this.#chatLog.push({ ...messageContent, role: "model" });
     this.#appendChatLogEntry("agent", message);
 
-    const response = await this.#choicePresenter.presentChoices(
-      message,
-      choices,
+    if (!this.#sink) {
+      return err(`Unable to present choices: no event sink available`);
+    }
+    const choicesResponse = await this.#sink.suspend<ChatChoicesResponse>({
+      type: "waitForChoice",
+      requestId: crypto.randomUUID(),
+      prompt: messageContent,
+      choices: choices.map((c) => ({
+        id: c.id,
+        content: { parts: [{ text: c.label }] },
+      })),
       selectionMode,
       layout,
-      noneOfTheAboveLabel
-    );
-    if (!ok(response)) return response;
+      noneOfTheAboveLabel,
+    });
+    if (!ok(choicesResponse)) return choicesResponse;
 
     // Build user response text from selected choice labels
-    const selectedLabels = response.selected
-      .map((id) => choices.find((c) => c.id === id)?.label ?? id)
+    const selectedLabels = choicesResponse.selected
+      .map((id: string) => choices.find((c) => c.id === id)?.label ?? id)
       .join(", ");
     this.#chatLog.push({
       role: "user",
@@ -270,7 +276,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     });
     this.#appendChatLogEntry("user", selectedLabels);
 
-    return response;
+    return choicesResponse;
   }
 
   async render(
