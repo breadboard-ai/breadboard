@@ -16,6 +16,7 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
+import "./ui/elements/notebooklm-picker/notebooklm-picker.js";
 import { RuntimeConfig } from "./utils/graph-types.js";
 
 import {
@@ -697,6 +698,20 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         }
       }}
     ></bb-snackbar>`;
+  }
+
+  protected renderNotebookLmPicker() {
+    if (
+      Utils.Helpers.isHydrating(
+        () => this.sca.controller.global.flags?.enableNotebookLm
+      )
+    ) {
+      return nothing;
+    }
+    if (!this.sca.controller.global.flags?.enableNotebookLm) {
+      return nothing;
+    }
+    return html`<bb-notebooklm-picker></bb-notebooklm-picker>`;
   }
 
   protected async askUserToSignInIfNeeded(

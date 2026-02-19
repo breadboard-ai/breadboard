@@ -10,6 +10,20 @@ import { RootController } from "../root-controller.js";
 
 export { NotebookLmPickerController };
 
+/**
+ * Value returned when a notebook is picked from the picker.
+ */
+export type NotebookPickedValue = {
+  /** A special value recognized by the "GraphPortLabel": if present, used as the preview. */
+  preview: string;
+  /** The notebook ID (without notebooks/ prefix). */
+  id: string;
+  /** The full resource name (notebooks/{id}). */
+  name: string;
+  /** Optional emoji for display. */
+  emoji?: string;
+};
+
 type PickerState = "idle" | "loading" | "error";
 
 class NotebookLmPickerController extends RootController {
@@ -30,6 +44,12 @@ class NotebookLmPickerController extends RootController {
 
   @field()
   accessor pickerOpen = false;
+
+  /**
+   * Callback invoked when the picker confirms selection.
+   * Set by the `open` action; cleared by `reset()`.
+   */
+  onConfirm: ((values: NotebookPickedValue[]) => void) | null = null;
 
   get filteredNotebooks(): Notebook[] {
     const query = this.searchQuery.toLowerCase().trim();
@@ -58,5 +78,6 @@ class NotebookLmPickerController extends RootController {
     this.selectedNotebooks = new Set();
     this.searchQuery = "";
     this.pickerOpen = false;
+    this.onConfirm = null;
   }
 }

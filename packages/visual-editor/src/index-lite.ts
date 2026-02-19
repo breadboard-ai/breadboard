@@ -836,7 +836,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ${content}
       </section>
       ${this.#renderShellUI()} ${this.#renderSharePanel()}
-      ${this.renderSnackbar()} `;
+      ${this.renderSnackbar()} ${this.renderNotebookLmPicker()} `;
   }
 
   #onSnackbar(event: BreadboardUI.Events.SnackbarEvent) {
