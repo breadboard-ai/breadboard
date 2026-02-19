@@ -27,6 +27,7 @@ export type GrantResponse =
        */
       domain?: string;
       scopes?: string[];
+      authuser?: string;
     };
 
 export type RefreshResponse =
@@ -52,6 +53,7 @@ export interface TokenGrant {
   id?: string;
   domain: string | undefined;
   scopes: string[] | undefined;
+  authuser: string | undefined;
 }
 
 export type TokenResult =

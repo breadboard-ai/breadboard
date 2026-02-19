@@ -12,14 +12,11 @@ export { StatusUpdatesController } from "./status-updates-controller.js";
 export { ToastController } from "./toast-controller.js";
 export { FlagController } from "./flag-controller.js";
 export { FlowgenInputController } from "./flowgen-input-controller.js";
+export { OnboardingController } from "./onboarding-controller.js";
 export { ScreenSizeController } from "./screen-size-controller.js";
 
-import {
-  SubscriptionStatus,
-  UILoadState,
-  UIOverlays,
-} from "../../../../ui/state/types.js";
-import { VisualEditorMode } from "../../../../ui/types/types.js";
+import { SubscriptionStatus, UILoadState, UIOverlays } from "../../../types.js";
+import { VisualEditorMode } from "../../../types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 

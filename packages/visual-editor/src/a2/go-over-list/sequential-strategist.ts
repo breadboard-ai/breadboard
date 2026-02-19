@@ -2,7 +2,7 @@
  * @fileoverview Executes sequential strategy.
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { report } from "../a2/output.js";
 import { ok, toLLMContent } from "../a2/utils.js";
 import { getPlan, plannerPrompt } from "./planner-prompt.js";
@@ -17,14 +17,12 @@ class SequentialStrategist implements Strategist {
 All tasks in the plan will be executed in sequence, building on each other.`;
 
   async execute(
-    caps: Capabilities,
     moduleArgs: A2ModuleArgs,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent
   ): Promise<Outcome<LLMContent[]>> {
     const planning = await plannerPrompt(
-      caps,
       moduleArgs,
       mutableContext,
       objective,

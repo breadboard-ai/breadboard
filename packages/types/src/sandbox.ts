@@ -29,18 +29,6 @@ export type DescriberOutputs = { inputSchema: unknown; outputSchema: unknown };
 export type InvokeInputs = Values;
 export type InvokeOutputs = Values;
 
-export type Capability = (
-  inputs: Values,
-  path: number[]
-) => Promise<Values | void>;
-
-export type CapabilitySpec = {
-  input?: Capability;
-  query?: Capability;
-  read?: Capability;
-  write?: Capability;
-};
-
 export type RunnableModuleTelemetry = {
   startModule(): Promise<void>;
   endModule(): Promise<void>;
@@ -68,16 +56,11 @@ export type RunnableModule = {
   describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs>;
 };
 
-export type CapabilitiesManager = {
-  createSpec(): CapabilitySpec;
-};
-
 export type RunnableModuleFactory = {
   createRunnableModule(
     mutable: MutableGraph,
     graph: GraphDescriptor,
-    context: NodeHandlerContext,
-    capabilities?: CapabilitiesManager
+    context: NodeHandlerContext
   ): Promise<Outcome<RunnableModule>>;
 };
 

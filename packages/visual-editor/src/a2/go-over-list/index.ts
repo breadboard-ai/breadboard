@@ -16,9 +16,6 @@ import * as goOverListSystemInstruction from "./system-instruction.js";
 import * as goOverListThinkStrategist from "./think-strategist.js";
 import * as goOverListTypes from "./types.js";
 
-import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl.js";
-
 export const exports = {
   "conversational-planner-prompt": goOverListConversationalPlannerPrompt,
   "conversational-think-strategist": goOverListConversationalThinkStrategist,
@@ -32,5 +29,3 @@ export const exports = {
   "think-strategist": goOverListThinkStrategist,
   types: goOverListTypes,
 };
-
-export const bgl = createBgl(descriptor, exports);

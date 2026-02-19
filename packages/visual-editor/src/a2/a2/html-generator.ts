@@ -2,7 +2,7 @@
  * @fileoverview Utility for calling generate_webpage tool.
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import type {
   ContentMap,
   ExecuteStepRequest,
@@ -23,7 +23,6 @@ const OUTPUT_KEY = "rendered_outputs";
  * Legacy (non-streaming) implementation of GenerateWebpage.
  */
 async function callGenWebpageLegacy(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   instruction: string,
   content: LLMContent[],
@@ -106,7 +105,7 @@ async function callGenWebpageLegacy(
     icon: "spark",
   });
   const args: ExecuteStepArgs = { ...moduleArgs, reporter };
-  const response = await executeStep(caps, args, body, {
+  const response = await executeStep(args, body, {
     expectedDurationInSec: 70,
   });
   if (!ok(response)) {
@@ -128,7 +127,6 @@ async function callGenWebpageLegacy(
  * Uses streaming API when streamGenWebpage flag is enabled.
  */
 async function callGenWebpage(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   instruction: string,
   content: LLMContent[],
@@ -150,19 +148,12 @@ async function callGenWebpage(
 
   if (useStreaming) {
     console.log("[html-generator] Using streaming API for GenerateWebpage");
-    return executeWebpageStream(
-      caps,
-      moduleArgs,
-      instruction,
-      content,
-      modelName
-    );
+    return executeWebpageStream(moduleArgs, instruction, content, modelName);
   } else {
     console.log(
       "[html-generator] Using legacy executeStep for GenerateWebpage"
     );
     return callGenWebpageLegacy(
-      caps,
       moduleArgs,
       instruction,
       content,

@@ -6,11 +6,7 @@
 
 import { describe, it } from "node:test";
 import { PidginTranslator } from "../../src/a2/agent/pidgin-translator.js";
-import {
-  stubCaps,
-  stubMemoryManager,
-  stubModuleArgs,
-} from "../useful-stubs.js";
+import { stubMemoryManager, stubModuleArgs } from "../useful-stubs.js";
 import { AgentFileSystem } from "../../src/a2/agent/file-system.js";
 import { deepStrictEqual, fail, strictEqual } from "node:assert";
 import { ok } from "@breadboard-ai/utils/outcome.js";
@@ -28,7 +24,7 @@ function makeTranslator(): PidginTranslator {
     context: stubModuleArgs.context,
     memoryManager: stubMemoryManager,
   });
-  return new PidginTranslator(stubCaps, stubModuleArgs, fileSystem);
+  return new PidginTranslator(stubModuleArgs, fileSystem);
 }
 
 function makeTranslatorWithFileSystem(): {
@@ -40,7 +36,7 @@ function makeTranslatorWithFileSystem(): {
     memoryManager: stubMemoryManager,
   });
   return {
-    translator: new PidginTranslator(stubCaps, stubModuleArgs, fileSystem),
+    translator: new PidginTranslator(stubModuleArgs, fileSystem),
     fileSystem,
   };
 }
@@ -65,11 +61,7 @@ describe("Pidgin Translator", () => {
         context: stubModuleArgs.context,
         memoryManager: stubMemoryManager,
       });
-      const translator = new PidginTranslator(
-        stubCaps,
-        stubModuleArgs,
-        fileSystem
-      );
+      const translator = new PidginTranslator(stubModuleArgs, fileSystem);
 
       const translated = await translator.toPidgin(
         llm`Go to ${Template.route("Route A", "cool-route")}`.asContent(),

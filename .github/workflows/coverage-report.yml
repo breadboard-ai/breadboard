@@ -20,6 +20,7 @@ jobs:
       contents: read       # To checkout main branch
       pull-requests: write # To post comments on the PR
       actions: read        # To download artifacts from the triggering workflow
+      checks: write        # To create a coverage status check on the PR
     if: >
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success'
@@ -54,15 +55,18 @@ jobs:
         id: pr-info
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_EVENT_WORKFLOW_RUN_HEAD_REPOSITORY_OWNER_LOGIN: ${{ github.event.workflow_run.head_repository.owner.login }}
+          GITHUB_EVENT_WORKFLOW_RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
-          FORK_OWNER='${{ github.event.workflow_run.head_repository.owner.login }}'
-          FORK_BRANCH='${{ github.event.workflow_run.head_branch }}'
+          FORK_OWNER="${GITHUB_EVENT_WORKFLOW_RUN_HEAD_REPOSITORY_OWNER_LOGIN}"
+          FORK_BRANCH="${GITHUB_EVENT_WORKFLOW_RUN_HEAD_BRANCH}"
           API_URL="repos/${{ github.repository }}/pulls?state=all&head=${FORK_OWNER}:${FORK_BRANCH}&sort=updated&direction=desc&per_page=1"
           PR_NUMBER=$(gh api "$API_URL" --jq '.[0].number // empty')
 
           if [ -n "$PR_NUMBER" ]; then
             echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
             BASE_SHA=$(gh api "$API_URL" --jq '.[0].base.sha // empty')
+            HEAD_SHA=$(gh api "$API_URL" --jq '.[0].head.sha // empty')
 
             if [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
               echo "sha=$BASE_SHA" >> $GITHUB_OUTPUT
@@ -70,10 +74,18 @@ jobs:
               echo "::warning::Invalid base SHA format, using HEAD of main"
               echo "sha=" >> $GITHUB_OUTPUT
             fi
+
+            if [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+            else
+              echo "::warning::Could not determine PR head SHA for check"
+              echo "head_sha=" >> $GITHUB_OUTPUT
+            fi
           else
             echo "::warning::No PR found for ${FORK_OWNER}:${FORK_BRANCH}"
             echo "number=" >> $GITHUB_OUTPUT
             echo "sha=" >> $GITHUB_OUTPUT
+            echo "head_sha=" >> $GITHUB_OUTPUT
           fi
 
       # If we have a base SHA, checkout that commit for the baseline.
@@ -81,7 +93,9 @@ jobs:
       # changes by the time this workflow runs.
       - name: Checkout baseline commit
         if: steps.pr-info.outputs.sha != ''
-        run: git checkout ${{ steps.pr-info.outputs.sha }}
+        run: git checkout ${STEPS_PR_INFO_OUTPUTS_SHA}
+        env:
+          STEPS_PR_INFO_OUTPUTS_SHA: ${{ steps.pr-info.outputs.sha }}
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -139,8 +153,10 @@ jobs:
         if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && steps.baseline.outcome == 'success' && steps.pr-coverage.outputs.path != ''
         id: coverage
         # compare-coverage.js only parses JSON data, it does not execute artifact contents
-        run: node scripts/compare-coverage.js ${{ steps.pr-coverage.outputs.path }} packages/visual-editor/coverage/coverage-summary.json
+        run: node scripts/compare-coverage.js ${STEPS_PR_COVERAGE_OUTPUTS_PATH} packages/visual-editor/coverage/coverage-summary.json
         continue-on-error: true
+        env:
+          STEPS_PR_COVERAGE_OUTPUTS_PATH: ${{ steps.pr-coverage.outputs.path }}
 
       - name: Generate fallback comment on comparison failure
         if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && (steps.baseline.outcome == 'failure' || steps.coverage.outcome == 'failure')
@@ -151,9 +167,11 @@ jobs:
           echo "- Build failure on main branch" >> coverage-comment.md
           echo "- Missing coverage data" >> coverage-comment.md
           echo "" >> coverage-comment.md
-          if [ -n "${{ steps.pr-coverage.outputs.path }}" ]; then
+          if [ -n "${STEPS_PR_COVERAGE_OUTPUTS_PATH}" ]; then
             echo "**PR Coverage data was uploaded successfully.**" >> coverage-comment.md
           fi
+        env:
+          STEPS_PR_COVERAGE_OUTPUTS_PATH: ${{ steps.pr-coverage.outputs.path }}
 
       - name: Post coverage comment
         if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != ''
@@ -197,3 +215,34 @@ jobs:
                 body: body
               });
             }
+
+      - name: Create coverage check
+        if: steps.download.outcome == 'success' && steps.pr-info.outputs.number != '' && steps.pr-info.outputs.head_sha != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let conclusion = 'neutral';
+            let title = 'Coverage data unavailable';
+            let summary = 'Could not determine coverage status.';
+
+            if (fs.existsSync('coverage-status.json')) {
+              const status = JSON.parse(fs.readFileSync('coverage-status.json', 'utf8'));
+              conclusion = status.failed ? 'failure' : 'success';
+              title = status.failed ? 'Coverage dropped' : 'Coverage OK';
+              summary = status.details;
+            }
+
+            // Use the full markdown table as the summary if available.
+            if (fs.existsSync('coverage-comment.md')) {
+              summary = fs.readFileSync('coverage-comment.md', 'utf8');
+            }
+
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Coverage',
+              head_sha: '${{ steps.pr-info.outputs.head_sha }}',
+              conclusion,
+              output: { title, summary }
+            });

@@ -12,6 +12,7 @@ import {
   LLMContent,
 } from "@breadboard-ai/types";
 import { GeminiBody } from "../a2/gemini.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import { AgentProgressManager } from "./types.js";
 import { llm, progressFromThought } from "../a2/utils.js";
 import { StatusUpdateCallbackOptions } from "./function-definition.js";
@@ -91,7 +92,7 @@ class ConsoleProgressManager implements AgentProgressManager {
   startAgent(objective: LLMContent) {
     if (this.#screen) {
       this.#screen.progress = StarterPhraseVendor.instance.phrase();
-      this.#screen.expectedDuration = -1;
+      setScreenDuration(this.#screen, -1);
     }
     if (this.#consoleEntry) {
       const update = {
@@ -115,7 +116,7 @@ class ConsoleProgressManager implements AgentProgressManager {
   generatingLayouts(uiPrompt: LLMContent | undefined) {
     if (this.#screen) {
       this.#screen.progress = "Generating layouts";
-      this.#screen.expectedDuration = 70;
+      setScreenDuration(this.#screen, 70);
     }
     this.#addWorkItem(
       "Generating Layouts",
@@ -168,7 +169,7 @@ class ConsoleProgressManager implements AgentProgressManager {
     if (this.#screen) {
       this.#previousStatus = this.#screen.progress;
       this.#screen.progress = progressFromThought(text);
-      this.#screen.expectedDuration = -1;
+      setScreenDuration(this.#screen, -1);
     }
   }
 
@@ -240,7 +241,7 @@ class ConsoleProgressManager implements AgentProgressManager {
       if (this.#screen) {
         this.#previousStatus = this.#screen.progress;
         this.#screen.progress = progressFromThought(status);
-        this.#screen.expectedDuration = -1;
+        setScreenDuration(this.#screen, -1);
       }
     } else {
       if (!this.#screen) return;
@@ -249,14 +250,14 @@ class ConsoleProgressManager implements AgentProgressManager {
         if (this.#previousStatus) {
           this.#screen.progress = this.#previousStatus;
         }
-        this.#screen.expectedDuration = -1;
+        setScreenDuration(this.#screen, -1);
       } else {
         // Remove the occasional ellipsis from the status
         status = trimEllipsis(status);
         if (options?.expectedDurationInSec) {
-          this.#screen.expectedDuration = options.expectedDurationInSec;
+          setScreenDuration(this.#screen, options.expectedDurationInSec);
         } else {
-          this.#screen.expectedDuration = -1;
+          setScreenDuration(this.#screen, -1);
         }
 
         this.#previousStatus = this.#screen.progress;
@@ -290,7 +291,7 @@ class ConsoleProgressManager implements AgentProgressManager {
   finish() {
     if (this.#screen) {
       this.#screen.progress = undefined;
-      this.#screen.expectedDuration = -1;
+      setScreenDuration(this.#screen, -1);
     }
     this.#agentSession?.finish();
   }

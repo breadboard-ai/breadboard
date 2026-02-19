@@ -7,24 +7,30 @@
 import type {
   EditHistoryCreator,
   GraphDescriptor,
+  InputValues,
   OutputValues,
 } from "@breadboard-ai/types";
-import { SnackType, type SnackbarUUID } from "../../../ui/types/types.js";
+import { ConsentType, ConsentUIType } from "@breadboard-ai/types";
+import { SnackType, type SnackbarUUID } from "../../types.js";
 import type { StateEvent } from "../../../ui/events/events.js";
 import { parseUrl } from "../../../ui/utils/urls.js";
 import { Utils } from "../../utils.js";
-import { makeAction, withBlockingAction } from "../binder.js";
-import {
-  asAction,
-  ActionMode,
-  stateEventTrigger,
-  keyboardTrigger,
-} from "../../coordination.js";
+import { makeAction, withUIBlocking, stopRun } from "../binder.js";
+import { asAction, ActionMode, stateEventTrigger } from "../../coordination.js";
 import * as Helpers from "./helpers/helpers.js";
+import { provideInput } from "../run/helpers/input-queue.js";
 import {
   onVersionChange,
   onNewerVersionAvailable,
   onSaveStatusChange,
+  onBoardRun,
+  onBoardStop,
+  onBoardRestart,
+  onBoardInput,
+  onBoardCreate,
+  onBoardRemix,
+  onBoardDelete,
+  onSaveShortcut,
 } from "./triggers.js";
 import { forSection } from "../../../ui/strings/helper.js";
 
@@ -235,80 +241,86 @@ export type RemixResult =
  * @param messages Snackbar messages for user feedback
  * @returns The save result with new URL, or an error result
  */
-export const remix = asAction(
-  "Board.remix",
-  ActionMode.Exclusive,
-  async (
-    url: string,
-    messages: { start: string; end: string; error: string }
-  ): Promise<RemixResult> => {
-    const { controller, services } = bind;
-    const graphController = controller.editor.graph;
-    const snackbars = controller.global.snackbars;
+/**
+ * Core remix logic, not wrapped in coordination.
+ *
+ * This is an implementation detail — callers that need coordination should use
+ * `remix` (the coordinated wrapper). Parent actions that are already
+ * coordinated (e.g. `onRemix`) call this directly to avoid nested-exclusive
+ * deadlocks.
+ */
+async function remixImpl(
+  url: string,
+  messages: { start: string; end: string; error: string }
+): Promise<RemixResult> {
+  const { controller, services } = bind;
+  const graphController = controller.editor.graph;
+  const snackbars = controller.global.snackbars;
 
-    const logger = Utils.Logging.getLogger(controller);
-    const LABEL = "Board Actions";
+  const logger = Utils.Logging.getLogger(controller);
+  const LABEL = "Board Actions";
 
-    // Immediately acknowledge the user's action with a snackbar.
-    // This will be superseded by saveAs, but provides instant feedback.
-    snackbars.snackbar(
-      messages.start,
-      SnackType.PENDING,
-      [],
-      true,
-      undefined,
-      true // Replace existing snackbars.
-    );
+  // Immediately acknowledge the user's action with a snackbar.
+  // This will be superseded by saveAs, but provides instant feedback.
+  snackbars.snackbar(
+    messages.start,
+    SnackType.PENDING,
+    [],
+    true,
+    undefined,
+    true // Replace existing snackbars.
+  );
 
-    // Resolve the graph to remix
-    const currentGraph = graphController.editor?.raw();
-    let graph: GraphDescriptor;
+  // Resolve the graph to remix
+  const currentGraph = graphController.editor?.raw();
+  let graph: GraphDescriptor;
 
-    // First check if the currently open graph matches the remix URL.
-    // This handles the common case of remixing from the header and avoids
-    // URL mismatch issues (e.g., resourcekey param removed by loader).
-    if (currentGraph && graphController.url === url) {
-      logger.log(Utils.Logging.Formatter.verbose("Using current graph"), LABEL);
-      graph = structuredClone(currentGraph);
-    } else {
-      // Fall back to loading from the store (for gallery remixes, etc.)
-      logger.log(Utils.Logging.Formatter.verbose("Using graph store"), LABEL);
+  // First check if the currently open graph matches the remix URL.
+  // This handles the common case of remixing from the header and avoids
+  // URL mismatch issues (e.g., resourcekey param removed by loader).
+  if (currentGraph && graphController.url === url) {
+    logger.log(Utils.Logging.Formatter.verbose("Using current graph"), LABEL);
+    graph = structuredClone(currentGraph);
+  } else {
+    // Fall back to loading from the store (for gallery remixes, etc.)
+    logger.log(Utils.Logging.Formatter.verbose("Using graph store"), LABEL);
 
-      const loadResult = await services.loader.load(url, {});
+    const loadResult = await services.loader.load(url);
 
-      if (
-        !loadResult.success ||
-        !loadResult.graph ||
-        loadResult.graph.nodes.length === 0
-      ) {
-        // Empty graph means the load failed - likely URL mismatch
-        snackbars.snackbar(
-          messages.error,
-          SnackType.ERROR,
-          [],
-          false,
-          undefined,
-          true
-        );
-        return { success: false, reason: "no-graph" };
-      }
-
-      graph = structuredClone(loadResult.graph);
+    if (
+      !loadResult.success ||
+      !loadResult.graph ||
+      loadResult.graph.nodes.length === 0
+    ) {
+      // Empty graph means the load failed - likely URL mismatch
+      snackbars.snackbar(
+        messages.error,
+        SnackType.ERROR,
+        [],
+        false,
+        undefined,
+        true
+      );
+      return { success: false, reason: "no-graph" };
     }
 
-    // Append " Remix" to the title
-    graph.title = `${graph.title ?? "Untitled"} Remix`;
-
-    // Save as a new board
-    const saveResult = await saveAs(graph, messages);
-
-    if (!saveResult?.result || !saveResult.url) {
-      return { success: false, reason: "save-failed" };
-    }
-
-    return { success: true, url: saveResult.url };
+    graph = structuredClone(loadResult.graph);
   }
-);
+
+  // Append " Remix" to the title
+  graph.title = `${graph.title ?? "Untitled"} Remix`;
+
+  // Save as a new board
+  const saveResult = await saveAs(graph, messages);
+
+  if (!saveResult?.result || !saveResult.url) {
+    return { success: false, reason: "save-failed" };
+  }
+
+  return { success: true, url: saveResult.url };
+}
+
+export const remix = asAction("Board.remix", ActionMode.Exclusive, remixImpl);
 
 /**
  * Deletes a board from the board server.
@@ -319,40 +331,48 @@ export const remix = asAction(
  * @param messages Snackbar messages for user feedback
  * @returns Promise resolving to the delete result
  */
+/**
+ * Core delete-board logic, not wrapped in coordination.
+ *
+ * Parent actions that are already coordinated (e.g. `onDelete`) call this
+ * directly to avoid nested-exclusive deadlocks.
+ */
+async function deleteBoardImpl(
+  url: string,
+  messages: { start: string; end: string; error: string }
+): Promise<{ result: boolean }> {
+  const { controller, services } = bind;
+  const snackbars = controller.global.snackbars;
+
+  const snackbarId = snackbars.snackbar(
+    messages.start,
+    SnackType.PENDING,
+    [],
+    true, // persistent
+    undefined,
+    true // replaceAll
+  );
+
+  const fail = { result: false, error: "Unable to delete" };
+
+  const boardServer = services.googleDriveBoardServer;
+  if (!boardServer) {
+    snackbars.update(snackbarId, messages.error, SnackType.ERROR);
+    return fail;
+  }
+
+  const result = await boardServer.delete(new URL(url));
+
+  // Update snackbar with success message
+  snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
+
+  return result;
+}
+
 export const deleteBoard = asAction(
   "Board.deleteBoard",
   ActionMode.Exclusive,
-  async (
-    url: string,
-    messages: { start: string; end: string; error: string }
-  ): Promise<{ result: boolean }> => {
-    const { controller, services } = bind;
-    const snackbars = controller.global.snackbars;
-
-    const snackbarId = snackbars.snackbar(
-      messages.start,
-      SnackType.PENDING,
-      [],
-      true, // persistent
-      undefined,
-      true // replaceAll
-    );
-
-    const fail = { result: false, error: "Unable to delete" };
-
-    const boardServer = services.googleDriveBoardServer;
-    if (!boardServer) {
-      snackbars.update(snackbarId, messages.error, SnackType.ERROR);
-      return fail;
-    }
-
-    const result = await boardServer.delete(new URL(url));
-
-    // Update snackbar with success message
-    snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
-
-    return result;
-  }
+  deleteBoardImpl
 );
 
 /**
@@ -502,7 +522,6 @@ export const load = asAction(
       graphStoreArgs: {
         loader: services.loader,
         sandbox: services.sandbox,
-        fileSystem: services.fileSystem,
         flags: controller.global.flags,
       },
     });
@@ -511,7 +530,10 @@ export const load = asAction(
     controller.editor.theme.updateHash(prepared.graph);
 
     // 10. Reset run state for new graph (clear console entries from previous graph)
-    controller.run.main.resetOutput();
+    controller.run.main.reset();
+    controller.run.main.clearRunner();
+    controller.run.screen.reset();
+    controller.run.renderer.reset();
     controller.editor.share.reset();
 
     // 10. Update board controller state
@@ -540,6 +562,12 @@ export const close = asAction(
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
     const { controller } = bind;
+
+    // Reset run state
+    controller.run.main.reset();
+    controller.run.main.clearRunner();
+    controller.run.screen.reset();
+    controller.run.renderer.reset();
 
     // Reset the graph controller state
     controller.editor.graph.resetAll();
@@ -695,7 +723,7 @@ export const onRename = asAction(
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
-    await withBlockingAction(controller, async () => {
+    await withUIBlocking(controller, async () => {
       await editor.edit(
         [
           {
@@ -837,16 +865,285 @@ export const onSave = asAction(
   "Board.onSave",
   {
     mode: ActionMode.Awaits,
-    triggeredBy: () =>
-      keyboardTrigger("Save Shortcut", ["Cmd+s", "Ctrl+s"], () => {
-        const { controller } = bind;
-        return !!controller.editor.graph.editor;
-      }),
+    triggeredBy: () => onSaveShortcut(bind),
   },
   async (): Promise<void> => {
     await save({
       start: Strings.from("STATUS_SAVING_PROJECT"),
       end: Strings.from("STATUS_PROJECT_SAVED"),
+    });
+  }
+);
+
+// =============================================================================
+// State-Event-Triggered Board Routes
+// =============================================================================
+// Migrated from event-routing/board/board.ts.
+
+/**
+ * Core run-board logic, not wrapped in coordination.
+ *
+ * Checks sign-in, consent, and starts the runner. Parent actions that are
+ * already coordinated (e.g. `onRestart`) call this directly to avoid
+ * nested-exclusive deadlocks.
+ */
+async function runBoard(): Promise<void> {
+  const { controller, services } = bind;
+  const gc = controller.editor.graph;
+  const logger = Utils.Logging.getLogger(controller);
+
+  if (!gc.graph) {
+    logger.log(Utils.Logging.Formatter.warning("No board loaded"), LABEL);
+    return;
+  }
+
+  if ((await services.askUserToSignInIfNeeded()) !== "success") {
+    return;
+  }
+
+  /* c8 ignore start */
+  if (!controller.run.main.runner) {
+    logger.log(Utils.Logging.Formatter.warning("Runner not available"), LABEL);
+    return;
+  }
+  /* c8 ignore end */
+
+  // b/452677430 - Check for consent before running shared Opals that
+  // use the get_webpage tool, as this could be a data exfiltration vector.
+  if ((await controller.global.flags.flags()).requireConsentForGetWebpage) {
+    const url = gc.url;
+    const boardServer = services.googleDriveBoardServer;
+    const isGalleryApp = url && boardServer.galleryGraphs.has(url);
+    const usesGetWebpage = gc.editor
+      ?.inspect("")
+      ?.usesTool("embed://a2/tools.bgl.json#module:get-webpage");
+    const needsConsent = !isGalleryApp && gc.readOnly && usesGetWebpage;
+
+    if (needsConsent) {
+      const hasConsent =
+        url &&
+        (await controller.global.consent.queryConsent(
+          {
+            type: ConsentType.GET_ANY_WEBPAGE,
+            scope: {},
+            graphUrl: url,
+          },
+          ConsentUIType.IN_APP
+        ));
+
+      if (!hasConsent) {
+        return;
+      }
+    }
+  }
+
+  controller.run.main.runner.start();
+}
+
+export const onRun = asAction(
+  "Board.onRun",
+  {
+    mode: ActionMode.Exclusive,
+    triggeredBy: () => onBoardRun(bind),
+  },
+  runBoard
+);
+
+/**
+ * Stops the current run.
+ *
+ * If `finalOutputValues` are populated (result-only view from a shared link),
+ * clears them and strips the `?results=` param from the URL via the router
+ * instead of directly manipulating `history`.
+ *
+ * **Triggers:** `board.stop` StateEvent
+ */
+export const onStop = asAction(
+  "Board.onStop",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onBoardStop(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const gc = controller.editor.graph;
+
+    if (!gc.graph) {
+      return;
+    }
+
+    if (gc.finalOutputValues) {
+      gc.finalOutputValues = undefined;
+
+      // Strip ?results= from the URL using the router (instead of direct
+      // history.pushState) so that the router's reactive parsedUrl stays in
+      // sync.
+      const current = controller.router.parsedUrl;
+      if (current.page === "graph" && "results" in current && current.results) {
+        controller.router.go({ ...current, results: undefined });
+      }
+    }
+
+    // Stop the run.
+    stopRun(controller);
+  }
+);
+
+/**
+ * Restarts the run: stops the current run, logs the analytics event, then
+ * starts a fresh run.
+ *
+ * **Triggers:** `board.restart` StateEvent
+ */
+export const onRestart = asAction(
+  "Board.onRestart",
+  {
+    mode: ActionMode.Exclusive,
+    triggeredBy: () => onBoardRestart(bind),
+  },
+  async (): Promise<void> => {
+    const { controller, services } = bind;
+
+    await onStop();
+
+    services.actionTracker.runApp(
+      controller.editor.graph.url ?? undefined,
+      "console"
+    );
+
+    // Call the plain function directly — not the coordinated `onRun` wrapper —
+    // to avoid a nested-exclusive deadlock.
+    await runBoard();
+  }
+);
+
+/**
+ * Provides user input to the running graph.
+ *
+ * **Triggers:** `board.input` StateEvent
+ */
+export const onInput = asAction(
+  "Board.onInput",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onBoardInput(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    if (!controller.editor.graph.graph) {
+      return;
+    }
+
+    const detail = (evt as StateEvent<"board.input">).detail;
+    provideInput(detail.data as InputValues, controller.run);
+  }
+);
+
+/**
+ * Creates a new board from a graph descriptor.
+ *
+ * Gated behind sign-in. On success, navigates to the new board and notifies
+ * the embedder.
+ *
+ * **Triggers:** `board.create` StateEvent
+ */
+export const onCreate = asAction(
+  "Board.onCreate",
+  {
+    mode: ActionMode.Exclusive,
+    triggeredBy: () => onBoardCreate(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller, services } = bind;
+    const detail = (evt as StateEvent<"board.create">).detail;
+
+    if ((await services.askUserToSignInIfNeeded()) !== "success") {
+      controller.global.snackbars.unsnackbar();
+      return;
+    }
+
+    await withUIBlocking(controller, async () => {
+      const result = await saveAs(detail.graph, detail.messages);
+
+      if (!result?.url) {
+        return;
+      }
+
+      Helpers.navigateToNewBoard(controller, services, result.url);
+    });
+  }
+);
+
+/**
+ * Remixes a board: copies it with " Remix" appended to the title, saves as
+ * a new board, then navigates to it.
+ *
+ * **Triggers:** `board.remix` StateEvent
+ */
+export const onRemix = asAction(
+  "Board.onRemix",
+  {
+    mode: ActionMode.Exclusive,
+    triggeredBy: () => onBoardRemix(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller, services } = bind;
+    const detail = (evt as StateEvent<"board.remix">).detail;
+
+    await withUIBlocking(controller, async () => {
+      // Call the plain function directly — not the coordinated `remix`
+      // wrapper — to avoid a nested-exclusive deadlock.
+      const result = await remixImpl(detail.url, detail.messages);
+
+      if (!result?.success) {
+        return;
+      }
+
+      Helpers.navigateToNewBoard(controller, services, result.url);
+    });
+  }
+);
+
+/**
+ * Deletes a board after user confirmation.
+ *
+ * Removes the board from recents, deselects everything, and navigates home
+ * (unless already on the home page).
+ *
+ * **Triggers:** `board.delete` StateEvent
+ */
+export const onDelete = asAction(
+  "Board.onDelete",
+  {
+    mode: ActionMode.Exclusive,
+    triggeredBy: () => onBoardDelete(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as StateEvent<"board.delete">).detail;
+
+    if (!confirm(detail.messages.query)) {
+      return;
+    }
+
+    await withUIBlocking(controller, async () => {
+      // Call the plain function directly — not the coordinated `deleteBoard`
+      // wrapper — to avoid a nested-exclusive deadlock.
+      await deleteBoardImpl(detail.url, detail.messages);
+      controller.home.recent.remove(detail.url);
+      await controller.home.recent.isSettled;
+    });
+
+    controller.editor.selection.deselectAll();
+
+    if (controller.router.parsedUrl.page === "home") return;
+
+    const { lite, dev } = parseUrl(window.location.href);
+    controller.router.go({
+      page: "home",
+      lite,
+      dev,
+      guestPrefixed: true,
     });
   }
 );

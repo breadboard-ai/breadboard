@@ -30,7 +30,7 @@ export class Divider extends Root {
       :host {
         display: block;
         min-height: 0;
-        overflow: auto;
+        overflow: hidden;
       }
 
       hr {

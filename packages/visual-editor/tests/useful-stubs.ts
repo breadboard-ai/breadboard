@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types/capabilities.js";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
 import { AgentContext } from "../src/a2/agent/agent-context.js";
@@ -15,20 +14,9 @@ import {
 } from "../src/a2/agent/types.js";
 import { Outcome } from "@breadboard-ai/types";
 import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
+import { AgentService } from "../src/a2/agent/agent-service.js";
 
-export { stubCaps, stubModuleArgs, stubMemoryManager };
-
-const stubCaps: Capabilities = {
-  query() {
-    throw new Error(`Not implemented`);
-  },
-  read() {
-    throw new Error(`Not implemented`);
-  },
-  async write() {
-    // Do nothing
-  },
-};
+export { stubModuleArgs, stubMemoryManager };
 
 const stubModuleArgs: A2ModuleArgs = {
   mcpClientManager: {} as unknown as McpClientManager,
@@ -38,6 +26,7 @@ const stubModuleArgs: A2ModuleArgs = {
       throw new Error(`fetchWithCreds not implemented`);
     },
   }),
+  agentService: new AgentService(),
   fetchWithCreds: () => {
     throw new Error(`fetchWithCreds not implemented`);
   },

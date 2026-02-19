@@ -326,7 +326,7 @@ export const styles = [
           &:hover,
           &[disabled] {
             color: light-dark(var(--n-15), var(--n-10));
-            background: light-dark(var(--n-98), var(--n-80));
+            background: light-dark(var(--n-95), var(--n-25));
           }
 
           &[disabled] {
@@ -348,7 +348,7 @@ export const styles = [
 
             &:hover,
             &[disabled] {
-              background: light-dark(var(--p-98), var(--p-80));
+              background: light-dark(var(--n-95), var(--n-25));
             }
           }
         }

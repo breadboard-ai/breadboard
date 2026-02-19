@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type ToastType } from "../../../../ui/events/events.js";
+import { type ToastType } from "../../../types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 

@@ -8,7 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { StateEvent } from "../../events/events.js";
-import { RuntimeFlags } from "@breadboard-ai/types";
+import { RuntimeFlags, RUNTIME_FLAG_META } from "@breadboard-ai/types";
 import { Task } from "@lit/task";
 import { repeat } from "lit/directives/repeat.js";
 
@@ -51,9 +51,21 @@ export class VERuntimeFlags extends LitElement {
         & .entry {
           display: grid;
           grid-template-columns: 1fr 120px;
-          align-items: center;
+          align-items: start;
+
+          & .flag-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--bb-grid-size);
+          }
+
+          & .flag-description {
+            font-size: var(--bb-body-small);
+            color: var(--light-dark-n-20);
+          }
 
           & select {
+            margin-top: var(--bb-grid-size);
             padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
             border-radius: var(--bb-grid-size-16);
             cursor: pointer;
@@ -106,9 +118,11 @@ export class VERuntimeFlags extends LitElement {
         }
 
         const flags = Object.entries(runtimeFlags).sort(([aName], [bName]) => {
-          if (aName > bName) return 1;
-          if (aName < bName) return -1;
-          return 0;
+          const aTitle =
+            RUNTIME_FLAG_META[aName as keyof RuntimeFlags]?.title ?? aName;
+          const bTitle =
+            RUNTIME_FLAG_META[bName as keyof RuntimeFlags]?.title ?? bName;
+          return aTitle.localeCompare(bTitle);
         });
 
         return html`
@@ -121,10 +135,20 @@ export class VERuntimeFlags extends LitElement {
               flags,
               ([flag]) => flag,
               ([name, value]) => {
+                const meta = RUNTIME_FLAG_META[name as keyof RuntimeFlags];
+                const title = meta?.title ?? name;
+                const description = meta?.description;
                 return html` <div class="entry">
-                  <label class="sans-flex round w-400" for=${name}
-                    >${name}</label
-                  >
+                  <div class="flag-info">
+                    <label class="sans-flex round w-400" for=${name}
+                      >${title}</label
+                    >
+                    ${description
+                      ? html`<span class="flag-description sans-flex w-400"
+                          >${description}</span
+                        >`
+                      : nothing}
+                  </div>
                   <select
                     id=${name}
                     name=${name}

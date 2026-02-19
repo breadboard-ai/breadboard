@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, GraphTag } from "./graph-descriptor.js";
-import { GraphToRun } from "./node-handler.js";
+import {
+  GraphDescriptor,
+  GraphIdentifier,
+  GraphTag,
+} from "./graph-descriptor.js";
 import {
   TypedEventTarget,
   TypedEventTargetType,
@@ -22,7 +25,7 @@ export type GraphProviderItem = {
   mine: boolean;
   readonly: boolean;
   handle: unknown;
-  metadata?: {liteModeFeaturedIndex?: number};
+  metadata?: { liteModeFeaturedIndex?: number };
 };
 
 export type GraphProviderStore = {
@@ -154,39 +157,15 @@ export interface MutableGraphCollection extends ImmutableGraphCollection {
 }
 
 /**
- * Describes the context in which a graph is being loaded.
- * It's a subset of the `NodeHandlerContext` type.
- * @see [NodeHandlerContext]
- *
- */
-export type GraphLoaderContext = {
-  /**
-   * The base URL for the graph being loaded. This may be a URL of the graph
-   * that is loading the graph, or it may be the URL of a graph higher in
-   * the graph hierarchy, since some graphs may be ephemeral: created without
-   * a URL.
-   */
-  base?: URL;
-  /**
-   * The board that is loading this graph.
-   */
-  board?: GraphDescriptor;
-  /**
-   * The graph that contains the graph being loaded. Usually the same as
-   * `board`, but may be different in some cases.
-   * TODO: Figure out what those cases are.
-   */
-  outerGraph?: GraphDescriptor;
-};
-
-/**
  * Returns the result of loading the graph. When we're loading the subgraph,
  * it returns the main graph and the id of the subgraph
  */
 export type GraphLoaderResult =
-  | ({
+  | {
       success: true;
-    } & GraphToRun)
+      graph: GraphDescriptor;
+      subGraphId?: GraphIdentifier;
+    }
   | {
       success: false;
       error: string;
@@ -203,10 +182,7 @@ export type GraphLoader = {
    * @param context -- the context in which to load the graph
    * @returns -- the loaded graph, or `null` if it could not be loaded.
    */
-  load: (
-    path: string,
-    context: GraphLoaderContext
-  ) => Promise<GraphLoaderResult>;
+  load: (path: string) => Promise<GraphLoaderResult>;
 };
 
 /**
@@ -244,8 +220,7 @@ export type BoardServerEventMap = {
 export type BoardServerEventTarget = TypedEventTarget<BoardServerEventMap>;
 
 export interface BoardServer
-  extends GraphProvider,
-    TypedEventTargetType<BoardServerEventMap> {
+  extends GraphProvider, TypedEventTargetType<BoardServerEventMap> {
   getLatestSharedVersion?(url: URL): number;
   capabilities: BoardServerCapabilities;
 }

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types";
 import { mkdir, writeFile } from "fs/promises";
 import { mock } from "node:test";
 import { dirname, join } from "path";
@@ -29,6 +28,7 @@ import {
 import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
 import { getAuthenticatedClient } from "./authenticate.js";
 import { type ConsentController } from "../src/sca/controller/subcontrollers/global/global.js";
+import { AgentService } from "../src/a2/agent/agent-service.js";
 
 export { session };
 
@@ -37,7 +37,6 @@ const ROOT_DIR = join(MODULE_DIR, "..", "..", "..");
 const OUT_DIR = join(ROOT_DIR, "out");
 
 export type EvalHarnessRuntimeArgs = {
-  caps: Capabilities;
   moduleArgs: A2ModuleArgs;
   logger: EvalLogger;
 };
@@ -216,18 +215,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
 
   readonly requestLogger = new Logger();
 
-  readonly caps: Capabilities = {
-    query() {
-      throw new Error(`Not implemented`);
-    },
-    read() {
-      throw new Error(`Not implemented`);
-    },
-    async write() {
-      // Do nothing
-    },
-  };
-
   private fetchWithCreds = async (
     url: RequestInfo | URL,
     init?: RequestInit
@@ -259,6 +246,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
       } as Partial<ConsentController> as ConsentController;
     },
     notebookLmApiClient: {} as never,
+    agentService: new AgentService(),
 
     context: {
       currentGraph: {

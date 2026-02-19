@@ -17,27 +17,27 @@ import type {
   AppTemplateAdditionalOptionsAvailable,
   Command,
   EdgeData,
-  Settings,
-  SnackType,
-  SnackbarAction,
-  SnackbarUUID,
+  Tokens,
   UserOutputValues,
   Utterance,
   WorkspaceVisualChangeId,
 } from "../types/types.js";
+import {
+  ToastType,
+  type SnackType,
+  type SnackbarAction,
+  type SnackbarUUID,
+} from "../../sca/types.js";
+
+// Re-export ToastType for barrel compatibility (BreadboardUI.Events.ToastType).
+// Canonical source: sca/types.ts.
+export { ToastType };
 
 const eventInit = {
   bubbles: true,
   cancelable: true,
   composed: true,
 };
-
-export enum ToastType {
-  INFORMATION = "information",
-  WARNING = "warning",
-  ERROR = "error",
-  PENDING = "pending",
-}
 
 /** State Event System */
 
@@ -341,7 +341,7 @@ export class OverlayDismissedEvent extends Event {
 export class SettingsUpdateEvent extends Event {
   static eventName = "bbsettingsupdate";
 
-  constructor(public readonly settings: Settings) {
+  constructor(public readonly settings: Tokens) {
     super(SettingsUpdateEvent.eventName, { ...eventInit });
   }
 }

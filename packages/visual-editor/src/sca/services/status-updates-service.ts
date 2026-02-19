@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { VisualEditorStatusUpdate } from "../../ui/types/types.js";
+import type { VisualEditorStatusUpdate } from "../types.js";
 import type { StatusUpdatesController } from "../controller/subcontrollers/global/status-updates-controller.js";
 import * as Formatter from "../utils/logging/formatter.js";
 import { getLogger } from "../utils/logging/logger.js";

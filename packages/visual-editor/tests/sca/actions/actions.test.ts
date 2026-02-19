@@ -75,6 +75,7 @@ suite("Actions", () => {
           addEventListener: () => {},
           removeEventListener: () => {},
         },
+        runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
       // Initialize actions
@@ -127,6 +128,7 @@ suite("Actions", () => {
           addEventListener: () => {},
           removeEventListener: () => {},
         },
+        runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
       actions(mockController, mockServices);
@@ -180,6 +182,7 @@ suite("Actions", () => {
           addEventListener: () => {},
           removeEventListener: () => {},
         },
+        runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
       actions(mockController, mockServices);
@@ -224,6 +227,7 @@ suite("Actions", () => {
           addEventListener: () => {},
           removeEventListener: () => {},
         },
+        runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
       // First initialization

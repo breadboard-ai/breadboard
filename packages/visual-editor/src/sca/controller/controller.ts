@@ -74,6 +74,15 @@ class Controller implements AppController {
         "Editor_Integrations",
         "IntegrationsController"
       ),
+      graphEditingAgent:
+        new Editor.GraphEditingAgent.GraphEditingAgentController(
+          "Editor_GraphEditingAgent",
+          "GraphEditingAgentController"
+        ),
+      notebookLmPicker: new Editor.NotebookLmPicker.NotebookLmPickerController(
+        "Editor_NotebookLmPicker",
+        "NotebookLmPickerController"
+      ),
     };
 
     this.home = {
@@ -102,6 +111,10 @@ class Controller implements AppController {
         "StatusUpdatesController"
       ),
       consent: new Global.ConsentController("Consent", "ConsentController"),
+      onboarding: new Global.OnboardingController(
+        "Onboarding",
+        "OnboardingController"
+      ),
       screenSize: new Global.ScreenSizeController(
         "ScreenSize",
         "ScreenSizeController"
@@ -137,6 +150,11 @@ class Controller implements AppController {
 
     this.run = {
       main: new Run.RunController("Run", "RunController"),
+      renderer: new Run.RendererController(
+        "Run_Renderer",
+        "RendererController"
+      ),
+      screen: new Run.ScreenController("Run_Screen", "ScreenController"),
     };
 
     this.router = new RouterController();
@@ -225,6 +243,8 @@ export interface AppController extends DebuggableAppController {
     theme: Editor.Theme.ThemeController;
     fastAccess: Editor.FastAccess.FastAccessController;
     integrations: Editor.Integrations.IntegrationsController;
+    graphEditingAgent: Editor.GraphEditingAgent.GraphEditingAgentController;
+    notebookLmPicker: Editor.NotebookLmPicker.NotebookLmPickerController;
   };
   home: {
     recent: Home.RecentBoardsController;
@@ -239,6 +259,7 @@ export interface AppController extends DebuggableAppController {
     snackbars: Global.SnackbarController;
     statusUpdates: Global.StatusUpdatesController;
     consent: Global.ConsentController;
+    onboarding: Global.OnboardingController;
     screenSize: Global.ScreenSizeController;
     performMigrations(): Promise<void>;
   };
@@ -247,6 +268,8 @@ export interface AppController extends DebuggableAppController {
   };
   run: {
     main: Run.RunController;
+    renderer: Run.RendererController;
+    screen: Run.ScreenController;
   };
   router: RouterController;
   isHydrated: Promise<number[]>;

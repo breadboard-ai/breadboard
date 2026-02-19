@@ -18,6 +18,7 @@ import { html, css } from "lit";
 import { customElement, query, state } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { ref } from "lit/directives/ref.js";
+import { icons } from "../styles/icons.js";
 
 /**
  * Modal dialog component.
@@ -32,6 +33,7 @@ import { ref } from "lit/directives/ref.js";
 @customElement("a2ui-modal")
 export class Modal extends Root {
   static styles = [
+    icons,
     css`
       * {
         box-sizing: border-box;

@@ -8,7 +8,7 @@ import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { MainArguments } from "./types/types.js";
 
 import * as BBLite from "./ui/lite/lite.js";
@@ -16,13 +16,12 @@ import { MainBase } from "./main-base.js";
 import { classMap } from "lit/directives/class-map.js";
 import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
-import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
+
 import { reactive } from "./sca/reactive.js";
-import { eventRoutes } from "./event-routing/event-routing.js";
+
 import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { styleMap } from "lit/directives/style-map.js";
 
 import { markdown } from "./ui/directives/markdown.js";
 import { type SharePanel } from "./ui/elements/elements.js";
@@ -33,9 +32,6 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 
-const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
-const REMIX_WARNING_KEY = "bb-lite-show-remix-warning";
-
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
   @property()
@@ -43,9 +39,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   @property()
   accessor compactView = false;
-
-  @state()
-  accessor #showAdvancedEditorOnboardingTooltip = true;
 
   static styles = [
     BBLite.Styles.HostColorScheme.match,
@@ -371,17 +364,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `,
   ];
 
-  @state()
-  set showRemixWarning(show: boolean) {
-    this.#showRemixWarning = show;
-    globalThis.localStorage.setItem(REMIX_WARNING_KEY, String(show));
-  }
-  get showRemixWarning() {
-    return this.#showRemixWarning;
-  }
-  #showRemixWarning = false;
-
-  #advancedEditorLink: Ref<HTMLElement> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
 
   private accessor accessStatus: CheckAppAccessResult | null = null;
@@ -410,13 +392,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   constructor(args: MainArguments) {
     super(args);
-
-    this.#showAdvancedEditorOnboardingTooltip =
-      (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
-      "true";
-
-    this.showRemixWarning =
-      (globalThis.localStorage.getItem(REMIX_WARNING_KEY) ?? "true") === "true";
+    this.sca.controller.global.onboarding.appMode = "lite";
 
     this.addEventListener("bbevent", (e: Event) => {
       const evt = e as StateEvent<keyof StateEventDetailMap>;
@@ -469,7 +445,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #goFullScreenIfGraphIsProbablyShared() {
-    const url = this.tab?.graph.url;
+    const gc = this.sca.controller.editor.graph;
+    const url = gc.url;
     if (!url) {
       return;
     }
@@ -484,7 +461,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       // This is a bit hacky and indirect, but an easy way to tell if something
       // is from the public gallery is to check if the GoogleDriveClient has
       // been configured to use the proxy for it.
-      this.googleDriveClient.fileIsMarkedForReadingWithPublicProxy(fileId);
+      this.sca.services.googleDriveClient.fileIsMarkedForReadingWithPublicProxy(
+        fileId
+      );
     if (!isMine && !isFeaturedGalleryItem) {
       this.showAppFullscreen = true;
     }
@@ -511,7 +490,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void> {
-    this.actionTracker.updateCanAccessStatus(result.canAccess);
+    this.sca.services.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       this.accessStatus = result;
       this.sca.controller.global.main.show.add("NoAccessModal");
@@ -540,7 +519,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: "" };
     }
     // await this.sca.controller.global.flowgenInput.isHydrated;
-    let projectState = this.runtime.project;
+    let hasEditor = !!this.sca.controller.editor.graph.editor;
     this.sca.controller.global.flowgenInput.currentExampleIntent = intent;
 
     // Set generating state early so the UI shows the editor view throughout
@@ -548,18 +527,15 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     // loadState transitions to "Loaded" while the graph is still empty.
     this.sca.controller.global.flowgenInput.state = { status: "generating" };
 
-    if (!projectState) {
+    if (!hasEditor) {
       // Zero state: need to create the board first, then wait for load
       await this.invokeBoardCreateRoute();
       await this.#waitForLoadState();
 
-      // After the board has been created we should be okay to create
-      // projectState.
-      this.runtime.syncProjectState();
-      projectState = this.runtime.project;
-      if (!projectState) {
+      hasEditor = !!this.sca.controller.editor.graph.editor;
+      if (!hasEditor) {
         this.sca.controller.global.flowgenInput.state = { status: "initial" };
-        return { error: `Failed to create a new opal.` };
+        return { error: `Failed to create a new Opal.` };
       }
     }
 
@@ -569,20 +545,20 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: "No current graph detected, exting flow generation" };
     }
 
-    if (!this.flowGenerator) {
+    if (!this.sca.services.flowGenerator) {
       this.sca.controller.global.flowgenInput.state = { status: "initial" };
       return { error: `No FlowGenerator was provided` };
     }
 
-    this.dispatchEvent(
+    this.sca.services.stateEventBus.dispatchEvent(
       new StateEvent({ eventType: "flowgen.generate", intent })
     );
   }
 
   #renderOriginalPrompt() {
     const prompt =
-      this.tab?.graph.metadata?.raw_intent ??
-      this.tab?.graph.metadata?.intent ??
+      this.sca.controller.editor.graph.graph?.metadata?.raw_intent ??
+      this.sca.controller.editor.graph.graph?.metadata?.intent ??
       this.sca.controller.global.flowgenInput.currentExampleIntent ??
       null;
 
@@ -595,7 +571,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   protected renderNoAccessModal() {
     const content = getNoAccessModalContent(
       this.accessStatus,
-      this.guestConfiguration
+      this.sca.services.guestConfig
     );
     if (!content) return nothing;
     const { title, message } = content;
@@ -613,7 +589,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderUserInput() {
     const editable =
-      (this.tab?.graphIsMine ?? false) || this.#viewType !== "editor";
+      !this.sca.controller.editor.graph.readOnly || this.#viewType !== "editor";
     return html`<bb-editor-input-lite
       ?inert=${this.#isInert()}
       .controller=${this}
@@ -625,7 +601,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderMessage() {
     const editable =
-      (this.tab?.graphIsMine ?? false) || this.#viewType !== "editor";
+      !this.sca.controller.editor.graph.readOnly || this.#viewType !== "editor";
     return html`<div
       ?disabled=${!editable}
       id="message"
@@ -652,50 +628,15 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `;
   }
 
-  #renderOnboardingTooltip() {
-    if (this.showRemixWarning) {
-      this.#showAdvancedEditorOnboardingTooltip = false;
-    }
-
-    if (
-      !this.#showAdvancedEditorOnboardingTooltip ||
-      !this.#advancedEditorLink.value
-    ) {
-      return nothing;
-    }
-
-    const targetBounds = this.#advancedEditorLink.value.getBoundingClientRect();
-    if (!targetBounds.width) {
-      return nothing;
-    }
-
-    const PADDING = 30;
-    const x = Math.round(window.innerWidth - targetBounds.right + PADDING);
-    const y = Math.round(targetBounds.y + targetBounds.height + PADDING);
-    const styles: Record<string, string> = {
-      "--right": `${x}px`,
-      "--top": `${y}px`,
-    };
-
-    return html`<bb-onboarding-tooltip
-      @bbonboardingacknowledged=${() => {
-        this.#showAdvancedEditorOnboardingTooltip = false;
-        globalThis.localStorage.setItem(ADVANCED_EDITOR_KEY, "false");
-      }}
-      style=${styleMap(styles)}
-      .text=${"To edit or view full prompt, open in advanced editor"}
-    ></bb-onboarding-tooltip>`;
-  }
-
   #renderApp() {
     const renderValues = this.getRenderValues();
 
     const title =
       this.#viewType === "editor"
-        ? (this.tab?.graph.title ?? "Untitled app")
+        ? (this.sca.controller.editor.graph.title ?? "Untitled app")
         : "...";
 
-    const graphIsMine = this.tab?.graphIsMine ?? false;
+    const graphIsMine = !this.sca.controller.editor.graph.readOnly;
     const isGenerating = this.#status === "generating";
     const isFreshGraph =
       isGenerating &&
@@ -707,14 +648,16 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if (this.#viewType === "editor") {
       buttons.push(
         html`<a
-          ${ref(this.#advancedEditorLink)}
           class="w-400 md-title-small sans-flex unvaried"
           id="open-advanced-editor"
-          href="${this.guestConfiguration.advancedEditorOrigin ||
+          href="${this.sca.services.guestConfig.advancedEditorOrigin ||
           this.hostOrigin}?mode=canvas&flow=${this.#graph?.url}"
           target="_blank"
         >
           <span class="g-icon">open_in_new</span>Open Advanced Editor
+          <bb-onboarding-tooltip
+            .onboardingId=${"advanced-editor"}
+          ></bb-onboarding-tooltip>
         </a>`
       );
       if (graphIsMine) {
@@ -735,15 +678,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             @click=${this.#onClickRemixApp}
           >
             <span class="g-icon">gesture</span>${Strings.from("COMMAND_REMIX")}
-            ${this.showRemixWarning
-              ? html`<bb-onboarding-tooltip
-                  id="show-remix-warning"
-                  .text=${"Remix to make a copy and edit the steps"}
-                  @bbonboardingacknowledged=${() => {
-                    this.showRemixWarning = false;
-                  }}
-                ></bb-onboarding-tooltip>`
-              : nothing}
+            ${html`<bb-onboarding-tooltip
+              id="show-remix-warning"
+              .onboardingId=${"lite-remix"}
+            ></bb-onboarding-tooltip>`}
           </button>`
         );
       }
@@ -767,17 +705,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ?inert=${this.#isInert()}
         class=${classMap({ active: true })}
         .graph=${this.#graph ?? null}
-        .graphIsEmpty=${false}
+        .graphContentState=${"loaded"}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-        .isMine=${this.tab?.graphIsMine ?? false}
-        .projectRun=${renderValues.projectState?.run}
+        .isMine=${!this.sca.controller.editor.graph.readOnly}
         .readOnly=${true}
         .runtimeFlags=${this.sca.controller.global.flags}
         .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
         "signedin"}
-        .status=${renderValues.tabStatus}
-        .shouldShowFirstRunMessage=${true}
-        .firstRunMessage=${Strings.from("LABEL_FIRST_RUN_LITE")}
+        .status=${renderValues.runStatus}
         .themeHash=${this.sca.controller.editor.theme.themeHash}
         .headerConfig=${{
           menu: false,
@@ -818,7 +753,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
                 }}
               >
                 <span class="example-icon">
-                  <span class="g-icon filled-heavy round">pentagon</span>
+                  <span class="g-icon filled heavy round">pentagon</span>
                 </span>
                 <span>${example.intent}</span>
               </button>
@@ -833,7 +768,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderShellUI() {
     return [
       this.renderTooltip(),
-      this.#renderOnboardingTooltip(),
       this.sca.controller.global.main.show.has("NoAccessModal")
         ? this.renderNoAccessModal()
         : nothing,
@@ -902,7 +836,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ${content}
       </section>
       ${this.#renderShellUI()} ${this.#renderSharePanel()}
-      ${this.renderSnackbar()} `;
+      ${this.renderSnackbar()} ${this.renderNotebookLmPicker()} `;
   }
 
   #onSnackbar(event: BreadboardUI.Events.SnackbarEvent) {
@@ -920,36 +854,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     this.sca.controller.global.snackbars.unsnackbar(event.snackbarId);
   }
 
-  protected async invokeBoardReplaceRoute(
-    replacement: GraphDescriptor,
-    theme: GraphTheme | undefined
-  ) {
-    return eventRoutes.get("board.replace")?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.replace",
-          replacement,
-          theme,
-          creator: { role: "assistant" },
-        })
-      )
-    );
-  }
-
-  protected async invokeBoardCreateRoute() {
-    return eventRoutes.get("board.create")?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.create",
-          editHistoryCreator: { role: "user" },
-          graph: blankBoard(),
-          messages: {
-            start: "",
-            end: "",
-            error: "",
-          },
-        })
-      )
+  protected invokeBoardCreateRoute() {
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent({
+        eventType: "board.create",
+        editHistoryCreator: { role: "user" },
+        graph: blankBoard(),
+        messages: {
+          start: "",
+          end: "",
+          error: "",
+        },
+      })
     );
   }
 

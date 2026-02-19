@@ -5,7 +5,6 @@
  */
 
 import {
-  Capabilities,
   ConsentType,
   ConsentUIType,
   TextCapabilityPart,
@@ -41,7 +40,7 @@ export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 
-const FLASH_MODEL_NAME = "gemini-2.5-flash";
+const FLASH_MODEL_NAME = "gemini-3-flash-preview";
 const CODE_GENERATION_MODEL_NAME = "gemini-3-flash-preview";
 const PRO_MODEL_NAME = "gemini-3-pro-preview";
 const LITE_MODEL_NAME = "gemini-2.5-flash-lite";
@@ -60,7 +59,6 @@ export type ModelConstraint =
 
 export type GenerateFunctionArgs = {
   fileSystem: AgentFileSystem;
-  caps: Capabilities;
   moduleArgs: A2ModuleArgs;
   translator: PidginTranslator;
   taskTreeManager: TaskTreeManager;
@@ -114,14 +112,8 @@ function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
 function defineGenerateFunctions(
   args: GenerateFunctionArgs
 ): FunctionDefinition[] {
-  const {
-    fileSystem,
-    caps,
-    moduleArgs,
-    translator,
-    taskTreeManager,
-    generators,
-  } = args;
+  const { fileSystem, moduleArgs, translator, taskTreeManager, generators } =
+    args;
   const imageFunction = defineFunction(
     {
       name: "generate_images",
@@ -228,7 +220,6 @@ The Gemini model to use for image generation. How to choose the right model:
         reporter: effectiveReporter,
       };
       const generated = await generators.callImage(
-        caps,
         args,
         modelName,
         prompt,
@@ -508,7 +499,6 @@ The following elements should be included in your prompt:
         reporter: effectiveReporter,
       };
       const generating = await generators.callVideo(
-        caps,
         args,
         prompt,
         imageParts.map((part) => ({ parts: [part] })),
@@ -580,7 +570,7 @@ The following elements should be included in your prompt:
         ...moduleArgs,
         reporter: effectiveReporter,
       };
-      const generating = await generators.callAudio(caps, args, text, voice);
+      const generating = await generators.callAudio(args, text, voice);
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);
@@ -653,7 +643,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
         ...moduleArgs,
         reporter: effectiveReporter,
       };
-      const generating = await generators.callMusic(caps, args, prompt);
+      const generating = await generators.callMusic(args, prompt);
       if (!ok(generating)) return { error: generating.$error };
 
       const dataPart = generating.parts.at(0);

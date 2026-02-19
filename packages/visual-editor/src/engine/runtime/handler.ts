@@ -13,11 +13,7 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import { A2_COMPONENT_MAP } from "../../a2/a2-registry.js";
-import {
-  A2ModuleFactory,
-  createCallableCapabilities,
-} from "../../a2/runnable-module-factory.js";
-import { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
+import { A2ModuleFactory } from "../../a2/runnable-module-factory.js";
 
 const getHandlerFunction = (handler: NodeHandler): NodeHandlerFunction => {
   if ("invoke" in handler && handler.invoke) return handler.invoke;
@@ -62,11 +58,9 @@ export async function getHandler(
   const component = A2_COMPONENT_MAP.get(type);
   if (component && context.sandbox) {
     const factory = context.sandbox as A2ModuleFactory;
-    const capsManager = new CapabilitiesManagerImpl(context);
-    const caps = createCallableCapabilities(capsManager.createSpec());
     return {
       invoke: async (inputs, invokeContext) =>
-        component.invoke(inputs, caps, factory.createModuleArgs(invokeContext)),
+        component.invoke(inputs, factory.createModuleArgs(invokeContext)),
       describe: async (inputs, inputSchema, outputSchema, describerContext) =>
         component.describe(
           {
@@ -75,7 +69,6 @@ export async function getHandler(
             outputSchema,
             asType: describerContext?.asType,
           },
-          caps,
           factory.createModuleArgs(describerContext ?? context)
         ),
     };

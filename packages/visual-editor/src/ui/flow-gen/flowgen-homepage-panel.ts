@@ -7,10 +7,10 @@
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { LitElement, css, html, type PropertyValues } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { actionTrackerContext } from "../contexts/action-tracker-context.js";
 import "../elements/input/expanding-textarea.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { StateEvent, UtteranceEvent } from "../events/events.js";
@@ -20,8 +20,8 @@ import { type } from "../styles/host/type.js";
 import { icons } from "../styles/icons.js";
 import { outlineButtonWithIcon } from "../styles/outline-button-with-icon.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
-import { ActionTracker } from "../types/types.js";
-import { flowGeneratorContext, type FlowGenerator } from "./flow-generator.js";
+import { scaContext } from "../../sca/context/context.js";
+import { type SCA } from "../../sca/sca.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 const GlobalStrings = StringsHelper.forSection("Global");
@@ -41,7 +41,7 @@ const SAMPLE_INTENTS = [
 const SAMPLE_INTENTS_ROTATION_MS = 7000;
 
 @customElement("bb-flowgen-homepage-panel")
-export class FlowgenHomepagePanel extends LitElement {
+export class FlowgenHomepagePanel extends SignalWatcher(LitElement) {
   static styles = [
     outlineButtonWithIcon,
     icons,
@@ -158,11 +158,8 @@ export class FlowgenHomepagePanel extends LitElement {
     `,
   ];
 
-  @consume({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator | undefined = undefined;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined = undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @state()
   accessor #state: State = { status: "initial" };
@@ -300,7 +297,7 @@ export class FlowgenHomepagePanel extends LitElement {
         return;
       }
 
-      this.actionTracker?.flowGenCreate();
+      this.sca?.services.actionTracker?.flowGenCreate();
 
       this.#state = { status: "generating" };
       void this.#generateBoard(description)
@@ -314,10 +311,11 @@ export class FlowgenHomepagePanel extends LitElement {
   }
 
   async #generateBoard(intent: string): Promise<GraphDescriptor> {
-    if (!this.flowGenerator) {
+    const flowGenerator = this.sca.services.flowGenerator;
+    if (!flowGenerator) {
       throw new Error(`No FlowGenerator was provided`);
     }
-    const generated = await this.flowGenerator.oneShot({ intent });
+    const generated = await flowGenerator.oneShot({ intent });
     if ("error" in generated) {
       throw new Error(generated.error);
     }

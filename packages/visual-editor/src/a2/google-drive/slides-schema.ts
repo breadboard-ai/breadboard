@@ -2,12 +2,7 @@
  * @fileoverview Defines the schema for simple slides JSON output
  */
 
-import {
-  Capabilities,
-  JSONPart,
-  LLMContent,
-  Outcome,
-} from "@breadboard-ai/types";
+import { JSONPart, LLMContent, Outcome } from "@breadboard-ai/types";
 import { type GeminiSchema } from "../a2/gemini.js";
 import { GeminiPrompt } from "../a2/gemini-prompt.js";
 import { err, llm, ok } from "../a2/utils.js";
@@ -47,14 +42,13 @@ function simpleSlidesSchema(): GeminiSchema {
 }
 
 async function inferSlideStructure(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   contents?: LLMContent[]
 ): Promise<Outcome<SimplePresentation>> {
   if (!contents) {
     return err(`Unable to infer slide structure. No information was provided.`);
   }
-  const prompt = new GeminiPrompt(caps, moduleArgs, {
+  const prompt = new GeminiPrompt(moduleArgs, {
     body: {
       contents,
       systemInstruction:

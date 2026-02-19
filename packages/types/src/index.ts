@@ -10,6 +10,7 @@ export type * from "./data.js";
 export type * from "./deep-read-only.js";
 export type * from "./edit.js";
 export type * from "./flags.js";
+export { RUNTIME_FLAG_META } from "./flags.js";
 export type * from "./graph-descriptor.js";
 export type * from "./harness.js";
 export type * from "./inspect.js";

@@ -8,7 +8,6 @@ import { Signal } from "signal-polyfill";
 
 import type {
   AffectedNode,
-  DescribeResultCacheArgs,
   GraphIdentifier,
   GraphStoreArgs,
   InspectableDescriberResultCache,
@@ -17,51 +16,80 @@ import type {
   NodeDescriberResult,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { hash } from "@breadboard-ai/utils";
-import { NodeDescriberManager } from "./node-describer-manager.js";
+import { getHandler } from "../../runtime/legacy.js";
 
 export { DescribeResultCache };
+
+function emptyResult(): NodeDescriberResult {
+  return {
+    inputSchema: { type: "object" },
+    outputSchema: { type: "object" },
+  };
+}
 
 class SignalBackedEntry {
   #current: Signal.State<NodeDescriberResult>;
   #updating: Signal.State<boolean> = new Signal.State(true);
   #latestPromise: Promise<NodeDescriberResult>;
 
-  #args: DescribeResultCacheArgs;
+  #mutable: MutableGraph;
+  #deps: GraphStoreArgs;
   #graphId: GraphIdentifier;
   #nodeId: NodeIdentifier;
 
   constructor(
-    args: DescribeResultCacheArgs,
+    mutable: MutableGraph,
+    deps: GraphStoreArgs,
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ) {
-    this.#args = args;
+    this.#mutable = mutable;
+    this.#deps = deps;
     this.#graphId = graphId;
     this.#nodeId = nodeId;
-    this.#current = new Signal.State(args.initial(graphId, nodeId));
+    this.#current = new Signal.State(emptyResult());
     this.#latestPromise = this.#fetchLatest();
   }
 
-  #fetchLatest(): Promise<NodeDescriberResult> {
+  async #fetchLatest(): Promise<NodeDescriberResult> {
     this.#updating.set(true);
-    const promise = this.#args
-      .latest(this.#graphId, this.#nodeId)
-      .then((latest) => {
-        this.#current.set(latest);
-        this.#updating.set(false);
-        return latest;
-      })
-      .catch(() => {
+    try {
+      const node = this.#mutable.nodes.get(this.#nodeId, this.#graphId);
+      if (!node) {
         this.#updating.set(false);
         return this.#current.get();
-      });
-    this.#latestPromise = promise;
-    return promise;
+      }
+      const context = {
+        sandbox: this.#deps.sandbox,
+        graphStore: this.#mutable.store,
+      };
+      const handler = await getHandler(node.descriptor.type, context);
+      if (!handler || !("describe" in handler) || !handler.describe) {
+        this.#updating.set(false);
+        return this.#current.get();
+      }
+      const latest = await handler.describe(
+        { ...node.configuration() },
+        { type: "object" },
+        { type: "object" },
+        {
+          sandbox: this.#deps.sandbox,
+          graphStore: this.#mutable.store,
+          flags: this.#deps.flags,
+          asType: false,
+        }
+      );
+      this.#current.set(latest);
+      this.#updating.set(false);
+      return latest;
+    } catch {
+      this.#updating.set(false);
+      return this.#current.get();
+    }
   }
 
   refresh() {
-    this.#fetchLatest();
+    this.#latestPromise = this.#fetchLatest();
   }
 
   snapshot(): InspectableDescriberResultCacheEntry {
@@ -74,21 +102,23 @@ class SignalBackedEntry {
 }
 
 class DescribeResultCache implements InspectableDescriberResultCache {
-  #map = new Map<number, SignalBackedEntry>();
-  #args: DescribeResultCacheArgs;
+  #map = new Map<string, SignalBackedEntry>();
+  #mutable: MutableGraph;
+  #deps: GraphStoreArgs;
 
   constructor(mutable: MutableGraph, deps: GraphStoreArgs) {
-    this.#args = new NodeDescriberManager(mutable, deps);
+    this.#mutable = mutable;
+    this.#deps = deps;
   }
 
   get(
     id: NodeIdentifier,
     graphId: GraphIdentifier
   ): InspectableDescriberResultCacheEntry {
-    const key = computeHash({ id, graphId });
+    const key = `${graphId}:${id}`;
     let entry = this.#map.get(key);
     if (!entry) {
-      entry = new SignalBackedEntry(this.#args, graphId, id);
+      entry = new SignalBackedEntry(this.#mutable, this.#deps, graphId, id);
       this.#map.set(key, entry);
     }
     return entry.snapshot();
@@ -96,12 +126,8 @@ class DescribeResultCache implements InspectableDescriberResultCache {
 
   update(affectedNodes: AffectedNode[]) {
     affectedNodes.forEach((affected) => {
-      const key = computeHash(affected);
+      const key = `${affected.graphId}:${affected.id}`;
       this.#map.get(key)?.refresh();
     });
   }
-}
-
-function computeHash(node: AffectedNode): number {
-  return hash(node);
 }

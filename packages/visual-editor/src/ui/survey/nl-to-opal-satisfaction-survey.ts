@@ -6,7 +6,7 @@
 
 import type { BoardServer, GraphDescriptor } from "@breadboard-ai/types";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
-import type { ProjectRun } from "../state/types.js";
+import type { AppScreenPresenter } from "../presenters/app-screen-presenter.js";
 import { DAYS, maybeTriggerSurvey, type SurveyConfig } from "./survey.js";
 
 const CONFIG: SurveyConfig = {
@@ -20,13 +20,21 @@ const CONFIG: SurveyConfig = {
 
 const WAIT_MS = 20_000;
 
+/**
+ * Minimal interface for the graph controller properties the survey needs.
+ */
+interface SurveyGraphSource {
+  readonly finalOutputValues: unknown;
+}
+
 let globalState:
   | { status: "inactive" }
-  | { status: "waiting"; run: ProjectRun }
+  | { status: "waiting"; presenter: AppScreenPresenter }
   | { status: "triggering" } = { status: "inactive" };
 
 export async function maybeTriggerNlToOpalSatisfactionSurvey(
-  run: ProjectRun,
+  presenter: AppScreenPresenter,
+  graphSource: SurveyGraphSource,
   graph: GraphDescriptor,
   boardServer: BoardServer
 ) {
@@ -34,7 +42,7 @@ export async function maybeTriggerNlToOpalSatisfactionSurvey(
     !CONFIG.triggerId ||
     !graph.url ||
     globalState.status === "triggering" ||
-    (globalState.status === "waiting" && run === globalState.run)
+    (globalState.status === "waiting" && presenter === globalState.presenter)
   ) {
     return;
   }
@@ -42,8 +50,8 @@ export async function maybeTriggerNlToOpalSatisfactionSurvey(
   const url = new URL(graph.url);
   const eligible =
     // We're viewing the final screen
-    run.app.state === "output" &&
-    run.finalOutput &&
+    presenter.state === "output" &&
+    graphSource.finalOutputValues &&
     // ... and the graph was created by the current user during this session
     boardServer.isMine?.(url) &&
     boardServer.createdDuringThisSession?.(url) &&
@@ -55,10 +63,10 @@ export async function maybeTriggerNlToOpalSatisfactionSurvey(
   }
 
   const pageUrlBeforeWaiting = document.location.href;
-  globalState = { status: "waiting", run };
+  globalState = { status: "waiting", presenter };
   await new Promise((resolve) => setTimeout(resolve, WAIT_MS));
   const superceded =
-    globalState.status !== "waiting" || globalState.run !== run;
+    globalState.status !== "waiting" || globalState.presenter !== presenter;
   const navigatedAway = pageUrlBeforeWaiting !== document.location.href;
   if (superceded || navigatedAway) {
     return;

@@ -26,3 +26,9 @@ export interface A2UIAction extends BaseEventDetail<`${Namespace}.action`> {
   readonly sourceComponentId: string;
   readonly sourceComponent: AnyComponentNode | null;
 }
+
+export interface A2UIStatus extends BaseEventDetail<`${Namespace}.status`> {
+  readonly id: ReturnType<typeof crypto.randomUUID>;
+  readonly message: string;
+  readonly status: "pending" | "success" | "error";
+}

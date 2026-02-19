@@ -9,7 +9,7 @@ import { customElement, property } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
-import { StepListStepState } from "../../state/index.js";
+import type { StepListStepState } from "../../../sca/types.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { hash } from "@breadboard-ai/utils";
@@ -413,13 +413,13 @@ export class StepListView extends SignalWatcher(LitElement) {
             <span class="marker-container">
               <span class=${classMap(markerClasses)}></span>
               ${options.status === "generating"
-                ? html`<span class="generating g-icon filled-heavy round"
+                ? html`<span class="generating g-icon filled heavy round"
                     >pentagon</span
                   >`
                 : nothing}
             </span>
             ${step.icon && options.status !== "generating"
-              ? html`<span class="step-icon g-icon filled-heavy round"
+              ? html`<span class="step-icon g-icon filled heavy round"
                   >${step.icon}</span
                 >`
               : nothing}
@@ -448,16 +448,15 @@ export class StepListView extends SignalWatcher(LitElement) {
 
     const renderPlaceholders = () => {
       return html`<ul id="list">
-        ${this.#status === "generating"
-          ? renderPlannerProgress()
-          : nothing}
+        ${this.#status === "generating" ? renderPlannerProgress() : nothing}
         ${repeat(new Array(4), () => {
           return html`<li>
             ${renderStep(
               {
                 marker: true,
                 "g-icon": true,
-                "filled-heavy": true,
+                filled: true,
+                heavy: true,
               },
               {
                 label: "",
@@ -478,7 +477,8 @@ export class StepListView extends SignalWatcher(LitElement) {
           {
             marker: true,
             "g-icon": true,
-            "filled-heavy": true,
+            filled: true,
+            heavy: true,
             "processing-generation": true,
           },
           {
@@ -492,10 +492,7 @@ export class StepListView extends SignalWatcher(LitElement) {
       </li>`;
     };
 
-    if (
-      this.#viewType === "editor" &&
-      this.#status === "generating"
-    ) {
+    if (this.#viewType === "editor" && this.#status === "generating") {
       return renderPlaceholders();
     }
 
@@ -521,13 +518,14 @@ export class StepListView extends SignalWatcher(LitElement) {
           const markerClasses: Record<string, boolean> = {
             marker: true,
             "g-icon": true,
-            "filled-heavy": true,
+            filled: true,
+            heavy: true,
             [step.status]: true,
           };
 
           const renderPlaceholder = () => html`
             <div class="placeholder">
-              <span class="g-icon filled-heavy round pending"
+              <span class="g-icon filled heavy round pending"
                 >progress_activity<span> </span
               ></span>
             </div>

@@ -34,16 +34,16 @@ import { classMap } from "lit/directives/class-map.js";
 import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
   StateEvent,
   ToastEvent,
-  ToastType,
 } from "../../events/events.js";
-import { Project } from "../../state/index.js";
-import { ActionTracker, EnumValue } from "../../types/types.js";
+import { ToastType } from "../../../sca/types.js";
+
+import { EnumValue } from "../../types/types.js";
 import {
   isControllerBehavior,
   isLLMContentArrayBehavior,
@@ -69,7 +69,6 @@ import {
   isTextCapabilityPart,
 } from "../../../data/common.js";
 
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { embedderContext } from "../../contexts/embedder.js";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
@@ -105,20 +104,14 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   }
 
   get #readOnly(): boolean {
-    return !this.sca.controller.editor.graph.graphIsMine;
+    return this.sca.controller.editor.graph.readOnly;
   }
-
-  @property()
-  accessor projectState: Project | null = null;
 
   @property({ reflect: true, type: Boolean })
   accessor autoFocus = false;
 
   @consume({ context: embedderContext })
   accessor embedState: EmbedState = embedState();
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
@@ -182,6 +175,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           &:hover,
           &:focus {
             border: 1px solid var(--outer-border);
+          }
+          &:not(:focus) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
         }
       }
@@ -271,6 +269,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         & h1 {
           --outer-border: oklch(from var(--ui-asset) calc(l - 0.2) c h);
           background: var(--ui-asset);
+          color: var(--n-0);
+        }
+        & input {
+          color: var(--n-0);
         }
 
         bb-llm-output {
@@ -346,6 +348,33 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
           & .port {
             margin-bottom: var(--bb-grid-size-2);
+          }
+        }
+
+        .memory-sheet-container {
+          display: block;
+          padding: var(--bb-grid-size-4) 0;
+        }
+
+        .memory-sheet-link {
+          display: inline-flex;
+          width: fit-content;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+          border: 1px solid var(--n-90);
+          border-radius: var(--bb-grid-size-6);
+          color: var(--n-30);
+          text-decoration: none;
+          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+
+          &:hover {
+            background: var(--n-95);
+          }
+
+          & .g-icon {
+            font-size: 18px;
           }
         }
 
@@ -1000,7 +1029,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.actionTracker?.editStep("manual");
+    this.sca?.services.actionTracker?.editStep("manual");
 
     this.dispatchEvent(
       new StateEvent({
@@ -1233,12 +1262,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       return html`Invalid value`;
     }
 
-    // Note that projectState and subGraphId must be set before value since
-    // value depends on the projectState & subGraphId to expand on chiclet
+    // Note that subGraphId must be set before value since
+    // value depends on the subGraphId to expand on chiclet
     // metadata.
     return html`<bb-text-editor
       ${isReferenced ? ref(this.#editorRef) : nothing}
-      .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
       .value=${textPart.text}
       .supportsFastAccess=${fastAccess}
@@ -1458,7 +1486,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                   stepId: nodeId,
                 } satisfies FlowGenConstraint}
                 @bbgraphreplace=${() => {
-                  this.actionTracker?.editStep("flowgen");
+                  this.sca?.services.actionTracker?.editStep("flowgen");
                   // Ignore all edits to this point so that we don't issue
                   // a submit and stomp the new values.
                   this.#edited = false;
@@ -1486,7 +1514,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
     return [
       ...basicPorts.map(portRender),
-      advancedPorts.length > 0
+      advancedPorts.length > 0 ||
+      this.sca?.controller.editor.step.memorySheetUrl
         ? html`<details
             id="advanced-settings"
             ?open=${this.#advancedOpen}
@@ -1500,6 +1529,16 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           >
             <summary><span class="g-icon"></span>Advanced settings</summary>
             ${[...advancedPorts.map(portRender)]}
+            ${this.sca?.controller.editor.step.memorySheetUrl
+              ? html`<a
+                  class="memory-sheet-link"
+                  href=${this.sca.controller.editor.step.memorySheetUrl}
+                  target="_blank"
+                  rel="noopener"
+                  >Open Memory Database
+                  <span class="g-icon">open_in_new</span></a
+                >`
+              : nothing}
           </details>`
         : nothing,
     ];
@@ -1589,7 +1628,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       }}
       .graphUrl=${graphUrl}
       .subType=${asset.subType}
-      .projectState=${this.projectState}
       .dataPart=${dataPart}
     ></bb-llm-part-input>`;
 
@@ -1741,7 +1779,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
   /**
    * Implements the StepEditorSurface interface, so that this class could
-   * be used in Project state machinery.
+   * be used in step editing.
    */
   async #save(): Promise<Outcome<void>> {
     if (!this.#edited) {
@@ -1783,6 +1821,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     void this.sca.controller.editor.graph.version;
     // Subscribe to selection changes via SignalWatcher.
     void this.sca.controller.editor.selection.selectionId;
+    // Subscribe to memory sheet URL changes (set asynchronously by action).
+    void this.sca.controller.editor.step.memorySheetUrl;
 
     // Count only primary editable items (nodes, assets).
     // Edges and asset-edges are secondary and shouldn't inflate the count.

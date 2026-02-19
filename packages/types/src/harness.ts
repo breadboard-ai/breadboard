@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystem, Outcome } from "./data.js";
+import { Outcome } from "./data.js";
 import { DeepReadonly } from "./deep-read-only.js";
 import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
 import { RuntimeFlagManager } from "./flags.js";
@@ -162,10 +162,7 @@ export type RunConfig = {
    * JS Sandbox that will be used to run imperative graphs.
    */
   sandbox?: RunnableModuleFactory;
-  /**
-   * The file system, provided as module capability.
-   */
-  fileSystem?: FileSystem;
+
   /**
    * A way to see and manage runtime flags.
    */

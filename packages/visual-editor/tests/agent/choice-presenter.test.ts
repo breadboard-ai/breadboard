@@ -9,11 +9,7 @@ import { deepStrictEqual, ok as assert, fail } from "node:assert";
 import { ChoicePresenter } from "../../src/a2/agent/choice-presenter.js";
 import { PidginTranslator } from "../../src/a2/agent/pidgin-translator.js";
 import { AgentFileSystem } from "../../src/a2/agent/file-system.js";
-import {
-  stubCaps,
-  stubMemoryManager,
-  stubModuleArgs,
-} from "../useful-stubs.js";
+import { stubMemoryManager, stubModuleArgs } from "../useful-stubs.js";
 import { ok, err } from "@breadboard-ai/utils/outcome.js";
 import type { LLMContent, Outcome } from "@breadboard-ai/types";
 import type { v0_8 } from "../../src/a2ui/index.js";
@@ -67,7 +63,7 @@ function createTranslator(): PidginTranslator {
     context: stubModuleArgs.context,
     memoryManager: stubMemoryManager,
   });
-  return new PidginTranslator(stubCaps, stubModuleArgs, fileSystem);
+  return new PidginTranslator(stubModuleArgs, fileSystem);
 }
 
 // Helper to find component by id in captured messages

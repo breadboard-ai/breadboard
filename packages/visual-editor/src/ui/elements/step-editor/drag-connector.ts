@@ -16,11 +16,11 @@ import {
   DragConnectorCancelledEvent,
   StateEvent,
   ToastEvent,
-  ToastType,
 } from "../../events/events.js";
+import { ToastType } from "../../../sca/types.js";
 import { collectNodeIds } from "./utils/collect-ids.js";
 import { PortIdentifier } from "@breadboard-ai/types";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import { NodeSelectEvent } from "./events/events.js";
 
 const HEADER_ADJUSTMENT = 18;

@@ -5,7 +5,7 @@
  */
 
 import { createContext } from "@lit/context";
-import { ActionTracker } from "../types/types.js";
+import { ActionTracker } from "../../sca/types.js";
 
 export const actionTrackerContext = createContext<ActionTracker | undefined>(
   "action-tracker"

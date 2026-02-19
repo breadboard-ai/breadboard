@@ -2,12 +2,7 @@
  * @fileoverview Generates audio (tts) output using supplied context.
  */
 
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { type DescriberResult } from "../a2/common.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
 import {
@@ -61,7 +56,6 @@ function makeSpeechInstruction(inputs: Record<string, unknown>) {
 }
 
 async function callAudioGen(
-  caps: Capabilities,
   args: ExecuteStepArgs,
   prompt: string,
   voice: VoiceOption
@@ -98,7 +92,7 @@ async function callAudioGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, args, body);
+  const response = await executeStep(args, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
@@ -106,7 +100,6 @@ async function callAudioGen(
 
 async function invoke(
   { context, text, voice, ...params }: AudioGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AudioGeneratorOutputs>> {
   context ??= [];
@@ -114,11 +107,13 @@ async function invoke(
   if (text) {
     instructionText = toText(text).trim();
   }
-  const template = new Template(caps, toLLMContent(instructionText));
+  const template = new Template(
+    toLLMContent(instructionText),
+    moduleArgs.context.currentGraph
+  );
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
@@ -152,7 +147,6 @@ async function invoke(
   });
   const executeStepArgs: ExecuteStepArgs = { ...moduleArgs, reporter };
   const result = await callAudioGen(
-    caps,
     executeStepArgs,
     combinedInstruction,
     voice
@@ -167,11 +161,8 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { text } }: DescribeInputs,
-  caps: Capabilities
-) {
-  const template = new Template(caps, text);
+async function describe({ inputs: { text } }: DescribeInputs) {
+  const template = new Template(text);
   return {
     inputSchema: {
       type: "object",

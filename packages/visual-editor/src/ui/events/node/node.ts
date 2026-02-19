@@ -27,8 +27,7 @@ export interface Action extends BaseEventDetail<`${Namespace}.action`> {
   readonly actionContext: "console" | "graph" | null;
 }
 
-export interface AddWithEdge
-  extends BaseEventDetail<`${Namespace}.addwithedge`> {
+export interface AddWithEdge extends BaseEventDetail<`${Namespace}.addwithedge`> {
   readonly node: NodeDescriptor;
   readonly edge: Edge;
   readonly subGraphId: string | null;
@@ -64,8 +63,7 @@ export interface SelectionPositionUpdate {
 /**
  * Event for updating positions of selected nodes and assets.
  */
-export interface MoveSelection
-  extends BaseEventDetail<`${Namespace}.moveselection`> {
+export interface MoveSelection extends BaseEventDetail<`${Namespace}.moveselection`> {
   readonly updates: SelectionPositionUpdate[];
 }
 
@@ -76,8 +74,7 @@ export interface ChangeEdge extends BaseEventDetail<`${Namespace}.changeedge`> {
   readonly subGraphId: string | null;
 }
 
-export interface ChangeEdgeAttachmentPoint
-  extends BaseEventDetail<`${Namespace}.changeedgeattachmentpoint`> {
+export interface ChangeEdgeAttachmentPoint extends BaseEventDetail<`${Namespace}.changeedgeattachmentpoint`> {
   readonly graphId: GraphIdentifier;
   readonly edge: Edge;
   readonly which: "from" | "to";

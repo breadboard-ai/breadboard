@@ -1734,3 +1734,89 @@ suite("Node Actions — Keyboard", () => {
     });
   });
 });
+
+suite("onNodeAction", () => {
+  beforeEach(() => {
+    coordination.reset();
+  });
+
+  function bindNodeAction() {
+    const setNodeActionRequestFn = mock.fn();
+    const controller = {
+      editor: {
+        graph: {
+          editor: null,
+          readOnly: false,
+          lastNodeConfigChange: null,
+        },
+      },
+      global: { main: { blockingAction: false } },
+      run: {
+        main: {
+          setNodeActionRequest: setNodeActionRequestFn,
+        },
+      },
+    } as unknown as AppController;
+    const services = {
+      stateEventBus: new EventTarget(),
+    } as unknown as AppServices;
+
+    NodeActionsModule.bind({ controller, services });
+
+    return { setNodeActionRequestFn };
+  }
+
+  test("maps console to step", async () => {
+    const { setNodeActionRequestFn } = bindNodeAction();
+
+    const evt = new StateEvent({
+      eventType: "node.action",
+      nodeId: "node-1",
+      subGraphId: null,
+      actionContext: "console",
+    });
+    await NodeActionsModule.onNodeAction(evt);
+
+    assert.strictEqual(setNodeActionRequestFn.mock.callCount(), 1);
+    assert.deepStrictEqual(setNodeActionRequestFn.mock.calls[0].arguments[0], {
+      nodeId: "node-1",
+      actionContext: "step",
+    });
+  });
+
+  test("passes graph context unchanged", async () => {
+    const { setNodeActionRequestFn } = bindNodeAction();
+
+    const evt = new StateEvent({
+      eventType: "node.action",
+      nodeId: "node-2",
+      subGraphId: null,
+      actionContext: "graph",
+    });
+    await NodeActionsModule.onNodeAction(evt);
+
+    assert.strictEqual(setNodeActionRequestFn.mock.callCount(), 1);
+    assert.deepStrictEqual(setNodeActionRequestFn.mock.calls[0].arguments[0], {
+      nodeId: "node-2",
+      actionContext: "graph",
+    });
+  });
+
+  test("returns early when actionContext is null", async () => {
+    const { setNodeActionRequestFn } = bindNodeAction();
+
+    const evt = new StateEvent({
+      eventType: "node.action",
+      nodeId: "node-3",
+      subGraphId: null,
+      actionContext: null,
+    });
+    await NodeActionsModule.onNodeAction(evt);
+
+    assert.strictEqual(
+      setNodeActionRequestFn.mock.callCount(),
+      0,
+      "should not call setNodeActionRequest when actionContext is null"
+    );
+  });
+});

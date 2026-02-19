@@ -11,37 +11,88 @@ import type {
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 
-export type UnmanagedAssetProblem = {
+export type UnmanagedAssetProblem =
+  | UnmanagedDriveAssetProblem
+  | UnmanagedNotebookAssetProblem;
+
+export type UnmanagedDriveAssetProblem = {
+  type: "drive";
   asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
 } & (
   | { problem: "cant-share" }
   | { problem: "missing"; missing: gapi.client.drive.Permission[] }
 );
 
-export type SharePanelStatus =
-  | "closed"
-  | "loading"
-  | "readonly"
-  | "writable"
-  | "updating"
-  | "granular"
-  | "unmanaged-assets";
+export type UnmanagedNotebookAssetProblem = {
+  type: "notebook";
+  notebookId: string;
+  notebookName: string;
+} & (
+  | { problem: "cant-share" }
+  | { problem: "missing"; missingEmails: string[] }
+);
+
+export type SharePanelStatus = "closed" | "open" | "native-share";
+
+export type VisibilityLevel = "only-you" | "restricted" | "anyone";
+
+export type ViewerMode = "full" | "app-only";
+
+export type ShareStatus =
+  /** Fetching basic share state (ownership, permissions) on board load. */
+  | "initializing"
+  /** Nothing in progress. */
+  | "ready"
+  /** Creating the shareable copy before opening the native Drive share dialog,
+   *  or re-reading permissions after the user closes it. */
+  | "syncing-native-share"
+  /** Publishing, unpublishing, or changing the visibility dropdown. */
+  | "changing-visibility"
+  /** Updating the viewer access level on the shareable copy. */
+  | "changing-access"
+  /** Updating the shareable copy with the latest board content. */
+  | "publishing-stale"
+  /** Syncing asset permissions after the user approves fixing unmanaged assets. */
+  | "syncing-assets"
+  /** An error occurred. */
+  | "error";
 
 export class ShareController extends RootController {
+  @field()
+  accessor status: ShareStatus = "initializing";
+
   @field()
   accessor panel: SharePanelStatus = "closed";
 
   @field()
-  accessor access: "unknown" | "readonly" | "writable" = "unknown";
+  accessor ownership: "unknown" | "owner" | "non-owner" = "unknown";
 
   @field()
-  accessor published = false;
+  accessor hasPublicPermissions = false;
 
   @field()
-  accessor stale = false;
+  accessor editableVersion = "";
 
   @field()
-  accessor granularlyShared = false;
+  accessor sharedVersion = "";
+
+  get stale(): boolean {
+    return (
+      (this.hasPublicPermissions || this.hasOtherPermissions) &&
+      this.editableVersion !== this.sharedVersion &&
+      this.editableVersion !== "" &&
+      this.sharedVersion !== ""
+    );
+  }
+
+  @field()
+  accessor hasOtherPermissions = false;
+
+  get visibility(): VisibilityLevel {
+    if (this.hasPublicPermissions) return "anyone";
+    if (this.hasOtherPermissions) return "restricted";
+    return "only-you";
+  }
 
   @field()
   accessor userDomain = "";
@@ -49,17 +100,20 @@ export class ShareController extends RootController {
   @field()
   accessor publicPublishingAllowed = true;
 
-  @field()
-  accessor latestVersion = "";
-
   @field({ deep: false })
-  accessor publishedPermissions: gapi.client.drive.Permission[] = [];
+  accessor actualPermissions: gapi.client.drive.Permission[] = [];
 
   @field()
   accessor shareableFile: DriveFileId | null = null;
 
   @field({ deep: false })
   accessor unmanagedAssetProblems: UnmanagedAssetProblem[] = [];
+
+  @field()
+  accessor notebookDomainSharingLimited = false;
+
+  @field()
+  accessor viewerMode: ViewerMode = "full";
 
   /**
    * Resets all fields to their defaults. Called when loading a new opal.
@@ -74,16 +128,19 @@ export class ShareController extends RootController {
    */
   reset() {
     this.panel = "closed";
-    this.access = "unknown";
-    this.published = false;
-    this.stale = false;
-    this.granularlyShared = false;
+    this.status = "initializing";
+    this.ownership = "unknown";
+    this.hasPublicPermissions = false;
+    this.editableVersion = "";
+    this.sharedVersion = "";
+    this.hasOtherPermissions = false;
     this.userDomain = "";
     this.publicPublishingAllowed = true;
-    this.latestVersion = "";
-    this.publishedPermissions = [];
+    this.actualPermissions = [];
     this.shareableFile = null;
     this.unmanagedAssetProblems = [];
+    this.notebookDomainSharingLimited = false;
+    this.viewerMode = "full";
   }
 
   #resolveUnmanagedAssets?: () => void;

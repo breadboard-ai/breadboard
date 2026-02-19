@@ -30,7 +30,7 @@ import {
   GraphSelectionState,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
-} from "../runtime/types.js";
+} from "./graph-types.js";
 import { GraphTheme } from "@breadboard-ai/types";
 import {
   generatePaletteFromColor,
@@ -289,6 +289,11 @@ export function generateDeleteEditSpecFrom(
   return edits;
 }
 
+const PASTE_GRID_SIZE = 20;
+function toGridSize(value: number) {
+  return Math.round(value / PASTE_GRID_SIZE) * PASTE_GRID_SIZE;
+}
+
 function adjustNodePosition(
   node: NodeDescriptor | CommentNode,
   leftMostNode: { x: number; y: number },
@@ -306,8 +311,12 @@ function adjustNodePosition(
     collapsed: string;
   };
 
-  location.x = location.x - leftMostNode.x + pointerLocation.x + graphOffset;
-  location.y = location.y - leftMostNode.y + pointerLocation.y + graphOffset;
+  location.x = toGridSize(
+    location.x - leftMostNode.x + pointerLocation.x + graphOffset
+  );
+  location.y = toGridSize(
+    location.y - leftMostNode.y + pointerLocation.y + graphOffset
+  );
 }
 
 function getLeftMostLocation(

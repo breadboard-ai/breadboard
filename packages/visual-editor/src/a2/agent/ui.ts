@@ -125,6 +125,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     if (this.#appScreen) {
       const appScreenOutput = new A2UIAppScreenOutput(this.client);
       this.#appScreen.outputs.set(outputId, appScreenOutput);
+      this.#appScreen.last = appScreenOutput;
       this.#appScreen.type = "a2ui";
     }
 
@@ -174,10 +175,11 @@ class AgentUI implements A2UIRenderer, ChatManager {
     } satisfies Schema;
 
     // Add to app screen outputs directly
-    this.#appScreen?.outputs.set(outputId, {
-      schema,
-      output: { message } as OutputValues,
-    });
+    if (this.#appScreen) {
+      const entry = { schema, output: { message } as OutputValues };
+      this.#appScreen.outputs.set(outputId, entry);
+      this.#appScreen.last = entry;
+    }
 
     // Add to console entry as a work item
     if (this.#consoleEntry) {

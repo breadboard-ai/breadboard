@@ -1,7 +1,7 @@
 /**
  * @fileoverview Recursively search the web for in-depth answers to your query.
  */
-import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
+import { LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -146,14 +146,12 @@ async function thought(
 
 async function invokeOpalAdk(
   { context, query, ...params }: ResearcherInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
-  const template = new Template(caps, query);
+  const template = new Template(query, moduleArgs.context.currentGraph);
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
@@ -161,10 +159,12 @@ async function invokeOpalAdk(
   if (!ok(substituting)) {
     return substituting;
   }
-  const opalAdkStream = new OpalAdkStream(caps, moduleArgs);
-  const results = await opalAdkStream
-    .executeOpalAdkStream(DEEP_RESEARCH_KEY, [substituting]);
-  console.log("deep-research results", results)
+  const opalAdkStream = new OpalAdkStream(moduleArgs);
+  const results = await opalAdkStream.executeOpalAdkStream(
+    substituting,
+    DEEP_RESEARCH_KEY
+  );
+  console.log("deep-research results", results);
   return {
     context: [...(context || []), results],
   };
@@ -172,19 +172,17 @@ async function invokeOpalAdk(
 
 async function invokeLegacy(
   { context, query, summarize, ...params }: ResearcherInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   console.log("calling deep research agent.");
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
   let content = context || [toLLMContent("Start the research")];
 
-  const template = new Template(caps, query);
+  const template = new Template(query, moduleArgs.context.currentGraph);
   const substituting = await template.substitute(params, async (part) =>
     toolManager.addTool(part)
   );
@@ -206,7 +204,6 @@ async function invokeLegacy(
   for (let i = 0; i <= MAX_ITERATIONS; i++) {
     const askingGemini = await invokeGemini(
       researcherPrompt(content, query, toolManager.list(), i === 0),
-      caps,
       moduleArgs
     );
 
@@ -246,7 +243,6 @@ async function invokeLegacy(
   if (summarize) {
     const producingReport = await invokeGemini(
       reportWriterPrompt(query, research),
-      caps,
       moduleArgs
     );
     if (!ok(producingReport)) {
@@ -269,23 +265,14 @@ async function invokeLegacy(
 
 async function invoke(
   { context, query, summarize, ...params }: ResearcherInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await moduleArgs.context.flags?.flags();
   const opalAdkEnabled = flags?.opalAdk || false;
   if (opalAdkEnabled) {
-    return invokeOpalAdk(
-      { context, query, summarize, ...params },
-      caps,
-      moduleArgs
-    );
+    return invokeOpalAdk({ context, query, summarize, ...params }, moduleArgs);
   } else {
-    return invokeLegacy(
-      { context, query, summarize, ...params },
-      caps,
-      moduleArgs
-    );
+    return invokeLegacy({ context, query, summarize, ...params }, moduleArgs);
   }
 }
 
@@ -317,11 +304,8 @@ function researchExample(): string[] {
   ];
 }
 
-async function describe(
-  { inputs: { query } }: DescribeInputs,
-  caps: Capabilities
-) {
-  const template = new Template(caps, query);
+async function describe({ inputs: { query } }: DescribeInputs) {
+  const template = new Template(query);
   return {
     inputSchema: {
       type: "object",

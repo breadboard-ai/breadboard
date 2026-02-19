@@ -14,15 +14,12 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
-import { ActionTracker, OverflowAction } from "../../types/types.js";
+import { OverflowAction } from "../../types/types.js";
 import { until } from "lit/directives/until.js";
 import { renderThumbnail } from "../../utils/image.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { guard } from "lit/directives/guard.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
@@ -483,12 +480,6 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
-
   @property({ attribute: false })
   accessor items: [string, GraphProviderItem][] | null = null;
 
@@ -691,7 +682,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         <h2 class="gallery-title md-title-medium sans-flex w-400">
           ${this.headerText}
           ${this.headerIcon
-            ? html`<span class="g-icon filled-heavy round"
+            ? html`<span class="g-icon filled heavy round"
                 >${this.headerIcon}</span
               >`
             : nothing}
@@ -770,9 +761,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   }
 
   async #renderThumbnail(thumbnail: string | null | undefined) {
-    return await renderThumbnail(thumbnail, this.googleDriveClient!, {
-      thumbnail: true,
-    });
+    return await renderThumbnail(
+      thumbnail,
+      this.sca.services.googleDriveClient!,
+      {
+        thumbnail: true,
+      }
+    );
   }
 
   #renderBoard([name, item]: [string, GraphProviderItem], isPinned = false) {
@@ -815,7 +810,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
                   );
                 }}
               >
-                <span class="g-icon filled-heavy"></span>
+                <span class="g-icon filled heavy"></span>
               </button>
               <button
                 class="overflow-menu"
@@ -841,7 +836,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
                   this.showOverflowMenu = true;
                 }}
               >
-                <span class="g-icon filled-heavy w-500">more_vert</span>
+                <span class="g-icon filled heavy w-500">more_vert</span>
               </button>`
           : html` <button
               class=${classMap({
@@ -917,14 +912,14 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           ?disabled=${this.page === 0}
           @click=${this.#onClickPrevPage}
         >
-          <span class="g-icon filled-heavy round">chevron_left</span>
+          <span class="g-icon filled heavy round">chevron_left</span>
         </button>
         <button
           id="next"
           ?disabled=${this.page === pages - 1}
           @click=${this.#onClickNextPage}
         >
-          <span class="g-icon filled-heavy round">chevron_right</span>
+          <span class="g-icon filled heavy round">chevron_right</span>
         </button>
       </menu>
     `;
@@ -939,7 +934,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   }
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
-    this.actionTracker?.openApp(
+    this.sca?.services.actionTracker?.openApp(
       url,
       this.forceCreatorToBeTeam ? "gallery" : "user"
     );
@@ -962,7 +957,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
     event: PointerEvent | KeyboardEvent | OverflowMenuActionEvent,
     url: string
   ) {
-    this.actionTracker?.remixApp(
+    this.sca?.services.actionTracker?.remixApp(
       url,
       this.forceCreatorToBeTeam ? "gallery" : "user"
     );

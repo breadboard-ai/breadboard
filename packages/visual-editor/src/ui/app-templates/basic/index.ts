@@ -16,12 +16,11 @@ import {
 } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import {
-  ActionTracker,
   AppTemplate,
   AppTemplateOptions,
   FloatingInputFocusState,
-  SnackType,
 } from "../../types/types.js";
+import { SnackType, ToastType } from "../../../sca/types.js";
 
 // Custom Elements for the App.
 import "./a2ui-custom-elements/index.js";
@@ -38,8 +37,7 @@ import {
   theme as a2uiTheme,
   applyTokens,
 } from "../../a2ui-theme/a2ui-theme.js";
-import { boardServerContext } from "../../contexts/board-server.js";
-import { projectRunContext } from "../../contexts/project-run.js";
+
 import {
   ResizeEvent,
   ShareRequestedEvent,
@@ -47,25 +45,22 @@ import {
   StateEvent,
   UnsnackbarEvent,
 } from "../../events/events.js";
-import { ProjectRun } from "../../state/types.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 import { appScreenToA2UIProcessor } from "../shared/utils/app-screen-to-a2ui.js";
 import { styles as appStyles } from "./index.styles.js";
 
-import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
   DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl, parseUrl } from "../../utils/urls.js";
 
 import {
   AppScreenOutput,
-  BoardServer,
   ConsentAction,
   GraphDescriptor,
   RuntimeFlags,
@@ -79,16 +74,13 @@ import {
   extensionFromMimeType,
   saveOutputsAsFile,
 } from "../../../data/save-outputs-as-file.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import {
-  GlobalConfig,
-  globalConfigContext,
-} from "../../contexts/global-config.js";
+
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 import { CONSENT_RENDER_INFO } from "../../utils/consent-content-items.js";
 import { isDocSlidesOrSheetsOutput } from "../../../a2/a2/utils.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { SCA } from "../../../sca/sca.js";
+import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
 
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -115,7 +107,6 @@ function getHTMLOutput(screen: AppScreenOutput): string | null {
 }
 
 const parsedUrl = parseUrl(window.location.href);
-const FIRST_RUN_KEY = "bb-first-run-warning";
 
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
@@ -126,29 +117,25 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     splashImage: false,
   };
 
-  @consume({ context: globalConfigContext })
-  @property({ attribute: false })
-  accessor globalConfig: GlobalConfig | undefined;
-
   @provide({ context: A2UI.Context.themeContext })
   accessor a2uitheme: v0_8.Types.Theme = a2uiTheme;
 
   connectedCallback(): void {
     super.connectedCallback();
     applyTokens(this, this.a2uitheme.tokens);
+    this.#appPresenter.connect(this.sca);
   }
 
-  @state()
-  @consume({ context: projectRunContext, subscribe: true })
-  accessor run: ProjectRun | null = null;
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#appPresenter.disconnect();
+  }
 
   @state()
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  @state()
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined = undefined;
+  readonly #appPresenter = new AppScreenPresenter();
 
   @property()
   accessor focusWhenIn: FloatingInputFocusState = ["app"];
@@ -196,36 +183,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     small: false,
   };
 
-  @consume({ context: boardServerContext, subscribe: true })
-  accessor boardServer: BoardServer | undefined;
-
   @state()
   accessor showAddAssetModal = false;
 
   @state()
   accessor resultsUrl: string | null = null;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
-
   @query("#export-output-button")
   accessor exportOutputsButton: HTMLButtonElement | null = null;
-
-  @property()
-  accessor shouldShowFirstRunMessage = false;
-
-  @property()
-  accessor firstRunMessage = Strings.from("LABEL_FIRST_RUN");
-
-  @state()
-  set showFirstRunMessage(show: boolean) {
-    this.#showFirstRunMessage = show;
-    globalThis.localStorage.setItem(FIRST_RUN_KEY, String(show));
-  }
-  get showFirstRunMessage() {
-    return this.#showFirstRunMessage;
-  }
-  #showFirstRunMessage = false;
 
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
@@ -252,36 +217,26 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   constructor() {
     super();
-
-    this.showFirstRunMessage =
-      (globalThis.localStorage.getItem(FIRST_RUN_KEY) ?? "true") === "true";
   }
 
   #renderControls() {
     return html`<bb-app-header
       .isEmpty=${this.isEmpty}
-      .progress=${this.run?.progress}
+      .progress=${this.sca.controller.run.main.progress}
       .replayActive=${this.headerConfig.replay}
       .menuActive=${this.headerConfig.menu}
       .fullScreenActive=${this.headerConfig.fullscreen}
       .small=${this.headerConfig.small}
       .appTitle=${this.graph?.title}
-      @bbevent=${(evt: StateEvent<"board.stop">) => {
-        if (evt.detail.eventType !== "board.stop") {
-          return;
-        }
-      }}
     ></bb-app-header>`;
   }
 
   #renderOutputs() {
-    if (!this.run) return nothing;
-
     let activityContents:
       | HTMLTemplateResult
       | Array<HTMLTemplateResult | symbol>
       | symbol = nothing;
-    const lastScreen = this.run.app.last;
+    const lastScreen = this.#appPresenter.last;
     const last = lastScreen?.last;
     if (last) {
       const htmlOutput = getHTMLOutput(last);
@@ -349,7 +304,23 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         }
 
         activityContents = html`<section id="surfaces">
-          <bb-a2ui-client-view .processor=${processor} .receiver=${receiver}>
+          <bb-a2ui-client-view
+            .processor=${processor}
+            .receiver=${receiver}
+            @a2uistatus=${(evt: v0_8.Events.StateEvent<"a2ui.status">) => {
+              const STATUS_TO_TOAST: Record<string, ToastType> = {
+                pending: ToastType.PENDING,
+                success: ToastType.INFORMATION,
+                error: ToastType.ERROR,
+              };
+              this.sca.controller.global.toasts.toast(
+                evt.detail.message,
+                STATUS_TO_TOAST[evt.detail.status] ?? ToastType.INFORMATION,
+                false,
+                evt.detail.id
+              );
+            }}
+          >
           </bb-a2ui-client-view>
         </section>`;
       }
@@ -358,13 +329,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     return html`<div id="activity">${[activityContents]}</div>`;
   }
   #renderProgress(active: boolean) {
-    if (!this.run) return nothing;
-
-    const titles = Array.from(this.run.app.current.values()).map((screen) => {
-      if (!screen.progress) return screen.title;
-      if (screen.progressCompletion < 0) return screen.progress;
-      return `${screen.progress}: ${screen.progressCompletion}%`;
-    });
+    const titles = Array.from(this.#appPresenter.current.values()).map(
+      (screen) => {
+        if (!screen.progress) return screen.title;
+        if (screen.progressCompletion < 0) return screen.progress;
+        return `${screen.progress}: ${screen.progressCompletion}%`;
+      }
+    );
 
     const titleList = new Intl.ListFormat("en-US", {
       style: "long",
@@ -383,8 +354,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderError() {
-    if (!this.run) return nothing;
-    const error = this.run.error;
+    const error = this.sca.controller.run.main.error;
     if (!error) {
       console.warn("Asked to render error, but no error was found");
       return nothing;
@@ -462,7 +432,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderSaveResultsButtons() {
-    if (!this.run?.finalOutput) {
+    if (!this.#appPresenter.finalOutput) {
       return nothing;
     }
 
@@ -470,7 +440,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const allowSharingOutputs = !parsedUrl.lite;
 
-    const isBtnDisabled = isDocSlidesOrSheetsOutput(this.run.finalOutput);
+    const isBtnDisabled = isDocSlidesOrSheetsOutput(
+      this.#appPresenter.finalOutput
+    );
 
     return html`
       <div id="save-results-button-container">
@@ -515,7 +487,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     await navigator.clipboard.writeText(decodeURIComponent(this.resultsUrl));
 
-    this.actionTracker?.shareResults("copy_share_link");
+    this.sca.services.actionTracker?.shareResults("copy_share_link");
 
     this.dispatchEvent(
       new SnackbarEvent(
@@ -538,8 +510,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     lockButton();
 
-    if (!this.run) {
-      console.error(`No project run`);
+    if (!this.sca) {
+      console.error(`No SCA`);
       unlockButton();
       return;
     }
@@ -551,12 +523,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    if (!this.run.finalOutput) {
+    if (!this.#appPresenter.finalOutput) {
       unlockButton();
       return;
     }
 
-    const boardServer = this.boardServer as GoogleDriveBoardServer;
+    const boardServer = this.sca.services.googleDriveBoardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
@@ -571,7 +543,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const outputs = await inlineAllContent(
       boardServer.dataPartTransformer(),
-      this.run.finalOutput,
+      this.#appPresenter.finalOutput!,
       currentGraphUrl
     );
     if (!ok(outputs)) {
@@ -599,7 +571,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     unlockButton();
 
-    this.actionTracker?.shareResults("download");
+    this.sca.services.actionTracker?.shareResults("download");
 
     function lockButton() {
       btn!.disabled = true;
@@ -644,15 +616,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     lockButton();
 
-    if (!this.run) {
-      console.error(`No project run`);
-      unlockButton();
-      unsnackbar();
-      return;
-    }
-
     // Check if we're published. We can only share results for published graphs.
-    if (!this.googleDriveClient) {
+    if (!this.sca.services.googleDriveClient) {
       console.error(`No google drive client`);
       unlockButton();
       unsnackbar();
@@ -675,10 +640,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     let shareableGraphFileId;
-    const currentGraphMetadata = await this.googleDriveClient.getFileMetadata(
-      currentGraphFileId,
-      { fields: ["properties", "capabilities"] }
-    );
+    const currentGraphMetadata =
+      await this.sca.services.googleDriveClient.getFileMetadata(
+        currentGraphFileId,
+        { fields: ["properties", "capabilities"] }
+      );
     const isShareableCopy =
       !!currentGraphMetadata.properties?.[
         DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN
@@ -739,16 +705,16 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         shareableGraphFileId = currentGraphFileId;
       }
     }
-    const shareableGraphResourceKeyPromise = this.googleDriveClient
+    const shareableGraphResourceKeyPromise = this.sca.services.googleDriveClient
       .getFileMetadata(shareableGraphFileId, { fields: ["resourceKey"] })
       .then(({ resourceKey }) => resourceKey);
 
-    if (!this.run.finalOutput) {
+    if (!this.#appPresenter.finalOutput) {
       unlockButton();
       unsnackbar();
       return;
     }
-    const boardServer = this.boardServer;
+    const boardServer = this.sca.services.googleDriveBoardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
@@ -765,7 +731,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
     const finalOutputValues = await inlineAllContent(
       boardServer.dataPartTransformer(),
-      this.run.finalOutput,
+      this.#appPresenter.finalOutput!,
       shareableGraphUrl
     );
     if (!ok(finalOutputValues)) {
@@ -853,10 +819,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         results: resultsFileId,
         guestPrefixed: false,
       },
-      this.globalConfig?.hostOrigin
+      this.sca.services.globalConfig?.hostOrigin
     );
 
-    this.actionTracker?.shareResults("save_to_drive");
+    this.sca.services.actionTracker?.shareResults("save_to_drive");
 
     unlockButton();
 
@@ -864,7 +830,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderInput() {
-    const input = this.run?.input;
+    const input = this.sca.controller.run.main.input;
     if (!input) {
       this.style.setProperty("--input-clearance", `0px`);
 
@@ -886,7 +852,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   protected willUpdate(_changedProperties: PropertyValues): void {
-    if (this.run?.status === "running" && this.resultsUrl) {
+    if (this.sca.controller.run.main.status === "running" && this.resultsUrl) {
       this.resultsUrl = null;
     }
   }
@@ -896,10 +862,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       "app-template": true,
       [this.options.mode]: true,
     };
-
-    if (!this.run) {
-      return nothing;
-    }
 
     if (this.options.additionalOptions) {
       for (const [name, value] of Object.entries(
@@ -939,7 +901,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     if (!this.options.title) {
-      if (!this.run || this.run.status === "stopped") {
+      if (this.sca.controller.run.main.status === "stopped") {
         return html`<section
           class=${classMap(classes)}
           style=${styleMap(styles)}
@@ -1046,32 +1008,28 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 id="run"
                 class=${classMap({ invisible: this.isFreshGraph })}
                 @click=${() => {
-                  this.showFirstRunMessage = false;
-
-                  this.actionTracker?.runApp(this.graph?.url, "app_preview");
+                  this.sca.services.actionTracker?.runApp(
+                    this.graph?.url,
+                    "app_preview"
+                  );
                   this.dispatchEvent(
                     new StateEvent({ eventType: "board.run" })
                   );
                 }}
               >
-                <span class="g-icon filled-heavy round"></span>${this
+                <span class="g-icon filled heavy round"></span>${this
                   .isRefreshingAppTheme
                   ? "Updating..."
                   : "Start"}
               </button>
-              ${this.shouldShowFirstRunMessage &&
-              this.showFirstRunMessage &&
-              !this.isFreshGraph
+              ${!this.isFreshGraph
                 ? html`<bb-onboarding-tooltip
-                    @bbonboardingacknowledged=${() => {
-                      this.showFirstRunMessage = false;
-                    }}
+                    .onboardingId=${"first-run"}
                     style=${styleMap({
-                      "--top": `-12px`,
-                      "--right": "8px",
+                      "--top": `-24px`,
+                      "--right": "0px",
                     })}
                     .stackTop=${true}
-                    .text=${this.firstRunMessage}
                   ></bb-onboarding-tooltip>`
                 : nothing}
             </div>
@@ -1081,7 +1039,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     `;
 
     const shouldRenderProgress =
-      this.run.app.state === "progress" &&
+      this.#appPresenter.state === "progress" &&
       this.sca.controller.global.consent.pendingInApp.length === 0;
     let content: Array<HTMLTemplateResult | symbol> = [];
     if (this.isEmpty) {
@@ -1090,7 +1048,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       if (this.sca.controller.global.consent.pendingInApp.length > 0) {
         content = [this.#renderConsent()];
       } else {
-        switch (this.run.app.state) {
+        switch (this.#appPresenter.state) {
           case "splash":
             content = [splashScreen];
             break;
@@ -1107,11 +1065,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             break;
 
           case "output":
-            if (this.graph && this.boardServer) {
+            if (this.graph && this.sca.services.googleDriveBoardServer) {
               void maybeTriggerNlToOpalSatisfactionSurvey(
-                this.run,
+                this.#appPresenter,
+                this.sca.controller.editor.graph,
                 this.graph,
-                this.boardServer
+                this.sca.services.googleDriveBoardServer
               );
             }
             content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
@@ -1128,7 +1087,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           default: {
             console.warn(
               "Unknown state",
-              this.run.app.state,
+              this.#appPresenter.state,
               "rendering splash screen"
             );
             content = [splashScreen];

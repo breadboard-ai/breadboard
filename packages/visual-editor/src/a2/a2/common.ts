@@ -4,8 +4,6 @@
 
 import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 
-export type UserInput = LLMContent;
-
 export type Params = {
   [key: `p-z-${string}`]: unknown;
 };
@@ -54,10 +52,6 @@ export type CallToolCallback = (
 
 export type AgentInputs = {
   /**
-   * Whether (true) or not (false) the agent is allowed to chat with user.
-   */
-  chat: boolean;
-  /**
    * The incoming conversation context.
    */
   context: LLMContent[];
@@ -103,14 +97,6 @@ export type AgentContext = AgentInputs & {
    * Currently used to have a persistent part separator across conversation context
    */
   id: string;
-  /**
-   * Accumulating list of user inputs
-   */
-  userInputs: UserInput[];
-  /**
-   * Indicator that the user ended chat.
-   */
-  userEndedChat: boolean;
 };
 
 export type DescribeInputs = {

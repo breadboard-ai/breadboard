@@ -124,6 +124,7 @@ export class ExpandingTextarea extends LitElement {
         white-space: normal;
         letter-spacing: normal;
         word-spacing: normal;
+        overflow-wrap: anywhere;
       }
 
       textarea {

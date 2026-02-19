@@ -7,6 +7,7 @@
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
 import * as Agent from "./agent/agent-actions.js";
+import * as GraphEditingAgent from "./agent/graph-editing-agent-actions.js";
 import * as Asset from "./asset/asset-actions.js";
 import * as Board from "./board/board-actions.js";
 import * as Flowgen from "./flowgen/flowgen-actions.js";
@@ -14,6 +15,7 @@ import * as Graph from "./graph/graph-actions.js";
 import * as Integration from "./integration/integration-actions.js";
 import * as Host from "./host/host-actions.js";
 import * as Node from "./node/node-actions.js";
+import * as NotebookLmPicker from "./notebooklm/notebooklm-picker-actions.js";
 import * as Router from "./router/router-actions.js";
 import * as Run from "./run/run-actions.js";
 import * as ScreenSize from "./screen-size/screen-size-actions.js";
@@ -27,6 +29,7 @@ import { Utils } from "../utils.js";
 
 export interface AppActions {
   agent: typeof Agent;
+  graphEditingAgent: typeof GraphEditingAgent;
   asset: typeof Asset;
   board: typeof Board;
   flowgen: typeof Flowgen;
@@ -34,6 +37,7 @@ export interface AppActions {
   integration: typeof Integration;
   host: typeof Host;
   node: typeof Node;
+  notebookLmPicker: typeof NotebookLmPicker;
   router: typeof Router;
   run: typeof Run;
   screenSize: typeof ScreenSize;
@@ -50,6 +54,7 @@ let triggerDisposers: Array<() => void> = [];
 export function actions(controller: AppController, services: AppServices) {
   if (!instance) {
     Agent.bind({ controller, services });
+    GraphEditingAgent.bind({ controller, services });
     Asset.bind({ controller, services });
     Board.bind({ controller, services });
     Flowgen.bind({ controller, services });
@@ -57,6 +62,7 @@ export function actions(controller: AppController, services: AppServices) {
     Integration.bind({ controller, services });
     Host.bind({ controller, services });
     Node.bind({ controller, services });
+    NotebookLmPicker.bind({ controller, services });
     Router.bind({ controller, services });
     Run.bind({ controller, services });
     ScreenSize.bind({ controller, services });
@@ -67,6 +73,7 @@ export function actions(controller: AppController, services: AppServices) {
     Theme.bind({ controller, services });
     instance = {
       agent: Agent,
+      graphEditingAgent: GraphEditingAgent,
       asset: Asset,
       board: Board,
       flowgen: Flowgen,
@@ -74,6 +81,7 @@ export function actions(controller: AppController, services: AppServices) {
       integration: Integration,
       host: Host,
       node: Node,
+      notebookLmPicker: NotebookLmPicker,
       router: Router,
       run: Run,
       screenSize: ScreenSize,
@@ -104,6 +112,7 @@ export function activateTriggers(): () => void {
   // Collect all actions from all modules
   const allActions = [
     ...Object.values(Agent),
+    ...Object.values(GraphEditingAgent),
     ...Object.values(Asset),
     ...Object.values(Board),
     ...Object.values(Flowgen),
@@ -111,6 +120,7 @@ export function activateTriggers(): () => void {
     ...Object.values(Integration),
     ...Object.values(Host),
     ...Object.values(Node),
+    ...Object.values(NotebookLmPicker),
     ...Object.values(Router),
     ...Object.values(Run),
     ...Object.values(ScreenSize),
@@ -208,6 +218,7 @@ export function cleanActions(): void {
 // Re-export individual modules for direct access in tests
 export {
   Agent,
+  GraphEditingAgent,
   Asset,
   Board,
   Flowgen,
@@ -215,6 +226,7 @@ export {
   Integration,
   Host,
   Node,
+  NotebookLmPicker,
   Router,
   Run,
   ScreenSize,

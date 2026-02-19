@@ -31,7 +31,7 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { A2_COMPONENTS } from "../../../a2/a2-registry.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   CreateNewAssetsEvent,
   GraphEdgeAttachmentMoveEvent,
@@ -68,7 +68,7 @@ import { EditorControls } from "./editor-controls.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants.js";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command.js";
-import { Project, RendererRunState } from "../../state/index.js";
+import type { RendererRunState } from "../../../sca/types.js";
 
 import { baseColors } from "../../styles/host/base-colors.js";
 import { ItemSelect } from "../elements.js";
@@ -85,9 +85,6 @@ export class Renderer extends SignalWatcher(LitElement) {
   }
 
   // --- External state (set by canvas-controller) ---
-
-  @property()
-  accessor projectState: Project | null = null;
 
   @property()
   accessor runState: RendererRunState | null = null;
@@ -280,7 +277,12 @@ export class Renderer extends SignalWatcher(LitElement) {
     this.#lastBoundsForInteraction = this.#boundsForInteraction;
     this.#boundsForInteraction = this.getBoundingClientRect();
 
-    if (this.#firstResize) {
+    // If this is the very first resize, or if we're expanding from a viewport
+    // that was too small for a meaningful fitToView (e.g. mobile view where
+    // the graph editor was hidden or very narrow), do a full fitToView.
+    const wasTooSmall =
+      this.#lastBoundsForInteraction.width < 2 * this.graphFitPadding;
+    if (this.#firstResize || wasTooSmall) {
       this.#fitToViewPre = true;
     } else {
       this.#attemptAdjustToNewBounds = true;
@@ -355,7 +357,7 @@ export class Renderer extends SignalWatcher(LitElement) {
   #handleNewAssets(evt: CreateNewAssetsEvent) {
     evt.stopImmediatePropagation();
 
-    if (!this.#gc.graphIsMine) {
+    if (this.#gc.readOnly) {
       return;
     }
 
@@ -406,7 +408,7 @@ export class Renderer extends SignalWatcher(LitElement) {
       !evt.dataTransfer ||
       !evt.dataTransfer.files ||
       !evt.dataTransfer.files.length ||
-      !this.#gc.graphIsMine
+      this.#gc.readOnly
     ) {
       return;
     }
@@ -896,8 +898,8 @@ export class Renderer extends SignalWatcher(LitElement) {
       mainGraph.nodes = graph.nodes();
       mainGraph.edges = graph.edges();
       mainGraph.graphAssets = this.#gc.graphAssets;
-      mainGraph.readOnly = !this.#gc.graphIsMine;
-      mainGraph.projectState = this.projectState;
+      mainGraph.readOnly = this.#gc.readOnly;
+
       mainGraph.assets = new Map(
         Array.from(graph.assets().entries()).filter(
           ([, asset]) => asset.type !== "connector"
@@ -925,8 +927,8 @@ export class Renderer extends SignalWatcher(LitElement) {
         subGraph.nodes = subGraphData.nodes();
         subGraph.edges = subGraphData.edges();
         subGraph.graphAssets = this.#gc.graphAssets;
-        subGraph.readOnly = !this.#gc.graphIsMine;
-        subGraph.projectState = this.projectState;
+        subGraph.readOnly = this.#gc.readOnly;
+
         subGraph.allowEdgeAttachmentMove = this.allowEdgeAttachmentMove;
         subGraph.resetTransform();
       }
@@ -1011,7 +1013,7 @@ export class Renderer extends SignalWatcher(LitElement) {
 
     this.#fitToViewPost = false;
     requestAnimationFrame(() => {
-      this.fitToView(false);
+      this.fitToView(false, /* retryOnEmpty */ true);
     });
   }
 
@@ -1148,7 +1150,7 @@ export class Renderer extends SignalWatcher(LitElement) {
       1
     );
 
-    if (delta === 0) {
+    if (delta <= 0) {
       return targetMatrix;
     }
 
@@ -1600,11 +1602,11 @@ export class Renderer extends SignalWatcher(LitElement) {
       html`<bb-editor-controls
         ${ref(this.#editorControls)}
         .graph=${inspectableGraph}
-        .graphIsMine=${this.#gc.graphIsMine}
+        .graphIsMine=${!this.#gc.readOnly}
         .history=${this.#gc.editor?.history() ?? null}
         .mainGraphId=${this.#gc.mainGraphId}
         .showDefaultAdd=${showDefaultAdd}
-        .readOnly=${!this.#gc.graphIsMine}
+        .readOnly=${!!this.#gc.readOnly}
         @wheel=${(evt: WheelEvent) => {
           evt.stopImmediatePropagation();
         }}
@@ -1637,7 +1639,7 @@ export class Renderer extends SignalWatcher(LitElement) {
       ></div>`,
       selectionRectangle,
       this.dragConnector,
-      this.showDisclaimer && this.#gc.graphIsMine
+      this.showDisclaimer && !this.#gc.readOnly
         ? html`<p
             id="disclaimer"
             class=${this.sca.controller.global.flags.enableGraphEditorAgent

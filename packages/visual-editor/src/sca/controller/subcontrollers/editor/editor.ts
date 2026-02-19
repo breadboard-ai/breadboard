@@ -13,3 +13,5 @@ export * as Share from "./share-controller.js";
 export * as Theme from "./theme-controller.js";
 export * as FastAccess from "./fast-access/fast-access.js";
 export * as Integrations from "./integrations/integrations.js";
+export * as GraphEditingAgent from "./graph-editing-agent-controller.js";
+export * as NotebookLmPicker from "./notebooklm-picker-controller.js";

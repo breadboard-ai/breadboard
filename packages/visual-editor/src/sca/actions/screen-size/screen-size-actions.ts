@@ -21,6 +21,37 @@ import { onScreenSizeChange } from "./triggers.js";
 export const bind = makeAction();
 
 // =============================================================================
+// Internal Helper
+// =============================================================================
+
+/**
+ * Core screen-size update logic, shared by both `updateScreenSize`
+ * (coordinated, trigger-driven) and `init` (direct call during bootstrap).
+ */
+function updateScreenSizeImpl(): void {
+  const { controller } = bind;
+
+  // Guard for SSR/test environments
+  if (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function"
+  ) {
+    return;
+  }
+
+  const narrowQuery = window.matchMedia(`(max-width: ${NARROW_BREAKPOINT}px)`);
+  const mediumQuery = window.matchMedia(`(max-width: ${MEDIUM_BREAKPOINT}px)`);
+
+  if (narrowQuery.matches) {
+    controller.global.screenSize.size = "narrow";
+  } else if (mediumQuery.matches) {
+    controller.global.screenSize.size = "medium";
+  } else {
+    controller.global.screenSize.size = "wide";
+  }
+}
+
+// =============================================================================
 // Actions
 // =============================================================================
 
@@ -40,30 +71,7 @@ export const updateScreenSize = asAction(
     triggeredBy: onScreenSizeChange,
   },
   async (): Promise<void> => {
-    const { controller } = bind;
-
-    // Guard for SSR/test environments
-    if (
-      typeof window === "undefined" ||
-      typeof window.matchMedia !== "function"
-    ) {
-      return;
-    }
-
-    const narrowQuery = window.matchMedia(
-      `(max-width: ${NARROW_BREAKPOINT}px)`
-    );
-    const mediumQuery = window.matchMedia(
-      `(max-width: ${MEDIUM_BREAKPOINT}px)`
-    );
-
-    if (narrowQuery.matches) {
-      controller.global.screenSize.size = "narrow";
-    } else if (mediumQuery.matches) {
-      controller.global.screenSize.size = "medium";
-    } else {
-      controller.global.screenSize.size = "wide";
-    }
+    updateScreenSizeImpl();
   }
 );
 
@@ -71,13 +79,15 @@ export const updateScreenSize = asAction(
  * Initializes the screen size state.
  * Called once during SCA bootstrap.
  *
+ * Calls `updateScreenSizeImpl` directly (not the coordinated wrapper)
+ * to avoid nested coordination tracking.
+ *
  * Note: This action has no triggers - it's called directly during initialization.
  */
 export const init = asAction(
   "ScreenSize.init",
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
-    // Delegate to updateScreenSize for consistent logic
-    await updateScreenSize();
+    updateScreenSizeImpl();
   }
 );
