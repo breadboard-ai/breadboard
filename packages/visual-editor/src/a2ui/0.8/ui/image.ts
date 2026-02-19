@@ -66,7 +66,7 @@ export class Image extends Root {
         display: block;
         flex: var(--weight);
         min-height: 0;
-        overflow: auto;
+        overflow: hidden;
         padding: var(--a2ui-image-padding, 0);
       }
 

@@ -44,7 +44,7 @@ export class Audio extends Root {
         display: block;
         flex: var(--weight);
         min-height: 55px;
-        overflow: auto;
+        overflow: hidden;
         min-width: 225px;
         padding: var(--a2ui-audio-padding, 0);
       }
