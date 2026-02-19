@@ -18,6 +18,7 @@ import { renderConsistentUI } from "./render-consistent-ui.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Params } from "./common.js";
 import { isLLMContent, isLLMContentArray } from "../../data/common.js";
+import { DocEditMode, DocWriteMode } from "../google-drive/types.js";
 
 export { invoke as default, describe };
 
@@ -137,7 +138,9 @@ type InvokeInputs = {
   "p-render-mode": string;
   "b-system-instruction"?: LLMContent;
   "b-render-model-name": string;
-  "b-google-doc-title"?: string;
+  "b-doc-title"?: string;
+  "b-doc-a-edit-mode"?: string;
+  "b-doc-a-write-mode"?: string;
   "b-slide-deck-mode"?: string;
   "b-slide-write-mode"?: string;
 };
@@ -155,6 +158,7 @@ type DescribeInputs = {
     text?: LLMContent;
     "p-render-mode": string;
     "b-slide-deck-mode"?: string;
+    "b-doc-a-edit-mode"?: string;
   };
 };
 
@@ -250,7 +254,9 @@ async function saveToGoogleDrive(
   mimeType: string,
   title: string | undefined,
   slideDeckMode?: string,
-  slideWriteMode?: string
+  slideWriteMode?: string,
+  googleDocEditMode?: DocEditMode,
+  googleDocWriteMode?: DocWriteMode
 ): Promise<Outcome<SaveOutput>> {
   const graph = moduleArgs.context.currentGraph;
   let graphId = "";
@@ -277,6 +283,8 @@ async function saveToGoogleDrive(
             | "append"
             | "overwrite"
             | undefined,
+          docEditMode: googleDocEditMode,
+          docWriteMode: googleDocWriteMode,
         },
       },
     },
@@ -304,7 +312,9 @@ async function invoke(
     "p-render-mode": renderMode,
     "b-system-instruction": systemInstruction,
     "b-render-model-name": modelType,
-    "b-google-doc-title": googleDocTitle,
+    "b-doc-title": googleDocTitle,
+    "b-doc-a-edit-mode": docEditMode,
+    "b-doc-a-write-mode": docWriteMode,
     "b-slide-deck-mode": slideDeckMode,
     "b-slide-write-mode": slideWriteMode,
     ...params
@@ -377,7 +387,11 @@ async function invoke(
         moduleArgs,
         out,
         "application/vnd.google-apps.document",
-        googleDocTitle
+        googleDocTitle,
+        undefined,
+        undefined,
+        docEditMode as DocEditMode,
+        docWriteMode as DocWriteMode
       );
     }
     case "GoogleSlides": {
@@ -408,12 +422,12 @@ async function invoke(
       return { context };
     }
   }
-  return { context: [out] };
 }
 
 function advancedSettings(
   renderType: RenderType,
-  slideDeckMode?: string
+  slideDeckMode?: string,
+  googleDocEditMode?: string
 ): Record<string, Schema> {
   switch (renderType) {
     case "HTML":
@@ -433,15 +447,59 @@ function advancedSettings(
         },
       };
     case "GoogleDoc": {
-      return {
-        "b-google-doc-title": {
+      const settings: Record<string, Schema> = {
+        "b-doc-a-edit-mode": {
           type: "string",
-          behavior: ["config", "hint-advanced"],
-          title: "Google Doc Title",
-          description:
-            "The title of the Google Drive Document that content will be saved to",
+          enum: [
+            {
+              id: "new",
+              title: "New document",
+            },
+            {
+              id: "same",
+              title: "Same document",
+            },
+          ],
+          behavior: ["config", "hint-advanced", "reactive"],
+          title: "Edit each time",
+          default: "new",
         },
       };
+      if (googleDocEditMode === "same") {
+        settings["b-doc-a-write-mode"] = {
+          type: "string",
+          enum: [
+            {
+              id: "prepend",
+              title: "Prepend",
+              description: "Add to the beginning",
+            },
+            {
+              id: "append",
+              title: "Append",
+              description: "Add to the end",
+            },
+            {
+              id: "overwrite",
+              title: "Overwrite",
+              description: "Replace everything",
+            },
+          ],
+          behavior: ["config", "hint-advanced", "reactive"],
+          title: "Write mode",
+          default: "prepend",
+        };
+      }
+
+      settings["b-doc-title"] = {
+        type: "string",
+        behavior: ["config", "hint-advanced"],
+        title: "Document name",
+        description:
+          "The title of the Google Drive Document that content will be saved to",
+      };
+
+      return settings;
     }
     case "GoogleSlides": {
       const settings: Record<string, Schema> = {
@@ -487,7 +545,7 @@ function advancedSettings(
           default: "prepend",
         };
       }
-      settings["b-google-doc-title"] = {
+      settings["b-doc-title"] = {
         type: "string",
         behavior: ["config", "hint-advanced"],
         title: "Slide deck name",
@@ -497,7 +555,7 @@ function advancedSettings(
     }
     case "GoogleSheets": {
       return {
-        "b-google-doc-title": {
+        "b-doc-title": {
           type: "string",
           behavior: ["config", "hint-advanced"],
           title: "Google Spreadsheet Title",
@@ -526,6 +584,7 @@ async function describe(
       text,
       "p-render-mode": renderMode,
       "b-slide-deck-mode": slideDeckMode,
+      "b-doc-a-edit-mode": docEditMode,
     },
   }: DescribeInputs,
   moduleArgs: A2ModuleArgs
@@ -558,7 +617,7 @@ async function describe(
           default: MANUAL_MODE,
           description: "Choose how to combine and display the outputs",
         },
-        ...advancedSettings(renderType, slideDeckMode),
+        ...advancedSettings(renderType, slideDeckMode, docEditMode),
         ...template.schemas(),
       },
       behavior: ["at-wireable"],

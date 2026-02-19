@@ -700,6 +700,166 @@ export type Metadata = {
   description?: string;
 };
 
+export interface DocsRgbColor {
+  red?: number;
+  green?: number;
+  blue?: number;
+}
+
+export interface DocsColor {
+  rgbColor?: DocsRgbColor;
+}
+
+export interface DocsOptionalColor {
+  color?: DocsColor;
+}
+
+export interface DocsDimension {
+  magnitude?: number;
+  unit?: string;
+}
+
+export interface DocsLink {
+  url?: string;
+  bookmarkId?: string;
+  headingId?: string;
+}
+
+export interface DocsWeightedFontFamily {
+  fontFamily?: string;
+  weight?: number;
+}
+
+export interface DocsTextStyle {
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strikethrough?: boolean;
+  smallCaps?: boolean;
+  backgroundColor?: DocsOptionalColor;
+  foregroundColor?: DocsOptionalColor;
+  fontSize?: DocsDimension;
+  weightedFontFamily?: DocsWeightedFontFamily;
+  baselineOffset?: string;
+  link?: DocsLink;
+}
+
+export interface DocsTextRun {
+  content?: string;
+  textStyle?: DocsTextStyle;
+}
+
+export interface DocsParagraphElement {
+  startIndex?: number;
+  endIndex?: number;
+  textRun?: DocsTextRun;
+}
+
+export interface DocsBorder {
+  color?: DocsOptionalColor;
+  width?: DocsDimension;
+  padding?: DocsDimension;
+  dashStyle?: string;
+}
+
+export interface DocsShading {
+  backgroundColor?: DocsOptionalColor;
+}
+
+export interface DocsParagraphStyle {
+  namedStyleType?: string;
+  alignment?: string;
+  lineSpacing?: number;
+  direction?: string;
+  spacingMode?: string;
+  spaceAbove?: DocsDimension;
+  spaceBelow?: DocsDimension;
+  borderBetween?: DocsBorder;
+  borderTop?: DocsBorder;
+  borderBottom?: DocsBorder;
+  borderLeft?: DocsBorder;
+  borderRight?: DocsBorder;
+  indentFirstLine?: DocsDimension;
+  indentStart?: DocsDimension;
+  indentEnd?: DocsDimension;
+  keepLinesTogether?: boolean;
+  keepWithNext?: boolean;
+  avoidWidowAndOrphan?: boolean;
+  shading?: DocsShading;
+  pageBreakBefore?: boolean;
+}
+
+export interface DocsParagraph {
+  elements?: DocsParagraphElement[];
+  paragraphStyle?: DocsParagraphStyle;
+}
+
+export interface DocsSectionStyle {
+  columnSeparatorStyle?: string;
+  contentDirection?: string;
+  sectionType?: string;
+}
+
+export interface DocsSectionBreak {
+  sectionStyle?: DocsSectionStyle;
+}
+
+export interface DocsBodyContentElement {
+  startIndex?: number;
+  endIndex?: number;
+  paragraph?: DocsParagraph;
+  sectionBreak?: DocsSectionBreak;
+}
+
+export interface DocsBody {
+  content?: DocsBodyContentElement[];
+}
+
+export interface DocsBackground {
+  color?: DocsOptionalColor;
+}
+
+export interface DocsDocumentFormat {
+  documentMode?: string;
+}
+
+export interface DocsDocumentStyle {
+  background?: DocsBackground;
+  pageNumberStart?: number;
+  marginTop?: DocsDimension;
+  marginBottom?: DocsDimension;
+  marginRight?: DocsDimension;
+  marginLeft?: DocsDimension;
+  pageSize?: {
+    height?: DocsDimension;
+    width?: DocsDimension;
+  };
+  marginHeader?: DocsDimension;
+  marginFooter?: DocsDimension;
+  useCustomHeaderFooterMargins?: boolean;
+  documentFormat?: DocsDocumentFormat;
+}
+
+export interface DocsNamedStyle {
+  namedStyleType?: string;
+  textStyle?: DocsTextStyle;
+  paragraphStyle?: DocsParagraphStyle;
+}
+
+export interface DocsNamedStyles {
+  styles?: DocsNamedStyle[];
+}
+
+export interface DocsDocument {
+  documentId?: string;
+  title?: string;
+  body?: DocsBody;
+  documentStyle?: DocsDocumentStyle;
+  namedStyles?: DocsNamedStyles;
+  revisionId?: string;
+  suggestionsViewMode?: string;
+}
+
 export type Method = "GET" | "POST" | "PUT" | "DELETE";
 
 async function get(moduleArgs: ApiDeps, id: string) {
@@ -747,11 +907,14 @@ async function exp(moduleArgs: ApiDeps, fileId: string, mimeType: string) {
   );
 }
 
-async function getDoc(moduleArgs: ApiDeps, id: string) {
+async function getDoc(
+  moduleArgs: ApiDeps,
+  id: string
+): Promise<Outcome<DocsDocument>> {
   if (!id) {
     return err("Please supply the doc id to get.");
   }
-  return api(
+  return api<DocsDocument>(
     moduleArgs,
     `${GOOGLE_DOCS_API_PREFIX}/${encodeURIComponent(id)}`,
     "GET"
