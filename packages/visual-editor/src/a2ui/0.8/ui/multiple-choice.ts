@@ -66,7 +66,7 @@ class MultipleChoice extends Root {
         width: 100%;
         flex: var(--weight);
         min-height: 0;
-        overflow: auto;
+        overflow: hidden;
         container-type: inline-size;
       }
 
