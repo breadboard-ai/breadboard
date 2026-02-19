@@ -3,6 +3,44 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+/**
+ * @fileoverview PDF viewer component built on pdfjs-dist.
+ *
+ * ## Architecture
+ *
+ * The viewer follows a **Task → willUpdate → content promise → until()**
+ * pipeline:
+ *
+ * 1. **Lit Task** (`#pdfTask`) lazily loads pdfjs-dist and opens the document
+ *    whenever `data` or `url` changes.
+ * 2. **`willUpdate`** detects when the Task delivers a new PDF (or when zoom /
+ *    page changes) and sets `#content` to a fresh render promise.
+ * 3. **`render()`** uses `until(this.#content)` to bridge the async render
+ *    into Lit's template. The canvas DOM node is owned by Lit's template
+ *    system — never appended imperatively.
+ *
+ * ## Zoom & Layout
+ *
+ * Zoom is baked into the pdfjs viewport scale (`zoom * devicePixelRatio`),
+ * which grows the canvas pixel buffer. CSS dimensions are set to
+ * `pixels / dPR` so the visual size matches the zoom level accurately.
+ *
+ * The critical layout rule is `contain: size` on `:host`. Without it,
+ * `height: 100%` can resolve to `auto` when no ancestor provides an explicit
+ * height, causing the element to grow with the canvas and leak scroll to
+ * ancestors. `contain: size` ensures the element never sizes from its
+ * children, so `overflow: auto` on `#container` reliably contains the
+ * scrollable canvas.
+ *
+ * ## Controls
+ *
+ * Hover-to-show overlay at bottom-right, matching the `a2ui-image` pattern.
+ * Zoom buttons use ×1.1 / ÷1.1 (10% increments). Multi-page PDFs get a
+ * paging "super button" — a single continuous dark block with
+ * back / page-number / next.
+ */
+
 import {
   LitElement,
   html,
@@ -14,366 +52,544 @@ import {
 import { customElement, property } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import type { PageViewport, PDFDocumentProxy } from "pdfjs-dist";
+import { icons } from "../../../styles/icons.js";
+import { Task, TaskStatus } from "@lit/task";
+import type { RenderTask, PDFDocumentProxy } from "pdfjs-dist";
 
 type PDFJS = typeof import("pdfjs-dist");
-type PDFLoadResult = { lib: PDFJS; data: ArrayBuffer } | null;
 
-const dPR = window.devicePixelRatio ?? 1;
+// ── pdfjs-dist lazy loader ───────────────────────────────────────────────────
+
+/** Module-level cache so we only import pdfjs once across all instances. */
+let pdfjsLib: PDFJS | null = null;
+
+async function loadPDFJS(): Promise<PDFJS> {
+  if (pdfjsLib) {
+    return pdfjsLib;
+  }
+
+  const pdfjs = await import("pdfjs-dist");
+  const workerUrl = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url);
+  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl.href;
+  pdfjsLib = pdfjs;
+  return pdfjs;
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 @customElement("bb-pdf-viewer")
 export class PDFViewer extends LitElement {
-  @property()
+  /**
+   * Raw PDF bytes. Use this for inline data that's already in memory.
+   * Mutually exclusive with `url`.
+   */
+  @property({ attribute: false })
   accessor data: ArrayBuffer | null = null;
 
+  /**
+   * URL to fetch the PDF from. The viewer handles the fetch internally.
+   * Mutually exclusive with `data`.
+   */
+  @property()
+  accessor url: string | null = null;
+
+  /** Whether to show the hover overlay controls (zoom, fit, download, paging). */
   @property({ reflect: true })
   accessor showControls = false;
 
+  /**
+   * Current zoom level. 1 = PDF's native 72 dpi size. Values are clamped
+   * to [0.1, 10] in `willUpdate`. On first render, this is automatically
+   * set to fit the page within the container.
+   */
   @property()
   accessor zoom = 1;
 
+  /** Current 1-indexed page number. */
   @property()
   accessor page = 1;
 
-  @property()
-  accessor disabled = false;
+  // ── Styles ───────────────────────────────────────────────────────────
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    icons,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      overflow: auto;
-      width: 100%;
-      height: 100%;
-    }
+      /*
+       * contain: size — critical. Without it, height: 100% can resolve to
+       * auto (content height) when the parent lacks an explicit height.
+       * The element would then grow with the canvas, and overflow: hidden
+       * wouldn't clip anything. contain: size ensures the element is never
+       * sized by its children.
+       */
+      :host {
+        display: block;
+        contain: size;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        background: var(--light-dark-nv-98);
+        border-radius: var(--bb-grid-size-5);
+      }
 
-    #controls {
-      height: var(--bb-grid-size-11);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      /* Positioning context for absolute controls overlay. */
+      #wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
 
-      & > div {
+      /*
+       * Scrollable viewport for zoomed-in content. Scrollbars are hidden
+       * across all browsers to keep the visual clean — users scroll via
+       * trackpad/touch/mouse wheel.
+       */
+      #container {
+        width: 100%;
+        height: 100%;
+        padding: 8px;
+        overflow: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      #container::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* margin: auto centers the canvas when it's smaller than #container. */
+      canvas {
+        display: block;
+        margin: auto;
+        image-rendering: smooth;
+      }
+
+      /* ── Hover overlay controls ─────────────────────────────────── */
+
+      #controls {
+        position: absolute;
+        bottom: var(--bb-grid-size-4, 16px);
+        right: var(--bb-grid-size-4, 16px);
+        display: flex;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      #wrapper:hover #controls {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      #controls button {
         display: flex;
         align-items: center;
-
-        &#zoom {
-          padding-left: var(--bb-grid-size-2);
-        }
-      }
-
-      & button {
-        margin: 0 var(--bb-grid-size) 0 0;
-        border: none;
-        font-size: 0;
-        width: 20px;
-        height: 20px;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
         padding: 0;
-        background: var(--light-dark-n-98);
-        opacity: 0.5;
+        border: none;
+        border-radius: var(--bb-grid-size-2, 10px);
+        background: oklch(0 0 0 / 0.5);
+        color: white;
+        cursor: pointer;
+        transition: background 0.2s ease;
 
-        &:not([disabled]) {
-          cursor: pointer;
-          opacity: 1;
+        &:hover {
+          background: oklch(0 0 0 / 0.7);
         }
 
-        &#zoom-out {
-          background: var(--bb-icon-zoom-out) center center / 20px 20px
-            no-repeat;
-        }
-
-        &#zoom-in {
-          background: var(--bb-icon-zoom-in) center center / 20px 20px no-repeat;
-        }
-
-        &#fill {
-          background: var(--bb-icon-view-real-size) center center / 20px 20px
-            no-repeat;
-        }
-
-        &#fit {
-          background: var(--bb-icon-fit) center center / 20px 20px no-repeat;
-        }
-
-        &#next {
-          background: var(--bb-icon-next) center center / 20px 20px no-repeat;
-        }
-
-        &#back {
-          background: var(--bb-icon-before) center center / 20px 20px no-repeat;
+        &[disabled] {
+          opacity: 0.4;
+          cursor: default;
         }
       }
-    }
 
-    .pages {
-      text-align: center;
-      min-width: var(--bb-grid-size-4);
-    }
+      /*
+       * Paging "super button" — a single continuous dark block containing
+       * back / page-number / next. Buttons inside inherit the shared
+       * background and only show a hover highlight. Disabled buttons stay
+       * fully opaque (no stacking with the container's background) and
+       * instead dim their icon color.
+       */
+      #controls .paging {
+        display: flex;
+        align-items: center;
+        height: 36px;
+        border-radius: var(--bb-grid-size-2, 10px);
+        background: oklch(0 0 0 / 0.5);
+        overflow: hidden;
 
-    #container {
-      display: block;
-      width: 100%;
-      height: 100%;
-      position: relative;
+        & button {
+          background: transparent;
+          border-radius: 0;
 
-      padding: 8px;
-      border: 1px solid var(--light-dark-n-98);
-      background: var(--light-dark-n-98);
-      overflow: scroll;
-      scrollbar-width: none;
+          &:hover:not([disabled]) {
+            background: oklch(0 0 0 / 0.3);
+          }
 
-      & #inner-container {
-        & canvas {
-          object-fit: contain;
-          image-rendering: smooth;
-          max-width: 100%;
+          &[disabled] {
+            opacity: 1;
+            color: oklch(1 0 0 / 0.3);
+          }
+        }
+
+        & .page-num {
+          color: white;
+          font: 500 var(--bb-body-small, 12px) / 1
+            var(--bb-font-family, sans-serif);
+          min-width: 20px;
+          text-align: center;
         }
       }
-    }
+    `,
+  ];
 
-    :host([showcontrols="true"]) {
-      #container {
-        height: calc(100% - var(--bb-grid-size-11));
-      }
-    }
-  `;
+  // ── Private state ──────────────────────────────────────────────────
 
-  #libraryLoaded: Promise<PDFJS> | null = null;
-  #pdfFile: Promise<PDFDocumentProxy | null> | null = null;
-  #content: Promise<HTMLTemplateResult> | null = null;
+  /** Ref to the scrollable container, used for zoom-to-fit calculations. */
   #containerRef: Ref<HTMLDivElement> = createRef();
-  #canvas = document.createElement("canvas");
-  #bounds = new DOMRectReadOnly();
-  #baseViewport: PageViewport | null = null;
-  #pages = 0;
-  #resizeObserver = new ResizeObserver((entries) => {
-    const [entry] = entries;
-    this.#bounds = entry.contentRect;
+
+  /** Reused canvas element. Created once, updated on every render. */
+  #canvas: HTMLCanvasElement | null = null;
+
+  /** In-flight pdfjs render task, cancelled when a new render starts. */
+  #activeRender: RenderTask | null = null;
+
+  /** Guards the `load` event so it fires exactly once per document. */
+  #loadDispatched = false;
+
+  /** Whether the initial zoom-to-fit has been performed. */
+  #hasInitialZoom = false;
+
+  /**
+   * PDF page dimensions in points (at viewport scale=1). Cached after the
+   * first render so #zoomToFit can be called later without re-fetching the
+   * page.
+   */
+  #pageWidth = 0;
+  #pageHeight = 0;
+
+  /** Resolved ArrayBuffer for download, whether supplied or fetched. */
+  #resolvedBytes: ArrayBuffer | null = null;
+
+  /** The rendered content promise, consumed by `until()` in the template. */
+  #content: Promise<HTMLTemplateResult> | null = null;
+
+  /** Tracks the last PDF document to detect when a new one arrives. */
+  #lastPdf: PDFDocumentProxy | null = null;
+
+  #rafId = 0;
+  #resizeObserver = new ResizeObserver(() => {
+    cancelAnimationFrame(this.#rafId);
+    this.#rafId = requestAnimationFrame(() => {
+      this.requestUpdate();
+    });
   });
+
+  // ── Lit Task: load pdfjs + open document ───────────────────────────
+
+  /**
+   * Reactive Task that loads pdfjs-dist and opens the PDF document.
+   * Re-runs automatically when `data` or `url` changes. The resolved
+   * PDFDocumentProxy is picked up by `willUpdate`.
+   */
+  #pdfTask = new Task(this, {
+    task: async ([data, url]: [ArrayBuffer | null, string | null]) => {
+      if (!data && !url) {
+        return null;
+      }
+
+      const lib = await loadPDFJS();
+
+      let bytes = data;
+      if (!bytes && url) {
+        const response = await fetch(url);
+        bytes = await response.arrayBuffer();
+      }
+      if (!bytes) {
+        throw new Error("No PDF data provided");
+      }
+
+      // Copy bytes for download — pdfjs transfers the buffer to its worker,
+      // which detaches the original.
+      this.#resolvedBytes = bytes.slice(0);
+      return lib.getDocument({ data: bytes }).promise;
+    },
+    args: () => [this.data, this.url] as [ArrayBuffer | null, string | null],
+  });
+
+  // ── Lifecycle ──────────────────────────────────────────────────────
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this.#resizeObserver.disconnect();
+    cancelAnimationFrame(this.#rafId);
+    this.#activeRender?.cancel();
 
-    if (this.#pdfFile) {
-      this.#pdfFile.then((pdf) => {
-        if (!pdf) {
-          return;
-        }
-
-        return pdf.destroy().then(() => pdf.cleanup());
-      });
+    if (this.#pdfTask.status === TaskStatus.COMPLETE && this.#pdfTask.value) {
+      const pdf = this.#pdfTask.value as PDFDocumentProxy;
+      pdf.destroy();
     }
-  }
-
-  async #loadLib() {
-    const pdfjs = await import("pdfjs-dist");
-    // Here we must use the pdf.worker.mjs rather than the .min.mjs because the
-    // unminifed code includes a critical vite-ignore comment. When this comment
-    // is missing (as it is in the .min.mjs version), vite attempts to import
-    // wasm files up front and that fails.
-    const pdfjsWorkerUrl = new URL(
-      "pdfjs-dist/build/pdf.worker.mjs",
-      import.meta.url
-    );
-
-    pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl.href;
-    return pdfjs;
   }
 
   protected firstUpdated(): void {
-    if (!this.#containerRef.value) {
-      return;
+    if (this.#containerRef.value) {
+      this.#resizeObserver.observe(this.#containerRef.value);
     }
-
-    this.#resizeObserver.observe(this.#containerRef.value);
   }
 
-  #initialRender = true;
-  #isRendering = false;
+  /**
+   * Central coordination point. Detects three triggers:
+   * 1. Zoom property changed → clamp to [0.1, 10].
+   * 2. Task delivered a new PDFDocumentProxy.
+   * 3. Zoom or page changed on an existing PDF.
+   *
+   * Any of these triggers a fresh `#renderToCanvas` call, whose promise
+   * is stored in `#content` for consumption by `until()` in the template.
+   */
   protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("data")) {
-      this.disabled = true;
-      if (!this.#libraryLoaded) {
-        this.#libraryLoaded = this.#loadLib();
-      }
-
-      this.#pdfFile = this.#libraryLoaded
-        .then<PDFLoadResult>((lib) => {
-          if (!this.data) {
-            return null;
-          }
-
-          return { lib, data: this.data };
-        })
-        .then<PDFDocumentProxy | null>((loadResult) => {
-          if (!loadResult) {
-            return null;
-          }
-
-          const pdfjsLib = loadResult.lib;
-          const loadingTask = pdfjsLib.getDocument({ data: loadResult.data });
-          return loadingTask.promise;
-        });
+    // Clamp zoom so the stored value always matches what's rendered.
+    if (changedProperties.has("zoom")) {
+      this.zoom = Math.max(0.1, Math.min(10, this.zoom));
     }
 
-    if (changedProperties.has("page")) {
-      this.disabled = true;
-      this.#baseViewport = null;
+    // Detect when the Task has delivered a new PDF document.
+    const pdf =
+      this.#pdfTask.status === TaskStatus.COMPLETE
+        ? (this.#pdfTask.value as PDFDocumentProxy | null)
+        : null;
+    const pdfChanged = pdf !== null && pdf !== this.#lastPdf;
+    if (pdfChanged) {
+      this.#lastPdf = pdf;
     }
 
-    if (changedProperties.has("zoom") || changedProperties.has("page")) {
-      this.disabled = true;
-      if (!this.#pdfFile) {
-        return;
-      }
-
-      this.#content = this.#pdfFile.then(async (pdfDocument) => {
-        if (!pdfDocument || !this.#canvas) {
-          return html`Unable to render`;
-        }
-
-        const pdfPage = await pdfDocument.getPage(this.page);
-
-        // Get the current page's size for fit-to-screen.
-        if (!this.#baseViewport) {
-          this.#baseViewport = pdfPage.getViewport({
-            scale: dPR,
-          });
-
-          this.#zoomToFit();
-        }
-
-        if (this.#pages === 0) {
-          this.#pages = pdfDocument.numPages;
-        }
-
-        const canvas = this.#canvas;
-        const ctx = canvas.getContext("2d")!;
-        if (this.#isRendering) {
-          return html`${canvas}`;
-        }
-
-        const viewport = pdfPage.getViewport({
-          scale: this.zoom * dPR,
-        });
-
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        this.#isRendering = true;
-        const renderTask = pdfPage.render({
-          canvas,
-          canvasContext: ctx,
-          viewport,
-        });
-
-        await renderTask.promise;
-
-        if (this.#initialRender) {
-          this.#initialRender = false;
-          this.dispatchEvent(new Event("pdfinitialrender"));
-        }
-
-        this.disabled = false;
-        this.#isRendering = false;
-
-        return html`${canvas}`;
-      });
-    }
-  }
-
-  #clamp(value: number, min: number, max: number) {
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
-  }
-
-  #zoomToFit() {
+    // Rebuild the content promise whenever the PDF, zoom, or page changes.
     if (
-      this.#bounds.width === 0 ||
-      this.#bounds.height === 0 ||
-      !this.#baseViewport
+      pdf &&
+      (pdfChanged ||
+        changedProperties.has("zoom") ||
+        changedProperties.has("page"))
     ) {
+      this.#content = this.#renderToCanvas(pdf);
+    }
+  }
+
+  // ── Canvas rendering ───────────────────────────────────────────────
+
+  /**
+   * Renders a single PDF page to the shared canvas element.
+   *
+   * The canvas uses the standard high-DPI pattern:
+   * - **Pixel dimensions** (`canvas.width/height`): `zoom * dPR * pageSize`
+   *   — determines the rendered resolution.
+   * - **CSS dimensions** (`canvas.style.width/height`): `zoom * pageSize`
+   *   — determines the visual size on screen.
+   *
+   * This means the canvas CSS size grows/shrinks with zoom, which is
+   * how overflow scrolling works. `#container` has `overflow: auto` and
+   * `contain: size` on `:host` prevents the growing canvas from pushing
+   * ancestor elements larger.
+   */
+  async #renderToCanvas(pdf: PDFDocumentProxy): Promise<HTMLTemplateResult> {
+    // Cancel any in-flight render.
+    if (this.#activeRender) {
+      this.#activeRender.cancel();
+      this.#activeRender = null;
+    }
+
+    const pdfPage = await pdf.getPage(this.page);
+    const dPR = window.devicePixelRatio ?? 1;
+
+    if (!this.#canvas) {
+      this.#canvas = document.createElement("canvas");
+    }
+
+    // On first render, calculate zoom so the page fits the container.
+    if (!this.#hasInitialZoom) {
+      this.#hasInitialZoom = true;
+      const baseViewport = pdfPage.getViewport({ scale: 1 });
+      this.#zoomToFit(baseViewport.width, baseViewport.height);
+    }
+
+    // Zoom is baked into the viewport scale — the canvas grows on zoom-in,
+    // and #container (overflow: auto) handles scrolling.
+    const viewport = pdfPage.getViewport({ scale: this.zoom * dPR });
+
+    // Set pixel buffer (resolution).
+    this.#canvas.width = viewport.width;
+    this.#canvas.height = viewport.height;
+
+    // Set CSS dimensions (visual size) — divide by dPR for correct 1x sizing.
+    this.#canvas.style.width = `${viewport.width / dPR}px`;
+    this.#canvas.style.height = `${viewport.height / dPR}px`;
+
+    const ctx = this.#canvas.getContext("2d")!;
+    const renderTask = pdfPage.render({
+      canvas: this.#canvas,
+      canvasContext: ctx,
+      viewport,
+    });
+    this.#activeRender = renderTask;
+
+    try {
+      await renderTask.promise;
+    } catch (err: unknown) {
+      // pdfjs throws when a render is cancelled — that's expected.
+      if (
+        err instanceof Error &&
+        (err.message.includes("Rendering cancelled") ||
+          err.message.includes("cancelled"))
+      ) {
+        return html`${this.#canvas}`;
+      }
+      return html`Unable to render PDF`;
+    } finally {
+      this.#activeRender = null;
+    }
+
+    if (!this.#loadDispatched) {
+      this.#loadDispatched = true;
+      this.dispatchEvent(new Event("load"));
+    }
+
+    return html`${this.#canvas}`;
+  }
+
+  // ── Zoom ───────────────────────────────────────────────────────────
+
+  /**
+   * Sets `this.zoom` so the full page fits within the container. On first
+   * call, caches the page's natural dimensions (PDF points at scale=1) so
+   * subsequent calls (e.g. from the fit_screen button) don't need to
+   * re-fetch the page.
+   */
+  #zoomToFit(pageWidth?: number, pageHeight?: number): void {
+    if (pageWidth) this.#pageWidth = pageWidth;
+    if (pageHeight) this.#pageHeight = pageHeight;
+
+    const container = this.#containerRef.value;
+    if (!container || !this.#pageWidth || !this.#pageHeight) {
       return;
     }
+
+    const { clientWidth, clientHeight } = container;
+    if (clientWidth === 0 || clientHeight === 0) {
+      return;
+    }
+
+    // Account for container padding (8px each side).
+    const availWidth = clientWidth - 16;
+    const availHeight = clientHeight - 16;
 
     this.zoom = Math.min(
-      (this.#bounds.width - this.#bounds.left) / this.#baseViewport.width,
-      (this.#bounds.height - this.#bounds.top) / this.#baseViewport.height
+      availWidth / this.#pageWidth,
+      availHeight / this.#pageHeight
     );
   }
 
-  render() {
-    return html` ${this.showControls
+  // ── Download ───────────────────────────────────────────────────────
+
+  /** Triggers a browser download of the PDF using the resolved bytes. */
+  #download(): void {
+    const bytes = this.#resolvedBytes;
+    if (!bytes) {
+      return;
+    }
+
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = "document.pdf";
+    a.click();
+    URL.revokeObjectURL(blobUrl);
+  }
+
+  // ── Derived getters ────────────────────────────────────────────────
+
+  /** Total number of pages in the loaded PDF (0 while loading). */
+  get #pages(): number {
+    if (this.#pdfTask.status !== TaskStatus.COMPLETE || !this.#pdfTask.value) {
+      return 0;
+    }
+    return (this.#pdfTask.value as PDFDocumentProxy).numPages;
+  }
+
+  /** Whether controls should be disabled (PDF still loading). */
+  get #disabled(): boolean {
+    return this.#pdfTask.status === TaskStatus.PENDING;
+  }
+
+  // ── Template ───────────────────────────────────────────────────────
+
+  render(): HTMLTemplateResult {
+    return html`<div id="wrapper">
+      <div id="container" ${ref(this.#containerRef)}>
+        ${until(this.#content)}
+      </div>
+      ${this.showControls
         ? html`<div id="controls">
-            <div id="zoom">
-              <button
-                ?disabled=${this.disabled}
-                id="zoom-out"
-                @click=${() => {
-                  this.zoom = this.#clamp(this.zoom - 0.25, 0.1, 10);
-                }}
-              >
-                -</button
-              ><button
-                ?disabled=${this.disabled}
-                id="zoom-in"
-                @click=${() => {
-                  this.zoom = this.#clamp(this.zoom + 0.25, 0.1, 10);
-                }}
-              >
-                +
-              </button>
-              <button
-                ?disabled=${this.disabled}
-                id="fill"
-                @click=${() => {
-                  this.zoom = 1;
-                }}
-              >
-                Fill
-              </button>
-
-              <button
-                ?disabled=${this.disabled}
-                id="fit"
-                @click=${() => {
-                  this.#zoomToFit();
-                }}
-              >
-                Zoom to Fit
-              </button>
-            </div>
-
-            <div id="paging">
-              <button
-                ?disabled=${this.disabled || this.page <= 1}
-                id="back"
-                @click=${() => {
-                  this.page--;
-                }}
-              >
-                Back
-              </button>
-              <span class="pages">${this.page}</span>
-              <button
-                ?disabled=${this.disabled || this.page >= this.#pages}
-                id="next"
-                @click=${() => {
-                  this.page++;
-                }}
-              >
-                Next
-              </button>
-            </div>
+            <button
+              ?disabled=${this.#disabled}
+              @click=${() => {
+                this.zoom /= 1.1;
+              }}
+            >
+              <span class="g-icon filled round">remove</span>
+            </button>
+            <button
+              ?disabled=${this.#disabled}
+              @click=${() => {
+                this.zoom *= 1.1;
+              }}
+            >
+              <span class="g-icon filled round">add</span>
+            </button>
+            <button
+              ?disabled=${this.#disabled}
+              @click=${() => {
+                this.#zoomToFit();
+              }}
+            >
+              <span class="g-icon filled round">fit_screen</span>
+            </button>
+            <button
+              ?disabled=${this.#disabled || !this.#resolvedBytes}
+              @click=${() => {
+                this.#download();
+              }}
+            >
+              <span class="g-icon round">download</span>
+            </button>
+            ${this.#pages > 1
+              ? html`<div class="paging">
+                  <button
+                    ?disabled=${this.#disabled || this.page <= 1}
+                    @click=${() => {
+                      this.page--;
+                    }}
+                  >
+                    <span class="g-icon round">navigate_before</span>
+                  </button>
+                  <span class="page-num">${this.page}</span>
+                  <button
+                    ?disabled=${this.#disabled || this.page >= this.#pages}
+                    @click=${() => {
+                      this.page++;
+                    }}
+                  >
+                    <span class="g-icon round">navigate_next</span>
+                  </button>
+                </div>`
+              : nothing}
           </div>`
         : nothing}
-      <div id="container" ${ref(this.#containerRef)}>
-        <div id="inner-container">${until(this.#content)}</div>
-      </div>`;
+    </div>`;
   }
 }

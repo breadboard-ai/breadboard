@@ -7,7 +7,6 @@
 import * as A2UI from "../../../../a2ui/index.js";
 import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Task } from "@lit/task";
 
 @customElement("a2ui-custom-pdf-viewer")
 export class A2UICustomPDFViewer extends A2UI.v0_8.UI.Root {
@@ -42,32 +41,7 @@ export class A2UICustomPDFViewer extends A2UI.v0_8.UI.Root {
     `,
   ];
 
-  #partTask = new Map<string, Task>();
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    for (const task of this.#partTask.values()) {
-      task.abort();
-    }
-
-    this.#partTask.clear();
-  }
-
-  #createPDFLoadTask(url: string) {
-    const task = new Task(this, {
-      task: async ([url]) => {
-        const response = await fetch(url);
-        const data = await response.arrayBuffer();
-        return data;
-      },
-      args: () => [url],
-    });
-
-    task.autoRun = false;
-    return task;
-  }
-
-  #renderPDF() {
+  render() {
     const fileUri = A2UI.v0_8.UI.Utils.extractStringValue(
       this.fileUri,
       this.component,
@@ -84,27 +58,8 @@ export class A2UICustomPDFViewer extends A2UI.v0_8.UI.Root {
     const pdfUrl = fileUri || url;
     if (!pdfUrl) return html`Unable to render PDF`;
 
-    let partTask = this.#partTask.get(pdfUrl);
-    if (!partTask) {
-      partTask = this.#createPDFLoadTask(pdfUrl);
-      this.#partTask.set(pdfUrl, partTask);
-      partTask.run();
-    }
-
-    return partTask.render({
-      initial: () => html`Waiting to load PDF...`,
-      pending: () => html`Loading PDF`,
-      complete: (pdfData) => {
-        return html`<bb-pdf-viewer
-          .showControls=${false}
-          .data=${pdfData}
-        ></bb-pdf-viewer>`;
-      },
-      error: () => html`Unable to load PDF`,
-    });
-  }
-
-  render() {
-    return html`<section>${this.#renderPDF()}</section>`;
+    return html`<section>
+      <bb-pdf-viewer .url=${pdfUrl} .showControls=${true}></bb-pdf-viewer>
+    </section>`;
   }
 }
