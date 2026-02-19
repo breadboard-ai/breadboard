@@ -417,10 +417,13 @@ class Main extends MainBase {
       .flags=${this.sca.controller.global.flags.flags()}
       .uiState=${this.sca.controller.global.main}
       .emailPrefsManager=${this.sca.services.emailPrefsManager}
+      .initialTab=${this.sca.controller.global.main.globalSettingsTab}
       @bbmodaldismissed=${() => {
+        this.sca.controller.global.main.globalSettingsTab = null;
         this.sca.controller.global.main.show.delete("GlobalSettings");
       }}
-    ></bb-global-settings-modal>`;
+    >
+    </bb-global-settings-modal>`;
   }
 
   #renderWarmWelcomeModal() {

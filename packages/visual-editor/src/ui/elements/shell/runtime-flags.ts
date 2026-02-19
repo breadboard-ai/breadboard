@@ -5,6 +5,7 @@
  */
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { StateEvent } from "../../events/events.js";
@@ -20,6 +21,9 @@ export class VERuntimeFlags extends LitElement {
   @property()
   accessor flags: Promise<Readonly<RuntimeFlags>> | null = null;
 
+  @property()
+  accessor envDefaults: Readonly<RuntimeFlags> | null = null;
+
   static styles = [
     type,
     baseColors,
@@ -31,6 +35,25 @@ export class VERuntimeFlags extends LitElement {
       p {
         margin: 0 0 var(--bb-grid-size-3) 0;
         color: var(--light-dark-e-20);
+      }
+
+      .reset-all {
+        display: flex;
+        justify-content: flex-end;
+        padding: 0 0 var(--bb-grid-size-2) 0;
+
+        & button {
+          background: none;
+          border: none;
+          color: var(--light-dark-e-20);
+          cursor: pointer;
+          padding: var(--bb-grid-size) var(--bb-grid-size-2);
+          border-radius: var(--bb-grid-size);
+
+          &:hover {
+            background: var(--light-dark-n-95);
+          }
+        }
       }
 
       form {
@@ -50,7 +73,7 @@ export class VERuntimeFlags extends LitElement {
 
         & .entry {
           display: grid;
-          grid-template-columns: 1fr 120px;
+          grid-template-columns: 1fr 100px;
           align-items: start;
 
           & .flag-info {
@@ -72,10 +95,15 @@ export class VERuntimeFlags extends LitElement {
             background: var(--light-dark-n-0);
             color: var(--light-dark-n-100);
             border: none;
+            text-align: center;
 
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
+
+            &.overridden {
+              background-color: light-dark(var(--p-50), var(--p-70));
+            }
           }
         }
       }
@@ -125,11 +153,33 @@ export class VERuntimeFlags extends LitElement {
           return aTitle.localeCompare(bTitle);
         });
 
+        const env = this.envDefaults;
+
         return html`
           <p class="sans-flex w-400 md-body-medium">
             By enabling these features you may introduce instability or lose
             work in ${Strings.from("APP_NAME")}. Please proceed with caution.
           </p>
+          <div class="reset-all">
+            <button
+              class="sans-flex w-400 md-body-small"
+              @click=${() => {
+                if (!confirm("Continue resetting all flags?")) return;
+
+                for (const [name] of flags) {
+                  this.dispatchEvent(
+                    new StateEvent({
+                      eventType: "host.flagchange",
+                      flag: name as keyof RuntimeFlags,
+                      value: undefined,
+                    })
+                  );
+                }
+              }}
+            >
+              Reset all to default
+            </button>
+          </div>
           <form @submit=${(evt: SubmitEvent) => evt.preventDefault()}>
             ${repeat(
               flags,
@@ -138,6 +188,10 @@ export class VERuntimeFlags extends LitElement {
                 const meta = RUNTIME_FLAG_META[name as keyof RuntimeFlags];
                 const title = meta?.title ?? name;
                 const description = meta?.description;
+                const isOverridden =
+                  env !== null &&
+                  env[name as keyof RuntimeFlags] !== undefined &&
+                  value !== env[name as keyof RuntimeFlags];
                 return html` <div class="entry">
                   <div class="flag-info">
                     <label class="sans-flex round w-400" for=${name}
@@ -153,7 +207,12 @@ export class VERuntimeFlags extends LitElement {
                     id=${name}
                     name=${name}
                     type="checkbox"
-                    class="sans-flex round w-400"
+                    class=${classMap({
+                      "sans-flex": true,
+                      round: true,
+                      "w-400": true,
+                      overridden: isOverridden,
+                    })}
                     .checked=${value}
                     @change=${(evt: InputEvent) => {
                       if (!(evt.target instanceof HTMLSelectElement)) {
@@ -186,7 +245,7 @@ export class VERuntimeFlags extends LitElement {
               }
             )}
           </form>
-        </bb-modal>`;
+        `;
       },
     });
   }

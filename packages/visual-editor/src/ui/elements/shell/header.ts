@@ -360,12 +360,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
         color: light-dark(var(--n-0), var(--n-70));
 
         &.has-overrides {
-          font-size: 12px;
-          line-height: normal;
-          padding: 2px 6px;
-          color: #60150f;
-          background-color: #ffecee;
-          color: light-dark(var(--n-0), var(--n-70));
+          cursor: pointer;
+          background-color: light-dark(var(--e-95), var(--e-15));
+          color: light-dark(var(--e-40), var(--e-70));
           font-weight: 500;
           font-family: Google Sans Code;
         }
@@ -768,6 +765,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         return html`<span
           class="sans ${count > 0 ? "has-overrides" : ""}"
           id="experiment"
+          .aria-role=${count > 0 ? "button" : nothing}
           @pointerover=${(evt: PointerEvent) => {
             if (count <= 0) {
               return;
@@ -775,10 +773,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
             this.dispatchEvent(
               new ShowTooltipEvent(
-                Strings.from("TEXT_EXPERIMENT_MODE").replace(
-                  "{{count}}",
-                  count.toString()
-                ),
+                Strings.from("TEXT_EXPERIMENT_MODE")
+                  .replace("{{count}}", count.toString())
+                  .replace("{{suffix}}", count === 1 ? "" : "s"),
                 evt.clientX,
                 evt.clientY + 90,
                 { status: false, isMultiLine: true }
@@ -791,6 +788,14 @@ export class VEHeader extends SignalWatcher(LitElement) {
             }
 
             this.dispatchEvent(new HideTooltipEvent());
+          }}
+          @click=${() => {
+            if (count <= 0) {
+              return;
+            }
+
+            this.sca.controller.global.main.globalSettingsTab = "EXPERIMENTAL";
+            this.sca.controller.global.main.show.add("GlobalSettings");
           }}
           >${count > 0 ? "Experiment mode" : "Experiment"}</span
         >`;
