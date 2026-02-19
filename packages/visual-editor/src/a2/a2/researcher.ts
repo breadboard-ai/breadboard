@@ -256,9 +256,7 @@ function researchExample(): string[] {
   ];
 }
 
-async function describe(
-  { inputs: { plan } }: DescribeInputs,
-) {
+async function describe({ inputs: { plan } }: DescribeInputs) {
   const template = new Template(plan);
   return {
     inputSchema: {

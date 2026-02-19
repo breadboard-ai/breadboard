@@ -45,6 +45,7 @@ export const DRIVE_PROPERTY_LATEST_SHARED_VERSION = "latestSharedVersion";
 export const DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY = "mainToShareableCopy";
 export const DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN = "shareableCopyToMain";
 export const DRIVE_PROPERTY_OPAL_SHARE_SURFACE = "opalShareSurface";
+export const DRIVE_PROPERTY_VIEWER_MODE = "opal.viewerMode";
 
 export interface MakeGraphListQueryInit {
   kind: "editable" | "shareable";
@@ -161,7 +162,9 @@ class DriveOperations {
   async writeGraphToDrive(
     url: URL,
     descriptor: GraphDescriptor
-  ): Promise<{ result: boolean; error?: string }> {
+  ): Promise<
+    { result: true; version: string } | { result: false; error: string }
+  > {
     await purgeStoredDataInMemoryValues(descriptor);
     const file = this.fileIdFromUrl(url);
     const name = getFileTitle(descriptor);
@@ -172,7 +175,7 @@ class DriveOperations {
         descriptor
       );
 
-      await this.#googleDriveClient.updateFile(
+      const updated = await this.#googleDriveClient.updateFile(
         file,
         new Blob([JSON.stringify(descriptor)], {
           type: GRAPH_MIME_TYPE,
@@ -186,11 +189,12 @@ class DriveOperations {
             tags: descriptor.metadata?.tags ?? [],
           }),
           mimeType: GRAPH_MIME_TYPE,
-        }
+        },
+        { fields: ["version"] }
       );
       this.#log("verbose", "Saved graph", descriptor);
 
-      return { result: true };
+      return { result: true, version: updated.version };
     } catch (err) {
       this.#log("warning", err);
       return { result: false, error: "Unable to save" };

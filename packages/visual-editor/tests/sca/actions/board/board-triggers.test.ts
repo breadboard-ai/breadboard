@@ -104,7 +104,7 @@ suite("Board Triggers", () => {
       );
     });
 
-    test("returns truthy value (1) when version is 0", () => {
+    test("returns false when version is 0 (initial load bump)", () => {
       const mockBind = {
         controller: {
           editor: {
@@ -121,8 +121,31 @@ suite("Board Triggers", () => {
       const trigger = onVersionChange(mockBind as never);
       const result = trigger.condition();
 
-      // Returns 1 (version 0 + 1) so it's truthy
-      assert.strictEqual(result, 1, "Should return 1 for version 0");
+      assert.strictEqual(
+        result,
+        false,
+        "Should not save on version 0 (load-induced bump)"
+      );
+    });
+
+    test("returns truthy value (2) for version 1 (first real edit)", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              version: 1,
+              readOnly: false,
+              editor: {},
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onVersionChange(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(result, 2, "Should save on first real edit");
     });
 
     test("has correct trigger name", () => {

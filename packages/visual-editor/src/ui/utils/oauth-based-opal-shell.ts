@@ -519,6 +519,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       id: grantResponse.id,
       domain: grantResponse.domain,
       scopes: grantResponse.scopes,
+      authuser: grantResponse.authuser,
     };
     console.info("[shell host] Updating storage");
 
@@ -561,6 +562,12 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   }
 
   #makeSignedInState(grant: TokenGrant): SignInState {
+    if (grant.authuser === undefined) {
+      console.warn(
+        `[shell host] authuser is not available in stored sign-in data. ` +
+          `User will need to sign out and sign back in to populate authuser and access G1 status.`
+      );
+    }
     return {
       status: "signedin",
       id: grant.id,
@@ -570,6 +577,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       scopes: (grant.scopes ?? []).map((scope) =>
         canonicalizeOAuthScope(scope)
       ),
+      authuser: grant.authuser,
     };
   }
 

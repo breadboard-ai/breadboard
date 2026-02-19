@@ -6,8 +6,8 @@
 
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
-import { ToastType } from "../../ui/events/events.js";
-import { STATUS } from "../../ui/types/types.js";
+import { ToastType } from "../types.js";
+import { STATUS } from "../types.js";
 
 /**
  * Returns true if the keyboard event originated from within the graph renderer
@@ -27,10 +27,12 @@ export function isFocusedOnGraphRenderer(evt: KeyboardEvent): boolean {
     );
 }
 
-type DefaultBindings = {
+export type ActionBind = {
   controller: AppController;
   services: AppServices;
 };
+
+type DefaultBindings = ActionBind;
 
 /**
  * Defines the hybrid type:
@@ -192,4 +194,5 @@ export function stopRun(controller: AppController): void {
   run.screen.reset();
   run.renderer.reset();
   run.main.setStatus(STATUS.STOPPED);
+  run.main.bumpStopVersion();
 }

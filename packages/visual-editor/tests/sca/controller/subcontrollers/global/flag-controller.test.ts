@@ -107,11 +107,6 @@ suite("FlagController", () => {
     );
 
     assert.throws(
-      () => String(store.gulfRenderer),
-      new Error("gulfRenderer was not set by environment")
-    );
-
-    assert.throws(
       () => String(store.mcp),
       new Error("mcp was not set by environment")
     );

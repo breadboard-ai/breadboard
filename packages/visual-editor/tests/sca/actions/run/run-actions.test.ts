@@ -64,6 +64,45 @@ suite("Run Actions", () => {
     assert.ok(controller.run.main.runner !== null, "runner should be set");
   });
 
+  test("prepare pre-populates renderer with node states from orchestrator", () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller, {
+      edges: [],
+      nodes: [
+        { id: "node-a", type: "test" },
+        { id: "node-b", type: "test" },
+      ],
+    });
+    RunActions.prepare();
+
+    // The renderer controller should have node states for each node
+    const rendererNodes = controller.run.renderer.nodes;
+    assert.strictEqual(
+      rendererNodes.size,
+      2,
+      "renderer should have 2 node states"
+    );
+
+    const nodeA = rendererNodes.get("node-a");
+    assert.ok(nodeA, "node-a should have a renderer state");
+    assert.strictEqual(
+      nodeA.status,
+      "ready",
+      "node-a should be 'ready' (single stage, no dependencies)"
+    );
+
+    const nodeB = rendererNodes.get("node-b");
+    assert.ok(nodeB, "node-b should have a renderer state");
+    assert.strictEqual(
+      nodeB.status,
+      "ready",
+      "node-b should be 'ready' (single stage, no dependencies)"
+    );
+  });
+
   test("prepare sets status to STOPPED (ready)", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
@@ -585,6 +624,49 @@ suite("Run.stop action", () => {
 
     done();
   });
+
+  test("stop bumps stopVersion", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Prepare a runner
+    setupGraph(controller);
+    RunActions.prepare();
+
+    const versionBefore = controller.run.main.stopVersion;
+
+    await RunActions.stop();
+
+    assert.strictEqual(
+      controller.run.main.stopVersion,
+      versionBefore + 1,
+      "stopVersion should be bumped after stop"
+    );
+  });
+
+  test("stop bumps stopVersion on each call", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    await RunActions.stop();
+    const v1 = controller.run.main.stopVersion;
+
+    // Re-prepare so there's a runner to stop again
+    RunActions.prepare();
+    await RunActions.stop();
+    const v2 = controller.run.main.stopVersion;
+
+    assert.strictEqual(
+      v2,
+      v1 + 1,
+      "stopVersion should increment monotonically"
+    );
+  });
 });
 
 suite("syncConsoleFromRunner", () => {
@@ -963,6 +1045,160 @@ suite("syncConsoleFromRunner", () => {
   });
 });
 
+suite("reprepareAfterStop", () => {
+  beforeEach(() => {
+    setDOM();
+    coordination.reset();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("stop re-populates console entries (regression test for 2bfbc6bf5)", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    // Set up a graph with nodes
+    setupGraph(controller, {
+      edges: [],
+      nodes: [
+        { id: "node-a", type: "test" },
+        { id: "node-b", type: "test" },
+      ],
+    });
+
+    // Provide graph inspection so syncConsoleFromRunner can populate entries
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => ({
+                title: () => id,
+                currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                currentPorts: () => ({
+                  inputs: { ports: [] },
+                  outputs: { ports: [] },
+                }),
+                describe: () =>
+                  Promise.resolve({ metadata: { tags: ["test"] } }),
+              }),
+            },
+          ],
+        ]),
+      });
+
+    // Prepare populates console with "inactive" entries
+    RunActions.prepare();
+    assert.ok(controller.run.main.runner, "runner should be set after prepare");
+    assert.ok(
+      controller.run.main.console.size > 0,
+      "console should be populated after prepare"
+    );
+
+    // Simulate a run (set status to RUNNING)
+    controller.run.main.setStatus(STATUS.RUNNING);
+
+    // Stop clears console and bumps stopVersion, which should trigger
+    // reprepareAfterStop → prepare(). We call stop() directly since triggers
+    // are tested at integration level.
+    await RunActions.stop();
+
+    // The stopVersion should have been bumped
+    assert.ok(
+      controller.run.main.stopVersion > 0,
+      "stopVersion should be bumped"
+    );
+
+    // Simulate what the trigger does: call reprepareAfterStop
+    await RunActions.reprepareAfterStop();
+
+    // After re-preparation, runner should be set again
+    assert.ok(
+      controller.run.main.runner,
+      "runner should be re-set after reprepareAfterStop"
+    );
+
+    // Console should be re-populated with entries
+    assert.ok(
+      controller.run.main.console.size > 0,
+      "console should be re-populated after reprepareAfterStop"
+    );
+
+    // consoleState should be "entries" (not "start"), keeping Start button active
+    assert.strictEqual(
+      controller.run.main.consoleState,
+      "entries",
+      "consoleState should be 'entries' after reprepareAfterStop"
+    );
+
+    // Status should be STOPPED (ready to start again)
+    assert.strictEqual(
+      controller.run.main.status,
+      STATUS.STOPPED,
+      "status should be STOPPED after reprepareAfterStop"
+    );
+  });
+
+  test("console is empty after stop but before reprepareAfterStop", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller, {
+      edges: [],
+      nodes: [{ id: "node-a", type: "test" }],
+    });
+
+    // Provide graph inspection
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => ({
+                title: () => id,
+                currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                currentPorts: () => ({
+                  inputs: { ports: [] },
+                  outputs: { ports: [] },
+                }),
+                describe: () =>
+                  Promise.resolve({ metadata: { tags: ["test"] } }),
+              }),
+            },
+          ],
+        ]),
+      });
+
+    RunActions.prepare();
+
+    assert.ok(
+      controller.run.main.console.size > 0,
+      "console should have entries before stop"
+    );
+
+    // Stop clears the console via reset()
+    await RunActions.stop();
+
+    // Console should be empty immediately after stop (before trigger fires)
+    assert.strictEqual(
+      controller.run.main.console.size,
+      0,
+      "console should be empty after stop"
+    );
+    assert.strictEqual(
+      controller.run.main.consoleState,
+      "start",
+      "consoleState should be 'start' when console is empty"
+    );
+  });
+});
+
 suite("mapLifecycleToRunStatus", () => {
   test("maps 'inactive' to 'inactive'", () => {
     assert.strictEqual(
@@ -1139,6 +1375,164 @@ suite("runner nodeend event", () => {
 
     // Should not throw and console should still be empty
     assert.strictEqual(controller.run.main.console.size, 0);
+  });
+
+  test("sets error on console entry when outputs contain $error (string)", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("error-node", {
+      title: "Error Node",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+      error: null,
+    } as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["error-node"],
+          node: { id: "error-node" },
+          outputs: { $error: "Simulated 503: model overloaded" },
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("error-node");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.status?.status,
+      "failed",
+      "status should be failed"
+    );
+    assert.ok(entry.error, "error should be set");
+    assert.strictEqual(
+      entry.error?.message,
+      "Simulated 503: model overloaded",
+      "error message should match"
+    );
+    assert.strictEqual(entry.completed, true, "completed should be true");
+  });
+
+  test("sets error on console entry when $error is an object with message", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("error-node-2", {
+      title: "Error Node 2",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+      error: null,
+    } as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["error-node-2"],
+          node: { id: "error-node-2" },
+          outputs: { $error: { message: "Rate limit exceeded" } },
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("error-node-2");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.status?.status,
+      "failed",
+      "status should be failed"
+    );
+    assert.strictEqual(
+      entry.error?.message,
+      "Rate limit exceeded",
+      "error message should be extracted from object"
+    );
+  });
+
+  test("does not populate output map when outputs contain $error", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("error-node-3", {
+      title: "Error Node 3",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+      error: null,
+      output: new Map(),
+    } as unknown as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["error-node-3"],
+          node: { id: "error-node-3" },
+          outputs: { $error: "Something went wrong" },
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("error-node-3");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.output.size,
+      0,
+      "output map should remain empty for failed nodes"
+    );
+  });
+
+  test("includes errorMessage in failed status", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({ controller, services });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("renderer-error-node", {
+      title: "Renderer Error",
+      status: { status: "working" },
+      icon: "star",
+      completed: false,
+      error: null,
+    } as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["renderer-error-node"],
+          node: { id: "renderer-error-node" },
+          outputs: { $error: "API failure" },
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("renderer-error-node");
+    assert.ok(entry, "entry should exist");
+    assert.strictEqual(
+      entry.status?.status,
+      "failed",
+      "status should be failed"
+    );
+    assert.strictEqual(
+      (entry.status as { status: "failed"; errorMessage: string }).errorMessage,
+      "API failure",
+      "errorMessage should be set on the failed status"
+    );
   });
 });
 

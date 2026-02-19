@@ -40,7 +40,7 @@ export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 
-const FLASH_MODEL_NAME = "gemini-2.5-flash";
+const FLASH_MODEL_NAME = "gemini-3-flash-preview";
 const CODE_GENERATION_MODEL_NAME = "gemini-3-flash-preview";
 const PRO_MODEL_NAME = "gemini-3-pro-preview";
 const LITE_MODEL_NAME = "gemini-2.5-flash-lite";
@@ -112,13 +112,8 @@ function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
 function defineGenerateFunctions(
   args: GenerateFunctionArgs
 ): FunctionDefinition[] {
-  const {
-    fileSystem,
-    moduleArgs,
-    translator,
-    taskTreeManager,
-    generators,
-  } = args;
+  const { fileSystem, moduleArgs, translator, taskTreeManager, generators } =
+    args;
   const imageFunction = defineFunction(
     {
       name: "generate_images",

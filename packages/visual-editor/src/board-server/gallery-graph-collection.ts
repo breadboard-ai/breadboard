@@ -134,5 +134,7 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   #setError(e: Error) {
     console.error(`[gallery] ${e.message}`, e);
     this.#error = e;
+    this.#loading = false;
+    this.#loaded.resolve();
   }
 }

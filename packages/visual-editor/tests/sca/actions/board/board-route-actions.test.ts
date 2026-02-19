@@ -97,6 +97,7 @@ function makeMockRouteController(
           abortController: null as AbortController | null,
           reset: mock.fn(),
           setStatus: mock.fn(),
+          bumpStopVersion: mock.fn(),
         },
         screen: {
           reset: mock.fn(),
@@ -427,6 +428,15 @@ suite("Board Route Actions", () => {
         ).mock.callCount(),
         1,
         "setStatus should be called"
+      );
+      assert.strictEqual(
+        (
+          controller.run.main.bumpStopVersion as unknown as ReturnType<
+            typeof mock.fn
+          >
+        ).mock.callCount(),
+        1,
+        "bumpStopVersion should be called to trigger re-preparation"
       );
     });
 

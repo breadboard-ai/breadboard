@@ -15,20 +15,22 @@ import { classMap } from "lit/directives/class-map.js";
 
 import {
   CloseEvent,
+  HideTooltipEvent,
   OverflowMenuActionEvent,
   ShareRequestedEvent,
+  ShowTooltipEvent,
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
-import { UILoadState } from "../../types/state-types.js";
+import { UILoadState } from "../../../sca/types.js";
+import type { GraphContentState } from "../../../sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import * as Styles from "../../styles/styles.js";
 import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
+import { until } from "lit/directives/until.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
-
-const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
 @customElement("bb-ve-header")
 export class VEHeader extends SignalWatcher(LitElement) {
@@ -70,14 +72,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
   @property()
   accessor status: "Draft" | "Published" = "Draft";
 
-  @property({ type: Boolean })
-  accessor graphIsEmpty = true;
+  @property()
+  accessor graphContentState: GraphContentState = "loading";
 
   @state()
   accessor #showAccountSwitcher = false;
-
-  @state()
-  accessor #showRemixInfo = false;
 
   static styles = [
     Styles.HostType.type,
@@ -134,22 +133,26 @@ export class VEHeader extends SignalWatcher(LitElement) {
             align-items: center;
 
             color: var(--light-dark-n-0);
-            background: var(--light-dark-n-90);
+            background: var(--light-dark-n-95);
             cursor: pointer;
             height: var(--bb-grid-size-8);
             border: none;
             transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
-            &:not([disabled]):hover,
-            &.selected {
+            &:not([disabled]):not(.selected):hover {
               background: light-dark(
-                var(--ui-custom-o-25),
-                var(--ui-custom-o-30)
+                var(--ui-custom-o-5),
+                var(--ui-custom-o-5)
               );
             }
 
             &.selected {
               cursor: auto;
+              background: light-dark(
+                var(--ui-custom-o-25),
+                var(--ui-custom-o-25)
+              );
+              outline: 1px solid var(--ui-custom-o-100);
             }
           }
 
@@ -307,6 +310,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
         color: light-dark(var(--n-0), var(--n-90));
         display: flex;
         align-items: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
 
         &#app-title {
           font-size: 26px;
@@ -352,6 +358,17 @@ export class VEHeader extends SignalWatcher(LitElement) {
         border: 1px solid light-dark(var(--n-0), var(--n-70));
         text-transform: uppercase;
         color: light-dark(var(--n-0), var(--n-70));
+
+        &.has-overrides {
+          font-size: 12px;
+          line-height: normal;
+          padding: 2px 6px;
+          color: #60150f;
+          background-color: #ffecee;
+          color: light-dark(var(--n-0), var(--n-70));
+          font-weight: 500;
+          font-family: Google Sans Code;
+        }
       }
 
       #status {
@@ -420,6 +437,21 @@ export class VEHeader extends SignalWatcher(LitElement) {
         }
       }
 
+      #mode-toggle,
+      #remix,
+      #share-button {
+        animation: fadeIn 0.15s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
       @media (min-width: 980px) {
         #status {
           display: flex;
@@ -430,9 +462,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   constructor() {
     super();
-
-    const showRemixInfo = globalThis.localStorage.getItem(REMIX_INFO_KEY);
-    this.#showRemixInfo = showRemixInfo === null;
   }
 
   #handleTitleUpdate(evt: Event) {
@@ -504,7 +533,20 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderModeToggle() {
-    if (this.graphIsEmpty) {
+    // Hide the mode toggle only when the graph is genuinely empty.
+    // During "loading", we still show the toggle to avoid a flash.
+    if (this.graphContentState === "empty") {
+      return nothing;
+    }
+    const share = this.sca.controller.editor.share;
+    if (
+      !this.isMine &&
+      // Always hide the mode toggle (as well as the share and remix buttons below)
+      // while sharing is initializing, so that there's no flash if it turns out
+      // viewerMode=app-only. Instead, they will fade in (or not) after sharing
+      // is initialized.
+      (share.status === "initializing" || share.viewerMode === "app-only")
+    ) {
       return nothing;
     }
     return html`<span id="mode-toggle">
@@ -711,10 +753,50 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderExperimentalLabel() {
-    return html`${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
-    Strings.from("PROVIDER_NAME") !== ""
-      ? html`<span class="sans" id="experiment">Experiment</span>`
-      : nothing}`;
+    const hasOverrides = this.sca.controller.global.flags
+      .overrides()
+      .then((overrides) => {
+        const count = Object.keys(overrides).length;
+
+        if (
+          Strings.from("PROVIDER_NAME") === "PROVIDER_NAME" ||
+          Strings.from("PROVIDER_NAME") === ""
+        ) {
+          return nothing;
+        }
+
+        return html`<span
+          class="sans ${count > 0 ? "has-overrides" : ""}"
+          id="experiment"
+          @pointerover=${(evt: PointerEvent) => {
+            if (count <= 0) {
+              return;
+            }
+
+            this.dispatchEvent(
+              new ShowTooltipEvent(
+                Strings.from("TEXT_EXPERIMENT_MODE").replace(
+                  "{{count}}",
+                  count.toString()
+                ),
+                evt.clientX,
+                evt.clientY + 90,
+                { status: false, isMultiLine: true }
+              )
+            );
+          }}
+          @pointerout=${() => {
+            if (count <= 0) {
+              return;
+            }
+
+            this.dispatchEvent(new HideTooltipEvent());
+          }}
+          >${count > 0 ? "Experiment mode" : "Experiment"}</span
+        >`;
+      });
+
+    return html`${until(hasOverrides, nothing)}`;
   }
 
   #renderStatusLabel() {
@@ -740,6 +822,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   #renderRemixButton() {
     if (this.isMine) {
+      return nothing;
+    }
+    const share = this.sca.controller.editor.share;
+    if (share.status === "initializing" || share.viewerMode === "app-only") {
       return nothing;
     }
 
@@ -768,19 +854,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
       <span class="g-icon">gesture</span>
       <span class="round w-500">Remix</span>
 
-      ${this.#showRemixInfo
-        ? html`<bb-onboarding-tooltip
-            delayed
-            .tooltipTitle="Remix to Edit"
-            .text='You can only run this ${Strings.from(
-              "APP_NAME"
-            )} app. To edit, click the "Remix" button to make a copy.'
-            @bbonboardingacknowledged=${() => {
-              globalThis.localStorage.setItem(REMIX_INFO_KEY, "false");
-              this.#showRemixInfo = false;
-            }}
-          ></bb-onboarding-tooltip>`
-        : nothing}
+      ${html`<bb-onboarding-tooltip
+        delayed
+        .onboardingId=${"standalone-remix"}
+      ></bb-onboarding-tooltip>`}
     </button> `;
   }
 
@@ -792,6 +869,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderShareButton() {
+    const share = this.sca.controller.editor.share;
+    if (!this.isMine && share.status === "initializing") {
+      return nothing;
+    }
     const label = CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
       ? "Share"
       : Strings.from("COMMAND_COPY_APP_PREVIEW_URL");
@@ -845,6 +926,40 @@ export class VEHeader extends SignalWatcher(LitElement) {
       ${this.#renderAccountSwitcher()}`;
   }
 
+  #createUserSuffix(authuser = 0) {
+    let userSuffix = "";
+    if (authuser !== 0) {
+      userSuffix = `/u/${authuser + 1}`;
+    }
+
+    return userSuffix;
+  }
+
+  #createMembershipUrl(authuser = 0) {
+    const userSuffix = this.#createUserSuffix(authuser);
+    return `https://one.google.com${userSuffix}/settings?utm_source=opal&utm_medium=web&utm_campaign=opal_manage_membership`;
+  }
+
+  #createAICreditsUrl(authuser = 0) {
+    const userSuffix = this.#createUserSuffix(authuser);
+    return `https://one.google.com${userSuffix}/ai/credits?utm_source=opal&utm_medium=web&utm_campaign=opal_account_menu_add_credits`;
+  }
+
+  #getAuthUser() {
+    let authUser = 0;
+    if (this.sca.services.signinAdapter.stateSignal?.status === "signedin") {
+      const { authuser } = this.sca.services.signinAdapter.stateSignal;
+      if (authuser) {
+        authUser = Number.parseInt(authuser, 10);
+        if (Number.isNaN(authUser)) {
+          authUser = 0;
+        }
+      }
+    }
+
+    return authUser;
+  }
+
   #renderAccountSwitcher() {
     if (!this.#showAccountSwitcher) {
       return nothing;
@@ -862,6 +977,18 @@ export class VEHeader extends SignalWatcher(LitElement) {
         switch (evt.action) {
           case "logout": {
             this.dispatchEvent(new SignOutEvent());
+            break;
+          }
+
+          case "manage-membership": {
+            const url = this.#createMembershipUrl(this.#getAuthUser());
+            window.open(url, "_blank", "noopener,noreferrer");
+            break;
+          }
+
+          case "get-ai-credits": {
+            const url = this.#createAICreditsUrl(this.#getAuthUser());
+            window.open(url, "_blank", "noopener,noreferrer");
             break;
           }
 

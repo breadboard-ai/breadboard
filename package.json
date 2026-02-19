@@ -15,6 +15,7 @@
     "dev:next": "npm run dev:next:nowatch --watch",
     "dev:next:nowatch": "wireit",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
+    "format:fix": "prettier --write \"**/*.ts\"",
     "ci:local": "wireit",
     "syncpack:check": "wireit",
     "syncpack:check:dev": "wireit",

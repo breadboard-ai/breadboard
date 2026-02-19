@@ -344,9 +344,7 @@ function expandVeoError(
   return e;
 }
 
-async function describe(
-  { inputs: { instruction } }: DescribeInputs,
-) {
+async function describe({ inputs: { instruction } }: DescribeInputs) {
   const template = new Template(instruction);
   return {
     inputSchema: {

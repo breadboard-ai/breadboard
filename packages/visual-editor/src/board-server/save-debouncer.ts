@@ -21,6 +21,7 @@ export type SaveStatus = SaveDebouncerState["status"];
 
 export type DebouncerCallbacks = {
   savestatuschange: (status: SaveStatus, url: string) => void;
+  savecomplete: (url: string, version: string) => void;
 };
 
 const DEFAULT_DEBOUNCE_DELAY = 1_500;
@@ -132,8 +133,9 @@ class SaveDebouncer {
       // TODO: Introduce error status and learn to recover from errors.
       this.#setState({ status: "idle" }, url);
       resolve();
-      return err(writing.error!);
+      return err(writing.error);
     }
+    this.callbacks.savecomplete(url.href, writing.version);
     if (this.#latest !== null) {
       // If `save` was invoked again while operation was running, restart
       // the debounce timer.

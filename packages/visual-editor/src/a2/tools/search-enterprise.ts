@@ -25,14 +25,10 @@ async function invoke(
   if (!search_engine_resource_name) {
     return err(`Search engine resource name is required`);
   }
-  const executing = await executeTool<string>(
-    moduleArgs,
-    "enterprise_search",
-    {
-      query,
-      search_engine_resource_name,
-    }
-  );
+  const executing = await executeTool<string>(moduleArgs, "enterprise_search", {
+    query,
+    search_engine_resource_name,
+  });
   if (!ok(executing)) return executing;
 
   return { results: executing };

@@ -19,7 +19,7 @@ import { consume } from "@lit/context";
 import type { HighlightStateWithChangeId } from "../types/types.js";
 import { findChangedNodes } from "../flow-gen/flow-diff.js";
 import { HighlightEvent } from "../elements/step-editor/events/events.js";
-import { MAIN_BOARD_ID } from "../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../sca/constants.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
 import { scaContext } from "../../sca/context/context.js";
 import { SCA } from "../../sca/sca.js";

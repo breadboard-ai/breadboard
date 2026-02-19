@@ -19,6 +19,7 @@ import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { StringValue } from "../types/primitives.js";
 import { extractStringValue } from "./utils/utils.js";
+import { icons } from "../styles/icons.js";
 
 /**
  * Material icon component.
@@ -33,6 +34,7 @@ export class Icon extends Root {
   accessor name: StringValue | null = null;
 
   static styles = [
+    icons,
     css`
       * {
         box-sizing: border-box;
@@ -42,7 +44,7 @@ export class Icon extends Root {
         display: block;
         flex: var(--weight);
         min-height: 0;
-        overflow: auto;
+        overflow: hidden;
       }
     `,
   ];

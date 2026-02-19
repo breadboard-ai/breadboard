@@ -129,14 +129,15 @@ export class LandingCarousel extends LitElement {
         align-items: center;
         border: none;
         font-size: 16px;
-        color: var(--light-dark-n-100);
-        background: var(--light-dark-n-0);
-        border-radius: 60px;
         height: 56px;
         padding: 0 var(--bb-grid-size-6);
         white-space: nowrap;
         cursor: pointer;
         text-decoration: none;
+        background: var(--n-0);
+        color: var(--n-100);
+        border-radius: var(--bb-grid-size-16);
+        gap: var(--bb-grid-size-2);
 
         &.sticky {
           position: absolute;

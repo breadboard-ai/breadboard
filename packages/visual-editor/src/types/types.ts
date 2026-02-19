@@ -5,14 +5,14 @@
  */
 
 import type { EmbedHandler } from "../ui/embed/embed.js";
-import type { GlobalConfig } from "../ui/contexts/global-config.js";
+import type { GlobalConfig } from "../sca/types.js";
 import type { FileSystemEntry } from "@breadboard-ai/types";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import type {
   GuestConfiguration,
   OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { MakeUrlInit } from "../ui/types/types.js";
+import { type MakeUrlInit } from "../sca/types.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;

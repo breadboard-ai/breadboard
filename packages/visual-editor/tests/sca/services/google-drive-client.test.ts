@@ -10,7 +10,7 @@ import {
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import assert from "node:assert";
 import { after, before, beforeEach, suite, test } from "node:test";
-import { FakeGoogleDriveApi } from "../helpers/fake-google-drive-api.js";
+import { FakeGoogleDriveApi } from "@breadboard-ai/utils/google-drive/fake-google-drive-api.js";
 
 suite("GoogleDriveClient", () => {
   let fakeApi: FakeGoogleDriveApi;
@@ -19,9 +19,8 @@ suite("GoogleDriveClient", () => {
   before(async () => {
     fakeApi = await FakeGoogleDriveApi.start();
     client = new GoogleDriveClient({
-      apiBaseUrl: fakeApi.filesApiUrl,
-      uploadApiBaseUrl: fakeApi.uploadApiUrl,
-      proxyApiBaseUrl: fakeApi.proxyApiUrl,
+      apiBaseUrl: fakeApi.apiBaseUrl,
+      proxyBaseUrl: fakeApi.proxyBaseUrl,
       fetchWithCreds: globalThis.fetch,
     });
   });
@@ -569,22 +568,6 @@ suite("GoogleDriveClient", () => {
     });
   });
 
-  suite("URL accessors", () => {
-    test("filesApiUrl has correct format", () => {
-      assert.match(
-        fakeApi.filesApiUrl,
-        /^http:\/\/127\.0\.0\.1:\d+\/drive\/v3\/files$/
-      );
-    });
-
-    test("uploadApiUrl has correct format", () => {
-      assert.match(
-        fakeApi.uploadApiUrl,
-        /^http:\/\/127\.0\.0\.1:\d+\/upload\/drive\/v3\/files$/
-      );
-    });
-  });
-
   suite("normalizeFileId", () => {
     test("converts string to DriveFileId object", () => {
       const result = normalizeFileId("abc123");
@@ -601,6 +584,104 @@ suite("GoogleDriveClient", () => {
       const input = { id: "abc123" };
       const result = normalizeFileId(input);
       assert.deepStrictEqual(result, { id: "abc123" });
+    });
+  });
+
+  suite("version tracking", () => {
+    test("createFile starts at version 1", async () => {
+      const file = await client.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "test.json", mimeType: "application/json" }
+      );
+      const meta = await client.getFileMetadata(file.id, {
+        fields: ["version"],
+      });
+      assert.strictEqual(meta.version, "1");
+    });
+
+    test("updateFileMetadata increments version", async () => {
+      const file = await client.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "test.json", mimeType: "application/json" }
+      );
+
+      await client.updateFileMetadata(file.id, { name: "renamed.json" });
+      const meta1 = await client.getFileMetadata(file.id, {
+        fields: ["version"],
+      });
+      assert.strictEqual(meta1.version, "2");
+
+      await client.updateFileMetadata(file.id, { name: "renamed-again.json" });
+      const meta2 = await client.getFileMetadata(file.id, {
+        fields: ["version"],
+      });
+      assert.strictEqual(meta2.version, "3");
+    });
+
+    test("updateFile (media upload) increments version", async () => {
+      const file = await client.createFile(
+        new Blob(["v1"], { type: "application/json" }),
+        { name: "test.json", mimeType: "application/json" }
+      );
+
+      await client.updateFile(
+        file.id,
+        new Blob(["v2"], { type: "application/json" })
+      );
+      const meta1 = await client.getFileMetadata(file.id, {
+        fields: ["version"],
+      });
+      assert.strictEqual(meta1.version, "2");
+
+      await client.updateFile(
+        file.id,
+        new Blob(["v3"], { type: "application/json" })
+      );
+      const meta2 = await client.getFileMetadata(file.id, {
+        fields: ["version"],
+      });
+      assert.strictEqual(meta2.version, "3");
+    });
+
+    test("copyFile starts at version 1", async () => {
+      const original = await client.createFile(
+        new Blob(["data"], { type: "application/json" }),
+        { name: "original.json", mimeType: "application/json" }
+      );
+
+      // Bump the original to version 3
+      await client.updateFileMetadata(original.id, { name: "bump1.json" });
+      await client.updateFileMetadata(original.id, { name: "bump2.json" });
+
+      const copyResult = await client.copyFile(original.id, {
+        name: "copy.json",
+      });
+      assert.ok(copyResult.ok);
+      const copyMeta = await client.getFileMetadata(copyResult.value.id, {
+        fields: ["version"],
+      });
+      assert.strictEqual(copyMeta.version, "1", "Copy should start fresh at 1");
+    });
+
+    test("mixed content and metadata updates track version correctly", async () => {
+      const file = await client.createFile(
+        new Blob(["start"], { type: "application/json" }),
+        { name: "test.json", mimeType: "application/json" }
+      );
+
+      // 3 content updates + 1 metadata update = version 5
+      for (let i = 0; i < 3; i++) {
+        await client.updateFile(
+          file.id,
+          new Blob([`v${i}`], { type: "application/json" })
+        );
+      }
+      await client.updateFileMetadata(file.id, { name: "final.json" });
+
+      const meta = await client.getFileMetadata(file.id, {
+        fields: ["version"],
+      });
+      assert.strictEqual(meta.version, "5");
     });
   });
 });

@@ -46,7 +46,7 @@ import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import { NodeRunState } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { scaContext } from "../../../sca/context/context.js";
@@ -265,8 +265,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
       #container {
         width: 300px;
-        overflow-wrap: break-word;
-        word-break: break-all;
+        overflow-wrap: anywhere;
         border-radius: calc(var(--bb-grid-size-3) + 1px);
         color: light-dark(var(--n-10), var(--n-0));
         position: relative;
@@ -289,8 +288,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           border-radius: var(--bb-grid-size-3);
           outline: 2px solid transparent;
           z-index: 2;
-          overflow-wrap: break-word;
-          word-break: break-all;
+          overflow-wrap: anywhere;
         }
 
         & header {
@@ -376,8 +374,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         }
 
         & #content {
-          overflow-wrap: break-word;
-          word-break: break-all;
+          overflow-wrap: anywhere;
           position: relative;
           background: light-dark(var(--n-100), var(--n-20));
           padding: var(--bb-grid-size-3) var(--bb-grid-size-4)

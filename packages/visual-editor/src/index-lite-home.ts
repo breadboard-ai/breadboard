@@ -23,7 +23,7 @@ import type {
 } from "./ui/events/events.js";
 import * as BBLite from "./ui/lite/lite.js";
 import "./ui/lite/welcome-panel/project-listing.js";
-import { SnackType } from "./ui/types/types.js";
+import { SnackType } from "./sca/types.js";
 import { scaContext } from "./sca/context/context.js";
 import { sca, type SCA } from "./sca/sca.js";
 import { RuntimeConfig } from "./utils/graph-types.js";
@@ -82,6 +82,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     };
 
     this.sca = sca(config, mainArgs.globalConfig.flags);
+    this.sca.controller.global.onboarding.appMode = "lite";
 
     const sizeDetector = window.matchMedia("(max-width: 500px)");
     const reactToScreenWidth = () => {

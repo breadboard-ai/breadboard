@@ -28,10 +28,8 @@ import {
   StateEvent,
   ThemeEditRequestEvent,
 } from "../../events/events.js";
-import {
-  COMMAND_SET_GRAPH_EDITOR,
-  MAIN_BOARD_ID,
-} from "../../constants/constants.js";
+import { COMMAND_SET_GRAPH_EDITOR } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import { classMap } from "lit/directives/class-map.js";
 import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
 import { RendererRunState } from "../../../sca/types.js";
@@ -169,7 +167,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const gc = this.sca.controller.editor.graph;
 
     const graph = gc.editor?.inspect("") || null;
-    const graphIsEmpty = gc.empty;
+    // The canvas treats "loading" the same as "empty" — both show the
+    // onboarding state. Only "loaded" hides the empty state.
+    const graphContentState = gc.graphContentState;
+    const graphIsEmpty = graphContentState !== "loaded";
 
     const runState = this.runState;
 
@@ -291,7 +292,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             })}
             .focusWhenIn=${focusAppControllerWhenIn}
             .graph=${gc.graph}
-            .graphIsEmpty=${graphIsEmpty}
+            .graphContentState=${graphContentState}
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}
             .isMine=${!gc.readOnly}
             .readOnly=${gc.readOnly}

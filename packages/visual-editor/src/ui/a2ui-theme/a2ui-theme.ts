@@ -48,6 +48,12 @@ const tokens: ThemeTokens = {
 
   // Button
   "--a2ui-button-radius": "var(--a2ui-border-radius-lg)",
+
+  // Image controls (sensible defaults — opt-in overrides)
+  "--a2ui-image-button-bg": "oklch(0 0 0 / 0.5)",
+  "--a2ui-image-button-bg-hover": "oklch(0 0 0 / 0.7)",
+  "--a2ui-image-button-color": "white",
+  "--a2ui-image-button-size": "36px",
 };
 
 export const theme: v0_8.Types.Theme = {

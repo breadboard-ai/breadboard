@@ -8,7 +8,8 @@ import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { icons } from "../../styles/icons.js";
 
-export type VisibilityLevel = "only-you" | "restricted" | "anyone";
+import type { VisibilityLevel } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+export type { VisibilityLevel };
 
 @customElement("bb-share-visibility-selector")
 export class ShareVisibilitySelector extends LitElement {
@@ -123,11 +124,38 @@ export class ShareVisibilitySelector extends LitElement {
         font-weight: 300;
         line-height: 16px;
       }
+
+      .spinner {
+        animation: rotate 1s linear infinite;
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      select:disabled {
+        cursor: wait;
+      }
+
+      :host([loading]) #select-row {
+        pointer-events: none;
+        opacity: 0.6;
+      }
     `,
   ];
 
   @property()
   accessor value: VisibilityLevel = "only-you";
+
+  @property({ type: Boolean, reflect: true })
+  accessor loading = false;
 
   render() {
     const { icon, label, subtitle } = this.#iconAndSubtitle();
@@ -141,7 +169,11 @@ export class ShareVisibilitySelector extends LitElement {
           <div id="select-row">
             <span id="label">${label}</span>
             <span class="g-icon">arrow_drop_down</span>
-            <select .value=${this.value} @change=${this.#onChange}>
+            <select
+              .value=${this.value}
+              @change=${this.#onChange}
+              ?disabled=${this.loading}
+            >
               <option value="only-you">Only you</option>
               <option value="restricted">Restricted</option>
               <option value="anyone">Anyone with the link</option>
@@ -149,13 +181,15 @@ export class ShareVisibilitySelector extends LitElement {
           </div>
           <span id="subtitle">${subtitle}</span>
         </div>
-        ${this.value === "restricted"
-          ? html`
-              <button id="edit-access-button" @click=${this.#onEditAccess}>
-                Edit access
-              </button>
-            `
-          : nothing}
+        ${this.loading
+          ? html`<span class="g-icon spinner">progress_activity</span>`
+          : this.value === "restricted"
+            ? html`
+                <button id="edit-access-button" @click=${this.#onEditAccess}>
+                  Edit access
+                </button>
+              `
+            : nothing}
       </div>
     `;
   }
@@ -194,6 +228,7 @@ export class ShareVisibilitySelector extends LitElement {
   #onChange(event: Event) {
     const select = event.target as HTMLSelectElement;
     this.value = select.value as VisibilityLevel;
+    this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
   }
 }
 

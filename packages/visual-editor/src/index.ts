@@ -16,7 +16,7 @@ import * as BreadboardUI from "./ui/index.js";
 import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { MakeUrlInit } from "./ui/types/types.js";
+import { MakeUrlInit } from "./sca/types.js";
 import { repeat } from "lit/directives/repeat.js";
 import { Utils } from "./sca/utils.js";
 
@@ -236,6 +236,7 @@ class Main extends MainBase {
         this.renderTooltip(),
         this.#renderToasts(),
         this.renderSnackbar(),
+        this.renderNotebookLmPicker(),
         this.#renderFeedbackPanel(),
         this.renderConsentRequests(),
         this.#maybeRenderDebugPanel(),
@@ -268,7 +269,7 @@ class Main extends MainBase {
 
   #renderAppController(renderValues: RenderValues) {
     const gc = this.sca.controller.editor.graph;
-    const graphIsEmpty = gc.empty;
+    const graphContentState = gc.graphContentState;
     const active =
       this.sca.controller.global.main.mode === "app" &&
       this.sca.controller.global.main.loadState !== "Home";
@@ -276,7 +277,7 @@ class Main extends MainBase {
     return html`<bb-app-controller
       class=${classMap({ active })}
       .graph=${gc.graph ?? null}
-      .graphIsEmpty=${graphIsEmpty}
+      .graphContentState=${graphContentState}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
       .isMine=${!gc.readOnly}
       .readOnly=${true}
@@ -290,6 +291,18 @@ class Main extends MainBase {
   }
 
   #renderCanvasController(renderValues: RenderValues) {
+    // Temporarily block rendering the canvas for non-owners until sharing
+    // initializes, so the editor doesn't flash before a potential redirect to
+    // app mode due to the "allow access to editor view and remix" checkbox.
+    const { graph, share } = this.sca.controller.editor;
+    if (
+      this.sca.controller.global.main.mode === "canvas" &&
+      graph.url &&
+      !this.sca.services.googleDriveBoardServer.isMine(new URL(graph.url)) &&
+      share.status === "initializing"
+    ) {
+      return nothing;
+    }
     return html` <bb-canvas-controller
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
@@ -556,7 +569,7 @@ class Main extends MainBase {
         : false}
       .saveStatus=${renderValues.saveStatus}
       .mode=${this.sca.controller.global.main.mode}
-      .graphIsEmpty=${gc.empty}
+      .graphContentState=${gc.graphContentState}
       @bbsignout=${async () => {
         await this.sca.services.signinAdapter.signOut();
         this.sca.services.actionTracker.signOutSuccess();

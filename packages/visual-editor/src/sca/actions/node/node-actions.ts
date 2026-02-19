@@ -20,7 +20,7 @@ import {
   ChangeEdgeAttachmentPoint,
 } from "../../../ui/transforms/index.js";
 import type { StateEvent } from "../../../ui/events/events.js";
-import { MAIN_BOARD_ID } from "../../../ui/constants/constants.js";
+import { MAIN_BOARD_ID } from "../../constants.js";
 
 import {
   makeAction,

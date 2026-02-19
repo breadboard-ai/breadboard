@@ -57,7 +57,7 @@ class Button extends Root {
         display: flex;
         flex: var(--weight);
         min-height: 0;
-        overflow: auto;
+        overflow: hidden;
       }
 
       button {

@@ -173,6 +173,24 @@ export default {
   LABEL_FIRST_RUN_LITE: {
     str: "Click start to try this app",
   },
+  ONBOARDING_ADVANCED_EDITOR: {
+    str: "To edit or view full prompt, open in advanced editor",
+  },
+  ONBOARDING_LITE_REMIX: {
+    str: "Remix to make a copy and edit the steps",
+  },
+  ONBOARDING_STANDALONE_REMIX_TITLE: {
+    str: "Remix to Edit",
+  },
+  ONBOARDING_STANDALONE_REMIX_TEXT: {
+    str: 'You can only run this Breadboard app. To edit, click the "Remix" button to make a copy.',
+  },
+  ONBOARDING_REPLAY_WARNING_TITLE: {
+    str: "Are you sure you want to refresh?",
+  },
+  ONBOARDING_REPLAY_WARNING_TEXT: {
+    str: "Share or download results, otherwise output will be lost.",
+  },
 
   // Statuses.
   STATUS_REMIXING_PROJECT: {
@@ -299,5 +317,8 @@ export default {
   },
   TEXT_WARM_WELCOME_EMAIL_UPDATES: {
     str: "Let us know if you’d like to be involved with future research studies or hear about the latest and greatest from Opal!",
+  },
+  TEXT_EXPERIMENT_MODE: {
+    str: "Experiment is a beta feature.\nYou have {{count}} experiments on.\nTo deactivate, go to settings.",
   },
 } as LanguagePackEntry;

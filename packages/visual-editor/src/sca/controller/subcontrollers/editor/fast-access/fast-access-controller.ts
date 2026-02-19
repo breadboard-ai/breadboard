@@ -11,7 +11,7 @@ import type {
   FastAccessItem,
   DisplayItem,
 } from "../../../../types.js";
-import type { Tool } from "../../../../../ui/types/state-types.js";
+import type { Tool } from "../../../../types.js";
 import type { IntegrationsController } from "../integrations/integrations-controller.js";
 import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 

@@ -31,7 +31,7 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { A2_COMPONENTS } from "../../../a2/a2-registry.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   CreateNewAssetsEvent,
   GraphEdgeAttachmentMoveEvent,
@@ -277,7 +277,12 @@ export class Renderer extends SignalWatcher(LitElement) {
     this.#lastBoundsForInteraction = this.#boundsForInteraction;
     this.#boundsForInteraction = this.getBoundingClientRect();
 
-    if (this.#firstResize) {
+    // If this is the very first resize, or if we're expanding from a viewport
+    // that was too small for a meaningful fitToView (e.g. mobile view where
+    // the graph editor was hidden or very narrow), do a full fitToView.
+    const wasTooSmall =
+      this.#lastBoundsForInteraction.width < 2 * this.graphFitPadding;
+    if (this.#firstResize || wasTooSmall) {
       this.#fitToViewPre = true;
     } else {
       this.#attemptAdjustToNewBounds = true;
@@ -1008,7 +1013,7 @@ export class Renderer extends SignalWatcher(LitElement) {
 
     this.#fitToViewPost = false;
     requestAnimationFrame(() => {
-      this.fitToView(false);
+      this.fitToView(false, /* retryOnEmpty */ true);
     });
   }
 
@@ -1145,7 +1150,7 @@ export class Renderer extends SignalWatcher(LitElement) {
       1
     );
 
-    if (delta === 0) {
+    if (delta <= 0) {
       return targetMatrix;
     }
 

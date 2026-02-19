@@ -6,7 +6,7 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import type { Component, Tool } from "../../types/state-types.js";
+import type { Component, Tool } from "../../../sca/types.js";
 import type { GraphAsset } from "../../../sca/types.js";
 import {
   FastAccessDismissedEvent,

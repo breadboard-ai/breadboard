@@ -20,10 +20,7 @@ import {
   type SignalTrigger,
   type EventTrigger,
 } from "../../coordination.js";
-import type { AppController } from "../../controller/controller.js";
-import type { AppServices } from "../../services/services.js";
-
-type ActionBind = { controller: AppController; services: AppServices };
+import { type ActionBind } from "../binder.js";
 
 // =============================================================================
 // Signal Triggers
@@ -36,8 +33,11 @@ type ActionBind = { controller: AppController; services: AppServices };
 export function onGraphVersionForSync(bind: ActionBind): SignalTrigger {
   return signalTrigger("Graph Version (Sync)", () => {
     const { controller } = bind;
-    // Return true when version is valid - reactive system tracks changes
-    return controller.editor.graph.version >= 0;
+    // Return a new value on every version bump so the signal system
+    // detects a change. A boolean (>= 0) would be "sticky" — once true,
+    // subsequent bumps produce the same value and the trigger never re-fires.
+    const version = controller.editor.graph.version;
+    return version >= 0 ? version + 1 : false;
   });
 }
 
@@ -64,6 +64,20 @@ export function onTopologyChange(bind: ActionBind): SignalTrigger {
     const { controller } = bind;
     // +1 so version 0 isn't falsy; each increment produces a unique value.
     return controller.editor.graph.topologyVersion + 1;
+  });
+}
+
+/**
+ * Creates a trigger that fires when a run is stopped.
+ * Used to re-prepare the runner so the console is repopulated with "inactive"
+ * entries and the Start button stays active after stop.
+ */
+export function onRunStopped(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Run Stopped (Re-prepare)", () => {
+    const { controller } = bind;
+    const v = controller.run.main.stopVersion;
+    // +1 so version 0 isn't falsy (same pattern as other version triggers).
+    return v > 0 ? v + 1 : false;
   });
 }
 

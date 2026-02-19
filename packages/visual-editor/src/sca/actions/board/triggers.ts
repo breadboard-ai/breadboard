@@ -24,10 +24,7 @@ import {
   type EventTrigger,
   type KeyboardTrigger,
 } from "../../coordination.js";
-import type { AppController } from "../../controller/controller.js";
-import type { AppServices } from "../../services/services.js";
-
-type ActionBind = { controller: AppController; services: AppServices };
+import { type ActionBind } from "../binder.js";
 
 // =============================================================================
 // Signal Triggers
@@ -46,11 +43,16 @@ export function onVersionChange(bind: ActionBind): SignalTrigger {
     const { controller } = bind;
     const { version, readOnly, editor } = controller.editor.graph;
 
-    // Return a unique truthy value per version so each increment fires.
-    // We use version + 1 because version 0 is falsy.
-    if (readOnly || version < 0 || !editor) {
+    if (readOnly || !editor) {
+      // Not a saveable graph.
       return false;
     }
+    if (version < 1) {
+      // Don't save on version 0, since that's just the initial load.
+      return false;
+    }
+    // Return a unique truthy value per version so each increment fires.
+    // We use version + 1 because version 0 is falsy.
     return version + 1;
   });
 }

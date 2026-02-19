@@ -19,8 +19,8 @@ import {
   AppTemplate,
   AppTemplateOptions,
   FloatingInputFocusState,
-  SnackType,
 } from "../../types/types.js";
+import { SnackType, ToastType } from "../../../sca/types.js";
 
 // Custom Elements for the App.
 import "./a2ui-custom-elements/index.js";
@@ -107,7 +107,6 @@ function getHTMLOutput(screen: AppScreenOutput): string | null {
 }
 
 const parsedUrl = parseUrl(window.location.href);
-const FIRST_RUN_KEY = "bb-first-run-warning";
 
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
@@ -193,22 +192,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @query("#export-output-button")
   accessor exportOutputsButton: HTMLButtonElement | null = null;
 
-  @property()
-  accessor shouldShowFirstRunMessage = false;
-
-  @property()
-  accessor firstRunMessage = Strings.from("LABEL_FIRST_RUN");
-
-  @state()
-  set showFirstRunMessage(show: boolean) {
-    this.#showFirstRunMessage = show;
-    globalThis.localStorage.setItem(FIRST_RUN_KEY, String(show));
-  }
-  get showFirstRunMessage() {
-    return this.#showFirstRunMessage;
-  }
-  #showFirstRunMessage = false;
-
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
   get additionalOptions() {
@@ -234,9 +217,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   constructor() {
     super();
-
-    this.showFirstRunMessage =
-      (globalThis.localStorage.getItem(FIRST_RUN_KEY) ?? "true") === "true";
   }
 
   #renderControls() {
@@ -324,7 +304,23 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         }
 
         activityContents = html`<section id="surfaces">
-          <bb-a2ui-client-view .processor=${processor} .receiver=${receiver}>
+          <bb-a2ui-client-view
+            .processor=${processor}
+            .receiver=${receiver}
+            @a2uistatus=${(evt: v0_8.Events.StateEvent<"a2ui.status">) => {
+              const STATUS_TO_TOAST: Record<string, ToastType> = {
+                pending: ToastType.PENDING,
+                success: ToastType.INFORMATION,
+                error: ToastType.ERROR,
+              };
+              this.sca.controller.global.toasts.toast(
+                evt.detail.message,
+                STATUS_TO_TOAST[evt.detail.status] ?? ToastType.INFORMATION,
+                false,
+                evt.detail.id
+              );
+            }}
+          >
           </bb-a2ui-client-view>
         </section>`;
       }
@@ -436,7 +432,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   #renderSaveResultsButtons() {
-    if (!this.sca.controller.editor.graph.finalOutputValues) {
+    if (!this.#appPresenter.finalOutput) {
       return nothing;
     }
 
@@ -445,7 +441,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     const allowSharingOutputs = !parsedUrl.lite;
 
     const isBtnDisabled = isDocSlidesOrSheetsOutput(
-      this.sca.controller.editor.graph.finalOutputValues
+      this.#appPresenter.finalOutput
     );
 
     return html`
@@ -527,7 +523,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    if (!this.sca.controller.editor.graph.finalOutputValues) {
+    if (!this.#appPresenter.finalOutput) {
       unlockButton();
       return;
     }
@@ -547,7 +543,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const outputs = await inlineAllContent(
       boardServer.dataPartTransformer(),
-      this.sca.controller.editor.graph.finalOutputValues!,
+      this.#appPresenter.finalOutput!,
       currentGraphUrl
     );
     if (!ok(outputs)) {
@@ -713,7 +709,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       .getFileMetadata(shareableGraphFileId, { fields: ["resourceKey"] })
       .then(({ resourceKey }) => resourceKey);
 
-    if (!this.sca.controller.editor.graph.finalOutputValues) {
+    if (!this.#appPresenter.finalOutput) {
       unlockButton();
       unsnackbar();
       return;
@@ -735,7 +731,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
     const finalOutputValues = await inlineAllContent(
       boardServer.dataPartTransformer(),
-      this.sca.controller.editor.graph.finalOutputValues!,
+      this.#appPresenter.finalOutput!,
       shareableGraphUrl
     );
     if (!ok(finalOutputValues)) {
@@ -1012,8 +1008,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 id="run"
                 class=${classMap({ invisible: this.isFreshGraph })}
                 @click=${() => {
-                  this.showFirstRunMessage = false;
-
                   this.sca.services.actionTracker?.runApp(
                     this.graph?.url,
                     "app_preview"
@@ -1023,24 +1017,19 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                   );
                 }}
               >
-                <span class="g-icon filled-heavy round"></span>${this
+                <span class="g-icon filled heavy round"></span>${this
                   .isRefreshingAppTheme
                   ? "Updating..."
                   : "Start"}
               </button>
-              ${this.shouldShowFirstRunMessage &&
-              this.showFirstRunMessage &&
-              !this.isFreshGraph
+              ${!this.isFreshGraph
                 ? html`<bb-onboarding-tooltip
-                    @bbonboardingacknowledged=${() => {
-                      this.showFirstRunMessage = false;
-                    }}
+                    .onboardingId=${"first-run"}
                     style=${styleMap({
-                      "--top": `-12px`,
-                      "--right": "8px",
+                      "--top": `-24px`,
+                      "--right": "0px",
                     })}
                     .stackTop=${true}
-                    .text=${this.firstRunMessage}
                   ></bb-onboarding-tooltip>`
                 : nothing}
             </div>

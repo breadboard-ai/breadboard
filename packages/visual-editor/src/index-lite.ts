@@ -8,7 +8,7 @@ import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { MainArguments } from "./types/types.js";
 
 import * as BBLite from "./ui/lite/lite.js";
@@ -22,7 +22,6 @@ import { reactive } from "./sca/reactive.js";
 import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { styleMap } from "lit/directives/style-map.js";
 
 import { markdown } from "./ui/directives/markdown.js";
 import { type SharePanel } from "./ui/elements/elements.js";
@@ -33,9 +32,6 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 
-const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
-const REMIX_WARNING_KEY = "bb-lite-show-remix-warning";
-
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
   @property()
@@ -43,9 +39,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   @property()
   accessor compactView = false;
-
-  @state()
-  accessor #showAdvancedEditorOnboardingTooltip = true;
 
   static styles = [
     BBLite.Styles.HostColorScheme.match,
@@ -371,17 +364,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `,
   ];
 
-  @state()
-  set showRemixWarning(show: boolean) {
-    this.#showRemixWarning = show;
-    globalThis.localStorage.setItem(REMIX_WARNING_KEY, String(show));
-  }
-  get showRemixWarning() {
-    return this.#showRemixWarning;
-  }
-  #showRemixWarning = false;
-
-  #advancedEditorLink: Ref<HTMLElement> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
 
   private accessor accessStatus: CheckAppAccessResult | null = null;
@@ -410,13 +392,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   constructor(args: MainArguments) {
     super(args);
-
-    this.#showAdvancedEditorOnboardingTooltip =
-      (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
-      "true";
-
-    this.showRemixWarning =
-      (globalThis.localStorage.getItem(REMIX_WARNING_KEY) ?? "true") === "true";
+    this.sca.controller.global.onboarding.appMode = "lite";
 
     this.addEventListener("bbevent", (e: Event) => {
       const evt = e as StateEvent<keyof StateEventDetailMap>;
@@ -652,41 +628,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `;
   }
 
-  #renderOnboardingTooltip() {
-    if (this.showRemixWarning) {
-      this.#showAdvancedEditorOnboardingTooltip = false;
-    }
-
-    if (
-      !this.#showAdvancedEditorOnboardingTooltip ||
-      !this.#advancedEditorLink.value
-    ) {
-      return nothing;
-    }
-
-    const targetBounds = this.#advancedEditorLink.value.getBoundingClientRect();
-    if (!targetBounds.width) {
-      return nothing;
-    }
-
-    const PADDING = 30;
-    const x = Math.round(window.innerWidth - targetBounds.right + PADDING);
-    const y = Math.round(targetBounds.y + targetBounds.height + PADDING);
-    const styles: Record<string, string> = {
-      "--right": `${x}px`,
-      "--top": `${y}px`,
-    };
-
-    return html`<bb-onboarding-tooltip
-      @bbonboardingacknowledged=${() => {
-        this.#showAdvancedEditorOnboardingTooltip = false;
-        globalThis.localStorage.setItem(ADVANCED_EDITOR_KEY, "false");
-      }}
-      style=${styleMap(styles)}
-      .text=${"To edit or view full prompt, open in advanced editor"}
-    ></bb-onboarding-tooltip>`;
-  }
-
   #renderApp() {
     const renderValues = this.getRenderValues();
 
@@ -707,7 +648,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if (this.#viewType === "editor") {
       buttons.push(
         html`<a
-          ${ref(this.#advancedEditorLink)}
           class="w-400 md-title-small sans-flex unvaried"
           id="open-advanced-editor"
           href="${this.sca.services.guestConfig.advancedEditorOrigin ||
@@ -715,6 +655,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           target="_blank"
         >
           <span class="g-icon">open_in_new</span>Open Advanced Editor
+          <bb-onboarding-tooltip
+            .onboardingId=${"advanced-editor"}
+          ></bb-onboarding-tooltip>
         </a>`
       );
       if (graphIsMine) {
@@ -735,15 +678,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             @click=${this.#onClickRemixApp}
           >
             <span class="g-icon">gesture</span>${Strings.from("COMMAND_REMIX")}
-            ${this.showRemixWarning
-              ? html`<bb-onboarding-tooltip
-                  id="show-remix-warning"
-                  .text=${"Remix to make a copy and edit the steps"}
-                  @bbonboardingacknowledged=${() => {
-                    this.showRemixWarning = false;
-                  }}
-                ></bb-onboarding-tooltip>`
-              : nothing}
+            ${html`<bb-onboarding-tooltip
+              id="show-remix-warning"
+              .onboardingId=${"lite-remix"}
+            ></bb-onboarding-tooltip>`}
           </button>`
         );
       }
@@ -767,7 +705,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ?inert=${this.#isInert()}
         class=${classMap({ active: true })}
         .graph=${this.#graph ?? null}
-        .graphIsEmpty=${false}
+        .graphContentState=${"loaded"}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .isMine=${!this.sca.controller.editor.graph.readOnly}
         .readOnly=${true}
@@ -775,8 +713,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
         "signedin"}
         .status=${renderValues.runStatus}
-        .shouldShowFirstRunMessage=${true}
-        .firstRunMessage=${Strings.from("LABEL_FIRST_RUN_LITE")}
         .themeHash=${this.sca.controller.editor.theme.themeHash}
         .headerConfig=${{
           menu: false,
@@ -817,7 +753,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
                 }}
               >
                 <span class="example-icon">
-                  <span class="g-icon filled-heavy round">pentagon</span>
+                  <span class="g-icon filled heavy round">pentagon</span>
                 </span>
                 <span>${example.intent}</span>
               </button>
@@ -832,7 +768,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderShellUI() {
     return [
       this.renderTooltip(),
-      this.#renderOnboardingTooltip(),
       this.sca.controller.global.main.show.has("NoAccessModal")
         ? this.renderNoAccessModal()
         : nothing,
@@ -901,7 +836,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ${content}
       </section>
       ${this.#renderShellUI()} ${this.#renderSharePanel()}
-      ${this.renderSnackbar()} `;
+      ${this.renderSnackbar()} ${this.renderNotebookLmPicker()} `;
   }
 
   #onSnackbar(event: BreadboardUI.Events.SnackbarEvent) {

@@ -8,7 +8,6 @@ import * as a2AudioGenerator from "./audio-generator.js";
 import * as a2CombineOutputs from "./combine-outputs.js";
 import * as a2Common from "./common.js";
 import * as a2ConnectorManager from "./connector-manager.js";
-import * as a2Entry from "./entry.js";
 import * as a2Gemini from "./gemini.js";
 import * as a2GeminiPrompt from "./gemini-prompt.js";
 import * as a2HtmlGenerator from "./html-generator.js";
@@ -26,15 +25,11 @@ import * as a2Template from "./template.js";
 import * as a2ToolManager from "./tool-manager.js";
 import * as a2Utils from "./utils.js";
 
-import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl.js";
-
 export const exports = {
   "audio-generator": a2AudioGenerator,
   "combine-outputs": a2CombineOutputs,
   common: a2Common,
   "connector-manager": a2ConnectorManager,
-  entry: a2Entry,
   "gemini-prompt": a2GeminiPrompt,
   gemini: a2Gemini,
   "html-generator": a2HtmlGenerator,
@@ -52,5 +47,3 @@ export const exports = {
   "tool-manager": a2ToolManager,
   utils: a2Utils,
 };
-
-export const bgl = createBgl(descriptor, exports);

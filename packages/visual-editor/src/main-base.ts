@@ -16,6 +16,7 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
+import "./ui/elements/notebooklm-picker/notebooklm-picker.js";
 import { RuntimeConfig } from "./utils/graph-types.js";
 
 import {
@@ -34,7 +35,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { reactive } from "./sca/reactive.js";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 
-import { RecentBoard, UserSignInResponse } from "./ui/types/types.js";
+import { RecentBoard, UserSignInResponse } from "./sca/types.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 
 import { Admin } from "./admin.js";
@@ -284,6 +285,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     try {
       await this.sca.controller.isHydrated;
       const flags = await this.sca.controller.global.flags.flags();
+
+      if (this.sca.services.signinAdapter.stateSignal?.status === "signedin") {
+        if (
+          this.sca.services.signinAdapter.stateSignal.authuser === undefined
+        ) {
+          this.sca.controller.global.main.subscriptionStatus = "not-subscribed";
+          return;
+        }
+      }
+
       if (flags.googleOne) {
         this.logger.log(
           Utils.Logging.Formatter.verbose(`Checking subscriber status`),
@@ -476,7 +487,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       // So, we need to wait for full initialization before we broadcast.
       const { url } = saveResult;
       const boardServer = this.sca.services.googleDriveBoardServer;
-      await boardServer.flushSaveQueue(url.href);
+      await boardServer.graphIsFullyCreated(url.href);
       this.sca.services.embedHandler.sendToEmbedder({
         type: "board_id_created",
         id: url.href,
@@ -543,6 +554,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.tooltipRef.value.y = tooltipEvent.y;
     this.tooltipRef.value.message = tooltipEvent.message;
     this.tooltipRef.value.status = tooltipEvent.extendedOptions.status;
+    this.tooltipRef.value.isMultiLine =
+      tooltipEvent.extendedOptions?.isMultiLine || false;
     this.tooltipRef.value.visible = true;
   }
 
@@ -687,6 +700,20 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         }
       }}
     ></bb-snackbar>`;
+  }
+
+  protected renderNotebookLmPicker() {
+    if (
+      Utils.Helpers.isHydrating(
+        () => this.sca.controller.global.flags?.enableNotebookLm
+      )
+    ) {
+      return nothing;
+    }
+    if (!this.sca.controller.global.flags?.enableNotebookLm) {
+      return nothing;
+    }
+    return html`<bb-notebooklm-picker></bb-notebooklm-picker>`;
   }
 
   protected async askUserToSignInIfNeeded(

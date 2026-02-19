@@ -19,7 +19,7 @@ import type {
 } from "@breadboard-ai/types";
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
-import { STATUS } from "../../../ui/types/types.js";
+import { STATUS } from "../../types.js";
 import { getStepIcon } from "../../../ui/utils/get-step-icon.js";
 import { makeAction, stopRun } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
@@ -28,6 +28,7 @@ import { RunController } from "../../controller/subcontrollers/run/run-controlle
 import {
   onGraphVersionForSync,
   onNodeActionRequested,
+  onRunStopped,
   onTopologyChange,
   onRunnerStart,
   onRunnerResume,
@@ -165,6 +166,19 @@ export const prepare = asAction(
 
     // Set status to stopped (ready to start)
     controller.run.main.setStatus(STATUS.STOPPED);
+
+    // Pre-populate renderer node states from the orchestrator's initial state
+    // so that the graph shows run buttons immediately.
+    controller.run.renderer.reset();
+    for (const [nodeId, nodeState] of runner.state) {
+      const state = nodeState.state;
+      controller.run.renderer.setNodeState(
+        nodeId,
+        state === "failed"
+          ? { status: "failed", errorMessage: "" }
+          : { status: state }
+      );
+    }
 
     // Pre-populate console with all graph nodes as "inactive" on initial load
     await syncConsoleFromRunner();
@@ -448,9 +462,19 @@ export const onNodeEndAction = asAction(
     const nodeId = detail.node.id;
     const existing = controller.run.main.console.get(nodeId);
     if (existing) {
-      // Populate the output map for completed step display.
       const { outputs } = detail;
-      if (outputs && !("$error" in outputs)) {
+      const hasFailed = outputs && "$error" in outputs;
+
+      if (hasFailed) {
+        // Extract error message from the $error field.
+        const errorData = outputs.$error;
+        const message =
+          typeof errorData === "string"
+            ? errorData
+            : ((errorData as { message?: string })?.message ?? "Unknown error");
+        existing.error = { message };
+      } else if (outputs) {
+        // Populate the output map for completed step display.
         const inspectable = controller.editor.graph.get()?.graphs.get("");
         const node = inspectable?.nodeById(nodeId);
         const outputSchema = node?.currentDescribe()?.outputSchema ?? {};
@@ -462,10 +486,19 @@ export const onNodeEndAction = asAction(
 
       controller.run.main.setConsoleEntry(nodeId, {
         ...existing,
-        status: { status: "succeeded" },
+        status: hasFailed
+          ? { status: "failed", errorMessage: existing.error!.message }
+          : { status: "succeeded" },
         completed: true,
       });
-      controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
+      if (hasFailed) {
+        controller.run.renderer.setNodeState(nodeId, {
+          status: "failed",
+          errorMessage: existing.error!.message,
+        });
+      } else {
+        controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
+      }
     }
 
     // Finalize or delete screen based on node state
@@ -679,6 +712,26 @@ export const syncConsoleFromRunner = asAction(
     // Replace the console atomically with new entries
     // This triggers @field signal due to reference change (immutable pattern)
     runController.replaceConsole(newEntries);
+  }
+);
+
+/**
+ * Re-prepares the runner after a run is stopped.
+ *
+ * Restores the behavior from the pre-SCA StopRoute (removed in 2bfbc6bf5)
+ * which called prepare() after stop() to re-populate the console with
+ * "inactive" entries.
+ *
+ * **Triggers:** `onRunStopped` — fires when stopVersion is bumped
+ */
+export const reprepareAfterStop = asAction(
+  "Run.reprepareAfterStop",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunStopped(bind),
+  },
+  async (): Promise<void> => {
+    await prepare();
   }
 );
 

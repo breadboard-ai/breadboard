@@ -14,7 +14,7 @@ import type {
   Schema,
   WorkItem,
 } from "@breadboard-ai/types";
-import { STATUS } from "../../../../ui/types/types.js";
+import { STATUS } from "../../../types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 
@@ -69,6 +69,14 @@ export class RunController extends RootController {
    * Set to true when status becomes RUNNING, cleared on reset().
    */
   private _runEverStarted = false;
+
+  /**
+   * Monotonic counter bumped each time `stopRun` completes.
+   * Watched by the `onRunStopped` trigger so that `reprepareAfterStop` fires
+   * and re-populates the console with fresh "inactive" entries.
+   */
+  @field()
+  private accessor _stopVersion = 0;
 
   /**
    * The current HarnessRunner.
@@ -201,6 +209,21 @@ export class RunController extends RootController {
     this.runner = null;
     this.abortController = null;
     this.onInputRequested = null;
+  }
+
+  /**
+   * Bumps the stop version to trigger re-preparation after stop.
+   * Called by `stopRun` in `binder.ts`.
+   */
+  bumpStopVersion(): void {
+    this._stopVersion++;
+  }
+
+  /**
+   * Gets the stop version. Watched by the `onRunStopped` trigger.
+   */
+  get stopVersion(): number {
+    return this._stopVersion;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

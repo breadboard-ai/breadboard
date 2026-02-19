@@ -14,9 +14,6 @@ import * as googleDriveSlidesSchema from "./slides-schema.js";
 import * as googleDriveTypes from "./types.js";
 import * as googleDriveUnescape from "./unescape.js";
 
-import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl.js";
-
 export const exports = {
   api: googleDriveApi,
   "connector-load": googleDriveConnectorLoad,
@@ -28,5 +25,3 @@ export const exports = {
   types: googleDriveTypes,
   unescape: googleDriveUnescape,
 };
-
-export const bgl = createBgl(descriptor, exports);

@@ -12,16 +12,13 @@ import { RendererController } from "../../../src/sca/controller/subcontrollers/r
 import { ScreenController } from "../../../src/sca/controller/subcontrollers/run/screen-controller.js";
 import type { FlowgenInputStatus } from "../../../src/sca/controller/subcontrollers/global/flowgen-input-controller.js";
 import { ShareController } from "../../../src/sca/controller/subcontrollers/editor/share-controller.js";
+import { field } from "../../../src/sca/controller/decorators/field.js";
+import { NotebookLmPickerController } from "../../../src/sca/controller/subcontrollers/editor/notebooklm-picker-controller.js";
 import { SnackType, SnackbarUUID } from "../../../src/ui/types/types.js";
 
 /**
  * Shared controller mocks for SCA tests.
  */
-
-const defaultGraph = {
-  version: 0,
-  graphIsMine: true,
-};
 
 /**
  * Creates a mock FlowgenInputController for testing.
@@ -84,8 +81,30 @@ export function makeMockSnackbarController() {
 export interface TestControllerOptions {
   /** Editor to use - if provided, creates controller with editor-backed graph */
   editor?: EditableGraph;
-  /** Custom graph for non-editor tests */
-  graph?: typeof defaultGraph;
+}
+
+/**
+ * Minimal mock of GraphController that uses @field() for signal-backed
+ * properties. This ensures signal triggers (like onGraphUrl) work in tests.
+ */
+class MockGraphController {
+  @field()
+  accessor url: string | null = null;
+
+  editor?: EditableGraph;
+  lastNodeConfigChange = null;
+  version = 0;
+  graphIsMine = true;
+
+  constructor(editor?: EditableGraph) {
+    this.editor = editor;
+  }
+
+  // Stubs for GraphController methods called by actions (e.g. run-actions).
+  get() {
+    return undefined;
+  }
+  set() {}
 }
 
 /**
@@ -93,7 +112,7 @@ export interface TestControllerOptions {
  * Returns the controller and mocks for test access.
  */
 export function makeTestController(options: TestControllerOptions = {}) {
-  const { editor, graph = defaultGraph } = options;
+  const { editor } = options;
   const flowgenInput = makeMockFlowgenInput();
   const snackbars = makeMockSnackbarController();
   const main = { blockingAction: false };
@@ -125,14 +144,7 @@ export function makeTestController(options: TestControllerOptions = {}) {
       init: () => {},
     },
     editor: {
-      graph: editor
-        ? {
-            editor,
-            lastNodeConfigChange: null,
-            get: () => undefined,
-            set: () => {},
-          }
-        : { ...graph, get: () => undefined, set: () => {} },
+      graph: new MockGraphController(editor),
       selection: {
         selectionId: 0,
       },
@@ -152,6 +164,10 @@ export function makeTestController(options: TestControllerOptions = {}) {
       // behaviors in tests, since we'd be testing the real behavior of
       // controllers directly.
       share: new ShareController("test-share", "test"),
+      notebookLmPicker: new NotebookLmPickerController(
+        "test-notebookLmPicker",
+        "test"
+      ),
       theme: {
         status: "idle" as string,
       },

@@ -126,6 +126,7 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
           color: var(--light-dark-n-100);
           top: var(--bb-grid-size-3);
           right: var(--bb-grid-size-3);
+          pointer-events: auto;
 
           & > .g-icon {
             pointer-events: none;
@@ -323,7 +324,7 @@ export class GoogleDriveFileViewer extends SignalWatcher(LitElement) {
                         this.dispatchEvent(new HideTooltipEvent());
                       }}
                     >
-                      <span class="g-icon filled-heavy round">open_in_new</span>
+                      <span class="g-icon filled heavy round">open_in_new</span>
                     </span>
                   </div>
                 `}

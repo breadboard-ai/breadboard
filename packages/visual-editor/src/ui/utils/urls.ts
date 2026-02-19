@@ -12,7 +12,7 @@ import {
   LandingUrlInit,
   MakeUrlInit,
   OpenUrlInit,
-} from "../types/types.js";
+} from "../../sca/types.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 
 export function devUrlParams(): Required<BaseUrlInit>["dev"] {

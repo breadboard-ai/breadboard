@@ -14,10 +14,16 @@ import { AgentUI } from "./ui.js";
 import { RunStateManager } from "./run-state-manager.js";
 import { ConsoleProgressManager } from "./console-progress-manager.js";
 import { llm } from "../a2/utils.js";
-import { FunctionGroupConfigurator, LoopHooks, UIType } from "./types.js";
+import {
+  FunctionGroupConfigurator,
+  LoopHooks,
+  ProgressReporter,
+  UIType,
+} from "./types.js";
 import { Loop, AgentRunArgs } from "./loop.js";
+import type { AgentEventSink } from "./agent-event-sink.js";
 
-export { buildAgentRun };
+export { buildAgentRun, buildHooksFromSink };
 
 /**
  * Builds everything needed for a full-featured agent run:
@@ -42,10 +48,13 @@ async function buildAgentRun(args: {
   configureFn: FunctionGroupConfigurator;
   uiType?: UIType;
   uiPrompt?: LLMContent;
+  sink: AgentEventSink;
 }): Promise<
   Outcome<{
     loop: Loop;
     runArgs: AgentRunArgs;
+    progress: ConsoleProgressManager;
+    runStateManager: RunStateManager;
   }>
 > {
   const {
@@ -55,6 +64,7 @@ async function buildAgentRun(args: {
     configureFn,
     uiType = "chat",
     uiPrompt,
+    sink,
   } = args;
 
   // 1. Create deps (previously done in Loop constructor)
@@ -148,8 +158,8 @@ async function buildAgentRun(args: {
   );
   if (!ok(functionGroupsResult)) return functionGroupsResult;
 
-  // 6. Compose hooks from progress manager and run state manager
-  const hooks = buildHooks(ui.progress, runStateManager);
+  // 6. Compose hooks from sink
+  const hooks = buildHooksFromSink(sink);
 
   // 7. Assemble the run args
   const runArgs: AgentRunArgs = {
@@ -160,44 +170,79 @@ async function buildAgentRun(args: {
     customTools: objectivePidgin.tools,
   };
 
-  return { loop, runArgs };
+  return { loop, runArgs, progress: ui.progress, runStateManager };
 }
 
 /**
- * Builds LoopHooks from a ConsoleProgressManager and RunStateManager.
+ * Builds LoopHooks that emit AgentEvents through a sink.
+ *
+ * Each hook emits an AgentEvent instead of calling managers directly.
+ * The consumer on the other end of the sink dispatches events to the
+ * appropriate managers (ConsoleProgressManager, RunStateManager).
+ *
+ * The returned `reporter` is a proxy that emits `subagentAddJson`,
+ * `subagentError`, and `subagentFinish` events. This preserves nested
+ * progress reporting for sub-processes (image/video/audio/music gen)
+ * when the agent runs on the backend.
  */
-function buildHooks(
-  progress: ConsoleProgressManager,
-  runStateManager: RunStateManager
-): LoopHooks {
+function buildHooksFromSink(sink: AgentEventSink): LoopHooks {
   return {
     onStart(objective: LLMContent) {
-      progress.startAgent(objective);
+      sink.emit({ type: "start", objective });
     },
     onFinish() {
-      progress.finish();
+      sink.emit({ type: "finish" });
     },
     onContent(content: LLMContent) {
-      runStateManager.pushContent(content);
+      sink.emit({ type: "content", content });
     },
     onThought(text: string) {
-      progress.thought(text);
+      sink.emit({ type: "thought", text });
     },
     onFunctionCall(part, icon?, title?) {
-      return progress.functionCall(part, icon, title);
+      const callId = crypto.randomUUID();
+      sink.emit({
+        type: "functionCall",
+        callId,
+        name: part.functionCall.name,
+        args: (part.functionCall.args ?? {}) as Record<string, unknown>,
+        icon: typeof icon === "string" ? icon : undefined,
+        title,
+      });
+      // Return a proxy reporter that emits subagent events through the sink.
+      // Function handlers call addJson/addError/finish as usual — the events
+      // travel through the event layer to the consumer.
+      const reporter: ProgressReporter = {
+        addJson(jsonTitle, data, jsonIcon?) {
+          sink.emit({
+            type: "subagentAddJson",
+            callId,
+            title: jsonTitle,
+            data,
+            icon: jsonIcon,
+          });
+        },
+        addError(error) {
+          sink.emit({ type: "subagentError", callId, error });
+          return error;
+        },
+        finish() {
+          sink.emit({ type: "subagentFinish", callId });
+        },
+      };
+      return { callId, reporter };
     },
     onFunctionCallUpdate(callId, status, opts?) {
-      progress.functionCallUpdate(callId, status, opts);
+      sink.emit({ type: "functionCallUpdate", callId, status, opts });
     },
     onFunctionResult(callId, content) {
-      progress.functionResult(callId, content);
+      sink.emit({ type: "functionResult", callId, content });
     },
     onTurnComplete() {
-      runStateManager.completeTurn();
+      sink.emit({ type: "turnComplete" });
     },
     onSendRequest(model, body) {
-      progress.sendRequest(model, body);
-      runStateManager.captureRequestBody(model, body);
+      sink.emit({ type: "sendRequest", model, body });
     },
   };
 }

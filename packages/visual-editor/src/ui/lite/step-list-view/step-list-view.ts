@@ -413,13 +413,13 @@ export class StepListView extends SignalWatcher(LitElement) {
             <span class="marker-container">
               <span class=${classMap(markerClasses)}></span>
               ${options.status === "generating"
-                ? html`<span class="generating g-icon filled-heavy round"
+                ? html`<span class="generating g-icon filled heavy round"
                     >pentagon</span
                   >`
                 : nothing}
             </span>
             ${step.icon && options.status !== "generating"
-              ? html`<span class="step-icon g-icon filled-heavy round"
+              ? html`<span class="step-icon g-icon filled heavy round"
                   >${step.icon}</span
                 >`
               : nothing}
@@ -455,7 +455,8 @@ export class StepListView extends SignalWatcher(LitElement) {
               {
                 marker: true,
                 "g-icon": true,
-                "filled-heavy": true,
+                filled: true,
+                heavy: true,
               },
               {
                 label: "",
@@ -476,7 +477,8 @@ export class StepListView extends SignalWatcher(LitElement) {
           {
             marker: true,
             "g-icon": true,
-            "filled-heavy": true,
+            filled: true,
+            heavy: true,
             "processing-generation": true,
           },
           {
@@ -516,13 +518,14 @@ export class StepListView extends SignalWatcher(LitElement) {
           const markerClasses: Record<string, boolean> = {
             marker: true,
             "g-icon": true,
-            "filled-heavy": true,
+            filled: true,
+            heavy: true,
             [step.status]: true,
           };
 
           const renderPlaceholder = () => html`
             <div class="placeholder">
-              <span class="g-icon filled-heavy round pending"
+              <span class="g-icon filled heavy round pending"
                 >progress_activity<span> </span
               ></span>
             </div>

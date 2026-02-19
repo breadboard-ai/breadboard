@@ -33,20 +33,16 @@ import {
   ShowTooltipEvent,
   StateEvent,
   ToastEvent,
-  ToastType,
   ZoomInEvent,
   ZoomOutEvent,
   ZoomToFitEvent,
 } from "../../events/events.js";
+import { ToastType } from "../../../sca/types.js";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
 import { NewAsset } from "../../types/types.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
-import {
-  GoogleDriveFileId,
-  ItemSelect,
-  NotebookLmPicker,
-} from "../elements.js";
+import { GoogleDriveFileId, ItemSelect } from "../elements.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
 import type { NotebookPickedValue } from "../notebooklm-picker/notebooklm-picker.js";
 import { DATA_TYPE } from "./constants.js";
@@ -516,7 +512,6 @@ export class EditorControls extends SignalWatcher(LitElement) {
   ];
 
   #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
-  #addNotebookLmInputRef: Ref<NotebookLmPicker> = createRef();
 
   hidePickers() {
     this.showComponentPicker = false;
@@ -538,18 +533,29 @@ export class EditorControls extends SignalWatcher(LitElement) {
   }
 
   #attemptNotebookLMPickerFlow() {
-    if (!this.#addNotebookLmInputRef.value) {
-      return;
-    }
-
-    try {
-      this.#addNotebookLmInputRef.value.triggerFlow();
-    } catch (err) {
-      console.warn(err);
-      this.dispatchEvent(
-        new ToastEvent("Unable to load NotebookLM", ToastType.ERROR)
-      );
-    }
+    this.sca.actions.notebookLmPicker.open(
+      (notebooks: NotebookPickedValue[]) => {
+        const assets = notebooks.map((notebook) => ({
+          path: globalThis.crypto.randomUUID(),
+          name: notebook.preview,
+          type: "content" as const,
+          subType: "notebooklm" as const,
+          managed: false,
+          data: {
+            role: "user" as const,
+            parts: [
+              {
+                storedData: {
+                  handle: toNotebookLmUrl(notebook.id),
+                  mimeType: NOTEBOOKLM_MIMETYPE,
+                },
+              },
+            ],
+          },
+        }));
+        this.dispatchEvent(new CreateNewAssetsEvent(assets));
+      }
+    );
   }
   #handleChosenKitItem(nodeType: string) {
     let x;
@@ -838,34 +844,6 @@ export class EditorControls extends SignalWatcher(LitElement) {
               );
             }}
           ></bb-google-drive-file-id>
-          <bb-notebooklm-picker
-            id="add-notebooklm-proxy"
-            ${ref(this.#addNotebookLmInputRef)}
-            @bb-input-change=${(evt: InputChangeEvent) => {
-              const notebooks = evt.value as NotebookPickedValue[];
-
-              const assets = notebooks.map((notebook) => ({
-                path: globalThis.crypto.randomUUID(),
-                name: notebook.preview,
-                type: "content" as const,
-                subType: "notebooklm" as const,
-                managed: false,
-                data: {
-                  role: "user" as const,
-                  parts: [
-                    {
-                      storedData: {
-                        handle: toNotebookLmUrl(notebook.id),
-                        mimeType: NOTEBOOKLM_MIMETYPE,
-                      },
-                    },
-                  ],
-                },
-              }));
-
-              this.dispatchEvent(new CreateNewAssetsEvent(assets));
-            }}
-          ></bb-notebooklm-picker>
         </div> `
     );
 

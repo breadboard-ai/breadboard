@@ -8,11 +8,10 @@ import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-driv
 import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { RuntimeConfig } from "../../utils/graph-types.js";
-import type { GlobalConfig } from "../../ui/contexts/global-config.js";
+import type { GlobalConfig } from "../types.js";
 import { createActionTracker } from "../../ui/utils/action-tracker.js";
 import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
-  GOOGLE_DRIVE_FILES_API_PREFIX,
   GraphLoader,
   NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
@@ -27,13 +26,14 @@ import { IntegrationManagerService } from "./integration-managers.js";
 import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 
 import { createLoader } from "../../engine/loader/index.js";
 import { Autonamer } from "./autonamer.js";
 import { AppCatalystApiClient } from "../../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../../ui/utils/email-prefs-manager.js";
 import { FlowGenerator } from "../../ui/flow-gen/flow-generator.js";
-import { ActionTracker, UserSignInResponse } from "../../ui/types/types.js";
+import { ActionTracker, UserSignInResponse } from "../types.js";
 import { type ConsentController } from "../controller/subcontrollers/global/global.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { RunService } from "./run-service.js";
@@ -41,7 +41,7 @@ import { StatusUpdatesService } from "./status-updates-service.js";
 import { getLogger, Formatter } from "../utils/logging/logger.js";
 import { NotebookLmApiClient } from "./notebooklm-api-client.js";
 import type { OAuthScope } from "../../ui/connection/oauth-scopes.js";
-import { GraphEditingAgentService } from "./graph-editing-agent-service.js";
+import { AgentService } from "../../a2/agent/agent-service.js";
 
 export interface AppServices {
   actionTracker: ActionTracker;
@@ -69,7 +69,7 @@ export interface AppServices {
   integrationManagers: IntegrationManagerService;
   notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
-  graphEditingAgentService: GraphEditingAgentService;
+  agentService: AgentService;
   sandbox: RunnableModuleFactory;
   signinAdapter: SigninAdapter;
   /**
@@ -95,16 +95,15 @@ export function services(
 
     const actionTracker = createActionTracker(config.shellHost);
 
-    const proxyApiBaseUrl = new URL(
-      "/api/drive-proxy/drive/v3/files",
-      window.location.href
-    ).href;
-    const apiBaseUrl = signinAdapter.state.then((state) =>
-      state === "signedout" ? proxyApiBaseUrl : GOOGLE_DRIVE_FILES_API_PREFIX
-    );
+    const proxyBaseUrl = new URL("/api/drive-proxy", window.location.href).href;
+    const apiBaseUrl =
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT ||
+      signinAdapter.state.then((state) =>
+        state === "signedout" ? proxyBaseUrl : undefined
+      );
     const googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
-      proxyApiBaseUrl,
+      proxyBaseUrl,
       fetchWithCreds: fetchWithCreds,
       log(level, ...args) {
         const logger = getLogger();
@@ -135,12 +134,15 @@ export function services(
       OPAL_BACKEND_API_PREFIX
     );
 
+    const agentService = new AgentService();
+
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,
       shell: config.shellHost,
       getConsentController,
       agentContext,
+      agentService,
       notebookLmApiClient,
     });
     const googleDriveBoardServer = createGoogleDriveBoardServer(
@@ -186,7 +188,7 @@ export function services(
       mcpClientManager,
       notebookLmApiClient,
       runService: new RunService(),
-      graphEditingAgentService: new GraphEditingAgentService(),
+      agentService,
       sandbox,
       signinAdapter,
       stateEventBus: new EventTarget(),

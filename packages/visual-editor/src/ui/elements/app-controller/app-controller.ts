@@ -5,21 +5,21 @@
  */
 
 import { GraphDescriptor, RuntimeFlags } from "@breadboard-ai/types";
+import type { GraphContentState } from "../../../sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 const GlobalStrings = StringsHelper.forSection("Global");
 
-import { LitElement, type PropertyValues, html } from "lit";
+import { LitElement, type PropertyValues, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { isStoredData } from "@breadboard-ai/utils";
 
 import { styles as appPreviewStyles } from "./app-controller.styles.js";
 import {
   AppTemplateOptions,
-  AppTheme,
   FloatingInputFocusState,
-  STATUS,
 } from "../../types/types.js";
+import { AppTheme, STATUS } from "../../../sca/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { generatePaletteFromColor } from "../../../theme/index.js";
@@ -70,7 +70,7 @@ export class AppController extends SignalWatcher(LitElement) {
   accessor graph: GraphDescriptor | null = null;
 
   @property()
-  accessor graphIsEmpty = false;
+  accessor graphContentState: GraphContentState = "loading";
 
   @property()
   accessor graphTopologyUpdateId = 0;
@@ -137,38 +137,6 @@ export class AppController extends SignalWatcher(LitElement) {
     }
 
     return this.#appTemplate.isRefreshingAppTheme;
-  }
-
-  @property()
-  set shouldShowFirstRunMessage(showFirstRunMessage: boolean) {
-    if (!this.#appTemplate) {
-      return;
-    }
-
-    this.#appTemplate.shouldShowFirstRunMessage = showFirstRunMessage;
-  }
-  get shouldShowFirstRunMessage() {
-    if (!this.#appTemplate) {
-      return false;
-    }
-
-    return this.#appTemplate.showFirstRunMessage;
-  }
-
-  @property()
-  set firstRunMessage(firstRunMessage: string) {
-    if (!this.#appTemplate) {
-      return;
-    }
-
-    this.#appTemplate.firstRunMessage = firstRunMessage;
-  }
-  get firstRunMessage() {
-    if (!this.#appTemplate) {
-      return "";
-    }
-
-    return this.#appTemplate.firstRunMessage;
   }
 
   @property()
@@ -428,6 +396,12 @@ export class AppController extends SignalWatcher(LitElement) {
   }
 
   render() {
+    // While the graph is still loading, render nothing to avoid flashing
+    // the default template with "Untitled Opal App" and default styles.
+    if (this.graphContentState === "loading") {
+      return nothing;
+    }
+
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
       this.#appTemplate.showGDrive = this.showGDrive;
@@ -442,7 +416,9 @@ export class AppController extends SignalWatcher(LitElement) {
               href="https://support.google.com/legal/answer/3110420?hl=en"
               >Report legal issue</a
             >`;
-      this.#appTemplate.isEmpty = this.graphIsEmpty;
+      // Only show the empty state when the graph is genuinely empty,
+      // not when it's still loading (to avoid a flash of empty content).
+      this.#appTemplate.isEmpty = this.graphContentState === "empty";
       this.#appTemplate.focusWhenIn = this.focusWhenIn;
       this.#appTemplate.runtimeFlags = this.runtimeFlags;
       this.#appTemplate.headerConfig = this.headerConfig;

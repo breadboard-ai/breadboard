@@ -6,7 +6,7 @@
 
 import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
-import { type UserSignInResponse } from "../ui/types/types.js";
+import { type UserSignInResponse } from "../sca/types.js";
 import {
   AssetPath,
   FileSystemEntry,
@@ -16,7 +16,7 @@ import {
   PortIdentifier,
 } from "@breadboard-ai/types";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
-import type { GlobalConfig } from "../ui/contexts/global-config.js";
+import type { GlobalConfig } from "../sca/types.js";
 import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SCA } from "../sca/sca.js";
 

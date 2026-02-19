@@ -184,7 +184,7 @@ export class PromptView extends SignalWatcher(LitElement) {
         }}
       >
         <span>Original prompt:</span>
-        <span class="g-icon filled-heavy round"></span>
+        <span class="g-icon filled heavy round"></span>
       </button>
       <div
         ${ref(this.#promptContainer)}

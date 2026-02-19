@@ -2,11 +2,7 @@
  * @fileoverview Generates audio output using supplied context.
  */
 
-import {
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { type DescriberResult } from "./common.js";
 import gemini, { defaultSafetySettings } from "./gemini.js";
 import { err, ok } from "./utils.js";
