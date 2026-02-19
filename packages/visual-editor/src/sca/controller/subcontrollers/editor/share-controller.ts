@@ -78,7 +78,7 @@ export class ShareController extends RootController {
 
   get stale(): boolean {
     return (
-      this.hasPublicPermissions &&
+      (this.hasPublicPermissions || this.hasOtherPermissions) &&
       this.editableVersion !== this.sharedVersion &&
       this.editableVersion !== "" &&
       this.sharedVersion !== ""

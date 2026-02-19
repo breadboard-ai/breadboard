@@ -377,7 +377,11 @@ async function ensureShareableCopyExists(): Promise<string> {
       id: result.shareableCopyFileId,
       resourceKey: result.shareableCopyResourceKey,
     };
-    share.sharedVersion = result.newMainVersion ?? share.sharedVersion;
+    // The metadata write to the main file (linking to the copy) bumps
+    // the Drive version. Update both so the stale getter doesn't treat
+    // this metadata-only bump as a content change.
+    share.editableVersion = result.newMainVersion;
+    share.sharedVersion = result.newMainVersion;
   }
   return share.shareableFile.id;
 }

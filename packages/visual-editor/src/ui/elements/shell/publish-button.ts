@@ -120,18 +120,12 @@ export class PublishButton extends SignalWatcher(LitElement) {
   }
 
   get #hasRedDot() {
-    const share = this.#share;
-    return share?.hasPublicPermissions && share?.stale;
+    return this.#share?.stale;
   }
 
   get #isEnabled() {
     const share = this.#share;
-    return (
-      share?.hasPublicPermissions &&
-      share?.stale &&
-      share?.panel === "closed" &&
-      !this.#isPublishing
-    );
+    return share?.stale && share?.panel === "closed" && !this.#isPublishing;
   }
 
   get #isPublishing() {
