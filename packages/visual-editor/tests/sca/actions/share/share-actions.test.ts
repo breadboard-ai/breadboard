@@ -7,6 +7,7 @@
 import type { Asset, GraphDescriptor } from "@breadboard-ai/types";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { DRIVE_PROPERTY_VIEWER_MODE } from "@breadboard-ai/utils/google-drive/operations.js";
 import assert from "node:assert";
 import { after, before, beforeEach, suite, test } from "node:test";
 import { GoogleDriveBoardServer } from "../../../../src/board-server/server.js";
@@ -1650,6 +1651,7 @@ suite("Share Actions", () => {
       },
     ];
     share.notebookDomainSharingLimited = true;
+    share.viewerMode = "app-only";
 
     share.reset();
 
@@ -1667,6 +1669,239 @@ suite("Share Actions", () => {
     assert.strictEqual(share.shareableFile, null);
     assert.deepStrictEqual(share.unmanagedAssetProblems, []);
     assert.strictEqual(share.notebookDomainSharingLimited, false);
+    assert.strictEqual(share.viewerMode, "full");
+  });
+
+  suite("viewerMode", () => {
+    test("initialize defaults viewerMode to 'full' when property is absent", async () => {
+      await ShareActions.initialize();
+      assert.strictEqual(share.viewerMode, "full");
+    });
+
+    test("initialize reads viewerMode from shareable copy (shareable copy file)", async () => {
+      // Create a file that IS a shareable copy with viewerMode=app
+      const shareableCopy = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        {
+          name: "shareable-copy.bgl.json",
+          mimeType: "application/json",
+          properties: {
+            shareableCopyToMain: "main-file-id",
+            [DRIVE_PROPERTY_VIEWER_MODE]: "app-only",
+          },
+        }
+      );
+
+      setGraph({
+        edges: [],
+        nodes: [],
+        url: `drive:/${shareableCopy.id}`,
+      });
+      await ShareActions.initialize();
+
+      // Any file with a shareableCopyToMain property is treated as a shareable
+      // copy viewer (non-owner), regardless of Drive ownership.
+      assert.strictEqual(share.ownership, "non-owner");
+      assert.strictEqual(share.viewerMode, "app-only");
+    });
+
+    test("initialize reads viewerMode from shareable copy (non-owner with link)", async () => {
+      // Create the main file owned by someone else
+      const mainFile = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "main-file.bgl.json", mimeType: "application/json" }
+      );
+
+      // Create the shareable copy with viewerMode=app
+      const shareableCopy = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        {
+          name: "shareable-copy.bgl.json",
+          mimeType: "application/json",
+          properties: {
+            [DRIVE_PROPERTY_VIEWER_MODE]: "app-only",
+          },
+        }
+      );
+
+      // Link main → shareable copy and mark as not owned
+      fakeDriveApi.forceSetFileMetadata(mainFile.id, {
+        ownedByMe: false,
+        properties: { mainToShareableCopy: shareableCopy.id },
+      });
+
+      setGraph({
+        edges: [],
+        nodes: [],
+        url: `drive:/${mainFile.id}`,
+      });
+      await ShareActions.initialize();
+
+      assert.strictEqual(share.ownership, "non-owner");
+      assert.strictEqual(share.viewerMode, "app-only");
+    });
+
+    test("initialize reads viewerMode from shareable copy (owner)", async () => {
+      // Create the main file
+      const mainFile = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "main-file.bgl.json", mimeType: "application/json" }
+      );
+
+      // Create the shareable copy with viewerMode=app
+      const shareableCopy = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        {
+          name: "shareable-copy.bgl.json",
+          mimeType: "application/json",
+          properties: {
+            [DRIVE_PROPERTY_VIEWER_MODE]: "app-only",
+          },
+        }
+      );
+
+      // Link main → shareable copy (owner)
+      fakeDriveApi.forceSetFileMetadata(mainFile.id, {
+        properties: { mainToShareableCopy: shareableCopy.id },
+      });
+
+      setGraph({
+        edges: [],
+        nodes: [],
+        url: `drive:/${mainFile.id}`,
+      });
+      await ShareActions.initialize();
+
+      assert.strictEqual(share.ownership, "owner");
+      assert.strictEqual(share.viewerMode, "app-only");
+    });
+
+    test("setViewerAccess creates shareable copy and writes property", async () => {
+      await ShareActions.initialize();
+      assert.strictEqual(share.viewerMode, "full");
+      assert.strictEqual(share.shareableFile, null);
+
+      // Set to app — should create shareable copy and write property
+      await ShareActions.setViewerAccess("app-only");
+
+      assert.strictEqual(share.viewerMode, "app-only");
+      assert.ok(share.shareableFile, "shareableFile should be set");
+      const shareableFile = share.shareableFile as DriveFileId;
+
+      // Verify property was written to Drive
+      const meta = await googleDriveClient.getFileMetadata(shareableFile.id, {
+        fields: ["properties"],
+      });
+      assert.strictEqual(
+        meta.properties?.[DRIVE_PROPERTY_VIEWER_MODE],
+        "app-only",
+        "Property should be 'app' on the shareable copy"
+      );
+    });
+
+    test("setViewerAccess to 'full' clears the property", async () => {
+      await ShareActions.initialize();
+
+      // First set to app
+      await ShareActions.setViewerAccess("app-only");
+      assert.strictEqual(share.viewerMode, "app-only");
+      assert.ok(share.shareableFile);
+
+      // Then set back to full — should clear the property
+      await ShareActions.setViewerAccess("full");
+      assert.strictEqual(share.viewerMode, "full");
+
+      const meta = await googleDriveClient.getFileMetadata(
+        share.shareableFile!.id,
+        { fields: ["properties"] }
+      );
+      // Property should be empty string (cleared)
+      assert.strictEqual(
+        meta.properties?.[DRIVE_PROPERTY_VIEWER_MODE],
+        "",
+        "Property should be cleared when set to full"
+      );
+    });
+
+    test("publish includes viewerMode on new shareable copy", async () => {
+      await ShareActions.initialize();
+
+      // Set viewerMode before publishing
+      share.viewerMode = "app-only";
+      await ShareActions.publish();
+
+      assert.ok(share.shareableFile);
+      const shareableFileId = (share.shareableFile as DriveFileId).id;
+      const meta = await googleDriveClient.getFileMetadata(shareableFileId, {
+        fields: ["properties"],
+      });
+      assert.strictEqual(
+        meta.properties?.[DRIVE_PROPERTY_VIEWER_MODE],
+        "app-only",
+        "Shareable copy should have viewerMode=app"
+      );
+    });
+
+    test("publishStale preserves viewerMode", async () => {
+      // Create the main file
+      const mainFile = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "main-file.bgl.json", mimeType: "application/json" }
+      );
+
+      // Create a shareable copy with viewerMode=app
+      const shareableFile = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "shareable-copy.bgl.json", mimeType: "application/json" }
+      );
+
+      // Bump version
+      await googleDriveClient.updateFile(
+        mainFile.id,
+        new Blob([`{"v":1}`], { type: "application/json" }),
+        undefined,
+        { fields: ["version"] }
+      );
+
+      // Link and set stale version
+      await googleDriveClient.updateFileMetadata(mainFile.id, {
+        properties: { mainToShareableCopy: shareableFile.id },
+      });
+      await googleDriveClient.updateFileMetadata(shareableFile.id, {
+        properties: {
+          latestSharedVersion: "1",
+          [DRIVE_PROPERTY_VIEWER_MODE]: "app-only",
+        },
+      });
+      // Pre-populate permissions
+      await googleDriveClient.createPermission(
+        shareableFile.id,
+        { type: "domain", domain: "example.com", role: "reader" },
+        { sendNotificationEmail: false }
+      );
+
+      setGraph({
+        edges: [],
+        nodes: [],
+        url: `drive:/${mainFile.id}`,
+      });
+      await ShareActions.initialize();
+      assert.strictEqual(share.viewerMode, "app-only");
+      assert.strictEqual(share.stale, true);
+
+      // Publish stale
+      await ShareActions.publishStale();
+
+      // Verify viewerMode is still written on the shareable copy
+      const meta = await googleDriveClient.getFileMetadata(shareableFile.id, {
+        fields: ["properties"],
+      });
+      assert.strictEqual(
+        meta.properties?.[DRIVE_PROPERTY_VIEWER_MODE],
+        "app-only",
+        "viewerMode should be preserved after publishStale"
+      );
+    });
   });
 });
 

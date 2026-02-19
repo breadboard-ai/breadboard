@@ -290,6 +290,18 @@ class Main extends MainBase {
   }
 
   #renderCanvasController(renderValues: RenderValues) {
+    // Temporarily block rendering the canvas for non-owners until sharing
+    // initializes, so the editor doesn't flash before a potential redirect to
+    // app mode due to the "allow access to editor view and remix" checkbox.
+    const { graph, share } = this.sca.controller.editor;
+    if (
+      this.sca.controller.global.main.mode === "canvas" &&
+      graph.url &&
+      !this.sca.services.googleDriveBoardServer.isMine(new URL(graph.url)) &&
+      share.status === "initializing"
+    ) {
+      return nothing;
+    }
     return html` <bb-canvas-controller
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}

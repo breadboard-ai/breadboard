@@ -423,6 +423,21 @@ export class VEHeader extends SignalWatcher(LitElement) {
         }
       }
 
+      #mode-toggle,
+      #remix,
+      #share-button {
+        animation: fadeIn 0.15s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
       @media (min-width: 980px) {
         #status {
           display: flex;
@@ -507,6 +522,17 @@ export class VEHeader extends SignalWatcher(LitElement) {
     // Hide the mode toggle only when the graph is genuinely empty.
     // During "loading", we still show the toggle to avoid a flash.
     if (this.graphContentState === "empty") {
+      return nothing;
+    }
+    const share = this.sca.controller.editor.share;
+    if (
+      !this.isMine &&
+      // Always hide the mode toggle (as well as the share and remix buttons below)
+      // while sharing is initializing, so that there's no flash if it turns out
+      // viewerMode=app-only. Instead, they will fade in (or not) after sharing
+      // is initialized.
+      (share.status === "initializing" || share.viewerMode === "app-only")
+    ) {
       return nothing;
     }
     return html`<span id="mode-toggle">
@@ -744,6 +770,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
     if (this.isMine) {
       return nothing;
     }
+    const share = this.sca.controller.editor.share;
+    if (share.status === "initializing" || share.viewerMode === "app-only") {
+      return nothing;
+    }
 
     return html`<button
       id="remix"
@@ -785,6 +815,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderShareButton() {
+    const share = this.sca.controller.editor.share;
+    if (!this.isMine && share.status === "initializing") {
+      return nothing;
+    }
     const label = CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
       ? "Share"
       : Strings.from("COMMAND_COPY_APP_PREVIEW_URL");

@@ -220,6 +220,27 @@ export class SharePanel extends SignalWatcher(LitElement) {
           --md-switch-selected-handle-width: 20px;
           --md-switch-selected-handle-height: 20px;
         }
+
+        .toggle-spinner {
+          animation: rotate 1s linear infinite;
+          font-size: 18px;
+          color: #525252;
+        }
+
+        .toggle-group {
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+        }
+
+        @keyframes rotate {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
       }
 
       #editor-access-toggle + #app-link {
@@ -708,6 +729,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderEditorAccessToggle() {
+    const changing = this.#controller.status === "changing-access";
     return html`
       <div id="editor-access-toggle">
         <label>
@@ -718,9 +740,23 @@ export class SharePanel extends SignalWatcher(LitElement) {
             >info</span
           >
         </label>
-        <md-switch .disabled=${this.#controller.status !== "ready"}></md-switch>
+        <span class="toggle-group">
+          ${changing
+            ? html`<span class="g-icon toggle-spinner">progress_activity</span>`
+            : nothing}
+          <md-switch
+            .disabled=${this.#controller.status !== "ready"}
+            ?selected=${this.#controller.viewerMode === "full"}
+            @change=${this.#onViewerModeToggle}
+          ></md-switch>
+        </span>
       </div>
     `;
+  }
+
+  async #onViewerModeToggle(event: Event) {
+    const selected = (event.target as MdSwitch).selected;
+    await this.#actions.setViewerAccess(selected ? "full" : "app-only");
   }
 
   #renderReadonlyModalContents() {

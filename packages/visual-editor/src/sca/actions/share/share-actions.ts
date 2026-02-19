@@ -11,6 +11,7 @@ import {
   DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
   DRIVE_PROPERTY_OPAL_SHARE_SURFACE,
   DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
+  DRIVE_PROPERTY_VIEWER_MODE,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import {
   diffPermissionsIgnoringRole,
@@ -25,6 +26,7 @@ import {
 } from "@breadboard-ai/utils";
 import type {
   UnmanagedAssetProblem,
+  ViewerMode,
   VisibilityLevel,
 } from "../../controller/subcontrollers/editor/share-controller.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
@@ -35,7 +37,7 @@ import {
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
-import { makeUrl } from "../../../ui/utils/urls.js";
+import { makeUrl, parseUrl } from "../../../ui/utils/urls.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
 import { onGraphUrl, onSaveComplete } from "./triggers.js";
@@ -69,6 +71,27 @@ export const initialize = asAction(
     share.reset();
     share.status = "initializing";
     await fetchShareData();
+
+    // Enforce app-only access: if a non-owner lands on an edit URL for an opal
+    // with viewerMode="app-only", redirect them to the app URL.
+    //
+    // TODO(aomarks) I'm not sure this is the right place for this. Feels potentially
+    // like a router-level concern. But, it does depend on reading sharing metadata
+    // from drive.
+    if (
+      share.ownership === "non-owner" &&
+      share.viewerMode === "app-only" &&
+      typeof window !== "undefined" &&
+      window.location
+    ) {
+      const current = parseUrl(window.location.href);
+      if (current.page === "graph" && current.mode === "canvas") {
+        const appUrl = makeUrl({ ...current, mode: "app" });
+        window.history.replaceState(null, "", appUrl);
+        controller.router.updateFromCurrentUrl();
+      }
+    }
+
     share.status = "ready";
   }
 );
@@ -157,6 +180,7 @@ async function fetchShareData(): Promise<void> {
       id: thisFileId,
       resourceKey: thisFileMetadata.resourceKey,
     };
+    share.viewerMode = readViewerModeProperty(thisFileMetadata.properties);
     return;
   }
 
@@ -165,20 +189,25 @@ async function fetchShareData(): Promise<void> {
 
   if (!thisFileMetadata.ownedByMe) {
     share.ownership = "non-owner";
-    share.shareableFile = shareableCopyFileId
-      ? {
-          id: shareableCopyFileId,
-          resourceKey: (
-            await googleDriveClient.getFileMetadata(shareableCopyFileId, {
-              fields: ["resourceKey"],
-              bypassProxy: true,
-            })
-          ).resourceKey,
+    if (shareableCopyFileId) {
+      const shareableCopyMeta = await googleDriveClient.getFileMetadata(
+        shareableCopyFileId,
+        {
+          fields: ["resourceKey", "properties"],
+          bypassProxy: true,
         }
-      : {
-          id: thisFileId,
-          resourceKey: thisFileMetadata.resourceKey,
-        };
+      );
+      share.shareableFile = {
+        id: shareableCopyFileId,
+        resourceKey: shareableCopyMeta.resourceKey,
+      };
+      share.viewerMode = readViewerModeProperty(shareableCopyMeta.properties);
+    } else {
+      share.shareableFile = {
+        id: thisFileId,
+        resourceKey: thisFileMetadata.resourceKey,
+      };
+    }
     return;
   }
 
@@ -208,6 +237,9 @@ async function fetchShareData(): Promise<void> {
     id: shareableCopyFileId,
     resourceKey: shareableCopyFileMetadata.resourceKey,
   };
+  share.viewerMode = readViewerModeProperty(
+    shareableCopyFileMetadata.properties
+  );
 }
 
 /** Opens the share panel. */
@@ -416,7 +448,8 @@ async function applyPermissionDiff(
 }
 
 async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
-  const { services } = bind;
+  const { controller, services } = bind;
+  const share = controller.editor.share;
   const graph = getGraph();
   if (!graph) {
     /* c8 ignore start */
@@ -498,6 +531,7 @@ async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
         ...(shareSurface
           ? { [DRIVE_PROPERTY_OPAL_SHARE_SURFACE]: shareSurface }
           : {}),
+        ...writeViewerModeProperty(share.viewerMode),
       },
     },
     { fields: ["resourceKey"] }
@@ -1027,6 +1061,7 @@ export const publishStale = asAction(
       googleDriveClient.updateFileMetadata(share.shareableFile.id, {
         properties: {
           [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: share.editableVersion,
+          ...writeViewerModeProperty(share.viewerMode),
         },
       }),
       // Ensure all assets have the same permissions as the shareable file,
@@ -1218,3 +1253,42 @@ export const onGoogleDriveSharePanelClose = asAction(
     share.status = "ready";
   }
 );
+
+export const setViewerAccess = asAction(
+  "Share.setViewerAccess",
+  { mode: ActionMode.Immediate },
+  async (level: ViewerMode): Promise<void> => {
+    const { controller, services } = bind;
+    const share = controller.editor.share;
+    const googleDriveClient = services.googleDriveClient;
+
+    if (share.ownership !== "owner") {
+      return;
+    }
+
+    share.viewerMode = level;
+    share.status = "changing-access";
+
+    const shareableFileId = await ensureShareableCopyExists();
+    await googleDriveClient.updateFileMetadata(shareableFileId, {
+      properties: writeViewerModeProperty(level),
+    });
+
+    share.status = "ready";
+  }
+);
+
+function readViewerModeProperty(
+  properties: Record<string, string> | undefined
+): ViewerMode {
+  const value = properties?.[DRIVE_PROPERTY_VIEWER_MODE] as
+    | ViewerMode
+    | undefined;
+  return value === "app-only" ? "app-only" : "full";
+}
+
+function writeViewerModeProperty(level: ViewerMode): Record<string, string> {
+  return {
+    [DRIVE_PROPERTY_VIEWER_MODE]: level === "app-only" ? "app-only" : "",
+  };
+}
