@@ -204,4 +204,5 @@ session({ name: "Agent" }, async (session) => {
   await evalObjective("./news-tracker.js");
   await evalObjective("./get-recipe.js");
   await evalObjective("./recipe-assistant.js");
+  await evalObjective("./content-guardrails.js");
 });
