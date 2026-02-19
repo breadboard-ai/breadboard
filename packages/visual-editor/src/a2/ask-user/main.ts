@@ -125,15 +125,8 @@ async function askUser(
     details = substituting;
   }
 
-  // Extract the title for the input schema before modifying details.
+  // Extract the title for the input schema.
   const title = toText(details);
-
-  // Prepend "# " to the prompt text so it renders as a markdown heading
-  // on the app screen. This replaces the old `textAsH1` renderer flag.
-  const detailsText = details.parts[0];
-  if ("text" in detailsText) {
-    detailsText.text = `# ${detailsText.text}`;
-  }
 
   await report(moduleArgs, {
     actor: "User Input",

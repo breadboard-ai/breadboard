@@ -65,6 +65,44 @@ export const TOKENS = {
   imageButtonBgHover: "--a2ui-image-button-bg-hover",
   imageButtonColor: "--a2ui-image-button-color",
   imageButtonSize: "--a2ui-image-button-size",
+
+  // Text: input-prompt variant
+  textInputPromptFontFamily: "--a2ui-text-input-prompt-font-family",
+  textInputPromptFontSize: "--a2ui-text-input-prompt-font-size",
+  textInputPromptLineHeight: "--a2ui-text-input-prompt-line-height",
+  textInputPromptFontWeight: "--a2ui-text-input-prompt-font-weight",
+  textInputPromptTextAlign: "--a2ui-text-input-prompt-text-align",
+  textInputPromptFontVariation: "--a2ui-text-input-prompt-font-variation",
+
+  // Text: heading variants (h1–h5)
+  textH1FontFamily: "--a2ui-text-h1-font-family",
+  textH1FontSize: "--a2ui-text-h1-font-size",
+  textH1LineHeight: "--a2ui-text-h1-line-height",
+  textH1FontWeight: "--a2ui-text-h1-font-weight",
+  textH1TextAlign: "--a2ui-text-h1-text-align",
+  textH1FontVariation: "--a2ui-text-h1-font-variation",
+
+  textH2FontSize: "--a2ui-text-h2-font-size",
+  textH2LineHeight: "--a2ui-text-h2-line-height",
+
+  textH3FontSize: "--a2ui-text-h3-font-size",
+  textH3LineHeight: "--a2ui-text-h3-line-height",
+
+  textH4FontSize: "--a2ui-text-h4-font-size",
+  textH4LineHeight: "--a2ui-text-h4-line-height",
+
+  textH5FontSize: "--a2ui-text-h5-font-size",
+  textH5LineHeight: "--a2ui-text-h5-line-height",
+
+  // Text: h2-h5 shared base
+  textSubheadingFontFamily: "--a2ui-text-subheading-font-family",
+  textSubheadingFontWeight: "--a2ui-text-subheading-font-weight",
+  textSubheadingTextAlign: "--a2ui-text-subheading-text-align",
+  textSubheadingFontVariation: "--a2ui-text-subheading-font-variation",
+  textSubheadingColor: "--a2ui-text-subheading-color",
+
+  // Text: caption/body
+  textBodyColor: "--a2ui-text-body-color",
 } as const;
 
 /** The values for each token. Keys match the property names in TOKENS. */

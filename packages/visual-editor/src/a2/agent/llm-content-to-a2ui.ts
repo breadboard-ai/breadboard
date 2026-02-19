@@ -28,9 +28,10 @@ type ConversionOptions = {
    */
   idPrefix?: string;
   /**
-   * If true, text content will be rendered as h1.
+   * Override usageHint for text content.
+   * Defaults to "body" when not provided.
    */
-  textAsH1?: boolean;
+  textUsageHint?: string;
   /**
    * If true, media will be wrapped in a container card.
    * Useful for app screen output where media needs sizing constraints.
@@ -60,7 +61,7 @@ function llmContentToA2UIComponents(
   content: LLMContent,
   options: ConversionOptions = {}
 ): ConvertedLLMContent {
-  const { idPrefix, textAsH1 = false, wrapMediaInCard = false } = options;
+  const { idPrefix, textUsageHint = "body", wrapMediaInCard = false } = options;
 
   const result: ConvertedLLMContent = {
     ids: [],
@@ -121,7 +122,7 @@ function llmContentToA2UIComponents(
       addTopLevel(generateId("text"), {
         Text: {
           text: { literalString: text },
-          usageHint: textAsH1 ? "h1" : "body",
+          usageHint: textUsageHint,
         },
       });
     } else if (isFileDataCapabilityPart(part)) {

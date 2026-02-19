@@ -46,7 +46,15 @@ export interface Action {
 
 export interface Text {
   text: StringValue;
-  usageHint: "h1" | "h2" | "h3" | "h4" | "h5" | "caption" | "body";
+  usageHint:
+    | "h1"
+    | "h2"
+    | "h3"
+    | "h4"
+    | "h5"
+    | "caption"
+    | "body"
+    | "input-prompt";
 }
 
 export interface Image {

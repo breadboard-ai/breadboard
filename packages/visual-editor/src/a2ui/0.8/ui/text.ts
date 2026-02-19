@@ -55,13 +55,26 @@ export class Text extends Root {
 
       /* Usage-hint variants applied via host attribute */
       :host([usage-hint="h1"]) section {
-        font-family: var(--a2ui-font-family-flex);
-        text-align: center;
-        font-variation-settings: "ROND" 100;
-        font-weight: 500;
+        font-family: var(--a2ui-text-h1-font-family);
+        text-align: var(--a2ui-text-h1-text-align);
+        font-variation-settings: var(--a2ui-text-h1-font-variation);
+        font-weight: var(--a2ui-text-h1-font-weight);
         margin: 0;
-        font-size: 24px;
-        line-height: 32px;
+        font-size: var(--a2ui-text-h1-font-size);
+        line-height: var(--a2ui-text-h1-line-height);
+        font-style: normal;
+        align-self: normal;
+        margin-bottom: var(--a2ui-spacing-2);
+      }
+
+      :host([usage-hint="input-prompt"]) section {
+        font-family: var(--a2ui-text-input-prompt-font-family);
+        text-align: var(--a2ui-text-input-prompt-text-align);
+        font-variation-settings: var(--a2ui-text-input-prompt-font-variation);
+        font-weight: var(--a2ui-text-input-prompt-font-weight);
+        margin: 0;
+        font-size: var(--a2ui-text-input-prompt-font-size);
+        line-height: var(--a2ui-text-input-prompt-line-height);
         font-style: normal;
         align-self: normal;
         margin-bottom: var(--a2ui-spacing-2);
@@ -71,37 +84,37 @@ export class Text extends Root {
       :host([usage-hint="h3"]) section,
       :host([usage-hint="h4"]) section,
       :host([usage-hint="h5"]) section {
-        font-family: var(--a2ui-font-family-flex);
-        text-align: center;
-        font-variation-settings: "ROND" 100;
-        font-weight: 400;
+        font-family: var(--a2ui-text-subheading-font-family);
+        text-align: var(--a2ui-text-subheading-text-align);
+        font-variation-settings: var(--a2ui-text-subheading-font-variation);
+        font-weight: var(--a2ui-text-subheading-font-weight);
         margin: 0;
-        color: var(--a2ui-color-secondary);
+        color: var(--a2ui-text-subheading-color);
       }
 
       :host([usage-hint="h2"]) section {
-        font-size: 22px;
-        line-height: 28px;
+        font-size: var(--a2ui-text-h2-font-size);
+        line-height: var(--a2ui-text-h2-line-height);
       }
 
       :host([usage-hint="h3"]) section {
-        font-size: 14px;
-        line-height: 20px;
+        font-size: var(--a2ui-text-h3-font-size);
+        line-height: var(--a2ui-text-h3-line-height);
       }
 
       :host([usage-hint="h4"]) section {
-        font-size: 16px;
-        line-height: 24px;
+        font-size: var(--a2ui-text-h4-font-size);
+        line-height: var(--a2ui-text-h4-line-height);
       }
 
       :host([usage-hint="h5"]) section {
-        font-size: 14px;
-        line-height: 20px;
+        font-size: var(--a2ui-text-h5-font-size);
+        line-height: var(--a2ui-text-h5-line-height);
       }
 
       :host([usage-hint="caption"]) section,
       :host([usage-hint="body"]) section {
-        color: var(--a2ui-color-secondary);
+        color: var(--a2ui-text-body-color);
       }
 
       /* Markdown element styles — these apply to elements rendered by
@@ -189,6 +202,7 @@ export class Text extends Root {
 
     switch (this.usageHint) {
       case "h1":
+      case "input-prompt":
         text = `# ${text}`;
         break;
       case "h2":
