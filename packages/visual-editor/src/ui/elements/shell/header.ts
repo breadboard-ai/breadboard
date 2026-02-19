@@ -351,16 +351,23 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
       #experiment {
         display: none;
-        font-size: 12px;
-        line-height: normal;
-        padding: 2px 6px;
+        font-size: 11px;
+        line-height: 1;
+        padding: var(--bb-grid-size) var(--bb-grid-size-3);
         border-radius: var(--bb-grid-size-16);
         border: 1px solid light-dark(var(--n-0), var(--n-70));
         text-transform: uppercase;
-        background-color: #ffecee;
-        color: #60150f;
-        font-weight: 500;
-        font-family: Google Sans Code;
+
+        &.has-overrides {
+          font-size: 12px;
+          line-height: normal;
+          padding: 2px 6px;
+          color: #60150f;
+          background-color: #ffecee;
+          color: light-dark(var(--n-0), var(--n-70));
+          font-weight: 500;
+          font-family: Google Sans Code;
+        }
       }
 
       #status {
@@ -749,34 +756,43 @@ export class VEHeader extends SignalWatcher(LitElement) {
       .overrides()
       .then((overrides) => {
         const count = Object.keys(overrides).length;
-        if (count > 0) {
-          return html`<span
-            class="sans"
-            id="experiment"
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new ShowTooltipEvent(
-                  Strings.from("TEXT_EXPERIMENT_MODE").replace(
-                    "{{count}}",
-                    count.toString()
-                  ),
-                  evt.clientX,
-                  evt.clientY + 90,
-                  { status: false, isMultiLine: true }
-                )
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new HideTooltipEvent());
-            }}
-            >Experiment mode</span
-          >`;
-        } else {
-          return html`${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
-          Strings.from("PROVIDER_NAME") !== ""
-            ? html`<span class="sans" id="experiment">Experiment</span>`
-            : nothing}`;
+
+        if (
+          Strings.from("PROVIDER_NAME") === "PROVIDER_NAME" ||
+          Strings.from("PROVIDER_NAME") === ""
+        ) {
+          return nothing;
         }
+
+        return html`<span
+          class="sans ${count > 0 ? "has-overrides" : ""}"
+          id="experiment"
+          @pointerover=${(evt: PointerEvent) => {
+            if (count <= 0) {
+              return;
+            }
+
+            this.dispatchEvent(
+              new ShowTooltipEvent(
+                Strings.from("TEXT_EXPERIMENT_MODE").replace(
+                  "{{count}}",
+                  count.toString()
+                ),
+                evt.clientX,
+                evt.clientY + 90,
+                { status: false, isMultiLine: true }
+              )
+            );
+          }}
+          @pointerout=${() => {
+            if (count <= 0) {
+              return;
+            }
+
+            this.dispatchEvent(new HideTooltipEvent());
+          }}
+          >${count > 0 ? "Experiment mode" : "Experiment"}</span
+        >`;
       });
 
     return html`${until(hasOverrides, nothing)}`;
