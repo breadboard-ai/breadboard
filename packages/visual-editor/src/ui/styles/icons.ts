@@ -14,6 +14,13 @@ import { css } from "lit";
  * ```html
  * <span class="g-icon">pen_spark</span>
  * ```
+ *
+ * Each variation axis is exposed as a CSS custom property so consumers
+ * can toggle individual axes without repeating the full longhand:
+ *
+ * ```css
+ * .my-button:hover .g-icon { --icon-fill: 1; }
+ * ```
  */
 export const icons = css`
   .g-icon {
@@ -36,29 +43,29 @@ export const icons = css`
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
 
+    --icon-fill: 0;
+    --icon-wght: 300;
+    --icon-grad: 0;
+    --icon-opsz: 48;
+    --icon-rond: 100;
+
     font-variation-settings:
-      "FILL" 0,
-      "wght" 300,
-      "GRAD" 0,
-      "opsz" 48,
-      "ROND" 100;
+      "FILL" var(--icon-fill),
+      "wght" var(--icon-wght),
+      "GRAD" var(--icon-grad),
+      "opsz" var(--icon-opsz),
+      "ROND" var(--icon-rond);
 
     &.filled {
-      font-variation-settings:
-        "FILL" 1,
-        "wght" 300,
-        "GRAD" 0,
-        "opsz" 48,
-        "ROND" 100;
+      --icon-fill: 1;
     }
 
-    &.filled-heavy {
-      font-variation-settings:
-        "FILL" 1,
-        "wght" 700,
-        "GRAD" 0,
-        "opsz" 48,
-        "ROND" 100;
+    &.heavy {
+      --icon-wght: 700;
+    }
+
+    &.round {
+      --icon-rond: 100;
     }
 
     & > svg {

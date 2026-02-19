@@ -33,9 +33,9 @@ session({ name: "Autoname" }, async (s) => {
   const autonamer = (await import("../../src/a2/autoname/main.js")).default;
 
   function evalAutonamingGenerate(title: string, mode: string, text: string) {
-    s.eval(title, async ({ moduleArgs, caps, logger }) => {
+    s.eval(title, async ({ moduleArgs, logger }) => {
       const context = generateArgs(mode, text);
-      const result = await autonamer({ context }, caps, moduleArgs);
+      const result = await autonamer({ context }, moduleArgs);
       if (!ok(result)) {
         logger.log({ type: "error", data: result.$error });
         return;

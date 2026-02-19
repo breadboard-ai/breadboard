@@ -8,11 +8,15 @@ import * as StringsHelper from "../../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property, query, state } from "lit/decorators.js";
+import { customElement, property, query } from "lit/decorators.js";
 import { icons } from "../../../styles/icons.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { SideNav } from "./side-nav.js";
 import { type } from "../../../styles/host/type.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../../sca/context/context.js";
+import { type SCA } from "../../../../sca/sca.js";
 
 import "./side-nav.js";
 import {
@@ -21,10 +25,11 @@ import {
   StateEvent,
 } from "../../../events/events.js";
 
-const REPLAY_WARNING_KEY = "bb-app-header-show-replay-warning";
-
 @customElement("bb-app-header")
-export class Header extends LitElement {
+export class Header extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property()
   accessor progress = 0; /** 0 -> 1 */
 
@@ -60,9 +65,6 @@ export class Header extends LitElement {
 
   @query("#side-nav")
   accessor #sideNav: SideNav | null = null;
-
-  @state()
-  accessor #showReplayWarning = false;
 
   static styles = [
     icons,
@@ -229,6 +231,21 @@ export class Header extends LitElement {
         }
       }
 
+      :host([isempty]) #fullscreen,
+      :host([isempty]) #menu,
+      :host([isempty]) #replay,
+      :host([isempty]) #replay-autostart {
+        color: light-dark(
+          oklch(from var(--n-10) l c h / 38%),
+          oklch(from var(--n-80) l c h / 38%)
+        );
+        pointer-events: none;
+      }
+
+      :host([isempty]) #progress-container {
+        visibility: hidden;
+      }
+
       ul {
         padding: 0;
         margin: 0;
@@ -277,10 +294,6 @@ export class Header extends LitElement {
 
   constructor() {
     super();
-
-    const showReplayWarning =
-      globalThis.localStorage.getItem(REPLAY_WARNING_KEY);
-    this.#showReplayWarning = showReplayWarning === null;
   }
 
   #renderFullScreen() {
@@ -372,13 +385,13 @@ export class Header extends LitElement {
   }
 
   #renderReplayButton(stackRight = false) {
-    const showReplayWarning = this.progress > 0 && this.#showReplayWarning;
+    const showReplayWarning = this.progress > 0;
 
     return html`<button
       id="replay"
       ?disabled=${!this.replayActive}
       @pointerover=${(evt: PointerEvent) => {
-        if (showReplayWarning) {
+        if (showReplayWarning || this.isEmpty) {
           return;
         }
         this.dispatchEvent(
@@ -397,12 +410,7 @@ export class Header extends LitElement {
         ? html`<bb-onboarding-tooltip
             delayed
             ?stackRight=${stackRight}
-            .tooltipTitle=${"Are you sure you want to refresh?"}
-            .text=${"Share or download results, otherwise output will be lost."}
-            @bbonboardingacknowledged=${() => {
-              globalThis.localStorage.setItem(REPLAY_WARNING_KEY, "false");
-              this.#showReplayWarning = false;
-            }}
+            .onboardingId=${"replay-warning"}
           ></bb-onboarding-tooltip>`
         : nothing}
     </button>`;

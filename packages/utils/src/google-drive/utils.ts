@@ -191,7 +191,7 @@ export function partToDriveFileId(part: DataPart): DriveFileId | undefined {
 }
 type Permission = gapi.client.drive.Permission;
 
-export function diffAssetReadPermissions(permissions: {
+export function diffPermissionsIgnoringRole(permissions: {
   actual: Permission[];
   expected: Permission[];
 }): { missing: Permission[]; excess: Permission[] } {
@@ -201,9 +201,9 @@ export function diffAssetReadPermissions(permissions: {
 
   const missing = [];
   {
-    const actualStrs = new Set(actual.map(stringifyAssetReadPermission));
+    const actualStrs = new Set(actual.map(stringifyPermissionIgnoringRole));
     for (const e of expected) {
-      if (!actualStrs.has(stringifyAssetReadPermission(e))) {
+      if (!actualStrs.has(stringifyPermissionIgnoringRole(e))) {
         missing.push(e);
       }
     }
@@ -211,9 +211,9 @@ export function diffAssetReadPermissions(permissions: {
 
   const excess = [];
   {
-    const expectedStrs = new Set(expected.map(stringifyAssetReadPermission));
+    const expectedStrs = new Set(expected.map(stringifyPermissionIgnoringRole));
     for (const a of actual) {
-      if (!expectedStrs.has(stringifyAssetReadPermission(a))) {
+      if (!expectedStrs.has(stringifyPermissionIgnoringRole(a))) {
         excess.push(a);
       }
     }
@@ -224,10 +224,10 @@ export function diffAssetReadPermissions(permissions: {
 
 /**
  * Make a string from a permission object that can be used for Set membership.
- * Note we ignore "role" here, because we only care about reading, and all roles
- * can read.
+ * Note we ignore "role" here because we compare permissions by identity
+ * (type + domain/email), not by access level.
  */
-function stringifyAssetReadPermission(permission: Permission): string {
+function stringifyPermissionIgnoringRole(permission: Permission): string {
   return JSON.stringify({
     type: permission.type,
     domain: permission.domain ?? undefined,
@@ -235,13 +235,13 @@ function stringifyAssetReadPermission(permission: Permission): string {
   });
 }
 
-export function permissionMatchesAnyOf(
+export function permissionMatchesAnyOfIgnoringRole(
   permission: Permission,
   candidates: Permission[]
 ): boolean {
-  const str = stringifyAssetReadPermission(permission);
+  const str = stringifyPermissionIgnoringRole(permission);
   for (const candidate of candidates) {
-    if (str === stringifyAssetReadPermission(candidate)) {
+    if (str === stringifyPermissionIgnoringRole(candidate)) {
       return true;
     }
   }

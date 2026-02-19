@@ -20,7 +20,7 @@ import type {
   Candidate,
   GroundingMetadata,
 } from "../../../src/a2/a2/gemini.js";
-import { stubCaps, stubModuleArgs } from "../../useful-stubs.js";
+import { stubModuleArgs } from "../../useful-stubs.js";
 
 export {
   createMockGenerators,
@@ -284,7 +284,6 @@ function createTestArgs(
 ): GenerateFunctionArgs {
   return {
     fileSystem: overrides.fileSystem ?? createMockFileSystem(),
-    caps: overrides.caps ?? stubCaps,
     moduleArgs: overrides.moduleArgs ?? stubModuleArgs,
     translator: overrides.translator ?? createMockTranslator(),
     taskTreeManager: overrides.taskTreeManager ?? createMockTaskTreeManager(),

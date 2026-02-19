@@ -9,11 +9,7 @@ import { deepStrictEqual, ok as assert, fail } from "node:assert";
 import { ChoicePresenter } from "../../src/a2/agent/choice-presenter.js";
 import { PidginTranslator } from "../../src/a2/agent/pidgin-translator.js";
 import { AgentFileSystem } from "../../src/a2/agent/file-system.js";
-import {
-  stubCaps,
-  stubMemoryManager,
-  stubModuleArgs,
-} from "../useful-stubs.js";
+import { stubMemoryManager, stubModuleArgs } from "../useful-stubs.js";
 import { ok, err } from "@breadboard-ai/utils/outcome.js";
 import type { LLMContent, Outcome } from "@breadboard-ai/types";
 import type { v0_8 } from "../../src/a2ui/index.js";
@@ -67,7 +63,7 @@ function createTranslator(): PidginTranslator {
     context: stubModuleArgs.context,
     memoryManager: stubMemoryManager,
   });
-  return new PidginTranslator(stubCaps, stubModuleArgs, fileSystem);
+  return new PidginTranslator(stubModuleArgs, fileSystem);
 }
 
 // Helper to find component by id in captured messages
@@ -84,10 +80,29 @@ function findComponent(
   return undefined;
 }
 
+// Helper to extract MultipleChoice properties from component
+function getMultipleChoiceProps(component: v0_8.Types.ComponentInstance) {
+  return (
+    component.component as {
+      MultipleChoice: {
+        options: {
+          label?: { literalString: string };
+          value: string;
+          child?: string;
+        }[];
+        maxAllowedSelections: number;
+        selections: { path: string };
+      };
+    }
+  ).MultipleChoice;
+}
+
 describe("ChoicePresenter", () => {
   describe("presentChoices - single selection mode", () => {
-    it("returns selected choice ID when user clicks a button", async () => {
-      const mockRenderer = createMockRenderer({ choiceId: "option-b" });
+    it("returns selected choice ID when user selects an option", async () => {
+      const mockRenderer = createMockRenderer({
+        selections: ["option-b"],
+      });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
       const result = await presenter.presentChoices(
@@ -106,8 +121,8 @@ describe("ChoicePresenter", () => {
       deepStrictEqual(result.selected, ["option-b"]);
     });
 
-    it("creates buttons for each choice", async () => {
-      const mockRenderer = createMockRenderer({ choiceId: "a" });
+    it("creates a MultipleChoice component with maxAllowedSelections=1", async () => {
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
       await presenter.presentChoices(
@@ -119,31 +134,93 @@ describe("ChoicePresenter", () => {
         "single"
       );
 
-      // Verify buttons were created
-      const buttonA = findComponent(
+      // Verify MultipleChoice was created
+      const multipleChoice = findComponent(
         mockRenderer.capturedMessages,
-        "choice-btn-0"
-      );
-      const buttonB = findComponent(
-        mockRenderer.capturedMessages,
-        "choice-btn-1"
+        "multiple-choice"
       );
 
-      assert(buttonA !== undefined, "Button 0 should exist");
-      assert(buttonB !== undefined, "Button 1 should exist");
+      assert(multipleChoice !== undefined, "MultipleChoice should exist");
       assert(
-        buttonA?.component && "Button" in buttonA.component,
-        "Component should be a Button"
+        multipleChoice?.component &&
+          "MultipleChoice" in multipleChoice.component,
+        "Component should be a MultipleChoice"
       );
+
+      const mc = getMultipleChoiceProps(multipleChoice!);
+      deepStrictEqual(mc.maxAllowedSelections, 1);
+      deepStrictEqual(mc.options.length, 2);
+      deepStrictEqual(mc.options[0].value, "a");
+      deepStrictEqual(mc.options[1].value, "b");
+    });
+
+    it("creates rich child components for each option", async () => {
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+      await presenter.presentChoices(
+        "Pick:",
+        [
+          { id: "a", label: "First" },
+          { id: "b", label: "Second" },
+        ],
+        "single"
+      );
+
+      // Verify child content containers exist
+      const content0 = findComponent(
+        mockRenderer.capturedMessages,
+        "choice-content-0"
+      );
+      const content1 = findComponent(
+        mockRenderer.capturedMessages,
+        "choice-content-1"
+      );
+
+      assert(content0 !== undefined, "Choice content 0 should exist");
+      assert(content1 !== undefined, "Choice content 1 should exist");
+
+      // Verify MultipleChoice options reference children
+      const multipleChoice = findComponent(
+        mockRenderer.capturedMessages,
+        "multiple-choice"
+      );
+      const mc = getMultipleChoiceProps(multipleChoice!);
+      deepStrictEqual(mc.options[0].child, "choice-content-0");
+      deepStrictEqual(mc.options[1].child, "choice-content-1");
+    });
+
+    it("creates a submit button for single mode", async () => {
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+      await presenter.presentChoices(
+        "Pick:",
+        [{ id: "a", label: "A" }],
+        "single"
+      );
+
+      const submitBtn = findComponent(
+        mockRenderer.capturedMessages,
+        "submit-btn"
+      );
+      assert(submitBtn !== undefined, "Submit button should exist");
       assert(
-        buttonB?.component && "Button" in buttonB.component,
-        "Component should be a Button"
+        submitBtn?.component && "Button" in submitBtn.component,
+        "Should be a Button"
       );
     });
 
-    it("returns error when no choice is selected", async () => {
-      const mockRenderer = createMockRenderer({}); // No choiceId
-      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+    it("returns error when context is missing", async () => {
+      // Create renderer that returns no userAction
+      const failingRenderer: UIRenderer = {
+        renderUserInterface: () => undefined as unknown as Outcome<void>,
+        awaitUserInput: async () => ({ userAction: undefined }),
+      };
+      const presenter = new ChoicePresenter(
+        createTranslator(),
+        failingRenderer
+      );
 
       const result = await presenter.presentChoices(
         "Choose:",
@@ -151,94 +228,12 @@ describe("ChoicePresenter", () => {
         "single"
       );
 
-      assert(!ok(result), "Should return error when no choice selected");
-      deepStrictEqual(result.$error, "No choice was selected");
-    });
-
-    it("uses list layout by default (Column container)", async () => {
-      const mockRenderer = createMockRenderer({ choiceId: "a" });
-      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-      await presenter.presentChoices(
-        "Pick:",
-        [
-          { id: "a", label: "A" },
-          { id: "b", label: "B" },
-        ],
-        "single"
-      );
-
-      const container = findComponent(
-        mockRenderer.capturedMessages,
-        "choices-container"
-      );
-      assert(container !== undefined, "Choices container should exist");
-      assert(
-        container?.component && "Column" in container.component,
-        "Default layout should be Column"
-      );
-    });
-
-    it("uses Row container for 'row' layout", async () => {
-      const mockRenderer = createMockRenderer({ choiceId: "a" });
-      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-      await presenter.presentChoices(
-        "Pick:",
-        [
-          { id: "a", label: "Yes" },
-          { id: "b", label: "No" },
-        ],
-        "single",
-        "row"
-      );
-
-      const container = findComponent(
-        mockRenderer.capturedMessages,
-        "choices-container"
-      );
-      assert(container !== undefined, "Choices container should exist");
-      assert(
-        container?.component && "Row" in container.component,
-        "Row layout should use Row component"
-      );
-
-      // Verify alignment for row
-      const row = (container!.component as { Row: { alignment?: string } }).Row;
-      deepStrictEqual(row.alignment, "center");
-    });
-
-    it("uses Row container for 'grid' layout", async () => {
-      const mockRenderer = createMockRenderer({ choiceId: "a" });
-      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-      await presenter.presentChoices(
-        "Pick:",
-        [
-          { id: "a", label: "1" },
-          { id: "b", label: "2" },
-        ],
-        "single",
-        "grid"
-      );
-
-      const container = findComponent(
-        mockRenderer.capturedMessages,
-        "choices-container"
-      );
-      assert(container !== undefined, "Choices container should exist");
-      assert(
-        container?.component && "Row" in container.component,
-        "Grid layout should use Row component"
-      );
-
-      // Verify alignment for grid (start, not center)
-      const row = (container!.component as { Row: { alignment?: string } }).Row;
-      deepStrictEqual(row.alignment, "start");
+      assert(!ok(result), "Should return error when no selections received");
+      deepStrictEqual(result.$error, "No selections received");
     });
 
     it("uses Row for single-part choice content", async () => {
-      const mockRenderer = createMockRenderer({ choiceId: "simple" });
+      const mockRenderer = createMockRenderer({ selections: ["simple"] });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
       await presenter.presentChoices(
@@ -266,9 +261,7 @@ describe("ChoicePresenter", () => {
   describe("presentChoices - multiple selection mode", () => {
     it("returns all selected choice IDs", async () => {
       const mockRenderer = createMockRenderer({
-        "opt-1": true,
-        "opt-2": false,
-        "opt-3": true,
+        selections: ["opt-1", "opt-3"],
       });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
@@ -290,8 +283,7 @@ describe("ChoicePresenter", () => {
 
     it("returns empty array when nothing selected", async () => {
       const mockRenderer = createMockRenderer({
-        a: false,
-        b: false,
+        selections: [],
       });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
@@ -310,8 +302,8 @@ describe("ChoicePresenter", () => {
       deepStrictEqual(result.selected, []);
     });
 
-    it("creates checkboxes for each choice", async () => {
-      const mockRenderer = createMockRenderer({ x: true });
+    it("creates a MultipleChoice component", async () => {
+      const mockRenderer = createMockRenderer({ selections: ["x"] });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
       await presenter.presentChoices(
@@ -323,25 +315,23 @@ describe("ChoicePresenter", () => {
         "multiple"
       );
 
-      const checkboxX = findComponent(
+      const multipleChoice = findComponent(
         mockRenderer.capturedMessages,
-        "choice-checkbox-0"
-      );
-      const checkboxY = findComponent(
-        mockRenderer.capturedMessages,
-        "choice-checkbox-1"
+        "multiple-choice"
       );
 
-      assert(checkboxX !== undefined, "Checkbox 0 should exist");
-      assert(checkboxY !== undefined, "Checkbox 1 should exist");
+      assert(multipleChoice !== undefined, "MultipleChoice should exist");
       assert(
-        checkboxX?.component && "CheckBox" in checkboxX.component,
-        "Component should be a CheckBox"
+        multipleChoice?.component &&
+          "MultipleChoice" in multipleChoice.component,
+        "Component should be a MultipleChoice"
       );
-      assert(
-        checkboxY?.component && "CheckBox" in checkboxY.component,
-        "Component should be a CheckBox"
-      );
+
+      const mc = getMultipleChoiceProps(multipleChoice!);
+      deepStrictEqual(mc.options.length, 2);
+      deepStrictEqual(mc.options[0].value, "x");
+      deepStrictEqual(mc.options[1].value, "y");
+      deepStrictEqual(mc.maxAllowedSelections, 2);
     });
 
     it("creates a submit button", async () => {
@@ -375,8 +365,8 @@ describe("ChoicePresenter", () => {
       );
     });
 
-    it("initializes data model with unchecked state", async () => {
-      const mockRenderer = createMockRenderer({});
+    it("initializes data model with empty selections array", async () => {
+      const mockRenderer = createMockRenderer({ selections: [] });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
       await presenter.presentChoices(
@@ -398,16 +388,14 @@ describe("ChoicePresenter", () => {
         dataUpdate as {
           dataModelUpdate: {
             path: string;
-            contents: { key: string; valueBoolean: boolean }[];
+            contents: { key: string; valueString: string }[];
           };
         }
       ).dataModelUpdate;
-      deepStrictEqual(update.path, "/selections");
-      deepStrictEqual(update.contents.length, 2);
-      deepStrictEqual(update.contents[0].key, "first");
-      deepStrictEqual(update.contents[0].valueBoolean, false);
-      deepStrictEqual(update.contents[1].key, "second");
-      deepStrictEqual(update.contents[1].valueBoolean, false);
+      deepStrictEqual(update.path, "/");
+      deepStrictEqual(update.contents.length, 1);
+      deepStrictEqual(update.contents[0].key, "selections");
+      deepStrictEqual(update.contents[0].valueString, "[]");
     });
 
     it("returns error when context is missing", async () => {
@@ -431,8 +419,8 @@ describe("ChoicePresenter", () => {
       deepStrictEqual(result.$error, "No selections received");
     });
 
-    it("uses list layout by default for checkboxes", async () => {
-      const mockRenderer = createMockRenderer({});
+    it("sets maxAllowedSelections to choice count", async () => {
+      const mockRenderer = createMockRenderer({ selections: [] });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
       await presenter.presentChoices(
@@ -440,44 +428,21 @@ describe("ChoicePresenter", () => {
         [
           { id: "a", label: "A" },
           { id: "b", label: "B" },
+          { id: "c", label: "C" },
         ],
         "multiple"
       );
 
-      const container = findComponent(
+      const multipleChoice = findComponent(
         mockRenderer.capturedMessages,
-        "choices-container"
+        "multiple-choice"
       );
-      assert(container !== undefined, "Choices container should exist");
       assert(
-        container?.component && "Column" in container.component,
-        "Default layout should be Column"
+        multipleChoice !== undefined,
+        "MultipleChoice component should exist"
       );
-    });
-
-    it("uses Row container for 'row' layout", async () => {
-      const mockRenderer = createMockRenderer({});
-      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-      await presenter.presentChoices(
-        "Check:",
-        [
-          { id: "a", label: "A" },
-          { id: "b", label: "B" },
-        ],
-        "multiple",
-        "row"
-      );
-
-      const container = findComponent(
-        mockRenderer.capturedMessages,
-        "choices-container"
-      );
-      assert(container !== undefined, "Choices container should exist");
-      assert(
-        container?.component && "Row" in container.component,
-        "Row layout should use Row component"
-      );
+      const mc = getMultipleChoiceProps(multipleChoice!);
+      deepStrictEqual(mc.maxAllowedSelections, 3);
     });
   });
 
@@ -575,7 +540,7 @@ describe("ChoicePresenter", () => {
 
   describe("UI structure", () => {
     it("creates root component with message and choices", async () => {
-      const mockRenderer = createMockRenderer({ choiceId: "a" });
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
       await presenter.presentChoices(
@@ -595,13 +560,17 @@ describe("ChoicePresenter", () => {
         root!.component as { Column: { children: { explicitList: string[] } } }
       ).Column;
       assert(
-        column.children.explicitList.includes("choices-container"),
-        "Should include choices container"
+        column.children.explicitList.includes("multiple-choice"),
+        "Should include multiple-choice component"
+      );
+      assert(
+        column.children.explicitList.includes("button-row"),
+        "Should include button row"
       );
     });
 
     it("sends beginRendering message with correct surfaceId", async () => {
-      const mockRenderer = createMockRenderer({ choiceId: "a" });
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
       await presenter.presentChoices(
@@ -628,7 +597,7 @@ describe("ChoicePresenter", () => {
     });
 
     it("uses @choices as surfaceId", async () => {
-      const mockRenderer = createMockRenderer({ choiceId: "a" });
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
       const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
       await presenter.presentChoices(
@@ -646,183 +615,173 @@ describe("ChoicePresenter", () => {
         .surfaceUpdate;
       deepStrictEqual(update.surfaceId, "@choices");
     });
+
+    it("initializes data model for single selection mode", async () => {
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+      await presenter.presentChoices(
+        "Pick:",
+        [{ id: "a", label: "A" }],
+        "single"
+      );
+
+      const dataUpdate = mockRenderer.capturedMessages.find(
+        (m) => "dataModelUpdate" in m
+      );
+      assert(
+        dataUpdate !== undefined,
+        "Data model update should exist for single mode"
+      );
+    });
   });
 
   describe("presentChoices - none_of_the_above_label", () => {
-    describe("single selection mode", () => {
-      it("renders separator and secondary button when noneOfTheAboveLabel is provided", async () => {
-        const mockRenderer = createMockRenderer({ choiceId: "a" });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+    it("creates a non-primary Button when noneOfTheAboveLabel is provided", async () => {
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
-        await presenter.presentChoices(
-          "Pick one:",
-          [{ id: "a", label: "Option A" }],
-          "single",
-          "list",
-          "Skip"
-        );
+      await presenter.presentChoices(
+        "Pick one:",
+        [{ id: "a", label: "Option A" }],
+        "single",
+        "list",
+        "Skip"
+      );
 
-        // Verify separator exists
-        const separator = findComponent(
-          mockRenderer.capturedMessages,
-          "none-separator"
-        );
-        assert(separator !== undefined, "Separator should exist");
-        assert(
-          separator?.component && "Divider" in separator.component,
-          "Should be a Divider"
-        );
+      // The "none of the above" should NOT be in the MultipleChoice options
+      const multipleChoice = findComponent(
+        mockRenderer.capturedMessages,
+        "multiple-choice"
+      );
+      assert(
+        multipleChoice !== undefined,
+        "MultipleChoice component should exist"
+      );
+      const mc = getMultipleChoiceProps(multipleChoice!);
+      deepStrictEqual(
+        mc.options.length,
+        1,
+        "MultipleChoice should only have the real options"
+      );
 
-        // Verify secondary button exists
-        const noneBtn = findComponent(
-          mockRenderer.capturedMessages,
-          "none-btn"
-        );
-        assert(noneBtn !== undefined, "None button should exist");
-        assert(
-          noneBtn?.component && "Button" in noneBtn.component,
-          "Should be a Button"
-        );
-        const button = (noneBtn!.component as { Button: { variant?: string } })
-          .Button;
-        deepStrictEqual(button.variant, "secondary");
-      });
+      // It should be a separate Button component
+      const noneBtn = findComponent(
+        mockRenderer.capturedMessages,
+        "none-of-the-above-btn"
+      );
+      assert(noneBtn !== undefined, "None-of-the-above button should exist");
+      assert(
+        noneBtn?.component && "Button" in noneBtn.component,
+        "Should be a Button"
+      );
 
-      it("returns __none_of_the_above__ ID when none button is selected", async () => {
-        const mockRenderer = createMockRenderer({
-          choiceId: "__none_of_the_above__",
-        });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-        const result = await presenter.presentChoices(
-          "Pick one:",
-          [{ id: "a", label: "Option A" }],
-          "single",
-          "list",
-          "Exit"
-        );
-
-        if (!ok(result)) {
-          fail(`Expected success, got error: ${result.$error}`);
+      const btnProps = (
+        noneBtn!.component as {
+          Button: {
+            primary: boolean;
+            action: {
+              name: string;
+              context: { key: string; value: { literalString: string } }[];
+            };
+          };
         }
-        deepStrictEqual(result.selected, ["__none_of_the_above__"]);
-      });
+      ).Button;
+      deepStrictEqual(btnProps.primary, false, "Should be non-primary");
+      deepStrictEqual(btnProps.action.name, "submit");
+      deepStrictEqual(
+        btnProps.action.context[0].value.literalString,
+        JSON.stringify(["__none_of_the_above__"])
+      );
 
-      it("does not render separator or none button when noneOfTheAboveLabel is not provided", async () => {
-        const mockRenderer = createMockRenderer({ choiceId: "a" });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-        await presenter.presentChoices(
-          "Pick one:",
-          [{ id: "a", label: "Option A" }],
-          "single"
-        );
-
-        const separator = findComponent(
-          mockRenderer.capturedMessages,
-          "none-separator"
-        );
-        const noneBtn = findComponent(
-          mockRenderer.capturedMessages,
-          "none-btn"
-        );
-
-        deepStrictEqual(separator, undefined, "Separator should not exist");
-        deepStrictEqual(noneBtn, undefined, "None button should not exist");
-      });
+      // Verify the text child has the label
+      const noneText = findComponent(
+        mockRenderer.capturedMessages,
+        "none-of-the-above-text"
+      );
+      assert(noneText !== undefined, "None-of-the-above text should exist");
+      const textProps = (
+        noneText!.component as {
+          Text: { text: { literalString: string } };
+        }
+      ).Text;
+      deepStrictEqual(textProps.text.literalString, "Skip");
     });
 
-    describe("multiple selection mode", () => {
-      it("renders separator and checkbox when noneOfTheAboveLabel is provided", async () => {
-        const mockRenderer = createMockRenderer({
-          a: false,
-          __none_of_the_above__: false,
-        });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-        await presenter.presentChoices(
-          "Select all:",
-          [{ id: "a", label: "Option A" }],
-          "multiple",
-          "list",
-          "None apply"
-        );
-
-        // Verify separator exists
-        const separator = findComponent(
-          mockRenderer.capturedMessages,
-          "none-separator"
-        );
-        assert(separator !== undefined, "Separator should exist");
-
-        // Verify checkbox exists
-        const noneCheckbox = findComponent(
-          mockRenderer.capturedMessages,
-          "none-checkbox"
-        );
-        assert(noneCheckbox !== undefined, "None checkbox should exist");
-        assert(
-          noneCheckbox?.component && "CheckBox" in noneCheckbox.component,
-          "Should be a CheckBox"
-        );
+    it("returns __none_of_the_above__ ID when none button is clicked", async () => {
+      const mockRenderer = createMockRenderer({
+        selections: ["__none_of_the_above__"],
       });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
 
-      it("includes __none_of_the_above__ in selections when checked", async () => {
-        const mockRenderer = createMockRenderer({
-          a: true,
-          __none_of_the_above__: true,
-        });
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+      const result = await presenter.presentChoices(
+        "Pick one:",
+        [{ id: "a", label: "Option A" }],
+        "single",
+        "list",
+        "Exit"
+      );
 
-        const result = await presenter.presentChoices(
-          "Select all:",
-          [{ id: "a", label: "Option A" }],
-          "multiple",
-          "list",
-          "None apply"
-        );
+      if (!ok(result)) {
+        fail(`Expected success, got error: ${result.$error}`);
+      }
+      deepStrictEqual(result.selected, ["__none_of_the_above__"]);
+    });
 
-        if (!ok(result)) {
-          fail(`Expected success, got error: ${result.$error}`);
+    it("does not create none button when noneOfTheAboveLabel is not provided", async () => {
+      const mockRenderer = createMockRenderer({ selections: ["a"] });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+      await presenter.presentChoices(
+        "Pick one:",
+        [{ id: "a", label: "Option A" }],
+        "single"
+      );
+
+      const noneBtn = findComponent(
+        mockRenderer.capturedMessages,
+        "none-of-the-above-btn"
+      );
+      deepStrictEqual(noneBtn, undefined, "None button should not exist");
+
+      const multipleChoice = findComponent(
+        mockRenderer.capturedMessages,
+        "multiple-choice"
+      );
+      const mc = getMultipleChoiceProps(multipleChoice!);
+      deepStrictEqual(mc.options.length, 1);
+    });
+
+    it("includes none-of-the-above-btn in root layout", async () => {
+      const mockRenderer = createMockRenderer({ selections: [] });
+      const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
+
+      await presenter.presentChoices(
+        "Select:",
+        [{ id: "a", label: "Option A" }],
+        "multiple",
+        "list",
+        "None apply"
+      );
+
+      const buttonRow = findComponent(
+        mockRenderer.capturedMessages,
+        "button-row"
+      );
+      assert(buttonRow !== undefined, "Button row should exist");
+      const row = (
+        buttonRow!.component as {
+          Row: { children: { explicitList: string[] } };
         }
-        deepStrictEqual(result.selected, ["a", "__none_of_the_above__"]);
-      });
-
-      it("initializes none_of_the_above in data model as unchecked", async () => {
-        const mockRenderer = createMockRenderer({});
-        const presenter = new ChoicePresenter(createTranslator(), mockRenderer);
-
-        await presenter.presentChoices(
-          "Select:",
-          [{ id: "a", label: "A" }],
-          "multiple",
-          "list",
-          "Skip"
-        );
-
-        // Find the dataModelUpdate message
-        const dataUpdate = mockRenderer.capturedMessages.find(
-          (m) => "dataModelUpdate" in m
-        );
-        assert(dataUpdate !== undefined, "Data model update should exist");
-
-        const update = (
-          dataUpdate as {
-            dataModelUpdate: {
-              path: string;
-              contents: { key: string; valueBoolean: boolean }[];
-            };
-          }
-        ).dataModelUpdate;
-
-        // Should include both regular choice and none_of_the_above
-        deepStrictEqual(update.contents.length, 2);
-        const noneEntry = update.contents.find(
-          (c) => c.key === "__none_of_the_above__"
-        );
-        assert(noneEntry !== undefined, "None of the above should be in data");
-        deepStrictEqual(noneEntry!.valueBoolean, false);
-      });
+      ).Row;
+      assert(
+        row.children.explicitList.includes("none-of-the-above-btn"),
+        "Button row should include none-of-the-above button"
+      );
+      assert(
+        row.children.explicitList.includes("submit-btn"),
+        "Button row should include submit button"
+      );
     });
   });
 });

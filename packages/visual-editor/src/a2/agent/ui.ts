@@ -9,6 +9,7 @@ import {
   ConsoleEntry,
   DeepReadonly,
   LLMContent,
+  NodeHandlerContext,
   Outcome,
   OutputValues,
   Schema,
@@ -32,6 +33,7 @@ import {
   ChatInputType,
   ChatManager,
   ChatResponse,
+  MemoryManager,
   VALID_INPUT_TYPES,
 } from "./types.js";
 import { getCurrentStepState } from "./progress-work-item.js";
@@ -71,6 +73,9 @@ class AgentUI implements A2UIRenderer, ChatManager {
   readonly #appScreen: AppScreen | undefined;
 
   readonly #chatLog: LLMContent[] = [];
+  readonly #sessionId = crypto.randomUUID();
+  #memoryManager: MemoryManager | null = null;
+  #context: NodeHandlerContext | null = null;
 
   readonly #choicePresenter: ChoicePresenter;
 
@@ -120,6 +125,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     if (this.#appScreen) {
       const appScreenOutput = new A2UIAppScreenOutput(this.client);
       this.#appScreen.outputs.set(outputId, appScreenOutput);
+      this.#appScreen.last = appScreenOutput;
       this.#appScreen.type = "a2ui";
     }
 
@@ -130,6 +136,38 @@ class AgentUI implements A2UIRenderer, ChatManager {
     return this.#chatLog;
   }
 
+  setMemoryManager(manager: MemoryManager, context: NodeHandlerContext) {
+    this.#memoryManager = manager;
+    this.#context = context;
+  }
+
+  /**
+   * Seeds the in-memory chat log with historical entries from the sheet.
+   * Each row is expected to be [timestamp, session_id, role, content].
+   * The first row (header) is skipped.
+   */
+  seedChatLog(rows: unknown[][]): void {
+    // Skip header row (row 0 = column names)
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length < 4) continue;
+      const role = String(row[2]) === "agent" ? "model" : "user";
+      const content = String(row[3]);
+      this.#chatLog.push({ role, parts: [{ text: content }] });
+    }
+  }
+
+  #appendChatLogEntry(role: "agent" | "user", content: string): void {
+    if (!this.#memoryManager || !this.#context) return;
+    const timestamp = new Date().toISOString();
+    this.#memoryManager
+      .appendToSheet(this.#context, {
+        range: "__chat_log__!A:D",
+        values: [[timestamp, this.#sessionId, role, content]],
+      })
+      .catch((e) => console.warn("Failed to append chat log entry:", e));
+  }
+
   #addChatOutput(message: LLMContent): void {
     const outputId = crypto.randomUUID();
     const schema = {
@@ -137,10 +175,11 @@ class AgentUI implements A2UIRenderer, ChatManager {
     } satisfies Schema;
 
     // Add to app screen outputs directly
-    this.#appScreen?.outputs.set(outputId, {
-      schema,
-      output: { message } as OutputValues,
-    });
+    if (this.#appScreen) {
+      const entry = { schema, output: { message } as OutputValues };
+      this.#appScreen.outputs.set(outputId, entry);
+      this.#appScreen.last = entry;
+    }
 
     // Add to console entry as a work item
     if (this.#consoleEntry) {
@@ -169,6 +208,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     const message = await this.translator.fromPidginString(pidginString);
     if (!ok(message)) return message;
     this.#chatLog.push({ ...message, role: "model" });
+    this.#appendChatLogEntry("agent", pidginString);
     this.#addChatOutput(message);
     const response = await requestInput(this.moduleArgs, {
       properties: {
@@ -182,6 +222,11 @@ class AgentUI implements A2UIRenderer, ChatManager {
     if (!ok(response)) return response;
     const chatResponse = response as ChatResponse;
     this.#chatLog.push({ ...chatResponse.input, role: "user" });
+    const userText =
+      chatResponse.input.parts
+        ?.map((p) => ("text" in p ? p.text : ""))
+        .join(" ") || "";
+    this.#appendChatLogEntry("user", userText);
     return chatResponse;
   }
 
@@ -204,6 +249,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     const messageContent = await this.translator.fromPidginString(message);
     if (!ok(messageContent)) return messageContent;
     this.#chatLog.push({ ...messageContent, role: "model" });
+    this.#appendChatLogEntry("agent", message);
 
     const response = await this.#choicePresenter.presentChoices(
       message,
@@ -222,6 +268,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
       role: "user",
       parts: [{ text: selectedLabels }],
     });
+    this.#appendChatLogEntry("user", selectedLabels);
 
     return response;
   }

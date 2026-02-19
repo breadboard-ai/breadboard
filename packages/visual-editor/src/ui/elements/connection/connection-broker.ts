@@ -104,6 +104,8 @@ export class ConnectionBroker extends HTMLElement {
     if (grantResponse.error === undefined) {
       grantResponse.scopes =
         thisUrl.searchParams.get("scope")?.trim().split(/ +/) ?? [];
+      grantResponse.authuser =
+        thisUrl.searchParams.get("authuser") ?? undefined;
     }
 
     // Send the grant response back to the originating tab and close up shop.

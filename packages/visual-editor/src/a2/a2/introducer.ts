@@ -2,13 +2,7 @@
  * @fileoverview Handles introduction of the step.
  */
 
-import {
-  Capabilities,
-  JSONPart,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { JSONPart, LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import {
   type DescriberResult,
   type DescriberResultTransformer,
@@ -34,10 +28,7 @@ type NamingResult = {
  * and parameters
  */
 class ArgumentNameGenerator implements DescriberResultTransformer {
-  constructor(
-    private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleArgs
-  ) {}
+  constructor(private readonly moduleArgs: A2ModuleArgs) {}
 
   #containsContext(describerResult: DescriberResult): boolean {
     if (!describerResult.inputSchema?.properties) return true;
@@ -96,7 +87,7 @@ class ArgumentNameGenerator implements DescriberResultTransformer {
 
     // When no parameters found, try to discern the parameter name
     // from description and title.
-    const naming = await new GeminiPrompt(this.caps, this.moduleArgs, {
+    const naming = await new GeminiPrompt(this.moduleArgs, {
       body: {
         contents: [this.prompt(describerResult)],
         safetySettings: defaultSafetySettings(),

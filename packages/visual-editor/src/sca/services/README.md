@@ -36,21 +36,22 @@ Services are created at boot in `services()` and passed to Actions via dependenc
 
 ## Service Catalog
 
-| Service | Responsibility |
-|---------|----------------|
-| `actionTracker` | Records user actions for analytics |
-| `autonamer` | AI-powered node name generation |
-| `emailPrefsManager` | User notification preferences |
-| `fetchWithCreds` | Authenticated `fetch` wrapper |
-| `fileSystem` | Local and persistent file I/O |
-| `flowGenerator` | AI-powered flow/graph generation |
-| `googleDriveBoardServer` | Board server backed by Google Drive |
-| `googleDriveClient` | Low-level Drive API client |
-| `graphStore` | Graph definition caching and loading |
-| `kits` | Available node type kits |
-| `loader` | Graph loading from various sources |
-| `mcpClientManager` | MCP (Model Context Protocol) client lifecycle |
-| `signinAdapter` | Unified authentication state |
+Notable services include:
+
+| Service | Class/Type | Purpose |
+|---------|-----------|--------|
+| `actionTracker` | `ActionTracker` | Records user actions for analytics |
+| `autonamer` | `Autonamer` | Smart name generation for nodes |
+| `flowGenerator` | `FlowGenerator` | AI-powered flow/graph generation |
+| `globalConfig` | `GlobalConfig` | Static deployment configuration |
+| `guestConfig` | `GuestConfiguration` | Configuration provided by shell host |
+| `googleDriveClient` | `GoogleDriveClient` | Google Drive API interactions |
+| `googleDriveBoardServer` | `GoogleDriveBoardServer` | Board storage via Google Drive |
+| `mcpClientManager` | `McpClientManager` | MCP (Model Context Protocol) connections |
+| `signinAdapter` | `SigninAdapter` | Unified authentication provider |
+| `shellHost` | `OpalShellHostProtocol` | Communication with the host shell |
+| `sandbox` | `RunnableModuleFactory` | Sandboxed module execution |
+| `agentContext` | `AgentContext` | Agent lifecycle and trace management |
 
 ---
 
@@ -170,8 +171,13 @@ export async function useMyService() {
 
 ```
 services/
-├── services.ts     # AppServices interface & factory
-└── autonamer.ts    # Node autonaming service
+├── services.ts                     # AppServices interface & factory
+├── autonamer.ts                    # Node autonaming service
+├── graph-editing-agent-service.ts   # Agent-assisted graph editing
+├── integration-managers.ts          # Integration/MCP management
+├── notebooklm-api-client.ts         # NotebookLM API client
+├── run-service.ts                   # Run execution helpers
+└── status-updates-service.ts        # Status update polling
 ```
 
 Most service implementations live outside the `sca/` directory (in `engine/`, `ui/utils/`, etc.) and are composed together in the `services()` factory.

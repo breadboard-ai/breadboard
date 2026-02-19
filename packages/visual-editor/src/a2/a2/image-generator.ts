@@ -2,12 +2,7 @@
  * @fileoverview Generates an image using supplied context (generation only).
  */
 
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { type DescriberResult, type Params } from "./common.js";
 import { GeminiPrompt } from "./gemini-prompt.js";
 import { callImageGen, promptExpander } from "./image-utils.js";
@@ -59,7 +54,6 @@ function makeImageInstruction({ pro }: { pro: boolean }) {
 }
 
 function gatheringRequest(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
@@ -74,7 +68,6 @@ ${instruction}
 
 Call the tools to gather the necessary information that could be used to create an accurate prompt.`;
   return new GeminiPrompt(
-    caps,
     moduleArgs,
     {
       body: {
@@ -100,7 +93,6 @@ async function invoke(
     "p-aspect-ratio": aspectRatio,
     ...params
   }: ImageGeneratorInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<ImageGeneratorOutputs>> {
   incomingContext ??= [];
@@ -113,14 +105,13 @@ async function invoke(
   let imageContext = extractMediaData(incomingContext);
   // Substitute params in instruction.
   const toolManager = new ToolManager(
-    caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps, moduleArgs)
+    new ArgumentNameGenerator(moduleArgs)
   );
-  const substituting = await new Template(caps, instruction).substitute(
-    params,
-    async (part) => toolManager.addTool(part)
-  );
+  const substituting = await new Template(
+    instruction,
+    moduleArgs.context.currentGraph
+  ).substitute(params, async (part) => toolManager.addTool(part));
   if (!ok(substituting)) {
     return substituting;
   }
@@ -132,7 +123,6 @@ async function invoke(
   // information via tools.
   if (toolManager.hasTools()) {
     const gatheringInformation = await gatheringRequest(
-      caps,
       moduleArgs,
       context,
       substituting,
@@ -162,7 +152,6 @@ async function invoke(
         imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
       } else {
         const generatingPrompt = await promptExpander(
-          caps,
           moduleArgs,
           context,
           refText
@@ -177,12 +166,7 @@ async function invoke(
         icon: "spark",
       });
       const args: ExecuteStepArgs = { ...moduleArgs, reporter };
-      const generatedImage = await callImageGen(
-        caps,
-        args,
-        iPrompt,
-        aspectRatio
-      );
+      const generatedImage = await callImageGen(args, iPrompt, aspectRatio);
       if (!ok(generatedImage)) return generatedImage;
       return { context: [mergeContent(generatedImage, "model")] };
     }
@@ -196,11 +180,8 @@ type DescribeInputs = {
   };
 };
 
-async function describe(
-  { inputs: { instruction } }: DescribeInputs,
-  caps: Capabilities
-) {
-  const template = new Template(caps, instruction);
+async function describe({ inputs: { instruction } }: DescribeInputs) {
+  const template = new Template(instruction);
   return {
     inputSchema: {
       type: "object",

@@ -50,8 +50,6 @@ export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
 
 export const ENABLE_CONSISTENT_UI: boolean = getBoolean("ENABLE_CONSISTENT_UI");
 
-export const ENABLE_GULF_RENDERER: boolean = getBoolean("ENABLE_GULF_RENDERER");
-
 export const ENABLE_MCP: boolean = getBoolean("ENABLE_MCP");
 
 export const ENVIRONMENT_NAME: string = getString("ENVIRONMENT_NAME");
@@ -76,9 +74,13 @@ export const GOOGLE_SLIDES_API_ENDPOINT: string = getString(
   "GOOGLE_SLIDES_API_ENDPOINT"
 );
 
-export const GOOGLE_DRIVE_API_ENDPOINT: string = getString(
-  "GOOGLE_DRIVE_API_ENDPOINT"
-);
+export const FAKE_MODE = getBoolean("FAKE_MODE");
+
+export const FAKE_DRIVE_PORT = Number(process.env["FAKE_DRIVE_PORT"] || 3110);
+
+export const GOOGLE_DRIVE_API_ENDPOINT: string = FAKE_MODE
+  ? `http://localhost:${FAKE_DRIVE_PORT}`
+  : getString("GOOGLE_DRIVE_API_ENDPOINT");
 
 export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
@@ -153,6 +155,10 @@ export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
 export const ENABLE_RESUME_AGENT_RUN = getBoolean("ENABLE_RESUME_AGENT_RUN");
 
 export const ENABLE_NOTEBOOK_LM = getBoolean("ENABLE_NOTEBOOK_LM");
+
+export const ENABLE_GRAPH_EDITOR_AGENT = getBoolean(
+  "ENABLE_GRAPH_EDITOR_AGENT"
+);
 
 function getDomainConfig(
   flagName: string

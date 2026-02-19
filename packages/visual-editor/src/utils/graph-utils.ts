@@ -24,12 +24,13 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { isStoredData } from "@breadboard-ai/utils";
+import type { Selection } from "../sca/controller/subcontrollers/editor/selection/selection-controller.js";
 import {
   EditChangeId,
   GraphSelectionState,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
-} from "../runtime/types.js";
+} from "./graph-types.js";
 import { GraphTheme } from "@breadboard-ai/types";
 import {
   generatePaletteFromColor,
@@ -81,7 +82,6 @@ export function createWorkspaceSelectionChangeId(): WorkspaceSelectionChangeId {
 export function createEmptyWorkspaceSelectionState(): WorkspaceSelectionState {
   return {
     graphs: new Map(),
-    modules: new Set(),
   };
 }
 
@@ -97,9 +97,12 @@ export function createEmptyGraphSelectionState(): GraphSelectionState {
 }
 
 export function generateBoardFrom(
-  selectionState: WorkspaceSelectionState,
+  selectionState: WorkspaceSelectionState | Selection,
   graph: InspectableGraph
 ): GraphDescriptor {
+  if (!isWorkspaceSelection(selectionState)) {
+    selectionState = selectionFromFlat(selectionState);
+  }
   const filteredGraph = structuredClone(graph.raw());
 
   const filterGraph = (
@@ -155,9 +158,12 @@ export function generateBoardFrom(
 }
 
 export function generateDeleteEditSpecFrom(
-  selectionState: WorkspaceSelectionState,
+  selectionState: WorkspaceSelectionState | Selection,
   graph: InspectableGraph
 ): EditSpec[] {
+  if (!isWorkspaceSelection(selectionState)) {
+    selectionState = selectionFromFlat(selectionState);
+  }
   const createDeleteEditSpecsForGraph = (
     state: GraphSelectionState,
     graphId: GraphIdentifier,
@@ -283,6 +289,11 @@ export function generateDeleteEditSpecFrom(
   return edits;
 }
 
+const PASTE_GRID_SIZE = 20;
+function toGridSize(value: number) {
+  return Math.round(value / PASTE_GRID_SIZE) * PASTE_GRID_SIZE;
+}
+
 function adjustNodePosition(
   node: NodeDescriptor | CommentNode,
   leftMostNode: { x: number; y: number },
@@ -300,8 +311,12 @@ function adjustNodePosition(
     collapsed: string;
   };
 
-  location.x = location.x - leftMostNode.x + pointerLocation.x + graphOffset;
-  location.y = location.y - leftMostNode.y + pointerLocation.y + graphOffset;
+  location.x = toGridSize(
+    location.x - leftMostNode.x + pointerLocation.x + graphOffset
+  );
+  location.y = toGridSize(
+    location.y - leftMostNode.y + pointerLocation.y + graphOffset
+  );
 }
 
 function getLeftMostLocation(
@@ -745,6 +760,52 @@ export async function createAppPaletteIfNeeded(
 /**
  * Bundle of graph utility functions for easier import.
  */
+/**
+ * Type guard: does the value look like a WorkspaceSelectionState?
+ */
+function isWorkspaceSelection(
+  s: WorkspaceSelectionState | Selection
+): s is WorkspaceSelectionState {
+  return "graphs" in s;
+}
+
+/**
+ * Wraps a flat Selection into a WorkspaceSelectionState keyed by
+ * MAIN_BOARD_ID. This lets graph-utils functions continue to work
+ * internally with the per-graph map while callers pass the simpler type.
+ */
+function selectionFromFlat(s: Selection): WorkspaceSelectionState {
+  return {
+    graphs: new Map([
+      [
+        MAIN_BOARD_ID,
+        {
+          nodes: new Set(s.nodes),
+          edges: new Set(s.edges),
+          assets: new Set(s.assets),
+          assetEdges: new Set(s.assetEdges),
+          comments: new Set<string>(),
+          references: new Set(),
+        },
+      ],
+    ]),
+  };
+}
+
+/**
+ * Extracts the set of node IDs from a list of EditSpecs (e.g. after
+ * paste or duplicate). Only considers "addnode" specs.
+ */
+export function nodeIdsFromSpec(spec: EditSpec[]): Set<NodeIdentifier> {
+  const ids = new Set<NodeIdentifier>();
+  for (const item of spec) {
+    if (item.type === "addnode") {
+      ids.add(item.node.id);
+    }
+  }
+  return ids;
+}
+
 export const GraphUtils = {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
@@ -763,4 +824,5 @@ export const GraphUtils = {
   generateSelectionFrom,
   getDefaultConfiguration,
   inspectableEdgeToString,
+  nodeIdsFromSpec,
 };

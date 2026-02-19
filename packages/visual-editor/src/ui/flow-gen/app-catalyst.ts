@@ -45,13 +45,13 @@ export interface AppCatalystG1CreditsResponse {
 
 export type CheckAppAccessResponse =
   | {
-    canAccess: false;
-    accessStatus: string;
-    termsOfService?: {
-      version: number;
-      terms: string;
-    };
-  }
+      canAccess: false;
+      accessStatus: string;
+      termsOfService?: {
+        version: number;
+        terms: string;
+      };
+    }
   | { canAccess: true; accessStatus: string };
 
 export interface AppCatalystContentChunk {

@@ -87,10 +87,7 @@ export async function loadGraph(
   }
 
   // Load the graph
-  const base = new URL(globalThis.location?.href ?? "");
-  const loadResult = await loader.load(canLoadResult.urlWithResourceKey, {
-    base,
-  });
+  const loadResult = await loader.load(canLoadResult.urlWithResourceKey);
 
   if (!loadResult.success || !loadResult.graph) {
     // Check auth state to determine error type

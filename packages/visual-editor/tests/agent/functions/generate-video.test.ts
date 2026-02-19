@@ -65,7 +65,6 @@ describe("generate_video", () => {
       const generators = createMockGenerators({
         callVideo: mock.fn(
           async (
-            _caps: unknown,
             _moduleArgs: unknown,
             _prompt: string,
             _images: LLMContent[],
@@ -95,7 +94,6 @@ describe("generate_video", () => {
       const generators = createMockGenerators({
         callVideo: mock.fn(
           async (
-            _caps: unknown,
             _moduleArgs: unknown,
             _prompt: string,
             _images: LLMContent[],

@@ -31,7 +31,6 @@ export class ChangeEdge implements EditOperation {
       return {
         success: true,
         affectedNodes: [],
-        affectedModules: [],
         affectedGraphs: [graphId],
       };
     }
@@ -44,7 +43,6 @@ export class ChangeEdge implements EditOperation {
     return {
       success: true,
       affectedNodes: [],
-      affectedModules: [],
       affectedGraphs: [graphId],
     };
   }
@@ -74,7 +72,6 @@ export class ChangeEdge implements EditOperation {
         success: true,
         noChange: true,
         affectedNodes: [],
-        affectedModules: [],
         affectedGraphs: [],
         topologyChange: true,
       };
@@ -102,7 +99,6 @@ export class ChangeEdge implements EditOperation {
         { id: edge.from, graphId },
         { id: edge.to, graphId },
       ],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };

@@ -2,93 +2,135 @@
 trigger: always_on
 ---
 
-## Build system
+## Build System
 
-This is a monorepo that uses wireit as a build system. This means that the
-commands in `package.json` files are typically wireit commands that invoke the
-full build system to first ensure that all dependencies are satisfied. For
-example:
+Monorepo using wireit. `package.json` commands invoke the full build system.
+`npm run build` / `npm run build:tsc` builds all deps then compiles.
+`npm run test` builds deps then runs tests.
 
-- `npm run build` or `npm run build:tsc` builds all monorepo dependencies and
-  then runs tsc to compile the target.
-- `npm run test` first invokes build (or `build:tsc`) for all dependencies, then
-  runs testing.
+When making changes, check if the user has `npm run build --watch` running.
+If not, prompt them to start one. Use its output to verify compilation instead
+of running separate `tsc --noEmit` commands.
 
 ## Packages
 
-These are some significant packages:
+- `packages/types` — cross-package type definitions only (avoids circular refs).
+- `packages/utils` — shared helpers. Check here before writing new utilities.
+- `packages/visual-editor` — the frontend (Lit + Signals).
+- `packages/unified-server` — the Node.js backend.
 
-- `packages/types` -- contains only type definitons. This is package is designed
-  to allow defining types that are used across the package to avoid circular
-  references. Any time you need to add a cross-package type, add it here.
+## SCA Architecture
 
-- `packages/utils` -- contains commonly used functions and classes. If you're
-  looking to implement a helper function, first look in `packages/utils` to see
-  if it might be already present there.
+The frontend uses **Services, Controllers, Actions** (SCA). All new frontend
+logic must follow this pattern. Read `packages/visual-editor/src/sca/README.md`
+for the full reference.
 
-- `packages/breadboard`, `packages/runtime`, `packages/data`, `packages/loader`
-  -- contain the core runtime engine for the project and all the data
-  transformation/processing code.
+- **Services** — stateless infrastructure (APIs, file system). No UI state.
+- **Controllers** — signal-backed reactive state (`@field` decorator).
+  Hierarchical (`app.editor.graph`, `app.global.flags`).
+- **Actions** — cross-cutting orchestration via `asAction`. Appropriate when
+  logic touches Services AND Controllers, or multiple subcontrollers.
+  Single-controller logic belongs on the Controller itself.
+- **Triggers** — reactive bridge (`signalTrigger`, `eventTrigger`,
+  `keyboardTrigger`). Defined in companion `triggers.ts` files.
 
-- `packages/visual-editor` -- contains the majority of the frontend code for the
-  project.
+### SCA as Single Context
 
-- `unified-server` -- contains the nodejs server, the backend of the project.
+UI components access the entire SCA singleton via Lit Context (`scaContext`).
+Consume with `@consume({ context: scaContext })` on `SignalWatcher(LitElement)`.
+Never prop-drill individual controllers or services.
+
+### Canonical Imports
+
+Import shared types and constants from `sca/types.ts` and `sca/constants.ts`,
+not from UI-specific locations. Cross-package types go in `packages/types`.
+
+### Action Conventions
+
+- Wrap business logic in `asAction` for coordination visibility.
+- Access deps via the module-level `bind` object, never as function params.
+- Return `Outcome<T>` (`ok(value)` / `err("message")`). Use fail-early guards.
+- Actions must never import other action modules. Cross-domain coordination
+  uses Triggers (Triggered Delegation pattern).
+- One trigger per action. Consolidate multi-signal conditions into one trigger.
+
+### Trigger Conventions
+
+- **Version + 1** pattern to avoid the Sticky Trigger Hazard:
+  `return controller.editor.graph.version + 1;`
+- For presence-based triggers, the action must clear the signal as its final step.
+- Wrap `triggeredBy` in a factory function for lazy evaluation and SSR safety.
+
+### UI Components
+
+UI elements should be thin rendering shells. Push state and business logic into
+SCA Controllers and Actions — elements should only hold DOM-intrinsic state
+(scroll position, focus, animation frames). Read application state from
+Controllers via signals; dispatch mutations through Actions.
+
+When working in an element that encodes business state locally (e.g., tracking
+run status, managing lists, or holding derived data in the component itself),
+gently encourage a refactor to move that state into a Controller and the logic
+into an Action. This makes the behavior testable without the DOM.
 
 ## Signals
 
-The repo is using `signal-polyfil` and `signal-utils` as its signal
-infrastructure.
+The repo uses `signal-polyfill` and `signal-utils` as its signal infrastructure.
 
 ## Coding Conventions
 
-### Exports
-
-Use ES Module syntax for imports/exports.
-
-Define exports explicitly at the top of the file, right below the imports.
-
+Use ES Module syntax. Define exports explicitly at the top of the file, right
+below imports:
 ```ts
 import { foo } from "./foo";
-// ... more imports
-
 export { bar, baz };
-
-function bar() {
-  // function impl.
-}
-
-function baz() {
-  // function impl.
-}
-
-// not exported
-function quz() {
-  // function impl.
-}
+function bar() { /* ... */ }
+function baz() { /* ... */ }
 ```
+
+## Refactoring Patterns
+
+- **Interface removal as discovery**: delete from the interface, build, then
+  fix all consumers the compiler surfaces.
+- **Flags**: defined in `packages/types/src/flags.ts` (type + metadata),
+  `FlagController` (frontend), and `unified-server/src/flags.ts` (backend).
+  When adding/removing a flag, update all three locations plus tests.
 
 ## Tests
 
-To write tests, use node's built-in test framework. Use the `npm run test`
-command within the package to run tests.
+Use Node's built-in test framework (`node:test`). Tests run in Node, not a
+browser. If the code under test references DOM globals (`document`, `window`,
+etc.), call `setDOM()` from `tests/fake-dom.ts` in `beforeEach` and
+`unsetDOM()` in `afterEach` to ensure a clean environment between tests.
+Modules must never access DOM globals at the module level (e.g., top-level
+`document.createElement`) — defer all DOM access to function bodies so the
+module can be imported safely in Node.
+Name tests as `[source-file].test.ts` in `packages/[package]/tests/`. In
+`packages/visual-editor`, mirror `src/sca/` structure under `tests/sca/`.
 
-Name tests as `[name of tested file].test.ts` and place it into
-`packages/[package name]/tests/` directory. All packages are configured to pick
-up that file with `npm run test`.
+### Mocking
 
-If you're writing a test in `packages/visual-editor/tests` and the
-code-to-be-tested contains signals, use the
-`packages/visual-editor/tests/signal-watcher.ts` helper for easy reactivity
-testing.
+Always use `mock.method` from `node:test`. Never directly overwrite properties
+on globals. Call `mock.restoreAll()` in `afterEach`. See
+`.agent/workflows/testing-conventions.md` for details.
 
-In `packages/visual-editor`, use `npm run test:pattern` to run tests with direct
-control over node's test runner flags:
+### SCA Action Tests
 
+- Bind action modules to mock controller/services via `Module.bind(...)`.
+- When actions call other modules, bind ALL participating modules.
+- Reset `coordination.reset()` in `beforeEach` to prevent cross-test deadlocks.
+- Use `createMockEditor` from `tests/sca/helpers/mock-controller.ts` — avoid
+  inline mocks.
+- Capture transforms via `onApply` callback; return `{ success: true }`.
+- Test all fail-early guards with partial/null bindings.
+
+### Signal / Async Tests
+
+If the code under test contains signals, use the `signal-watcher.ts` helper. For
+async signal derivations, use the "Settled and Wait" pattern:
+`await store.isSettled` then `await new Promise(r => setTimeout(r, 50))`.
+
+Use `npm run test:file` to run subsets:
 ```bash
-# Filter tests by name pattern
-npm run test:pattern -- --test-name-pattern="ChoicePresenter"
-
-# Run only tests marked with .only
-npm run test:pattern -- --test-only
+npm run test:file -- './dist/tsc/tests/sca/actions/share/**/*.js'
 ```

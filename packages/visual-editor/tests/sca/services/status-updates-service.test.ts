@@ -12,12 +12,16 @@ import { VisualEditorStatusUpdate } from "../../../src/ui/types/types.js";
 import { setDOM, unsetDOM } from "../../fake-dom.js";
 
 suite("StatusUpdatesService", () => {
-  let fetchMock: ReturnType<(typeof mock)["fn"]>;
+  let fetchMock: ReturnType<(typeof mock)["method"]>;
 
   beforeEach(() => {
     setDOM();
-    fetchMock = mock.fn();
-    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    fetchMock = mock.method(globalThis, "fetch", async () =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([]),
+      } as Response)
+    );
   });
 
   afterEach(() => {

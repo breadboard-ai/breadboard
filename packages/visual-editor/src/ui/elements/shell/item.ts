@@ -12,7 +12,7 @@ import {
   OverflowAction,
   WorkspaceSelectionStateWithChangeId,
 } from "../../types/types.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import { icons } from "../../styles/icons.js";
 import { OverflowMenuActionEvent } from "../../events/events.js";
 
@@ -106,39 +106,19 @@ export class ItemModal extends LitElement {
   ];
 
   #createItemList() {
-    const list: OverflowAction[] = Object.entries(this.graph?.modules ?? {})
-      .map(([name, module]) => {
-        return {
-          name,
-          icon: module.metadata?.runnable ? "step" : "code",
-          title: module.metadata?.title ?? name,
-          secondaryAction: "delete",
-          disabled: this.selectionState?.selectionState.modules.has(name),
-        };
-      })
-      .sort((a, b) => {
-        if (a.title.toLocaleLowerCase() > b.title.toLocaleLowerCase()) return 1;
-        if (a.title.toLocaleLowerCase() < b.title.toLocaleLowerCase())
-          return -1;
-        return 0;
-      });
+    const list: OverflowAction[] = [];
 
     const hasNoGraphsSelected =
       this.selectionState?.selectionState.graphs.size === 0;
-    const hasNoModulesSelected =
-      this.selectionState?.selectionState.modules.size === 0;
     const hasMainGraphSelected =
       this.selectionState?.selectionState.graphs.has(MAIN_BOARD_ID);
 
-    if (!this.graph?.main) {
-      list.unshift({
-        name: "flow",
-        icon: "flowchart",
-        title: "Flow",
-        disabled:
-          (hasNoGraphsSelected || hasMainGraphSelected) && hasNoModulesSelected,
-      });
-    }
+    list.unshift({
+      name: "flow",
+      icon: "flowchart",
+      title: "Flow",
+      disabled: hasNoGraphsSelected || hasMainGraphSelected,
+    });
 
     return list;
   }

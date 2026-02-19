@@ -62,11 +62,11 @@ export async function createClientConfig(opts: {
     SHARE_SURFACE_URL_TEMPLATES: flags.SHARE_SURFACE_URL_TEMPLATES,
     ENABLE_NEW_URL_SCHEME: flags.ENABLE_NEW_URL_SCHEME,
     ENABLE_SHARING_2: flags.ENABLE_SHARING_2,
+    FAKE_MODE: flags.FAKE_MODE,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       mcp: flags.ENABLE_MCP,
       force2DGraph: flags.ENABLE_FORCE_2D_GRAPH,
-      gulfRenderer: flags.ENABLE_GULF_RENDERER,
       consistentUI: flags.ENABLE_CONSISTENT_UI,
       agentMode: flags.ENABLE_AGENT_MODE,
       opalAdk: flags.ENABLE_OPAL_ADK,
@@ -81,6 +81,7 @@ export async function createClientConfig(opts: {
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
       enableNotebookLm: flags.ENABLE_NOTEBOOK_LM,
       enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
+      enableGraphEditorAgent: flags.ENABLE_GRAPH_EDITOR_AGENT,
     },
   };
 }

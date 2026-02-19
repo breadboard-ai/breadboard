@@ -5,16 +5,16 @@
  */
 
 import type {
-  MainGraphIdentifier,
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
   GraphIdentifier,
-  ModuleIdentifier,
-  MutableGraphStore,
+  GraphStoreArgs,
   OutputValues,
 } from "@breadboard-ai/types";
+import { Graph as GraphEditor } from "../../../../engine/editor/graph.js";
 import type * as Editor from "../../../controller/subcontrollers/editor/editor.js";
+import { MutableGraphImpl } from "../../../../engine/inspector/graph/mutable-graph.js";
 
 /**
  * Options for initializing the editor.
@@ -22,8 +22,6 @@ import type * as Editor from "../../../controller/subcontrollers/editor/editor.j
 export interface InitializeEditorOptions {
   /** The prepared graph to edit */
   graph: GraphDescriptor;
-  /** The resolved module ID */
-  moduleId: ModuleIdentifier | null;
   /** The resolved subgraph ID */
   subGraphId: GraphIdentifier | null;
   /** The URL the graph was loaded from */
@@ -41,6 +39,8 @@ export interface InitializeEditorOptions {
   onHistoryChanged?: (history: Readonly<EditHistoryEntry[]>) => void;
   /** Pre-loaded final output values */
   finalOutputValues?: OutputValues;
+  /** Dependencies for creating MutableGraphImpl */
+  graphStoreArgs: GraphStoreArgs;
 }
 
 /**
@@ -50,26 +50,23 @@ export interface InitializeEditorResult {
   success: true;
   /** The editor ID (for identifying this editing session) */
   id: string;
-  /** The main graph ID in the graph store */
-  mainGraphId: MainGraphIdentifier;
 }
 
 /**
  * Sets up the editor state for a loaded graph.
  *
  * This function:
- * - Adds the graph to the graph store
+ * - Creates a MutableGraphImpl from the graph descriptor
+ * - Stores it in the graph controller
  * - Creates an editor instance
  * - Wires up event listeners for graph changes
  * - Updates the graph controller state
  *
- * @param graphStore The mutable graph store
  * @param graphController The graph controller to update
  * @param options Editor initialization options
- * @returns The editor ID and main graph ID
+ * @returns The editor ID
  */
 export function initializeEditor(
-  graphStore: MutableGraphStore,
   graphController: Editor.Graph.GraphController,
   options: InitializeEditorOptions
 ): InitializeEditorResult {
@@ -82,23 +79,17 @@ export function initializeEditor(
     creator,
     history,
     onHistoryChanged,
+    graphStoreArgs,
   } = options;
 
-  // Add graph to store
-  const mainGraphId = graphStore.getByDescriptor(graph);
-  if (!mainGraphId.success) {
-    throw new Error(`Unable to add graph: ${mainGraphId.error}`);
-  }
-
-  // Create editor
-  const editor = graphStore.editByDescriptor(graph, {
+  // Create MutableGraphImpl and store in controller
+  const mutable = new MutableGraphImpl(graph, graphController, graphStoreArgs);
+  graphController.set(mutable);
+  const editor = new GraphEditor(mutable, {
     creator,
     history,
     onHistoryChanged,
   });
-  if (!editor) {
-    throw new Error("Unable to edit by descriptor");
-  }
 
   // Generate a session ID
   const id = globalThis.crypto.randomUUID();
@@ -109,9 +100,7 @@ export function initializeEditor(
   graphController.url = url;
   graphController.version = version;
   graphController.readOnly = readOnly;
-  // Derive graphIsMine from readOnly for legacy compat (deprecated)
-  graphController.graphIsMine = !readOnly;
-  graphController.mainGraphId = mainGraphId.result;
+  graphController.mainGraphId = id;
   graphController.lastLoadedVersion = lastLoadedVersion;
   graphController.finalOutputValues = options.finalOutputValues;
 
@@ -122,7 +111,6 @@ export function initializeEditor(
   return {
     success: true,
     id,
-    mainGraphId: mainGraphId.result,
   };
 }
 

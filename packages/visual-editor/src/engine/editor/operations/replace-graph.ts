@@ -42,7 +42,6 @@ export class ReplaceGraph implements EditOperation {
       success: true,
       // We don't need to include any affected things, because rebuild replaces
       // them anyway.
-      affectedModules: [],
       affectedNodes: [],
       affectedGraphs: [],
       topologyChange: true,

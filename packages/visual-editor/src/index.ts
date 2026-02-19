@@ -16,7 +16,7 @@ import * as BreadboardUI from "./ui/index.js";
 import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { MakeUrlInit } from "./ui/types/types.js";
+import { MakeUrlInit } from "./sca/types.js";
 import { repeat } from "lit/directives/repeat.js";
 import { Utils } from "./sca/utils.js";
 
@@ -100,7 +100,7 @@ class Main extends MainBase {
     if (!domain) {
       return;
     }
-    const url = this.globalConfig.domains?.[domain]?.preferredUrl;
+    const url = this.sca.services.globalConfig.domains?.[domain]?.preferredUrl;
     if (!url) {
       return;
     }
@@ -119,7 +119,7 @@ class Main extends MainBase {
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void> {
-    this.actionTracker.updateCanAccessStatus(result.canAccess);
+    this.sca.services.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       await this.sca.services.signinAdapter.signOut();
       window.history.pushState(
@@ -225,7 +225,7 @@ class Main extends MainBase {
           ? this.#renderStatusUpdateModal()
           : nothing,
         this.sca.controller.global.main.show.has("GlobalSettings")
-          ? this.#renderGlobalSettingsModal(renderValues)
+          ? this.#renderGlobalSettingsModal()
           : nothing,
         this.sca.controller.global.main.show.has("WarmWelcome")
           ? this.#renderWarmWelcomeModal()
@@ -236,6 +236,7 @@ class Main extends MainBase {
         this.renderTooltip(),
         this.#renderToasts(),
         this.renderSnackbar(),
+        this.renderNotebookLmPicker(),
         this.#renderFeedbackPanel(),
         this.renderConsentRequests(),
         this.#maybeRenderDebugPanel(),
@@ -267,48 +268,45 @@ class Main extends MainBase {
   }
 
   #renderAppController(renderValues: RenderValues) {
-    const graphIsEmpty = BreadboardUI.Utils.isEmpty(this.tab?.graph ?? null);
+    const gc = this.sca.controller.editor.graph;
+    const graphContentState = gc.graphContentState;
     const active =
       this.sca.controller.global.main.mode === "app" &&
       this.sca.controller.global.main.loadState !== "Home";
 
     return html`<bb-app-controller
       class=${classMap({ active })}
-      .graph=${this.tab?.graph ?? null}
-      .graphIsEmpty=${graphIsEmpty}
+      .graph=${gc.graph ?? null}
+      .graphContentState=${graphContentState}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .isMine=${this.tab?.graphIsMine ?? false}
-      .projectRun=${renderValues.projectState?.run}
+      .isMine=${!gc.readOnly}
       .readOnly=${true}
       .runtimeFlags=${this.sca.controller.global.flags}
-      .settings=${this.settings}
       .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
       "signedin"}
-      .status=${renderValues.tabStatus}
-      .themeHash=${renderValues.themeHash}
+      .status=${renderValues.runStatus}
+      .themeHash=${this.sca.controller.editor.theme.themeHash}
     >
     </bb-app-controller>`;
   }
 
   #renderCanvasController(renderValues: RenderValues) {
+    // Temporarily block rendering the canvas for non-owners until sharing
+    // initializes, so the editor doesn't flash before a potential redirect to
+    // app mode due to the "allow access to editor view and remix" checkbox.
+    const { graph, share } = this.sca.controller.editor;
+    if (
+      this.sca.controller.global.main.mode === "canvas" &&
+      graph.url &&
+      !this.sca.services.googleDriveBoardServer.isMine(new URL(graph.url)) &&
+      share.status === "initializing"
+    ) {
+      return nothing;
+    }
     return html` <bb-canvas-controller
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
-      .canRun=${this.sca.controller.global.main.canRunMain}
-      .editor=${this.sca.controller.editor.graph.editor}
-      .graph=${this.tab?.graph ?? null}
-      .graphIsMine=${this.tab?.graphIsMine ?? false}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .history=${this.sca.controller.editor.graph.editor?.history() ?? null}
-      .mainGraphId=${this.tab?.mainGraphId}
-      .projectState=${renderValues.projectState}
-      .readOnly=${this.tab?.readOnly ?? true}
-      .selectionState=${this.selectionState}
-      .settings=${this.settings}
-      .signedIn=${this.sca.services.signinAdapter.stateSignal?.status ===
-      "signedin"}
-      .status=${renderValues.tabStatus}
-      .themeHash=${renderValues.themeHash}
       @bbshowvideomodal=${() => {
         this.sca.controller.global.main.show.add("VideoModal");
       }}
@@ -317,6 +315,8 @@ class Main extends MainBase {
       ) => {
         this.lastPointerPosition.x = evt.x;
         this.lastPointerPosition.y = evt.y;
+        this.sca.controller.global.main.pointerLocation.x = evt.x;
+        this.sca.controller.global.main.pointerLocation.y = evt.y;
       }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
         const message: IterateOnPromptMessage = {
@@ -327,19 +327,21 @@ class Main extends MainBase {
           nodeId: iterateOnPromptEvent.nodeId,
           modelId: iterateOnPromptEvent.modelId,
         };
-        this.embedHandler?.sendToEmbedder(message);
+        this.sca.services.embedHandler?.sendToEmbedder(message);
       }}
     ></bb-canvas-controller>`;
   }
 
   #renderBoardEditModal() {
+    const gc = this.sca.controller.editor.graph;
     return html`<bb-edit-board-modal
-      .boardTitle=${this.tab?.graph.title ?? null}
-      .boardDescription=${this.tab?.graph.description ?? null}
+      .boardTitle=${gc.title ?? null}
+      .boardDescription=${gc.graph?.description ?? null}
       @bbmodaldismissed=${() => {
         this.sca.controller.global.main.show.delete("BoardEditModal");
       }}
-    ></bb-edit-board-modal>`;
+    >
+    </bb-edit-board-modal>`;
   }
 
   #renderVideoModal() {
@@ -410,10 +412,9 @@ class Main extends MainBase {
     ></bb-status-update-modal>`;
   }
 
-  #renderGlobalSettingsModal(renderValues: RenderValues) {
+  #renderGlobalSettingsModal() {
     return html`<bb-global-settings-modal
       .flags=${this.sca.controller.global.flags.flags()}
-      .project=${renderValues.projectState}
       .uiState=${this.sca.controller.global.main}
       .emailPrefsManager=${this.sca.services.emailPrefsManager}
       @bbmodaldismissed=${() => {
@@ -555,23 +556,20 @@ class Main extends MainBase {
   }
 
   #renderHeader(renderValues: RenderValues) {
+    const gc = this.sca.controller.editor.graph;
     return html`<bb-ve-header
       ?inert=${renderValues.showingOverlay ||
       this.sca.controller.global.main.blockingAction}
       .signinAdapter=${this.sca.services.signinAdapter}
-      .hasActiveTab=${this.tab !== null}
-      .tabTitle=${this.tab?.graph?.title ?? null}
-      .url=${this.tab?.graph?.url ?? null}
+      .url=${gc.url ?? null}
       .loadState=${this.sca.controller.global.main.loadState}
       .canSave=${renderValues.canSave}
-      .isMine=${this.tab?.graph.url
-        ? this.sca.services.googleDriveBoardServer.isMine(
-            new URL(this.tab.graph.url)
-          )
+      .isMine=${gc.url
+        ? this.sca.services.googleDriveBoardServer.isMine(new URL(gc.url))
         : false}
       .saveStatus=${renderValues.saveStatus}
       .mode=${this.sca.controller.global.main.mode}
-      .graphIsEmpty=${BreadboardUI.Utils.isEmpty(this.tab?.graph ?? null)}
+      .graphContentState=${gc.graphContentState}
       @bbsignout=${async () => {
         await this.sca.services.signinAdapter.signOut();
         this.sca.services.actionTracker.signOutSuccess();
@@ -585,10 +583,10 @@ class Main extends MainBase {
         });
       }}
       @bbclose=${async () => {
-        if (!this.tab) {
+        if (!gc.graph) {
           return;
         }
-        this.embedHandler?.sendToEmbedder({
+        this.sca.services.embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
         const homepage: MakeUrlInit = {
@@ -637,7 +635,7 @@ class Main extends MainBase {
 
         switch (select.value) {
           case "edit-title-and-description": {
-            if (!this.tab) {
+            if (!gc.graph) {
               return;
             }
 
@@ -646,24 +644,21 @@ class Main extends MainBase {
           }
 
           case "delete": {
-            if (!this.tab?.graph || !this.tab.graph.url) {
+            if (!gc.graph || !gc.url) {
               return;
             }
 
-            this.invokeDeleteEventRouteWith(this.tab.graph.url);
+            this.invokeDeleteEventRouteWith(gc.url);
             break;
           }
 
           case "duplicate": {
-            if (!this.tab?.graph || !this.tab.graph.url) {
+            if (!gc.graph || !gc.url) {
               return;
             }
 
-            this.sca.services.actionTracker.remixApp(
-              this.tab.graph.url,
-              "editor"
-            );
-            this.invokeRemixEventRouteWith(this.tab.graph.url, {
+            this.sca.services.actionTracker.remixApp(gc.url, "editor");
+            this.invokeRemixEventRouteWith(gc.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),
               error: Strings.from("ERROR_GENERIC"),
@@ -672,7 +667,9 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            this.sca.controller.global.feedback.open(this.globalConfig);
+            this.sca.controller.global.feedback.open(
+              this.sca.services.globalConfig
+            );
             break;
           }
 
@@ -712,12 +709,12 @@ class Main extends MainBase {
           }
 
           case "copy-board-contents": {
-            if (!this.tab) {
+            if (!gc.graph) {
               return;
             }
 
             await navigator.clipboard.writeText(
-              JSON.stringify(this.tab.graph, null, 2)
+              JSON.stringify(gc.graph, null, 2)
             );
             this.sca.controller.global.toasts.toast(
               Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
@@ -732,14 +729,11 @@ class Main extends MainBase {
           }
 
           case "remix": {
-            if (!this.tab?.graph.url) {
+            if (!gc.url) {
               return;
             }
-            this.sca.services.actionTracker.remixApp(
-              this.tab.graph.url,
-              "editor"
-            );
-            this.invokeRemixEventRouteWith(this.tab.graph.url, {
+            this.sca.services.actionTracker.remixApp(gc.url, "editor");
+            this.invokeRemixEventRouteWith(gc.url, {
               start: Strings.from("STATUS_REMIXING_PROJECT"),
               end: Strings.from("STATUS_PROJECT_CREATED"),
               error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),

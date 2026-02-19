@@ -4,40 +4,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type GraphDescriptor } from "@breadboard-ai/types";
-import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
-import { css, html, LitElement, nothing, type PropertyValues } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { scaContext } from "../../../sca/context/context.js";
-import type { ShareState } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
+import type {
+  SharePanelStatus,
+  UnmanagedAssetProblem,
+} from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { SCA } from "../../../sca/sca.js";
-import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import {
-  globalConfigContext,
-  type GlobalConfig,
-} from "../../contexts/global-config.js";
-import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
-import { ToastEvent, ToastType } from "../../events/events.js";
+import { ToastEvent } from "../../events/events.js";
+import { ToastType } from "../../../sca/types.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
-import { ActionTracker } from "../../types/types.js";
-import { makeUrl } from "../../utils/urls.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
-import type { VisibilityLevel } from "./share-visibility-selector.js";
+import type { ShareVisibilitySelector } from "./share-visibility-selector.js";
 import "./share-visibility-selector.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
+const SHARING_V2 = CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2;
 
 @customElement("bb-share-panel")
 export class SharePanel extends SignalWatcher(LitElement) {
@@ -100,6 +94,181 @@ export class SharePanel extends SignalWatcher(LitElement) {
         font-size: 24px;
       }
 
+      dialog.sharing-v2 {
+        padding: var(--bb-grid-size-6);
+
+        h2 {
+          font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+            var(--bb-font-family);
+          color: #243351;
+        }
+
+        #app-link {
+          align-items: center;
+
+          #app-link-text {
+            background: none;
+            color: #525252;
+            border: none;
+          }
+
+          #app-link-copy-button {
+            width: 150px;
+            height: 40px;
+            border: 1px solid #f1f1f1;
+            background: #fff;
+            padding: 10px 16px;
+            gap: var(--bb-grid-size-2);
+            font-family: var(--bb-font-family-flex);
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0;
+
+            &.bb-button-outlined {
+              color: #1b1b1b;
+            }
+
+            &:hover {
+              background: #f1f1f1;
+              border-color: #ababab;
+            }
+          }
+        }
+      }
+
+      #advisory-v2 {
+        color: var(--light-dark-n-40);
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        margin: var(--bb-grid-size-8) 0 0 0;
+
+        a {
+          color: #665ef6;
+          font-weight: 700;
+          letter-spacing: 0.1px;
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      #editor-access-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--bb-grid-size-9);
+
+        label {
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+          color: var(--Text, #1b1b1b);
+          font-family: var(--bb-font-family-flex);
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 24px;
+          letter-spacing: 0;
+        }
+
+        .info-icon {
+          position: relative;
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          overflow: visible;
+          color: #525252;
+          padding: 4px;
+          margin: -4px;
+          cursor: help;
+        }
+
+        .info-icon::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 50%;
+          transform: translateX(-50%);
+          background: #2e2e2e;
+          color: #f2f2f2;
+          font-family: var(--bb-font-family-flex);
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 16px;
+          letter-spacing: 0.1px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          width: max-content;
+          max-width: 300px;
+          white-space: normal;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.15s ease;
+        }
+
+        .info-icon:hover::after {
+          opacity: 1;
+        }
+
+        md-switch {
+          --md-sys-color-primary: #000;
+          --md-sys-color-primary-container: #fff;
+          --md-sys-color-surface-container-highest: #e0e0e0;
+          --md-switch-track-height: 24px;
+          --md-switch-track-width: 40px;
+          --md-switch-selected-handle-width: 20px;
+          --md-switch-selected-handle-height: 20px;
+        }
+
+        .toggle-spinner {
+          animation: rotate 1s linear infinite;
+          font-size: 18px;
+          color: #525252;
+        }
+
+        .toggle-group {
+          display: flex;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+        }
+
+        @keyframes rotate {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      }
+
+      #editor-access-toggle + #app-link {
+        margin-top: 44px;
+      }
+
+      footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--bb-grid-size-12);
+
+        .bb-button-outlined {
+          flex-direction: column;
+          padding: 10px 16px;
+          border: 1px solid #ababab;
+          color: #1b1b1b;
+          font-family: var(--bb-font-family-flex);
+          font-size: 14px;
+          line-height: 20px;
+          letter-spacing: 0;
+
+          &[disabled] {
+            opacity: 0.4;
+            cursor: wait;
+          }
+        }
+      }
+
       #loading {
         flex: 1;
         display: flex;
@@ -139,6 +308,39 @@ export class SharePanel extends SignalWatcher(LitElement) {
         button[disabled] {
           cursor: wait;
         }
+      }
+
+      #stale-v2 {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--bb-grid-size-4);
+        background: #f1f1f1;
+        margin: var(--bb-grid-size-4) calc(-1 * var(--bb-grid-size-6)) 0
+          calc(-1 * var(--bb-grid-size-6));
+        padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
+        font-family: var(--bb-font-family-flex);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: normal;
+        letter-spacing: 0;
+        color: #1a1a1a;
+
+        button {
+          font: 700 var(--bb-label-large) / 16px var(--bb-font-family);
+          color: #000;
+          letter-spacing: 0.25px;
+          flex-shrink: 0;
+        }
+
+        button[disabled] {
+          opacity: 0.4;
+          cursor: wait;
+        }
+      }
+
+      #stale-v2 + #advisory-v2 {
+        margin-top: var(--bb-grid-size-4);
       }
 
       #permissions {
@@ -314,25 +516,16 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @consume({ context: globalConfigContext })
-  @property({ attribute: false })
-  accessor globalConfig: GlobalConfig | undefined;
-
   @consume({ context: scaContext })
   @property({ attribute: false })
   accessor sca!: SCA;
 
-  @consume({ context: guestConfigurationContext })
-  accessor guestConfiguration: GuestConfiguration | undefined;
+  get #graph() {
+    return this.sca.controller.editor.graph.graph;
+  }
 
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
-
-  @property({ attribute: false })
-  accessor graph: GraphDescriptor | undefined;
-
-  get #state(): ShareState {
-    return this.#controller.state;
+  get #panel(): SharePanelStatus {
+    return this.#controller.panel;
   }
 
   get #actions() {
@@ -347,24 +540,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
   #publishedSwitch = createRef<MdSwitch>();
   #googleDriveSharePanel = createRef<GoogleDriveSharePanel>();
 
-  override willUpdate(changes: PropertyValues<this>) {
-    super.willUpdate(changes);
-    if (changes.has("graph") && this.#state.status !== "closed") {
-      this.#actions.openPanel();
-    }
-    if (this.#state.status === "opening" && this.graph) {
-      this.#actions.readPublishedState(
-        this.graph,
-        this.#getRequiredPublishPermissions()
-      );
-    }
-  }
-
   override render() {
-    const { status } = this.#state;
-    if (status === "closed" || status === "opening") {
+    const panel = this.#panel;
+    if (panel === "closed") {
       return nothing;
-    } else if (status === "granular") {
+    } else if (panel === "native-share") {
       return this.#renderGranularSharingModal();
     } else {
       return this.#renderModal();
@@ -372,15 +552,15 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   override updated() {
-    if (this.#state.status === "granular") {
+    if (this.#panel === "native-share") {
       this.#googleDriveSharePanel.value?.open();
-    } else if (this.#state.status !== "closed") {
+    } else if (this.#panel !== "closed") {
       this.#dialog.value?.showModal();
     }
   }
 
   open(): void {
-    this.#actions.openPanel();
+    this.#actions.open();
   }
 
   close(): void {
@@ -388,15 +568,25 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderModal() {
-    const title = this.graph?.title;
+    const title = this.#graph?.title;
     return html`
-      <dialog ${ref(this.#dialog)} @close=${this.close}>
+      <dialog
+        class=${SHARING_V2 ? "sharing-v2" : ""}
+        ${ref(this.#dialog)}
+        @close=${this.close}
+        @cancel=${(e: Event) => {
+          if (this.#controller.status !== "ready") {
+            e.preventDefault();
+          }
+        }}
+      >
         <header>
           <h2>Share ${title ? `“${title}”` : ""}</h2>
           <button
             id="close-button"
             class="g-icon"
             aria-label="Close"
+            .disabled=${this.#controller.status !== "ready"}
             @click=${this.close}
           >
             close
@@ -409,20 +599,44 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderModalContents() {
-    const { status } = this.#state;
-    if (status === "loading") {
+    // Asset-review takes priority when there are unmanaged asset problems
+    // pending resolution (e.g. during publish), OR when notebook domain-sharing
+    // limitations need to be surfaced. The action layer blocks on
+    // waitForUnmanagedAssetsResolution() in both cases.
+    if (
+      this.#controller.unmanagedAssetProblems.length > 0 ||
+      this.#controller.notebookDomainSharingLimited
+    ) {
+      return this.#renderUnmanagedAssetsModalContents();
+    }
+    const status = this.#controller.status;
+    // V2 has inline spinners for changing-visibility and publishing-stale,
+    // so only show the full-panel loader for statuses without those affordances.
+    if (
+      SHARING_V2 &&
+      (status === "initializing" ||
+        status === "syncing-native-share" ||
+        status === "syncing-assets")
+    ) {
+      return this.#renderLoading();
+      // V1 has an inline spinner for changing-visibility on the publish switch,
+      // so only show the full-panel loader for statuses without inline affordances.
+    } else if (
+      !SHARING_V2 &&
+      (status === "initializing" ||
+        status === "syncing-native-share" ||
+        status === "publishing-stale" ||
+        status === "syncing-assets")
+    ) {
       return this.#renderLoading();
     }
-    if (status === "writable" || status === "updating") {
+    if (this.#controller.ownership === "owner") {
       return CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2
         ? this.#renderWritableContentsV2()
         : this.#renderWritableContentsV1();
     }
-    if (status === "readonly") {
+    if (this.#controller.ownership === "non-owner") {
       return this.#renderReadonlyModalContents();
-    }
-    if (status === "unmanaged-assets") {
-      return this.#renderUnmanagedAssetsModalContents();
     }
   }
 
@@ -435,40 +649,19 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  get #isShared(): boolean | undefined {
-    const state = this.#state;
-    const { status } = state;
-    if (status === "readonly") {
-      // If we're readonly, then we're not the owner. And if we're not the
-      // owner, and yet here we are, then it must be shared with us one way or
-      // the other.
-      return true;
-    }
-    if (status === "writable" || status === "updating") {
-      return state.published || state.granularlyShared;
-    }
-    return undefined;
-  }
-
-  get #isStale(): boolean | undefined {
-    const state = this.#state;
-    const { status } = state;
-    if (status === "writable" || status === "updating") {
-      return state.shareableFile?.stale ?? false;
-    }
-    return undefined;
-  }
-
   #renderWritableContentsV1() {
+    const shared =
+      this.#controller.hasPublicPermissions ||
+      this.#controller.hasOtherPermissions;
     return [
-      this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
+      this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
       html`
         <div id="permissions">
           Publish your ${APP_NAME} ${this.#renderPublishedSwitch()}
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      this.#isShared && this.#state.status !== "updating"
+      shared && this.#controller.status === "ready"
         ? this.#renderAppLink()
         : nothing,
       this.#renderGranularSharingLink(),
@@ -477,13 +670,18 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderWritableContentsV2() {
+    const shared =
+      this.#controller.hasPublicPermissions ||
+      this.#controller.hasOtherPermissions;
     return [
-      this.#isStale && this.#isShared ? this.#renderStaleBanner() : nothing,
+      this.#controller.stale && shared ? this.#renderStaleBannerV2() : nothing,
+      this.#renderAdvisoryV2(),
       this.#renderVisibilityDropdown(),
-      this.#isShared && this.#state.status !== "updating"
-        ? this.#renderAppLink()
+      this.#controller.visibility !== "only-you"
+        ? this.#renderEditorAccessToggle()
         : nothing,
-      this.#renderAdvisory(),
+      shared ? this.#renderAppLink() : nothing,
+      this.#renderDoneButton(),
     ];
   }
 
@@ -496,7 +694,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         </p>
         <button
           class="bb-button-text"
-          .disabled=${this.#state.status !== "writable"}
+          .disabled=${this.#controller.status === "publishing-stale"}
           @click=${this.#onClickPublishStale}
         >
           Update
@@ -504,11 +702,61 @@ export class SharePanel extends SignalWatcher(LitElement) {
       </div>
     `;
   }
+
   async #onClickPublishStale() {
-    if (!this.graph) {
-      return;
-    }
-    await this.#actions.publishStale(this.graph);
+    await this.#actions.publishStale();
+  }
+
+  #renderStaleBannerV2() {
+    return html`
+      <div id="stale-v2">
+        <span>
+          Click update to push these changes. This will override previous
+          versions of the link that you shared.
+        </span>
+        <button
+          class="bb-button-text"
+          .disabled=${this.#controller.status !== "ready"}
+          @click=${this.#onClickPublishStale}
+        >
+          ${this.#controller.status === "publishing-stale"
+            ? html`<span class="g-icon spin spinner">progress_activity</span>`
+            : nothing}
+          Update
+        </button>
+      </div>
+    `;
+  }
+
+  #renderEditorAccessToggle() {
+    const changing = this.#controller.status === "changing-access";
+    return html`
+      <div id="editor-access-toggle">
+        <label>
+          Allow access to editor view and remix
+          <span
+            class="g-icon info-icon"
+            data-tooltip="Allows others to easily see your prompts and make a copy of your Opal"
+            >info</span
+          >
+        </label>
+        <span class="toggle-group">
+          ${changing
+            ? html`<span class="g-icon toggle-spinner">progress_activity</span>`
+            : nothing}
+          <md-switch
+            .disabled=${this.#controller.status !== "ready"}
+            ?selected=${this.#controller.viewerMode === "full"}
+            @change=${this.#onViewerModeToggle}
+          ></md-switch>
+        </span>
+      </div>
+    `;
+  }
+
+  async #onViewerModeToggle(event: Event) {
+    const selected = (event.target as MdSwitch).selected;
+    await this.#actions.setViewerAccess(selected ? "full" : "app-only");
   }
 
   #renderReadonlyModalContents() {
@@ -516,18 +764,16 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderDisallowedPublishingNotice() {
-    if (
-      this.#state.status !== "writable" &&
-      this.#state.status !== "updating"
-    ) {
+    const status = this.#controller.status;
+    if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
-    const domain = this.#state.userDomain;
+    const domain = this.#controller.userDomain;
     if (!domain) {
       return nothing;
     }
     const { disallowPublicPublishing, preferredUrl } =
-      this.globalConfig?.domains?.[domain] ?? {};
+      this.sca?.services.globalConfig?.domains?.[domain] ?? {};
     if (!disallowPublicPublishing) {
       return nothing;
     }
@@ -548,7 +794,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderAppLink() {
-    const appUrl = this.#appUrl;
+    const appUrl = this.#actions.computeAppUrl(this.#controller.shareableFile);
     if (!appUrl) {
       return nothing;
     }
@@ -579,7 +825,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         id="granular-sharing-link"
         href=""
         @click=${this.#onClickViewSharePermissions}
-        ?disabled=${this.#state.status !== "writable"}
+        ?disabled=${this.#controller.status !== "ready"}
       >
         View Share Permissions
       </a>
@@ -605,45 +851,71 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
 
+  #renderAdvisoryV2() {
+    return html`
+      <p id="advisory-v2">
+        Sharing your ${APP_NAME} app makes it available to anyone with the link.
+        To restrict access to your app, you can edit your share permissions so
+        only you or specific people you specify can view it.
+        <a
+          href="https://policies.google.com/terms/generative-ai/use-policy"
+          target="_blank"
+          >Share responsibly</a
+        >.
+        <a href="https://developers.google.com/opal/faq" target="_blank"
+          >Learn more</a
+        >.
+      </p>
+    `;
+  }
+
+  #renderDoneButton() {
+    return html`
+      <footer>
+        <button
+          class="bb-button-outlined"
+          .disabled=${this.#controller.status !== "ready"}
+          @click=${this.close}
+        >
+          Done
+        </button>
+      </footer>
+    `;
+  }
+
   #renderVisibilityDropdown() {
     return html`<bb-share-visibility-selector
-      .value=${this.#computedVisibility}
+      .value=${this.#controller.visibility}
+      .loading=${this.#controller.status === "changing-visibility"}
+      @change=${this.#onVisibilityChange}
+      @edit-access=${this.#onEditAccess}
     ></bb-share-visibility-selector>`;
   }
 
-  get #computedVisibility(): VisibilityLevel {
-    const state = this.#state;
-    if (
-      (state.status === "writable" || state.status === "updating") &&
-      state.published
-    ) {
-      return "anyone";
-    }
-    if (
-      (state.status === "writable" || state.status === "updating") &&
-      state.granularlyShared
-    ) {
-      return "restricted";
-    }
-    return "only-you";
+  async #onVisibilityChange(event: Event) {
+    const selector = event.target as ShareVisibilitySelector;
+    await this.#actions.changeVisibility(selector.value);
+  }
+
+  async #onEditAccess() {
+    await this.#actions.viewSharePermissions();
   }
 
   #renderPublishedSwitch() {
-    const { status } = this.#state;
-    if (status !== "writable" && status !== "updating") {
+    const status = this.#controller.status;
+    if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
-    const published =
-      (status === "writable" || status === "updating") && this.#state.published;
-
-    const domain = this.#state.userDomain;
+    const published = this.#controller.hasPublicPermissions;
+    const domain = this.#controller.userDomain;
     const { disallowPublicPublishing } =
-      this.globalConfig?.domains?.[domain] ?? {};
+      this.sca?.services.globalConfig?.domains?.[domain] ?? {};
 
-    const disabled = disallowPublicPublishing || status === "updating";
+    const disabled =
+      disallowPublicPublishing || status === "changing-visibility";
     return html`
       <div id="published-switch-container">
-        ${status === "updating"
+        ${status === "changing-visibility"
           ? html`<span class="g-icon spin spinner">progress_activity</span>`
           : nothing}
         <md-switch
@@ -660,59 +932,61 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderGranularSharingModal() {
-    if (this.#state.status !== "granular") {
+    const panel = this.#panel;
+    if (panel !== "native-share" || !this.#controller.shareableFile) {
       return nothing;
     }
     return html`
       <bb-google-drive-share-panel
         ${ref(this.#googleDriveSharePanel)}
-        .fileIds=${[this.#state.shareableFile.id]}
+        .fileIds=${[this.#controller.shareableFile.id]}
         @close=${this.#onGoogleDriveSharePanelClose}
       ></bb-google-drive-share-panel>
     `;
   }
 
   #renderUnmanagedAssetsModalContents() {
-    const state = this.#state;
-    if (state.status !== "unmanaged-assets") {
+    const problems = this.#controller.unmanagedAssetProblems;
+    const domainLimited = this.#controller.notebookDomainSharingLimited;
+    if (problems.length === 0 && !domainLimited) {
       return nothing;
     }
 
+    const renderAssetChip = (p: UnmanagedAssetProblem) => {
+      const name = p.type === "drive" ? p.asset.name : p.notebookName;
+      const url =
+        p.type === "drive"
+          ? driveOpenUrl(p.asset)
+          : `https://notebooklm.google.com/notebook/${p.notebookId}`;
+      const icon =
+        p.type === "drive" ? html`<img src=${p.asset.iconLink} />` : html`📓`;
+      return html`
+        <span class="asset-chip">
+          ${icon}
+          <a href=${url} target="_blank">${name}</a>
+        </span>
+      `;
+    };
+
     const parts = [];
 
-    const missingProblems = state.problems.filter(
+    const missingProblems = problems.filter(
       ({ problem }) => problem === "missing"
     );
     if (missingProblems.length > 0) {
-      const missingChips = missingProblems.map(({ asset }) => {
-        return html`
-          <span class="asset-chip">
-            <img src=${asset.iconLink} />
-            <a href=${driveOpenUrl(asset)} target="_blank">${asset.name}</a>
-          </span>
-        `;
-      });
       parts.push(html`
         <p>
           The following assets are editable by you, but are not yet shared with
           all users of this app. To share them now, choose "Share my assets".
         </p>
-        <div id="asset-chips">${missingChips}</div>
+        <div id="asset-chips">${missingProblems.map(renderAssetChip)}</div>
       `);
     }
 
-    const cantShareProblems = state.problems.filter(
+    const cantShareProblems = problems.filter(
       ({ problem }) => problem === "cant-share"
     );
     if (cantShareProblems.length > 0) {
-      const cantShareChips = cantShareProblems.map(({ asset }) => {
-        return html`
-          <span class="asset-chip">
-            <img src=${asset.iconLink} />
-            <a href=${driveOpenUrl(asset)} target="_blank">${asset.name}</a>
-          </span>
-        `;
-      });
       parts.push(html`
         <p>
           The following assets are <strong>not</strong> editable by you, and we
@@ -721,7 +995,17 @@ export class SharePanel extends SignalWatcher(LitElement) {
           safely ignore this warning. If you are unsure, contact the owner of
           the asset, or replace it with an asset you do own.
         </p>
-        <div id="asset-chips">${cantShareChips}</div>
+        <div id="asset-chips">${cantShareProblems.map(renderAssetChip)}</div>
+      `);
+    }
+
+    if (this.#controller.notebookDomainSharingLimited) {
+      parts.push(html`
+        <p>
+          <strong>Note:</strong> NotebookLM notebooks cannot be shared with
+          domain-wide or public access. They must be shared individually with
+          each user.
+        </p>
       `);
     }
 
@@ -759,11 +1043,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   async #onClickDismissUnmanagedAssetProblems() {
-    const state = this.#state;
-    if (state.status !== "unmanaged-assets") {
-      return;
-    }
-    state.closed.resolve();
+    await this.#actions.dismissUnmanagedAssetProblems();
   }
   async #onClickFixUnmanagedAssetProblems() {
     await this.#actions.fixUnmanagedAssetProblems();
@@ -771,13 +1051,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   async #onClickViewSharePermissions(event: MouseEvent) {
     event.preventDefault();
-    if (!this.graph) {
-      return;
-    }
-    await this.#actions.viewSharePermissions(
-      this.graph,
-      this.guestConfiguration?.shareSurface
-    );
+    await this.#actions.viewSharePermissions();
   }
 
   #onPublishedSwitchChange() {
@@ -786,20 +1060,16 @@ export class SharePanel extends SignalWatcher(LitElement) {
       console.error("Expected input element to be rendered");
       return;
     }
-    if (!this.graph?.url) {
+    if (!this.#graph?.url) {
       console.error("No graph url");
       return;
     }
     const selected = input.selected;
     if (selected) {
-      this.actionTracker?.publishApp(this.graph.url);
-      this.#actions.publish(
-        this.graph,
-        this.#getRequiredPublishPermissions(),
-        this.guestConfiguration?.shareSurface
-      );
+      this.sca?.services.actionTracker?.publishApp(this.#graph.url);
+      this.#actions.publish();
     } else {
-      this.#actions.unpublish(this.graph);
+      this.#actions.unpublish();
     }
   }
 
@@ -808,10 +1078,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   async #onClickCopyLinkButton() {
-    const appUrl = this.#appUrl;
+    const appUrl = this.#actions.computeAppUrl(this.#controller.shareableFile);
     if (!appUrl) {
       console.error("No app url");
-      return nothing;
+      return;
     }
     await navigator.clipboard.writeText(appUrl);
     this.dispatchEvent(
@@ -822,55 +1092,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     );
   }
 
-  get #appUrl(): string | undefined {
-    const state = this.#state;
-    if (
-      (state.status === "writable" ||
-        state.status === "updating" ||
-        state.status === "readonly") &&
-      state.shareableFile
-    ) {
-      const shareSurface = this.guestConfiguration?.shareSurface;
-      const shareSurfaceUrlTemplate =
-        shareSurface &&
-        this.guestConfiguration?.shareSurfaceUrlTemplates?.[shareSurface];
-      if (shareSurfaceUrlTemplate) {
-        return makeShareLinkFromTemplate({
-          urlTemplate: shareSurfaceUrlTemplate,
-          fileId: state.shareableFile.id,
-          resourceKey: state.shareableFile.resourceKey,
-        });
-      }
-      return makeUrl(
-        {
-          page: "graph",
-          mode: "app",
-          flow: `drive:/${state.shareableFile.id}`,
-          resourceKey: state.shareableFile.resourceKey,
-          guestPrefixed: false,
-        },
-        this.globalConfig?.hostOrigin
-      );
-    }
-    return undefined;
-  }
   async #onGoogleDriveSharePanelClose() {
-    if (!this.graph) {
-      return;
-    }
-    await this.#actions.onGoogleDriveSharePanelClose(this.graph);
-  }
-
-  #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {
-    if (!this.globalConfig) {
-      console.error(`No environment was provided`);
-      return [];
-    }
-    const permissions = this.globalConfig.googleDrive.publishPermissions;
-    if (permissions.length === 0) {
-      console.error(`Environment contained no googleDrive.publishPermissions`);
-    }
-    return permissions.map((permission) => ({ role: "reader", ...permission }));
+    await this.#actions.onGoogleDriveSharePanelClose();
   }
 }
 

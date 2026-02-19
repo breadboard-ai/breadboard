@@ -98,13 +98,13 @@ class FlagDisplay extends SignalWatcher(LitElement) {
 
   render() {
     // Reading signals auto-registers reactivity
-    const gulfRendererEnabled = this.sca?.controller.global.flags.gulfRenderer;
+    const agentModeEnabled = this.sca?.controller.global.flags.agentMode;
 
     return html`
-      <div>Gulf Renderer: ${gulfRendererEnabled ? "ON" : "OFF"}</div>
+      <div>Agent Mode: ${agentModeEnabled ? "ON" : "OFF"}</div>
     `;
   }
 }
 ```
 
-When `flags.gulfRenderer` changes, the component automatically re-renders.
+When `flags.agentMode` changes, the component automatically re-renders.

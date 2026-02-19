@@ -14,22 +14,29 @@ import {
   GraphIdentifier,
   GraphTheme,
   InspectableGraph,
+  InspectableNodePorts,
+  MutableGraph,
+  MutableGraphStore,
   NodeConfiguration,
+  NodeHandlerMetadata,
   NodeIdentifier,
+  Outcome,
   OutputValues,
+  PortIdentifier,
 } from "@breadboard-ai/types";
-import { NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
+import {
+  err,
+  NOTEBOOKLM_TOOL_PATH,
+  willCreateCycle,
+} from "@breadboard-ai/utils";
 import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
-import { Tab } from "../../../../../runtime/types.js";
-import {
-  Tool,
-  Component,
-  Components,
-  GraphAsset,
-} from "../../../../../ui/state/types.js";
+
+import { Tool, Component } from "../../../../types.js";
+import type { Components, GraphAsset } from "../../../../types.js";
 import { A2_TOOLS } from "../../../../../a2/a2-registry.js";
+import type { FastAccessItem } from "../../../../types.js";
 
 /**
  * Context for tracking node configuration changes.
@@ -54,6 +61,15 @@ export interface PendingGraphReplacement {
   /** Edit history creator info */
   creator: EditHistoryCreator;
 }
+
+/**
+ * Tri-state describing the content state of a graph.
+ *
+ * - `"loading"` — graph descriptor hasn't been set yet (initial state).
+ * - `"empty"`   — graph is loaded but contains no nodes, assets, or sub-graphs.
+ * - `"loaded"`  — graph has at least one node, asset, or sub-graph.
+ */
+export type GraphContentState = "loading" | "empty" | "loaded";
 
 /**
  * Tool definition for the "Go to" routing action.
@@ -85,7 +101,25 @@ const NOTEBOOKLM_TOOL: Tool = {
   icon: notebookLmIcon,
 };
 
-export class GraphController extends RootController {
+export class GraphController
+  extends RootController
+  implements MutableGraphStore
+{
+  #mutableGraph: MutableGraph | undefined;
+
+  /**
+   * MutableGraphStore.set — stores the given MutableGraph.
+   */
+  set(graph: MutableGraph): void {
+    this.#mutableGraph = graph;
+  }
+
+  /**
+   * MutableGraphStore.get — returns the current MutableGraph.
+   */
+  get(): MutableGraph | undefined {
+    return this.#mutableGraph;
+  }
   /**
    * Static registry of A2 tools. These are environment-independent
    * and don't change based on graph content.
@@ -143,6 +177,14 @@ export class GraphController extends RootController {
   @field()
   accessor version = 0;
 
+  /**
+   * Monotonically increases on non-visual graph topology changes.
+   * Used by UI components to detect when the graph structure has changed
+   * (as opposed to visual-only changes like node movement).
+   */
+  @field()
+  accessor topologyVersion = 0;
+
   @field()
   accessor lastLoadedVersion = 0;
 
@@ -151,15 +193,6 @@ export class GraphController extends RootController {
 
   @field()
   accessor readOnly = false;
-
-  /**
-   * The currently selected node ID for step editing.
-   * TODO: Remove this once SelectionController is fully wired up.
-   * At that point, fast-access.ts should read from SelectionController
-   * directly.
-   */
-  @field()
-  accessor selectedNodeId: NodeIdentifier | null = null;
 
   /**
    * The graph URL parsed as a URL object, or null if no URL.
@@ -223,13 +256,6 @@ export class GraphController extends RootController {
    * @deprecated
    */
   @field()
-  accessor graphIsMine = false;
-
-  /**
-   * Here for migrations.
-   * @deprecated
-   */
-  @field()
   accessor mainGraphId: ReturnType<typeof globalThis.crypto.randomUUID> | null =
     null;
 
@@ -257,10 +283,37 @@ export class GraphController extends RootController {
   }
 
   /**
-   * Whether the graph is empty (has no nodes).
+   * The content state of the graph. Distinguishes between three states:
+   *
+   * - `"loading"` — the graph descriptor hasn't been set yet
+   *   (`_graph` is null). This is the initial state before `setEditor()`
+   *   is called. UI consumers should avoid showing the "empty" message
+   *   during this transient phase to prevent a flash of empty content.
+   *
+   * - `"empty"` — the graph is loaded but has no nodes, assets,
+   *   or sub-graphs. This is the genuine empty state where the user
+   *   hasn't added any content yet.
+   *
+   * - `"loaded"` — the graph has at least one node, asset,
+   *   or sub-graph. Normal editing/preview state.
+   */
+  get graphContentState(): GraphContentState {
+    const g = this._graph;
+    if (!g) return "loading";
+    const hasContent =
+      (g.nodes?.length ?? 0) > 0 ||
+      Object.keys(g.assets ?? {}).length > 0 ||
+      Object.keys(g.graphs ?? {}).length > 0;
+    return hasContent ? "loaded" : "empty";
+  }
+
+  /**
+   * Whether the graph is empty (has no nodes, assets, or sub-graphs).
+   * @deprecated Use `graphContentState` instead, which distinguishes
+   * "loading" from "empty".
    */
   get empty() {
-    return (this._graph?.nodes?.length ?? 0) === 0;
+    return this.graphContentState === "empty";
   }
 
   get editor() {
@@ -307,6 +360,7 @@ export class GraphController extends RootController {
     // Skip derived tools update on visual-only changes (e.g., node movement)
     if (evt.visualOnly) return;
 
+    this.topologyVersion++;
     this.#updateMyTools();
     this.#updateAgentModeTools();
     this.#updateComponents();
@@ -321,35 +375,91 @@ export class GraphController extends RootController {
     }
   }
 
-  /**
-   * Here for migrations.
-   *
-   * @deprecated
-   */
-  asTab(): Tab | null {
-    if (!this._graph || !this.id || !this.mainGraphId) return null;
+  // =========================================================================
+  // Node Queries
+  // =========================================================================
 
-    return {
-      id: this.id,
-      graph: this._graph,
-      graphIsMine: this.graphIsMine,
-      readOnly: !this.graphIsMine,
-      boardServer: null,
-      lastLoadedVersion: this.lastLoadedVersion,
-      mainGraphId: this.mainGraphId,
-      moduleId: null,
-      name: this._graph.title ?? "Untitled app",
-      subGraphId: null,
-      type: 0,
-      version: this.version,
-      finalOutputValues: this.finalOutputValues,
-    } satisfies Tab;
+  /**
+   * Returns metadata for a given node. This function is sync, and it
+   * will return the current result, not the latest -- which is fine in most
+   * cases.
+   */
+  getMetadataForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<NodeHandlerMetadata> {
+    if (!this._editor) {
+      return err("No editor available");
+    }
+    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    const metadata = node.currentDescribe().metadata;
+    if (!metadata) {
+      return err(`Unable to find metadata for node with id "${nodeId}"`);
+    }
+    return metadata;
+  }
+
+  getPortsForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<InspectableNodePorts> {
+    if (!this._editor) {
+      return err("No editor available");
+    }
+    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    return node.currentPorts();
+  }
+
+  getTitleForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<string> {
+    if (!this._editor) {
+      return err("No editor available");
+    }
+    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    return node.title();
+  }
+
+  findOutputPortId(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ): Outcome<{ id: PortIdentifier; title: string }> {
+    if (!this._editor) {
+      return err("No editor available");
+    }
+    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    const { ports } = node.currentPorts().outputs;
+    const mainPort = ports.find((port) =>
+      port.schema.behavior?.includes("main-port")
+    );
+    const result = { id: "" as PortIdentifier, title: node.descriptor.id };
+    if (mainPort) {
+      result.id = mainPort.name as PortIdentifier;
+      return result;
+    }
+    const firstPort = ports.at(0);
+    if (!firstPort) {
+      return err(`Unable to find a port on node with id "${nodeId}`);
+    }
+    result.id = firstPort.name as PortIdentifier;
+    return result;
   }
 
   /**
-   * Here for migrations.
-   *
-   * @deprecated
+   * Resets the graph state when a board is closed.
    */
   resetAll() {
     this.id = null;
@@ -358,8 +468,8 @@ export class GraphController extends RootController {
     this._title = null;
     this.url = null;
     this.version = 0;
+    this.topologyVersion = 0;
     this.readOnly = false;
-    this.graphIsMine = false;
     this.mainGraphId = null;
     this.lastLoadedVersion = 0;
     this.lastNodeConfigChange = null;
@@ -367,6 +477,126 @@ export class GraphController extends RootController {
     this._myTools = new Map();
     this._agentModeTools = new Map();
     this._components = new Map();
+    this.#componentsUpdateGeneration++;
+  }
+
+  // =========================================================================
+  // Fast Access Derivations
+  // =========================================================================
+
+  /**
+   * Derives the set of route targets available from the currently selected node.
+   * Returns all nodes in the main graph except the selected one.
+   * Returns an empty map when no node is selected.
+   *
+   * Accepts `selectedNodeId` as a parameter because GraphController cannot
+   * access its sibling SelectionController directly. Callers pass
+   * `sca.controller.editor.selection.selectedNodeId`.
+   */
+  getRoutes(
+    selectedNodeId: NodeIdentifier | null
+  ): ReadonlyMap<string, Component> {
+    if (!selectedNodeId) {
+      return new Map();
+    }
+    const inspectable = this._editor?.inspect("");
+    if (!inspectable) {
+      return new Map();
+    }
+    return new Map<string, Component>(
+      inspectable
+        .nodes()
+        .filter((node) => node.descriptor.id !== selectedNodeId)
+        .map((node) => {
+          const id = node.descriptor.id;
+          return [
+            id,
+            {
+              id,
+              title: node.title(),
+              metadata: node.currentDescribe().metadata,
+            },
+          ];
+        })
+    );
+  }
+
+  /**
+   * Returns components with cycle-creating nodes filtered out for the
+   * currently selected node. When no node is selected, returns all components.
+   *
+   * Accepts `selectedNodeId` as a parameter because GraphController cannot
+   * access its sibling SelectionController directly.
+   */
+  getFilteredComponents(
+    selectedNodeId: NodeIdentifier | null
+  ): ReadonlyMap<GraphIdentifier, Components> {
+    if (!selectedNodeId) {
+      return this._components;
+    }
+    const inspectable = this._editor?.inspect("");
+    if (!inspectable) {
+      return this._components;
+    }
+    const components = this._components.get("");
+    if (!components) {
+      return new Map();
+    }
+
+    const graph = inspectable.raw();
+    const validComponents = [...components].filter(
+      ([id]) => !willCreateCycle({ to: selectedNodeId, from: id }, graph)
+    );
+
+    return new Map<GraphIdentifier, Components>([
+      ["", new Map(validComponents)],
+    ]);
+  }
+
+  /**
+   * Builds a flat, ordered list of all items available in the Fast Access menu.
+   * This replaces the brittle index-offset arithmetic that was previously in
+   * the UI component's `willUpdate()` and `#emitCurrentItem()`.
+   *
+   * The order is: assets → tools → components → routes.
+   * Integration items are NOT included here — they remain on the legacy
+   * Integrations manager until that migration is complete.
+   *
+   * @param selectedNodeId The currently selected node (for routes and
+   *   filtered components). Pass `null` when no node is selected.
+   */
+  getFastAccessItems(selectedNodeId: NodeIdentifier | null): FastAccessItem[] {
+    const items: FastAccessItem[] = [];
+
+    // Assets
+    for (const asset of this._graphAssets.values()) {
+      items.push({ kind: "asset", asset });
+    }
+
+    // Tools (A2 tools + myTools, sorted by order)
+    const allTools = [...this.tools.values(), ...this._myTools.values()].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0)
+    );
+    for (const tool of allTools) {
+      items.push({ kind: "tool", tool });
+    }
+
+    // Components (filtered for cycles)
+    const filteredComponents = this.getFilteredComponents(selectedNodeId);
+    const graphComponents = filteredComponents.get("");
+    if (graphComponents) {
+      for (const component of graphComponents.values()) {
+        items.push({ kind: "component", component });
+      }
+    }
+
+    // Routes
+    const routes = this.getRoutes(selectedNodeId);
+    for (const route of routes.values()) {
+      items.push({ kind: "route", route });
+    }
+
+    return items;
   }
 
   /**

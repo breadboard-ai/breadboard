@@ -5,30 +5,28 @@
  */
 
 import { GraphDescriptor, RuntimeFlags } from "@breadboard-ai/types";
+import type { GraphContentState } from "../../../sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 const GlobalStrings = StringsHelper.forSection("Global");
 
-import { LitElement, type PropertyValues, html } from "lit";
+import { LitElement, type PropertyValues, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { isStoredData } from "@breadboard-ai/utils";
 
 import { styles as appPreviewStyles } from "./app-controller.styles.js";
 import {
   AppTemplateOptions,
-  AppTheme,
   FloatingInputFocusState,
-  SettingsStore,
-  STATUS,
 } from "../../types/types.js";
+import { AppTheme, STATUS } from "../../../sca/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import { consume, provide } from "@lit/context";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { consume } from "@lit/context";
 import { generatePaletteFromColor } from "../../../theme/index.js";
 import { loadPartAsDataUrl } from "../../utils/data-parts.js";
-import { projectRunContext } from "../../contexts/project-run.js";
-import { ProjectRun } from "../../state/types.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
+
 import { SignalWatcher } from "@lit-labs/signals";
 import { Template } from "../../app-templates/basic/index.js";
 
@@ -72,7 +70,7 @@ export class AppController extends SignalWatcher(LitElement) {
   accessor graph: GraphDescriptor | null = null;
 
   @property()
-  accessor graphIsEmpty = false;
+  accessor graphContentState: GraphContentState = "loading";
 
   @property()
   accessor graphTopologyUpdateId = 0;
@@ -82,13 +80,6 @@ export class AppController extends SignalWatcher(LitElement) {
 
   @property()
   accessor isMine = false;
-
-  @property({ reflect: false })
-  @provide({ context: projectRunContext })
-  accessor projectRun: ProjectRun | null = null;
-
-  @property()
-  accessor settings: SettingsStore | null = null;
 
   @property({ reflect: true })
   accessor status = STATUS.RUNNING;
@@ -122,8 +113,8 @@ export class AppController extends SignalWatcher(LitElement) {
   @state()
   accessor _originalTheme: AppTheme | null = null;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   static styles = appPreviewStyles;
 
@@ -146,38 +137,6 @@ export class AppController extends SignalWatcher(LitElement) {
     }
 
     return this.#appTemplate.isRefreshingAppTheme;
-  }
-
-  @property()
-  set shouldShowFirstRunMessage(showFirstRunMessage: boolean) {
-    if (!this.#appTemplate) {
-      return;
-    }
-
-    this.#appTemplate.shouldShowFirstRunMessage = showFirstRunMessage;
-  }
-  get shouldShowFirstRunMessage() {
-    if (!this.#appTemplate) {
-      return false;
-    }
-
-    return this.#appTemplate.showFirstRunMessage;
-  }
-
-  @property()
-  set firstRunMessage(firstRunMessage: string) {
-    if (!this.#appTemplate) {
-      return;
-    }
-
-    this.#appTemplate.firstRunMessage = firstRunMessage;
-  }
-  get firstRunMessage() {
-    if (!this.#appTemplate) {
-      return "";
-    }
-
-    return this.#appTemplate.firstRunMessage;
   }
 
   @property()
@@ -323,7 +282,12 @@ export class AppController extends SignalWatcher(LitElement) {
         this.#retrievingSplashFor = requestKey;
         // Stored Data splash screen.
         Promise.resolve()
-          .then(() => loadPartAsDataUrl(this.googleDriveClient!, splashScreen))
+          .then(() =>
+            loadPartAsDataUrl(
+              this.sca.services.googleDriveClient!,
+              splashScreen
+            )
+          )
           .then((base64DataUrl) => {
             if (!base64DataUrl) return;
             return fetch(base64DataUrl).then((r) => r.blob());
@@ -432,6 +396,12 @@ export class AppController extends SignalWatcher(LitElement) {
   }
 
   render() {
+    // While the graph is still loading, render nothing to avoid flashing
+    // the default template with "Untitled Opal App" and default styles.
+    if (this.graphContentState === "loading") {
+      return nothing;
+    }
+
     if (this.#appTemplate) {
       this.#appTemplate.graph = this.graph;
       this.#appTemplate.showGDrive = this.showGDrive;
@@ -446,7 +416,9 @@ export class AppController extends SignalWatcher(LitElement) {
               href="https://support.google.com/legal/answer/3110420?hl=en"
               >Report legal issue</a
             >`;
-      this.#appTemplate.isEmpty = this.graphIsEmpty;
+      // Only show the empty state when the graph is genuinely empty,
+      // not when it's still loading (to avoid a flash of empty content).
+      this.#appTemplate.isEmpty = this.graphContentState === "empty";
       this.#appTemplate.focusWhenIn = this.focusWhenIn;
       this.#appTemplate.runtimeFlags = this.runtimeFlags;
       this.#appTemplate.headerConfig = this.headerConfig;

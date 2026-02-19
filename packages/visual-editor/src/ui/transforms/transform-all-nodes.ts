@@ -20,15 +20,25 @@ import { isLLMContent, isLLMContentArray } from "../../data/common.js";
 export { TransformAllNodes, transformConfiguration };
 
 /**
- * Returns either a new replacement part or null if the part does not need to
- * be replaced.
+ * Returns either a new replacement part, null if the part does not need to
+ * be replaced, or `false` if the part should be removed entirely.
  */
 export type TemplatePartTransformer = (
   part: TemplatePart,
   nodeId: NodeIdentifier
-) => TemplatePart | null;
+) => TemplatePart | null | false;
 
-export type EditTransformFactory = (id: NodeIdentifier) => EditTransform;
+export type EditTransformFactory = (id: NodeIdentifier) => EditTransform | null;
+
+// Sentinel used to mark template parts for removal. The transform callback
+// replaces the part with this sentinel and the serialized form is stripped
+// from the text afterward.
+const REMOVAL_SENTINEL: TemplatePart = {
+  type: "tool",
+  path: "__REMOVE__",
+  title: "__REMOVE__",
+};
+const REMOVAL_SENTINEL_SERIALIZED = Template.part(REMOVAL_SENTINEL);
 
 function transformConfiguration(
   id: NodeIdentifier,
@@ -54,15 +64,23 @@ function transformConfiguration(
         if ("text" in part) {
           const template = new Template(part.text);
           if (template.hasPlaceholders) {
-            const text = template.transform((part) => {
+            let text = template.transform((part) => {
               const transformed = templateTransformer(part, id);
               if (transformed === null) {
                 return part;
+              } else if (transformed === false) {
+                // Mark for removal — will be stripped below.
+                didTransform = true;
+                return REMOVAL_SENTINEL;
               } else {
                 didTransform = true;
                 return transformed;
               }
             });
+            // Strip any removal sentinels from the text.
+            while (text.includes(REMOVAL_SENTINEL_SERIALIZED)) {
+              text = text.replace(REMOVAL_SENTINEL_SERIALIZED, "");
+            }
             parts.push({ text });
             continue;
           }
@@ -129,8 +147,11 @@ class TransformAllNodes implements EditTransform {
       if (!changingConfig.success) return changingConfig;
 
       if (this.nodeTransformer) {
-        const transformingNode = await this.nodeTransformer(id).apply(context);
-        if (!transformingNode.success) return transformingNode;
+        const nodeTransform = this.nodeTransformer(id);
+        if (nodeTransform) {
+          const transformingNode = await nodeTransform.apply(context);
+          if (!transformingNode.success) return transformingNode;
+        }
       }
     }
     return { success: true };

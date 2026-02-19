@@ -9,19 +9,16 @@ import { LitElement, type PropertyValues, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { projectStateContext } from "../contexts/project-state.js";
+
 import "../elements/input/expanding-textarea.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
 import { StateEvent, UtteranceEvent } from "../events/events.js";
-import { Project } from "../state/types.js";
+
 import * as StringsHelper from "../strings/helper.js";
 import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
 import { icons } from "../styles/icons.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
-import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
-import { actionTrackerContext } from "../contexts/action-tracker-context.js";
-import { ActionTracker } from "../types/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
@@ -184,10 +181,6 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
 
         &:focus-within {
           outline: 1px solid var(--ui-custom-o-100);
-
-          [slot~="submit"] {
-            color: var(--light-dark-n-0);
-          }
         }
 
         > [slot~="submit"] {
@@ -198,6 +191,15 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
           font-size: 30px;
           width: 30px;
           height: 30px;
+          transition: color 0.2s ease;
+          cursor: default;
+          pointer-events: none;
+
+          &.active {
+            color: light-dark(var(--n-0), var(--n-100)) !important;
+            cursor: pointer;
+            pointer-events: auto;
+          }
         }
 
         &::part(textarea)::placeholder {
@@ -210,15 +212,6 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @consume({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator | undefined;
-
-  @consume({ context: projectStateContext })
-  accessor projectState: Project | undefined;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
 
   /**
    * Get state from controller (signal-backed for cross-breakpoint sync).
@@ -260,6 +253,11 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
 
+  @property({ type: Boolean })
+  accessor hasInputText = false;
+
+  #lastStatus: FlowgenInputStatus["status"] = "initial";
+
   readonly #descriptionInput = createRef<ExpandingTextarea>();
 
   override render() {
@@ -274,11 +272,22 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
   }
 
   override async updated(changes: PropertyValues) {
+    const currentStatus = this.#state.status;
+    if (this.#lastStatus === "generating" && currentStatus === "initial") {
+      if (this.#descriptionInput.value) {
+        this.#descriptionInput.value.value = "";
+        this.#inputValue = "";
+        this.hasInputText = false;
+      }
+    }
+
     if (changes.has("#state") && this.#state.status === "error") {
       this.#descriptionInput.value?.focus();
       this.highlighted = true;
       setTimeout(() => (this.highlighted = false), 2500);
     }
+
+    this.#lastStatus = currentStatus;
   }
 
   #renderFeedback() {
@@ -392,6 +401,7 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
               filled: true,
               round: true,
               spin: isGenerating,
+              active: this.hasInputText || isGenerating,
             })}
             >${isGenerating ? "progress_activity" : "send"}</span
           >
@@ -420,7 +430,6 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
         new StateEvent({
           eventType: "flowgen.generate",
           intent: description,
-          projectState: this.projectState,
         })
       );
     }
@@ -437,6 +446,7 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
     const input = this.#descriptionInput.value;
     if (input) {
       this.#inputValue = input.value;
+      this.hasInputText = input.value.trim().length > 0;
     }
   }
 

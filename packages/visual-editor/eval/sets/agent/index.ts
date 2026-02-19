@@ -4,11 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ok } from "@breadboard-ai/utils";
 import { session } from "../../eval.js";
+import {
+  SimulatedUserChatManager,
+  createSimulatedUserConfigurator,
+} from "../../simulated-user.js";
+import type {
+  FunctionGroupConfigurator,
+  LoopDeps,
+  FunctionGroupConfiguratorFlags,
+  FunctionGroup,
+  ProgressReporter,
+} from "../../../src/a2/agent/types.js";
 
 session({ name: "Agent" }, async (session) => {
   // Need to import dynamically to let the mocks do their job.
-  const Loop = (await import("../../../src/a2/agent/loop.js")).Loop;
+  const { buildAgentRun } = await import("../../../src/a2/agent/loop-setup.js");
   const { createAgentConfigurator } =
     await import("../../../src/a2/agent/agent-function-configurator.js");
   const { streamGenerateContent, conformGeminiBody } =
@@ -38,18 +50,138 @@ session({ name: "Agent" }, async (session) => {
     callMusic: async () => fakeContent("music", "audio/mp3", musicCount++),
   };
 
+  function composeConfigurators(
+    ...configurators: FunctionGroupConfigurator[]
+  ): FunctionGroupConfigurator {
+    return async (deps: LoopDeps, flags: FunctionGroupConfiguratorFlags) => {
+      const groups: FunctionGroup[] = [];
+      for (const configurator of configurators) {
+        const result = await configurator(deps, flags);
+        if (!ok(result)) return result;
+        groups.push(...result);
+      }
+      return groups;
+    };
+  }
+
   async function evalObjective(filename: string, only = false) {
-    const { objective, title } = await import(filename);
+    const { objective, title, userObjective } = await import(filename);
     const params: Parameters<typeof session.eval> = [
       title,
-      async ({ caps, moduleArgs }) => {
-        const configureFn = createAgentConfigurator(
-          caps,
+      async ({ moduleArgs }) => {
+        const agentConfigurator = createAgentConfigurator(
           moduleArgs,
           generators
         );
-        const loop = new Loop(caps, moduleArgs, configureFn);
-        return loop.run({ objective, params: {}, uiType: "chat" });
+
+        let configureFn: FunctionGroupConfigurator;
+        let uiType: "chat" | "simulated" = "chat";
+        let simulatedUser: SimulatedUserChatManager | null = null;
+
+        if (userObjective) {
+          simulatedUser = new SimulatedUserChatManager(
+            userObjective,
+            moduleArgs
+          );
+          const simulatedUserConfigurator =
+            createSimulatedUserConfigurator(simulatedUser);
+          configureFn = composeConfigurators(
+            agentConfigurator,
+            simulatedUserConfigurator
+          );
+          uiType = "simulated";
+        } else {
+          configureFn = agentConfigurator;
+        }
+
+        const handle = moduleArgs.agentService.startRun({
+          kind: "content-eval",
+          objective,
+        });
+
+        const setup = await buildAgentRun({
+          objective,
+          params: {},
+          moduleArgs,
+          configureFn,
+          uiType,
+          sink: handle.sink,
+        });
+        if (!ok(setup)) {
+          moduleArgs.agentService.endRun(handle.runId);
+          return setup;
+        }
+        const { loop, runArgs, progress, runStateManager } = setup;
+
+        // Maps event-layer callIds → progress-manager callIds.
+        const callIdMap = new Map<string, string>();
+        const reporterMap = new Map<string, ProgressReporter>();
+
+        handle.events
+          .on("start", (event) => {
+            progress.startAgent(event.objective);
+          })
+          .on("finish", () => {
+            progress.finish();
+          })
+          .on("content", (event) => {
+            runStateManager.pushContent(event.content);
+          })
+          .on("thought", (event) => {
+            progress.thought(event.text);
+          })
+          .on("functionCall", (event) => {
+            const { callId: progressCallId, reporter } = progress.functionCall(
+              { functionCall: { name: event.name, args: event.args } },
+              event.icon,
+              event.title
+            );
+            callIdMap.set(event.callId, progressCallId);
+            if (reporter) {
+              reporterMap.set(event.callId, reporter);
+            }
+          })
+          .on("functionCallUpdate", (event) => {
+            const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+            progress.functionCallUpdate(
+              progressCallId,
+              event.status,
+              event.opts
+            );
+          })
+          .on("functionResult", (event) => {
+            const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+            progress.functionResult(progressCallId, event.content);
+            callIdMap.delete(event.callId);
+            reporterMap.delete(event.callId);
+          })
+          .on("turnComplete", () => {
+            runStateManager.completeTurn();
+          })
+          .on("sendRequest", (event) => {
+            progress.sendRequest(event.model, event.body);
+            runStateManager.captureRequestBody(event.model, event.body);
+          })
+          .on("subagentAddJson", (event) => {
+            reporterMap
+              .get(event.callId)
+              ?.addJson(event.title, event.data, event.icon);
+          })
+          .on("subagentError", (event) => {
+            reporterMap.get(event.callId)?.addError(event.error);
+          })
+          .on("subagentFinish", (event) => {
+            reporterMap.get(event.callId)?.finish();
+          });
+
+        const result = await loop.run(runArgs);
+        moduleArgs.agentService.endRun(handle.runId);
+
+        if (simulatedUser) {
+          await simulatedUser.close();
+        }
+
+        return result;
       },
     ];
 
@@ -71,4 +203,5 @@ session({ name: "Agent" }, async (session) => {
   await evalObjective("./state-detector.js");
   await evalObjective("./news-tracker.js");
   await evalObjective("./get-recipe.js");
+  await evalObjective("./recipe-assistant.js");
 });

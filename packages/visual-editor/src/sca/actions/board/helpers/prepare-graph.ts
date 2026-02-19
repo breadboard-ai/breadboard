@@ -4,23 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  GraphDescriptor,
-  GraphIdentifier,
-  ModuleIdentifier,
-} from "@breadboard-ai/types";
+import type { GraphDescriptor, GraphIdentifier } from "@breadboard-ai/types";
 import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
-} from "../../../../runtime/util.js";
+} from "../../../../utils/graph-utils.js";
 
 /**
  * Options for graph preparation.
  */
 export interface PrepareGraphOptions {
-  /** Module ID to focus on (for imperative graphs) */
-  moduleId?: ModuleIdentifier | null;
   /** Subgraph ID to focus on */
   subGraphId?: GraphIdentifier | null;
   /** Google Drive client for palette creation */
@@ -33,38 +27,8 @@ export interface PrepareGraphOptions {
 export interface PrepareGraphResult {
   /** The prepared graph (modified in place) */
   graph: GraphDescriptor;
-  /** The resolved module ID (may differ from input) */
-  moduleId: ModuleIdentifier | null;
   /** The resolved subgraph ID (may differ from input) */
   subGraphId: GraphIdentifier | null;
-}
-
-/**
- * Validates and resolves a module ID against the graph's modules.
- *
- * @param graph The graph to check against
- * @param moduleId The module ID to validate
- * @returns The validated module ID, or null if invalid
- */
-export function validateModuleId(
-  graph: GraphDescriptor,
-  moduleId: ModuleIdentifier | null | undefined
-): ModuleIdentifier | null {
-  // For imperative graphs, use the main module if no module specified
-  let resolvedModuleId = moduleId ?? null;
-  if (graph.main && !resolvedModuleId) {
-    resolvedModuleId = graph.main;
-  }
-
-  // Confirm the module exists
-  if (
-    resolvedModuleId &&
-    (!graph.modules || !graph.modules[resolvedModuleId])
-  ) {
-    return null;
-  }
-
-  return resolvedModuleId;
 }
 
 /**
@@ -101,23 +65,22 @@ export function renameLegacyMainBoard(graph: GraphDescriptor): void {
  * Prepares a loaded graph for use.
  *
  * This includes:
- * - Validating and resolving module/subgraph IDs
+ * - Validating and resolving subgraph IDs
  * - Renaming legacy "Main board" subgraph
  * - Applying default theme information
  * - Creating app palette if needed
  *
  * @param graph The graph to prepare (modified in place)
  * @param options Preparation options
- * @returns The prepared graph with resolved module/subgraph IDs
+ * @returns The prepared graph with resolved subgraph IDs
  */
 export async function prepareGraph(
   graph: GraphDescriptor,
   options: PrepareGraphOptions = {}
 ): Promise<PrepareGraphResult> {
-  const { moduleId, subGraphId, googleDriveClient } = options;
+  const { subGraphId, googleDriveClient } = options;
 
-  // Validate module and subgraph IDs
-  const resolvedModuleId = validateModuleId(graph, moduleId);
+  // Validate subgraph IDs
   const resolvedSubGraphId = validateSubGraphId(graph, subGraphId);
 
   // Rename legacy "Main board" subgraph
@@ -133,7 +96,6 @@ export async function prepareGraph(
 
   return {
     graph,
-    moduleId: resolvedModuleId,
     subGraphId: resolvedSubGraphId,
   };
 }

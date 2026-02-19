@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
-import { Params } from "../a2/common.js";
 import {
   conformGeminiBody,
   GeminiBody,
@@ -15,50 +14,39 @@ import {
 } from "../a2/gemini.js";
 import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { AgentFileSystem } from "./file-system.js";
+import { SimplifiedToolManager } from "../a2/tool-manager.js";
 import { FunctionCallerImpl } from "./function-caller.js";
-import { PidginTranslator } from "./pidgin-translator.js";
-import { AgentUI } from "./ui.js";
-import { FunctionGroup, UIType } from "./types.js";
-import { RunStateManager } from "./run-state-manager.js";
+import { FunctionGroup, LoopHooks } from "./types.js";
 
-export { Loop };
-export type {
-  LoopDeps,
-  FunctionGroupConfigurator,
-  FunctionGroupConfiguratorFlags,
-};
+export { Loop, LoopController };
+export type { AgentRunArgs, AgentResult, FileData };
 
-export type AgentRunArgs = {
+type AgentRunArgs = {
   objective: LLMContent;
-  params: Params;
-  uiType?: UIType;
-  uiPrompt?: LLMContent;
+  /**
+   * Pre-built function groups for this run.
+   * The caller is responsible for creating and configuring these.
+   */
+  functionGroups: FunctionGroup[];
+  /**
+   * Optional lifecycle hooks the Loop invokes at key points.
+   */
+  hooks?: LoopHooks;
+  /**
+   * Initial contents for the conversation. If resuming, this may
+   * include historical turns. If not provided, defaults to
+   * [objectiveContent].
+   */
+  contents?: LLMContent[];
+  /**
+   * Custom tool manager for user-defined tools (e.g. board-tools wired
+   * in the objective via pidgin). If not provided, no custom tool
+   * dispatch is available.
+   */
+  customTools?: SimplifiedToolManager;
 };
 
-type LoopDeps = {
-  fileSystem: AgentFileSystem;
-  translator: PidginTranslator;
-  ui: AgentUI;
-};
-
-type FunctionGroupConfiguratorFlags = {
-  uiType: UIType;
-  useMemory: boolean;
-  useNotebookLM: boolean;
-  objective: LLMContent;
-  uiPrompt?: LLMContent;
-  params: Params;
-  onSuccess: (href: string, pidginString: string) => Promise<Outcome<void>>;
-  onFailure: (message: string) => void;
-};
-
-type FunctionGroupConfigurator = (
-  deps: LoopDeps,
-  flags: FunctionGroupConfiguratorFlags
-) => Promise<Outcome<FunctionGroup[]>>;
-
-export type AgentResult = {
+type AgentResult = {
   /**
    * Whether or not agent succeeded in fulfilling the objective.
    */
@@ -78,149 +66,96 @@ export type AgentResult = {
   intermediate?: FileData[];
 };
 
-export type FileData = {
+type FileData = {
   path: string;
   content: LLMContent;
 };
 
 const AGENT_MODEL = "gemini-3-flash-preview";
 
+const EMPTY_TOOL_MANAGER: SimplifiedToolManager = {
+  callTool: () => Promise.resolve(err("No custom tools available")),
+  list: () => [],
+};
+
 /**
- * The main agent loop
+ * Controls the Loop's termination from outside.
+ *
+ * Function groups (e.g. `declare_success`, `declare_failure`) call
+ * `terminate(result)` to stop the loop and set its final result.
+ * Mirrors the `AbortController` / `AbortSignal` pattern.
+ */
+class LoopController {
+  #terminated = false;
+  #result: Outcome<AgentResult> | null = null;
+
+  get terminated(): boolean {
+    return this.#terminated;
+  }
+
+  get result(): Outcome<AgentResult> {
+    if (!this.#result) {
+      throw new Error("LoopController.result accessed before termination");
+    }
+    return this.#result;
+  }
+
+  terminate(result: Outcome<AgentResult>): void {
+    this.#terminated = true;
+    this.#result = result;
+  }
+}
+
+/**
+ * The main agent loop.
+ *
+ * A pure Gemini function-calling orchestrator. It does not create or own
+ * any external dependencies (file systems, translators, progress managers,
+ * run state trackers). Instead, callers provide:
+ *
+ * - **functionGroups**: the tools the agent can call
+ * - **hooks**: optional lifecycle callbacks for progress, state tracking, etc.
+ *
+ * This makes the Loop reusable across different agent types:
+ * - Content generation agent (full hooks for progress + run state)
+ * - Graph editing agent (minimal or no hooks)
+ * - Headless eval agent (run-state hooks only)
  */
 class Loop {
-  private readonly translator: PidginTranslator;
-  private readonly fileSystem: AgentFileSystem;
-  private readonly ui: AgentUI;
-  private readonly runStateManager: RunStateManager;
+  readonly controller = new LoopController();
 
-  constructor(
-    caps: Capabilities,
-    private readonly moduleArgs: A2ModuleArgs,
-    private readonly configureFn: FunctionGroupConfigurator
-  ) {
-    this.fileSystem = new AgentFileSystem({
-      context: moduleArgs.context,
-      memoryManager: moduleArgs.agentContext.memoryManager,
-    });
-    this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
-    this.ui = new AgentUI(moduleArgs, this.translator);
-    this.runStateManager = new RunStateManager(
-      moduleArgs.agentContext,
-      this.fileSystem
-    );
-    this.ui.onA2UIRender = (messages) =>
-      this.runStateManager.pushA2UISurface(messages);
-  }
+  constructor(private readonly moduleArgs: A2ModuleArgs) {}
 
   async run({
     objective,
-    params,
-    uiPrompt,
-    uiType = "chat",
+    functionGroups,
+    hooks = {},
+    contents: initialContents,
+    customTools,
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
-    const { moduleArgs, fileSystem, translator, ui } = this;
+    const { moduleArgs } = this;
+    const contents = initialContents || [objective];
+    const toolManager = customTools || EMPTY_TOOL_MANAGER;
 
-    ui.progress.startAgent(objective);
+    hooks.onStart?.(objective);
+
     try {
-      const objectivePidgin = await translator.toPidgin(
-        objective,
-        params,
-        true
-      );
-      if (!ok(objectivePidgin)) return objectivePidgin;
-
-      // Set whether memory files should be exposed based on useMemory tool
-      fileSystem.setUseMemory(objectivePidgin.useMemory);
-
-      // Start or resume the run via RunStateManager
-      const stepId = this.moduleArgs.context.currentStep?.id;
-      const objectiveContent =
-        llm`<objective>${objectivePidgin.text}</objective>`.asContent();
-
-      // Check the enableResumeAgentRun flag
-      const runtimeFlags = await moduleArgs.context.flags?.flags();
-      const enableResumeAgentRun = runtimeFlags?.enableResumeAgentRun ?? false;
-
-      const { contents } = enableResumeAgentRun
-        ? this.runStateManager.startOrResume(stepId, objectiveContent)
-        : this.runStateManager.startFresh(stepId, objectiveContent);
-
-      let terminateLoop = false;
-      let finalResult: Outcome<AgentResult> | null = null;
-
-      const functionGroupsResult = await this.configureFn(
-        {
-          fileSystem,
-          translator,
-          ui,
-        },
-        {
-          uiType,
-          useMemory: objectivePidgin.useMemory,
-          useNotebookLM: objectivePidgin.useNotebookLM,
-          objective,
-          uiPrompt,
-          params,
-          onSuccess: async (href, objective_outcome) => {
-            const originalRoute = fileSystem.getOriginalRoute(href);
-            if (!ok(originalRoute)) return originalRoute;
-
-            const outcomes =
-              await translator.fromPidginString(objective_outcome);
-            if (!ok(outcomes)) return outcomes;
-
-            const intermediateFiles = [...fileSystem.files.keys()];
-            const errors: string[] = [];
-            const intermediate = (
-              await Promise.all(
-                intermediateFiles.map(async (file) => {
-                  const content = await translator.fromPidginFiles([file]);
-                  if (!ok(content)) {
-                    errors.push(content.$error);
-                    return [];
-                  }
-                  return { path: file, content };
-                })
-              )
-            ).flat();
-            if (errors.length > 0) {
-              return err(errors.join(","));
-            }
-
-            this.runStateManager.complete();
-            terminateLoop = true;
-            finalResult = {
-              success: true,
-              href: originalRoute,
-              outcomes,
-              intermediate,
-            };
-          },
-          onFailure: (objective_outcome: string) => {
-            terminateLoop = true;
-            finalResult = this.runStateManager.fail(err(objective_outcome));
-          },
-        }
-      );
-      if (!ok(functionGroupsResult)) return functionGroupsResult;
-      const functionGroups = functionGroupsResult;
-
-      const objectiveTools = objectivePidgin.tools.list().at(0);
+      const customToolDeclarations = toolManager.list();
       const tools: Tool[] = [
         {
-          ...objectiveTools,
+          ...customToolDeclarations[0],
           functionDeclarations: [
-            ...(objectiveTools?.functionDeclarations || []),
+            ...(customToolDeclarations[0]?.functionDeclarations || []),
             ...functionGroups.flatMap((group) => group.declarations),
           ],
         },
       ];
+
       const functionDefinitionMap = new Map([
         ...functionGroups.flatMap((group) => group.definitions),
       ]);
 
-      while (!terminateLoop) {
+      while (!this.controller.terminated) {
         const body: GeminiBody = {
           contents,
           generationConfig: {
@@ -239,13 +174,10 @@ class Loop {
         };
         const conformedBody = await conformGeminiBody(moduleArgs, body);
         if (!ok(conformedBody)) {
-          return this.runStateManager.fail(conformedBody);
+          return conformedBody;
         }
 
-        ui.progress.sendRequest(AGENT_MODEL, conformedBody);
-
-        // Capture the request body for the first request only
-        this.runStateManager.captureRequestBody(AGENT_MODEL, conformedBody);
+        hooks.onSendRequest?.(AGENT_MODEL, conformedBody);
 
         const generated = await streamGenerateContent(
           AGENT_MODEL,
@@ -253,26 +185,26 @@ class Loop {
           moduleArgs
         );
         if (!ok(generated)) {
-          return this.runStateManager.fail(generated);
+          return generated;
         }
         const functionCaller = new FunctionCallerImpl(
           functionDefinitionMap,
-          objectivePidgin.tools
+          toolManager
         );
         for await (const chunk of generated) {
           const content = chunk.candidates?.at(0)?.content;
           if (!content) {
-            return this.runStateManager.fail(
-              err(`Agent unable to proceed: no content in Gemini response`)
+            return err(
+              `Agent unable to proceed: no content in Gemini response`
             );
           }
           contents.push(content);
-          this.runStateManager.pushContent(content);
+          hooks.onContent?.(content);
           const parts = content.parts || [];
           for (const part of parts) {
             if (part.thought) {
               if ("text" in part) {
-                ui.progress.thought(part.text);
+                hooks.onThought?.(part.text);
               } else {
                 console.log("INVALID THOUGHT", part);
               }
@@ -281,18 +213,24 @@ class Loop {
               const functionDef = functionDefinitionMap.get(
                 part.functionCall.name
               );
-              const { callId, reporter } = ui.progress.functionCall(
-                part,
-                typeof functionDef?.icon === "string"
-                  ? functionDef.icon
-                  : undefined,
-                functionDef?.title
-              );
+
+              // If hooks provide onFunctionCall, use it for callId + reporter.
+              // Otherwise, generate a simple callId.
+              const { callId, reporter } = hooks.onFunctionCall
+                ? hooks.onFunctionCall(
+                    part,
+                    typeof functionDef?.icon === "string"
+                      ? functionDef.icon
+                      : undefined,
+                    functionDef?.title
+                  )
+                : { callId: crypto.randomUUID(), reporter: null };
+
               functionCaller.call(
                 callId,
                 part,
                 (status, opts) =>
-                  ui.progress.functionCallUpdate(callId, status, opts),
+                  hooks.onFunctionCallUpdate?.(callId, status, opts),
                 reporter
               );
             }
@@ -301,24 +239,22 @@ class Loop {
         const functionResults = await functionCaller.getResults();
         if (!functionResults) continue;
         if (!ok(functionResults)) {
-          return this.runStateManager.fail(
-            err(`Agent unable to proceed: ${functionResults.$error}`)
-          );
+          return err(`Agent unable to proceed: ${functionResults.$error}`);
         }
         // Report each function result individually
         for (const { callId, response } of functionResults.results) {
-          ui.progress.functionResult(callId, { parts: [response] });
+          hooks.onFunctionResult?.(callId, { parts: [response] });
         }
         contents.push(functionResults.combined);
-        this.runStateManager.pushContent(functionResults.combined);
-        this.runStateManager.completeTurn();
+        hooks.onContent?.(functionResults.combined);
+        hooks.onTurnComplete?.();
       }
-      return finalResult!;
+      return this.controller.result;
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
-      return this.runStateManager.fail(err(`Agent error: ${errorMessage}`));
+      return err(`Agent error: ${errorMessage}`);
     } finally {
-      ui.finish();
+      hooks.onFinish?.();
     }
   }
 }

@@ -30,7 +30,6 @@ export class ChangeMetadata implements EditOperation {
     return {
       success: true,
       affectedNodes: [],
-      affectedModules: [],
       affectedGraphs: [],
     };
   }
@@ -84,7 +83,6 @@ export class ChangeMetadata implements EditOperation {
       success: true,
       visualOnly,
       affectedNodes,
-      affectedModules: [],
       affectedGraphs: [graphId],
     };
   }

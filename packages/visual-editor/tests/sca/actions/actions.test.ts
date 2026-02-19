@@ -66,6 +66,7 @@ suite("Actions", () => {
       } as unknown as AppController;
 
       const mockServices = {
+        stateEventBus: new EventTarget(),
         agentContext: {
           invalidateResumableRuns: () => {},
           clearAllRuns: () => {},
@@ -74,6 +75,7 @@ suite("Actions", () => {
           addEventListener: () => {},
           removeEventListener: () => {},
         },
+        runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
       // Initialize actions
@@ -117,6 +119,7 @@ suite("Actions", () => {
       } as unknown as AppController;
 
       const mockServices = {
+        stateEventBus: new EventTarget(),
         agentContext: {
           invalidateResumableRuns: () => {},
           clearAllRuns: () => {},
@@ -125,6 +128,7 @@ suite("Actions", () => {
           addEventListener: () => {},
           removeEventListener: () => {},
         },
+        runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
       actions(mockController, mockServices);
@@ -169,6 +173,7 @@ suite("Actions", () => {
       } as unknown as AppController;
 
       const mockServices = {
+        stateEventBus: new EventTarget(),
         agentContext: {
           invalidateResumableRuns: () => {},
           clearAllRuns: () => {},
@@ -177,6 +182,7 @@ suite("Actions", () => {
           addEventListener: () => {},
           removeEventListener: () => {},
         },
+        runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
       actions(mockController, mockServices);
@@ -212,6 +218,7 @@ suite("Actions", () => {
       } as unknown as AppController;
 
       const mockServices = {
+        stateEventBus: new EventTarget(),
         agentContext: {
           invalidateResumableRuns: () => {},
           clearAllRuns: () => {},
@@ -220,6 +227,7 @@ suite("Actions", () => {
           addEventListener: () => {},
           removeEventListener: () => {},
         },
+        runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
       // First initialization

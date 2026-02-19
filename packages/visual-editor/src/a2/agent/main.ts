@@ -5,7 +5,6 @@
  */
 
 import {
-  Capabilities,
   LLMContent,
   Outcome,
   RuntimeFlags,
@@ -13,9 +12,10 @@ import {
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common.js";
+import type { ProgressReporter } from "./types.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { Loop } from "./loop.js";
+import { buildAgentRun } from "./loop-setup.js";
 import { createAgentConfigurator } from "./agent-function-configurator.js";
 import { readFlags } from "../a2/settings.js";
 import { conformGeminiBody, streamGenerateContent } from "../a2/gemini.js";
@@ -54,22 +54,22 @@ function computeAgentSchema(
   const uiPromptSchema: Schema["properties"] =
     flags?.consistentUI && enableA2UI
       ? {
-        "b-ui-prompt": {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "UI Layout instructions",
-          description: "Instructions for UI layout",
-        },
-      }
+          "b-ui-prompt": {
+            type: "object",
+            behavior: ["llm-content", "config", "hint-advanced"],
+            title: "UI Layout instructions",
+            description: "Instructions for UI layout",
+          },
+        }
       : {};
   const uiConsistent: Schema["properties"] = flags?.consistentUI
     ? {
-      "b-ui-consistent": {
-        type: "boolean",
-        title: "Use A2UI",
-        behavior: ["config", "hint-advanced", "reactive"],
-      },
-    }
+        "b-ui-consistent": {
+          type: "boolean",
+          title: "Use A2UI",
+          behavior: ["config", "hint-advanced", "reactive"],
+        },
+      }
     : {};
   return {
     config$prompt: {
@@ -83,7 +83,10 @@ function computeAgentSchema(
   } satisfies Schema["properties"];
 }
 
-export async function toAgentOutputs(results?: LLMContent, href?: string): Promise<AgentOutputs> {
+export async function toAgentOutputs(
+  results?: LLMContent,
+  href?: string
+): Promise<AgentOutputs> {
   const context: LLMContent[] = [];
   if (results) {
     context.push(results);
@@ -103,20 +106,99 @@ async function invokeAgent(
     "b-ui-prompt": uiPrompt,
     ...rest
   }: AgentInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const configureFn = createAgentConfigurator(caps, moduleArgs, generators);
-  const loop = new Loop(caps, moduleArgs, configureFn);
-  const result = await loop.run({
+  const configureFn = createAgentConfigurator(moduleArgs, generators);
+
+  // Create a run handle for this content agent execution
+  const handle = moduleArgs.agentService.startRun({
+    kind: "content",
+    objective,
+  });
+
+  const setup = await buildAgentRun({
     objective,
     params,
+    moduleArgs,
+    configureFn,
     uiType: enableA2UI ? "a2ui" : "chat",
     uiPrompt,
+    sink: handle.sink,
   });
+  if (!ok(setup)) {
+    moduleArgs.agentService.endRun(handle.runId);
+    return setup;
+  }
+
+  const { loop, runArgs, progress, runStateManager } = setup;
+
+  // Maps event-layer callIds → progress-manager callIds.
+  // Both sides generate UUIDs independently; this map correlates them.
+  const callIdMap = new Map<string, string>();
+
+  // Maps event-layer callIds → real ProgressReporters from progress.functionCall().
+  // Subagent events dispatch to these reporters.
+  const reporterMap = new Map<string, ProgressReporter>();
+
+  // Wire consumer handlers to progress manager and run state manager
+  handle.events
+    .on("start", (event) => {
+      progress.startAgent(event.objective);
+    })
+    .on("finish", () => {
+      progress.finish();
+    })
+    .on("content", (event) => {
+      runStateManager.pushContent(event.content);
+    })
+    .on("thought", (event) => {
+      progress.thought(event.text);
+    })
+    .on("functionCall", (event) => {
+      const { callId: progressCallId, reporter } = progress.functionCall(
+        { functionCall: { name: event.name, args: event.args } },
+        event.icon,
+        event.title
+      );
+      callIdMap.set(event.callId, progressCallId);
+      if (reporter) {
+        reporterMap.set(event.callId, reporter);
+      }
+    })
+    .on("functionCallUpdate", (event) => {
+      const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+      progress.functionCallUpdate(progressCallId, event.status, event.opts);
+    })
+    .on("functionResult", (event) => {
+      const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+      progress.functionResult(progressCallId, event.content);
+      callIdMap.delete(event.callId);
+      reporterMap.delete(event.callId);
+    })
+    .on("turnComplete", () => {
+      runStateManager.completeTurn();
+    })
+    .on("sendRequest", (event) => {
+      progress.sendRequest(event.model, event.body);
+      runStateManager.captureRequestBody(event.model, event.body);
+    })
+    .on("subagentAddJson", (event) => {
+      reporterMap
+        .get(event.callId)
+        ?.addJson(event.title, event.data, event.icon);
+    })
+    .on("subagentError", (event) => {
+      reporterMap.get(event.callId)?.addError(event.error);
+    })
+    .on("subagentFinish", (event) => {
+      reporterMap.get(event.callId)?.finish();
+    });
+
+  const result = await loop.run(runArgs);
+  moduleArgs.agentService.endRun(handle.runId);
   if (!ok(result)) return result;
   console.log("LOOP", result);
   return toAgentOutputs(result.outcomes, result.href);
@@ -124,27 +206,25 @@ async function invokeAgent(
 
 async function invoke(
   inputs: AgentInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
   const flags = await moduleArgs.context.flags?.flags();
   const opalAdkEnabled = flags?.opalAdk || false;
 
   if (opalAdkEnabled) {
-    return invokeAgentAdk(inputs, caps, moduleArgs);
+    return invokeAgentAdk(inputs, moduleArgs);
   } else {
-    return invokeAgent(inputs, caps, moduleArgs);
+    return invokeAgent(inputs, moduleArgs);
   }
 }
 
 async function describe(
   { inputs: { config$prompt, ...rest } }: { inputs: AgentInputs },
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);
   const uiSchemas = computeAgentSchema(flags, rest);
-  const template = new Template(caps, config$prompt);
+  const template = new Template(config$prompt, moduleArgs.context.currentGraph);
   return {
     inputSchema: {
       type: "object",

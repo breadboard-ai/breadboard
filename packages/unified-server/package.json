@@ -11,6 +11,8 @@
     "build:tsc": "wireit",
     "build:vite": "wireit",
     "dev": "npm run serve --watch",
+    "dev:fake": "npm run serve:fake --watch",
+    "serve:fake": "wireit",
     "dev-drive": "VITE_BOARD_SERVICE='drive:' npm run serve --watch",
     "docker-build": "docker build --build-context=breadboard=../.. --tag=unified-server .",
     "docker-clean": "docker image rm unified-server",
@@ -57,6 +59,26 @@
     "serve": {
       "command": "node --enable-source-maps .",
       "service": true,
+      "files": [
+        ".env"
+      ],
+      "dependencies": [
+        "build:tsc",
+        {
+          "script": "../visual-editor#check:tsc",
+          "cascade": false
+        }
+      ]
+    },
+    "serve:fake": {
+      "command": "node --enable-source-maps .",
+      "service": true,
+      "env": {
+        "PORT": "3100",
+        "FAKE_MODE": "true",
+        "SHELL_GUEST_ORIGIN": "http://localhost:3100",
+        "SHELL_HOST_ORIGINS": "http://localhost:3100"
+      },
       "files": [
         ".env"
       ],

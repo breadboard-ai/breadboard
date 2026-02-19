@@ -12,7 +12,6 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableDrivePickerInLiteMode: false,
   force2DGraph: false,
   googleOne: false,
-  gulfRenderer: false,
   mcp: false,
   opalAdk: false,
   outputTemplates: false,
@@ -23,4 +22,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableGoogleDriveTools: false,
   enableNotebookLm: false,
   enableResumeAgentRun: false,
+  enableGraphEditorAgent: false,
 };

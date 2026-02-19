@@ -5,7 +5,6 @@
  */
 
 import type { GraphProviderItem } from "@breadboard-ai/types";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
@@ -16,14 +15,12 @@ import { keyed } from "lit/directives/keyed.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
-import { ActionTracker, OverflowAction } from "../../types/types.js";
+import { OverflowAction } from "../../types/types.js";
 import { renderThumbnail } from "../../utils/image.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
@@ -173,6 +170,7 @@ export class Gallery extends SignalWatcher(LitElement) {
           position: absolute;
           top: var(--bb-grid-size-6);
           right: var(--bb-grid-size-4);
+          z-index: 10;
           width: 20px;
           height: 20px;
           border-radius: 50%;
@@ -180,7 +178,6 @@ export class Gallery extends SignalWatcher(LitElement) {
           border: none;
           background: transparent;
           color: var(--n-100);
-          z-index: 10;
 
           > * {
             pointer-events: none;
@@ -192,40 +189,53 @@ export class Gallery extends SignalWatcher(LitElement) {
         }
 
         .overflow-pin {
-          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-          font-variation-settings: "FILL" 0;
+          top: var(--bb-grid-size-4);
+          right: auto;
+          left: var(--bb-grid-size-4);
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           opacity: 0.3;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
           @media (min-width: 620px) {
             opacity: 0;
             pointer-events: none;
           }
-          right: auto;
-          left: var(--bb-grid-size-4);
 
-          & .g-icon::before {
-            content: "keep";
+          & .g-icon {
+            font-size: 20px;
+
+            &::before {
+              content: "keep";
+            }
           }
 
           &.pinned {
             opacity: 1;
             pointer-events: auto;
+
+            &:hover {
+              background: oklch(from var(--light-dark-n-0) l c h / 38%);
+
+              & .g-icon::before {
+                content: "keep_off";
+              }
+            }
           }
         }
 
         &:hover {
-          & .overflow-pin {
-            font-variation-settings: "FILL" 1;
+          & .overflow-pin .g-icon {
+            --icon-fill: 1;
           }
+
           & .overflow-pin,
           & .remix-button {
             opacity: 1;
             pointer-events: auto;
-          }
-
-          & .overflow-pin.pinned {
-            & .g-icon::before {
-              content: "keep_off";
-            }
           }
         }
 
@@ -508,12 +518,6 @@ export class Gallery extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  @consume({ context: googleDriveClientContext })
-  accessor googleDriveClient!: GoogleDriveClient | undefined;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker!: ActionTracker | undefined;
-
   @property({ attribute: false })
   accessor items: [string, GraphProviderItem][] | null = null;
 
@@ -658,9 +662,13 @@ export class Gallery extends SignalWatcher(LitElement) {
   }
 
   async #renderThumbnail(thumbnail: string | null | undefined) {
-    return await renderThumbnail(thumbnail, this.googleDriveClient!, {
-      thumbnail: true,
-    });
+    return await renderThumbnail(
+      thumbnail,
+      this.sca.services.googleDriveClient!,
+      {
+        thumbnail: true,
+      }
+    );
   }
 
   #renderBoard([name, item]: [string, GraphProviderItem], isPinned = false) {
@@ -696,7 +704,7 @@ export class Gallery extends SignalWatcher(LitElement) {
                   );
                 }}
               >
-                <span class="g-icon filled-heavy round"></span>
+                <span class="g-icon filled heavy round"></span>
               </button>
               <button
                 class="overflow-menu"
@@ -722,7 +730,7 @@ export class Gallery extends SignalWatcher(LitElement) {
                   this.showOverflowMenu = true;
                 }}
               >
-                <span class="g-icon filled-heavy w-500 round">more_vert</span>
+                <span class="g-icon filled heavy w-500 round">more_vert</span>
               </button>`
           : html` <button
               class=${classMap({
@@ -875,7 +883,7 @@ export class Gallery extends SignalWatcher(LitElement) {
   }
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
-    this.actionTracker?.openApp(
+    this.sca?.services.actionTracker?.openApp(
       url,
       this.forceCreatorToBeTeam ? "gallery" : "user"
     );
@@ -898,7 +906,7 @@ export class Gallery extends SignalWatcher(LitElement) {
     event: PointerEvent | KeyboardEvent | OverflowMenuActionEvent,
     url: string
   ) {
-    this.actionTracker?.remixApp(
+    this.sca?.services.actionTracker?.remixApp(
       url,
       this.forceCreatorToBeTeam ? "gallery" : "user"
     );

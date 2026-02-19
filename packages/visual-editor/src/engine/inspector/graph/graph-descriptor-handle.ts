@@ -28,10 +28,6 @@ class GraphDescriptorHandle {
     return this.#url;
   }
 
-  outerGraph() {
-    return this.#graph;
-  }
-
   graph() {
     return this.graphId ? this.#graph.graphs![this.graphId]! : this.#graph;
   }

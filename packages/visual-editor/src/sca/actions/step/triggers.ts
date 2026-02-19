@@ -12,10 +12,7 @@
 
 import { Signal } from "signal-polyfill";
 import { signalTrigger, type SignalTrigger } from "../../coordination.js";
-import type { AppController } from "../../controller/controller.js";
-import type { AppServices } from "../../services/services.js";
-
-type ActionBind = { controller: AppController; services: AppServices };
+import { type ActionBind } from "../binder.js";
 
 // =============================================================================
 // Signal Triggers
@@ -53,5 +50,55 @@ export function onSelectionOrSidebarChange(bind: ActionBind): SignalTrigger {
 
     // Return true if there are pending edits
     return !!(pendingEdit || pendingAssetEdit);
+  });
+}
+
+/**
+ * Creates a trigger that fires when a node action is requested.
+ *
+ * Pre-action orchestration: when a node action is requested, pending
+ * step edits must be applied before the action can proceed. This trigger
+ * watches the nodeActionRequest field and returns true when there is both
+ * a pending action request AND pending edits to apply.
+ */
+export function onNodeActionRequested(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Node Action Requested (Step)", () => {
+    const { controller } = bind;
+
+    // Register dependency on the action request
+    const request = controller.run.main.nodeActionRequest;
+
+    // Read pending edits WITHOUT registering as dependency
+    const pendingEdit = Signal.subtle.untrack(
+      () => controller.editor.step.pendingEdit
+    );
+    const pendingAssetEdit = Signal.subtle.untrack(
+      () => controller.editor.step.pendingAssetEdit
+    );
+
+    // Fire when there's a request AND pending edits
+    return !!(request && (pendingEdit || pendingAssetEdit));
+  });
+}
+
+/**
+ * Creates a trigger that fires when a graph with the memory tool is loaded.
+ *
+ * Returns the graph URL as the stamp so the trigger fires exactly once
+ * per graph load, only when `agentModeTools` includes "use-memory".
+ */
+const MEMORY_TOOL_PATH = "function-group/use-memory";
+export function onGraphChangeWithMemory(bind: ActionBind): SignalTrigger {
+  return signalTrigger("Graph Change (Memory)", () => {
+    const { controller } = bind;
+
+    const graphUrl = controller.editor.graph.url;
+    const hasMemory =
+      controller.editor.graph.agentModeTools.has(MEMORY_TOOL_PATH);
+
+    if (graphUrl && hasMemory) {
+      return graphUrl;
+    }
+    return false;
   });
 }

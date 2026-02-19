@@ -139,9 +139,6 @@ packages/visual-editor/build
 .wireit
 *.vsix
 
-# User-specific configuration
-.vscode/settings.json
-
 lcov.info
 
 # VS Code code searches

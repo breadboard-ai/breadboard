@@ -10,23 +10,43 @@ The controller layer holds all application state using [Signals](https://github.
 
 ```
 AppController (singleton)
-├── editor                          # Editor workspace state
-│   ├── graph    (GraphController)      # Active graph, editor instance
-│   ├── selection (SelectionController) # Selected nodes/edges/assets
-│   ├── splitter (SplitterController)   # Panel resizer positions
-│   └── sidebar  (SidebarController)    # Sidebar visibility/content
+├── editor                              # Editor workspace state
+│   ├── graph          (GraphController)       # Active graph, editor instance
+│   ├── selection      (SelectionController)   # Selected nodes/edges/assets
+│   ├── splitter       (SplitterController)    # Panel resizer positions
+│   ├── sidebar        (SidebarController)     # Sidebar visibility/content
+│   ├── step           (StepController)        # Step editing state
+│   ├── share          (ShareController)       # Sharing state
+│   ├── theme          (ThemeController)       # Theme customization
+│   ├── fastAccess     (FastAccessController)  # Quick-access menu
+│   ├── integrations   (IntegrationsController) # MCP/integration state
+│   └── graphEditingAgent (GraphEditingAgentController)
 │
-├── home                            # Home screen state
-│   └── recent   (RecentBoardsController) # Recently accessed boards
+├── home                                # Home screen state
+│   └── recent         (RecentBoardsController) # Recently accessed boards
 │
-└── global                          # Application-wide state
-    ├── main     (GlobalController)     # Top-level app state
-    ├── flags    (FlagController)       # Feature flags
-    ├── debug    (DebugController)      # Developer tools
-    ├── feedback (FeedbackController)   # Feedback collection
-    ├── toasts   (ToastController)      # Toast notifications
-    ├── snackbars (SnackbarController)  # Actionable snackbars
-    └── consent  (ConsentController)    # User consent management
+├── global                              # Application-wide state
+│   ├── main           (GlobalController)      # Top-level app state
+│   ├── flags          (FlagController)        # Feature flags
+│   ├── debug          (DebugController)       # Developer tools
+│   ├── feedback       (FeedbackController)    # Feedback collection
+│   ├── flowgenInput   (FlowgenInputController) # Flow gen prompt state
+│   ├── toasts         (ToastController)       # Toast notifications
+│   ├── snackbars      (SnackbarController)    # Actionable snackbars
+│   ├── statusUpdates  (StatusUpdatesController)
+│   ├── consent        (ConsentController)     # User consent management
+│   ├── screenSize     (ScreenSizeController)  # Responsive breakpoints
+│   └── performMigrations()                     # State migration runner
+│
+├── board                               # Board metadata
+│   └── main           (BoardController)       # Current board state
+│
+├── run                                 # Execution state
+│   ├── main           (RunController)         # Run lifecycle
+│   ├── renderer       (RendererController)    # Graph render state during run
+│   └── screen         (ScreenController)      # Run view mode
+│
+└── router             (RouterController)      # URL routing (single controller)
 ```
 
 ---
@@ -132,7 +152,7 @@ Controllers expose simple, atomic mutations. Complex multi-step workflows belong
 
 ```typescript
 // ✅ Good: Simple atomic mutation
-controller.editor.selection.clear();
+controller.editor.selection.deselectAll();
 
 // ❌ Bad: Complex workflow in controller
 controller.saveGraphAndNotifyAndRefresh(); // This should be an Action
@@ -150,18 +170,18 @@ controller/
 │   ├── debug.ts        # Debug bindings for Tweakpane
 │   ├── storage/        # Storage wrappers (local, idb)
 │   └── utils/          # Type matching, wrap/unwrap
-├── subcontrollers/     # Domain-specific controllers
-│   ├── root-controller.ts   # Base class
-│   ├── editor/              # Editor domain
-│   ├── home/                # Home domain
-│   ├── global/              # Global domain controllers
-│   ├── flag-controller.ts
-│   ├── toast-controller.ts
-│   └── ...
 ├── context/            # Pending writes tracking
 │   └── writes.ts
-└── migration/          # State migration utilities
-    └── migrations.ts
+├── migration/          # State migration utilities
+│   └── migrations.ts
+└── subcontrollers/     # Domain-specific controllers
+    ├── root-controller.ts   # Base class
+    ├── board/               # Board domain
+    ├── editor/              # Editor domain (graph, selection, sidebar, etc.)
+    ├── global/              # Global domain (flags, toasts, consent, etc.)
+    ├── home/                # Home domain
+    ├── router/              # Router domain
+    └── run/                 # Run domain
 ```
 
 ---
@@ -202,7 +222,7 @@ export const myAction = asAction(
   "MyDomain.myAction",
   {
     mode: ActionMode.Immediate,
-    triggeredBy: [() => onSomeCondition(bind)],
+    triggeredBy: () => onSomeCondition(bind),
   },
   async () => {
     const { controller } = bind;  // Injected via bind

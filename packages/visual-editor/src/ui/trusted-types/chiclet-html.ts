@@ -6,7 +6,6 @@
 
 import { Template } from "@breadboard-ai/utils";
 import { chicletHtml } from "../elements/input/text-editor/text-editor.js";
-import type { Project } from "../state/types.js";
 import { escapeNodeText } from "../../utils/sanitizer.js";
 import { SCA } from "../../sca/sca.js";
 
@@ -23,13 +22,11 @@ export const createTrustedChicletHTML =
 function createTrustedChicletHTMLImpl(
   value: string,
   sca?: SCA,
-  projectState?: Project | null,
-  subGraphId?: string | null,
+  subGraphId?: string | null
 ): string {
   if (!value) {
     return "";
   }
-
 
   // Explanation:
   //
@@ -46,8 +43,31 @@ function createTrustedChicletHTMLImpl(
   //   guaranteed to not use unsafe sinks, the outerHTML is also trusted.
   const template = new Template(value);
   template.substitute(
-    (part) => chicletHtml(part, projectState ?? null, subGraphId ?? null, sca),
+    (part) => chicletHtml(part, subGraphId ?? null, sca),
     (part) => escapeNodeText(part)
   );
   return template.renderable;
+}
+
+/**
+ * Set trusted HTML content on an element. Prefers `setHTML` when available
+ * for safer sanitized insertion, falling back to `innerHTML`.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Element/setHTML
+ */
+export function setTrustedHTML(el: Element, html: string | TrustedHTML): void {
+  if ("setHTML" in el) {
+    (
+      el as {
+        setHTML(
+          val: string | TrustedHTML,
+          opts: { sanitizer: { elements: string[] } }
+        ): void;
+      }
+    ).setHTML(html, {
+      sanitizer: { elements: ["span", "label"] },
+    });
+  } else {
+    (el as { innerHTML: string | TrustedHTML }).innerHTML = html;
+  }
 }

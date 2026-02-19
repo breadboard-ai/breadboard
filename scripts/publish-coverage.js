@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* global console */
+
 import path from "node:path";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "url";

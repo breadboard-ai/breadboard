@@ -13,8 +13,6 @@ import {
   GraphIdentifier,
   GraphMetadata,
   Integration,
-  Module,
-  ModuleIdentifier,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
@@ -68,21 +66,10 @@ export type AddNodeSpec = {
   graphId: GraphIdentifier;
 };
 
-export type AddModuleSpec = {
-  type: "addmodule";
-  id: ModuleIdentifier;
-  module: Module;
-};
-
 export type RemoveNodeSpec = {
   type: "removenode";
   id: NodeIdentifier;
   graphId: GraphIdentifier;
-};
-
-export type RemoveModuleSpec = {
-  type: "removemodule";
-  id: ModuleIdentifier;
 };
 
 export type AddEdgeSpec = {
@@ -149,12 +136,6 @@ export type ChangeMetadataSpec = {
   reset?: boolean;
 };
 
-export type ChangeModuleSpec = {
-  type: "changemodule";
-  id: ModuleIdentifier;
-  module: Module;
-};
-
 export type ChangeGraphMetadataSpec = {
   type: "changegraphmetadata";
   metadata?: GraphMetadata;
@@ -176,8 +157,8 @@ export type RemoveGraphSpec = {
 
 export type ToggleExportSpec = {
   type: "toggleexport";
-  id: GraphIdentifier | ModuleIdentifier;
-  exportType: "imperative" | "declarative";
+  id: GraphIdentifier;
+  exportType: "declarative";
 };
 
 export type AddAssetSpec = {
@@ -231,18 +212,15 @@ export type EditOperation = {
 };
 
 export type EditSpec =
-  | AddModuleSpec
   | AddNodeSpec
   | RemoveNodeSpec
   | AddEdgeSpec
   | RemoveEdgeSpec
-  | RemoveModuleSpec
   | ChangeEdgeSpec
   | ChangeEdgeMetadataSpec
   | ChangeConfigurationSpec
   | ChangeMetadataSpec
   | ChangeGraphMetadataSpec
-  | ChangeModuleSpec
   | AddGraphSpec
   | RemoveGraphSpec
   | ToggleExportSpec
@@ -383,7 +361,6 @@ export type SingleEditResult =
   | {
       success: true;
       affectedNodes: AffectedNode[];
-      affectedModules: ModuleIdentifier[];
       affectedGraphs: GraphIdentifier[];
       /**
        * Indicates that the change updated integrations.

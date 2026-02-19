@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSystem, Outcome } from "./data.js";
+import { Outcome } from "./data.js";
 import { DeepReadonly } from "./deep-read-only.js";
 import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
 import { RuntimeFlagManager } from "./flags.js";
@@ -19,6 +19,7 @@ import {
 import { MutableGraphStore } from "./inspect.js";
 import { GraphLoader } from "./loader.js";
 import { ErrorResponse, Kit } from "./node-handler.js";
+import { RunnableModuleFactory } from "./sandbox.js";
 import {
   EdgeLifecycleState,
   NodeLifecycleState,
@@ -158,9 +159,10 @@ export type RunConfig = {
    */
   graphStore?: MutableGraphStore;
   /**
-   * The file system, provided as module capability.
+   * JS Sandbox that will be used to run imperative graphs.
    */
-  fileSystem?: FileSystem;
+  sandbox?: RunnableModuleFactory;
+
   /**
    * A way to see and manage runtime flags.
    */

@@ -29,7 +29,7 @@ import {
 import { css, html } from "lit";
 import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   SelectGraphContentsEvent,
   SelectionTranslateEvent,
@@ -39,7 +39,10 @@ import { toGridSize } from "./utils/to-grid-size.js";
 import { GRID_SIZE, MOVE_GRAPH_ID } from "./constants.js";
 import { GraphAsset } from "./graph-asset.js";
 import { AssetPath, NodeRunState } from "@breadboard-ai/types";
-import { RendererRunState, RendererState } from "../../state/index.js";
+import type {
+  RendererRunState,
+  GraphAsset as GraphAssetState,
+} from "../../../sca/types.js";
 import { getStepIcon } from "../../utils/get-step-icon.js";
 import { toAssetEdgeIdentifier } from "../../../sca/utils/helpers/helpers.js";
 
@@ -57,9 +60,8 @@ export class Graph extends Box {
   @property()
   accessor url: URL | null = null;
 
-  // TODO: Make it GraphState
   @property()
-  accessor rendererState: RendererState | null = null;
+  accessor graphAssets: Map<AssetPath, GraphAssetState> | null = null;
 
   static styles = [
     Box.styles,
@@ -325,7 +327,7 @@ export class Graph extends Box {
 
       graphAsset.showBounds = this.showBounds;
       graphAsset.boundsLabel = asset.title;
-      graphAsset.state = this.rendererState?.graphAssets.get(assetPath) || null;
+      graphAsset.state = this.graphAssets?.get(assetPath) || null;
     }
 
     // Remove stale assets.
@@ -504,6 +506,8 @@ export class Graph extends Box {
       return;
     }
 
+    const hasMoved = x !== 0 || y !== 0;
+
     for (const node of this.selectionState.nodes) {
       const graphNode = this.entities.get(node) as GraphNode;
       if (!graphNode || graphNode.readOnly) {
@@ -517,10 +521,12 @@ export class Graph extends Box {
       graphNode.transform.e = graphNode.baseTransform.e + x;
       graphNode.transform.f = graphNode.baseTransform.f + y;
 
-      graphNode.transform.e =
-        Math.round(graphNode.transform.e / GRID_SIZE) * GRID_SIZE;
-      graphNode.transform.f =
-        Math.round(graphNode.transform.f / GRID_SIZE) * GRID_SIZE;
+      if (hasMoved) {
+        graphNode.transform.e =
+          Math.round(graphNode.transform.e / GRID_SIZE) * GRID_SIZE;
+        graphNode.transform.f =
+          Math.round(graphNode.transform.f / GRID_SIZE) * GRID_SIZE;
+      }
 
       if (hasSettled) {
         graphNode.baseTransform = null;
@@ -540,10 +546,12 @@ export class Graph extends Box {
       graphAsset.transform.e = graphAsset.baseTransform.e + x;
       graphAsset.transform.f = graphAsset.baseTransform.f + y;
 
-      graphAsset.transform.e =
-        Math.round(graphAsset.transform.e / GRID_SIZE) * GRID_SIZE;
-      graphAsset.transform.f =
-        Math.round(graphAsset.transform.f / GRID_SIZE) * GRID_SIZE;
+      if (hasMoved) {
+        graphAsset.transform.e =
+          Math.round(graphAsset.transform.e / GRID_SIZE) * GRID_SIZE;
+        graphAsset.transform.f =
+          Math.round(graphAsset.transform.f / GRID_SIZE) * GRID_SIZE;
+      }
 
       if (hasSettled) {
         graphAsset.baseTransform = null;

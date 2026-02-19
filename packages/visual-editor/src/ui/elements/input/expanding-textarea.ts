@@ -124,6 +124,7 @@ export class ExpandingTextarea extends LitElement {
         white-space: normal;
         letter-spacing: normal;
         word-spacing: normal;
+        overflow-wrap: anywhere;
       }
 
       textarea {
@@ -175,16 +176,6 @@ export class ExpandingTextarea extends LitElement {
         justify-content: center;
         margin: -4px;
         cursor: pointer;
-      }
-
-      :host([ispopulated]) #submit {
-        opacity: 0.7;
-
-        &:not([disabled]) {
-          &:hover {
-            opacity: 1;
-          }
-        }
       }
 
       ::slotted(.g-icon) {

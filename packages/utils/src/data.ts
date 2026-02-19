@@ -20,7 +20,6 @@ export const isStoredData = (
   return true;
 };
 
-
 /** Deletes all .data value from StoredDataCapabilityPart. */
 export const purgeStoredDataInMemoryValues = async (graph: GraphDescriptor) => {
   return visitGraphNodes(graph, (node: unknown) => {

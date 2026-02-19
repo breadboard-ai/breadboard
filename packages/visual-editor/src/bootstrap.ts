@@ -7,8 +7,9 @@
 import * as pkg from "../package.json" with { type: "json" };
 import type { BootstrapArguments, MainArguments } from "./types/types.js";
 
-import { LandingUrlInit, type LanguagePack } from "./ui/types/types.js";
-import type { GlobalConfig } from "./ui/contexts/global-config.js";
+import { LandingUrlInit } from "./sca/types.js";
+import { type LanguagePack } from "./ui/types/types.js";
+import type { GlobalConfig } from "./sca/types.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
@@ -60,9 +61,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     hostOrigin,
   };
 
-  const { SettingsStore } = await import("./ui/data/settings-store.js");
-  const settings = await SettingsStore.restoredInstance();
-
   const signinAdapter = new SigninAdapter(shellHost);
 
   const StringsHelper = await import("./ui/strings/helper.js");
@@ -106,7 +104,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     window.oncontextmenu = (evt) => evt.preventDefault();
 
     const mainArgs: MainArguments = {
-      settings,
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
       env: bootstrapArgs.env,

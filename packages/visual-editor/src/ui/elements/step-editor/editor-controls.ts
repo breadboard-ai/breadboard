@@ -27,40 +27,34 @@ import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { A2_COMPONENTS } from "../../../a2/a2-registry.js";
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+
 import {
   HideTooltipEvent,
   ShowTooltipEvent,
   StateEvent,
   ToastEvent,
-  ToastType,
   ZoomInEvent,
   ZoomOutEvent,
   ZoomToFitEvent,
 } from "../../events/events.js";
+import { ToastType } from "../../../sca/types.js";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
-import { ActionTracker, NewAsset } from "../../types/types.js";
+import { NewAsset } from "../../types/types.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
-import {
-  GoogleDriveFileId,
-  ItemSelect,
-  NotebookLmPicker,
-} from "../elements.js";
+import { GoogleDriveFileId, ItemSelect } from "../elements.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
 import type { NotebookPickedValue } from "../notebooklm-picker/notebooklm-picker.js";
 import { DATA_TYPE } from "./constants.js";
 import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
+import "../../elements/graph-editing-chat/graph-editing-chat.js";
 
 @customElement("bb-editor-controls")
 export class EditorControls extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker!: ActionTracker | undefined;
 
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
@@ -111,7 +105,8 @@ export class EditorControls extends SignalWatcher(LitElement) {
 
       :host([readonly]) {
         #top-shelf,
-        bb-flowgen-editor-input {
+        bb-flowgen-editor-input,
+        bb-graph-editing-chat {
           display: none;
         }
       }
@@ -517,7 +512,6 @@ export class EditorControls extends SignalWatcher(LitElement) {
   ];
 
   #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
-  #addNotebookLmInputRef: Ref<NotebookLmPicker> = createRef();
 
   hidePickers() {
     this.showComponentPicker = false;
@@ -539,18 +533,29 @@ export class EditorControls extends SignalWatcher(LitElement) {
   }
 
   #attemptNotebookLMPickerFlow() {
-    if (!this.#addNotebookLmInputRef.value) {
-      return;
-    }
-
-    try {
-      this.#addNotebookLmInputRef.value.triggerFlow();
-    } catch (err) {
-      console.warn(err);
-      this.dispatchEvent(
-        new ToastEvent("Unable to load NotebookLM", ToastType.ERROR)
-      );
-    }
+    this.sca.actions.notebookLmPicker.open(
+      (notebooks: NotebookPickedValue[]) => {
+        const assets = notebooks.map((notebook) => ({
+          path: globalThis.crypto.randomUUID(),
+          name: notebook.preview,
+          type: "content" as const,
+          subType: "notebooklm" as const,
+          managed: false,
+          data: {
+            role: "user" as const,
+            parts: [
+              {
+                storedData: {
+                  handle: toNotebookLmUrl(notebook.id),
+                  mimeType: NOTEBOOKLM_MIMETYPE,
+                },
+              },
+            ],
+          },
+        }));
+        this.dispatchEvent(new CreateNewAssetsEvent(assets));
+      }
+    );
   }
   #handleChosenKitItem(nodeType: string) {
     let x;
@@ -583,11 +588,11 @@ export class EditorControls extends SignalWatcher(LitElement) {
         draggable="true"
         class=${classMap(classes)}
         @click=${() => {
-          this.actionTracker?.addNewStep(item.title);
+          this.sca?.services.actionTracker?.addNewStep(item.title);
           this.#handleChosenKitItem(item.url);
         }}
         @dragstart=${(evt: DragEvent) => {
-          this.actionTracker?.addNewStep(item.title);
+          this.sca?.services.actionTracker?.addNewStep(item.title);
           if (!evt.dataTransfer) {
             return;
           }
@@ -839,34 +844,6 @@ export class EditorControls extends SignalWatcher(LitElement) {
               );
             }}
           ></bb-google-drive-file-id>
-          <bb-notebooklm-picker
-            id="add-notebooklm-proxy"
-            ${ref(this.#addNotebookLmInputRef)}
-            @bb-input-change=${(evt: InputChangeEvent) => {
-              const notebooks = evt.value as NotebookPickedValue[];
-
-              const assets = notebooks.map((notebook) => ({
-                path: globalThis.crypto.randomUUID(),
-                name: notebook.preview,
-                type: "content" as const,
-                subType: "notebooklm" as const,
-                managed: false,
-                data: {
-                  role: "user" as const,
-                  parts: [
-                    {
-                      storedData: {
-                        handle: toNotebookLmUrl(notebook.id),
-                        mimeType: NOTEBOOKLM_MIMETYPE,
-                      },
-                    },
-                  ],
-                },
-              }));
-
-              this.dispatchEvent(new CreateNewAssetsEvent(assets));
-            }}
-          ></bb-notebooklm-picker>
         </div> `
     );
 
@@ -875,16 +852,22 @@ export class EditorControls extends SignalWatcher(LitElement) {
     </div>`;
 
     const shelf = html`<div id="shelf">
-      <bb-flowgen-editor-input
-        .hasEmptyGraph=${this.graph.raw().nodes.length === 0}
-        @pointerdown=${(evt: PointerEvent) => {
-          // <bb-renderer> listens for pointerdown and retains focus so that
-          // after selection updates the user can do things like delete nodes
-          // with the keyboard. The corresponding effect makes it impossible to
-          // interact with this element so we catch the event here first.
-          evt.stopPropagation();
-        }}
-      ></bb-flowgen-editor-input>
+      ${this.sca.controller.global.flags.enableGraphEditorAgent
+        ? html`<bb-graph-editing-chat
+            @pointerdown=${(evt: PointerEvent) => {
+              evt.stopPropagation();
+            }}
+          ></bb-graph-editing-chat>`
+        : html`<bb-flowgen-editor-input
+            .hasEmptyGraph=${this.graph.raw().nodes.length === 0}
+            @pointerdown=${(evt: PointerEvent) => {
+              // <bb-renderer> listens for pointerdown and retains focus so that
+              // after selection updates the user can do things like delete nodes
+              // with the keyboard. The corresponding effect makes it impossible to
+              // interact with this element so we catch the event here first.
+              evt.stopPropagation();
+            }}
+          ></bb-flowgen-editor-input>`}
     </div>`;
 
     const graphControls = html`<div id="graph-controls">

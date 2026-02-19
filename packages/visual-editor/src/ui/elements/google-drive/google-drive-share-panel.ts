@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { consume } from "@lit/context";
 import { css, LitElement, nothing } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
-import { opalShellContext } from "../../utils/opal-shell-guest.js";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 @customElement("bb-google-drive-share-panel")
-export class GoogleDriveSharePanel extends LitElement {
+export class GoogleDriveSharePanel extends SignalWatcher(LitElement) {
   static styles = [
     css`
       :host {
@@ -20,8 +21,8 @@ export class GoogleDriveSharePanel extends LitElement {
     `,
   ];
 
-  @consume({ context: opalShellContext })
-  accessor opalShell: OpalShellHostProtocol | undefined;
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
 
   @property({ type: Array })
   accessor fileIds: string[] | undefined;
@@ -33,21 +34,20 @@ export class GoogleDriveSharePanel extends LitElement {
   }
 
   async open() {
-    if (this.#status !== "closed") {
+    if (this.#status === "open") return;
+    if (!this.sca.services.shellHost) {
+      console.error(`No shell host`);
       return;
     }
+
     const fileIds = this.fileIds;
     if (!fileIds?.length) {
       console.error("No file ids");
       return;
     }
-    if (!this.opalShell) {
-      console.error(`No opal shell`);
-      return;
-    }
 
     this.#status = "open";
-    await this.opalShell.shareDriveFiles({ fileIds });
+    await this.sca.services.shellHost.shareDriveFiles({ fileIds });
     this.#status = "closed";
     this.dispatchEvent(new Event("close"));
   }

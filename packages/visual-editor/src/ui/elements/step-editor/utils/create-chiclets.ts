@@ -11,7 +11,6 @@ import {
   NOTEBOOKLM_TOOL_PATH,
 } from "@breadboard-ai/utils";
 import { html, HTMLTemplateResult, nothing } from "lit";
-import { Project } from "../../../state/index.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { getAssetType } from "../../../utils/mime-type.js";
 import {
@@ -28,7 +27,6 @@ import { SCA } from "../../../../sca/sca.js";
 
 export function createChiclets(
   port: InspectablePort | null,
-  projectState: Project | null = null,
   subGraphId: string,
   sca: SCA
 ): HTMLTemplateResult[] {
@@ -87,7 +85,6 @@ export function createChiclets(
 
     const { icon: srcIcon, tags: metadataTags } = expandChiclet(
       part,
-      projectState,
       subGraphId,
       sca
     );
@@ -102,7 +99,6 @@ export function createChiclets(
       if (instance) {
         const { icon, title } = expandChiclet(
           { path: instance, type: "in", title: "unknown" },
-          projectState,
           subGraphId,
           sca
         );

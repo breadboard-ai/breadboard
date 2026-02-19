@@ -683,7 +683,7 @@
                           "properties": {
                             "label": {
                               "type": "object",
-                              "description": "The text to display for this option. This can be a literal string or a reference to a value in the data model (e.g. '/option/label').",
+                              "description": "The text to display for this option. This can be a literal string or a reference to a value in the data model (e.g. '/option/label'). Optional when 'child' is provided.",
                               "additionalProperties": false,
                               "properties": {
                                 "literalString": {
@@ -697,9 +697,13 @@
                             "value": {
                               "type": "string",
                               "description": "The value to be associated with this option when selected."
+                            },
+                            "child": {
+                              "type": "string",
+                              "description": "An optional reference to a component instance by its unique ID. When provided, the option renders this component as its content instead of the text label."
                             }
                           },
-                          "required": ["label", "value"]
+                          "required": ["value"]
                         }
                       },
                       "maxAllowedSelections": {

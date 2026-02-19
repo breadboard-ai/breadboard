@@ -7,151 +7,80 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import type { AppScreenOutput, BoardServer } from "@breadboard-ai/types";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
-import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
-import { SettingsStore } from "./ui/data/settings-store.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { styles as mainStyles } from "./index.styles.js";
 import "./ui/lite/step-list-view/step-list-view.js";
 import "./ui/lite/input/editor-input-lite.js";
-import * as Runtime from "./runtime/runtime.js";
-import {
-  RuntimeConfig,
-  WorkspaceSelectionStateWithChangeId,
-} from "./runtime/types.js";
-
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import "./ui/elements/notebooklm-picker/notebooklm-picker.js";
+import { RuntimeConfig } from "./utils/graph-types.js";
 
 import {
   canonicalizeOAuthScope,
   type OAuthScope,
 } from "./ui/connection/oauth-scopes.js";
-import { boardServerContext } from "./ui/contexts/board-server.js";
-import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
-import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
+
 import { VESignInModal } from "./ui/elements/elements.js";
-import { EmbedHandler, embedState, EmbedState } from "./ui/embed/embed.js";
+import { embedState, EmbedState } from "./ui/embed/embed.js";
 
 import type {
   CheckAppAccessResult,
-  GuestConfiguration,
-  OpalShellHostProtocol,
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { reactive } from "./sca/reactive.js";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
-import {
-  FlowGenerator,
-  flowGeneratorContext,
-} from "./ui/flow-gen/flow-generator.js";
-import { ReactiveAppScreen } from "./ui/state/app-screen.js";
-import {
-  ActionTracker,
-  RecentBoard,
-  UserSignInResponse,
-} from "./ui/types/types.js";
-import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
+
+import { RecentBoard, UserSignInResponse } from "./sca/types.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 
 import { Admin } from "./admin.js";
-import { keyboardCommands } from "./commands/commands.js";
-import { KeyboardCommandDeps } from "./commands/types.js";
-import { eventRoutes } from "./event-routing/event-routing.js";
 
-import { hash } from "@breadboard-ai/utils";
 import { MainArguments } from "./types/types.js";
-import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
-import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 
 import { sca, SCA } from "./sca/sca.js";
 import { Utils } from "./sca/utils.js";
 import { scaContext } from "./sca/context/context.js";
-import { GraphUtils } from "./utils/graph-utils.js";
 
 export { MainBase };
 
 export type RenderValues = {
   canSave: boolean;
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
-  projectState: BreadboardUI.State.Project | null;
   showingOverlay: boolean;
-  themeHash: number;
-  tabStatus: BreadboardUI.Types.STATUS;
+  runStatus: BreadboardUI.Types.STATUS;
 };
 
 const LOADING_TIMEOUT = 1250;
-
 const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
+
 abstract class MainBase extends SignalWatcher(LitElement) {
-  @provide({ context: globalConfigContext })
-  accessor globalConfig: GlobalConfig;
-
-  @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
-  accessor settingsHelper: SettingsHelperImpl;
-
-  @provide({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator;
-
-  @provide({ context: googleDriveClientContext })
-  accessor googleDriveClient: GoogleDriveClient;
-
   @provide({ context: BreadboardUI.Contexts.embedderContext })
   accessor embedState!: EmbedState;
-
-  @provide({ context: boardServerContext })
-  accessor boardServer: BoardServer;
-
-  @provide({ context: opalShellContext })
-  accessor opalShell: OpalShellHostProtocol;
-
-  @provide({ context: guestConfigurationContext })
-  protected accessor guestConfiguration: GuestConfiguration;
-
-  @provide({ context: actionTrackerContext })
-  protected accessor actionTracker: ActionTracker;
 
   @provide({ context: scaContext })
   protected accessor sca: SCA;
 
-  // Computed from SCA controller - no longer stored
-  protected get tab(): Runtime.Types.Tab | null {
-    return this.sca.controller.editor.graph.asTab();
-  }
-
   /**
-   * Monotonically increases whenever the graph topology of a graph in the
-   * current tab changes. Graph topology == any non-visual change to the graph.
-   * - this property is incremented whenever the "update" event is received
-   *   from the `GraphStore` instance, which stores and tracks all known graphs,
-   *   across all tabs, etc.
-   * - this property is only incremented when the "update" is for the current
-   *   tab's graph, but that still works when we switch tabs, since we don't
-   *   check the value of the property, just whether it changed.
-   * - because it is decorated with `@state()` on this component,
-   *   incrementing this property causes a new render of the component.
-   * - this property is then passed to various sub-components that need to be
-   *   aware of graph topology changes.
-   * - these sub-components need to have their own `graphTopologyUpdateId` that
-   *   should be decorated as `@property()`, so that the change to this property
-   *   causes a new render of that component, too.
-   * - as the resulting effect, incrementing the property will keep the parts
-   *   of the UI that need to reflect the latest graph topology up to date.
+   * @deprecated Use sca.controller.editor.graph.topologyVersion instead.
+   * Kept as a @state() only to avoid breaking sub-components that still
+   * receive it as a @property().
    */
-  @state()
-  accessor graphTopologyUpdateId: number = 0;
+  get graphTopologyUpdateId(): number {
+    return this.sca.controller.editor.graph.topologyVersion;
+  }
 
   @state()
   protected accessor tosStatus: CheckAppAccessResponse | null = null;
 
   // References.
-  protected selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-  protected runtime: Runtime.Runtime;
+  // NOTE: selectionState field removed. Selection is now managed
+  // entirely by SelectionController via SCA.
+
   protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
   // Run status now tracked by this.sca.controller.run.main
@@ -161,15 +90,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     createRef();
   protected feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
-  protected readonly embedHandler: EmbedHandler | undefined;
-  protected readonly settings: SettingsStore;
+
   protected readonly hostOrigin: URL;
   protected readonly logger: ReturnType<typeof Utils.Logging.getLogger> =
     Utils.Logging.getLogger();
 
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
   readonly #hideTooltipBound = this.#hideTooltip.bind(this);
-  readonly #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
   #urlEffectDisposer: (() => void) | null = null;
   #lastHandledUrl: string | null = null;
 
@@ -179,33 +106,27 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     super();
 
     // Static deployment config
-    this.globalConfig = args.globalConfig;
+    const globalConfig = args.globalConfig;
 
     // Configuration provided by shell host
-    this.guestConfiguration = args.guestConfiguration;
-
-    // User settings
-    this.settings = args.settings;
-    this.settingsHelper = new SettingsHelperImpl(this.settings);
+    const guestConfiguration = args.guestConfiguration;
 
     // Authentication
-    this.opalShell = args.shellHost;
+    const opalShell = args.shellHost;
     this.hostOrigin = args.hostOrigin;
 
     // Controller
     const config: RuntimeConfig = {
-      globalConfig: this.globalConfig,
-      guestConfig: this.guestConfiguration,
-      settings: this.settings,
-      shellHost: this.opalShell,
+      globalConfig,
+      guestConfig: guestConfiguration,
+      shellHost: opalShell,
+      embedHandler: args.embedHandler,
       env: args.env,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
+      askUserToSignInIfNeeded: (scopes) => this.askUserToSignInIfNeeded(scopes),
     };
     this.sca = sca(config, args.globalConfig.flags);
-    this.sca.controller.global.debug.isHydrated.then(() => {
-      this.sca.controller.global.debug.enabled = true;
-    });
 
     // If the router encountered an invalid URL (e.g. unsupported flow ID),
     // show a warning snackbar once the controllers are hydrated.
@@ -223,36 +144,19 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    // Append SCA to the config.
-    config.sca = this.sca;
-    this.runtime = new Runtime.Runtime(config);
-
-    this.googleDriveClient = this.sca.services.googleDriveClient;
-
-    // Asyncronously check if the user has an access restriction (e.g. geo) and
-    // if they are signed in with all required scopes.
     this.sca.services.signinAdapter.state.then((state) => {
       if (state === "signedin") {
-        this.actionTracker.updateSignedInStatus(true);
+        this.sca.services.actionTracker.updateSignedInStatus(true);
         this.sca.services.signinAdapter
           .checkAppAccess()
           .then(this.handleAppAccessCheckResult.bind(this));
-        this.opalShell
+        this.sca.services.shellHost
           .validateScopes()
           .then(this.handleValidateScopesResult.bind(this));
       }
     });
 
-    this.flowGenerator = this.sca.services.flowGenerator;
-    this.actionTracker = this.sca.services.actionTracker;
-
-    this.embedHandler = args.embedHandler;
-
-    this.#addRuntimeEventHandlers();
-
-    this.boardServer = this.sca.services.googleDriveBoardServer;
-
-    if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
+    if (this.sca.services.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.sca.services.emailPrefsManager.refreshPrefs().then(() => {
         if (
           this.sca.services.emailPrefsManager.prefsValid &&
@@ -263,31 +167,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    // Admin.
-    const admin = new Admin(
+    // Admin — side-effect: exposes `window.o` when URL has #owner-tools.
+    new Admin(
       args,
-      this.globalConfig,
-      this.googleDriveClient,
+      this.sca.services.globalConfig,
+      this.sca.services.googleDriveClient,
       this.sca.services.signinAdapter
     );
-    admin.runtime = this.runtime;
-    admin.settingsHelper = this.settingsHelper;
-
-    this.sca.services.graphStore.addEventListener("update", (evt) => {
-      const { mainGraphId } = evt;
-      const current = this.tab?.mainGraphId;
-      if (
-        !current ||
-        (mainGraphId !== current && !evt.affectedGraphs.includes(current))
-      ) {
-        return;
-      }
-      this.graphTopologyUpdateId++;
-    });
 
     // Once we've determined the sign-in status, relay it to an embedder.
     this.sca.services.signinAdapter.state.then((state) =>
-      this.embedHandler?.sendToEmbedder({
+      this.sca.services.embedHandler?.sendToEmbedder({
         type: "home_loaded",
         isSignedIn: state === "signedin",
       })
@@ -350,29 +240,31 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.addEventListener("pointerdown", this.#hideTooltipBound);
-    window.addEventListener("keydown", this.#onKeyboardShortCut);
 
-    if (this.embedHandler) {
+    if (this.sca.services.embedHandler) {
       this.embedState = embedState();
     }
 
-    this.embedHandler?.addEventListener(
+    this.sca.services.embedHandler?.addEventListener(
       "toggle_iterate_on_prompt",
       ({ message }) => {
         this.embedState.showIterateOnPrompt = message.on;
       }
     );
-    this.embedHandler?.addEventListener("create_new_board", ({ message }) => {
-      if (!message.prompt) {
-        // If no prompt provided, generate an empty board.
-        this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
-      } else {
-        void this.#generateGraph(message.prompt)
-          .then((graph) => this.#generateBoardFromGraph(graph))
-          .catch((error) => console.error("Error generating board", error));
+    this.sca.services.embedHandler?.addEventListener(
+      "create_new_board",
+      ({ message }) => {
+        if (!message.prompt) {
+          // If no prompt provided, generate an empty board.
+          this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
+        } else {
+          void this.#generateGraph(message.prompt)
+            .then((graph) => this.#generateBoardFromGraph(graph))
+            .catch((error) => console.error("Error generating board", error));
+        }
       }
-    });
-    this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
+    );
+    this.sca.services.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
 
   disconnectedCallback(): void {
@@ -381,7 +273,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
     window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
     window.removeEventListener("pointerdown", this.#hideTooltipBound);
-    window.removeEventListener("keydown", this.#onKeyboardShortCut);
 
     // Dispose URL change effect
     if (this.#urlEffectDisposer) {
@@ -394,6 +285,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     try {
       await this.sca.controller.isHydrated;
       const flags = await this.sca.controller.global.flags.flags();
+
+      if (this.sca.services.signinAdapter.stateSignal?.status === "signedin") {
+        if (
+          this.sca.services.signinAdapter.stateSignal.authuser === undefined
+        ) {
+          this.sca.controller.global.main.subscriptionStatus = "not-subscribed";
+          return;
+        }
+      }
+
       if (flags.googleOne) {
         this.logger.log(
           Utils.Logging.Formatter.verbose(`Checking subscriber status`),
@@ -414,64 +315,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       this.sca.controller.global.main.subscriptionStatus = "error";
       this.sca.controller.global.main.subscriptionCredits = -2;
     }
-  }
-
-  #addRuntimeEventHandlers() {
-    if (!this.runtime) {
-      console.error("No runtime found");
-      return;
-    }
-
-    this.runtime.select.addEventListener(
-      Runtime.Events.RuntimeSelectionChangeEvent.eventName,
-      (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
-        // Bump the SCA selectionId to trigger the step autosave.
-        // This bridges the legacy selection system to the SCA trigger.
-        this.sca.controller.editor.selection.bumpSelectionId();
-
-        // TODO: Remove once SelectionController is fully wired up.
-        // This sets the selectedNodeId for fast-access filtering.
-        const candidate = [...evt.selectionState.graphs].find(
-          ([, graph]) => graph.nodes.size > 0
-        );
-        if (candidate && candidate[1].nodes.size === 1) {
-          const [, graph] = candidate;
-          this.sca.controller.editor.graph.selectedNodeId = [...graph.nodes][0];
-        } else {
-          this.sca.controller.editor.graph.selectedNodeId = null;
-        }
-
-        this.selectionState = {
-          selectionChangeId: evt.selectionChangeId,
-          selectionState: evt.selectionState,
-          moveToSelection: evt.moveToSelection,
-        };
-
-        this.requestUpdate();
-      }
-    );
-
-    // Note: runtime.board and runtime.edit listeners removed - these classes
-    // are now empty EventTargets. Functionality migrated to SCA:
-    // - RuntimeShareMissingEvent: handled elsewhere
-    // - RuntimeRequestSignInEvent: handled elsewhere
-    // - RuntimeVisualChangeEvent: handled by SCA triggers
-    // - RuntimeBoardLoadErrorEvent: handled by SCA
-    // - RuntimeErrorEvent: handled by SCA
-
-    // Note: RuntimeNewerSharedVersionEvent listener moved to
-    // SCA trigger: Board.registerNewerVersionTrigger()
-
-    // Note: RuntimeTabChangeEvent listener removed - logic moved to
-    // #handleBoardStateChanged() which is called directly after load/close
-
-    // Note: RuntimeTabCloseEvent listener removed - stop-run logic moved to
-    // before close() call in route handler
-
-    // Note: RuntimeBoardRunEvent listener removed -
-    // run status now tracked by runner event listeners
-    // set up in sca.actions.run.prepare() which updates
-    // controller.run.main.status directly
   }
 
   /**
@@ -509,11 +352,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       );
     }
 
-    // Close tab, go to the home page.
+    // Close board, go to the home page.
     if (parsedUrl.page === "home") {
       // Stop any running board before closing
-      const closingTabId = this.tab?.id;
-      if (closingTabId) {
+      if (this.sca.controller.editor.graph.graph) {
         this.sca.controller.run.main.setStatus(
           BreadboardUI.Types.STATUS.STOPPED
         );
@@ -524,9 +366,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       await this.#handleBoardStateChanged();
       return;
     } else {
-      // Load the tab.
+      // Load the board.
       const boardUrl = parsedUrl.page === "graph" ? parsedUrl.flow : undefined;
-      if (!boardUrl || boardUrl === this.tab?.graph.url) {
+      if (!boardUrl || boardUrl === this.sca.controller.editor.graph.url) {
         return;
       }
 
@@ -610,7 +452,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
-    const generated = await this.flowGenerator.oneShot({ intent });
+    const generated = await this.sca.services.flowGenerator.oneShot({ intent });
     if ("error" in generated) {
       throw new Error(generated.error);
     }
@@ -628,7 +470,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    if (this.embedHandler) {
+    if (this.sca.services.embedHandler) {
       // When the board server is asked to create a new graph, it first makes a
       // very fast RPC just to allocate a drive file id, returns that file id,
       // and finishes initializing the graph in the background (uploading the
@@ -645,8 +487,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       // So, we need to wait for full initialization before we broadcast.
       const { url } = saveResult;
       const boardServer = this.sca.services.googleDriveBoardServer;
-      await boardServer.flushSaveQueue(url.href);
-      this.embedHandler.sendToEmbedder({
+      await boardServer.graphIsFullyCreated(url.href);
+      this.sca.services.embedHandler.sendToEmbedder({
         type: "board_id_created",
         id: url.href,
       });
@@ -658,44 +500,24 @@ abstract class MainBase extends SignalWatcher(LitElement) {
    * Calls syncProjectState directly instead of event dispatch.
    */
   async #handleBoardStateChanged(): Promise<void> {
-    // Sync project state (creates the Project object for the loaded graph)
-    this.runtime.syncProjectState();
-
-    const tab = this.tab;
+    const gc = this.sca.controller.editor.graph;
     this.#maybeShowWelcomePanel();
 
-    if (tab) {
+    if (gc.graph) {
       // Page title is now handled by the page title trigger in SCA
 
-      const url = tab.graph.url;
+      const url = gc.url;
       if (url) {
-        this.sca.actions.run.prepare({
-          graph: tab.graph,
-          url,
-          settings: this.settings,
-          fetchWithCreds: this.sca.services.fetchWithCreds,
-          flags: this.sca.controller.global.flags,
-          getProjectRunState: () => this.runtime.project?.run,
-          connectToProject: (runner, abortSignal) => {
-            const project = this.runtime.project;
-            if (project) {
-              project.connectHarnessRunner(runner, abortSignal);
-            }
-          },
-        });
+        this.sca.actions.run.prepare();
       }
 
-      if (tab.graph.url && tab.graphIsMine) {
-        const board: RecentBoard = { url: tab.graph.url };
-        if (tab.graph.title) board.title = tab.graph.title;
+      if (url && !gc.readOnly) {
+        const board: RecentBoard = { url };
+        if (gc.title) board.title = gc.title;
         this.sca.controller.home.recent.add(board);
       }
 
       this.sca.controller.global.main.loadState = "Loaded";
-      this.runtime.select.refresh(
-        tab.id,
-        GraphUtils.createWorkspaceSelectionChangeId()
-      );
     } else {
       this.sca.controller.router.clearFlowParameters();
       // Page title is now handled by the page title trigger in SCA
@@ -703,7 +525,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   #maybeShowWelcomePanel() {
-    if (this.tab === null) {
+    if (this.sca.controller.editor.graph.graph === null) {
       this.sca.controller.global.main.loadState = "Home";
     }
 
@@ -728,14 +550,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    const tooltips = this.settings.getItem(
-      BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-      "Show Tooltips"
-    );
-    if (!tooltips?.value) {
-      return;
-    }
-
     this.tooltipRef.value.x = tooltipEvent.x;
     this.tooltipRef.value.y = tooltipEvent.y;
     this.tooltipRef.value.message = tooltipEvent.message;
@@ -753,123 +567,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.tooltipRef.value.visible = false;
   }
 
-  #receivesInputPreference(target: EventTarget) {
-    return (
-      target instanceof HTMLInputElement ||
-      target instanceof HTMLTextAreaElement ||
-      target instanceof HTMLSelectElement ||
-      target instanceof HTMLCanvasElement ||
-      (target instanceof HTMLElement &&
-        (target.contentEditable === "true" ||
-          target.contentEditable === "plaintext-only"))
-    );
-  }
-
-  #handlingShortcut = false;
-  async #onKeyboardShortcut(evt: KeyboardEvent) {
-    if (this.#handlingShortcut) {
-      return;
-    }
-
-    // Check if there's an input preference before actioning any main keyboard
-    // command. This is often something like the text inputs which have
-    // preference over these more general keyboard commands.
-    if (
-      evt.composedPath().some((target) => this.#receivesInputPreference(target))
-    ) {
-      return;
-    }
-
-    let key = evt.key;
-    if (key === "Meta" || key === "Ctrl" || key === "Shift") {
-      return;
-    }
-    if (evt.shiftKey) {
-      key = `Shift+${key}`;
-    }
-    if (evt.metaKey) {
-      key = `Cmd+${key}`;
-    }
-    if (evt.ctrlKey) {
-      key = `Ctrl+${key}`;
-    }
-
-    const deps: KeyboardCommandDeps = {
-      runtime: this.runtime,
-      sca: this.sca,
-      selectionState: this.selectionState,
-      tab: this.tab,
-      originalEvent: evt,
-      pointerLocation: this.lastPointerPosition,
-      settings: this.settings,
-      strings: Strings,
-    } as const;
-
-    for (const [keys, command] of keyboardCommands) {
-      if (keys.includes(key) && command.willHandle(this.tab, evt)) {
-        evt.preventDefault();
-        evt.stopImmediatePropagation();
-
-        this.#handlingShortcut = true;
-
-        // Toast.
-        let toastId;
-        const notifyUser = () => {
-          toastId = this.sca.controller.global.toasts.toast(
-            command.messagePending ?? Strings.from("STATUS_GENERIC_WORKING"),
-            BreadboardUI.Events.ToastType.PENDING,
-            true
-          );
-        };
-
-        // Either notify or set a timeout for notifying the user.
-        let notifyUserOnTimeout;
-        if (command.alwaysNotify) {
-          notifyUser();
-        } else {
-          notifyUserOnTimeout = setTimeout(
-            notifyUser,
-            command.messageTimeout ?? 500
-          );
-        }
-
-        // Perform the command.
-        try {
-          this.sca.controller.global.main.blockingAction = true;
-          await command.do(deps);
-          this.sca.controller.global.main.blockingAction = false;
-
-          // Replace the toast.
-          if (toastId) {
-            this.sca.controller.global.toasts.toast(
-              command.messageComplete ?? Strings.from("STATUS_GENERIC_WORKING"),
-              command.messageType ?? BreadboardUI.Events.ToastType.INFORMATION,
-              false,
-              toastId
-            );
-          }
-        } catch (err) {
-          const commandErr = err as { message: string };
-          this.sca.controller.global.toasts.toast(
-            commandErr.message ?? Strings.from("ERROR_GENERIC"),
-            BreadboardUI.Events.ToastType.ERROR,
-            false,
-            toastId
-          );
-        } finally {
-          // Clear the timeout in case it's not fired yet.
-          if (notifyUserOnTimeout) {
-            clearTimeout(notifyUserOnTimeout);
-          }
-          this.sca.controller.global.main.blockingAction = false;
-        }
-
-        this.#handlingShortcut = false;
-        break;
-      }
-    }
-  }
-
   /**
    * @deprecated File drop to create new tab is no longer supported
    */
@@ -878,38 +575,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   protected getRenderValues(): RenderValues {
-    const tabStatus = this.sca.controller.run.main.status;
-
-    let themeHash = 0;
-    if (
-      this.tab?.graph?.metadata?.visual?.presentation?.themes &&
-      this.tab?.graph?.metadata?.visual?.presentation?.theme
-    ) {
-      const theme = this.tab.graph.metadata.visual.presentation.theme;
-      const themes = this.tab.graph.metadata.visual.presentation.themes;
-
-      if (themes[theme]) {
-        themeHash = hash(themes[theme]);
-      }
-    }
-
-    const projectState = this.runtime.project;
-
-    if (projectState && this.tab?.finalOutputValues) {
-      const current = new ReactiveAppScreen("", undefined);
-      current.status = "complete";
-      const last: AppScreenOutput = {
-        output: this.tab.finalOutputValues,
-        schema: {},
-      };
-      current.outputs.set("final", last);
-      projectState.run.app.screens.set("final", current);
-    }
+    const runStatus = this.sca.controller.run.main.status;
+    const gc = this.sca.controller.editor.graph;
 
     // Inline canSave logic - use services directly
     let canSave = false;
-    if (this.tab && !this.tab.readOnly) {
-      const graphUrl = this.sca.controller.editor.graph.url;
+    if (gc.graph && !gc.readOnly) {
+      const graphUrl = gc.url;
       if (graphUrl) {
         const boardServer = this.sca.services.googleDriveBoardServer;
         const capabilities = boardServer?.canProvide(new URL(graphUrl));
@@ -920,8 +592,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Get saveStatus from controller and map to enum
     let saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS =
       BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
-    if (this.tab) {
-      const status = this.sca.controller.editor.graph.saveStatus;
+    if (gc.graph) {
+      const status = gc.saveStatus;
       switch (status) {
         case "saving":
           saveStatus = BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING;
@@ -940,32 +612,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     return {
       canSave,
-      projectState,
       saveStatus,
       showingOverlay: this.sca.controller.global.main.show.size > 0,
-      themeHash,
-      tabStatus,
+      runStatus,
     } satisfies RenderValues;
-  }
-
-  protected collectEventRouteDeps(
-    evt: BreadboardUI.Events.StateEvent<
-      keyof BreadboardUI.Events.StateEventDetailMap
-    >
-  ) {
-    return {
-      originalEvent: evt,
-      runtime: this.runtime,
-      settings: this.settings,
-      tab: this.tab,
-      googleDriveClient: this.googleDriveClient,
-      askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
-        this.askUserToSignInIfNeeded(scopes),
-      boardServer: this.boardServer,
-      actionTracker: this.actionTracker,
-      embedHandler: this.embedHandler,
-      sca: this.sca,
-    };
   }
 
   protected willUpdate(): void {
@@ -984,7 +634,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html`<bb-tooltip ${ref(this.tooltipRef)}></bb-tooltip>`;
   }
 
-  protected async invokeRemixEventRouteWith(
+  protected invokeRemixEventRouteWith(
     url: string,
     messages = {
       start: Strings.from("STATUS_REMIXING_PROJECT"),
@@ -992,47 +642,28 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
     }
   ) {
-    const remixRoute = eventRoutes.get("board.remix");
-    const refresh = await remixRoute?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.remix",
-          messages,
-          url,
-        })
-      )
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent({
+        eventType: "board.remix",
+        messages,
+        url,
+      })
     );
-    if (refresh) {
-      requestAnimationFrame(() => {
-        this.requestUpdate();
-      });
-    }
   }
 
-  protected async invokeDeleteEventRouteWith(url: string) {
-    this.sca.controller.global.main.blockingAction = true;
-    const deleteRoute = eventRoutes.get("board.delete");
-    const refresh = await deleteRoute?.do(
-      this.collectEventRouteDeps(
-        new BreadboardUI.Events.StateEvent({
-          eventType: "board.delete",
-          messages: {
-            query: Strings.from("QUERY_DELETE_PROJECT"),
-            start: Strings.from("STATUS_DELETING_PROJECT"),
-            end: Strings.from("STATUS_PROJECT_DELETED"),
-            error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
-          },
-          url,
-        })
-      )
+  protected invokeDeleteEventRouteWith(url: string) {
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent({
+        eventType: "board.delete",
+        messages: {
+          query: Strings.from("QUERY_DELETE_PROJECT"),
+          start: Strings.from("STATUS_DELETING_PROJECT"),
+          end: Strings.from("STATUS_PROJECT_DELETED"),
+          error: Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+        },
+        url,
+      })
     );
-    this.sca.controller.global.main.blockingAction = false;
-
-    if (refresh) {
-      requestAnimationFrame(() => {
-        this.requestUpdate();
-      });
-    }
   }
 
   protected renderSnackbar() {
@@ -1063,12 +694,26 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "dismiss": {
-            this.runtime.project?.run?.dismissError();
+            this.sca.controller.run.main.dismissError();
             break;
           }
         }
       }}
     ></bb-snackbar>`;
+  }
+
+  protected renderNotebookLmPicker() {
+    if (
+      Utils.Helpers.isHydrating(
+        () => this.sca.controller.global.flags?.enableNotebookLm
+      )
+    ) {
+      return nothing;
+    }
+    if (!this.sca.controller.global.flags?.enableNotebookLm) {
+      return nothing;
+    }
+    return html`<bb-notebooklm-picker></bb-notebooklm-picker>`;
   }
 
   protected async askUserToSignInIfNeeded(
@@ -1092,7 +737,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     if ((await this.sca.services.signinAdapter.state) === "signedin") {
       if (await verifyScopes()) {
-        if (!this.guestConfiguration.consentMessage) {
+        if (!this.sca.services.guestConfig.consentMessage) {
           return "success";
         }
         if (checkSignInConsent()) {
@@ -1134,7 +779,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html`
       <bb-sign-in-modal
         ${ref(this.signInModalRef)}
-        .consentMessage=${this.guestConfiguration.consentMessage}
+        .consentMessage=${this.sca.services.guestConfig.consentMessage}
         .blurBackground=${blurBackground}
         @bbmodaldismissed=${() => {
           this.sca.controller.global.main.show.delete("SignInModal");
@@ -1169,26 +814,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       keyof BreadboardUI.Events.StateEventDetailMap
     >
   ) {
-    // Locate the specific handler based on the event type.
-    const eventRoute = eventRoutes.get(evt.detail.eventType);
-    if (!eventRoute) {
-      console.warn(`No event handler for "${evt.detail.eventType}"`);
-      return;
-    }
-
-    // Pass the handler everything it may need in order to function. Usually
-    // the most important of these are the runtime, originalEvent (which
-    // contains the data needed) and the tab so that the runtime can locate
-    // the appropriate editor etc.
-    const shouldRender = await eventRoute.do(this.collectEventRouteDeps(evt));
-
-    // Some legacy actions require an update after running, so if the event
-    // handler returns with a true, schedule an update.
-    if (shouldRender) {
-      requestAnimationFrame(() => {
-        this.requestUpdate();
-      });
-    }
+    // Bridge: re-dispatch onto stateEventBus so SCA eventTrigger actions fire.
+    // The event type must match the trigger's eventType (e.g. "node.change"),
+    // not the DOM-level "bbevent" type that StateEvent uses.
+    this.sca.services.stateEventBus.dispatchEvent(
+      new BreadboardUI.Events.StateEvent(evt.detail)
+    );
   }
 }
 

@@ -12,7 +12,6 @@ import {
   InspectableNode,
   InspectableNodePorts,
   LLMContent,
-  MainGraphIdentifier,
   NodeConfiguration,
   NodeIdentifier,
   NodeMetadata,
@@ -29,33 +28,22 @@ import {
   TemplatePart,
   TemplatePartTransformCallback,
 } from "@breadboard-ai/utils";
-import {
-  css,
-  html,
-  HTMLTemplateResult,
-  LitElement,
-  nothing,
-  PropertyValues,
-} from "lit";
+import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { notebookLmIcon } from "../../styles/svg-icons.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
   StateEvent,
   ToastEvent,
-  ToastType,
 } from "../../events/events.js";
-import { Project } from "../../state/index.js";
-import {
-  ActionTracker,
-  EnumValue,
-  WorkspaceSelectionStateWithChangeId,
-} from "../../types/types.js";
+import { ToastType } from "../../../sca/types.js";
+
+import { EnumValue } from "../../types/types.js";
 import {
   isControllerBehavior,
   isLLMContentArrayBehavior,
@@ -81,7 +69,6 @@ import {
   isTextCapabilityPart,
 } from "../../../data/common.js";
 
-import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { embedderContext } from "../../contexts/embedder.js";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";
@@ -112,32 +99,19 @@ const INVALID_ITEM = html`<div id="invalid-item">
 
 @customElement("bb-entity-editor")
 export class EntityEditor extends SignalWatcher(LitElement) {
-  @property()
-  accessor graph: InspectableGraph | null = null;
+  get #graph(): InspectableGraph | null {
+    return this.sca.controller.editor.graph.editor?.inspect("") ?? null;
+  }
 
-  // NOTE: graphTopologyUpdateId was removed - autosave on selection change
-  // is now handled by the SCA step autosave trigger.
-
-  @property()
-  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-
-  @property()
-  accessor mainGraphId: MainGraphIdentifier | null = null;
-
-  @property()
-  accessor projectState: Project | null = null;
-
-  @property({ reflect: true, type: Boolean })
-  accessor readOnly = false;
+  get #readOnly(): boolean {
+    return this.sca.controller.editor.graph.readOnly;
+  }
 
   @property({ reflect: true, type: Boolean })
   accessor autoFocus = false;
 
   @consume({ context: embedderContext })
   accessor embedState: EmbedState = embedState();
-
-  @consume({ context: actionTrackerContext })
-  accessor actionTracker: ActionTracker | undefined;
 
   @consume({ context: scaContext })
   accessor sca!: SCA;
@@ -201,6 +175,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           &:hover,
           &:focus {
             border: 1px solid var(--outer-border);
+          }
+          &:not(:focus) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
         }
       }
@@ -290,6 +269,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         & h1 {
           --outer-border: oklch(from var(--ui-asset) calc(l - 0.2) c h);
           background: var(--ui-asset);
+          color: var(--n-0);
+        }
+        & input {
+          color: var(--n-0);
         }
 
         bb-llm-output {
@@ -365,6 +348,33 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
           & .port {
             margin-bottom: var(--bb-grid-size-2);
+          }
+        }
+
+        .memory-sheet-container {
+          display: block;
+          padding: var(--bb-grid-size-4) 0;
+        }
+
+        .memory-sheet-link {
+          display: inline-flex;
+          width: fit-content;
+          align-items: center;
+          gap: var(--bb-grid-size-2);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+          border: 1px solid var(--n-90);
+          border-radius: var(--bb-grid-size-6);
+          color: var(--n-30);
+          text-decoration: none;
+          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+
+          &:hover {
+            background: var(--n-95);
+          }
+
+          & .g-icon {
+            font-size: 18px;
           }
         }
 
@@ -869,25 +879,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     };
   }
 
-  #calculateSelectionSize() {
-    if (!this.selectionState) {
-      return 0;
-    }
-
-    return [...this.selectionState.selectionState.graphs].reduce(
-      (prev, [, graph]) => {
-        return (
-          prev +
-          graph.assets.size +
-          graph.comments.size +
-          graph.nodes.size +
-          graph.references.size
-        );
-      },
-      0
-    );
-  }
-
   /**
    * If necessary, updates the text parts that contain parameterized references
    * to components.
@@ -916,6 +907,11 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         graphId,
         nodeId
       );
+      // The direct apply above incremented the graph version, so any
+      // pendingEdit captured earlier (via @input) is now stale.
+      // Clear it to prevent a false "edits were discarded" warning.
+      this.#edited = false;
+      this.sca?.controller.editor.step.clearPendingEdit();
       return;
     }
     const assetPath = data.get("asset-path") as string | null;
@@ -972,7 +968,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     ins: TemplatePart[];
     editGraphId: GraphIdentifier;
   } | null> {
-    let targetGraph = this.graph;
+    let targetGraph = this.#graph;
     if (!targetGraph) {
       return null;
     }
@@ -981,7 +977,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     const apiGraphId = graphId === MAIN_BOARD_ID ? "" : graphId;
 
     if (graphId !== MAIN_BOARD_ID) {
-      targetGraph = this.graph!.graphs()?.[graphId] ?? null;
+      targetGraph = this.#graph!.graphs()?.[graphId] ?? null;
     }
 
     if (!targetGraph) {
@@ -1033,7 +1029,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.actionTracker?.editStep("manual");
+    this.sca?.services.actionTracker?.editStep("manual");
 
     this.dispatchEvent(
       new StateEvent({
@@ -1110,13 +1106,13 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   }
 
   #renderNode(graphId: GraphIdentifier, nodeId: NodeIdentifier) {
-    let targetGraph = this.graph;
+    let targetGraph = this.#graph;
     if (!targetGraph) {
       return INVALID_ITEM;
     }
 
     if (graphId !== MAIN_BOARD_ID) {
-      targetGraph = this.graph!.graphs()?.[graphId] ?? null;
+      targetGraph = this.#graph!.graphs()?.[graphId] ?? null;
     }
 
     if (!targetGraph) {
@@ -1183,7 +1179,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             name="node-title"
             class="sans-flex round w-500 md-title-medium"
             .value=${node.title()}
-            ?disabled=${this.readOnly}
+            ?disabled=${this.#readOnly}
             @keydown=${(evt: KeyboardEvent) => {
               if (evt.key !== "Enter") {
                 return;
@@ -1217,7 +1213,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   ) {
     // Note that the board URL here may not be a HTTP/HTTPS URL - it could
     // be a Drive URL of the form drive:/12345.
-    const boardUrl = this.graph?.raw().url ?? getBoardUrlFromCurrentWindow();
+    const boardUrl = this.#graph?.raw().url ?? getBoardUrlFromCurrentWindow();
     if (!boardUrl || !isGenerativeNode(node)) {
       return nothing;
     }
@@ -1266,16 +1262,15 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       return html`Invalid value`;
     }
 
-    // Note that projectState and subGraphId must be set before value since
-    // value depends on the projectState & subGraphId to expand on chiclet
+    // Note that subGraphId must be set before value since
+    // value depends on the subGraphId to expand on chiclet
     // metadata.
     return html`<bb-text-editor
       ${isReferenced ? ref(this.#editorRef) : nothing}
-      .projectState=${this.projectState}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
       .value=${textPart.text}
       .supportsFastAccess=${fastAccess}
-      .readOnly=${this.readOnly}
+      .readOnly=${this.#readOnly}
       .isAgentMode=${agentMode}
       id=${port.name}
       name=${port.name}
@@ -1480,18 +1475,18 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           </div>
 
           ${extendedInfoOutput}
-          ${this.graph
+          ${this.#graph
             ? html`<bb-flowgen-in-step-button
                 monochrome
                 popoverPosition="below"
                 .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
-                .currentGraph=${this.graph.raw() satisfies GraphDescriptor}
+                .currentGraph=${this.#graph.raw() satisfies GraphDescriptor}
                 .constraint=${{
                   kind: "EDIT_STEP_CONFIG",
                   stepId: nodeId,
                 } satisfies FlowGenConstraint}
                 @bbgraphreplace=${() => {
-                  this.actionTracker?.editStep("flowgen");
+                  this.sca?.services.actionTracker?.editStep("flowgen");
                   // Ignore all edits to this point so that we don't issue
                   // a submit and stomp the new values.
                   this.#edited = false;
@@ -1500,7 +1495,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             : nothing}`;
       }
 
-      classes["read-only"] = this.readOnly;
+      classes["read-only"] = this.#readOnly;
 
       return [html`<div class=${classMap(classes)}>${value} ${controls}</div>`];
     };
@@ -1519,7 +1514,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
     return [
       ...basicPorts.map(portRender),
-      advancedPorts.length > 0
+      advancedPorts.length > 0 ||
+      this.sca?.controller.editor.step.memorySheetUrl
         ? html`<details
             id="advanced-settings"
             ?open=${this.#advancedOpen}
@@ -1533,6 +1529,16 @@ export class EntityEditor extends SignalWatcher(LitElement) {
           >
             <summary><span class="g-icon"></span>Advanced settings</summary>
             ${[...advancedPorts.map(portRender)]}
+            ${this.sca?.controller.editor.step.memorySheetUrl
+              ? html`<a
+                  class="memory-sheet-link"
+                  href=${this.sca.controller.editor.step.memorySheetUrl}
+                  target="_blank"
+                  rel="noopener"
+                  >Open Memory Database
+                  <span class="g-icon">open_in_new</span></a
+                >`
+              : nothing}
           </details>`
         : nothing,
     ];
@@ -1578,11 +1584,13 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
       this.#fastAccessRef.value.focusFilter();
     });
+    this.sca.controller.editor.fastAccess.fastAccessMode = "tools";
     this.#isUsingFastAccess = true;
   }
 
   #hideFastAccess() {
     this.#isUsingFastAccess = false;
+    this.sca.controller.editor.fastAccess.fastAccessMode = null;
     if (!this.#fastAccessRef.value) {
       return;
     }
@@ -1591,16 +1599,16 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   }
 
   #renderAsset(assetPath: AssetPath) {
-    const asset = this.graph?.assets().get(assetPath);
+    const asset = this.#graph?.assets().get(assetPath);
     if (!asset) {
       return INVALID_ITEM;
     }
 
-    if (!this.graph) {
+    if (!this.#graph) {
       return INVALID_ITEM;
     }
 
-    const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
+    const graphUrl = new URL(this.#graph.raw().url ?? window.location.href);
     const itemData = asset?.data.at(-1) ?? null;
     const dataPart = itemData?.parts[0] ?? null;
     const isDrawable = isStoredData(dataPart) && asset.subType === "drawable";
@@ -1620,7 +1628,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       }}
       .graphUrl=${graphUrl}
       .subType=${asset.subType}
-      .projectState=${this.projectState}
       .dataPart=${dataPart}
     ></bb-llm-part-input>`;
 
@@ -1677,26 +1684,15 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   }
 
   #renderSelectedItem() {
-    if (!this.selectionState) {
-      return;
-    }
+    const sel = this.sca.controller.editor.selection.selection;
 
-    const candidate = [...this.selectionState.selectionState.graphs].find(
-      ([, graph]) =>
-        graph.assets.size > 0 || graph.nodes.size > 0 || graph.comments.size > 0
-    );
     let value: HTMLTemplateResult | symbol = nothing;
-    if (!candidate) {
-      value = html`<div id="generic-status">Unsupported item</div>`;
+    if (sel.assets.size > 0) {
+      value = this.#renderAsset([...sel.assets][0]);
+    } else if (sel.nodes.size > 0) {
+      value = this.#renderNode(MAIN_BOARD_ID, [...sel.nodes][0]);
     } else {
-      const [id, graph] = candidate;
-      if (graph.assets.size) {
-        value = this.#renderAsset([...graph.assets][0]);
-      } else if (graph.nodes.size) {
-        value = this.#renderNode(id, [...graph.nodes][0]);
-      } else {
-        value = html`<div id="generic-status">Unsupported Item</div>`;
-      }
+      value = html`<div id="generic-status">Unsupported item</div>`;
     }
 
     return html`<form
@@ -1759,7 +1755,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Check if this is an asset edit
     const assetPath = data.get("asset-path") as string | null;
     if (assetPath !== null) {
-      const asset = this.projectState?.graphAssets.get(assetPath);
+      const asset = this.sca.controller.editor.graph.graphAssets.get(assetPath);
       if (!asset) {
         return;
       }
@@ -1783,7 +1779,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
   /**
    * Implements the StepEditorSurface interface, so that this class could
-   * be used in Project state machinery.
+   * be used in step editing.
    */
   async #save(): Promise<Outcome<void>> {
     if (!this.#edited) {
@@ -1815,11 +1811,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     });
   }
 
-  protected firstUpdated(changedProperties: PropertyValues): void {
-    if (!changedProperties.has("selectionState")) {
-      return;
-    }
-
+  protected firstUpdated(): void {
     this.focus();
   }
 
@@ -1827,8 +1819,15 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Read graph version to subscribe to graph changes via SignalWatcher.
     // This ensures we re-render when the graph is modified (e.g., wire drag).
     void this.sca.controller.editor.graph.version;
+    // Subscribe to selection changes via SignalWatcher.
+    void this.sca.controller.editor.selection.selectionId;
+    // Subscribe to memory sheet URL changes (set asynchronously by action).
+    void this.sca.controller.editor.step.memorySheetUrl;
 
-    const selectionCount = this.#calculateSelectionSize();
+    // Count only primary editable items (nodes, assets).
+    // Edges and asset-edges are secondary and shouldn't inflate the count.
+    const sel = this.sca.controller.editor.selection.selection;
+    const selectionCount = sel.nodes.size + sel.assets.size;
     if (selectionCount === 0) {
       return html`<div id="generic-status">Please select an item to edit</div>`;
     }
@@ -1841,9 +1840,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       this.#renderSelectedItem(),
       html`<bb-fast-access-menu
           ${ref(this.#fastAccessRef)}
-          .showTools=${true}
-          .showAssets=${false}
-          .showComponents=${false}
           @pointerdown=${(evt: PointerEvent) => {
             evt.stopImmediatePropagation();
           }}
@@ -1868,9 +1864,6 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
             this.#editorRef.value.addItem(part);
           }}
-          .graphId=${null}
-          .nodeId=${null}
-          .state=${this.projectState?.fastAccess}
         ></bb-fast-access-menu>
         <div ${ref(this.#proxyRef)} id="proxy"></div>`,
     ];

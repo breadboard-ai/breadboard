@@ -169,3 +169,213 @@ suite("Serialization Utilities", () => {
     });
   });
 });
+
+/**
+ * Tests for deep-wrapping safeguards.
+ *
+ * When `wrap()` produces a SignalMap, SignalSet, SignalArray, or SignalObject,
+ * subsequent mutations (set, add, index assignment, property assignment) must
+ * automatically wrap new POJO values.  This prevents reactivity bugs where
+ * unwrapped nested objects bypass signal tracking.
+ */
+suite("Deep-wrapping safeguards", () => {
+  suite("DeepSignalMap", () => {
+    test("set() auto-wraps POJO values", () => {
+      const map = wrap(new Map()) as SignalMap<string, unknown>;
+      map.set("key", { nested: true });
+
+      const value = map.get("key");
+      assert(
+        value instanceof SignalObject,
+        "POJO set on DeepSignalMap should be auto-wrapped to SignalObject"
+      );
+    });
+
+    test("set() auto-wraps nested arrays", () => {
+      const map = wrap(new Map()) as SignalMap<string, unknown>;
+      map.set("arr", [1, 2, 3]);
+
+      const value = map.get("arr");
+      assert(
+        value instanceof SignalArray,
+        "Array set on DeepSignalMap should be auto-wrapped to SignalArray"
+      );
+    });
+
+    test("set() auto-wraps nested Maps", () => {
+      const map = wrap(new Map()) as SignalMap<string, unknown>;
+      map.set("inner", new Map([["a", 1]]));
+
+      const value = map.get("inner");
+      assert(
+        value instanceof SignalMap,
+        "Map set on DeepSignalMap should be auto-wrapped to SignalMap"
+      );
+    });
+
+    test("set() passes through primitives", () => {
+      const map = wrap(new Map()) as SignalMap<string, unknown>;
+      map.set("num", 42);
+      map.set("str", "hello");
+
+      assert.strictEqual(map.get("num"), 42);
+      assert.strictEqual(map.get("str"), "hello");
+    });
+
+    test("set() is idempotent for already-wrapped values", () => {
+      const map = wrap(new Map()) as SignalMap<string, unknown>;
+      const existingSignalObj = new SignalObject({ x: 1 });
+      map.set("obj", existingSignalObj);
+
+      assert.strictEqual(
+        map.get("obj"),
+        existingSignalObj,
+        "Already-wrapped SignalObject should pass through unchanged"
+      );
+    });
+  });
+
+  suite("DeepSignalSet", () => {
+    test("add() auto-wraps POJO values", () => {
+      const set = wrap(new Set()) as SignalSet<unknown>;
+      const pojo = { nested: true };
+      set.add(pojo);
+
+      // The POJO should be wrapped, so the original reference is not in the set
+      assert(
+        !set.has(pojo),
+        "Original POJO should not be in the set (it was wrapped)"
+      );
+      // But the set should have one item
+      assert.strictEqual(set.size, 1);
+
+      // The item in the set should be a SignalObject
+      const [item] = set;
+      assert(
+        item instanceof SignalObject,
+        "POJO added to DeepSignalSet should be auto-wrapped to SignalObject"
+      );
+    });
+
+    test("add() passes through primitives", () => {
+      const set = wrap(new Set()) as SignalSet<unknown>;
+      set.add(42);
+      set.add("hello");
+
+      assert(set.has(42));
+      assert(set.has("hello"));
+    });
+  });
+
+  suite("Deep SignalArray", () => {
+    test("index assignment auto-wraps POJOs", () => {
+      const arr = wrap([]) as SignalArray<unknown>;
+      arr.push(null); // ensure index 0 exists
+      arr[0] = { nested: true };
+
+      assert(
+        arr[0] instanceof SignalObject,
+        "POJO assigned to array index should be auto-wrapped to SignalObject"
+      );
+    });
+
+    test("instanceof SignalArray works on deep-wrapped array", () => {
+      const arr = wrap([1, 2, 3]) as SignalArray<number>;
+      assert(
+        arr instanceof SignalArray,
+        "Deep-wrapped array should pass instanceof SignalArray"
+      );
+    });
+
+    test("unwrap works on deep-wrapped array", () => {
+      const arr = wrap([1, { a: 2 }]) as SignalArray<unknown>;
+      const plain = unwrap(arr);
+
+      assert(Array.isArray(plain));
+      assert.deepStrictEqual(plain, [1, { a: 2 }]);
+    });
+
+    test("nested arrays in initial data are recursively wrapped", () => {
+      const arr = wrap([[1, 2], [3]]) as SignalArray<unknown>;
+
+      assert(arr[0] instanceof SignalArray, "Nested array should be wrapped");
+      assert(arr[1] instanceof SignalArray, "Nested array should be wrapped");
+    });
+  });
+
+  suite("Deep SignalObject", () => {
+    test("property assignment auto-wraps POJOs", () => {
+      const obj = wrap({ key: null }) as Record<string, unknown>;
+      obj.key = { nested: true };
+
+      assert(
+        obj.key instanceof SignalObject,
+        "POJO assigned to property should be auto-wrapped to SignalObject"
+      );
+    });
+
+    test("instanceof SignalObject works on deep-wrapped object", () => {
+      const obj = wrap({ a: 1 });
+      assert(
+        obj instanceof SignalObject,
+        "Deep-wrapped object should pass instanceof SignalObject"
+      );
+    });
+
+    test("unwrap works on deep-wrapped object", () => {
+      const obj = wrap({ a: 1, b: { c: 2 } });
+      const plain = unwrap(obj);
+
+      assert.deepStrictEqual(plain, { a: 1, b: { c: 2 } });
+      assert.strictEqual(
+        Object.getPrototypeOf(plain),
+        Object.prototype,
+        "Unwrapped result should be a plain object"
+      );
+    });
+
+    test("nested objects in initial data are recursively wrapped", () => {
+      const obj = wrap({ inner: { deep: true } }) as Record<string, unknown>;
+
+      assert(
+        obj.inner instanceof SignalObject,
+        "Nested object should be wrapped"
+      );
+    });
+  });
+
+  suite("wrap/unwrap round-trip with deep-wrapped collections", () => {
+    test("Map with nested POJOs survives round-trip", () => {
+      const original = new Map<string, unknown>([
+        ["a", { x: 1 }],
+        ["b", [1, 2]],
+      ]);
+
+      const wrapped = wrap(original);
+      const unwrapped = unwrap(wrapped) as Map<string, unknown>;
+
+      assert(unwrapped instanceof Map);
+      assert.deepStrictEqual(unwrapped.get("a"), { x: 1 });
+      assert.deepStrictEqual(unwrapped.get("b"), [1, 2]);
+    });
+
+    test("deeply nested structure survives round-trip", () => {
+      const original = {
+        items: [
+          { name: "first", tags: new Set(["a", "b"]) },
+          { name: "second", meta: new Map([["key", "val"]]) },
+        ],
+      };
+
+      const wrapped = wrap(original);
+      const unwrapped = unwrap(wrapped) as typeof original;
+
+      assert.strictEqual(unwrapped.items[0].name, "first");
+      assert(unwrapped.items[0].tags instanceof Set);
+      assert(unwrapped.items[0].tags.has("a"));
+      assert.strictEqual(unwrapped.items[1].name, "second");
+      assert(unwrapped.items[1].meta instanceof Map);
+      assert.strictEqual(unwrapped.items[1].meta.get("key"), "val");
+    });
+  });
+});

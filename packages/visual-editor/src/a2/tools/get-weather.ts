@@ -2,12 +2,7 @@
  * @fileoverview Searches weather information on Google Search.
  */
 
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { err, ok, toLLMContent } from "../a2/utils.js";
 import { executeTool } from "../a2/step-executor.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -24,7 +19,6 @@ export type Outputs = {
 
 async function invoke(
   inputs: WeatherInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const location = (inputs.location || "").trim();
@@ -32,7 +26,7 @@ async function invoke(
     return err("Please provide a location");
   }
   console.log("Location: " + location);
-  const executing = await executeTool<string>(caps, moduleArgs, "get_weather", {
+  const executing = await executeTool<string>(moduleArgs, "get_weather", {
     location,
   });
   if (!ok(executing)) return executing;

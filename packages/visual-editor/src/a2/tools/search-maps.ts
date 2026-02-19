@@ -2,7 +2,7 @@
  * @fileoverview Search for location information.
  */
 
-import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
+import { Outcome, Schema } from "@breadboard-ai/types";
 import { ok } from "../a2/utils.js";
 import { executeTool } from "../a2/step-executor.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -64,11 +64,9 @@ ${results.places
 
 async function invoke(
   { query }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const executing = await executeTool<SearchMapResults>(
-    caps,
     moduleArgs,
     "map_search",
     {

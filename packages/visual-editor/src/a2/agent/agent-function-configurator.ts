@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import type { FunctionGroupConfigurator } from "./loop.js";
+import type { FunctionGroupConfigurator } from "./types.js";
 import { getGoogleDriveFunctionGroup } from "./functions/google-drive.js";
 import { getGenerateFunctionGroup } from "./functions/generate.js";
 import { getSystemFunctionGroup } from "./functions/system.js";
@@ -22,7 +21,6 @@ import { Generators } from "./types.js";
 export { createAgentConfigurator };
 
 function createAgentConfigurator(
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   generators: Generators
 ): FunctionGroupConfigurator {
@@ -43,7 +41,6 @@ function createAgentConfigurator(
     groups.push(
       getGenerateFunctionGroup({
         fileSystem: deps.fileSystem,
-        caps,
         moduleArgs,
         translator: deps.translator,
         taskTreeManager,
@@ -76,7 +73,6 @@ function createAgentConfigurator(
 
     if (flags.uiType === "a2ui") {
       const a2uiFunctionGroup = await getA2UIFunctionGroup({
-        caps,
         moduleArgs,
         fileSystem: deps.fileSystem,
         translator: deps.translator,
@@ -91,6 +87,24 @@ function createAgentConfigurator(
       deps.fileSystem.addSystemFile(CHAT_LOG_PATH, () =>
         JSON.stringify(deps.ui.chatLog)
       );
+      if (flags.useMemory) {
+        const memoryManager = moduleArgs.agentContext.memoryManager;
+        deps.ui.setMemoryManager(memoryManager, moduleArgs.context);
+        // Ensure the __chat_log__ sheet exists, then load historical entries.
+        const ensured = await memoryManager.ensureSystemSheet(
+          moduleArgs.context,
+          "__chat_log__",
+          ["timestamp", "session_id", "role", "content"]
+        );
+        if (ok(ensured)) {
+          const sheetData = await memoryManager.readSheet(moduleArgs.context, {
+            range: "__chat_log__!A:D",
+          });
+          if (ok(sheetData) && "values" in sheetData && sheetData.values) {
+            deps.ui.seedChatLog(sheetData.values);
+          }
+        }
+      }
       groups.push(
         getChatFunctionGroup({
           chatManager: deps.ui,

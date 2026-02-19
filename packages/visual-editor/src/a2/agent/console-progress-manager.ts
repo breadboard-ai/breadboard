@@ -12,6 +12,7 @@ import {
   LLMContent,
 } from "@breadboard-ai/types";
 import { GeminiBody } from "../a2/gemini.js";
+import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import { AgentProgressManager } from "./types.js";
 import { llm, progressFromThought } from "../a2/utils.js";
 import { StatusUpdateCallbackOptions } from "./function-definition.js";
@@ -19,6 +20,7 @@ import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
 import { ConsoleWorkItem } from "./console-work-item.js";
 import { ProgressReporter } from "./types.js";
 import { StreamingRequestBody } from "../a2/opal-adk-stream.js";
+import { parseThought } from "./thought-parser.js";
 
 export { ConsoleProgressManager };
 
@@ -27,27 +29,6 @@ export { ConsoleProgressManager };
  * they are handled by other UI mechanisms.
  */
 const SKIP_WORK_ITEM_FUNCTIONS = new Set(["chat_present_choices"]);
-
-/**
- * Parsed thought with optional title and body.
- */
-type ParsedThought = {
-  title: string | null;
-  body: string;
-};
-
-/**
- * Parse a thought string to extract title (from **Title**) and body.
- */
-function parseThought(text: string): ParsedThought {
-  const match = text.match(/\*\*(.+?)\*\*/);
-  if (!match) {
-    return { title: null, body: text };
-  }
-  const title = match[1];
-  const body = text.replace(match[0], "").trim();
-  return { title, body };
-}
 
 /**
  * Trim trailing ellipsis ("...") from a string.
@@ -111,7 +92,7 @@ class ConsoleProgressManager implements AgentProgressManager {
   startAgent(objective: LLMContent) {
     if (this.#screen) {
       this.#screen.progress = StarterPhraseVendor.instance.phrase();
-      this.#screen.expectedDuration = -1;
+      setScreenDuration(this.#screen, -1);
     }
     if (this.#consoleEntry) {
       const update = {
@@ -135,7 +116,7 @@ class ConsoleProgressManager implements AgentProgressManager {
   generatingLayouts(uiPrompt: LLMContent | undefined) {
     if (this.#screen) {
       this.#screen.progress = "Generating layouts";
-      this.#screen.expectedDuration = 70;
+      setScreenDuration(this.#screen, 70);
     }
     this.#addWorkItem(
       "Generating Layouts",
@@ -164,10 +145,7 @@ class ConsoleProgressManager implements AgentProgressManager {
         title: "Send request",
         icon: "upload",
         body: {
-          parts: [
-            { text: `Calling model: ${model}` },
-            { json: body },
-          ],
+          parts: [{ text: `Calling model: ${model}` }, { json: body }],
         },
       });
     }
@@ -191,7 +169,7 @@ class ConsoleProgressManager implements AgentProgressManager {
     if (this.#screen) {
       this.#previousStatus = this.#screen.progress;
       this.#screen.progress = progressFromThought(text);
-      this.#screen.expectedDuration = -1;
+      setScreenDuration(this.#screen, -1);
     }
   }
 
@@ -263,7 +241,7 @@ class ConsoleProgressManager implements AgentProgressManager {
       if (this.#screen) {
         this.#previousStatus = this.#screen.progress;
         this.#screen.progress = progressFromThought(status);
-        this.#screen.expectedDuration = -1;
+        setScreenDuration(this.#screen, -1);
       }
     } else {
       if (!this.#screen) return;
@@ -272,14 +250,14 @@ class ConsoleProgressManager implements AgentProgressManager {
         if (this.#previousStatus) {
           this.#screen.progress = this.#previousStatus;
         }
-        this.#screen.expectedDuration = -1;
+        setScreenDuration(this.#screen, -1);
       } else {
         // Remove the occasional ellipsis from the status
         status = trimEllipsis(status);
         if (options?.expectedDurationInSec) {
-          this.#screen.expectedDuration = options.expectedDurationInSec;
+          setScreenDuration(this.#screen, options.expectedDurationInSec);
         } else {
-          this.#screen.expectedDuration = -1;
+          setScreenDuration(this.#screen, -1);
         }
 
         this.#previousStatus = this.#screen.progress;
@@ -313,7 +291,7 @@ class ConsoleProgressManager implements AgentProgressManager {
   finish() {
     if (this.#screen) {
       this.#screen.progress = undefined;
-      this.#screen.expectedDuration = -1;
+      setScreenDuration(this.#screen, -1);
     }
     this.#agentSession?.finish();
   }

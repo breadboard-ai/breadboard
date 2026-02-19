@@ -5,44 +5,56 @@
  */
 
 import type {
-  GraphDescriptor,
-  HarnessRunner,
+  ConsoleEntry,
+  ErrorObject,
   NodeLifecycleState,
   NodeRunStatus,
-  RunConfig,
-  RuntimeFlagManager,
+  SimplifiedProjectRunState,
 } from "@breadboard-ai/types";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "../../../data/file-system.js";
+import type {
+  LLMContent,
+  OutputResponse,
+  Schema,
+  WorkItem,
+} from "@breadboard-ai/types";
+
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
-import { inputsFromSettings } from "../../../ui/data/inputs.js";
-import type { SettingsStore } from "../../../ui/data/settings-store.js";
-import { STATUS } from "../../../ui/types/types.js";
+import { STATUS } from "../../types.js";
 import { getStepIcon } from "../../../ui/utils/get-step-icon.js";
-import { makeAction } from "../binder.js";
+import { makeAction, stopRun } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
 import { RunController } from "../../controller/subcontrollers/run/run-controller.js";
-import { onDblClick, onGraphVersionForSync } from "./triggers.js";
+import {
+  onGraphVersionForSync,
+  onNodeActionRequested,
+  onRunStopped,
+  onTopologyChange,
+  onRunnerStart,
+  onRunnerResume,
+  onRunnerPause,
+  onRunnerEnd,
+  onRunnerError,
+  onRunnerGraphStart,
+  onRunnerNodeStart,
+  onRunnerNodeEnd,
+  onRunnerNodeStateChange,
+  onRunnerEdgeStateChange,
+  onRunnerOutput,
+} from "./triggers.js";
+import { edgeToString } from "../../../ui/utils/workspace.js";
+import { decodeErrorData } from "../../utils/decode-error.js";
+import { createAppScreen, tickScreenProgress } from "../../utils/app-screen.js";
+import { computeControlState } from "../../../utils/control.js";
+import { toLLMContentArray } from "../../utils/common.js";
+import {
+  cleanupStoppedInput,
+  dispatchRun,
+  dispatchStop,
+  handleInputRequested,
+} from "./helpers/helpers.js";
 
 export const bind = makeAction();
-
-// =============================================================================
-// Coordinated Actions
-// =============================================================================
-
-export const testAction = asAction(
-  "Run.test",
-  {
-    mode: ActionMode.Immediate,
-    triggeredBy: () => onDblClick(),
-  },
-  async (): Promise<void> => {
-    return new Promise((r) => setTimeout(r, 3_000));
-  }
-);
 
 /**
  * Starts the current run.
@@ -74,12 +86,7 @@ export const stop = asAction(
   "Run.stop",
   ActionMode.Immediate,
   async (): Promise<void> => {
-    const { controller } = bind;
-    const runController = controller.run.main;
-    if (runController.abortController) {
-      runController.abortController.abort();
-    }
-    runController.setStatus(STATUS.STOPPED);
+    stopRun(bind.controller);
   }
 );
 
@@ -88,80 +95,54 @@ export const stop = asAction(
 // =============================================================================
 
 /**
- * Callback to connect the runner to the project.
- * Called after runner is created, allowing Runtime to bridge to Project.
- */
-export type ConnectToProjectCallback = (
-  runner: HarnessRunner,
-  abortSignal: AbortSignal
-) => void;
-
-/**
- * Configuration for preparing a run.
- */
-export interface PrepareRunConfig {
-  /** The graph to run */
-  graph: GraphDescriptor;
-  /** The URL of the graph */
-  url: string;
-  /** User settings (for inputs) */
-  settings: SettingsStore;
-  /** Credentials fetch function */
-  fetchWithCreds: typeof fetch;
-  /** Runtime flags */
-  flags: RuntimeFlagManager;
-  /** Callback to get project run state */
-  getProjectRunState: RunConfig["getProjectRunState"];
-  /**
-   * Callback to connect runner to project (bridging Runtime to SCA).
-   * @deprecated Remove once Project is moved into SCA structure.
-   */
-  connectToProject?: ConnectToProjectCallback;
-}
-
-/**
  * Prepares a run by building the RunConfig, creating the HarnessRunner,
- * and setting it on the controller.
+ * registering it on the service (for event forwarding), and setting it on
+ * the controller.
+ *
+ * All configuration is pulled directly from the SCA bind (controller/services).
+ * Wired to `onTopologyChange` so the runner is re-created whenever nodes are
+ * added or removed, keeping the console in sync with the current graph.
+ *
+ * Skips re-preparation while a run is in progress — mid-run topology changes
+ * are handled by `syncConsoleFromRunner` instead.
  */
 export const prepare = asAction(
   "Run.prepare",
-  { mode: ActionMode.Immediate },
-  async (config: PrepareRunConfig): Promise<void> => {
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onTopologyChange(bind),
+  },
+  async (): Promise<void> => {
     const { controller, services } = bind;
     const logger = Utils.Logging.getLogger(controller);
     const LABEL = "Run Actions";
 
-    const {
-      graph,
-      url,
-      settings,
-      fetchWithCreds,
-      flags,
-      getProjectRunState,
-      connectToProject,
-    } = config;
+    // Don't re-prepare while a run is in progress.
+    if (controller.run.main.status === STATUS.RUNNING) {
+      return;
+    }
 
-    // Build the fileSystem for this run
-    const fileSystem = services.graphStore.fileSystem.createRunFileSystem({
-      graphUrl: url,
-      env: envFromGraphDescriptor(services.graphStore.fileSystem.env(), graph),
-      assets: assetsFromGraphDescriptor(graph),
-    });
+    const graph = controller.editor.graph.editor?.raw();
+    const url = controller.editor.graph.url;
+    if (!graph || !url) {
+      return;
+    }
 
-    // Build the full RunConfig
-    const runConfig: RunConfig = {
+    const runConfig = {
       url,
       runner: graph,
-      diagnostics: true,
+      diagnostics: true as const,
       loader: services.loader,
-      graphStore: services.graphStore,
-      fileSystem,
-      // TODO: Remove this. Inputs from Settings is no longer a thing.
-      inputs: inputsFromSettings(settings),
-      fetchWithCreds,
-      getProjectRunState,
+      graphStore: controller.editor.graph,
+      sandbox: services.sandbox,
+      fetchWithCreds: services.fetchWithCreds,
+      getProjectRunState: () =>
+        ({
+          console: controller.run.main.console,
+          app: { screens: controller.run.screen.screens },
+        }) as unknown as SimplifiedProjectRunState,
       clientDeploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
-      flags,
+      flags: controller.global.flags,
     };
     logger.log(
       Utils.Logging.Formatter.info(`Created run config for ${url}`),
@@ -172,175 +153,447 @@ export const prepare = asAction(
     const { runner, abortController } =
       services.runService.createRunner(runConfig);
 
-    // Register status listeners on the runner
-    runner.addEventListener("start", () => {
-      controller.run.main.setStatus(STATUS.RUNNING);
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner started for ${url}`),
-        LABEL
-      );
-    });
+    // Register on service — this hooks up event forwarding to runnerEventBus.
+    services.runService.registerRunner(runner);
 
-    runner.addEventListener("resume", () => {
-      controller.run.main.setStatus(STATUS.RUNNING);
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner resumed for ${url}`),
-        LABEL
-      );
-    });
-
-    runner.addEventListener("pause", () => {
-      controller.run.main.setStatus(STATUS.PAUSED);
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner paused for ${url}`),
-        LABEL
-      );
-    });
-
-    runner.addEventListener("end", () => {
-      controller.run.main.setStatus(STATUS.STOPPED);
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner ended for ${url}`),
-        LABEL
-      );
-    });
-
-    runner.addEventListener("error", () => {
-      controller.run.main.setStatus(STATUS.STOPPED);
-      logger.log(
-        Utils.Logging.Formatter.verbose(`Runner error for ${url}`),
-        LABEL
-      );
-    });
-
-    runner.addEventListener("error", (event) => {
-      const error = event.data?.error;
-      const message =
-        typeof error === "string"
-          ? error
-          : ((error as { message?: string })?.message ?? "Unknown error");
-      controller.run.main.setError({ message });
-      controller.run.main.clearInput();
-    });
-
-    runner.addEventListener("end", () => {
-      controller.run.main.clearInput();
-    });
-
-    runner.addEventListener("graphstart", (event) => {
-      // Only reset for top-level graph
-      if (event.data.path.length === 0) {
-        controller.run.main.resetOutput();
-
-        // Use runner.plan.stages for execution-ordered iteration
-        // Flatten stages to get nodes in execution order
-        const nodeIds: string[] = [];
-        for (const stage of runner.plan?.stages ?? []) {
-          for (const planNode of stage) {
-            nodeIds.push(planNode.node.id);
-          }
-        }
-
-        controller.run.main.setEstimatedEntryCount(nodeIds.length);
-
-        // Pre-populate console with all graph nodes as "inactive" in execution order
-        const graphDescriptor = services.graphStore.getByDescriptor(graph);
-        if (graphDescriptor?.success) {
-          const inspectable = services.graphStore.inspect(
-            graphDescriptor.result,
-            ""
-          );
-          for (const nodeId of nodeIds) {
-            const node = inspectable?.nodeById(nodeId);
-            const title = node?.title() ?? nodeId;
-            const metadata = node?.currentDescribe()?.metadata ?? {};
-            const icon = getStepIcon(metadata.icon, node?.currentPorts());
-
-            const entry = RunController.createConsoleEntry(title, "inactive", {
-              icon,
-              tags: metadata.tags,
-            });
-            controller.run.main.setConsoleEntry(nodeId, entry);
-
-            // If metadata wasn't ready (no tags), async fetch full describe
-            if (!metadata.tags && node) {
-              node.describe().then((result) => {
-                const { icon: asyncIcon, tags: asyncTags } =
-                  result.metadata || {};
-                const resolvedIcon = getStepIcon(
-                  asyncIcon,
-                  node.currentPorts()
-                );
-                const updatedEntry = RunController.createConsoleEntry(
-                  title,
-                  "inactive",
-                  {
-                    icon: resolvedIcon,
-                    tags: asyncTags,
-                  }
-                );
-                controller.run.main.setConsoleEntry(nodeId, updatedEntry);
-              });
-            }
-          }
-        }
-      }
-    });
-
-    runner.addEventListener("nodestart", (event) => {
-      // Only handle top-level nodes
-      if (event.data.path.length > 1) return;
-
-      const nodeId = event.data.node.id;
-      const graphDescriptor = services.graphStore.getByDescriptor(graph);
-      if (!graphDescriptor?.success) return;
-
-      const inspectable = services.graphStore.inspect(
-        graphDescriptor.result,
-        ""
-      );
-      const node = inspectable?.nodeById(nodeId);
-      const title = node?.title() ?? nodeId;
-      const metadata = node?.currentDescribe()?.metadata ?? {};
-
-      const entry = RunController.createConsoleEntry(title, "working", {
-        icon: getStepIcon(metadata.icon, node?.currentPorts()),
-        tags: metadata.tags,
-      });
-      controller.run.main.setConsoleEntry(nodeId, entry);
-    });
-
-    // Handle nodeend - update console entry status to succeeded
-    runner.addEventListener("nodeend", (event) => {
-      // Only handle top-level nodes
-      if (event.data.path.length > 1) return;
-
-      const nodeId = event.data.node.id;
-      const existing = controller.run.main.console.get(nodeId);
-      if (existing) {
-        controller.run.main.setConsoleEntry(nodeId, {
-          ...existing,
-          status: { status: "succeeded" },
-          completed: true,
-        });
-      }
-    });
+    // Wire input lifecycle: when a console entry calls requestInputForNode,
+    // notify the input queue to handle activation (bump screen, set input, etc.)
+    controller.run.main.onInputRequested = (id, schema) =>
+      handleInputRequested(id, schema, controller.run);
 
     // Set on controller
     controller.run.main.setRunner(runner, abortController);
 
-    // Connect to project if callback provided
-    if (connectToProject) {
-      connectToProject(runner, abortController.signal);
-    }
-
     // Set status to stopped (ready to start)
     controller.run.main.setStatus(STATUS.STOPPED);
+
+    // Pre-populate renderer node states from the orchestrator's initial state
+    // so that the graph shows run buttons immediately.
+    controller.run.renderer.reset();
+    for (const [nodeId, nodeState] of runner.state) {
+      const state = nodeState.state;
+      controller.run.renderer.setNodeState(
+        nodeId,
+        state === "failed"
+          ? { status: "failed", errorMessage: "" }
+          : { status: state }
+      );
+    }
 
     // Pre-populate console with all graph nodes as "inactive" on initial load
     await syncConsoleFromRunner();
   }
 );
+
+// =============================================================================
+// Runner Event-Triggered Actions
+// =============================================================================
+// Each runner event type gets its own triggered action, making it visible in
+// the coordination registry, testable in isolation, and independently loggable.
+
+/**
+ * Module-level progress ticker handle, shared between onStart (creates it)
+ * and onEnd/onError (clears it).
+ */
+let progressTickerHandle: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Runner "start" — sets status to RUNNING and starts the progress ticker.
+ */
+export const onStart = asAction(
+  "Run.onRunnerStart",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerStart(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const logger = Utils.Logging.getLogger(controller);
+    const url = controller.editor.graph.url ?? "(unknown)";
+
+    controller.run.main.setStatus(STATUS.RUNNING);
+    logger.log(
+      Utils.Logging.Formatter.verbose(`Runner started for ${url}`),
+      "Run Actions"
+    );
+
+    // Start ticking progress every 250ms
+    progressTickerHandle = setInterval(() => {
+      for (const screen of controller.run.screen.screens.values()) {
+        tickScreenProgress(screen);
+      }
+    }, 250);
+  }
+);
+
+/**
+ * Runner "resume" — sets status to RUNNING.
+ */
+export const onResume = asAction(
+  "Run.onRunnerResume",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerResume(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    controller.run.main.setStatus(STATUS.RUNNING);
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Runner resumed for ${controller.editor.graph.url ?? "(unknown)"}`
+      ),
+      "Run Actions"
+    );
+  }
+);
+
+/**
+ * Runner "pause" — sets status to PAUSED.
+ */
+export const onPause = asAction(
+  "Run.onRunnerPause",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerPause(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    controller.run.main.setStatus(STATUS.PAUSED);
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Runner paused for ${controller.editor.graph.url ?? "(unknown)"}`
+      ),
+      "Run Actions"
+    );
+  }
+);
+
+/**
+ * Runner "end" — sets status to STOPPED, clears ticker and input.
+ */
+export const onEnd = asAction(
+  "Run.onRunnerEnd",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerEnd(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    controller.run.main.setStatus(STATUS.STOPPED);
+    if (progressTickerHandle) {
+      clearInterval(progressTickerHandle);
+      progressTickerHandle = null;
+    }
+    controller.run.main.clearInput();
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Runner ended for ${controller.editor.graph.url ?? "(unknown)"}`
+      ),
+      "Run Actions"
+    );
+  }
+);
+
+/**
+ * Runner "error" — sets status to STOPPED, clears ticker, sets error + clears input.
+ */
+export const onError = asAction(
+  "Run.onRunnerError",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerError(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+
+    // Status + ticker cleanup
+    controller.run.main.setStatus(STATUS.STOPPED);
+    if (progressTickerHandle) {
+      clearInterval(progressTickerHandle);
+      progressTickerHandle = null;
+    }
+
+    // Extract error message from the event detail
+    const detail = (evt as CustomEvent)?.detail;
+    const error = detail?.error;
+    const message =
+      typeof error === "string"
+        ? error
+        : ((error as { message?: string })?.message ?? "Unknown error");
+    controller.run.main.setError({ message });
+    controller.run.main.clearInput();
+
+    Utils.Logging.getLogger(controller).log(
+      Utils.Logging.Formatter.verbose(
+        `Runner error for ${controller.editor.graph.url ?? "(unknown)"}`
+      ),
+      "Run Actions"
+    );
+  }
+);
+
+/**
+ * Runner "graphstart" — resets controllers and pre-populates console.
+ */
+export const onGraphStartAction = asAction(
+  "Run.onGraphStart",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerGraphStart(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+    const path = detail?.path;
+
+    // Only reset for top-level graph
+    if (!path || path.length !== 0) return;
+
+    controller.run.main.reset();
+    controller.run.renderer.reset();
+    controller.run.screen.reset();
+
+    const runner = controller.run.main.runner;
+
+    // Use runner.plan.stages for execution-ordered iteration
+    // Flatten stages to get nodes in execution order
+    const nodeIds: string[] = [];
+    for (const stage of runner?.plan?.stages ?? []) {
+      for (const planNode of stage) {
+        nodeIds.push(planNode.node.id);
+      }
+    }
+
+    controller.run.main.setEstimatedEntryCount(nodeIds.length);
+
+    // Pre-populate console with all graph nodes as "inactive" in execution order
+    const inspectable = controller.editor.graph.get()?.graphs.get("");
+    if (inspectable) {
+      for (const nodeId of nodeIds) {
+        const node = inspectable?.nodeById(nodeId);
+        const title = node?.title() ?? nodeId;
+        const metadata = node?.currentDescribe()?.metadata ?? {};
+        const icon = getStepIcon(metadata.icon, node?.currentPorts());
+
+        const entry = RunController.createConsoleEntry(title, "inactive", {
+          icon,
+          tags: metadata.tags,
+        });
+        controller.run.main.setConsoleEntry(nodeId, entry);
+
+        // If metadata wasn't ready (no tags), async fetch full describe
+        if (!metadata.tags && node) {
+          node.describe().then((result) => {
+            const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
+            const resolvedIcon = getStepIcon(asyncIcon, node.currentPorts());
+            const updatedEntry = RunController.createConsoleEntry(
+              title,
+              "inactive",
+              {
+                icon: resolvedIcon,
+                tags: asyncTags,
+              }
+            );
+            controller.run.main.setConsoleEntry(nodeId, updatedEntry);
+          });
+        }
+      }
+    }
+  }
+);
+
+/**
+ * Runner "nodestart" — creates console entry, sets renderer state, creates screen.
+ */
+export const onNodeStartAction = asAction(
+  "Run.onNodeStart",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerNodeStart(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+
+    // Only handle top-level nodes
+    if (!detail || detail.path.length > 1) return;
+
+    const nodeId = detail.node.id;
+    const inspectable = controller.editor.graph.get()?.graphs.get("");
+    const node = inspectable?.nodeById(nodeId);
+    const title = node?.title() ?? nodeId;
+    const metadata = node?.currentDescribe()?.metadata ?? {};
+
+    const entry = RunController.createConsoleEntry(title, "working", {
+      icon: getStepIcon(metadata.icon, node?.currentPorts()),
+      tags: metadata.tags,
+      id: nodeId,
+      controller: controller.run.main,
+    });
+    controller.run.main.setConsoleEntry(nodeId, entry);
+    controller.run.renderer.setNodeState(nodeId, { status: "working" });
+
+    // Create screen for this node (unless it should be skipped)
+    const outputSchema = node?.currentDescribe()?.outputSchema;
+    const controlState = computeControlState(detail.inputs ?? {});
+    if (!controlState.skip) {
+      const screen = createAppScreen(title, outputSchema);
+      controller.run.screen.setScreen(nodeId, screen);
+    }
+  }
+);
+
+/**
+ * Runner "nodeend" — updates console entry status, finalizes screen.
+ */
+export const onNodeEndAction = asAction(
+  "Run.onNodeEnd",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerNodeEnd(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+
+    // Only handle top-level nodes
+    if (!detail || detail.path.length > 1) return;
+
+    const nodeId = detail.node.id;
+    const existing = controller.run.main.console.get(nodeId);
+    if (existing) {
+      const { outputs } = detail;
+      const hasFailed = outputs && "$error" in outputs;
+
+      if (hasFailed) {
+        // Extract error message from the $error field.
+        const errorData = outputs.$error;
+        const message =
+          typeof errorData === "string"
+            ? errorData
+            : ((errorData as { message?: string })?.message ?? "Unknown error");
+        existing.error = { message };
+      } else if (outputs) {
+        // Populate the output map for completed step display.
+        const inspectable = controller.editor.graph.get()?.graphs.get("");
+        const node = inspectable?.nodeById(nodeId);
+        const outputSchema = node?.currentDescribe()?.outputSchema ?? {};
+        const { products } = toLLMContentArray(outputSchema as Schema, outputs);
+        for (const [name, product] of Object.entries(products)) {
+          existing.output.set(name, product as LLMContent);
+        }
+      }
+
+      controller.run.main.setConsoleEntry(nodeId, {
+        ...existing,
+        status: hasFailed
+          ? { status: "failed", errorMessage: existing.error!.message }
+          : { status: "succeeded" },
+        completed: true,
+      });
+      if (hasFailed) {
+        controller.run.renderer.setNodeState(nodeId, {
+          status: "failed",
+          errorMessage: existing.error!.message,
+        });
+      } else {
+        controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
+      }
+    }
+
+    // Finalize or delete screen based on node state
+    const nodeState = controller.run.main.runner?.state?.get(nodeId);
+    if (nodeState?.state === "interrupted") {
+      controller.run.screen.deleteScreen(nodeId);
+    } else {
+      controller.run.screen.screens.get(nodeId)?.finalize(detail);
+    }
+  }
+);
+
+/**
+ * Runner "nodestatechange" — updates renderer node state.
+ */
+export const onNodeStateChangeAction = asAction(
+  "Run.onNodeStateChange",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerNodeStateChange(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller, services } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+    if (!detail) return;
+
+    const { id, state, message } = detail;
+    if (state === "failed") {
+      const errorMessage =
+        decodeErrorData(services.actionTracker, message as ErrorObject) ??
+        "Unknown error";
+      controller.run.renderer.setNodeState(id, {
+        status: state,
+        errorMessage: errorMessage.message,
+      });
+      return;
+    }
+    controller.run.renderer.setNodeState(id, { status: state });
+  }
+);
+
+/**
+ * Runner "edgestatechange" — updates renderer edge state.
+ */
+export const onEdgeStateChangeAction = asAction(
+  "Run.onEdgeStateChange",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerEdgeStateChange(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail;
+    if (!detail) return;
+
+    const { edges, state } = detail;
+    edges?.forEach(
+      (edge: { from: string; to: string; out: string; in: string }) => {
+        const edgeId = edgeToString(edge);
+        controller.run.renderer.setEdgeState(edgeId, { status: state });
+      }
+    );
+  }
+);
+
+/**
+ * Runner "output" — writes to screen and console entry.
+ */
+export const onOutputAction = asAction(
+  "Run.onOutput",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunnerOutput(bind),
+  },
+  async (evt?: Event): Promise<void> => {
+    const { controller } = bind;
+    const detail = (evt as CustomEvent)?.detail as OutputResponse | undefined;
+    if (!detail || !detail.bubbled) return;
+
+    const nodeId = detail.node.id;
+
+    // Write to screen (app view).
+    controller.run.screen.screens.get(nodeId)?.addOutput(detail);
+
+    // Write to console entry as a work item (console view live display).
+    const entry = controller.run.main.console.get(nodeId);
+    if (entry) {
+      addOutputWorkItem(entry, detail);
+    }
+  }
+);
+
+// =============================================================================
+// Console Sync
+// =============================================================================
 
 /**
  * Maps a NodeLifecycleState to a NodeRunStatus for console entries.
@@ -389,7 +642,7 @@ export const syncConsoleFromRunner = asAction(
     triggeredBy: () => onGraphVersionForSync(bind),
   },
   async (): Promise<void> => {
-    const { controller, services } = bind;
+    const { controller } = bind;
     const runController = controller.run.main;
     const graphController = controller.editor.graph;
 
@@ -415,21 +668,13 @@ export const syncConsoleFromRunner = asAction(
       return;
     }
 
-    const graphDescriptor = services.graphStore.getByDescriptor(graph);
-    if (!graphDescriptor?.success) {
-      return;
-    }
-
-    const inspectable = services.graphStore.inspect(graphDescriptor.result, "");
+    const inspectable = controller.editor.graph.get()?.graphs.get("");
     if (!inspectable) {
       return;
     }
 
     // Build console entries in a regular Map first
-    const newEntries = new Map<
-      string,
-      import("@breadboard-ai/types").ConsoleEntry
-    >();
+    const newEntries = new Map<string, ConsoleEntry>();
 
     for (const nodeId of nodeIds) {
       const node = inspectable.nodeById(nodeId);
@@ -469,3 +714,166 @@ export const syncConsoleFromRunner = asAction(
     runController.replaceConsole(newEntries);
   }
 );
+
+/**
+ * Re-prepares the runner after a run is stopped.
+ *
+ * Restores the behavior from the pre-SCA StopRoute (removed in 2bfbc6bf5)
+ * which called prepare() after stop() to re-populate the console with
+ * "inactive" entries.
+ *
+ * **Triggers:** `onRunStopped` — fires when stopVersion is bumped
+ */
+export const reprepareAfterStop = asAction(
+  "Run.reprepareAfterStop",
+  {
+    mode: ActionMode.Immediate,
+    triggeredBy: () => onRunStopped(bind),
+  },
+  async (): Promise<void> => {
+    await prepare();
+  }
+);
+
+// =============================================================================
+// Node Action
+// =============================================================================
+
+/**
+ * Requests a node action (run/stop/runFrom/runNode).
+ *
+ * Sets the nodeActionRequest field on RunController, which triggers:
+ * 1. Step.applyPendingEditsForNodeAction (priority 100) — flushes pending edits
+ * 2. Run.executeNodeAction (priority 50) — dispatches the actual command
+ */
+export const handleNodeAction = asAction(
+  "Run.handleNodeAction",
+  { mode: ActionMode.Immediate },
+  async (payload: {
+    nodeId: string;
+    actionContext?: "graph" | "step";
+  }): Promise<void> => {
+    const { nodeId, actionContext } = payload;
+    if (!actionContext) {
+      Utils.Logging.getLogger().log(
+        Utils.Logging.Formatter.warning("Unknown action context"),
+        "handleNodeAction"
+      );
+      return;
+    }
+    const { controller } = bind;
+    controller.run.main.setNodeActionRequest({ nodeId, actionContext });
+  }
+);
+
+/**
+ * Executes a previously requested node action.
+ *
+ * Triggered by nodeActionRequest becoming non-null. Runs at priority 50
+ * so that step-actions' applyPendingEditsForNodeAction (priority 100)
+ * fires first, flushing any pending edits.
+ *
+ * **Triggers:**
+ * - `onNodeActionRequested`: Fires when nodeActionRequest is set
+ */
+export const executeNodeAction = asAction(
+  "Run.executeNodeAction",
+  {
+    mode: ActionMode.Immediate,
+    priority: 50, // Lower than applyPendingEditsForNodeAction (100)
+    triggeredBy: () => onNodeActionRequested(bind),
+  },
+  async (): Promise<void> => {
+    const { controller } = bind;
+    const runController = controller.run.main;
+    const request = runController.nodeActionRequest;
+    if (!request) {
+      return;
+    }
+
+    // Clear the request immediately so it doesn't re-trigger.
+    runController.clearNodeActionRequest();
+
+    const { nodeId, actionContext } = request;
+    const runFromNode = actionContext === "graph";
+    const runner = runController.runner;
+    const nodeState = runner?.state?.get(nodeId);
+    if (!nodeState) {
+      Utils.Logging.getLogger().log(
+        Utils.Logging.Formatter.warning(
+          `Primary action: orchestrator state for node "${nodeId}" not found`
+        ),
+        "executeNodeAction"
+      );
+      return;
+    }
+
+    switch (nodeState.state) {
+      case "inactive":
+        break;
+
+      case "ready":
+      case "succeeded":
+      case "failed":
+      case "interrupted":
+        runController.undismissError(nodeId);
+        dispatchRun(runFromNode, nodeId, runner);
+        break;
+
+      case "working":
+      case "waiting":
+        controller.run.renderer.setNodeState(nodeId, {
+          status: "interrupted",
+        });
+        cleanupStoppedInput(nodeId, controller.run);
+        dispatchStop(nodeId, runner);
+        break;
+
+      case "skipped":
+        Utils.Logging.getLogger().log(
+          Utils.Logging.Formatter.warning(
+            `Action event is invalid for "skipped" state`
+          ),
+          "executeNodeAction"
+        );
+        break;
+
+      default:
+        Utils.Logging.getLogger().log(
+          Utils.Logging.Formatter.warning("Unknown state", nodeState.state),
+          "executeNodeAction"
+        );
+    }
+  }
+);
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Helpers
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Creates a WorkItem from an OutputResponse and adds it to the console entry.
+ * This provides live output display in the console view while a step runs.
+ */
+function addOutputWorkItem(entry: ConsoleEntry, data: OutputResponse): void {
+  const { path, node, outputs } = data;
+  const { configuration = {}, metadata } = node;
+  const { schema = {} } = configuration;
+  const id = path.join("-");
+  const title = metadata?.description || metadata?.title || "Output";
+  const icon = metadata?.icon || "output";
+  const { products } = toLLMContentArray(schema as Schema, outputs);
+
+  const item: WorkItem = {
+    title,
+    icon,
+    start: data.timestamp || performance.now(),
+    end: null,
+    elapsed: 0,
+    awaitingUserInput: false,
+    product: new Map(Object.entries(products) as [string, LLMContent][]),
+  };
+
+  entry.work.set(id, item);
+  entry.current = item;
+}

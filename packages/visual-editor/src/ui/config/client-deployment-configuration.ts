@@ -17,7 +17,6 @@ import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deploym
 const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   mcp: false,
   force2DGraph: false,
-  gulfRenderer: false,
   consistentUI: false,
   agentMode: false,
   opalAdk: false,
@@ -31,6 +30,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   enableGoogleDriveTools: false,
   enableResumeAgentRun: false,
   enableNotebookLm: false,
+  enableGraphEditorAgent: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

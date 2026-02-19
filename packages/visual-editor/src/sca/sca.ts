@@ -26,7 +26,7 @@
  * - Typically stateless (with respect to the UI).
  * - Injected once at application boot.
  * - Held in `app.services` but rarely accessed directly by the UI.
- * - **Examples:** `FileSystem`, `GraphStore`, `Autonamer`, `GoogleDriveClient`.
+ * - **Examples:** `FileSystem`, `Autonamer`, `GoogleDriveClient`.
  *
  * ## 2. Controllers (The "State")
  * **Role:** The reactive source of truth.
@@ -73,7 +73,7 @@
  * ```typescript
  * export const save = asAction("Board.save", {
  *   mode: ActionMode.Awaits,
- *   triggeredBy: [() => onVersionChange(bind)],
+ *   triggeredBy: () => onVersionChange(bind),
  * }, async () => { ... });
  * ```
  *
@@ -96,15 +96,10 @@ import * as Services from "./services/services.js";
 import * as Controller from "./controller/controller.js";
 import * as Actions from "./actions/actions.js";
 import { type RuntimeFlags } from "@breadboard-ai/types";
-import { RuntimeConfig } from "../runtime/types.js";
+import { RuntimeConfig } from "../utils/graph-types.js";
 
-// Re-export NotebookLM API client types and enums for UI components
-export {
-  type Notebook,
-  OriginProductType,
-  ApplicationPlatform,
-  DeviceType,
-} from "./services/notebooklm-api-client.js";
+// Re-export NotebookLM API client types for UI components
+export { type Notebook } from "./services/notebooklm-api-client.js";
 
 export interface SCA {
   services: ReturnType<typeof Services.services>;
@@ -121,6 +116,7 @@ export function sca(config: RuntimeConfig, flags: RuntimeFlags) {
       controller.global.flags,
       () => controller.global.consent
     );
+
     const actions = Actions.actions(controller, services);
 
     instance = {

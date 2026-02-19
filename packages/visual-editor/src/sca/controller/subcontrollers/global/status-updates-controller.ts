@@ -5,7 +5,7 @@
  */
 
 import { hash } from "@breadboard-ai/utils";
-import type { VisualEditorStatusUpdate } from "../../../../ui/types/types.js";
+import type { VisualEditorStatusUpdate } from "../../../types.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 

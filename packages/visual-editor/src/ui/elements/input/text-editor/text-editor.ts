@@ -9,7 +9,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events.js";
-import { Project } from "../../../state/index.js";
+
 import { FastAccessMenu } from "../../elements.js";
 import { isTemplatePart } from "@breadboard-ai/utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
@@ -17,7 +17,10 @@ import { getAssetType } from "../../../utils/mime-type.js";
 import { icons } from "../../../styles/icons.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { jsonStringify } from "../../../utils/json-stringify.js";
-import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js";
+import {
+  createTrustedChicletHTML,
+  setTrustedHTML,
+} from "../../../trusted-types/chiclet-html.js";
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
@@ -29,7 +32,6 @@ import { scaContext } from "../../../../sca/context/context.js";
 
 export function chicletHtml(
   part: TemplatePart,
-  projectState: Project | null,
   subGraphId: string | null,
   sca?: SCA
 ) {
@@ -37,7 +39,6 @@ export function chicletHtml(
   const assetType = getAssetType(mimeType) ?? "";
   const { icon: srcIcon, tags: metadataTags } = expandChiclet(
     part,
-    projectState,
     subGraphId,
     sca
   );
@@ -114,7 +115,6 @@ export function chicletHtml(
     if (instance) {
       const { icon, title } = expandChiclet(
         { path: instance, type: "in", title: "unknown" },
-        projectState,
         subGraphId,
         sca
       );
@@ -156,9 +156,12 @@ export class TextEditor extends SignalWatcher(LitElement) {
     this.#renderableValue = createTrustedChicletHTML(
       value,
       this.sca,
-      this.projectState,
       this.subGraphId
     );
+    // If SCA wasn't available yet, chiclets that depend on graph lookups
+    // (e.g. routing chip targets) will render incomplete. Flag for refresh
+    // once the context arrives.
+    this.#needsChicletRefresh = !this.sca;
     this.#updateEditorValue();
   }
 
@@ -178,9 +181,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
   @property()
   accessor subGraphId: string | null = null;
-
-  @property()
-  accessor projectState: Project | null = null;
 
   @property()
   accessor readOnly = false;
@@ -264,6 +264,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
   #rawValue = "";
   #renderableValue: TrustedHTML = createTrustedChicletHTML("");
+  #needsChicletRefresh = false;
   #isUsingFastAccess = false;
   #showFastAccessMenuOnKeyUp = false;
   #fastAccessTarget: TemplatePart | null = null;
@@ -440,13 +441,13 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
       const fragment = document.createDocumentFragment();
       const tempEl = document.createElement("div");
-      (tempEl as { innerHTML: string | TrustedHTML }).innerHTML =
-        createTrustedChicletHTML(
-          `{${JSON.stringify(part)}}`,
-          this.sca,
-          this.projectState,
-          this.subGraphId
-        );
+      const chicletHtml = createTrustedChicletHTML(
+        `{${JSON.stringify(part)}}`,
+        this.sca,
+        this.subGraphId
+      );
+
+      setTrustedHTML(tempEl, chicletHtml);
       let appendedEl: ChildNode | undefined;
       if (tempEl.firstChild) {
         // We can just take the last item even though this is using a while.
@@ -920,15 +921,13 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
     const fragment = document.createDocumentFragment();
     const tempEl = document.createElement("div");
-    (
-      tempEl as {
-        innerHTML: string | TrustedHTML;
-      }
-    ).innerHTML = createTrustedChicletHTML(
-      evt.clipboardData.getData("text"),
-      this.sca,
-      this.projectState,
-      this.subGraphId
+    setTrustedHTML(
+      tempEl,
+      createTrustedChicletHTML(
+        evt.clipboardData.getData("text"),
+        this.sca,
+        this.subGraphId
+      )
     );
 
     while (tempEl.firstChild) {
@@ -1064,17 +1063,19 @@ export class TextEditor extends SignalWatcher(LitElement) {
     const hasTarget = this.#fastAccessTarget !== null;
 
     this.#fastAccessRef.value.selectedIndex = 0;
-    this.#fastAccessRef.value.showAssets = !hasTarget;
-    this.#fastAccessRef.value.showTools = !hasTarget;
-    this.#fastAccessRef.value.showComponents = !hasTarget;
-    this.#fastAccessRef.value.showRoutes = hasTarget;
-    this.#fastAccessRef.value.showAgentModeTools =
-      this.isAgentMode && !hasTarget;
+    if (this.sca) {
+      this.sca.controller.editor.fastAccess.fastAccessMode = hasTarget
+        ? "route"
+        : "browse";
+    }
     this.#isUsingFastAccess = true;
   }
 
   #hideFastAccess() {
     this.#isUsingFastAccess = false;
+    if (this.sca) {
+      this.sca.controller.editor.fastAccess.fastAccessMode = null;
+    }
     if (!this.#fastAccessRef.value) {
       return;
     }
@@ -1094,11 +1095,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
       return;
     }
 
-    (
-      this.#editorRef.value as {
-        innerHTML: string | TrustedHTML;
-      }
-    ).innerHTML = this.#renderableValue;
+    setTrustedHTML(this.#editorRef.value, this.#renderableValue);
     this.#ensureAllChicletsHaveSpace();
     this.#togglePlaceholder();
   }
@@ -1108,6 +1105,21 @@ export class TextEditor extends SignalWatcher(LitElement) {
 
     if (this.#focusOnFirstRender) {
       this.focus();
+    }
+  }
+
+  protected updated(): void {
+    // The value setter may fire before @consume resolves the SCA context.
+    // Once SCA arrives, recompute the chiclet HTML so graph-dependent lookups
+    // (e.g. routing chip target titles) render correctly.
+    if (this.#needsChicletRefresh && this.sca) {
+      this.#needsChicletRefresh = false;
+      this.#renderableValue = createTrustedChicletHTML(
+        this.#rawValue,
+        this.sca,
+        this.subGraphId
+      );
+      this.#updateEditorValue();
     }
   }
 
@@ -1178,7 +1190,7 @@ export class TextEditor extends SignalWatcher(LitElement) {
           }
 
           if (
-            this.projectState &&
+            this.sca &&
             this.supportsFastAccess &&
             this.#showFastAccessMenuOnKeyUp
           ) {
@@ -1239,12 +1251,6 @@ export class TextEditor extends SignalWatcher(LitElement) {
           this.#captureEditorValue();
           this.#togglePlaceholder();
         }}
-        .graphId=${this.subGraphId}
-        .nodeId=${this.nodeId}
-        .showAgentModeTools=${this.#fastAccessTarget === null}
-        .showAssets=${this.#fastAccessTarget === null}
-        .showTools=${this.#fastAccessTarget === null}
-        .state=${this.projectState?.fastAccess}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;
   }

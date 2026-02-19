@@ -7,12 +7,11 @@
 import {
   FileDataPart,
   GraphDescriptor,
+  GraphLoader,
   InlineDataCapabilityPart,
-  MutableGraphStore,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import * as BreadboardUI from "../ui/index.js";
-import { isShortsUri } from "../ui/utils/youtube.js";
+import * as YouTube from "../ui/utils/youtube.js";
 import { asBase64 } from "../data/common.js";
 
 export { ClipboardReader };
@@ -43,7 +42,7 @@ export type DetectedType =
 class ClipboardReader {
   constructor(
     public readonly graphUrl: string | undefined,
-    public readonly graphStore: MutableGraphStore
+    public readonly loader: GraphLoader
   ) {}
 
   async read(): Promise<DetectedType> {
@@ -77,7 +76,7 @@ class ClipboardReader {
   }
 
   async isGraphUrl(url: string) {
-    const loading = await this.graphStore.load(url, {});
+    const loading = await this.loader.load(url);
     return loading.success;
   }
 
@@ -125,8 +124,8 @@ function tryParsingYouTubeUrl(s: string) {
     isWatchUri,
     convertShareUriToEmbedUri,
     convertWatchOrShortsUriToEmbedUri,
-  } = BreadboardUI.Utils.YouTube;
-  if (isWatchUri(fileUri) || isShortsUri(fileUri)) {
+  } = YouTube;
+  if (isWatchUri(fileUri) || YouTube.isShortsUri(fileUri)) {
     fileUri = convertWatchOrShortsUriToEmbedUri(fileUri);
   } else if (isShareUri(fileUri)) {
     fileUri = convertShareUriToEmbedUri(fileUri);

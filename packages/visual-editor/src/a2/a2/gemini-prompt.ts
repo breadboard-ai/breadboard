@@ -2,12 +2,7 @@
  * @fileoverview Manages Gemini prompt.
  */
 
-import {
-  Capabilities,
-  DataPart,
-  LLMContent,
-  Outcome,
-} from "@breadboard-ai/types";
+import { DataPart, LLMContent, Outcome } from "@breadboard-ai/types";
 import gemini, { type Candidate, type GeminiInputs } from "./gemini.js";
 import { ToolManager } from "./tool-manager.js";
 import { err, ok } from "./utils.js";
@@ -58,7 +53,6 @@ class GeminiPrompt {
   calledCustomTools: boolean = false;
 
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     public readonly inputs: GeminiInputs,
     options?: ToolManager | GeminiPromptOptions
@@ -80,7 +74,7 @@ class GeminiPrompt {
     this.calledTools = false;
     this.calledCustomTools = false;
     const { allowToolErrors, validator } = this.options;
-    const invoking = await gemini(this.inputs, this.caps, this.moduleArgs);
+    const invoking = await gemini(this.inputs, this.moduleArgs);
     if (!ok(invoking)) return invoking;
     if ("context" in invoking) {
       return err("Invalid output from Gemini -- must be candidates", {

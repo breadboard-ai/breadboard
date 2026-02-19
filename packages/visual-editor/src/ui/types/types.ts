@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2023 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   Schema,
   InspectableEdgeType,
@@ -22,13 +16,40 @@ import type {
   AssetType,
   GraphIdentifier,
   GraphMetadata,
-  InlineDataCapabilityPart,
   LLMContent,
-  ModuleIdentifier,
   RuntimeFlags,
-  StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import type { HTMLTemplateResult, LitElement } from "lit";
+
+import type {
+  AppThemeColors,
+  SnackbarAction,
+  SnackbarUUID,
+  SnackType,
+} from "../../sca/types.js";
+
+// Re-export migrated types from sca/types.ts for barrel compatibility
+// (BreadboardUI.Types.* namespace access). Canonical source: sca/types.ts.
+export {
+  STATUS,
+  SnackType,
+  type SnackbarUUID,
+  type SnackbarAction,
+  type AppTheme,
+  type VisualEditorMode,
+  type VisualEditorStatusUpdate,
+  type UserSignInResponse,
+  type ActionTracker,
+  type RecentBoard,
+  type MakeUrlInit,
+  type BaseUrlInit,
+  type GraphUrlInit,
+  type HomeUrlInit,
+  type LandingUrlInit,
+  type OpenUrlInit,
+  type GlobalConfig,
+  type AppThemeColors,
+} from "../../sca/types.js";
 
 export type InputCallback = (data: Record<string, unknown>) => void;
 
@@ -37,12 +58,6 @@ export type Board = {
   url: string;
   version: string;
 };
-
-export enum STATUS {
-  RUNNING = "running",
-  PAUSED = "paused",
-  STOPPED = "stopped",
-}
 
 export enum BOARD_LOAD_STATUS {
   PENDING = "pending",
@@ -88,15 +103,11 @@ export interface AllowedLLMContentTypes {
   textInline: boolean;
 }
 
-export enum SETTINGS_TYPE {
-  SECRETS = "Secrets",
-  GENERAL = "General",
-  INPUTS = "Inputs",
-  NODE_PROXY_SERVERS = "Node Proxy Servers",
+export enum TOKEN_TYPE {
   CONNECTIONS = "Connections",
 }
 
-export interface SettingEntry {
+export interface TokenEntry {
   key: string;
   value: {
     id?: string;
@@ -106,21 +117,14 @@ export interface SettingEntry {
   };
 }
 
-export interface SettingsList {
-  [SETTINGS_TYPE.GENERAL]: SettingEntry;
-  [SETTINGS_TYPE.SECRETS]: SettingEntry;
-  [SETTINGS_TYPE.INPUTS]: SettingEntry;
-  [SETTINGS_TYPE.NODE_PROXY_SERVERS]: SettingEntry;
-  [SETTINGS_TYPE.CONNECTIONS]: SettingEntry;
+export interface TokensList {
+  [TOKEN_TYPE.CONNECTIONS]: TokenEntry;
 }
 
-export type SettingsItems = Map<
-  SettingEntry["value"]["name"],
-  SettingEntry["value"]
->;
+export type TokenItems = Map<TokenEntry["value"]["name"], TokenEntry["value"]>;
 
-export type Settings = {
-  [K in keyof SettingsList]: {
+export type Tokens = {
+  [K in keyof TokensList]: {
     configuration: {
       extensible: boolean;
       description: string;
@@ -133,28 +137,22 @@ export type Settings = {
        */
       customElement?: string;
     };
-    items: SettingsItems;
+    items: TokenItems;
   };
 };
 
-export type CustomSettingsElement = HTMLElement & {
-  settingsType?: SETTINGS_TYPE | undefined;
-  settingsItems?: Settings[SETTINGS_TYPE]["items"] | undefined;
-};
-
 /**
- * A simplified interface over {@link SettingsStore} that reads/writes
- * immediately and can be consumed by elements using
- * {@link settingsHelperContext}.
+ * A simplified interface over {@link TokenStore} for reading/writing
+ * token grants to IndexedDB.
  */
-export interface SettingsHelper {
-  get(section: SETTINGS_TYPE, name: string): SettingEntry["value"] | undefined;
+export interface TokensHelper {
+  get(section: TOKEN_TYPE, name: string): TokenEntry["value"] | undefined;
   set(
-    section: SETTINGS_TYPE,
+    section: TOKEN_TYPE,
     name: string,
-    value: SettingEntry["value"]
+    value: TokenEntry["value"]
   ): Promise<void>;
-  delete(section: SETTINGS_TYPE, name: string): Promise<void>;
+  delete(section: TOKEN_TYPE, name: string): Promise<void>;
 }
 
 /**
@@ -201,22 +199,6 @@ export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
           type: edge.type,
         }
   ) as T;
-}
-
-export interface RecentBoard {
-  title?: string;
-  url: string;
-  pinned?: boolean;
-  [key: string]: unknown;
-}
-
-export interface SettingsStore {
-  values: Settings;
-  getSection(section: SETTINGS_TYPE): Settings[typeof section];
-  getItem(section: SETTINGS_TYPE, name: string): void;
-  save(settings: Settings): Promise<void>;
-  restore(): Promise<void>;
-  delete(): Promise<void>;
 }
 
 export interface UserMessage {
@@ -280,7 +262,6 @@ export interface WorkspaceVisualStateWithChangeId {
 export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
 export type WorkspaceSelectionState = {
   graphs: Map<GraphIdentifier, GraphSelectionState>;
-  modules: Set<ModuleIdentifier>;
 };
 export interface WorkspaceSelectionStateWithChangeId {
   selectionChangeId: WorkspaceSelectionChangeId;
@@ -333,22 +314,6 @@ export interface LanguagePack {
   UIController: LanguagePackEntry;
   WorkspaceOutline: LanguagePackEntry;
 }
-
-/**
- * @deprecated Replaced with AppPalette
- */
-export interface AppThemeColors {
-  primaryColor: string;
-  secondaryColor: string;
-  backgroundColor: string;
-  textColor: string;
-  primaryTextColor: string;
-}
-
-export type AppTheme = AppPalette &
-  AppThemeColors & {
-    splashScreen?: InlineDataCapabilityPart | StoredDataCapabilityPart | null;
-  };
 
 export interface AppTemplateAdditionalOption {
   values: Array<{ value: string; title: string }>;
@@ -429,23 +394,6 @@ export type EnumValue = {
   info?: string;
 };
 
-export enum SnackType {
-  NONE = "none",
-  INFORMATION = "information",
-  WARNING = "warning",
-  ERROR = "error",
-  PENDING = "pending",
-}
-
-export type SnackbarUUID = ReturnType<typeof globalThis.crypto.randomUUID>;
-
-export type SnackbarAction = {
-  title: string;
-  action: string;
-  value?: HTMLTemplateResult | string;
-  callback?: () => Promise<void> | void;
-};
-
 export type SnackbarMessage = {
   id: SnackbarUUID;
   type: SnackType;
@@ -505,118 +453,6 @@ export type ColorPalettes = {
   error: CreatePalette<"e">;
 };
 
-export type VisualEditorMode = "app" | "canvas";
-
-export interface VisualEditorStatusUpdate {
-  date: string;
-  text: string;
-  type: "info" | "warning" | "urgent";
-}
-
 export type FloatingInputFocusState =
   | ["canvas", "preview" | "console"]
   | ["app"];
-
-export type ParsedUrlProvider = {
-  readonly parsedUrl: MakeUrlInit;
-};
-
-export type MakeUrlInit =
-  | HomeUrlInit
-  | GraphUrlInit
-  | LandingUrlInit
-  | OpenUrlInit;
-
-export interface BaseUrlInit {
-  /**
-   * Any `dev-` prefixed search-param will be stored here (e.g.
-   * `?dev-fooBar=baz` becomes`{dev: {fooBar: "baz"}}` and vice-versa).
-   * Prefer camelCase names for consistency, and be sure to make all properties
-   * ?optional.
-   */
-  dev?: {
-    forceSignInState?:
-      | "sign-in"
-      | "add-scope"
-      | "geo-restriction"
-      | "missing-scopes";
-    forceSurveySelection?: "true";
-  };
-  oauthRedirect?: string;
-  lite?: boolean;
-  colorScheme?: "light" | "dark";
-  guestPrefixed: boolean;
-}
-
-export interface HomeUrlInit extends BaseUrlInit {
-  page: "home";
-  new?: boolean;
-  redirectFromLanding?: boolean;
-}
-
-export interface GraphUrlInit extends BaseUrlInit {
-  page: "graph";
-  mode: VisualEditorMode;
-  flow: string;
-  remix?: boolean;
-  resourceKey?: string | undefined;
-  results?: string;
-  redirectFromLanding?: boolean;
-}
-
-export interface LandingUrlInit extends BaseUrlInit {
-  page: "landing";
-  redirect: MakeUrlInit;
-  missingScopes?: boolean;
-  geoRestriction?: boolean;
-}
-
-export interface OpenUrlInit extends BaseUrlInit {
-  page: "open";
-  fileId: string;
-  resourceKey?: string;
-}
-
-export type UserSignInResponse = "success" | "failure" | "dismissed";
-
-export interface ActionTracker {
-  load(type: "app" | "canvas" | "landing" | "home"): void;
-  openApp(url: string, source: "gallery" | "user"): void;
-  remixApp(url: string, source: "gallery" | "user" | "editor"): void;
-  createNew(): void;
-  flowGenCreate(): void;
-  flowGenEdit(url: string | undefined): void;
-  runApp(
-    url: string | undefined,
-    source: "app_preview" | "app_view" | "console"
-  ): void;
-  publishApp(url: string | undefined): void;
-  signOutSuccess(): void;
-  signInSuccess(): void;
-  errorUnknown(): void;
-  errorConfig(): void;
-  errorRecitation(): void;
-  errorCapacity(medium: string): void;
-  errorSafety(): void;
-  addNewStep(type?: string): void;
-  editStep(type: "manual" | "flowgen"): void;
-  shareResults(type: "download" | "save_to_drive" | "copy_share_link"): void;
-
-  // Updates GA properties
-
-  /**
-   * Updates the current status of the user. Call it whenever the sign in
-   * status of the user is determined.
-   *
-   * Will also be automatically called by:
-   * - `signInSuccess`
-   * - `signOutSuccess`
-   */
-  updateSignedInStatus(signedIn: boolean): void;
-
-  /**
-   * Updates the current eligibility status of the user. Call right after the
-   * checkAppAccess call.
-   */
-  updateCanAccessStatus(canAccess: boolean): void;
-}

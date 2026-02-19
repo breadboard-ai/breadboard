@@ -3,12 +3,7 @@
  */
 
 import { readFlags } from "../a2/settings.js";
-import {
-  Capabilities,
-  LLMContent,
-  RuntimeFlags,
-  Schema,
-} from "@breadboard-ai/types";
+import { LLMContent, RuntimeFlags, Schema } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import {
   makeTextInstruction,
@@ -101,7 +96,7 @@ type Mode = {
 };
 
 const PROMPT_PORT = "config$prompt";
-const ASK_USER_PORT = "config$ask-user";
+
 const LIMIT_MSG = "generation has a daily limit";
 
 const ALL_MODES: Mode[] = [
@@ -115,10 +110,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "none",
     invoke: makeText,
@@ -135,10 +127,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.0-flash",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
     invoke: makeText,
@@ -154,10 +143,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-3-flash-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
     invoke: makeText,
@@ -173,10 +159,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: false }),
     modelConstraint: "text-flash",
     invoke: makeText,
@@ -192,10 +175,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-2.5-pro",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
     invoke: makeText,
@@ -211,10 +191,7 @@ const ALL_MODES: Mode[] = [
     modelName: "gemini-3-pro-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
-    portMap: new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-    ]),
+    portMap: new Map([[PROMPT_PORT, "description"]]),
     makeInstruction: makeTextInstruction({ pro: true }),
     modelConstraint: "text-pro",
     invoke: makeText,
@@ -426,7 +403,6 @@ function resolveModes(
 
 async function invoke(
   { "generation-mode": mode, ...rest }: Inputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const flags = await readFlags(moduleArgs);
@@ -440,7 +416,7 @@ async function invoke(
         "b-ui-prompt": { parts: [] },
         ...rest,
       };
-      return agent(agentInputs, caps, moduleArgs);
+      return agent(agentInputs, moduleArgs);
     } else {
       // Other modes dispatch directly to their module
       const { type, modelName } = current;
@@ -448,7 +424,7 @@ async function invoke(
         rest["p-model-name"] = modelName;
       }
       const inputs = forwardPorts(type, rest);
-      return current.invoke(inputs, caps, moduleArgs);
+      return current.invoke(inputs, moduleArgs);
     }
   } else {
     const { type, modelName } = current;
@@ -459,13 +435,12 @@ async function invoke(
       rest["p-model-name"] = modelName;
     }
     const inputs = forwardPorts(type, rest);
-    return current.invoke(inputs, caps, moduleArgs);
+    return current.invoke(inputs, moduleArgs);
   }
 }
 
 async function describe(
   { inputs: { "generation-mode": mode, ...rest }, asType }: DescribeInputs,
-  caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
   const metadata = {
@@ -495,20 +470,18 @@ async function describe(
   let modeSchema: Schema["properties"] = {};
   let behavior: Schema["behavior"] = [];
 
-  const transformedInputs = forwardPorts(type, rest);
-  const describing = await current.describe(
-    { inputs: transformedInputs },
-    caps
-  );
-  modeSchema = receivePorts(
-    type,
-    describing.inputSchema.properties || modeSchema
-  );
-  behavior = describing.inputSchema.behavior || [];
   if (flags?.agentMode && current.id === "agent") {
-    const agentSchema = computeAgentSchema(flags, rest);
-    modeSchema = { ...modeSchema, ...agentSchema };
-    behavior = [...(behavior || [])];
+    // Agent mode has its own schema; skip text-generation describe entirely.
+    modeSchema = computeAgentSchema(flags, rest);
+    behavior = ["at-wireable"];
+  } else {
+    const transformedInputs = forwardPorts(type, rest);
+    const describing = await current.describe({ inputs: transformedInputs });
+    modeSchema = receivePorts(
+      type,
+      describing.inputSchema.properties || modeSchema
+    );
+    behavior = describing.inputSchema.behavior || [];
   }
 
   return {

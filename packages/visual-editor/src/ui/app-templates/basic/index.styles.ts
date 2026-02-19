@@ -472,8 +472,9 @@ export const styles: CSSResultGroup = [
             --multi-output-value-padding-x: 0;
             flex: 1 0 auto;
             margin: 0 auto;
-            width: 100%;
-            max-width: 840px;
+            width: calc(100% - var(--bb-grid-size-12));
+            max-width: 960px;
+            box-sizing: border-box;
             animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
           }
 

@@ -91,7 +91,6 @@ export class AddEdge implements EditOperation {
         { id: edge.from, graphId },
         { id: edge.to, graphId },
       ],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };
@@ -125,7 +124,6 @@ export class AddEdge implements EditOperation {
 
     edge = fixUpStarEdge(edge);
     edge = fixupConstantEdge(edge);
-    mutable.edges.add(edge, graphId);
     handle.result.graph().edges.push(edge);
     return {
       success: true,
@@ -133,7 +131,6 @@ export class AddEdge implements EditOperation {
         { id: edge.from, graphId },
         { id: edge.to, graphId },
       ],
-      affectedModules: [],
       affectedGraphs: [graphId],
       topologyChange: true,
     };

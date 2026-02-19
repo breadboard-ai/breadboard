@@ -9,10 +9,9 @@ import {
   GraphIdentifier,
   InspectableEdge,
   InspectableGraph,
-  ModuleIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { MAIN_BOARD_ID } from "../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../sca/constants.js";
 import {
   GraphHighlightState,
   GraphSelectionState,
@@ -45,7 +44,6 @@ export function createWorkspaceSelectionChangeId(): WorkspaceSelectionChangeId {
 export function createEmptyWorkspaceSelectionState(): WorkspaceSelectionState {
   return {
     graphs: new Map(),
-    modules: new Set(),
   };
 }
 
@@ -84,7 +82,6 @@ export function createSelection(
   existingSelectionState: WorkspaceSelectionState | null,
   targetGraph: InspectableGraph | undefined | null,
   subGraphId: GraphIdentifier | null,
-  moduleId: ModuleIdentifier | null,
   nodeId: NodeIdentifier | null = null,
   replaceExistingSelections = true
 ) {
@@ -106,63 +103,51 @@ export function createSelection(
     selectionState.graphs.set(MAIN_BOARD_ID, createEmptyGraphSelectionState());
   }
 
-  // Similarly for the module ID.
-  if (moduleId && !selectionState.modules.has(moduleId)) {
-    selectionState.graphs.clear();
-    selectionState.modules.clear();
-    selectionState.modules.add(moduleId);
-  } else if (!moduleId && replaceExistingSelections) {
-    selectionState.modules.clear();
-  }
+  const graphSelection = selectionState.graphs.get(subGraph);
+  if (graphSelection && nodeId) {
+    if (graphSelection.nodes.has(nodeId) && replaceExistingSelections) {
+      graphSelection.nodes.delete(nodeId);
+    } else {
+      graphSelection.nodes.add(nodeId);
+    }
+  } else if (graphSelection) {
+    // Append all nodes.
+    if (targetGraph && subGraph !== MAIN_BOARD_ID) {
+      targetGraph = targetGraph.graphs()?.[subGraph];
+    }
 
-  if (!moduleId) {
-    const graphSelection = selectionState.graphs.get(subGraph);
-    if (graphSelection && nodeId) {
-      if (graphSelection.nodes.has(nodeId) && replaceExistingSelections) {
-        graphSelection.nodes.delete(nodeId);
-      } else {
-        graphSelection.nodes.add(nodeId);
-      }
-    } else if (graphSelection) {
-      // Append all nodes.
-      if (targetGraph && subGraph !== MAIN_BOARD_ID) {
-        targetGraph = targetGraph.graphs()?.[subGraph];
-      }
+    if (targetGraph) {
+      for (const node of targetGraph.nodes()) {
+        graphSelection.nodes.add(node.descriptor.id);
 
-      if (targetGraph) {
-        for (const node of targetGraph.nodes()) {
-          graphSelection.nodes.add(node.descriptor.id);
+        const referencePorts = node
+          .currentPorts()
+          .inputs.ports.filter(
+            (port) =>
+              isBoardBehavior(port.schema) || isBoardArrayBehavior(port.schema)
+          );
 
-          const referencePorts = node
-            .currentPorts()
-            .inputs.ports.filter(
-              (port) =>
-                isBoardBehavior(port.schema) ||
-                isBoardArrayBehavior(port.schema)
-            );
-
-          for (const port of referencePorts) {
-            if (Array.isArray(port.value)) {
-              for (let i = 0; i < port.value.length; i++) {
-                graphSelection.references.add(
-                  `${node.descriptor.id}|${port.name}|${i}`
-                );
-              }
-            } else {
+        for (const port of referencePorts) {
+          if (Array.isArray(port.value)) {
+            for (let i = 0; i < port.value.length; i++) {
               graphSelection.references.add(
-                `${node.descriptor.id}|${port.name}|0`
+                `${node.descriptor.id}|${port.name}|${i}`
               );
             }
+          } else {
+            graphSelection.references.add(
+              `${node.descriptor.id}|${port.name}|0`
+            );
           }
         }
+      }
 
-        for (const edge of targetGraph.edges()) {
-          graphSelection.edges.add(inspectableEdgeToString(edge));
-        }
+      for (const edge of targetGraph.edges()) {
+        graphSelection.edges.add(inspectableEdgeToString(edge));
+      }
 
-        for (const comment of targetGraph.metadata()?.comments || []) {
-          graphSelection.comments.add(comment.id);
-        }
+      for (const comment of targetGraph.metadata()?.comments || []) {
+        graphSelection.comments.add(comment.id);
       }
     }
   }

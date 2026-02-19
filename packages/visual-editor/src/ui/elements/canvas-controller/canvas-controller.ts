@@ -9,12 +9,7 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("UIController");
 const GlobalStrings = StringsHelper.forSection("Global");
 
-import {
-  EditHistory,
-  EditableGraph,
-  GraphDescriptor,
-  MainGraphIdentifier,
-} from "@breadboard-ai/types";
+import { GraphDescriptor, MainGraphIdentifier } from "@breadboard-ai/types";
 import {
   HTMLTemplateResult,
   LitElement,
@@ -24,14 +19,7 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { guard } from "lit/directives/guard.js";
-import {
-  AppTemplateAdditionalOptionsAvailable,
-  HighlightStateWithChangeId,
-  SETTINGS_TYPE,
-  STATUS,
-  SettingsStore,
-  WorkspaceSelectionStateWithChangeId,
-} from "../../types/types.js";
+import { AppTemplateAdditionalOptionsAvailable } from "../../types/types.js";
 import { styles as canvasControllerStyles } from "./canvas-controller.styles.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
@@ -40,13 +28,11 @@ import {
   StateEvent,
   ThemeEditRequestEvent,
 } from "../../events/events.js";
-import {
-  COMMAND_SET_GRAPH_EDITOR,
-  COMMAND_SET_MODULE_EDITOR,
-  MAIN_BOARD_ID,
-} from "../../constants/constants.js";
+import { COMMAND_SET_GRAPH_EDITOR } from "../../constants/constants.js";
+import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Project, RendererRunState } from "../../state/types.js";
+import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
+import { RendererRunState } from "../../../sca/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
 import "../../lite/step-list-view/step-list-view.js";
@@ -58,10 +44,9 @@ import {
 } from "../../utils/workspace.js";
 import { icons } from "../../styles/icons.js";
 import { EntityEditor } from "../elements.js";
-import { consume, provide } from "@lit/context";
+import { consume } from "@lit/context";
 import { SharePanel } from "../share-panel/share-panel.js";
-import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+
 import { effects } from "../../styles/host/effects.js";
 import { GraphTheme } from "@breadboard-ai/types";
 import { styleMap } from "lit/directives/style-map.js";
@@ -71,66 +56,27 @@ const focusAppControllerWhenIn = ["canvas", "preview"];
 
 import "./empty-state.js";
 import "../../flow-gen/flowgen-editor-input.js";
-import { isEmpty } from "../../utils/utils.js";
-import { Signal, SignalWatcher } from "@lit-labs/signals";
-import { projectStateContext } from "../../contexts/contexts.js";
+import "../../elements/graph-editing-chat/graph-editing-chat.js";
+
+import { SignalWatcher } from "@lit-labs/signals";
+
 import * as Theme from "../../../theme/index.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
+import { Utils } from "../../../sca/utils.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
-  /**
-   * Indicates whether or not the UI can currently run a flow or not.
-   * This is useful in situations where we're doing some work on the
-   * board and want to prevent the user from triggering the start
-   * of the flow.
-   */
-  @property()
-  accessor canRun = true;
-
-  @property()
-  accessor editor: EditableGraph | null = null;
-
-  @property()
-  accessor graph: GraphDescriptor | null = null;
-
-  @property()
-  accessor graphIsMine = false;
-
   @property()
   accessor graphTopologyUpdateId: number = 0;
 
-  @state()
-  accessor history: EditHistory | null = null;
+  readonly #appPresenter = new AppScreenPresenter();
 
-  @property()
-  accessor mainGraphId: MainGraphIdentifier | null = null;
-
-  @provide({ context: projectStateContext })
-  @state()
-  accessor projectState!: Project;
-
-  @property()
-  accessor readOnly = true;
-
-  @property()
-  accessor themeHash = 0;
-
-  @property()
-  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-
-  @property()
-  accessor settings: SettingsStore | null = null;
-
-  @property()
-  accessor signedIn = false;
-
-  @property({ reflect: true })
-  accessor status = STATUS.RUNNING;
+  // NOTE: selectionState prop removed. Entity-editor now reads from
+  // SelectionController via SCA directly.
 
   @property({ reflect: true, type: Boolean })
   accessor showThemeDesigner = false;
@@ -149,105 +95,56 @@ export class CanvasController extends SignalWatcher(LitElement) {
   }
 
   @state()
-  accessor highlightState: HighlightStateWithChangeId | null = null;
-
-  @state()
   accessor showAssetOrganizer = false;
-
-  @consume({ context: googleDriveClientContext })
-  @property({ attribute: false })
-  accessor googleDriveClient: GoogleDriveClient | undefined;
 
   #entityEditorRef: Ref<EntityEditor> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
   #lastKnownNlEditValue = "";
+  #prevMainGraphId: MainGraphIdentifier | null = null;
+  #prevGraph: GraphDescriptor | null = null;
 
   static styles = [icons, effects, canvasControllerStyles];
 
-  connectedCallback(): void {
+  override connectedCallback(): void {
     super.connectedCallback();
+    this.#appPresenter.connect(this.sca);
   }
 
-  editorRender = 0;
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (changedProperties.has("projectState")) {
-      this.#projectStateUpdated.set({});
-    }
-    if (changedProperties.has("selectionState")) {
-      // If this is an imperative board with no selection state then set the
-      // selection to be the main.
-      if (
-        this.selectionState?.selectionState.graphs.size === 0 &&
-        this.selectionState?.selectionState.modules.size === 0 &&
-        this.graph?.main
-      ) {
-        this.selectionState?.selectionState.modules.add(this.graph.main);
-      }
-    }
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#appPresenter.disconnect();
+  }
 
-    let newSelectionCount = 0;
-    if (this.selectionState) {
-      newSelectionCount = [...this.selectionState.selectionState.graphs].reduce(
-        (prev, [, graph]) => {
-          return (
-            prev +
-            graph.assets.size +
-            graph.comments.size +
-            graph.nodes.size +
-            graph.references.size
-          );
-        },
-        0
-      );
-    }
-
-    // NOTE: Step autosave is now handled by the SCA step autosave trigger,
-    // which fires when selection or sidebar section changes. The trigger
-    // applies pending edits captured by entity-editor's @input handler.
-
-
-    // Here we decide how to handle the changing sidenav items & selections.
-    // If there are no selections and we're in the editor switch out to the app
-    // view. Otherwise, if there's any change to the selection and the sidenav
-    // isn't set to the editor, switch to it.
-    if (newSelectionCount === 0 && this.sideNavItem === "editor") {
-      this.sideNavItem = "preview";
-    } else if (
-      newSelectionCount > 0 &&
-      changedProperties.has("selectionState") &&
-      this.sideNavItem !== "editor"
-    ) {
-      this.sideNavItem = "editor";
-    }
+  protected willUpdate(_changedProperties: PropertyValues<this>): void {
+    // NOTE: Selection count and sidebar toggling are now handled by the
+    // SCA sidebar trigger action (Sidebar.updateOnSelectionChange).
 
     // If the user opens an unowned graph then we default them back to the app
     // view irrespective of whatever sidenav item they had selected prior.
+    const mainGraphId = this.sca.controller.editor.graph.mainGraphId;
     if (
-      changedProperties.has("mainGraphId") &&
-      this.mainGraphId &&
-      !this.graphIsMine
+      mainGraphId !== this.#prevMainGraphId &&
+      mainGraphId &&
+      this.sca.controller.editor.graph.readOnly
     ) {
       this.sideNavItem = "preview";
     }
+    this.#prevMainGraphId = mainGraphId;
 
     // Set theme designer to hidden when navigating away
-    if (changedProperties.has("graph")) {
+    const currentGraph = this.sca.controller.editor.graph.graph;
+    if (currentGraph !== this.#prevGraph) {
       this.showThemeDesigner = false;
     }
+    this.#prevGraph = currentGraph;
   }
-
-  #projectStateUpdated = new Signal.State({});
 
   @signal
   get runState(): RendererRunState {
-    this.#projectStateUpdated.get();
-    if (!this.projectState) {
-      return {
-        nodes: new Map(),
-        edges: new Map(),
-      };
-    }
-    return this.projectState.run.renderer;
+    return {
+      nodes: this.sca.controller.run.renderer.nodes,
+      edges: this.sca.controller.run.renderer.edges,
+    };
   }
 
   /**
@@ -262,192 +159,104 @@ export class CanvasController extends SignalWatcher(LitElement) {
     this.runState.edges.values();
     this.runState.nodes.values();
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    this.projectState?.run.app.state;
+    this.#appPresenter.state;
     return ++this.#runStateEffectCount;
   }
 
   render() {
-    const collapseNodesByDefault = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Collapse Nodes by Default")?.value
-      : false;
+    const gc = this.sca.controller.editor.graph;
 
-    const showNodePreviewValues = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show Node Preview Values")?.value
-      : false;
-
-    const hideSubboardSelectorWhenEmpty = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Hide Embedded Board Selector When Empty")?.value
-      : false;
-
-    const invertZoomScrollDirection = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Invert Zoom Scroll Direction")?.value
-      : false;
-
-    const showNodeShortcuts = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show Node Shortcuts")?.value
-      : false;
-
-    const showPortTooltips = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show Port Tooltips")?.value
-      : false;
-
-    const highlightInvalidWires = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Highlight Invalid Wires")?.value
-      : false;
-
-    const showSubgraphsInline = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show subgraphs inline")?.value
-      : false;
-
-    const showCustomStepEditing = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Enable Custom Step Creation")?.value
-      : false;
-
-    const showAssetsInGraph = true;
-    const graph = this.editor?.inspect("") || null;
-    const graphIsEmpty = isEmpty(graph?.raw() ?? null);
+    const graph = gc.editor?.inspect("") || null;
+    // The canvas treats "loading" the same as "empty" — both show the
+    // onboarding state. Only "loaded" hides the empty state.
+    const graphContentState = gc.graphContentState;
+    const graphIsEmpty = graphContentState !== "loaded";
 
     const runState = this.runState;
 
-    const graphEditor = guard(
-      [
-        graph,
-        this.graphIsMine,
-        this.projectState,
-        runState,
-        this.#runStateEffect,
-        this.history,
-        this.editorRender,
-        this.selectionState,
-        this.highlightState,
-        this.graphTopologyUpdateId,
-        this.sca.controller.global.flags,
-        collapseNodesByDefault,
-        hideSubboardSelectorWhenEmpty,
-        showNodeShortcuts,
-        showNodePreviewValues,
-        invertZoomScrollDirection,
-        showPortTooltips,
-        highlightInvalidWires,
-        showSubgraphsInline,
-        showCustomStepEditing,
-      ],
-      () => {
-        return html`<bb-renderer
-          .projectState=${this.projectState}
-          .runState=${runState}
-          .runStateEffect=${this.#runStateEffect}
-          .runtimeFlags=${this.sca.controller.global.flags}
-          .graph=${graph}
-          .graphIsMine=${this.graphIsMine}
-          .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-          .history=${this.history}
-          .state=${this.projectState?.renderer}
-          .selectionState=${this.selectionState}
-          .showAssetsInGraph=${showAssetsInGraph}
-          .highlightState=${this.highlightState}
-          .mainGraphId=${this.mainGraphId}
-          .readOnly=${this.readOnly}
-          @input=${(evt: Event) => {
-            const composedPath = evt.composedPath();
-            const isFromNLInput = composedPath.some((el) => {
-              return (
-                el instanceof HTMLElement &&
-                el.tagName.toLocaleLowerCase() === "bb-flowgen-editor-input"
-              );
-            });
-
-            if (isFromNLInput) {
-              const target = composedPath.at(0);
-              if (!(target instanceof HTMLTextAreaElement)) {
-                return;
-              }
-
-              this.#lastKnownNlEditValue = target.value;
-              this.requestUpdate();
-            }
-          }}
-          @bbautofocuseditor=${() => {
-            if (!this.#entityEditorRef.value) {
-              return;
-            }
-
-            this.#entityEditorRef.value.focus();
-          }}
-          @bbnodeconfigurationupdaterequest=${(
-            evt: NodeConfigurationUpdateRequestEvent
-          ) => {
-            if (!evt.id) {
-              return;
-            }
-
-            this.sideNavItem = "editor";
-
-            const newState = createEmptyWorkspaceSelectionState();
-            const graphState = createEmptyGraphSelectionState();
-            const graphId = evt.subGraphId ? evt.subGraphId : MAIN_BOARD_ID;
-            const selectionChangeId = createWorkspaceSelectionChangeId();
-            graphState.nodes.add(evt.id);
-            newState.graphs.set(graphId, graphState);
-
-            // Intercept the port value click and convert it to a selection
-            // change *and* switch the side nav item with it.
-            evt.stopImmediatePropagation();
-
-            // If the item is already selected, skip the change.
-            if (
-              this.selectionState?.selectionState.graphs.has(graphId) &&
-              this.selectionState.selectionState.graphs
-                .get(graphId)
-                ?.nodes.has(evt.id)
-            ) {
-              return;
-            }
-
-            this.dispatchEvent(
-              new StateEvent({
-                eventType: "host.selectionstatechange",
-                selectionChangeId,
-                selections: newState,
-                replaceExistingSelections: true,
-                moveToSelection: false,
-              })
+    const graphEditor = guard([runState, this.#runStateEffect], () => {
+      return html`<bb-renderer
+        .runState=${runState}
+        .runStateEffect=${this.#runStateEffect}
+        @input=${(evt: Event) => {
+          const composedPath = evt.composedPath();
+          const isFromNLInput = composedPath.some((el) => {
+            return (
+              el instanceof HTMLElement &&
+              el.tagName.toLocaleLowerCase() === "bb-flowgen-editor-input"
             );
-          }}
-          @bbshowassetorganizer=${() => {
-            this.showAssetOrganizer = true;
-          }}
-        ></bb-renderer>`;
-      }
-    );
+          });
+
+          if (isFromNLInput) {
+            const target = composedPath.at(0);
+            if (!(target instanceof HTMLTextAreaElement)) {
+              return;
+            }
+
+            this.#lastKnownNlEditValue = target.value;
+            this.requestUpdate();
+          }
+        }}
+        @bbautofocuseditor=${() => {
+          if (!this.#entityEditorRef.value) {
+            return;
+          }
+
+          this.#entityEditorRef.value.focus();
+        }}
+        @bbnodeconfigurationupdaterequest=${(
+          evt: NodeConfigurationUpdateRequestEvent
+        ) => {
+          if (!evt.id) {
+            return;
+          }
+
+          this.sideNavItem = "editor";
+
+          const newState = createEmptyWorkspaceSelectionState();
+          const graphState = createEmptyGraphSelectionState();
+          const graphId = evt.subGraphId ? evt.subGraphId : MAIN_BOARD_ID;
+          const selectionChangeId = createWorkspaceSelectionChangeId();
+          graphState.nodes.add(evt.id);
+          newState.graphs.set(graphId, graphState);
+
+          // Intercept the port value click and convert it to a selection
+          // change *and* switch the side nav item with it.
+          evt.stopImmediatePropagation();
+
+          // If the item is already selected, skip the change.
+          if (
+            this.sca.controller.editor.selection.selection.nodes.has(evt.id)
+          ) {
+            return;
+          }
+
+          this.dispatchEvent(
+            new StateEvent({
+              eventType: "host.selectionstatechange",
+              selectionChangeId,
+              selections: newState,
+              replaceExistingSelections: true,
+              moveToSelection: false,
+            })
+          );
+        }}
+        @bbshowassetorganizer=${() => {
+          this.showAssetOrganizer = true;
+        }}
+      ></bb-renderer>`;
+    });
 
     let theme: string;
     let themes: Record<string, GraphTheme>;
     let themeStyles: Record<string, string> = {};
+    const themeHash = this.sca.controller.editor.theme.themeHash;
     if (
-      this.graph?.metadata?.visual?.presentation?.themes &&
-      this.graph?.metadata?.visual?.presentation?.theme
+      gc.graph?.metadata?.visual?.presentation?.themes &&
+      gc.graph?.metadata?.visual?.presentation?.theme
     ) {
-      theme = this.graph.metadata.visual.presentation.theme;
-      themes = this.graph.metadata.visual.presentation.themes;
+      theme = gc.graph.metadata.visual.presentation.theme;
+      themes = gc.graph.metadata.visual.presentation.themes;
 
       if (themes[theme]) {
         const appPalette = themes[theme].palette;
@@ -460,30 +269,16 @@ export class CanvasController extends SignalWatcher(LitElement) {
       }
     }
 
-    let selectionCount = 0;
-    if (this.selectionState) {
-      selectionCount = [...this.selectionState.selectionState.graphs].reduce(
-        (prev, [, graph]) => {
-          return (
-            prev +
-            graph.assets.size +
-            graph.comments.size +
-            graph.nodes.size +
-            graph.references.size
-          );
-        },
-        0
-      );
-    }
+    const selectionCount = this.sca.controller.editor.selection.size;
 
     const sideNavItem = [
       html`${guard(
         [
           graphIsEmpty,
-          this.graph,
-          this.signedIn,
-          this.selectionState,
-          this.themeHash,
+          gc.graph,
+          this.sca.services.signinAdapter.stateSignal?.status === "signedin",
+          this.sca.controller.editor.selection.selectionId,
+          themeHash,
           this.#runStateEffect,
           selectionCount,
           this.sideNavItem,
@@ -496,17 +291,16 @@ export class CanvasController extends SignalWatcher(LitElement) {
               active: this.sideNavItem === "preview",
             })}
             .focusWhenIn=${focusAppControllerWhenIn}
-            .graph=${this.graph}
-            .graphIsEmpty=${graphIsEmpty}
+            .graph=${gc.graph}
+            .graphContentState=${graphContentState}
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-            .isMine=${this.graphIsMine}
-            .projectRun=${this.projectState?.run}
-            .readOnly=${!this.graphIsMine}
+            .isMine=${!gc.readOnly}
+            .readOnly=${gc.readOnly}
             .runtimeFlags=${this.sca.controller.global.flags}
-            .settings=${this.settings}
-            .showGDrive=${this.signedIn}
-            .status=${this.status}
-            .themeHash=${this.themeHash}
+            .showGDrive=${this.sca.services.signinAdapter.stateSignal
+              ?.status === "signedin"}
+            .status=${this.sca.controller.run.main.status}
+            .themeHash=${themeHash}
             @bbthemeeditrequest=${(evt: ThemeEditRequestEvent) => {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
@@ -522,21 +316,14 @@ export class CanvasController extends SignalWatcher(LitElement) {
         class=${classMap({
           active: this.sideNavItem === "editor",
         })}
-        .graph=${graph}
-        .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-        .selectionState=${this.selectionState}
-        .mainGraphId=${this.mainGraphId}
-        .readOnly=${this.readOnly}
-        .projectState=${this.projectState}
       ></bb-entity-editor>`,
       html`
         <bb-console-view
           class=${classMap({
             active: this.sideNavItem === "console",
           })}
-          .run=${this.projectState?.run}
           .themeStyles=${themeStyles}
-          .disclaimerContent=${this.graphIsMine
+          .disclaimerContent=${!gc.readOnly
             ? GlobalStrings.from("LABEL_DISCLAIMER")
             : html`This content was created by another person. It may be
                 inaccurate or unsafe.
@@ -551,16 +338,15 @@ export class CanvasController extends SignalWatcher(LitElement) {
         class=${classMap({
           active: this.sideNavItem === "edit-history",
         })}
-        .history=${this.history}
+        .history=${gc.editor?.history() ?? null}
       ></bb-edit-history-panel>`,
     ];
 
     let themeEditor: HTMLTemplateResult | symbol = nothing;
     if (this.showThemeDesigner) {
       themeEditor = html`<bb-app-theme-creator
-        .projectState=${this.projectState}
-        .graph=${this.graph}
-        .themeHash=${this.themeHash}
+        .graph=${gc.graph}
+        .themeHash=${themeHash}
         .themeOptions=${this.#themeOptions}
         @pointerdown=${(evt: PointerEvent) => {
           evt.stopImmediatePropagation();
@@ -579,7 +365,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         }}
       >
         <div id="graph-container" slot="s0">
-          <bb-edit-history-overlay .history=${this.history}>
+          <bb-edit-history-overlay .history=${gc.editor?.history() ?? null}>
           </bb-edit-history-overlay>
           ${graphIsEmpty ? this.#maybeRenderEmptyState() : nothing}
           ${graphEditor} ${themeEditor}
@@ -639,7 +425,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
                   "sans-flex": true,
                   "w-500": true,
                   round: true,
-                  invisible: !this.graphIsMine,
+                  invisible: gc.readOnly,
                 })}
                 @click=${() => {
                   this.sideNavItem = "preview";
@@ -663,24 +449,29 @@ export class CanvasController extends SignalWatcher(LitElement) {
       this.sca?.controller.global.flowgenInput.state.status === "generating";
     const showStepListView = !graphIsEmpty || isGenerating;
     const prompt =
-      this.graph?.metadata?.raw_intent ?? this.graph?.metadata?.intent ?? null;
-    const narrowScreenContent =
-      !graph
-        ? nothing
-        : html`<section id="narrow-view">
-            ${showStepListView
-              ? html`<bb-prompt-view
-                    .prompt=${prompt}
-                  ></bb-prompt-view>
-                  <bb-step-list-view
-                  ></bb-step-list-view>`
-              : html`<bb-empty-state narrow></bb-empty-state>`}
-            ${this.readOnly
-              ? nothing
+      gc.graph?.metadata?.raw_intent ?? gc.graph?.metadata?.intent ?? null;
+    const narrowScreenContent = !graph
+      ? nothing
+      : html`<section id="narrow-view">
+          ${showStepListView
+            ? html`<bb-prompt-view .prompt=${prompt}></bb-prompt-view>
+                <bb-step-list-view></bb-step-list-view>`
+            : html`<bb-empty-state narrow></bb-empty-state>`}
+          ${gc.readOnly ||
+          Utils.Helpers.isHydrating(
+            () => this.sca.controller.global.flags.enableGraphEditorAgent
+          )
+            ? nothing
+            : this.sca.controller.global.flags.enableGraphEditorAgent
+              ? html`<bb-graph-editing-chat
+                  @pointerdown=${(evt: PointerEvent) => {
+                    evt.stopPropagation();
+                  }}
+                ></bb-graph-editing-chat>`
               : html`<bb-flowgen-editor-input
                   .hasEmptyGraph=${graphIsEmpty}
                 ></bb-flowgen-editor-input>`}
-          </section>`;
+        </section>`;
 
     const screenSize = this.sca.controller.global.screenSize.size;
     return [
@@ -691,29 +482,30 @@ export class CanvasController extends SignalWatcher(LitElement) {
           : html`<section id="content" class="welcome">
               ${graphEditor}
             </section>`,
-      html`
-        <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
-        </bb-share-panel>
-      `,
+      html`<bb-share-panel ${ref(this.#sharePanelRef)}></bb-share-panel>`,
     ];
   }
 
   updated() {
     // Inform bb-main which command set is in use.
-    const selectedModules = this.selectionState?.selectionState.modules;
-    const modules = selectedModules ? [...selectedModules] : [];
-
-    this.dispatchEvent(
-      new CommandsSetSwitchEvent(
-        modules.length > 0
-          ? COMMAND_SET_MODULE_EDITOR
-          : COMMAND_SET_GRAPH_EDITOR
-      )
-    );
+    // Module-based command sets are no longer tracked via selectionState.
+    this.dispatchEvent(new CommandsSetSwitchEvent(COMMAND_SET_GRAPH_EDITOR));
   }
 
   #maybeRenderEmptyState() {
     if (this.#lastKnownNlEditValue !== "") {
+      return nothing;
+    }
+
+    // The empty state callouts reference the flowgen-editor-input which is not
+    // rendered when the graph editing agent is active. Skip it to avoid both
+    // misleading arrows and z-index overlap with the chat panel.
+    if (
+      !Utils.Helpers.isHydrating(
+        () => this.sca.controller.global.flags.enableGraphEditorAgent
+      ) &&
+      this.sca.controller.global.flags.enableGraphEditorAgent
+    ) {
       return nothing;
     }
 

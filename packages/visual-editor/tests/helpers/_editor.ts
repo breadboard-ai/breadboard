@@ -8,16 +8,33 @@ import {
   EditableGraph,
   EditableGraphOptions,
   GraphDescriptor,
+  MutableGraphStore,
 } from "@breadboard-ai/types";
 import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
 import { Graph } from "../../src/engine/editor/graph.js";
-import { makeTestGraphStore } from "./_graph-store.js";
+import { makeTestGraphStore, makeTestGraphStoreArgs } from "./_graph-store.js";
+
+export { editGraphStore };
 
 export const editGraph = (
   graph: GraphDescriptor,
   options: EditableGraphOptions = {}
 ): EditableGraph => {
-  const store = makeTestGraphStore(options);
-  const mutable = new MutableGraphImpl(graph, store);
+  const args = makeTestGraphStoreArgs(options);
+  const store = makeTestGraphStore(args);
+  const mutable = new MutableGraphImpl(graph, store, args);
   return new Graph(mutable, options);
 };
+
+/**
+ * Creates an EditableGraph from a GraphStore.
+ * Test helper replacing the removed `graphStore.edit()` method.
+ */
+function editGraphStore(
+  graphStore: MutableGraphStore,
+  options: EditableGraphOptions = {}
+): EditableGraph | undefined {
+  const mutable = graphStore.get();
+  if (!mutable) return undefined;
+  return new Graph(mutable, options);
+}

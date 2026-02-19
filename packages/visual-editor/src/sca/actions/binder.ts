@@ -6,11 +6,33 @@
 
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
+import { ToastType } from "../types.js";
+import { STATUS } from "../types.js";
 
-type DefaultBindings = {
+/**
+ * Returns true if the keyboard event originated from within the graph renderer
+ * (`<bb-renderer>`). Used as a `guard` for keyboard triggers that should only
+ * fire when the renderer has focus (e.g. Delete, Undo, Copy).
+ *
+ * Uses tag-name matching instead of `instanceof Renderer` to avoid importing
+ * the heavy UI element module into the SCA action graph.
+ */
+export function isFocusedOnGraphRenderer(evt: KeyboardEvent): boolean {
+  return evt
+    .composedPath()
+    .some(
+      (target) =>
+        target instanceof HTMLElement &&
+        target.tagName.toLowerCase() === "bb-renderer"
+    );
+}
+
+export type ActionBind = {
   controller: AppController;
   services: AppServices;
 };
+
+type DefaultBindings = ActionBind;
 
 /**
  * Defines the hybrid type:
@@ -68,4 +90,109 @@ export function makeAction<T extends DefaultBindings>(): Action<T> {
       throw new Error("Not set");
     },
   }) as Action<T>;
+}
+
+/**
+ * Configuration for toast notifications during a blocking action.
+ */
+export interface ToastConfig {
+  /** Message shown while the action is in progress */
+  pending?: string;
+  /** Message shown when the action completes successfully */
+  complete?: string;
+  /** Toast type for the completion message (default: INFORMATION) */
+  completeType?: ToastType;
+  /** Milliseconds before showing the pending toast (default: 500). Ignored if alwaysNotify is true. */
+  timeout?: number;
+  /** If true, show the pending toast immediately instead of after a timeout */
+  alwaysNotify?: boolean;
+}
+
+/**
+ * Runs an async callback while the `blockingAction` flag is set on the
+ * controller. The flag is always cleared in a `finally` block.
+ *
+ * When a `toast` config is provided, a pending toast is shown (immediately
+ * or after a timeout), replaced by a success or error toast on completion.
+ *
+ * This is the standard pattern for actions triggered by user events that
+ * perform async editor operations: we block the UI to prevent concurrent
+ * edits, run the work, then unblock.
+ *
+ * @param controller App controller whose `blockingAction` flag to manage
+ * @param fn The async work to run while blocking
+ * @param toast Optional toast notification config
+ */
+export async function withUIBlocking(
+  controller: AppController,
+  fn: () => Promise<void>,
+  toast?: ToastConfig
+): Promise<void> {
+  controller.global.main.blockingAction = true;
+
+  let toastId: `${string}-${string}-${string}-${string}-${string}` | undefined;
+  let notifyTimeout: ReturnType<typeof setTimeout> | undefined;
+
+  if (toast) {
+    const showPending = () => {
+      if (toast.pending) {
+        // PENDING = 1 from ToastType enum
+        toastId = controller.global.toasts.toast(
+          toast.pending,
+          ToastType.PENDING,
+          true
+        );
+      }
+    };
+
+    if (toast.alwaysNotify) {
+      showPending();
+    } else {
+      notifyTimeout = setTimeout(showPending, toast.timeout ?? 500);
+    }
+  }
+
+  try {
+    await fn();
+
+    if (toast?.complete && toastId) {
+      // Replace the pending toast with the completion toast.
+      // Default to INFORMATION = 0.
+      controller.global.toasts.toast(
+        toast.complete,
+        toast.completeType ?? ToastType.INFORMATION,
+        false,
+        toastId
+      );
+    }
+  } catch (err) {
+    const message =
+      (err as { message?: string })?.message ?? "An error occurred";
+    controller.global.toasts.toast(message, ToastType.ERROR, false, toastId);
+  } finally {
+    if (notifyTimeout) {
+      clearTimeout(notifyTimeout);
+    }
+    controller.global.main.blockingAction = false;
+  }
+}
+
+/**
+ * Aborts any in-progress run and resets all run-related controller state.
+ *
+ * This consolidates the abort → reset → setStatus(STOPPED) pattern that
+ * appears in multiple action domains (board, flowgen, run).
+ *
+ * @param controller App controller whose run sub-controllers to reset
+ */
+export function stopRun(controller: AppController): void {
+  const { run } = controller;
+  if (run.main.abortController) {
+    run.main.abortController.abort();
+  }
+  run.main.reset();
+  run.screen.reset();
+  run.renderer.reset();
+  run.main.setStatus(STATUS.STOPPED);
+  run.main.bumpStopVersion();
 }

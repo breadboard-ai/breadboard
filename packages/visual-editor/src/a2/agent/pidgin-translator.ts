@@ -5,7 +5,6 @@
  */
 
 import {
-  Capabilities,
   DataPart,
   JsonSerializable,
   LLMContent,
@@ -110,7 +109,6 @@ const MAX_INLINE_CHARACTER_LENGTH = 1000;
  */
 class PidginTranslator {
   constructor(
-    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     private readonly fileSystem: AgentFileSystem
   ) {}
@@ -219,8 +217,11 @@ class PidginTranslator {
     params: Params,
     textAsFiles: boolean
   ): Promise<Outcome<ToPidginResult>> {
-    const template = new Template(this.caps, content);
-    const toolManager = new ToolManager(this.caps, this.moduleArgs);
+    const template = new Template(
+      content,
+      this.moduleArgs.context.currentGraph
+    );
+    const toolManager = new ToolManager(this.moduleArgs);
 
     const errors: string[] = [];
     let useMemory = false;
@@ -292,11 +293,6 @@ ${inner}
             }
             return param.title;
           }
-          case "param":
-            errors.push(
-              `Agent: Params aren't supported in template substitution`
-            );
-            return "";
           case "tool": {
             if (param.path === ROUTE_TOOL_PATH) {
               if (!param.instance) {
@@ -307,7 +303,7 @@ ${inner}
               return `<a href="${routeName}">${param.title}</a>`;
             } else if (param.path === MEMORY_TOOL_PATH) {
               useMemory = true;
-              return "Use Memory Data Store";
+              return "Use Memory";
             } else if (param.path === NOTEBOOKLM_TOOL_PATH) {
               useNotebookLM = true;
               return "Use NotebookLM";

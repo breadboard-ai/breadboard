@@ -4,29 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { createContext } from "@lit/context";
+import type { GlobalConfig } from "../../sca/types.js";
 
-// TODO Replace this with the version in the types package
-export type GoogleDrivePermission =
-  | { id: string; type: "user"; emailAddress: string }
-  | { id: string; type: "group"; emailAddress: string }
-  | { id: string; type: "domain"; domain: string }
-  | { id: string; type: "anyone" };
-
-export type GlobalConfig = {
-  environmentName: string | undefined;
-  hostOrigin: URL;
-  googleDrive: {
-    publishPermissions: GoogleDrivePermission[];
-  };
-  buildInfo: BuildInfo;
-} & ClientDeploymentConfiguration;
-
-export interface BuildInfo {
-  packageJsonVersion: string;
-  gitCommitHash: string;
-}
+// Re-export GlobalConfig for backward compatibility.
+// Canonical source: sca/types.ts.
+export type { GlobalConfig };
 
 export const globalConfigContext = createContext<GlobalConfig | undefined>(
   "bb-global-config"

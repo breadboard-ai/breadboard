@@ -23,6 +23,18 @@ import {
 import { type AnyComponentNode } from "../../types/types.js";
 
 /**
+ * Converts literal escape sequences (e.g. the two-character string `\n`)
+ * into their corresponding whitespace characters.  Gemini-generated A2UI
+ * payloads sometimes emit these as literal strings in `literalString` values.
+ */
+function unescapeLiteral(s: string): string {
+  return s
+    .replaceAll("\\n", "\n")
+    .replaceAll("\\t", "\t")
+    .replaceAll("\\r", "\r");
+}
+
+/**
  * Resolves a `StringValue` to a concrete string.
  *
  * Handles three cases:
@@ -40,9 +52,9 @@ export function extractStringValue(
 ): string {
   if (val !== null && typeof val === "object") {
     if ("literalString" in val) {
-      return val.literalString ?? "";
+      return unescapeLiteral(val.literalString ?? "");
     } else if ("literal" in val && val.literal !== undefined) {
-      return val.literal ?? "";
+      return unescapeLiteral(val.literal ?? "");
     } else if (val && "path" in val && val.path) {
       if (!processor || !component) {
         return "(no model)";

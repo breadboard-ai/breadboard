@@ -34,9 +34,6 @@ export class FlagController
   private accessor _googleOne: boolean | null = null;
 
   @field({ persist: "idb" })
-  private accessor _gulfRenderer: boolean | null = null;
-
-  @field({ persist: "idb" })
   private accessor _mcp: boolean | null = null;
 
   @field({ persist: "idb" })
@@ -59,6 +56,9 @@ export class FlagController
 
   @field({ persist: "idb" })
   private accessor _enableNotebookLm: boolean | null = null;
+
+  @field({ persist: "idb" })
+  private accessor _enableGraphEditorAgent: boolean | null = null;
 
   get agentMode() {
     if (this._agentMode === null)
@@ -102,12 +102,6 @@ export class FlagController
     if (this._googleOne === null)
       throw new Error("googleOne was not set by environment");
     return this._googleOne;
-  }
-
-  get gulfRenderer() {
-    if (this._gulfRenderer === null)
-      throw new Error("gulfRenderer was not set by environment");
-    return this._gulfRenderer;
   }
 
   get mcp() {
@@ -157,6 +151,12 @@ export class FlagController
     if (this._enableNotebookLm === null)
       throw new Error("enableNotebookLm was not set by environment");
     return this._enableNotebookLm;
+  }
+
+  get enableGraphEditorAgent() {
+    if (this._enableGraphEditorAgent === null)
+      throw new Error("enableGraphEditorAgent was not set by environment");
+    return this._enableGraphEditorAgent;
   }
 
   @field({ persist: "local" })
@@ -213,12 +213,6 @@ export class FlagController
       case "googleOne": {
         if (onlyIfNull && this._googleOne !== null) return;
         this._googleOne = value;
-        return;
-      }
-
-      case "gulfRenderer": {
-        if (onlyIfNull && this._gulfRenderer !== null) return;
-        this._gulfRenderer = value;
         return;
       }
 
@@ -281,6 +275,12 @@ export class FlagController
         this._enableNotebookLm = value;
         return;
       }
+
+      case "enableGraphEditorAgent": {
+        if (onlyIfNull && this._enableGraphEditorAgent !== null) return;
+        this._enableGraphEditorAgent = value;
+        return;
+      }
     }
   }
 
@@ -311,7 +311,6 @@ export class FlagController
       );
       this.#set("force2DGraph", env.force2DGraph, onlyIfNull);
       this.#set("googleOne", env.googleOne, onlyIfNull);
-      this.#set("gulfRenderer", env.gulfRenderer, onlyIfNull);
       this.#set("mcp", env.mcp, onlyIfNull);
       this.#set("opalAdk", env.opalAdk, onlyIfNull);
       this.#set("outputTemplates", env.outputTemplates, onlyIfNull);
@@ -329,6 +328,11 @@ export class FlagController
       this.#set("streamPlanner", env.streamPlanner, onlyIfNull);
       this.#set("enableResumeAgentRun", env.enableResumeAgentRun, onlyIfNull);
       this.#set("enableNotebookLm", env.enableNotebookLm, onlyIfNull);
+      this.#set(
+        "enableGraphEditorAgent",
+        env.enableGraphEditorAgent,
+        onlyIfNull
+      );
     });
   }
 

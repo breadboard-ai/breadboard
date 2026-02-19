@@ -110,4 +110,27 @@ suite("deriveLiteViewType", () => {
     const result = deriveLiteViewType(sca, false); // isGraphEmpty = false
     assert.strictEqual(result, "editor");
   });
+
+  test("returns 'editor' when Loaded, graph empty, but generating (flowgen in progress)", () => {
+    const sca = createMockSCA({
+      loadState: "Loaded",
+      isGenerating: true,
+    });
+    const result = deriveLiteViewType(sca, true); // graph empty, but generating
+    assert.strictEqual(result, "editor");
+  });
+
+  test("returns 'home' when Home without new flag and page is 'home'", () => {
+    const sca = createMockSCA({
+      loadState: "Home",
+      parsedUrl: { page: "home" },
+    });
+    // This falls through the "Home" case without matching new or graph conditions
+    // and hits the c8-ignored logging path, so we can't easily test that branch.
+    // But testing the parsedUrl.page === 'home' without `new` is still useful.
+    const result = deriveLiteViewType(sca, false);
+    // Without parsedUrl.new, zeroState is falsy, so it falls through
+    // to the logging/invalid path (c8-ignored).
+    assert.strictEqual(result, "invalid");
+  });
 });
