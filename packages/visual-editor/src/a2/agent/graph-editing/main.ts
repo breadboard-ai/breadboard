@@ -12,6 +12,7 @@ import { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.
 import { graphOverviewYaml, describeSelection } from "./graph-overview.js";
 import { bind } from "../../../sca/actions/graph/graph-actions.js";
 import type { LoopHooks } from "../types.js";
+import type { AgentEventSink } from "../agent-event-sink.js";
 
 export { invokeGraphEditingAgent };
 
@@ -25,12 +26,12 @@ export { invokeGraphEditingAgent };
 async function invokeGraphEditingAgent(
   objective: LLMContent,
   moduleArgs: A2ModuleArgs,
-  waitForInput: (agentMessage: string) => Promise<string>,
+  sink: AgentEventSink,
   hooks?: LoopHooks
 ): Promise<Outcome<AgentResult>> {
   const translator = new EditingAgentPidginTranslator();
   const functionGroups = buildGraphEditingFunctionGroups({
-    waitForInput,
+    sink,
     translator,
   });
 
