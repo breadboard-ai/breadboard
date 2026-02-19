@@ -432,6 +432,49 @@ suite("CoordinationRegistry", () => {
         "exclusive-end",
       ]);
     });
+
+    it("exclusive action does not wait for in-progress immediate action", async () => {
+      const events: string[] = [];
+
+      // Register a slow Immediate action (simulates a network call like
+      // Step.lookupMemorySheet that triggered the original deadlock).
+      const slowImmediate = coordination.registerAction(
+        "Slow.immediate",
+        ActionMode.Immediate,
+        async () => {
+          events.push("immediate-start");
+          await new Promise((r) => setTimeout(r, 100));
+          events.push("immediate-end");
+        }
+      );
+
+      const exclusiveAction = coordination.registerAction(
+        "Fast.exclusive",
+        ActionMode.Exclusive,
+        async () => {
+          events.push("exclusive-start");
+          events.push("exclusive-end");
+        }
+      );
+
+      // Start the slow Immediate action first
+      const immediatePromise = slowImmediate();
+
+      // Give it a tick to register as in-progress
+      await microtask();
+
+      // Now start the Exclusive action — it should NOT wait for the Immediate
+      await exclusiveAction();
+
+      // Wait for the slow Immediate to complete so we can check full ordering
+      await immediatePromise;
+
+      // Exclusive should have completed before the slow Immediate finishes
+      assert.ok(
+        events.indexOf("exclusive-end") < events.indexOf("immediate-end"),
+        `Exclusive should finish before Immediate, but got: ${events.join(", ")}`
+      );
+    });
   });
 
   // =========================================================================
