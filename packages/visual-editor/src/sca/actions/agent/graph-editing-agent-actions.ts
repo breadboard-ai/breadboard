@@ -20,6 +20,7 @@ import { buildHooksFromSink } from "../../../a2/agent/loop-setup.js";
 import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing/main.js";
 import type { AgentRunHandle } from "../../../a2/agent/agent-service.js";
 import type { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
+import type { ChatResponse } from "../../../a2/agent/types.js";
 
 export {
   bind,
@@ -38,8 +39,11 @@ const bind = makeAction();
 /** The currently active run handle (null when no loop is running). */
 let currentRun: AgentRunHandle | null = null;
 
-/** Resolve callback for the pending `wait_for_user_input` promise. */
-let pendingResolve: ((text: string) => void) | null = null;
+/**
+ * Resolve callback for the pending `waitForInput` suspend event.
+ * The consumer handler creates this; `resolveGraphEditingInput` calls it.
+ */
+let pendingResolve: ((response: ChatResponse) => void) | null = null;
 
 // ─── Actions ────────────────────────────────────────────────────────────────
 
@@ -91,17 +95,22 @@ function startGraphEditingAgent(firstMessage: string): void {
   // Build hooks from sink
   const hooks = buildHooksFromSink(handle.sink);
 
-  // Bridge the "suspend" concept: the agent calls waitForInput,
-  // which returns a Promise that resolves when the user sends
-  // the next message via resolveGraphEditingInput.
-  const waitForInput = (agentMessage: string): Promise<string> => {
-    agent.addMessage("model", agentMessage);
+  // Register the suspend handler: when the agent calls `sink.suspend()`
+  // with a `waitForInput` event, this handler sets UI state and returns
+  // a Promise that resolves when the user sends the next message.
+  handle.events.on("waitForInput", (event) => {
+    // Extract the prompt text from the event
+    const promptText = event.prompt.parts
+      .filter((p): p is { text: string } => "text" in p)
+      .map((p) => p.text)
+      .join("\n");
+    agent.addMessage("model", promptText);
     agent.waiting = true;
     agent.processing = false;
-    return new Promise<string>((resolve) => {
+    return new Promise<ChatResponse>((resolve) => {
       pendingResolve = resolve;
     });
-  };
+  });
 
   const context = {
     fetchWithCreds: services.fetchWithCreds,
@@ -111,7 +120,7 @@ function startGraphEditingAgent(firstMessage: string): void {
 
   const moduleArgs = factory.createModuleArgs(context);
 
-  invokeGraphEditingAgent(objective, moduleArgs, waitForInput, hooks)
+  invokeGraphEditingAgent(objective, moduleArgs, handle.sink, hooks)
     .then((result) => {
       agent.loopRunning = false;
       if (result && "$error" in result) {
@@ -129,7 +138,8 @@ function startGraphEditingAgent(firstMessage: string): void {
 }
 
 /**
- * Resolve the pending `wait_for_user_input` promise with user text.
+ * Resolve the pending `waitForInput` suspend event with user text.
+ * Constructs a `ChatResponse` and resolves the consumer handler's Promise.
  * Returns true if there was a pending resolve (agent was waiting).
  */
 function resolveGraphEditingInput(text: string): boolean {
@@ -140,7 +150,7 @@ function resolveGraphEditingInput(text: string): boolean {
   const agent = controller.editor.graphEditingAgent;
   agent.waiting = false;
   agent.processing = true;
-  resolve(text);
+  resolve({ input: { parts: [{ text }] } });
   return true;
 }
 

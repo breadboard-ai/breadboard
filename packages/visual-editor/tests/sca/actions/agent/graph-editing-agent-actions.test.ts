@@ -17,6 +17,7 @@ import {
   type ChatEntry,
 } from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
 import { AgentService } from "../../../../src/a2/agent/agent-service.js";
+import type { WaitForInputEvent } from "../../../../src/a2/agent/agent-event.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -204,6 +205,7 @@ suite("graph-editing-agent-actions", () => {
       type: "functionCall",
       callId: "call-1",
       name: "add_node",
+      args: {},
       title: "Adding node",
     });
 
@@ -212,6 +214,7 @@ suite("graph-editing-agent-actions", () => {
       type: "functionCall",
       callId: "call-2",
       name: "wait_for_user_input",
+      args: {},
       title: undefined,
     });
 
@@ -228,6 +231,170 @@ suite("graph-editing-agent-actions", () => {
     if (systemMessages[0].kind === "message") {
       assert.ok(systemMessages[0].text.includes("Adding node"));
     }
+
+    services.agentService.endRun(handle.runId);
+  });
+
+  // ── Suspend/Resume (waitForInput) ─────────────────────────────────────────
+  // These tests verify the event-driven suspend/resume flow.
+  // They wire the waitForInput consumer handler directly (same approach as
+  // the thought/functionCall tests above) rather than going through
+  // startGraphEditingAgent which requires a full agent loop setup.
+
+  test("waitForInput handler sets waiting state and adds model message", async () => {
+    const controller = await makeControllerStub("GEA_act_9");
+    const services = makeServicesStub();
+    bind({ controller, services });
+    const agent = controller.editor.graphEditingAgent;
+
+    const handle = services.agentService.startRun({
+      kind: "graph-editing",
+      objective: { parts: [{ text: "test" }] },
+    });
+
+    // Wire the handler exactly as the action does
+    handle.events.on("waitForInput", (event: WaitForInputEvent) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const parts = event.prompt.parts as any[];
+      const promptText = parts
+        .filter((p) => "text" in p)
+        .map((p) => p.text)
+        .join("\n");
+      agent.addMessage("model", promptText);
+      agent.waiting = true;
+      agent.processing = false;
+      return new Promise(() => {
+        // Intentionally don't resolve — we just test the UI state change
+      });
+    });
+
+    // Trigger the suspend event
+    handle.events.handle({
+      type: "waitForInput",
+      requestId: "req-1",
+      prompt: { parts: [{ text: "What would you like me to do?" }] },
+      inputType: "text",
+    });
+
+    await agent.isSettled;
+
+    assert.strictEqual(agent.waiting, true, "Agent should be waiting");
+    assert.strictEqual(
+      agent.processing,
+      false,
+      "Agent should not be processing"
+    );
+
+    // Verify the model message was added
+    const modelMessages = agent.entries.filter(
+      (e: ChatEntry) => e.kind === "message" && e.role === "model"
+    );
+    assert.ok(
+      modelMessages.length > 0,
+      "Should have at least one model message"
+    );
+    if (modelMessages[0].kind === "message") {
+      assert.ok(
+        modelMessages[0].text.includes("What would you like me to do?")
+      );
+    }
+
+    services.agentService.endRun(handle.runId);
+  });
+
+  test("waitForInput handler Promise resolves with ChatResponse", async () => {
+    const controller = await makeControllerStub("GEA_act_10");
+    const services = makeServicesStub();
+    bind({ controller, services });
+    const agent = controller.editor.graphEditingAgent;
+
+    const handle = services.agentService.startRun({
+      kind: "graph-editing",
+      objective: { parts: [{ text: "test" }] },
+    });
+
+    let capturedResolve: ((v: unknown) => void) | null = null;
+    handle.events.on("waitForInput", (event: WaitForInputEvent) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const parts = event.prompt.parts as any[];
+      const promptText = parts
+        .filter((p) => "text" in p)
+        .map((p) => p.text)
+        .join("\n");
+      agent.addMessage("model", promptText);
+      agent.waiting = true;
+      agent.processing = false;
+      return new Promise<unknown>((resolve) => {
+        capturedResolve = resolve;
+      });
+    });
+
+    // Trigger suspend
+    const resultPromise = handle.events.handle({
+      type: "waitForInput",
+      requestId: "req-2",
+      prompt: { parts: [{ text: "Hello" }] },
+      inputType: "text",
+    }) as Promise<unknown>;
+
+    assert.strictEqual(agent.waiting, true);
+    assert.ok(
+      capturedResolve !== null,
+      "Should have captured the resolve callback"
+    );
+
+    // Resolve with a ChatResponse (same shape as resolveGraphEditingInput).
+    // Assign to a local to avoid TS never-narrowing after assert.ok.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const doResolve = capturedResolve as any;
+    doResolve({ input: { parts: [{ text: "user says hi" }] } });
+
+    const response = await resultPromise;
+    assert.deepStrictEqual(response, {
+      input: { parts: [{ text: "user says hi" }] },
+    });
+
+    services.agentService.endRun(handle.runId);
+  });
+
+  test("suspend round-trip via bridge: suspend → resolve → value returned", async () => {
+    const controller = await makeControllerStub("GEA_act_11");
+    const services = makeServicesStub();
+    bind({ controller, services });
+    const agent = controller.editor.graphEditingAgent;
+
+    const handle = services.agentService.startRun({
+      kind: "graph-editing",
+      objective: { parts: [{ text: "test" }] },
+    });
+
+    // Wire handler
+    handle.events.on("waitForInput", () => {
+      agent.waiting = true;
+      agent.processing = false;
+      return new Promise((resolve) => {
+        // Simulate user responding after a tick
+        setTimeout(() => {
+          agent.waiting = false;
+          agent.processing = true;
+          resolve({ input: { parts: [{ text: "delayed reply" }] } });
+        }, 10);
+      });
+    });
+
+    // Use sink.suspend (the actual bridge path)
+    const response = (await handle.sink.suspend({
+      type: "waitForInput",
+      requestId: "req-3",
+      prompt: { parts: [{ text: "Waiting..." }] },
+      inputType: "text",
+    })) as { input: { parts: { text: string }[] } };
+
+    assert.deepStrictEqual(response, {
+      input: { parts: [{ text: "delayed reply" }] },
+    });
+    assert.strictEqual(agent.waiting, false);
+    assert.strictEqual(agent.processing, true);
 
     services.agentService.endRun(handle.runId);
   });

@@ -8,6 +8,7 @@ import { getGraphEditingFunctionGroup } from "./functions.js";
 import type { FunctionGroup } from "../types.js";
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
 import { getChatFunctionGroup } from "./chat-functions.js";
+import type { AgentEventSink } from "../agent-event-sink.js";
 
 export { buildGraphEditingFunctionGroups };
 
@@ -18,12 +19,12 @@ export { buildGraphEditingFunctionGroups };
  * handle maps across function calls within a session.
  */
 function buildGraphEditingFunctionGroups(args: {
-  waitForInput: (agentMessage: string) => Promise<string>;
+  sink: AgentEventSink;
   translator: EditingAgentPidginTranslator;
 }): FunctionGroup[] {
   const { translator } = args;
   return [
     getGraphEditingFunctionGroup(translator),
-    getChatFunctionGroup(args.waitForInput, translator),
+    getChatFunctionGroup(args.sink, translator),
   ];
 }

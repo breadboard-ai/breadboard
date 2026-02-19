@@ -6,8 +6,9 @@
 
 import z from "zod";
 import { defineFunction, mapDefinitions } from "../function-definition.js";
-import type { FunctionGroup } from "../types.js";
+import type { FunctionGroup, ChatResponse } from "../types.js";
 import type { EditingAgentPidginTranslator } from "./editing-agent-pidgin-translator.js";
+import type { AgentEventSink } from "../agent-event-sink.js";
 import { bind } from "../../../sca/actions/graph/graph-actions.js";
 import { graphOverviewYaml, describeSelection } from "./graph-overview.js";
 import {
@@ -39,11 +40,14 @@ function getGraphData() {
  * Contains a single `wait_for_user_input` function that blocks until
  * the user sends the next message.
  *
+ * The function suspends the agent loop via `sink.suspend()`, which
+ * returns a `ChatResponse` when the user responds in the UI.
+ *
  * When the user responds, the function also reports any graph changes
  * the user made while the agent was waiting.
  */
 function getChatFunctionGroup(
-  waitForInput: (agentMessage: string) => Promise<string>,
+  sink: AgentEventSink,
   translator: EditingAgentPidginTranslator
 ): FunctionGroup {
   let lastSnapshot: GraphSnapshot | null = null;
@@ -93,7 +97,18 @@ function getChatFunctionGroup(
           );
         }
 
-        const userMessage = await waitForInput(message);
+        const response = await sink.suspend<ChatResponse>({
+          type: "waitForInput",
+          requestId: crypto.randomUUID(),
+          prompt: { parts: [{ text: message }] },
+          inputType: "text",
+        });
+
+        // Extract text from the ChatResponse
+        const userMessage = response.input.parts
+          .filter((p): p is { text: string } => "text" in p)
+          .map((p) => p.text)
+          .join("\n");
 
         // After user responds, check whether they edited the graph.
         const afterData = getGraphData();
