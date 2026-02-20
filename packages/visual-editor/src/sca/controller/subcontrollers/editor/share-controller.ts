@@ -115,6 +115,9 @@ export class ShareController extends RootController {
   @field()
   accessor viewerMode: ViewerMode = "full";
 
+  @field()
+  accessor lastPublishedIso = "";
+
   /**
    * Resets all fields to their defaults. Called when loading a new opal.
    *
@@ -141,6 +144,7 @@ export class ShareController extends RootController {
     this.unmanagedAssetProblems = [];
     this.notebookDomainSharingLimited = false;
     this.viewerMode = "full";
+    this.lastPublishedIso = "";
   }
 
   #resolveUnmanagedAssets?: () => void;

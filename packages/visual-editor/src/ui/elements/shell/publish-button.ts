@@ -6,7 +6,7 @@
 
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
-import { css, html, LitElement } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { scaContext } from "../../../sca/context/context.js";
@@ -92,11 +92,32 @@ export class PublishButton extends SignalWatcher(LitElement) {
         letter-spacing: 0.1px;
         padding: 8px 12px;
         border-radius: 4px;
-        width: 220px;
+        width: 230px;
         white-space: normal;
-        pointer-events: none;
         opacity: 0;
         transition: opacity 0.15s ease 0.5s;
+
+        /* Bridges the gap so the cursor can move into the tooltip. */
+        &::before {
+          content: "";
+          position: absolute;
+          top: -8px;
+          left: 0;
+          right: 0;
+          height: 8px;
+        }
+
+        .up-to-date {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          & .g-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+            --icon-wght: 500;
+          }
+        }
       }
 
       #wrapper:hover #tooltip {
@@ -146,11 +167,38 @@ export class PublishButton extends SignalWatcher(LitElement) {
           ${this.#label}
         </button>
         <span id="tooltip"
-          >Click publish to update your Opal. This ensures everyone with your
-          shared link sees your latest changes.</span
+          >${this.#formattedLastPublished
+            ? html`Last Published: ${this.#formattedLastPublished}<br /><br />`
+            : nothing}${this.#hasRedDot
+            ? html`Click publish to update your Opal. This ensures everyone with
+              your shared link sees your latest changes.`
+            : this.#share?.hasPublicPermissions
+              ? html`<span class="up-to-date">
+                  <span
+                    >Your Opal is up-to-date. Everyone with your shared link
+                    sees your latest changes.</span
+                  >
+                  <span class="g-icon">check</span>
+                </span>`
+              : html`Your Opal is not currently shared with anyone, so
+                publishing is unavailable.`}</span
         >
       </div>
     `;
+  }
+
+  get #formattedLastPublished(): string | undefined {
+    const iso = this.#share?.lastPublishedIso;
+    if (!iso) {
+      return undefined;
+    }
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   }
 
   get #hasRedDot() {

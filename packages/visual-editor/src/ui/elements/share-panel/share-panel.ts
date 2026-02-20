@@ -184,8 +184,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
           cursor: help;
         }
 
-        .info-icon::after {
-          content: attr(data-tooltip);
+        .info-tooltip {
           position: absolute;
           bottom: calc(100% + 8px);
           left: 50%;
@@ -197,17 +196,28 @@ export class SharePanel extends SignalWatcher(LitElement) {
           font-weight: 400;
           line-height: 16px;
           letter-spacing: 0.1px;
-          padding: 4px 8px;
+          padding: 6px 10px;
           border-radius: 4px;
           width: max-content;
-          max-width: 300px;
+          max-width: 233px;
           white-space: normal;
-          pointer-events: none;
           opacity: 0;
           transition: opacity 0.15s ease;
+          cursor: text;
+          user-select: text;
+
+          /* Bridges the gap so the cursor can move into the tooltip. */
+          &::before {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            height: 8px;
+          }
         }
 
-        .info-icon:hover::after {
+        .info-icon:hover .info-tooltip {
           opacity: 1;
         }
 
@@ -312,7 +322,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
       #stale-v2 {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
         gap: var(--bb-grid-size-4);
         background: #f1f1f1;
@@ -336,6 +346,10 @@ export class SharePanel extends SignalWatcher(LitElement) {
         button[disabled] {
           opacity: 0.4;
           cursor: wait;
+        }
+
+        p {
+          margin: 0 0 var(--bb-grid-size-5) 0;
         }
       }
 
@@ -707,12 +721,28 @@ export class SharePanel extends SignalWatcher(LitElement) {
     await this.#actions.publishStale();
   }
 
+  #formatLastPublished() {
+    const iso = this.#controller.lastPublishedIso;
+    if (!iso) {
+      return nothing;
+    }
+    const date = new Date(iso);
+    const formatted = date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return html`<p>Last Published: ${formatted}</p>`;
+  }
+
   #renderStaleBannerV2() {
     return html`
       <div id="stale-v2">
         <span>
-          Click publish to update your Opal. This ensures everyone with your
-          shared link sees your latest changes.
+          ${this.#formatLastPublished()} Click publish to update your Opal. This
+          ensures everyone with your shared link sees your latest changes.
         </span>
         <button
           class="bb-button-text"
@@ -734,10 +764,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
       <div id="editor-access-toggle">
         <label>
           Allow access to editor view and remix
-          <span
-            class="g-icon info-icon"
-            data-tooltip="Allows others to easily see your prompts and make a copy of your Opal."
-            >info</span
+          <span class="g-icon info-icon"
+            >info<span class="info-tooltip"
+              >Allows others to easily see your prompts and make a copy of your
+              Opal.</span
+            ></span
           >
         </label>
         <span class="toggle-group">

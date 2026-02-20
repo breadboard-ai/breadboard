@@ -29,6 +29,7 @@ interface FakeGoogleDriveApiSession {
   listFilesIterators: Map<string, DriveFile[]>;
   nextIteratorId: number;
   latencyMs: number;
+  clockMs: number;
 }
 
 /**
@@ -75,6 +76,8 @@ export class FakeGoogleDriveApi {
     return this.#session.requests;
   }
 
+  static readonly #FAKE_CLOCK_START = Date.parse("2000-01-01T08:00:00Z");
+
   static #freshSession(): FakeGoogleDriveApiSession {
     return {
       files: new Map(),
@@ -84,7 +87,14 @@ export class FakeGoogleDriveApi {
       listFilesIterators: new Map(),
       nextIteratorId: 0,
       latencyMs: 0,
+      clockMs: FakeGoogleDriveApi.#FAKE_CLOCK_START,
     };
+  }
+
+  #nextTimestamp(): string {
+    const iso = new Date(this.#session.clockMs).toISOString();
+    this.#session.clockMs += 60_000;
+    return iso.replace(/\.\d{3}Z$/, "Z");
   }
 
   private constructor(
@@ -434,11 +444,14 @@ export class FakeGoogleDriveApi {
     const metadata: DriveFile = JSON.parse(new TextDecoder().decode(body));
     const newFileId = metadata.id ?? this.#generateFakeFileId();
 
+    const now = this.#nextTimestamp();
     const fileMetadata: DriveFile = {
       id: newFileId,
       kind: "drive#file",
       ownedByMe: true,
       version: "1",
+      createdTime: now,
+      modifiedTime: now,
       properties: {},
       ...metadata,
     };
@@ -525,6 +538,7 @@ export class FakeGoogleDriveApi {
       },
       id: fileId,
       version: String(currentVersion + 1),
+      modifiedTime: this.#nextTimestamp(),
     };
 
     this.#session.files.set(fileId, {
@@ -679,11 +693,14 @@ export class FakeGoogleDriveApi {
     // Use client-provided ID if present (e.g., from generateIds), otherwise generate one
     const fileId = metadata.id ?? this.#generateFakeFileId();
 
+    const now = this.#nextTimestamp();
     const fileMetadata: DriveFile = {
       id: fileId,
       kind: "drive#file",
       ownedByMe: true,
       version: "1",
+      createdTime: now,
+      modifiedTime: now,
       properties: {},
       permissions: [],
       ...(this.#session.generatesResourceKey && {
@@ -724,6 +741,7 @@ export class FakeGoogleDriveApi {
       },
       id: fileId,
       version: String(currentVersion + 1),
+      modifiedTime: this.#nextTimestamp(),
     };
 
     this.#session.files.set(fileId, { metadata: updatedMetadata, data });

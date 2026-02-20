@@ -684,4 +684,94 @@ suite("GoogleDriveClient", () => {
       assert.strictEqual(meta.version, "5");
     });
   });
+
+  suite("timestamp tracking", () => {
+    const T0 = "2000-01-01T08:00:00Z";
+
+    test("createFile sets createdTime and modifiedTime from fake clock", async () => {
+      const file = await client.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "test.json", mimeType: "application/json" }
+      );
+      const meta = await client.getFileMetadata(file.id, {
+        fields: ["createdTime", "modifiedTime"],
+      });
+      assert.strictEqual(meta.createdTime, T0);
+      assert.strictEqual(meta.modifiedTime, T0);
+    });
+
+    test("clock increments by 1 minute per request", async () => {
+      const a = await client.createFile(
+        new Blob(["a"], { type: "text/plain" }),
+        { name: "a.txt", mimeType: "text/plain" }
+      );
+      const b = await client.createFile(
+        new Blob(["b"], { type: "text/plain" }),
+        { name: "b.txt", mimeType: "text/plain" }
+      );
+      const c = await client.createFile(
+        new Blob(["c"], { type: "text/plain" }),
+        { name: "c.txt", mimeType: "text/plain" }
+      );
+      const metaA = await client.getFileMetadata(a.id, {
+        fields: ["createdTime"],
+      });
+      const metaB = await client.getFileMetadata(b.id, {
+        fields: ["createdTime"],
+      });
+      const metaC = await client.getFileMetadata(c.id, {
+        fields: ["createdTime"],
+      });
+      assert.strictEqual(metaA.createdTime, T0);
+      assert.strictEqual(metaB.createdTime, "2000-01-01T08:01:00Z");
+      assert.strictEqual(metaC.createdTime, "2000-01-01T08:02:00Z");
+    });
+
+    test("updateFileMetadata advances modifiedTime but not createdTime", async () => {
+      const file = await client.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "test.json", mimeType: "application/json" }
+      );
+      await client.updateFileMetadata(file.id, { name: "renamed.json" });
+      const meta = await client.getFileMetadata(file.id, {
+        fields: ["createdTime", "modifiedTime"],
+      });
+      assert.strictEqual(meta.createdTime, T0);
+      assert.strictEqual(meta.modifiedTime, "2000-01-01T08:01:00Z");
+    });
+
+    test("updateFile advances modifiedTime", async () => {
+      const file = await client.createFile(
+        new Blob(["v1"], { type: "text/plain" }),
+        { name: "test.txt", mimeType: "text/plain" }
+      );
+      await client.updateFile(
+        file.id,
+        new Blob(["v2"], { type: "text/plain" })
+      );
+      const meta = await client.getFileMetadata(file.id, {
+        fields: ["modifiedTime"],
+      });
+      assert.strictEqual(meta.modifiedTime, "2000-01-01T08:01:00Z");
+    });
+
+    test("reset restarts the clock", async () => {
+      // Advance the clock by creating a file
+      await client.createFile(new Blob(["x"], { type: "text/plain" }), {
+        name: "x.txt",
+        mimeType: "text/plain",
+      });
+
+      fakeApi.reset();
+
+      const file = await client.createFile(
+        new Blob(["y"], { type: "text/plain" }),
+        { name: "y.txt", mimeType: "text/plain" }
+      );
+      const meta = await client.getFileMetadata(file.id, {
+        fields: ["createdTime"],
+      });
+      assert.strictEqual(meta.createdTime, T0);
+    });
+  });
 });
