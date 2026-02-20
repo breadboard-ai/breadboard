@@ -18,7 +18,17 @@ import { renderConsistentUI } from "./render-consistent-ui.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Params } from "./common.js";
 import { isLLMContent, isLLMContentArray } from "../../data/common.js";
-import { DocEditMode, DocWriteMode } from "../google-drive/types.js";
+import {
+  DocEditMode,
+  DocOutputName,
+  DocWriteMode,
+  SheetEditMode,
+  SheetOutputName,
+  SheetWriteMode,
+  SlideDeckMode,
+  SlideOutputName,
+  SlideWriteMode,
+} from "../google-drive/types.js";
 
 export { invoke as default, describe };
 
@@ -139,10 +149,12 @@ type InvokeInputs = {
   "b-system-instruction"?: LLMContent;
   "b-render-model-name": string;
   "b-doc-title"?: string;
-  "b-doc-a-edit-mode"?: string;
-  "b-doc-a-write-mode"?: string;
-  "b-slide-deck-mode"?: string;
-  "b-slide-write-mode"?: string;
+  [DocOutputName.EditMode]?: DocEditMode;
+  [DocOutputName.WriteMode]?: DocWriteMode;
+  [SheetOutputName.EditMode]?: SheetEditMode;
+  [SheetOutputName.WriteMode]?: SheetWriteMode;
+  [SlideOutputName.DeckMode]?: SlideDeckMode;
+  [SlideOutputName.WriteMode]?: SlideWriteMode;
 };
 
 type InvokeOutputs = {
@@ -157,8 +169,9 @@ type DescribeInputs = {
   inputs: {
     text?: LLMContent;
     "p-render-mode": string;
-    "b-slide-deck-mode"?: string;
-    "b-doc-a-edit-mode"?: string;
+    [SlideOutputName.DeckMode]?: SlideDeckMode;
+    [DocOutputName.EditMode]?: DocEditMode;
+    [SheetOutputName.EditMode]?: SheetEditMode;
   };
 };
 
@@ -253,10 +266,12 @@ async function saveToGoogleDrive(
   content: LLMContent,
   mimeType: string,
   title: string | undefined,
-  slideDeckMode?: string,
-  slideWriteMode?: string,
+  slideDeckMode?: SlideDeckMode,
+  slideWriteMode?: SlideWriteMode,
   googleDocEditMode?: DocEditMode,
-  googleDocWriteMode?: DocWriteMode
+  googleDocWriteMode?: DocWriteMode,
+  googleSheetEditMode?: SheetEditMode,
+  googleSheetWriteMode?: SheetWriteMode
 ): Promise<Outcome<SaveOutput>> {
   const graph = moduleArgs.context.currentGraph;
   let graphId = "";
@@ -277,14 +292,12 @@ async function saveToGoogleDrive(
       info: {
         configuration: {
           file: { mimeType, preview: "", id: "" },
-          slideDeckMode: slideDeckMode as "new" | "same" | undefined,
-          slideWriteMode: slideWriteMode as
-            | "prepend"
-            | "append"
-            | "overwrite"
-            | undefined,
+          slideDeckMode: slideDeckMode,
+          slideWriteMode: slideWriteMode,
           docEditMode: googleDocEditMode,
           docWriteMode: googleDocWriteMode,
+          sheetEditMode: googleSheetEditMode,
+          sheetWriteMode: googleSheetWriteMode,
         },
       },
     },
@@ -313,10 +326,12 @@ async function invoke(
     "b-system-instruction": systemInstruction,
     "b-render-model-name": modelType,
     "b-doc-title": googleDocTitle,
-    "b-doc-a-edit-mode": docEditMode,
-    "b-doc-a-write-mode": docWriteMode,
-    "b-slide-deck-mode": slideDeckMode,
-    "b-slide-write-mode": slideWriteMode,
+    [DocOutputName.EditMode]: docEditMode,
+    [DocOutputName.WriteMode]: docWriteMode,
+    [SheetOutputName.EditMode]: sheetEditMode,
+    [SheetOutputName.WriteMode]: sheetWriteMode,
+    [SlideOutputName.DeckMode]: slideDeckMode,
+    [SlideOutputName.WriteMode]: slideWriteMode,
     ...params
   }: InvokeInputs,
   moduleArgs: A2ModuleArgs
@@ -409,7 +424,13 @@ async function invoke(
         moduleArgs,
         out,
         "application/vnd.google-apps.spreadsheet",
-        googleDocTitle
+        googleDocTitle,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        sheetEditMode as SheetEditMode,
+        sheetWriteMode as SheetWriteMode
       );
     }
     case "ConsistentUI": {
@@ -426,8 +447,9 @@ async function invoke(
 
 function advancedSettings(
   renderType: RenderType,
-  slideDeckMode?: string,
-  googleDocEditMode?: string
+  slideDeckMode?: SlideDeckMode,
+  googleDocEditMode?: DocEditMode,
+  sheetsEditMode?: SheetEditMode
 ): Record<string, Schema> {
   switch (renderType) {
     case "HTML":
@@ -448,46 +470,46 @@ function advancedSettings(
       };
     case "GoogleDoc": {
       const settings: Record<string, Schema> = {
-        "b-doc-a-edit-mode": {
+        [DocOutputName.EditMode]: {
           type: "string",
           enum: [
             {
-              id: "new",
+              id: DocEditMode.New,
               title: "New document",
             },
             {
-              id: "same",
+              id: DocEditMode.Same,
               title: "Same document",
             },
           ],
           behavior: ["config", "hint-advanced", "reactive"],
           title: "Edit each time",
-          default: "new",
+          default: DocEditMode.New,
         },
       };
-      if (googleDocEditMode === "same") {
-        settings["b-doc-a-write-mode"] = {
+      if (googleDocEditMode === DocEditMode.Same) {
+        settings[DocOutputName.WriteMode] = {
           type: "string",
           enum: [
             {
-              id: "prepend",
+              id: DocWriteMode.Prepend,
               title: "Prepend",
               description: "Add to the beginning",
             },
             {
-              id: "append",
+              id: DocWriteMode.Append,
               title: "Append",
               description: "Add to the end",
             },
             {
-              id: "overwrite",
+              id: DocWriteMode.Overwrite,
               title: "Overwrite",
               description: "Replace everything",
             },
           ],
           behavior: ["config", "hint-advanced", "reactive"],
           title: "Write mode",
-          default: "prepend",
+          default: DocWriteMode.Prepend,
         };
       }
 
@@ -503,46 +525,46 @@ function advancedSettings(
     }
     case "GoogleSlides": {
       const settings: Record<string, Schema> = {
-        "b-slide-deck-mode": {
+        [SlideOutputName.DeckMode]: {
           type: "string",
           enum: [
             {
-              id: "new",
+              id: SlideDeckMode.New,
               title: "New slide deck",
             },
             {
-              id: "same",
+              id: SlideDeckMode.Same,
               title: "Same slide deck",
             },
           ],
           behavior: ["config", "hint-advanced", "reactive"],
           title: "Edit each time",
-          default: "new",
+          default: SlideDeckMode.New,
         },
       };
-      if (slideDeckMode === "same") {
-        settings["b-slide-write-mode"] = {
+      if (slideDeckMode === SlideDeckMode.Same) {
+        settings[SlideOutputName.WriteMode] = {
           type: "string",
           enum: [
             {
-              id: "prepend",
+              id: SlideWriteMode.Prepend,
               title: "Prepend",
               description: "Add to the beginning",
             },
             {
-              id: "append",
+              id: SlideWriteMode.Append,
               title: "Append",
               description: "Add to the end",
             },
             {
-              id: "overwrite",
+              id: SlideWriteMode.Overwrite,
               title: "Overwrite",
               description: "Replace everything",
             },
           ],
           behavior: ["config", "hint-advanced", "reactive"],
           title: "Write mode",
-          default: "prepend",
+          default: SlideWriteMode.Prepend,
         };
       }
       settings["b-doc-title"] = {
@@ -554,15 +576,63 @@ function advancedSettings(
       return settings;
     }
     case "GoogleSheets": {
-      return {
-        "b-doc-title": {
+      const settings: Record<string, Schema> = {
+        [SheetOutputName.EditMode]: {
           type: "string",
-          behavior: ["config", "hint-advanced"],
-          title: "Google Spreadsheet Title",
-          description:
-            "The title of a Google Drive Spreadsheet that content will be saved to",
+          enum: [
+            {
+              id: SheetEditMode.SameTab,
+              title: "Same tab",
+            },
+            {
+              id: SheetEditMode.NewTab,
+              title: "New tab",
+            },
+            {
+              id: SheetEditMode.NewSheet,
+              title: "New sheet",
+            },
+          ],
+          behavior: ["config", "hint-advanced", "reactive"],
+          title: "Edit each time",
+          default: SheetEditMode.SameTab,
         },
       };
+      if (sheetsEditMode === SheetEditMode.SameTab) {
+        settings[SheetOutputName.WriteMode] = {
+          type: "string",
+          enum: [
+            {
+              id: SheetWriteMode.Prepend,
+              title: "Prepend",
+              description: "Add to the beginning",
+            },
+            {
+              id: SheetWriteMode.Append,
+              title: "Append",
+              description: "Add to the end",
+            },
+            {
+              id: SheetWriteMode.Overwrite,
+              title: "Overwrite",
+              description: "Replace everything",
+            },
+          ],
+          behavior: ["config", "hint-advanced", "reactive"],
+          title: "Write mode",
+          default: SheetWriteMode.Prepend,
+        };
+      }
+
+      settings["b-doc-title"] = {
+        type: "string",
+        behavior: ["config", "hint-advanced"],
+        title: "Sheets name",
+        description:
+          "The title of a Google Drive Spreadsheet that content will be saved to",
+      };
+
+      return settings;
     }
     case "ConsistentUI": {
       return {
@@ -583,8 +653,9 @@ async function describe(
     inputs: {
       text,
       "p-render-mode": renderMode,
-      "b-slide-deck-mode": slideDeckMode,
-      "b-doc-a-edit-mode": docEditMode,
+      [SlideOutputName.DeckMode]: slideDeckMode,
+      [DocOutputName.EditMode]: docEditMode,
+      [SheetOutputName.EditMode]: sheetsEditMode,
     },
   }: DescribeInputs,
   moduleArgs: A2ModuleArgs
@@ -617,7 +688,12 @@ async function describe(
           default: MANUAL_MODE,
           description: "Choose how to combine and display the outputs",
         },
-        ...advancedSettings(renderType, slideDeckMode, docEditMode),
+        ...advancedSettings(
+          renderType,
+          slideDeckMode,
+          docEditMode,
+          sheetsEditMode
+        ),
         ...template.schemas(),
       },
       behavior: ["at-wireable"],
