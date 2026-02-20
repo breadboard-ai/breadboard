@@ -303,6 +303,20 @@ suite("Share Actions", () => {
       shareableFileId,
       "Main file should point to the shareable copy"
     );
+
+    // Verify lastPublishedIso is set and is after the graph file was created
+    const publishedAt = Date.parse(share.lastPublishedIso);
+    const graphCreatedAt = Date.parse(
+      (
+        await googleDriveClient.getFileMetadata(graphDriveFile.id, {
+          fields: ["createdTime"],
+        })
+      ).createdTime!
+    );
+    assert.ok(
+      publishedAt > graphCreatedAt,
+      "lastPublishedIso should be after the graph file was created"
+    );
   });
 
   test("publish blocked by domain config", async () => {
@@ -525,6 +539,11 @@ suite("Share Actions", () => {
     assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.stale, true);
     assert.strictEqual(share.editableVersion, "5");
+    const lastPublishedBefore = share.lastPublishedIso;
+    assert.ok(
+      lastPublishedBefore,
+      "lastPublishedIso should be set from shareable copy"
+    );
 
     // Publish stale with a graph that has identifiable content
     setGraph({
@@ -561,6 +580,14 @@ suite("Share Actions", () => {
     assert.strictEqual(share.status, "ready");
     assert.strictEqual(share.ownership, "owner");
     assert.strictEqual(share.stale, false);
+
+    // Verify lastPublishedIso was updated to a later time
+    const publishedAfter = Date.parse(share.lastPublishedIso);
+    const publishedBefore = Date.parse(lastPublishedBefore);
+    assert.ok(
+      publishedAfter > publishedBefore,
+      "lastPublishedIso should advance after publishStale"
+    );
   });
 
   test("granular sharing", async () => {
