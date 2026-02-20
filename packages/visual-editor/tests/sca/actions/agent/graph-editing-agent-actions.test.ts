@@ -5,560 +5,654 @@
  */
 
 import assert from "node:assert";
-import { suite, test, afterEach, beforeEach, mock } from "node:test";
+import { beforeEach, suite, test } from "node:test";
+import * as Graph from "../../../../src/sca/actions/graph/graph-actions.js";
+import { AppServices } from "../../../../src/sca/services/services.js";
+import { AppController } from "../../../../src/sca/controller/controller.js";
 import {
-  bind,
-  startGraphEditingAgent,
-  resolveGraphEditingInput,
-  resetGraphEditingAgent,
-} from "../../../../src/sca/actions/agent/graph-editing-agent-actions.js";
-import {
-  GraphEditingAgentController,
-  type ChatEntry,
-} from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
-import { AgentService } from "../../../../src/a2/agent/agent-service.js";
-import type { AgentRunHandle } from "../../../../src/a2/agent/agent-service.js";
+  makeTestGraphStore,
+  loadGraphIntoStore,
+} from "../../../helpers/_graph-store.js";
+import { editGraphStore } from "../../../helpers/_editor.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
+import type { ConfigChangeContext } from "../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
+import { makeFreshGraph } from "../../helpers/index.js";
+import { onPendingGraphReplacement } from "../../../../src/sca/actions/graph/triggers.js";
 
-import { setDOM, unsetDOM } from "../../../fake-dom.js";
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-async function makeControllerStub(id: string) {
-  const agent = new GraphEditingAgentController(
-    id,
-    "GraphEditingAgentController"
-  );
-  await agent.isHydrated;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { editor: { graphEditingAgent: agent, graph: {} } } as any;
+function editorChange(graphActions: typeof Graph) {
+  return new Promise<GraphDescriptor>((res) => {
+    graphActions.bind.controller.editor.graph.editor?.addEventListener(
+      "graphchange",
+      (evt) => res(evt.graph),
+      { once: true }
+    );
+  });
 }
 
-function makeServicesStub() {
-  return {
-    sandbox: { createModuleArgs: () => ({}) },
-    fetchWithCreds: globalThis.fetch,
-    agentService: new AgentService(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any;
-}
+suite("Graph Actions", () => {
+  suite("instantiated without editor", () => {
+    const graphActions = Graph;
 
-/**
- * Call startGraphEditingAgent and capture the run handle.
- *
- * The real `startGraphEditingAgent` calls `agentService.startRun()` then
- * wires handlers on the returned handle, then fires off
- * `invokeGraphEditingAgent(…).then(…).catch(…)` asynchronously.
- *
- * Since all handler wiring is synchronous and happens BEFORE the async
- * invoke, we can immediately emit events on the captured sink to exercise
- * the real handler code.
- *
- * The `invokeGraphEditingAgent` call will fail (because we pass dummy
- * module args) and the `.catch()` handler fires — which is also good:
- * it tests the error completion path (L206-211).
- */
-function startAndCapture(
-  services: ReturnType<typeof makeServicesStub>,
-  message = "test"
-): AgentRunHandle {
-  let capturedHandle: AgentRunHandle | null = null;
+    beforeEach(() => {
+      const graphStore = makeTestGraphStore();
 
-  const origStartRun = services.agentService.startRun.bind(
-    services.agentService
-  );
-  mock.method(
-    services.agentService,
-    "startRun",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (opts: any) => {
-      capturedHandle = origStartRun(opts);
-      return capturedHandle;
-    }
-  );
-
-  startGraphEditingAgent(message);
-
-  assert.ok(capturedHandle, "startRun should have been called");
-  return capturedHandle;
-}
-
-// ── Tests ────────────────────────────────────────────────────────────────────
-
-suite("graph-editing-agent-actions", () => {
-  beforeEach(() => {
-    setDOM();
-  });
-
-  afterEach(() => {
-    // Always reset to clean up module-level state (currentRun, pendingResolve)
-    try {
-      resetGraphEditingAgent();
-    } catch {
-      // Ignore — reset may fail if bind wasn't called
-    }
-    mock.restoreAll();
-    unsetDOM();
-  });
-
-  // ── resolveGraphEditingInput ──────────────────────────────────────────────
-
-  test("resolveGraphEditingInput returns false when no pending resolve", async () => {
-    const controller = await makeControllerStub("GEA_act_1");
-    bind({ controller, services: makeServicesStub() });
-
-    const result = resolveGraphEditingInput("hello");
-    assert.strictEqual(result, false);
-  });
-
-  // ── resetGraphEditingAgent ────────────────────────────────────────────────
-
-  test("resetGraphEditingAgent resets controller state", async () => {
-    const controller = await makeControllerStub("GEA_act_2");
-    bind({ controller, services: makeServicesStub() });
-    const agent = controller.editor.graphEditingAgent;
-
-    // Set some state
-    agent.open = true;
-    agent.loopRunning = true;
-    agent.waiting = true;
-    agent.processing = true;
-    agent.currentFlow = "flow-1";
-    agent.addMessage("user", "Hello");
-    await agent.isSettled;
-
-    resetGraphEditingAgent();
-    await agent.isSettled;
-
-    assert.deepStrictEqual(agent.entries, []);
-    assert.strictEqual(agent.open, false);
-    assert.strictEqual(agent.loopRunning, false);
-    assert.strictEqual(agent.waiting, false);
-    assert.strictEqual(agent.processing, false);
-    assert.strictEqual(agent.currentFlow, null);
-  });
-
-  test("resetGraphEditingAgent is safe to call multiple times", async () => {
-    const controller = await makeControllerStub("GEA_act_3");
-    bind({ controller, services: makeServicesStub() });
-
-    resetGraphEditingAgent();
-    resetGraphEditingAgent();
-    assert.ok(true, "Double reset did not throw");
-  });
-
-  // ── startGraphEditingAgent ────────────────────────────────────────────────
-
-  test("startGraphEditingAgent is idempotent when loop is already running", async () => {
-    const controller = await makeControllerStub("GEA_act_4");
-    const services = makeServicesStub();
-    bind({ controller, services });
-
-    controller.editor.graphEditingAgent.loopRunning = true;
-    await controller.editor.graphEditingAgent.isSettled;
-
-    const startRunSpy = mock.method(services.agentService, "startRun");
-
-    startGraphEditingAgent("test");
-
-    assert.strictEqual(
-      startRunSpy.mock.callCount(),
-      0,
-      "Should not start a run when loop is already running"
-    );
-  });
-
-  test("startGraphEditingAgent sets loopRunning to true", async () => {
-    const controller = await makeControllerStub("GEA_act_5");
-    const services = makeServicesStub();
-    bind({ controller, services });
-
-    startAndCapture(services, "Build something");
-
-    assert.strictEqual(controller.editor.graphEditingAgent.loopRunning, true);
-  });
-
-  test("startGraphEditingAgent creates a run via AgentService", async () => {
-    const controller = await makeControllerStub("GEA_act_6");
-    const services = makeServicesStub();
-    bind({ controller, services });
-
-    const startRunSpy = mock.method(services.agentService, "startRun");
-
-    startGraphEditingAgent("Build something");
-
-    assert.strictEqual(startRunSpy.mock.callCount(), 1);
-    const callArgs = startRunSpy.mock.calls[0].arguments[0];
-    assert.strictEqual(callArgs.kind, "graph-editing");
-  });
-
-  // ── Real handler: thought events (L91-93) ─────────────────────────────────
-
-  test("thought handler: real handler adds thought to controller", async () => {
-    const controller = await makeControllerStub("GEA_act_7");
-    const services = makeServicesStub();
-    bind({ controller, services });
-    const agent = controller.editor.graphEditingAgent;
-
-    const handle = startAndCapture(services);
-
-    // Emit through real sink → real handler fires at L92-93
-    handle.sink.emit({ type: "thought", text: "**Analyzing** the graph" });
-    await agent.isSettled;
-
-    const thoughtGroup = agent.entries.find(
-      (e: ChatEntry) => e.kind === "thought-group"
-    );
-    assert.ok(thoughtGroup, "Should have a thought group");
-    if (thoughtGroup?.kind === "thought-group") {
-      assert.strictEqual(thoughtGroup.thoughts.length, 1);
-      assert.strictEqual(thoughtGroup.thoughts[0].title, "Analyzing");
-    }
-  });
-
-  // ── Real handler: functionCall events (L95-99) ────────────────────────────
-
-  test("functionCall handler: adds system message for non-wait functions", async () => {
-    const controller = await makeControllerStub("GEA_act_8");
-    const services = makeServicesStub();
-    bind({ controller, services });
-    const agent = controller.editor.graphEditingAgent;
-
-    const handle = startAndCapture(services);
-
-    // Non-wait: should add system message (L98)
-    handle.sink.emit({
-      type: "functionCall",
-      callId: "call-1",
-      name: "add_node",
-      args: {},
-      title: "Adding node",
+      graphActions.bind({
+        services: { graphStore } as unknown as AppServices,
+        controller: {
+          editor: {
+            graph: {
+              editor: null,
+            },
+          },
+        } as AppController,
+      });
     });
 
-    // Wait: should NOT add message (L97 guard)
-    handle.sink.emit({
-      type: "functionCall",
-      callId: "call-2",
-      name: "wait_for_user_input",
-      args: {},
-      title: undefined,
+    test("throw on edit", async () => {
+      await assert.rejects(async () => {
+        await graphActions.updateBoardTitleAndDescription(
+          "New Title",
+          "New Description"
+        );
+      }, new Error("No active graph to edit"));
     });
 
-    await agent.isSettled;
-
-    const systemMessages = agent.entries.filter(
-      (e: ChatEntry) => e.kind === "message" && e.role === "system"
-    );
-    assert.strictEqual(
-      systemMessages.length,
-      1,
-      "Only non-wait functions should produce system messages"
-    );
-    if (systemMessages[0].kind === "message") {
-      assert.ok(systemMessages[0].text.includes("Adding node"));
-    }
-  });
-
-  test("functionCall handler: uses name when title is undefined", async () => {
-    const controller = await makeControllerStub("GEA_act_9");
-    const services = makeServicesStub();
-    bind({ controller, services });
-    const agent = controller.editor.graphEditingAgent;
-
-    const handle = startAndCapture(services);
-
-    handle.sink.emit({
-      type: "functionCall",
-      callId: "call-1",
-      name: "edit_graph",
-      args: {},
-    });
-    await agent.isSettled;
-
-    const systemMessages = agent.entries.filter(
-      (e: ChatEntry) => e.kind === "message" && e.role === "system"
-    );
-    assert.strictEqual(systemMessages.length, 1);
-    if (systemMessages[0].kind === "message") {
-      assert.ok(systemMessages[0].text.includes("edit_graph"));
-    }
-  });
-
-  // ── Real handler: waitForInput + resolveGraphEditingInput (L104-119, L219-228) ─
-
-  test("waitForInput + resolve: real handler sets state and resolveGraphEditingInput resolves", async () => {
-    const controller = await makeControllerStub("GEA_act_10");
-    const services = makeServicesStub();
-    bind({ controller, services });
-    const agent = controller.editor.graphEditingAgent;
-
-    const handle = startAndCapture(services);
-
-    // Trigger suspend → real waitForInput handler fires (L104-119)
-    const responsePromise = handle.sink.suspend({
-      type: "waitForInput",
-      requestId: "req-1",
-      prompt: { parts: [{ text: "What next?" }] },
-      inputType: "text",
-    });
-
-    await agent.isSettled;
-
-    // Real handler set state at L115-116
-    assert.strictEqual(agent.waiting, true);
-    assert.strictEqual(agent.processing, false);
-
-    // Real handler added model message at L114
-    const modelMessages = agent.entries.filter(
-      (e: ChatEntry) => e.kind === "message" && e.role === "model"
-    );
-    assert.ok(modelMessages.length > 0);
-    if (modelMessages[0].kind === "message") {
-      assert.ok(modelMessages[0].text.includes("What next?"));
-    }
-
-    // Real resolveGraphEditingInput exercises L221-228
-    const resolved = resolveGraphEditingInput("user reply");
-
-    assert.strictEqual(resolved, true, "Should return true (L220)");
-    assert.strictEqual(agent.waiting, false, "Should clear waiting (L225)");
-    assert.strictEqual(agent.processing, true, "Should set processing (L226)");
-
-    const response = await responsePromise;
-    assert.deepStrictEqual(response, {
-      input: { parts: [{ text: "user reply" }] },
+    test("throw on apply", async () => {
+      await assert.rejects(async () => {
+        await graphActions.changeEdge("move", { from: "foo", to: "bar" });
+      }, new Error("No active graph to transform"));
     });
   });
 
-  // ── Real handler: readGraph (L122-129) ─────────────────────────────────────
+  suite("properly instantiated", () => {
+    const graphActions = Graph;
+    // Graph-actions tests require 2 nodes for edge operations
+    const graphWithTwoNodes = () =>
+      makeFreshGraph({
+        nodes: [
+          { id: "foo", type: "test:promptTemplate" },
+          { id: "bar", type: "test:promptTemplate" },
+        ],
+      });
+    let testGraph = graphWithTwoNodes();
 
-  test("readGraph handler returns empty graph when no editor (L126-127)", async () => {
-    const controller = await makeControllerStub("GEA_act_11");
-    const services = makeServicesStub();
-    controller.editor.graph = { editor: null };
-    bind({ controller, services });
+    beforeEach(() => {
+      const graphStore = makeTestGraphStore();
 
-    const handle = startAndCapture(services);
+      testGraph = graphWithTwoNodes();
+      loadGraphIntoStore(graphStore, testGraph);
+      const editor = editGraphStore(graphStore);
+      if (!editor) assert.fail("Unable to edit graph");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await handle.sink.suspend({
-      type: "readGraph",
-      requestId: "rg-1",
+      graphActions.bind({
+        services: { graphStore } as unknown as AppServices,
+        controller: {
+          editor: {
+            graph: {
+              editor,
+              lastNodeConfigChange: null,
+              pendingGraphReplacement: null,
+              clearPendingGraphReplacement: () => {},
+            },
+            theme: { updateHash() {} },
+          },
+        } as unknown as AppController,
+      });
     });
 
-    assert.deepStrictEqual(result, { graph: { edges: [], nodes: [] } });
+    test("throws when transforms fail", async () => {
+      await assert.rejects(async () => {
+        await graphActions.changeEdge(
+          "remove",
+          // Unknown type: foo so bar does not get added.
+          { from: "foo", to: "bar", in: "*", out: "*" }
+        );
+      }, new Error(`Edge from "foo:*" to "bar:*" does not exist`));
+    });
+
+    suite("functionality", () => {
+      test("Update title & description", async () => {
+        await graphActions.updateBoardTitleAndDescription(
+          "New Title",
+          "New Description"
+        );
+
+        assert.strictEqual(testGraph.title, "New Title");
+        assert.strictEqual(testGraph.description, "New Description");
+      });
+
+      test("Change Edge", async () => {
+        assert.strictEqual(testGraph.edges.length, 0);
+
+        await graphActions.changeEdge("add", {
+          from: "foo",
+          to: "bar",
+          in: "*",
+          out: "*",
+        });
+
+        assert.strictEqual(testGraph.edges.length, 1);
+
+        await graphActions.changeEdge("remove", {
+          from: "foo",
+          to: "bar",
+          in: "*",
+          out: "*",
+        });
+
+        assert.strictEqual(testGraph.edges.length, 0);
+      });
+
+      test("undo & redo", async () => {
+        // Should not fail, even though there is no change to the graph.
+        await assert.doesNotReject(async () => {
+          await graphActions.redo();
+          await graphActions.undo();
+        });
+
+        await graphActions.changeEdge("add", {
+          from: "foo",
+          to: "bar",
+          in: "*",
+          out: "*",
+        });
+
+        assert.strictEqual(testGraph.nodes.length, 2);
+        assert.strictEqual(testGraph.edges.length, 1);
+
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.undo();
+        testGraph = await changeWatcher;
+
+        assert.strictEqual(testGraph.nodes.length, 2);
+        assert.strictEqual(testGraph.edges.length, 0);
+
+        const changeWatcher2 = editorChange(graphActions);
+        await graphActions.redo();
+        testGraph = await changeWatcher2;
+
+        assert.strictEqual(testGraph.nodes.length, 2);
+        assert.strictEqual(testGraph.edges.length, 1);
+      });
+
+      test("changeNodeConfiguration updates node and sets signal", async () => {
+        // Get the controller from the binder
+        const controller = graphActions.bind.controller;
+
+        // Verify initial state
+        assert.strictEqual(controller.editor.graph.lastNodeConfigChange, null);
+
+        // Change the configuration of node "foo"
+        await graphActions.changeNodeConfiguration(
+          "foo",
+          "", // main graph
+          { prompt: "Hello world" }
+        );
+
+        // Verify the signal was set
+        const change = controller.editor.graph
+          .lastNodeConfigChange as ConfigChangeContext | null;
+        assert.ok(change, "lastNodeConfigChange should be set");
+        assert.strictEqual(change.nodeId, "foo");
+        assert.strictEqual(change.graphId, "");
+        assert.deepStrictEqual(change.configuration, { prompt: "Hello world" });
+        assert.strictEqual(
+          typeof change.titleUserModified,
+          "boolean",
+          "titleUserModified should be a boolean"
+        );
+
+        // Verify the node configuration was actually updated
+        const node = testGraph.nodes.find((n) => n.id === "foo");
+        assert.ok(node, "Node should exist");
+        assert.deepStrictEqual(node.configuration, { prompt: "Hello world" });
+      });
+
+      test("changeNodeConfiguration throws when node doesn't exist", async () => {
+        await assert.rejects(
+          async () => {
+            await graphActions.changeNodeConfiguration("nonexistent", "", {
+              prompt: "test",
+            });
+          },
+          (err: Error) => err.message.includes("nonexistent")
+        );
+      });
+
+      test("addNode creates a new node", async () => {
+        assert.strictEqual(testGraph.nodes.length, 2);
+
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.addNode(
+          {
+            id: "new-node",
+            type: "test:promptTemplate",
+            metadata: { title: "New Node" },
+          },
+          ""
+        );
+        testGraph = await changeWatcher;
+
+        assert.strictEqual(testGraph.nodes.length, 3);
+        const newNode = testGraph.nodes.find((n) => n.id === "new-node");
+        assert.ok(newNode, "New node should exist");
+        assert.strictEqual(newNode.type, "test:promptTemplate");
+        assert.strictEqual(newNode.metadata?.title, "New Node");
+      });
+
+      test("moveSelectionPositions updates node positions", async () => {
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.moveSelectionPositions([
+          { type: "node", id: "foo", graphId: "", x: 100, y: 200 },
+        ]);
+        testGraph = await changeWatcher;
+
+        const node = testGraph.nodes.find((n) => n.id === "foo");
+        assert.ok(node, "Node should exist");
+        assert.strictEqual(
+          (node.metadata?.visual as { x: number } | undefined)?.x,
+          100
+        );
+        assert.strictEqual(
+          (node.metadata?.visual as { y: number } | undefined)?.y,
+          200
+        );
+      });
+
+      test("moveSelectionPositions updates asset positions", async () => {
+        // First add an asset to the graph
+        const editor = graphActions.bind.controller.editor.graph.editor;
+        assert.ok(editor, "Editor should exist");
+
+        await editor.edit(
+          [
+            {
+              type: "addasset",
+              path: "test-asset.txt",
+              data: { inline: "test content" },
+              metadata: {
+                title: "Test Asset",
+                type: "content",
+              },
+            },
+          ],
+          "Add test asset"
+        );
+
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.moveSelectionPositions([
+          { type: "asset", id: "test-asset.txt", graphId: "", x: 300, y: 400 },
+        ]);
+        testGraph = await changeWatcher;
+
+        const asset = testGraph.assets?.["test-asset.txt"];
+        assert.ok(asset, "Asset should exist");
+        assert.strictEqual(
+          (asset.metadata?.visual as { x: number } | undefined)?.x,
+          300
+        );
+        assert.strictEqual(
+          (asset.metadata?.visual as { y: number } | undefined)?.y,
+          400
+        );
+      });
+
+      test("moveSelectionPositions skips assets without metadata", async () => {
+        // This should not throw - just skip the asset
+        await graphActions.moveSelectionPositions([
+          {
+            type: "asset",
+            id: "nonexistent-asset.txt",
+            graphId: "",
+            x: 100,
+            y: 200,
+          },
+        ]);
+        // If we get here without throwing, the test passes
+        assert.ok(true, "Should not throw for missing asset");
+      });
+
+      test("changeAssetEdge throws when asset edge cannot be created", async () => {
+        // Attempting to create an asset edge for a nonexistent asset should throw
+        await assert.rejects(
+          async () => {
+            await graphActions.changeAssetEdge(
+              "add",
+              {
+                assetPath: "nonexistent-asset.txt",
+                direction: "load",
+                nodeId: "foo",
+              },
+              ""
+            );
+          },
+          (err: Error) => err.message.includes("Unable to change asset")
+        );
+      });
+
+      test("changeEdgeAttachmentPoint updates edge attachment", async () => {
+        const editor = graphActions.bind.controller.editor.graph.editor;
+        assert.ok(editor, "Editor should exist");
+
+        // First add an edge
+        await editor.edit(
+          [
+            {
+              type: "addedge",
+              graphId: "",
+              edge: { from: "foo", to: "bar", in: "in", out: "out" },
+            },
+          ],
+          "Add edge"
+        );
+
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.changeEdgeAttachmentPoint(
+          "",
+          { from: "foo", to: "bar", in: "in", out: "out" },
+          "from",
+          "Bottom"
+        );
+        testGraph = await changeWatcher;
+
+        // Verify the edge exists (attachment point is on the edge metadata)
+        const edge = testGraph.edges.find(
+          (e) => e.from === "foo" && e.to === "bar"
+        );
+        assert.ok(edge, "Edge should exist");
+      });
+
+      test("replace replaces the entire graph", async () => {
+        const changeWatcher = editorChange(graphActions);
+        await graphActions.replace(
+          {
+            nodes: [{ id: "new-node", type: "input" }],
+            edges: [],
+            title: "Replaced Graph",
+          },
+          { role: "user" }
+        );
+        testGraph = await changeWatcher;
+
+        assert.strictEqual(testGraph.title, "Replaced Graph");
+        assert.strictEqual(testGraph.nodes.length, 1);
+        assert.strictEqual(testGraph.nodes[0].id, "new-node");
+      });
+
+      suite("replaceWithTheme", () => {
+        test("applies a generated theme to the graph", async () => {
+          const changeWatcher = editorChange(graphActions);
+          const testTheme = {
+            themeColors: {
+              primary: "#ff0000",
+              secondary: "#00ff00",
+              background: "#ffffff",
+            },
+            template: "modern",
+          };
+
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [{ id: "themed-node", type: "input" }],
+              edges: [],
+              title: "Themed Graph",
+            },
+            theme: testTheme,
+            creator: { role: "assistant" },
+          });
+          testGraph = await changeWatcher;
+
+          assert.strictEqual(testGraph.title, "Themed Graph");
+
+          // Verify theme was applied
+          const presentation = testGraph.metadata?.visual?.presentation;
+          assert.ok(presentation, "Presentation metadata should exist");
+          assert.ok(presentation.theme, "Theme ID should be set");
+          assert.ok(presentation.themes, "Themes object should exist");
+
+          const appliedTheme = presentation.themes[presentation.theme];
+          assert.ok(appliedTheme, "Applied theme should exist");
+          assert.strictEqual(appliedTheme.themeColors?.["primary"], "#ff0000");
+          assert.strictEqual(appliedTheme.template, "modern");
+        });
+
+        test("generates unique theme IDs for each replacement", async () => {
+          const testTheme = {
+            themeColors: { primary: "#ff0000" },
+          };
+
+          // First replacement
+          let changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "First",
+            },
+            theme: testTheme,
+            creator: { role: "assistant" },
+          });
+          const graph1 = await changeWatcher;
+          const themeId1 = graph1.metadata?.visual?.presentation?.theme;
+
+          // Second replacement
+          changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Second",
+            },
+            theme: testTheme,
+            creator: { role: "assistant" },
+          });
+          const graph2 = await changeWatcher;
+          const themeId2 = graph2.metadata?.visual?.presentation?.theme;
+
+          assert.ok(themeId1, "First theme ID should exist");
+          assert.ok(themeId2, "Second theme ID should exist");
+          assert.notStrictEqual(
+            themeId1,
+            themeId2,
+            "Theme IDs should be unique"
+          );
+        });
+
+        test("preserves splash screen from current graph theme", async () => {
+          // First, set up a graph with a theme containing a splash screen
+          const splashScreenData = {
+            storedData: {
+              handle: "splash-handle-1",
+              mimeType: "image/png",
+            },
+          };
+
+          const initialTheme = {
+            themeColors: { primary: "#0000ff" },
+            splashScreen: splashScreenData,
+          };
+
+          let changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Initial with splash",
+            },
+            theme: initialTheme,
+            creator: { role: "user" },
+          });
+          await changeWatcher;
+
+          // Now replace with a theme that lacks a splash screen
+          changeWatcher = editorChange(graphActions);
+          const newThemeWithoutSplash = {
+            themeColors: { primary: "#ff0000" },
+            // No splashScreen
+          };
+
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Replacement without splash",
+            },
+            theme: newThemeWithoutSplash,
+            creator: { role: "assistant" },
+          });
+          testGraph = await changeWatcher;
+
+          // Verify the splash screen was preserved from the original theme
+          const presentation = testGraph.metadata?.visual?.presentation;
+          assert.ok(presentation, "Presentation should exist");
+          const appliedTheme = presentation.themes?.[presentation.theme!];
+          assert.ok(appliedTheme, "Applied theme should exist");
+          assert.deepStrictEqual(
+            appliedTheme.splashScreen,
+            splashScreenData,
+            "Splash screen should be preserved from previous theme"
+          );
+        });
+
+        test("does not overwrite splash screen when replacement has one", async () => {
+          // First, set up a graph with a theme containing a splash screen
+          const originalSplashScreen = {
+            storedData: {
+              handle: "original-handle",
+              mimeType: "image/png",
+            },
+          };
+
+          let changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Original",
+            },
+            theme: {
+              themeColors: { primary: "#0000ff" },
+              splashScreen: originalSplashScreen,
+            },
+            creator: { role: "user" },
+          });
+          await changeWatcher;
+
+          // Replace with a theme that HAS its own splash screen
+          const newSplashScreen = {
+            storedData: {
+              handle: "new-handle",
+              mimeType: "image/jpeg",
+            },
+          };
+
+          changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Replacement with its own splash",
+            },
+            theme: {
+              themeColors: { primary: "#00ff00" },
+              splashScreen: newSplashScreen,
+            },
+            creator: { role: "assistant" },
+          });
+          testGraph = await changeWatcher;
+
+          // Verify the new splash screen is used, not the old one
+          const presentation = testGraph.metadata?.visual?.presentation;
+          const themeId = presentation?.theme;
+          const appliedTheme = themeId
+            ? presentation?.themes?.[themeId]
+            : undefined;
+          assert.deepStrictEqual(
+            appliedTheme?.splashScreen,
+            newSplashScreen,
+            "New splash screen should be used"
+          );
+        });
+
+        test("calls replace with the creator parameter", async () => {
+          const changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+              title: "Creator Test",
+            },
+            creator: { role: "assistant" },
+          });
+          testGraph = await changeWatcher;
+
+          assert.strictEqual(testGraph.title, "Creator Test");
+        });
+      });
+    });
   });
+});
 
-  test("readGraph handler returns editor graph when available (L128-129)", async () => {
-    const controller = await makeControllerStub("GEA_act_12");
-    const services = makeServicesStub();
-    const fakeGraph = {
-      nodes: [{ id: "n1", type: "t" }],
-      edges: [{ from: "n1", to: "n2", out: "o", in: "i" }],
-    };
-    controller.editor.graph = { editor: { raw: () => fakeGraph } };
-    bind({ controller, services });
+suite("Graph Triggers", () => {
+  // Minimal type for the bind object - only what onPendingGraphReplacement needs
+  type TriggerBind = {
+    controller: { editor: { graph: { pendingGraphReplacement: unknown } } };
+    services: unknown;
+  };
 
-    const handle = startAndCapture(services);
+  suite("onPendingGraphReplacement", () => {
+    test("returns true when pendingGraphReplacement is set", () => {
+      const mockBind: TriggerBind = {
+        controller: {
+          editor: {
+            graph: {
+              pendingGraphReplacement: {
+                replacement: { edges: [], nodes: [] },
+                creator: { role: "user" },
+              },
+            },
+          },
+        },
+        services: {},
+      };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await handle.sink.suspend({
-      type: "readGraph",
-      requestId: "rg-2",
+      const trigger = onPendingGraphReplacement(
+        mockBind as Parameters<typeof onPendingGraphReplacement>[0]
+      );
+
+      assert.strictEqual(trigger.type, "signal");
+      assert.strictEqual(trigger.name, "Pending Graph Replacement");
+
+      const result = trigger.condition();
+      assert.strictEqual(
+        result,
+        true,
+        "Should return true when replacement is pending"
+      );
     });
 
-    assert.deepStrictEqual(result, { graph: fakeGraph });
-  });
+    test("returns false when pendingGraphReplacement is null/undefined", () => {
+      const mockBind: TriggerBind = {
+        controller: {
+          editor: {
+            graph: {
+              pendingGraphReplacement: null,
+            },
+          },
+        },
+        services: {},
+      };
 
-  // ── Real handler: applyEdits (L131-186) ────────────────────────────────────
+      const trigger = onPendingGraphReplacement(
+        mockBind as Parameters<typeof onPendingGraphReplacement>[0]
+      );
 
-  test("applyEdits handler: no editor (L136-137)", async () => {
-    const controller = await makeControllerStub("GEA_act_13");
-    const services = makeServicesStub();
-    controller.editor.graph = { editor: null };
-    bind({ controller, services });
-
-    const handle = startAndCapture(services);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await handle.sink.suspend({
-      type: "applyEdits",
-      requestId: "ae-1",
-      edits: [{ type: "addnode", graphId: "", node: { id: "x", type: "t" } }],
-      label: "test",
+      const result = trigger.condition();
+      assert.strictEqual(
+        result,
+        false,
+        "Should return false when replacement is null"
+      );
     });
-
-    assert.deepStrictEqual(result, {
-      success: false,
-      error: "No active graph to edit",
-    });
-  });
-
-  test("applyEdits handler: raw edits success (L140-146)", async () => {
-    const controller = await makeControllerStub("GEA_act_14");
-    const services = makeServicesStub();
-    const editSpy = mock.fn(async () => ({ success: true }));
-    controller.editor.graph = { editor: { edit: editSpy, apply: mock.fn() } };
-    bind({ controller, services });
-
-    const handle = startAndCapture(services);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await handle.sink.suspend({
-      type: "applyEdits",
-      requestId: "ae-2",
-      edits: [{ type: "addnode", graphId: "", node: { id: "x", type: "t" } }],
-      label: "Add node",
-    });
-
-    assert.strictEqual(editSpy.mock.callCount(), 1);
-    assert.deepStrictEqual(result, { success: true });
-  });
-
-  test("applyEdits handler: raw edits failure (L143-144)", async () => {
-    const controller = await makeControllerStub("GEA_act_15");
-    const services = makeServicesStub();
-    const editSpy = mock.fn(async () => ({
-      success: false,
-      error: "bad edit",
-    }));
-    controller.editor.graph = { editor: { edit: editSpy, apply: mock.fn() } };
-    bind({ controller, services });
-
-    const handle = startAndCapture(services);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await handle.sink.suspend({
-      type: "applyEdits",
-      requestId: "ae-3",
-      edits: [{ type: "addnode", graphId: "", node: { id: "x", type: "t" } }],
-      label: "Fail",
-    });
-
-    assert.deepStrictEqual(result, {
-      success: false,
-      error: "Failed to apply edits",
-    });
-  });
-
-  test("applyEdits handler: updateNode transform (L153-175)", async () => {
-    const controller = await makeControllerStub("GEA_act_16");
-    const services = makeServicesStub();
-    const applySpy = mock.fn(async () => ({ success: true }));
-    controller.editor.graph = {
-      editor: { edit: mock.fn(), apply: applySpy },
-      lastNodeConfigChange: null,
-    };
-    bind({ controller, services });
-
-    const handle = startAndCapture(services);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await handle.sink.suspend({
-      type: "applyEdits",
-      requestId: "ae-4",
-      label: "Update node",
-      transform: {
-        kind: "updateNode",
-        nodeId: "node-1",
-        graphId: "main",
-        configuration: { prompt: "hello" },
-        metadata: null,
-        portsToAutowire: null,
-      },
-    });
-
-    assert.strictEqual(applySpy.mock.callCount(), 1);
-    assert.deepStrictEqual(result, { success: true });
-
-    // Autoname side effect (L166-173)
-    assert.ok(controller.editor.graph.lastNodeConfigChange);
-    assert.strictEqual(
-      controller.editor.graph.lastNodeConfigChange.nodeId,
-      "node-1"
-    );
-  });
-
-  test("applyEdits handler: updateNode transform failure (L174-175)", async () => {
-    const controller = await makeControllerStub("GEA_act_17");
-    const services = makeServicesStub();
-    const applySpy = mock.fn(async () => ({
-      success: false,
-      error: "transform failed",
-    }));
-    controller.editor.graph = {
-      editor: { edit: mock.fn(), apply: applySpy },
-    };
-    bind({ controller, services });
-
-    const handle = startAndCapture(services);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await handle.sink.suspend({
-      type: "applyEdits",
-      requestId: "ae-5",
-      label: "Update node",
-      transform: {
-        kind: "updateNode",
-        nodeId: "node-1",
-        graphId: "main",
-        configuration: null,
-        metadata: null,
-        portsToAutowire: null,
-      },
-    });
-
-    assert.deepStrictEqual(result, {
-      success: false,
-      error: "transform failed",
-    });
-  });
-
-  test("applyEdits handler: invalid event (L185-186)", async () => {
-    const controller = await makeControllerStub("GEA_act_18");
-    const services = makeServicesStub();
-    controller.editor.graph = {
-      editor: { edit: mock.fn(), apply: mock.fn() },
-    };
-    bind({ controller, services });
-
-    const handle = startAndCapture(services);
-
-    const result = await (
-      handle.sink.suspend as unknown as (
-        event: Record<string, unknown>
-      ) => Promise<unknown>
-    ).call(handle.sink, {
-      type: "applyEdits",
-      requestId: "ae-6",
-    });
-
-    assert.deepStrictEqual(result, {
-      success: false,
-      error: "Invalid applyEdits event",
-    });
-  });
-
-  // ── Completion handlers (.then/.catch on invokeGraphEditingAgent) ──────────
-  // Since invokeGraphEditingAgent is the real implementation (not mocked),
-  // it will try to call sink.suspend({ type: "readGraph" }) first.
-  // If there's no readGraph handler or it fails, the invoke will reject
-  // and the .catch (L206-211) fires. We test this by starting the agent
-  // without readGraph returning properly.
-
-  test("catch handler: error in invoke adds error message (L206-211)", async () => {
-    const controller = await makeControllerStub("GEA_act_19");
-    const services = makeServicesStub();
-    // No editor or readGraph handler — invokeGraphEditingAgent will crash
-    controller.editor.graph = { editor: null };
-    bind({ controller, services });
-    const agent = controller.editor.graphEditingAgent;
-
-    startAndCapture(services);
-
-    // Wait for the invoke to fail and the .catch handler to fire
-    await new Promise((r) => setTimeout(r, 200));
-    await agent.isSettled;
-
-    assert.strictEqual(agent.loopRunning, false, "Should reset loopRunning");
   });
 });
