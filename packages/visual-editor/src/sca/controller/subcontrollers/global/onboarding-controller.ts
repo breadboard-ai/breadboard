@@ -79,8 +79,12 @@ export class OnboardingController extends RootController {
    * or `null` if all items for that mode have been dismissed.
    */
   currentItem(mode: "lite" | "standalone"): OnboardingItemDescriptor | null {
+    // Before IDB hydration we don't know what's been dismissed yet,
+    // so return null to avoid flashing tooltips that were already acknowledged.
+    if (!this.hydrated) return null;
+
     for (const item of REGISTRY) {
-      if (this.hydrated && this._dismissed.has(item.id)) continue;
+      if (this._dismissed.has(item.id)) continue;
       if (item.mode === "both" || item.mode === mode) {
         return item;
       }
