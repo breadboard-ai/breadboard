@@ -1,0 +1,28 @@
+[project]
+name = "opal-backend-dev"
+version = "0.1.0"
+description = "Opal dev backend (proxy existing APIs, wire new ones directly)"
+requires-python = ">=3.11"
+dependencies = [
+    "opal-backend-shared",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "httpx>=0.28",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "anyio>=4.0",
+    "pytest-asyncio>=0.24",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.setuptools.packages.find]
+include = ["opal_backend_dev*"]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

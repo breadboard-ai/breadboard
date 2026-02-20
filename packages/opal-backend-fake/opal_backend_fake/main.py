@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-FastAPI application implementing the Breadboard agent event SSE protocol.
+FastAPI application implementing the Opal agent event SSE protocol
+with canned scenarios for integration testing.
 
 Endpoints:
     POST /api/agent/run           — Start a canned scenario
@@ -21,13 +22,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from .pending_requests import PendingRequestMap
+from opal_backend_shared.pending_requests import PendingRequestMap
+from opal_backend_shared.sse_sink import SSEAgentEventSink
 from .scenarios import SCENARIOS
-from .sse_sink import SSEAgentEventSink
 
 app = FastAPI(
-    title="Mock Agent Server",
-    description="Validates the Breadboard agent event SSE protocol",
+    title="Opal Fake Backend",
+    description="Canned-scenario server for integration testing",
     version="0.1.0",
 )
 
@@ -49,7 +50,7 @@ app.add_middleware(
 async def root():
     """Landing page with available scenarios and endpoints."""
     return {
-        "name": "Mock Agent Server",
+        "name": "Opal Fake Backend",
         "endpoints": {
             "POST /api/agent/run": "Start a scenario",
             "GET /api/agent/{runId}/events": "SSE event stream",
@@ -191,7 +192,7 @@ async def _run_scenario(
     except asyncio.CancelledError:
         pass
     except Exception as exc:
-        from .events import ErrorEvent
+        from opal_backend_shared.events import ErrorEvent
         await sink.emit(ErrorEvent(message=str(exc)))
         await sink.close()
     finally:

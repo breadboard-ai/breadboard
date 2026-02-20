@@ -1,0 +1,13 @@
+{
+  "name": "opal-backend-fake",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fake Opal backend for integration testing (canned scenarios)",
+  "scripts": {
+    "setup": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '../opal-backend-shared[dev]' && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
+    "dev": ".venv/bin/uvicorn opal_backend_fake.main:app --reload --port 8000",
+    "test": ".venv/bin/python -m pytest tests/ -v",
+    "test:unit": ".venv/bin/python -m pytest tests/test_pending_requests.py -v",
+    "test:integration": ".venv/bin/python -m pytest tests/test_server.py -v"
+  }
+}

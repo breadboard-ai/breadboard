@@ -1,13 +1,13 @@
 [project]
-name = "mock-agent-server"
+name = "opal-backend-fake"
 version = "0.1.0"
-description = "Mock SSE server for validating Breadboard agent event protocol"
+description = "Fake Opal backend for integration testing (canned scenarios)"
 requires-python = ">=3.11"
 dependencies = [
+    "opal-backend-shared",
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
     "sse-starlette>=2.2.0",
-    "pydantic>=2.10.0",
 ]
 
 [project.optional-dependencies]
@@ -20,6 +20,9 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[tool.setuptools.packages.find]
+include = ["opal_backend_fake*"]
 
 [build-system]
 requires = ["setuptools>=68.0"]

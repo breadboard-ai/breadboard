@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 import uuid
 
-from .events import (
+from opal_backend_shared.events import (
     ApplyEditsEvent,
     ContentEvent,
     FinishEvent,
@@ -28,7 +28,7 @@ from .events import (
     ThoughtEvent,
     WaitForInputEvent,
 )
-from .sse_sink import SSEAgentEventSink
+from opal_backend_shared.sse_sink import SSEAgentEventSink
 
 # Default inter-event delay for interactive (human-visible) use.
 # Tests pass delay=0 to skip all sleeps.

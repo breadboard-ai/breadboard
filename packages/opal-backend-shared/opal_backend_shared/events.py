@@ -6,7 +6,7 @@ Pydantic models mirroring every AgentEvent variant from agent-event.ts.
 
 These define the SSE wire format. Each event is a tagged union discriminated
 by the `type` field. The models are intentionally permissive (using `dict`
-for nested structures like LLMContent) because the mock server doesn't need
+for nested structures like LLMContent) because the server doesn't need
 to deeply validate Breadboard-specific types — it just needs to produce
 well-shaped JSON that the TypeScript client can parse.
 """
