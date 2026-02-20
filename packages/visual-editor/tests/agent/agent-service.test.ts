@@ -7,6 +7,7 @@
 import assert from "node:assert";
 import { suite, test } from "node:test";
 import { AgentService } from "../../src/a2/agent/agent-service.js";
+import type { LocalAgentRun } from "../../src/a2/agent/local-agent-run.js";
 
 const OBJECTIVE = { parts: [{ text: "test" }] };
 
@@ -79,10 +80,13 @@ suite("AgentService", () => {
   });
 });
 
-suite("AgentRunHandle (via AgentRun)", () => {
+suite("LocalAgentRun (via AgentRunHandle)", () => {
   test("provides events consumer and sink", () => {
     const service = new AgentService();
-    const handle = service.startRun({ kind: "test", objective: OBJECTIVE });
+    const handle = service.startRun({
+      kind: "test",
+      objective: OBJECTIVE,
+    }) as LocalAgentRun;
 
     assert.ok(handle.events, "should have events consumer");
     assert.ok(handle.sink, "should have sink");
@@ -92,7 +96,10 @@ suite("AgentRunHandle (via AgentRun)", () => {
 
   test("sink emits reach the consumer", () => {
     const service = new AgentService();
-    const handle = service.startRun({ kind: "test", objective: OBJECTIVE });
+    const handle = service.startRun({
+      kind: "test",
+      objective: OBJECTIVE,
+    }) as LocalAgentRun;
     const received: string[] = [];
 
     handle.events.on("thought", (event: { text: string }) => {
@@ -142,7 +149,10 @@ suite("AgentRunHandle (via AgentRun)", () => {
 
   test("subagent events flow from sink to consumer", () => {
     const service = new AgentService();
-    const handle = service.startRun({ kind: "test", objective: OBJECTIVE });
+    const handle = service.startRun({
+      kind: "test",
+      objective: OBJECTIVE,
+    }) as LocalAgentRun;
     const received: { type: string; callId: string }[] = [];
 
     handle.events
@@ -185,7 +195,10 @@ suite("AgentRunHandle (via AgentRun)", () => {
 
   test("functionCall event with args survives sink→consumer round-trip", () => {
     const service = new AgentService();
-    const handle = service.startRun({ kind: "test", objective: OBJECTIVE });
+    const handle = service.startRun({
+      kind: "test",
+      objective: OBJECTIVE,
+    }) as LocalAgentRun;
     const received: Array<{ name: string; args: Record<string, unknown> }> = [];
 
     handle.events.on("functionCall", (event) => {

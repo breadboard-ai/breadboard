@@ -6,11 +6,10 @@
 
 import type { LLMContent } from "@breadboard-ai/types";
 import type { AgentInputResponse } from "./agent-event.js";
-import {
-  AgentEventConsumer,
-  LocalAgentEventBridge,
-} from "./agent-event-consumer.js";
-import type { AgentEventSink } from "./agent-event-sink.js";
+import type { AgentEventConsumer } from "./agent-event-consumer.js";
+
+import { LocalAgentRun } from "./local-agent-run.js";
+import { SSEAgentRun } from "./sse-agent-run.js";
 
 export { AgentService };
 export type { AgentRunHandle, AgentRunConfig };
@@ -53,13 +52,6 @@ interface AgentRunHandle {
   readonly events: AgentEventConsumer;
 
   /**
-   * The event sink for this run.
-   * Used by the agent loop (producer side) to emit events.
-   * Today this is a LocalAgentEventBridge; tomorrow, SSE on the server.
-   */
-  readonly sink: AgentEventSink;
-
-  /**
    * Resume a suspended request (chat input or choice).
    * The `requestId` must match the one from the suspend event.
    */
@@ -76,57 +68,6 @@ interface AgentRunHandle {
 }
 
 // =============================================================================
-// Implementation
-// =============================================================================
-
-/**
- * Internal implementation of `AgentRunHandle`.
- *
- * Uses a `LocalAgentEventBridge` for in-process communication between
- * the agent loop (sink) and the event consumer. When the server exists,
- * this will be replaced with an SSE-backed implementation — but the
- * `AgentRunHandle` interface stays the same.
- */
-class AgentRun implements AgentRunHandle {
-  readonly events: AgentEventConsumer;
-  readonly sink: AgentEventSink;
-
-  readonly #abortController = new AbortController();
-
-  constructor(
-    readonly runId: string,
-    readonly kind: string
-  ) {
-    this.events = new AgentEventConsumer();
-    this.sink = new LocalAgentEventBridge(this.events);
-  }
-
-  resolveInput(response: AgentInputResponse): void {
-    // In the local bridge, suspend events resolve through the
-    // consumer's handler Promise chain — the consumer handler
-    // for waitForInput/waitForChoice returns a Promise that the
-    // bridge awaits. resolveInput is a no-op in this mode because
-    // the UI handler directly resolves the Promise.
-    //
-    // When SSE replaces the bridge, this method will POST the
-    // response to the server endpoint that resolves the pending map.
-    void response;
-  }
-
-  abort(): void {
-    this.#abortController.abort();
-  }
-
-  get aborted(): boolean {
-    return this.#abortController.signal.aborted;
-  }
-
-  get signal(): AbortSignal {
-    return this.#abortController.signal;
-  }
-}
-
-// =============================================================================
 // AgentService
 // =============================================================================
 
@@ -137,8 +78,9 @@ class AgentRun implements AgentRunHandle {
  * `startRun()` creates a new `AgentRunHandle` with its own event
  * consumer, abort controller, and (future) pending-request map.
  *
- * The service is transport-agnostic: today it creates in-process bridges,
- * tomorrow it can POST to the server and open SSE streams.
+ * The service is transport-agnostic: in local mode it creates
+ * `LocalAgentRun` instances with in-process bridges, in remote
+ * mode it creates `SSEAgentRun` instances that connect via SSE.
  *
  * ## SCA Integration
  *
@@ -158,19 +100,55 @@ class AgentRun implements AgentRunHandle {
  * | `handle.abort()`           | `POST /api/agent/{runId}/abort`      |
  */
 class AgentService {
-  readonly #runs = new Map<string, AgentRun>();
+  readonly #runs = new Map<string, AgentRunHandle>();
+
+  /**
+   * Remote server URL. When set, `startRun()` creates `SSEAgentRun`
+   * instances that connect via SSE. When null, local mode is used.
+   *
+   * Set via `configureRemote()` — intended for tests and dev mode.
+   */
+  #remoteBaseUrl: string | null = null;
+  #remoteFetchWithCreds: typeof fetch = fetch;
+
+  /**
+   * Configure the service for remote (SSE) mode.
+   *
+   * When `baseUrl` is set, `startRun()` will POST to the server and
+   * return an `SSEAgentRun` that streams events via SSE.
+   * The `fetchFn` is used for all HTTP requests (typically `fetchWithCreds`).
+   *
+   * Pass `null` for baseUrl to revert to local mode.
+   */
+  configureRemote(
+    baseUrl: string | null,
+    fetchWithCreds: typeof fetch = fetch
+  ): void {
+    this.#remoteBaseUrl = baseUrl;
+    this.#remoteFetchWithCreds = fetchWithCreds;
+  }
 
   /**
    * Create and start a new agent run.
    *
    * Returns a handle that the caller uses to:
    * 1. Wire event handlers (via `handle.events`)
-   * 2. Pass `handle.sink` to the agent loop (producer)
-   * 3. Cancel the run (via `handle.abort()`)
+   * 2. Cancel the run (via `handle.abort()`)
+   *
+   * In local mode, downcast to `LocalAgentRun` to access the `sink`.
    */
   startRun(config: AgentRunConfig): AgentRunHandle {
     const runId = crypto.randomUUID();
-    const run = new AgentRun(runId, config.kind);
+
+    const run = this.#remoteBaseUrl
+      ? new SSEAgentRun(
+          runId,
+          config.kind,
+          this.#remoteBaseUrl,
+          this.#remoteFetchWithCreds
+        )
+      : new LocalAgentRun(runId, config.kind);
+
     this.#runs.set(runId, run);
     return run;
   }

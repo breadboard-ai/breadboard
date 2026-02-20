@@ -23,6 +23,7 @@ import { makeAction } from "../binder.js";
 import { buildHooksFromSink } from "../../../a2/agent/loop-setup.js";
 import { invokeGraphEditingAgent } from "../../../a2/agent/graph-editing/main.js";
 import type { AgentRunHandle } from "../../../a2/agent/agent-service.js";
+import type { LocalAgentRun } from "../../../a2/agent/local-agent-run.js";
 import type { A2ModuleFactory } from "../../../a2/runnable-module-factory.js";
 import type { ChatResponse } from "../../../a2/agent/types.js";
 import { UpdateNode } from "../../../ui/transforms/update-node.js";
@@ -80,11 +81,12 @@ function startGraphEditingAgent(firstMessage: string): void {
   // Abort any previous run
   currentRun?.abort();
 
-  // Create a new run via AgentService
+  // Create a new run via AgentService.
+  // This action IS the agent loop, so it's always local mode.
   const handle = services.agentService.startRun({
     kind: "graph-editing",
     objective,
-  });
+  }) as LocalAgentRun;
   currentRun = handle;
 
   // Wire consumer handlers to controller mutations
