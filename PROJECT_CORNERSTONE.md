@@ -135,17 +135,14 @@ mirrored as Pydantic models in `opal-backend-shared`.
 - [x] Remove `packages/mock-agent-server/`
 - [x] Migrate and verify all existing tests (13/13 passing)
 
-#### 4.2: Local Dev Workflow
+#### 4.2: Local Dev Workflow ✅
 
-- [ ] Top-level `npm run setup:python` script (creates venvs for all Python
-      packages)
-- [ ] Pip index config (handle custom registry vs pypi.org)
-- [ ] `npm run dev:backend` script in unified-server (starts `opal-backend-dev`
-      alongside static server)
-- [ ] `npm run dev:fake-backend` script (starts `opal-backend-fake` for testing)
-- [ ] Wire `BACKEND_API_ENDPOINT` in dev/fake configs to point at local Python
-      server
-- [ ] Document the dev workflow in `opal-backend-dev/README.md`
+- [x] Root `npm run setup:python` (creates venvs for all Python packages)
+- [x] `PIP_INDEX_URL` baked into all setup scripts
+- [x] `dev:fake` starts fake Python backend alongside static server (with venv
+      check)
+- [x] `BACKEND_API_ENDPOINT=http://localhost:8000` set in `serve:fake` env
+- [x] Developer docs in `opal-backend-dev/README.md`
 
 #### 4.3: Port Agent Loop to Python
 

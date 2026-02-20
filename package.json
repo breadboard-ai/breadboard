@@ -23,7 +23,8 @@
     "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts && npm install",
     "check": "wireit",
     "markdown": "(find . -iname \"*.md\" -not -path \"*/.wireit/*\" -not -path \"*/node_modules/*\" -exec cat {} +) > all_markdown.md",
-    "prepare": "husky"
+    "prepare": "husky",
+    "setup:python": "npm run setup -w packages/opal-backend-shared && npm run setup -w packages/opal-backend-fake && npm run setup -w packages/opal-backend-dev"
   },
   "wireit": {
     "build": {
@@ -36,18 +37,27 @@
       "dependencies": [
         "<workspaces>#<this>",
         "!./packages/ui-tests#<this>",
-        "!./experiments/screens#<this>"
+        "!./experiments/screens#<this>",
+        "!./packages/opal-backend-shared#<this>",
+        "!./packages/opal-backend-fake#<this>",
+        "!./packages/opal-backend-dev#<this>"
       ]
     },
     "coverage": {
       "dependencies": [
-        "<workspaces>#<this>"
+        "<workspaces>#<this>",
+        "!./packages/opal-backend-shared#<this>",
+        "!./packages/opal-backend-fake#<this>",
+        "!./packages/opal-backend-dev#<this>"
       ]
     },
     "lint": {
       "dependencies": [
         "<workspaces>#<this>",
-        "!./packages/jsandbox#<this>"
+        "!./packages/jsandbox#<this>",
+        "!./packages/opal-backend-shared#<this>",
+        "!./packages/opal-backend-fake#<this>",
+        "!./packages/opal-backend-dev#<this>"
       ]
     },
     "ci:local": {
