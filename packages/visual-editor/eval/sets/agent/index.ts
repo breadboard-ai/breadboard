@@ -6,6 +6,7 @@
 
 import { ok } from "@breadboard-ai/utils";
 import { session } from "../../eval.js";
+import type { LocalAgentRun } from "../../../src/a2/agent/local-agent-run.js";
 import {
   SimulatedUserChatManager,
   createSimulatedUserConfigurator,
@@ -72,7 +73,7 @@ session({ name: "Agent" }, async (session) => {
         const handle = moduleArgs.agentService.startRun({
           kind: "content-eval",
           objective,
-        });
+        }) as LocalAgentRun;
 
         const agentConfigurator = createAgentConfigurator(
           moduleArgs,

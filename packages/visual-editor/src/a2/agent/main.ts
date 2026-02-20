@@ -18,6 +18,7 @@ import type { ProgressReporter } from "./types.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { buildAgentRun } from "./loop-setup.js";
+import type { LocalAgentRun } from "./local-agent-run.js";
 import { createAgentConfigurator } from "./agent-function-configurator.js";
 import { readFlags } from "../a2/settings.js";
 import { conformGeminiBody, streamGenerateContent } from "../a2/gemini.js";
@@ -115,11 +116,12 @@ async function invokeAgent(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
 
-  // Create a run handle for this content agent execution
+  // Create a run handle for this content agent execution.
+  // This code IS the agent loop, so it's always local mode.
   const handle = moduleArgs.agentService.startRun({
     kind: "content",
     objective,
-  });
+  }) as LocalAgentRun;
 
   const configureFn = createAgentConfigurator(
     moduleArgs,

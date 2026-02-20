@@ -175,7 +175,7 @@ is a transport swap, not a refactor.
       `sink.suspend("queryConsent")`
 - [x] Consumer handlers for each new suspend event
 
-### Phase 3.75: Mock Server Protocol Validation (in progress)
+### Phase 3.75: Mock Server Protocol Validation (complete)
 
 Standalone Python mock server (`packages/mock-agent-server/`) that implements
 the SSE wire format, so `SSEAgentEventSource` can be developed against a real
@@ -188,12 +188,23 @@ HTTP endpoint before the TypeScript server exists.
       `POST /abort`
 - [x] Canned scenarios: `echo`, `chat`, `graph-edit`, `consent`
 - [x] End-to-end verification: 13 tests in 0.4s (`npm test`)
-- [ ] Develop `SSEAgentEventSource` (client) against the mock server
+- [x] `SSEAgentEventSource` — `fetch` + `iteratorFromStream` → consumer
+- [x] `SSEAgentRun` / `LocalAgentRun` — split run implementations
+- [x] `AgentService.configureRemote(baseUrl, fetchFn)` — remote mode flag
+- [x] `sink` removed from `AgentRunHandle` (local-only detail on
+      `LocalAgentRun`)
+
+### Phase 3.85: Integration Test
+
+Round-trip integration test that starts the mock server, runs a scenario via
+`SSEAgentEventSource` over real HTTP, and validates the full event flow
+including suspend/resume.
+
+- [ ] Integration test: `SSEAgentEventSource` ↔ mock server round-trip
 
 ### Phase 4: Server-Side Implementation
 
 - [ ] `SSEAgentEventSink` — writes events to SSE response stream
-- [ ] `SSEAgentEventSource` — client reads SSE stream → consumer
 - [ ] `PendingRequestMap` — server-side suspend/resume keyed by `requestId`
 - [ ] Server endpoints: `POST /run`, `GET /events`, `POST /input`, `POST /abort`
 - [ ] `EventReplayBuffer` — per-run log for reconnection / "tab closed" replay
