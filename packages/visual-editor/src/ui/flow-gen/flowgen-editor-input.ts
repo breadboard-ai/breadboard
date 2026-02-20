@@ -224,7 +224,7 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
   /**
    * Set state on controller.
    */
-set #state(value: FlowgenInputStatus) {
+  set #state(value: FlowgenInputStatus) {
     this.sca.controller.global.flowgenInput.state = value;
   }
 
@@ -275,7 +275,7 @@ set #state(value: FlowgenInputStatus) {
   override async updated(changes: PropertyValues) {
     const currentStatus = this.#state.status;
 
-    // Show snackbar when status transitions back to initial from any other state
+    // Show snackbar when status transitions back to initial without an error
     if (
       currentStatus === "initial" &&
       this.#lastStatus !== undefined &&
