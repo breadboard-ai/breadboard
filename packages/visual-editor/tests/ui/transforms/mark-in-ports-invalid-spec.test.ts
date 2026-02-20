@@ -261,3 +261,139 @@ describe("MarkInPortsInvalidSpec — routing edge removal", () => {
     );
   });
 });
+
+describe("MarkInPortsInvalidSpec — node removal", () => {
+  it("marks @ references invalid when a referenced node is removed", async () => {
+    const inChiclet = `{${JSON.stringify({ type: "in", path: "removed-node", title: "@removed-node" })}}`;
+    const config: NodeConfiguration = {
+      config$prompt: {
+        role: "user",
+        parts: [{ text: `Use ${inChiclet}` }],
+      },
+    };
+
+    const { context, appliedEdits } = createInvalidSpecContext(
+      [
+        { id: "remaining", configuration: config },
+        {
+          id: "removed-node",
+          configuration: {
+            config$prompt: { role: "user", parts: [{ text: "" }] },
+          },
+        },
+      ],
+      ""
+    );
+
+    const spec: EditSpec[] = [
+      { type: "removenode", graphId: "", id: "removed-node" },
+    ];
+    const transform = new MarkInPortsInvalidSpec(spec);
+    const result = await transform.apply(context);
+
+    assert.equal(result.success, true);
+    const configEdits = appliedEdits.flatMap((batch) =>
+      batch.filter((e) => e.type === "changeconfiguration")
+    );
+    assert.ok(configEdits.length >= 1, "should mark @ references invalid");
+
+    const text = promptTextFrom(configEdits[0]);
+    assert.ok(text.includes('"invalid"'), "should include invalid flag");
+  });
+});
+
+describe("MarkInPortsInvalidSpec — p-z- edge removal", () => {
+  it("marks @ references invalid for p-z- edge removal", async () => {
+    const inChiclet = `{${JSON.stringify({ type: "in", path: "source", title: "@source" })}}`;
+    const config: NodeConfiguration = {
+      config$prompt: {
+        role: "user",
+        parts: [{ text: `Use ${inChiclet}` }],
+      },
+    };
+
+    const { context, appliedEdits } = createInvalidSpecContext(
+      [
+        {
+          id: "source",
+          configuration: {
+            config$prompt: { role: "user", parts: [{ text: "" }] },
+          },
+        },
+        { id: "dest", configuration: config },
+      ],
+      ""
+    );
+
+    const spec: EditSpec[] = [
+      {
+        type: "removeedge",
+        graphId: "",
+        edge: { from: "source", to: "dest", out: "output", in: "p-z-source" },
+      },
+    ];
+    const transform = new MarkInPortsInvalidSpec(spec);
+    const result = await transform.apply(context);
+
+    assert.equal(result.success, true);
+    const configEdits = appliedEdits.flatMap((batch) =>
+      batch.filter((e) => e.type === "changeconfiguration")
+    );
+    assert.ok(configEdits.length >= 1, "should update config for @ reference");
+  });
+});
+
+describe("MarkInPortsInvalidSpec — combined operations", () => {
+  it("handles node removal + routing edge removal together", async () => {
+    const inChiclet = `{${JSON.stringify({ type: "in", path: "deleted-node", title: "@deleted" })}}`;
+    const routeChiclet = `{${JSON.stringify({ type: "tool", path: "control-flow/routing", instance: "route-target", title: "Route" })}}`;
+    const config: NodeConfiguration = {
+      config$prompt: {
+        role: "user",
+        parts: [{ text: `${inChiclet} ${routeChiclet}` }],
+      },
+    };
+
+    const { context, appliedEdits } = createInvalidSpecContext(
+      [
+        { id: "source", configuration: config },
+        {
+          id: "deleted-node",
+          configuration: {
+            config$prompt: { role: "user", parts: [{ text: "" }] },
+          },
+        },
+        {
+          id: "route-target",
+          configuration: {
+            config$prompt: { role: "user", parts: [{ text: "" }] },
+          },
+        },
+      ],
+      ""
+    );
+
+    const spec: EditSpec[] = [
+      { type: "removenode", graphId: "", id: "deleted-node" },
+      routingEdge("source", "route-target"),
+    ];
+    const transform = new MarkInPortsInvalidSpec(spec);
+    const result = await transform.apply(context);
+
+    assert.equal(result.success, true);
+    assert.ok(appliedEdits.length >= 2, "should process both removal types");
+  });
+
+  it("passes through when spec has no removals", async () => {
+    const { context, appliedEdits } = createInvalidSpecContext([], "");
+
+    const spec: EditSpec[] = [
+      { type: "addnode", graphId: "", node: { id: "new", type: "test" } },
+    ];
+    const transform = new MarkInPortsInvalidSpec(spec);
+    const result = await transform.apply(context);
+
+    assert.equal(result.success, true);
+    assert.equal(appliedEdits.length, 1, "just the spec pass");
+  });
+});
