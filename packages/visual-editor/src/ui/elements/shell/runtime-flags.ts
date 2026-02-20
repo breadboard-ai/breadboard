@@ -12,12 +12,19 @@ import { StateEvent } from "../../events/events.js";
 import { RuntimeFlags, RUNTIME_FLAG_META } from "@breadboard-ai/types";
 import { Task } from "@lit/task";
 import { repeat } from "lit/directives/repeat.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { scaContext } from "../../../sca/context/context.js";
+import { type SCA } from "../../../sca/sca.js";
 
 import * as BreadboardUI from "../../../ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 @customElement("bb-runtime-flags")
-export class VERuntimeFlags extends LitElement {
+export class VERuntimeFlags extends SignalWatcher(LitElement) {
+  @consume({ context: scaContext })
+  accessor sca!: SCA;
+
   @property()
   accessor flags: Promise<Readonly<RuntimeFlags>> | null = null;
 
@@ -145,13 +152,22 @@ export class VERuntimeFlags extends LitElement {
           return html`Unable to load flags`;
         }
 
-        const flags = Object.entries(runtimeFlags).sort(([aName], [bName]) => {
-          const aTitle =
-            RUNTIME_FLAG_META[aName as keyof RuntimeFlags]?.title ?? aName;
-          const bTitle =
-            RUNTIME_FLAG_META[bName as keyof RuntimeFlags]?.title ?? bName;
-          return aTitle.localeCompare(bTitle);
-        });
+        const flags = Object.entries(runtimeFlags)
+          .filter(([name]) => {
+            const meta = RUNTIME_FLAG_META[name as keyof RuntimeFlags];
+            if (!meta) return false;
+            const showExperimental =
+              this.sca?.controller?.global?.main?.experimentalComponents ??
+              false;
+            return showExperimental || meta.visibility === "public";
+          })
+          .sort(([aName], [bName]) => {
+            const aTitle =
+              RUNTIME_FLAG_META[aName as keyof RuntimeFlags]?.title ?? aName;
+            const bTitle =
+              RUNTIME_FLAG_META[bName as keyof RuntimeFlags]?.title ?? bName;
+            return aTitle.localeCompare(bTitle);
+          });
 
         const env = this.envDefaults;
 
