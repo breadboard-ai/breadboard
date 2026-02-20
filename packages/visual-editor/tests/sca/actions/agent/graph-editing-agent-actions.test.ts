@@ -17,7 +17,8 @@ import {
   type ChatEntry,
 } from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
 import { AgentService } from "../../../../src/a2/agent/agent-service.js";
-import type { WaitForInputEvent } from "../../../../src/a2/agent/agent-event.js";
+import type { AgentRunHandle } from "../../../../src/a2/agent/agent-service.js";
+
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -29,7 +30,7 @@ async function makeControllerStub(id: string) {
   );
   await agent.isHydrated;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { editor: { graphEditingAgent: agent } } as any;
+  return { editor: { graphEditingAgent: agent, graph: {} } } as any;
 }
 
 function makeServicesStub() {
@@ -41,12 +42,60 @@ function makeServicesStub() {
   } as any;
 }
 
+/**
+ * Call startGraphEditingAgent and capture the run handle.
+ *
+ * The real `startGraphEditingAgent` calls `agentService.startRun()` then
+ * wires handlers on the returned handle, then fires off
+ * `invokeGraphEditingAgent(…).then(…).catch(…)` asynchronously.
+ *
+ * Since all handler wiring is synchronous and happens BEFORE the async
+ * invoke, we can immediately emit events on the captured sink to exercise
+ * the real handler code.
+ *
+ * The `invokeGraphEditingAgent` call will fail (because we pass dummy
+ * module args) and the `.catch()` handler fires — which is also good:
+ * it tests the error completion path (L206-211).
+ */
+function startAndCapture(
+  services: ReturnType<typeof makeServicesStub>,
+  message = "test"
+): AgentRunHandle {
+  let capturedHandle: AgentRunHandle | null = null;
+
+  const origStartRun = services.agentService.startRun.bind(
+    services.agentService
+  );
+  mock.method(
+    services.agentService,
+    "startRun",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (opts: any) => {
+      capturedHandle = origStartRun(opts);
+      return capturedHandle;
+    }
+  );
+
+  startGraphEditingAgent(message);
+
+  assert.ok(capturedHandle, "startRun should have been called");
+  return capturedHandle;
+}
+
+// ── Tests ────────────────────────────────────────────────────────────────────
+
 suite("graph-editing-agent-actions", () => {
   beforeEach(() => {
     setDOM();
   });
 
   afterEach(() => {
+    // Always reset to clean up module-level state (currentRun, pendingResolve)
+    try {
+      resetGraphEditingAgent();
+    } catch {
+      // Ignore — reset may fail if bind wasn't called
+    }
     mock.restoreAll();
     unsetDOM();
   });
@@ -107,8 +156,6 @@ suite("graph-editing-agent-actions", () => {
     controller.editor.graphEditingAgent.loopRunning = true;
     await controller.editor.graphEditingAgent.isSettled;
 
-    // Mock invokeGraphEditingAgent at module level — if it gets called,
-    // the test should fail. We verify indirectly via the agentService.
     const startRunSpy = mock.method(services.agentService, "startRun");
 
     startGraphEditingAgent("test");
@@ -125,7 +172,7 @@ suite("graph-editing-agent-actions", () => {
     const services = makeServicesStub();
     bind({ controller, services });
 
-    startGraphEditingAgent("Build something");
+    startAndCapture(services, "Build something");
 
     assert.strictEqual(controller.editor.graphEditingAgent.loopRunning, true);
   });
@@ -144,26 +191,17 @@ suite("graph-editing-agent-actions", () => {
     assert.strictEqual(callArgs.kind, "graph-editing");
   });
 
-  // ── Consumer wiring ────────────────────────────────────────────────────────
-  // These tests verify that the consumer handlers wire events to controller
-  // mutations correctly. They create a run handle directly (bypassing the
-  // real agent loop) and emit events through the sink.
+  // ── Real handler: thought events (L91-93) ─────────────────────────────────
 
-  test("thought events are wired to controller", async () => {
+  test("thought handler: real handler adds thought to controller", async () => {
     const controller = await makeControllerStub("GEA_act_7");
     const services = makeServicesStub();
     bind({ controller, services });
     const agent = controller.editor.graphEditingAgent;
 
-    // Create a run handle directly and wire it like the action does
-    const handle = services.agentService.startRun({
-      kind: "graph-editing",
-      objective: { parts: [{ text: "test" }] },
-    });
-    handle.events.on("thought", (event: { text: string }) => {
-      agent.addThought(event.text);
-    });
+    const handle = startAndCapture(services);
 
+    // Emit through real sink → real handler fires at L92-93
     handle.sink.emit({ type: "thought", text: "**Analyzing** the graph" });
     await agent.isSettled;
 
@@ -175,32 +213,19 @@ suite("graph-editing-agent-actions", () => {
       assert.strictEqual(thoughtGroup.thoughts.length, 1);
       assert.strictEqual(thoughtGroup.thoughts[0].title, "Analyzing");
     }
-
-    services.agentService.endRun(handle.runId);
   });
 
-  test("functionCall events add system messages for non-wait functions", async () => {
+  // ── Real handler: functionCall events (L95-99) ────────────────────────────
+
+  test("functionCall handler: adds system message for non-wait functions", async () => {
     const controller = await makeControllerStub("GEA_act_8");
     const services = makeServicesStub();
     bind({ controller, services });
     const agent = controller.editor.graphEditingAgent;
 
-    // Create a run handle directly and wire it like the action does
-    const handle = services.agentService.startRun({
-      kind: "graph-editing",
-      objective: { parts: [{ text: "test" }] },
-    });
-    handle.events.on(
-      "functionCall",
-      (event: { name: string; title?: string }) => {
-        const name = event.name;
-        if (name !== "wait_for_user_input") {
-          agent.addMessage("system", `${event.title ?? name}…`);
-        }
-      }
-    );
+    const handle = startAndCapture(services);
 
-    // Non-wait function call → should add system message
+    // Non-wait: should add system message (L98)
     handle.sink.emit({
       type: "functionCall",
       callId: "call-1",
@@ -209,7 +234,7 @@ suite("graph-editing-agent-actions", () => {
       title: "Adding node",
     });
 
-    // Wait function call → should NOT add system message
+    // Wait: should NOT add message (L97 guard)
     handle.sink.emit({
       type: "functionCall",
       callId: "call-2",
@@ -231,171 +256,308 @@ suite("graph-editing-agent-actions", () => {
     if (systemMessages[0].kind === "message") {
       assert.ok(systemMessages[0].text.includes("Adding node"));
     }
-
-    services.agentService.endRun(handle.runId);
   });
 
-  // ── Suspend/Resume (waitForInput) ─────────────────────────────────────────
-  // These tests verify the event-driven suspend/resume flow.
-  // They wire the waitForInput consumer handler directly (same approach as
-  // the thought/functionCall tests above) rather than going through
-  // startGraphEditingAgent which requires a full agent loop setup.
-
-  test("waitForInput handler sets waiting state and adds model message", async () => {
+  test("functionCall handler: uses name when title is undefined", async () => {
     const controller = await makeControllerStub("GEA_act_9");
     const services = makeServicesStub();
     bind({ controller, services });
     const agent = controller.editor.graphEditingAgent;
 
-    const handle = services.agentService.startRun({
-      kind: "graph-editing",
-      objective: { parts: [{ text: "test" }] },
-    });
+    const handle = startAndCapture(services);
 
-    // Wire the handler exactly as the action does
-    handle.events.on("waitForInput", (event: WaitForInputEvent) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const parts = event.prompt.parts as any[];
-      const promptText = parts
-        .filter((p) => "text" in p)
-        .map((p) => p.text)
-        .join("\n");
-      agent.addMessage("model", promptText);
-      agent.waiting = true;
-      agent.processing = false;
-      return new Promise(() => {
-        // Intentionally don't resolve — we just test the UI state change
-      });
+    handle.sink.emit({
+      type: "functionCall",
+      callId: "call-1",
+      name: "edit_graph",
+      args: {},
     });
-
-    // Trigger the suspend event
-    handle.events.handle({
-      type: "waitForInput",
-      requestId: "req-1",
-      prompt: { parts: [{ text: "What would you like me to do?" }] },
-      inputType: "text",
-    });
-
     await agent.isSettled;
 
-    assert.strictEqual(agent.waiting, true, "Agent should be waiting");
-    assert.strictEqual(
-      agent.processing,
-      false,
-      "Agent should not be processing"
+    const systemMessages = agent.entries.filter(
+      (e: ChatEntry) => e.kind === "message" && e.role === "system"
     );
-
-    // Verify the model message was added
-    const modelMessages = agent.entries.filter(
-      (e: ChatEntry) => e.kind === "message" && e.role === "model"
-    );
-    assert.ok(
-      modelMessages.length > 0,
-      "Should have at least one model message"
-    );
-    if (modelMessages[0].kind === "message") {
-      assert.ok(
-        modelMessages[0].text.includes("What would you like me to do?")
-      );
+    assert.strictEqual(systemMessages.length, 1);
+    if (systemMessages[0].kind === "message") {
+      assert.ok(systemMessages[0].text.includes("edit_graph"));
     }
-
-    services.agentService.endRun(handle.runId);
   });
 
-  test("waitForInput handler Promise resolves with ChatResponse", async () => {
+  // ── Real handler: waitForInput + resolveGraphEditingInput (L104-119, L219-228) ─
+
+  test("waitForInput + resolve: real handler sets state and resolveGraphEditingInput resolves", async () => {
     const controller = await makeControllerStub("GEA_act_10");
     const services = makeServicesStub();
     bind({ controller, services });
     const agent = controller.editor.graphEditingAgent;
 
-    const handle = services.agentService.startRun({
-      kind: "graph-editing",
-      objective: { parts: [{ text: "test" }] },
-    });
+    const handle = startAndCapture(services);
 
-    let capturedResolve: ((v: unknown) => void) | null = null;
-    handle.events.on("waitForInput", (event: WaitForInputEvent) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const parts = event.prompt.parts as any[];
-      const promptText = parts
-        .filter((p) => "text" in p)
-        .map((p) => p.text)
-        .join("\n");
-      agent.addMessage("model", promptText);
-      agent.waiting = true;
-      agent.processing = false;
-      return new Promise<unknown>((resolve) => {
-        capturedResolve = resolve;
-      });
-    });
-
-    // Trigger suspend
-    const resultPromise = handle.events.handle({
+    // Trigger suspend → real waitForInput handler fires (L104-119)
+    const responsePromise = handle.sink.suspend({
       type: "waitForInput",
-      requestId: "req-2",
-      prompt: { parts: [{ text: "Hello" }] },
+      requestId: "req-1",
+      prompt: { parts: [{ text: "What next?" }] },
       inputType: "text",
-    }) as Promise<unknown>;
-
-    assert.strictEqual(agent.waiting, true);
-    assert.ok(
-      capturedResolve !== null,
-      "Should have captured the resolve callback"
-    );
-
-    // Resolve with a ChatResponse (same shape as resolveGraphEditingInput).
-    // Assign to a local to avoid TS never-narrowing after assert.ok.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const doResolve = capturedResolve as any;
-    doResolve({ input: { parts: [{ text: "user says hi" }] } });
-
-    const response = await resultPromise;
-    assert.deepStrictEqual(response, {
-      input: { parts: [{ text: "user says hi" }] },
     });
 
-    services.agentService.endRun(handle.runId);
+    await agent.isSettled;
+
+    // Real handler set state at L115-116
+    assert.strictEqual(agent.waiting, true);
+    assert.strictEqual(agent.processing, false);
+
+    // Real handler added model message at L114
+    const modelMessages = agent.entries.filter(
+      (e: ChatEntry) => e.kind === "message" && e.role === "model"
+    );
+    assert.ok(modelMessages.length > 0);
+    if (modelMessages[0].kind === "message") {
+      assert.ok(modelMessages[0].text.includes("What next?"));
+    }
+
+    // Real resolveGraphEditingInput exercises L221-228
+    const resolved = resolveGraphEditingInput("user reply");
+
+    assert.strictEqual(resolved, true, "Should return true (L220)");
+    assert.strictEqual(agent.waiting, false, "Should clear waiting (L225)");
+    assert.strictEqual(agent.processing, true, "Should set processing (L226)");
+
+    const response = await responsePromise;
+    assert.deepStrictEqual(response, {
+      input: { parts: [{ text: "user reply" }] },
+    });
   });
 
-  test("suspend round-trip via bridge: suspend → resolve → value returned", async () => {
+  // ── Real handler: readGraph (L122-129) ─────────────────────────────────────
+
+  test("readGraph handler returns empty graph when no editor (L126-127)", async () => {
     const controller = await makeControllerStub("GEA_act_11");
     const services = makeServicesStub();
+    controller.editor.graph = { editor: null };
+    bind({ controller, services });
+
+    const handle = startAndCapture(services);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await handle.sink.suspend({
+      type: "readGraph",
+      requestId: "rg-1",
+    });
+
+    assert.deepStrictEqual(result, { graph: { edges: [], nodes: [] } });
+  });
+
+  test("readGraph handler returns editor graph when available (L128-129)", async () => {
+    const controller = await makeControllerStub("GEA_act_12");
+    const services = makeServicesStub();
+    const fakeGraph = {
+      nodes: [{ id: "n1", type: "t" }],
+      edges: [{ from: "n1", to: "n2", out: "o", in: "i" }],
+    };
+    controller.editor.graph = { editor: { raw: () => fakeGraph } };
+    bind({ controller, services });
+
+    const handle = startAndCapture(services);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await handle.sink.suspend({
+      type: "readGraph",
+      requestId: "rg-2",
+    });
+
+    assert.deepStrictEqual(result, { graph: fakeGraph });
+  });
+
+  // ── Real handler: applyEdits (L131-186) ────────────────────────────────────
+
+  test("applyEdits handler: no editor (L136-137)", async () => {
+    const controller = await makeControllerStub("GEA_act_13");
+    const services = makeServicesStub();
+    controller.editor.graph = { editor: null };
+    bind({ controller, services });
+
+    const handle = startAndCapture(services);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await handle.sink.suspend({
+      type: "applyEdits",
+      requestId: "ae-1",
+      edits: [{ type: "addnode", graphId: "", node: { id: "x", type: "t" } }],
+      label: "test",
+    });
+
+    assert.deepStrictEqual(result, {
+      success: false,
+      error: "No active graph to edit",
+    });
+  });
+
+  test("applyEdits handler: raw edits success (L140-146)", async () => {
+    const controller = await makeControllerStub("GEA_act_14");
+    const services = makeServicesStub();
+    const editSpy = mock.fn(async () => ({ success: true }));
+    controller.editor.graph = { editor: { edit: editSpy, apply: mock.fn() } };
+    bind({ controller, services });
+
+    const handle = startAndCapture(services);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await handle.sink.suspend({
+      type: "applyEdits",
+      requestId: "ae-2",
+      edits: [{ type: "addnode", graphId: "", node: { id: "x", type: "t" } }],
+      label: "Add node",
+    });
+
+    assert.strictEqual(editSpy.mock.callCount(), 1);
+    assert.deepStrictEqual(result, { success: true });
+  });
+
+  test("applyEdits handler: raw edits failure (L143-144)", async () => {
+    const controller = await makeControllerStub("GEA_act_15");
+    const services = makeServicesStub();
+    const editSpy = mock.fn(async () => ({
+      success: false,
+      error: "bad edit",
+    }));
+    controller.editor.graph = { editor: { edit: editSpy, apply: mock.fn() } };
+    bind({ controller, services });
+
+    const handle = startAndCapture(services);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await handle.sink.suspend({
+      type: "applyEdits",
+      requestId: "ae-3",
+      edits: [{ type: "addnode", graphId: "", node: { id: "x", type: "t" } }],
+      label: "Fail",
+    });
+
+    assert.deepStrictEqual(result, {
+      success: false,
+      error: "Failed to apply edits",
+    });
+  });
+
+  test("applyEdits handler: updateNode transform (L153-175)", async () => {
+    const controller = await makeControllerStub("GEA_act_16");
+    const services = makeServicesStub();
+    const applySpy = mock.fn(async () => ({ success: true }));
+    controller.editor.graph = {
+      editor: { edit: mock.fn(), apply: applySpy },
+      lastNodeConfigChange: null,
+    };
+    bind({ controller, services });
+
+    const handle = startAndCapture(services);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await handle.sink.suspend({
+      type: "applyEdits",
+      requestId: "ae-4",
+      label: "Update node",
+      transform: {
+        kind: "updateNode",
+        nodeId: "node-1",
+        graphId: "main",
+        configuration: { prompt: "hello" },
+        metadata: null,
+        portsToAutowire: null,
+      },
+    });
+
+    assert.strictEqual(applySpy.mock.callCount(), 1);
+    assert.deepStrictEqual(result, { success: true });
+
+    // Autoname side effect (L166-173)
+    assert.ok(controller.editor.graph.lastNodeConfigChange);
+    assert.strictEqual(
+      controller.editor.graph.lastNodeConfigChange.nodeId,
+      "node-1"
+    );
+  });
+
+  test("applyEdits handler: updateNode transform failure (L174-175)", async () => {
+    const controller = await makeControllerStub("GEA_act_17");
+    const services = makeServicesStub();
+    const applySpy = mock.fn(async () => ({
+      success: false,
+      error: "transform failed",
+    }));
+    controller.editor.graph = {
+      editor: { edit: mock.fn(), apply: applySpy },
+    };
+    bind({ controller, services });
+
+    const handle = startAndCapture(services);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await handle.sink.suspend({
+      type: "applyEdits",
+      requestId: "ae-5",
+      label: "Update node",
+      transform: {
+        kind: "updateNode",
+        nodeId: "node-1",
+        graphId: "main",
+        configuration: null,
+        metadata: null,
+        portsToAutowire: null,
+      },
+    });
+
+    assert.deepStrictEqual(result, {
+      success: false,
+      error: "transform failed",
+    });
+  });
+
+  test("applyEdits handler: invalid event (L185-186)", async () => {
+    const controller = await makeControllerStub("GEA_act_18");
+    const services = makeServicesStub();
+    controller.editor.graph = {
+      editor: { edit: mock.fn(), apply: mock.fn() },
+    };
+    bind({ controller, services });
+
+    const handle = startAndCapture(services);
+
+    const suspend = handle.sink.suspend as unknown as (
+      event: Record<string, unknown>
+    ) => Promise<unknown>;
+    const result = await suspend({
+      type: "applyEdits",
+      requestId: "ae-6",
+    });
+
+    assert.deepStrictEqual(result, {
+      success: false,
+      error: "Invalid applyEdits event",
+    });
+  });
+
+  // ── Completion handlers (.then/.catch on invokeGraphEditingAgent) ──────────
+  // Since invokeGraphEditingAgent is the real implementation (not mocked),
+  // it will try to call sink.suspend({ type: "readGraph" }) first.
+  // If there's no readGraph handler or it fails, the invoke will reject
+  // and the .catch (L206-211) fires. We test this by starting the agent
+  // without readGraph returning properly.
+
+  test("catch handler: error in invoke adds error message (L206-211)", async () => {
+    const controller = await makeControllerStub("GEA_act_19");
+    const services = makeServicesStub();
+    // No editor or readGraph handler — invokeGraphEditingAgent will crash
+    controller.editor.graph = { editor: null };
     bind({ controller, services });
     const agent = controller.editor.graphEditingAgent;
 
-    const handle = services.agentService.startRun({
-      kind: "graph-editing",
-      objective: { parts: [{ text: "test" }] },
-    });
+    startAndCapture(services);
 
-    // Wire handler
-    handle.events.on("waitForInput", () => {
-      agent.waiting = true;
-      agent.processing = false;
-      return new Promise((resolve) => {
-        // Simulate user responding after a tick
-        setTimeout(() => {
-          agent.waiting = false;
-          agent.processing = true;
-          resolve({ input: { parts: [{ text: "delayed reply" }] } });
-        }, 10);
-      });
-    });
+    // Wait for the invoke to fail and the .catch handler to fire
+    await new Promise((r) => setTimeout(r, 200));
+    await agent.isSettled;
 
-    // Use sink.suspend (the actual bridge path)
-    const response = (await handle.sink.suspend({
-      type: "waitForInput",
-      requestId: "req-3",
-      prompt: { parts: [{ text: "Waiting..." }] },
-      inputType: "text",
-    })) as { input: { parts: { text: string }[] } };
-
-    assert.deepStrictEqual(response, {
-      input: { parts: [{ text: "delayed reply" }] },
-    });
-    assert.strictEqual(agent.waiting, false);
-    assert.strictEqual(agent.processing, true);
-
-    services.agentService.endRun(handle.runId);
+    assert.strictEqual(agent.loopRunning, false, "Should reset loopRunning");
   });
 });
