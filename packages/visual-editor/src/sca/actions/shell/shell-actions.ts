@@ -10,12 +10,9 @@
  * Actions for Shell management (page title, etc).
  */
 
-import * as StringsHelper from "../../../ui/strings/helper.js";
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { onTitleChange } from "./triggers.js";
-
-const Strings = StringsHelper.forSection("Global");
 
 export const bind = makeAction();
 
@@ -36,17 +33,7 @@ export const updatePageTitle = asAction(
     triggeredBy: () => onTitleChange(bind),
   },
   async (): Promise<void> => {
-    const { controller } = bind;
-    const title = controller.editor.graph.title;
-
-    const appName = Strings.from("APP_NAME");
-    const appSubName = Strings.from("SUB_APP_NAME");
-    const suffix = `${appName} [${appSubName}]`;
-
-    if (title) {
-      window.document.title = `${title.trim()} - ${suffix}`;
-    } else {
-      window.document.title = suffix;
-    }
+    const { controller, services } = bind;
+    services.setTitle(controller.editor.graph.title);
   }
 );

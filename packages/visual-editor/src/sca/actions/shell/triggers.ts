@@ -23,7 +23,6 @@ import { type ActionBind } from "../binder.js";
 export function onTitleChange(bind: ActionBind): SignalTrigger {
   return signalTrigger("Graph Title Change", () => {
     const { controller } = bind;
-    // Return true when there's a title - reactive system tracks title changes
-    return controller.editor.graph.title !== null;
+    return controller.editor.graph.title;
   });
 }

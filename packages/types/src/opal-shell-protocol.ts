@@ -60,6 +60,7 @@ export declare interface OpalShellHostProtocol {
   ): Promise<void>;
 
   trackProperties(payload: Record<string, string | undefined>): Promise<void>;
+  setTitle(title: string | null): void;
 }
 
 export declare interface OpalShellGuestProtocol {

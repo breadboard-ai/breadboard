@@ -60,6 +60,7 @@ export interface AppServices {
   guestConfig: GuestConfiguration;
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
+  setTitle: (title: string | null) => void;
 
   flowGenerator: FlowGenerator;
   googleDriveBoardServer: GoogleDriveBoardServer;
@@ -179,6 +180,7 @@ export function services(
       guestConfig: config.guestConfig,
       emailPrefsManager,
       fetchWithCreds,
+      setTitle: (title: string | null) => config.shellHost.setTitle(title),
 
       flowGenerator,
       googleDriveBoardServer,
