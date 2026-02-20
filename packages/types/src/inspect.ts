@@ -28,7 +28,6 @@ import {
 import { LLMContent } from "./llm-content.js";
 import { GraphLoader } from "./loader.js";
 import { NodeDescriberResult, NodeHandlerMetadata } from "./node-handler.js";
-import { RunnableModuleFactory } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
 
 import { UUID } from "./uuid.js";
@@ -360,7 +359,7 @@ export type InspectableGraphOptions = {
   /**
    * The Javascript Sandbox that will be used to run custom describers.
    */
-  readonly sandbox?: RunnableModuleFactory;
+  readonly sandbox?: unknown;
 };
 
 /**

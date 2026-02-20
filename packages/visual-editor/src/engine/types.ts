@@ -46,13 +46,11 @@ import type {
 
 export type { NodeInvoker };
 
-interface NodeInvoker {
-  invokeNode(
-    args: RunArguments,
-    descriptor: NodeDescriptor,
-    inputs: InputValues
-  ): Promise<OutputValues>;
-}
+type NodeInvoker = (
+  args: RunArguments,
+  descriptor: NodeDescriptor,
+  inputs: InputValues
+) => Promise<OutputValues>;
 
 export type { PlanCreator };
 

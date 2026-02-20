@@ -25,7 +25,6 @@ import {
   InlineDataCapabilityPart,
   StoredDataCapabilityPart,
 } from "./llm-content.js";
-import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
 
@@ -100,7 +99,7 @@ export type NodeDescriberContext = {
   /**
    * JS Sandbox that will be used to run the module describers.
    */
-  sandbox?: RunnableModuleFactory;
+  sandbox?: unknown;
   /**
    * Graph Store: tracks all the graphs, changes to them, and their
    * dependencies.
@@ -287,7 +286,7 @@ export interface NodeHandlerContext {
   /**
    * JS Sandbox that will be used to run the imperative graphs.
    */
-  sandbox?: RunnableModuleFactory;
+  sandbox?: unknown;
   /**
    * Graph Store: tracks all the graphs, changes to them, and their
    * dependencies.

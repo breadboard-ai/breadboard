@@ -122,7 +122,7 @@ class RunStateController {
       } else {
         outputs = augmentWithSkipOutputs(
           nodeConfiguration,
-          await this.invoker.invokeNode(
+          await this.invoker(
             {
               ...context,
               signal,

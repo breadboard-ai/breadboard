@@ -17,13 +17,15 @@ import {
   OPAL_BACKEND_API_PREFIX,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import type { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
 import { IntegrationManagerService } from "./integration-managers.js";
-import { createA2ModuleFactory } from "../../a2/runnable-module-factory.js";
+import {
+  createA2ModuleFactory,
+  A2ModuleFactory,
+} from "../../a2/runnable-module-factory.js";
 import { AgentContext } from "../../a2/agent/agent-context.js";
 import { createGoogleDriveBoardServer } from "../../ui/utils/create-server.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
@@ -70,7 +72,7 @@ export interface AppServices {
   notebookLmApiClient: NotebookLmApiClient;
   runService: RunService;
   agentService: AgentService;
-  sandbox: RunnableModuleFactory;
+  sandbox: A2ModuleFactory;
   signinAdapter: SigninAdapter;
   /**
    * An EventTarget for dispatching StateEvents into the SCA trigger system.
@@ -152,13 +154,8 @@ export function services(
       config.shellHost.listUserOpals
     );
     const loader = createLoader(googleDriveBoardServer);
-    const graphStoreArgs = {
-      loader,
-      sandbox,
-      flags,
-    };
 
-    const autonamer = new Autonamer(graphStoreArgs, sandbox);
+    const autonamer = new Autonamer(sandbox);
     const apiClient = new AppCatalystApiClient(
       fetchWithCreds,
       OPAL_BACKEND_API_PREFIX

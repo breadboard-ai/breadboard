@@ -1,8 +1,11 @@
 # Services Layer
 
-> **Infrastructure and external communication** — The capabilities of the application.
+> **Infrastructure and external communication** — The capabilities of the
+> application.
 
-Services provide access to file systems, network APIs, graph processing, and other external resources. They are **stateless** with respect to the UI and injected once at application boot.
+Services provide access to file systems, network APIs, graph processing, and
+other external resources. They are **stateless** with respect to the UI and
+injected once at application boot.
 
 ---
 
@@ -10,7 +13,8 @@ Services provide access to file systems, network APIs, graph processing, and oth
 
 ### 1. Statelessness
 
-Services don't hold UI state. State belongs in Controllers. Services provide *capabilities*, not *state*.
+Services don't hold UI state. State belongs in Controllers. Services provide
+_capabilities_, not _state_.
 
 ```typescript
 // ✅ Service provides capability
@@ -23,6 +27,7 @@ const graph = await services.graphStore.get(url);
 ### 2. Single Responsibility
 
 Each service handles one infrastructure concern:
+
 - `fileSystem` — file I/O
 - `googleDriveClient` — Drive API
 - `autonamer` — node naming AI
@@ -30,7 +35,8 @@ Each service handles one infrastructure concern:
 
 ### 3. Injected Once
 
-Services are created at boot in `services()` and passed to Actions via dependency injection. They're not recreated per-request.
+Services are created at boot in `services()` and passed to Actions via
+dependency injection. They're not recreated per-request.
 
 ---
 
@@ -38,20 +44,20 @@ Services are created at boot in `services()` and passed to Actions via dependenc
 
 Notable services include:
 
-| Service | Class/Type | Purpose |
-|---------|-----------|--------|
-| `actionTracker` | `ActionTracker` | Records user actions for analytics |
-| `autonamer` | `Autonamer` | Smart name generation for nodes |
-| `flowGenerator` | `FlowGenerator` | AI-powered flow/graph generation |
-| `globalConfig` | `GlobalConfig` | Static deployment configuration |
-| `guestConfig` | `GuestConfiguration` | Configuration provided by shell host |
-| `googleDriveClient` | `GoogleDriveClient` | Google Drive API interactions |
-| `googleDriveBoardServer` | `GoogleDriveBoardServer` | Board storage via Google Drive |
-| `mcpClientManager` | `McpClientManager` | MCP (Model Context Protocol) connections |
-| `signinAdapter` | `SigninAdapter` | Unified authentication provider |
-| `shellHost` | `OpalShellHostProtocol` | Communication with the host shell |
-| `sandbox` | `RunnableModuleFactory` | Sandboxed module execution |
-| `agentContext` | `AgentContext` | Agent lifecycle and trace management |
+| Service                  | Class/Type               | Purpose                                  |
+| ------------------------ | ------------------------ | ---------------------------------------- |
+| `actionTracker`          | `ActionTracker`          | Records user actions for analytics       |
+| `autonamer`              | `Autonamer`              | Smart name generation for nodes          |
+| `flowGenerator`          | `FlowGenerator`          | AI-powered flow/graph generation         |
+| `globalConfig`           | `GlobalConfig`           | Static deployment configuration          |
+| `guestConfig`            | `GuestConfiguration`     | Configuration provided by shell host     |
+| `googleDriveClient`      | `GoogleDriveClient`      | Google Drive API interactions            |
+| `googleDriveBoardServer` | `GoogleDriveBoardServer` | Board storage via Google Drive           |
+| `mcpClientManager`       | `McpClientManager`       | MCP (Model Context Protocol) connections |
+| `signinAdapter`          | `SigninAdapter`          | Unified authentication provider          |
+| `shellHost`              | `OpalShellHostProtocol`  | Communication with the host shell        |
+| `sandbox`                | `A2ModuleFactory`        | Module factory for A2 component dispatch |
+| `agentContext`           | `AgentContext`           | Agent lifecycle and trace management     |
 
 ---
 
@@ -83,14 +89,15 @@ const services = Services.services(config, controller.global.flags, getConsent);
 
 ## Bootstrap Injection Pattern
 
-Some services need controller access, but controllers aren't created yet during service initialization. We resolve this with **getter injection**:
+Some services need controller access, but controllers aren't created yet during
+service initialization. We resolve this with **getter injection**:
 
 ```typescript
 // In sca.ts
 const services = Services.services(
   config,
-  controller.global.flags,           // Direct reference (already created)
-  () => controller.global.consent    // Getter for lazy resolution
+  controller.global.flags, // Direct reference (already created)
+  () => controller.global.consent // Getter for lazy resolution
 );
 ```
 
@@ -101,11 +108,11 @@ The service factory receives a function that returns the controller:
 export function services(
   config: RuntimeConfig,
   flags: RuntimeFlagManager,
-  getConsentController: () => ConsentController  // Lazy getter
+  getConsentController: () => ConsentController // Lazy getter
 ) {
   const sandbox = createA2ModuleFactory({
     // ...
-    getConsentController,  // Passed to sandbox for later use
+    getConsentController, // Passed to sandbox for later use
   });
 }
 ```
@@ -180,4 +187,5 @@ services/
 └── status-updates-service.ts        # Status update polling
 ```
 
-Most service implementations live outside the `sca/` directory (in `engine/`, `ui/utils/`, etc.) and are composed together in the `services()` factory.
+Most service implementations live outside the `sca/` directory (in `engine/`,
+`ui/utils/`, etc.) and are composed together in the `services()` factory.

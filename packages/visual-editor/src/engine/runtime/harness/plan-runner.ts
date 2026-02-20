@@ -22,7 +22,7 @@ import {
 import { timestamp } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { NodeInvokerImpl } from "../run/node-invoker.js";
+import { defaultInvokeNode } from "../run/node-invoker.js";
 import type {
   ConfigProvider,
   NodeInvoker,
@@ -141,7 +141,7 @@ class PlanRunner
   constructor(
     config: RunConfig,
     planCreator: PlanCreator = defaultCreatePlan,
-    invoker: NodeInvoker = new NodeInvokerImpl(),
+    invoker: NodeInvoker = defaultInvokeNode,
     configProvider?: ConfigProvider
   ) {
     super();
