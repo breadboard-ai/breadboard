@@ -23,6 +23,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../sca/context/context.js";
 import { type SCA } from "../../sca/sca.js";
 import type { FlowgenInputStatus } from "../../sca/controller/subcontrollers/global/flowgen-input-controller.js";
+import { SnackType } from "../../sca/types.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -273,6 +274,20 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
 
   override async updated(changes: PropertyValues) {
     const currentStatus = this.#state.status;
+
+    // Show snackbar when status transitions back to initial without an error
+    if (
+      currentStatus === "initial" &&
+      this.#lastStatus !== undefined &&
+      this.#lastStatus !== "initial"
+    ) {
+      this.sca.controller.global.snackbars.snackbar(
+        "Edits applied to steps. Please restart app to see new changes.",
+        SnackType.INFORMATION
+      );
+      this.sca.controller.editor.sidebar.section = "preview";
+    }
+
     if (this.#lastStatus === "generating" && currentStatus === "initial") {
       if (this.#descriptionInput.value) {
         this.#descriptionInput.value.value = "";
