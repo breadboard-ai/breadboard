@@ -10,11 +10,13 @@ import {
 import { err, ok } from "../a2/utils.js";
 import {
   appendSpreadsheetValues,
+  clearSpreadsheetValues,
   create,
   createPresentation,
   getDoc,
   getPresentation,
   getSpreadsheetMetadata,
+  setSpreadsheetValues,
   updateDoc,
   updatePresentation,
   updateSpreadsheet,
@@ -26,6 +28,8 @@ import { inferSlideStructure } from "./slides-schema.js";
 import {
   DocEditMode,
   DocWriteMode,
+  SheetEditMode,
+  SheetWriteMode,
   type ConnectorConfiguration,
 } from "./types.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -189,39 +193,104 @@ async function invoke(
         return { context: contextFromId(id, SLIDES_MIME_TYPE) };
       }
       case SHEETS_MIME_TYPE: {
+        const sheetEditMode =
+          info?.configuration?.sheetEditMode || SheetEditMode.SameTab;
+        const sheetWriteMode =
+          info?.configuration?.sheetWriteMode || SheetWriteMode.Append;
+
         const [gettingCollector, result] = await Promise.all([
-          getCollector(
-            moduleArgs,
-            connectorId,
-            graphId,
-            title ?? "Untitled Spreadsheet",
-            SHEETS_MIME_TYPE,
-            info?.configuration?.file?.id
-          ),
+          sheetEditMode === SheetEditMode.NewSheet
+            ? createNewSpreadsheet(
+                moduleArgs,
+                connectorId,
+                graphId,
+                title ?? "Untitled Spreadsheet"
+              )
+            : getCollector(
+                moduleArgs,
+                connectorId,
+                graphId,
+                title ?? "Untitled Spreadsheet",
+                SHEETS_MIME_TYPE,
+                info?.configuration?.file?.id
+              ),
           inferSheetValues(moduleArgs, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
-        console.log("VALUES", result);
 
         const { id } = gettingCollector;
-        const sheetInfo = await getSpreadsheetMetadata(moduleArgs, id);
-        if (!ok(sheetInfo)) return sheetInfo;
+        let sheetTitle: string | undefined;
+        let sheetId: number | undefined;
 
-        const newSheetTitle = generateSheetName();
-        const creatingSheet = await updateSpreadsheet(moduleArgs, id, [
-          { addSheet: { properties: { title: newSheetTitle, index: 0 } } },
-        ]);
+        if (sheetEditMode === SheetEditMode.SameTab) {
+          const sheetInfo = await getSpreadsheetMetadata(moduleArgs, id);
+          if (!ok(sheetInfo)) return sheetInfo;
+          sheetTitle = sheetInfo.sheets[0]?.properties.title;
+          sheetId = sheetInfo.sheets[0]?.properties.sheetId;
+        } else {
+          sheetTitle = generateSheetName();
+          const creatingSheet = await updateSpreadsheet(moduleArgs, id, [
+            { addSheet: { properties: { title: sheetTitle, index: 0 } } },
+          ]);
 
-        if (!ok(creatingSheet)) return creatingSheet;
+          if (!ok(creatingSheet)) return creatingSheet;
+        }
 
-        const appending = await appendSpreadsheetValues(
-          moduleArgs,
-          id,
-          newSheetTitle,
-          { values: result }
-        );
-        if (!ok(appending)) return appending;
+        if (!sheetTitle) return err("Unable to determine sheet title");
+
+        if (sheetWriteMode === SheetWriteMode.Overwrite) {
+          const clearing = await clearSpreadsheetValues(
+            moduleArgs,
+            id,
+            sheetTitle
+          );
+          if (!ok(clearing)) return clearing;
+
+          const updating = await setSpreadsheetValues(
+            moduleArgs,
+            id,
+            `${sheetTitle}!A1`,
+            result
+          );
+          if (!ok(updating)) return updating;
+        } else if (
+          sheetWriteMode === SheetWriteMode.Prepend &&
+          sheetEditMode === SheetEditMode.SameTab &&
+          sheetId !== undefined
+        ) {
+          const inserting = await updateSpreadsheet(moduleArgs, id, [
+            {
+              insertDimension: {
+                range: {
+                  sheetId,
+                  dimension: "ROWS",
+                  startIndex: 0,
+                  endIndex: result.length,
+                },
+                inheritFromBefore: false,
+              },
+            },
+          ]);
+          if (!ok(inserting)) return inserting;
+
+          const updating = await setSpreadsheetValues(
+            moduleArgs,
+            id,
+            `${sheetTitle}!A1`,
+            result
+          );
+          if (!ok(updating)) return updating;
+        } else {
+          const appending = await appendSpreadsheetValues(
+            moduleArgs,
+            id,
+            sheetTitle,
+            { values: result }
+          );
+          if (!ok(appending)) return appending;
+        }
+
         return { context: contextFromId(id, SHEETS_MIME_TYPE) };
       }
     }
@@ -376,6 +445,28 @@ async function createNewPresentation(
       .map((s) => s.objectId)
       .filter(Boolean) as string[],
   };
+}
+
+/**
+ * Always creates a new spreadsheet without looking up existing files.
+ * Used when sheetEditMode is "new-sheet".
+ */
+async function createNewSpreadsheet(
+  moduleArgs: A2ModuleArgs,
+  connectorId: string,
+  graphId: string,
+  title: string
+): Promise<Outcome<CollectorData>> {
+  const fileKey = `sheet${connectorId}${graphId}`;
+  const createdFile = await create(moduleArgs, {
+    name: title,
+    mimeType: SHEETS_MIME_TYPE,
+    appProperties: {
+      "google-drive-connector": fileKey,
+    },
+  });
+  if (!ok(createdFile)) return createdFile;
+  return { id: createdFile.id, end: 1 };
 }
 
 async function describe() {
