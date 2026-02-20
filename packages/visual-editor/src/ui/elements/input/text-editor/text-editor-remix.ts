@@ -3,6 +3,67 @@
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+/**
+ * # TextEditorRemix — Controlled Contenteditable Component
+ *
+ * ## Big Picture
+ *
+ * This is the Lit web component that renders the rich text editor. It displays
+ * a mix of plain text and inline "chiclets" — UI pills representing template
+ * parts (references to tools, files, steps, etc.).
+ *
+ * ## Architecture: Controlled Input
+ *
+ * Unlike a typical `contenteditable` where the browser mutates the DOM and
+ * you read the result, this editor uses a **controlled input** pattern:
+ *
+ * 1. **`beforeinput` interception**: Every browser editing action is
+ *    `preventDefault()`'d in `#onBeforeInput`.
+ * 2. **Model mutation**: The corresponding operation is applied to the
+ *    `EditorModel` (insert text, delete, etc.).
+ * 3. **Re-render**: `#syncFromModel()` rebuilds render segments from the model
+ *    and triggers a Lit update cycle.
+ * 4. **Cursor restoration**: In `updated()`, the pending cursor offset is
+ *    restored via `EditorSelection.setCursorAtCharOffset()`.
+ *
+ * This approach eliminates browser editing quirks (inconsistent line break
+ * handling, unwanted formatting, contenteditable undo stack conflicts) and
+ * gives us full control over the content structure.
+ *
+ * ## Key Subsystems
+ *
+ * - **EditorModel** (editor-model.ts): Pure data model — segment array,
+ *   mutations, serialization, undo/redo history. No DOM dependencies.
+ *
+ * - **EditorSelection** (editor-selection.ts): DOM adapter — translates
+ *   between the model's visible-text offsets and browser Range/Selection
+ *   positions, handling ZWNBSP padding and shadow DOM quirks.
+ *
+ * - **This component**: Orchestration layer — wires user events to model
+ *   mutations, manages the fast access menu (@-trigger), handles clipboard
+ *   operations, and implements chiclet drag-and-drop reordering.
+ *
+ * ## Undo History Strategy
+ *
+ * Typing snapshots are **debounced**: each keystroke captures a snapshot
+ * eagerly (so the segment state is correct) but defers pushing it to
+ * history until 300ms of typing silence. This groups consecutive keystrokes
+ * into a single undo step. Structural changes (chiclet insertion, paste,
+ * drag, cut) push snapshots **immediately** because they represent discrete
+ * user actions.
+ *
+ * ## Fast Access (@-trigger)
+ *
+ * When the user types '@', the component records a "history anchor" (the
+ * undo index before the '@' was typed), shows the fast access menu, and
+ * stores the cursor range. When a selection is made:
+ * 1. History is truncated to the anchor (removing the '@' keystroke).
+ * 2. The chiclet is inserted at the original cursor position.
+ * 3. A fresh snapshot is pushed.
+ * This makes undo skip from "pre-@" to "with-chiclet", never showing the
+ * intermediate "@" state.
+ */
 import type { TemplatePart } from "@breadboard-ai/utils";
 import { isTemplatePart, Template } from "@breadboard-ai/utils";
 import { css, html, LitElement, nothing } from "lit";
@@ -35,15 +96,21 @@ import { EditorSelection, caretPositionFromPoint } from "./editor-selection.js";
 
 @customElement("bb-text-editor-remix")
 export class TextEditorRemix extends SignalWatcher(LitElement) {
+  /** SCA singleton, consumed via Lit Context from a parent provider. */
   @consume({ context: scaContext })
   accessor sca!: SCA;
 
+  /**
+   * The raw template string value (with `{JSON}` chiclet syntax).
+   *
+   * The setter includes a bail-out guard: if the incoming value matches what
+   * we already have, we skip the update. Without this, every parent re-render
+   * would clobber in-progress edits, destroy/recreate all DOM nodes inside
+   * the contenteditable (because render segment keys would regenerate), and
+   * lose the user's cursor position.
+   */
   @property()
   set value(value: string) {
-    // Bail when the incoming value matches what we already have.
-    // Without this guard, every parent re-render clobbers in-progress edits
-    // and regenerates render segment keys, causing Lit to destroy/recreate
-    // all DOM nodes inside the contenteditable.
     if (value === this.#rawValue) return;
 
     this.#rawValue = value;
@@ -56,16 +123,20 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     return this.#rawValue;
   }
 
+  /** Always "string" — used by the form system to identify the input type. */
   get type(): string {
     return "string";
   }
 
+  /** Whether the '@' key triggers the fast access menu. */
   @property({ reflect: true, type: Boolean })
   accessor supportsFastAccess = true;
 
+  /** Sub-graph context for chiclet metadata resolution. */
   @property()
   accessor subGraphId: string | null = null;
 
+  /** When true, the editor is non-editable (contenteditable=false). */
   @property()
   accessor readOnly = false;
 
@@ -87,6 +158,8 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         position: relative;
       }
 
+      /* The main editing surface. Uses break-spaces so whitespace and
+         newlines render correctly without needing <br> elements. */
       #editor {
         outline: none;
         display: block;
@@ -104,6 +177,8 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         scrollbar-width: none;
       }
 
+      /* Absolutely positioned placeholder that shows when the editor is empty.
+         pointer-events: none ensures clicks pass through to the editor. */
       #placeholder {
         font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
@@ -115,6 +190,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         pointer-events: none;
       }
 
+      /* Chiclets are draggable (grab cursor) and fade when being dragged. */
       .chiclet {
         cursor: grab;
 
@@ -123,6 +199,8 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         }
       }
 
+      /* Fast access menu is hidden by default and positioned absolutely
+         via CSS custom properties set from JS. */
       bb-fast-access-menu {
         display: none;
         position: absolute;
@@ -135,6 +213,10 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         }
       }
 
+      /* Zero-height proxy div at the top of the component, used as a
+         coordinate reference for positioning the fast access menu.
+         Its getBoundingClientRect() gives us the component's top-left
+         in viewport coordinates. */
       #proxy {
         position: absolute;
         top: 0;
@@ -149,33 +231,94 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // State
   // ---------------------------------------------------------------------------
 
+  /** The current serialized value (raw template string with {JSON} chiclets). */
   #rawValue = "";
+
+  /** The pure data model — source of truth for all content. */
   #model = EditorModel.empty();
+
+  /** DOM selection bridge — initialized in connectedCallback. */
   #selection!: EditorSelection;
+
+  /** Cached render segments (model segments + ZWNBSP padding). */
   #renderSegments: Segment[] = [];
+
+  /**
+   * Pending cursor offset to restore after Lit re-renders the DOM.
+   *
+   * The controlled-input cycle is: mutate model → rebuild segments →
+   * requestUpdate() → Lit reconciles DOM → `updated()` restores cursor.
+   * These fields store the cursor position between the mutation and the
+   * `updated()` callback.
+   */
   #pendingCursorOffset: number | null = null;
+
+  /** Whether the pending cursor should be placed after a chiclet. */
   #pendingCursorAfterChiclet = false;
+
+  /** True while the fast access menu is open and capturing keyboard input. */
   #isUsingFastAccess = false;
+
+  /**
+   * Flag set on '@' keydown, consumed on keyup. We split across two events
+   * because `beforeinput` fires between them — the '@' needs to be inserted
+   * into the model first (via beforeinput), then the menu is shown on keyup
+   * after the DOM has been updated with the '@' character.
+   */
   #showFastAccessMenuOnKeyUp = false;
+
+  /**
+   * When non-null, the fast access menu is in "route" mode: the user has
+   * selected a "Go to" step chiclet and is now picking a destination.
+   * The target part is the existing step chiclet whose `instance` field
+   * will be filled with the selected route.
+   */
   #fastAccessTarget: TemplatePart | null = null;
+
+  /** The last stored browser Range, used for restoring cursor on menu interactions. */
   #lastRange: Range | null = null;
+
+  /** If focus() is called before the editor element exists, defer to firstUpdated. */
   #focusOnFirstRender = false;
+
+  /** Guards selection-tracking: only check selections when pointer is in editor. */
   #shouldCheckSelections = false;
 
-  // Drag state.
+  // Drag state — tracks which chiclet is being dragged by its segment key.
   #dragSourceKey: string | null = null;
 
-  // Snapshot debounce for undo history.
+  // ---------------------------------------------------------------------------
+  // Snapshot debounce for undo history
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Timer ID for the debounced snapshot push. Typing captures a snapshot
+   * eagerly (at keystroke time) and stores it in #pendingSnapshotData,
+   * but only pushes to history after 300ms of silence. This groups
+   * consecutive keystrokes into a single undo step.
+   */
   #snapshotTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * The eagerly captured snapshot data waiting to be pushed.
+   * We capture at keystroke time (so segment state is accurate) but
+   * defer the push to coalesce rapid typing into one undo step.
+   */
   #pendingSnapshotData: import("./editor-model.js").Snapshot | null = null;
+
+  /**
+   * History index captured before the '@' trigger keystroke. When a chiclet
+   * is inserted via fast access, history is truncated to this anchor so
+   * undo skips the intermediate '@' state.
+   */
   #fastAccessHistoryAnchor: number | null = null;
 
-  // Refs.
+  // Refs — Lit createRef() for type-safe access to rendered elements.
   #editorRef: Ref<HTMLSpanElement> = createRef();
   #proxyRef: Ref<HTMLDivElement> = createRef();
   #fastAccessRef: Ref<FastAccessMenu> = createRef();
 
-  // Bound handlers.
+  // Bound handlers — pre-bound so we can remove them in disconnectedCallback.
   #onGlobalPointerDownBound = this.#onGlobalPointerDown.bind(this);
   #startTrackingSelectionsBound = this.#startTrackingSelections.bind(this);
   #stopTrackingSelectionsBound = this.#stopTrackingSelections.bind(this);
@@ -186,6 +329,18 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // Lifecycle
   // ---------------------------------------------------------------------------
 
+  /**
+   * Set up the selection bridge and register global event listeners.
+   *
+   * Global listeners (on `window`) are necessary because:
+   * - `selectionchange` only fires on `document`, not on individual elements.
+   * - Pointer events during drag must be tracked globally (the pointer may
+   *   leave the editor bounds).
+   * - Context menu suppression needs capture phase on window.
+   *
+   * All listeners use `capture: true` where needed to intercept events
+   * before they reach other handlers.
+   */
   connectedCallback(): void {
     super.connectedCallback();
 
@@ -212,6 +367,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     });
   }
 
+  /** Clean up all global listeners to prevent memory leaks. */
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
@@ -235,17 +391,22 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     });
   }
 
+  /** If focus was requested before the editor element existed, apply it now. */
   protected firstUpdated(): void {
     if (this.#focusOnFirstRender) {
       this.focus();
     }
   }
 
+  /**
+   * Restore cursor position after Lit finishes rendering.
+   *
+   * This is the final step of the controlled-input cycle. It runs
+   * synchronously after the DOM update, before any pending event handlers
+   * (e.g. keyup), ensuring storeLastRange captures the correct cursor
+   * position for fast access.
+   */
   protected override updated(): void {
-    // Restore cursor position after Lit finishes rendering.
-    // This runs synchronously after the DOM update, before any pending
-    // event handlers (e.g. keyup), ensuring storeLastRange captures
-    // the correct cursor position.
     if (this.#pendingCursorOffset !== null) {
       const offset = this.#pendingCursorOffset;
       const afterChiclet = this.#pendingCursorAfterChiclet;
@@ -259,10 +420,19 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // Public API (matching bb-text-editor)
   // ---------------------------------------------------------------------------
 
+  /** Save the current browser Range so it can be restored later. */
   storeLastRange(): void {
     this.#lastRange = this.#selection.getRange();
   }
 
+  /**
+   * Restore a previously stored range. Used when returning focus to the
+   * editor after a fast access menu interaction.
+   *
+   * @param offsetLastChar When true, pulls the range back by one character
+   *   (used to position the cursor just before the '@' trigger character
+   *   so the chiclet replaces it).
+   */
   restoreLastRange(offsetLastChar = true): void {
     if (!this.#lastRange || !this.#selection.isRangeValid(this.#lastRange)) {
       return;
@@ -272,9 +442,33 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#selection.restoreRange(this.#lastRange, offsetLastChar);
   }
 
+  /**
+   * Insert a chiclet (template part) at the current cursor position.
+   *
+   * This is the main entry point for programmatic chiclet insertion,
+   * called from the fast access menu selection handler and potentially
+   * from external code.
+   *
+   * ### Undo history integration
+   *
+   * When inserting via fast access (triggered by '@'):
+   * 1. Discard any pending debounced snapshot (the '@' keystroke).
+   * 2. Truncate history to the pre-@ anchor.
+   * 3. Push a fresh snapshot with the chiclet in place.
+   *
+   * This ensures undo jumps from "pre-@" directly to "with-chiclet",
+   * never showing the intermediate "@" state.
+   *
+   * ### "Go to" step chaining
+   *
+   * If the inserted part is a "Go to" step (`ROUTE_TOOL_PATH`) without
+   * a destination (`!part.instance`), the fast access menu is immediately
+   * reopened in "route" mode so the user can pick a destination step.
+   */
   async addItem(part: TemplatePart): Promise<void> {
     if (!this.#editorRef.value) return;
 
+    // Ensure we have a valid cursor position.
     if (!this.#selection.getRange()) {
       this.restoreLastRange();
     }
@@ -314,12 +508,18 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#syncFromModel(charOffset, true, /* immediate */ true);
     this.#captureEditorValue();
 
+    // If this is a "Go to" step without a destination, chain into route
+    // selection by re-opening fast access in route mode.
     if (part.path === ROUTE_TOOL_PATH && !part.instance) {
       await this.updateComplete;
       this.#triggerFastAccessIfOnStepParam();
     }
   }
 
+  /**
+   * Focus the editor, placing the cursor at the end of all content.
+   * If the editor element doesn't exist yet (pre-first-render), defer.
+   */
   override focus(): void {
     if (!this.#editorRef.value) {
       this.#focusOnFirstRender = true;
@@ -332,10 +532,34 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // Render
   // ---------------------------------------------------------------------------
 
+  /** Delegate to the model's toRenderSegments() to get ZWNBSP-padded output. */
   #buildRenderSegments(): Segment[] {
     return this.#model.toRenderSegments();
   }
 
+  /**
+   * Render a single chiclet as a `<label>` element.
+   *
+   * Chiclets are rendered with `contenteditable="false"` so the browser
+   * treats them as atomic inline elements — the cursor skips over them
+   * rather than entering them. The `data-segment-key` attribute links
+   * the DOM element back to its position in the render segments array,
+   * enabling model lookups without parsing DOM text content.
+   *
+   * ### "Go to" step chiclets
+   *
+   * Route step chiclets (`ROUTE_TOOL_PATH`) have special rendering: they
+   * show a source icon + title, a target icon + title (the destination),
+   * and a dropdown arrow. The `data-parameter-step` attribute flags them
+   * for the fast access route selection flow.
+   *
+   * ### Hidden preamble/postamble
+   *
+   * Each chiclet contains hidden `<span>` elements with the raw template
+   * preamble (`{...`) and postamble (`...}`) so that if the DOM text is
+   * read directly (e.g. for accessibility or clipboard fallback), it
+   * produces valid template syntax.
+   */
   #renderChiclet(seg: ChicletSegment, key: string) {
     const { part } = seg;
     const { type, invalid } = part;
@@ -350,6 +574,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     let metadataIcon = srcIcon;
     let sourceTitle = title;
 
+    // Build CSS class map for styling based on chiclet type/state.
     const classes: Record<string, boolean> = { chiclet: true };
 
     if (metadataTags) {
@@ -367,6 +592,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       classes["invalid"] = true;
     }
 
+    // Override title/icon for well-known tool paths.
     if (path === ROUTE_TOOL_PATH) {
       sourceTitle = "Go to";
       metadataIcon = "start";
@@ -378,6 +604,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       metadataIcon = "notebooklm";
     }
 
+    // For "Go to" steps with a destination, resolve the target's metadata.
     let targetIcon: string | undefined;
     let targetTitle: string | undefined;
     if (path === ROUTE_TOOL_PATH && instance) {
@@ -390,6 +617,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       targetIcon = expanded.icon ?? undefined;
     }
 
+    // Hidden template syntax spans for raw-text fallback.
     const preamble = Template.preamble(part);
     const titleText = jsonStringify(title);
     const postamble = Template.postamble();
@@ -435,6 +663,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     >`;
   }
 
+  /** Top-level render: editor + fast access menu + coordinate proxy div. */
   render() {
     return html`
       ${this.#renderEditor()} ${this.#renderFastAccessMenu()}
@@ -442,6 +671,18 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     `;
   }
 
+  /**
+   * Render the main editor area.
+   *
+   * The content is a flat list of text strings and chiclet `<label>` elements
+   * rendered as direct children of the `<span id="editor">`. Text segments
+   * become text nodes; chiclet segments become rendered label elements.
+   *
+   * The `>${ ... }<` pattern (no whitespace between the tags and the template
+   * expression) is intentional: it prevents Lit from inserting extra text
+   * nodes that would break the 1:1 mapping between render segments and DOM
+   * child nodes.
+   */
   #renderEditor() {
     const isEmpty = this.#rawValue === "";
     const placeholderText = this.supportsFastAccess
@@ -471,6 +712,13 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     `;
   }
 
+  /**
+   * Render the fast access menu.
+   *
+   * The `pointerdown` handler calls `stopImmediatePropagation()` to prevent
+   * the global `#onGlobalPointerDown` handler from immediately hiding the
+   * menu when the user clicks inside it.
+   */
   #renderFastAccessMenu() {
     return html`
       <bb-fast-access-menu
@@ -488,14 +736,24 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // Fast access event handlers
   // ---------------------------------------------------------------------------
 
+  /** Called when the user dismisses the fast access menu without selecting. */
   #onFastAccessDismissed() {
     this.#hideFastAccess();
+    // Clear the history anchor — the '@' character stays in the text
+    // since no chiclet was inserted.
     this.#fastAccessHistoryAnchor = null;
     this.#captureEditorValue();
     this.restoreLastRange();
     this.#setFastAccessTarget(null);
   }
 
+  /**
+   * Called when the user selects an item from the fast access menu.
+   *
+   * When `#fastAccessTarget` is set (route mode), the selected item fills
+   * the target's `instance` field rather than creating a new chiclet.
+   * Otherwise, a fresh chiclet is created from the selection event data.
+   */
   #onFastAccessSelect(evt: FastAccessSelectEvent) {
     this.#hideFastAccess();
     this.restoreLastRange();
@@ -508,6 +766,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       instance: evt.instance ?? undefined,
     };
 
+    // In route mode, merge the selection into the existing step chiclet.
     if (this.#fastAccessTarget !== null) {
       targetPart = {
         ...this.#fastAccessTarget,
@@ -525,9 +784,29 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // Input handling
   // ---------------------------------------------------------------------------
 
+  /**
+   * Controlled input handler: intercepts ALL browser editing mutations.
+   *
+   * Every `beforeinput` event is `preventDefault()`'d so the browser never
+   * mutates the DOM directly. Instead, the corresponding operation is
+   * applied to the EditorModel, and Lit re-renders the result.
+   *
+   * ### Selection deletion
+   *
+   * If there's a non-collapsed selection (highlighted text), it's deleted
+   * first via the model before the requested operation is applied. The
+   * pre-delete state is snapshotted for undo, with the cursor at the
+   * selection end so undo restores the cursor there.
+   *
+   * ### Cursor placement after deletion
+   *
+   * After a delete operation, if the cursor lands at a chiclet boundary,
+   * it's placed **after** the chiclet. This keeps the cursor on the same
+   * side as the deleted text — preventing the jarring experience of the
+   * cursor jumping to the opposite side of a chiclet. For text insertion,
+   * the cursor stays where the text was typed.
+   */
   #onBeforeInput(evt: InputEvent): void {
-    // Controlled input: prevent ALL browser-native editing. Every mutation
-    // goes through the model and Lit re-renders the result.
     evt.preventDefault();
 
     const range = this.#selection.getRange();
@@ -562,6 +841,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
 
     let newOffset = charOffset;
 
+    // Route each input type to the corresponding model operation.
     switch (evt.inputType) {
       case "insertText": {
         const text = evt.data ?? "";
@@ -591,6 +871,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         break;
 
       case "deleteWordBackward": {
+        // Opt+Backspace: delete the previous word.
         const wordStart = this.#model.findWordBoundaryBefore(charOffset);
         newOffset = this.#model.deleteAtOffset(
           charOffset,
@@ -600,6 +881,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       }
 
       case "deleteWordForward": {
+        // Opt+Delete: delete the next word.
         const wordEnd = this.#model.findWordBoundaryAfter(charOffset);
         newOffset = this.#model.deleteAtOffset(
           charOffset,
@@ -610,12 +892,13 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
 
       case "deleteSoftLineBackward":
       case "deleteHardLineBackward":
-        // Delete to start of line: delete all chars before cursor.
+        // Cmd+Backspace: delete to start of line.
         newOffset = this.#model.deleteAtOffset(charOffset, -charOffset);
         break;
 
       case "deleteSoftLineForward":
       case "deleteHardLineForward": {
+        // Cmd+Delete: delete to end of line.
         const totalLen = this.#model.visibleTextLength;
         newOffset = this.#model.deleteAtOffset(
           charOffset,
@@ -643,6 +926,16 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   /**
    * Model-driven paste: splice pasted text into the model's raw value
    * so that `{JSON}` chiclet syntax is parsed back into chiclets.
+   *
+   * ### Why not just insert text?
+   *
+   * If we used `insertTextAtOffset`, pasted `{JSON}` would be treated as
+   * literal text. Instead, we splice into the raw template string and
+   * re-parse the entire model, which reconstitutes any chiclet syntax
+   * in the pasted content.
+   *
+   * The cursor position after paste is computed from the pasted content's
+   * visible text length (not raw length, since chiclets are zero-width).
    */
   #onPaste(evt: ClipboardEvent): void {
     evt.preventDefault();
@@ -661,8 +954,8 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       charOffset = this.#model.deleteSelection(charOffset, endOffset);
     }
 
-    // Splice pasted text into the raw value and re-parse so chiclets
-    // in the pasted text are reconstituted.
+    // Convert the visible-text cursor offset to a raw-string offset,
+    // splice the pasted text in at that position, then re-parse.
     const isAfterChiclet = this.#model.hasChicletAtBoundary(charOffset);
     const rawOffset = this.#model.charOffsetToRawOffset(
       charOffset,
@@ -674,6 +967,8 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#model.replaceAll(newRaw, /* resetHistory */ false);
 
     // Compute new cursor position from pasted content's visible length.
+    // Parse the pasted text as its own model to count visible characters
+    // (which excludes chiclet JSON syntax).
     const pastedModel = EditorModel.fromRawValue(text);
     const newOffset = charOffset + pastedModel.visibleTextLength;
     const afterChiclet = this.#model.hasChicletAtBoundary(newOffset);
@@ -682,11 +977,17 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#captureEditorValue();
   }
 
+  /**
+   * Key-down handler for special keys that bypass the `beforeinput` pipeline.
+   *
+   * These keys either need pre-processing (Tab, @), custom behavior
+   * (undo/redo, copy/cut), or cursor clamping around chiclets.
+   */
   #onKeyDown(evt: KeyboardEvent): void {
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-    // Tab handling — route through model.
+    // Tab handling — route through model (not browser's native tab).
     if (evt.key === "Tab") {
       evt.preventDefault();
       if (!evt.shiftKey) {
@@ -699,14 +1000,15 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       return;
     }
 
-    // Undo / Redo.
+    // Undo / Redo — Cmd+Z / Cmd+Shift+Z.
     if (evt.key === "z" && isCtrlCommand) {
       evt.preventDefault();
       // Flush any pending debounced typing snapshot so it's undoable.
       this.#flushPendingSnapshot();
       const result = evt.shiftKey ? this.#model.redo() : this.#model.undo();
       if (result) {
-        // Rebuild render segments but don't push a new snapshot.
+        // Rebuild render segments but don't push a new snapshot
+        // (undo/redo doesn't create new history entries).
         this.#renderSegments = this.#buildRenderSegments();
 
         // When undoing/redoing to empty, skip cursor positioning (there's
@@ -721,14 +1023,17 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         this.requestUpdate();
         this.#captureEditorValue();
 
-        // Ensure focus so the user can type immediately.
+        // Ensure focus so the user can type immediately after undo/redo.
         this.#editorRef.value?.focus();
       }
       return;
     }
 
     // Copy / Cut — put raw template syntax on clipboard so chiclets
-    // round-trip through paste.
+    // round-trip through paste. We intercept these instead of letting
+    // the browser's native clipboard handling run, because the browser
+    // would copy the DOM's visual text (with ZWNBSPs) rather than the
+    // raw template syntax we need for chiclet preservation.
     if ((evt.key === "c" || evt.key === "x") && isCtrlCommand) {
       evt.preventDefault();
       const range = this.#selection.getRange();
@@ -738,7 +1043,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         endRange.collapse(false);
         const endOffset = this.#selection.rangeToCharOffset(endRange);
 
-        // Extract raw value for the selected range.
+        // Extract raw value for the selected range (chiclets as {JSON}).
         const rawText = this.#model.rawSlice(startOffset, endOffset);
         navigator.clipboard.writeText(rawText);
 
@@ -752,7 +1057,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       return;
     }
 
-    // @ trigger for fast access.
+    // '@' trigger for fast access.
     if (evt.key === "@") {
       this.#showFastAccessMenuOnKeyUp = true;
       // Anchor the history index before '@' is typed so addItem can
@@ -761,11 +1066,19 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       this.#fastAccessHistoryAnchor = this.#model.historyIndex;
     }
 
-    // Cursor clamping around chiclets.
+    // Cursor clamping around chiclets — prevent cursor from landing
+    // in the "danger zone" between ZWNBSPs and chiclets.
     this.#selection.ensureSafePosition(evt);
   }
 
+  /**
+   * Key-up handler — triggers the fast access menu after '@' is fully
+   * processed (the '@' character has been inserted via beforeinput and
+   * the DOM has been updated).
+   */
   #onKeyUp(evt: KeyboardEvent): void {
+    // If fast access is already open, swallow all keyups — they're
+    // being handled by the menu.
     if (this.#isUsingFastAccess) {
       evt.preventDefault();
       return;
@@ -784,11 +1097,28 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   }
 
   // ---------------------------------------------------------------------------
-  // Chiclet pointer-based reordering
+  // Chiclet pointer-based reordering (drag-and-drop)
   // ---------------------------------------------------------------------------
 
+  /**
+   * Handle pointer-down on a chiclet to initiate drag reordering.
+   *
+   * This implements a lightweight drag system without the Drag & Drop API
+   * (which doesn't work well with contenteditable and shadow DOM):
+   *
+   * 1. **pointerdown**: Record the source chiclet, add "dragging" class.
+   * 2. **pointermove**: Use `caretPositionFromPoint` to find the text
+   *    position under the pointer and show a caret there as visual feedback.
+   * 3. **pointerup**: Remove the chiclet from its original position and
+   *    re-insert it at the last valid drop offset.
+   *
+   * The source chiclet is looked up in the model by **TemplatePart reference
+   * identity** (`findSegmentByPart`), not by index mapping, because the
+   * render segments contain synthetic ZWNBSP text nodes that don't exist
+   * in the model, making index mapping unreliable.
+   */
   #onChicletPointerDown(evt: PointerEvent, key: string): void {
-    // Only primary button.
+    // Only primary button (left-click).
     if (evt.button !== 0) return;
 
     const chicletEl = evt.currentTarget;
@@ -807,7 +1137,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
 
     const onPointerMove = (moveEvt: PointerEvent) => {
       didMove = true;
-      // Update the caret position at the pointer for visual feedback.
+      // Use caretPositionFromPoint to find where in the text the pointer is.
       const caretPos = caretPositionFromPoint(
         moveEvt.clientX,
         moveEvt.clientY,
@@ -815,7 +1145,8 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       );
       if (!caretPos) return;
 
-      // Skip if the caret lands inside the dragging chiclet itself.
+      // Skip if the caret lands inside the dragging chiclet itself —
+      // we can't drop a chiclet onto itself.
       if (chicletEl === caretPos.node || chicletEl.contains(caretPos.node)) {
         return;
       }
@@ -825,7 +1156,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
         caretPos.offset
       );
 
-      // Use the shadow-DOM-aware cursor placement for visual feedback.
+      // Move the visible caret to the drop position for visual feedback.
       this.#selection.setCursorAtCharOffset(lastDropOffset);
     };
 
@@ -834,12 +1165,13 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       window.removeEventListener("pointerup", onPointerUp);
       chicletEl.classList.remove("dragging");
 
+      // Bail if the chiclet wasn't actually moved.
       if (!this.#dragSourceKey || !didMove || lastDropOffset === -1) {
         this.#dragSourceKey = null;
         return;
       }
 
-      // Look up the source chiclet in render segments.
+      // Look up the source chiclet in render segments by its key.
       const sourceRenderIndex = this.#renderSegments.findIndex(
         (_s, i) => `seg-${i}` === this.#dragSourceKey
       );
@@ -861,7 +1193,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       const chicletOffset = this.#model.chicletCharOffset(modelSourceIndex);
       this.#model.pushSnapshot(chicletOffset, true);
 
-      // Remove and re-insert at the last valid drop position.
+      // Remove from original position and re-insert at drop position.
       this.#model.removeSegment(modelSourceIndex);
       this.#model.insertChicletAtOffset(lastDropOffset, sourceSeg.part);
 
@@ -879,9 +1211,23 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // ---------------------------------------------------------------------------
 
   /**
-   * Rebuild render segments from the model and re-render.
-   * If `cursorOffset` is provided, it will be restored in `updated()`
-   * after Lit finishes rendering.
+   * The core sync method: rebuild render segments from the model, schedule
+   * cursor restoration, and trigger a Lit update.
+   *
+   * ### Snapshot debouncing
+   *
+   * When `immediate` is true (structural changes like chiclet insert, paste,
+   * drag), a snapshot is pushed to history right away. When false (typing),
+   * the snapshot is captured eagerly but pushed after a 300ms pause, grouping
+   * consecutive keystrokes into a single undo step.
+   *
+   * The eager capture + deferred push pattern is important: we must clone
+   * the segment state at keystroke time (when it's correct), but defer the
+   * push to avoid bloating history with per-keystroke entries.
+   *
+   * @param cursorOffset Visible-text offset to restore after render.
+   * @param afterChiclet Whether to place the cursor after a chiclet.
+   * @param immediate If true, push snapshot immediately (structural changes).
    */
   #syncFromModel(
     cursorOffset?: number,
@@ -934,6 +1280,17 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // Value capture
   // ---------------------------------------------------------------------------
 
+  /**
+   * Serialize the model to a raw value and dispatch an `input` event.
+   *
+   * This is the "output" side of the controlled-input cycle. After every
+   * mutation, we read the model's raw value (the canonical representation)
+   * and fire an `input` event so parent components can read the updated
+   * `value` property.
+   *
+   * The placeholder visibility is tied to whether the value is empty,
+   * so we trigger a re-render when the empty state changes.
+   */
   #captureEditorValue(): void {
     const wasEmpty = this.#rawValue === "";
     this.#rawValue = this.#model.toRawValue();
@@ -954,13 +1311,14 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   }
 
   // ---------------------------------------------------------------------------
-  // Offset mapping
-  // ---------------------------------------------------------------------------
-
-  // ---------------------------------------------------------------------------
   // Context menu
   // ---------------------------------------------------------------------------
 
+  /**
+   * Suppress the browser's default context menu on the editor.
+   * Uses `stopImmediatePropagation` to prevent other context menu handlers
+   * (e.g. the app-level right-click menu) from interfering.
+   */
   #onContextMenu(evt: Event): void {
     const isOnSelf = evt.composedPath().find((el) => el === this);
     if (!isOnSelf) return;
@@ -971,11 +1329,23 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // Global pointer handlers
   // ---------------------------------------------------------------------------
 
+  /**
+   * Any pointer-down anywhere in the window dismisses the fast access menu.
+   * The menu's own pointerdown handler calls `stopImmediatePropagation()`
+   * to prevent this from firing when clicking inside the menu.
+   */
   #onGlobalPointerDown(): void {
     this.#hideFastAccess();
     this.#setFastAccessTarget(null);
   }
 
+  /**
+   * Start tracking pointer-based selections.
+   *
+   * Clears existing chiclet selections, and if the pointer landed on a
+   * chiclet, toggles its selected state. Then flags whether the pointer
+   * is inside the editor (for ongoing selection tracking during drag).
+   */
   #startTrackingSelections(evt: Event): void {
     this.#selection.clearChicletSelections();
     this.#selection.selectChicletIfPossible(evt);
@@ -985,6 +1355,13 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#shouldCheckSelections = topItem === this.#editorRef.value;
   }
 
+  /**
+   * Stop tracking selections on pointer-up.
+   *
+   * If the pointer wasn't tracking editor selections (it was elsewhere),
+   * check if the pointer-up landed on a selected step chiclet to trigger
+   * the route fast access flow.
+   */
   #stopTrackingSelections(evt: PointerEvent): void {
     if (!this.#shouldCheckSelections) {
       this.#triggerFastAccessIfOnStepParam();
@@ -994,6 +1371,10 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#checkSelectionsBound(evt);
   }
 
+  /**
+   * Update chiclet "selected" visual state during pointer drag and on
+   * browser selection changes.
+   */
   #checkChicletSelections(evt: Event): void {
     if (!this.#shouldCheckSelections && evt.type !== "selectionchange") return;
     this.#selection.updateChicletSelections();
@@ -1003,6 +1384,13 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
   // Fast access menu
   // ---------------------------------------------------------------------------
 
+  /**
+   * If a selected chiclet is a "Go to" step, open the fast access menu
+   * in route mode so the user can pick a destination.
+   *
+   * This is triggered after clicking a step chiclet, enabling a two-part
+   * insertion flow: first pick "Go to", then pick the destination step.
+   */
   #triggerFastAccessIfOnStepParam(targetChild?: ChildNode): void {
     if (!this.#editorRef.value) return;
 
@@ -1031,7 +1419,12 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
 
   /**
    * Look up the TemplatePart for a chiclet DOM element by finding its
-   * segment key in the model, rather than re-parsing the DOM text content.
+   * segment key in the render segments array.
+   *
+   * The primary path uses `data-segment-key` to find the chiclet in our
+   * cached render segments — fast and reliable. The fallback path parses
+   * the DOM text content as a Template, which should only be needed if
+   * the keys somehow get out of sync (defensive coding).
    */
   #chicletToTemplatePart(chiclet: HTMLElement): TemplatePart {
     const key = chiclet.dataset.segmentKey;
@@ -1060,6 +1453,25 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     }
   }
 
+  /**
+   * Position and display the fast access menu near a DOM rect.
+   *
+   * ### Positioning strategy
+   *
+   * Uses the `#proxy` div as a coordinate reference — its `getBoundingClientRect()`
+   * gives the component's top-left corner in viewport coordinates. The menu
+   * is positioned relative to this origin using CSS custom properties
+   * (`--fast-access-x`, `--fast-access-y`).
+   *
+   * Clamping logic prevents the menu from overflowing the component bounds:
+   * - Right edge: clamp left so the 240px-wide menu stays within bounds.
+   * - Bottom edge: clamp top so the 312px-tall menu stays within bounds.
+   * - Zero bounds: fall back to (0, 0) for edge cases.
+   *
+   * In route mode, the menu is positioned below the chiclet (+ height + 4px gap).
+   *
+   * TODO: This positioning logic should migrate to FastAccessController via SCA.
+   */
   // TODO: This positioning logic and mode state should migrate to
   // FastAccessController via SCA, keeping the component a thin shell.
   #showFastAccess(bounds: DOMRect | undefined): void {
@@ -1069,10 +1481,12 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     const proxyBounds = this.#proxyRef.value.getBoundingClientRect();
     let top = Math.round(bounds.top - proxyBounds.top);
     if (this.#fastAccessTarget !== null) {
+      // In route mode, position below the chiclet with a small gap.
       top += Math.round(bounds.height) + 4;
     }
     let left = Math.round(bounds.left - proxyBounds.left);
 
+    // Clamp to prevent overflow.
     if (left + 240 > proxyBounds.width) {
       left = proxyBounds.width - 240;
     }
@@ -1091,6 +1505,8 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
       this.#fastAccessRef.value?.focusFilter();
     });
 
+    // Set the menu mode: "route" when picking a step destination,
+    // "browse" when inserting a new chiclet.
     const hasTarget = this.#fastAccessTarget !== null;
     this.#fastAccessRef.value.selectedIndex = 0;
     if (this.sca) {
@@ -1101,6 +1517,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#isUsingFastAccess = true;
   }
 
+  /** Hide the fast access menu and reset its SCA mode. */
   #hideFastAccess(): void {
     this.#isUsingFastAccess = false;
     if (this.sca) {
@@ -1109,6 +1526,7 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     this.#fastAccessRef.value?.classList.remove("active");
   }
 
+  /** Set (or clear) the fast access target and reset the menu filter. */
   #setFastAccessTarget(part: TemplatePart | null): void {
     this.#fastAccessTarget = part;
     if (this.#fastAccessRef.value && this.#fastAccessTarget !== null) {

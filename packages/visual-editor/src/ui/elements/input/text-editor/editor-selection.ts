@@ -4,6 +4,64 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * # EditorSelection — DOM Selection Bridge for the Text Editor
+ *
+ * ## Big Picture
+ *
+ * This module bridges between the browser's Selection/Range APIs and the
+ * abstract coordinate system used by `EditorModel`. The model thinks in
+ * terms of "visible-text character offsets" (where chiclets are zero-width);
+ * the browser thinks in terms of DOM nodes and text offsets within those
+ * nodes. This class translates between the two.
+ *
+ * ## Why is this hard?
+ *
+ * A `contenteditable` span with interleaved text nodes and chiclet `<label>`
+ * elements creates several challenges:
+ *
+ * 1. **ZWNBSPs**: The render layer inserts invisible zero-width no-break
+ *    space characters (U+FEFF) around chiclets as "cursor landing pads".
+ *    These exist in the DOM but not in the model, so every offset conversion
+ *    must skip them.
+ *
+ * 2. **Lit comment markers**: Lit inserts `<!-- -->` comment nodes between
+ *    template parts as boundary markers. These inflate the child count of
+ *    the editor element but don't correspond to model segments. We skip
+ *    them with `nextSignificantSibling` / `prevSignificantSibling`.
+ *
+ * 3. **Shadow DOM**: The component lives inside a shadow root. The
+ *    `Selection` API behaves differently across browsers in shadow DOM:
+ *    Chrome/Firefox support `shadowRoot.getSelection()`, while Safari
+ *    falls back to `document.getSelection()`. Similarly,
+ *    `caretPositionFromPoint` needs the `shadowRoots` option in Chrome
+ *    to penetrate shadow boundaries during drag operations.
+ *
+ * 4. **Chiclet cursor ambiguity**: Because chiclets are zero-width,
+ *    adjacent chiclets create multiple DOM positions that map to the same
+ *    visible-text offset. The `afterChiclet` flag throughout the codebase
+ *    resolves this ambiguity by specifying which side of a chiclet
+ *    boundary the cursor should be on.
+ *
+ * ## Cursor Clamping ("Safe Positions")
+ *
+ * The `ensureSafePosition()` method prevents the cursor from landing in
+ * the "danger zone" — the space between a ZWNBSP and its adjacent chiclet.
+ * If the cursor were allowed there, the next keystroke could produce
+ * unexpected behavior (e.g. text inserted between the ZWNBSP and the
+ * chiclet, where it would be invisible or misplaced). The method pushes
+ * the cursor to the user-facing side of the ZWNBSP after arrow key
+ * navigation, delete, and other cursor-moving operations.
+ *
+ * ## Design: DOM-Coupled but Testable
+ *
+ * Pure offset helpers (like `charOffsetToRawOffset()` and the sibling
+ * navigation functions) are extracted as module-level functions that don't
+ * need DOM access. The class instance methods are inherently DOM-coupled
+ * (they read Selection/Range state), but the separation keeps the testable
+ * surface as large as possible.
+ */
+
 import { Template } from "@breadboard-ai/utils";
 import type { Segment } from "./editor-model.js";
 import { ZWNBSP, ZWNBSP_RE, stripZWNBSP } from "./constants.js";
@@ -15,14 +73,23 @@ export type { CursorSnapshot };
 // Types
 // ---------------------------------------------------------------------------
 
+/**
+ * A snapshot of the cursor position in model-space coordinates.
+ * Used to save/restore cursor position across re-renders.
+ */
 interface CursorSnapshot {
-  /** Index into the render-segments array. */
+  /** Index into the render-segments array (which child of the editor). */
   segmentIndex: number;
   /** Character offset within the segment's text (text segments only). */
   offset: number;
 }
 
-/** Returned by the cross-browser caret-from-point helper. */
+/**
+ * Returned by the cross-browser `caretPositionFromPoint` helper.
+ * Normalizes the different return types of `document.caretPositionFromPoint`
+ * (returns `CaretPosition` with `offsetNode`) and `document.caretRangeFromPoint`
+ * (returns `Range` with `startContainer`) into a single interface.
+ */
 interface CaretPosition {
   node: Node;
   offset: number;
@@ -34,6 +101,11 @@ interface CaretPosition {
 
 /**
  * Return the next non-comment sibling, skipping Lit's marker comments.
+ *
+ * Lit inserts `<!-- -->` comment nodes between rendered template parts as
+ * boundary markers. When navigating the DOM sibling chain (e.g. to find
+ * the text node after a chiclet), we need to skip these invisible markers
+ * so we land on a "real" node (text node or element).
  */
 function nextSignificantSibling(node: Node | null): Node | null {
   let current = node?.nextSibling ?? null;
@@ -45,6 +117,7 @@ function nextSignificantSibling(node: Node | null): Node | null {
 
 /**
  * Return the previous non-comment sibling, skipping Lit's marker comments.
+ * Mirror of `nextSignificantSibling` for backward navigation.
  */
 function prevSignificantSibling(node: Node | null): Node | null {
   let current = node?.previousSibling ?? null;
@@ -58,6 +131,15 @@ function prevSignificantSibling(node: Node | null): Node | null {
  * Map a character offset in the visible text (where chiclets are zero-width)
  * to an offset in the raw template string (where chiclets are their full
  * `{JSON}` representation).
+ *
+ * This is a **render-segment-aware** version of the mapping — it operates
+ * on the render segments (which include ZWNBSPs) and strips them during
+ * the character count. The model has its own version
+ * (`EditorModel.charOffsetToRawOffset`) that works on clean model segments.
+ *
+ * @param segments The **render** segments (with ZWNBSP padding).
+ * @param charOffset The visible-text offset to map.
+ * @returns The corresponding offset in the raw template string.
  */
 function charOffsetToRawOffset(
   segments: Segment[],
@@ -68,6 +150,7 @@ function charOffsetToRawOffset(
 
   for (const seg of segments) {
     if (seg.kind === "text") {
+      // Strip ZWNBSPs to get the "real" visible character count.
       const clean = seg.text.replace(ZWNBSP_RE, "");
       if (charRun + clean.length >= charOffset) {
         return rawRun + (charOffset - charRun);
@@ -75,6 +158,7 @@ function charOffsetToRawOffset(
       charRun += clean.length;
       rawRun += clean.length;
     } else {
+      // Chiclet: zero-width in visible space, full JSON length in raw space.
       const partStr = Template.part(seg.part);
       rawRun += partStr.length;
     }
@@ -90,11 +174,23 @@ function charOffsetToRawOffset(
 /**
  * Encapsulates all cursor, selection, and offset logic for the text editor.
  *
- * Separates pure offset computations (testable without DOM) from the thin
- * DOM adapter layer that bridges to the browser's Range/Selection APIs.
+ * This class acts as a DOM adapter: the component tells it "place the cursor
+ * at visible-text offset 12" and it figures out which DOM text node and at
+ * what text offset within that node corresponds to position 12, accounting
+ * for ZWNBSP padding, Lit comment markers, and chiclet `<label>` elements.
+ *
+ * It also provides the reverse mapping: given a browser Range, compute the
+ * visible-text offset (for feeding back into the model on user input).
  */
 class EditorSelection {
+  /** The component's shadow root, used for `getSelection()`. */
   #shadowRoot: ShadowRoot;
+
+  /**
+   * Lazy accessor for the editor `<span>` element. This is a function
+   * (rather than a stored reference) because the element may not exist
+   * yet at construction time — it's created during Lit's first render.
+   */
   #editorEl: () => HTMLElement | undefined;
 
   constructor(shadowRoot: ShadowRoot, editorEl: () => HTMLElement | undefined) {
@@ -106,23 +202,41 @@ class EditorSelection {
   // Cross-browser Selection access
   // -------------------------------------------------------------------------
 
+  /**
+   * Get the current Selection object, accounting for shadow DOM differences.
+   *
+   * - **Chrome/Firefox**: `shadowRoot.getSelection()` returns the selection
+   *   scoped to this shadow root. This is the preferred path because it
+   *   correctly reflects selections within the shadow DOM.
+   *
+   * - **Safari**: does not support `shadowRoot.getSelection()`, so we fall
+   *   back to `document.getSelection()` which works for most cases but can't
+   *   fully distinguish selections across shadow boundaries.
+   */
   getSelection(): Selection | null {
-    // Chrome/Firefox: shadowRoot.getSelection()
     if ("getSelection" in this.#shadowRoot) {
       // @ts-expect-error New API not yet in all type definitions.
       return this.#shadowRoot.getSelection() as Selection | null;
     }
 
-    // Safari fallback: document.getSelection() works for most use cases.
     return document.getSelection();
   }
 
+  /**
+   * Get the current Range from the selection, or null if no selection exists.
+   * Convenience wrapper around `getSelection().getRangeAt(0)`.
+   */
   getRange(): Range | null {
     const selection = this.getSelection();
     if (!selection) return null;
     return selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
   }
 
+  /**
+   * Check whether a Range is still valid (its ancestor is within the editor).
+   * Ranges can become invalid if the DOM was re-rendered since the range
+   * was captured, or if the range belongs to a different part of the page.
+   */
   isRangeValid(range: Range): boolean {
     return this.#editorEl()?.contains(range.commonAncestorContainer) ?? false;
   }
@@ -134,6 +248,10 @@ class EditorSelection {
   /**
    * Snapshot the current cursor position as a model-space offset
    * (segment index + character offset within that segment).
+   *
+   * This walks the editor's child nodes to find which one contains the
+   * Range's start position, returning the child index (= segment index)
+   * and the offset within that child.
    */
   snapshot(): CursorSnapshot | null {
     const range = this.getRange();
@@ -158,6 +276,11 @@ class EditorSelection {
   /**
    * After inserting a chiclet, place the cursor in the text node
    * immediately following the last chiclet.
+   *
+   * This scans backward through the editor's children looking for the
+   * last chiclet, then places the cursor at offset 1 in the following
+   * text node (offset 1 = just past the ZWNBSP that serves as the
+   * chiclet's trailing cursor landing pad).
    */
   restoreAfterChicletInsert(): void {
     const editor = this.#editorEl();
@@ -180,7 +303,11 @@ class EditorSelection {
   }
 
   /**
-   * Place the cursor at a specific offset within a node.
+   * Place the cursor at a specific DOM node + text offset.
+   *
+   * This is the lowest-level cursor placement method — all other cursor
+   * methods eventually delegate here. It creates a collapsed Range at
+   * the specified position and replaces the current selection with it.
    */
   #setCursorAt(node: Node, offset: number): void {
     const selection = this.getSelection();
@@ -197,8 +324,22 @@ class EditorSelection {
   // -------------------------------------------------------------------------
 
   /**
-   * Convert the current Range's start position to a character offset
-   * within the model's visible text (ZWNBSPs excluded, chiclets zero-width).
+   * Convert a browser Range's start position to a visible-text character
+   * offset (where ZWNBSPs are excluded and chiclets are zero-width).
+   *
+   * ### How it works
+   *
+   * Walk the editor's child nodes in order. For each child *before* the one
+   * containing the Range's start, add its visible text length to the running
+   * offset. For the child *containing* the Range's start, count only the
+   * visible characters up to the Range's start offset.
+   *
+   * ### Special case: Range container is the editor itself
+   *
+   * When the user does Cmd+A (select all), the browser may set the Range's
+   * startContainer to the editor element itself, with startOffset being a
+   * *child index* rather than a text offset. We handle this by counting
+   * visible characters across children up to that index.
    */
   rangeToCharOffset(range: Range | null): number {
     const editor = this.#editorEl();
@@ -214,7 +355,7 @@ class EditorSelection {
         if (child.nodeType === Node.TEXT_NODE) {
           offset += stripZWNBSP(child.textContent ?? "").length;
         }
-        // Chiclets and comments are zero-width.
+        // Chiclets and comments contribute zero visible characters.
       }
       return offset;
     }
@@ -228,7 +369,8 @@ class EditorSelection {
         child.contains(range.startContainer)
       ) {
         if (child.nodeType === Node.TEXT_NODE) {
-          // Count only visible (non-ZWNBSP) characters up to the cursor.
+          // Count only visible (non-ZWNBSP) characters up to the cursor
+          // position within this text node.
           const text = child.textContent ?? "";
           for (let i = 0; i < range.startOffset && i < text.length; i++) {
             if (text[i] !== ZWNBSP) {
@@ -236,9 +378,11 @@ class EditorSelection {
             }
           }
         }
+        // Found the container — stop walking.
         break;
       }
 
+      // This child is entirely before the Range — add its full visible length.
       if (child.nodeType === Node.TEXT_NODE) {
         offset += stripZWNBSP(child.textContent ?? "").length;
       }
@@ -249,8 +393,16 @@ class EditorSelection {
 
   /**
    * Compute the character offset from a DOM node + text offset directly.
-   * Unlike `rangeToCharOffset`, this doesn't require a Range object,
-   * making it safe for shadow DOM nodes returned by `caretPositionFromPoint`.
+   *
+   * This is identical in logic to `rangeToCharOffset` but accepts a raw
+   * DOM node + offset instead of a Range object. This is needed for
+   * `caretPositionFromPoint` results during drag operations, where we get
+   * a node+offset from the browser's hit-testing API rather than from the
+   * current Selection.
+   *
+   * The separation exists because `caretPositionFromPoint` can return nodes
+   * inside the shadow DOM that may not be reachable through the standard
+   * Selection API, making it unsafe to construct a Range from them.
    */
   nodeToCharOffset(targetNode: Node, nodeOffset: number): number {
     const editor = this.#editorEl();
@@ -295,7 +447,10 @@ class EditorSelection {
 
   /**
    * Map a character offset to a raw template string offset.
-   * Pure computation delegated to the module-level helper.
+   *
+   * Delegates to the module-level pure function. This instance method exists
+   * to expose the functionality through the EditorSelection interface for
+   * callers that already have a reference to the selection object.
    */
   charOffsetToRawOffset(segments: Segment[], charOff: number): number {
     return charOffsetToRawOffset(segments, charOff);
@@ -303,9 +458,25 @@ class EditorSelection {
 
   /**
    * Place the cursor at a character offset in the visible text.
-   * Chiclets are zero-width; ZWNBSPs in the DOM are skipped.
-   * If `afterChiclet` is true and the offset lands at a chiclet boundary,
-   * place the cursor in the text node AFTER the chiclet.
+   *
+   * ### Algorithm
+   *
+   * Walk the editor's child nodes (the rendered DOM), skipping chiclet
+   * `<label>` elements and Lit comment markers. For each text node, count
+   * visible characters (skipping ZWNBSPs) until we've consumed `charOffset`
+   * characters, then place the cursor at that DOM position.
+   *
+   * ### The `afterChiclet` flag
+   *
+   * When a chiclet sits at a boundary, the same visible-text offset maps to
+   * two DOM positions: the end of the text node *before* the chiclet, or
+   * the start of the text node *after* it. The `afterChiclet` flag resolves
+   * this: when `true`, we advance past the chiclet to place the cursor in
+   * the following text node (at offset 1, past the ZWNBSP landing pad).
+   *
+   * This is critical after deletion: if you backspace a character and the
+   * cursor ends up at a chiclet boundary, it should stay on the *same side*
+   * as the deleted text, not jump to the other side of the chiclet.
    */
   setCursorAtCharOffset(charOffset: number, afterChiclet = false): void {
     const editor = this.#editorEl();
@@ -318,7 +489,7 @@ class EditorSelection {
       const child = children[ci];
 
       if (isChicletNode(child)) {
-        // Chiclets are zero-width — skip them.
+        // Chiclets are zero-width — skip them entirely.
         continue;
       }
 
@@ -328,11 +499,13 @@ class EditorSelection {
       }
 
       const text = child.textContent ?? "";
-      // Compute the visible length (strip ZWNBSPs).
+      // Walk through the text node character by character, counting only
+      // visible (non-ZWNBSP) characters.
       let visibleConsumed = 0;
       for (let i = 0; i < text.length; i++) {
         if (text[i] === ZWNBSP) continue;
         if (visibleConsumed === remaining) {
+          // Found the exact position — place cursor here.
           this.#setCursorAt(child, i);
           return;
         }
@@ -342,12 +515,14 @@ class EditorSelection {
       // If we consumed exactly `remaining` chars, cursor is at end of node.
       if (visibleConsumed === remaining) {
         // When afterChiclet is requested, check if a chiclet follows.
-        // If so, advance past it to the next text node.
+        // If so, advance past it to the next text node so the cursor
+        // appears on the far side of the chiclet.
         if (afterChiclet) {
           const nextSig = nextSignificantSibling(child);
           if (nextSig && isChicletNode(nextSig)) {
             const afterNode = nextSignificantSibling(nextSig);
             if (afterNode && afterNode.nodeType === Node.TEXT_NODE) {
+              // Offset 1 = just past the ZWNBSP landing pad.
               const t = afterNode.textContent ?? "";
               const pos = t.startsWith(ZWNBSP) ? 1 : 0;
               this.#setCursorAt(afterNode, pos);
@@ -374,8 +549,14 @@ class EditorSelection {
 
   /**
    * Map a DOM node + offset to a render-segment index.
-   * Skips Lit comment markers (which inflate the child count)
-   * so the returned index matches the model segment array.
+   *
+   * This tells the model "the cursor is in segment N", which is used as
+   * the `segmentHint` for `EditorModel.insertTextAtOffset()` to disambiguate
+   * zero-width gaps between adjacent chiclets.
+   *
+   * Skips Lit comment nodes (which inflate the child count but don't
+   * correspond to model segments) so the returned index matches the model
+   * segment array.
    */
   domPositionToSegmentIndex(node: Node, _offset: number): number {
     const editor = this.#editorEl();
@@ -402,9 +583,37 @@ class EditorSelection {
 
   /**
    * Ensure the cursor is in a "safe" position relative to chiclets.
-   * The ZWNBSP cursor-landing pads exist to give the caret a text node
-   * to rest in, but the cursor should never sit between a ZWNBSP and
-   * a chiclet — it should sit on the user-facing side of the ZWNBSP.
+   *
+   * ### The Problem
+   *
+   * Each chiclet has a ZWNBSP text node on either side as a cursor landing
+   * pad. The cursor can legally sit at several positions within these text
+   * nodes, but only the **user-facing side** is correct:
+   *
+   * ```
+   *   ... text [ZWNBSP] <chiclet> [ZWNBSP] text ...
+   *             ^safe                ^safe
+   *                    ^danger  ^danger
+   * ```
+   *
+   * If the cursor sits in the "danger" zone (between a ZWNBSP and a chiclet),
+   * the next keystroke produces confusing behavior — text appears to be
+   * inserted inside the chiclet.
+   *
+   * ### Per-key behavior
+   *
+   * - **ArrowLeft**: If the cursor is at the start of a text node that follows
+   *   a chiclet, jump over the chiclet to the end of the previous text node.
+   * - **ArrowRight**: If at the end of a text node preceding a chiclet, jump
+   *   over to the start of the next text node.
+   * - **Delete/Backspace**: Clamp position but let the model handle deletion
+   *   (chiclet deletion is done by `#onBeforeInput` through the model).
+   * - **Enter**: Prevent the cursor from sitting between ZWNBSP and chiclet
+   *   when inserting a newline.
+   * - **Default**: For any other key, just ensure we're not in the danger zone.
+   *
+   * @returns `true` if the cursor was clamped (the event may have been
+   *   `preventDefault()`ed), `false` otherwise.
    */
   /* c8 ignore start — deeply coupled to live Selection/Range interaction */
   ensureSafePosition(evt?: KeyboardEvent): boolean {
@@ -412,6 +621,8 @@ class EditorSelection {
     const range = this.getRange();
 
     // Only clamp when the cursor is collapsed (no selection range).
+    // When there's a selection, the start/end are different and clamping
+    // individual endpoints would break the selection.
     if (
       range?.startContainer !== range?.endContainer ||
       range?.startOffset !== range?.endOffset
@@ -432,6 +643,12 @@ class EditorSelection {
       return false;
     }
 
+    /**
+     * Helper: move the cursor to a safe position within a node.
+     * Optionally prevents the default behavior of the triggering event
+     * (used for arrow keys where we're overriding the browser's native
+     * cursor movement).
+     */
     const updateRange = (
       node: Node,
       offset: number,
@@ -450,13 +667,19 @@ class EditorSelection {
       }
     };
 
-    // Use helpers that skip Lit comment markers.
+    // Check neighbors using helpers that skip Lit comment markers.
     const nextSig = nextSignificantSibling(focusedNode);
     const prevSig = prevSignificantSibling(focusedNode);
     const nextSiblingIsChiclet = isChicletNode(nextSig);
     const previousSiblingIsChiclet = isChicletNode(prevSig);
     const textContent = focusedNode.textContent!;
 
+    /**
+     * Generic safety check: if the cursor is at the end of a text node
+     * that precedes a chiclet, pull it back by 1 (to the user-facing side
+     * of the ZWNBSP). If at the start of a text node that follows a chiclet,
+     * push it forward by 1.
+     */
     const ensureNotBetweenZWNBSPAndChiclet = () => {
       if (textContent.length === focusedOffset && nextSiblingIsChiclet) {
         updateRange(focusedNode, focusedOffset - 1);
@@ -473,6 +696,8 @@ class EditorSelection {
     let handled = false;
     switch (evt.key) {
       case "ArrowLeft": {
+        // If cursor is near the start of a text node after a chiclet,
+        // jump over the chiclet to the previous text node's safe position.
         if (focusedOffset <= 1 && previousSiblingIsChiclet) {
           const prevTextNode = prevSignificantSibling(prevSig);
           if (prevTextNode?.nodeType === Node.TEXT_NODE) {
@@ -488,6 +713,8 @@ class EditorSelection {
       }
 
       case "ArrowRight": {
+        // If cursor is near the end of a text node before a chiclet,
+        // jump over the chiclet to the next text node's safe position.
         if (focusedOffset === textContent.length - 1 && nextSiblingIsChiclet) {
           const nextTextNode = nextSignificantSibling(nextSig);
           if (nextTextNode?.nodeType === Node.TEXT_NODE) {
@@ -500,8 +727,8 @@ class EditorSelection {
 
       case "Delete":
       case "Backspace": {
-        // Chiclet deletion is now handled by #onBeforeInput via the model.
-        // Just clamp the cursor position.
+        // Chiclet deletion is handled by #onBeforeInput through the model.
+        // Here we just clamp the cursor so the delete targets the right thing.
         if (focusedOffset <= 1 && previousSiblingIsChiclet) {
           updateRange(focusedNode, 0);
           handled = true;
@@ -510,6 +737,7 @@ class EditorSelection {
       }
 
       case "Enter": {
+        // Prevent newline from being inserted between ZWNBSP and chiclet.
         if (focusedOffset === textContent.length && nextSiblingIsChiclet) {
           updateRange(focusedNode, focusedOffset - 1);
         }
@@ -530,6 +758,14 @@ class EditorSelection {
   // Chiclet selection visual feedback
   // -------------------------------------------------------------------------
 
+  /**
+   * If the pointer landed on a chiclet, toggle its "selected" CSS class
+   * and set the browser selection to cover the entire chiclet node.
+   *
+   * This gives chiclets a visual "selected" state when clicked, and
+   * ensures the browser's Selection encompasses the chiclet so that
+   * subsequent Delete/Backspace operations can detect and remove it.
+   */
   /* c8 ignore start — needs composedPath() from live browser events */
   selectChicletIfPossible(evt: Event): void {
     const [possibleChiclet] = evt.composedPath();
@@ -548,6 +784,11 @@ class EditorSelection {
   }
   /* c8 ignore end */
 
+  /**
+   * Remove the "selected" CSS class from all chiclets in the editor.
+   * Called at the start of each pointer interaction to reset visual state
+   * before potentially selecting new chiclets.
+   */
   clearChicletSelections(): void {
     const editor = this.#editorEl();
     if (!editor) return;
@@ -558,6 +799,14 @@ class EditorSelection {
     }
   }
 
+  /**
+   * Sync chiclet "selected" visual state with the current browser Selection.
+   *
+   * When the user drags to create a text selection that spans chiclets,
+   * this method marks each chiclet as "selected" if the Selection range
+   * intersects it. This gives visual feedback that the chiclet is part
+   * of the selection and will be affected by delete/cut operations.
+   */
   updateChicletSelections(): void {
     const range = this.getRange();
     const editor = this.#editorEl();
@@ -577,6 +826,10 @@ class EditorSelection {
   /**
    * Insert a tab character at the current collapsed caret position.
    * Returns true if a tab was inserted, false otherwise.
+   *
+   * Note: this is a legacy DOM-level insertion method. The primary tab
+   * insertion path now goes through the model (`insertTextAtOffset`), with
+   * this method available as a direct-DOM fallback.
    */
   insertTab(): boolean {
     const range = this.getRange();
@@ -599,6 +852,9 @@ class EditorSelection {
   /**
    * Programmatically select a DOM node (e.g. a chiclet) so it appears
    * highlighted and the browser's selection covers it.
+   *
+   * Used when a "Go to" step chiclet is clicked to select it before
+   * opening the fast access menu to pick a route destination.
    */
   selectNode(node: Node): void {
     const selection = this.getSelection();
@@ -611,9 +867,13 @@ class EditorSelection {
   }
 
   /**
-   * Restore a previously stored Range into the browser selection,
-   * optionally offsetting it back by one character (used to place the
-   * cursor just before a newly inserted chiclet).
+   * Restore a previously stored Range into the browser selection.
+   *
+   * When `offsetLastChar` is true (the default), the range's start position
+   * is pulled back by one character. This is used when restoring the cursor
+   * position for fast access chiclet insertion: the stored range points to
+   * the '@' trigger character, and we want the cursor just before it so the
+   * chiclet replaces the '@'.
    */
   restoreRange(range: Range, offsetLastChar = true): void {
     const selection = this.getSelection();
@@ -635,6 +895,14 @@ class EditorSelection {
   // Focus management
   // -------------------------------------------------------------------------
 
+  /**
+   * Move focus to the editor and place the cursor at the very end of
+   * all content. Also scrolls the editor to the bottom so the cursor
+   * is visible.
+   *
+   * Used when the component's `focus()` method is called externally
+   * (e.g. when the user clicks into the editor area).
+   */
   focusEnd(): void {
     const editor = this.#editorEl();
     if (!editor || !editor.lastChild) return;
@@ -644,7 +912,7 @@ class EditorSelection {
 
     const range = new Range();
     range.selectNodeContents(editor);
-    range.collapse(false);
+    range.collapse(false); // Collapse to end.
     selection.removeAllRanges();
     selection.addRange(range);
 
@@ -657,7 +925,14 @@ class EditorSelection {
 // Utility
 // ---------------------------------------------------------------------------
 
-/** Check whether a DOM node is a chiclet `<label>`. */
+/**
+ * Check whether a DOM node is a chiclet `<label>`.
+ *
+ * Chiclets are rendered as `<label class="chiclet" contenteditable="false">`
+ * elements within the editor. This type guard is used throughout the
+ * selection logic to distinguish chiclets from text nodes when walking
+ * the editor's child list.
+ */
 function isChicletNode(node: Node | null): node is HTMLElement {
   return node instanceof HTMLElement && node.classList.contains("chiclet");
 }
@@ -666,8 +941,19 @@ function isChicletNode(node: Node | null): node is HTMLElement {
  * Cross-browser caret-from-point. Returns the DOM node + offset at
  * the given viewport coordinates.
  *
- * When `shadowRoot` is provided, Chrome's `shadowRoots` option is used
- * so the API can penetrate into shadow DOM and return internal text nodes.
+ * ### Why two code paths?
+ *
+ * - `document.caretPositionFromPoint` (standards track, Firefox/Chrome): returns
+ *   a `CaretPosition` with `offsetNode`. Chrome supports a `shadowRoots` option
+ *   that lets us penetrate into shadow DOM boundaries — critical because the
+ *   editor lives in a shadow root, and without this option, the returned node
+ *   would be the shadow host rather than the internal text node.
+ *
+ * - `document.caretRangeFromPoint` (Safari, legacy Chrome): returns a Range
+ *   at the point. Does not support shadow DOM penetration.
+ *
+ * This is used during chiclet drag-and-drop to determine where the dragged
+ * chiclet would be dropped based on the pointer position.
  */
 /* c8 ignore start — browser-only API, not available in jsdom */
 function caretPositionFromPoint(
