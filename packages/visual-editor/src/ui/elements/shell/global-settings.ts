@@ -35,9 +35,7 @@ function getTabEnabledMap(sca: SCA | undefined): Record<TabId, boolean> {
   return {
     [TabId.GENERAL]: Boolean(CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN),
     [TabId.INTEGRATIONS]: Boolean(sca?.controller?.global?.flags?.mcp),
-    [TabId.EXPERIMENTAL]: Boolean(
-      sca?.controller?.global.main.experimentalComponents
-    ),
+    [TabId.EXPERIMENTAL]: true,
   };
 }
 

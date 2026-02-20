@@ -125,10 +125,16 @@ export type RuntimeFlagManager = {
 
 /**
  * Metadata for a runtime flag: a human-readable title and short description.
+ *
+ * `visibility` controls where the flag appears in the settings UI:
+ * - `"public"` — always shown in the Experimental tab.
+ * - `"experimental"` — only shown after enabling experimental components
+ *   (Cmd+Shift+E / Ctrl+Shift+E).
  */
 export type RuntimeFlagMeta = {
   title: string;
   description: string;
+  visibility: "public" | "experimental";
 };
 
 /**
@@ -139,69 +145,86 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   mcp: {
     title: "MCP Support",
     description: "Enable Model Context Protocol support",
+    visibility: "public",
   },
   force2DGraph: {
     title: "2D Graph Rendering",
     description: "Use 2D matrices for graph rendering",
+    visibility: "experimental",
   },
   consistentUI: {
     title: "Consistent UI",
     description: "Experimental consistent UI output mode",
+    visibility: "experimental",
   },
   agentMode: {
     title: "Agent Mode",
     description: "Enable agent mode",
+    visibility: "experimental",
   },
   googleOne: {
     title: "Google One Quotas",
     description: "Enable Google One quota limits",
+    visibility: "experimental",
   },
   opalAdk: {
     title: "Opal-ADK",
     description: "Enable Opal-ADK support",
+    visibility: "experimental",
   },
   outputTemplates: {
     title: "Output Templates",
     description: "Enable output templates for consistent output",
+    visibility: "experimental",
   },
   requireConsentForGetWebpage: {
     title: "Consent for Get Webpage",
     description: "Require user consent to use the get_webpage tool",
+    visibility: "public",
   },
   requireConsentForOpenWebpage: {
     title: "Consent for Open Webpage",
     description: "Require user consent to use the open_webpage tool",
+    visibility: "public",
   },
   streamPlanner: {
     title: "Stream Planner",
     description: "Enable SSE streaming for planner calls",
+    visibility: "experimental",
   },
   streamGenWebpage: {
     title: "Stream Generate Webpage",
     description: "Enable SSE streaming for HTML generation",
+    visibility: "experimental",
   },
   enableDrivePickerInLiteMode: {
     title: "Drive Picker (Lite Mode)",
     description: "Enable 'Add from Drive' in lite mode",
+    visibility: "experimental",
   },
   enableGoogleDriveTools: {
     title: "Google Drive Tools",
     description: "Enable 'export to Drive' capability",
+    visibility: "public",
   },
   enableResumeAgentRun: {
     title: "Resume Agent Run",
     description: "Enable auto-resumption of failed agent runs",
+    visibility: "experimental",
   },
   enableNotebookLm: {
     title: "NotebookLM",
     description: "Enable NotebookLM integration",
+    visibility: "public",
   },
   enableGraphEditorAgent: {
     title: "Graph Editor Agent",
     description: "Enable conversational graph building",
+    visibility: "experimental",
   },
   textEditorRemix: {
     title: "Text Editor (Remix)",
     description: "Use the newer, model-driven text editor",
+    visibility: "experimental",
   },
 };
