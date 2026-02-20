@@ -58,9 +58,9 @@ export async function createClientConfig(opts: {
     SHELL_GUEST_ORIGIN: flags.SHELL_GUEST_ORIGIN,
     SHELL_HOST_ORIGINS: flags.SHELL_HOST_ORIGINS,
     SHELL_PREFIX: flags.SHELL_PREFIX,
-    ENABLE_EMAIL_OPT_IN: flags.ENABLE_EMAIL_OPT_IN,
+
     SHARE_SURFACE_URL_TEMPLATES: flags.SHARE_SURFACE_URL_TEMPLATES,
-    ENABLE_NEW_URL_SCHEME: flags.ENABLE_NEW_URL_SCHEME,
+
     ENABLE_SHARING_2: flags.ENABLE_SHARING_2,
     FAKE_MODE: flags.FAKE_MODE,
     domains: flags.DOMAIN_CONFIG,
@@ -72,12 +72,7 @@ export async function createClientConfig(opts: {
       opalAdk: flags.ENABLE_OPAL_ADK,
       outputTemplates: flags.ENABLE_OUTPUT_TEMPLATES,
       googleOne: flags.ENABLE_GOOGLE_ONE,
-      requireConsentForGetWebpage: flags.ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE,
-      requireConsentForOpenWebpage:
-        flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
-      streamPlanner: flags.STREAM_PLANNER,
-      streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
-      enableDrivePickerInLiteMode: flags.ENABLE_DRIVE_PICKER_IN_LITE_MODE,
+
       enableGoogleDriveTools: flags.ENABLE_GOOGLE_DRIVE_TOOLS,
       enableNotebookLm: flags.ENABLE_NOTEBOOK_LM,
       enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,

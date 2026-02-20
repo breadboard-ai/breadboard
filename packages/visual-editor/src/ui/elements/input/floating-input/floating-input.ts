@@ -42,7 +42,6 @@ import {
   isStoredData,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
-import { parseUrl } from "../../../utils/urls.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../../../sca/context/context.js";
@@ -63,8 +62,6 @@ interface SupportedActions {
     notebooklm: boolean;
   };
 }
-
-const parsedUrl = parseUrl(window.location.href);
 
 @customElement("bb-floating-input")
 export class FloatingInput extends SignalWatcher(LitElement) {
@@ -532,9 +529,7 @@ export class FloatingInput extends SignalWatcher(LitElement) {
 
   render() {
     let inputContents: HTMLTemplateResult | symbol = nothing;
-    const showGDrive =
-      !parsedUrl.lite ||
-      !!this.sca.controller.global.flags?.enableDrivePickerInLiteMode;
+    const showGDrive = true;
     const showNotebookLm = !!this.sca.controller.global.flags?.enableNotebookLm;
     if (this.schema) {
       const props = Object.entries(this.schema.properties ?? {});

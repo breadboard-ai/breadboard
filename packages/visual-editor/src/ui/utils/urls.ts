@@ -13,7 +13,6 @@ import {
   MakeUrlInit,
   OpenUrlInit,
 } from "../../sca/types.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 
 export function devUrlParams(): Required<BaseUrlInit>["dev"] {
   // TODO(aomarks) Add a flag so that we only allow these in dev.
@@ -41,8 +40,7 @@ const DEV_PREFIX = "dev-";
  */
 export function makeUrl(
   init: MakeUrlInit,
-  base: string | URL = window.location.href,
-  enableNewUrlScheme = CLIENT_DEPLOYMENT_CONFIG.ENABLE_NEW_URL_SCHEME
+  base: string | URL = window.location.href
 ): string {
   const baseOrigin =
     typeof base === "string" ? new URL(base).origin : base.origin;
@@ -71,9 +69,6 @@ export function makeUrl(
       url.searchParams.set(NEW, init.new === true ? "true" : "false");
     }
   } else if (page === "graph") {
-    if (!enableNewUrlScheme) {
-      url.searchParams.set(FLOW, init.flow);
-    }
     if (init.resourceKey) {
       url.searchParams.set(RESOURCE_KEY, init.resourceKey);
     }
@@ -97,21 +92,17 @@ export function makeUrl(
           : COLOR_SCHEME_DARK
       );
     }
-    if (!enableNewUrlScheme) {
-      url.searchParams.set(MODE, init.mode);
+    const driveId = extractGoogleDriveFileId(init.flow);
+    if (!driveId) {
+      throw new Error("unsupported graph id " + init.flow);
+    }
+    if (init.mode === "app") {
+      url.pathname = "app/" + encodeURIComponent(driveId);
+    } else if (init.mode === "canvas") {
+      url.pathname = "edit/" + encodeURIComponent(driveId);
     } else {
-      const driveId = extractGoogleDriveFileId(init.flow);
-      if (!driveId) {
-        throw new Error("unsupported graph id " + init.flow);
-      }
-      if (init.mode === "app") {
-        url.pathname = "app/" + encodeURIComponent(driveId);
-      } else if (init.mode === "canvas") {
-        url.pathname = "edit/" + encodeURIComponent(driveId);
-      } else {
-        init.mode satisfies never;
-        throw new Error("unsupported mode " + init.mode);
-      }
+      init.mode satisfies never;
+      throw new Error("unsupported mode " + init.mode);
     }
   } else if (page === "landing") {
     url.pathname = "landing/";
@@ -136,10 +127,12 @@ export function makeUrl(
       );
     }
     if (init.redirect.page === "graph") {
-      // To encode the redirect URL, we just copy all the search params directly
-      // onto the landing page URL, and then pick them off later. Note this
-      // could be a little brittle if we add more pages, since we aren't
-      // explicitly representing which page we're redirecting to.
+      // To encode the redirect URL, we store the graph parameters as search
+      // params on the landing URL, and then pick them off later during parsing.
+      // We explicitly set flow and mode since makeUrl encodes them in the
+      // pathname rather than as search params.
+      url.searchParams.set(FLOW, init.redirect.flow);
+      url.searchParams.set(MODE, init.redirect.mode);
       const redirectUrl = new URL(makeUrl(init.redirect, base));
       for (const [redirectParam, redirectValue] of redirectUrl.searchParams) {
         url.searchParams.set(redirectParam, redirectValue);

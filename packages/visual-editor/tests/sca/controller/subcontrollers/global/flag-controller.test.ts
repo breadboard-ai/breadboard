@@ -92,11 +92,6 @@ suite("FlagController", () => {
     );
 
     assert.throws(
-      () => String(store.enableDrivePickerInLiteMode),
-      new Error("enableDrivePickerInLiteMode was not set by environment")
-    );
-
-    assert.throws(
       () => String(store.force2DGraph),
       new Error("force2DGraph was not set by environment")
     );
@@ -119,26 +114,6 @@ suite("FlagController", () => {
     assert.throws(
       () => String(store.outputTemplates),
       new Error("outputTemplates was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.requireConsentForGetWebpage),
-      new Error("requireConsentForGetWebpage was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.requireConsentForOpenWebpage),
-      new Error("requireConsentForOpenWebpage was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.streamGenWebpage),
-      new Error("streamGenWebpage was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.streamPlanner),
-      new Error("streamPlanner was not set by environment")
     );
 
     assert.throws(

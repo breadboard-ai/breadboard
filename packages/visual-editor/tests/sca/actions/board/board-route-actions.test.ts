@@ -81,7 +81,7 @@ function makeMockRouteController(
           queryConsent: async () => true,
         },
         flags: {
-          flags: async () => ({ requireConsentForGetWebpage: false }),
+          flags: async () => ({}),
         },
         toasts: {
           toast: () => "toast-id",
@@ -291,17 +291,6 @@ suite("Board Route Actions", () => {
         editor: mockEditor,
       });
 
-      // Override flags to require consent
-      (
-        controller.global as unknown as {
-          flags: {
-            flags: () => Promise<{ requireConsentForGetWebpage: boolean }>;
-          };
-        }
-      ).flags = {
-        flags: async () => ({ requireConsentForGetWebpage: true }),
-      };
-
       // Override consent to deny
       (
         controller.global as unknown as {
@@ -341,17 +330,6 @@ suite("Board Route Actions", () => {
         url: "drive:/gallery-board",
         editor: mockEditor,
       });
-
-      // Override flags to require consent
-      (
-        controller.global as unknown as {
-          flags: {
-            flags: () => Promise<{ requireConsentForGetWebpage: boolean }>;
-          };
-        }
-      ).flags = {
-        flags: async () => ({ requireConsentForGetWebpage: true }),
-      };
 
       const boardServer = makeMockBoardServer({});
       (boardServer as unknown as { galleryGraphs: Set<string> }).galleryGraphs =
