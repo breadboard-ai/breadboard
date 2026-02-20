@@ -134,6 +134,8 @@ export function makeMockBoardServer(options: {
     // For event bridge support
     addEventListener: () => {},
     removeEventListener: () => {},
+    // Consent check support (always-on after flag removal)
+    galleryGraphs: new Set<string>(),
     // Test helpers
     get lastSavedGraph() {
       return lastSavedGraph;
