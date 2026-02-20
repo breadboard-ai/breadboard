@@ -9,12 +9,12 @@ import { suite, test } from "node:test";
 import {
   AgentEventConsumer,
   LocalAgentEventBridge,
-} from "../../../../src/a2/agent/agent-event-consumer.js";
-import { getGraphEditingFunctionGroup } from "../../../../src/a2/agent/graph-editing/functions.js";
-import type { AgentEvent } from "../../../../src/a2/agent/agent-event.js";
+} from "../../../src/a2/agent/agent-event-consumer.js";
+import { getGraphEditingFunctionGroup } from "../../../src/a2/agent/graph-editing/functions.js";
+import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
-import { EditingAgentPidginTranslator } from "../../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
-import type { FunctionDefinition } from "../../../../src/a2/agent/function-definition.js";
+import { EditingAgentPidginTranslator } from "../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
+import type { FunctionDefinition } from "../../../src/a2/agent/function-definition.js";
 
 /**
  * A minimal mock graph for testing.

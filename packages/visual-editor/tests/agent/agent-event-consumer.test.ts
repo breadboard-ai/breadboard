@@ -9,8 +9,8 @@ import { suite, test } from "node:test";
 import {
   AgentEventConsumer,
   LocalAgentEventBridge,
-} from "../../../src/a2/agent/agent-event-consumer.js";
-import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
+} from "../../src/a2/agent/agent-event-consumer.js";
+import type { AgentEvent } from "../../src/a2/agent/agent-event.js";
 
 suite("AgentEventConsumer", () => {
   test("dispatches events to registered handlers", () => {
