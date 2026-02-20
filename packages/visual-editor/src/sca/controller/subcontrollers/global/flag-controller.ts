@@ -160,7 +160,7 @@ export class FlagController
   get textEditorRemix() {
     return valueOrThrow(
       "textEditorRemix",
-      this._enableGraphEditorAgent ?? this.#env.enableGraphEditorAgent
+      this._textEditorRemix ?? this.#env.textEditorRemix
     );
   }
 
