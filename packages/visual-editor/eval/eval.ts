@@ -361,6 +361,9 @@ class EvalRun implements EvalHarnessRuntimeArgs {
       trackProperties: function (): Promise<void> {
         throw new Error("Function not implemented.");
       },
+      setTitle: function (_title: string | null): void {
+        throw new Error("Function not implemented.");
+      },
     } satisfies OpalShellHostProtocol,
   };
 }
