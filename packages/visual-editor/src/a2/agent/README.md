@@ -175,6 +175,21 @@ is a transport swap, not a refactor.
       `sink.suspend("queryConsent")`
 - [x] Consumer handlers for each new suspend event
 
+### Phase 3.75: Mock Server Protocol Validation (in progress)
+
+Standalone Python mock server (`packages/mock-agent-server/`) that implements
+the SSE wire format, so `SSEAgentEventSource` can be developed against a real
+HTTP endpoint before the TypeScript server exists.
+
+- [x] Pydantic models for all 21 `AgentEvent` types (`events.py`)
+- [x] `SSEAgentEventSink` — serializes events to SSE stream via async queue
+- [x] `PendingRequestMap` — asyncio suspend/resume keyed by `requestId`
+- [x] FastAPI endpoints: `POST /run`, `GET /events`, `POST /input`,
+      `POST /abort`
+- [x] Canned scenarios: `echo`, `chat`, `graph-edit`, `consent`
+- [x] End-to-end verification: 13 tests in 0.4s (`npm test`)
+- [ ] Develop `SSEAgentEventSource` (client) against the mock server
+
 ### Phase 4: Server-Side Implementation
 
 - [ ] `SSEAgentEventSink` — writes events to SSE response stream
