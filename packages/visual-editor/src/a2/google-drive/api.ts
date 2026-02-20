@@ -28,6 +28,7 @@ type ApiDeps = {
 
 export {
   appendSpreadsheetValues,
+  clearSpreadsheetValues,
   create,
   createPresentation,
   del,
@@ -664,6 +665,17 @@ export type SpreadsheetRequest =
         properties: { sheetId: number; title: string };
         fields: string;
       };
+    }
+  | {
+      insertDimension: {
+        range: {
+          sheetId: number;
+          dimension: "ROWS" | "COLUMNS";
+          startIndex: number;
+          endIndex: number;
+        };
+        inheritFromBefore?: boolean;
+      };
     };
 
 export type SpreadsheetValueRange = {
@@ -688,7 +700,7 @@ export type SheetList = {
     properties: {
       sheetId: number;
       title: string;
-      index: 0;
+      index: number;
     };
   }[];
 };
@@ -1020,6 +1032,19 @@ async function setSpreadsheetValues(
     `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
     "PUT",
     { values }
+  );
+}
+
+async function clearSpreadsheetValues(
+  moduleArgs: ApiDeps,
+  id: string,
+  range: string
+) {
+  return api<void>(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}:clear`,
+    "POST",
+    {}
   );
 }
 
