@@ -17,8 +17,9 @@ function testSymmetrical(
   init: MakeUrlInit
 ): void {
   test(oldUrl, () => {
-    assert.deepEqual(makeUrl(init, BASE_URL, true), newUrl);
-    assert.deepEqual(makeUrl(init, BASE_URL, false), oldUrl);
+    // makeUrl always generates the new URL scheme now
+    assert.deepEqual(makeUrl(init, BASE_URL), newUrl);
+    // parseUrl still supports both old and new URL formats
     assert.deepEqual(parseUrl(newUrl), init);
     assert.deepEqual(parseUrl(oldUrl), init);
   });
@@ -280,7 +281,7 @@ suite("landing", () => {
   );
 
   testSymmetrical(
-    `${BASE_URL}/landing/?flow=drive:/abc123&resourcekey=ghi789&results=def456&mode=app`,
+    `${BASE_URL}/landing/?flow=drive:/abc123&mode=app&resourcekey=ghi789&results=def456`,
     `${BASE_URL}/landing/?flow=drive:/abc123&resourcekey=ghi789&results=def456&mode=app`,
     {
       page: "landing",

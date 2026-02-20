@@ -156,16 +156,14 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     });
 
-    if (this.sca.services.globalConfig.ENABLE_EMAIL_OPT_IN) {
-      this.sca.services.emailPrefsManager.refreshPrefs().then(() => {
-        if (
-          this.sca.services.emailPrefsManager.prefsValid &&
-          !this.sca.services.emailPrefsManager.hasStoredPreferences
-        ) {
-          this.sca.controller.global.main.show.add("WarmWelcome");
-        }
-      });
-    }
+    this.sca.services.emailPrefsManager.refreshPrefs().then(() => {
+      if (
+        this.sca.services.emailPrefsManager.prefsValid &&
+        !this.sca.services.emailPrefsManager.hasStoredPreferences
+      ) {
+        this.sca.controller.global.main.show.add("WarmWelcome");
+      }
+    });
 
     // Admin — side-effect: exposes `window.o` when URL has #owner-tools.
     new Admin(

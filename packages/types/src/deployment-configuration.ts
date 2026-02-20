@@ -11,7 +11,6 @@ export type ClientDeploymentConfiguration = {
   MEASUREMENT_ID?: string;
   BACKEND_API_ENDPOINT?: string;
   ENVIRONMENT_NAME?: string;
-  ENABLE_NEW_URL_SCHEME?: boolean;
   ENABLE_SHARING_2?: boolean;
   GOOGLE_OAUTH_TOKEN_ENDPOINT?: string;
   GOOGLE_OAUTH_AUTH_ENDPOINT?: string;
@@ -35,7 +34,7 @@ export type ClientDeploymentConfiguration = {
    * value is "false"
    */
   ALLOW_3P_MODULES?: boolean;
-  ENABLE_EMAIL_OPT_IN?: boolean;
+
   FAKE_MODE?: boolean;
   SHARE_SURFACE_URL_TEMPLATES: Record<string, string>;
   domains?: Record<string, DomainConfiguration>;

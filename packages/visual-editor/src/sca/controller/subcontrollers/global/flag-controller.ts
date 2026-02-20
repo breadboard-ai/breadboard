@@ -19,9 +19,6 @@ export class FlagController
   private accessor _consistentUI: boolean | null = null;
 
   @field({ persist: "idb" })
-  private accessor _enableDrivePickerInLiteMode: boolean | null = null;
-
-  @field({ persist: "idb" })
   private accessor _enableGoogleDriveTools: boolean | null = null;
 
   @field({ persist: "idb" })
@@ -43,18 +40,6 @@ export class FlagController
   private accessor _outputTemplates: boolean | null = null;
 
   @field({ persist: "idb" })
-  private accessor _requireConsentForGetWebpage: boolean | null = null;
-
-  @field({ persist: "idb" })
-  private accessor _requireConsentForOpenWebpage: boolean | null = null;
-
-  @field({ persist: "idb" })
-  private accessor _streamGenWebpage: boolean | null = null;
-
-  @field({ persist: "idb" })
-  private accessor _streamPlanner: boolean | null = null;
-
-  @field({ persist: "idb" })
   private accessor _enableNotebookLm: boolean | null = null;
 
   @field({ persist: "idb" })
@@ -70,12 +55,6 @@ export class FlagController
     if (this._consistentUI === null)
       throw new Error("consistentUI was not set by environment");
     return this._consistentUI;
-  }
-
-  get enableDrivePickerInLiteMode() {
-    if (this._enableDrivePickerInLiteMode === null)
-      throw new Error("enableDrivePickerInLiteMode was not set by environment");
-    return this._enableDrivePickerInLiteMode;
   }
 
   get enableGoogleDriveTools() {
@@ -119,32 +98,6 @@ export class FlagController
     if (this._outputTemplates === null)
       throw new Error("outputTemplates was not set by environment");
     return this._outputTemplates;
-  }
-
-  get requireConsentForGetWebpage() {
-    if (this._requireConsentForGetWebpage === null)
-      throw new Error("requireConsentForGetWebpage was not set by environment");
-    return this._requireConsentForGetWebpage;
-  }
-
-  get requireConsentForOpenWebpage() {
-    if (this._requireConsentForOpenWebpage === null)
-      throw new Error(
-        "requireConsentForOpenWebpage was not set by environment"
-      );
-    return this._requireConsentForOpenWebpage;
-  }
-
-  get streamGenWebpage() {
-    if (this._streamGenWebpage === null)
-      throw new Error("streamGenWebpage was not set by environment");
-    return this._streamGenWebpage;
-  }
-
-  get streamPlanner() {
-    if (this._streamPlanner === null)
-      throw new Error("streamPlanner was not set by environment");
-    return this._streamPlanner;
   }
 
   get enableNotebookLm() {
@@ -198,12 +151,6 @@ export class FlagController
         return;
       }
 
-      case "enableDrivePickerInLiteMode": {
-        if (onlyIfNull && this._enableDrivePickerInLiteMode !== null) return;
-        this._enableDrivePickerInLiteMode = value;
-        return;
-      }
-
       case "force2DGraph": {
         if (onlyIfNull && this._force2DGraph !== null) return;
         this._force2DGraph = value;
@@ -231,30 +178,6 @@ export class FlagController
       case "outputTemplates": {
         if (onlyIfNull && this._outputTemplates !== null) return;
         this._outputTemplates = value;
-        return;
-      }
-
-      case "requireConsentForGetWebpage": {
-        if (onlyIfNull && this._requireConsentForGetWebpage !== null) return;
-        this._requireConsentForGetWebpage = value;
-        return;
-      }
-
-      case "requireConsentForOpenWebpage": {
-        if (onlyIfNull && this._requireConsentForOpenWebpage !== null) return;
-        this._requireConsentForOpenWebpage = value;
-        return;
-      }
-
-      case "streamGenWebpage": {
-        if (onlyIfNull && this._streamGenWebpage !== null) return;
-        this._streamGenWebpage = value;
-        return;
-      }
-
-      case "streamPlanner": {
-        if (onlyIfNull && this._streamPlanner !== null) return;
-        this._streamPlanner = value;
         return;
       }
 
@@ -304,28 +227,11 @@ export class FlagController
         env.enableGoogleDriveTools,
         onlyIfNull
       );
-      this.#set(
-        "enableDrivePickerInLiteMode",
-        env.enableDrivePickerInLiteMode,
-        onlyIfNull
-      );
       this.#set("force2DGraph", env.force2DGraph, onlyIfNull);
       this.#set("googleOne", env.googleOne, onlyIfNull);
       this.#set("mcp", env.mcp, onlyIfNull);
       this.#set("opalAdk", env.opalAdk, onlyIfNull);
       this.#set("outputTemplates", env.outputTemplates, onlyIfNull);
-      this.#set(
-        "requireConsentForGetWebpage",
-        env.requireConsentForGetWebpage,
-        onlyIfNull
-      );
-      this.#set(
-        "requireConsentForOpenWebpage",
-        env.requireConsentForOpenWebpage,
-        onlyIfNull
-      );
-      this.#set("streamGenWebpage", env.streamGenWebpage, onlyIfNull);
-      this.#set("streamPlanner", env.streamPlanner, onlyIfNull);
       this.#set("enableResumeAgentRun", env.enableResumeAgentRun, onlyIfNull);
       this.#set("enableNotebookLm", env.enableNotebookLm, onlyIfNull);
       this.#set(

@@ -38,13 +38,7 @@ export const ENABLE_FORCE_2D_GRAPH: boolean = getBoolean(
 
 export const ENABLE_SHARING_2: boolean = getBoolean("ENABLE_SHARING_2");
 
-export const ENABLE_STREAM_GEN_WEBPAGE: boolean = getBoolean(
-  "ENABLE_STREAM_GEN_WEBPAGE"
-);
-
 export const ENABLE_AGENT_MODE: boolean = getBoolean("ENABLE_AGENT_MODE");
-
-export const STREAM_PLANNER: boolean = getBoolean("ENABLE_STREAM_PLANNER");
 
 export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
 
@@ -124,29 +118,14 @@ export const SHELL_HOST_ORIGINS = getStringList("SHELL_HOST_ORIGINS");
 
 export const SHELL_PREFIX = getString("SHELL_PREFIX");
 
-export const ENABLE_EMAIL_OPT_IN = getBoolean("ENABLE_EMAIL_OPT_IN");
-
 export const ENABLE_OPAL_ADK = getBoolean("ENABLE_OPAL_ADK");
 
 export const ENABLE_OUTPUT_TEMPLATES = getBoolean("ENABLE_OUTPUT_TEMPLATES");
 
 export const ENABLE_GOOGLE_ONE = getBoolean("ENABLE_GOOGLE_ONE");
-export const ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE = getBoolean(
-  "ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE"
-);
-
-export const ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE = getBoolean(
-  "ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE"
-);
-
-export const ENABLE_NEW_URL_SCHEME = getBoolean("ENABLE_NEW_URL_SCHEME");
 
 export const SHARE_SURFACE_URL_TEMPLATES =
   (getJson("SHARE_SURFACE_URL_TEMPLATES") as Record<string, string>) ?? {};
-
-export const ENABLE_DRIVE_PICKER_IN_LITE_MODE = getBoolean(
-  "ENABLE_DRIVE_PICKER_IN_LITE_MODE"
-);
 
 export const ENABLE_GOOGLE_DRIVE_TOOLS = getBoolean(
   "ENABLE_GOOGLE_DRIVE_TOOLS"

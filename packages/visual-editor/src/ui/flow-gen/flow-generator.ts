@@ -134,7 +134,7 @@ export class FlowGenerator {
     const responseMessages: string[] = [];
     const suggestions: string[] = [];
 
-    if (flags.streamPlanner && !constraint) {
+    if (!constraint) {
       await this.#streamOneShot(
         intent,
         context,
