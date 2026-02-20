@@ -6,18 +6,18 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import { AgentUI } from "../../../src/a2/agent/ui.js";
+import { AgentUI } from "../../src/a2/agent/ui.js";
 import {
   AgentEventConsumer,
   LocalAgentEventBridge,
-} from "../../../src/a2/agent/agent-event-consumer.js";
-import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
-import type { A2ModuleArgs } from "../../../src/a2/runnable-module-factory.js";
-import type { PidginTranslator } from "../../../src/a2/agent/pidgin-translator.js";
+} from "../../src/a2/agent/agent-event-consumer.js";
+import type { AgentEvent } from "../../src/a2/agent/agent-event.js";
+import type { A2ModuleArgs } from "../../src/a2/runnable-module-factory.js";
+import type { PidginTranslator } from "../../src/a2/agent/pidgin-translator.js";
 import type {
   ChatResponse,
   ChatChoicesResponse,
-} from "../../../src/a2/agent/types.js";
+} from "../../src/a2/agent/types.js";
 import { ok } from "@breadboard-ai/utils";
 
 /**

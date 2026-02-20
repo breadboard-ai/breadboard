@@ -6,7 +6,7 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import { AgentService } from "../../../src/a2/agent/agent-service.js";
+import { AgentService } from "../../src/a2/agent/agent-service.js";
 
 const OBJECTIVE = { parts: [{ text: "test" }] };
 

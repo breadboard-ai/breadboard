@@ -14,10 +14,10 @@ import {
   createMockTaskTreeManager,
   createMockSink,
   getHandler,
-} from "../../../agent/functions/generate-test-utils.js";
-import { getGenerateFunctionGroup } from "../../../../src/a2/agent/functions/generate.js";
-import { stubModuleArgs } from "../../../useful-stubs.js";
-import type { AgentEvent } from "../../../../src/a2/agent/agent-event.js";
+} from "./generate-test-utils.js";
+import { getGenerateFunctionGroup } from "../../../src/a2/agent/functions/generate.js";
+import { stubModuleArgs } from "../../useful-stubs.js";
+import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
 
 suite("generate_text queryConsent suspend", () => {
   test("emits queryConsent suspend event when url_context is enabled and consent is granted", async () => {

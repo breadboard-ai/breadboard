@@ -6,9 +6,9 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import { buildHooksFromSink } from "../../../src/a2/agent/loop-setup.js";
-import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
-import type { AgentEventSink } from "../../../src/a2/agent/agent-event-sink.js";
+import { buildHooksFromSink } from "../../src/a2/agent/loop-setup.js";
+import type { AgentEvent } from "../../src/a2/agent/agent-event.js";
+import type { AgentEventSink } from "../../src/a2/agent/agent-event-sink.js";
 
 // ── Spy sink ─────────────────────────────────────────────────────────────────
 

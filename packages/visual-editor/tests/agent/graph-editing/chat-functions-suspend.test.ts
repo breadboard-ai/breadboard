@@ -9,14 +9,14 @@ import { suite, test, beforeEach, afterEach } from "node:test";
 import {
   AgentEventConsumer,
   LocalAgentEventBridge,
-} from "../../../../src/a2/agent/agent-event-consumer.js";
-import { getChatFunctionGroup } from "../../../../src/a2/agent/graph-editing/chat-functions.js";
-import type { AgentEvent } from "../../../../src/a2/agent/agent-event.js";
+} from "../../../src/a2/agent/agent-event-consumer.js";
+import { getChatFunctionGroup } from "../../../src/a2/agent/graph-editing/chat-functions.js";
+import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
-import { EditingAgentPidginTranslator } from "../../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
-import type { FunctionDefinition } from "../../../../src/a2/agent/function-definition.js";
-import { setDOM, unsetDOM } from "../../../fake-dom.js";
-import { bind } from "../../../../src/sca/actions/graph/graph-actions.js";
+import { EditingAgentPidginTranslator } from "../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
+import type { FunctionDefinition } from "../../../src/a2/agent/function-definition.js";
+import { setDOM, unsetDOM } from "../../fake-dom.js";
+import { bind } from "../../../src/sca/actions/graph/graph-actions.js";
 
 /**
  * A minimal mock graph for testing.
