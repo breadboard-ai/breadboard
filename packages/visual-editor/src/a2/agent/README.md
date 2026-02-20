@@ -167,13 +167,13 @@ is a transport swap, not a refactor.
 - [x] Widen `suspend()` to accept any `SuspendEvent`
 - [x] Add typed suspend events: `ReadGraphEvent`, `InspectNodeEvent`,
       `ApplyEditsEvent`, `QueryConsentEvent`
-- [ ] Graph-editing functions: replace direct `editor.raw()` / `inspect()` calls
+- [x] Graph-editing functions: replace direct `editor.raw()` / `inspect()` calls
       with `sink.suspend("readGraph")` / `sink.suspend("inspectNode")`
-- [ ] Graph-editing functions: replace direct `applyTransform()` with
+- [x] Graph-editing functions: replace direct `applyTransform()` with
       `sink.suspend("applyEdits")` for confirmed graph writes
-- [ ] Generate functions: replace direct `queryConsent()` with
+- [x] Generate functions: replace direct `queryConsent()` with
       `sink.suspend("queryConsent")`
-- [ ] Consumer handlers for each new suspend event
+- [x] Consumer handlers for each new suspend event
 
 ### Phase 4: Server-Side Implementation
 

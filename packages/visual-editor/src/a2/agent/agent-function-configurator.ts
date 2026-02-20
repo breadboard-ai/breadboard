@@ -20,9 +20,12 @@ import { Generators } from "./types.js";
 
 export { createAgentConfigurator };
 
+import type { AgentEventSink } from "./agent-event-sink.js";
+
 function createAgentConfigurator(
   moduleArgs: A2ModuleArgs,
-  generators: Generators
+  generators: Generators,
+  sink: AgentEventSink
 ): FunctionGroupConfigurator {
   return async (deps, flags) => {
     const groups = [];
@@ -45,6 +48,7 @@ function createAgentConfigurator(
         translator: deps.translator,
         taskTreeManager,
         generators,
+        sink,
       })
     );
 

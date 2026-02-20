@@ -16,17 +16,19 @@ import {
   diffSnapshots,
   type GraphSnapshot,
 } from "./graph-diff.js";
+import type { ReadGraphResponse } from "./types.js";
 
 export { getChatFunctionGroup };
 
 /**
- * Read the current graph data from the active editor.
+ * Read the current graph data via the suspend mechanism.
+ * Returns null if the graph descriptor has no nodes.
  */
-function getGraphData() {
-  const { controller } = bind;
-  const editor = controller.editor.graph.editor;
-  if (!editor) return null;
-  const graph = editor.raw();
+async function readGraphData(sink: AgentEventSink) {
+  const { graph } = await sink.suspend<ReadGraphResponse>({
+    type: "readGraph",
+    requestId: crypto.randomUUID(),
+  });
   return {
     title: graph.title,
     description: graph.description,
@@ -88,7 +90,7 @@ function getChatFunctionGroup(
       },
       async ({ message }) => {
         // Snapshot the graph before blocking on user input.
-        const beforeData = getGraphData();
+        const beforeData = await readGraphData(sink);
         if (beforeData) {
           lastSnapshot = takeSnapshot(
             beforeData.nodes,
@@ -111,7 +113,7 @@ function getChatFunctionGroup(
           .join("\n");
 
         // After user responds, check whether they edited the graph.
-        const afterData = getGraphData();
+        const afterData = await readGraphData(sink);
         let graph_changes: string | undefined;
 
         // Always include the current graph overview.

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { LLMContent, EditSpec } from "@breadboard-ai/types";
+import type { LLMContent, EditSpec, ConsentType } from "@breadboard-ai/types";
 import type { StatusUpdateCallbackOptions } from "./function-definition.js";
 import type { GeminiBody } from "../a2/gemini.js";
 import type { ErrorMetadata } from "../a2/utils.js";
@@ -178,7 +178,7 @@ type LayoutGraphDescriptor = {
 type QueryConsentEvent = {
   type: "queryConsent";
   requestId: string;
-  consentType: string;
+  consentType: ConsentType;
   scope: Record<string, unknown>;
   graphUrl: string;
 };

@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  ConsentType,
-  ConsentUIType,
-  TextCapabilityPart,
-} from "@breadboard-ai/types";
+import { ConsentType, TextCapabilityPart } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import z from "zod";
 import { GenerationConfig, Tool } from "../../a2/gemini.js";
@@ -35,6 +31,7 @@ import { FunctionGroup, Generators } from "../types.js";
 import { fileNameSchema, statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 import { createReporter } from "../progress-work-item.js";
+import type { AgentEventSink } from "../agent-event-sink.js";
 
 export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
 
@@ -63,6 +60,7 @@ export type GenerateFunctionArgs = {
   translator: PidginTranslator;
   taskTreeManager: TaskTreeManager;
   generators: Generators;
+  sink: AgentEventSink;
 };
 
 const GENERATE_TEXT_FUNCTION = "generate_text";
@@ -112,8 +110,14 @@ function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
 function defineGenerateFunctions(
   args: GenerateFunctionArgs
 ): FunctionDefinition[] {
-  const { fileSystem, moduleArgs, translator, taskTreeManager, generators } =
-    args;
+  const {
+    fileSystem,
+    moduleArgs,
+    translator,
+    taskTreeManager,
+    generators,
+    sink,
+  } = args;
   const imageFunction = defineFunction(
     {
       name: "generate_images",
@@ -357,14 +361,13 @@ Specify URLs in the prompt.
         tools.push({ googleMaps: {} });
       }
       if (url_context) {
-        const consent = await moduleArgs.getConsentController().queryConsent(
-          {
-            type: ConsentType.GET_ANY_WEBPAGE,
-            scope: {},
-            graphUrl: moduleArgs.context.currentGraph?.url || "",
-          },
-          ConsentUIType.MODAL
-        );
+        const consent = await sink.suspend<boolean>({
+          type: "queryConsent",
+          requestId: crypto.randomUUID(),
+          consentType: ConsentType.GET_ANY_WEBPAGE,
+          scope: {},
+          graphUrl: moduleArgs.context.currentGraph?.url || "",
+        });
         if (!consent) {
           return { error: "User declined to consent to access URLs" };
         }

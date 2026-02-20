@@ -19,6 +19,7 @@ import {
   createStreamResponse,
   createTestArgs,
   createMockStatusUpdater,
+  createMockSink,
   getHandler,
   fixtures,
   createMockTranslator,
@@ -215,14 +216,8 @@ describe("generate_text", () => {
 
   describe("consent flow", () => {
     it("returns error when user declines url_context consent", async () => {
-      const baseArgs = createTestArgs();
       const args = createTestArgs({
-        moduleArgs: {
-          ...baseArgs.moduleArgs,
-          getConsentController: () => ({
-            queryConsent: async () => false,
-          }),
-        } as unknown as typeof baseArgs.moduleArgs,
+        sink: createMockSink({ queryConsent: false }),
       });
 
       const group = getGenerateFunctionGroup(args);
