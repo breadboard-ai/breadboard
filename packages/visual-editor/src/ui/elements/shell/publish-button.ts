@@ -28,6 +28,10 @@ export class PublishButton extends SignalWatcher(LitElement) {
         width: 130px;
       }
 
+      #wrapper {
+        position: relative;
+      }
+
       button {
         display: flex;
         align-items: center;
@@ -75,6 +79,30 @@ export class PublishButton extends SignalWatcher(LitElement) {
         }
       }
 
+      #tooltip {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: #2e2e2e;
+        color: #f2f2f2;
+        font-family: var(--bb-font-family-flex);
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 16px;
+        letter-spacing: 0.1px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        width: 220px;
+        white-space: normal;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s ease 0.5s;
+      }
+
+      #wrapper:hover #tooltip {
+        opacity: 1;
+      }
+
       @keyframes spin {
         to {
           transform: rotate(360deg);
@@ -97,25 +125,31 @@ export class PublishButton extends SignalWatcher(LitElement) {
 
   render() {
     return html`
-      <button
-        class=${classMap({
-          "sans-flex": true,
-          round: true,
-          "w-500": true,
-          "has-red-dot": this.#hasRedDot,
-        })}
-        ?disabled=${!this.#isEnabled}
-        @click=${this.#onClickPublish}
-      >
-        <span
+      <div id="wrapper">
+        <button
           class=${classMap({
-            "g-icon": true,
-            spinner: this.#isPublishing,
+            "sans-flex": true,
+            round: true,
+            "w-500": true,
+            "has-red-dot": this.#hasRedDot,
           })}
-          >${this.#icon}</span
+          ?disabled=${!this.#isEnabled}
+          @click=${this.#onClickPublish}
         >
-        ${this.#label}
-      </button>
+          <span
+            class=${classMap({
+              "g-icon": true,
+              spinner: this.#isPublishing,
+            })}
+            >${this.#icon}</span
+          >
+          ${this.#label}
+        </button>
+        <span id="tooltip"
+          >Click publish to update your Opal. This ensures everyone with your
+          shared link sees your latest changes.</span
+        >
+      </div>
     `;
   }
 
