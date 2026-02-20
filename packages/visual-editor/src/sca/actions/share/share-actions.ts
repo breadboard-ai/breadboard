@@ -220,7 +220,7 @@ async function fetchShareData(): Promise<void> {
   const shareableCopyFileMetadata = await googleDriveClient.getFileMetadata(
     shareableCopyFileId,
     {
-      fields: ["resourceKey", "properties", "permissions"],
+      fields: ["resourceKey", "properties", "permissions", "modifiedTime"],
       bypassProxy: true,
     }
   );
@@ -240,6 +240,7 @@ async function fetchShareData(): Promise<void> {
   share.viewerMode = readViewerModeProperty(
     shareableCopyFileMetadata.properties
   );
+  share.lastPublishedIso = shareableCopyFileMetadata.modifiedTime ?? "";
 }
 
 /** Opens the share panel. */
@@ -362,6 +363,8 @@ interface MakeShareableCopyResult {
    * metadata-only version bump as a content change.
    */
   newMainVersion: string;
+  /** ISO 8601 timestamp of when the shareable copy was last modified. */
+  modifiedTime: string;
 }
 
 /**
@@ -382,6 +385,7 @@ async function ensureShareableCopyExists(): Promise<string> {
     // this metadata-only bump as a content change.
     share.editableVersion = result.newMainVersion;
     share.sharedVersion = result.newMainVersion;
+    share.lastPublishedIso = result.modifiedTime;
   }
   return share.shareableFile.id;
 }
@@ -538,7 +542,7 @@ async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
         ...writeViewerModeProperty(share.viewerMode),
       },
     },
-    { fields: ["resourceKey"] }
+    { fields: ["resourceKey", "modifiedTime"] }
   );
 
   Utils.Logging.getLogger().log(
@@ -552,6 +556,7 @@ async function makeShareableCopy(): Promise<MakeShareableCopyResult> {
     shareableCopyFileId,
     shareableCopyResourceKey: shareableCopyMetadata.resourceKey,
     newMainVersion: updateMainResult.version,
+    modifiedTime: shareableCopyMetadata.modifiedTime ?? "",
   };
 }
 
@@ -1055,19 +1060,21 @@ export const publishStale = asAction(
     const updatedShareableGraph = structuredClone(graph);
     delete updatedShareableGraph["url"];
 
-    await Promise.all([
-      // Update the contents of the shareable copy.
+    const [, staleUpdateResult] = await Promise.all([
       boardServer.ops.writeGraphToDrive(
         shareableFileUrl,
         updatedShareableGraph
       ),
-      // Update the latest version property on the main file.
-      googleDriveClient.updateFileMetadata(share.shareableFile.id, {
-        properties: {
-          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: share.editableVersion,
-          ...writeViewerModeProperty(share.viewerMode),
+      googleDriveClient.updateFileMetadata(
+        share.shareableFile.id,
+        {
+          properties: {
+            [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: share.editableVersion,
+            ...writeViewerModeProperty(share.viewerMode),
+          },
         },
-      }),
+        { fields: ["modifiedTime"] }
+      ),
       // Ensure all assets have the same permissions as the shareable file,
       // since they might have been added since the last publish.
       handleAssetPermissions(share.shareableFile.id, graph),
@@ -1075,6 +1082,7 @@ export const publishStale = asAction(
 
     share.status = "ready";
     share.sharedVersion = share.editableVersion;
+    share.lastPublishedIso = staleUpdateResult.modifiedTime ?? "";
 
     Utils.Logging.getLogger(controller).log(
       Utils.Logging.Formatter.verbose(
