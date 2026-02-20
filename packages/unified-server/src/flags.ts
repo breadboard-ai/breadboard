@@ -160,6 +160,8 @@ export const ENABLE_GRAPH_EDITOR_AGENT = getBoolean(
   "ENABLE_GRAPH_EDITOR_AGENT"
 );
 
+export const ENABLE_TEXT_EDITOR_REMIX = getBoolean("ENABLE_TEXT_EDITOR_REMIX");
+
 function getDomainConfig(
   flagName: string
 ): Record<string, DomainConfiguration> {

@@ -335,7 +335,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             margin-bottom: var(--bb-grid-size);
           }
 
-          bb-text-editor {
+          bb-text-editor,
+          bb-text-editor-remix {
             width: 100%;
             height: 100%;
             --text-editor-padding-top: var(--bb-grid-size-2);
@@ -640,7 +641,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             padding-right: 0;
           }
 
-          &:has(bb-text-editor) {
+          &:has(:is(bb-text-editor, bb-text-editor-remix)) {
             min-height: var(--bb-grid-size-5);
             align-items: flex-start;
             flex-direction: column;
@@ -651,7 +652,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             }
 
             &:not(.stretch) details {
-              bb-text-editor {
+              bb-text-editor,
+              bb-text-editor-remix {
                 padding-top: var(--bb-grid-size-2);
                 padding-bottom: var(--bb-grid-size-2);
                 height: calc(200px - var(--bb-grid-size) * 2);
@@ -735,7 +737,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             }
           }
 
-          & bb-text-editor {
+          & :is(bb-text-editor, bb-text-editor-remix) {
             width: 100%;
             height: 100%;
             --text-editor-height: 100%;
@@ -745,7 +747,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             --text-editor-padding-left: var(--bb-grid-size-6);
           }
 
-          &:has(bb-text-editor) {
+          &:has(:is(bb-text-editor, bb-text-editor-remix)) {
             &:not(:last-of-type) {
               border-bottom: 1px solid var(--light-dark-n-90);
             }
@@ -1265,6 +1267,29 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Note that subGraphId must be set before value since
     // value depends on the subGraphId to expand on chiclet
     // metadata.
+    const useRemix = this.sca?.controller.global.flags.textEditorRemix;
+
+    // We use a static template per variant so Lit can diff correctly.
+    // Both components expose the same property/event surface.
+    if (useRemix) {
+      return html`<bb-text-editor-remix
+        ${isReferenced ? ref(this.#editorRef) : nothing}
+        .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}
+        .value=${textPart.text}
+        .supportsFastAccess=${fastAccess}
+        .readOnly=${this.#readOnly}
+        id=${port.name}
+        name=${port.name}
+        @keydown=${(evt: KeyboardEvent) => {
+          if (!isCtrlCommand(evt) || evt.key !== "Enter") {
+            return;
+          }
+
+          this.#save();
+        }}
+      ></bb-text-editor-remix>`;
+    }
+
     return html`<bb-text-editor
       ${isReferenced ? ref(this.#editorRef) : nothing}
       .subGraphId=${graphId !== MAIN_BOARD_ID ? graphId : null}

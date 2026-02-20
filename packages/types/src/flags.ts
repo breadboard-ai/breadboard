@@ -84,6 +84,11 @@ export type RuntimeFlags = {
    * Enables the graph editor agent for conversational graph building
    */
   enableGraphEditorAgent: boolean;
+
+  /**
+   * Use the remix text editor (model-driven, Lit-rendered)
+   */
+  textEditorRemix: boolean;
 };
 
 /**
@@ -194,5 +199,9 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   enableGraphEditorAgent: {
     title: "Graph Editor Agent",
     description: "Enable conversational graph building",
+  },
+  textEditorRemix: {
+    title: "Text Editor (Remix)",
+    description: "Use the newer, model-driven text editor",
   },
 };

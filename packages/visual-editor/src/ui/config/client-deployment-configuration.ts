@@ -31,6 +31,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   enableResumeAgentRun: false,
   enableNotebookLm: false,
   enableGraphEditorAgent: false,
+  textEditorRemix: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(
