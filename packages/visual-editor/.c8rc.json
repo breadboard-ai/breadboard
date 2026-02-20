@@ -10,9 +10,17 @@
     "src/sca/*.ts",
     "src/sca/utils/utils.ts",
     "src/sca/utils/logging/logging.ts",
-    "src/sca/actions/board/helpers/helpers.ts"
+    "src/sca/actions/board/helpers/helpers.ts",
+    "src/ui/elements/input/text-editor/text-editor.ts",
+    "src/ui/elements/input/text-editor/text-editor-remix.ts"
   ],
-  "include": ["src/sca/**/*.ts"],
+  "include": [
+    "src/sca/**/*.ts",
+    "src/ui/elements/input/text-editor/**/*.ts",
+    "src/ui/presenters/**/*.ts",
+    "src/ui/prompts/**/*.ts",
+    "src/ui/transforms/**/*.ts"
+  ],
   "omit-empty": true,
   "check-coverage": false,
   "exclude-after-remap": true

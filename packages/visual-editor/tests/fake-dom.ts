@@ -14,11 +14,13 @@ export function setDOM() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const unsetGlobalThis = globalThis as any;
   unsetGlobalThis.window = dom.window;
-  globalThis.document = dom.window.document;
-  globalThis.HTMLElement = dom.window.HTMLElement;
-  globalThis.Node = dom.window.Node;
-  globalThis.Event = dom.window.Event;
-  globalThis.CustomEvent = dom.window.CustomEvent;
+  unsetGlobalThis.document = dom.window.document;
+  unsetGlobalThis.HTMLElement = dom.window.HTMLElement;
+  unsetGlobalThis.Node = dom.window.Node;
+  unsetGlobalThis.Event = dom.window.Event;
+  unsetGlobalThis.CustomEvent = dom.window.CustomEvent;
+  unsetGlobalThis.Range = dom.window.Range;
+  unsetGlobalThis.Selection = dom.window.Selection;
   unsetGlobalThis.location = dom.window.location;
 
   if (!unsetGlobalThis.trustedTypes) {
@@ -39,5 +41,7 @@ export function unsetDOM() {
   unsetGlobalThis.Node = undefined;
   unsetGlobalThis.Event = undefined;
   unsetGlobalThis.CustomEvent = undefined;
+  unsetGlobalThis.Range = undefined;
+  unsetGlobalThis.Selection = undefined;
   unsetGlobalThis.location = undefined;
 }

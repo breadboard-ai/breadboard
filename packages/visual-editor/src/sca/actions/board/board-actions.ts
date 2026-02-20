@@ -552,7 +552,7 @@ export const load = asAction(
     return { success: true };
   }
 );
-/* c8 ignore stop */
+/* c8 ignore end */
 
 /**
  * Closes the current board and returns to the home state.

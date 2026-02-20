@@ -69,6 +69,9 @@ export class FlagController
   @field({ persist: "idb" })
   private accessor _enableGraphEditorAgent: boolean | null = null;
 
+  @field({ persist: "idb" })
+  private accessor _textEditorRemix: boolean | null = null;
+
   get agentMode() {
     return valueOrThrow("agentMode", this._agentMode ?? this.#env.agentMode);
   }
@@ -151,6 +154,12 @@ export class FlagController
   get enableGraphEditorAgent() {
     return valueOrThrow(
       "enableGraphEditorAgent",
+      this._enableGraphEditorAgent ?? this.#env.enableGraphEditorAgent
+    );
+  }
+  get textEditorRemix() {
+    return valueOrThrow(
+      "textEditorRemix",
       this._enableGraphEditorAgent ?? this.#env.enableGraphEditorAgent
     );
   }
@@ -255,6 +264,9 @@ export class FlagController
         return;
       case "enableGraphEditorAgent":
         this._enableGraphEditorAgent = value;
+        return;
+      case "textEditorRemix":
+        this._textEditorRemix = value;
         return;
     }
   }

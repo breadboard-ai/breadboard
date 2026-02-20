@@ -23,4 +23,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableNotebookLm: false,
   enableResumeAgentRun: false,
   enableGraphEditorAgent: false,
+  textEditorRemix: false,
 };

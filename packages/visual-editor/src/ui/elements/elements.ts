@@ -32,6 +32,7 @@ export { ItemSelect } from "./input/item-select/item-select.js";
 export { LLMPartInput } from "./entity-editor/llm-part-input.js";
 export { SpeechToText } from "./input/speech-to-text/speech-to-text.js";
 export { TextEditor } from "./input/text-editor/text-editor.js";
+export { TextEditorRemix } from "./input/text-editor/text-editor-remix.js";
 export { WebcamInput } from "./input/webcam/webcam.js";
 export { WebcamVideoInput } from "./input/webcam/webcam-video.js";
 
