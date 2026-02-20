@@ -865,9 +865,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
           Share responsibly.</a
         >
 
-        <a href="https://developers.google.com/opal/faq" target="_blank">
-          Learn more </a
-        >.
+        <a href="https://developers.google.com/opal/faq" target="_blank"
+          >Learn more.</a
+        >
       </p>
     `;
   }
