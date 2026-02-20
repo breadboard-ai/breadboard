@@ -523,10 +523,11 @@ suite("graph-editing-agent-actions", () => {
 
     const handle = startAndCapture(services);
 
-    const suspend = handle.sink.suspend as unknown as (
-      event: Record<string, unknown>
-    ) => Promise<unknown>;
-    const result = await suspend({
+    const result = await (
+      handle.sink.suspend as unknown as (
+        event: Record<string, unknown>
+      ) => Promise<unknown>
+    ).call(handle.sink, {
       type: "applyEdits",
       requestId: "ae-6",
     });
