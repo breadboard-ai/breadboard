@@ -127,6 +127,8 @@ packages/visual-editor/build
 
 */__pycache__/
 *.py[cod]
+.venv/
+*.egg-info/
 
 .firebase/
 .firebaserc

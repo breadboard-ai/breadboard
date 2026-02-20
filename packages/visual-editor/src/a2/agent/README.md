@@ -1,16 +1,9 @@
 # Agent Event Architecture
 
 > The event-driven layer that enables the client-server cut for agentic code.
-
-## The Big Picture
-
-Today, agent loops (content generation, graph editing) run **in the browser**.
-They call Gemini, execute functions, and mutate UI state directly.
-
-The goal is to move agent loops to the **backend** (unified-server),
-communicating with the client over **Server-Sent Events (SSE)**. This makes
-agents faster (server-side API calls), enables server-only capabilities, and
-keeps prompts and logic out of the client bundle.
+>
+> For the full migration roadmap and phase tracking, see
+> [PROJECT_CORNERSTONE.md](../../../../../PROJECT_CORNERSTONE.md).
 
 ## The Cut Line
 

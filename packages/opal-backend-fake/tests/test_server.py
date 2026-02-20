@@ -1,7 +1,7 @@
 # Copyright 2026 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Integration tests for the mock agent server.
+"""Integration tests for the fake backend server.
 
 Tests each scenario end-to-end by driving the SSEAgentEventSink directly
 (same approach the FastAPI endpoints use), which avoids httpx SSE streaming
@@ -18,16 +18,16 @@ import json
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from mock_agent_server import main as server_module
-from mock_agent_server.main import app
-from mock_agent_server.pending_requests import PendingRequestMap
-from mock_agent_server.scenarios import (
+from opal_backend_fake import main as server_module
+from opal_backend_fake.main import app
+from opal_backend_shared.pending_requests import PendingRequestMap
+from opal_backend_fake.scenarios import (
     chat_scenario,
     consent_scenario,
     echo_scenario,
     graph_edit_scenario,
 )
-from mock_agent_server.sse_sink import SSEAgentEventSink
+from opal_backend_shared.sse_sink import SSEAgentEventSink
 
 # Skip the 60s cleanup delay in tests.
 server_module._CLEANUP_DELAY = 0

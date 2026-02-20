@@ -7,7 +7,7 @@ import asyncio
 
 import pytest
 
-from mock_agent_server.pending_requests import PendingRequestMap
+from opal_backend_shared.pending_requests import PendingRequestMap
 
 
 @pytest.mark.asyncio
