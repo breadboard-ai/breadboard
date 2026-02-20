@@ -6,10 +6,41 @@
 
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
 
 import type { VisibilityLevel } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 export type { VisibilityLevel };
+
+interface VisibilityOption {
+  value: VisibilityLevel;
+  label: string;
+  icon: string;
+  subtitle: string;
+}
+
+const OPTIONS: VisibilityOption[] = [
+  {
+    value: "only-you",
+    label: "Only you",
+    icon: "lock",
+    subtitle: "Only you can open this link",
+  },
+  {
+    value: "restricted",
+    label: "Restricted",
+    icon: "lock",
+    subtitle: "Only people with access can open with the link",
+  },
+  {
+    value: "anyone",
+    label: "Anyone with the link",
+    icon: "public",
+    subtitle: "Anyone on the internet with the link can view",
+  },
+];
+
+const OPTIONS_BY_VALUE = new Map(OPTIONS.map((o) => [o.value, o]));
 
 @customElement("bb-share-visibility-selector")
 export class ShareVisibilitySelector extends LitElement {
@@ -62,6 +93,12 @@ export class ShareVisibilitySelector extends LitElement {
       }
 
       #select-row {
+        /* Reset button defaults */
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: none;
+
         position: relative;
         display: inline-flex;
         align-items: center;
@@ -72,8 +109,13 @@ export class ShareVisibilitySelector extends LitElement {
         border-radius: var(--bb-grid-size-2);
         margin-left: calc(-1 * var(--bb-grid-size-2));
 
-        &:hover {
+        &:hover:not(:disabled) {
           background: #f1f1f1;
+        }
+
+        &:disabled {
+          pointer-events: none;
+          opacity: 0.6;
         }
       }
 
@@ -90,11 +132,60 @@ export class ShareVisibilitySelector extends LitElement {
         line-height: 16px;
       }
 
-      select {
-        position: absolute;
-        inset: 0;
-        opacity: 0;
+      #dropdown {
+        /* Override popover UA defaults */
+        position: fixed;
+        inset: unset;
+        margin: 0;
+        border: none;
+        color: inherit;
+
+        z-index: 1000;
+        min-width: 220px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow:
+          0 2px 6px rgba(0, 0, 0, 0.15),
+          0 8px 24px rgba(0, 0, 0, 0.12);
+        padding: var(--bb-grid-size-2) 0;
+      }
+
+      .dropdown-option {
+        display: flex;
+        align-items: center;
+        gap: var(--bb-grid-size-3);
+        padding: 10px 16px;
         cursor: pointer;
+        font-family: var(--bb-font-family-flex);
+        font-size: 14px;
+        font-weight: 400;
+        color: #1b1b1b;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+
+        &:hover {
+          background: #f5f5f5;
+        }
+      }
+
+      .check-icon {
+        width: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .check-icon .g-icon {
+        font-size: 20px;
+        color: #1a73e8;
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 600,
+          "GRAD" 0,
+          "opsz" 48;
       }
 
       #edit-access-button {
@@ -139,15 +230,6 @@ export class ShareVisibilitySelector extends LitElement {
           transform: rotate(360deg);
         }
       }
-
-      select:disabled {
-        cursor: wait;
-      }
-
-      :host([loading]) #select-row {
-        pointer-events: none;
-        opacity: 0.6;
-      }
     `,
   ];
 
@@ -157,29 +239,29 @@ export class ShareVisibilitySelector extends LitElement {
   @property({ type: Boolean, reflect: true })
   accessor loading = false;
 
+  readonly #triggerRef = createRef<HTMLButtonElement>();
+  readonly #dropdownRef = createRef<HTMLDivElement>();
+
   render() {
-    const { icon, label, subtitle } = this.#iconAndSubtitle();
+    const opt = OPTIONS_BY_VALUE.get(this.value)!;
 
     return html`
       <div id="container">
         <div id="icon" class=${this.value === "anyone" ? "anyone" : ""}>
-          <span class="g-icon">${icon}</span>
+          <span class="g-icon">${opt.icon}</span>
         </div>
         <div id="text">
-          <div id="select-row">
-            <span id="label">${label}</span>
+          <button
+            id="select-row"
+            ${ref(this.#triggerRef)}
+            type="button"
+            popovertarget="dropdown"
+            ?disabled=${this.loading}
+          >
+            <span id="label">${opt.label}</span>
             <span class="g-icon">arrow_drop_down</span>
-            <select
-              .value=${this.value}
-              @change=${this.#onChange}
-              ?disabled=${this.loading}
-            >
-              <option value="only-you">Only you</option>
-              <option value="restricted">Restricted</option>
-              <option value="anyone">Anyone with the link</option>
-            </select>
-          </div>
-          <span id="subtitle">${subtitle}</span>
+          </button>
+          <span id="subtitle">${opt.subtitle}</span>
         </div>
         ${this.loading
           ? html`<span class="g-icon spinner">progress_activity</span>`
@@ -191,44 +273,61 @@ export class ShareVisibilitySelector extends LitElement {
               `
             : nothing}
       </div>
+      <div
+        id="dropdown"
+        ${ref(this.#dropdownRef)}
+        popover="auto"
+        @beforetoggle=${this.#onBeforeToggle}
+      >
+        ${OPTIONS.map(
+          (opt) => html`
+            <button
+              class="dropdown-option"
+              @click=${() => this.#selectOption(opt.value)}
+            >
+              <span class="check-icon">
+                ${opt.value === this.value
+                  ? html`<span class="g-icon">check</span>`
+                  : nothing}
+              </span>
+              ${opt.label}
+            </button>
+          `
+        )}
+      </div>
     `;
   }
 
-  #iconAndSubtitle(): { icon: string; label: string; subtitle: string } {
-    const value = this.value;
-    if (value === "anyone") {
-      return {
-        icon: "public",
-        label: "Anyone with the link",
-        subtitle: "Anyone on the internet with the link can view",
-      };
-    } else if (value === "restricted") {
-      return {
-        icon: "lock",
-        label: "Restricted",
-        subtitle: "Only people with access can open with the link",
-      };
-    } else if (value === "only-you") {
-      return {
-        icon: "lock",
-        label: "Only you",
-        subtitle: "Only you can open this link",
-      };
+  /** Position the dropdown below the trigger before it becomes visible. */
+  #onBeforeToggle(event: ToggleEvent) {
+    if (event.newState !== "open") {
+      return;
     }
-    value satisfies never;
-    return { icon: "lock", label: "", subtitle: "" };
+    const trigger = this.#triggerRef.value;
+    const dropdown = this.#dropdownRef.value;
+    if (!trigger || !dropdown) {
+      return;
+    }
+    const rect = trigger.getBoundingClientRect();
+    // Imperative because beforetoggle fires synchronously before the popover
+    // paints; a reactive styleMap update would lag by one microtask.
+    dropdown.style.top = `${rect.bottom + 4}px`;
+    dropdown.style.left = `${rect.left}px`;
+  }
+
+  #selectOption(newValue: VisibilityLevel) {
+    this.#dropdownRef.value?.hidePopover();
+    if (newValue === this.value) {
+      return;
+    }
+    this.value = newValue;
+    this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
   }
 
   #onEditAccess() {
     this.dispatchEvent(
       new Event("edit-access", { bubbles: true, composed: true })
     );
-  }
-
-  #onChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this.value = select.value as VisibilityLevel;
-    this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
   }
 }
 
