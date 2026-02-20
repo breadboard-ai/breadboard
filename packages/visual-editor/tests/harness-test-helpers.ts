@@ -101,14 +101,12 @@ function makeInvoker(
   ) => Promise<OutputValues>
 ): NodeInvoker {
   const defaultFn = async () => ({ result: "ok" });
-  return {
-    invokeNode: async (
-      _args: RunArguments,
-      descriptor: NodeDescriptor,
-      inputs: InputValues
-    ) => {
-      return (outputsFn || defaultFn)(descriptor, inputs);
-    },
+  return async (
+    _args: RunArguments,
+    descriptor: NodeDescriptor,
+    inputs: InputValues
+  ) => {
+    return (outputsFn || defaultFn)(descriptor, inputs);
   };
 }
 
@@ -130,11 +128,9 @@ function makeBlockingInvoker(): {
     reject = rej;
   });
   return {
-    invoker: {
-      invokeNode: async () => {
-        const outputs = await promise;
-        return outputs ?? { result: "ok" };
-      },
+    invoker: async () => {
+      const outputs = await promise;
+      return outputs ?? { result: "ok" };
     },
     resolve,
     reject,

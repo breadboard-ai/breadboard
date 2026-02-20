@@ -4,40 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { MutableGraph, NodeHandlerContext } from "@breadboard-ai/types";
-import {
-  GraphDescriptor,
-  GraphStoreArgs,
-  LLMContent,
-  Outcome,
-} from "@breadboard-ai/types";
-import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
+import type { LLMContent, Outcome } from "@breadboard-ai/types";
+import type { A2ModuleFactory } from "../../a2/runnable-module-factory.js";
+import autonameInvoke from "../../a2/autoname/main.js";
 import { ok } from "@breadboard-ai/utils";
 
 export { Autonamer };
 
 class Autonamer {
-  constructor(
-    _args: GraphStoreArgs,
-    private readonly moduleFactory: RunnableModuleFactory
-  ) {}
+  constructor(private readonly moduleFactory: A2ModuleFactory) {}
 
   async autoname(
     inputs: LLMContent[],
     signal: AbortSignal
   ): Promise<Outcome<LLMContent[]>> {
-    const context: NodeHandlerContext = {
-      signal,
-    };
-    const module = await this.moduleFactory.createRunnableModule(
-      {} as unknown as MutableGraph,
-      {
-        url: "embed://a2/autoname.bgl.json#module:main",
-      } as unknown as GraphDescriptor,
-      context
-    );
-    if (!ok(module)) return module;
-    const results = await module.invoke("main", { context: inputs });
+    const moduleArgs = this.moduleFactory.createModuleArgs({ signal });
+    const results = await autonameInvoke({ context: inputs }, moduleArgs);
+    if (!ok(results)) return results;
     return (results as { context: LLMContent[] }).context;
   }
 }

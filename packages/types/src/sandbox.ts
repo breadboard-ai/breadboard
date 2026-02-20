@@ -4,16 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Outcome } from "./data.js";
-import {
-  GraphDescriptor,
-  InputValues,
-  NodeMetadata,
-  OutputValues,
-} from "./graph-descriptor.js";
-import { MutableGraph } from "./inspect.js";
-import { NodeHandlerContext } from "./node-handler.js";
-import { UUID } from "./uuid.js";
+import { InputValues, OutputValues } from "./graph-descriptor.js";
 
 export type Values = Record<string, unknown>;
 export type ModuleSpec = Record<string, string>;
@@ -33,11 +24,7 @@ export type RunnableModuleTelemetry = {
   startModule(): Promise<void>;
   endModule(): Promise<void>;
   invocationPath(path: number): number[];
-  startCapability(
-    type: string,
-    inputs: InputValues,
-    metadata?: NodeMetadata
-  ): Promise<number>;
+  startCapability(type: string, inputs: InputValues): Promise<number>;
   endCapability(
     type: string,
     path: number,
@@ -46,27 +33,9 @@ export type RunnableModuleTelemetry = {
   ): Promise<void>;
 };
 
-export type RunnableModule = {
-  invoke(
-    name: string,
-    inputs: InvokeInputs,
-    telemetry?: RunnableModuleTelemetry
-  ): Promise<InvokeOutputs>;
-
-  describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs>;
-};
-
-export type RunnableModuleFactory = {
-  createRunnableModule(
-    mutable: MutableGraph,
-    graph: GraphDescriptor,
-    context: NodeHandlerContext
-  ): Promise<Outcome<RunnableModule>>;
-};
-
 export type Sandbox = {
   runModule(
-    invocationId: UUID,
+    invocationId: string,
     method: "default" | "describe",
     modules: ModuleSpec,
     name: string,

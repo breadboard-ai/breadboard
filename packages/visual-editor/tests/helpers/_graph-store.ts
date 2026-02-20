@@ -20,11 +20,7 @@ function makeTestGraphStoreArgs(
   options: InspectableGraphOptions = {}
 ): GraphStoreArgs {
   return {
-    sandbox: options.sandbox || {
-      createRunnableModule() {
-        throw new Error("Do not use sandbox with test graph store");
-      },
-    },
+    sandbox: options.sandbox || {},
     loader: options.loader || {
       load() {
         throw new Error("Do not load graphs with test graph store");

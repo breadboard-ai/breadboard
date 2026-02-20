@@ -19,7 +19,6 @@ import {
 import { MutableGraphStore } from "./inspect.js";
 import { GraphLoader } from "./loader.js";
 import { ErrorResponse, Kit } from "./node-handler.js";
-import { RunnableModuleFactory } from "./sandbox.js";
 import {
   EdgeLifecycleState,
   NodeLifecycleState,
@@ -161,7 +160,7 @@ export type RunConfig = {
   /**
    * JS Sandbox that will be used to run imperative graphs.
    */
-  sandbox?: RunnableModuleFactory;
+  sandbox?: unknown;
 
   /**
    * A way to see and manage runtime flags.
