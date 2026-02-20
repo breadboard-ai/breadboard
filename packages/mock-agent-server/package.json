@@ -1,0 +1,13 @@
+{
+  "name": "mock-agent-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mock SSE server for validating Breadboard agent event protocol",
+  "scripts": {
+    "setup": "python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'",
+    "dev": ".venv/bin/uvicorn mock_agent_server.main:app --reload --port 8000",
+    "test": ".venv/bin/python -m pytest tests/ -v",
+    "test:unit": ".venv/bin/python -m pytest tests/test_pending_requests.py -v",
+    "test:integration": ".venv/bin/python -m pytest tests/test_server.py -v"
+  }
+}
