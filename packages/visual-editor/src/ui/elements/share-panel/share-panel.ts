@@ -711,8 +711,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return html`
       <div id="stale-v2">
         <span>
-          Click update to push these changes. This will override previous
-          versions of the link that you shared.
+          Click publish to update your Opal. This ensures everyone with your
+          shared link sees your latest changes.
         </span>
         <button
           class="bb-button-text"
@@ -722,7 +722,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
           ${this.#controller.status === "publishing-stale"
             ? html`<span class="g-icon spin spinner">progress_activity</span>`
             : nothing}
-          Update
+          Publish
         </button>
       </div>
     `;
@@ -736,7 +736,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
           Allow access to editor view and remix
           <span
             class="g-icon info-icon"
-            data-tooltip="Allows others to easily see your prompts and make a copy of your Opal"
+            data-tooltip="Allows others to easily see your prompts and make a copy of your Opal."
             >info</span
           >
         </label>
@@ -854,17 +854,20 @@ export class SharePanel extends SignalWatcher(LitElement) {
   #renderAdvisoryV2() {
     return html`
       <p id="advisory-v2">
-        Sharing your ${APP_NAME} app makes it available to anyone with the link.
-        To restrict access to your app, you can edit your share permissions so
-        only you or specific people you specify can view it.
+        Sharing your Opal app makes it available to anyone with the link. To
+        restrict access to your app, you can edit your share permissions so only
+        you or specific people you specify can view it.
+
         <a
           href="https://policies.google.com/terms/generative-ai/use-policy"
           target="_blank"
-          >Share responsibly</a
-        >.
+        >
+          Share responsibly.</a
+        >
+
         <a href="https://developers.google.com/opal/faq" target="_blank"
-          >Learn more</a
-        >.
+          >Learn more.</a
+        >
       </p>
     `;
   }
