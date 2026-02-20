@@ -8,6 +8,15 @@ import { RuntimeFlagManager, RuntimeFlags } from "@breadboard-ai/types";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 
+function valueOrThrow(
+  flag: keyof RuntimeFlags,
+  value: boolean | null | undefined
+): boolean {
+  if (value === null || value === undefined)
+    throw new Error(`${flag} was not set by environment`);
+  return value;
+}
+
 export class FlagController
   extends RootController
   implements RuntimeFlagManager, RuntimeFlags
@@ -61,109 +70,96 @@ export class FlagController
   private accessor _enableGraphEditorAgent: boolean | null = null;
 
   get agentMode() {
-    if (this._agentMode === null)
-      throw new Error("agentMode was not set by environment");
-    return this._agentMode;
+    return valueOrThrow("agentMode", this._agentMode ?? this.#env.agentMode);
   }
-
   get consistentUI() {
-    if (this._consistentUI === null)
-      throw new Error("consistentUI was not set by environment");
-    return this._consistentUI;
+    return valueOrThrow(
+      "consistentUI",
+      this._consistentUI ?? this.#env.consistentUI
+    );
   }
-
   get enableDrivePickerInLiteMode() {
-    if (this._enableDrivePickerInLiteMode === null)
-      throw new Error("enableDrivePickerInLiteMode was not set by environment");
-    return this._enableDrivePickerInLiteMode;
+    return valueOrThrow(
+      "enableDrivePickerInLiteMode",
+      this._enableDrivePickerInLiteMode ?? this.#env.enableDrivePickerInLiteMode
+    );
   }
-
   get enableGoogleDriveTools() {
-    if (this._enableGoogleDriveTools === null) {
-      throw new Error("enableGoogleDriveTools was not set by environment");
-    }
-    return this._enableGoogleDriveTools;
+    return valueOrThrow(
+      "enableGoogleDriveTools",
+      this._enableGoogleDriveTools ?? this.#env.enableGoogleDriveTools
+    );
   }
-
   get enableResumeAgentRun() {
-    if (this._enableResumeAgentRun === null) {
-      throw new Error("enableResumeAgentRun was not set by environment");
-    }
-    return this._enableResumeAgentRun;
+    return valueOrThrow(
+      "enableResumeAgentRun",
+      this._enableResumeAgentRun ?? this.#env.enableResumeAgentRun
+    );
   }
-
   get force2DGraph() {
-    if (this._force2DGraph === null)
-      throw new Error("force2DGraph was not set by environment");
-    return this._force2DGraph;
+    return valueOrThrow(
+      "force2DGraph",
+      this._force2DGraph ?? this.#env.force2DGraph
+    );
   }
-
   get googleOne() {
-    if (this._googleOne === null)
-      throw new Error("googleOne was not set by environment");
-    return this._googleOne;
+    return valueOrThrow("googleOne", this._googleOne ?? this.#env.googleOne);
   }
-
   get mcp() {
-    if (this._mcp === null) throw new Error("mcp was not set by environment");
-    return this._mcp;
+    return valueOrThrow("mcp", this._mcp ?? this.#env.mcp);
   }
-
   get opalAdk() {
-    if (this._opalAdk === null)
-      throw new Error("opalAdk was not set by environment");
-    return this._opalAdk;
+    return valueOrThrow("opalAdk", this._opalAdk ?? this.#env.opalAdk);
   }
-
   get outputTemplates() {
-    if (this._outputTemplates === null)
-      throw new Error("outputTemplates was not set by environment");
-    return this._outputTemplates;
+    return valueOrThrow(
+      "outputTemplates",
+      this._outputTemplates ?? this.#env.outputTemplates
+    );
   }
-
   get requireConsentForGetWebpage() {
-    if (this._requireConsentForGetWebpage === null)
-      throw new Error("requireConsentForGetWebpage was not set by environment");
-    return this._requireConsentForGetWebpage;
+    return valueOrThrow(
+      "requireConsentForGetWebpage",
+      this._requireConsentForGetWebpage ?? this.#env.requireConsentForGetWebpage
+    );
   }
-
   get requireConsentForOpenWebpage() {
-    if (this._requireConsentForOpenWebpage === null)
-      throw new Error(
-        "requireConsentForOpenWebpage was not set by environment"
-      );
-    return this._requireConsentForOpenWebpage;
+    return valueOrThrow(
+      "requireConsentForOpenWebpage",
+      this._requireConsentForOpenWebpage ??
+        this.#env.requireConsentForOpenWebpage
+    );
   }
-
   get streamGenWebpage() {
-    if (this._streamGenWebpage === null)
-      throw new Error("streamGenWebpage was not set by environment");
-    return this._streamGenWebpage;
+    return valueOrThrow(
+      "streamGenWebpage",
+      this._streamGenWebpage ?? this.#env.streamGenWebpage
+    );
   }
-
   get streamPlanner() {
-    if (this._streamPlanner === null)
-      throw new Error("streamPlanner was not set by environment");
-    return this._streamPlanner;
+    return valueOrThrow(
+      "streamPlanner",
+      this._streamPlanner ?? this.#env.streamPlanner
+    );
   }
-
   get enableNotebookLm() {
-    if (this._enableNotebookLm === null)
-      throw new Error("enableNotebookLm was not set by environment");
-    return this._enableNotebookLm;
+    return valueOrThrow(
+      "enableNotebookLm",
+      this._enableNotebookLm ?? this.#env.enableNotebookLm
+    );
   }
-
   get enableGraphEditorAgent() {
-    if (this._enableGraphEditorAgent === null)
-      throw new Error("enableGraphEditorAgent was not set by environment");
-    return this._enableGraphEditorAgent;
+    return valueOrThrow(
+      "enableGraphEditorAgent",
+      this._enableGraphEditorAgent ?? this.#env.enableGraphEditorAgent
+    );
   }
 
   @field({ persist: "local" })
   private accessor _migrated = false;
 
   /**
-   * Here for migrating from the old storage layer.
+   * Used by `flagsMigration` in migrations.ts to migrate from IdbFlagManager.
    * @deprecated
    */
   get isMigrated() {
@@ -171,7 +167,7 @@ export class FlagController
   }
 
   /**
-   * Here for migrating from the old storage layer.
+   * Used by `flagsMigration` in migrations.ts to migrate from IdbFlagManager.
    * @deprecated
    */
   migrate(flags: RuntimeFlags) {
@@ -183,157 +179,90 @@ export class FlagController
     this._migrated = true;
   }
 
-  #set(flag: keyof RuntimeFlags, value: boolean, onlyIfNull = false) {
-    if (typeof value !== "boolean") value = null as unknown as boolean;
+  /**
+   * Tracks whether the V1 "sticky env" fix has been applied.
+   *
+   * ## Background
+   * Commit 2e7b70ab1 introduced a bug where the constructor eagerly populated
+   * null values with env defaults after hydration, persisting them to IndexedDB.
+   * On subsequent boots, the stored value took precedence—even though the user
+   * never explicitly chose it. See `flagsV1ResetMigration` for full details.
+   */
+  @field({ persist: "local" })
+  private accessor _flagsV1Reset = false;
+
+  get isFlagsV1Reset() {
+    return this._flagsV1Reset;
+  }
+
+  /**
+   * Clears all stored flag overrides to fix the "sticky env" bug.
+   * Called by `flagsV1ResetMigration` in migrations.ts.
+   */
+  resetAllFlags() {
+    for (const flag of Object.keys(this.#env) as Array<keyof RuntimeFlags>) {
+      this.#set(flag, null);
+    }
+    this._flagsV1Reset = true;
+  }
+
+  #set(flag: keyof RuntimeFlags, value: boolean | null) {
     switch (flag) {
-      case "agentMode": {
-        if (onlyIfNull && this._agentMode !== null) return;
+      case "agentMode":
         this._agentMode = value;
         return;
-      }
-
-      case "consistentUI": {
-        if (onlyIfNull && this._consistentUI !== null) return;
+      case "consistentUI":
         this._consistentUI = value;
         return;
-      }
-
-      case "enableDrivePickerInLiteMode": {
-        if (onlyIfNull && this._enableDrivePickerInLiteMode !== null) return;
+      case "enableDrivePickerInLiteMode":
         this._enableDrivePickerInLiteMode = value;
         return;
-      }
-
-      case "force2DGraph": {
-        if (onlyIfNull && this._force2DGraph !== null) return;
+      case "force2DGraph":
         this._force2DGraph = value;
         return;
-      }
-
-      case "googleOne": {
-        if (onlyIfNull && this._googleOne !== null) return;
+      case "googleOne":
         this._googleOne = value;
         return;
-      }
-
-      case "mcp": {
-        if (onlyIfNull && this._mcp !== null) return;
+      case "mcp":
         this._mcp = value;
         return;
-      }
-
-      case "opalAdk": {
-        if (onlyIfNull && this._opalAdk !== null) return;
+      case "opalAdk":
         this._opalAdk = value;
         return;
-      }
-
-      case "outputTemplates": {
-        if (onlyIfNull && this._outputTemplates !== null) return;
+      case "outputTemplates":
         this._outputTemplates = value;
         return;
-      }
-
-      case "requireConsentForGetWebpage": {
-        if (onlyIfNull && this._requireConsentForGetWebpage !== null) return;
+      case "requireConsentForGetWebpage":
         this._requireConsentForGetWebpage = value;
         return;
-      }
-
-      case "requireConsentForOpenWebpage": {
-        if (onlyIfNull && this._requireConsentForOpenWebpage !== null) return;
+      case "requireConsentForOpenWebpage":
         this._requireConsentForOpenWebpage = value;
         return;
-      }
-
-      case "streamGenWebpage": {
-        if (onlyIfNull && this._streamGenWebpage !== null) return;
+      case "streamGenWebpage":
         this._streamGenWebpage = value;
         return;
-      }
-
-      case "streamPlanner": {
-        if (onlyIfNull && this._streamPlanner !== null) return;
+      case "streamPlanner":
         this._streamPlanner = value;
         return;
-      }
-
-      case "enableGoogleDriveTools": {
-        if (onlyIfNull && this._enableGoogleDriveTools !== null) return;
+      case "enableGoogleDriveTools":
         this._enableGoogleDriveTools = value;
         return;
-      }
-
-      case "enableResumeAgentRun": {
-        if (onlyIfNull && this._enableResumeAgentRun !== null) return;
+      case "enableResumeAgentRun":
         this._enableResumeAgentRun = value;
         return;
-      }
-
-      case "enableNotebookLm": {
-        if (onlyIfNull && this._enableNotebookLm !== null) return;
+      case "enableNotebookLm":
         this._enableNotebookLm = value;
         return;
-      }
-
-      case "enableGraphEditorAgent": {
-        if (onlyIfNull && this._enableGraphEditorAgent !== null) return;
+      case "enableGraphEditorAgent":
         this._enableGraphEditorAgent = value;
         return;
-      }
     }
   }
 
   #env: RuntimeFlags;
   constructor(controllerId: string, persistenceId: string, env: RuntimeFlags) {
     super(controllerId, persistenceId);
-
     this.#env = env;
-
-    /**
-     * Only populate the values if they nullish, in which case inherit from the
-     * provided env.
-     */
-    this.isHydrated.then(() => {
-      const onlyIfNull = true;
-
-      this.#set("agentMode", env.agentMode, onlyIfNull);
-      this.#set("consistentUI", env.consistentUI, onlyIfNull);
-      this.#set(
-        "enableGoogleDriveTools",
-        env.enableGoogleDriveTools,
-        onlyIfNull
-      );
-      this.#set(
-        "enableDrivePickerInLiteMode",
-        env.enableDrivePickerInLiteMode,
-        onlyIfNull
-      );
-      this.#set("force2DGraph", env.force2DGraph, onlyIfNull);
-      this.#set("googleOne", env.googleOne, onlyIfNull);
-      this.#set("mcp", env.mcp, onlyIfNull);
-      this.#set("opalAdk", env.opalAdk, onlyIfNull);
-      this.#set("outputTemplates", env.outputTemplates, onlyIfNull);
-      this.#set(
-        "requireConsentForGetWebpage",
-        env.requireConsentForGetWebpage,
-        onlyIfNull
-      );
-      this.#set(
-        "requireConsentForOpenWebpage",
-        env.requireConsentForOpenWebpage,
-        onlyIfNull
-      );
-      this.#set("streamGenWebpage", env.streamGenWebpage, onlyIfNull);
-      this.#set("streamPlanner", env.streamPlanner, onlyIfNull);
-      this.#set("enableResumeAgentRun", env.enableResumeAgentRun, onlyIfNull);
-      this.#set("enableNotebookLm", env.enableNotebookLm, onlyIfNull);
-      this.#set(
-        "enableGraphEditorAgent",
-        env.enableGraphEditorAgent,
-        onlyIfNull
-      );
-    });
   }
 
   env(): Readonly<RuntimeFlags> {
@@ -371,6 +300,6 @@ export class FlagController
   }
 
   async clearOverride(flag: keyof RuntimeFlags): Promise<void> {
-    this.#set(flag, this.#env[flag]);
+    this.#set(flag, null);
   }
 }

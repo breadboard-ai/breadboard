@@ -136,6 +136,7 @@ class Controller implements AppController {
         // independent of each other.
         await Migrations.recentBoardsMigration(controller.home.recent);
         await Migrations.flagsMigration(controller.global.flags, runtimeFlags);
+        await Migrations.flagsV1ResetMigration(controller.global.flags);
         await Migrations.statusUpdatesMigration(
           controller.global.statusUpdates
         );

@@ -72,88 +72,56 @@ suite("FlagController", () => {
     assert.deepStrictEqual(overrides, { consistentUI: true });
   });
 
-  test("Throws for unset overrides", async () => {
+  test("Returns env default when not overridden", async () => {
+    const env: RuntimeFlags = { ...defaultRuntimeFlags, agentMode: true };
+    const store = new FlagController("Flags_4", "FlagController", env);
+    await store.isHydrated;
+    await store.isSettled;
+
+    // No override set, should return env value
+    assert.strictEqual(store.agentMode, true);
+  });
+
+  test("Clears override to follow env", async () => {
+    const env: RuntimeFlags = { ...defaultRuntimeFlags, agentMode: true };
     const store = new FlagController(
-      "Flags_4",
+      "Flags_clearOverride",
+      "FlagController",
+      env
+    );
+    await store.isHydrated;
+    await store.isSettled;
+
+    // Override to a different value
+    await store.override("agentMode", false);
+    await store.isSettled;
+    assert.strictEqual(store.agentMode, false);
+
+    // Clear the override
+    await store.clearOverride("agentMode");
+    await store.isSettled;
+
+    // Should now follow env
+    assert.strictEqual(store.agentMode, true);
+
+    // And not appear in overrides
+    const overrides = await store.overrides();
+    assert.strictEqual(overrides.agentMode, undefined);
+  });
+
+  test("Throws for truly unset flags (no override and no env)", async () => {
+    const store = new FlagController(
+      "Flags_unset",
       "FlagController",
       {} as RuntimeFlags
     );
     await store.isHydrated;
     await store.isSettled;
 
+    // Both internal value and env are undefined/null, should throw
     assert.throws(
       () => String(store.agentMode),
       new Error("agentMode was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.consistentUI),
-      new Error("consistentUI was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.enableDrivePickerInLiteMode),
-      new Error("enableDrivePickerInLiteMode was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.force2DGraph),
-      new Error("force2DGraph was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.googleOne),
-      new Error("googleOne was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.mcp),
-      new Error("mcp was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.opalAdk),
-      new Error("opalAdk was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.outputTemplates),
-      new Error("outputTemplates was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.requireConsentForGetWebpage),
-      new Error("requireConsentForGetWebpage was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.requireConsentForOpenWebpage),
-      new Error("requireConsentForOpenWebpage was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.streamGenWebpage),
-      new Error("streamGenWebpage was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.streamPlanner),
-      new Error("streamPlanner was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.enableGoogleDriveTools),
-      new Error("enableGoogleDriveTools was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.enableNotebookLm),
-      new Error("enableNotebookLm was not set by environment")
-    );
-
-    assert.throws(
-      () => String(store.enableResumeAgentRun),
-      new Error("enableResumeAgentRun was not set by environment")
     );
   });
 });

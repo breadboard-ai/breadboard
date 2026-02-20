@@ -80,6 +80,49 @@ export async function flagsMigration(
 }
 
 /**
+ * One-time migration to fix the "sticky env" bug introduced in commit
+ * 2e7b70ab1 ("[ve] Move flags over to SMB-Controller (#7528)").
+ *
+ * ## The Bug
+ * The `FlagController` constructor eagerly populated null values with env
+ * defaults after hydration:
+ *
+ * ```typescript
+ * this.isHydrated.then(() => {
+ *   const onlyIfNull = true;
+ *   this.#set("agentMode", env.agentMode, onlyIfNull);
+ *   // ...
+ * });
+ * ```
+ *
+ * Since the `@field` decorator persists values to IndexedDB, this persisted the
+ * env value on first boot. On subsequent boots, the field wouldn't be null, so
+ * the stored value took precedence—even though the user never explicitly chose
+ * it.
+ *
+ * **Example:** Server has `agentMode: false`. User visits for the first time,
+ * and `false` gets persisted. Server later changes to `agentMode: true`, but
+ * the user still sees `false` because their stored value takes precedence.
+ *
+ * ## The Fix
+ * - Getters now fall back to env when the internal value is `null`, so no
+ *   constructor initialization is needed.
+ * - This migration clears all stored flag values, resetting users to the
+ *   correct "follow env" behavior.
+ *
+ * Unfortunately, we cannot distinguish intentional user overrides from "sticky
+ * env" values, so all users lose their saved preferences. This is a one-time
+ * operation tracked by `isFlagsV1Reset`.
+ */
+export async function flagsV1ResetMigration(flagController: FlagController) {
+  await flagController.isHydrated;
+  if (flagController.isFlagsV1Reset) return;
+
+  flagController.resetAllFlags();
+  await flagController.isSettled;
+}
+
+/**
  * Carries the status updates hash from raw localStorage to the new
  * StatusUpdatesController. This ensures users don't see the "new updates"
  * chip for updates they've already seen.
