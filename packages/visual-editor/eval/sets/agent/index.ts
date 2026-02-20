@@ -69,9 +69,15 @@ session({ name: "Agent" }, async (session) => {
     const params: Parameters<typeof session.eval> = [
       title,
       async ({ moduleArgs }) => {
+        const handle = moduleArgs.agentService.startRun({
+          kind: "content-eval",
+          objective,
+        });
+
         const agentConfigurator = createAgentConfigurator(
           moduleArgs,
-          generators
+          generators,
+          handle.sink
         );
 
         let configureFn: FunctionGroupConfigurator;
@@ -93,11 +99,6 @@ session({ name: "Agent" }, async (session) => {
         } else {
           configureFn = agentConfigurator;
         }
-
-        const handle = moduleArgs.agentService.startRun({
-          kind: "content-eval",
-          objective,
-        });
 
         const setup = await buildAgentRun({
           objective,

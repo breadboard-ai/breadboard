@@ -21,6 +21,8 @@ import type {
   GroundingMetadata,
 } from "../../../src/a2/a2/gemini.js";
 import { stubModuleArgs } from "../../useful-stubs.js";
+import type { AgentEventSink } from "../../../src/a2/agent/agent-event-sink.js";
+import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
 
 export {
   createMockGenerators,
@@ -28,6 +30,7 @@ export {
   createMockFileSystem,
   createMockTaskTreeManager,
   createMockTranslator,
+  createMockSink,
   createTestArgs,
   createMockStatusUpdater,
   getHandler,
@@ -277,6 +280,30 @@ function createMockStatusUpdater(): MockStatusUpdater {
 }
 
 /**
+ * Creates a mock AgentEventSink for testing.
+ *
+ * - `emit()` captures events in `emitted`.
+ * - `suspend()` returns the value from `suspendResponses` keyed by event type,
+ *   or a generic empty object if not configured.
+ */
+function createMockSink(
+  suspendResponses: Record<string, unknown> = {}
+): AgentEventSink & { emitted: AgentEvent[] } {
+  const emitted: AgentEvent[] = [];
+  return {
+    emitted,
+    emit(event: AgentEvent) {
+      emitted.push(event);
+    },
+    async suspend<T>(event: AgentEvent & { requestId: string }): Promise<T> {
+      emitted.push(event);
+      const response = suspendResponses[event.type];
+      return (response ?? {}) as T;
+    },
+  };
+}
+
+/**
  * Creates complete GenerateFunctionArgs for testing.
  */
 function createTestArgs(
@@ -288,6 +315,7 @@ function createTestArgs(
     translator: overrides.translator ?? createMockTranslator(),
     taskTreeManager: overrides.taskTreeManager ?? createMockTaskTreeManager(),
     generators: overrides.generators ?? createMockGenerators(),
+    sink: overrides.sink ?? createMockSink(),
   };
 }
 

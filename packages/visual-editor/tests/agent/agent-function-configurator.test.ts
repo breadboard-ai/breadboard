@@ -12,6 +12,7 @@ import {
   createMockGenerators,
   createMockFileSystem,
   createMockTranslator,
+  createMockSink,
 } from "./functions/generate-test-utils.js";
 import type { AgentUI } from "../../src/a2/agent/ui.js";
 import type { LLMContent } from "@breadboard-ai/types";
@@ -62,7 +63,8 @@ describe("createAgentConfigurator", () => {
   it("returns a function", () => {
     const configureFn = createAgentConfigurator(
       stubModuleArgs,
-      createMockGenerators()
+      createMockGenerators(),
+      createMockSink()
     );
     strictEqual(typeof configureFn, "function");
   });
@@ -71,7 +73,8 @@ describe("createAgentConfigurator", () => {
     it("always includes system and generate groups", async () => {
       const configureFn = createAgentConfigurator(
         stubModuleArgs,
-        createMockGenerators()
+        createMockGenerators(),
+        createMockSink()
       );
       const result = await configureFn(createMockDeps(), createFlags());
       assert(Array.isArray(result), "Should return an array");
@@ -105,7 +108,8 @@ describe("createAgentConfigurator", () => {
       } as typeof stubModuleArgs;
       const configureFn = createAgentConfigurator(
         moduleArgsWithMemory,
-        createMockGenerators()
+        createMockGenerators(),
+        createMockSink()
       );
       const result = await configureFn(
         createMockDeps(),
@@ -123,7 +127,8 @@ describe("createAgentConfigurator", () => {
     it("excludes memory group when useMemory is false", async () => {
       const configureFn = createAgentConfigurator(
         stubModuleArgs,
-        createMockGenerators()
+        createMockGenerators(),
+        createMockSink()
       );
       const result = await configureFn(
         createMockDeps(),
@@ -158,7 +163,8 @@ describe("createAgentConfigurator", () => {
       const moduleArgs = createModuleArgsWithFlags(true);
       const configureFn = createAgentConfigurator(
         moduleArgs,
-        createMockGenerators()
+        createMockGenerators(),
+        createMockSink()
       );
       const result = await configureFn(
         createMockDeps(),
@@ -177,7 +183,8 @@ describe("createAgentConfigurator", () => {
       const moduleArgs = createModuleArgsWithFlags(false);
       const configureFn = createAgentConfigurator(
         moduleArgs,
-        createMockGenerators()
+        createMockGenerators(),
+        createMockSink()
       );
       const result = await configureFn(
         createMockDeps(),
@@ -196,7 +203,8 @@ describe("createAgentConfigurator", () => {
       const moduleArgs = createModuleArgsWithFlags(true);
       const configureFn = createAgentConfigurator(
         moduleArgs,
-        createMockGenerators()
+        createMockGenerators(),
+        createMockSink()
       );
       const result = await configureFn(
         createMockDeps(),
@@ -216,7 +224,8 @@ describe("createAgentConfigurator", () => {
     it("includes chat group when uiType is 'chat'", async () => {
       const configureFn = createAgentConfigurator(
         stubModuleArgs,
-        createMockGenerators()
+        createMockGenerators(),
+        createMockSink()
       );
       const result = await configureFn(
         createMockDeps(),
@@ -234,7 +243,8 @@ describe("createAgentConfigurator", () => {
     it("excludes chat and a2ui functions when uiType forces no-ui path", async () => {
       const configureFn = createAgentConfigurator(
         stubModuleArgs,
-        createMockGenerators()
+        createMockGenerators(),
+        createMockSink()
       );
       // Cast to bypass the UIType union and hit the else branch
       const result = await configureFn(

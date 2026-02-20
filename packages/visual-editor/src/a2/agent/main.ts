@@ -5,6 +5,8 @@
  */
 
 import {
+  ConsentRequest,
+  ConsentUIType,
   LLMContent,
   Outcome,
   RuntimeFlags,
@@ -112,13 +114,18 @@ async function invokeAgent(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const configureFn = createAgentConfigurator(moduleArgs, generators);
 
   // Create a run handle for this content agent execution
   const handle = moduleArgs.agentService.startRun({
     kind: "content",
     objective,
   });
+
+  const configureFn = createAgentConfigurator(
+    moduleArgs,
+    generators,
+    handle.sink
+  );
 
   const setup = await buildAgentRun({
     objective,
@@ -227,6 +234,17 @@ async function invokeAgent(
         event.layout,
         event.noneOfTheAboveLabel
       ) as Promise<unknown>;
+    })
+    .on("queryConsent", async (event) => {
+      const consent = await moduleArgs.getConsentController().queryConsent(
+        {
+          type: event.consentType,
+          scope: event.scope,
+          graphUrl: event.graphUrl,
+        } as ConsentRequest,
+        ConsentUIType.MODAL
+      );
+      return consent;
     });
 
   const result = await loop.run(runArgs);
