@@ -140,11 +140,10 @@ class Loop:
     def __init__(
         self,
         *,
-        api_key: str | None = None,
-        access_token: str | None = None,
+        access_token: str = "",
+        controller: LoopController | None = None,
     ) -> None:
-        self.controller = LoopController()
-        self._api_key = api_key
+        self.controller = controller or LoopController()
         self._access_token = access_token
 
     async def run(self, args: AgentRunArgs) -> AgentResult | Outcome:
@@ -216,7 +215,6 @@ class Loop:
                 async for chunk in stream_generate_content(
                     AGENT_MODEL,
                     body,
-                    api_key=self._api_key,
                     access_token=self._access_token,
                 ):
                     candidates = chunk.get("candidates", [])
