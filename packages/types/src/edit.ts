@@ -248,9 +248,8 @@ export type EditableGraph = {
    * @param edits -- a list of changes to apply
    * @param label -- a user-friendly description of the edit, which also
    * serves a grouping hint for undo/redo operations.
-   * @param dryRun -- if true, perform the edit, but discard the changes.
    */
-  edit(edits: EditSpec[], label: string, dryRun?: boolean): Promise<EditResult>;
+  edit(edits: EditSpec[], label: string): Promise<EditResult>;
 
   /**
    * Applies an edit transform to the graph.

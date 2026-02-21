@@ -12,7 +12,7 @@ import type {
   MutableGraphStore,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
+import { createMutableGraph } from "./_mutable-graph.js";
 
 export { makeTestGraphStore, makeTestGraphStoreArgs, loadGraphIntoStore };
 
@@ -47,7 +47,7 @@ function makeTestGraphStoreArgs(
 }
 
 /**
- * Creates a MutableGraphImpl from a descriptor and stores it in the given store.
+ * Creates a MutableGraph from a descriptor and stores it in the given store.
  * Convenience function for tests that need to populate a MutableGraphStore.
  */
 function loadGraphIntoStore(
@@ -56,7 +56,7 @@ function loadGraphIntoStore(
   args?: GraphStoreArgs
 ): void {
   const storeArgs = args ?? makeTestGraphStoreArgs();
-  const mutable = new MutableGraphImpl(graph, store, storeArgs);
+  const mutable = createMutableGraph(graph, store, storeArgs);
   store.set(mutable);
 }
 

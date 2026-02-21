@@ -11,7 +11,6 @@ import type {
   EditHistory,
   EditHistoryCreator,
   EditOperation,
-  EditOperationConductor,
   EditOperationContext,
   EditResult,
   EditResultLogEntry,
@@ -25,7 +24,7 @@ import type {
   SingleEditResult,
 } from "@breadboard-ai/types";
 import { PromiseQueue } from "@breadboard-ai/utils";
-import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
+
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { GraphEditHistory } from "./history.js";
 import { AddAsset } from "./operations/add-asset.js";
@@ -187,22 +186,18 @@ export class Graph implements EditableGraph {
     return operation.do(edit, context);
   }
 
-  async edit(
-    edits: EditSpec[],
-    label: string,
-    dryRun = false
-  ): Promise<EditResult> {
+  async edit(edits: EditSpec[], label: string): Promise<EditResult> {
     return this.#edits.add(() =>
       this.#applyEdits(async (context) => {
         await context.apply(edits, label);
         return { success: true, spec: { edits, label } };
-      }, dryRun)
+      })
     );
   }
 
-  async apply(transform: EditTransform, dryRun = false): Promise<EditResult> {
+  async apply(transform: EditTransform): Promise<EditResult> {
     return this.#edits.add(() =>
-      this.#applyEdits((context) => transform.apply(context), dryRun)
+      this.#applyEdits((context) => transform.apply(context))
     );
   }
 
@@ -223,10 +218,7 @@ export class Graph implements EditableGraph {
   }
 
   async #applyEdits(
-    transformer: (
-      context: EditOperationContext
-    ) => Promise<EditTransformResult>,
-    dryRun = false
+    transformer: (context: EditOperationContext) => Promise<EditTransformResult>
   ): Promise<EditResult> {
     const checkpoint = structuredClone(this.#graph);
     const log: EditResultLogEntry[] = [];
@@ -246,82 +238,65 @@ export class Graph implements EditableGraph {
     let integrationsChange = false;
     // Presume that all edits will result in no topology change.
     let topologyChange = false;
-    let context: EditOperationContext;
-    const apply: EditOperationConductor = async (
-      edits: EditSpec[],
-      editLabel: string
-    ) => {
-      if (error) return { success: false, error };
-      label = editLabel;
-      for (const edit of edits) {
-        const result = await this.#singleEdit(edit, context);
-        log.push({ edit: edit.type, result });
-        if (!result.success) {
-          error = result.error;
-          return { success: false, error };
+    const context: EditOperationContext = {
+      graph: this.#graph,
+      mutable: this.#mutable,
+      apply: async (edits: EditSpec[], editLabel: string) => {
+        if (error) return { success: false, error };
+        label = editLabel;
+        for (const edit of edits) {
+          const result = await this.#singleEdit(edit, context);
+          log.push({ edit: edit.type, result });
+          if (!result.success) {
+            error = result.error;
+            return { success: false, error };
+          }
+          affectedNodes.push(result.affectedNodes);
+          affectedGraphs.push(result.affectedGraphs);
+          if (!result.noChange) {
+            noChange = false;
+          }
+          if (!result.visualOnly) {
+            visualOnly = false;
+          }
+          if (result.topologyChange) {
+            topologyChange = true;
+          }
+          if (result.integrationsChange) {
+            integrationsChange = true;
+          }
+          if ("creator" in edit) {
+            creator = edit.creator;
+          }
         }
-        affectedNodes.push(result.affectedNodes);
-        affectedGraphs.push(result.affectedGraphs);
-        if (!result.noChange) {
-          noChange = false;
-        }
-        if (!result.visualOnly) {
-          visualOnly = false;
-        }
-        if (result.topologyChange) {
-          topologyChange = true;
-        }
-        if (result.integrationsChange) {
-          integrationsChange = true;
-        }
-        if ("creator" in edit) {
-          creator = edit.creator;
-        }
-      }
-      return { success: true, result: undefined };
+        return { success: true, result: undefined };
+      },
     };
 
-    if (dryRun) {
-      const graph = checkpoint;
-      const mutable = new MutableGraphImpl(
-        graph,
-        this.#mutable.store,
-        this.#mutable.deps
-      );
-      context = { graph, mutable, apply };
-    } else {
-      context = { graph: this.#graph, mutable: this.#mutable, apply };
-    }
     const result = await transformer(context);
     if (!result.success) {
       error = result.error;
     }
     if (error) {
-      if (!dryRun) {
-        this.#rollbackGraph(checkpoint, error);
-      }
+      this.#rollbackGraph(checkpoint, error);
       return { success: false, log, error };
     }
 
     if (noChange) {
-      if (!dryRun) {
-        this.#dispatchNoChange();
-      }
+      this.#dispatchNoChange();
       return { success: true, log };
     }
 
     this.#history.add(this.raw(), label, creator, Date.now());
 
-    if (!dryRun) {
-      this.#updateGraph(
-        visualOnly,
-        unique(affectedNodes.flat()),
-        [...new Set(affectedGraphs.flat())],
-        topologyChange,
-        integrationsChange,
-        label
-      );
-    }
+    this.#updateGraph(
+      visualOnly,
+      unique(affectedNodes.flat()),
+      [...new Set(affectedGraphs.flat())],
+      topologyChange,
+      integrationsChange,
+      label
+    );
     return { success: true, log };
   }
 }
