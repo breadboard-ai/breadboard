@@ -496,6 +496,21 @@ export class GraphController extends RootController implements MutableGraph {
   }
 
   // =========================================================================
+  // Graph Inspection
+  // =========================================================================
+
+  /**
+   * Returns an `InspectableGraph` for the given sub-graph (or the main graph
+   * when `graphId` is `""`).
+   *
+   * This is backed by the existing `Graph` class with `this` as the
+   * `MutableGraph` — no extra state is created.
+   */
+  inspect(graphId: GraphIdentifier): InspectableGraph {
+    return new Graph(graphId, this);
+  }
+
+  // =========================================================================
   // Node Queries
   // =========================================================================
 
@@ -508,12 +523,9 @@ export class GraphController extends RootController implements MutableGraph {
     nodeId: NodeIdentifier,
     graphId: GraphIdentifier
   ): Outcome<NodeHandlerMetadata> {
-    if (!this._editor) {
-      return err("No editor available");
-    }
-    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    const node = this.nodes?.get(nodeId, graphId);
     if (!node) {
-      return err(`Unable to find node with id "${nodeId}`);
+      return err(`Unable to find node with id "${nodeId}"`);
     }
     const metadata = node.currentDescribe().metadata;
     if (!metadata) {
@@ -526,12 +538,9 @@ export class GraphController extends RootController implements MutableGraph {
     nodeId: NodeIdentifier,
     graphId: GraphIdentifier
   ): Outcome<InspectableNodePorts> {
-    if (!this._editor) {
-      return err("No editor available");
-    }
-    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    const node = this.nodes?.get(nodeId, graphId);
     if (!node) {
-      return err(`Unable to find node with id "${nodeId}`);
+      return err(`Unable to find node with id "${nodeId}"`);
     }
     return node.currentPorts();
   }
@@ -540,12 +549,9 @@ export class GraphController extends RootController implements MutableGraph {
     nodeId: NodeIdentifier,
     graphId: GraphIdentifier
   ): Outcome<string> {
-    if (!this._editor) {
-      return err("No editor available");
-    }
-    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    const node = this.nodes?.get(nodeId, graphId);
     if (!node) {
-      return err(`Unable to find node with id "${nodeId}`);
+      return err(`Unable to find node with id "${nodeId}"`);
     }
     return node.title();
   }
@@ -554,12 +560,9 @@ export class GraphController extends RootController implements MutableGraph {
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ): Outcome<{ id: PortIdentifier; title: string }> {
-    if (!this._editor) {
-      return err("No editor available");
-    }
-    const node = this._editor.inspect(graphId).nodeById(nodeId);
+    const node = this.nodes?.get(nodeId, graphId);
     if (!node) {
-      return err(`Unable to find node with id "${nodeId}`);
+      return err(`Unable to find node with id "${nodeId}"`);
     }
     const { ports } = node.currentPorts().outputs;
     const mainPort = ports.find((port) =>
@@ -572,7 +575,7 @@ export class GraphController extends RootController implements MutableGraph {
     }
     const firstPort = ports.at(0);
     if (!firstPort) {
-      return err(`Unable to find a port on node with id "${nodeId}`);
+      return err(`Unable to find a port on node with id "${nodeId}"`);
     }
     result.id = firstPort.name as PortIdentifier;
     return result;
@@ -658,8 +661,8 @@ export class GraphController extends RootController implements MutableGraph {
     if (!selectedNodeId) {
       return this._components;
     }
-    const inspectable = this._editor?.inspect("");
-    if (!inspectable) {
+    const graph = this.graph;
+    if (!graph) {
       return this._components;
     }
     const components = this._components.get("");
@@ -667,7 +670,6 @@ export class GraphController extends RootController implements MutableGraph {
       return new Map();
     }
 
-    const graph = inspectable.raw();
     const validComponents = [...components].filter(
       ([id]) => !willCreateCycle({ to: selectedNodeId, from: id }, graph)
     );
