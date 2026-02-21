@@ -1125,15 +1125,25 @@ suite("GraphController", () => {
   // MutableGraphStore (set/get)
   // ==========================================================================
 
-  test("set/get stores and returns MutableGraph", async () => {
+  test("get returns the controller itself (GraphController IS the MutableGraph)", async () => {
     const store = new GraphController("Graph_MGS_SetGet", "GraphController");
     await store.isHydrated;
 
-    assert.strictEqual(store.get(), undefined, "initially undefined");
+    // GraphController IS the MutableGraph, so get() always returns `this`.
+    assert.strictEqual(
+      store.get(),
+      store,
+      "get() should return the controller itself"
+    );
 
+    // set() is a no-op — retained for interface compatibility.
     const mockMutableGraph = { id: "mock-mutable" } as unknown as MutableGraph;
     store.set(mockMutableGraph);
-    assert.strictEqual(store.get(), mockMutableGraph);
+    assert.strictEqual(
+      store.get(),
+      store,
+      "get() should still return the controller after set()"
+    );
   });
 
   // ==========================================================================

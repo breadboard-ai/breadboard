@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2026 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   EditHistoryCreator,
   EditHistoryEntry,
@@ -14,7 +8,6 @@ import type {
 } from "@breadboard-ai/types";
 import { Graph as GraphEditor } from "../../../../engine/editor/graph.js";
 import type * as Editor from "../../../controller/subcontrollers/editor/editor.js";
-import { MutableGraphImpl } from "../../../../engine/inspector/graph/mutable-graph.js";
 
 /**
  * Options for initializing the editor.
@@ -39,7 +32,7 @@ export interface InitializeEditorOptions {
   onHistoryChanged?: (history: Readonly<EditHistoryEntry[]>) => void;
   /** Pre-loaded final output values */
   finalOutputValues?: OutputValues;
-  /** Dependencies for creating MutableGraphImpl */
+  /** Dependencies for describer caches */
   graphStoreArgs: GraphStoreArgs;
 }
 
@@ -56,8 +49,7 @@ export interface InitializeEditorResult {
  * Sets up the editor state for a loaded graph.
  *
  * This function:
- * - Creates a MutableGraphImpl from the graph descriptor
- * - Stores it in the graph controller
+ * - Initializes the graph controller as the MutableGraph
  * - Creates an editor instance
  * - Wires up event listeners for graph changes
  * - Updates the graph controller state
@@ -82,10 +74,9 @@ export function initializeEditor(
     graphStoreArgs,
   } = options;
 
-  // Create MutableGraphImpl and store in controller
-  const mutable = new MutableGraphImpl(graph, graphController, graphStoreArgs);
-  graphController.set(mutable);
-  const editor = new GraphEditor(mutable, {
+  // Initialize GraphController as the MutableGraph (replaces MutableGraphImpl)
+  graphController.initialize(graph, graphStoreArgs);
+  const editor = new GraphEditor(graphController, {
     creator,
     history,
     onHistoryChanged,
@@ -95,7 +86,7 @@ export function initializeEditor(
   const id = globalThis.crypto.randomUUID();
 
   // Set up controller state
-  graphController.id = id;
+  graphController.sessionId = id;
   graphController.setEditor(editor);
   graphController.url = url;
   graphController.version = version;

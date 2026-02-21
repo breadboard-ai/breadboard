@@ -20,22 +20,26 @@ const testGraphStoreArgs = makeTestGraphStoreArgs();
 function makeMockGraphController(): Editor.Graph.GraphController & {
   _state: Record<string, unknown>;
 } {
-  let mutableGraph: MutableGraph | undefined;
   const state: Record<string, unknown> = {};
-  return {
-    // MutableGraphStore implementation — just stores the MutableGraph
-    set(graph: MutableGraph) {
-      mutableGraph = graph;
+  const mock = {
+    // MutableGraph — self-referential
+    set(_graph: MutableGraph) {
+      // no-op
     },
     get() {
-      return mutableGraph;
+      return mock;
     },
 
-    get id() {
-      return state.id as string;
+    // Initializes caches (simplified for test — just stores the graph)
+    initialize(graph: GraphDescriptor) {
+      state.graph = graph;
     },
-    set id(v: string) {
-      state.id = v;
+
+    get sessionId() {
+      return state.sessionId as string;
+    },
+    set sessionId(v: string) {
+      state.sessionId = v;
     },
     setEditor: (e: unknown) => {
       state.editor = e;
@@ -76,8 +80,13 @@ function makeMockGraphController(): Editor.Graph.GraphController & {
     set lastLoadedVersion(v: number) {
       state.lastLoadedVersion = v;
     },
+    get finalOutputValues() {
+      return state.finalOutputValues;
+    },
+    set finalOutputValues(v: unknown) {
+      state.finalOutputValues = v;
+    },
     resetAll: () => {
-      mutableGraph = undefined;
       for (const key of Object.keys(state)) {
         delete state[key];
       }
@@ -86,6 +95,7 @@ function makeMockGraphController(): Editor.Graph.GraphController & {
   } as unknown as Editor.Graph.GraphController & {
     _state: Record<string, unknown>;
   };
+  return mock;
 }
 
 function makeMockGraph(): GraphDescriptor {
