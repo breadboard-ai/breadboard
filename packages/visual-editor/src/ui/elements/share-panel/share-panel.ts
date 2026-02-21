@@ -291,6 +291,22 @@ export class SharePanel extends SignalWatcher(LitElement) {
         }
       }
 
+      #error {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: var(--bb-grid-size-3);
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+          var(--bb-font-family);
+        color: var(--bb-ui-600);
+        .error-icon {
+          font-size: 32px;
+          color: var(--bb-warning-color, #b00020);
+        }
+      }
+
       #readonly {
         margin: auto 0 auto 0;
         #app-link {
@@ -613,6 +629,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   #renderModalContents() {
+    if (this.#controller.error) {
+      return this.#renderError();
+    }
     // Asset-review takes priority when there are unmanaged asset problems
     // pending resolution (e.g. during publish), OR when notebook domain-sharing
     // limitations need to be surfaced. The action layer blocks on
@@ -659,6 +678,15 @@ export class SharePanel extends SignalWatcher(LitElement) {
       <div id="loading">
         <span class="g-icon spinner">progress_activity</span>
         Loading ...
+      </div>
+    `;
+  }
+
+  #renderError() {
+    return html`
+      <div id="error">
+        <span class="g-icon error-icon">error</span>
+        ${this.#controller.error}
       </div>
     `;
   }

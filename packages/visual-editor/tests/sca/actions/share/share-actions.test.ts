@@ -1679,6 +1679,8 @@ suite("Share Actions", () => {
     ];
     share.notebookDomainSharingLimited = true;
     share.viewerMode = "app-only";
+    share.lastPublishedIso = "2025-01-01T00:00:00Z";
+    share.error = "some error";
 
     share.reset();
 
@@ -1697,6 +1699,118 @@ suite("Share Actions", () => {
     assert.deepStrictEqual(share.unmanagedAssetProblems, []);
     assert.strictEqual(share.notebookDomainSharingLimited, false);
     assert.strictEqual(share.viewerMode, "full");
+    assert.strictEqual(share.lastPublishedIso, "");
+    assert.strictEqual(share.error, "");
+  });
+
+  suite("error recovery", () => {
+    test("initialize sets error on Drive failure", async () => {
+      fakeDriveApi.forceNextError(403);
+      await ShareActions.initialize();
+      assert.ok(share.error);
+    });
+
+    test("publish sets error on Drive failure", async () => {
+      await ShareActions.initialize();
+      fakeDriveApi.forceNextError(400);
+      await ShareActions.publish();
+      assert.ok(share.error);
+    });
+
+    test("publishStale sets error on Drive failure", async () => {
+      const mainFile = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "main.bgl.json", mimeType: "application/json" }
+      );
+      const shareableFile = await googleDriveClient.createFile(
+        new Blob(["{}"], { type: "application/json" }),
+        { name: "shareable.bgl.json", mimeType: "application/json" }
+      );
+      await googleDriveClient.updateFileMetadata(mainFile.id, {
+        properties: { mainToShareableCopy: shareableFile.id },
+      });
+      await googleDriveClient.updateFileMetadata(shareableFile.id, {
+        properties: { latestSharedVersion: "1" },
+      });
+      await googleDriveClient.createPermission(
+        shareableFile.id,
+        { type: "domain", domain: "example.com", role: "reader" },
+        { sendNotificationEmail: false }
+      );
+
+      setGraph({ edges: [], nodes: [], url: `drive:/${mainFile.id}` });
+      await ShareActions.initialize();
+      assert.strictEqual(share.stale, true);
+
+      fakeDriveApi.forceNextError(400);
+      await ShareActions.publishStale();
+      assert.ok(share.error);
+    });
+
+    test("unpublish sets error on Drive failure", async () => {
+      await ShareActions.initialize();
+      await ShareActions.publish();
+      assert.strictEqual(share.hasPublicPermissions, true);
+
+      fakeDriveApi.forceNextError(403);
+      await ShareActions.unpublish();
+      assert.ok(share.error);
+    });
+
+    test("changeVisibility sets error on Drive failure", async () => {
+      await ShareActions.initialize();
+      fakeDriveApi.forceNextError(400);
+      await ShareActions.changeVisibility("anyone");
+      assert.ok(share.error);
+    });
+
+    test("setViewerAccess sets error on Drive failure", async () => {
+      await ShareActions.initialize();
+      await ShareActions.publish();
+      fakeDriveApi.forceNextError(403);
+      await ShareActions.setViewerAccess("app-only");
+      assert.ok(share.error);
+    });
+
+    test("open sets error on Drive failure", async () => {
+      await ShareActions.initialize();
+      share.panel = "closed";
+      fakeDriveApi.forceNextError(400);
+      await ShareActions.open();
+      assert.ok(share.error);
+    });
+
+    test("fixUnmanagedAssetProblems sets error on Drive failure", async () => {
+      await ShareActions.initialize();
+      share.unmanagedAssetProblems = [
+        {
+          type: "drive",
+          asset: { id: "a", resourceKey: "k", name: "n", iconLink: "i" },
+          problem: "missing",
+          missing: [{ type: "anyone", role: "reader" }],
+        },
+      ];
+      fakeDriveApi.forceNextError(403);
+      await ShareActions.fixUnmanagedAssetProblems();
+      assert.ok(share.error);
+    });
+
+    test("viewSharePermissions sets error on Drive failure", async () => {
+      await ShareActions.initialize();
+      share.shareableFile = null;
+      fakeDriveApi.forceNextError(400);
+      await ShareActions.viewSharePermissions();
+      assert.ok(share.error);
+    });
+
+    test("onGoogleDriveSharePanelClose sets error on Drive failure", async () => {
+      await ShareActions.initialize();
+      await ShareActions.publish();
+      share.panel = "native-share";
+      fakeDriveApi.forceNextError(403);
+      await ShareActions.onGoogleDriveSharePanelClose();
+      assert.ok(share.error);
+    });
   });
 
   suite("viewerMode", () => {

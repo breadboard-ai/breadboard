@@ -30,6 +30,7 @@ interface FakeGoogleDriveApiSession {
   nextIteratorId: number;
   latencyMs: number;
   clockMs: number;
+  forcedErrorStatus: number | null;
 }
 
 /**
@@ -88,6 +89,7 @@ export class FakeGoogleDriveApi {
       nextIteratorId: 0,
       latencyMs: 0,
       clockMs: FakeGoogleDriveApi.#FAKE_CLOCK_START,
+      forcedErrorStatus: null,
     };
   }
 
@@ -168,6 +170,14 @@ export class FakeGoogleDriveApi {
     // Reject paused requests so they throw instead of resuming with stale state.
     this.#pauseGate?.reject(new Error("FakeGoogleDriveApi was reset"));
     this.#pauseGate = null;
+  }
+
+  /**
+   * Forces the next request to return the given HTTP status code.
+   * The flag auto-clears after one request.
+   */
+  forceNextError(statusCode: number): void {
+    this.#session.forcedErrorStatus = statusCode;
   }
 
   /**
@@ -278,6 +288,13 @@ export class FakeGoogleDriveApi {
       body: new TextDecoder().decode(body) || undefined,
       wasProxied: hasProxyPrefix,
     });
+
+    if (this.#session.forcedErrorStatus !== null) {
+      const status = this.#session.forcedErrorStatus;
+      this.#session.forcedErrorStatus = null;
+      this.#errorResponse(res, status, "Forced error for testing");
+      return;
+    }
 
     const url = new URL(routingUrl, `http://${this.#host}:${this.#port}`);
 
