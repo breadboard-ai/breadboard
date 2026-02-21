@@ -20,9 +20,9 @@
 │              │                                                    │
 │              │ stores                                             │
 │              ▼                                                    │
-│   MutableGraphImpl (inspector layer, non-reactive)               │
-│   ├─ .graph     → GraphDescriptor (duplicated)                   │
-│   ├─ .graphs    → Graph (InspectableGraph per sub-graph)         │
+│   ~~MutableGraphImpl (inspector layer, non-reactive)~~           │
+│   ~~├─ .graph     → GraphDescriptor (duplicated)~~               │
+│   ~~(deleted — GraphController now IS the MutableGraph)~~         │
 │   ├─ .nodes     → Node (InspectableNode per node)                │
 │   └─ .describe  → DescribeResultCache (signal-backed)            │
 │              │                                                    │
@@ -64,7 +64,7 @@
 
 | File                                                                                        | Role                                                              |
 | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `packages/visual-editor/src/engine/inspector/graph/mutable-graph.ts`                        | Current `MutableGraphImpl` — to be absorbed                       |
+| `packages/visual-editor/src/engine/inspector/graph/mutable-graph.ts`                        | ~~Deleted~~ — was `MutableGraphImpl`, now `GraphController`       |
 | `packages/visual-editor/src/engine/inspector/graph/graph.ts`                                | `InspectableGraph` per sub-graph — to become `SubgraphController` |
 | `packages/visual-editor/src/engine/inspector/graph/node.ts`                                 | `InspectableNode` — to become `NodeController`                    |
 | `packages/visual-editor/src/engine/inspector/graph/edge.ts`                                 | `InspectableEdge` — to become `EdgeController`                    |
@@ -117,30 +117,55 @@ swap out the `MutableGraphImpl` instantiation in `initialize-editor.ts`.
 - [x] Verify build passes
 - [x] Verify all tests pass
 
-### Phase 2: Absorb `GraphQueries` + `Node` + `Edge`
+### Phase 2: Migrate away from inspector classes
 
-Move query helpers and inspector classes into the controller layer.
+Replace `editor.inspect()` call sites with direct `GraphController` access, then
+delete the inspector layer wholesale.
 
-- [x] Remove `MutableGraphImpl` class
-  - Replaced with `createMutableGraph()` factory (test-only, in
-    `tests/helpers/_mutable-graph.ts`)
-  - Removed dead `dryRun` parameter from `EditableGraph.edit()`, editor
-    implementation, and `editInternal` action
-  - Deleted `src/engine/inspector/graph/mutable-graph.ts` — no production code
-    references it
-- [ ] Fold `GraphQueries` static methods into `GraphController`
-- [ ] Create `NodeController` sub-controller with `@field describeResult`
-- [ ] Create describe action + trigger (`Node.describe` action, fired on config
-      change)
-- [ ] Replace `Node` class consumers with `NodeController`
-- [ ] Replace `Edge` class consumers with `EdgeController` (or inline)
-- [ ] Migrate `editor.inspect(graphId).nodeById(id)` call sites to
-      `graphController.nodeById(id, graphId)`
-- [ ] Remove `Graph`, `Node`, `Edge`, `GraphQueries`, `DescribeResultCache`
-      classes
-- [ ] Verify build passes
-- [ ] Verify all tests pass
-- [ ] Write tests for `NodeController` describe reactivity
+> **Strategy**: Migrate outside-in. `GraphQueries` is internal plumbing consumed
+> only by `Graph` and `Node` — it gets swept away automatically once nothing
+> calls `editor.inspect()`.
+
+**Stage 1 — Simple cache hits** (done)
+
+- [x] Remove `MutableGraphImpl` class, dead `dryRun` code, relocate factory to
+      test helpers
+- [x] Replace 5 `editor.inspect().nodeById()` calls inside `GraphController`
+      with `this.nodes.get()` / `this.graph`
+
+**Stage 2 — Enrich `GraphController` API**
+
+- [x] Add `inspect(graphId)` method backed by `new Graph(graphId, this)` —
+      `GraphController` IS a `MutableGraph`, so `Graph`/`Node` work
+      out-of-the-box
+- [x] Write tests for `inspect()` (main graph, sub-graphs, node methods) and
+      `getFilteredComponents`
+- 2 internal calls (`getRoutes`, `#updateComponents`) still use
+  `_editor.inspect()` because they run during `setEditor()` before
+  `initialize()` populates caches. These will be migrated when
+  `setEditor + initialize` lifecycle is unified.
+
+**Stage 3 — Migrate consumers + delete**
+
+All consumers call `editor.inspect(graphId)` → `InspectableGraph`. With
+`graphController.inspect(graphId)` available, these can switch to
+`controller.editor.graph.inspect(graphId)` instead.
+
+- [ ] Migrate `node-actions.ts` (8 calls: `autoname`, `onNodeChange`,
+      `onMoveSelection`, `onDelete`, `onSelectAll`, `onCopy`, `onCut`,
+      `onPaste`/`onDuplicate`)
+- [ ] Migrate `graph-actions.ts` (1 call: `replaceWithTheme`)
+- [ ] Migrate `graph-editing-chat.ts` (1 call)
+- [ ] Migrate `graph-utils.ts` (7 functions accept `InspectableGraph` — these
+      can accept `graphController.inspect()` output unchanged since it returns
+      the same `InspectableGraph` type)
+- [ ] Migrate 2 remaining internal `_editor.inspect()` calls in
+      `GraphController` (`getRoutes`, `#updateComponents`) — blocked on unifying
+      `setEditor + initialize` lifecycle
+- [ ] Delete `Graph`, `Node`, `Edge`, `GraphQueries`, `DescribeResultCache`
+      (only after ALL consumers are migrated, since `inspect()` still returns
+      `new Graph(...)`)
+- [ ] Verify build + tests pass
 
 ### Phase 3: Flatten `EditableGraph` → Actions
 
