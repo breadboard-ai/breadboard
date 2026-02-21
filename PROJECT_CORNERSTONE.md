@@ -91,6 +91,27 @@ mirrored as Pydantic models in `opal-backend-shared`.
 
 ## Phases
 
+### How Objectives Work
+
+Objectives (🎯) are the **real** milestones — concrete, executable tests that
+prove the system works. They go at the top of each phase. Everything below them
+is in service of reaching them.
+
+**Plan backward from the objective.** Write the objective first as a specific
+action with an observable result ("run this command, see this output"). Then
+work backward: what items are needed to make that action succeed? If the items
+don't add up to a reachable objective, the plan is wrong — restructure it.
+
+**A checked-off list is not an objective.** Individual items can be correct
+(code compiles, tests pass) without adding up to the objective. Before marking a
+phase complete, trace the full path from the user's action to the expected
+result. If any link is missing, the objective is not reached — add the missing
+work to the plan rather than redefining the objective.
+
+**Restructuring is progress.** Discovering that the plan doesn't reach the
+objective is valuable information. Add new phases, split existing ones, move
+items — whatever makes the path to the objective honest.
+
 ### Phase 1: Client-Side Event Coverage ✅
 
 - [x] Event types, sink, consumer, bridge
@@ -178,59 +199,95 @@ mirrored as Pydantic models in `opal-backend-shared`.
 - [x] Agent endpoint wiring (always active, access token from request headers)
 - [x] Unit tests (15 tests for event sink + hooks)
 
-##### 4.4d: Real Objective + Auth Wiring
+##### 4.4d: Resumable Stream Protocol ✅
 
-- [ ] `StartRunRequest` takes objective (`LLMContent`) + access token (not
-      "scenario")
-- [ ] `DevAgentBackend.start_run` forwards access token to `Loop`
-- [ ] Frontend `SSEAgentRun` can connect and receive events from dev backend
+> **🎯 Objective:** Backend pipeline works end-to-end without the frontend.
+>
+> ```
+> curl -X POST http://localhost:8080/api/agent/run \
+>   -H "Content-Type: application/json" \
+>   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+>   -d '{"kind":"content","objective":{"parts":[{"text":"Make a joke"}],"role":"user"}}' \
+>   --no-buffer
+> ```
+>
+> → SSE stream of events → ends with `system_objective_fulfilled`.
 
-> **🧪 Checkpoint:** Start frontend + dev backend, give it a simple text task
-> like "make a joke". The agent calls Gemini, classifies it as simple domain,
-> and returns the result via `system_objective_fulfilled`. Full SSE round-trip
-> proven: frontend → backend → Gemini → SSE → UI. More complex tasks that need
-> tools (file system, image gen) will fail gracefully.
+**Architecture pivot:** Single `POST /api/agent/run` → SSE stream replaces the
+multi-endpoint pattern.
 
-##### 4.4e: Agent File System + Remaining System Functions
+```
+POST /api/agent/run  →  SSE stream (start or resume)
+Body (start):  {kind, objective}
+Body (resume): {interactionId, response}
+```
+
+- [x] Redesign `api_surface.py` — single `POST /run` → `EventSourceResponse`
+- [x] Update `DevAgentBackend` — POST handler starts loop, streams inline
+- [x] Update frontend `SSEAgentEventSource` — POST with body instead of GET
+- [x] Update frontend `AgentService` — pass config into SSEAgentRun
+- [x] Remove `SSEAgentRun.resolveInput()` side-channel
+- [x] Auth: access token from `Authorization` header → `Loop`
+- [x] Wire `configureRemote()` in app init via `BACKEND_API_ENDPOINT`
+- [x] Fix proxy `Content-Encoding` header stripping
+
+##### 4.4e: Wire Content Runs Through AgentService
+
+> **🎯 Objective:** Run an opal through the dev backend and see the result.
+>
+> ```
+> npm run dev:backend -w packages/unified-server
+> ```
+>
+> Open the app, run an opal with a simple text task like "make a joke". The
+> agent calls Gemini via the Python backend, streams events back, and the result
+> appears in the UI.
+
+**The gap:** Content agent runs (the main "run an opal" flow) currently go
+through `RunService` / step executor in-process. They don't use `AgentService`
+at all. `AgentService.startRun()` is only called by the graph-editing agent,
+which is hardcoded to `LocalAgentRun`.
+
+- [ ] Study how `RunService` / step executor invoke the content agent loop
+- [ ] Route content runs through `AgentService.startRun()` when in remote mode
+- [ ] Handle content agent events in the UI via `AgentEventConsumer`
+- [ ] `SSEAgentRun.connect()` must be called at the right time
+
+##### 4.4f: Agent File System + Remaining System Functions
 
 - [ ] Port `AgentFileSystem` (in-memory virtual FS)
 - [ ] Port remaining system functions (list/read/write files, task tree)
 - [ ] Add `intermediate` / `FileData` to `AgentResult`
 
-##### 4.4f: Content Generation Functions
+##### 4.4g: Content Generation Functions
+
+> **🎯 Objective:** Run an opal with "generate an image of a cat" through the
+> dev backend. Full content generation flow end-to-end.
 
 - [ ] Port `conformGeminiBody` (data-part transforms for file upload)
 - [ ] Port `SimplifiedToolManager` / `customTools` support in Loop
 - [ ] Port generate functions (image/video/audio/music)
 - [ ] Port `PidginTranslator` (objective translation)
 
-> **🧪 Checkpoint:** Frontend + dev backend, give a simple prompt like "generate
-> an image of a cat". The agent uses real Gemini APIs, calls generate functions,
-> emits subagent progress events, and returns the result through
-> `system_objective_fulfilled`. Full content gen flow end-to-end.
+#### 4.5: Suspend/Resume for Interactive Agents
 
-#### 4.5: Graph-Editing Agent Over the Wire
+> **🎯 Objective:** Open graph editor, use AI chat to edit a graph through the
+> dev backend. Each interaction round-trips as: POST → stream → suspend → POST →
+> stream → complete.
 
-- [ ] Port suspend/resume plumbing (`sink.suspend()` ↔ `/input` endpoint)
-- [ ] Graph-editing functions use suspend events for all client calls
-- [ ] End-to-end graph editing via SSE
+- [ ] Emit `suspend` event with `interactionId` when loop needs client input
+- [ ] State serialization — save `contents` + config keyed by interaction ID
+- [ ] Resume path — POST with `{interactionId, response}` reconstructs loop
+- [ ] Graph-editing functions use suspend for `readGraph`, `applyEdits`, etc.
 
-> **🧪 Checkpoint:** Frontend + dev backend, open graph editor and use the AI
-> chat to edit a graph. Suspend/resume events flow over SSE, graph edits appear
-> in the UI in real time.
+#### 4.6: Production Readiness
 
-#### 4.6: Content Generation Agent Over the Wire
-
-- [ ] Content gen agent runs on Python backend
-- [ ] Subagent progress events (image/video/audio gen) over SSE
-
-### Phase 5: Integration & Polish
+> **🎯 Objective:** Full parity with the in-process agent. Everything that works
+> locally works identically through the dev backend. `LocalAgentRun` can be
+> removed or kept as a fallback.
 
 - [ ] File upload flow via `LLMContent` `inlineData`/`storedData`
-- [ ] Reconnection with event replay (`EventReplayBuffer`)
+- [ ] State store for production (Redis/Firestore instead of in-memory)
+- [ ] Reconnection — client re-POSTs with last interaction ID on drop
 - [ ] Remove `LocalAgentRun` path (or keep for offline dev)
 - [ ] `opal-backend-dev` proxies all APIs as they land on One Platform
-
-> **🧪 Checkpoint:** Full parity with the in-process agent. Everything that
-> works locally works identically through the dev backend. `LocalAgentRun` can
-> be removed or kept as a fallback.

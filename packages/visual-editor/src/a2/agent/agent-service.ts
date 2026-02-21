@@ -5,7 +5,6 @@
  */
 
 import type { LLMContent } from "@breadboard-ai/types";
-import type { AgentInputResponse } from "./agent-event.js";
 import type { AgentEventConsumer } from "./agent-event-consumer.js";
 
 import { LocalAgentRun } from "./local-agent-run.js";
@@ -51,12 +50,6 @@ interface AgentRunHandle {
    */
   readonly events: AgentEventConsumer;
 
-  /**
-   * Resume a suspended request (chat input or choice).
-   * The `requestId` must match the one from the suspend event.
-   */
-  resolveInput(response: AgentInputResponse): void;
-
   /** Cancel this run. */
   abort(): void;
 
@@ -90,14 +83,13 @@ interface AgentRunHandle {
  * - Multiple runs can be live concurrently (e.g., content agent
  *   running while a graph-editing chat is open).
  *
- * ## Server Mapping
+ * ## Server Mapping (Resumable Stream Protocol)
  *
  * | Client method              | Server endpoint                      |
  * |----------------------------|--------------------------------------|
- * | `startRun(config)`         | `POST /api/agent/run`                |
- * | `handle.events` (consumer) | `GET /api/agent/{runId}/events` (SSE)|
- * | `handle.resolveInput()`    | `POST /api/agent/{runId}/input`      |
- * | `handle.abort()`           | `POST /api/agent/{runId}/abort`      |
+ * | `startRun(config)`         | `POST /api/agent/run` → SSE stream   |
+ * | `handle.events` (consumer) | (events arrive in the SSE response)  |
+ * | `handle.abort()`           | Client closes the connection         |
  */
 class AgentService {
   readonly #runs = new Map<string, AgentRunHandle>();
@@ -145,6 +137,7 @@ class AgentService {
           runId,
           config.kind,
           this.#remoteBaseUrl,
+          config,
           this.#remoteFetchWithCreds
         )
       : new LocalAgentRun(runId, config.kind);

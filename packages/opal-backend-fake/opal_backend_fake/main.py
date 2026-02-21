@@ -2,32 +2,30 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-FastAPI application implementing the Opal agent event SSE protocol
+FastAPI application implementing the Opal agent event protocol
 with canned scenarios for integration testing.
 
-Endpoints:
-    POST /api/agent/run           — Start a canned scenario
-    GET  /api/agent/{runId}/events — SSE stream of AgentEvent NDJSON
-    POST /api/agent/{runId}/input  — Resume a suspended request
-    POST /api/agent/{runId}/abort  — Abort a run
+Protocol:
+    POST /api/agent/run → SSE stream (Resumable Stream Protocol)
+
+    Body (start): {"kind": "fake", "objective": {"scenario": "<name>"}}
+    Body (resume): {"interactionId": "...", "response": {...}}
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import uuid
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
 from opal_backend_shared.pending_requests import PendingRequestMap
 from opal_backend_shared.sse_sink import SSEAgentEventSink
-from opal_backend_shared.local.api_surface import (
-    StartRunResponse,
-    create_api_router,
-)
+from opal_backend_shared.local.api_surface import create_api_router
 from .scenarios import SCENARIOS
 
 app = FastAPI(
@@ -55,12 +53,7 @@ async def root():
     """Landing page with available scenarios and endpoints."""
     return {
         "name": "Opal Fake Backend",
-        "endpoints": {
-            "POST /api/agent/run": "Start a scenario",
-            "GET /api/agent/{runId}/events": "SSE event stream",
-            "POST /api/agent/{runId}/input": "Resume a suspend",
-            "POST /api/agent/{runId}/abort": "Abort a run",
-        },
+        "endpoint": "POST /api/agent/run → SSE stream",
         "scenarios": list(SCENARIOS.keys()),
     }
 
@@ -89,9 +82,28 @@ _runs: dict[str, RunState] = {}
 # ---------------------------------------------------------------------------
 
 class FakeAgentBackend:
-    """Canned-scenario implementation of the AgentBackend protocol."""
+    """Canned-scenario implementation of the AgentBackend protocol.
 
-    async def start_run(self, scenario: str) -> StartRunResponse:
+    Single POST /api/agent/run → SSE stream.
+    Scenario name is extracted from the objective.
+    """
+
+    async def run(self, request: Request) -> EventSourceResponse:
+        body = await request.json()
+
+        # Extract scenario name from the request body.
+        # Start request: {"kind": "fake", "objective": {"scenario": "echo"}}
+        # For backwards compat, also check top-level "scenario" key.
+        objective = body.get("objective", {})
+        if isinstance(objective, dict):
+            scenario = objective.get("scenario", "")
+        else:
+            scenario = ""
+
+        # Fallback: top-level scenario key.
+        if not scenario:
+            scenario = body.get("scenario", "echo")
+
         if scenario not in SCENARIOS:
             raise HTTPException(
                 status_code=400,
@@ -108,13 +120,6 @@ class FakeAgentBackend:
             _run_scenario(run_id, scenario_fn, state.sink)
         )
 
-        return StartRunResponse(run_id=run_id, scenario=scenario)
-
-    async def event_stream(self, run_id: str) -> EventSourceResponse:
-        state = _runs.get(run_id)
-        if state is None:
-            raise HTTPException(status_code=404, detail="Run not found")
-
         async def generate():
             while True:
                 line = await state.sink.queue.get()
@@ -123,35 +128,6 @@ class FakeAgentBackend:
                 yield {"data": line}
 
         return EventSourceResponse(generate())
-
-    async def submit_input(
-        self, run_id: str, request_id: str, response: Any
-    ) -> dict:
-        state = _runs.get(run_id)
-        if state is None:
-            raise HTTPException(status_code=404, detail="Run not found")
-
-        resolved = state.pending.resolve(request_id, response)
-        if not resolved:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No pending request with id: {request_id}",
-            )
-
-        return {"ok": True}
-
-    async def abort_run(self, run_id: str) -> dict:
-        state = _runs.get(run_id)
-        if state is None:
-            raise HTTPException(status_code=404, detail="Run not found")
-
-        state.aborted = True
-        state.pending.abort_all()
-        if state.task and not state.task.done():
-            state.task.cancel()
-        await state.sink.close()
-
-        return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

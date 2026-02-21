@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { AgentInputResponse } from "./agent-event.js";
 import {
   AgentEventConsumer,
   LocalAgentEventBridge,
@@ -33,15 +32,6 @@ class LocalAgentRun implements AgentRunHandle {
   ) {
     this.events = new AgentEventConsumer();
     this.sink = new LocalAgentEventBridge(this.events);
-  }
-
-  resolveInput(response: AgentInputResponse): void {
-    // In the local bridge, suspend events resolve through the
-    // consumer's handler Promise chain — the consumer handler
-    // for waitForInput/waitForChoice returns a Promise that the
-    // bridge awaits. resolveInput is a no-op in this mode because
-    // the UI handler directly resolves the Promise.
-    void response;
   }
 
   abort(): void {

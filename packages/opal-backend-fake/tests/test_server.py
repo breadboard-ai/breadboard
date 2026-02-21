@@ -271,29 +271,18 @@ async def test_unknown_scenario_returns_400(client: AsyncClient):
     """Starting an unknown scenario returns 400."""
     resp = await client.post(
         "/api/agent/run",
-        json={"scenario": "nonexistent"},
+        json={"objective": {"scenario": "nonexistent"}},
     )
     assert resp.status_code == 400
 
 
 @pytest.mark.asyncio
-async def test_unknown_run_returns_404(client: AsyncClient):
-    """Requesting input for an unknown runId returns 404."""
-    resp = await client.post(
-        "/api/agent/fake-id/input",
-        json={"request_id": "x", "response": {}},
-    )
-    assert resp.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_start_run_returns_run_id(client: AsyncClient):
-    """Starting a run returns a run_id and scenario name."""
+async def test_start_run_returns_sse_stream(client: AsyncClient):
+    """Starting a run returns an SSE stream (text/event-stream)."""
     resp = await client.post(
         "/api/agent/run",
-        json={"scenario": "echo"},
+        json={"objective": {"scenario": "echo"}},
     )
     assert resp.status_code == 200
-    data = resp.json()
-    assert "run_id" in data
-    assert data["scenario"] == "echo"
+    assert "text/event-stream" in resp.headers.get("content-type", "")
+
