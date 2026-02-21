@@ -171,29 +171,53 @@ mirrored as Pydantic models in `opal-backend-shared`.
 - [x] System instruction (meta-plan prompt — verbatim port)
 - [x] Unit tests (13 tests)
 
-##### 4.4c: DevAgentBackend + End-to-End
+##### 4.4c: DevAgentBackend + End-to-End ✅
 
-- [ ] `DevAgentBackend` in `opal-backend-dev` (implements `AgentBackend`)
-- [ ] `buildHooksFromSink` equivalent for event emission
-- [ ] Integration tests for agent endpoints
-- [ ] End-to-end: `SSEAgentEventSource` ↔ `opal-backend-dev` round-trip
+- [x] `AgentEventSink` + `build_hooks_from_sink` in `opal-backend-shared`
+- [x] `DevAgentBackend` in `opal-backend-dev` (implements `AgentBackend`)
+- [x] Agent endpoint wiring (always active, access token from request headers)
+- [x] Unit tests (15 tests for event sink + hooks)
 
-##### 4.4d: Agent File System + Pidgin
+##### 4.4d: Real Objective + Auth Wiring
+
+- [ ] `StartRunRequest` takes objective (`LLMContent`) + access token (not
+      "scenario")
+- [ ] `DevAgentBackend.start_run` forwards access token to `Loop`
+- [ ] Frontend `SSEAgentRun` can connect and receive events from dev backend
+
+> **🧪 Checkpoint:** Start frontend + dev backend, give it a simple text task
+> like "make a joke". The agent calls Gemini, classifies it as simple domain,
+> and returns the result via `system_objective_fulfilled`. Full SSE round-trip
+> proven: frontend → backend → Gemini → SSE → UI. More complex tasks that need
+> tools (file system, image gen) will fail gracefully.
+
+##### 4.4e: Agent File System + Remaining System Functions
 
 - [ ] Port `AgentFileSystem` (in-memory virtual FS)
-- [ ] Port `PidginTranslator` (objective translation)
-- [ ] Add `intermediate` / `FileData` to `AgentResult`
 - [ ] Port remaining system functions (list/read/write files, task tree)
+- [ ] Add `intermediate` / `FileData` to `AgentResult`
 
-##### 4.4e: Custom Tools + Body Conformation
+##### 4.4f: Content Generation Functions
 
 - [ ] Port `conformGeminiBody` (data-part transforms for file upload)
 - [ ] Port `SimplifiedToolManager` / `customTools` support in Loop
+- [ ] Port generate functions (image/video/audio/music)
+- [ ] Port `PidginTranslator` (objective translation)
+
+> **🧪 Checkpoint:** Frontend + dev backend, give a simple prompt like "generate
+> an image of a cat". The agent uses real Gemini APIs, calls generate functions,
+> emits subagent progress events, and returns the result through
+> `system_objective_fulfilled`. Full content gen flow end-to-end.
 
 #### 4.5: Graph-Editing Agent Over the Wire
 
+- [ ] Port suspend/resume plumbing (`sink.suspend()` ↔ `/input` endpoint)
 - [ ] Graph-editing functions use suspend events for all client calls
 - [ ] End-to-end graph editing via SSE
+
+> **🧪 Checkpoint:** Frontend + dev backend, open graph editor and use the AI
+> chat to edit a graph. Suspend/resume events flow over SSE, graph edits appear
+> in the UI in real time.
 
 #### 4.6: Content Generation Agent Over the Wire
 
@@ -206,3 +230,7 @@ mirrored as Pydantic models in `opal-backend-shared`.
 - [ ] Reconnection with event replay (`EventReplayBuffer`)
 - [ ] Remove `LocalAgentRun` path (or keep for offline dev)
 - [ ] `opal-backend-dev` proxies all APIs as they land on One Platform
+
+> **🧪 Checkpoint:** Full parity with the in-process agent. Everything that
+> works locally works identically through the dev backend. `LocalAgentRun` can
+> be removed or kept as a fallback.

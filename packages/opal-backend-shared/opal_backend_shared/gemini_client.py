@@ -8,7 +8,7 @@ Calls the Gemini REST API directly using httpx, yielding response chunks
 as async iterables. This replaces the browser-side fetch + iteratorFromStream
 approach used in the TypeScript client.
 
-The API key or access token must be provided by the caller — this module
+The access token must be provided by the caller — this module
 does not manage authentication.
 """
 
@@ -43,8 +43,7 @@ async def stream_generate_content(
     model: str,
     body: GeminiBody,
     *,
-    api_key: str | None = None,
-    access_token: str | None = None,
+    access_token: str,
     client: httpx.AsyncClient | None = None,
 ) -> AsyncIterator[GeminiChunk]:
     """Stream content from Gemini with automatic retry on empty responses.
@@ -54,13 +53,10 @@ async def stream_generate_content(
     2. Parse the SSE stream line-by-line
     3. Retry (up to MAX_RETRIES) if no content is found in the response
 
-    Either ``api_key`` or ``access_token`` must be provided.
-
     Args:
         model: Gemini model name (e.g. "gemini-3-flash-preview").
         body: The full request body (contents, tools, etc.).
-        api_key: API key for authentication.
-        access_token: OAuth2 access token (used when proxying user creds).
+        access_token: OAuth2 access token forwarded from the user's request.
         client: Optional httpx.AsyncClient to reuse.
 
     Yields:
@@ -71,11 +67,10 @@ async def stream_generate_content(
     """
     url = f"{GENAI_API_BASE}/{model}:streamGenerateContent?alt=sse"
 
-    headers: dict[str, str] = {"Content-Type": "application/json"}
-    if access_token:
-        headers["Authorization"] = f"Bearer {access_token}"
-    if api_key:
-        url += f"&key={api_key}"
+    headers: dict[str, str] = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}",
+    }
 
     own_client = client is None
     if own_client:
