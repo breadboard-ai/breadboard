@@ -16,14 +16,18 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from opal_backend_shared.pending_requests import PendingRequestMap
 from opal_backend_shared.sse_sink import SSEAgentEventSink
+from opal_backend_shared.local.api_surface import (
+    StartRunResponse,
+    create_api_router,
+)
 from .scenarios import SCENARIOS
 
 app = FastAPI(
@@ -81,100 +85,82 @@ _runs: dict[str, RunState] = {}
 
 
 # ---------------------------------------------------------------------------
-# Request / response models
+# Agent backend implementation
 # ---------------------------------------------------------------------------
 
-class StartRunRequest(BaseModel):
-    scenario: str = "echo"
+class FakeAgentBackend:
+    """Canned-scenario implementation of the AgentBackend protocol."""
 
+    async def start_run(self, scenario: str) -> StartRunResponse:
+        if scenario not in SCENARIOS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown scenario: {scenario}. "
+                       f"Available: {', '.join(SCENARIOS.keys())}",
+            )
 
-class StartRunResponse(BaseModel):
-    run_id: str
-    scenario: str
+        run_id = str(uuid.uuid4())
+        state = RunState(scenario)
+        _runs[run_id] = state
 
-
-class InputRequest(BaseModel):
-    request_id: str
-    response: dict | None = None
-
-
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
-
-@app.post("/api/agent/run")
-async def start_run(req: StartRunRequest) -> StartRunResponse:
-    """Start a new agent run with the specified scenario."""
-    if req.scenario not in SCENARIOS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown scenario: {req.scenario}. "
-                   f"Available: {', '.join(SCENARIOS.keys())}",
+        scenario_fn = SCENARIOS[scenario]
+        state.task = asyncio.create_task(
+            _run_scenario(run_id, scenario_fn, state.sink)
         )
 
-    run_id = str(uuid.uuid4())
-    state = RunState(req.scenario)
-    _runs[run_id] = state
+        return StartRunResponse(run_id=run_id, scenario=scenario)
 
-    # Launch the scenario in a background task.
-    # It writes events to state.sink.queue, which the SSE endpoint reads.
-    scenario_fn = SCENARIOS[req.scenario]
-    state.task = asyncio.create_task(
-        _run_scenario(run_id, scenario_fn, state.sink)
-    )
+    async def event_stream(self, run_id: str) -> EventSourceResponse:
+        state = _runs.get(run_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail="Run not found")
 
-    return StartRunResponse(run_id=run_id, scenario=req.scenario)
+        async def generate():
+            while True:
+                line = await state.sink.queue.get()
+                if line is None:
+                    break
+                yield {"data": line}
 
+        return EventSourceResponse(generate())
 
-@app.get("/api/agent/{run_id}/events")
-async def event_stream(run_id: str) -> EventSourceResponse:
-    """SSE stream of AgentEvent NDJSON for the given run."""
-    state = _runs.get(run_id)
-    if state is None:
-        raise HTTPException(status_code=404, detail="Run not found")
+    async def submit_input(
+        self, run_id: str, request_id: str, response: Any
+    ) -> dict:
+        state = _runs.get(run_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail="Run not found")
 
-    async def generate():
-        while True:
-            line = await state.sink.queue.get()
-            if line is None:
-                # Stream complete
-                break
-            yield {"data": line}
+        resolved = state.pending.resolve(request_id, response)
+        if not resolved:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No pending request with id: {request_id}",
+            )
 
-    return EventSourceResponse(generate())
+        return {"ok": True}
 
+    async def abort_run(self, run_id: str) -> dict:
+        state = _runs.get(run_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail="Run not found")
 
-@app.post("/api/agent/{run_id}/input")
-async def submit_input(run_id: str, req: InputRequest) -> dict:
-    """Resume a suspended request with the client's response."""
-    state = _runs.get(run_id)
-    if state is None:
-        raise HTTPException(status_code=404, detail="Run not found")
+        state.aborted = True
+        state.pending.abort_all()
+        if state.task and not state.task.done():
+            state.task.cancel()
+        await state.sink.close()
 
-    resolved = state.pending.resolve(req.request_id, req.response)
-    if not resolved:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No pending request with id: {req.request_id}",
-        )
-
-    return {"ok": True}
+        return {"ok": True}
 
 
-@app.post("/api/agent/{run_id}/abort")
-async def abort_run(run_id: str) -> dict:
-    """Abort a running scenario."""
-    state = _runs.get(run_id)
-    if state is None:
-        raise HTTPException(status_code=404, detail="Run not found")
+# ---------------------------------------------------------------------------
+# Wire it up via the shared API surface
+# ---------------------------------------------------------------------------
 
-    state.aborted = True
-    state.pending.abort_all()
-    if state.task and not state.task.done():
-        state.task.cancel()
-    await state.sink.close()
-
-    return {"ok": True}
+_agent = FakeAgentBackend()
+router = create_api_router(agent=_agent)
+app.include_router(router)
 
 
 # ---------------------------------------------------------------------------

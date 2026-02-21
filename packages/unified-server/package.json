@@ -12,7 +12,9 @@
     "build:vite": "wireit",
     "dev": "npm run serve --watch",
     "dev:fake": "wireit",
+    "dev:backend": "npm run serve:dev-backend-all --watch",
     "serve:fake": "wireit",
+    "serve:dev-backend-all": "wireit",
     "dev-drive": "VITE_BOARD_SERVICE='drive:' npm run serve --watch",
     "docker-build": "docker build --build-context=breadboard=../.. --tag=unified-server .",
     "docker-clean": "docker image rm unified-server",
@@ -105,6 +107,28 @@
       "command": "ava",
       "dependencies": [
         "build:tsc"
+      ]
+    },
+    "serve:dev-backend": {
+      "command": "bash scripts/start-dev-backend.sh",
+      "service": true
+    },
+    "serve:dev-backend-all": {
+      "command": "node --enable-source-maps .",
+      "service": true,
+      "env": {
+        "BACKEND_API_ENDPOINT": "http://localhost:8080"
+      },
+      "files": [
+        ".env"
+      ],
+      "dependencies": [
+        "build:tsc",
+        {
+          "script": "../visual-editor#check:tsc",
+          "cascade": false
+        },
+        "serve:dev-backend"
       ]
     }
   },

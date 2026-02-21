@@ -4,10 +4,31 @@
   "private": true,
   "description": "Fake Opal backend for integration testing (canned scenarios)",
   "scripts": {
-    "setup": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '../opal-backend-shared[dev]' && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
+    "setup": "wireit",
     "dev": ".venv/bin/uvicorn opal_backend_fake.main:app --reload --port 8000",
-    "test": ".venv/bin/python -m pytest tests/ -v",
+    "test": "wireit",
     "test:unit": ".venv/bin/python -m pytest tests/test_pending_requests.py -v",
     "test:integration": ".venv/bin/python -m pytest tests/test_server.py -v"
+  },
+  "wireit": {
+    "setup": {
+      "command": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '../opal-backend-shared[dev]' && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
+      "files": [
+        "pyproject.toml",
+        "../opal-backend-shared/pyproject.toml"
+      ],
+      "output": [],
+      "dependencies": [
+        "../opal-backend-shared#setup"
+      ]
+    },
+    "test": {
+      "command": ".venv/bin/python -m pytest tests/ -v",
+      "files": [
+        "opal_backend_fake/**/*.py",
+        "tests/**/*.py"
+      ],
+      "dependencies": []
+    }
   }
 }

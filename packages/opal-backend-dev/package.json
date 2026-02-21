@@ -4,7 +4,29 @@
   "private": true,
   "description": "Opal dev backend (proxy existing APIs, wire new ones directly)",
   "scripts": {
-    "setup": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '../opal-backend-shared[dev]' && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
-    "dev": ".venv/bin/uvicorn opal_backend_dev.main:app --reload --port 8080"
+    "setup": "wireit",
+    "dev": ".venv/bin/uvicorn opal_backend_dev.main:app --reload --port 8080",
+    "test": "wireit"
+  },
+  "wireit": {
+    "setup": {
+      "command": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '../opal-backend-shared[dev]' && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
+      "files": [
+        "pyproject.toml",
+        "../opal-backend-shared/pyproject.toml"
+      ],
+      "output": [],
+      "dependencies": [
+        "../opal-backend-shared#setup"
+      ]
+    },
+    "test": {
+      "command": ".venv/bin/python -m pytest tests/ -v",
+      "files": [
+        "opal_backend_dev/**/*.py",
+        "tests/**/*.py"
+      ],
+      "dependencies": []
+    }
   }
 }
