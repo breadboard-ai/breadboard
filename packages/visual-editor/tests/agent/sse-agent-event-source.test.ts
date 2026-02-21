@@ -42,14 +42,14 @@ function mockFetchResponse(body: ReadableStream): Response {
   } as unknown as Response;
 }
 
+const TEST_CONFIG = { kind: "test", objective: { parts: [{ text: "hi" }] } };
+
 suite("SSEAgentEventSource", () => {
   let fetchCalls: Array<{ url: string; init?: RequestInit }>;
-  let postBodies: Array<{ url: string; body: unknown }>;
 
   beforeEach(() => {
     setDOM();
     fetchCalls = [];
-    postBodies = [];
   });
 
   afterEach(() => {
@@ -57,7 +57,7 @@ suite("SSEAgentEventSource", () => {
     unsetDOM();
   });
 
-  /** Install a mock fetch that returns the SSE stream for GET, records POSTs */
+  /** Install a mock fetch that returns the SSE stream for POST requests. */
   function installFetch(events: AgentEvent[]) {
     mock.method(
       globalThis,
@@ -65,18 +65,7 @@ suite("SSEAgentEventSource", () => {
       async (url: string | URL | Request, init?: RequestInit) => {
         const urlStr = typeof url === "string" ? url : url.toString();
         fetchCalls.push({ url: urlStr, init });
-
-        if (!init?.method || init.method === "GET") {
-          // SSE stream response
-          return mockFetchResponse(sseStream(events));
-        }
-
-        // POST (input endpoint)
-        postBodies.push({
-          url: urlStr,
-          body: init.body ? JSON.parse(init.body as string) : null,
-        });
-        return { ok: true, status: 200 };
+        return mockFetchResponse(sseStream(events));
       }
     );
   }
@@ -100,7 +89,7 @@ suite("SSEAgentEventSource", () => {
 
     const source = new SSEAgentEventSource(
       "http://test",
-      "run-1",
+      TEST_CONFIG,
       consumer,
       fetch
     );
@@ -110,11 +99,17 @@ suite("SSEAgentEventSource", () => {
     assert.strictEqual(received[0].type, "thought");
     assert.strictEqual(received[1].type, "finish");
 
-    // Verify the GET URL
-    assert.strictEqual(fetchCalls[0].url, "http://test/api/agent/run-1/events");
+    // Verify the POST URL and body
+    assert.strictEqual(fetchCalls[0].url, "http://test/api/agent/run");
+    assert.strictEqual(fetchCalls[0].init?.method, "POST");
+    const body = JSON.parse(fetchCalls[0].init?.body as string);
+    assert.deepStrictEqual(body, TEST_CONFIG);
   });
 
-  test("suspend events trigger POST to /input", async () => {
+  test("suspend events are dispatched to consumer", async () => {
+    // In the Resumable Stream Protocol, suspend events are just events
+    // like any other. The client will POST again with the interaction ID
+    // in Phase 4.5 — for now, they're simply passed to the consumer.
     const events: AgentEvent[] = [
       {
         type: "waitForInput",
@@ -127,27 +122,28 @@ suite("SSEAgentEventSource", () => {
     installFetch(events);
 
     const consumer = new AgentEventConsumer();
+    const received: AgentEvent[] = [];
 
-    consumer.on("waitForInput", () => {
-      // Simulate UI returning a response
-      return Promise.resolve({ input: { parts: [{ text: "hello" }] } });
+    consumer.on("waitForInput", (event) => {
+      received.push(event);
     });
-    consumer.on("finish", () => {});
+    consumer.on("finish", (event) => {
+      received.push(event);
+    });
 
     const source = new SSEAgentEventSource(
       "http://test",
-      "run-1",
+      TEST_CONFIG,
       consumer,
       fetch
     );
     await source.connect();
 
-    assert.strictEqual(postBodies.length, 1);
-    assert.strictEqual(postBodies[0].url, "http://test/api/agent/run-1/input");
-    assert.deepStrictEqual(postBodies[0].body, {
-      request_id: "req-42",
-      response: { input: { parts: [{ text: "hello" }] } },
-    });
+    assert.strictEqual(received.length, 2);
+    assert.strictEqual(received[0].type, "waitForInput");
+
+    // No side-channel POST — only the initial POST to start the stream.
+    assert.strictEqual(fetchCalls.length, 1);
   });
 
   test("stops on finish event", async () => {
@@ -169,7 +165,7 @@ suite("SSEAgentEventSource", () => {
 
     const source = new SSEAgentEventSource(
       "http://test",
-      "run-1",
+      TEST_CONFIG,
       consumer,
       fetch
     );
@@ -189,7 +185,7 @@ suite("SSEAgentEventSource", () => {
 
     const source = new SSEAgentEventSource(
       "http://test",
-      "run-1",
+      TEST_CONFIG,
       consumer,
       fetch
     );
@@ -207,7 +203,7 @@ suite("SSEAgentEventSource", () => {
     const consumer = new AgentEventConsumer();
     const source = new SSEAgentEventSource(
       "http://test",
-      "run-1",
+      TEST_CONFIG,
       consumer,
       fetch
     );
@@ -223,7 +219,7 @@ suite("SSEAgentEventSource", () => {
     const consumer = new AgentEventConsumer();
     const source = new SSEAgentEventSource(
       "http://test",
-      "run-1",
+      TEST_CONFIG,
       consumer,
       fetch
     );

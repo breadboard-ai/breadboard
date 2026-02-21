@@ -5,19 +5,21 @@
 Opal dev backend server.
 
 Reverse-proxies all v1beta1/* requests to One Platform, forwarding
-auth headers as-is. Agent-run endpoints use the real Gemini loop
-from opal-backend-shared with system termination functions.
+auth headers as-is. Agent runs use the real Gemini loop from
+opal-backend-shared with system termination functions.
+
+Protocol:
+    POST /api/agent/run → SSE stream (Resumable Stream Protocol)
+    Body: {"kind": "...", "objective": {...}}
 
 Run with: uvicorn opal_backend_dev.main:app --reload --port 8080
 """
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os
-import uuid
 
 import httpx
 from fastapi import FastAPI, Request, Response
@@ -29,10 +31,7 @@ from opal_backend_shared.agent_events import (
     build_hooks_from_sink,
 )
 from opal_backend_shared.functions.system import get_system_function_group
-from opal_backend_shared.local.api_surface import (
-    StartRunResponse,
-    create_api_router,
-)
+from opal_backend_shared.local.api_surface import create_api_router
 from opal_backend_shared.loop import (
     AgentRunArgs,
     Loop,
@@ -61,8 +60,6 @@ UPSTREAM_BASE = os.environ.get(
     "https://appcatalyst.pa.googleapis.com",
 )
 
-
-
 # Persistent HTTP client for proxying.
 _client = httpx.AsyncClient(timeout=120.0)
 
@@ -76,14 +73,12 @@ class DevProxyBackend:
 
     async def proxy(self, request: Request) -> Response:
         # Build the upstream URL.
-        # request.url.path is like /v1beta1/executeStep
         upstream_url = f"{UPSTREAM_BASE}{request.url.path}"
         if request.url.query:
             upstream_url += f"?{request.url.query}"
 
         # Forward headers (including Authorization).
         headers = dict(request.headers)
-        # Remove hop-by-hop headers that shouldn't be forwarded.
         for h in ("host", "transfer-encoding"):
             headers.pop(h, None)
 
@@ -97,55 +92,61 @@ class DevProxyBackend:
         )
 
         # Forward the upstream response back to the client.
+        # Strip encoding headers — httpx decompresses the body, so
+        # forwarding Content-Encoding would cause ERR_CONTENT_DECODING_FAILED.
+        resp_headers = dict(upstream_resp.headers)
+        for h in ("content-encoding", "content-length", "transfer-encoding"):
+            resp_headers.pop(h, None)
+
         return Response(
             content=upstream_resp.content,
             status_code=upstream_resp.status_code,
-            headers=dict(upstream_resp.headers),
+            headers=resp_headers,
         )
 
 
 # ---------------------------------------------------------------------------
-# Agent backend — real Gemini loop
+# Agent backend — real Gemini loop via Resumable Stream Protocol
 # ---------------------------------------------------------------------------
 
 class DevAgentBackend:
     """Implements AgentBackend using the real Python agent loop.
 
-    Each ``start_run()`` creates a Loop with system termination functions,
-    starts the loop as a background asyncio task, and stores the event
-    sink. ``event_stream()`` drains the sink into an SSE stream.
+    Single POST /api/agent/run → SSE stream.
 
-    The access token for Gemini API calls will be forwarded from the
-    user's request headers once the request-scoped auth plumbing is
-    wired (Phase 4.4d+).
+    The handler parses the request body, extracts the access token
+    from the Authorization header, runs the Loop inline, and streams
+    events directly back to the client as SSE.
+
+    No background tasks or run maps needed — the HTTP response IS
+    the event stream.
     """
 
-    def __init__(self) -> None:
-        # Active runs: run_id → (task, sink, controller)
-        self._runs: dict[
-            str,
-            tuple[asyncio.Task, AgentEventSink, LoopController],
-        ] = {}
+    async def run(self, request: Request) -> EventSourceResponse:
+        # Parse the request body.
+        body = await request.json()
 
-    async def start_run(self, scenario: str) -> StartRunResponse:
-        run_id = str(uuid.uuid4())
+        # Extract access token from Authorization header.
+        auth_header = request.headers.get("authorization", "")
+        access_token = ""
+        if auth_header.startswith("Bearer "):
+            access_token = auth_header[len("Bearer "):]
+
+        # Build the objective from the request body.
+        objective = body.get("objective")
+        if not objective:
+            return _error_stream("Missing 'objective' in request body")
 
         # Create the event sink and hooks.
         sink = AgentEventSink()
         hooks = build_hooks_from_sink(sink)
 
-        # Create the loop + controller.
+        # Create the loop with auth.
         controller = LoopController()
-        loop = Loop(controller=controller)
+        loop = Loop(access_token=access_token, controller=controller)
 
         # Wire up system functions (termination only for now).
         system_group = get_system_function_group(controller)
-
-        # Build the objective content.
-        objective: dict = {
-            "parts": [{"text": f"Scenario: {scenario}"}],
-            "role": "user",
-        }
 
         run_args = AgentRunArgs(
             objective=objective,
@@ -153,24 +154,36 @@ class DevAgentBackend:
             hooks=hooks,
         )
 
-        # Start the loop as a background task.
-        async def run_loop() -> None:
+        async def generate():
+            """Run the loop and yield SSE events."""
             try:
                 result = await loop.run(run_args)
-                # Emit the final complete event.
-                sink.emit({
-                    "type": "complete",
-                    "result": {
-                        "success": result.success
-                        if hasattr(result, "success")
-                        else False,
-                        "outcomes": result.outcomes
-                        if hasattr(result, "outcomes")
-                        else None,
-                    },
-                })
+
+                # The loop returns err() dicts ({"$error": "message"})
+                # on caught exceptions. Surface them as error events.
+                if isinstance(result, dict) and "$error" in result:
+                    sink.emit({
+                        "type": "error",
+                        "message": result["$error"],
+                    })
+                    sink.emit({
+                        "type": "complete",
+                        "result": {"success": False, "outcomes": None},
+                    })
+                else:
+                    sink.emit({
+                        "type": "complete",
+                        "result": {
+                            "success": result.success
+                            if hasattr(result, "success")
+                            else False,
+                            "outcomes": result.outcomes
+                            if hasattr(result, "outcomes")
+                            else None,
+                        },
+                    })
             except Exception as e:
-                logger.exception("Loop failed for run %s", run_id)
+                logger.exception("Agent loop failed")
                 sink.emit({
                     "type": "error",
                     "message": str(e),
@@ -178,53 +191,37 @@ class DevAgentBackend:
             finally:
                 sink.close()
 
-        task = asyncio.create_task(run_loop())
-        self._runs[run_id] = (task, sink, controller)
+        async def stream():
+            """Yield SSE-formatted events from the sink.
 
-        return StartRunResponse(run_id=run_id, scenario=scenario)
+            We start the loop as a concurrent task so the sink can
+            drain events as they're produced.
+            """
+            import asyncio
 
-    async def event_stream(self, run_id: str) -> EventSourceResponse:
-        entry = self._runs.get(run_id)
-        if entry is None:
-            return EventSourceResponse(
-                content=iter([]),
-                status_code=404,
-            )
+            loop_task = asyncio.create_task(generate())
+            try:
+                async for event in sink:
+                    event_type = event.get("type", "message")
+                    yield {
+                        "event": event_type,
+                        "data": json.dumps(event),
+                    }
+            finally:
+                if not loop_task.done():
+                    loop_task.cancel()
 
-        _, sink, _ = entry
+        return EventSourceResponse(content=stream())
 
-        async def generate():
-            async for event in sink:
-                event_type = event.get("type", "message")
-                yield {
-                    "event": event_type,
-                    "data": json.dumps(event),
-                }
 
-        return EventSourceResponse(content=generate())
-
-    async def submit_input(
-        self, run_id: str, request_id: str, response
-    ) -> dict:
-        # Input handling will be added in a later phase when we port
-        # the suspend/resume pattern (waitForInput, waitForChoice).
-        return {"status": "not_implemented"}
-
-    async def abort_run(self, run_id: str) -> dict:
-        entry = self._runs.pop(run_id, None)
-        if entry is None:
-            return {"status": "not_found"}
-
-        task, sink, controller = entry
-        # Terminate the controller — the loop will exit on next iteration.
-        from opal_backend_shared.loop import AgentResult
-
-        controller.terminate(
-            AgentResult(success=False, outcomes={"parts": [{"text": "Aborted"}]})
-        )
-        sink.close()
-        task.cancel()
-        return {"status": "aborted"}
+def _error_stream(message: str) -> EventSourceResponse:
+    """Return an SSE stream with a single error event."""
+    async def generate():
+        yield {
+            "event": "error",
+            "data": json.dumps({"type": "error", "message": message}),
+        }
+    return EventSourceResponse(content=generate())
 
 
 # ---------------------------------------------------------------------------
@@ -247,7 +244,6 @@ async def root():
     return {
         "name": "Opal Dev Backend",
         "upstream": UPSTREAM_BASE,
-        "agent": "active",
-        "status": "proxy active — all v1beta1/* forwarded to upstream",
+        "agent": "active (Resumable Stream Protocol)",
+        "endpoint": "POST /api/agent/run → SSE stream",
     }
-
