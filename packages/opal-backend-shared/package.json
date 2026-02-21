@@ -5,7 +5,7 @@
   "description": "Shared Opal backend logic (synced to production)",
   "scripts": {
     "setup": "wireit",
-    "test": ".venv/bin/python -m pytest tests/ -v"
+    "test": "wireit"
   },
   "wireit": {
     "setup": {
@@ -14,6 +14,14 @@
         "pyproject.toml"
       ],
       "output": []
+    },
+    "test": {
+      "command": ".venv/bin/python -m pytest tests/ -v",
+      "files": [
+        "opal_backend_shared/**/*.py",
+        "tests/**/*.py"
+      ],
+      "dependencies": []
     }
   }
 }

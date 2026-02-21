@@ -46,6 +46,7 @@
     },
     "test:python": {
       "dependencies": [
+        "./packages/opal-backend-shared#test",
         "./packages/opal-backend-fake#test",
         "./packages/opal-backend-dev#test"
       ]

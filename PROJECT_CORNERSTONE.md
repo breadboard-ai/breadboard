@@ -151,16 +151,44 @@ mirrored as Pydantic models in `opal-backend-shared`.
       protocols
 - [x] `opal-backend-dev` reverse proxy via `httpx` (forwards auth headers)
 - [x] `opal-backend-fake` refactored to shared API surface (13 tests passing)
-- [x] `dev2` wireit entry (serves at `:3100`, proxy at `:8080`)
+- [x] `dev:backend` wireit entry (serves at `:3000`, proxy at `:8080`)
 - [x] `start-dev-backend.sh` with venv check
 
 #### 4.4: Port Agent Loop to Python
 
-- [ ] Port `Loop` (agent loop core) to `opal-backend-shared`
-- [ ] Port `FunctionCaller` (tool dispatch) to `opal-backend-shared`
-- [ ] Port function definitions (generate, graph-editing, a2ui, etc.)
-- [ ] Wire agent-run endpoints in `opal-backend-dev`
+##### 4.4a: Loop Core ✅
+
+- [x] `gemini_client.py` — streaming Gemini API via `httpx`
+- [x] `function_definition.py` — `FunctionDefinition`, `FunctionGroup` types
+- [x] `function_caller.py` — async function dispatch + result collection
+- [x] `loop.py` — while-loop orchestrator with `LoopHooks`
+- [x] Unit tests with mocked Gemini responses (14 tests)
+
+##### 4.4b: Termination Functions
+
+- [ ] Port `system_objective_fulfilled` (terminates loop with success)
+- [ ] Port `system_failed_to_fulfill_objective` (terminates loop with failure)
+- [ ] System instruction (meta-plan prompt)
+- [ ] Unit tests
+
+##### 4.4c: DevAgentBackend + End-to-End
+
+- [ ] `DevAgentBackend` in `opal-backend-dev` (implements `AgentBackend`)
+- [ ] `buildHooksFromSink` equivalent for event emission
+- [ ] Integration tests for agent endpoints
 - [ ] End-to-end: `SSEAgentEventSource` ↔ `opal-backend-dev` round-trip
+
+##### 4.4d: Agent File System + Pidgin
+
+- [ ] Port `AgentFileSystem` (in-memory virtual FS)
+- [ ] Port `PidginTranslator` (objective translation)
+- [ ] Add `intermediate` / `FileData` to `AgentResult`
+- [ ] Port remaining system functions (list/read/write files, task tree)
+
+##### 4.4e: Custom Tools + Body Conformation
+
+- [ ] Port `conformGeminiBody` (data-part transforms for file upload)
+- [ ] Port `SimplifiedToolManager` / `customTools` support in Loop
 
 #### 4.5: Graph-Editing Agent Over the Wire
 
