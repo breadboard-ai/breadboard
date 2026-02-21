@@ -138,6 +138,14 @@ export function services(
 
     const agentService = new AgentService();
 
+    // When the Python agent backend is enabled, route content agent runs
+    // through SSE instead of running the loop in-process.
+    // Use the canonical OPAL_BACKEND_API_PREFIX — fetchWithCreds remaps it
+    // to BACKEND_API_ENDPOINT automatically via the allowlist.
+    if (CLIENT_DEPLOYMENT_CONFIG.DEV_BACKEND_MODE) {
+      agentService.configureRemote(OPAL_BACKEND_API_PREFIX, fetchWithCreds);
+    }
+
     const sandbox = createA2ModuleFactory({
       mcpClientManager: mcpClientManager,
       fetchWithCreds: fetchWithCreds,

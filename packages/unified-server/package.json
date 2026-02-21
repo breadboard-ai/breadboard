@@ -117,7 +117,8 @@
       "command": "node --enable-source-maps .",
       "service": true,
       "env": {
-        "BACKEND_API_ENDPOINT": "http://localhost:8080"
+        "BACKEND_API_ENDPOINT": "http://localhost:8080",
+        "DEV_BACKEND_MODE": "true"
       },
       "files": [
         ".env"

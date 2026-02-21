@@ -19,6 +19,9 @@ import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { buildAgentRun } from "./loop-setup.js";
 import type { LocalAgentRun } from "./local-agent-run.js";
+import { SSEAgentRun } from "./sse-agent-run.js";
+import { ConsoleProgressManager } from "./console-progress-manager.js";
+import { getCurrentStepState } from "./progress-work-item.js";
 import { createAgentConfigurator } from "./agent-function-configurator.js";
 import { readFlags } from "../a2/settings.js";
 import { conformGeminiBody, streamGenerateContent } from "../a2/gemini.js";
@@ -116,17 +119,24 @@ async function invokeAgent(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
 
-  // Create a run handle for this content agent execution.
-  // This code IS the agent loop, so it's always local mode.
+  // Create a run handle. In remote mode this is SSEAgentRun.
   const handle = moduleArgs.agentService.startRun({
     kind: "content",
     objective,
-  }) as LocalAgentRun;
+  });
+
+  // --- Remote mode: server runs the loop, we consume SSE events ---
+  if (handle instanceof SSEAgentRun) {
+    return invokeRemoteAgent(handle, moduleArgs);
+  }
+
+  // --- Local mode: build and run the loop in-process ---
+  const localHandle = handle as LocalAgentRun;
 
   const configureFn = createAgentConfigurator(
     moduleArgs,
     generators,
-    handle.sink
+    localHandle.sink
   );
 
   const setup = await buildAgentRun({
@@ -136,7 +146,7 @@ async function invokeAgent(
     configureFn,
     uiType: enableA2UI ? "a2ui" : "chat",
     uiPrompt,
-    sink: handle.sink,
+    sink: localHandle.sink,
   });
   if (!ok(setup)) {
     moduleArgs.agentService.endRun(handle.runId);
@@ -146,15 +156,10 @@ async function invokeAgent(
   const { loop, runArgs, progress, runStateManager, choicePresenter } = setup;
 
   // Maps event-layer callIds → progress-manager callIds.
-  // Both sides generate UUIDs independently; this map correlates them.
   const callIdMap = new Map<string, string>();
-
-  // Maps event-layer callIds → real ProgressReporters from progress.functionCall().
-  // Subagent events dispatch to these reporters.
   const reporterMap = new Map<string, ProgressReporter>();
 
-  // Wire consumer handlers to progress manager and run state manager
-  handle.events
+  localHandle.events
     .on("start", (event) => {
       progress.startAgent(event.objective);
     })
@@ -254,6 +259,82 @@ async function invokeAgent(
   if (!ok(result)) return result;
   console.log("LOOP", result);
   return toAgentOutputs(result.outcomes, result.href);
+}
+
+/**
+ * Remote agent run: the server runs the loop, we consume SSE events.
+ *
+ * This is a lightweight path that skips all the heavy local deps
+ * (AgentFileSystem, PidginTranslator, AgentUI) — those run server-side.
+ * We only set up a ConsoleProgressManager for UI reporting.
+ */
+async function invokeRemoteAgent(
+  handle: SSEAgentRun,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<AgentOutputs>> {
+  const { consoleEntry, appScreen } = getCurrentStepState(moduleArgs);
+  const progress = new ConsoleProgressManager(consoleEntry, appScreen);
+
+  const callIdMap = new Map<string, string>();
+  const reporterMap = new Map<string, ProgressReporter>();
+
+  // The `complete` event carries the final AgentResult with outcomes.
+  // This mirrors `loop.run()` returning `controller.result` in local mode.
+  let remoteResult: { success: boolean; outcomes?: LLMContent } | undefined;
+
+  handle.events
+    .on("start", (event) => {
+      progress.startAgent(event.objective);
+    })
+    .on("finish", () => {
+      progress.finish();
+    })
+    .on("complete", (event) => {
+      remoteResult = event.result;
+    })
+    .on("thought", (event) => {
+      progress.thought(event.text);
+    })
+    .on("functionCall", (event) => {
+      const { callId: progressCallId, reporter } = progress.functionCall(
+        { functionCall: { name: event.name, args: event.args } },
+        event.icon,
+        event.title
+      );
+      callIdMap.set(event.callId, progressCallId);
+      if (reporter) {
+        reporterMap.set(event.callId, reporter);
+      }
+    })
+    .on("functionCallUpdate", (event) => {
+      const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+      progress.functionCallUpdate(progressCallId, event.status, event.opts);
+    })
+    .on("functionResult", (event) => {
+      const progressCallId = callIdMap.get(event.callId) ?? event.callId;
+      progress.functionResult(progressCallId, event.content);
+      callIdMap.delete(event.callId);
+      reporterMap.delete(event.callId);
+    })
+    .on("sendRequest", (event) => {
+      progress.sendRequest(event.model, event.body);
+    })
+    .on("subagentAddJson", (event) => {
+      reporterMap
+        .get(event.callId)
+        ?.addJson(event.title, event.data, event.icon);
+    })
+    .on("subagentError", (event) => {
+      reporterMap.get(event.callId)?.addError(event.error);
+    })
+    .on("subagentFinish", (event) => {
+      reporterMap.get(event.callId)?.finish();
+    });
+
+  await handle.connect();
+  moduleArgs.agentService.endRun(handle.runId);
+
+  return toAgentOutputs(remoteResult?.outcomes);
 }
 
 async function invoke(
