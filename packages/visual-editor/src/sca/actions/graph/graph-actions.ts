@@ -58,7 +58,7 @@ export const bind = makeAction();
 /**
  * Runs a generic edit.
  */
-async function editInternal(spec: EditSpec[], label: string, dryRun = false) {
+async function editInternal(spec: EditSpec[], label: string) {
   const { controller } = bind;
 
   // TODO: Get the editor instance from the graphStore service. Note that the
@@ -69,7 +69,7 @@ async function editInternal(spec: EditSpec[], label: string, dryRun = false) {
     throw new Error("No active graph to edit");
   }
 
-  const result = await editor.edit(spec, label, dryRun);
+  const result = await editor.edit(spec, label);
   if (result.success) {
     return;
   }

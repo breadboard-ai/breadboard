@@ -9,6 +9,7 @@ import { beforeEach, suite, test } from "node:test";
 import { GraphController } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/graph-controller.js";
 import {
   makeTestGraphStore,
+  makeTestGraphStoreArgs,
   loadGraphIntoStore,
 } from "../../../../../helpers/_graph-store.js";
 import { editGraphStore } from "../../../../../helpers/_editor.js";
@@ -17,7 +18,6 @@ import type {
   EditableGraph,
   EditHistoryCreator,
   GraphDescriptor,
-  MutableGraph,
   MutableGraphStore,
 } from "@breadboard-ai/types";
 import type { GraphAsset } from "../../../../../../src/sca/types.js";
@@ -1122,27 +1122,319 @@ suite("GraphController", () => {
   });
 
   // ==========================================================================
-  // MutableGraphStore (set/get)
+  // MutableGraph — set/get (self-referential), initialize, update, rebuild
   // ==========================================================================
 
-  test("get returns the controller itself (GraphController IS the MutableGraph)", async () => {
-    const store = new GraphController("Graph_MGS_SetGet", "GraphController");
+  test("get returns this, set is a no-op", async () => {
+    const store = new GraphController("Graph_SetGet", "GraphController");
     await store.isHydrated;
 
-    // GraphController IS the MutableGraph, so get() always returns `this`.
-    assert.strictEqual(
-      store.get(),
-      store,
-      "get() should return the controller itself"
+    // get() always returns `this`
+    assert.strictEqual(store.get(), store);
+
+    // set() is a no-op — get() still returns `this`
+    const fake = {} as unknown as import("@breadboard-ai/types").MutableGraph;
+    store.set(fake);
+    assert.strictEqual(store.get(), store);
+  });
+
+  test("initialize() sets deps, id, and builds caches", async () => {
+    const store = new GraphController("Graph_Init", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [{ id: "a", type: "foo" }],
+      edges: [],
+    };
+
+    const args = makeTestGraphStoreArgs();
+    store.initialize(graph, args);
+
+    // id should be a UUID
+    assert.ok(store.id, "id should be set");
+    assert.match(
+      store.id,
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      "id should be a UUID"
     );
 
-    // set() is a no-op — retained for interface compatibility.
-    const mockMutableGraph = { id: "mock-mutable" } as unknown as MutableGraph;
-    store.set(mockMutableGraph);
+    // deps should be accessible
+    assert.strictEqual(store.deps, args);
+
+    // graph should be set
+    assert.strictEqual(store.graph, graph);
+
+    // caches should be initialized
+    assert.ok(store.graphs, "graphs cache should exist");
+    assert.ok(store.nodes, "nodes cache should exist");
+    assert.ok(store.describe, "describe cache should exist");
+  });
+
+  test("store getter returns this", async () => {
+    const store = new GraphController("Graph_Store", "GraphController");
+    await store.isHydrated;
+
+    assert.strictEqual(store.store, store, "store should return this");
+  });
+
+  test("nodes.get returns a node by id", async () => {
+    const store = new GraphController("Graph_NodesGet", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [
+        { id: "alpha", type: "foo" },
+        { id: "beta", type: "bar" },
+      ],
+      edges: [],
+    };
+
+    store.initialize(graph, makeTestGraphStoreArgs());
+
+    const node = store.nodes.get("alpha", "");
+    assert.ok(node, "should find node 'alpha'");
+    assert.strictEqual(node!.descriptor.id, "alpha");
+
+    const missing = store.nodes.get("nonexistent", "");
     assert.strictEqual(
-      store.get(),
-      store,
-      "get() should still return the controller after set()"
+      missing,
+      undefined,
+      "should return undefined for missing"
+    );
+  });
+
+  test("nodes.nodes returns all nodes", async () => {
+    const store = new GraphController("Graph_NodesAll", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [
+        { id: "a", type: "foo" },
+        { id: "b", type: "bar" },
+        { id: "c", type: "foo" },
+      ],
+      edges: [],
+    };
+
+    store.initialize(graph, makeTestGraphStoreArgs());
+
+    const allNodes = store.nodes.nodes("");
+    assert.strictEqual(allNodes.length, 3);
+  });
+
+  test("nodes.byType filters nodes by type", async () => {
+    const store = new GraphController("Graph_NodesByType", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [
+        { id: "a", type: "foo" },
+        { id: "b", type: "bar" },
+        { id: "c", type: "foo" },
+      ],
+      edges: [],
+    };
+
+    store.initialize(graph, makeTestGraphStoreArgs());
+
+    const fooNodes = store.nodes.byType("foo", "");
+    assert.strictEqual(fooNodes.length, 2);
+
+    const barNodes = store.nodes.byType("bar", "");
+    assert.strictEqual(barNodes.length, 1);
+
+    const noneNodes = store.nodes.byType("baz", "");
+    assert.strictEqual(noneNodes.length, 0);
+  });
+
+  test("nodes cache works with sub-graphs", async () => {
+    const store = new GraphController("Graph_SubGraphNodes", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [{ id: "main-node", type: "foo" }],
+      edges: [],
+      graphs: {
+        "sub-1": {
+          nodes: [
+            { id: "sub-a", type: "bar" },
+            { id: "sub-b", type: "baz" },
+          ],
+          edges: [],
+        },
+      },
+    };
+
+    store.initialize(graph, makeTestGraphStoreArgs());
+
+    // Main graph
+    assert.strictEqual(store.nodes.nodes("").length, 1);
+    assert.strictEqual(
+      store.nodes.get("main-node", "")?.descriptor.id,
+      "main-node"
+    );
+
+    // Sub-graph
+    assert.strictEqual(store.nodes.nodes("sub-1").length, 2);
+    assert.strictEqual(
+      store.nodes.get("sub-a", "sub-1")?.descriptor.id,
+      "sub-a"
+    );
+    assert.strictEqual(store.nodes.get("main-node", "sub-1"), undefined);
+  });
+
+  test("graphs.get returns an InspectableGraph", async () => {
+    const store = new GraphController("Graph_GraphsGet", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [{ id: "a", type: "foo" }],
+      edges: [],
+      graphs: {
+        "tool-1": { nodes: [], edges: [] },
+      },
+    };
+
+    store.initialize(graph, makeTestGraphStoreArgs());
+
+    const main = store.graphs.get("");
+    assert.ok(main, "should return main graph");
+
+    const sub = store.graphs.get("tool-1");
+    assert.ok(sub, "should return sub-graph");
+  });
+
+  test("graphs.graphs returns all sub-graphs", async () => {
+    const store = new GraphController("Graph_GraphsAll", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      graphs: {
+        "tool-1": { nodes: [], edges: [] },
+        "tool-2": { nodes: [], edges: [] },
+      },
+    };
+
+    store.initialize(graph, makeTestGraphStoreArgs());
+
+    const allGraphs = store.graphs.graphs();
+    const keys = Object.keys(allGraphs);
+    assert.strictEqual(keys.length, 2);
+    assert.ok(keys.includes("tool-1"));
+    assert.ok(keys.includes("tool-2"));
+  });
+
+  test("update() refreshes graph without full rebuild", async () => {
+    const store = new GraphController("Graph_Update", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [{ id: "a", type: "foo" }],
+      edges: [],
+    };
+
+    store.initialize(graph, makeTestGraphStoreArgs());
+    const describeBeforeUpdate = store.describe;
+
+    // Update with a new graph (visual-only change — no describe refresh)
+    const updatedGraph: GraphDescriptor = {
+      nodes: [
+        {
+          id: "a",
+          type: "foo",
+          metadata: { visual: { x: 100, y: 200, icon: "generic" } },
+        },
+      ],
+      edges: [],
+    };
+    store.update(updatedGraph, true, []);
+    assert.strictEqual(store.graph, updatedGraph);
+    // Describe cache should be the SAME object (not rebuilt)
+    assert.strictEqual(store.describe, describeBeforeUpdate);
+  });
+
+  test("update() refreshes describers on structural changes", async () => {
+    const store = new GraphController("Graph_UpdateStruct", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [{ id: "a", type: "foo" }],
+      edges: [],
+    };
+
+    store.initialize(graph, makeTestGraphStoreArgs());
+    const describeBeforeUpdate = store.describe;
+
+    // Non-visual update — describe.update() is called
+    const updatedGraph: GraphDescriptor = {
+      nodes: [
+        { id: "a", type: "foo" },
+        { id: "b", type: "bar" },
+      ],
+      edges: [],
+    };
+    store.update(updatedGraph, false, [{ id: "b", graphId: "" }]);
+    assert.strictEqual(store.graph, updatedGraph);
+    // Describe cache should still be the same object (update() doesn't rebuild)
+    assert.strictEqual(store.describe, describeBeforeUpdate);
+  });
+
+  test("rebuild() creates fresh caches", async () => {
+    const store = new GraphController("Graph_Rebuild", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = {
+      nodes: [{ id: "a", type: "foo" }],
+      edges: [],
+    };
+
+    store.initialize(graph, makeTestGraphStoreArgs());
+    const describeBefore = store.describe;
+    const nodesBefore = store.nodes;
+
+    // Rebuild with a different graph
+    const newGraph: GraphDescriptor = {
+      nodes: [
+        { id: "x", type: "bar" },
+        { id: "y", type: "baz" },
+      ],
+      edges: [],
+    };
+    store.rebuild(newGraph);
+
+    assert.strictEqual(store.graph, newGraph);
+    // Caches should be new objects
+    assert.notStrictEqual(store.describe, describeBefore);
+    assert.notStrictEqual(store.nodes, nodesBefore);
+    // New nodes should be accessible
+    assert.strictEqual(store.nodes.nodes("").length, 2);
+    assert.ok(store.nodes.get("x", ""));
+    assert.strictEqual(
+      store.nodes.get("a", ""),
+      undefined,
+      "old node should be gone"
+    );
+  });
+
+  test("initialize() generates a new id each time", async () => {
+    const store = new GraphController("Graph_InitId", "GraphController");
+    await store.isHydrated;
+
+    const graph: GraphDescriptor = { nodes: [], edges: [] };
+    const args = makeTestGraphStoreArgs();
+
+    store.initialize(graph, args);
+    const firstId = store.id;
+
+    store.initialize(graph, args);
+    const secondId = store.id;
+
+    assert.notStrictEqual(
+      firstId,
+      secondId,
+      "each initialize should generate a new id"
     );
   });
 

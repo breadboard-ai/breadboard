@@ -121,7 +121,13 @@ swap out the `MutableGraphImpl` instantiation in `initialize-editor.ts`.
 
 Move query helpers and inspector classes into the controller layer.
 
-- [ ] Remove `MutableGraphImpl` class (dry-run path, test helpers)
+- [x] Remove `MutableGraphImpl` class
+  - Replaced with `createMutableGraph()` factory (test-only, in
+    `tests/helpers/_mutable-graph.ts`)
+  - Removed dead `dryRun` parameter from `EditableGraph.edit()`, editor
+    implementation, and `editInternal` action
+  - Deleted `src/engine/inspector/graph/mutable-graph.ts` — no production code
+    references it
 - [ ] Fold `GraphQueries` static methods into `GraphController`
 - [ ] Create `NodeController` sub-controller with `@field describeResult`
 - [ ] Create describe action + trigger (`Node.describe` action, fired on config

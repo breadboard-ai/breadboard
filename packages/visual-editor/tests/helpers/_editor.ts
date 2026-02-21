@@ -10,7 +10,7 @@ import {
   GraphDescriptor,
   MutableGraphStore,
 } from "@breadboard-ai/types";
-import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
+import { createMutableGraph } from "./_mutable-graph.js";
 import { Graph } from "../../src/engine/editor/graph.js";
 import { makeTestGraphStore, makeTestGraphStoreArgs } from "./_graph-store.js";
 
@@ -22,7 +22,7 @@ export const editGraph = (
 ): EditableGraph => {
   const args = makeTestGraphStoreArgs(options);
   const store = makeTestGraphStore(args);
-  const mutable = new MutableGraphImpl(graph, store, args);
+  const mutable = createMutableGraph(graph, store, args);
   return new Graph(mutable, options);
 };
 
