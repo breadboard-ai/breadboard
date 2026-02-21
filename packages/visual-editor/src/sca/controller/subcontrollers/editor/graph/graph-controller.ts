@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
+  AffectedNode,
   AssetPath,
   EditableGraph,
   EditHistoryCreator,
@@ -12,12 +13,18 @@ import {
   GraphChangeRejectEvent,
   GraphDescriptor,
   GraphIdentifier,
+  GraphStoreArgs,
   GraphTheme,
+  InspectableDescriberResultCache,
   InspectableGraph,
+  InspectableGraphCache,
+  InspectableNodeCache,
   InspectableNodePorts,
+  MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
   NodeConfiguration,
+  NodeDescriptor,
   NodeHandlerMetadata,
   NodeIdentifier,
   Outcome,
@@ -32,6 +39,9 @@ import {
 import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
+import { DescribeResultCache } from "../../../../../engine/inspector/graph/describe-cache.js";
+import { Graph } from "../../../../../engine/inspector/graph/graph.js";
+import { Node } from "../../../../../engine/inspector/graph/node.js";
 
 import { Tool, Component } from "../../../../types.js";
 import type { Components, GraphAsset } from "../../../../types.js";
@@ -101,24 +111,130 @@ const NOTEBOOKLM_TOOL: Tool = {
   icon: notebookLmIcon,
 };
 
-export class GraphController
-  extends RootController
-  implements MutableGraphStore
-{
-  #mutableGraph: MutableGraph | undefined;
+export class GraphController extends RootController implements MutableGraph {
+  // =========================================================================
+  // MutableGraph implementation
+  // =========================================================================
 
   /**
-   * MutableGraphStore.set — stores the given MutableGraph.
+   * MutableGraph.id — stable identifier for this mutable graph instance.
+   * Regenerated on each `initialize()` call.
    */
-  set(graph: MutableGraph): void {
-    this.#mutableGraph = graph;
+  id!: MainGraphIdentifier;
+
+  /**
+   * Dependencies for describers (sandbox, flags, etc.).
+   * Set once during initialization via `initialize()`.
+   */
+  #deps!: GraphStoreArgs;
+
+  get deps(): GraphStoreArgs {
+    return this.#deps;
   }
 
   /**
-   * MutableGraphStore.get — returns the current MutableGraph.
+   * Inspectable sub-graph cache. Provides `.get(id)` and `.graphs()`.
    */
-  get(): MutableGraph | undefined {
-    return this.#mutableGraph;
+  graphs!: InspectableGraphCache;
+
+  /**
+   * Inspectable node cache. Provides `.get(id, graphId)`, `.nodes(graphId)`,
+   * `.byType(type, graphId)`.
+   */
+  nodes!: InspectableNodeCache;
+
+  /**
+   * Describe-result cache. Provides `.get(id, graphId)` and
+   * `.update(affectedNodes)`.
+   */
+  describe!: InspectableDescriberResultCache;
+
+  /**
+   * MutableGraphStore — self-referential. `EditableGraph` reads `store` from
+   * the MutableGraph to pass to describer contexts.
+   */
+  get store(): MutableGraphStore {
+    return this;
+  }
+
+  /**
+   * MutableGraphStore.set — no-op, since GraphController IS the mutable graph.
+   * Retained for interface compatibility.
+   */
+  set(_graph: MutableGraph): void {
+    // no-op: GraphController is the MutableGraph, nothing to store.
+  }
+
+  /**
+   * MutableGraphStore.get — returns `this`.
+   */
+  get(): MutableGraph {
+    return this;
+  }
+
+  /**
+   * Initializes the MutableGraph state from a graph descriptor.
+   * Call this once when loading a graph (replaces `new MutableGraphImpl()`).
+   */
+  initialize(graph: GraphDescriptor, deps: GraphStoreArgs): void {
+    this.#deps = deps;
+    this.id = crypto.randomUUID();
+    this.rebuild(graph);
+  }
+
+  /**
+   * MutableGraph.update — incremental update after an edit.
+   * Refreshes describers for affected nodes without rebuilding caches.
+   */
+  update(
+    graph: GraphDescriptor,
+    visualOnly: boolean,
+    affectedNodes: AffectedNode[]
+  ): void {
+    if (!visualOnly) {
+      this.describe.update(affectedNodes);
+    }
+    this._graph = graph;
+  }
+
+  /**
+   * MutableGraph.rebuild — full rebuild of all caches from a new descriptor.
+   * Called on rollback, history navigation, and initial load.
+   */
+  rebuild(graph: GraphDescriptor): void {
+    this._graph = graph;
+    this.describe = new DescribeResultCache(this, this.#deps);
+    this.graphs = {
+      get: (id: GraphIdentifier) => new Graph(id, this),
+      graphs: () =>
+        Object.fromEntries(
+          Object.keys(this._graph?.graphs || {}).map((id) => [
+            id,
+            new Graph(id, this),
+          ])
+        ),
+    };
+    this.nodes = this.#createNodeAccessor();
+  }
+
+  #graphNodes(graphId: GraphIdentifier): NodeDescriptor[] {
+    if (!graphId) return this._graph?.nodes ?? [];
+    return this._graph?.graphs?.[graphId]?.nodes || [];
+  }
+
+  #createNodeAccessor(): InspectableNodeCache {
+    return {
+      get: (id, graphId) => {
+        const descriptor = this.#graphNodes(graphId).find((n) => n.id === id);
+        return descriptor ? new Node(descriptor, this, graphId) : undefined;
+      },
+      nodes: (graphId) =>
+        this.#graphNodes(graphId).map((n) => new Node(n, this, graphId)),
+      byType: (type, graphId) =>
+        this.#graphNodes(graphId)
+          .filter((n) => n.type === type)
+          .map((n) => new Node(n, this, graphId)),
+    };
   }
   /**
    * Static registry of A2 tools. These are environment-independent
@@ -172,7 +288,8 @@ export class GraphController
   private accessor _graph: GraphDescriptor | null = null;
 
   @field()
-  accessor id: ReturnType<typeof globalThis.crypto.randomUUID> | null = null;
+  accessor sessionId: ReturnType<typeof globalThis.crypto.randomUUID> | null =
+    null;
 
   @field()
   accessor version = 0;
@@ -277,9 +394,12 @@ export class GraphController
 
   /**
    * The current graph descriptor.
+   * Returns non-null to satisfy MutableGraph. Before `initialize()`
+   * is called, `_graph` is null, but nothing should read `.graph` via the
+   * MutableGraph contract before initialization.
    */
-  get graph() {
-    return this._graph;
+  get graph(): GraphDescriptor {
+    return this._graph!;
   }
 
   /**
@@ -462,7 +582,7 @@ export class GraphController
    * Resets the graph state when a board is closed.
    */
   resetAll() {
-    this.id = null;
+    this.sessionId = null;
     this._editor = null;
     this._graph = null;
     this._title = null;
@@ -478,6 +598,10 @@ export class GraphController
     this._agentModeTools = new Map();
     this._components = new Map();
     this.#componentsUpdateGeneration++;
+    // Reset MutableGraph caches (will be re-initialized on next load)
+    this.graphs = undefined!;
+    this.nodes = undefined!;
+    this.describe = undefined!;
   }
 
   // =========================================================================
