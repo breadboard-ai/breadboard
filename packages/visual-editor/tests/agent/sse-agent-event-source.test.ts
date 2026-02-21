@@ -146,12 +146,22 @@ suite("SSEAgentEventSource", () => {
     assert.strictEqual(fetchCalls.length, 1);
   });
 
-  test("stops on finish event", async () => {
+  test("processes events between finish and complete", async () => {
+    // The server emits `finish` then `complete`. The client must NOT
+    // break on `finish` — it needs the `complete` event for outcomes.
     const events: AgentEvent[] = [
       { type: "thought", text: "before finish" },
       { type: "finish" },
-      // Anything after finish should be ignored
-      { type: "thought", text: "after finish" },
+      {
+        type: "complete",
+        result: {
+          success: true,
+          href: "/",
+          outcomes: { parts: [{ text: "the outcome" }] },
+        },
+      } as AgentEvent,
+      // Anything after complete should be ignored
+      { type: "thought", text: "after complete" },
     ];
     installFetch(events);
 
@@ -159,9 +169,14 @@ suite("SSEAgentEventSource", () => {
     const received: string[] = [];
 
     consumer.on("thought", (event) => {
-      received.push(event.text);
+      received.push(`thought:${event.text}`);
     });
-    consumer.on("finish", () => {});
+    consumer.on("finish", () => {
+      received.push("finish");
+    });
+    consumer.on("complete", () => {
+      received.push("complete");
+    });
 
     const source = new SSEAgentEventSource(
       "http://test",
@@ -171,7 +186,179 @@ suite("SSEAgentEventSource", () => {
     );
     await source.connect();
 
-    assert.deepStrictEqual(received, ["before finish"]);
+    // All events up to and including `complete` should be dispatched.
+    // The thought after `complete` should be ignored.
+    assert.deepStrictEqual(received, [
+      "thought:before finish",
+      "finish",
+      "complete",
+    ]);
+  });
+
+  test("complete event carries AgentResult with outcomes", async () => {
+    const outcomeContent = { parts: [{ text: "Why did the chicken..." }] };
+    const events: AgentEvent[] = [
+      { type: "start", objective: { parts: [{ text: "tell a joke" }] } },
+      { type: "finish" },
+      {
+        type: "complete",
+        result: {
+          success: true,
+          href: "/",
+          outcomes: outcomeContent,
+        },
+      } as AgentEvent,
+    ];
+    installFetch(events);
+
+    const consumer = new AgentEventConsumer();
+    let capturedResult: Record<string, unknown> | undefined;
+
+    consumer.on("start", () => {});
+    consumer.on("finish", () => {});
+    consumer.on("complete", (event) => {
+      capturedResult = event.result as unknown as Record<string, unknown>;
+    });
+
+    const source = new SSEAgentEventSource(
+      "http://test",
+      TEST_CONFIG,
+      consumer,
+      fetch
+    );
+    await source.connect();
+
+    assert.ok(capturedResult, "complete handler should have been called");
+    assert.strictEqual(capturedResult.success, true);
+    assert.deepStrictEqual(capturedResult.outcomes, outcomeContent);
+  });
+
+  test("gracefully handles stream ending after finish without complete", async () => {
+    // If the server closes the stream after `finish` (no `complete`),
+    // the client should still process all events up to `finish`.
+    const events: AgentEvent[] = [
+      { type: "thought", text: "working" },
+      { type: "finish" },
+    ];
+    installFetch(events);
+
+    const consumer = new AgentEventConsumer();
+    const received: string[] = [];
+
+    consumer.on("thought", (event) => {
+      received.push(event.text);
+    });
+    consumer.on("finish", () => {
+      received.push("finish");
+    });
+
+    const source = new SSEAgentEventSource(
+      "http://test",
+      TEST_CONFIG,
+      consumer,
+      fetch
+    );
+    await source.connect();
+
+    // Both events dispatched — stream ended naturally after finish.
+    assert.deepStrictEqual(received, ["working", "finish"]);
+  });
+
+  test("full remote run sequence dispatches all events in order", async () => {
+    // Simulate the full remote run sequence observed during manual testing:
+    //   start → sendRequest → content → functionCall → functionResult →
+    //   turnComplete → finish → complete
+    const events: AgentEvent[] = [
+      { type: "start", objective: { parts: [{ text: "make a joke" }] } },
+      {
+        type: "sendRequest",
+        model: "gemini-3-flash-preview",
+        body: {} as AgentEvent extends { type: "sendRequest"; body: infer B }
+          ? B
+          : never,
+      } as AgentEvent,
+      {
+        type: "content",
+        content: { parts: [{ text: "Here is a joke" }] },
+      },
+      {
+        type: "functionCall",
+        callId: "call-1",
+        name: "system_objective_fulfilled",
+        args: { objective_outcome: "A joke about chickens" },
+        icon: "check_circle",
+        title: "Returning final outcome",
+      },
+      {
+        type: "functionResult",
+        callId: "call-1",
+        content: { parts: [{ text: "{}" }] },
+      },
+      { type: "turnComplete" },
+      { type: "finish" },
+      {
+        type: "complete",
+        result: {
+          success: true,
+          href: "/",
+          outcomes: { parts: [{ text: "A joke about chickens" }] },
+        },
+      } as AgentEvent,
+    ];
+    installFetch(events);
+
+    const consumer = new AgentEventConsumer();
+    const timeline: string[] = [];
+    let finalOutcomes: unknown;
+
+    consumer
+      .on("start", () => {
+        timeline.push("start");
+      })
+      .on("sendRequest", () => {
+        timeline.push("sendRequest");
+      })
+      .on("content", () => {
+        timeline.push("content");
+      })
+      .on("functionCall", () => {
+        timeline.push("functionCall");
+      })
+      .on("functionResult", () => {
+        timeline.push("functionResult");
+      })
+      .on("turnComplete", () => {
+        timeline.push("turnComplete");
+      })
+      .on("finish", () => {
+        timeline.push("finish");
+      })
+      .on("complete", (event) => {
+        timeline.push("complete");
+        finalOutcomes = event.result.outcomes;
+      });
+
+    const source = new SSEAgentEventSource(
+      "http://test",
+      TEST_CONFIG,
+      consumer,
+      fetch
+    );
+    await source.connect();
+
+    assert.deepStrictEqual(timeline, [
+      "start",
+      "sendRequest",
+      "content",
+      "functionCall",
+      "functionResult",
+      "turnComplete",
+      "finish",
+      "complete",
+    ]);
+    assert.deepStrictEqual(finalOutcomes, {
+      parts: [{ text: "A joke about chickens" }],
+    });
   });
 
   test("stops on error event", async () => {

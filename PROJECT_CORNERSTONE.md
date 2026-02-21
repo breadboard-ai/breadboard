@@ -231,7 +231,7 @@ Body (resume): {interactionId, response}
 - [x] Wire `configureRemote()` in app init via `BACKEND_API_ENDPOINT`
 - [x] Fix proxy `Content-Encoding` header stripping
 
-##### 4.4e: Wire Content Runs Through AgentService
+##### 4.4e: Wire Content Runs Through AgentService ✅
 
 > **🎯 Objective:** Run an opal through the dev backend and see the result.
 >
@@ -243,15 +243,12 @@ Body (resume): {interactionId, response}
 > agent calls Gemini via the Python backend, streams events back, and the result
 > appears in the UI.
 
-**The gap:** Content agent runs (the main "run an opal" flow) currently go
-through `RunService` / step executor in-process. They don't use `AgentService`
-at all. `AgentService.startRun()` is only called by the graph-editing agent,
-which is hardcoded to `LocalAgentRun`.
-
-- [ ] Study how `RunService` / step executor invoke the content agent loop
-- [ ] Route content runs through `AgentService.startRun()` when in remote mode
-- [ ] Handle content agent events in the UI via `AgentEventConsumer`
-- [ ] `SSEAgentRun.connect()` must be called at the right time
+- [x] `DEV_BACKEND_MODE` deploy-time flag (like `FAKE_MODE`)
+- [x] `configureRemote()` gated on flag in `services.ts`
+- [x] Early `instanceof SSEAgentRun` branch in `main.ts` → `invokeRemoteAgent()`
+- [x] Lightweight `ConsoleProgressManager` for remote UI reporting
+- [x] `complete` event carries `AgentResult.outcomes` (don't break on `finish`)
+- [x] Tests: SSE event sequence, outcome extraction, error handling (11 tests)
 
 ##### 4.4f: Agent File System + Remaining System Functions
 

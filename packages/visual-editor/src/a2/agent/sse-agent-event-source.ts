@@ -70,7 +70,9 @@ class SSEAgentEventSource {
         console.log("[SSE] Event:", event.type, event);
         await this.#dispatch(event);
 
-        if (event.type === "finish" || event.type === "error") {
+        // `finish` fires before `complete` — don't break early.
+        // `complete` carries the final AgentResult with outcomes.
+        if (event.type === "complete" || event.type === "error") {
           break;
         }
       }

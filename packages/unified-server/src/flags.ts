@@ -75,6 +75,7 @@ export const GOOGLE_SLIDES_API_ENDPOINT: string = getString(
 );
 
 export const FAKE_MODE = getBoolean("FAKE_MODE");
+export const DEV_BACKEND_MODE = getBoolean("DEV_BACKEND_MODE");
 
 export const FAKE_DRIVE_PORT = Number(process.env["FAKE_DRIVE_PORT"] || 3110);
 
