@@ -164,12 +164,12 @@ mirrored as Pydantic models in `opal-backend-shared`.
 - [x] `loop.py` — while-loop orchestrator with `LoopHooks`
 - [x] Unit tests with mocked Gemini responses (14 tests)
 
-##### 4.4b: Termination Functions
+##### 4.4b: Termination Functions ✅
 
-- [ ] Port `system_objective_fulfilled` (terminates loop with success)
-- [ ] Port `system_failed_to_fulfill_objective` (terminates loop with failure)
-- [ ] System instruction (meta-plan prompt)
-- [ ] Unit tests
+- [x] Port `system_objective_fulfilled` (terminates loop with success)
+- [x] Port `system_failed_to_fulfill_objective` (terminates loop with failure)
+- [x] System instruction (meta-plan prompt — verbatim port)
+- [x] Unit tests (13 tests)
 
 ##### 4.4c: DevAgentBackend + End-to-End
 
