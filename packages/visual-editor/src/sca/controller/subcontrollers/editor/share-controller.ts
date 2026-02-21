@@ -53,9 +53,7 @@ export type ShareStatus =
   /** Updating the shareable copy with the latest board content. */
   | "publishing-stale"
   /** Syncing asset permissions after the user approves fixing unmanaged assets. */
-  | "syncing-assets"
-  /** An error occurred. */
-  | "error";
+  | "syncing-assets";
 
 export class ShareController extends RootController {
   @field()
@@ -118,6 +116,9 @@ export class ShareController extends RootController {
   @field()
   accessor lastPublishedIso = "";
 
+  @field()
+  accessor error = "";
+
   /**
    * Resets all fields to their defaults. Called when loading a new opal.
    *
@@ -145,6 +146,7 @@ export class ShareController extends RootController {
     this.notebookDomainSharingLimited = false;
     this.viewerMode = "full";
     this.lastPublishedIso = "";
+    this.error = "";
   }
 
   #resolveUnmanagedAssets?: () => void;

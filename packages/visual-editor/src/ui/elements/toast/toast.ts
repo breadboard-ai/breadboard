@@ -79,6 +79,7 @@ export class Toast extends SignalWatcher(LitElement) {
       }
 
       .g-icon {
+        flex-shrink: 0;
         margin-right: var(--bb-grid-size-2);
 
         .rotate {
