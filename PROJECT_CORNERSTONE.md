@@ -26,12 +26,12 @@
 └─────────────────────────────────────────────────────────────┘
                         │
                 ┌───────┴────────────────────────────────────┐
-                │  ONE PLATFORM (google3, production)         │
+                │  ONE PLATFORM (production backend)          │
                 │                                             │
                 │  Wraps opal-backend-shared with             │
                 │  One Platform API surface                   │
                 │                                             │
-                │  ← copybara from packages/opal-backend-shared
+                │  ← synced from packages/opal-backend-shared
                 └─────────────────────────────────────────────┘
 
   LOCAL DEV:
@@ -51,13 +51,13 @@
 
 ## Packages
 
-| Package               | Language   | Purpose                            |
-| --------------------- | ---------- | ---------------------------------- |
-| `opal-backend-shared` | Python     | Copybara-sharable agent logic      |
-| `opal-backend-dev`    | Python     | Dev server (proxy + direct wiring) |
-| `opal-backend-fake`   | Python     | Fake server (canned scenarios)     |
-| `unified-server`      | TypeScript | Static content + blobs (unchanged) |
-| `visual-editor`       | TypeScript | Client (SSE consumer, unchanged)   |
+| Package               | Language   | Purpose                             |
+| --------------------- | ---------- | ----------------------------------- |
+| `opal-backend-shared` | Python     | Shared agent logic (synced to prod) |
+| `opal-backend-dev`    | Python     | Dev server (proxy + direct wiring)  |
+| `opal-backend-fake`   | Python     | Fake server (canned scenarios)      |
+| `unified-server`      | TypeScript | Static content + blobs (unchanged)  |
+| `visual-editor`       | TypeScript | Client (SSE consumer, unchanged)    |
 
 ## Wire Format
 
@@ -144,7 +144,17 @@ mirrored as Pydantic models in `opal-backend-shared`.
 - [x] `BACKEND_API_ENDPOINT=http://localhost:8000` set in `serve:fake` env
 - [x] Developer docs in `opal-backend-dev/README.md`
 
-#### 4.3: Port Agent Loop to Python
+#### 4.3: Proxy-First Backend ✅
+
+- [x] `opal_backend_shared/local/` — local-only shared API surface
+- [x] `api_surface.py` — router factory with `AgentBackend` + `ProxyBackend`
+      protocols
+- [x] `opal-backend-dev` reverse proxy via `httpx` (forwards auth headers)
+- [x] `opal-backend-fake` refactored to shared API surface (13 tests passing)
+- [x] `dev2` wireit entry (serves at `:3100`, proxy at `:8080`)
+- [x] `start-dev-backend.sh` with venv check
+
+#### 4.4: Port Agent Loop to Python
 
 - [ ] Port `Loop` (agent loop core) to `opal-backend-shared`
 - [ ] Port `FunctionCaller` (tool dispatch) to `opal-backend-shared`
@@ -152,12 +162,12 @@ mirrored as Pydantic models in `opal-backend-shared`.
 - [ ] Wire agent-run endpoints in `opal-backend-dev`
 - [ ] End-to-end: `SSEAgentEventSource` ↔ `opal-backend-dev` round-trip
 
-#### 4.4: Graph-Editing Agent Over the Wire
+#### 4.5: Graph-Editing Agent Over the Wire
 
 - [ ] Graph-editing functions use suspend events for all client calls
 - [ ] End-to-end graph editing via SSE
 
-#### 4.5: Content Generation Agent Over the Wire
+#### 4.6: Content Generation Agent Over the Wire
 
 - [ ] Content gen agent runs on Python backend
 - [ ] Subagent progress events (image/video/audio gen) over SSE

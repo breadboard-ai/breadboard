@@ -2,9 +2,18 @@
   "name": "opal-backend-shared",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared Opal backend logic (copybara-sharable)",
+  "description": "Shared Opal backend logic (synced to production)",
   "scripts": {
-    "setup": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
+    "setup": "wireit",
     "test": ".venv/bin/python -m pytest tests/ -v"
+  },
+  "wireit": {
+    "setup": {
+      "command": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[dev]'",
+      "files": [
+        "pyproject.toml"
+      ],
+      "output": []
+    }
   }
 }
