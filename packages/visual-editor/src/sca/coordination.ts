@@ -253,8 +253,14 @@ function receivesInputPreference(target: EventTarget): boolean {
  */
 export function normalizeKeyCombo(evt: KeyboardEvent): string {
   let key = evt.key;
-  if (key === "Meta" || key === "Ctrl" || key === "Shift") {
+  if (key === "Meta" || key === "Control" || key === "Shift") {
     return "";
+  }
+  // Normalize single-character keys to lowercase so that
+  // Shift+letter combos match regardless of platform casing.
+  // (macOS with Cmd reports lowercase; Windows/Linux with Ctrl reports uppercase.)
+  if (key.length === 1) {
+    key = key.toLowerCase();
   }
   if (evt.shiftKey) {
     key = `Shift+${key}`;

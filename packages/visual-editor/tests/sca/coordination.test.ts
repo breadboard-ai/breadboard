@@ -845,7 +845,7 @@ suite("CoordinationRegistry", () => {
       });
 
       it("returns empty for bare Ctrl key", () => {
-        assert.strictEqual(normalizeKeyCombo(makeKeyEvent("Ctrl")), "");
+        assert.strictEqual(normalizeKeyCombo(makeKeyEvent("Control")), "");
       });
 
       it("returns empty for bare Shift key", () => {
@@ -858,6 +858,22 @@ suite("CoordinationRegistry", () => {
           normalizeKeyCombo(makeKeyEvent("Backspace")),
           "Backspace"
         );
+      });
+
+      it("lowercases single-character keys for platform consistency", () => {
+        // On Windows/Linux, Ctrl+Shift+E reports key="E" (uppercase).
+        // On macOS, Cmd+Shift+E reports key="e" (lowercase).
+        // normalizeKeyCombo should produce the same result for both.
+        assert.strictEqual(
+          normalizeKeyCombo(makeKeyEvent("E", { ctrl: true, shift: true })),
+          "Ctrl+Shift+e"
+        );
+        assert.strictEqual(
+          normalizeKeyCombo(makeKeyEvent("e", { meta: true, shift: true })),
+          "Cmd+Shift+e"
+        );
+        // Plain uppercase letter should also be lowered
+        assert.strictEqual(normalizeKeyCombo(makeKeyEvent("A")), "a");
       });
     });
 
