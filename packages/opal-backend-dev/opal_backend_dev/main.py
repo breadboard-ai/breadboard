@@ -183,7 +183,7 @@ class DevAgentBackend:
 
         # Create the loop with auth.
         controller = LoopController()
-        loop = Loop(access_token=access_token, controller=controller)
+        loop = Loop(access_token=access_token, upstream_base=UPSTREAM_BASE, controller=controller)
 
         # Wire up all system functions.
         system_group = get_system_function_group(

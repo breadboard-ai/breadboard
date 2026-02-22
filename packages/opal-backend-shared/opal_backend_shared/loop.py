@@ -25,6 +25,7 @@ from typing import Any, Callable, Awaitable
 
 from .function_caller import FunctionCaller
 from .function_definition import FunctionGroup
+from .conform_body import conform_body
 from .gemini_client import (
     GeminiBody,
     GeminiChunk,
@@ -150,10 +151,12 @@ class Loop:
         self,
         *,
         access_token: str = "",
+        upstream_base: str = "",
         controller: LoopController | None = None,
     ) -> None:
         self.controller = controller or LoopController()
         self._access_token = access_token
+        self._upstream_base = upstream_base
 
     async def run(self, args: AgentRunArgs) -> AgentResult | Outcome:
         """Execute the agent loop.
@@ -217,6 +220,14 @@ class Loop:
 
                 if hooks.on_send_request:
                     hooks.on_send_request(AGENT_MODEL, body)
+
+                # Resolve storedData/fileData/json parts before calling Gemini
+                if self._upstream_base:
+                    body = await conform_body(
+                        body,
+                        access_token=self._access_token,
+                        upstream_base=self._upstream_base,
+                    )
 
                 # Stream from Gemini
                 function_caller = FunctionCaller(definition_map)

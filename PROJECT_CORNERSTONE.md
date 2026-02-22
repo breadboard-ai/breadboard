@@ -344,12 +344,14 @@ Body (resume): {interactionId, response}
 > proxies to the same One Platform server. The Python agent loop can call these
 > endpoints directly.
 
-- [ ] `conformBody` on the server: walk `LLMContent` parts, resolve
-      `storedData`/`fileData` to Gemini File API URLs via `/v1beta1/*`
-- [ ] `json` parts → `{text: JSON.stringify()}` (trivial, like the TS version)
-- [ ] `NotebookLM` storedData → passthrough as text URL (no transform)
-- [ ] File upload helper: authenticated calls to One Platform upload endpoints
-- [ ] Tests: round-trip data part resolution
+- [x] `conform_body` on the server: `conform_body.py` walks `LLMContent` parts,
+      resolves `storedData`/`fileData` to Gemini File API URLs via
+      `/v1beta1/uploadGeminiFile` (HTTP calls to One Platform)
+- [x] `json` parts → `{text: json.dumps()}` (inline transform)
+- [x] `NotebookLM` storedData → `{text: url}` passthrough
+- [x] `_upload_gemini_file` helper: authenticated POST to One Platform,
+      `upstream_base` threaded from dev backend → `Loop.__init__`
+- [x] Tests: 21 tests covering all 6 transforms, error handling, mixed content
 
 #### 4.7: Function Groups
 
