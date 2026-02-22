@@ -161,12 +161,25 @@ All consumers call `editor.inspect(graphId)` → `InspectableGraph`. With
       same `InspectableGraph` type; no changes needed)
 - [x] Migrate 2 remaining internal `_editor.inspect()` calls in
       `GraphController` (`getRoutes`, `#updateComponents`) — uses
-      `this.inspect()` with `_editor.inspect()` fallback for backward
-      compatibility
-- [ ] Delete `Graph`, `Node`, `Edge`, `GraphQueries`, `DescribeResultCache`
-      (only after ALL consumers are migrated, since `inspect()` still returns
-      `new Graph(...)`)
-- [ ] Verify build + tests pass
+      `this.inspect("")` directly; `_editor.inspect()` fallback removed
+- [x] Verify build + tests pass
+
+**Stage 4 — Relocate utility functions out of inspector layer**
+
+Move standalone utility functions so the inspector directory becomes
+self-contained (only `Graph`, `Node`, `DescribeResultCache` remain, consumed
+solely by `GraphController.inspect()`).
+
+- [x] Move `routesFromConfiguration()` + `toolsFromConfiguration()` from
+      `graph-queries.ts` → `utils/control.ts`
+- [x] Move `fixUpStarEdge()` + `unfixUpStarEdge()` + `fixupConstantEdge()` from
+      `edge.ts` → `engine/editor/operations/edge-utils.ts` [NEW]
+- [x] Move `GraphDescriptorHandle` from `inspector/graph/` →
+      `engine/editor/graph-descriptor-handle.ts` [MOVED, original deleted]
+- [x] Verify inspector files are now internal-only: `graph-queries.ts` and
+      `edge.ts` still provide `Edge`/`GraphQueries` classes used by
+      `graph.ts`/`node.ts`; they will be deleted with the inspector layer
+- [x] Verify build + tests pass
 
 ### Phase 3: Flatten `EditableGraph` → Actions
 

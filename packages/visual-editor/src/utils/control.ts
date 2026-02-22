@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2026 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import {
   InputValues,
   LLMContent,
@@ -11,13 +5,17 @@ import {
   NodeValue,
   OutputValues,
 } from "@breadboard-ai/types";
-import { routesFromConfiguration } from "../engine/inspector/graph/graph-queries.js";
+import { TemplatePart } from "@breadboard-ai/utils";
+import { scanConfiguration } from "./scan-configuration.js";
+import { ROUTE_TOOL_PATH } from "../a2/a2/tool-manager.js";
 
 export {
   computeControlState,
   computeSkipOutputs,
   augmentWithSkipOutputs,
   hasControlPart,
+  routesFromConfiguration,
+  toolsFromConfiguration,
 };
 
 const CONTROL_SENTINEL_VALUE = "$control";
@@ -81,4 +79,20 @@ function augmentWithSkipOutputs(
     routes.map((route) => [route, CONTROL_OUTPUT])
   );
   return { ...allSkipped, ...outputs };
+}
+
+function toolsFromConfiguration(configuration: NodeConfiguration) {
+  const tools: TemplatePart[] = [];
+  scanConfiguration(configuration, (part) => {
+    if (part.type === "tool") {
+      tools.push(part);
+    }
+  });
+  return tools;
+}
+
+function routesFromConfiguration(configuration: NodeConfiguration) {
+  return toolsFromConfiguration(configuration)
+    .filter((part) => part.path === ROUTE_TOOL_PATH && part.instance)
+    .map((part) => part.instance!);
 }

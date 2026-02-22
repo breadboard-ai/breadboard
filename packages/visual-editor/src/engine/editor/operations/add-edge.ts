@@ -17,8 +17,8 @@ import {
   fixUpStarEdge,
   fixupConstantEdge,
   unfixUpStarEdge,
-} from "../../inspector/graph/edge.js";
-import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+} from "./edge-utils.js";
+import { GraphDescriptorHandle } from "../graph-descriptor-handle.js";
 import { errorNoInspect } from "./error.js";
 
 export class AddEdge implements EditOperation {

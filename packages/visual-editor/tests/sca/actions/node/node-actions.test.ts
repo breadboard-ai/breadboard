@@ -771,6 +771,56 @@ suite("Node Actions — Event-Triggered", () => {
       // Should not throw
       await NodeActionsModule.onNodeAdd(evt);
     });
+
+    test("uses metadata title in edit label when available", async () => {
+      let editLabel = "";
+      const mockEditor = makeMockEditorForEvent({
+        onEdit: (_e, label) => {
+          editLabel = label;
+        },
+      });
+
+      bindNode(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "node.add",
+        node: {
+          id: "titled-node",
+          type: "someType",
+          metadata: { title: "My Named Step" },
+        },
+        graphId: "",
+      });
+      await NodeActionsModule.onNodeAdd(evt);
+
+      assert.ok(
+        editLabel.includes("My Named Step"),
+        `Expected label to include title, got: ${editLabel}`
+      );
+    });
+
+    test("falls back to node id in label when no title", async () => {
+      let editLabel = "";
+      const mockEditor = makeMockEditorForEvent({
+        onEdit: (_e, label) => {
+          editLabel = label;
+        },
+      });
+
+      bindNode(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "node.add",
+        node: { id: "untitled-node", type: "someType" },
+        graphId: "",
+      });
+      await NodeActionsModule.onNodeAdd(evt);
+
+      assert.ok(
+        editLabel.includes("untitled-node"),
+        `Expected label to include node id, got: ${editLabel}`
+      );
+    });
   });
 
   suite("onMoveSelection", () => {
@@ -825,6 +875,40 @@ suite("Node Actions — Event-Triggered", () => {
         "changeassetmetadata"
       );
     });
+
+    test("skips asset update when asset has no metadata", async () => {
+      const edits: unknown[] = [];
+      const rawGraph = {
+        nodes: [],
+        edges: [],
+        assets: {
+          "no-meta-asset": {
+            // No metadata field at all
+          },
+        },
+      };
+      const mockEditor = makeMockEditorForEvent({
+        onEdit: (e) => edits.push(...e),
+        rawGraph,
+      });
+
+      bindNode(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "node.moveselection",
+        updates: [
+          { type: "asset", id: "no-meta-asset", graphId: "", x: 50, y: 75 },
+        ],
+      });
+      await NodeActionsModule.onMoveSelection(evt);
+
+      // Asset without metadata should be skipped (continue)
+      assert.strictEqual(
+        edits.length,
+        0,
+        "Should not create edit for asset without metadata"
+      );
+    });
   });
 
   suite("onChangeEdge", () => {
@@ -848,6 +932,59 @@ suite("Node Actions — Event-Triggered", () => {
       await NodeActionsModule.onChangeEdge(evt);
 
       assert.ok(appliedTransform, "apply should have been called");
+    });
+
+    test("shows error toast when apply returns failure", async () => {
+      let toastMessage = "";
+      const mockEditor = makeMockEditorForEvent();
+      mockEditor.apply = async () => ({
+        success: false,
+        error: "Edge validation failed",
+      });
+
+      // Bind with toasts mock so withUIBlocking can catch and toast
+      NodeActionsModule.bind({
+        controller: {
+          editor: {
+            graph: {
+              editor: mockEditor,
+              inspect: (graphId: string) => mockEditor.inspect(graphId),
+              readOnly: false,
+              lastNodeConfigChange: null,
+            },
+            selection: {
+              selectNodes: () => {},
+            },
+          },
+          global: {
+            main: { blockingAction: false },
+            toasts: {
+              toast: (msg: string) => {
+                toastMessage = msg;
+                return "toast-id";
+              },
+            },
+          },
+        } as unknown as AppController,
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+      });
+
+      const evt = new StateEvent({
+        eventType: "node.changeedge",
+        changeType: "add",
+        from: { from: "a", out: "out", to: "b", in: "in" },
+        to: undefined,
+        subGraphId: null,
+      });
+      await NodeActionsModule.onChangeEdge(evt);
+
+      assert.strictEqual(
+        toastMessage,
+        "Edge validation failed",
+        "Error should be shown via toast"
+      );
     });
 
     test("returns early when no editor", async () => {
@@ -886,6 +1023,80 @@ suite("Node Actions — Event-Triggered", () => {
       await NodeActionsModule.onChangeEdgeAttachmentPoint(evt);
 
       assert.ok(appliedTransform, "apply should have been called");
+    });
+
+    test("maps MAIN_BOARD_ID to empty string", async () => {
+      let appliedTransform: unknown = null;
+      const mockEditor = makeMockEditorForEvent({
+        onApply: (transform) => {
+          appliedTransform = transform;
+        },
+      });
+
+      bindNode(mockEditor);
+
+      const evt = new StateEvent({
+        eventType: "node.changeedgeattachmentpoint",
+        graphId: "Main board",
+        edge: { from: "a", out: "out", to: "b", in: "in" },
+        which: "from",
+        attachmentPoint: { x: 10, y: 20 } as unknown as EdgeAttachmentPoint,
+      });
+      await NodeActionsModule.onChangeEdgeAttachmentPoint(evt);
+
+      assert.ok(appliedTransform, "apply should have been called");
+    });
+
+    test("shows error toast when apply returns failure", async () => {
+      let toastMessage = "";
+      const mockEditor = makeMockEditorForEvent();
+      mockEditor.apply = async () => ({
+        success: false,
+        error: "Attachment point invalid",
+      });
+
+      NodeActionsModule.bind({
+        controller: {
+          editor: {
+            graph: {
+              editor: mockEditor,
+              inspect: (graphId: string) => mockEditor.inspect(graphId),
+              readOnly: false,
+              lastNodeConfigChange: null,
+            },
+            selection: {
+              selectNodes: () => {},
+            },
+          },
+          global: {
+            main: { blockingAction: false },
+            toasts: {
+              toast: (msg: string) => {
+                toastMessage = msg;
+                return "toast-id";
+              },
+            },
+          },
+        } as unknown as AppController,
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+      });
+
+      const evt = new StateEvent({
+        eventType: "node.changeedgeattachmentpoint",
+        graphId: "",
+        edge: { from: "a", out: "out", to: "b", in: "in" },
+        which: "from",
+        attachmentPoint: { x: 10, y: 20 } as unknown as EdgeAttachmentPoint,
+      });
+      await NodeActionsModule.onChangeEdgeAttachmentPoint(evt);
+
+      assert.strictEqual(
+        toastMessage,
+        "Attachment point invalid",
+        "Error should be shown via toast"
+      );
     });
 
     test("returns early when no editor", async () => {
@@ -1178,6 +1389,56 @@ suite("Node Actions — Keyboard", () => {
       assert.ok(
         appliedTransforms.length >= 2,
         `Expected at least 2 apply calls, got ${appliedTransforms.length}`
+      );
+      assert.ok(deselectAllCalled.value, "deselectAll should have been called");
+    });
+
+    test("deletes selected assets via editor.apply", async () => {
+      const appliedTransforms: unknown[] = [];
+      const deselectAllCalled = { value: false };
+
+      const mockEditor = {
+        apply: async (transform: unknown) => {
+          appliedTransforms.push(transform);
+          return { success: true };
+        },
+        edit: async () => {},
+        inspect: (_graphId: string) => ({
+          nodeById: (_id: string) => ({
+            metadata: () => ({}),
+          }),
+          nodes: () => [],
+          assetEdges: () => [],
+          raw: () => ({ nodes: [], edges: [] }),
+          metadata: () => ({}),
+        }),
+        raw: () => ({ nodes: [], edges: [] }),
+        history: () => ({
+          canUndo: () => false,
+          canRedo: () => false,
+          undo: async () => {},
+          redo: async () => {},
+        }),
+      };
+
+      bindKeyboardAction(mockEditor, {
+        size: 1,
+        selection: {
+          nodes: new Set(),
+          edges: new Set(),
+          comments: new Set(),
+          assetEdges: new Set(),
+          assets: new Set(["my-asset.txt"]),
+        },
+        deselectAllCalled,
+      });
+
+      await NodeActionsModule.onDelete();
+
+      // Should have calls for RemoveAssetWithRefs + MarkInPortsInvalidSpec
+      assert.ok(
+        appliedTransforms.length >= 2,
+        `Expected at least 2 apply calls for asset deletion, got ${appliedTransforms.length}`
       );
       assert.ok(deselectAllCalled.value, "deselectAll should have been called");
     });

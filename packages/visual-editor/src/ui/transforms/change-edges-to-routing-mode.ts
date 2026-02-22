@@ -15,7 +15,7 @@ import {
   GraphIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types/graph-descriptor.js";
-import { routesFromConfiguration } from "../../engine/inspector/graph/graph-queries.js";
+import { routesFromConfiguration } from "../../utils/control.js";
 
 export { ChangeEdgesToRoutingMode };
 

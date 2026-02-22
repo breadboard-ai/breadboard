@@ -13,8 +13,8 @@ import type {
   InspectableGraph,
   SingleEditResult,
 } from "@breadboard-ai/types";
-import { fixUpStarEdge } from "../../inspector/graph/edge.js";
-import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { fixUpStarEdge } from "./edge-utils.js";
+import { GraphDescriptorHandle } from "../graph-descriptor-handle.js";
 import { edgesEqual, findEdgeIndex } from "../edge.js";
 import { AddEdge } from "./add-edge.js";
 import { errorNoInspect } from "./error.js";

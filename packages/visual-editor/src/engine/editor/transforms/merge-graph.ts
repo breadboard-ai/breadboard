@@ -10,7 +10,7 @@ import type {
   EditTransformResult,
   GraphIdentifier,
 } from "@breadboard-ai/types";
-import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { GraphDescriptorHandle } from "../graph-descriptor-handle.js";
 import { MoveToGraphTransform } from "./move-to-graph.js";
 
 export { MergeGraphTransform };

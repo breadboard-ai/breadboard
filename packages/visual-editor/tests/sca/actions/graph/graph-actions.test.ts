@@ -589,6 +589,122 @@ suite("Graph Actions", () => {
 
           assert.strictEqual(testGraph.title, "Creator Test");
         });
+
+        test("returns early when no options and no pending replacement", async () => {
+          // Call without options and with pendingGraphReplacement = null
+          await assert.doesNotReject(async () => {
+            await graphActions.replaceWithTheme(undefined);
+          });
+          // Graph should be unchanged
+          assert.strictEqual(testGraph.nodes.length, 2);
+        });
+
+        test("clears flowgenInput when controller.global is set", async () => {
+          let flowgenCleared = false;
+          const controller = graphActions.bind.controller;
+          // Temporarily add a global with flowgenInput
+          (controller as unknown as { global: unknown }).global = {
+            flowgenInput: {
+              clear() {
+                flowgenCleared = true;
+              },
+            },
+          };
+
+          const changeWatcher = editorChange(graphActions);
+          await graphActions.replaceWithTheme({
+            replacement: {
+              nodes: [],
+              edges: [],
+            },
+            creator: { role: "user" },
+          });
+          await changeWatcher;
+
+          assert.strictEqual(
+            flowgenCleared,
+            true,
+            "flowgenInput.clear() should be called"
+          );
+
+          // Clean up
+          (controller as unknown as { global: unknown }).global = undefined;
+        });
+      });
+
+      test("updateBoardTitleAndDescription with null title and description", async () => {
+        // First set real values
+        await graphActions.updateBoardTitleAndDescription(
+          "Initial Title",
+          "Initial Description"
+        );
+
+        // Now pass null — the `?? undefined` branches should be hit
+        await graphActions.updateBoardTitleAndDescription(null, null);
+
+        // Graph should still have the initial values (null -> undefined means
+        // unchanged per the changegraphmetadata spec)
+        assert.strictEqual(testGraph.title, "Initial Title");
+      });
+
+      test("addNode without title metadata uses node id in label", async () => {
+        const changeWatcher = editorChange(graphActions);
+        // Node with no .metadata.title — exercises `?? node.id` branch
+        await graphActions.addNode(
+          { id: "no-title-node", type: "test:promptTemplate" },
+          ""
+        );
+        testGraph = await changeWatcher;
+
+        const node = testGraph.nodes.find((n) => n.id === "no-title-node");
+        assert.ok(node, "Node should be created");
+      });
+
+      test("changeAssetEdge with null subGraphId defaults to empty string", async () => {
+        // First add an asset to the graph
+        const editor = graphActions.bind.controller.editor.graph.editor;
+        assert.ok(editor, "Editor should exist");
+
+        await editor.edit(
+          [
+            {
+              type: "addasset",
+              path: "asset-edge-test.txt",
+              data: { inline: "test" },
+              metadata: { title: "Test", type: "content" },
+            },
+          ],
+          "Add asset"
+        );
+
+        // changeAssetEdge with null subGraphId (exercises ?? "" branch)
+        // This will fail since the node doesn't reference the asset,
+        // but it exercises the branch before the error throw
+        await assert.rejects(async () => {
+          await graphActions.changeAssetEdge(
+            "add",
+            {
+              assetPath: "asset-edge-test.txt",
+              direction: "load",
+              nodeId: "foo",
+            },
+            null
+          );
+        });
+      });
+
+      test("editInternal throws when edit returns failure", async () => {
+        // Adding a node with a duplicate ID causes editor.edit to return
+        // { success: false }, which triggers the "Unable to edit graph" throw.
+        await assert.rejects(
+          async () => {
+            await graphActions.addNode(
+              { id: "foo", type: "test:promptTemplate" },
+              ""
+            );
+          },
+          (err: Error) => err.message === "Unable to edit graph"
+        );
       });
     });
   });

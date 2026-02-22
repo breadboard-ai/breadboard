@@ -17,7 +17,7 @@ import {
 import { AutoWireInPorts, InPort } from "./autowire-in-ports.js";
 import { UpdateNodeTitle } from "./update-node-title.js";
 import { UpdateParameterMetadata } from "./update-parameter-metadata.js";
-import { routesFromConfiguration } from "../../engine/inspector/graph/graph-queries.js";
+import { routesFromConfiguration } from "../../utils/control.js";
 import { ChangeEdgesToBroadcastMode } from "./change-edges-to-broadcast-mode.js";
 import { ChangeEdgesToRoutingMode } from "./change-edges-to-routing-mode.js";
 

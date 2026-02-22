@@ -10,7 +10,7 @@ import type {
   EditSpec,
   SingleEditResult,
 } from "@breadboard-ai/types";
-import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { GraphDescriptorHandle } from "../graph-descriptor-handle.js";
 
 export class ChangeGraphMetadata implements EditOperation {
   async do(

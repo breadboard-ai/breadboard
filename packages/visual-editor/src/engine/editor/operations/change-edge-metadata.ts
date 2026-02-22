@@ -10,7 +10,7 @@ import type {
   EditSpec,
   SingleEditResult,
 } from "@breadboard-ai/types";
-import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { GraphDescriptorHandle } from "../graph-descriptor-handle.js";
 import { findEdgeIndex } from "../edge.js";
 import { error } from "./error.js";
 

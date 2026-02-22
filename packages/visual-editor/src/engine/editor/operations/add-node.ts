@@ -12,7 +12,7 @@ import type {
   InspectableGraph,
   SingleEditResult,
 } from "@breadboard-ai/types";
-import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
+import { GraphDescriptorHandle } from "../graph-descriptor-handle.js";
 import { errorNoInspect } from "./error.js";
 
 export class AddNode implements EditOperation {
