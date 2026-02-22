@@ -626,10 +626,10 @@ export class GraphController extends RootController implements MutableGraph {
     if (!selectedNodeId) {
       return new Map();
     }
-    const inspectable = this._editor?.inspect("");
-    if (!inspectable) {
+    if (!this.nodes) {
       return new Map();
     }
+    const inspectable = this.inspect("");
     return new Map<string, Component>(
       inspectable
         .nodes()
@@ -784,7 +784,11 @@ export class GraphController extends RootController implements MutableGraph {
     // Increment generation to track this update cycle
     const currentGeneration = ++this.#componentsUpdateGeneration;
 
-    const inspectable = this._editor.inspect("");
+    if (!this.nodes) {
+      this._components = new Map();
+      return;
+    }
+    const inspectable = this.inspect("");
     const graphs: [GraphIdentifier, InspectableGraph][] = Object.entries(
       inspectable.graphs() || {}
     );

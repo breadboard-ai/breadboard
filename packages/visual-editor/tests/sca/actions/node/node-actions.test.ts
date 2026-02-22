@@ -28,6 +28,7 @@ import { EditableGraph } from "@breadboard-ai/types";
 import { StateEvent } from "../../../../src/ui/events/events.js";
 import { coordination } from "../../../../src/sca/coordination.js";
 import type { EdgeAttachmentPoint } from "../../../../src/ui/types/types.js";
+import { makeTestGraphStoreArgs } from "../../../helpers/_graph-store.js";
 
 suite("Node Actions", () => {
   let controller: ReturnType<typeof appController>;
@@ -47,6 +48,21 @@ suite("Node Actions", () => {
     controller.editor.graph.readOnly = false;
   });
 
+  /**
+   * Initializes the MutableGraph caches and then sets the mock editor on the
+   * real GraphController. Mirrors the production order in `initializeEditor()`:
+   * `initialize()` first (populates caches), `setEditor()` second (runs
+   * `#updateComponents()` which uses the caches via `this.inspect()`).
+   */
+  function setEditorAndInit(mockEditor: EditableGraph) {
+    const raw = mockEditor.raw() as { nodes?: { id: string; type: string }[] };
+    controller.editor.graph.initialize(
+      { nodes: raw.nodes ?? [], edges: [] },
+      makeTestGraphStoreArgs()
+    );
+    controller.editor.graph.setEditor(mockEditor);
+  }
+
   suite("autoname action", () => {
     test("returns early when readOnly is true", async () => {
       let autonameCalled = false;
@@ -60,7 +76,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(createMockEditor());
+      setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = true;
 
       await NodeActions.autoname({
@@ -124,7 +140,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(createMockEditor());
+      setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
       await NodeActions.autoname({
@@ -159,7 +175,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(createMockEditor());
+      setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
       await NodeActions.autoname({
@@ -186,7 +202,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(createMockEditor());
+      setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
       await NodeActions.autoname({
@@ -213,7 +229,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(createMockEditor());
+      setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
       // Should not throw
@@ -237,7 +253,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(createMockEditor());
+      setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
       // Should not throw
@@ -281,7 +297,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(mockEditor);
+      setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
       await NodeActions.autoname({
@@ -320,7 +336,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(mockEditor);
+      setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
       // Should not throw
@@ -371,7 +387,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(mockEditor);
+      setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
       await NodeActions.autoname({
@@ -417,7 +433,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(mockEditor);
+      setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
       await NodeActions.autoname({
@@ -467,7 +483,7 @@ suite("Node Actions", () => {
       });
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(mockEditor);
+      setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
       await NodeActions.autoname({
@@ -505,7 +521,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(createMockEditor());
+      setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
       controller.editor.graph.lastNodeConfigChange = null;
 
@@ -534,7 +550,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(createMockEditor());
+      setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
       // Set up lastNodeConfigChange
@@ -571,7 +587,7 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       NodeActions.bind({ controller, services });
-      controller.editor.graph.setEditor(createMockEditor());
+      setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
       // Set up lastNodeConfigChange with titleUserModified = true
@@ -633,6 +649,10 @@ suite("Node Actions — Event-Triggered", () => {
         editor: {
           graph: {
             editor,
+            inspect: (graphId: string) =>
+              (editor as { inspect?: (id: string) => unknown })?.inspect?.(
+                graphId
+              ),
             readOnly: overrides?.readOnly ?? false,
             lastNodeConfigChange: null,
           },
@@ -967,6 +987,10 @@ suite("Node Actions — Keyboard", () => {
         editor: {
           graph: {
             editor,
+            inspect: (graphId: string) =>
+              (editor as { inspect?: (id: string) => unknown })?.inspect?.(
+                graphId
+              ),
             readOnly: false,
             url: "https://example.com/board.json",
             lastNodeConfigChange: null,
@@ -1599,6 +1623,7 @@ suite("Node Actions — Keyboard", () => {
           editor: {
             graph: {
               editor: mockEditor,
+              inspect: (graphId: string) => mockEditor.inspect(graphId),
               readOnly: false,
               url: "https://example.com/board.json",
             },
@@ -1689,6 +1714,7 @@ suite("Node Actions — Keyboard", () => {
           editor: {
             graph: {
               editor: mockEditor,
+              inspect: (graphId: string) => mockEditor.inspect(graphId),
               readOnly: false,
               url: "https://example.com/board.json",
             },

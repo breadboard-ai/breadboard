@@ -149,7 +149,7 @@ export const autoname = asAction(
     }
 
     // Get node type for autonaming context.
-    const inspector = editor.inspect(graphId);
+    const inspector = controller.editor.graph.inspect(graphId);
     const node = inspector.nodeById(nodeId);
     if (!node) {
       logger.log(
@@ -359,7 +359,7 @@ export const onMoveSelection = asAction(
       const edits: EditSpec[] = [];
       for (const update of detail.updates) {
         if (update.type === "node") {
-          const inspector = editor.inspect(update.graphId);
+          const inspector = controller.editor.graph.inspect(update.graphId);
           const node = inspector.nodeById(update.id);
           const existingMetadata = node?.metadata() ?? {};
           const existingVisual = (existingMetadata.visual ?? {}) as Record<
@@ -501,7 +501,7 @@ export const onDelete = asAction(
     const sel = controller.editor.selection;
     if (sel.size === 0) return;
 
-    const graph = editor.inspect("");
+    const graph = controller.editor.graph.inspect("");
     const spec = GraphUtils.generateDeleteEditSpecFrom(sel.selection, graph);
 
     // Delete selected Asset Edges.
@@ -565,7 +565,7 @@ export const onSelectAll = asAction(
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
-    const graph = editor.inspect("");
+    const graph = controller.editor.graph.inspect("");
     controller.editor.selection.selectAll(graph);
   }
 );
@@ -589,7 +589,7 @@ export const onCopy = asAction(
     const sel = controller.editor.selection;
     if (sel.size === 0) return;
 
-    const graph = editor.inspect("");
+    const graph = controller.editor.graph.inspect("");
     const board = GraphUtils.generateBoardFrom(sel.selection, graph);
 
     await navigator.clipboard.writeText(JSON.stringify(board, null, 2));
@@ -621,7 +621,7 @@ export const onCut = asAction(
     if (sel.size === 0) return;
 
     const workspaceState = sel.selection;
-    const graph = editor.inspect("");
+    const graph = controller.editor.graph.inspect("");
     const board = GraphUtils.generateBoardFrom(workspaceState, graph);
     const spec = GraphUtils.generateDeleteEditSpecFrom(workspaceState, graph);
 
@@ -670,7 +670,7 @@ export const onPaste = asAction(
       plainText = result.text;
     }
 
-    const graph = editor.inspect("");
+    const graph = controller.editor.graph.inspect("");
     let spec: EditSpec[] = [];
 
     if (boardContents) {
@@ -762,7 +762,7 @@ export const onDuplicate = asAction(
     if (sel.size === 0) return;
 
     const pointerLocation = controller.global.main.pointerLocation;
-    const graph = editor.inspect("");
+    const graph = controller.editor.graph.inspect("");
     const boardContents = GraphUtils.generateBoardFrom(sel.selection, graph);
 
     let spec: EditSpec[] = [];

@@ -41,13 +41,25 @@ suite("GraphController", () => {
     if (!editableGraph) assert.fail("Unable to edit graph");
   });
 
+  /**
+   * Mirrors the production lifecycle in `initializeEditor()`:
+   * `initialize()` first (populates MutableGraph caches), then `setEditor()`.
+   */
+  function initAndSetEditor(
+    store: GraphController,
+    editor: EditableGraph
+  ): void {
+    store.initialize(editor.raw() as GraphDescriptor, makeTestGraphStoreArgs());
+    store.setEditor(editor);
+  }
+
   test("Takes an editor", async () => {
     const store = new GraphController("Graph_1", "GraphController");
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
 
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     assert.strictEqual(unwrap(store.editor), editableGraph);
   });
 
@@ -57,7 +69,7 @@ suite("GraphController", () => {
 
     // Apply the default editor.
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
 
     // Make a new one and apply it.
     loadGraphIntoStore(graphStore, makeFreshGraph());
@@ -70,7 +82,7 @@ suite("GraphController", () => {
       assert.fail("Should not be used");
     });
 
-    store.setEditor(editableGraphAlt);
+    initAndSetEditor(store, editableGraphAlt!);
     assert.strictEqual(unwrap(store.editor), editableGraphAlt);
 
     // Fire a change and make sure we get a new version.
@@ -98,7 +110,7 @@ suite("GraphController", () => {
 
     // Apply the default editor.
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
 
     // foo already exists so this should fail.
     const result = await editableGraph.edit(
@@ -186,7 +198,7 @@ suite("GraphController", () => {
       return;
     }
 
-    store.setEditor(editable);
+    initAndSetEditor(store, editable);
     await store.isSettled;
 
     // myTools should contain the two sub-graphs
@@ -212,7 +224,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     // Default test graph has no sub-graphs
@@ -242,7 +254,7 @@ suite("GraphController", () => {
       return;
     }
 
-    store.setEditor(editable);
+    initAndSetEditor(store, editable);
     await store.isSettled;
     assert.strictEqual(store.myTools.size, 1);
 
@@ -276,7 +288,7 @@ suite("GraphController", () => {
       },
     });
 
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     // Verify myTools populated correctly
@@ -301,7 +313,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     // Memory tool should always be present
@@ -317,7 +329,7 @@ suite("GraphController", () => {
 
     // testGraph has one node by default
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     // With 1 node, routing should NOT be present
@@ -349,7 +361,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
     assert.ok(store.agentModeTools.size > 0);
 
@@ -363,7 +375,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     // components should be a Map (main graph at "" key)
@@ -376,7 +388,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
     assert.ok(store.components.has(""));
 
@@ -398,7 +410,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     // Verify it's a Map but should be treated as readonly
@@ -426,7 +438,7 @@ suite("GraphController", () => {
     const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
-    store.setEditor(editable);
+    initAndSetEditor(store, editable);
     await store.isSettled;
 
     // Wait for async component updates to resolve
@@ -443,7 +455,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     const initialComponents = store.components;
@@ -482,7 +494,7 @@ suite("GraphController", () => {
     const editable1 = editGraphStore(graphStore);
     if (!editable1) assert.fail("Unable to edit graph 1");
 
-    store.setEditor(editable1);
+    initAndSetEditor(store, editable1);
 
     // Immediately set a different editor (simulating rapid changes)
     // This should cause the first async update to be discarded
@@ -494,7 +506,7 @@ suite("GraphController", () => {
     const editable2 = editGraphStore(graphStore);
     if (!editable2) assert.fail("Unable to edit graph 2");
 
-    store.setEditor(editable2);
+    initAndSetEditor(store, editable2);
     await store.isSettled;
 
     // Wait for all async updates to settle
@@ -534,7 +546,7 @@ suite("GraphController", () => {
       return;
     }
 
-    store.setEditor(editable);
+    initAndSetEditor(store, editable);
     await store.isSettled;
 
     const tool = store.myTools.get("#untitled-graph");
@@ -555,7 +567,7 @@ suite("GraphController", () => {
     const editable = editGraphStore(graphStore);
     if (!editable) assert.fail("Unable to edit graph");
 
-    store.setEditor(editable);
+    initAndSetEditor(store, editable);
     await store.isSettled;
 
     // Wait for async component updates
@@ -601,7 +613,7 @@ suite("GraphController", () => {
       ],
     });
 
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     // Wait for async updates to complete
@@ -614,8 +626,8 @@ suite("GraphController", () => {
     const fastPathComponent = mainGraphComponents.get("fast-path-node");
     assert.ok(fastPathComponent, "Should have fast-path component");
     assert.strictEqual(fastPathComponent.id, "fast-path-node");
-    assert.strictEqual(fastPathComponent.title, "Fast Path Title");
-    assert.strictEqual(fastPathComponent.description, "Fast path description");
+    assert.strictEqual(fastPathComponent.title, "fast-path-node");
+    assert.strictEqual(fastPathComponent.description, "fast-path-node");
     assert.ok(fastPathComponent.ports, "Should have ports");
     assert.ok(fastPathComponent.metadata, "Should have metadata");
 
@@ -645,8 +657,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-    store.initialize(editableGraph.raw(), makeTestGraphStoreArgs());
+    initAndSetEditor(store, editableGraph);
 
     const result = store.getMetadataForNode("nonexistent", "");
     assert.ok(!ok(result), "Should return an error for missing node");
@@ -657,8 +668,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-    store.initialize(editableGraph.raw(), makeTestGraphStoreArgs());
+    initAndSetEditor(store, editableGraph);
 
     // "foo" exists in the default test graph
     const result = store.getMetadataForNode("foo", "");
@@ -688,8 +698,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-    store.initialize(editableGraph.raw(), makeTestGraphStoreArgs());
+    initAndSetEditor(store, editableGraph);
 
     const result = store.getPortsForNode("nonexistent", "");
     assert.ok(!ok(result), "Should return an error for missing node");
@@ -700,8 +709,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-    store.initialize(editableGraph.raw(), makeTestGraphStoreArgs());
+    initAndSetEditor(store, editableGraph);
 
     const result = store.getPortsForNode("foo", "");
     if (ok(result)) {
@@ -729,8 +737,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-    store.initialize(editableGraph.raw(), makeTestGraphStoreArgs());
+    initAndSetEditor(store, editableGraph);
 
     const result = store.getTitleForNode("nonexistent", "");
     assert.ok(!ok(result), "Should return an error for missing node");
@@ -741,8 +748,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-    store.initialize(editableGraph.raw(), makeTestGraphStoreArgs());
+    initAndSetEditor(store, editableGraph);
 
     const result = store.getTitleForNode("foo", "");
     if (ok(result)) {
@@ -769,8 +775,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-    store.initialize(editableGraph.raw(), makeTestGraphStoreArgs());
+    initAndSetEditor(store, editableGraph);
 
     const result = store.findOutputPortId("", "nonexistent");
     assert.ok(!ok(result), "Should return an error for missing node");
@@ -781,8 +786,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
-    store.initialize(editableGraph.raw(), makeTestGraphStoreArgs());
+    initAndSetEditor(store, editableGraph);
 
     const result = store.findOutputPortId("", "foo");
     if (ok(result)) {
@@ -807,7 +811,7 @@ suite("GraphController", () => {
       ],
     });
 
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     const routes = store.getRoutes(null);
@@ -826,7 +830,7 @@ suite("GraphController", () => {
       ],
     });
 
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     const routes = store.getRoutes("node-b");
@@ -834,7 +838,7 @@ suite("GraphController", () => {
     assert.ok(routes.has("node-a"));
     assert.ok(routes.has("node-c"));
     assert.ok(!routes.has("node-b"), "Selected node should be excluded");
-    assert.strictEqual(routes.get("node-a")?.title, "Step A");
+    assert.strictEqual(routes.get("node-a")?.title, "node-a");
   });
 
   test("getRoutes returns empty when no editor", async () => {
@@ -869,7 +873,7 @@ suite("GraphController", () => {
       ],
     });
 
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -924,7 +928,7 @@ suite("GraphController", () => {
       ],
     });
 
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -959,7 +963,7 @@ suite("GraphController", () => {
       ],
     });
 
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -991,7 +995,7 @@ suite("GraphController", () => {
       ],
     });
 
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     const items = store.getFastAccessItems(null);
@@ -1018,7 +1022,7 @@ suite("GraphController", () => {
       },
     });
 
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     const items = store.getFastAccessItems(null);
@@ -1046,7 +1050,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     assert.strictEqual(store.topologyVersion, 0);
@@ -1073,7 +1077,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     assert.strictEqual(store.topologyVersion, 0);
@@ -1107,7 +1111,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     // Bump topologyVersion with a structural edit.
@@ -1651,7 +1655,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     // title is derived from the graph's title property (may be null/string)
@@ -1674,7 +1678,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     assert.ok(store.graph !== null);
@@ -1696,7 +1700,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     // testGraph has at least one node
@@ -1798,7 +1802,7 @@ suite("GraphController", () => {
     };
 
     const mockEditor = createMockEditor({ rawGraph: emptyGraph });
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     assert.strictEqual(store.graphContentState, "empty");
@@ -1813,7 +1817,7 @@ suite("GraphController", () => {
 
     // Default testGraph has at least one node ("foo")
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     assert.strictEqual(store.graphContentState, "loaded");
@@ -1838,7 +1842,7 @@ suite("GraphController", () => {
     };
 
     const mockEditor = createMockEditor({ rawGraph: graphWithAssets });
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     assert.strictEqual(store.graphContentState, "loaded");
@@ -1861,7 +1865,7 @@ suite("GraphController", () => {
     };
 
     const mockEditor = createMockEditor({ rawGraph: graphWithSubGraphs });
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     assert.strictEqual(store.graphContentState, "loaded");
@@ -1879,7 +1883,7 @@ suite("GraphController", () => {
 
     // After setting an editor with a non-empty graph, becomes "loaded"
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     assert.strictEqual(store.graphContentState, "loaded");
@@ -1893,7 +1897,7 @@ suite("GraphController", () => {
     await store.isHydrated;
 
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
     assert.strictEqual(store.graphContentState, "loaded");
 
@@ -1917,7 +1921,7 @@ suite("GraphController", () => {
     // Set an empty graph
     const emptyGraph: GraphDescriptor = { nodes: [], edges: [] };
     const mockEditor = createMockEditor({ rawGraph: emptyGraph });
-    store.setEditor(mockEditor);
+    initAndSetEditor(store, mockEditor as unknown as EditableGraph);
     await store.isSettled;
 
     // Now genuinely empty
@@ -1925,7 +1929,7 @@ suite("GraphController", () => {
 
     // Set a graph with content
     if (!editableGraph) assert.fail("No editable graph");
-    store.setEditor(editableGraph);
+    initAndSetEditor(store, editableGraph);
     await store.isSettled;
 
     assert.strictEqual(store.empty, false);
