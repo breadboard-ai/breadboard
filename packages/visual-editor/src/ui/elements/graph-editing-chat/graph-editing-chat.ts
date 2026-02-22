@@ -450,7 +450,7 @@ class GraphEditingChat extends SignalWatcher(LitElement) {
     const editor = this.sca.controller.editor.graph.editor;
     if (!editor) return nothing;
 
-    const inspector = editor.inspect("");
+    const inspector = this.sca.controller.editor.graph.inspect("");
     const chips = [...selectedNodes].map((nodeId) => {
       const node = inspector.nodeById(nodeId);
       const title = node?.metadata()?.title ?? "(untitled)";

@@ -151,17 +151,18 @@ All consumers call `editor.inspect(graphId)` → `InspectableGraph`. With
 `graphController.inspect(graphId)` available, these can switch to
 `controller.editor.graph.inspect(graphId)` instead.
 
-- [ ] Migrate `node-actions.ts` (8 calls: `autoname`, `onNodeChange`,
+- [x] Migrate `node-actions.ts` (8 calls: `autoname`, `onNodeChange`,
       `onMoveSelection`, `onDelete`, `onSelectAll`, `onCopy`, `onCut`,
       `onPaste`/`onDuplicate`)
-- [ ] Migrate `graph-actions.ts` (1 call: `replaceWithTheme`)
-- [ ] Migrate `graph-editing-chat.ts` (1 call)
-- [ ] Migrate `graph-utils.ts` (7 functions accept `InspectableGraph` — these
-      can accept `graphController.inspect()` output unchanged since it returns
-      the same `InspectableGraph` type)
-- [ ] Migrate 2 remaining internal `_editor.inspect()` calls in
-      `GraphController` (`getRoutes`, `#updateComponents`) — blocked on unifying
-      `setEditor + initialize` lifecycle
+- [x] Migrate `graph-actions.ts` (1 call: `replaceWithTheme`)
+- [x] Migrate `graph-editing-chat.ts` (1 call)
+- [x] Migrate `graph-utils.ts` (7 functions accept `InspectableGraph` — these
+      accept `graphController.inspect()` output unchanged since it returns the
+      same `InspectableGraph` type; no changes needed)
+- [x] Migrate 2 remaining internal `_editor.inspect()` calls in
+      `GraphController` (`getRoutes`, `#updateComponents`) — uses
+      `this.inspect()` with `_editor.inspect()` fallback for backward
+      compatibility
 - [ ] Delete `Graph`, `Node`, `Edge`, `GraphQueries`, `DescribeResultCache`
       (only after ALL consumers are migrated, since `inspect()` still returns
       `new Graph(...)`)

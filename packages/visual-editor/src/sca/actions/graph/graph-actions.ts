@@ -235,7 +235,7 @@ export const moveSelectionPositions = asAction(
     for (const update of updates) {
       if (update.type === "node") {
         // Fetch existing metadata from editor, merge visual coordinates
-        const inspector = editor.inspect(update.graphId);
+        const inspector = controller.editor.graph.inspect(update.graphId);
         const node = inspector.nodeById(update.id);
         const existingMetadata = node?.metadata() ?? {};
         const existingVisual = (existingMetadata.visual ?? {}) as Record<

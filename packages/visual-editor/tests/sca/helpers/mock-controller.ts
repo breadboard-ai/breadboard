@@ -221,8 +221,15 @@ export interface MockNode {
  */
 export function createMockEditor(options?: MockEditorOptions): EditableGraph {
   const nodeId = options?.nodeId ?? "test-node";
-  const rawGraph = options?.rawGraph ?? {
-    nodes: [{ id: nodeId, type: "promptTemplate" }],
+  const defaultNodes = options?.mockNodes?.map((n) => ({
+    id: n.id,
+    type: n.type,
+  })) ?? [{ id: nodeId, type: "promptTemplate" }];
+  const rawGraph = {
+    edges: [],
+    ...(options?.rawGraph ?? {
+      nodes: defaultNodes,
+    }),
   };
   const mockNodes = options?.mockNodes ?? [];
 

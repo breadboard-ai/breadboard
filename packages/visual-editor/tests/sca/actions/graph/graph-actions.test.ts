@@ -90,6 +90,7 @@ suite("Graph Actions", () => {
           editor: {
             graph: {
               editor,
+              inspect: (graphId: string) => editor.inspect(graphId),
               lastNodeConfigChange: null,
               pendingGraphReplacement: null,
               clearPendingGraphReplacement: () => {},
