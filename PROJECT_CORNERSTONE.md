@@ -250,21 +250,26 @@ Body (resume): {interactionId, response}
 - [x] `complete` event carries `AgentResult.outcomes` (don't break on `finish`)
 - [x] Tests: SSE event sequence, outcome extraction, error handling (11 tests)
 
-##### 4.4f: Agent File System + Remaining System Functions
+##### 4.4f: Agent File System + System Functions
 
-- [ ] Port `AgentFileSystem` (in-memory virtual FS)
-- [ ] Port remaining system functions (list/read/write files, task tree)
-- [ ] Add `intermediate` / `FileData` to `AgentResult`
+- [x] Port `AgentFileSystem` (in-memory virtual FS)
+- [x] Port `TaskTreeManager` (task tree schema + status tracking)
+- [x] Port `PidginTranslator.fromPidginString` (resolve `<file>` tags → data
+      parts from FS — needed by `system_write_file` and `onSuccess` callback)
+- [x] Port remaining system functions (list/read/write files, task tree)
+- [x] Add `intermediate` / `FileData` to `AgentResult`
+- [x] Wire file system + task tree into loop setup
 
-##### 4.4g: Content Generation Functions
+##### 4.4g: Content Generation + Objective Translation
 
 > **🎯 Objective:** Run an opal with "generate an image of a cat" through the
 > dev backend. Full content generation flow end-to-end.
 
+- [ ] Port `PidginTranslator.toPidgin` (objective → pidgin text, depends on
+      `SimplifiedToolManager`)
 - [ ] Port `conformGeminiBody` (data-part transforms for file upload)
 - [ ] Port `SimplifiedToolManager` / `customTools` support in Loop
 - [ ] Port generate functions (image/video/audio/music)
-- [ ] Port `PidginTranslator` (objective translation)
 
 #### 4.5: Suspend/Resume for Interactive Agents
 
@@ -284,6 +289,7 @@ Body (resume): {interactionId, response}
 > removed or kept as a fallback.
 
 - [ ] File upload flow via `LLMContent` `inlineData`/`storedData`
+- [ ] `MemoryManager` + `StoredData`/`FileData` resolution in Python FS
 - [ ] State store for production (Redis/Firestore instead of in-memory)
 - [ ] Reconnection — client re-POSTs with last interaction ID on drop
 - [ ] Remove `LocalAgentRun` path (or keep for offline dev)

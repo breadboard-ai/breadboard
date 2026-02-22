@@ -4,13 +4,11 @@
 """
 System functions for the agent loop.
 
-Port of ``functions/system.ts``. This module provides the two termination
-functions (``system_objective_fulfilled`` and
-``system_failed_to_fulfill_objective``) along with the full system instruction
-(meta-plan prompt).
-
-The remaining 5 system functions (list/read/write files, task tree) are
-deferred to Phase 4.4d.
+Port of ``functions/system.ts``. This module provides all system functions:
+termination (``system_objective_fulfilled`` / ``system_failed_to_fulfill_objective``),
+file operations (``system_list_files``, ``system_write_file``,
+``system_read_text_from_file``), and task tree management
+(``system_create_task_tree``, ``system_mark_completed_tasks``).
 """
 
 from __future__ import annotations
@@ -25,13 +23,16 @@ from ..function_definition import (
     map_definitions,
 )
 from ..loop import AgentResult, LoopController
+from ..agent_file_system import AgentFileSystem
+from ..task_tree_manager import TaskTreeManager, TASK_TREE_SCHEMA
+from ..pidgin import from_pidgin_string
 
 # Function name constants (must match the TypeScript originals exactly).
 OBJECTIVE_FULFILLED_FUNCTION = "system_objective_fulfilled"
 FAILED_TO_FULFILL_FUNCTION = "system_failed_to_fulfill_objective"
-
-# Also referenced in the instruction but not ported yet (4.4d).
 LIST_FILES_FUNCTION = "system_list_files"
+WRITE_FILE_FUNCTION = "system_write_file"
+READ_TEXT_FROM_FILE_FUNCTION = "system_read_text_from_file"
 CREATE_TASK_TREE_FUNCTION = "system_create_task_tree"
 MARK_COMPLETED_TASKS_FUNCTION = "system_mark_completed_tasks"
 OBJECTIVE_OUTCOME_PARAMETER = "objective_outcome"
@@ -346,35 +347,314 @@ def _define_failed_to_fulfill(
     )
 
 
+# ---- File system functions ----
+
+
+def _define_list_files(
+    file_system: AgentFileSystem,
+) -> FunctionDefinition:
+    """Port of ``system_list_files`` from system.ts."""
+
+    async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+        status_update = args.get("status_update")
+        if status_cb and status_update:
+            status_cb(status_update)
+        elif status_cb:
+            status_cb("Getting a list of files")
+        return {"list": file_system.list_files()}
+
+    return FunctionDefinition(
+        name=LIST_FILES_FUNCTION,
+        description="Lists all files",
+        handler=handler,
+        icon="folder",
+        parameters_json_schema={
+            "type": "object",
+            "properties": {
+                "status_update": {
+                    "type": "string",
+                    "description": (
+                        "A short, user-facing status update that will be "
+                        "displayed in the UI while this function executes."
+                    ),
+                },
+            },
+        },
+        response_json_schema={
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "string",
+                    "description": "List of all files as file paths",
+                },
+            },
+        },
+    )
+
+
+def _define_write_file(
+    file_system: AgentFileSystem,
+) -> FunctionDefinition:
+    """Port of ``system_write_file`` from system.ts."""
+
+    async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+        file_name = args.get("file_name", "")
+        content = args.get("content", "")
+
+        # Resolve <file> tags in the content via pidgin translator
+        translated = from_pidgin_string(content, file_system)
+        if isinstance(translated, dict) and "$error" in translated:
+            return {"error": translated["$error"]}
+
+        # Extract text from the translated content parts
+        text_parts = []
+        for part in translated.get("parts", []):
+            if "text" in part:
+                text_parts.append(part["text"])
+        resolved_content = "\n".join(text_parts) if text_parts else content
+
+        file_path = file_system.write(file_name, resolved_content)
+        return {"file_path": file_path}
+
+    return FunctionDefinition(
+        name=WRITE_FILE_FUNCTION,
+        description="Writes the provided text to a file",
+        handler=handler,
+        icon="edit",
+        title="Writing to file",
+        parameters_json_schema={
+            "type": "object",
+            "properties": {
+                "file_name": {
+                    "type": "string",
+                    "description": (
+                        'The name of the file with the extension. '
+                        'This is the name that will come after the "/mnt/" '
+                        'prefix in the file path. Use snake_case for naming. '
+                        'If the file does not exist, it will be created. '
+                        'If the file already exists, its content will be '
+                        'overwritten. '
+                        'Examples: "report.md", "data.csv", "notes.txt", '
+                        '"config.json", "index.html"'
+                    ),
+                },
+                "content": {
+                    "type": "string",
+                    "description": "The content to write into a file",
+                },
+            },
+            "required": ["file_name", "content"],
+        },
+        response_json_schema={
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": (
+                        "The path to the file containing the provided text"
+                    ),
+                },
+                "error": {
+                    "type": "string",
+                    "description": (
+                        "The error message if the file could not be written"
+                    ),
+                },
+            },
+        },
+    )
+
+
+def _define_read_text_from_file(
+    file_system: AgentFileSystem,
+) -> FunctionDefinition:
+    """Port of ``system_read_text_from_file`` from system.ts."""
+
+    async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+        file_path = args.get("file_path", "")
+        text = file_system.read_text(file_path)
+        if isinstance(text, dict) and "$error" in text:
+            return {"error": text["$error"]}
+        return {"text": text}
+
+    return FunctionDefinition(
+        name=READ_TEXT_FROM_FILE_FUNCTION,
+        description=(
+            "Reads text from a file and return text as string. If the file "
+            "does not contain text or is not supported, an error will be "
+            "returned."
+        ),
+        handler=handler,
+        icon="description",
+        title="Reading from file",
+        parameters_json_schema={
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": (
+                        "The file path of the file to read the text from."
+                    ),
+                },
+            },
+            "required": ["file_path"],
+        },
+        response_json_schema={
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": (
+                        "The text contents of a file as a string."
+                    ),
+                },
+                "error": {
+                    "type": "string",
+                    "description": (
+                        "If an error has occurred, will contain a "
+                        "description of the error"
+                    ),
+                },
+            },
+        },
+    )
+
+
+# ---- Task tree functions ----
+
+
+def _define_create_task_tree(
+    task_tree_manager: TaskTreeManager,
+) -> FunctionDefinition:
+    """Port of ``system_create_task_tree`` from system.ts."""
+
+    async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+        task_tree = args.get("task_tree")
+        if not task_tree:
+            return {"error": "task_tree is required"}
+        file_path = task_tree_manager.set(task_tree)
+        return {"file_path": file_path}
+
+    return FunctionDefinition(
+        name=CREATE_TASK_TREE_FUNCTION,
+        description=(
+            "When working on a complicated problem, use this function to "
+            "create a scratch pad to reason about a dependency tree of "
+            "tasks, like about the order of tasks, and which tasks can be "
+            "executed concurrently and which ones must be executed serially."
+        ),
+        handler=handler,
+        icon="task",
+        title="Creating task tree",
+        parameters_json_schema=TASK_TREE_SCHEMA,
+        response_json_schema={
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                },
+            },
+        },
+    )
+
+
+def _define_mark_completed_tasks(
+    task_tree_manager: TaskTreeManager,
+) -> FunctionDefinition:
+    """Port of ``system_mark_completed_tasks`` from system.ts."""
+
+    async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+        task_ids = args.get("task_ids", [])
+        file_path = task_tree_manager.set_complete(task_ids)
+        return {"file_path": file_path}
+
+    return FunctionDefinition(
+        name=MARK_COMPLETED_TASKS_FUNCTION,
+        description=(
+            f'Mark one or more tasks defined with the '
+            f'"{CREATE_TASK_TREE_FUNCTION}" as complete.'
+        ),
+        handler=handler,
+        icon="task",
+        title="Marking tasks complete",
+        parameters_json_schema={
+            "type": "object",
+            "properties": {
+                "task_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": (
+                            'The "task_id" from the task tree to mark as '
+                            'completed'
+                        ),
+                    },
+                    "description": (
+                        "The list of tasks to mark as completed"
+                    ),
+                },
+            },
+            "required": ["task_ids"],
+        },
+        response_json_schema={
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": (
+                        "The file path to the updated task tree"
+                    ),
+                },
+            },
+        },
+    )
+
+
 # ---- Public API ----
 
 
 def get_system_function_group(
     controller: LoopController,
     *,
+    file_system: AgentFileSystem | None = None,
+    task_tree_manager: TaskTreeManager | None = None,
     success_callback: Callable[[str, str], Any] | None = None,
     failure_callback: Callable[[str], None] | None = None,
 ) -> FunctionGroup:
-    """Build a FunctionGroup with the system termination functions.
+    """Build a FunctionGroup with all system functions.
 
     This is the Python equivalent of ``getSystemFunctionGroup`` from
-    system.ts. It wires the two termination functions to the given
-    ``LoopController`` and includes the full system instruction.
+    system.ts. It wires termination, file, and task tree functions.
 
     Args:
-        controller: The LoopController that functions will call to terminate.
-        success_callback: Optional callback for objective_fulfilled (e.g.
-            pidgin translation). Will be added in 4.4d.
-        failure_callback: Optional callback for failed_to_fulfill (e.g.
-            UI notification).
+        controller: The LoopController for termination functions.
+        file_system: The AgentFileSystem for file operations. When
+            ``None``, file functions are omitted.
+        task_tree_manager: The TaskTreeManager for task tree operations.
+            When ``None``, task tree functions are omitted.
+        success_callback: Optional callback for objective_fulfilled.
+        failure_callback: Optional callback for failed_to_fulfill.
 
     Returns:
         A FunctionGroup with declarations, definitions, and instruction.
     """
-    functions = [
+    functions: list[FunctionDefinition] = [
         _define_objective_fulfilled(controller, success_callback),
         _define_failed_to_fulfill(controller, failure_callback),
     ]
+
+    if file_system is not None:
+        functions.extend([
+            _define_list_files(file_system),
+            _define_write_file(file_system),
+            _define_read_text_from_file(file_system),
+        ])
+
+    if task_tree_manager is not None:
+        functions.extend([
+            _define_create_task_tree(task_tree_manager),
+            _define_mark_completed_tasks(task_tree_manager),
+        ])
 
     mapped = map_definitions(functions)
     return FunctionGroup(

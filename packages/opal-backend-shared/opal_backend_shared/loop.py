@@ -53,12 +53,21 @@ def ok(value: Any) -> bool:
 
 
 @dataclass
+class FileData:
+    """A file from the agent file system, keyed by path."""
+
+    path: str
+    content: LLMContent
+
+
+@dataclass
 class AgentResult:
     """Result of an agent loop run."""
 
     success: bool
     href: str = "/"
     outcomes: LLMContent | None = None
+    intermediate: list[FileData] | None = None
 
 
 @dataclass

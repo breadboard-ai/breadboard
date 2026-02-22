@@ -30,6 +30,7 @@ from opal_backend_shared.agent_events import (
     AgentEventSink,
     build_hooks_from_sink,
 )
+from opal_backend_shared.agent_file_system import AgentFileSystem
 from opal_backend_shared.functions.system import get_system_function_group
 from opal_backend_shared.local.api_surface import create_api_router
 from opal_backend_shared.loop import (
@@ -37,6 +38,7 @@ from opal_backend_shared.loop import (
     Loop,
     LoopController,
 )
+from opal_backend_shared.task_tree_manager import TaskTreeManager
 
 logger = logging.getLogger(__name__)
 
@@ -145,8 +147,16 @@ class DevAgentBackend:
         controller = LoopController()
         loop = Loop(access_token=access_token, controller=controller)
 
-        # Wire up system functions (termination only for now).
-        system_group = get_system_function_group(controller)
+        # Create file system and task tree manager.
+        file_system = AgentFileSystem()
+        task_tree_manager = TaskTreeManager(file_system)
+
+        # Wire up all system functions.
+        system_group = get_system_function_group(
+            controller,
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
+        )
 
         run_args = AgentRunArgs(
             objective=objective,
@@ -171,6 +181,16 @@ class DevAgentBackend:
                         "result": {"success": False, "outcomes": None},
                     })
                 else:
+                    # Collect intermediate files from the file system.
+                    intermediate = None
+                    if result.success and file_system.files:
+                        intermediate = [
+                            {
+                                "path": path,
+                                "content": file_system._file_to_part(desc),
+                            }
+                            for path, desc in file_system.files.items()
+                        ]
                     sink.emit({
                         "type": "complete",
                         "result": {
@@ -180,6 +200,9 @@ class DevAgentBackend:
                             "outcomes": result.outcomes
                             if hasattr(result, "outcomes")
                             else None,
+                            **({
+                                "intermediate": intermediate,
+                            } if intermediate else {}),
                         },
                     })
             except Exception as e:
