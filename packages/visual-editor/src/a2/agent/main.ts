@@ -12,7 +12,7 @@ import {
   RuntimeFlags,
   Schema,
 } from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
+import { ok, err } from "@breadboard-ai/utils";
 import { Params } from "../a2/common.js";
 import type { ProgressReporter } from "./types.js";
 import { Template } from "../a2/template.js";
@@ -20,6 +20,7 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { buildAgentRun } from "./loop-setup.js";
 import type { LocalAgentRun } from "./local-agent-run.js";
 import { SSEAgentRun } from "./sse-agent-run.js";
+import { resolveToSegments } from "./resolve-to-segments.js";
 import { ConsoleProgressManager } from "./console-progress-manager.js";
 import { getCurrentStepState } from "./progress-work-item.js";
 import { createAgentConfigurator } from "./agent-function-configurator.js";
@@ -119,11 +120,29 @@ async function invokeAgent(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
 
-  // Create a run handle. In remote mode this is SSEAgentRun.
-  const handle = moduleArgs.agentService.startRun({
-    kind: "content",
-    objective,
-  });
+  // Check if we're in remote mode by testing for the remote base URL.
+  // In remote mode, resolve templates to segments for the wire protocol.
+  // In local mode, pass the raw objective for in-process toPidgin.
+  const isRemote = moduleArgs.agentService.isRemote;
+
+  let handle;
+  if (isRemote) {
+    // Resolve templates into segments for the wire protocol.
+    const resolution = await resolveToSegments(objective, params, moduleArgs);
+    if (!ok(resolution)) {
+      return err(resolution.$error);
+    }
+    handle = moduleArgs.agentService.startRun({
+      kind: "content",
+      segments: resolution.segments,
+      flags: resolution.flags,
+    });
+  } else {
+    handle = moduleArgs.agentService.startRun({
+      kind: "content",
+      objective,
+    });
+  }
 
   // --- Remote mode: server runs the loop, we consume SSE events ---
   if (handle instanceof SSEAgentRun) {

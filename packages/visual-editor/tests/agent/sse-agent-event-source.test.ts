@@ -433,7 +433,8 @@ suite("AgentService remote mode", () => {
 
     const handle = service.startRun({
       kind: "test",
-      objective: { parts: [{ text: "hello" }] },
+      segments: [{ type: "text", text: "hello" }],
+      flags: { useNotebookLM: false },
     });
 
     // SSEAgentRun should not have sink on the interface

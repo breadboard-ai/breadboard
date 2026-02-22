@@ -6,25 +6,35 @@
 
 import type { LLMContent } from "@breadboard-ai/types";
 import type { AgentEventConsumer } from "./agent-event-consumer.js";
+import type { Segment, SegmentResolution } from "./resolve-to-segments.js";
 
 import { LocalAgentRun } from "./local-agent-run.js";
 import { SSEAgentRun } from "./sse-agent-run.js";
 
 export { AgentService };
-export type { AgentRunHandle, AgentRunConfig };
+export type { AgentRunHandle, AgentRunConfig, RemoteAgentRunConfig };
 
 /**
  * Configuration for starting a new agent run.
  *
- * The `kind` field selects which agent loop to execute (content generation,
- * graph editing, or future kinds). The `objective` is the user's goal.
- *
- * Additional kind-specific configuration can be added as needed.
+ * Two variants:
+ * - **Local mode**: carries `objective` (LLMContent) for in-process
+ *   `toPidgin` + loop execution.
+ * - **Remote mode**: carries `segments` + `flags` (wire protocol).
+ *   The server owns pidgin tag generation.
  */
-type AgentRunConfig = {
+type LocalAgentRunConfig = {
   kind: string;
   objective: LLMContent;
 };
+
+type RemoteAgentRunConfig = {
+  kind: string;
+  segments: Segment[];
+  flags: SegmentResolution["flags"];
+};
+
+type AgentRunConfig = LocalAgentRunConfig | RemoteAgentRunConfig;
 
 /**
  * A handle to a single live agent run.
@@ -120,6 +130,11 @@ class AgentService {
     this.#remoteFetchWithCreds = fetchWithCreds;
   }
 
+  /** Whether the service is configured for remote (SSE) mode. */
+  get isRemote(): boolean {
+    return this.#remoteBaseUrl !== null;
+  }
+
   /**
    * Create and start a new agent run.
    *
@@ -132,15 +147,21 @@ class AgentService {
   startRun(config: AgentRunConfig): AgentRunHandle {
     const runId = crypto.randomUUID();
 
-    const run = this.#remoteBaseUrl
-      ? new SSEAgentRun(
-          runId,
-          config.kind,
-          this.#remoteBaseUrl,
-          config,
-          this.#remoteFetchWithCreds
-        )
-      : new LocalAgentRun(runId, config.kind);
+    let run: AgentRunHandle;
+    if (this.#remoteBaseUrl) {
+      if (!("segments" in config)) {
+        throw new Error("Remote mode requires RemoteAgentRunConfig (segments)");
+      }
+      run = new SSEAgentRun(
+        runId,
+        config.kind,
+        this.#remoteBaseUrl,
+        config,
+        this.#remoteFetchWithCreds
+      );
+    } else {
+      run = new LocalAgentRun(runId, config.kind);
+    }
 
     this.#runs.set(runId, run);
     return run;

@@ -222,3 +222,66 @@ suite("LocalAgentRun (via AgentRunHandle)", () => {
     service.endRun(handle.runId);
   });
 });
+
+suite("AgentService — Remote Mode", () => {
+  test("isRemote is false by default", () => {
+    const service = new AgentService();
+    assert.strictEqual(service.isRemote, false);
+  });
+
+  test("isRemote is true after configureRemote", () => {
+    const service = new AgentService();
+    service.configureRemote("http://localhost:8080");
+    assert.strictEqual(service.isRemote, true);
+  });
+
+  test("isRemote reverts to false when set to null", () => {
+    const service = new AgentService();
+    service.configureRemote("http://localhost:8080");
+    assert.strictEqual(service.isRemote, true);
+
+    service.configureRemote(null);
+    assert.strictEqual(service.isRemote, false);
+  });
+
+  test("startRun in local mode accepts LocalAgentRunConfig", () => {
+    const service = new AgentService();
+    // Should not throw — local mode accepts objective
+    const handle = service.startRun({ kind: "test", objective: OBJECTIVE });
+    assert.ok(handle.runId);
+    service.endRun(handle.runId);
+  });
+
+  test("startRun in remote mode rejects LocalAgentRunConfig", () => {
+    const service = new AgentService();
+    service.configureRemote("http://localhost:8080", fakeFetch);
+
+    assert.throws(
+      () => service.startRun({ kind: "test", objective: OBJECTIVE }),
+      { message: /Remote mode requires RemoteAgentRunConfig/ }
+    );
+  });
+
+  test("startRun in remote mode accepts RemoteAgentRunConfig", () => {
+    const service = new AgentService();
+    service.configureRemote("http://localhost:8080", fakeFetch);
+
+    const handle = service.startRun({
+      kind: "test",
+      segments: [{ type: "text", text: "hello" }],
+      flags: { useNotebookLM: false },
+    });
+    assert.ok(handle.runId);
+    assert.strictEqual(handle.kind, "test");
+    service.endRun(handle.runId);
+  });
+});
+
+/**
+ * Minimal fetch stub for remote mode tests.
+ * SSEAgentRun constructs the source but we don't call connect(),
+ * so this is never actually invoked.
+ */
+function fakeFetch(): Promise<Response> {
+  return Promise.resolve(new Response());
+}

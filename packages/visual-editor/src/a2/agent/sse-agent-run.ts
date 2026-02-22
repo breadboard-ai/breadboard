@@ -5,7 +5,7 @@
  */
 
 import { AgentEventConsumer } from "./agent-event-consumer.js";
-import type { AgentRunConfig, AgentRunHandle } from "./agent-service.js";
+import type { RemoteAgentRunConfig, AgentRunHandle } from "./agent-service.js";
 import { SSEAgentEventSource } from "./sse-agent-event-source.js";
 
 export { SSEAgentRun };
@@ -16,11 +16,9 @@ export { SSEAgentRun };
  * Instead of running the agent loop in-process, this connects to a
  * remote server via a single POST request that returns an SSE stream.
  *
- * The `runId` is generated client-side (used as a correlation key).
- * The server may echo or override it in the first event.
- *
- * The `sink` is not available — in remote mode, the agent loop runs
- * on the server, so there is no client-side sink.
+ * The POST body carries structured segments + flags (wire protocol).
+ * The server calls `to_pidgin(segments)` to produce pidgin text and
+ * handles all data part registration + tag generation.
  */
 class SSEAgentRun implements AgentRunHandle {
   readonly events: AgentEventConsumer;
@@ -31,13 +29,17 @@ class SSEAgentRun implements AgentRunHandle {
     readonly runId: string,
     readonly kind: string,
     baseUrl: string,
-    config: AgentRunConfig,
+    config: RemoteAgentRunConfig,
     fetchWithCreds: typeof fetch
   ) {
     this.events = new AgentEventConsumer();
     this.#source = new SSEAgentEventSource(
       baseUrl,
-      { kind: config.kind, objective: config.objective },
+      {
+        kind: config.kind,
+        segments: config.segments,
+        flags: config.flags,
+      },
       this.events,
       fetchWithCreds,
       this.#abortController.signal

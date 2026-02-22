@@ -10,7 +10,8 @@ opal-backend-shared with system termination functions.
 
 Protocol:
     POST /api/agent/run → SSE stream (Resumable Stream Protocol)
-    Body: {"kind": "...", "objective": {...}}
+    Body (segments): {"kind": "...", "segments": [...], "flags": {...}}
+    Body (legacy):   {"kind": "...", "objective": {...}}
 
 Run with: uvicorn opal_backend_dev.main:app --reload --port 8080
 """
@@ -39,6 +40,8 @@ from opal_backend_shared.loop import (
     LoopController,
 )
 from opal_backend_shared.task_tree_manager import TaskTreeManager
+
+from opal_backend_shared.pidgin import to_pidgin, ToPidginResult
 
 logger = logging.getLogger(__name__)
 
@@ -120,8 +123,12 @@ class DevAgentBackend:
     from the Authorization header, runs the Loop inline, and streams
     events directly back to the client as SSE.
 
-    No background tasks or run maps needed — the HTTP response IS
-    the event stream.
+    Supports two body formats:
+    - **Segments** (Phase 4.5): ``{segments: [...], flags?: {...}}``
+      Template-resolved segments; server calls ``to_pidgin`` to produce
+      the objective text and discover capabilities.
+    - **Legacy**: ``{objective: {...}}``
+      Raw LLMContent passed directly to the loop.
     """
 
     async def run(self, request: Request) -> EventSourceResponse:
@@ -134,10 +141,41 @@ class DevAgentBackend:
         if auth_header.startswith("Bearer "):
             access_token = auth_header[len("Bearer "):]
 
-        # Build the objective from the request body.
-        objective = body.get("objective")
-        if not objective:
-            return _error_stream("Missing 'objective' in request body")
+        # Create file system and task tree manager.
+        file_system = AgentFileSystem()
+        task_tree_manager = TaskTreeManager(file_system)
+
+        # Build the objective — segments-based or legacy.
+        segments = body.get("segments")
+        if segments is not None:
+            # Phase 4.5: structured segments → to_pidgin → objective
+            flags = body.get("flags", {})
+            use_notebooklm_flag = flags.get("useNotebookLM", False)
+
+            pidgin_result = to_pidgin(
+                segments,
+                file_system,
+                use_notebooklm_flag=use_notebooklm_flag,
+            )
+
+            if isinstance(pidgin_result, dict) and "$error" in pidgin_result:
+                return _error_stream(pidgin_result["$error"])
+
+            # Wrap pidgin text as <objective>...</objective> content turn.
+            objective = {
+                "parts": [{
+                    "text": f"<objective>{pidgin_result.text}</objective>"
+                }],
+                "role": "user",
+            }
+        else:
+            # Legacy: raw LLMContent objective.
+            objective = body.get("objective")
+            if not objective:
+                return _error_stream(
+                    "Missing 'segments' or 'objective' in request body"
+                )
+            pidgin_result = None
 
         # Create the event sink and hooks.
         sink = AgentEventSink()
@@ -146,10 +184,6 @@ class DevAgentBackend:
         # Create the loop with auth.
         controller = LoopController()
         loop = Loop(access_token=access_token, controller=controller)
-
-        # Create file system and task tree manager.
-        file_system = AgentFileSystem()
-        task_tree_manager = TaskTreeManager(file_system)
 
         # Wire up all system functions.
         system_group = get_system_function_group(

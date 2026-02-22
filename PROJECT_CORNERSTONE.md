@@ -89,6 +89,50 @@ mirrored as Pydantic models in `opal-backend-shared`.
 | `error`              | → client  | Loop error               |
 | `finish`             | → client  | Cleanup signal           |
 
+## Dev Backend Pipeline
+
+> **How to run end-to-end**: `npm run dev:backend -w packages/unified-server`
+>
+> This starts **both** the unified-server (port 3000, serves the frontend) and
+> the Python dev backend (port 8080, runs the agent loop). Open
+> `localhost:3000`, create or open an Opal, and run it — the full wire protocol
+> will be exercised.
+
+**Activation**: The frontend enters remote mode when
+`CLIENT_DEPLOYMENT_CONFIG.DEV_BACKEND_MODE` is set. This calls
+`agentService.configureRemote(OPAL_BACKEND_API_PREFIX, fetchWithCreds)` in
+`packages/visual-editor/src/sca/services/services.ts`.
+
+**Data flow**:
+
+```
+Frontend (browser)                          Dev backend (Python)
+─────────────────────                       ────────────────────
+1. User runs Opal
+2. resolveToSegments(objective, params)
+   → segments[] + flags
+3. SSEAgentRun POSTs to /api/agent/run
+   body: {kind, segments, flags}
+                                    ──→  4. to_pidgin(segments, file_system)
+                                            → pidgin text + capabilities
+                                         5. Wrap: <objective>text</objective>
+                                         6. Loop.run(objective) → Gemini
+                                    ←──  7. SSE events stream back
+8. AgentEventConsumer dispatches
+   events to SCA controllers
+```
+
+**Key files**:
+
+- `packages/visual-editor/src/a2/agent/resolve-to-segments.ts` — template →
+  segments
+- `packages/visual-editor/src/a2/agent/sse-agent-run.ts` — POST body
+  construction
+- `packages/opal-backend-dev/opal_backend_dev/main.py` — receives and processes
+  body
+- `packages/opal-backend-shared/opal_backend_shared/pidgin.py` — `to_pidgin` +
+  `from_pidgin_string`
+
 ## Phases
 
 ### How Objectives Work
@@ -260,18 +304,81 @@ Body (resume): {interactionId, response}
 - [x] Add `intermediate` / `FileData` to `AgentResult`
 - [x] Wire file system + task tree into loop setup
 
-##### 4.4g: Content Generation + Objective Translation
+#### 4.5: Wire Protocol + Objective Handling
+
+> **Design:** Structured segments, not raw `LLMContent`. The client sends
+> semantic intent; the server owns the entire pidgin vocabulary.
+>
+> `toPidgin` splits in two: the client resolves templates into typed segments
+> (`text`, `asset`, `input`). The server walks segments, registers data parts in
+> `AgentFileSystem`, and emits all pidgin tags. `pidgin.py` is the single source
+> of truth for the pidgin language.
+>
+> Capabilities (`useMemory`, `useNotebookLM`) are discovered by the client
+> during template resolution — they emerge from encountering template chips, not
+> from runtime flags. Custom tools run on the server: the client sends board
+> URLs, the server loads and invokes them.
+
+- [x] Define segment types: `text` (literal), `asset` (titled content group),
+      `input` (agent-output content group), `tool` (routes, memory, NLM, custom)
+- [x] Client-side pre-resolution: `resolve-to-segments.ts` extracts template
+      resolution from `toPidgin` into a step that runs before `startRun()`
+- [x] Wire metadata: `flags.useNotebookLM` sideband; `useMemory`, routes, and
+      custom tools discovered from `tool` segments server-side
+- [x] Server-side `to_pidgin(segments)`: walk segments, register data parts in
+      FS, emit `<asset>`, `<input>`, `<file>`, `<content>`, `<objective>` tags
+- [x] Server-side `onSuccess` callback: `from_pidgin_string` (done ✅) +
+      intermediate file collection (done ✅)
+- [x] End-to-end: `npm run dev:backend` → frontend resolves segments → POST →
+      `to_pidgin` → Loop → SSE stream back to browser
+
+#### 4.6: Data Transform Plumbing
+
+> The shared substrate: resolving `storedData`/`fileData` references to
+> Gemini-consumable formats. All media generation and content functions depend
+> on this.
+>
+> Key insight: the D2F (Drive → Gemini File) and B2F (Blob → Gemini File)
+> transforms already go through _backend_ endpoints
+> (`/v1beta1/uploadGeminiFile`, `/v1beta1/uploadBlobFile`). The dev backend
+> proxies to the same One Platform server. The Python agent loop can call these
+> endpoints directly.
+
+- [ ] `conformBody` on the server: walk `LLMContent` parts, resolve
+      `storedData`/`fileData` to Gemini File API URLs via `/v1beta1/*`
+- [ ] `json` parts → `{text: JSON.stringify()}` (trivial, like the TS version)
+- [ ] `NotebookLM` storedData → passthrough as text URL (no transform)
+- [ ] File upload helper: authenticated calls to One Platform upload endpoints
+- [ ] Tests: round-trip data part resolution
+
+#### 4.7: Function Groups
+
+> With the wire protocol and data plumbing in place, function groups are thin
+> handlers on top.
 
 > **🎯 Objective:** Run an opal with "generate an image of a cat" through the
 > dev backend. Full content generation flow end-to-end.
 
-- [ ] Port `PidginTranslator.toPidgin` (objective → pidgin text, depends on
-      `SimplifiedToolManager`)
-- [ ] Port `conformGeminiBody` (data-part transforms for file upload)
-- [ ] Port `SimplifiedToolManager` / `customTools` support in Loop
-- [ ] Port generate functions (image/video/audio/music)
+##### 4.7a: Text Generation
 
-#### 4.5: Suspend/Resume for Interactive Agents
+- [ ] Port `generate_text` function (uses `fromPidginString`, `conformBody`,
+      streaming API call)
+- [ ] Port `generate_and_execute_code` function (code execution sandbox)
+
+##### 4.7b: Media Generators
+
+- [ ] `callImage` — Gemini image model via One Platform
+- [ ] `callVideo` — Veo API + polling for completion
+- [ ] `callAudio` — Audio generation API
+- [ ] `callMusic` — Music generation API
+
+##### 4.7c: Custom Tools (if needed)
+
+- [ ] Wire protocol for tool declarations from client
+- [ ] Server-side `SimplifiedToolManager` (dispatch to custom tools)
+- [ ] Determine if board-hosted tools are callable from the server
+
+#### 4.8: Suspend/Resume for Interactive Agents
 
 > **🎯 Objective:** Open graph editor, use AI chat to edit a graph through the
 > dev backend. Each interaction round-trips as: POST → stream → suspend → POST →
@@ -282,15 +389,12 @@ Body (resume): {interactionId, response}
 - [ ] Resume path — POST with `{interactionId, response}` reconstructs loop
 - [ ] Graph-editing functions use suspend for `readGraph`, `applyEdits`, etc.
 
-#### 4.6: Production Readiness
+#### 4.9: Production Readiness
 
 > **🎯 Objective:** Full parity with the in-process agent. Everything that works
-> locally works identically through the dev backend. `LocalAgentRun` can be
-> removed or kept as a fallback.
+> locally works identically through the dev backend.
 
-- [ ] File upload flow via `LLMContent` `inlineData`/`storedData`
 - [ ] `MemoryManager` + `StoredData`/`FileData` resolution in Python FS
 - [ ] State store for production (Redis/Firestore instead of in-memory)
 - [ ] Reconnection — client re-POSTs with last interaction ID on drop
 - [ ] Remove `LocalAgentRun` path (or keep for offline dev)
-- [ ] `opal-backend-dev` proxies all APIs as they land on One Platform
