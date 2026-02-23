@@ -12,7 +12,8 @@ import { makeTestFixtures } from "../../helpers/index.js";
 import type { EditableGraph, GraphTheme } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import type { AppTheme } from "../../../../src/ui/types/types.js";
-import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
+import { createMockEnvironment } from "../../helpers/mock-environment.js";
+import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -160,7 +161,11 @@ function setupThemeTest(
     );
   }
 
-  ThemeActions.bind({ controller, services, env: {} as AppEnvironment });
+  ThemeActions.bind({
+    controller,
+    services,
+    env: createMockEnvironment(defaultRuntimeFlags),
+  });
 
   return { controller, services, mocks, editor };
 }

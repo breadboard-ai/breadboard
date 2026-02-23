@@ -281,7 +281,7 @@ class Main extends MainBase {
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
       .isMine=${!gc.readOnly}
       .readOnly=${true}
-      .runtimeFlags=${this.sca.controller.global.flags}
+      .runtimeFlags=${this.sca.env.flags}
       .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
       "signedin"}
       .status=${renderValues.runStatus}
@@ -414,7 +414,7 @@ class Main extends MainBase {
 
   #renderGlobalSettingsModal() {
     return html`<bb-global-settings-modal
-      .flags=${this.sca.controller.global.flags.flags()}
+      .flags=${this.sca.env.flags.flags()}
       .uiState=${this.sca.controller.global.main}
       .emailPrefsManager=${this.sca.services.emailPrefsManager}
       .initialTab=${this.sca.controller.global.main.globalSettingsTab}

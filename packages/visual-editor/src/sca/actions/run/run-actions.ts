@@ -142,7 +142,7 @@ export const prepare = asAction(
           app: { screens: controller.run.screen.screens },
         }) as unknown as SimplifiedProjectRunState,
       clientDeploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
-      flags: controller.global.flags,
+      flags: bind.env.flags,
     };
     logger.log(
       Utils.Logging.Formatter.info(`Created run config for ${url}`),

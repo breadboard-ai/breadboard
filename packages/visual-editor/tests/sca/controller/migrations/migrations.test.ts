@@ -97,7 +97,7 @@ suite("Migrations", () => {
     await flagController.isSettled;
     await envFlags.isSettled;
 
-    let overrides = await flagController.overrides();
+    let overrides = await envFlags.overrides();
     assert.deepStrictEqual(overrides, {
       agentMode: true,
       consistentUI: true,
@@ -109,7 +109,7 @@ suite("Migrations", () => {
     await Migrations.flagsMigration(flagController, defaultRuntimeFlags);
     await flagController.isSettled;
 
-    overrides = await flagController.overrides();
+    overrides = await envFlags.overrides();
     assert.deepStrictEqual(overrides, {
       agentMode: true,
       consistentUI: true,

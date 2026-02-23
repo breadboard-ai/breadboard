@@ -33,32 +33,47 @@ export { createEnvironment, type AppEnvironment };
  *   UI   ←→   Controllers   ←→   Actions   ←→   Services
  *                  ↕                                ↕
  *            ╔═════════════════════════════════════════╗
- *            ║            ENVIRONMENT                  ║
+ *            ║               ENVIRONMENT               ║
  *            ╚═════════════════════════════════════════╝
  * ```
  */
 interface AppEnvironment {
-  // ── Feature flags (reactive, overridable) ─────────────────────
+  /**
+   * Reactive feature flags with IDB-persisted user overrides.
+   *
+   * Read a flag: `env.flags.get("flagName")`
+   * Override:    `env.flags.override("flagName", true)`
+   * All flags:   `await env.flags.flags()`
+   */
   readonly flags: EnvironmentFlags;
 
-  // ── Immutable deployment config (from server template) ────────
+  /** The origin URL of the host server (e.g. `https://opal.dev`). */
   readonly hostOrigin: URL;
+  /** The environment name (e.g. "prod", "staging"), or undefined for local dev. */
   readonly environmentName: string | undefined;
+  /** Build metadata: version, commit hash, build date. */
   readonly buildInfo: BuildInfo;
+  /** Google Drive configuration for the deployment. */
   readonly googleDrive: {
     readonly apiEndpoint: string | undefined;
     readonly publishPermissions: GoogleDrivePermission[];
   };
+  /** Domain configuration from the client deployment config. */
   readonly domains: ClientDeploymentConfiguration["domains"];
 
-  // ── Deployment feature switches (from server template) ────────
+  /** The full client deployment configuration (immutable, from server template). */
   readonly deploymentConfig: Readonly<ClientDeploymentConfiguration>;
 
-  // ── Host capabilities (from shell protocol) ───────────────────
+  /** Shell host protocol for communication with the embedding shell. */
   readonly shellHost: OpalShellHostProtocol;
+  /** Guest configuration provided by the shell at embed time. */
   readonly guestConfig: GuestConfiguration;
 
-  // ── Hydration ─────────────────────────────────────────────────
+  /**
+   * Resolves when all persisted fields (currently flag overrides) have been
+   * loaded from IndexedDB. UI should gate on this before rendering flag-
+   * dependent content.
+   */
   readonly isHydrated: Promise<number>;
 }
 

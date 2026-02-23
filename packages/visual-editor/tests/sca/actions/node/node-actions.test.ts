@@ -31,7 +31,6 @@ import { coordination } from "../../../../src/sca/coordination.js";
 import type { EdgeAttachmentPoint } from "../../../../src/ui/types/types.js";
 import { makeTestGraphStoreArgs } from "../../../helpers/_graph-store.js";
 import type { NodeDescriber } from "../../../../src/sca/controller/subcontrollers/editor/graph/node-describer.js";
-import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 const noopDescriber: NodeDescriber = async () => ({
   inputSchema: { type: "object" },
@@ -135,8 +134,8 @@ suite("Node Actions", () => {
 
     test("skips when outputTemplates disabled AND title user-modified", async () => {
       let autonameCalled = false;
-      const originalFlags = controller.global.flags.flags;
-      controller.global.flags.flags = async () => ({
+      const originalFlags = env.flags.flags;
+      env.flags.flags = async () => ({
         ...defaultRuntimeFlags,
         outputTemplates: false,
       });
@@ -168,7 +167,7 @@ suite("Node Actions", () => {
       );
 
       // Restore
-      controller.global.flags.flags = originalFlags;
+      env.flags.flags = originalFlags;
     });
 
     test("calls autonamer when conditions are met", async () => {
@@ -487,8 +486,8 @@ suite("Node Actions", () => {
       } as unknown as AppServices;
 
       // Must set outputTemplates: true for action to proceed when titleUserModified
-      const originalFlags = controller.global.flags.flags;
-      controller.global.flags.flags = async () => ({
+      const originalFlags = env.flags.flags;
+      env.flags.flags = async () => ({
         ...defaultRuntimeFlags,
         outputTemplates: true,
       });
@@ -514,7 +513,7 @@ suite("Node Actions", () => {
       );
 
       // Restore
-      controller.global.flags.flags = originalFlags;
+      env.flags.flags = originalFlags;
     });
   });
 
@@ -582,8 +581,8 @@ suite("Node Actions", () => {
     test("respects titleUserModified from lastNodeConfigChange", async () => {
       let autonameCalled = false;
 
-      const originalFlags = controller.global.flags.flags;
-      controller.global.flags.flags = async () => ({
+      const originalFlags = env.flags.flags;
+      env.flags.flags = async () => ({
         ...defaultRuntimeFlags,
         outputTemplates: false,
       });
@@ -619,7 +618,7 @@ suite("Node Actions", () => {
         "autoname should not be called when user modified title"
       );
 
-      controller.global.flags.flags = originalFlags;
+      env.flags.flags = originalFlags;
     });
   });
 });
@@ -981,7 +980,7 @@ suite("Node Actions — Event-Triggered", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       const evt = new StateEvent({
@@ -1094,7 +1093,7 @@ suite("Node Actions — Event-Triggered", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       const evt = new StateEvent({
@@ -1253,7 +1252,7 @@ suite("Node Actions — Keyboard", () => {
       services: {
         stateEventBus: new EventTarget(),
       } as unknown as AppServices,
-      env: {} as AppEnvironment,
+      env: createMockEnvironment(defaultRuntimeFlags),
     });
   }
 
@@ -1296,7 +1295,7 @@ suite("Node Actions — Keyboard", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await NodeActionsModule.onDelete();
@@ -1560,7 +1559,7 @@ suite("Node Actions — Keyboard", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await NodeActionsModule.onCut();
@@ -1658,7 +1657,7 @@ suite("Node Actions — Keyboard", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await NodeActionsModule.onDuplicate();
@@ -1838,7 +1837,7 @@ suite("Node Actions — Keyboard", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await NodeActionsModule.onPaste();
@@ -1937,7 +1936,7 @@ suite("Node Actions — Keyboard", () => {
             load: async () => ({ success: false }),
           },
         } as unknown as AppServices,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await NodeActionsModule.onPaste();
@@ -2027,7 +2026,7 @@ suite("Node Actions — Keyboard", () => {
             load: async () => ({ success: false }),
           },
         } as unknown as AppServices,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await NodeActionsModule.onPaste();

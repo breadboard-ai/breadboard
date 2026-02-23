@@ -8,11 +8,12 @@ import { suite, test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import { coordination } from "../../../../src/sca/coordination.js";
 import * as screenSizeActions from "../../../../src/sca/actions/screen-size/screen-size-actions.js";
-import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 import {
   NARROW_BREAKPOINT,
   MEDIUM_BREAKPOINT,
 } from "../../../../src/sca/controller/subcontrollers/global/screen-size-controller.js";
+import { createMockEnvironment } from "../../helpers/mock-environment.js";
+import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 
 suite("ScreenSize Actions", () => {
   let originalWindow: typeof globalThis.window;
@@ -56,7 +57,7 @@ suite("ScreenSize Actions", () => {
             },
           },
         } as never,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await screenSizeActions.updateScreenSize();
@@ -92,7 +93,7 @@ suite("ScreenSize Actions", () => {
             },
           },
         } as never,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await screenSizeActions.updateScreenSize();
@@ -123,7 +124,7 @@ suite("ScreenSize Actions", () => {
             },
           },
         } as never,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await screenSizeActions.updateScreenSize();
@@ -146,7 +147,7 @@ suite("ScreenSize Actions", () => {
             screenSize: {},
           },
         } as never,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       // Should not throw
@@ -181,7 +182,7 @@ suite("ScreenSize Actions", () => {
             },
           },
         } as never,
-        env: {} as AppEnvironment,
+        env: createMockEnvironment(defaultRuntimeFlags),
       });
 
       await screenSizeActions.init();

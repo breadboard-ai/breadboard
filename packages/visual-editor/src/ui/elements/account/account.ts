@@ -301,7 +301,7 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
           }
 
           if (
-            this.sca.controller.global.flags?.googleOne &&
+            this.sca.env.flags.get("googleOne") &&
             (this.sca.controller.global.main.subscriptionStatus === "error" ||
               this.sca.controller.global.main.subscriptionStatus ===
                 "subscribed")
@@ -337,7 +337,7 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
             <p>${this.signInAdapter.nameSignal}</p>
           </div>
         </section>
-        ${this.sca.controller.global.flags?.googleOne &&
+        ${this.sca.env.flags.get("googleOne") &&
         (this.sca.controller.global.main.subscriptionStatus === "subscribed" ||
           this.sca.controller.global.main.subscriptionStatus === "error")
           ? html` <section

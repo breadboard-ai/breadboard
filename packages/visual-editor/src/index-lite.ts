@@ -709,7 +709,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .isMine=${!this.sca.controller.editor.graph.readOnly}
         .readOnly=${true}
-        .runtimeFlags=${this.sca.controller.global.flags}
+        .runtimeFlags=${this.sca.env.flags}
         .showGDrive=${this.sca.services.signinAdapter.stateSignal?.status ===
         "signedin"}
         .status=${renderValues.runStatus}

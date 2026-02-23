@@ -534,8 +534,8 @@ export class FloatingInput extends SignalWatcher(LitElement) {
     let inputContents: HTMLTemplateResult | symbol = nothing;
     const showGDrive =
       !parsedUrl.lite ||
-      !!this.sca.controller.global.flags?.enableDrivePickerInLiteMode;
-    const showNotebookLm = !!this.sca.controller.global.flags?.enableNotebookLm;
+      !!this.sca.env.flags.get("enableDrivePickerInLiteMode");
+    const showNotebookLm = !!this.sca.env.flags.get("enableNotebookLm");
     if (this.schema) {
       const props = Object.entries(this.schema.properties ?? {});
       const supportedActions = this.#determineSupportedActions(props);

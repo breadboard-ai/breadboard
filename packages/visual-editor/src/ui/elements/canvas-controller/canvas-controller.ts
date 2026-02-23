@@ -283,7 +283,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           selectionCount,
           this.sideNavItem,
           this.graphTopologyUpdateId,
-          this.sca.controller.global.flags,
+          this.sca.env.flags,
         ],
         () => {
           return html`<bb-app-controller
@@ -296,7 +296,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}
             .isMine=${!gc.readOnly}
             .readOnly=${gc.readOnly}
-            .runtimeFlags=${this.sca.controller.global.flags}
+            .runtimeFlags=${this.sca.env.flags}
             .showGDrive=${this.sca.services.signinAdapter.stateSignal
               ?.status === "signedin"}
             .status=${this.sca.controller.run.main.status}
@@ -458,11 +458,11 @@ export class CanvasController extends SignalWatcher(LitElement) {
                 <bb-step-list-view></bb-step-list-view>`
             : html`<bb-empty-state narrow></bb-empty-state>`}
           ${gc.readOnly ||
-          Utils.Helpers.isHydrating(
-            () => this.sca.controller.global.flags.enableGraphEditorAgent
+          Utils.Helpers.isHydrating(() =>
+            this.sca.env.flags.get("enableGraphEditorAgent")
           )
             ? nothing
-            : this.sca.controller.global.flags.enableGraphEditorAgent
+            : this.sca.env.flags.get("enableGraphEditorAgent")
               ? html`<bb-graph-editing-chat
                   @pointerdown=${(evt: PointerEvent) => {
                     evt.stopPropagation();
@@ -501,10 +501,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
     // rendered when the graph editing agent is active. Skip it to avoid both
     // misleading arrows and z-index overlap with the chat panel.
     if (
-      !Utils.Helpers.isHydrating(
-        () => this.sca.controller.global.flags.enableGraphEditorAgent
+      !Utils.Helpers.isHydrating(() =>
+        this.sca.env.flags.get("enableGraphEditorAgent")
       ) &&
-      this.sca.controller.global.flags.enableGraphEditorAgent
+      this.sca.env.flags.get("enableGraphEditorAgent")
     ) {
       return nothing;
     }

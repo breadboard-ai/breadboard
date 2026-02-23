@@ -12,7 +12,8 @@ import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { makeTestFixtures } from "../../helpers/index.js";
 import { FakeNotebookLmApiClient } from "../../helpers/fake-notebooklm-api.js";
 import type { Notebook } from "../../../../src/sca/services/notebooklm-api-client.js";
-import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
+import { createMockEnvironment } from "../../helpers/mock-environment.js";
+import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -42,7 +43,7 @@ function setupNotebookLmPickerTest() {
   NotebookLmPickerActions.bind({
     controller,
     services,
-    env: {} as AppEnvironment,
+    env: createMockEnvironment(defaultRuntimeFlags),
   });
 
   const nlm = controller.editor

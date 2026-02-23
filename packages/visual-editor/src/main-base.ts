@@ -284,7 +284,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   async #checkSubscriptionStatus() {
     try {
       await this.sca.controller.isHydrated;
-      const flags = await this.sca.controller.global.flags.flags();
+      const flags = await this.sca.env.flags.flags();
 
       if (this.sca.services.signinAdapter.stateSignal?.status === "signedin") {
         if (
@@ -704,13 +704,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected renderNotebookLmPicker() {
     if (
-      Utils.Helpers.isHydrating(
-        () => this.sca.controller.global.flags?.enableNotebookLm
+      Utils.Helpers.isHydrating(() =>
+        this.sca.env.flags.get("enableNotebookLm")
       )
     ) {
       return nothing;
     }
-    if (!this.sca.controller.global.flags?.enableNotebookLm) {
+    if (!this.sca.env.flags.get("enableNotebookLm")) {
       return nothing;
     }
     return html`<bb-notebooklm-picker></bb-notebooklm-picker>`;

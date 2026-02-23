@@ -20,7 +20,8 @@ import type { AppController } from "../../../../src/sca/controller/controller.js
 import type { AppServices } from "../../../../src/sca/services/services.js";
 import { StateEvent } from "../../../../src/ui/events/events.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
-import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
+import { createMockEnvironment } from "../../helpers/mock-environment.js";
+import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 
 suite("Host Actions — Event-Triggered", () => {
   interface MockController {
@@ -67,7 +68,7 @@ suite("Host Actions — Event-Triggered", () => {
       services: {
         stateEventBus: new EventTarget(),
       } as unknown as AppServices,
-      env: {} as AppEnvironment,
+      env: createMockEnvironment(defaultRuntimeFlags),
     });
   }
 
@@ -155,7 +156,22 @@ suite("Host Actions — Event-Triggered", () => {
   // ---------------------------------------------------------------------------
   suite("flagChange", () => {
     test("calls override when value is present", async () => {
-      bindHost();
+      const overrideFn = mock.fn();
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      Host.bind({
+        controller: mockController as unknown as AppController,
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        env: {
+          ...env,
+          flags: {
+            ...env.flags,
+            override: overrideFn,
+          } as never,
+        },
+      });
+
       const evt = new StateEvent({
         eventType: "host.flagchange",
         flag: "mcp" as const,
@@ -163,16 +179,32 @@ suite("Host Actions — Event-Triggered", () => {
       });
       await Host.flagChange(evt);
 
-      assert.ok(
-        mockController._lastFlagOverride,
-        "override should have been called"
+      assert.strictEqual(
+        overrideFn.mock.callCount(),
+        1,
+        "override should have been called once"
       );
-      assert.strictEqual(mockController._lastFlagOverride.flag, "mcp");
-      assert.strictEqual(mockController._lastFlagOverride.value, true);
+      assert.strictEqual(overrideFn.mock.calls[0].arguments[0], "mcp");
+      assert.strictEqual(overrideFn.mock.calls[0].arguments[1], true);
     });
 
     test("calls clearOverride when value is undefined", async () => {
-      bindHost();
+      const clearOverrideFn = mock.fn();
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      Host.bind({
+        controller: mockController as unknown as AppController,
+        services: {
+          stateEventBus: new EventTarget(),
+        } as unknown as AppServices,
+        env: {
+          ...env,
+          flags: {
+            ...env.flags,
+            clearOverride: clearOverrideFn,
+          } as never,
+        },
+      });
+
       const evt = new StateEvent({
         eventType: "host.flagchange",
         flag: "mcp" as const,
@@ -181,10 +213,11 @@ suite("Host Actions — Event-Triggered", () => {
       await Host.flagChange(evt);
 
       assert.strictEqual(
-        mockController._lastFlagClear,
-        "mcp",
-        "clearOverride should have been called with the flag name"
+        clearOverrideFn.mock.callCount(),
+        1,
+        "clearOverride should have been called once"
       );
+      assert.strictEqual(clearOverrideFn.mock.calls[0].arguments[0], "mcp");
     });
   });
 
@@ -250,7 +283,7 @@ suite("Host Actions — Keyboard", () => {
         stateEventBus: new EventTarget(),
         ...services,
       } as unknown as AppServices,
-      env: {} as AppEnvironment,
+      env: createMockEnvironment(defaultRuntimeFlags),
     });
   }
 

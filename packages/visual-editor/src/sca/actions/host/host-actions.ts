@@ -104,12 +104,12 @@ export const flagChange = asAction(
     triggeredBy: () => onFlagChange(bind),
   },
   async (evt?: Event): Promise<void> => {
-    const { controller } = bind;
+    const { env } = bind;
     const detail = (evt as StateEvent<"host.flagchange">).detail;
     if (typeof detail.value !== "undefined") {
-      await controller.global.flags.override(detail.flag, detail.value);
+      await env.flags.override(detail.flag, detail.value);
     } else {
-      await controller.global.flags.clearOverride(detail.flag);
+      await env.flags.clearOverride(detail.flag);
     }
   }
 );

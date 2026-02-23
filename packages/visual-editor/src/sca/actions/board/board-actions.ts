@@ -522,7 +522,7 @@ export const load = asAction(
       graphStoreArgs: {
         loader: services.loader,
         sandbox: services.sandbox,
-        flags: controller.global.flags,
+        flags: bind.env.flags,
       },
     });
 
@@ -910,7 +910,7 @@ async function runBoard(): Promise<void> {
 
   // b/452677430 - Check for consent before running shared Opals that
   // use the get_webpage tool, as this could be a data exfiltration vector.
-  if ((await controller.global.flags.flags()).requireConsentForGetWebpage) {
+  if ((await bind.env.flags.flags()).requireConsentForGetWebpage) {
     const url = gc.url;
     const boardServer = services.googleDriveBoardServer;
     const isGalleryApp = url && boardServer.galleryGraphs.has(url);

@@ -786,7 +786,7 @@ export class EditorControls extends SignalWatcher(LitElement) {
               title: "My Drive",
               icon: "drive",
             },
-            ...(this.sca.controller.global.flags.enableNotebookLm
+            ...(this.sca.env.flags.get("enableNotebookLm")
               ? [
                   {
                     id: "notebooklm",
@@ -852,7 +852,7 @@ export class EditorControls extends SignalWatcher(LitElement) {
     </div>`;
 
     const shelf = html`<div id="shelf">
-      ${this.sca.controller.global.flags.enableGraphEditorAgent
+      ${this.sca.env.flags.get("enableGraphEditorAgent")
         ? html`<bb-graph-editing-chat
             @pointerdown=${(evt: PointerEvent) => {
               evt.stopPropagation();

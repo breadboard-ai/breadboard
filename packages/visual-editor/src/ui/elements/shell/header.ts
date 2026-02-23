@@ -752,56 +752,54 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderExperimentalLabel() {
-    const hasOverrides = this.sca.controller.global.flags
-      .overrides()
-      .then((overrides) => {
-        const count = Object.keys(overrides).length;
+    const hasOverrides = this.sca.env.flags.overrides().then((overrides) => {
+      const count = Object.keys(overrides).length;
 
-        if (
-          Strings.from("PROVIDER_NAME") === "PROVIDER_NAME" ||
-          Strings.from("PROVIDER_NAME") === ""
-        ) {
-          return nothing;
-        }
+      if (
+        Strings.from("PROVIDER_NAME") === "PROVIDER_NAME" ||
+        Strings.from("PROVIDER_NAME") === ""
+      ) {
+        return nothing;
+      }
 
-        return html`<span
-          class="sans ${count > 0 ? "has-overrides" : ""}"
-          id="experiment"
-          .aria-role=${count > 0 ? "button" : nothing}
-          @pointerover=${(evt: PointerEvent) => {
-            if (count <= 0) {
-              return;
-            }
+      return html`<span
+        class="sans ${count > 0 ? "has-overrides" : ""}"
+        id="experiment"
+        .aria-role=${count > 0 ? "button" : nothing}
+        @pointerover=${(evt: PointerEvent) => {
+          if (count <= 0) {
+            return;
+          }
 
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                Strings.from("TEXT_EXPERIMENT_MODE")
-                  .replace("{{count}}", count.toString())
-                  .replace("{{suffix}}", count === 1 ? "" : "s"),
-                evt.clientX,
-                evt.clientY + 90,
-                { status: false, isMultiLine: true }
-              )
-            );
-          }}
-          @pointerout=${() => {
-            if (count <= 0) {
-              return;
-            }
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              Strings.from("TEXT_EXPERIMENT_MODE")
+                .replace("{{count}}", count.toString())
+                .replace("{{suffix}}", count === 1 ? "" : "s"),
+              evt.clientX,
+              evt.clientY + 90,
+              { status: false, isMultiLine: true }
+            )
+          );
+        }}
+        @pointerout=${() => {
+          if (count <= 0) {
+            return;
+          }
 
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @click=${() => {
-            if (count <= 0) {
-              return;
-            }
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+        @click=${() => {
+          if (count <= 0) {
+            return;
+          }
 
-            this.sca.controller.global.main.globalSettingsTab = "EXPERIMENTAL";
-            this.sca.controller.global.main.show.add("GlobalSettings");
-          }}
-          >${count > 0 ? "Experiment mode" : "Experiment"}</span
-        >`;
-      });
+          this.sca.controller.global.main.globalSettingsTab = "EXPERIMENTAL";
+          this.sca.controller.global.main.show.add("GlobalSettings");
+        }}
+        >${count > 0 ? "Experiment mode" : "Experiment"}</span
+      >`;
+    });
 
     return html`${until(hasOverrides, nothing)}`;
   }
@@ -1020,7 +1018,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   render() {
-    const isHydrated = this.sca.controller.global.flags.hydrated;
+    const isHydrated = this.sca.env.flags.hydrated;
     if (!isHydrated) {
       return nothing;
     }

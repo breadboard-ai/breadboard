@@ -70,11 +70,13 @@ class EnvironmentFlags extends RootController implements RuntimeFlagManager {
 
   /** Override a flag (persists to IDB via @field, updates computed). */
   async override(key: keyof RuntimeFlags, value: boolean): Promise<void> {
+    await this.isHydrated;
     this._overrides = { ...this._overrides, [key]: value };
   }
 
   /** Clear an override (reverts to env default). */
   async clearOverride(key: keyof RuntimeFlags): Promise<void> {
+    await this.isHydrated;
     const next = { ...this._overrides };
     delete next[key];
     this._overrides = next;
@@ -87,6 +89,7 @@ class EnvironmentFlags extends RootController implements RuntimeFlagManager {
 
   /** Current values of runtime flags, combining env and overrides. */
   async flags(): Promise<Readonly<RuntimeFlags>> {
+    await this.isHydrated;
     const result: Partial<RuntimeFlags> = {};
     for (const key of Object.keys(this.#env) as Array<keyof RuntimeFlags>) {
       result[key] = this.get(key);
@@ -96,6 +99,7 @@ class EnvironmentFlags extends RootController implements RuntimeFlagManager {
 
   /** Gets only the flags that have been explicitly overridden by the user. */
   async overrides(): Promise<Partial<Readonly<RuntimeFlags>>> {
+    await this.isHydrated;
     const result: Partial<RuntimeFlags> = {};
     for (const key of Object.keys(this.#env) as Array<keyof RuntimeFlags>) {
       const override = this._overrides[key];

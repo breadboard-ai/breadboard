@@ -1265,7 +1265,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     // Note that subGraphId must be set before value since
     // value depends on the subGraphId to expand on chiclet
     // metadata.
-    const useRemix = this.sca?.controller.global.flags.textEditorRemix;
+    const useRemix = this.sca?.env.flags.get("textEditorRemix");
 
     // We use a static template per variant so Lit can diff correctly.
     // Both components expose the same property/event surface.

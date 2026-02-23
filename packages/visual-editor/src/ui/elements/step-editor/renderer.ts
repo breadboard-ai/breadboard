@@ -888,9 +888,9 @@ export class Renderer extends SignalWatcher(LitElement) {
         this.#fitToViewPost = true;
       }
 
-      const runtimeFlags = this.sca.controller.global.flags;
+      const runtimeFlags = this.sca.env.flags;
       if (runtimeFlags) {
-        mainGraph.force2D = runtimeFlags.force2DGraph;
+        mainGraph.force2D = runtimeFlags.get("force2DGraph");
       }
 
       mainGraph.url = graphUrl;
@@ -1642,7 +1642,7 @@ export class Renderer extends SignalWatcher(LitElement) {
       this.showDisclaimer && !this.#gc.readOnly
         ? html`<p
             id="disclaimer"
-            class=${this.sca.controller.global.flags.enableGraphEditorAgent
+            class=${this.sca.env.flags.get("enableGraphEditorAgent")
               ? "under-chat"
               : ""}
           >

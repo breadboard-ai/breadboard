@@ -34,7 +34,7 @@ enum TabId {
 function getTabEnabledMap(sca: SCA | undefined): Record<TabId, boolean> {
   return {
     [TabId.GENERAL]: Boolean(CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN),
-    [TabId.INTEGRATIONS]: Boolean(sca?.controller?.global?.flags?.mcp),
+    [TabId.INTEGRATIONS]: Boolean(sca?.env?.flags?.get("mcp")),
     [TabId.EXPERIMENTAL]: true,
   };
 }
@@ -222,8 +222,8 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
         name: Strings.from("LABEL_SETTINGS_EXPERIMENTAL"),
         template: () =>
           html` <bb-runtime-flags
-            .flags=${this.sca.controller.global.flags.flags()}
-            .envDefaults=${this.sca.controller.global.flags.env()}
+            .flags=${this.sca.env.flags.flags()}
+            .envDefaults=${this.sca.env.flags.env()}
           >
           </bb-runtime-flags>`,
       },

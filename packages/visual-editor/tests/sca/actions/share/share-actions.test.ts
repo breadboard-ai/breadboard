@@ -22,7 +22,8 @@ import { reactive } from "../../../../src/sca/reactive.js";
 import { FakeGoogleDriveApi } from "@breadboard-ai/utils/google-drive/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
 import { makeUrl } from "../../../../src/ui/navigation/urls.js";
-import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
+import { createMockEnvironment } from "../../helpers/mock-environment.js";
+import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 
 function makeAsset(handle: string, managed: boolean, title: string): Asset {
   return {
@@ -121,7 +122,20 @@ suite("Share Actions", () => {
         },
       },
     });
-    ShareActions.bind({ controller, services, env: {} as AppEnvironment });
+    const env = createMockEnvironment(defaultRuntimeFlags);
+    ShareActions.bind({
+      controller,
+      services,
+      env: {
+        ...env,
+        googleDrive: {
+          ...env.googleDrive,
+          publishPermissions: [
+            { id: "123", type: "domain" as const, domain: "example.com" },
+          ],
+        },
+      },
+    });
     share = controller.editor.share;
 
     // Create a default file and set graph for most tests.
@@ -340,7 +354,23 @@ suite("Share Actions", () => {
         },
       },
     });
-    ShareActions.bind({ controller, services, env: {} as AppEnvironment });
+    const env = createMockEnvironment(defaultRuntimeFlags);
+    ShareActions.bind({
+      controller,
+      services,
+      env: {
+        ...env,
+        googleDrive: {
+          ...env.googleDrive,
+          publishPermissions: [
+            { id: "123", type: "domain" as const, domain: "example.com" },
+          ],
+        },
+        domains: {
+          "example.com": { disallowPublicPublishing: true },
+        },
+      },
+    });
 
     // Initialize
     setGraph(graph);
@@ -1638,7 +1668,23 @@ suite("Share Actions", () => {
           },
         },
       });
-      ShareActions.bind({ controller, services, env: {} as AppEnvironment });
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      ShareActions.bind({
+        controller,
+        services,
+        env: {
+          ...env,
+          googleDrive: {
+            ...env.googleDrive,
+            publishPermissions: [
+              { id: "123", type: "domain" as const, domain: "example.com" },
+            ],
+          },
+          domains: {
+            "example.com": { disallowPublicPublishing: true },
+          },
+        },
+      });
 
       await ShareActions.initialize();
       assert.strictEqual(share.publicPublishingAllowed, false);
@@ -2063,7 +2109,18 @@ suite("computeAppUrl", () => {
       guestConfig: opts.guestConfig ?? {},
       globalConfig: opts.globalConfig ?? {},
     });
-    ShareActions.bind({ controller, services, env: {} as AppEnvironment });
+    const env = createMockEnvironment(defaultRuntimeFlags);
+    ShareActions.bind({
+      controller,
+      services,
+      env: {
+        ...env,
+        hostOrigin: (opts.globalConfig?.hostOrigin as URL) ?? undefined,
+        ...(opts.guestConfig
+          ? { guestConfig: opts.guestConfig as typeof env.guestConfig }
+          : {}),
+      },
+    });
   }
 
   test("returns empty string when shareableFile is null", () => {

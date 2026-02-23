@@ -141,7 +141,7 @@ export const autoname = asAction(
     const { nodeId, graphId, configuration, titleUserModified } =
       effectiveConfig;
     const { autonamer } = services;
-    const flags = await controller.global.flags.flags();
+    const flags = await bind.env.flags.flags();
 
     // Skip if output templates disabled AND title was user-modified.
     if (!flags.outputTemplates && titleUserModified) {
