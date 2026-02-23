@@ -5,6 +5,7 @@
  */
 
 import { JSDOM } from "jsdom";
+import { mock } from "node:test";
 
 export function setDOM() {
   const dom = new JSDOM("<!DOCTYPE html>", {
@@ -22,6 +23,19 @@ export function setDOM() {
   unsetGlobalThis.Range = dom.window.Range;
   unsetGlobalThis.Selection = dom.window.Selection;
   unsetGlobalThis.location = dom.window.location;
+
+  // Add a clipboard stub to the existing navigator object.
+  // Uses mock.fn() so tests can spy on or override individual methods
+  // via mock.method(navigator.clipboard, 'readText', ...).
+  Object.defineProperty(globalThis.navigator, "clipboard", {
+    value: {
+      readText: mock.fn(async () => ""),
+      read: mock.fn(async () => []),
+      writeText: mock.fn(async () => {}),
+    },
+    writable: true,
+    configurable: true,
+  });
 
   if (!unsetGlobalThis.trustedTypes) {
     unsetGlobalThis.trustedTypes = {
@@ -44,4 +58,7 @@ export function unsetDOM() {
   unsetGlobalThis.Range = undefined;
   unsetGlobalThis.Selection = undefined;
   unsetGlobalThis.location = undefined;
+
+  // Remove the clipboard stub from navigator.
+  delete (globalThis.navigator as unknown as Record<string, unknown>).clipboard;
 }

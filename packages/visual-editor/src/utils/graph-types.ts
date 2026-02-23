@@ -18,8 +18,8 @@ import { SCA } from "../sca/sca.js";
 export type {
   GraphSelectionState,
   ReferenceIdentifier,
-  WorkspaceSelectionChangeId,
-  WorkspaceSelectionState,
+  SelectionChangeId,
+  MultiGraphSelectionState,
 } from "../ui/types/types.js";
 
 export interface RuntimeConfig {

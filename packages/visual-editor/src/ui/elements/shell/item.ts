@@ -10,7 +10,7 @@ import { type } from "../../styles/host/type.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import {
   OverflowAction,
-  WorkspaceSelectionStateWithChangeId,
+  MultiGraphSelectionStateWithChangeId,
 } from "../../types/types.js";
 import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import { icons } from "../../styles/icons.js";
@@ -22,7 +22,7 @@ export class ItemModal extends LitElement {
   accessor graph: GraphDescriptor | null = null;
 
   @property()
-  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  accessor selectionState: MultiGraphSelectionStateWithChangeId | null = null;
 
   static styles = [
     icons,

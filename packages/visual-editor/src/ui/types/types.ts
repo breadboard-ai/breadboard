@@ -259,13 +259,13 @@ export interface WorkspaceVisualStateWithChangeId {
   visualState: WorkspaceVisualState;
 }
 
-export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
-export type WorkspaceSelectionState = {
+export type SelectionChangeId = ReturnType<typeof crypto.randomUUID>;
+export type MultiGraphSelectionState = {
   graphs: Map<GraphIdentifier, GraphSelectionState>;
 };
-export interface WorkspaceSelectionStateWithChangeId {
-  selectionChangeId: WorkspaceSelectionChangeId;
-  selectionState: WorkspaceSelectionState;
+export interface MultiGraphSelectionStateWithChangeId {
+  selectionChangeId: SelectionChangeId;
+  selectionState: MultiGraphSelectionState;
   moveToSelection: "immediate" | "animated" | false;
 }
 

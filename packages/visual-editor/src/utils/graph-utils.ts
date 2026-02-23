@@ -18,7 +18,6 @@ import {
   GraphIdentifier,
   InspectableEdge,
   InspectableGraph,
-  NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
 } from "@breadboard-ai/types";
@@ -29,8 +28,8 @@ import { BLOB_HANDLE_PATTERN } from "../ui/media/blob-handle-to-url.js";
 import {
   EditChangeId,
   GraphSelectionState,
-  WorkspaceSelectionChangeId,
-  WorkspaceSelectionState,
+  SelectionChangeId,
+  MultiGraphSelectionState,
 } from "./graph-types.js";
 import { GraphTheme } from "@breadboard-ai/types";
 import {
@@ -56,19 +55,15 @@ export function createNodeId(): NodeIdentifier {
   return globalThis.crypto.randomUUID();
 }
 
-export function createGraphId(): GraphIdentifier {
-  return globalThis.crypto.randomUUID();
-}
-
 export function createEditChangeId(): EditChangeId {
   return globalThis.crypto.randomUUID();
 }
 
-export function createWorkspaceSelectionChangeId(): WorkspaceSelectionChangeId {
+export function createSelectionChangeId(): SelectionChangeId {
   return globalThis.crypto.randomUUID();
 }
 
-export function createEmptyWorkspaceSelectionState(): WorkspaceSelectionState {
+export function createEmptyMultiGraphSelectionState(): MultiGraphSelectionState {
   return {
     graphs: new Map(),
   };
@@ -86,10 +81,10 @@ export function createEmptyGraphSelectionState(): GraphSelectionState {
 }
 
 export function generateBoardFrom(
-  selectionState: WorkspaceSelectionState | Selection,
+  selectionState: MultiGraphSelectionState | Selection,
   graph: InspectableGraph
 ): GraphDescriptor {
-  if (!isWorkspaceSelection(selectionState)) {
+  if (!isMultiGraphSelection(selectionState)) {
     selectionState = selectionFromFlat(selectionState);
   }
   const filteredGraph = structuredClone(graph.raw());
@@ -147,10 +142,10 @@ export function generateBoardFrom(
 }
 
 export function generateDeleteEditSpecFrom(
-  selectionState: WorkspaceSelectionState | Selection,
+  selectionState: MultiGraphSelectionState | Selection,
   graph: InspectableGraph
 ): EditSpec[] {
-  if (!isWorkspaceSelection(selectionState)) {
+  if (!isMultiGraphSelection(selectionState)) {
     selectionState = selectionFromFlat(selectionState);
   }
   const createDeleteEditSpecsForGraph = (
@@ -279,7 +274,7 @@ export function generateDeleteEditSpecFrom(
 }
 
 const PASTE_GRID_SIZE = 20;
-function toGridSize(value: number) {
+function snapToGrid(value: number) {
   return Math.round(value / PASTE_GRID_SIZE) * PASTE_GRID_SIZE;
 }
 
@@ -300,15 +295,15 @@ function adjustNodePosition(
     collapsed: string;
   };
 
-  location.x = toGridSize(
+  location.x = snapToGrid(
     location.x - leftMostNode.x + pointerLocation.x + graphOffset
   );
-  location.y = toGridSize(
+  location.y = snapToGrid(
     location.y - leftMostNode.y + pointerLocation.y + graphOffset
   );
 }
 
-function getLeftMostLocation(
+function findTopLeftOrigin(
   graph: GraphDescriptor,
   leftMostNode = {
     x: Number.POSITIVE_INFINITY,
@@ -349,7 +344,7 @@ function getLeftMostLocation(
   return leftMostNode;
 }
 
-function isInvalidPosition(position: { x: number; y: number }): boolean {
+function hasNoValidPosition(position: { x: number; y: number }): boolean {
   return (
     position.x === Number.POSITIVE_INFINITY ||
     position.y === Number.POSITIVE_INFINITY
@@ -384,125 +379,6 @@ export function generateAddEditSpecFromURL(
   return edits;
 }
 
-export function getDefaultConfiguration(
-  type: string
-): NodeConfiguration | undefined {
-  if (type !== "input" && type !== "output") {
-    return undefined;
-  }
-
-  return {
-    schema: {
-      properties: {
-        context: {
-          type: "array",
-          title: "Context",
-          items: {
-            type: "object",
-            examples: [],
-            behavior: ["llm-content"],
-          },
-          default:
-            type === "input"
-              ? '[{"role":"user","parts":[{"text":""}]}]'
-              : "null",
-        },
-      },
-      type: "object",
-      required: [],
-    },
-  };
-}
-
-export function generateSelectionFrom(
-  spec: EditSpec[]
-): WorkspaceSelectionState {
-  const selections = createEmptyWorkspaceSelectionState();
-  for (const item of spec) {
-    switch (item.type) {
-      case "addnode": {
-        const graphId = item.graphId === "" ? MAIN_BOARD_ID : item.graphId;
-        let graphState = selections.graphs.get(graphId);
-        if (!graphState) {
-          graphState = createEmptyGraphSelectionState();
-          selections.graphs.set(graphId, graphState);
-        }
-
-        graphState.nodes.add(item.node.id);
-        break;
-      }
-
-      case "addedge": {
-        const graphId = item.graphId === "" ? MAIN_BOARD_ID : item.graphId;
-        let graphState = selections.graphs.get(graphId);
-        if (!graphState) {
-          graphState = createEmptyGraphSelectionState();
-          selections.graphs.set(graphId, graphState);
-        }
-
-        graphState.edges.add(edgeToString(item.edge));
-        break;
-      }
-
-      case "addgraph": {
-        const graphId = item.id;
-        let graphState = selections.graphs.get(graphId);
-        if (!graphState) {
-          graphState = createEmptyGraphSelectionState();
-          selections.graphs.set(graphId, graphState);
-        }
-
-        for (const node of item.graph.nodes) {
-          graphState.nodes.add(node.id);
-        }
-
-        for (const edge of item.graph.edges) {
-          graphState.nodes.add(edgeToString(edge));
-        }
-        break;
-      }
-
-      default: {
-        break;
-      }
-    }
-  }
-
-  return selections;
-}
-
-export function generateAddEditSpecFromComponentType(
-  type: string,
-  targetGraph: InspectableGraph,
-  pointerLocation: { x: number; y: number } = { x: 0, y: 0 }
-) {
-  const title = `${type[0].toLocaleUpperCase()}${type.slice(1)}`;
-  const node: NodeDescriptor = {
-    id: createNodeId(),
-    type: type,
-    metadata: {
-      title,
-      visual: {
-        ...pointerLocation,
-      },
-    },
-  };
-
-  const configuration = getDefaultConfiguration(type);
-  if (configuration) {
-    node.configuration = configuration;
-  }
-
-  const edits: EditSpec[] = [
-    {
-      type: "addnode",
-      node,
-      graphId: targetGraph.graphId(),
-    },
-  ];
-  return edits;
-}
-
 export function generateAddEditSpecFromDescriptor(
   source: GraphDescriptor,
   graph: InspectableGraph,
@@ -514,14 +390,14 @@ export function generateAddEditSpecFromDescriptor(
   const graphToSpec = (sourceGraph: GraphDescriptor) => {
     // Find the left-most node in the target graph and then use that as the base
     // for all node locations.
-    let leftMostNode = getLeftMostLocation(sourceGraph);
+    let leftMostNode = findTopLeftOrigin(sourceGraph);
     const subGraphs = sourceGraph.graphs || {};
     for (const subGraph of Object.values(subGraphs)) {
-      leftMostNode = getLeftMostLocation(subGraph, leftMostNode);
+      leftMostNode = findTopLeftOrigin(subGraph, leftMostNode);
     }
 
     // If all else fails, reset to zero.
-    if (isInvalidPosition(leftMostNode)) {
+    if (hasNoValidPosition(leftMostNode)) {
       if (
         leftMostNode.x === Number.POSITIVE_INFINITY ||
         leftMostNode.y === Number.POSITIVE_INFINITY
@@ -749,20 +625,20 @@ export async function createAppPaletteIfNeeded(
  * Bundle of graph utility functions for easier import.
  */
 /**
- * Type guard: does the value look like a WorkspaceSelectionState?
+ * Type guard: does the value look like a MultiGraphSelectionState?
  */
-function isWorkspaceSelection(
-  s: WorkspaceSelectionState | Selection
-): s is WorkspaceSelectionState {
+function isMultiGraphSelection(
+  s: MultiGraphSelectionState | Selection
+): s is MultiGraphSelectionState {
   return "graphs" in s;
 }
 
 /**
- * Wraps a flat Selection into a WorkspaceSelectionState keyed by
+ * Wraps a flat Selection into a MultiGraphSelectionState keyed by
  * MAIN_BOARD_ID. This lets graph-utils functions continue to work
  * internally with the per-graph map while callers pass the simpler type.
  */
-function selectionFromFlat(s: Selection): WorkspaceSelectionState {
+function selectionFromFlat(s: Selection): MultiGraphSelectionState {
   return {
     graphs: new Map([
       [
@@ -808,18 +684,14 @@ export const GraphUtils = {
   createEditChangeId,
   createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
-  createEmptyWorkspaceSelectionState,
-  createGraphId,
+  createEmptyMultiGraphSelectionState,
   createNodeId,
-  createWorkspaceSelectionChangeId,
+  createSelectionChangeId,
   edgeToString,
-  generateAddEditSpecFromComponentType,
   generateAddEditSpecFromDescriptor,
   generateAddEditSpecFromURL,
   generateBoardFrom,
   generateDeleteEditSpecFrom,
-  generateSelectionFrom,
-  getDefaultConfiguration,
   inspectableEdgeToString,
   nodeIdsFromSpec,
 };

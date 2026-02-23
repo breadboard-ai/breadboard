@@ -39,8 +39,8 @@ import "../../lite/step-list-view/step-list-view.js";
 import "../../lite/prompt/prompt-view.js";
 import {
   createEmptyGraphSelectionState,
-  createEmptyWorkspaceSelectionState,
-  createWorkspaceSelectionChangeId,
+  createEmptyMultiGraphSelectionState,
+  createSelectionChangeId,
 } from "../../../utils/graph-utils.js";
 import { icons } from "../../styles/icons.js";
 import { EntityEditor } from "../elements.js";
@@ -213,10 +213,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
           this.sideNavItem = "editor";
 
-          const newState = createEmptyWorkspaceSelectionState();
+          const newState = createEmptyMultiGraphSelectionState();
           const graphState = createEmptyGraphSelectionState();
           const graphId = evt.subGraphId ? evt.subGraphId : MAIN_BOARD_ID;
-          const selectionChangeId = createWorkspaceSelectionChangeId();
+          const selectionChangeId = createSelectionChangeId();
           graphState.nodes.add(evt.id);
           newState.graphs.set(graphId, graphState);
 

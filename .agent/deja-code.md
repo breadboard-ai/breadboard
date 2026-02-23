@@ -26,7 +26,8 @@ existing helpers in real-time through IDE errors.
 
 ## Paved Desire Paths
 
-| Pattern                                 | Rule                                     | Utility                          |
-| --------------------------------------- | ---------------------------------------- | -------------------------------- |
-| Group items by key into `Map<K, V[]>`   | `deja-code-prefer-group-by`              | `utils/group-by.ts`              |
-| Summarize LLM content to preview string | `deja-code-prefer-summarize-llm-content` | `utils/summarize-llm-content.ts` |
+| Pattern                                 | Rule                                     | Utility                            |
+| --------------------------------------- | ---------------------------------------- | ---------------------------------- |
+| Group items by key into `Map<K, V[]>`   | `deja-code-prefer-group-by`              | `utils/group-by.ts`                |
+| Summarize LLM content to preview string | `deja-code-prefer-summarize-llm-content` | `utils/summarize-llm-content.ts`   |
+| Inline error unwrap + message extract   | `deja-code-prefer-format-error`          | `utils/formatting/format-error.ts` |

@@ -6,8 +6,8 @@
 
 import { RuntimeFlags } from "@breadboard-ai/types";
 import {
-  WorkspaceSelectionChangeId,
-  WorkspaceSelectionState,
+  SelectionChangeId,
+  MultiGraphSelectionState,
 } from "../../types/types.js";
 import { UserSignInResponse, VisualEditorMode } from "../../../sca/types.js";
 import { BaseEventDetail } from "../base.js";
@@ -31,8 +31,8 @@ export interface ModeToggle extends BaseEventDetail<`${Namespace}.modetoggle`> {
 }
 
 export interface SelectionStateChange extends BaseEventDetail<`${Namespace}.selectionstatechange`> {
-  readonly selectionChangeId: WorkspaceSelectionChangeId;
-  readonly selections: WorkspaceSelectionState | null;
+  readonly selectionChangeId: SelectionChangeId;
+  readonly selections: MultiGraphSelectionState | null;
   readonly replaceExistingSelections: boolean;
   readonly moveToSelection: MoveToSelection;
 }
