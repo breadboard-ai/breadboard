@@ -424,10 +424,10 @@ Body (resume): {interactionId, response}
 > The agent calls `generate_and_execute_code` → `conformBody` → `streamContent`
 > with `codeExecution` tool → streams text + inline file results back.
 
-- [ ] Port `generate_and_execute_code` function (prompt → `conformBody` →
+- [x] Port `generate_and_execute_code` function (prompt → `conformBody` →
       `streamContent` with code execution tool → merge text + file results)
-- [ ] Wire into dev backend `main.py`
-- [ ] Tests
+- [x] Wire into dev backend `main.py`
+- [x] Tests
 
 #### 4.8: Suspend/Resume for Interactive Agents
 
