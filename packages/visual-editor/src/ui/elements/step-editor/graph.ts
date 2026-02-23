@@ -741,7 +741,7 @@ export class Graph extends Box {
     );
 
     const bounds = calculateBounds(this.entities, adjustment);
-    if (Number.isNaN(bounds.left)) {
+    if (Number.isNaN(bounds.left) || !Number.isFinite(adjustment.x)) {
       return new DOMRect();
     }
 
