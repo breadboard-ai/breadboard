@@ -126,7 +126,7 @@ export class Graph implements EditableGraph {
     integrationsChange: boolean,
     label: string
   ) {
-    this.#mutable.update(this.#graph, visualOnly, affectedNodes);
+    this.#mutable.update(this.#graph, visualOnly);
     this.#eventTarget.dispatchEvent(
       new ChangeEvent(
         this.#graph,

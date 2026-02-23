@@ -5,7 +5,6 @@
  */
 
 import type {
-  AffectedNode,
   AssetPath,
   EditableGraph,
   EditHistoryCreator,
@@ -15,7 +14,6 @@ import type {
   GraphIdentifier,
   GraphStoreArgs,
   GraphTheme,
-  InspectableDescriberResultCache,
   InspectableGraph,
   InspectableGraphCache,
   InspectableNodeCache,
@@ -24,6 +22,7 @@ import type {
   MutableGraph,
   MutableGraphStore,
   NodeConfiguration,
+  NodeDescribeSnapshot,
   NodeDescriptor,
   NodeHandlerMetadata,
   NodeIdentifier,
@@ -31,6 +30,7 @@ import type {
   OutputValues,
   PortIdentifier,
 } from "@breadboard-ai/types";
+
 import {
   err,
   NOTEBOOKLM_TOOL_PATH,
@@ -39,7 +39,8 @@ import {
 import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
-import { DescribeResultCache } from "../../../../../engine/inspector/graph/describe-cache.js";
+import { NodeDescribeEntry } from "./node-describe-entry.js";
+import type { NodeDescriber } from "./node-describer.js";
 import { Graph } from "../../../../../engine/inspector/graph/graph.js";
 import { Node } from "../../../../../engine/inspector/graph/node.js";
 
@@ -144,10 +145,16 @@ export class GraphController extends RootController implements MutableGraph {
   nodes!: InspectableNodeCache;
 
   /**
-   * Describe-result cache. Provides `.get(id, graphId)` and
-   * `.update(affectedNodes)`.
+   * Describe entries map. Keyed by "graphId:nodeId".
+   * Entries are created lazily on first `describeNode()` call.
    */
-  describe!: InspectableDescriberResultCache;
+  #describeEntries = new Map<string, NodeDescribeEntry>();
+
+  /**
+   * The injected describer function (SCA Service→Controller boundary).
+   * Set during `initialize()`.
+   */
+  #describer!: NodeDescriber;
 
   /**
    * MutableGraphStore — self-referential. `EditableGraph` reads `store` from
@@ -176,24 +183,23 @@ export class GraphController extends RootController implements MutableGraph {
    * Initializes the MutableGraph state from a graph descriptor.
    * Call this once when loading a graph (replaces `new MutableGraphImpl()`).
    */
-  initialize(graph: GraphDescriptor, deps: GraphStoreArgs): void {
+  initialize(
+    graph: GraphDescriptor,
+    deps: GraphStoreArgs,
+    describer: NodeDescriber
+  ): void {
     this.#deps = deps;
+    this.#describer = describer;
     this.id = crypto.randomUUID();
     this.rebuild(graph);
   }
 
   /**
    * MutableGraph.update — incremental update after an edit.
-   * Refreshes describers for affected nodes without rebuilding caches.
+   * Sets the graph descriptor. Describe refresh is handled reactively
+   * by `#onGraphChange()` using the event's `affectedNodes`.
    */
-  update(
-    graph: GraphDescriptor,
-    visualOnly: boolean,
-    affectedNodes: AffectedNode[]
-  ): void {
-    if (!visualOnly) {
-      this.describe.update(affectedNodes);
-    }
+  update(graph: GraphDescriptor, _visualOnly: boolean): void {
     this._graph = graph;
   }
 
@@ -203,7 +209,7 @@ export class GraphController extends RootController implements MutableGraph {
    */
   rebuild(graph: GraphDescriptor): void {
     this._graph = graph;
-    this.describe = new DescribeResultCache(this, this.#deps);
+    this.#describeEntries.clear();
     this.graphs = {
       get: (id: GraphIdentifier) => new Graph(id, this),
       graphs: () =>
@@ -477,10 +483,11 @@ export class GraphController extends RootController implements MutableGraph {
     this.lastEditError = null;
     this.version++;
 
-    // Skip derived tools update on visual-only changes (e.g., node movement)
+    // Skip derived state updates on visual-only changes (e.g., node movement)
     if (evt.visualOnly) return;
 
     this.topologyVersion++;
+    this.#refreshDescribers(evt.affectedNodes);
     this.#updateMyTools();
     this.#updateAgentModeTools();
     this.#updateComponents();
@@ -492,6 +499,41 @@ export class GraphController extends RootController implements MutableGraph {
     this._graph = evt.graph;
     if (evt.reason.type === "error") {
       this.lastEditError = evt.reason.error;
+    }
+  }
+
+  /**
+   * Returns a snapshot of a node's describe state.
+   * Creates an entry lazily if one doesn't exist yet.
+   */
+  describeNode(
+    id: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): NodeDescribeSnapshot {
+    const key = `${graphId}:${id}`;
+    let entry = this.#describeEntries.get(key);
+    if (!entry) {
+      const node = this.nodes?.get(id, graphId);
+      const type = node?.descriptor.type ?? "";
+      const config = node?.configuration() ?? {};
+      entry = new NodeDescribeEntry(this.#describer, type, config);
+      this.#describeEntries.set(key, entry);
+    }
+    return entry.snapshot();
+  }
+
+  /**
+   * Refreshes describe entries for nodes affected by a graph change.
+   */
+  #refreshDescribers(affectedNodes: { id: string; graphId: string }[]) {
+    for (const { id, graphId } of affectedNodes) {
+      const key = `${graphId}:${id}`;
+      const entry = this.#describeEntries.get(key);
+      if (entry) {
+        const node = this.nodes?.get(id, graphId);
+        const config = node?.configuration() ?? {};
+        entry.refresh(config);
+      }
     }
   }
 
@@ -604,7 +646,7 @@ export class GraphController extends RootController implements MutableGraph {
     // Reset MutableGraph caches (will be re-initialized on next load)
     this.graphs = undefined!;
     this.nodes = undefined!;
-    this.describe = undefined!;
+    this.#describeEntries.clear();
   }
 
   // =========================================================================

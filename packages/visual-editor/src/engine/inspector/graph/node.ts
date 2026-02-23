@@ -92,7 +92,7 @@ export class Node implements InspectableNode {
   }
 
   async describe(): Promise<NodeDescriberResult> {
-    const describeEntry = this.#graph.describe.get(
+    const describeEntry = this.#graph.describeNode(
       this.descriptor.id,
       this.#graphId
     );
@@ -100,7 +100,7 @@ export class Node implements InspectableNode {
   }
 
   currentDescribe(): NodeDescriberResult {
-    const describeEntry = this.#graph.describe.get(
+    const describeEntry = this.#graph.describeNode(
       this.descriptor.id,
       this.#graphId
     );
@@ -111,7 +111,7 @@ export class Node implements InspectableNode {
     inputValues?: InputValues,
     outputValues?: OutputValues
   ): InspectableNodePorts {
-    const snapshot = this.#graph.describe.get(
+    const snapshot = this.#graph.describeNode(
       this.descriptor.id,
       this.#graphId
     );

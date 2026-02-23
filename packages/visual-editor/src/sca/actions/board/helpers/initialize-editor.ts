@@ -7,6 +7,8 @@ import type {
   OutputValues,
 } from "@breadboard-ai/types";
 import { Graph as GraphEditor } from "../../../../engine/editor/graph.js";
+import { getHandler } from "../../../../engine/runtime/legacy.js";
+import type { NodeDescriber } from "../../../../sca/controller/subcontrollers/editor/graph/node-describer.js";
 import type * as Editor from "../../../controller/subcontrollers/editor/editor.js";
 
 /**
@@ -49,6 +51,7 @@ export interface InitializeEditorResult {
  * Sets up the editor state for a loaded graph.
  *
  * This function:
+ * - Builds a NodeDescriber closure (SCA Service→Controller boundary)
  * - Initializes the graph controller as the MutableGraph
  * - Creates an editor instance
  * - Wires up event listeners for graph changes
@@ -74,8 +77,36 @@ export function initializeEditor(
     graphStoreArgs,
   } = options;
 
+  // Build the NodeDescriber function (SCA Service→Controller boundary).
+  // This closure captures the sandbox and graphStore so the Controller
+  // doesn't need to import engine/runtime/ directly.
+  const describer: NodeDescriber = async (type, configuration) => {
+    const context = {
+      sandbox: graphStoreArgs.sandbox,
+      graphStore: graphController.store,
+    };
+    const handler = await getHandler(type, context);
+    if (!handler || !("describe" in handler) || !handler.describe) {
+      return {
+        inputSchema: { type: "object" },
+        outputSchema: { type: "object" },
+      };
+    }
+    return handler.describe(
+      { ...configuration },
+      { type: "object" },
+      { type: "object" },
+      {
+        sandbox: graphStoreArgs.sandbox,
+        graphStore: graphController.store,
+        flags: graphStoreArgs.flags,
+        asType: false,
+      }
+    );
+  };
+
   // Initialize GraphController as the MutableGraph (replaces MutableGraphImpl)
-  graphController.initialize(graph, graphStoreArgs);
+  graphController.initialize(graph, graphStoreArgs, describer);
   const editor = new GraphEditor(graphController, {
     creator,
     history,

@@ -5,20 +5,31 @@
  */
 
 import type {
-  AffectedNode,
   GraphDescriptor,
   GraphIdentifier,
   GraphStoreArgs,
   MutableGraph,
   MutableGraphStore,
   NodeDescriptor,
+  NodeDescribeSnapshot,
 } from "@breadboard-ai/types";
-import { DescribeResultCache } from "../../src/engine/inspector/graph/describe-cache.js";
 
 import { Graph } from "../../src/engine/inspector/graph/graph.js";
 import { Node } from "../../src/engine/inspector/graph/node.js";
 
 export { createMutableGraph };
+
+const emptySnapshot: NodeDescribeSnapshot = {
+  current: {
+    inputSchema: { type: "object" },
+    outputSchema: { type: "object" },
+  },
+  latest: Promise.resolve({
+    inputSchema: { type: "object" },
+    outputSchema: { type: "object" },
+  }),
+  updating: false,
+};
 
 /**
  * Creates a standalone MutableGraph from a graph descriptor.
@@ -41,14 +52,18 @@ function createMutableGraph(
     return {
       get: (id: string, graphId: string) => {
         const descriptor = graphNodes(graphId).find((n) => n.id === id);
-        return descriptor ? new Node(descriptor, mutable, graphId) : undefined;
+        return descriptor
+          ? new Node(descriptor, mutable as MutableGraph, graphId)
+          : undefined;
       },
       nodes: (graphId: string) =>
-        graphNodes(graphId).map((n) => new Node(n, mutable, graphId)),
+        graphNodes(graphId).map(
+          (n) => new Node(n, mutable as MutableGraph, graphId)
+        ),
       byType: (type: string, graphId: string) =>
         graphNodes(graphId)
           .filter((n) => n.type === type)
-          .map((n) => new Node(n, mutable, graphId)),
+          .map((n) => new Node(n, mutable as MutableGraph, graphId)),
     };
   }
 
@@ -60,24 +75,19 @@ function createMutableGraph(
     id: crypto.randomUUID(),
     deps,
     store,
-    describe: null! as MutableGraph["describe"],
     graphs: null! as MutableGraph["graphs"],
     nodes: null! as MutableGraph["nodes"],
 
-    update(
-      graph: GraphDescriptor,
-      visualOnly: boolean,
-      affectedNodes: AffectedNode[]
-    ): void {
-      if (!visualOnly) {
-        mutable.describe.update(affectedNodes);
-      }
+    describeNode(): NodeDescribeSnapshot {
+      return emptySnapshot;
+    },
+
+    update(graph: GraphDescriptor, _visualOnly: boolean): void {
       mutable.graph = graph;
     },
 
     rebuild(graph: GraphDescriptor): void {
       mutable.graph = graph;
-      mutable.describe = new DescribeResultCache(mutable as MutableGraph, deps);
       mutable.graphs = {
         get: (id: GraphIdentifier) => new Graph(id, mutable as MutableGraph),
         graphs: () =>

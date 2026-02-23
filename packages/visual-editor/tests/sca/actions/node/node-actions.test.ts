@@ -29,6 +29,12 @@ import { StateEvent } from "../../../../src/ui/events/events.js";
 import { coordination } from "../../../../src/sca/coordination.js";
 import type { EdgeAttachmentPoint } from "../../../../src/ui/types/types.js";
 import { makeTestGraphStoreArgs } from "../../../helpers/_graph-store.js";
+import type { NodeDescriber } from "../../../../src/sca/controller/subcontrollers/editor/graph/node-describer.js";
+
+const noopDescriber: NodeDescriber = async () => ({
+  inputSchema: { type: "object" },
+  outputSchema: { type: "object" },
+});
 
 suite("Node Actions", () => {
   let controller: ReturnType<typeof appController>;
@@ -58,7 +64,8 @@ suite("Node Actions", () => {
     const raw = mockEditor.raw() as { nodes?: { id: string; type: string }[] };
     controller.editor.graph.initialize(
       { nodes: raw.nodes ?? [], edges: [] },
-      makeTestGraphStoreArgs()
+      makeTestGraphStoreArgs(),
+      noopDescriber
     );
     controller.editor.graph.setEditor(mockEditor);
   }

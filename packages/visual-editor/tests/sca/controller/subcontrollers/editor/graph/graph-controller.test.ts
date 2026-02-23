@@ -13,6 +13,12 @@ import {
   loadGraphIntoStore,
 } from "../../../../../helpers/_graph-store.js";
 import { editGraphStore } from "../../../../../helpers/_editor.js";
+import type { NodeDescriber } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/node-describer.js";
+
+const noopDescriber: NodeDescriber = async () => ({
+  inputSchema: { type: "object" },
+  outputSchema: { type: "object" },
+});
 import type {
   AssetPath,
   EditableGraph,
@@ -49,7 +55,11 @@ suite("GraphController", () => {
     store: GraphController,
     editor: EditableGraph
   ): void {
-    store.initialize(editor.raw() as GraphDescriptor, makeTestGraphStoreArgs());
+    store.initialize(
+      editor.raw() as GraphDescriptor,
+      makeTestGraphStoreArgs(),
+      noopDescriber
+    );
     store.setEditor(editor);
   }
 
@@ -1160,7 +1170,7 @@ suite("GraphController", () => {
     };
 
     const args = makeTestGraphStoreArgs();
-    store.initialize(graph, args);
+    store.initialize(graph, args, noopDescriber);
 
     // id should be a UUID
     assert.ok(store.id, "id should be set");
@@ -1179,7 +1189,8 @@ suite("GraphController", () => {
     // caches should be initialized
     assert.ok(store.graphs, "graphs cache should exist");
     assert.ok(store.nodes, "nodes cache should exist");
-    assert.ok(store.describe, "describe cache should exist");
+    // describeNode should work (describe entries lazily populated)
+    assert.ok(store.describeNode, "describeNode method should exist");
   });
 
   // ==========================================================================
@@ -1198,7 +1209,7 @@ suite("GraphController", () => {
       edges: [{ from: "a", to: "b", out: "out", in: "in" }],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     const inspectable = store.inspect("");
 
@@ -1245,7 +1256,7 @@ suite("GraphController", () => {
       },
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     // Main graph
     const main = store.inspect("");
@@ -1280,7 +1291,7 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     const inspectable = store.inspect("");
     const node1 = inspectable.nodeById("n1");
@@ -1330,7 +1341,7 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     const node = store.nodes.get("alpha", "");
     assert.ok(node, "should find node 'alpha'");
@@ -1357,7 +1368,7 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     const allNodes = store.nodes.nodes("");
     assert.strictEqual(allNodes.length, 3);
@@ -1376,7 +1387,7 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     const fooNodes = store.nodes.byType("foo", "");
     assert.strictEqual(fooNodes.length, 2);
@@ -1406,7 +1417,7 @@ suite("GraphController", () => {
       },
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     // Main graph
     assert.strictEqual(store.nodes.nodes("").length, 1);
@@ -1436,7 +1447,7 @@ suite("GraphController", () => {
       },
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     const main = store.graphs.get("");
     assert.ok(main, "should return main graph");
@@ -1458,7 +1469,7 @@ suite("GraphController", () => {
       },
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     const allGraphs = store.graphs.graphs();
     const keys = Object.keys(allGraphs);
@@ -1476,8 +1487,7 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
-    const describeBeforeUpdate = store.describe;
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     // Update with a new graph (visual-only change — no describe refresh)
     const updatedGraph: GraphDescriptor = {
@@ -1490,10 +1500,8 @@ suite("GraphController", () => {
       ],
       edges: [],
     };
-    store.update(updatedGraph, true, []);
+    store.update(updatedGraph, true);
     assert.strictEqual(store.graph, updatedGraph);
-    // Describe cache should be the SAME object (not rebuilt)
-    assert.strictEqual(store.describe, describeBeforeUpdate);
   });
 
   test("update() refreshes describers on structural changes", async () => {
@@ -1505,10 +1513,9 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
-    const describeBeforeUpdate = store.describe;
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
-    // Non-visual update — describe.update() is called
+    // Non-visual update — describe entries are refreshed (not rebuilt)
     const updatedGraph: GraphDescriptor = {
       nodes: [
         { id: "a", type: "foo" },
@@ -1516,10 +1523,8 @@ suite("GraphController", () => {
       ],
       edges: [],
     };
-    store.update(updatedGraph, false, [{ id: "b", graphId: "" }]);
+    store.update(updatedGraph, false);
     assert.strictEqual(store.graph, updatedGraph);
-    // Describe cache should still be the same object (update() doesn't rebuild)
-    assert.strictEqual(store.describe, describeBeforeUpdate);
   });
 
   test("rebuild() creates fresh caches", async () => {
@@ -1531,8 +1536,7 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
-    const describeBefore = store.describe;
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
     const nodesBefore = store.nodes;
 
     // Rebuild with a different graph
@@ -1546,8 +1550,7 @@ suite("GraphController", () => {
     store.rebuild(newGraph);
 
     assert.strictEqual(store.graph, newGraph);
-    // Caches should be new objects
-    assert.notStrictEqual(store.describe, describeBefore);
+    // Nodes cache should be a new object
     assert.notStrictEqual(store.nodes, nodesBefore);
     // New nodes should be accessible
     assert.strictEqual(store.nodes.nodes("").length, 2);
@@ -1566,10 +1569,10 @@ suite("GraphController", () => {
     const graph: GraphDescriptor = { nodes: [], edges: [] };
     const args = makeTestGraphStoreArgs();
 
-    store.initialize(graph, args);
+    store.initialize(graph, args, noopDescriber);
     const firstId = store.id;
 
-    store.initialize(graph, args);
+    store.initialize(graph, args, noopDescriber);
     const secondId = store.id;
 
     assert.notStrictEqual(
@@ -1721,7 +1724,7 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     const result = store.findOutputPortId("", "test-node");
     // The node exists. With the real describe cache (emptyResult), we get
@@ -1746,7 +1749,7 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     const result = store.findOutputPortId("", "test-node");
     // The node exists; the result should either be ok (found a port)
@@ -1766,7 +1769,7 @@ suite("GraphController", () => {
       edges: [],
     };
 
-    store.initialize(graph, makeTestGraphStoreArgs());
+    store.initialize(graph, makeTestGraphStoreArgs(), noopDescriber);
 
     // Node "missing-node" doesn't exist in the graph
     const result = store.findOutputPortId("", "missing-node");

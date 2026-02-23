@@ -5,7 +5,6 @@
  */
 
 import { Outcome } from "./data.js";
-import { AffectedNode } from "./edit.js";
 
 import {
   AssetPath,
@@ -575,29 +574,17 @@ export type InspectableNodeCache = {
   nodes(graphId: GraphIdentifier): InspectableNode[];
 };
 
-export type InspectableDescriberResultCacheEntry = {
-  /**
-   * When this promise is resolved, provides the latest/freshes value
-   * of the `NodeDescriberResult`.
-   */
-  latest: Promise<NodeDescriberResult>;
-  /**
-   * Provides the current value, which may be stale.
-   */
+/**
+ * Snapshot of a node's describe state.
+ * Returned by `MutableGraph.describeNode()`.
+ */
+export type NodeDescribeSnapshot = {
+  /** The current (possibly stale) describe result. */
   current: NodeDescriberResult;
-  /**
-   * True when this is not the latest value, and the current value is
-   * being updated
-   */
+  /** A promise that resolves when the latest describe result is ready. */
+  latest: Promise<NodeDescriberResult>;
+  /** True when the current value is being updated. */
   updating: boolean;
-};
-
-export type InspectableDescriberResultCache = {
-  get(
-    id: NodeIdentifier,
-    graphId: GraphIdentifier
-  ): InspectableDescriberResultCacheEntry;
-  update(affectedNodes: AffectedNode[]): void;
 };
 
 export type InspectableGraphCache = {
@@ -643,13 +630,14 @@ export type MutableGraph = {
   readonly graphs: InspectableGraphCache;
   readonly store: MutableGraphStore;
   readonly nodes: InspectableNodeCache;
-  readonly describe: InspectableDescriberResultCache;
 
-  update(
-    graph: GraphDescriptor,
-    visualOnly: boolean,
-    affectedNodes: AffectedNode[]
-  ): void;
+  /** Returns a snapshot of the describe state for a specific node. */
+  describeNode(
+    id: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): NodeDescribeSnapshot;
+
+  update(graph: GraphDescriptor, visualOnly: boolean): void;
 
   rebuild(graph: GraphDescriptor): void;
 };

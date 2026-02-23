@@ -181,17 +181,58 @@ solely by `GraphController.inspect()`).
       `graph.ts`/`node.ts`; they will be deleted with the inspector layer
 - [x] Verify build + tests pass
 
-### Phase 3: Flatten `EditableGraph` → Actions
+### Phase 3: Signal-Backed Describe + Event Elimination
 
-Move edit operations into SCA Actions, retire `EditableGraph`.
+Make `GraphController` fully reactive by absorbing describe refresh and
+eliminating the event bridge. `EditableGraph` stays as a mutation/validation API
+— the focus is on shifting the underlying model.
+
+> **Key insight**: `DescribeResultCache` was the last piece not owned by
+> `GraphController`. With it absorbed, `GraphController` has full control over
+> all derived state (nodes, graphs, tools, components, describe). The next step
+> is eliminating the event bridge so `EditableGraph` calls `GraphController`
+> directly.
+
+**Stage 1 — Absorb `DescribeResultCache` into `GraphController`** ✅
+
+- [x] Define `NodeDescriber` function type (SCA Service→Controller boundary)
+- [x] Create signal-backed `NodeDescribeEntry` class (replaces cache entries)
+- [x] Replace `MutableGraph.describe` field with `describeNode()` method
+- [x] Remove `InspectableDescriberResultCache` types from `@breadboard-ai/types`
+- [x] `GraphController` owns `#describeEntries` map, `describeNode()`,
+      `#refreshDescribers()`, and accepts `NodeDescriber` in `initialize()`
+- [x] Build `NodeDescriber` closure in `initialize-editor.ts` from
+      `getHandler` + `sandbox` (avoids circular deps)
+- [x] Update `Node` class to use `describeNode()` instead of `describe.get()`
+- [x] Delete `describe-cache.ts`
+- [x] Verify build + tests pass
+
+**Stage 2 — Eliminate event bridge**
+
+Have `EditableGraph` call `GraphController` methods directly instead of firing
+`graphchange`/`graphchangereject` events. `GraphController.setEditor()` stops
+adding event listeners.
+
+- [ ] Add direct notification methods on `GraphController`
+- [ ] Wire `EditableGraph` to call them instead of dispatching events
+- [ ] Remove event listener setup in `setEditor()`
+- [ ] Remove `ChangeEvent` / `ChangeRejectEvent` classes
+- [ ] Verify build + tests pass
+
+**Stage 3 — Migrate remaining `editor?.inspect()` UI calls**
+
+~5 UI components still call `editor?.inspect("")` (via `EditableGraph`) instead
+of `graphController.inspect()`.
+
+- [ ] Migrate `entity-editor.ts`, `renderer.ts`, `canvas-controller.ts`
+- [ ] Verify build + tests pass
+
+**Stage 4 — (Optional) Flatten `EditableGraph` into Actions**
+
+With events gone, `EditableGraph` is just validation + history. Flattening it
+into SCA Actions becomes trivial and optional.
 
 - [ ] Move edit history into `HistoryController`
-- [ ] Convert each `EditOperation` into an SCA Action (add-node, remove-node,
-      add-edge, remove-edge, change-configuration, etc.)
-- [ ] Remove `graphchange`/`graphchangereject` event pattern (replaced by direct
-      signal mutations)
-- [ ] Remove `EditableGraph` class and `engine/editor/` directory
-- [ ] Update `EditableGraph` type in `@breadboard-ai/types` or deprecate
-- [ ] Verify build passes
-- [ ] Verify all tests pass
-- [ ] Write tests for edit actions
+- [ ] Convert `EditOperation`s into SCA Actions
+- [ ] Remove `EditableGraph` class
+- [ ] Update/deprecate `EditableGraph` type in `@breadboard-ai/types`
