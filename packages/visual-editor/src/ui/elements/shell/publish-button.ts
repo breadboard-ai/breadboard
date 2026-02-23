@@ -96,16 +96,7 @@ export class PublishButton extends SignalWatcher(LitElement) {
         white-space: normal;
         opacity: 0;
         transition: opacity 0.15s ease 0.5s;
-
-        /* Bridges the gap so the cursor can move into the tooltip. */
-        &::before {
-          content: "";
-          position: absolute;
-          top: -8px;
-          left: 0;
-          right: 0;
-          height: 8px;
-        }
+        pointer-events: none;
 
         .up-to-date {
           display: flex;
@@ -120,8 +111,19 @@ export class PublishButton extends SignalWatcher(LitElement) {
         }
       }
 
+      /* Bridges the gap so the cursor can move into the tooltip. */
+      #wrapper:hover #tooltip::before {
+        content: "";
+        position: absolute;
+        top: -8px;
+        left: 0;
+        right: 0;
+        height: 8px;
+      }
+
       #wrapper:hover #tooltip {
         opacity: 1;
+        pointer-events: auto;
       }
 
       @keyframes spin {
