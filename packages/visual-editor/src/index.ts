@@ -592,6 +592,13 @@ class Main extends MainBase {
         this.sca.services.embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
+
+        // Clear board state immediately so the header updates in the same
+        // rendering frame. The reactive URL handler in main-base.ts also
+        // handles this, but it runs inside a Signal.Computed microtask where
+        // signal writes may not propagate to downstream watchers synchronously.
+        this.sca.actions.board.close();
+
         const homepage: MakeUrlInit = {
           page: "home",
           dev: parsedUrl.dev,

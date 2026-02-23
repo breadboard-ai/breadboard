@@ -360,9 +360,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           BreadboardUI.Types.STATUS.STOPPED
         );
         this.sca.controller.run.main.abortController?.abort();
+        this.sca.actions.board.close();
       }
 
-      this.sca.actions.board.close();
       await this.#handleBoardStateChanged();
       return;
     } else {
