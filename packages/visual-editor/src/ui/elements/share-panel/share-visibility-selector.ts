@@ -9,6 +9,8 @@ import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { VisibilityLevel } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { icons } from "../../styles/icons.js";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { match } from "../../styles/host/match.js";
 
 interface Option {
   level: VisibilityLevel;
@@ -21,6 +23,8 @@ interface Option {
 export class ShareVisibilitySelector extends LitElement {
   static styles = [
     icons,
+    baseColors,
+    match,
     css`
       :host {
         display: block;
@@ -43,8 +47,8 @@ export class ShareVisibilitySelector extends LitElement {
         height: 40px;
         border-radius: 50%;
         flex-shrink: 0;
-        background: #e2e2e2;
-        color: #1b1b1b;
+        background: var(--light-dark-n-90);
+        color: var(--sys-color--on-surface);
 
         &.icon-public {
           background: #c4fcd4;
@@ -90,7 +94,7 @@ export class ShareVisibilitySelector extends LitElement {
         margin-left: calc(-1 * var(--bb-grid-size-2));
 
         &:hover:not(:disabled) {
-          background: #f1f1f1;
+          background: var(--light-dark-n-95);
         }
 
         &:disabled {
@@ -105,7 +109,7 @@ export class ShareVisibilitySelector extends LitElement {
       }
 
       #label {
-        color: #525252;
+        color: var(--light-dark-n-35);
         font-family: var(--bb-font-family-flex);
         font-size: 14px;
         font-weight: 500;
@@ -117,17 +121,18 @@ export class ShareVisibilitySelector extends LitElement {
         position: fixed;
         inset: unset;
         margin: 0;
-        border: none;
-        color: inherit;
+        color-scheme: var(--color-scheme, inherit);
 
         z-index: 1000;
         min-width: 220px;
-        background: #fff;
+        background: light-dark(#fff, #2d2d2d);
+        border: 1px solid light-dark(#e0e0e0, #555);
         border-radius: 12px;
         box-shadow:
           0 2px 6px rgba(0, 0, 0, 0.15),
-          0 8px 24px rgba(0, 0, 0, 0.12);
+          0 8px 24px rgba(0, 0, 0, 0.25);
         padding: var(--bb-grid-size-2) 0;
+        color: light-dark(#1b1b1b, #e0e0e0);
       }
 
       .dropdown-option {
@@ -139,14 +144,14 @@ export class ShareVisibilitySelector extends LitElement {
         font-family: var(--bb-font-family-flex);
         font-size: 14px;
         font-weight: 400;
-        color: #1b1b1b;
+        color: var(--sys-color--on-surface);
         border: none;
         background: none;
         width: 100%;
         text-align: left;
 
         &:hover {
-          background: #f5f5f5;
+          background: light-dark(#f0f0f0, #3a3a3a);
         }
       }
 
@@ -160,7 +165,7 @@ export class ShareVisibilitySelector extends LitElement {
 
       .check-icon .g-icon {
         font-size: 20px;
-        color: #1a73e8;
+        color: var(--sys-color--primary);
         font-variation-settings:
           "FILL" 0,
           "wght" 600,
@@ -172,8 +177,8 @@ export class ShareVisibilitySelector extends LitElement {
         margin-left: auto;
         padding: 10px 16px;
         border-radius: 100px;
-        background: #1b1b1b;
-        color: #fff;
+        background: var(--light-dark-n-0);
+        color: var(--light-dark-n-100);
         font-family: var(--bb-font-family-flex);
         font-size: 14px;
         font-weight: 500;
@@ -184,12 +189,12 @@ export class ShareVisibilitySelector extends LitElement {
         white-space: nowrap;
 
         &:hover {
-          background: #3c3c3c;
+          background: var(--light-dark-n-25);
         }
       }
 
       #subtitle {
-        color: #525252;
+        color: var(--light-dark-n-35);
         font-family: var(--bb-font-family-flex);
         font-size: 12px;
         font-weight: 300;

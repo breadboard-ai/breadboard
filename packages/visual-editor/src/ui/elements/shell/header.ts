@@ -249,14 +249,14 @@ export class VEHeader extends SignalWatcher(LitElement) {
             }
 
             &.owner {
-              background: var(--light-dark-n-0);
-              border: none;
-              color: var(--light-dark-n-100);
+              background: light-dark(var(--n-0), var(--n-25));
+              border: 1px solid transparent;
+              color: light-dark(var(--n-100), var(--n-90));
               margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
 
               &:not([disabled]):hover {
-                background: light-dark(var(--n-25), var(--n-90));
-                border: none;
+                background: light-dark(var(--n-25), var(--n-35));
+                border: 1px solid transparent;
               }
             }
 

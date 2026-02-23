@@ -24,6 +24,8 @@ import { ToastType } from "../../../sca/types.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { match } from "../../styles/host/match.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 import type { ShareVisibilitySelector } from "./share-visibility-selector.js";
@@ -39,6 +41,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     icons,
     buttonStyles,
     animations,
+    baseColors,
+    match,
     css`
       :host {
         display: contents;
@@ -47,6 +51,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
       dialog {
         border-radius: var(--bb-grid-size-4);
         border: none;
+        background: light-dark(#fff, #1e1f20);
+        color: light-dark(#1b1b1b, #e0e0e0);
+        color-scheme: var(--color-scheme, inherit);
         box-shadow:
           0px 4px 8px 3px rgba(0, 0, 0, 0.15),
           0px 1px 3px 0px rgba(0, 0, 0, 0.3);
@@ -61,7 +68,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
            don't (easily) control, and which will replace our own dialog if the
            user clicks "View permissions". */
         &::backdrop {
-          background-color: #fff;
+          background-color: light-dark(#fff, #000);
           opacity: 50%;
         }
 
@@ -72,7 +79,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
           margin: var(--bb-grid-size-6) 0 0 0;
 
           a {
-            color: var(--light-dark-p-40);
+            color: light-dark(#5154b3, var(--p-70));
           }
         }
       }
@@ -100,7 +107,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         h2 {
           font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
             var(--bb-font-family);
-          color: #243351;
+          color: var(--sys-color--on-surface);
         }
 
         #app-link {
@@ -108,15 +115,16 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
           #app-link-text {
             background: none;
-            color: #525252;
+            color: var(--light-dark-n-35);
             border: none;
           }
 
           #app-link-copy-button {
             width: 150px;
             height: 40px;
-            border: 1px solid #f1f1f1;
-            background: #fff;
+            border: 1px solid light-dark(#f1f1f1, #555);
+            background: light-dark(#fff, #2d2d2d);
+            color: light-dark(#1b1b1b, #e0e0e0);
             padding: 10px 16px;
             gap: var(--bb-grid-size-2);
             font-family: var(--bb-font-family-flex);
@@ -124,13 +132,9 @@ export class SharePanel extends SignalWatcher(LitElement) {
             line-height: 20px;
             letter-spacing: 0;
 
-            &.bb-button-outlined {
-              color: #1b1b1b;
-            }
-
             &:hover {
-              background: #f1f1f1;
-              border-color: #ababab;
+              background: light-dark(#f0f0f0, #3a3a3a);
+              border-color: light-dark(#999, #777);
             }
           }
         }
@@ -143,7 +147,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         margin: var(--bb-grid-size-8) 0 0 0;
 
         a {
-          color: #665ef6;
+          color: light-dark(var(--ui-custom-o-100), var(--p-70));
           font-weight: 700;
           letter-spacing: 0.1px;
           text-decoration: none;
@@ -164,7 +168,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
           gap: var(--bb-grid-size-2);
-          color: var(--Text, #1b1b1b);
+          color: var(--sys-color--on-surface);
           font-family: var(--bb-font-family-flex);
           font-size: 16px;
           font-weight: 500;
@@ -178,7 +182,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
           width: 16px;
           height: 16px;
           overflow: visible;
-          color: #525252;
+          color: var(--light-dark-n-35);
           padding: 4px;
           margin: -4px;
           cursor: help;
@@ -224,9 +228,21 @@ export class SharePanel extends SignalWatcher(LitElement) {
         }
 
         md-switch {
-          --md-sys-color-primary: #000;
-          --md-sys-color-primary-container: #fff;
-          --md-sys-color-surface-container-highest: #e0e0e0;
+          color-scheme: var(--color-scheme, inherit);
+          --md-switch-selected-track-color: light-dark(#1b1b1b, #e0e0e0);
+          --md-switch-selected-handle-color: light-dark(#fff, #1b1b1b);
+          --md-switch-selected-pressed-track-color: light-dark(
+            #1b1b1b,
+            #e0e0e0
+          );
+          --md-switch-selected-pressed-handle-color: light-dark(#fff, #1b1b1b);
+          --md-switch-selected-hover-track-color: light-dark(#333, #ccc);
+          --md-switch-selected-hover-handle-color: light-dark(#fff, #1b1b1b);
+          --md-switch-selected-focus-track-color: light-dark(#1b1b1b, #e0e0e0);
+          --md-switch-selected-focus-handle-color: light-dark(#fff, #1b1b1b);
+          --md-switch-track-color: light-dark(#e0e0e0, #444);
+          --md-switch-handle-color: light-dark(#777, #999);
+          --md-switch-track-outline-color: light-dark(#777, #999);
           --md-switch-track-height: 24px;
           --md-switch-track-width: 40px;
           --md-switch-selected-handle-width: 20px;
@@ -236,7 +252,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         .toggle-spinner {
           animation: rotate 1s linear infinite;
           font-size: 18px;
-          color: #525252;
+          color: var(--light-dark-n-35);
         }
 
         .toggle-group {
@@ -267,8 +283,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
         .bb-button-outlined {
           flex-direction: column;
           padding: 10px 16px;
-          border: 1px solid #ababab;
-          color: #1b1b1b;
+          border: 1px solid var(--light-dark-n-70);
+          color: var(--sys-color--on-surface);
           font-family: var(--bb-font-family-flex);
           font-size: 14px;
           line-height: 20px;
@@ -343,7 +359,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
         align-items: center;
         justify-content: space-between;
         gap: var(--bb-grid-size-4);
-        background: #f1f1f1;
+        background: var(--light-dark-n-95);
         margin: var(--bb-grid-size-4) calc(-1 * var(--bb-grid-size-6)) 0
           calc(-1 * var(--bb-grid-size-6));
         padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
@@ -352,11 +368,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
         font-weight: 400;
         line-height: normal;
         letter-spacing: 0;
-        color: #1a1a1a;
+        color: var(--sys-color--on-surface);
 
         button {
           font: 700 var(--bb-label-large) / 16px var(--bb-font-family);
-          color: #000;
+          color: var(--light-dark-n-0);
           letter-spacing: 0.25px;
           flex-shrink: 0;
         }
@@ -531,11 +547,11 @@ export class SharePanel extends SignalWatcher(LitElement) {
             margin-left: var(--bb-grid-size-3);
           }
           .bb-button-text {
-            color: #000;
+            color: var(--light-dark-n-0);
           }
           .bb-button-filled {
-            background: #000;
-            color: #fff;
+            background: var(--light-dark-n-0);
+            color: var(--light-dark-n-100);
           }
         }
       }
