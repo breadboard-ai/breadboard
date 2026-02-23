@@ -182,8 +182,7 @@ export class PublishButton extends SignalWatcher(LitElement) {
                   >
                   <span class="g-icon">check</span>
                 </span>`
-              : html`Your Opal is not currently shared with anyone, so
-                publishing is unavailable.`}</span
+              : html`You can't publish your Opal because it isn't shared yet.`}</span
         >
       </div>
     `;
