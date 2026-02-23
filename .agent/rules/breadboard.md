@@ -160,3 +160,9 @@ The Daily Dig (`/daily-dig`) is a proactive bug hunt. Check the last entry date
 in `.agent/daily-dig.md` — if it's been more than a couple of days, suggest
 running one at the start of the session. Each dig should produce a concrete
 artifact (test, lint rule, or codemod) for any finding.
+
+## Python
+
+The developer environment uses corporate mirror for package repositories. When
+unable to install packages, remind the user to run `gcert` to enable access to
+the mirror.
