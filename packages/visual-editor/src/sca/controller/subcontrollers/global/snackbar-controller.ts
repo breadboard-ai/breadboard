@@ -111,7 +111,7 @@ export class SnackbarController extends RootController {
    * @param id The snackbar ID to update
    * @param message The new message
    * @param type The new type
-   * @param persistent If provided, updates the snackbar's persistent flag (e.g. false to allow auto-dismiss)
+   * @param persistent If provided, updates the snackbar's persistent flag
    * @returns True if the snackbar was found and updated
    */
   update(
@@ -124,14 +124,14 @@ export class SnackbarController extends RootController {
     if (!snackbar) {
       return false;
     }
- 
+
     const updated: SnackbarEntry = {
       ...snackbar,
       message,
       type,
       ...(persistent !== undefined && { persistent }),
     };
- 
+
     this._snackbars.set(id, updated);
 
     return true;
