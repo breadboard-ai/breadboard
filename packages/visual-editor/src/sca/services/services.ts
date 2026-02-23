@@ -9,13 +9,13 @@ import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { RuntimeConfig } from "../../utils/graph-types.js";
 import type { GlobalConfig } from "../types.js";
+import type { Environment } from "../environment/environment.js";
 import { createActionTracker } from "../../ui/utils/action-tracker.js";
 import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
 import {
   GraphLoader,
   NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
-  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 
@@ -88,7 +88,7 @@ let instance: AppServices | null = null;
 
 export function services(
   config: RuntimeConfig,
-  flags: RuntimeFlagManager,
+  env: Environment,
   getConsentController: () => ConsentController
 ) {
   if (!instance) {
@@ -169,7 +169,7 @@ export function services(
       OPAL_BACKEND_API_PREFIX
     );
     const emailPrefsManager = new EmailPrefsManager(apiClient);
-    const flowGenerator = new FlowGenerator(apiClient, flags);
+    const flowGenerator = new FlowGenerator(apiClient, env.flags);
 
     instance = {
       actionTracker,

@@ -9,6 +9,7 @@ import { after, before, suite, test } from "node:test";
 import { appController } from "../../../src/sca/controller/controller.js";
 import { setDOM, unsetDOM } from "../../fake-dom.js";
 import { defaultRuntimeFlags } from "./data/default-flags.js";
+import { createMockEnvironment } from "../helpers/mock-environment.js";
 
 suite("AppController", () => {
   before(() => {
@@ -21,15 +22,16 @@ suite("AppController", () => {
 
   // Note: this test must come first since appController stores a singleton
   // instance, which will be used between tests.
-  test("Errors without flags", async () => {
+  test("Errors without an Environment", async () => {
     assert.throws(() => {
       appController();
-    }, new Error("App Controller must be instantiated with flags"));
+    }, new Error("App Controller must be instantiated with an Environment"));
   });
 
-  test("Instantiates with flags", async () => {
+  test("Instantiates with an Environment", async () => {
     assert.doesNotReject(async () => {
-      const controller = appController(defaultRuntimeFlags);
+      const env = createMockEnvironment(defaultRuntimeFlags);
+      const controller = appController(env);
       await controller.isHydrated;
     });
   });

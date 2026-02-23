@@ -24,6 +24,7 @@ import { type AppServices } from "../../../../src/sca/services/services.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
 import { createMockEditor } from "../../helpers/mock-controller.js";
+import { createMockEnvironment } from "../../helpers/mock-environment.js";
 import { EditableGraph } from "@breadboard-ai/types";
 import { StateEvent } from "../../../../src/ui/events/events.js";
 import { coordination } from "../../../../src/sca/coordination.js";
@@ -36,12 +37,14 @@ const noopDescriber: NodeDescriber = async () => ({
   outputSchema: { type: "object" },
 });
 
+const env = createMockEnvironment(defaultRuntimeFlags);
+
 suite("Node Actions", () => {
   let controller: ReturnType<typeof appController>;
 
   before(async () => {
     setDOM();
-    controller = appController(defaultRuntimeFlags);
+    controller = appController(env);
     await controller.isHydrated;
   });
 
@@ -82,7 +85,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = true;
 
@@ -111,7 +114,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       controller.editor.graph.setEditor(null);
       controller.editor.graph.readOnly = false;
 
@@ -146,7 +149,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
@@ -181,7 +184,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
@@ -208,7 +211,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
@@ -235,7 +238,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
@@ -259,7 +262,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
@@ -303,7 +306,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
@@ -342,7 +345,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
@@ -393,7 +396,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
@@ -439,7 +442,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
@@ -489,7 +492,7 @@ suite("Node Actions", () => {
         outputTemplates: true,
       });
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(mockEditor);
       controller.editor.graph.readOnly = false;
 
@@ -527,7 +530,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
       controller.editor.graph.lastNodeConfigChange = null;
@@ -556,7 +559,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
@@ -593,7 +596,7 @@ suite("Node Actions", () => {
         },
       } as unknown as AppServices;
 
-      NodeActions.bind({ controller, services });
+      NodeActions.bind({ controller, services, env });
       setEditorAndInit(createMockEditor());
       controller.editor.graph.readOnly = false;
 
@@ -674,6 +677,7 @@ suite("Node Actions — Event-Triggered", () => {
       services: {
         stateEventBus: new EventTarget(),
       } as unknown as AppServices,
+      env,
     });
   }
 
@@ -2055,7 +2059,7 @@ suite("onNodeAction", () => {
       stateEventBus: new EventTarget(),
     } as unknown as AppServices;
 
-    NodeActionsModule.bind({ controller, services });
+    NodeActionsModule.bind({ controller, services, env });
 
     return { setNodeActionRequestFn };
   }

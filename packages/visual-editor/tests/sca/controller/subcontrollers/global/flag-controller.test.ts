@@ -7,16 +7,34 @@
 import assert from "node:assert";
 import { suite, test } from "node:test";
 import { FlagController } from "../../../../../src/sca/controller/subcontrollers/global/flag-controller.js";
+import { EnvironmentFlags } from "../../../../../src/sca/environment/environment-flags.js";
 import { defaultRuntimeFlags } from "../../data/default-flags.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
 
+let testId = 0;
+
+function makeFlags(env?: RuntimeFlags): {
+  envFlags: EnvironmentFlags;
+  store: FlagController;
+} {
+  testId++;
+  const envFlags = new EnvironmentFlags(
+    env ?? defaultRuntimeFlags,
+    `FC_EnvFlags_${testId}`,
+    `FC_EnvFlags_Persist_${testId}`
+  );
+  const store = new FlagController(
+    `FC_Flags_${testId}`,
+    `FC_FlagController_${testId}`,
+    envFlags
+  );
+  return { envFlags, store };
+}
+
 suite("FlagController", () => {
   test("Provides env", async () => {
-    const store = new FlagController(
-      "Flags_1",
-      "FlagController",
-      defaultRuntimeFlags
-    );
+    const { store, envFlags } = makeFlags();
+    await envFlags.isHydrated;
     await store.isHydrated;
     await store.isSettled;
 
@@ -24,34 +42,28 @@ suite("FlagController", () => {
   });
 
   test("Provides all flags", async () => {
-    const store = new FlagController(
-      "Flags_2",
-      "FlagController",
-      defaultRuntimeFlags
-    );
+    const { store, envFlags } = makeFlags();
+    await envFlags.isHydrated;
     await store.isHydrated;
     await store.isSettled;
 
     const allFlagsTrue: RuntimeFlags = { ...defaultRuntimeFlags };
     const envValues = Object.keys(allFlagsTrue) as Array<keyof RuntimeFlags>;
 
-    // Flip all values to true and wait for the write.
     envValues.forEach((flag) => {
       store.override(flag, true);
       allFlagsTrue[flag] = true;
     });
     await store.isSettled;
+    await envFlags.isSettled;
 
     const flags = await store.flags();
     assert.deepStrictEqual(flags, allFlagsTrue);
   });
 
   test("Allows overrides", async () => {
-    const store = new FlagController(
-      "Flags_3",
-      "FlagController",
-      defaultRuntimeFlags
-    );
+    const { store, envFlags } = makeFlags();
+    await envFlags.isHydrated;
     await store.isHydrated;
     await store.isSettled;
 
@@ -60,13 +72,13 @@ suite("FlagController", () => {
 
     store.override("consistentUI", true);
     store.override("agentMode", true);
-    await store.isSettled;
+    await envFlags.isSettled;
 
     overrides = await store.overrides();
     assert.deepStrictEqual(overrides, { agentMode: true, consistentUI: true });
 
     await store.clearOverride("agentMode");
-    await store.isSettled;
+    await envFlags.isSettled;
 
     overrides = await store.overrides();
     assert.deepStrictEqual(overrides, { consistentUI: true });
@@ -74,54 +86,41 @@ suite("FlagController", () => {
 
   test("Returns env default when not overridden", async () => {
     const env: RuntimeFlags = { ...defaultRuntimeFlags, agentMode: true };
-    const store = new FlagController("Flags_4", "FlagController", env);
+    const { store, envFlags } = makeFlags(env);
+    await envFlags.isHydrated;
     await store.isHydrated;
     await store.isSettled;
 
-    // No override set, should return env value
     assert.strictEqual(store.agentMode, true);
   });
 
   test("Clears override to follow env", async () => {
     const env: RuntimeFlags = { ...defaultRuntimeFlags, agentMode: true };
-    const store = new FlagController(
-      "Flags_clearOverride",
-      "FlagController",
-      env
-    );
+    const { store, envFlags } = makeFlags(env);
+    await envFlags.isHydrated;
     await store.isHydrated;
     await store.isSettled;
 
-    // Override to a different value
     await store.override("agentMode", false);
-    await store.isSettled;
+    await envFlags.isSettled;
     assert.strictEqual(store.agentMode, false);
 
-    // Clear the override
     await store.clearOverride("agentMode");
-    await store.isSettled;
+    await envFlags.isSettled;
 
-    // Should now follow env
     assert.strictEqual(store.agentMode, true);
 
-    // And not appear in overrides
     const overrides = await store.overrides();
     assert.strictEqual(overrides.agentMode, undefined);
   });
 
-  test("Throws for truly unset flags (no override and no env)", async () => {
-    const store = new FlagController(
-      "Flags_unset",
-      "FlagController",
-      {} as RuntimeFlags
-    );
+  test("Delegates get to EnvironmentFlags", async () => {
+    const env: RuntimeFlags = { ...defaultRuntimeFlags, mcp: true };
+    const { store, envFlags } = makeFlags(env);
+    await envFlags.isHydrated;
     await store.isHydrated;
     await store.isSettled;
 
-    // Both internal value and env are undefined/null, should throw
-    assert.throws(
-      () => String(store.agentMode),
-      new Error("agentMode was not set by environment")
-    );
+    assert.strictEqual(store.mcp, true);
   });
 });

@@ -5,7 +5,7 @@
  */
 import { DebuggableAppController, HydratedController } from "../types.js";
 import { BoardController } from "./subcontrollers/board/board-controller.js";
-import { RuntimeFlags } from "@breadboard-ai/types";
+import type { Environment } from "../environment/environment.js";
 import { isHydratedController } from "../utils/helpers/helpers.js";
 
 import * as Global from "./subcontrollers/global/global.js";
@@ -37,8 +37,8 @@ class Controller implements AppController {
   run: AppController["run"];
   router: AppController["router"];
 
-  constructor(flags: RuntimeFlags) {
-    const runtimeFlags = flags;
+  constructor(env: Environment) {
+    const runtimeFlags = env.flags.env();
 
     this.editor = {
       graph: new Editor.Graph.GraphController(
@@ -94,7 +94,7 @@ class Controller implements AppController {
 
     this.global = {
       main: new Global.GlobalController("Global", "GlobalController"),
-      flags: new Global.FlagController("Flags", "FlagController", runtimeFlags),
+      flags: new Global.FlagController("Flags", "FlagController", env.flags),
       debug: new Global.DebugController("Debug", "DebugController"),
       feedback: new Global.FeedbackController("Feedback", "FeedbackController"),
       flowgenInput: new Global.FlowgenInputController(
@@ -223,11 +223,13 @@ class Controller implements AppController {
  * ```
  */
 let controller: Controller;
-export const appController = (flags?: RuntimeFlags): Controller => {
+export const appController = (env?: Environment): Controller => {
   if (!controller) {
-    if (!flags)
-      throw new Error("App Controller must be instantiated with flags");
-    controller = new Controller(flags);
+    if (!env)
+      throw new Error(
+        "App Controller must be instantiated with an Environment"
+      );
+    controller = new Controller(env);
   }
 
   return controller;

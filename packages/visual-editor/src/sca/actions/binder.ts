@@ -6,6 +6,7 @@
 
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
+import type { Environment } from "../environment/environment.js";
 import { ToastType } from "../types.js";
 import { STATUS } from "../types.js";
 
@@ -30,6 +31,7 @@ export function isFocusedOnGraphRenderer(evt: KeyboardEvent): boolean {
 export type ActionBind = {
   controller: AppController;
   services: AppServices;
+  env: Environment;
 };
 
 type DefaultBindings = ActionBind;

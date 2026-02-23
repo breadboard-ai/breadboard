@@ -6,6 +6,7 @@
 
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
+import type { Environment } from "../environment/environment.js";
 import * as Agent from "./agent/agent-actions.js";
 import * as GraphEditingAgent from "./agent/graph-editing-agent-actions.js";
 import * as Asset from "./asset/asset-actions.js";
@@ -51,26 +52,30 @@ export interface AppActions {
 let instance: AppActions | null = null;
 let triggerDisposers: Array<() => void> = [];
 
-export function actions(controller: AppController, services: AppServices) {
+export function actions(
+  controller: AppController,
+  services: AppServices,
+  env: Environment
+) {
   if (!instance) {
-    Agent.bind({ controller, services });
-    GraphEditingAgent.bind({ controller, services });
-    Asset.bind({ controller, services });
-    Board.bind({ controller, services });
-    Flowgen.bind({ controller, services });
-    Graph.bind({ controller, services });
-    Integration.bind({ controller, services });
-    Host.bind({ controller, services });
-    Node.bind({ controller, services });
-    NotebookLmPicker.bind({ controller, services });
-    Router.bind({ controller, services });
-    Run.bind({ controller, services });
-    ScreenSize.bind({ controller, services });
-    Share.bind({ controller, services });
-    Shell.bind({ controller, services });
-    Sidebar.bind({ controller, services });
-    Step.bind({ controller, services });
-    Theme.bind({ controller, services });
+    Agent.bind({ controller, services, env });
+    GraphEditingAgent.bind({ controller, services, env });
+    Asset.bind({ controller, services, env });
+    Board.bind({ controller, services, env });
+    Flowgen.bind({ controller, services, env });
+    Graph.bind({ controller, services, env });
+    Integration.bind({ controller, services, env });
+    Host.bind({ controller, services, env });
+    Node.bind({ controller, services, env });
+    NotebookLmPicker.bind({ controller, services, env });
+    Router.bind({ controller, services, env });
+    Run.bind({ controller, services, env });
+    ScreenSize.bind({ controller, services, env });
+    Share.bind({ controller, services, env });
+    Shell.bind({ controller, services, env });
+    Sidebar.bind({ controller, services, env });
+    Step.bind({ controller, services, env });
+    Theme.bind({ controller, services, env });
     instance = {
       agent: Agent,
       graphEditingAgent: GraphEditingAgent,
