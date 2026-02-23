@@ -207,10 +207,10 @@ export class GoogleDriveFileId extends SignalWatcher(LitElement) {
   }
 
   async #onClickPickFiles() {
-    if (this.sca.services.shellHost === undefined) {
+    if (this.sca.env.shellHost === undefined) {
       return;
     }
-    const result = await this.sca.services.shellHost.pickDriveFiles({
+    const result = await this.sca.env.shellHost.pickDriveFiles({
       mimeTypes: ALLOWED_MIME_TYPES,
     });
     switch (result.action) {

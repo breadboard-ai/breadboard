@@ -70,7 +70,7 @@ interface AppEnvironment {
 function createEnvironment(
   config: RuntimeConfig,
   flags: RuntimeFlags
-): AppEnvironment {
+): Readonly<AppEnvironment> {
   const envFlags = new EnvironmentFlags(flags);
 
   return {

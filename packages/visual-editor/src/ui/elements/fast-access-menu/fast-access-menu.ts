@@ -311,7 +311,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       rawItems,
       graphController.agentModeTools,
       {
-        environmentName: this.sca?.services.globalConfig?.environmentName,
+        environmentName: this.sca?.env.environmentName,
         enableNotebookLm:
           this.sca?.controller.global.flags.enableNotebookLm ?? false,
         integrationsController:

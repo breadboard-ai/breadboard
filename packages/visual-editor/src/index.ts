@@ -100,7 +100,7 @@ class Main extends MainBase {
     if (!domain) {
       return;
     }
-    const url = this.sca.services.globalConfig.domains?.[domain]?.preferredUrl;
+    const url = this.sca.env.domains?.[domain]?.preferredUrl;
     if (!url) {
       return;
     }
@@ -670,9 +670,7 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            this.sca.controller.global.feedback.open(
-              this.sca.services.globalConfig
-            );
+            this.sca.controller.global.feedback.open(this.sca.env);
             break;
           }
 

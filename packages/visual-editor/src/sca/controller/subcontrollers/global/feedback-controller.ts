@@ -5,7 +5,7 @@
  */
 
 import { RootController } from "../root-controller.js";
-import { GlobalConfig } from "../../../types.js";
+import type { AppEnvironment } from "../../../environment/environment.js";
 import { createTrustedFeedbackURL } from "../../../../ui/trusted-types/feedback-url.js";
 import { field } from "../../decorators/field.js";
 import type { TrustedScriptURL } from "trusted-types/lib/index.js";
@@ -60,7 +60,7 @@ export class FeedbackController extends RootController {
   @field()
   accessor status: FeedbackStatus = "closed";
 
-  async open(globalConfig: GlobalConfig) {
+  async open(env: Readonly<AppEnvironment>) {
     const LABEL = "Feedback.open";
     const logger = Utils.Logging.getLogger();
 
@@ -68,14 +68,14 @@ export class FeedbackController extends RootController {
       return;
     }
 
-    if (!globalConfig) {
+    if (!env) {
       logger.log(
         Utils.Logging.Formatter.error("No environment was provided."),
         LABEL
       );
       return;
     }
-    const productId = globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID;
+    const productId = env.deploymentConfig.GOOGLE_FEEDBACK_PRODUCT_ID;
     if (!productId) {
       logger.log(
         Utils.Logging.Formatter.error(
@@ -85,7 +85,7 @@ export class FeedbackController extends RootController {
       );
       return;
     }
-    const bucket = globalConfig.GOOGLE_FEEDBACK_BUCKET;
+    const bucket = env.deploymentConfig.GOOGLE_FEEDBACK_BUCKET;
     if (!bucket) {
       logger.log(
         Utils.Logging.Formatter.error(
@@ -95,8 +95,7 @@ export class FeedbackController extends RootController {
       );
       return;
     }
-    const { packageJsonVersion: version, gitCommitHash } =
-      globalConfig.buildInfo;
+    const { packageJsonVersion: version, gitCommitHash } = env.buildInfo;
 
     this.status = "loading";
     let api;

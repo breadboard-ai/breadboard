@@ -832,7 +832,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
       return nothing;
     }
     const { disallowPublicPublishing, preferredUrl } =
-      this.sca?.services.globalConfig?.domains?.[domain] ?? {};
+      this.sca?.env.domains?.[domain] ?? {};
     if (!disallowPublicPublishing) {
       return nothing;
     }
@@ -970,8 +970,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     }
     const published = this.#controller.hasPublicPermissions;
     const domain = this.#controller.userDomain;
-    const { disallowPublicPublishing } =
-      this.sca?.services.globalConfig?.domains?.[domain] ?? {};
+    const { disallowPublicPublishing } = this.sca?.env.domains?.[domain] ?? {};
 
     const disabled =
       disallowPublicPublishing || status === "changing-visibility";

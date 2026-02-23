@@ -361,7 +361,7 @@ export const lookupMemorySheet = asAction(
     triggeredBy: () => onGraphChangeWithMemory(bind),
   },
   async (): Promise<void> => {
-    const { controller, services } = bind;
+    const { controller, env } = bind;
     const graphController = controller.editor.graph;
 
     // Derive the graph ID from the URL (strip "drive:/" prefix)
@@ -376,7 +376,7 @@ export const lookupMemorySheet = asAction(
     // Use shellHost.getDriveCollectorFile which bypasses the fetchWithCreds
     // URL allowlist by creating its own token-based fetch.
     try {
-      const result = await services.shellHost.getDriveCollectorFile(
+      const result = await env.shellHost.getDriveCollectorFile(
         SHEETS_MIME_TYPE,
         graphId,
         graphId

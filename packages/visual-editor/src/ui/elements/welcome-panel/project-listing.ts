@@ -578,7 +578,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   }
 
   #renderAppVersion() {
-    const buildInfo = this.sca?.services.globalConfig?.buildInfo;
+    const buildInfo = this.sca?.env.buildInfo;
     return html`
       <div id="app-version">
         ${buildInfo

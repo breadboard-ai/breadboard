@@ -186,7 +186,7 @@ export const updateEditableVersion = asAction(
  * that.
  */
 async function fetchShareData(): Promise<Result> {
-  const { controller, services } = bind;
+  const { controller, services, env } = bind;
   const share = controller.editor.share;
   const googleDriveClient = services.googleDriveClient;
   const boardServer = services.googleDriveBoardServer;
@@ -206,8 +206,7 @@ async function fetchShareData(): Promise<Result> {
   // ever, but it's super cheap so it doesn't matter.
   share.userDomain = (await services.signinAdapter.domain) ?? "";
   share.publicPublishingAllowed = !(
-    services.globalConfig.domains?.[share.userDomain]
-      ?.disallowPublicPublishing ?? false
+    env.domains?.[share.userDomain]?.disallowPublicPublishing ?? false
   );
 
   // Ensure the graph file has been fully created on Drive (board creation is
@@ -369,8 +368,8 @@ function getGraphFileId(graphUrl: string): string | undefined {
 }
 
 function getConfiguredPublishPermissions(): gapi.client.drive.Permission[] {
-  const { services } = bind;
-  const permissions = services.globalConfig.googleDrive?.publishPermissions;
+  const { env } = bind;
+  const permissions = env.googleDrive?.publishPermissions;
   if (!permissions || permissions.length === 0) {
     /* c8 ignore start */
     Utils.Logging.getLogger().log(
@@ -386,7 +385,7 @@ function getConfiguredPublishPermissions(): gapi.client.drive.Permission[] {
 }
 
 // This computation must live in the actions layer because it needs access to
-// guestConfig and globalConfig from services, but it can't be wrapped with
+// guestConfig and globalConfig from environment, but it can't be wrapped with
 // "asAction" as required by the lint rule, because that forces it to be async.
 // It can't be async because it needs to be rendered synchronously in the
 // share panel.
@@ -395,11 +394,10 @@ export function computeAppUrl(shareableFile: DriveFileId | null): string {
   if (!shareableFile) {
     return "";
   }
-  const { services } = bind;
-  const shareSurface = services.guestConfig.shareSurface;
+  const { env } = bind;
+  const shareSurface = env.guestConfig.shareSurface;
   const shareSurfaceUrlTemplate =
-    shareSurface &&
-    services.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
+    shareSurface && env.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
   if (shareSurfaceUrlTemplate) {
     return makeShareLinkFromTemplate({
       urlTemplate: shareSurfaceUrlTemplate,
@@ -407,7 +405,7 @@ export function computeAppUrl(shareableFile: DriveFileId | null): string {
       resourceKey: shareableFile.resourceKey,
     });
   }
-  const hostOrigin = services.globalConfig.hostOrigin;
+  const hostOrigin = env.hostOrigin;
   if (!hostOrigin) {
     return "";
   }
@@ -549,7 +547,7 @@ async function applyPermissionDiff(
 }
 
 async function makeShareableCopy(): Promise<Result<MakeShareableCopyResult>> {
-  const { controller, services } = bind;
+  const { controller, services, env } = bind;
   const share = controller.editor.share;
   const graph = getGraph();
   if (!graph) {
@@ -633,7 +631,7 @@ async function makeShareableCopy(): Promise<Result<MakeShareableCopyResult>> {
   await boardServer.graphIsFullyCreated(`drive:/${shareableCopyFileId}`);
   await boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
 
-  const shareSurface = services.guestConfig.shareSurface;
+  const shareSurface = env.guestConfig.shareSurface;
   const copyMetaResult = await resultify(() =>
     googleDriveClient.updateFileMetadata(
       shareableCopyFileId,

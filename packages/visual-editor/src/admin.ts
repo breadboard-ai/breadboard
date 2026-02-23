@@ -7,7 +7,7 @@
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { MainArguments } from "./types/types.js";
 
-import type { GlobalConfig } from "./sca/types.js";
+import type { AppEnvironment } from "./sca/environment/environment.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 
 import { GoogleDriveBoardServer } from "./board-server/server.js";
@@ -21,7 +21,7 @@ export class Admin {
 
   constructor(
     public readonly args: MainArguments,
-    public readonly globalConfig: GlobalConfig,
+    public readonly env: Readonly<AppEnvironment>,
     public readonly gDriveClient: GoogleDriveClient,
     public readonly signinAdapter: SigninAdapter
   ) {

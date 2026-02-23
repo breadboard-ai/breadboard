@@ -35,7 +35,7 @@ export class GoogleDriveSharePanel extends SignalWatcher(LitElement) {
 
   async open() {
     if (this.#status === "open") return;
-    if (!this.sca.services.shellHost) {
+    if (!this.sca.env.shellHost) {
       console.error(`No shell host`);
       return;
     }
@@ -47,7 +47,7 @@ export class GoogleDriveSharePanel extends SignalWatcher(LitElement) {
     }
 
     this.#status = "open";
-    await this.sca.services.shellHost.shareDriveFiles({ fileIds });
+    await this.sca.env.shellHost.shareDriveFiles({ fileIds });
     this.#status = "closed";
     this.dispatchEvent(new Event("close"));
   }

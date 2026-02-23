@@ -47,7 +47,7 @@ export class OpenMain extends MainBase {
       fileMetadata?.properties?.[DRIVE_PROPERTY_OPAL_SHARE_SURFACE];
     const shareSurfaceUrlTemplate =
       shareSurface &&
-      this.sca.services.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
+      this.sca.env.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
     if (shareSurfaceUrlTemplate) {
       const redirectUrl = makeShareLinkFromTemplate({
         urlTemplate: shareSurfaceUrlTemplate,
@@ -63,8 +63,7 @@ export class OpenMain extends MainBase {
     // redirect to the /open/ page on that domain's preferred url if set.
     const userDomain = await this.sca.services.signinAdapter.domain;
     const userDomainPreferredUrl =
-      userDomain &&
-      this.sca.services.globalConfig.domains?.[userDomain]?.preferredUrl;
+      userDomain && this.sca.env.domains?.[userDomain]?.preferredUrl;
     if (userDomainPreferredUrl) {
       const url = new URL(
         window.location.pathname.replace(/^\/_app\//, "") +

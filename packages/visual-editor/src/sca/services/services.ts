@@ -6,9 +6,7 @@
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
-import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { RuntimeConfig } from "../../utils/graph-types.js";
-import type { GlobalConfig } from "../types.js";
 import type { AppEnvironment } from "../environment/environment.js";
 import { createActionTracker } from "../../ui/utils/action-tracker.js";
 import { SigninAdapter } from "../../ui/utils/signin-adapter.js";
@@ -17,7 +15,6 @@ import {
   NOTEBOOKLM_API_PREFIX,
   OPAL_BACKEND_API_PREFIX,
 } from "@breadboard-ai/types";
-import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 import { McpClientManager } from "../../mcp/client-manager.js";
 import { builtInMcpClients } from "../../mcp-clients.js";
@@ -58,8 +55,7 @@ export interface AppServices {
   agentContext: AgentContext;
   apiClient: AppCatalystApiClient;
   autonamer: Autonamer;
-  globalConfig: GlobalConfig;
-  guestConfig: GuestConfiguration;
+
   emailPrefsManager: EmailPrefsManager;
   fetchWithCreds: typeof fetch;
 
@@ -81,7 +77,6 @@ export interface AppServices {
    */
   stateEventBus: EventTarget;
   statusUpdates: StatusUpdatesService;
-  shellHost: OpalShellHostProtocol;
 }
 
 let instance: AppServices | null = null;
@@ -180,8 +175,7 @@ export function services(
       agentContext,
       apiClient,
       autonamer,
-      globalConfig: config.globalConfig,
-      guestConfig: config.guestConfig,
+
       emailPrefsManager,
       fetchWithCreds,
 
@@ -198,7 +192,6 @@ export function services(
       signinAdapter,
       stateEventBus: new EventTarget(),
       statusUpdates: new StatusUpdatesService(),
-      shellHost: config.shellHost,
     } satisfies AppServices;
   }
 

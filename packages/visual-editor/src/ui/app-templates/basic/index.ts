@@ -776,7 +776,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         results: resultsFileId,
         guestPrefixed: false,
       },
-      this.sca.services.globalConfig?.hostOrigin
+      this.sca.env.hostOrigin
     );
 
     this.sca.services.actionTracker?.shareResults("save_to_drive");

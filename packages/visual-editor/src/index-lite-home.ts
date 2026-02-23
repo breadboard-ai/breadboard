@@ -266,14 +266,14 @@ export class LiteHome extends SignalWatcher(LitElement) {
   render() {
     return html`<section id="home">
       <bb-project-listing-lite
-        .libraryTitle=${this.sca.services.guestConfig.libraryTitle ?? null}
-        .libraryIcon=${this.sca.services.guestConfig.libraryIcon ?? null}
-        .noLibraryAppsTitle=${this.sca.services.guestConfig
-          .noLibraryAppsTitle ?? null}
-        .galleryTitle=${this.sca.services.guestConfig.galleryTitle ?? null}
-        .galleryIcon=${this.sca.services.guestConfig.galleryIcon ?? null}
-        .createNewTitle=${this.sca.services.guestConfig.createNewTitle ?? null}
-        .createNewIcon=${this.sca.services.guestConfig.createNewIcon ?? null}
+        .libraryTitle=${this.sca.env.guestConfig.libraryTitle ?? null}
+        .libraryIcon=${this.sca.env.guestConfig.libraryIcon ?? null}
+        .noLibraryAppsTitle=${this.sca.env.guestConfig.noLibraryAppsTitle ??
+        null}
+        .galleryTitle=${this.sca.env.guestConfig.galleryTitle ?? null}
+        .galleryIcon=${this.sca.env.guestConfig.galleryIcon ?? null}
+        .createNewTitle=${this.sca.env.guestConfig.createNewTitle ?? null}
+        .createNewIcon=${this.sca.env.guestConfig.createNewIcon ?? null}
         .allowCreate=${!this.compactView}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>
