@@ -302,9 +302,15 @@ export class GalleryLite extends SignalWatcher(LitElement) {
             pointer-events: auto;
           }
 
-          & .overflow-pin.pinned {
-            & .g-icon::before {
-              content: "keep_off";
+          & .overflow-pin {
+            &:hover {
+              background: oklch(from var(--light-dark-n-0) l c h / 38%);
+            }
+
+            &.pinned {
+              & .g-icon::before {
+                content: "keep_off";
+              }
             }
           }
         }

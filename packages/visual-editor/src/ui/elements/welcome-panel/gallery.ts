@@ -213,13 +213,15 @@ export class Gallery extends SignalWatcher(LitElement) {
             }
           }
 
+          &:hover {
+            background: oklch(from var(--light-dark-n-0) l c h / 38%);
+          }
+
           &.pinned {
             opacity: 1;
             pointer-events: auto;
 
             &:hover {
-              background: oklch(from var(--light-dark-n-0) l c h / 38%);
-
               & .g-icon::before {
                 content: "keep_off";
               }
