@@ -7,7 +7,7 @@
 import type { Edge, NodeDescriptor } from "@breadboard-ai/types";
 import { changeNodeConfiguration } from "../../../sca/actions/graph/graph-actions.js";
 
-export { layoutGraph };
+export { layoutGraph, computePositions };
 
 const HORIZONTAL_SPACING = 400;
 const VERTICAL_SPACING = 200;

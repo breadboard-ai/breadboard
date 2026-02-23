@@ -8,9 +8,9 @@ Monorepo using wireit. `package.json` commands invoke the full build system.
 `npm run build` / `npm run build:tsc` builds all deps then compiles.
 `npm run test` builds deps then runs tests.
 
-When making changes, check if the user has `npm run build --watch` running.
-If not, prompt them to start one. Use its output to verify compilation instead
-of running separate `tsc --noEmit` commands.
+When making changes, check if the user has `npm run build --watch` running. If
+not, prompt them to start one. Use its output to verify compilation instead of
+running separate `tsc --noEmit` commands.
 
 ## Packages
 
@@ -50,15 +50,16 @@ not from UI-specific locations. Cross-package types go in `packages/types`.
 - Wrap business logic in `asAction` for coordination visibility.
 - Access deps via the module-level `bind` object, never as function params.
 - Return `Outcome<T>` (`ok(value)` / `err("message")`). Use fail-early guards.
-- Actions must never import other action modules. Cross-domain coordination
-  uses Triggers (Triggered Delegation pattern).
+- Actions must never import other action modules. Cross-domain coordination uses
+  Triggers (Triggered Delegation pattern).
 - One trigger per action. Consolidate multi-signal conditions into one trigger.
 
 ### Trigger Conventions
 
 - **Version + 1** pattern to avoid the Sticky Trigger Hazard:
   `return controller.editor.graph.version + 1;`
-- For presence-based triggers, the action must clear the signal as its final step.
+- For presence-based triggers, the action must clear the signal as its final
+  step.
 - Wrap `triggeredBy` in a factory function for lazy evaluation and SSR safety.
 
 ### UI Components
@@ -81,32 +82,37 @@ The repo uses `signal-polyfill` and `signal-utils` as its signal infrastructure.
 
 Use ES Module syntax. Define exports explicitly at the top of the file, right
 below imports:
+
 ```ts
 import { foo } from "./foo";
 export { bar, baz };
-function bar() { /* ... */ }
-function baz() { /* ... */ }
+function bar() {
+  /* ... */
+}
+function baz() {
+  /* ... */
+}
 ```
 
 ## Refactoring Patterns
 
-- **Interface removal as discovery**: delete from the interface, build, then
-  fix all consumers the compiler surfaces.
+- **Interface removal as discovery**: delete from the interface, build, then fix
+  all consumers the compiler surfaces.
 - **Flags**: defined in `packages/types/src/flags.ts` (type + metadata),
-  `FlagController` (frontend), and `unified-server/src/flags.ts` (backend).
-  When adding/removing a flag, update all three locations plus tests.
+  `FlagController` (frontend), and `unified-server/src/flags.ts` (backend). When
+  adding/removing a flag, update all three locations plus tests.
 
 ## Tests
 
 Use Node's built-in test framework (`node:test`). Tests run in Node, not a
 browser. If the code under test references DOM globals (`document`, `window`,
-etc.), call `setDOM()` from `tests/fake-dom.ts` in `beforeEach` and
-`unsetDOM()` in `afterEach` to ensure a clean environment between tests.
-Modules must never access DOM globals at the module level (e.g., top-level
+etc.), call `setDOM()` from `tests/fake-dom.ts` in `beforeEach` and `unsetDOM()`
+in `afterEach` to ensure a clean environment between tests. Modules must never
+access DOM globals at the module level (e.g., top-level
 `document.createElement`) — defer all DOM access to function bodies so the
-module can be imported safely in Node.
-Name tests as `[source-file].test.ts` in `packages/[package]/tests/`. In
-`packages/visual-editor`, mirror `src/sca/` structure under `tests/sca/`.
+module can be imported safely in Node. Name tests as `[source-file].test.ts` in
+`packages/[package]/tests/`. In `packages/visual-editor`, mirror `src/sca/`
+structure under `tests/sca/`.
 
 ### Mocking
 
@@ -131,6 +137,14 @@ async signal derivations, use the "Settled and Wait" pattern:
 `await store.isSettled` then `await new Promise(r => setTimeout(r, 50))`.
 
 Use `npm run test:file` to run subsets:
+
 ```bash
 npm run test:file -- './dist/tsc/tests/sca/actions/share/**/*.js'
 ```
+
+## Daily Dig
+
+The Daily Dig (`/daily-dig`) is a proactive bug hunt. Check the last entry date
+in `.agent/daily-dig.md` — if it's been more than a couple of days, suggest
+running one at the start of the session. Each dig should produce a concrete
+artifact (test, lint rule, or codemod) for any finding.
