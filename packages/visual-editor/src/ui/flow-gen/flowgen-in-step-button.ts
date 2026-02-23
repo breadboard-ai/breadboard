@@ -5,6 +5,7 @@
  */
 
 import type { GraphDescriptor } from "@breadboard-ai/types";
+import { formatError } from "../../utils/formatting/format-error.js";
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing } from "lit";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -318,21 +319,7 @@ export class FlowgenInStepButton extends SignalWatcher(LitElement) {
     if (this.#state.status !== "error") {
       return nothing;
     }
-    let error = this.#state.error as
-      | string
-      | { message?: string }
-      | { error: { message?: string } | string };
-    if (typeof error === "object" && error !== null && "error" in error) {
-      // Errors from Breadboard are often wrapped in an {error: <Error>}
-      // structure. Unwrap if needed.
-      error = error.error;
-    }
-    let message;
-    if (typeof error === "object" && error !== null && "message" in error) {
-      message = error.message;
-    } else {
-      message = String(error);
-    }
+    const message = formatError(this.#state.error);
     return html`<div id="error" class="sans-flex round md-body-small">
       ${message}
     </div>`;

@@ -60,4 +60,16 @@ describe("formatError", () => {
     const err: ErrorObject = { error: "direct-string" };
     assert.equal(formatError(err), "direct-string");
   });
+
+  it("converts null to string", () => {
+    assert.equal(formatError(null), "null");
+  });
+
+  it("converts undefined to string", () => {
+    assert.equal(formatError(undefined), "undefined");
+  });
+
+  it("converts a number to string", () => {
+    assert.equal(formatError(42), "42");
+  });
 });

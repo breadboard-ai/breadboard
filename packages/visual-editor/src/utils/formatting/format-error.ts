@@ -6,26 +6,28 @@
 
 import { ErrorObject } from "@breadboard-ai/types";
 
-export function formatError(error: string | ErrorObject): string {
-  let output = "";
+export function formatError(error: unknown): string {
   if (typeof error === "string") {
-    output = error;
-  } else {
-    if (typeof error.error === "string") {
-      output = error.error;
-    } else {
-      let messageOutput = "";
-      let errorData = error;
-      while (typeof errorData === "object") {
-        if (errorData && "message" in errorData) {
-          messageOutput += `${errorData.message}\n`;
-        }
-
-        errorData = errorData.error as ErrorObject;
-      }
-
-      output = messageOutput;
-    }
+    return error.trim();
   }
+
+  if (typeof error !== "object" || error === null) {
+    return String(error);
+  }
+
+  const asError = error as ErrorObject;
+  if (typeof asError.error === "string") {
+    return asError.error.trim();
+  }
+
+  let output = "";
+  let current = asError;
+  while (typeof current === "object" && current) {
+    if ("message" in current) {
+      output += `${current.message}\n`;
+    }
+    current = current.error as ErrorObject;
+  }
+
   return output.trim();
 }

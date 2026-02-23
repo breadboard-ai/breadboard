@@ -5,6 +5,7 @@
  */
 
 import { consume } from "@lit/context";
+import { formatError } from "../../utils/formatting/format-error.js";
 import { LitElement, type PropertyValues, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -297,21 +298,7 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
         return nothing;
       }
       case "error": {
-        let error = this.#state.error as
-          | string
-          | { message?: string }
-          | { error: { message?: string } | string };
-        if (typeof error === "object" && error !== null && "error" in error) {
-          // Errors from Breadboard are often wrapped in an {error: <Error>}
-          // structure. Unwrap if needed.
-          error = error.error;
-        }
-        let message: string;
-        if (typeof error === "object" && error !== null && "message" in error) {
-          message = error.message ?? "";
-        } else {
-          message = String(error);
-        }
+        const message = formatError(this.#state.error);
 
         // Check for "Feel free to try this instead: '...' Validation" pattern
         const suggestionMatch = message.match(
