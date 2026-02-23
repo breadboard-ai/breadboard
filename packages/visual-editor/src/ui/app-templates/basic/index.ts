@@ -237,8 +237,17 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | symbol = nothing;
     const lastScreen = this.#appPresenter.last;
     const last = lastScreen?.last;
-    if (last) {
-      const htmlOutput = getHTMLOutput(last);
+
+    // For pre-loaded results (shared link), there are no run screens.
+    // Fall back to the presenter's finalOutput, wrapped as an AppScreenOutput.
+    const effectiveOutput =
+      last ??
+      (this.#appPresenter.finalOutput
+        ? { output: this.#appPresenter.finalOutput, schema: undefined }
+        : null);
+
+    if (effectiveOutput) {
+      const htmlOutput = getHTMLOutput(effectiveOutput);
       if (htmlOutput !== null) {
         activityContents = html`
           <bb-app-sandbox
@@ -250,13 +259,16 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         let processor;
         let receiver;
 
-        // A2UI payload received.
-        if (last.a2ui) {
+        // A2UI payload received (only from live run screens, not pre-loaded results).
+        if (last?.a2ui) {
           processor = last.a2ui.processor;
           receiver = last.a2ui.receiver;
         } else {
           // Likely a raw LLM Content that needs to be converted to A2UI.
-          processor = appScreenToA2UIProcessor(last, lastScreen?.type);
+          processor = appScreenToA2UIProcessor(
+            effectiveOutput,
+            lastScreen?.type
+          );
           receiver = null;
         }
 

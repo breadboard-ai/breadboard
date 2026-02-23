@@ -22,6 +22,7 @@ import type { AppController } from "../../../src/sca/controller/controller.js";
 function makeMockSCA(options?: {
   error?: { message: string };
   hasInput?: boolean;
+  finalOutputValues?: Record<string, unknown>;
 }): { sca: SCA; screen: ScreenController; run: RunController } {
   const run = new RunController("test-run", "test");
   const screen = new ScreenController("test-screen", "test");
@@ -36,6 +37,11 @@ function makeMockSCA(options?: {
 
   const controller = {
     run: { main: run, screen, renderer },
+    editor: {
+      graph: {
+        finalOutputValues: options?.finalOutputValues,
+      },
+    },
   } as unknown as AppController;
 
   const sca = { controller } as unknown as SCA;
@@ -80,6 +86,21 @@ suite("AppScreenPresenter state derivation", () => {
     await flush();
 
     assert.strictEqual(presenter.state, "splash");
+
+    presenter.disconnect();
+  });
+
+  test("state is output when finalOutputValues is pre-loaded (shared results link)", async () => {
+    const { sca } = makeMockSCA({
+      finalOutputValues: { result: "test" },
+    });
+
+    const presenter = new AppScreenPresenter();
+    presenter.connect(sca);
+    await flush();
+
+    assert.strictEqual(presenter.state, "output");
+    assert.notStrictEqual(presenter.finalOutput, null);
 
     presenter.disconnect();
   });

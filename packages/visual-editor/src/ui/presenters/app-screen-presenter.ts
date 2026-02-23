@@ -126,7 +126,11 @@ class AppScreenPresenter {
 
     // Derive `state`
     if (!this.last) {
-      this.state = "splash";
+      // Pre-loaded results from a shared link populate finalOutputValues
+      // on the GraphController without creating any run screens.
+      this.state = controller.editor.graph.finalOutputValues
+        ? "output"
+        : "splash";
     } else if (runController.error) {
       this.state = "error";
     } else if (runController.input) {
