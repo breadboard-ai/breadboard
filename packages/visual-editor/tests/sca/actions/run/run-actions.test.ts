@@ -19,6 +19,7 @@ import type {
 import type { AppController } from "../../../../src/sca/controller/controller.js";
 import { coordination } from "../../../../src/sca/coordination.js";
 import { createAppScreen } from "../../../../src/sca/utils/app-screen.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 /**
  * Sets up the controller's graph state so that the no-arg prepare() action
@@ -51,7 +52,7 @@ suite("Run Actions", () => {
   test("prepare sets runner on controller", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -67,7 +68,7 @@ suite("Run Actions", () => {
   test("prepare pre-populates renderer with node states from orchestrator", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller, {
       edges: [],
@@ -106,7 +107,7 @@ suite("Run Actions", () => {
   test("prepare sets status to STOPPED (ready)", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -121,7 +122,7 @@ suite("Run Actions", () => {
   test("runner 'start' event sets status to RUNNING", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -139,7 +140,7 @@ suite("Run Actions", () => {
   test("runner 'resume' event sets status to RUNNING", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -158,7 +159,7 @@ suite("Run Actions", () => {
   test("runner 'pause' event sets status to PAUSED", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -177,7 +178,7 @@ suite("Run Actions", () => {
   test("runner 'end' event sets status to STOPPED", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -196,7 +197,7 @@ suite("Run Actions", () => {
   test("runner 'error' event sets status to STOPPED", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -217,7 +218,7 @@ suite("Run Actions", () => {
   test("runner 'error' event sets error on controller with string message", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -245,7 +246,7 @@ suite("Run Actions", () => {
   test("runner 'error' event handles error object with message property", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -267,7 +268,7 @@ suite("Run Actions", () => {
   test("runner 'error' event handles missing error gracefully", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -285,7 +286,7 @@ suite("Run Actions", () => {
   test("runner 'end' event clears input", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -306,7 +307,7 @@ suite("Run Actions", () => {
   test("runner 'graphstart' event resets and pre-populates output for top-level graph", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Create config with 3 nodes
     setupGraph(controller, {
@@ -366,7 +367,7 @@ suite("Run Actions", () => {
   test("runner 'graphstart' event ignores nested graphs", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -395,7 +396,7 @@ suite("Run Actions", () => {
   test("runner 'nodestart' event adds console entry", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller, {
       edges: [],
@@ -425,7 +426,7 @@ suite("Run Actions", () => {
   test("runner 'nodestart' event ignores nested nodes", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -461,7 +462,7 @@ suite("Run.start action", () => {
   test("start calls runner.start()", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Prepare a runner
     setupGraph(controller);
@@ -482,7 +483,7 @@ suite("Run.start action", () => {
   test("start throws when no runner is set", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Ensure no runner is set
     controller.run.main.runner = null;
@@ -497,7 +498,7 @@ suite("Run.start action", () => {
   test("start uses exclusive mode (prevents concurrent calls)", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Prepare a runner
     setupGraph(controller);
@@ -549,7 +550,7 @@ suite("Run.stop action", () => {
   test("stop calls abortController.abort()", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Prepare a runner to set up abortController
     setupGraph(controller);
@@ -571,7 +572,7 @@ suite("Run.stop action", () => {
   test("stop sets status to STOPPED", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Prepare a runner
     setupGraph(controller);
@@ -592,7 +593,7 @@ suite("Run.stop action", () => {
   test("stop works when no abortController is set", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Ensure no abortController
     controller.run.main.abortController = null;
@@ -607,7 +608,7 @@ suite("Run.stop action", () => {
   test("stop uses immediate mode (works during triggers)", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Enter a trigger scope
     const done = coordination.enterTrigger("Test Trigger");
@@ -628,7 +629,7 @@ suite("Run.stop action", () => {
   test("stop bumps stopVersion", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Prepare a runner
     setupGraph(controller);
@@ -648,7 +649,7 @@ suite("Run.stop action", () => {
   test("stop bumps stopVersion on each call", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -681,7 +682,7 @@ suite("syncConsoleFromRunner", () => {
   test("returns early when no runner", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Ensure no runner is set
     controller.run.main.runner = null;
@@ -696,7 +697,7 @@ suite("syncConsoleFromRunner", () => {
     const { controller } = makeTestController();
     // Use nodeMetadata option for cleaner mocking
     const { services } = makeTestServices({});
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Mock controller.editor.graph.get() with node metadata
     const nodeMetadata: Record<
@@ -793,7 +794,7 @@ suite("syncConsoleFromRunner", () => {
   test("maps node state from runner.state", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices({});
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Mock controller.editor.graph.get() with node metadata
     (controller.editor.graph as unknown as { get: () => unknown }).get =
@@ -854,7 +855,7 @@ suite("syncConsoleFromRunner", () => {
   test("defaults to 'inactive' when node has no state", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices({});
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Mock controller.editor.graph.get() with node metadata
     (controller.editor.graph as unknown as { get: () => unknown }).get =
@@ -912,7 +913,7 @@ suite("syncConsoleFromRunner", () => {
   test("returns early when no graph editor", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     const mockRunner = {
       plan: { stages: [[{ node: { id: "node-1" } }]] },
@@ -937,7 +938,7 @@ suite("syncConsoleFromRunner", () => {
   test("returns early when graphStore fails", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     const mockRunner = {
       plan: { stages: [[{ node: { id: "node-1" } }]] },
@@ -970,7 +971,7 @@ suite("syncConsoleFromRunner", () => {
   test("uses nodeId as fallback title when node not found", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     const mockRunner = {
       plan: { stages: [[{ node: { id: "missing-node" } }]] },
@@ -1008,7 +1009,7 @@ suite("syncConsoleFromRunner", () => {
   test("handles empty plan gracefully", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     const mockRunner = {
       plan: { stages: [] }, // Empty plan
@@ -1058,7 +1059,7 @@ suite("reprepareAfterStop", () => {
   test("stop re-populates console entries (regression test for 2bfbc6bf5)", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Set up a graph with nodes
     setupGraph(controller, {
@@ -1146,7 +1147,7 @@ suite("reprepareAfterStop", () => {
   test("console is empty after stop but before reprepareAfterStop", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller, {
       edges: [],
@@ -1276,7 +1277,7 @@ suite("runner nodeend event", () => {
   test("updates existing console entry to succeeded on nodeend", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller, {
       edges: [],
@@ -1315,7 +1316,7 @@ suite("runner nodeend event", () => {
   test("ignores nodeend for nested nodes (path.length > 1)", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1355,7 +1356,7 @@ suite("runner nodeend event", () => {
   test("does nothing if node is not in console", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1380,7 +1381,7 @@ suite("runner nodeend event", () => {
   test("sets error on console entry when outputs contain $error (string)", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1422,7 +1423,7 @@ suite("runner nodeend event", () => {
   test("sets error on console entry when $error is an object with message", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1462,7 +1463,7 @@ suite("runner nodeend event", () => {
   test("does not populate output map when outputs contain $error", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1498,7 +1499,7 @@ suite("runner nodeend event", () => {
   test("includes errorMessage in failed status", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1548,7 +1549,7 @@ suite("syncConsoleFromRunner async describe", () => {
   test("async fetches node.describe when metadata has no tags", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Create a mock node with async describe
     let describeCalled = false;
@@ -1614,7 +1615,7 @@ suite("syncConsoleFromRunner async describe", () => {
   test("skips async describe when metadata already has tags", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Create a mock node that already has tags
     let describeCalled = false;
@@ -1662,7 +1663,7 @@ suite("syncConsoleFromRunner async describe", () => {
   test("skips async describe when node is null", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     const mockRunner = {
       plan: { stages: [[{ node: { id: "node-1" } }]] },
@@ -1712,7 +1713,7 @@ suite("handleNodeAction", () => {
   test("sets nodeActionRequest on controller", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     await RunActions.handleNodeAction({
       nodeId: "node-1",
@@ -1728,7 +1729,7 @@ suite("handleNodeAction", () => {
   test("sets 'step' actionContext", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     await RunActions.handleNodeAction({
       nodeId: "node-2",
@@ -1743,7 +1744,7 @@ suite("handleNodeAction", () => {
   test("no-ops and logs when actionContext is missing", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     await RunActions.handleNodeAction({ nodeId: "node-1" });
 
@@ -1772,7 +1773,7 @@ suite("executeNodeAction", () => {
   test("returns early when no request", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Ensure no request is set
     assert.strictEqual(controller.run.main.nodeActionRequest, null);
@@ -1787,7 +1788,7 @@ suite("executeNodeAction", () => {
   test("clears nodeActionRequest after execution", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Set up a runner with node state
     setupGraph(controller);
@@ -1816,7 +1817,7 @@ suite("executeNodeAction", () => {
   test("no-ops for 'inactive' state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1844,7 +1845,7 @@ suite("executeNodeAction", () => {
   test("dispatches run for 'ready' state with graph context", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1874,7 +1875,7 @@ suite("executeNodeAction", () => {
   test("dispatches run for 'succeeded' state with step context", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1903,7 +1904,7 @@ suite("executeNodeAction", () => {
   test("dispatches run for 'failed' state with undismissError", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1935,7 +1936,7 @@ suite("executeNodeAction", () => {
   test("dispatches run for 'interrupted' state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -1964,7 +1965,7 @@ suite("executeNodeAction", () => {
   test("stops working node and sets interrupted state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2000,7 +2001,7 @@ suite("executeNodeAction", () => {
   test("stops waiting node and sets interrupted state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2029,7 +2030,7 @@ suite("executeNodeAction", () => {
   test("logs warning for 'skipped' state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2054,7 +2055,7 @@ suite("executeNodeAction", () => {
   test("logs warning for unknown state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2078,7 +2079,7 @@ suite("executeNodeAction", () => {
   test("logs warning when node state not found", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2117,7 +2118,7 @@ suite("runner event handlers", () => {
   test("nodestatechange sets non-failed node state on renderer", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2144,7 +2145,7 @@ suite("runner event handlers", () => {
   test("nodestatechange decodes error for 'failed' state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2171,7 +2172,7 @@ suite("runner event handlers", () => {
   test("edgestatechange sets edge states on renderer", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2195,7 +2196,7 @@ suite("runner event handlers", () => {
   test("output event adds output to screen for bubbled events", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2223,7 +2224,7 @@ suite("runner event handlers", () => {
   test("output event ignores non-bubbled events", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2259,7 +2260,7 @@ suite("runner nodeend deleteScreen", () => {
   test("deletes screen when node state is interrupted", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2300,7 +2301,7 @@ suite("runner nodeend deleteScreen", () => {
   test("finalizes screen when node is NOT interrupted", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2346,7 +2347,7 @@ suite("runner nodeend deleteScreen", () => {
   test("sets renderer node state to succeeded on nodeend", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2393,7 +2394,7 @@ suite("runner graphstart async describe fallback", () => {
   test("async fetches describe when metadata has no tags during graphstart", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Create a node without tags initially
     let describeCalled = false;
@@ -2442,7 +2443,7 @@ suite("runner graphstart async describe fallback", () => {
   test("does NOT async fetch when tags are already present", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     let describeCalled = false;
     const mockNode = {
@@ -2482,7 +2483,7 @@ suite("runner graphstart async describe fallback", () => {
   test("graphstart falls back to nodeId when node is not found", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // nodeById returns null — triggers all ?? fallbacks
     (controller.editor.graph as unknown as { get: () => unknown }).get =
@@ -2513,7 +2514,7 @@ suite("runner graphstart async describe fallback", () => {
   test("graphstart handles null plan.stages by using empty array", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller, {
       edges: [],
@@ -2539,7 +2540,7 @@ suite("runner graphstart async describe fallback", () => {
   test("graphstart uses empty metadata when currentDescribe returns null", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     const mockNode = {
       title: () => "Node 1",
@@ -2586,7 +2587,7 @@ suite("runner nodestart fallback branches", () => {
   test("nodestart falls back to nodeId when node is not found", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // nodeById returns null
     (controller.editor.graph as unknown as { get: () => unknown }).get =
@@ -2619,7 +2620,7 @@ suite("runner nodestart fallback branches", () => {
   test("nodestart uses empty metadata when currentDescribe returns null", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     const mockNode = {
       title: () => "Node 1",
@@ -2671,7 +2672,7 @@ suite("prepare() guard clauses", () => {
   test("prepare() skips re-preparation while status is RUNNING", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2695,7 +2696,7 @@ suite("prepare() guard clauses", () => {
   test("prepare() returns early when graph is missing", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Set url but no graph editor
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2717,7 +2718,7 @@ suite("prepare() guard clauses", () => {
   test("prepare() returns early when url is missing", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Set graph editor but no url
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2751,7 +2752,7 @@ suite("prepare() getProjectRunState callback", () => {
   test("runner config getProjectRunState returns console and screen maps", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     // Capture the config passed to createRunner
     let capturedConfig: { getProjectRunState?: () => unknown } | undefined;
@@ -2806,7 +2807,7 @@ suite("progress ticker lifecycle", () => {
   test("start event begins ticker that ticks screens; end event clears it", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2839,7 +2840,7 @@ suite("progress ticker lifecycle", () => {
   test("error event clears progress ticker", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -2872,7 +2873,7 @@ suite("nodeend output population", () => {
   test("nodeend populates output map when outputs have no $error", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller, {
       edges: [],
@@ -2963,7 +2964,7 @@ suite("output event with console entry (addOutputWorkItem)", () => {
   test("output event adds work item to existing console entry", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller, {
       edges: [],
@@ -3049,7 +3050,7 @@ suite("onInputRequested wiring", () => {
   test("prepare() sets onInputRequested on RunController", () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
-    RunActions.bind({ controller, services });
+    RunActions.bind({ controller, services, env: {} as AppEnvironment });
 
     setupGraph(controller);
     RunActions.prepare();
@@ -3086,7 +3087,11 @@ suite("onTopologyChange trigger", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (controller.editor.graph as any).topologyVersion = 0;
 
-    const trigger = onTopologyChange({ controller, services });
+    const trigger = onTopologyChange({
+      controller,
+      services,
+      env: {} as AppEnvironment,
+    });
     assert.ok(trigger, "trigger should be created");
     assert.strictEqual(
       trigger.name,

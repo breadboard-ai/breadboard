@@ -5,7 +5,7 @@
  */
 import { DebuggableAppController, HydratedController } from "../types.js";
 import { BoardController } from "./subcontrollers/board/board-controller.js";
-import type { Environment } from "../environment/environment.js";
+import type { AppEnvironment } from "../environment/environment.js";
 import { isHydratedController } from "../utils/helpers/helpers.js";
 
 import * as Global from "./subcontrollers/global/global.js";
@@ -37,7 +37,7 @@ class Controller implements AppController {
   run: AppController["run"];
   router: AppController["router"];
 
-  constructor(env: Environment) {
+  constructor(env: AppEnvironment) {
     const runtimeFlags = env.flags.env();
 
     this.editor = {
@@ -223,7 +223,7 @@ class Controller implements AppController {
  * ```
  */
 let controller: Controller;
-export const appController = (env?: Environment): Controller => {
+export const appController = (env?: AppEnvironment): Controller => {
   if (!controller) {
     if (!env)
       throw new Error(

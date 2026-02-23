@@ -6,7 +6,7 @@
 
 import { type AppController } from "../controller/controller.js";
 import { type AppServices } from "../services/services.js";
-import type { Environment } from "../environment/environment.js";
+import type { AppEnvironment } from "../environment/environment.js";
 import * as Agent from "./agent/agent-actions.js";
 import * as GraphEditingAgent from "./agent/graph-editing-agent-actions.js";
 import * as Asset from "./asset/asset-actions.js";
@@ -55,7 +55,7 @@ let triggerDisposers: Array<() => void> = [];
 export function actions(
   controller: AppController,
   services: AppServices,
-  env: Environment
+  env: AppEnvironment
 ) {
   if (!instance) {
     Agent.bind({ controller, services, env });

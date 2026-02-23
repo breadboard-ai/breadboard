@@ -30,6 +30,7 @@ import {
   loadGraphIntoStore,
 } from "../../../helpers/_graph-store.js";
 import { editGraphStore } from "../../../helpers/_editor.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 // =============================================================================
 // Helpers
@@ -185,7 +186,7 @@ suite("Board Route Actions", () => {
       });
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onSave();
 
@@ -212,7 +213,7 @@ suite("Board Route Actions", () => {
       const { controller } = makeMockRouteController({ graph: null });
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onRun();
 
@@ -232,7 +233,7 @@ suite("Board Route Actions", () => {
       const { controller } = makeMockRouteController();
       const services = makeMockServices({ signInResult: "cancelled" });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onRun();
 
@@ -251,7 +252,7 @@ suite("Board Route Actions", () => {
       const { controller } = makeMockRouteController({ runner: null });
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       // Should not throw
       await Board.onRun();
@@ -264,7 +265,7 @@ suite("Board Route Actions", () => {
       });
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onRun();
 
@@ -316,7 +317,7 @@ suite("Board Route Actions", () => {
         new Set();
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onRun();
 
@@ -358,7 +359,7 @@ suite("Board Route Actions", () => {
         new Set(["drive:/gallery-board"]);
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onRun();
 
@@ -379,7 +380,7 @@ suite("Board Route Actions", () => {
       const { controller } = makeMockRouteController({ graph: null });
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onStop();
 
@@ -397,7 +398,7 @@ suite("Board Route Actions", () => {
       const { controller } = makeMockRouteController();
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onStop();
 
@@ -448,7 +449,7 @@ suite("Board Route Actions", () => {
       ).abortController = abortController;
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onStop();
 
@@ -470,7 +471,7 @@ suite("Board Route Actions", () => {
       ).parsedUrl = { page: "graph", results: "encoded-data" };
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onStop();
 
@@ -504,7 +505,7 @@ suite("Board Route Actions", () => {
       });
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       await Board.onRestart();
 
@@ -546,7 +547,7 @@ suite("Board Route Actions", () => {
       const { controller } = makeMockRouteController({ graph: null });
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.input",
@@ -565,7 +566,7 @@ suite("Board Route Actions", () => {
 
       // We can't easily mock provideInput since it's a module import,
       // but we can verify it doesn't crash with valid inputs.
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.input",
@@ -588,7 +589,7 @@ suite("Board Route Actions", () => {
       const { controller, goArgs } = makeMockRouteController();
       const services = makeMockServices({ signInResult: "cancelled" });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.create",
@@ -611,7 +612,7 @@ suite("Board Route Actions", () => {
       const { controller, goArgs } = makeMockRouteController();
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.create",
@@ -635,7 +636,7 @@ suite("Board Route Actions", () => {
       const { controller } = makeMockRouteController();
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.create",
@@ -683,7 +684,7 @@ suite("Board Route Actions", () => {
       });
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.remix",
@@ -715,7 +716,7 @@ suite("Board Route Actions", () => {
       });
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.remix",
@@ -770,7 +771,7 @@ suite("Board Route Actions", () => {
         url: undefined,
       });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.remix",
@@ -805,7 +806,7 @@ suite("Board Route Actions", () => {
       const { controller, goArgs, recentRemoves } = makeMockRouteController();
       const services = makeMockServices();
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.delete",
@@ -841,7 +842,7 @@ suite("Board Route Actions", () => {
       };
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.delete",
@@ -879,7 +880,11 @@ suite("Board Route Actions", () => {
       const ctx = makeMockRouteController();
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller: ctx.controller });
+      Board.bind({
+        services,
+        controller: ctx.controller,
+        env: {} as AppEnvironment,
+      });
 
       const evt = new StateEvent({
         eventType: "board.delete",
@@ -914,7 +919,7 @@ suite("Board Route Actions", () => {
       };
       const services = makeMockServices({ boardServer });
 
-      Board.bind({ services, controller });
+      Board.bind({ services, controller, env: {} as AppEnvironment });
 
       const evt = new StateEvent({
         eventType: "board.delete",

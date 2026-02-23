@@ -8,6 +8,7 @@ import { suite, test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import { coordination } from "../../../../src/sca/coordination.js";
 import * as screenSizeActions from "../../../../src/sca/actions/screen-size/screen-size-actions.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 import {
   NARROW_BREAKPOINT,
   MEDIUM_BREAKPOINT,
@@ -55,6 +56,7 @@ suite("ScreenSize Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await screenSizeActions.updateScreenSize();
@@ -90,6 +92,7 @@ suite("ScreenSize Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await screenSizeActions.updateScreenSize();
@@ -120,6 +123,7 @@ suite("ScreenSize Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await screenSizeActions.updateScreenSize();
@@ -142,6 +146,7 @@ suite("ScreenSize Actions", () => {
             screenSize: {},
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       // Should not throw
@@ -176,6 +181,7 @@ suite("ScreenSize Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await screenSizeActions.init();

@@ -20,6 +20,7 @@ import type { AppController } from "../../../../src/sca/controller/controller.js
 import type { AppServices } from "../../../../src/sca/services/services.js";
 import { StateEvent } from "../../../../src/ui/events/events.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 suite("Host Actions — Event-Triggered", () => {
   interface MockController {
@@ -66,6 +67,7 @@ suite("Host Actions — Event-Triggered", () => {
       services: {
         stateEventBus: new EventTarget(),
       } as unknown as AppServices,
+      env: {} as AppEnvironment,
     });
   }
 
@@ -248,6 +250,7 @@ suite("Host Actions — Keyboard", () => {
         stateEventBus: new EventTarget(),
         ...services,
       } as unknown as AppServices,
+      env: {} as AppEnvironment,
     });
   }
 

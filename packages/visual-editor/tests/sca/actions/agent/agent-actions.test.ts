@@ -8,6 +8,7 @@ import { suite, test, beforeEach } from "node:test";
 import assert from "node:assert";
 import { coordination } from "../../../../src/sca/coordination.js";
 import * as agentActions from "../../../../src/sca/actions/agent/agent-actions.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 suite("Agent Actions", () => {
   beforeEach(() => {
@@ -27,6 +28,7 @@ suite("Agent Actions", () => {
           },
         } as never,
         controller: {} as never,
+        env: {} as AppEnvironment,
       });
 
       await agentActions.invalidateResumableRuns();
@@ -52,6 +54,7 @@ suite("Agent Actions", () => {
           },
         } as never,
         controller: {} as never,
+        env: {} as AppEnvironment,
       });
 
       await agentActions.clearRunsOnGraphChange();

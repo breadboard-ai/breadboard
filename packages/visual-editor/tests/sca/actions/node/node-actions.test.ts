@@ -31,6 +31,7 @@ import { coordination } from "../../../../src/sca/coordination.js";
 import type { EdgeAttachmentPoint } from "../../../../src/ui/types/types.js";
 import { makeTestGraphStoreArgs } from "../../../helpers/_graph-store.js";
 import type { NodeDescriber } from "../../../../src/sca/controller/subcontrollers/editor/graph/node-describer.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 const noopDescriber: NodeDescriber = async () => ({
   inputSchema: { type: "object" },
@@ -980,6 +981,7 @@ suite("Node Actions — Event-Triggered", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
+        env: {} as AppEnvironment,
       });
 
       const evt = new StateEvent({
@@ -1092,6 +1094,7 @@ suite("Node Actions — Event-Triggered", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
+        env: {} as AppEnvironment,
       });
 
       const evt = new StateEvent({
@@ -1250,6 +1253,7 @@ suite("Node Actions — Keyboard", () => {
       services: {
         stateEventBus: new EventTarget(),
       } as unknown as AppServices,
+      env: {} as AppEnvironment,
     });
   }
 
@@ -1292,6 +1296,7 @@ suite("Node Actions — Keyboard", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
+        env: {} as AppEnvironment,
       });
 
       await NodeActionsModule.onDelete();
@@ -1555,6 +1560,7 @@ suite("Node Actions — Keyboard", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
+        env: {} as AppEnvironment,
       });
 
       await NodeActionsModule.onCut();
@@ -1652,6 +1658,7 @@ suite("Node Actions — Keyboard", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
+        env: {} as AppEnvironment,
       });
 
       await NodeActionsModule.onDuplicate();
@@ -1831,6 +1838,7 @@ suite("Node Actions — Keyboard", () => {
         services: {
           stateEventBus: new EventTarget(),
         } as unknown as AppServices,
+        env: {} as AppEnvironment,
       });
 
       await NodeActionsModule.onPaste();
@@ -1929,6 +1937,7 @@ suite("Node Actions — Keyboard", () => {
             load: async () => ({ success: false }),
           },
         } as unknown as AppServices,
+        env: {} as AppEnvironment,
       });
 
       await NodeActionsModule.onPaste();
@@ -2018,6 +2027,7 @@ suite("Node Actions — Keyboard", () => {
             load: async () => ({ success: false }),
           },
         } as unknown as AppServices,
+        env: {} as AppEnvironment,
       });
 
       await NodeActionsModule.onPaste();

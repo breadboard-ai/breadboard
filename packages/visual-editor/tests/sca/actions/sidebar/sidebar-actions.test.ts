@@ -11,6 +11,7 @@ import * as sidebarActions from "../../../../src/sca/actions/sidebar/sidebar-act
 import { onSelectionChange } from "../../../../src/sca/actions/sidebar/triggers.js";
 import type { AppController } from "../../../../src/sca/controller/controller.js";
 import type { AppServices } from "../../../../src/sca/services/services.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 suite("Sidebar Actions", () => {
   beforeEach(() => {
@@ -40,6 +41,7 @@ suite("Sidebar Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await sidebarActions.updateSidebarOnSelectionChange();
@@ -73,6 +75,7 @@ suite("Sidebar Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await sidebarActions.updateSidebarOnSelectionChange();
@@ -106,6 +109,7 @@ suite("Sidebar Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await sidebarActions.updateSidebarOnSelectionChange();
@@ -139,6 +143,7 @@ suite("Sidebar Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await sidebarActions.updateSidebarOnSelectionChange();
@@ -172,6 +177,7 @@ suite("Sidebar Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await sidebarActions.updateSidebarOnSelectionChange();
@@ -205,6 +211,7 @@ suite("Sidebar Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await sidebarActions.updateSidebarOnSelectionChange();
@@ -248,6 +255,7 @@ suite("Sidebar Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       // This is what activateTriggers() does for runOnActivate actions
@@ -282,6 +290,7 @@ suite("Sidebar Triggers", () => {
           },
         } as unknown as AppController,
         services: {} as unknown as AppServices,
+        env: {} as AppEnvironment,
       };
 
       const trigger = onSelectionChange(bind);

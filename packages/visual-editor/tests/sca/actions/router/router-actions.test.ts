@@ -8,6 +8,7 @@ import { suite, test, beforeEach } from "node:test";
 import assert from "node:assert";
 import { coordination } from "../../../../src/sca/coordination.js";
 import * as routerActions from "../../../../src/sca/actions/router/router-actions.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 suite("Router Actions", () => {
   beforeEach(() => {
@@ -27,6 +28,7 @@ suite("Router Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await routerActions.updateFromPopstate();
@@ -52,6 +54,7 @@ suite("Router Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await routerActions.init();

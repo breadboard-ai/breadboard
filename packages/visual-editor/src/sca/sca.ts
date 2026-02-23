@@ -99,16 +99,16 @@ import { type RuntimeFlags } from "@breadboard-ai/types";
 import { RuntimeConfig } from "../utils/graph-types.js";
 import {
   createEnvironment,
-  type Environment,
+  type AppEnvironment,
 } from "./environment/environment.js";
 
 // Re-export NotebookLM API client types for UI components
 export { type Notebook } from "./services/notebooklm-api-client.js";
-export type { Environment } from "./environment/environment.js";
+export type { AppEnvironment } from "./environment/environment.js";
 export { type EnvironmentFlags } from "./environment/environment-flags.js";
 
 export interface SCA {
-  env: Environment;
+  env: AppEnvironment;
   services: ReturnType<typeof Services.services>;
   controller: ReturnType<typeof Controller.appController>;
   actions: ReturnType<typeof Actions.actions>;

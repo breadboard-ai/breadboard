@@ -10,6 +10,7 @@ import { coordination } from "../../../../src/sca/coordination.js";
 import * as stepActions from "../../../../src/sca/actions/step/step-actions.js";
 import { ToastType } from "../../../../src/ui/events/events.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 suite("Step Actions", () => {
   beforeEach(() => {
@@ -62,6 +63,7 @@ suite("Step Actions", () => {
       stepActions.bind({
         services: {} as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingNodeEdit();
@@ -113,6 +115,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingNodeEdit();
@@ -150,6 +153,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingNodeEdit();
@@ -205,6 +209,7 @@ suite("Step Actions", () => {
           },
         } as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingAssetEdit();
@@ -249,6 +254,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingAssetEdit();
@@ -286,6 +292,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingAssetEdit();
@@ -331,6 +338,7 @@ suite("Step Actions", () => {
       stepActions.bind({
         services: {} as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingAssetEdit();
@@ -388,6 +396,7 @@ suite("Step Actions", () => {
       stepActions.bind({
         services: {} as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingAssetEdit();
@@ -451,6 +460,7 @@ suite("Step Actions", () => {
       stepActions.bind({
         services: {} as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingAssetEdit();
@@ -526,6 +536,7 @@ suite("Step Actions", () => {
           },
         } as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingAssetEdit();
@@ -599,6 +610,7 @@ suite("Step Actions", () => {
           },
         } as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingAssetEdit();
@@ -645,6 +657,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingAssetEdit();
@@ -686,6 +699,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingNodeEdit();
@@ -720,6 +734,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       // Should not throw
@@ -764,6 +779,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingEditsForNodeAction();
@@ -809,6 +825,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingEditsForNodeAction();
@@ -847,6 +864,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingEditsForNodeAction();
@@ -903,6 +921,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingEditsForNodeAction();
@@ -943,6 +962,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingEditsForNodeAction();
@@ -1008,6 +1028,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingEditsForNodeAction();
@@ -1072,6 +1093,7 @@ suite("Step Actions", () => {
             },
           },
         } as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.applyPendingEditsForNodeAction();
@@ -1109,6 +1131,7 @@ suite("Step Actions", () => {
           },
         } as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.lookupMemorySheet();
@@ -1144,6 +1167,7 @@ suite("Step Actions", () => {
           },
         } as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.lookupMemorySheet();
@@ -1184,6 +1208,7 @@ suite("Step Actions", () => {
           },
         } as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.lookupMemorySheet();
@@ -1226,6 +1251,7 @@ suite("Step Actions", () => {
           },
         } as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.lookupMemorySheet();
@@ -1269,6 +1295,7 @@ suite("Step Actions", () => {
           },
         } as never,
         controller: mockController as never,
+        env: {} as AppEnvironment,
       });
 
       await stepActions.lookupMemorySheet();

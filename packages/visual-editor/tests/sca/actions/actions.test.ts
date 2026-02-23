@@ -16,6 +16,7 @@ import { AppController } from "../../../src/sca/controller/controller.js";
 import { makeAction } from "../../../src/sca/actions/binder.js";
 import { coordination } from "../../../src/sca/coordination.js";
 import { setDOM, unsetDOM } from "../../fake-dom.js";
+import type { AppEnvironment } from "../../../src/sca/environment/environment.js";
 
 suite("Actions", () => {
   beforeEach(() => {
@@ -30,7 +31,7 @@ suite("Actions", () => {
 
   test("Instantiates without error", async () => {
     assert.doesNotThrow(() => {
-      actions({} as AppController, {} as AppServices);
+      actions({} as AppController, {} as AppServices, {} as AppEnvironment);
     });
 
     assert.throws(() => {
@@ -79,7 +80,7 @@ suite("Actions", () => {
       } as unknown as AppServices;
 
       // Initialize actions
-      actions(mockController, mockServices);
+      actions(mockController, mockServices, {} as AppEnvironment);
 
       // Activate triggers
       const dispose = activateTriggers();
@@ -131,7 +132,7 @@ suite("Actions", () => {
         runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
-      actions(mockController, mockServices);
+      actions(mockController, mockServices, {} as AppEnvironment);
 
       const dispose = activateTriggers();
 
@@ -185,7 +186,7 @@ suite("Actions", () => {
         runService: { runnerEventBus: new EventTarget() },
       } as unknown as AppServices;
 
-      actions(mockController, mockServices);
+      actions(mockController, mockServices, {} as AppEnvironment);
       activateTriggers();
 
       assert.doesNotThrow(() => {
@@ -231,14 +232,14 @@ suite("Actions", () => {
       } as unknown as AppServices;
 
       // First initialization
-      actions(mockController, mockServices);
+      actions(mockController, mockServices, {} as AppEnvironment);
       const dispose1 = activateTriggers();
       dispose1();
       cleanActions();
 
       // Re-initialization should work
       assert.doesNotThrow(() => {
-        actions(mockController, mockServices);
+        actions(mockController, mockServices, {} as AppEnvironment);
         const dispose2 = activateTriggers();
         dispose2();
       }, "Re-initialization after cleanup should work");

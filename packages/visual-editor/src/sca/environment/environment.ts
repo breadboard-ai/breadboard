@@ -18,7 +18,7 @@ import { RuntimeConfig } from "../../utils/graph-types.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 import type { BuildInfo } from "../types.js";
 
-export { createEnvironment, type Environment };
+export { createEnvironment, type AppEnvironment };
 
 /**
  * The Environment is the foundational layer of SCA — created first and
@@ -31,13 +31,13 @@ export { createEnvironment, type Environment };
  *
  * ```
  *   UI   ←→   Controllers   ←→   Actions   ←→   Services
- *                   ↕                                ↕
- *                        ╔═══════════════╗
- *                        ║  ENVIRONMENT  ║
- *                        ╚═══════════════╝
+ *                  ↕                                ↕
+ *            ╔═════════════════════════════════════════╗
+ *            ║            ENVIRONMENT                  ║
+ *            ╚═════════════════════════════════════════╝
  * ```
  */
-interface Environment {
+interface AppEnvironment {
   // ── Feature flags (reactive, overridable) ─────────────────────
   readonly flags: EnvironmentFlags;
 
@@ -70,7 +70,7 @@ interface Environment {
 function createEnvironment(
   config: RuntimeConfig,
   flags: RuntimeFlags
-): Environment {
+): AppEnvironment {
   const envFlags = new EnvironmentFlags(flags);
 
   return {

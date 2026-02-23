@@ -13,6 +13,7 @@ import { StateEvent } from "../../../../src/ui/events/events.js";
 
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import * as GraphActions from "../../../../src/sca/actions/graph/graph-actions.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 import {
   makeTestFixtures,
   makeFreshGraph as makeTestGraph,
@@ -32,8 +33,8 @@ function setupFlowgenTest(flowGeneratorMock: Partial<FlowGenerator>) {
     flowGeneratorMock,
   });
 
-  FlowgenActions.bind({ controller, services });
-  GraphActions.bind({ controller, services });
+  FlowgenActions.bind({ controller, services, env: {} as AppEnvironment });
+  GraphActions.bind({ controller, services, env: {} as AppEnvironment });
 
   return { controller, services, mocks };
 }
@@ -110,7 +111,7 @@ suite("Flowgen Actions", () => {
       withEditor: false,
     });
 
-    FlowgenActions.bind({ controller, services });
+    FlowgenActions.bind({ controller, services, env: {} as AppEnvironment });
 
     const result = await FlowgenActions.generate("test intent");
 
@@ -185,8 +186,8 @@ suite("onFlowgenGenerate", () => {
     (controller.run.renderer as unknown as Record<string, unknown>).reset ??=
       () => {};
 
-    FlowgenActions.bind({ controller, services });
-    GraphActions.bind({ controller, services });
+    FlowgenActions.bind({ controller, services, env: {} as AppEnvironment });
+    GraphActions.bind({ controller, services, env: {} as AppEnvironment });
 
     return { controller, services, mocks, runMocks };
   }

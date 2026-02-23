@@ -12,6 +12,7 @@ import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { makeTestFixtures } from "../../helpers/index.js";
 import { FakeNotebookLmApiClient } from "../../helpers/fake-notebooklm-api.js";
 import type { Notebook } from "../../../../src/sca/services/notebooklm-api-client.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -38,7 +39,11 @@ function setupNotebookLmPickerTest() {
   (services as unknown as Record<string, unknown>).notebookLmApiClient =
     fakeClient;
 
-  NotebookLmPickerActions.bind({ controller, services });
+  NotebookLmPickerActions.bind({
+    controller,
+    services,
+    env: {} as AppEnvironment,
+  });
 
   const nlm = controller.editor
     .notebookLmPicker as unknown as NotebookLmPickerController;

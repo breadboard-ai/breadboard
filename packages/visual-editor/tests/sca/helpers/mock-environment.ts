@@ -6,7 +6,7 @@
 
 import { RuntimeFlags } from "@breadboard-ai/types";
 import { EnvironmentFlags } from "../../../src/sca/environment/environment-flags.js";
-import type { Environment } from "../../../src/sca/environment/environment.js";
+import type { AppEnvironment } from "../../../src/sca/environment/environment.js";
 
 export { createMockEnvironment };
 
@@ -17,7 +17,7 @@ let mockEnvId = 0;
  * (an actual `EnvironmentFlags` instance); everything else is stubbed
  * to satisfy the type without requiring DOM or network dependencies.
  */
-function createMockEnvironment(flags: RuntimeFlags): Environment {
+function createMockEnvironment(flags: RuntimeFlags): AppEnvironment {
   mockEnvId++;
   const envFlags = new EnvironmentFlags(
     flags,
@@ -35,9 +35,9 @@ function createMockEnvironment(flags: RuntimeFlags): Environment {
       publishPermissions: [],
     },
     domains: undefined,
-    deploymentConfig: {} as Environment["deploymentConfig"],
-    shellHost: {} as Environment["shellHost"],
-    guestConfig: {} as Environment["guestConfig"],
+    deploymentConfig: {} as AppEnvironment["deploymentConfig"],
+    shellHost: {} as AppEnvironment["shellHost"],
+    guestConfig: {} as AppEnvironment["guestConfig"],
     get isHydrated() {
       return envFlags.isHydrated;
     },
