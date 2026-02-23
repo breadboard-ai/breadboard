@@ -48,8 +48,8 @@ class FastAccessController extends RootController {
    *
    * @param rawItems - unfiltered items from GraphController.getFastAccessItems
    * @param agentModeTools - agent-mode tools from GraphController
-   * @param opts.environmentName - from GlobalConfig context (legacy)
-   * @param opts.enableNotebookLm - from FlagController
+   * @param opts.environmentName - from AppEnvironment
+   * @param opts.enableNotebookLm - from env.flags
    * @param opts.integrationsController - IntegrationsController for integration tools
    */
   getDisplayItems(

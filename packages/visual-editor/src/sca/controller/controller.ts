@@ -254,6 +254,11 @@ export interface AppController extends DebuggableAppController {
   };
   global: {
     main: Global.GlobalController;
+    /**
+     * Migration-only persistence shell. Do NOT use for runtime flag access:
+     * use `env.flags` instead. Will be removed once all users have migrated.
+     * @internal
+     */
     flags: Global.FlagController;
     debug: Global.DebugController;
     feedback: Global.FeedbackController;
