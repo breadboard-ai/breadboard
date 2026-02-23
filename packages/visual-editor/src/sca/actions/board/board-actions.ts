@@ -679,9 +679,9 @@ export const onLoad = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"board.load">): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as StateEvent<"board.load">).detail;
+    const detail = evt!.detail;
 
     if (Utils.Helpers.isHydrating(() => controller.global.main.mode)) {
       await controller.global.main.isHydrated;
@@ -717,9 +717,9 @@ export const onRename = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"board.rename">): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as StateEvent<"board.rename">).detail;
+    const detail = evt!.detail;
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
@@ -757,9 +757,9 @@ export const onTogglePin = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"board.togglepin">): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as StateEvent<"board.togglepin">).detail;
+    const detail = evt!.detail;
     controller.home.recent.setPin(detail.url, detail.status === "pin");
   }
 );
@@ -840,9 +840,9 @@ export const onReplace = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"board.replace">): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as StateEvent<"board.replace">).detail;
+    const detail = evt!.detail;
 
     controller.editor.graph.pendingGraphReplacement = {
       replacement: detail.replacement,
@@ -1028,13 +1028,13 @@ export const onInput = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onBoardInput(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"board.input">): Promise<void> => {
     const { controller } = bind;
     if (!controller.editor.graph.graph) {
       return;
     }
 
-    const detail = (evt as StateEvent<"board.input">).detail;
+    const detail = evt!.detail;
     provideInput(detail.data as InputValues, controller.run);
   }
 );
@@ -1053,9 +1053,9 @@ export const onCreate = asAction(
     mode: ActionMode.Exclusive,
     triggeredBy: () => onBoardCreate(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"board.create">): Promise<void> => {
     const { controller, services } = bind;
-    const detail = (evt as StateEvent<"board.create">).detail;
+    const detail = evt!.detail;
 
     if ((await services.askUserToSignInIfNeeded()) !== "success") {
       controller.global.snackbars.unsnackbar();
@@ -1086,9 +1086,9 @@ export const onRemix = asAction(
     mode: ActionMode.Exclusive,
     triggeredBy: () => onBoardRemix(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"board.remix">): Promise<void> => {
     const { controller, services } = bind;
-    const detail = (evt as StateEvent<"board.remix">).detail;
+    const detail = evt!.detail;
 
     await withUIBlocking(controller, async () => {
       // Call the plain function directly — not the coordinated `remix`
@@ -1118,9 +1118,9 @@ export const onDelete = asAction(
     mode: ActionMode.Exclusive,
     triggeredBy: () => onBoardDelete(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"board.delete">): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as StateEvent<"board.delete">).detail;
+    const detail = evt!.detail;
 
     if (!confirm(detail.messages.query)) {
       return;

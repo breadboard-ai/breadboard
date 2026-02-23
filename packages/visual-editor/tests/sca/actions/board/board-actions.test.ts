@@ -900,7 +900,7 @@ suite("Board Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.load">({
         eventType: "board.load",
         url: "drive:/my-board",
         shared: false,
@@ -945,7 +945,7 @@ suite("Board Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.rename">({
         eventType: "board.rename",
         title: "New Title",
         description: "New Description",
@@ -978,7 +978,7 @@ suite("Board Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.rename">({
         eventType: "board.rename",
         title: "New Title",
         description: null,
@@ -1010,7 +1010,7 @@ suite("Board Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.togglepin">({
         eventType: "board.togglepin",
         url: "drive:/my-board",
         status: "pin",
@@ -1046,7 +1046,7 @@ suite("Board Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.togglepin">({
         eventType: "board.togglepin",
         url: "drive:/my-board",
         status: "unpin",
@@ -1232,7 +1232,7 @@ suite("Board Actions", () => {
       const replacement = { nodes: [], edges: [] };
       const theme = {} as GraphTheme;
       const creator = {} as EditHistoryCreator;
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.replace">({
         eventType: "board.replace",
         replacement,
         theme,

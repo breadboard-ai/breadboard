@@ -218,7 +218,7 @@ suite("onFlowgenGenerate", () => {
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
-    const evt = new StateEvent({
+    const evt = new StateEvent<"flowgen.generate">({
       eventType: "flowgen.generate",
       intent: "test intent",
     });
@@ -237,7 +237,7 @@ suite("onFlowgenGenerate", () => {
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
-    const evt = new StateEvent({
+    const evt = new StateEvent<"flowgen.generate">({
       eventType: "flowgen.generate",
       intent: "test intent",
     });
@@ -258,7 +258,7 @@ suite("onFlowgenGenerate", () => {
     // Set a URL for tracking
     controller.editor.graph.url = "test://board.json";
 
-    const evt = new StateEvent({
+    const evt = new StateEvent<"flowgen.generate">({
       eventType: "flowgen.generate",
       intent: "test intent",
     });
@@ -281,7 +281,7 @@ suite("onFlowgenGenerate", () => {
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
-    const evt = new StateEvent({
+    const evt = new StateEvent<"flowgen.generate">({
       eventType: "flowgen.generate",
       intent: "test intent",
     });
@@ -306,7 +306,7 @@ suite("onFlowgenGenerate", () => {
 
     controller.editor.graph.url = null;
 
-    const evt = new StateEvent({
+    const evt = new StateEvent<"flowgen.generate">({
       eventType: "flowgen.generate",
       intent: "test intent",
     });

@@ -602,7 +602,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.input">({
         eventType: "board.input",
         data: { input: "hello" },
         id: "input-1",
@@ -625,7 +625,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.input">({
         eventType: "board.input",
         data: { input: "hello" },
         id: "input-1",
@@ -652,7 +652,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.create">({
         eventType: "board.create",
         graph: { nodes: [], edges: [] },
         editHistoryCreator: { role: "user" },
@@ -679,7 +679,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.create">({
         eventType: "board.create",
         graph: testGraph,
         editHistoryCreator: { role: "user" },
@@ -707,7 +707,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.create">({
         eventType: "board.create",
         graph: makeFreshGraph(),
         editHistoryCreator: { role: "user" },
@@ -759,7 +759,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.remix">({
         eventType: "board.remix",
         url: "https://example.com/board.json",
         messages: { start: "Remixing...", end: "Done!", error: "Fail" },
@@ -795,7 +795,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.remix">({
         eventType: "board.remix",
         url: "https://example.com/board.json",
         messages: { start: "", end: "", error: "" },
@@ -854,7 +854,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.remix">({
         eventType: "board.remix",
         url: "https://example.com/nonexistent.json",
         messages: { start: "", end: "", error: "" },
@@ -893,7 +893,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.delete">({
         eventType: "board.delete",
         url: "https://example.com/board.json",
         messages: {
@@ -933,7 +933,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.delete">({
         eventType: "board.delete",
         url: "https://example.com/board.json",
         messages: {
@@ -975,7 +975,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.delete">({
         eventType: "board.delete",
         url: "https://example.com/board.json",
         messages: {
@@ -1014,7 +1014,7 @@ suite("Board Route Actions", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"board.delete">({
         eventType: "board.delete",
         url: "https://example.com/board.json",
         messages: {

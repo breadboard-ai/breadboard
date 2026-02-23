@@ -7,110 +7,148 @@
 /**
  * The Unseen Cast
  *
- * Detects unsafe event casts in SCA action files where an `Event` parameter
- * is unsafely cast to `StateEvent<T>` or `CustomEvent` to extract `.detail`.
+ * Detects and rewrites unsafe event casts in SCA action files where an `Event`
+ * parameter is unsafely cast to `StateEvent<T>` or `CustomEvent` to extract
+ * `.detail`.
  *
  * These casts have zero runtime safety — if the trigger wiring is wrong, you
- * get a silent `undefined` detail. This transform identifies all such sites
- * for review and optionally rewrites them.
+ * get a silent `undefined` detail. This transform:
  *
- * Patterns detected:
+ * 1. Narrows the parameter type from `Event` to the specific event type
+ * 2. Replaces the cast expression with a direct property access
  *
- *   const detail = (evt as StateEvent<"node.change">).detail;
- *   const detail = (evt as CustomEvent)?.detail;
- *   const { intent } = (evt as StateEvent<"flowgen.generate">).detail;
+ * Before:
+ *   async (evt?: Event): Promise<void> => {
+ *     const detail = (evt as StateEvent<"node.change">).detail;
+ *
+ * After:
+ *   async (evt?: StateEvent<"node.change">): Promise<void> => {
+ *     const detail = evt!.detail;
  *
  * Daily Dig #2 — Feb 23, 2026
  */
 
-import { type SourceFile, SyntaxKind } from "ts-morph";
+import {
+  type SourceFile,
+  type ArrowFunction,
+  SyntaxKind,
+  type AsExpression,
+} from "ts-morph";
 
 export const description =
-  "The Unseen Cast — find unsafe (evt as StateEvent/CustomEvent) casts in action files";
+  "The Unseen Cast — rewrite unsafe (evt as StateEvent/CustomEvent) casts";
 
 export const include = [
   "packages/visual-editor/src/sca/actions/**/*-actions.ts",
 ];
 
 interface CastSite {
-  file: string;
-  line: number;
-  text: string;
-  castTarget: string;
+  asExpr: AsExpression;
+  castType: string; // full type text, e.g. StateEvent<"node.change">
+  isOptionalChain: boolean; // true if ?.detail (CustomEvent pattern)
 }
 
 /**
- * Scans a source file for unsafe event casts.
- * In dry-run mode (default), reports findings without modifying anything.
+ * Rewrites unsafe event casts in action callbacks.
  *
- * Returns true if any cast sites were found.
+ * For each arrow function with `evt?: Event` that contains a
+ * StateEvent or CustomEvent cast:
+ *   1. Change parameter type: `evt?: Event` → `evt?: StateEvent<"...">`
+ *   2. Replace cast: `(evt as StateEvent<"...">).detail` → `evt!.detail`
+ *      or: `(evt as CustomEvent)?.detail` → `evt?.detail`
  */
 export function transform(file: SourceFile): boolean {
-  const sites: CastSite[] = [];
   const filePath = file.getFilePath();
-
-  // Find all `as` expressions (TypeScript type assertions using `as`)
   const asExpressions = file.getDescendantsOfKind(SyntaxKind.AsExpression);
+
+  // Collect cast sites grouped by their containing arrow function.
+  const arrowMap = new Map<ArrowFunction, CastSite[]>();
 
   for (const asExpr of asExpressions) {
     const typeNode = asExpr.getTypeNode();
     if (!typeNode) continue;
 
     const typeText = typeNode.getText();
-
-    // Match: (evt as StateEvent<"...">) or (evt as CustomEvent)
     const isStateEvent = typeText.startsWith("StateEvent<");
     const isCustomEvent = typeText === "CustomEvent";
-
     if (!isStateEvent && !isCustomEvent) continue;
 
-    // Verify this is inside an asAction callback by walking up to find one
-    const containingArrow = asExpr.getFirstAncestorByKind(
-      SyntaxKind.ArrowFunction
-    );
-    if (!containingArrow) continue;
+    // Must be inside an arrow function with an `evt` parameter.
+    const arrow = asExpr.getFirstAncestorByKind(SyntaxKind.ArrowFunction);
+    if (!arrow) continue;
 
-    // Check the arrow has an (evt?: Event) style parameter
-    const params = containingArrow.getParameters();
-    const hasEventParam = params.some((p) => {
-      const paramType = p.getType().getText();
-      return (
-        paramType.includes("Event") &&
-        (p.getName() === "evt" ||
-          p.getName() === "event" ||
-          p.getName() === "e")
-      );
+    const evtParam = arrow.getParameters().find((p) => {
+      const name = p.getName();
+      return name === "evt" || name === "event" || name === "e";
     });
+    if (!evtParam) continue;
 
-    if (!hasEventParam) continue;
+    // Check current param type includes Event.
+    const paramType = evtParam.getType().getText();
+    if (!paramType.includes("Event")) continue;
 
-    const line = asExpr.getStartLineNumber();
-    const statement = asExpr.getFirstAncestorByKind(
-      SyntaxKind.VariableStatement
-    );
-    const text = statement
-      ? statement.getText().trim()
-      : (asExpr.getParent()?.getText().trim() ?? asExpr.getText().trim());
+    // Detect optional chaining: (evt as CustomEvent)?.detail
+    const paren = asExpr.getParentIfKind(SyntaxKind.ParenthesizedExpression);
+    const grandparent = paren?.getParent();
+    const isOptionalChain =
+      grandparent?.getKind() === SyntaxKind.PropertyAccessExpression &&
+      grandparent.getText().includes("?.");
 
-    sites.push({
-      file: filePath,
-      line,
-      text: text.length > 100 ? text.slice(0, 100) + "…" : text,
-      castTarget: typeText,
-    });
-  }
-
-  if (sites.length > 0) {
-    const shortPath = filePath.replace(/.*packages\//, "packages/");
-    console.log(`   📍 ${shortPath} — ${sites.length} cast(s):`);
-    for (const site of sites) {
-      console.log(`      L${site.line}: ${site.castTarget}`);
-      console.log(`        ${site.text}`);
+    if (!arrowMap.has(arrow)) {
+      arrowMap.set(arrow, []);
     }
-    console.log();
+    arrowMap.get(arrow)!.push({ asExpr, castType: typeText, isOptionalChain });
   }
 
-  // This is a detection-only spike — no rewrites yet.
-  // Return false so the runner doesn't count files as "modified".
-  return false;
+  if (arrowMap.size === 0) return false;
+
+  const shortPath = filePath.replace(/.*packages\//, "packages/");
+
+  // Process each arrow function (bottom-up to preserve positions).
+  const arrows = [...arrowMap.entries()].reverse();
+
+  for (const [arrow, sites] of arrows) {
+    if (!arrow) continue;
+
+    const evtParam = arrow.getParameters().find((p) => {
+      const name = p.getName();
+      return name === "evt" || name === "event" || name === "e";
+    })!;
+
+    const paramName = evtParam.getName();
+
+    // Use the first cast's type for the parameter annotation.
+    const newParamType = sites[0].castType;
+
+    // 1. Rewrite each cast expression (bottom-up within the arrow).
+    const reversedSites = [...sites].reverse();
+    for (const { asExpr, isOptionalChain } of reversedSites) {
+      const paren = asExpr.getParentIfKind(SyntaxKind.ParenthesizedExpression);
+      if (!paren) continue;
+
+      // Capture line number before replacement invalidates the node.
+      const line = paren.getStartLineNumber();
+
+      // Replace `(evt as StateEvent<"...">)` or `(evt as CustomEvent)` with
+      // `evt!` (for non-optional) or `evt` (for optional chain ?.detail).
+      //
+      // When the original uses optional chaining `?.detail`, we replace with
+      // just `evt` because the `?.` is on the property access, not the paren.
+      // The parent PropertyAccessExpression already has `?.`.
+      if (isOptionalChain) {
+        paren.replaceWithText(paramName);
+      } else {
+        paren.replaceWithText(`${paramName}!`);
+      }
+
+      console.log(
+        `   ✏️  ${shortPath}:${line} — ${newParamType} → typed parameter`
+      );
+    }
+
+    // 2. Update the parameter type annotation.
+    evtParam.setType(newParamType);
+  }
+
+  return true;
 }

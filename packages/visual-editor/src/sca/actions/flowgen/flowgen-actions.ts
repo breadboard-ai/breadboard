@@ -221,9 +221,9 @@ export const onFlowgenGenerate = asAction(
     mode: ActionMode.Exclusive,
     triggeredBy: () => onFlowgenGenerateTrigger(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"flowgen.generate">): Promise<void> => {
     const { controller, services } = bind;
-    const { intent } = (evt as StateEvent<"flowgen.generate">).detail;
+    const { intent } = evt!.detail;
 
     const url = controller.editor.graph.url;
 

@@ -45,9 +45,9 @@ export const modeToggle = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onModeToggle(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"host.modetoggle">): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as StateEvent<"host.modetoggle">).detail;
+    const detail = evt!.detail;
     const current = parseUrl(window.location.href);
     if (current.page === "graph") {
       const newMode = detail.mode;
@@ -103,9 +103,9 @@ export const flagChange = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onFlagChange(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"host.flagchange">): Promise<void> => {
     const { env } = bind;
-    const detail = (evt as StateEvent<"host.flagchange">).detail;
+    const detail = evt!.detail;
     if (typeof detail.value !== "undefined") {
       await env.flags.override(detail.flag, detail.value);
     } else {

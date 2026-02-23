@@ -270,14 +270,14 @@ export const onNodeChange = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"node.change">): Promise<void> => {
     const { controller } = bind;
     if (controller.editor.graph.readOnly) return;
 
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
-    const detail = (evt as StateEvent<"node.change">).detail;
+    const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
       const transform = new UpdateNode(
         detail.id,
@@ -315,12 +315,12 @@ export const onNodeAdd = asAction(
       return stateEventTrigger("Node Add", services.stateEventBus, "node.add");
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"node.add">): Promise<void> => {
     const { controller } = bind;
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
-    const detail = (evt as StateEvent<"node.add">).detail;
+    const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
       await editor.edit(
         [{ type: "addnode", graphId: detail.graphId, node: detail.node }],
@@ -349,12 +349,12 @@ export const onMoveSelection = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"node.moveselection">): Promise<void> => {
     const { controller } = bind;
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
-    const detail = (evt as StateEvent<"node.moveselection">).detail;
+    const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
       const edits: EditSpec[] = [];
       for (const update of detail.updates) {
@@ -412,12 +412,12 @@ export const onChangeEdge = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"node.changeedge">): Promise<void> => {
     const { controller } = bind;
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
-    const detail = (evt as StateEvent<"node.changeedge">).detail;
+    const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
       const graphId = detail.subGraphId ?? "";
       const transform = new ChangeEdge(
@@ -452,12 +452,12 @@ export const onChangeEdgeAttachmentPoint = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"node.changeedgeattachmentpoint">): Promise<void> => {
     const { controller } = bind;
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
-    const detail = (evt as StateEvent<"node.changeedgeattachmentpoint">).detail;
+    const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
       const transform = new ChangeEdgeAttachmentPoint(
         detail.graphId === MAIN_BOARD_ID ? "" : detail.graphId,
@@ -854,8 +854,8 @@ export const onNodeAction = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onNodeActionTrigger(bind),
   },
-  async (evt?: Event): Promise<void> => {
-    const detail = (evt as StateEvent<"node.action">).detail;
+  async (evt?: StateEvent<"node.action">): Promise<void> => {
+    const detail = evt!.detail;
     const { nodeId, actionContext } = detail;
     if (!actionContext) return;
 

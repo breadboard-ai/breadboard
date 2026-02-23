@@ -1145,7 +1145,7 @@ suite("Asset Actions — Event-Triggered", () => {
 
       bindAssetForEvent(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"asset.changeedge">({
         eventType: "asset.changeedge",
         changeType: "add" as const,
         assetEdge: {
@@ -1163,7 +1163,7 @@ suite("Asset Actions — Event-Triggered", () => {
     test("returns early when no editor", async () => {
       bindAssetForEvent(null);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"asset.changeedge">({
         eventType: "asset.changeedge",
         changeType: "remove" as const,
         assetEdge: {
@@ -1191,7 +1191,7 @@ suite("Asset Actions — Event-Triggered", () => {
 
       bindAssetForEvent(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"asset.add">({
         eventType: "asset.add",
         assets: [
           {
@@ -1210,7 +1210,7 @@ suite("Asset Actions — Event-Triggered", () => {
     test("returns early when no editor", async () => {
       bindAssetForEvent(null);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"asset.add">({
         eventType: "asset.add",
         assets: [
           {
@@ -1236,7 +1236,7 @@ suite("Asset Actions — Event-Triggered", () => {
 
       bindAssetForEvent(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"asset.add">({
         eventType: "asset.add",
         assets: [
           {
@@ -1275,7 +1275,7 @@ suite("Asset Actions — Event-Triggered", () => {
 
       bindAssetForEvent(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"asset.add">({
         eventType: "asset.add",
         assets: [
           {
@@ -1338,7 +1338,7 @@ suite("Asset Actions — Event-Triggered", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"asset.add">({
         eventType: "asset.add",
         assets: [
           {
@@ -1410,7 +1410,7 @@ suite("Asset Actions — Event-Triggered", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"asset.add">({
         eventType: "asset.add",
         assets: [
           {

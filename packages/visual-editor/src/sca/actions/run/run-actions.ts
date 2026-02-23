@@ -303,7 +303,7 @@ export const onError = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onRunnerError(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: CustomEvent): Promise<void> => {
     const { controller } = bind;
 
     // Status + ticker cleanup
@@ -314,7 +314,7 @@ export const onError = asAction(
     }
 
     // Extract error message from the event detail
-    const detail = (evt as CustomEvent)?.detail;
+    const detail = evt?.detail;
     const error = detail?.error;
     const message =
       typeof error === "string"
@@ -341,9 +341,9 @@ export const onGraphStartAction = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onRunnerGraphStart(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: CustomEvent): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as CustomEvent)?.detail;
+    const detail = evt?.detail;
     const path = detail?.path;
 
     // Only reset for top-level graph
@@ -411,9 +411,9 @@ export const onNodeStartAction = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onRunnerNodeStart(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: CustomEvent): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as CustomEvent)?.detail;
+    const detail = evt?.detail;
 
     // Only handle top-level nodes
     if (!detail || detail.path.length > 1) return;
@@ -452,9 +452,9 @@ export const onNodeEndAction = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onRunnerNodeEnd(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: CustomEvent): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as CustomEvent)?.detail;
+    const detail = evt?.detail;
 
     // Only handle top-level nodes
     if (!detail || detail.path.length > 1) return;
@@ -520,9 +520,9 @@ export const onNodeStateChangeAction = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onRunnerNodeStateChange(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: CustomEvent): Promise<void> => {
     const { controller, services } = bind;
-    const detail = (evt as CustomEvent)?.detail;
+    const detail = evt?.detail;
     if (!detail) return;
 
     const { id, state, message } = detail;
@@ -549,9 +549,9 @@ export const onEdgeStateChangeAction = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onRunnerEdgeStateChange(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: CustomEvent): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as CustomEvent)?.detail;
+    const detail = evt?.detail;
     if (!detail) return;
 
     const { edges, state } = detail;
@@ -573,9 +573,9 @@ export const onOutputAction = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onRunnerOutput(bind),
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: CustomEvent): Promise<void> => {
     const { controller } = bind;
-    const detail = (evt as CustomEvent)?.detail as OutputResponse | undefined;
+    const detail = evt?.detail as OutputResponse | undefined;
     if (!detail || !detail.bubbled) return;
 
     const nodeId = detail.node.id;

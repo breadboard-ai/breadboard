@@ -85,7 +85,7 @@ suite("Host Actions — Event-Triggered", () => {
 
       try {
         bindHost();
-        const evt = new StateEvent({
+        const evt = new StateEvent<"host.modetoggle">({
           eventType: "host.modetoggle",
           mode: "app" as const,
         });
@@ -114,7 +114,7 @@ suite("Host Actions — Event-Triggered", () => {
       window.history.replaceState({}, "", "/?flow=drive:/my-board&mode=canvas");
       try {
         bindHost();
-        const evt = new StateEvent({
+        const evt = new StateEvent<"host.modetoggle">({
           eventType: "host.modetoggle",
           mode: "canvas" as const,
         });
@@ -172,7 +172,7 @@ suite("Host Actions — Event-Triggered", () => {
         },
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"host.flagchange">({
         eventType: "host.flagchange",
         flag: "mcp" as const,
         value: true,
@@ -205,7 +205,7 @@ suite("Host Actions — Event-Triggered", () => {
         },
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"host.flagchange">({
         eventType: "host.flagchange",
         flag: "mcp" as const,
         value: undefined,

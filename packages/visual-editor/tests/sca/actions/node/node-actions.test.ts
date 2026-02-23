@@ -692,7 +692,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.change">({
         eventType: "node.change",
         id: "node-1",
         configurationPart: { prompt: "hello" },
@@ -715,7 +715,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor, { readOnly: true });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.change">({
         eventType: "node.change",
         id: "node-1",
         configurationPart: { prompt: "hello" },
@@ -731,7 +731,7 @@ suite("Node Actions — Event-Triggered", () => {
     test("returns early when no editor", async () => {
       bindNode(null);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.change">({
         eventType: "node.change",
         id: "node-1",
         configurationPart: {},
@@ -759,7 +759,7 @@ suite("Node Actions — Event-Triggered", () => {
         },
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.add">({
         eventType: "node.add",
         node: { id: "new-node", type: "someType" },
         graphId: "",
@@ -774,7 +774,7 @@ suite("Node Actions — Event-Triggered", () => {
     test("returns early when no editor", async () => {
       bindNode(null);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.add">({
         eventType: "node.add",
         node: { id: "new-node", type: "someType" },
         graphId: "",
@@ -793,7 +793,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.add">({
         eventType: "node.add",
         node: {
           id: "titled-node",
@@ -820,7 +820,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.add">({
         eventType: "node.add",
         node: { id: "untitled-node", type: "someType" },
         graphId: "",
@@ -843,7 +843,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.moveselection">({
         eventType: "node.moveselection",
         updates: [{ type: "node", id: "node-1", graphId: "", x: 100, y: 200 }],
       });
@@ -874,7 +874,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.moveselection">({
         eventType: "node.moveselection",
         updates: [{ type: "asset", id: "asset-1", graphId: "", x: 50, y: 75 }],
       });
@@ -905,7 +905,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.moveselection">({
         eventType: "node.moveselection",
         updates: [
           { type: "asset", id: "no-meta-asset", graphId: "", x: 50, y: 75 },
@@ -933,7 +933,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.changeedge">({
         eventType: "node.changeedge",
         changeType: "add",
         from: { from: "a", out: "out", to: "b", in: "in" },
@@ -983,7 +983,7 @@ suite("Node Actions — Event-Triggered", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.changeedge">({
         eventType: "node.changeedge",
         changeType: "add",
         from: { from: "a", out: "out", to: "b", in: "in" },
@@ -1002,7 +1002,7 @@ suite("Node Actions — Event-Triggered", () => {
     test("returns early when no editor", async () => {
       bindNode(null);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.changeedge">({
         eventType: "node.changeedge",
         changeType: "add",
         from: { from: "a", out: "out", to: "b", in: "in" },
@@ -1025,7 +1025,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.changeedgeattachmentpoint">({
         eventType: "node.changeedgeattachmentpoint",
         graphId: "",
         edge: { from: "a", out: "out", to: "b", in: "in" },
@@ -1047,7 +1047,7 @@ suite("Node Actions — Event-Triggered", () => {
 
       bindNode(mockEditor);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.changeedgeattachmentpoint">({
         eventType: "node.changeedgeattachmentpoint",
         graphId: "Main board",
         edge: { from: "a", out: "out", to: "b", in: "in" },
@@ -1096,7 +1096,7 @@ suite("Node Actions — Event-Triggered", () => {
         env: createMockEnvironment(defaultRuntimeFlags),
       });
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.changeedgeattachmentpoint">({
         eventType: "node.changeedgeattachmentpoint",
         graphId: "",
         edge: { from: "a", out: "out", to: "b", in: "in" },
@@ -1115,7 +1115,7 @@ suite("Node Actions — Event-Triggered", () => {
     test("returns early when no editor", async () => {
       bindNode(null);
 
-      const evt = new StateEvent({
+      const evt = new StateEvent<"node.changeedgeattachmentpoint">({
         eventType: "node.changeedgeattachmentpoint",
         graphId: "",
         edge: { from: "a", out: "out", to: "b", in: "in" },
@@ -2076,7 +2076,7 @@ suite("onNodeAction", () => {
   test("maps console to step", async () => {
     const { setNodeActionRequestFn } = bindNodeAction();
 
-    const evt = new StateEvent({
+    const evt = new StateEvent<"node.action">({
       eventType: "node.action",
       nodeId: "node-1",
       subGraphId: null,
@@ -2094,7 +2094,7 @@ suite("onNodeAction", () => {
   test("passes graph context unchanged", async () => {
     const { setNodeActionRequestFn } = bindNodeAction();
 
-    const evt = new StateEvent({
+    const evt = new StateEvent<"node.action">({
       eventType: "node.action",
       nodeId: "node-2",
       subGraphId: null,
@@ -2112,7 +2112,7 @@ suite("onNodeAction", () => {
   test("returns early when actionContext is null", async () => {
     const { setNodeActionRequestFn } = bindNodeAction();
 
-    const evt = new StateEvent({
+    const evt = new StateEvent<"node.action">({
       eventType: "node.action",
       nodeId: "node-3",
       subGraphId: null,

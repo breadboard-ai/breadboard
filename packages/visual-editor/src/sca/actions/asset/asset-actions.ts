@@ -243,12 +243,12 @@ export const onChangeAssetEdge = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"asset.changeedge">): Promise<void> => {
     const { controller } = bind;
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
-    const detail = (evt as StateEvent<"asset.changeedge">).detail;
+    const detail = evt!.detail;
     await withUIBlocking(controller, async () => {
       const graphId = detail.subGraphId ?? "";
       const transform = new ChangeAssetEdge(
@@ -282,12 +282,12 @@ export const onAddAssets = asAction(
       );
     },
   },
-  async (evt?: Event): Promise<void> => {
+  async (evt?: StateEvent<"asset.add">): Promise<void> => {
     const { controller, services } = bind;
     const { editor } = controller.editor.graph;
     if (!editor) return;
 
-    const detail = (evt as StateEvent<"asset.add">).detail;
+    const detail = evt!.detail;
 
     let snackbarId: SnackbarUUID | undefined;
     const longRunningTaskTimeout = window.setTimeout(() => {
