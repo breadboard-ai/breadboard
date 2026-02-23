@@ -18,6 +18,8 @@ import {
   generateBoardFrom,
   generateDeleteEditSpecFrom,
   generateAddEditSpecFromURL,
+  generateAddEditSpecFromDescriptor,
+  applyDefaultThemeInformationIfNonePresent,
   nodeIdsFromSpec,
   MAIN_BOARD_ID,
 } from "../../src/utils/graph-utils.js";
@@ -43,6 +45,12 @@ function makeMockGraph(raw: GraphDescriptor): InspectableGraph {
     to: { descriptor: { id: e.to } },
   }));
 
+  const subGraphs = raw.graphs
+    ? Object.fromEntries(
+        Object.entries(raw.graphs).map(([id, sub]) => [id, makeMockGraph(sub)])
+      )
+    : null;
+
   return {
     raw: () => raw,
     graphId: () => "",
@@ -56,7 +64,7 @@ function makeMockGraph(raw: GraphDescriptor): InspectableGraph {
       };
     },
     metadata: () => raw.metadata ?? null,
-    graphs: () => null,
+    graphs: () => subGraphs,
   } as unknown as InspectableGraph;
 }
 
@@ -577,5 +585,562 @@ describe("graph-utils — generateDeleteEditSpecFrom", () => {
     const edits = generateDeleteEditSpecFrom(sel, graph);
     const removeEdges = edits.filter((e) => e.type === "removeedge");
     assert.equal(removeEdges.length, 0);
+  });
+
+  it("generates changeconfiguration for selected references (array port)", () => {
+    const raw: GraphDescriptor = {
+      nodes: [
+        {
+          id: "n1",
+          type: "foo",
+          configuration: {
+            context: ["item0", "item1", "item2"],
+          },
+        },
+      ],
+      edges: [],
+    };
+    const graph = makeMockGraph(raw);
+    const sel = makeSelection(MAIN_BOARD_ID, {
+      references: new Set(["n1|context|1"]),
+    });
+    const edits = generateDeleteEditSpecFrom(sel, graph);
+    const configEdits = edits.filter((e) => e.type === "changeconfiguration");
+    assert.equal(configEdits.length, 1);
+    const cfg = (
+      configEdits[0] as unknown as { configuration: { context: string[] } }
+    ).configuration;
+    // Index 1 ("item1") should be filtered out
+    assert.deepEqual(cfg.context, ["item0", "item2"]);
+  });
+
+  it("generates changeconfiguration for references (non-array port deletes the port)", () => {
+    const raw: GraphDescriptor = {
+      nodes: [
+        {
+          id: "n1",
+          type: "foo",
+          configuration: {
+            singleValue: "something",
+          },
+        },
+      ],
+      edges: [],
+    };
+    const graph = makeMockGraph(raw);
+    const sel = makeSelection(MAIN_BOARD_ID, {
+      references: new Set(["n1|singleValue|0"]),
+    });
+    const edits = generateDeleteEditSpecFrom(sel, graph);
+    const configEdits = edits.filter((e) => e.type === "changeconfiguration");
+    assert.equal(configEdits.length, 1);
+    const cfg = (configEdits[0] as { configuration: Record<string, unknown> })
+      .configuration;
+    assert.equal(cfg.singleValue, undefined);
+  });
+
+  it("skips references with invalid format (missing parts)", () => {
+    const raw: GraphDescriptor = {
+      nodes: [{ id: "n1", type: "foo", configuration: { p: "v" } }],
+      edges: [],
+    };
+    const graph = makeMockGraph(raw);
+    const sel = makeSelection(MAIN_BOARD_ID, {
+      references: new Set(["malformed"]) as never,
+    });
+    const edits = generateDeleteEditSpecFrom(sel, graph);
+    const configEdits = edits.filter((e) => e.type === "changeconfiguration");
+    assert.equal(configEdits.length, 0);
+  });
+
+  it("skips references with non-numeric index", () => {
+    const raw: GraphDescriptor = {
+      nodes: [{ id: "n1", type: "foo", configuration: { p: "v" } }],
+      edges: [],
+    };
+    const graph = makeMockGraph(raw);
+    const sel = makeSelection(MAIN_BOARD_ID, {
+      references: new Set(["n1|p|abc"]) as never,
+    });
+    const edits = generateDeleteEditSpecFrom(sel, graph);
+    const configEdits = edits.filter((e) => e.type === "changeconfiguration");
+    assert.equal(configEdits.length, 0);
+  });
+
+  it("skips references when node has no configuration", () => {
+    const raw: GraphDescriptor = {
+      nodes: [{ id: "n1", type: "foo" }],
+      edges: [],
+    };
+    const graph = makeMockGraph(raw);
+    const sel = makeSelection(MAIN_BOARD_ID, {
+      references: new Set(["n1|p|0"]),
+    });
+    const edits = generateDeleteEditSpecFrom(sel, graph);
+    const configEdits = edits.filter((e) => e.type === "changeconfiguration");
+    assert.equal(configEdits.length, 0);
+  });
+
+  it("skips references when port does not exist in configuration", () => {
+    const raw: GraphDescriptor = {
+      nodes: [{ id: "n1", type: "foo", configuration: { other: "something" } }],
+      edges: [],
+    };
+    const graph = makeMockGraph(raw);
+    const sel = makeSelection(MAIN_BOARD_ID, {
+      references: new Set(["n1|missing|0"]),
+    });
+    const edits = generateDeleteEditSpecFrom(sel, graph);
+    const configEdits = edits.filter((e) => e.type === "changeconfiguration");
+    assert.equal(configEdits.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateAddEditSpecFromDescriptor
+// ---------------------------------------------------------------------------
+
+describe("graph-utils — generateAddEditSpecFromDescriptor", () => {
+  it("generates addnode specs for each node in the source", () => {
+    const source: GraphDescriptor = {
+      nodes: [
+        { id: "n1", type: "foo", metadata: { visual: { x: 0, y: 0 } } },
+        { id: "n2", type: "bar", metadata: { visual: { x: 100, y: 50 } } },
+      ],
+      edges: [],
+    };
+    const graph = makeMockGraph({ nodes: [], edges: [] });
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 0, y: 0 },
+      [""]
+    );
+    const addNodes = specs.filter((s) => s.type === "addnode");
+    assert.equal(addNodes.length, 2);
+  });
+
+  it("generates addedge specs for edges in the source", () => {
+    const source: GraphDescriptor = {
+      nodes: [
+        { id: "n1", type: "foo", metadata: { visual: { x: 0, y: 0 } } },
+        { id: "n2", type: "bar", metadata: { visual: { x: 100, y: 0 } } },
+      ],
+      edges: [{ from: "n1", out: "x", to: "n2", in: "y" }],
+    };
+    const graph = makeMockGraph({ nodes: [], edges: [] });
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 0, y: 0 },
+      [""]
+    );
+    const addEdges = specs.filter((s) => s.type === "addedge");
+    assert.equal(addEdges.length, 1);
+  });
+
+  it("remaps node IDs when they conflict with existing nodes", () => {
+    const source: GraphDescriptor = {
+      nodes: [
+        { id: "existing", type: "foo", metadata: { visual: { x: 0, y: 0 } } },
+      ],
+      edges: [],
+    };
+    const graph = makeMockGraph({
+      nodes: [{ id: "existing", type: "bar" }],
+      edges: [],
+    });
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 0, y: 0 },
+      [""]
+    );
+    const addNode = specs.find((s) => s.type === "addnode") as {
+      type: "addnode";
+      node: { id: string };
+    };
+    assert.notEqual(addNode.node.id, "existing");
+  });
+
+  it("remaps edge endpoints when node IDs are remapped", () => {
+    const source: GraphDescriptor = {
+      nodes: [
+        {
+          id: "conflicting",
+          type: "foo",
+          metadata: { visual: { x: 0, y: 0 } },
+        },
+        { id: "other", type: "bar", metadata: { visual: { x: 100, y: 0 } } },
+      ],
+      edges: [{ from: "conflicting", out: "x", to: "other", in: "y" }],
+    };
+    const graph = makeMockGraph({
+      nodes: [{ id: "conflicting", type: "baz" }],
+      edges: [],
+    });
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 0, y: 0 },
+      [""]
+    );
+    const addEdge = specs.find((s) => s.type === "addedge") as {
+      type: "addedge";
+      edge: { from: string; to: string };
+    };
+    assert.notEqual(addEdge.edge.from, "conflicting");
+  });
+
+  it("copies comments and generates changegraphmetadata", () => {
+    const source: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      metadata: {
+        comments: [
+          { id: "c1", text: "A comment", metadata: { visual: { x: 0, y: 0 } } },
+        ],
+      },
+    };
+    const graph = makeMockGraph({ nodes: [], edges: [] });
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 0, y: 0 },
+      [""]
+    );
+    const metaEdits = specs.filter((s) => s.type === "changegraphmetadata");
+    assert.equal(metaEdits.length, 1);
+  });
+
+  it("copies describer metadata", () => {
+    const source: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      metadata: { describer: "my-describer" },
+    };
+    const graph = makeMockGraph({ nodes: [], edges: [] });
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 0, y: 0 },
+      [""]
+    );
+    const metaEdits = specs.filter((s) => s.type === "changegraphmetadata");
+    assert.equal(metaEdits.length, 1);
+  });
+
+  it("handles nodes without visual metadata", () => {
+    const source: GraphDescriptor = {
+      nodes: [{ id: "n1", type: "foo" }],
+      edges: [],
+    };
+    const graph = makeMockGraph({ nodes: [], edges: [] });
+    // Should not throw
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 10, y: 20 },
+      [""]
+    );
+    assert.ok(specs.length > 0);
+  });
+
+  it("processes subgraphs with nodes", () => {
+    const source: GraphDescriptor = {
+      nodes: [{ id: "n1", type: "foo", metadata: { visual: { x: 0, y: 0 } } }],
+      edges: [],
+      graphs: {
+        sub1: {
+          nodes: [
+            { id: "s1", type: "baz", metadata: { visual: { x: 0, y: 0 } } },
+          ],
+          edges: [],
+        },
+      },
+    };
+    const graph = makeMockGraph({ nodes: [], edges: [] });
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 0, y: 0 },
+      [""]
+    );
+    const addNodes = specs.filter((s) => s.type === "addnode");
+    assert.ok(addNodes.length >= 2); // main + subgraph nodes
+  });
+
+  it("skips empty subgraphs", () => {
+    const source: GraphDescriptor = {
+      nodes: [{ id: "n1", type: "foo", metadata: { visual: { x: 0, y: 0 } } }],
+      edges: [],
+      graphs: {
+        empty: { nodes: [], edges: [] },
+      },
+    };
+    const graph = makeMockGraph({ nodes: [], edges: [] });
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 0, y: 0 },
+      [""]
+    );
+    const addNodes = specs.filter((s) => s.type === "addnode");
+    assert.equal(addNodes.length, 1); // only the main node
+  });
+
+  it("skips non-existent target graphs", () => {
+    const source: GraphDescriptor = {
+      nodes: [{ id: "n1", type: "foo", metadata: { visual: { x: 0, y: 0 } } }],
+      edges: [],
+    };
+    const graph = makeMockGraph({ nodes: [], edges: [] });
+    const specs = generateAddEditSpecFromDescriptor(
+      source,
+      graph,
+      { x: 0, y: 0 },
+      ["nonexistent-subgraph"]
+    );
+    assert.equal(specs.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// applyDefaultThemeInformationIfNonePresent
+// ---------------------------------------------------------------------------
+
+describe("graph-utils — applyDefaultThemeInformationIfNonePresent", () => {
+  it("returns early if graph already has themes + theme id", () => {
+    const graph: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      metadata: {
+        visual: {
+          presentation: {
+            themes: { t1: {} as never },
+            theme: "t1",
+          },
+        },
+      },
+    };
+    applyDefaultThemeInformationIfNonePresent(graph);
+    // Should not modify — still has only one theme
+    assert.equal(
+      Object.keys(graph.metadata!.visual!.presentation!.themes!).length,
+      1
+    );
+  });
+
+  it("applies default theme when no legacy themeColors present", () => {
+    const graph: GraphDescriptor = { nodes: [], edges: [] };
+    applyDefaultThemeInformationIfNonePresent(graph);
+    assert.ok(graph.metadata?.visual?.presentation?.themes);
+    assert.ok(graph.metadata?.visual?.presentation?.theme);
+    const themeId = graph.metadata!.visual!.presentation!.theme!;
+    const theme = graph.metadata!.visual!.presentation!.themes![themeId];
+    assert.ok(theme);
+    assert.equal((theme as { isDefaultTheme?: boolean }).isDefaultTheme, true);
+  });
+
+  it("migrates legacy themeColors to a new theme entry", () => {
+    const graph: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      metadata: {
+        visual: {
+          presentation: {
+            themeColors: {
+              primaryColor: "#ff0000",
+              secondaryColor: "#00ff00",
+              backgroundColor: "#0000ff",
+              textColor: "#111",
+              primaryTextColor: "#eee",
+            },
+            template: "fancy",
+            templateAdditionalOptions: { opt: "val" },
+          },
+        },
+      },
+    };
+    applyDefaultThemeInformationIfNonePresent(graph);
+    // Legacy values should be removed
+    assert.equal(graph.metadata!.visual!.presentation!.template, undefined);
+    assert.equal(
+      graph.metadata!.visual!.presentation!.templateAdditionalOptions,
+      undefined
+    );
+    assert.equal(graph.metadata!.visual!.presentation!.themeColors, undefined);
+    // Theme should be set
+    const themeId = graph.metadata!.visual!.presentation!.theme!;
+    const theme = graph.metadata!.visual!.presentation!.themes![themeId] as {
+      themeColors: { primaryColor: string };
+      template: string;
+    };
+    assert.equal(theme.themeColors.primaryColor, "#ff0000");
+    assert.equal(theme.template, "fancy");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateBoardFrom — subgraph filtering
+// ---------------------------------------------------------------------------
+
+describe("graph-utils — generateBoardFrom (subgraphs)", () => {
+  it("includes selected subgraphs", () => {
+    const raw: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      graphs: {
+        sub1: { nodes: [{ id: "s1", type: "x" }], edges: [] },
+        sub2: { nodes: [{ id: "s2", type: "y" }], edges: [] },
+      },
+    };
+    const graph = makeMockGraph(raw);
+    const sel = createEmptyMultiGraphSelectionState();
+    sel.graphs.set("sub1", createEmptyGraphSelectionState());
+    const result = generateBoardFrom(sel, graph);
+    assert.ok(result.graphs?.sub1);
+    assert.equal(result.graphs?.sub2, undefined);
+  });
+
+  it("filters subgraph contents by selection", () => {
+    const raw: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      graphs: {
+        sub1: {
+          nodes: [
+            { id: "s1", type: "x" },
+            { id: "s2", type: "y" },
+          ],
+          edges: [],
+        },
+      },
+    };
+    const graph = makeMockGraph(raw);
+    const sel = createEmptyMultiGraphSelectionState();
+    const subSel = createEmptyGraphSelectionState();
+    subSel.nodes.add("s1");
+    sel.graphs.set("sub1", subSel);
+    const result = generateBoardFrom(sel, graph);
+    assert.equal(result.graphs?.sub1?.nodes?.length, 1);
+    assert.equal(result.graphs?.sub1?.nodes?.[0]?.id, "s1");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateDeleteEditSpecFrom — subgraph handling (L257-266)
+// ---------------------------------------------------------------------------
+
+describe("graph-utils — generateDeleteEditSpecFrom (subgraph handling)", () => {
+  it("deletes nodes from a subgraph selection", () => {
+    const raw: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      graphs: {
+        sub1: {
+          nodes: [
+            { id: "s1", type: "foo" },
+            { id: "s2", type: "bar" },
+          ],
+          edges: [{ from: "s1", out: "x", to: "s2", in: "y" }],
+        },
+      },
+    };
+    const graph = makeMockGraph(raw);
+    const sel = createEmptyMultiGraphSelectionState();
+    const subSel = createEmptyGraphSelectionState();
+    subSel.nodes.add("s1");
+    sel.graphs.set("sub1", subSel);
+    const edits = generateDeleteEditSpecFrom(sel, graph);
+    const removeNodes = edits.filter((e) => e.type === "removenode");
+    assert.equal(removeNodes.length, 1);
+  });
+
+  it("skips when graph.graphs() returns null", () => {
+    const raw: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+    };
+    const graph = {
+      ...makeMockGraph(raw),
+      graphs: () => null,
+    } as unknown as InspectableGraph;
+    const sel = createEmptyMultiGraphSelectionState();
+    const subSel = createEmptyGraphSelectionState();
+    subSel.nodes.add("s1");
+    sel.graphs.set("sub1", subSel);
+    const edits = generateDeleteEditSpecFrom(sel, graph);
+    assert.equal(edits.length, 0);
+  });
+
+  it("skips when subgraph ID does not exist", () => {
+    const raw: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      graphs: {
+        existing: { nodes: [], edges: [] },
+      },
+    };
+    const graph = makeMockGraph(raw);
+    const sel = createEmptyMultiGraphSelectionState();
+    const subSel = createEmptyGraphSelectionState();
+    subSel.nodes.add("s1");
+    sel.graphs.set("nonexistent", subSel);
+    const edits = generateDeleteEditSpecFrom(sel, graph);
+    assert.equal(edits.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// applyDefaultThemeInformationIfNonePresent — splash screen asset (L551-554)
+// ---------------------------------------------------------------------------
+
+describe("graph-utils — applyDefaultThemeInformationIfNonePresent (splash asset)", () => {
+  it("migrates splash screen asset into theme when present", () => {
+    const graph: GraphDescriptor = {
+      nodes: [],
+      edges: [],
+      metadata: {
+        visual: {
+          presentation: {
+            themeColors: {
+              primaryColor: "#ff0000",
+              secondaryColor: "#00ff00",
+              backgroundColor: "#ffffff",
+              textColor: "#000",
+              primaryTextColor: "#fff",
+            },
+            template: "basic",
+          },
+        },
+      },
+      assets: {
+        "@@splash": {
+          data: [
+            {
+              parts: [
+                {
+                  storedData: {
+                    handle: "https://example.com/image.png",
+                    mimeType: "image/png",
+                  },
+                },
+              ],
+            },
+          ] as never,
+        },
+      },
+    };
+    applyDefaultThemeInformationIfNonePresent(graph);
+    const themeId = graph.metadata!.visual!.presentation!.theme!;
+    const theme = graph.metadata!.visual!.presentation!.themes![themeId] as {
+      splashScreen?: { storedData: { handle: string } };
+    };
+    assert.ok(theme.splashScreen);
+    assert.equal(
+      theme.splashScreen.storedData.handle,
+      "https://example.com/image.png"
+    );
   });
 });

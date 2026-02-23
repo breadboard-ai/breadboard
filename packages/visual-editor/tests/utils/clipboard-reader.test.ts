@@ -133,4 +133,112 @@ describe("ClipboardReader", () => {
       assert.equal(result, false);
     });
   });
+
+  describe("read — binary data", () => {
+    it("returns inlineData for image mime types", async () => {
+      const imgData = "fake-image-bytes";
+      mock.method(navigator.clipboard, "read", async () => [
+        {
+          types: ["image/png"],
+          getType: async (mimeType: string) =>
+            new Blob([imgData], { type: mimeType }),
+        },
+      ]);
+      const reader = new ClipboardReader(undefined, makeLoader(false));
+      const result = await reader.read();
+      assert.ok("inlineData" in result);
+      const data = (result as { inlineData: { mimeType: string } }).inlineData;
+      assert.equal(data.mimeType, "image/png");
+    });
+
+    it("returns inlineData for video mime types", async () => {
+      mock.method(navigator.clipboard, "read", async () => [
+        {
+          types: ["video/mp4"],
+          getType: async (mimeType: string) =>
+            new Blob(["vid"], { type: mimeType }),
+        },
+      ]);
+      const reader = new ClipboardReader(undefined, makeLoader(false));
+      const result = await reader.read();
+      assert.ok("inlineData" in result);
+    });
+
+    it("returns inlineData for audio mime types", async () => {
+      mock.method(navigator.clipboard, "read", async () => [
+        {
+          types: ["audio/mpeg"],
+          getType: async (mimeType: string) =>
+            new Blob(["audio"], { type: mimeType }),
+        },
+      ]);
+      const reader = new ClipboardReader(undefined, makeLoader(false));
+      const result = await reader.read();
+      assert.ok("inlineData" in result);
+    });
+
+    it("returns inlineData for application/pdf", async () => {
+      mock.method(navigator.clipboard, "read", async () => [
+        {
+          types: ["application/pdf"],
+          getType: async (mimeType: string) =>
+            new Blob(["pdf"], { type: mimeType }),
+        },
+      ]);
+      const reader = new ClipboardReader(undefined, makeLoader(false));
+      const result = await reader.read();
+      assert.ok("inlineData" in result);
+    });
+
+    it("returns inlineData for text/html", async () => {
+      mock.method(navigator.clipboard, "read", async () => [
+        {
+          types: ["text/html"],
+          getType: async (mimeType: string) =>
+            new Blob(["<p>hi</p>"], { type: mimeType }),
+        },
+      ]);
+      const reader = new ClipboardReader(undefined, makeLoader(false));
+      const result = await reader.read();
+      assert.ok("inlineData" in result);
+    });
+
+    it("returns unknown when no supported types found", async () => {
+      mock.method(navigator.clipboard, "read", async () => [
+        {
+          types: ["application/octet-stream"],
+          getType: async () => new Blob(),
+        },
+      ]);
+      const reader = new ClipboardReader(undefined, makeLoader(false));
+      const result = await reader.read();
+      assert.deepEqual(result, { unknown: true });
+    });
+
+    it("returns unknown when clipboard items are empty", async () => {
+      mock.method(navigator.clipboard, "read", async () => []);
+      const reader = new ClipboardReader(undefined, makeLoader(false));
+      const result = await reader.read();
+      assert.deepEqual(result, { unknown: true });
+    });
+  });
+
+  describe("readText — URL fragments", () => {
+    it("detects fragment-only URLs when graphUrl base is provided", async () => {
+      mockClipboard("#fragment-id");
+      const reader = new ClipboardReader(
+        "https://example.com/page",
+        makeLoader(false)
+      );
+      const result = await reader.readText();
+      assert.ok("fileData" in result);
+    });
+
+    it("treats fragment-only text as plain text when no graphUrl base is provided", async () => {
+      mockClipboard("#not-a-url");
+      const reader = new ClipboardReader(undefined, makeLoader(false));
+      const result = await reader.readText();
+      assert.ok("text" in result);
+    });
+  });
 });
