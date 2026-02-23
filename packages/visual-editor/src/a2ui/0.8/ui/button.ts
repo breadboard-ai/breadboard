@@ -83,6 +83,10 @@ class Button extends Root {
           --a2ui-button-color,
           light-dark(var(--p-20), var(--n-100))
         );
+        --a2ui-text-body-color: var(
+          --a2ui-button-color,
+          light-dark(var(--p-20), var(--n-100))
+        );
 
         /* Child component padding — text gets padding, media is full-bleed. */
         --a2ui-text-padding: var(
@@ -137,6 +141,10 @@ class Button extends Root {
           var(--light-dark-n-100)
         );
         --a2ui-color-secondary: var(
+          --a2ui-button-color,
+          var(--light-dark-n-100)
+        );
+        --a2ui-text-body-color: var(
           --a2ui-button-color,
           var(--light-dark-n-100)
         );
