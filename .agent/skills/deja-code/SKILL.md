@@ -1,3 +1,11 @@
+---
+name: deja-code
+description:
+  A system that detects when you're writing code that already exists as a shared
+  utility. Instead of relying on memory or discipline, ESLint rules surface
+  existing helpers in real-time through IDE errors.
+---
+
 # 🔄 Déjà Code
 
 A system that detects when you're writing code that already exists as a shared

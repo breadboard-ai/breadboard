@@ -122,8 +122,9 @@ dry-run-first to scout the pattern before committing to a rewrite shape.
 
 ## Codebase Practices
 
-The `.agent/` directory contains practices and workflows. Read
-`.agent/README.md` for the full index.
+The `.agent/` directory contains practices, workflows, and skills. Read
+`.agent/README.md` for the full index. Each practice has a corresponding skill
+in `.agent/skills/` with detailed instructions.
 
 - **Daily Dig** (`/daily-dig`) — proactive bug hunts. Scout an area, find bugs,
   name them, write tests.
@@ -174,10 +175,11 @@ npm run test:file -- './dist/tsc/tests/sca/actions/share/**/*.js'
 
 ## Daily Dig
 
-The Daily Dig (`/daily-dig`) is a proactive bug hunt. Check the last entry date
-in `.agent/daily-dig.md` — if it's been more than a couple of days, suggest
-running one at the start of the session. Each dig should produce a concrete
-artifact (test, lint rule, or codemod) for any finding.
+The Daily Dig (`/daily-dig`) is a proactive bug hunt. Check the Hall of Fame in
+`.agent/skills/daily-dig/SKILL.md` — if it's been more than a couple of days
+since the last entry, suggest running one at the start of the session. Each dig
+should produce a concrete artifact (test, lint rule, or codemod) for any
+finding.
 
 ## Python
 

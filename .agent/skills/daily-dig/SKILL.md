@@ -1,3 +1,11 @@
+---
+name: daily-dig
+description:
+  A proactive bug hunt across the Breadboard codebase. Pick an area, go looking,
+  and produce a concrete artifact (test, lint rule, or codemod) for anything you
+  find.
+---
+
 # 🔍 Daily Dig
 
 A proactive bug hunt across the Breadboard codebase. Pick an area, go looking,

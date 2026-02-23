@@ -5,10 +5,11 @@ humans and agents work together in this codebase.
 
 ## Practices
 
-| Practice      | What it does                                                                                                               | Doc            |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| **Daily Dig** | Proactive bug hunt — scout, catch, tag, log.                                                                               | `daily-dig.md` |
-| **Déjà Code** | Detect and pave desire paths — find repeated multi-statement patterns and extract shared utilities backed by ESLint rules. | `deja-code.md` |
+| Practice      | What it does                                                                                                               | Skill        |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| **Daily Dig** | Proactive bug hunt — scout, catch, tag, log.                                                                               | `daily-dig/` |
+| **Déjà Code** | Detect and pave desire paths — find repeated multi-statement patterns and extract shared utilities backed by ESLint rules. | `deja-code/` |
+| **Codemods**  | Mechanical, multi-file, type-aware refactors via `ts-morph`. See `codemods/README.md`.                                     | `codemod/`   |
 
 ## Workflows
 
