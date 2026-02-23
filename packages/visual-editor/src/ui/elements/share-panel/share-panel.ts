@@ -945,9 +945,15 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
 
+  get #domainRestricted(): boolean {
+    const perms = this.sca.env.googleDrive.publishPermissions;
+    return perms.length === 0 || perms.some((p) => p.type !== "anyone");
+  }
+
   #renderVisibilityDropdown() {
     return html`<bb-share-visibility-selector
       .value=${this.#controller.visibility}
+      .domainRestricted=${this.#domainRestricted}
       .loading=${this.#controller.status === "changing-visibility"}
       @change=${this.#onVisibilityChange}
       @edit-access=${this.#onEditAccess}

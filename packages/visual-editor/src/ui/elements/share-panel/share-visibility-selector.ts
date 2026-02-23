@@ -7,40 +7,15 @@
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
+import type { VisibilityLevel } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
 import { icons } from "../../styles/icons.js";
 
-import type { VisibilityLevel } from "../../../sca/controller/subcontrollers/editor/share-controller.js";
-export type { VisibilityLevel };
-
-interface VisibilityOption {
-  value: VisibilityLevel;
+interface Option {
+  level: VisibilityLevel;
   label: string;
   icon: string;
   subtitle: string;
 }
-
-const OPTIONS: VisibilityOption[] = [
-  {
-    value: "only-you",
-    label: "Only you",
-    icon: "lock",
-    subtitle: "Only you can open this link",
-  },
-  {
-    value: "restricted",
-    label: "Restricted",
-    icon: "lock",
-    subtitle: "Only people with access can open with the link",
-  },
-  {
-    value: "anyone",
-    label: "Anyone with the link",
-    icon: "public",
-    subtitle: "Anyone on the internet with the link can view",
-  },
-];
-
-const OPTIONS_BY_VALUE = new Map(OPTIONS.map((o) => [o.value, o]));
 
 @customElement("bb-share-visibility-selector")
 export class ShareVisibilitySelector extends LitElement {
@@ -71,9 +46,14 @@ export class ShareVisibilitySelector extends LitElement {
         background: #e2e2e2;
         color: #1b1b1b;
 
-        &.anyone {
+        &.icon-public {
           background: #c4fcd4;
           color: #00381f;
+        }
+
+        &.icon-domain {
+          background: #c2e7ff;
+          color: #004a77;
         }
 
         .g-icon {
@@ -236,18 +216,51 @@ export class ShareVisibilitySelector extends LitElement {
   @property()
   accessor value: VisibilityLevel = "only-you";
 
+  @property({ type: Boolean })
+  accessor domainRestricted = false;
+
   @property({ type: Boolean, reflect: true })
   accessor loading = false;
 
   readonly #triggerRef = createRef<HTMLButtonElement>();
   readonly #dropdownRef = createRef<HTMLDivElement>();
 
+  get #options(): Option[] {
+    return [
+      {
+        level: "only-you",
+        label: "Only you",
+        icon: "lock",
+        subtitle: "Only you can open this link",
+      },
+      {
+        level: "restricted",
+        label: "Restricted",
+        icon: "lock",
+        subtitle: "Only people with access can open with the link",
+      },
+      this.domainRestricted
+        ? {
+            level: "anyone",
+            label: "Your Organization",
+            icon: "domain",
+            subtitle: "Anyone in your organization with the link can view",
+          }
+        : {
+            level: "anyone",
+            label: "Anyone with the link",
+            icon: "public",
+            subtitle: "Anyone on the internet with the link can view",
+          },
+    ];
+  }
+
   render() {
-    const opt = OPTIONS_BY_VALUE.get(this.value)!;
+    const opt = this.#options.find((o) => o.level === this.value)!;
 
     return html`
       <div id="container">
-        <div id="icon" class=${this.value === "anyone" ? "anyone" : ""}>
+        <div id="icon" class="icon-${opt.icon}">
           <span class="g-icon">${opt.icon}</span>
         </div>
         <div id="text">
@@ -279,14 +292,14 @@ export class ShareVisibilitySelector extends LitElement {
         popover="auto"
         @beforetoggle=${this.#onBeforeToggle}
       >
-        ${OPTIONS.map(
+        ${this.#options.map(
           (opt) => html`
             <button
               class="dropdown-option"
-              @click=${() => this.#selectOption(opt.value)}
+              @click=${() => this.#selectOption(opt.level)}
             >
               <span class="check-icon">
-                ${opt.value === this.value
+                ${opt.level === this.value
                   ? html`<span class="g-icon">check</span>`
                   : nothing}
               </span>
