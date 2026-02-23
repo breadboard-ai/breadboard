@@ -402,10 +402,10 @@ Body (resume): {interactionId, response}
 > calls `generate_speech_from_text` → `executeStep` → audio `storedData` saved
 > to agent FS.
 
-- [ ] Port `generate_speech_from_text` function (text + voice selection →
+- [x] Port `generate_speech_from_text` function (text + voice selection →
       `executeStep` → save audio to FS)
-- [ ] Wire into dev backend `main.py`
-- [ ] Tests
+- [x] Wire into dev backend `main.py`
+- [x] Tests
 
 ##### 4.7e: Music Generation
 
@@ -413,8 +413,19 @@ Body (resume): {interactionId, response}
 > agent calls `generate_music_from_text` → `executeStep` → audio `storedData`
 > saved to agent FS.
 
-- [ ] Port `generate_music_from_text` function (prompt → `executeStep` → save
+- [x] Port `generate_music_from_text` function (prompt → `executeStep` → save
       audio to FS)
+- [x] Wire into dev backend `main.py`
+- [x] Tests
+
+##### 4.7f: Code Generation & Execution
+
+> **🎯 Objective:** Ask the agent to "calculate the first 20 Fibonacci numbers."
+> The agent calls `generate_and_execute_code` → `conformBody` → `streamContent`
+> with `codeExecution` tool → streams text + inline file results back.
+
+- [ ] Port `generate_and_execute_code` function (prompt → `conformBody` →
+      `streamContent` with code execution tool → merge text + file results)
 - [ ] Wire into dev backend `main.py`
 - [ ] Tests
 
