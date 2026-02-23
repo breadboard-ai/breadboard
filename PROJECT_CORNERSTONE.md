@@ -371,18 +371,52 @@ Body (resume): {interactionId, response}
 - [x] Wire `get_generate_function_group` into dev backend `main.py`
 - [x] Tests: 20 tests — handler, grounding, model resolution, error handling
 
-##### 4.7b: Media Generators
+##### 4.7b: Image Generation
 
-- [ ] `callImage` — Gemini image model via One Platform
-- [ ] `callVideo` — Veo API + polling for completion
-- [ ] `callAudio` — Audio generation API
-- [ ] `callMusic` — Music generation API
+> **🎯 Objective:** Ask the agent to "generate an image of a cat" through the
+> dev backend. The agent calls `generate_image` → `executeStep` with
+> `ai_image_tool` → One Platform returns inline image data → saved to agent FS.
 
-##### 4.7c: Custom Tools (if needed)
+- [x] Port `executeStep` client (POST to `/v1beta1/executeStep`, collect output
+      chunks)
+- [x] Port `generate_image` function (prompt + optional input images + aspect
+      ratio → `executeStep` → save to FS)
+- [x] Wire into dev backend `main.py`
+- [x] Tests
 
-- [ ] Wire protocol for tool declarations from client
-- [ ] Server-side `SimplifiedToolManager` (dispatch to custom tools)
-- [ ] Determine if board-hosted tools are callable from the server
+##### 4.7c: Video Generation
+
+> **🎯 Objective:** Ask the agent to "make a short video of waves crashing." The
+> agent calls `generate_video` → `executeStep` with Veo model → `storedData`
+> part saved to agent FS.
+
+- [ ] Port `generate_video` function (prompt + optional reference images →
+      `executeStep` with `generate_video` API + Veo model selection)
+- [ ] Port `expandVeoError` safety-code mapping
+- [ ] Wire into dev backend `main.py`
+- [ ] Tests
+
+##### 4.7d: Speech Generation
+
+> **🎯 Objective:** Ask the agent to "read this paragraph aloud." The agent
+> calls `generate_speech_from_text` → `executeStep` → audio `storedData` saved
+> to agent FS.
+
+- [ ] Port `generate_speech_from_text` function (text + voice selection →
+      `executeStep` → save audio to FS)
+- [ ] Wire into dev backend `main.py`
+- [ ] Tests
+
+##### 4.7e: Music Generation
+
+> **🎯 Objective:** Ask the agent to "compose upbeat background music." The
+> agent calls `generate_music_from_text` → `executeStep` → audio `storedData`
+> saved to agent FS.
+
+- [ ] Port `generate_music_from_text` function (prompt → `executeStep` → save
+      audio to FS)
+- [ ] Wire into dev backend `main.py`
+- [ ] Tests
 
 #### 4.8: Suspend/Resume for Interactive Agents
 

@@ -33,4 +33,7 @@ fi
 
 export PROXY_UPSTREAM_URL="${UPSTREAM:-https://appcatalyst.pa.googleapis.com}"
 echo "Starting opal-backend-dev on port 8080 (upstream: $PROXY_UPSTREAM_URL)..."
-cd "$DEV_DIR" && .venv/bin/uvicorn opal_backend_dev.main:app --reload --port 8080
+SHARED_DIR="$(cd "$DEV_DIR/../opal-backend-shared/opal_backend_shared" 2>/dev/null && pwd)"
+cd "$DEV_DIR" && .venv/bin/uvicorn opal_backend_dev.main:app --reload --port 8080 \
+  --reload-dir opal_backend_dev \
+  ${SHARED_DIR:+--reload-dir "$SHARED_DIR"}

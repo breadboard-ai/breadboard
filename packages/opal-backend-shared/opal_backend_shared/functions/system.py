@@ -22,7 +22,7 @@ from ..function_definition import (
     FunctionGroup,
     map_definitions,
 )
-from ..loop import AgentResult, LoopController
+from ..loop import AgentResult, FileData, LoopController
 from ..agent_file_system import AgentFileSystem
 from ..task_tree_manager import TaskTreeManager, TASK_TREE_SCHEMA
 from ..pidgin import from_pidgin_string
@@ -195,6 +195,7 @@ In the good example above, the replaced texts fit neatly under each heading. In 
 
 def _define_objective_fulfilled(
     controller: LoopController,
+    file_system: AgentFileSystem | None = None,
     success_callback: Callable[[str, str], Any] | None = None,
 ) -> FunctionDefinition:
     """Port of ``system_objective_fulfilled`` from system.ts."""
@@ -213,13 +214,40 @@ def _define_objective_fulfilled(
             if isinstance(result, dict) and "$error" in result:
                 return {"error": result["$error"]}
 
-        controller.terminate(
-            AgentResult(
-                success=True,
-                href=href,
-                outcomes={"parts": [{"text": outcome_text}]},
-            )
+        # Resolve pidgin <file> tags in the outcome text to LLMContent.
+        # Port of the translator.fromPidginString() call in loop-setup.ts.
+        outcomes: dict[str, Any]
+        intermediate: list[dict[str, Any]] | None = None
+
+        if file_system and outcome_text:
+            resolved = from_pidgin_string(outcome_text, file_system)
+            if isinstance(resolved, dict) and "$error" in resolved:
+                return {"error": resolved["$error"]}
+            outcomes = resolved
+
+            # Collect all intermediate files with their resolved parts.
+            # Port of the intermediate file collection in loop-setup.ts.
+            intermediate: list[FileData] = []
+            for path in list(file_system.files.keys()):
+                file_parts = file_system.get(path)
+                if isinstance(file_parts, dict) and "$error" in file_parts:
+                    continue
+                # file_parts is a list of data parts; take the first one
+                if file_parts:
+                    intermediate.append(
+                        FileData(path=path, content=file_parts[0])
+                    )
+        else:
+            outcomes = {"parts": [{"text": outcome_text}]}
+
+        result_data = AgentResult(
+            success=True,
+            href=href,
+            outcomes=outcomes,
         )
+        if intermediate is not None:
+            result_data.intermediate = intermediate
+        controller.terminate(result_data)
         return {}
 
     return FunctionDefinition(
@@ -639,7 +667,7 @@ def get_system_function_group(
         A FunctionGroup with declarations, definitions, and instruction.
     """
     functions: list[FunctionDefinition] = [
-        _define_objective_fulfilled(controller, success_callback),
+        _define_objective_fulfilled(controller, file_system, success_callback),
         _define_failed_to_fulfill(controller, failure_callback),
     ]
 

@@ -16,6 +16,7 @@ from opal_backend_shared.functions.system import (
     get_system_function_group,
 )
 from opal_backend_shared.loop import AgentResult, LoopController
+from opal_backend_shared.agent_file_system import AgentFileSystem
 
 
 # =============================================================================
@@ -142,6 +143,138 @@ class TestObjectiveFulfilled:
         assert "objective_outcome" in schema["properties"]
         assert "href" in schema["properties"]
         assert "objective_outcome" in schema["required"]
+
+
+# =============================================================================
+# Pidgin Outcome Resolution Regression Tests
+# =============================================================================
+
+
+class TestObjectiveFulfilledPidginResolution:
+    """Regression tests for pidgin <file> tag resolution in outcomes.
+
+    Before the fix, outcomes contained raw pidgin text like
+    '<file src="/mnt/image1.jpg" />' instead of resolved storedData
+    parts. These tests guard against that regression.
+    """
+
+    @pytest.mark.asyncio
+    async def test_outcomes_resolve_file_tags_to_stored_data(self):
+        """Pidgin <file> tags in outcomes are resolved to storedData parts."""
+        controller = LoopController()
+        fs = AgentFileSystem()
+
+        # Simulate an image saved to the FS (as the image handler would)
+        fs.add_part({
+            "storedData": {
+                "handle": "/board/blobs/ef5dfcdd-0cf6-4d23-9519-241a05e2de59",
+                "mimeType": "image/jpeg",
+            }
+        })
+
+        group = get_system_function_group(controller, file_system=fs)
+        defn = dict(group.definitions)[OBJECTIVE_FULFILLED_FUNCTION]
+
+        await defn.handler(
+            {"objective_outcome": '<file src="/mnt/image1.jpg" />'},
+            lambda s: None,
+        )
+
+        result = controller.result
+        assert isinstance(result, AgentResult)
+        # Outcomes should be resolved LLMContent, NOT raw pidgin text
+        parts = result.outcomes["parts"]
+        assert len(parts) == 1
+        assert "storedData" in parts[0], (
+            "Outcome should contain storedData, not raw pidgin text"
+        )
+        assert parts[0]["storedData"]["handle"] == (
+            "/board/blobs/ef5dfcdd-0cf6-4d23-9519-241a05e2de59"
+        )
+
+    @pytest.mark.asyncio
+    async def test_outcomes_with_mixed_text_and_files(self):
+        """Outcomes with both text and <file> tags are properly resolved."""
+        controller = LoopController()
+        fs = AgentFileSystem()
+        fs.add_part({
+            "inlineData": {"data": "base64img", "mimeType": "image/png"},
+        })
+
+        group = get_system_function_group(controller, file_system=fs)
+        defn = dict(group.definitions)[OBJECTIVE_FULFILLED_FUNCTION]
+
+        await defn.handler(
+            {
+                "objective_outcome": (
+                    'Here is your image: <file src="/mnt/image1.png" />'
+                ),
+            },
+            lambda s: None,
+        )
+
+        result = controller.result
+        parts = result.outcomes["parts"]
+        # Should have text + inlineData parts
+        assert len(parts) == 2
+        assert "text" in parts[0]
+        assert "inlineData" in parts[1]
+
+    @pytest.mark.asyncio
+    async def test_intermediate_files_collected(self):
+        """All FS files are collected as intermediate FileData objects."""
+        controller = LoopController()
+        fs = AgentFileSystem()
+        fs.add_part({"inlineData": {"data": "img1", "mimeType": "image/png"}})
+        fs.add_part({"inlineData": {"data": "img2", "mimeType": "image/jpeg"}})
+
+        group = get_system_function_group(controller, file_system=fs)
+        defn = dict(group.definitions)[OBJECTIVE_FULFILLED_FUNCTION]
+
+        await defn.handler(
+            {"objective_outcome": '<file src="/mnt/image1.png" />'},
+            lambda s: None,
+        )
+
+        result = controller.result
+        assert result.intermediate is not None
+        assert len(result.intermediate) == 2
+        paths = [f.path for f in result.intermediate]
+        assert "/mnt/image1.png" in paths
+        assert "/mnt/image2.jpg" in paths
+
+    @pytest.mark.asyncio
+    async def test_outcomes_without_file_system_uses_raw_text(self):
+        """Without a file_system, outcomes use raw text (backward compat)."""
+        controller = LoopController()
+        group = get_system_function_group(controller)
+        defn = dict(group.definitions)[OBJECTIVE_FULFILLED_FUNCTION]
+
+        await defn.handler(
+            {"objective_outcome": "Simple text outcome"},
+            lambda s: None,
+        )
+
+        result = controller.result
+        assert result.outcomes["parts"][0]["text"] == "Simple text outcome"
+        assert result.intermediate is None
+
+    @pytest.mark.asyncio
+    async def test_missing_file_returns_error(self):
+        """Pidgin referencing a missing file → error returned."""
+        controller = LoopController()
+        fs = AgentFileSystem()  # Empty FS
+
+        group = get_system_function_group(controller, file_system=fs)
+        defn = dict(group.definitions)[OBJECTIVE_FULFILLED_FUNCTION]
+
+        result = await defn.handler(
+            {"objective_outcome": '<file src="/mnt/missing.png" />'},
+            lambda s: None,
+        )
+
+        # Should return an error dict, not terminate
+        assert "error" in result
 
 
 # =============================================================================
