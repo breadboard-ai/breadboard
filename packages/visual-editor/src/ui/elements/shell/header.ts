@@ -725,11 +725,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
     let saveStatusLabel;
     switch (this.saveStatus) {
-      case BOARD_SAVE_STATUS.UNSAVED: {
-        saveStatusLabel = html`Waiting to save...`;
-        break;
-      }
-
+      case BOARD_SAVE_STATUS.UNSAVED:
       case BOARD_SAVE_STATUS.SAVED: {
         saveStatusLabel = html`Saved`;
         break;
