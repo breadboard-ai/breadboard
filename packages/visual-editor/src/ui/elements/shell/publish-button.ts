@@ -109,6 +109,10 @@ export class PublishButton extends SignalWatcher(LitElement) {
             --icon-wght: 500;
           }
         }
+
+        .last-published {
+          margin-bottom: 8px;
+        }
       }
 
       /* Bridges the gap so the cursor can move into the tooltip. */
@@ -154,7 +158,7 @@ export class PublishButton extends SignalWatcher(LitElement) {
             "sans-flex": true,
             round: true,
             "w-500": true,
-            "has-red-dot": this.#hasRedDot,
+            "has-red-dot": !!this.#share?.stale,
           })}
           ?disabled=${!this.#isEnabled}
           @click=${this.#onClickPublish}
@@ -168,42 +172,47 @@ export class PublishButton extends SignalWatcher(LitElement) {
           >
           ${this.#label}
         </button>
-        <span id="tooltip"
-          >${this.#formattedLastPublished
-            ? html`Last Published: ${this.#formattedLastPublished}<br /><br />`
-            : nothing}${this.#hasRedDot
-            ? html`Click publish to update your Opal. This ensures everyone with
-              your shared link sees your latest changes.`
-            : this.#share?.hasPublicPermissions
-              ? html`<span class="up-to-date">
-                  <span
-                    >Your Opal is up-to-date. Everyone with your shared link
-                    sees your latest changes.</span
-                  >
-                  <span class="g-icon">check</span>
-                </span>`
-              : html`You can't publish your Opal because it isn't shared yet.`}</span
-        >
+        <span id="tooltip">${this.#renderTooltip()}</span>
       </div>
     `;
   }
 
-  get #formattedLastPublished(): string | undefined {
+  #renderTooltip() {
+    if (this.#share?.visibility === "only-you") {
+      return html`You can't publish your Opal because it isn't shared yet.`;
+    }
+    if (this.#share?.stale) {
+      return [
+        this.#renderLastPublished(),
+        html`Click publish to update your Opal. This ensures everyone with your
+        shared link sees your latest changes.`,
+      ];
+    }
+    return [
+      this.#renderLastPublished(),
+      html`<span class="up-to-date">
+        <span
+          >Your Opal is up-to-date. Everyone with your shared link sees your
+          latest changes.</span
+        >
+        <span class="g-icon">check</span>
+      </span>`,
+    ];
+  }
+
+  #renderLastPublished() {
     const iso = this.#share?.lastPublishedIso;
     if (!iso) {
-      return undefined;
+      return nothing;
     }
-    return new Date(iso).toLocaleDateString(undefined, {
+    const formatted = new Date(iso).toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
       year: "numeric",
       hour: "numeric",
       minute: "2-digit",
     });
-  }
-
-  get #hasRedDot() {
-    return this.#share?.stale;
+    return html`<div class="last-published">Last Published: ${formatted}</div>`;
   }
 
   get #isEnabled() {
