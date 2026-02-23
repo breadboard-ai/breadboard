@@ -54,6 +54,7 @@ async def conform_body(
     access_token: str,
     upstream_base: str,
     client: httpx.AsyncClient | None = None,
+    origin: str = "",
 ) -> GeminiBody:
     """Transform Breadboard-specific parts to Gemini-native formats.
 
@@ -85,6 +86,7 @@ async def conform_body(
                 access_token=access_token,
                 upstream_base=upstream_base,
                 client=client,
+                origin=origin,
             )
             new_parts.append(transformed)
 
@@ -99,6 +101,7 @@ async def _transform_part(
     access_token: str,
     upstream_base: str,
     client: httpx.AsyncClient | None = None,
+    origin: str = "",
 ) -> LLMContentPart:
     """Transform a single content part."""
 
@@ -124,6 +127,7 @@ async def _transform_part(
                 access_token=access_token,
                 upstream_base=upstream_base,
                 client=client,
+                origin=origin,
             )
 
         # Blob handle → uploadGeminiFile
@@ -134,6 +138,7 @@ async def _transform_part(
                 access_token=access_token,
                 upstream_base=upstream_base,
                 client=client,
+                origin=origin,
             )
 
         # Unknown storedData — error (matches TS err("Unknown part"))
@@ -165,6 +170,7 @@ async def _transform_part(
                 access_token=access_token,
                 upstream_base=upstream_base,
                 client=client,
+                origin=origin,
             )
 
         # Unknown fileData — error (matches TS err("Unknown part"))
@@ -180,6 +186,7 @@ async def _upload_gemini_file(
     access_token: str,
     upstream_base: str,
     client: httpx.AsyncClient | None = None,
+    origin: str = "",
 ) -> LLMContentPart:
     """Upload a file to Gemini File API via One Platform.
 
@@ -199,14 +206,31 @@ async def _upload_gemini_file(
         client = httpx.AsyncClient(timeout=120.0)
 
     try:
+        # OP requires the access token in the JSON body (in addition to the
+        # Authorization header).  The TS client does this via
+        # shouldAddAccessTokenToJsonBody in fetch-allowlist.ts.
+        augmented_request = {**request, "accessToken": access_token}
+
+        headers: dict[str, str] = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
+        if origin:
+            headers["Origin"] = origin
+
         response = await client.post(
             url,
-            json=request,
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {access_token}",
-            },
+            json=augmented_request,
+            headers=headers,
         )
+        if response.status_code >= 400:
+            logger.error(
+                "uploadGeminiFile failed: %d %s — request=%s response=%s",
+                response.status_code,
+                response.reason_phrase,
+                augmented_request,
+                response.text[:500],
+            )
         response.raise_for_status()
         data = response.json()
 

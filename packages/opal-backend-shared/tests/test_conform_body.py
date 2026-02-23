@@ -201,7 +201,10 @@ class TestUploadTransforms:
         # Verify upload was called with driveFileId
         client.post.assert_called_once()
         call_kwargs = client.post.call_args
-        assert call_kwargs.kwargs["json"] == {"driveFileId": "file-id-123"}
+        assert call_kwargs.kwargs["json"] == {
+            "driveFileId": "file-id-123",
+            "accessToken": TOKEN,
+        }
 
     @pytest.mark.asyncio
     async def test_blob_stored_data_upload(self):
@@ -222,7 +225,8 @@ class TestUploadTransforms:
         # Verify the request sent the blobId
         call_kwargs = client.post.call_args
         assert call_kwargs.kwargs["json"] == {
-            "blobId": "12345678-1234-1234-1234-123456789abc"
+            "blobId": "12345678-1234-1234-1234-123456789abc",
+            "accessToken": TOKEN,
         }
 
     @pytest.mark.asyncio
@@ -242,7 +246,10 @@ class TestUploadTransforms:
 
         # Verify the request sent driveFileId
         call_kwargs = client.post.call_args
-        assert call_kwargs.kwargs["json"] == {"driveFileId": "drive-file-id"}
+        assert call_kwargs.kwargs["json"] == {
+            "driveFileId": "drive-file-id",
+            "accessToken": TOKEN,
+        }
 
     @pytest.mark.asyncio
     async def test_drive_file_data_with_resource_key(self):
@@ -270,8 +277,8 @@ class TestUploadTransforms:
         assert req_body["driveResourceKey"] == "rk-abc"
 
     @pytest.mark.asyncio
-    async def test_auth_header_sent(self):
-        """Upload requests include Authorization header."""
+    async def test_auth_header_and_body_token(self):
+        """Upload requests include Authorization header and accessToken in body."""
         client = mock_client()
 
         body = body_with_parts(
@@ -283,11 +290,49 @@ class TestUploadTransforms:
 
         call_kwargs = client.post.call_args
         assert call_kwargs.kwargs["headers"]["Authorization"] == "Bearer my-secret-token"
+        assert call_kwargs.kwargs["json"]["accessToken"] == "my-secret-token"
+
+    @pytest.mark.asyncio
+    async def test_origin_header_sent(self):
+        """Upload requests include Origin header when origin is provided."""
+        client = mock_client()
+
+        body = body_with_parts(
+            [{"storedData": {"handle": "drive:/id", "mimeType": "image/png"}}]
+        )
+        await conform_body(
+            body,
+            access_token=TOKEN,
+            upstream_base=UPSTREAM,
+            client=client,
+            origin="http://localhost:3000",
+        )
+
+        call_kwargs = client.post.call_args
+        assert call_kwargs.kwargs["headers"]["Origin"] == "http://localhost:3000"
+
+    @pytest.mark.asyncio
+    async def test_origin_header_omitted_when_empty(self):
+        """Upload requests omit Origin header when origin is not provided."""
+        client = mock_client()
+
+        body = body_with_parts(
+            [{"storedData": {"handle": "drive:/id", "mimeType": "image/png"}}]
+        )
+        await conform_body(
+            body, access_token=TOKEN, upstream_base=UPSTREAM, client=client
+        )
+
+        call_kwargs = client.post.call_args
+        assert "Origin" not in call_kwargs.kwargs["headers"]
 
     @pytest.mark.asyncio
     async def test_upload_error_raises(self):
         """Upload failure raises via raise_for_status."""
         resp = MagicMock(spec=httpx.Response)
+        resp.status_code = 500
+        resp.reason_phrase = "Internal Server Error"
+        resp.text = "Something went wrong"
         resp.raise_for_status.side_effect = httpx.HTTPStatusError(
             "Server Error", request=MagicMock(), response=resp
         )
@@ -335,7 +380,10 @@ class TestUploadTransforms:
             body, access_token=TOKEN, upstream_base=UPSTREAM, client=client
         )
         call_kwargs = client.post.call_args
-        assert call_kwargs.kwargs["json"] == {"driveFileId": "file-id-123"}
+        assert call_kwargs.kwargs["json"] == {
+            "driveFileId": "file-id-123",
+            "accessToken": TOKEN,
+        }
 
     @pytest.mark.asyncio
     async def test_upload_url_constructed_correctly(self):

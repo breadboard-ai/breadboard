@@ -208,6 +208,50 @@ class Template {
     return { parts: this.#mergeTextParts(parts) };
   }
 
+  /**
+   * Walk the template's parsed parts in order, calling the appropriate
+   * handler for each kind of part. Returns the results in template order,
+   * preserving interleaving of text, placeholders, and data parts.
+   *
+   * Unlike {@link asyncSimpleSubstitute}, this does not collapse results
+   * into `LLMContent` — callers get back the typed values they produce,
+   * in the exact order they appear in the template.
+   *
+   * Each handler may return one item or an array (for fan-out).
+   */
+  async asyncMapParts<T>(handlers: {
+    onText: (text: string) => T | T[];
+    onParam: (param: ParamPart) => Promise<T | T[]>;
+    onData: (part: DataPart) => T | T[];
+  }): Promise<T[]> {
+    const results: T[] = [];
+    for (const part of this.#parts) {
+      if ("type" in part) {
+        const result = await handlers.onParam(part);
+        if (Array.isArray(result)) {
+          results.push(...result);
+        } else {
+          results.push(result);
+        }
+      } else if ("text" in part && part.text) {
+        const result = handlers.onText(part.text);
+        if (Array.isArray(result)) {
+          results.push(...result);
+        } else {
+          results.push(result);
+        }
+      } else {
+        const result = handlers.onData(part);
+        if (Array.isArray(result)) {
+          results.push(...result);
+        } else {
+          results.push(result);
+        }
+      }
+    }
+    return results;
+  }
+
   simpleSubstitute(callback: (param: ParamPart) => string): LLMContent {
     const parts: DataPart[] = [];
     for (const part of this.#parts) {

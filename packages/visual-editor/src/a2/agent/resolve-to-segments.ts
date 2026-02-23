@@ -73,145 +73,127 @@ async function resolveToSegments(
 ): Promise<Outcome<SegmentResolution>> {
   const template = new Template(objective, moduleArgs.context.currentGraph);
 
-  const segments: Segment[] = [];
   const errors: string[] = [];
   let useNotebookLM = false;
 
-  const resolved = await template.asyncSimpleSubstitute(async (param) => {
-    const { type } = param;
-    switch (type) {
-      case "asset": {
-        if (param.mimeType === NOTEBOOKLM_MIMETYPE) {
-          useNotebookLM = true;
-        }
-        const content = await template.loadAsset(param);
-        if (!ok(content)) {
-          errors.push(content.$error);
-          return "";
-        }
-        const lastContent = content?.at(-1);
-        if (!lastContent || lastContent.parts.length === 0) {
-          errors.push(`Agent: Invalid asset format`);
-          return "";
-        }
-        // Emit a placeholder marker that we'll replace below.
-        // The actual segment gets pushed to the array.
-        segments.push({
-          type: "asset",
-          title: param.title || "asset",
-          content: lastContent,
-        });
-        return ""; // Placeholder — segments carry the data
-      }
-      case "in": {
-        const value = params[Template.toId(param.path)];
-        if (!value) {
-          return "";
-        } else if (typeof value === "string") {
-          return value; // Inline as text
-        } else if (isLLMContent(value)) {
-          if (hasNlmAssetInContent(value)) {
+  const segments = await template.asyncMapParts<Segment | null>({
+    onText: (text) => (text ? { type: "text", text } : null),
+
+    onData: (part) => ({
+      type: "input",
+      title: "attachment",
+      content: { parts: [part], role: "user" },
+    }),
+
+    onParam: async (param): Promise<Segment | null> => {
+      const { type } = param;
+      switch (type) {
+        case "asset": {
+          if (param.mimeType === NOTEBOOKLM_MIMETYPE) {
             useNotebookLM = true;
           }
-          segments.push({
-            type: "input",
-            title: param.title || "input",
-            content: value,
-          });
-          return "";
-        } else if (isLLMContentArray(value)) {
-          const last = value.at(-1);
-          if (!last) return "";
-          if (hasNlmAssetInContent(last)) {
-            useNotebookLM = true;
+          const content = await template.loadAsset(param);
+          if (!ok(content)) {
+            errors.push(content.$error);
+            return null;
           }
-          segments.push({
-            type: "input",
-            title: param.title || "input",
-            content: last,
-          });
-          return "";
-        } else {
-          errors.push(
-            `Agent: Unknown param value type: "${JSON.stringify(value)}`
-          );
+          const lastContent = content?.at(-1);
+          if (!lastContent || lastContent.parts.length === 0) {
+            errors.push(`Agent: Invalid asset format`);
+            return null;
+          }
+          return {
+            type: "asset",
+            title: param.title || "asset",
+            content: lastContent,
+          };
         }
-        return param.title || "";
+        case "in": {
+          const value = params[Template.toId(param.path)];
+          if (!value) {
+            return null;
+          } else if (typeof value === "string") {
+            return { type: "text", text: value };
+          } else if (isLLMContent(value)) {
+            if (hasNlmAssetInContent(value)) {
+              useNotebookLM = true;
+            }
+            return {
+              type: "input",
+              title: param.title || "input",
+              content: value,
+            };
+          } else if (isLLMContentArray(value)) {
+            const last = value.at(-1);
+            if (!last) return null;
+            if (hasNlmAssetInContent(last)) {
+              useNotebookLM = true;
+            }
+            return {
+              type: "input",
+              title: param.title || "input",
+              content: last,
+            };
+          } else {
+            errors.push(
+              `Agent: Unknown param value type: "${JSON.stringify(value)}`
+            );
+          }
+          return param.title ? { type: "text", text: param.title } : null;
+        }
+        case "tool": {
+          return resolveToolParam(param, useNotebookLM, (v) => {
+            useNotebookLM = v;
+          });
+        }
+        default:
+          return null;
       }
-      case "tool": {
-        return resolveToolParam(param, segments, useNotebookLM, (v) => {
-          useNotebookLM = v;
-        });
-      }
-      default:
-        return "";
-    }
+    },
   });
 
   if (errors.length > 0) {
     return err(`Agent: ${errors.join(",")}`);
   }
 
-  // The resolved content may have remaining text parts from template
-  // substitution. Walk them and add as text segments.
-  for (const part of resolved.parts) {
-    if ("text" in part && part.text) {
-      segments.push({ type: "text", text: part.text });
-    } else if (!("text" in part)) {
-      // Non-text parts that weren't captured as asset/input content
-      // need to travel as part of the top-level objective.
-      // Wrap them in a content segment.
-      segments.push({
-        type: "input",
-        title: "attachment",
-        content: { parts: [part], role: "user" },
-      });
-    }
-  }
-
   return {
-    segments,
+    segments: segments.filter((s): s is Segment => s !== null),
     flags: { useNotebookLM },
   };
 }
 
 function resolveToolParam(
   param: ToolParamPart,
-  segments: Segment[],
   _useNotebookLM: boolean,
   setUseNotebookLM: (v: boolean) => void
-): string {
+): Segment | null {
   if (param.path === ROUTE_TOOL_PATH) {
     if (!param.instance) {
-      return "";
+      return null;
     }
-    segments.push({
+    return {
       type: "tool",
       path: ROUTE_TOOL_PATH,
       title: param.title,
       instance: param.instance,
-    });
-    return "";
+    };
   } else if (param.path === MEMORY_TOOL_PATH) {
-    segments.push({ type: "tool", path: MEMORY_TOOL_PATH });
-    return "";
+    return { type: "tool", path: MEMORY_TOOL_PATH };
   } else if (param.path === NOTEBOOKLM_TOOL_PATH) {
     setUseNotebookLM(true);
-    segments.push({ type: "tool", path: NOTEBOOKLM_TOOL_PATH });
-    return "";
+    return { type: "tool", path: NOTEBOOKLM_TOOL_PATH };
   } else {
     // Check for default tool substitution first
     const substitute = substituteDefaultTool(param);
     if (substitute !== null) {
-      return substitute; // text inline
+      return { type: "text", text: substitute };
     }
     // Custom tool — server will load and invoke
-    segments.push({
+    return {
       type: "tool",
       path: param.path,
       title: param.title,
-    });
-    return "";
+    };
   }
 }
 

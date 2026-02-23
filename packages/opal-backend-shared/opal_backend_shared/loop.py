@@ -152,11 +152,13 @@ class Loop:
         *,
         access_token: str = "",
         upstream_base: str = "",
+        origin: str = "",
         controller: LoopController | None = None,
     ) -> None:
         self.controller = controller or LoopController()
         self._access_token = access_token
         self._upstream_base = upstream_base
+        self._origin = origin
 
     async def run(self, args: AgentRunArgs) -> AgentResult | Outcome:
         """Execute the agent loop.
@@ -227,6 +229,7 @@ class Loop:
                         body,
                         access_token=self._access_token,
                         upstream_base=self._upstream_base,
+                        origin=self._origin,
                     )
 
                 # Stream from Gemini
@@ -277,7 +280,7 @@ class Loop:
                                     func_def.title if func_def else None,
                                 )
                                 call_id = result.get(
-                                    "call_id", str(uuid.uuid4())
+                                    "callId", str(uuid.uuid4())
                                 )
                                 reporter = result.get("reporter")
                             else:

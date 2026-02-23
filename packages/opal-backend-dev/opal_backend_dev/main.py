@@ -33,6 +33,7 @@ from opal_backend_shared.agent_events import (
 )
 from opal_backend_shared.agent_file_system import AgentFileSystem
 from opal_backend_shared.functions.system import get_system_function_group
+from opal_backend_shared.functions.generate import get_generate_function_group
 from opal_backend_shared.local.api_surface import create_api_router
 from opal_backend_shared.loop import (
     AgentRunArgs,
@@ -141,6 +142,9 @@ class DevAgentBackend:
         if auth_header.startswith("Bearer "):
             access_token = auth_header[len("Bearer "):]
 
+        # OP validates Origin to identify the requesting app.
+        origin = request.headers.get("origin", "")
+
         # Create file system and task tree manager.
         file_system = AgentFileSystem()
         task_tree_manager = TaskTreeManager(file_system)
@@ -183,7 +187,7 @@ class DevAgentBackend:
 
         # Create the loop with auth.
         controller = LoopController()
-        loop = Loop(access_token=access_token, upstream_base=UPSTREAM_BASE, controller=controller)
+        loop = Loop(access_token=access_token, upstream_base=UPSTREAM_BASE, origin=origin, controller=controller)
 
         # Wire up all system functions.
         system_group = get_system_function_group(
@@ -192,9 +196,18 @@ class DevAgentBackend:
             task_tree_manager=task_tree_manager,
         )
 
+        # Wire up generate functions.
+        generate_group = get_generate_function_group(
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
+            access_token=access_token,
+            upstream_base=UPSTREAM_BASE,
+            origin=origin,
+        )
+
         run_args = AgentRunArgs(
             objective=objective,
-            function_groups=[system_group],
+            function_groups=[system_group, generate_group],
             hooks=hooks,
         )
 

@@ -358,14 +358,18 @@ Body (resume): {interactionId, response}
 > With the wire protocol and data plumbing in place, function groups are thin
 > handlers on top.
 
-> **🎯 Objective:** Run an opal with "generate an image of a cat" through the
-> dev backend. Full content generation flow end-to-end.
-
 ##### 4.7a: Text Generation
 
-- [ ] Port `generate_text` function (uses `fromPidginString`, `conformBody`,
-      streaming API call)
-- [ ] Port `generate_and_execute_code` function (code execution sandbox)
+> **🎯 Objective:** Send an image into the agent and ask it to describe it. The
+> image flows through segments → pidgin → `from_pidgin_string` → `conform_body`
+> (resolves `storedData` to Gemini File API) → `generate_text` → text
+> description streams back over SSE. Full multimodal pipeline end-to-end.
+
+- [x] Port `generate_text` function (pidgin → conformBody → streamContent →
+      merge text)
+- [x] Grounding tools: Google Search, Google Maps, URL context
+- [x] Wire `get_generate_function_group` into dev backend `main.py`
+- [x] Tests: 20 tests — handler, grounding, model resolution, error handling
 
 ##### 4.7b: Media Generators
 

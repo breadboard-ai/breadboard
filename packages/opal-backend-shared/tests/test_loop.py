@@ -400,6 +400,69 @@ class TestLoop:
         assert "turn_complete" in events
 
     @pytest.mark.asyncio
+    async def test_function_call_and_result_share_same_call_id(self):
+        """Regression: on_function_call and on_function_result must use the
+        same callId so the client can correlate them.
+
+        The bug was that on_function_call returned {"callId": ...} (camelCase)
+        but the loop read result.get("call_id") (snake_case), silently falling
+        back to a different UUID, breaking progress UI correlation.
+        """
+        loop = Loop()
+
+        system_fns = make_system_functions(loop.controller)
+        mapped = map_definitions(system_fns)
+        group = FunctionGroup(
+            definitions=mapped.definitions,
+            declarations=mapped.declarations,
+        )
+
+        function_call_ids: list[str] = []
+        function_result_ids: list[str] = []
+
+        def on_function_call(part, icon=None, title=None):
+            call_id = f"test-{len(function_call_ids)}"
+            function_call_ids.append(call_id)
+            return {"callId": call_id}
+
+        def on_function_result(call_id, content):
+            function_result_ids.append(call_id)
+
+        hooks = LoopHooks(
+            on_function_call=on_function_call,
+            on_function_result=on_function_result,
+        )
+
+        chunks = [
+            make_function_call_chunk(
+                "system_objective_fulfilled",
+                {"objective_outcome": "done"},
+            ),
+        ]
+
+        async def mock_stream(*args, **kwargs):
+            for chunk in chunks:
+                yield chunk
+
+        with patch(
+            "opal_backend_shared.loop.stream_generate_content",
+            side_effect=mock_stream,
+        ):
+            await loop.run(
+                AgentRunArgs(
+                    objective={"parts": [{"text": "Test"}], "role": "user"},
+                    function_groups=[group],
+                    hooks=hooks,
+                )
+            )
+
+        # Both hooks must have been called
+        assert len(function_call_ids) == 1
+        assert len(function_result_ids) == 1
+        # And they must share the same callId
+        assert function_call_ids[0] == function_result_ids[0]
+
+    @pytest.mark.asyncio
     async def test_loop_handles_empty_candidates(self):
         """The loop should return an error if Gemini returns no candidates."""
         loop = Loop()
