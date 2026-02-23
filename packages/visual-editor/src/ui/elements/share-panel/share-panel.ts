@@ -205,20 +205,22 @@ export class SharePanel extends SignalWatcher(LitElement) {
           transition: opacity 0.15s ease;
           cursor: text;
           user-select: text;
+          pointer-events: none;
+        }
 
-          /* Bridges the gap so the cursor can move into the tooltip. */
-          &::before {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            height: 8px;
-          }
+        /* Bridges the gap so the cursor can move into the tooltip. */
+        .info-icon:hover .info-tooltip::before {
+          content: "";
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          height: 8px;
         }
 
         .info-icon:hover .info-tooltip {
           opacity: 1;
+          pointer-events: auto;
         }
 
         md-switch {
