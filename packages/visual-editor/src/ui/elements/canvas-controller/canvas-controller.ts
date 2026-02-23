@@ -41,7 +41,7 @@ import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
   createWorkspaceSelectionChangeId,
-} from "../../utils/workspace.js";
+} from "../../../utils/graph-utils.js";
 import { icons } from "../../styles/icons.js";
 import { EntityEditor } from "../elements.js";
 import { consume } from "@lit/context";

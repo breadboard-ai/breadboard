@@ -12,7 +12,7 @@ export * as Elements from "./elements/elements.js";
 export * as Events from "./events/events.js";
 export * as Plugins from "./plugins/plugins.js";
 export * as Types from "./types/types.js";
-export * as Utils from "./utils/utils.js";
+export * as Utils from "./utils/blank-board.js";
 export * as Strings from "./strings/helper.js";
 
 export * as Styles from "./styles/styles.js";

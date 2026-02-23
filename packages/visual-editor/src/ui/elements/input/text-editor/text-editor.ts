@@ -13,10 +13,10 @@ import { FastAccessSelectEvent } from "../../../events/events.js";
 import { FastAccessMenu } from "../../elements.js";
 import { isTemplatePart } from "@breadboard-ai/utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
-import { getAssetType } from "../../../utils/mime-type.js";
+import { getAssetType } from "../../../../utils/media/mime-type.js";
 import { icons } from "../../../styles/icons.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
-import { jsonStringify } from "../../../utils/json-stringify.js";
+import { jsonStringify } from "../../../../utils/formatting/json-stringify.js";
 import {
   createTrustedChicletHTML,
   setTrustedHTML,

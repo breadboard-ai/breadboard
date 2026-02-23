@@ -6,7 +6,7 @@
  *
  * The reason why they are like this is because they're relative to graph URL.
  */
-const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
+export const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
 
 export function blobHandleToUrl(handle: string): URL | undefined {
   const blobMatch = handle.match(BLOB_HANDLE_PATTERN);

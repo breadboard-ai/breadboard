@@ -19,7 +19,7 @@ import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
 
 import { reactive } from "./sca/reactive.js";
 
-import { blankBoard } from "./ui/utils/utils.js";
+import { blankBoard } from "./ui/utils/blank-board.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 

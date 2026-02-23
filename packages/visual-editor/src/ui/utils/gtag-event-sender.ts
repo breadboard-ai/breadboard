@@ -5,7 +5,7 @@
  */
 
 import { createTrustedAnalyticsURL } from "../trusted-types/analytics-url.js";
-import { parseUrl } from "./urls.js";
+import { parseUrl } from "../navigation/urls.js";
 
 export { GTagEventSender };
 

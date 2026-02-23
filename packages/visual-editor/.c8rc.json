@@ -19,7 +19,8 @@
     "src/ui/elements/input/text-editor/**/*.ts",
     "src/ui/presenters/**/*.ts",
     "src/ui/prompts/**/*.ts",
-    "src/ui/transforms/**/*.ts"
+    "src/ui/transforms/**/*.ts",
+    "src/utils/**/*.ts"
   ],
   "omit-empty": true,
   "check-coverage": false,

@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const documentStyles = getComputedStyle(document.documentElement);
-
 type ValidColorStrings = `#${string}` | `--${string}`;
 
 export function getGlobalColor(
   name: ValidColorStrings,
   defaultValue: ValidColorStrings = "#333333"
 ) {
+  const documentStyles = getComputedStyle(document.documentElement);
   const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
   const valueAsNumber = parseInt(value || defaultValue, 16);
   if (Number.isNaN(valueAsNumber)) {

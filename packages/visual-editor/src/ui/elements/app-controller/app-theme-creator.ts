@@ -33,7 +33,7 @@ import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
 import { AppTemplateAdditionalOptionsAvailable } from "../../types/types.js";
 import { AppTheme, SnackType } from "../../../sca/types.js";
-import { renderThumbnail } from "../../utils/image.js";
+import { renderThumbnail } from "../../media/image.js";
 import { convertImageToInlineData } from "./image-convert.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";

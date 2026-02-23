@@ -38,7 +38,7 @@ import {
 import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
-import { makeUrl, parseUrl } from "../../../ui/utils/urls.js";
+import { makeUrl, parseUrl } from "../../../ui/navigation/urls.js";
 import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
 import { onGraphUrl, onSaveComplete } from "./triggers.js";

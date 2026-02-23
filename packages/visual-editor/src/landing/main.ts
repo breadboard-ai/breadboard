@@ -13,7 +13,7 @@ import type { LanguagePack } from "../ui/types/types.js";
 import { createActionTracker } from "../ui/utils/action-tracker.js";
 import { connectToOpalShellHost } from "../ui/utils/opal-shell-guest.js";
 import { SigninAdapter } from "../ui/utils/signin-adapter.js";
-import { makeUrl, parseUrl } from "../ui/utils/urls.js";
+import { makeUrl, parseUrl } from "../ui/navigation/urls.js";
 import "./carousel.js";
 import * as Shell from "./shell.js";
 

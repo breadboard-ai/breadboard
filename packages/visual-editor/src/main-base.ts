@@ -36,7 +36,7 @@ import { reactive } from "./sca/reactive.js";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 
 import { RecentBoard, UserSignInResponse } from "./sca/types.js";
-import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
+import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/navigation/urls.js";
 
 import { Admin } from "./admin.js";
 

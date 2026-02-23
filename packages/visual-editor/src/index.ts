@@ -13,7 +13,7 @@ import { MainBase, RenderValues } from "./main-base.js";
 import { IterateOnPromptMessage } from "./ui/embed/embed.js";
 import { IterateOnPromptEvent } from "./ui/events/events.js";
 import * as BreadboardUI from "./ui/index.js";
-import { makeUrl, parseUrl } from "./ui/utils/urls.js";
+import { makeUrl, parseUrl } from "./ui/navigation/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./sca/types.js";

@@ -29,7 +29,7 @@ import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
   isPreviewBehavior,
-} from "../../utils/behaviors.js";
+} from "../../../utils/schema/behaviors.js";
 import {
   createTruncatedValue,
   truncateString,

@@ -5,7 +5,7 @@
  */
 
 import { InspectableNodePorts } from "@breadboard-ai/types";
-import { isControllerBehavior } from "./behaviors.js";
+import { isControllerBehavior } from "../../utils/schema/behaviors.js";
 import { iconSubstitute } from "./icon-substitute.js";
 
 export { getStepIcon };

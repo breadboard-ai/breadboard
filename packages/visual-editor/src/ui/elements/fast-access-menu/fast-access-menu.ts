@@ -14,7 +14,7 @@ import {
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { getAssetType, getMimeType } from "../../utils/mime-type.js";
+import { getAssetType, getMimeType } from "../../../utils/media/mime-type.js";
 import { consume } from "@lit/context";
 import { scaContext } from "../../../sca/context/context.js";
 import type { SCA } from "../../../sca/sca.js";

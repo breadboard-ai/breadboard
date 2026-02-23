@@ -21,7 +21,7 @@ import {
 import { reactive } from "../../../../src/sca/reactive.js";
 import { FakeGoogleDriveApi } from "@breadboard-ai/utils/google-drive/fake-google-drive-api.js";
 import { makeTestController, makeTestServices } from "../../helpers/index.js";
-import { makeUrl } from "../../../../src/ui/utils/urls.js";
+import { makeUrl } from "../../../../src/ui/navigation/urls.js";
 
 function makeAsset(handle: string, managed: boolean, title: string): Asset {
   return {

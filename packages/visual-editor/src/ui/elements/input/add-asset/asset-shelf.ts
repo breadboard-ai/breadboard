@@ -15,7 +15,7 @@ import {
   isShortsUri,
   isWatchUri,
   videoIdFromWatchOrShortsOrEmbedUri,
-} from "../../../utils/youtube.js";
+} from "../../../../utils/media/youtube.js";
 import { icons } from "../../../styles/icons.js";
 import {
   isFileDataCapabilityPart,

@@ -11,9 +11,6 @@ export function formatError(error: string | ErrorObject): string {
   if (typeof error === "string") {
     output = error;
   } else {
-    if ((error.error as Error)?.name === "AbortError") {
-      console.log("💖 actually aborted");
-    }
     if (typeof error.error === "string") {
       output = error.error;
     } else {

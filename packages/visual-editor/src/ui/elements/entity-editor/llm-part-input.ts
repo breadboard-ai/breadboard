@@ -13,7 +13,7 @@ import { TextEditor } from "../input/text-editor/text-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
 import { DrawableInput } from "../input/drawable/drawable.js";
-import { resolveImage } from "../../utils/image.js";
+import { resolveImage } from "../../media/image.js";
 import { consume } from "@lit/context";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";

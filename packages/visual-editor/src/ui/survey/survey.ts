@@ -7,7 +7,7 @@
 import { type DBSchema, openDB } from "idb";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import { loadExternalSurveyLibOnce } from "./survey-lib.js";
-import { parseUrl } from "../utils/urls.js";
+import { parseUrl } from "../navigation/urls.js";
 
 const { SURVEY_API_KEY } = CLIENT_DEPLOYMENT_CONFIG;
 

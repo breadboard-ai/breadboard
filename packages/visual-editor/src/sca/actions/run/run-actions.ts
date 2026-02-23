@@ -42,7 +42,7 @@ import {
   onRunnerEdgeStateChange,
   onRunnerOutput,
 } from "./triggers.js";
-import { edgeToString } from "../../../ui/utils/workspace.js";
+import { edgeToString } from "../../../utils/graph-utils.js";
 import { decodeErrorData } from "../../utils/decode-error.js";
 import { createAppScreen, tickScreenProgress } from "../../utils/app-screen.js";
 import { computeControlState } from "../../../utils/control.js";

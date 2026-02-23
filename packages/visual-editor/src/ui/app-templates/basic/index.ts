@@ -57,7 +57,7 @@ import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/util
 import { createRef, ref } from "lit/directives/ref.js";
 
 import { markdown } from "../../directives/markdown.js";
-import { makeUrl, parseUrl } from "../../utils/urls.js";
+import { makeUrl, parseUrl } from "../../navigation/urls.js";
 
 import {
   AppScreenOutput,

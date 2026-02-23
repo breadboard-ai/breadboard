@@ -16,7 +16,7 @@ import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { UserSignInResponse } from "../../../sca/types.js";
-import { devUrlParams } from "../../utils/urls.js";
+import { devUrlParams } from "../../navigation/urls.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { SCA } from "../../../sca/sca.js";
 

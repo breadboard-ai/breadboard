@@ -16,7 +16,7 @@ import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { OverflowAction } from "../../types/types.js";
 import { until } from "lit/directives/until.js";
-import { renderThumbnail } from "../../utils/image.js";
+import { renderThumbnail } from "../../media/image.js";
 import { guard } from "lit/directives/guard.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles.js";

@@ -8,7 +8,7 @@ import { InspectablePort } from "@breadboard-ai/types";
 import { Template, NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 import { html, HTMLTemplateResult, nothing } from "lit";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
-import { getAssetType } from "../../../utils/mime-type.js";
+import { getAssetType } from "../../../../utils/media/mime-type.js";
 import { summarizeLLMContentValue } from "../../../../utils/summarize-llm-content.js";
 import {
   ROUTE_TOOL_PATH,

@@ -42,7 +42,7 @@ import {
   SelectionTranslateEvent,
 } from "./events/events.js";
 import { NewAsset } from "../../types/types.js";
-import { createEmptyGraphSelectionState } from "../../utils/workspace.js";
+import { createEmptyGraphSelectionState } from "../../../utils/graph-utils.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import type {
@@ -67,7 +67,7 @@ import { collectAssetIds, collectNodeIds } from "./utils/collect-ids.js";
 import { EditorControls } from "./editor-controls.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants.js";
-import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command.js";
+import { isCtrlCommand, isMacPlatform } from "../../input/is-ctrl-command.js";
 import type { RendererRunState } from "../../../sca/types.js";
 
 import { baseColors } from "../../styles/host/base-colors.js";

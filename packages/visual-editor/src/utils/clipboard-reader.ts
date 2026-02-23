@@ -11,7 +11,7 @@ import {
   InlineDataCapabilityPart,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import * as YouTube from "../ui/utils/youtube.js";
+import * as YouTube from "./media/youtube.js";
 import { asBase64 } from "../data/common.js";
 
 export { ClipboardReader };

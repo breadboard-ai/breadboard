@@ -14,7 +14,7 @@ import type { NarrowedDriveFile } from "@breadboard-ai/utils/google-drive/google
 import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { parseUrl } from "../ui/utils/urls.js";
+import { parseUrl } from "../ui/navigation/urls.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   readonly #graphs = new SignalMap<string, GraphProviderItem>();

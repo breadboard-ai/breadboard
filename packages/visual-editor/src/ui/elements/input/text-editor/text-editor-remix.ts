@@ -76,7 +76,7 @@ import { FastAccessMenu } from "../../elements.js";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
 import { icons } from "../../../styles/icons.js";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
-import { jsonStringify } from "../../../utils/json-stringify.js";
+import { jsonStringify } from "../../../../utils/formatting/json-stringify.js";
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,

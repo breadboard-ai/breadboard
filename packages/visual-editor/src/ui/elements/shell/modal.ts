@@ -11,7 +11,7 @@ import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
 import { behavior } from "../../styles/host/behavior.js";
-import { isCtrlCommand } from "../../utils/is-ctrl-command.js";
+import { isCtrlCommand } from "../../input/is-ctrl-command.js";
 import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-modal")

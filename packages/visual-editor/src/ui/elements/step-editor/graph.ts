@@ -19,7 +19,7 @@ import {
   createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
   inspectableEdgeToString,
-} from "../../utils/workspace.js";
+} from "../../../utils/graph-utils.js";
 import { GraphEdge } from "./graph-edge.js";
 import {
   EdgeAttachmentPoint,

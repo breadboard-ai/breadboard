@@ -20,7 +20,7 @@ import { repeat } from "lit/directives/repeat.js";
 import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
-} from "../../../utils/index.js";
+} from "../../../../utils/schema/behaviors.js";
 import { AssetShelf } from "../add-asset/asset-shelf.js";
 import { maybeConvertToYouTube } from "../../../utils/substitute-input.js";
 import {
@@ -42,7 +42,7 @@ import {
   isStoredData,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
-import { parseUrl } from "../../../utils/urls.js";
+import { parseUrl } from "../../../navigation/urls.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { scaContext } from "../../../../sca/context/context.js";

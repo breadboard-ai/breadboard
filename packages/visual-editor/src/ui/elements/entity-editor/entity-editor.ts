@@ -45,14 +45,12 @@ import { ToastType } from "../../../sca/types.js";
 
 import { EnumValue } from "../../types/types.js";
 import {
+  isConfigurableBehavior,
   isControllerBehavior,
   isLLMContentArrayBehavior,
-} from "../../utils/behaviors.js";
-import {
-  isConfigurableBehavior,
   isLLMContentBehavior,
-} from "../../utils/index.js";
-import { isCtrlCommand } from "../../utils/is-ctrl-command.js";
+} from "../../../utils/schema/behaviors.js";
+import { isCtrlCommand } from "../../input/is-ctrl-command.js";
 import {
   FastAccessMenu,
   ItemSelect,
@@ -78,7 +76,7 @@ import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
-import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
+import { getBoardUrlFromCurrentWindow } from "../../navigation/board-id.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
 
 const Strings = StringsHelper.forSection("Editor");

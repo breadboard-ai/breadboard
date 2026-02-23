@@ -6,7 +6,7 @@
 
 import type { AppController } from "../../../controller/controller.js";
 import type { AppServices } from "../../../services/services.js";
-import { parseUrl } from "../../../../ui/utils/urls.js";
+import { parseUrl } from "../../../../ui/navigation/urls.js";
 
 export {
   canParse,

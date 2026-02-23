@@ -21,10 +21,11 @@ import {
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
-  Schema,
 } from "@breadboard-ai/types";
 import { isStoredData } from "@breadboard-ai/utils";
 import type { Selection } from "../sca/controller/subcontrollers/editor/selection/selection-controller.js";
+import type { GraphHighlightState } from "../ui/types/types.js";
+import { BLOB_HANDLE_PATTERN } from "../ui/media/blob-handle-to-url.js";
 import {
   EditChangeId,
   GraphSelectionState,
@@ -37,22 +38,10 @@ import {
   generatePaletteFromImage,
 } from "../theme/index.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { loadImage } from "../ui/utils/image.js";
+import { loadImage } from "../ui/media/image.js";
 import { isLLMContentArray } from "../data/common.js";
 
 export const MAIN_BOARD_ID = "Main board";
-
-export function isBoardBehavior(schema: Schema): boolean {
-  return schema.behavior?.includes("board") ?? false;
-}
-
-export function isBoardArrayBehavior(schema: Schema): boolean {
-  if (schema.type !== "array") return false;
-  if (!schema.items) return false;
-  if (Array.isArray(schema.items)) return false;
-  if (!schema.items.behavior) return false;
-  return schema.items.behavior?.includes("board") ?? false;
-}
 
 export function edgeToString(edge: Edge): string {
   const edgeIn = edge.out === "*" ? "*" : edge.in;
@@ -717,7 +706,6 @@ export async function createAppPaletteIfNeeded(
 
   let splashUrl: URL | undefined = undefined;
   const { handle } = theme.splashScreen.storedData;
-  const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
   const blobMatch = handle.match(BLOB_HANDLE_PATTERN);
 
   if (blobMatch) {
@@ -806,10 +794,19 @@ export function nodeIdsFromSpec(spec: EditSpec[]): Set<NodeIdentifier> {
   return ids;
 }
 
+export function createEmptyGraphHighlightState(): GraphHighlightState {
+  return {
+    nodes: new Set(),
+    comments: new Set(),
+    edges: new Set(),
+  };
+}
+
 export const GraphUtils = {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
   createEditChangeId,
+  createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
   createGraphId,

@@ -24,7 +24,7 @@ import {
 } from "./triggers.js";
 import type { StateEvent } from "../../../ui/events/events.js";
 import { ToastType } from "../../types.js";
-import { parseUrl } from "../../../ui/utils/urls.js";
+import { parseUrl } from "../../../ui/navigation/urls.js";
 
 export { bind };
 

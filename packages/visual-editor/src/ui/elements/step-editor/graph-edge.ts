@@ -13,7 +13,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { palette } from "../../styles/host/base-colors.js";
 import { icons } from "../../styles/icons.js";
 import { EdgeAttachmentPoint } from "../../types/types.js";
-import { inspectableEdgeToString } from "../../utils/workspace.js";
+import { inspectableEdgeToString } from "../../../utils/graph-utils.js";
 import { Box } from "./box.js";
 import { Entity } from "./entity.js";
 import {

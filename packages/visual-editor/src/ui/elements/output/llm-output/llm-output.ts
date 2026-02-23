@@ -33,7 +33,7 @@ import {
   isShareUri,
   isShortsUri,
   isWatchUri,
-} from "../../../utils/youtube.js";
+} from "../../../../utils/media/youtube.js";
 
 import { icons } from "../../../styles/icons.js";
 import { OverflowAction } from "../../../types/types.js";

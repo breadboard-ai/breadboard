@@ -21,7 +21,7 @@ import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
 import { OverflowAction } from "../../types/types.js";
-import { renderThumbnail } from "../../utils/image.js";
+import { renderThumbnail } from "../../media/image.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 

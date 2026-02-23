@@ -9,8 +9,8 @@ import type {
   InlineDataCapabilityPart,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { blobHandleToUrl } from "./blob-handle-to-url.js";
-import { loadImage } from "./image.js";
+import { blobHandleToUrl } from "../media/blob-handle-to-url.js";
+import { loadImage } from "../media/image.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { asBase64DataUrl } from "../../data/common.js";
 import { partToDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";

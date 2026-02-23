@@ -13,7 +13,7 @@ import { fonts } from "./fonts.js";
 
 import "./carousel-modal.js";
 import { shortestPath, toCSSMatrix } from "./utils.js";
-import { makeUrl } from "../ui/utils/urls.js";
+import { makeUrl } from "../ui/navigation/urls.js";
 
 @customElement("landing-carousel")
 export class LandingCarousel extends LitElement {

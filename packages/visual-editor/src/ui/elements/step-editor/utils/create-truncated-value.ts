@@ -10,7 +10,7 @@ import {
   isConfigurableBehavior,
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
-} from "../../../utils/index.js";
+} from "../../../../utils/schema/behaviors.js";
 import { summarizeLLMContentValue } from "../../../../utils/summarize-llm-content.js";
 
 export { truncateString, createTruncatedValue };

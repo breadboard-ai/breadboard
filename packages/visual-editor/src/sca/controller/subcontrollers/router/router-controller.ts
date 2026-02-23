@@ -5,7 +5,7 @@
  */
 
 import { MakeUrlInit, ParsedUrlProvider } from "../../../types.js";
-import { makeUrl, parseUrl } from "../../../../ui/utils/urls.js";
+import { makeUrl, parseUrl } from "../../../../ui/navigation/urls.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 

@@ -14,7 +14,7 @@ import {
   isShareUri,
   isShortsUri,
   isWatchUri,
-} from "../../../utils/youtube.js";
+} from "../../../../utils/media/youtube.js";
 import { Task } from "@lit/task";
 import { icons } from "../../../../a2ui/0.8/styles/icons.js";
 

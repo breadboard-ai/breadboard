@@ -11,7 +11,7 @@ import { LandingUrlInit } from "./sca/types.js";
 import { type LanguagePack } from "./ui/types/types.js";
 import type { GlobalConfig } from "./sca/types.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
-import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
+import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/navigation/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
 import { connectToOpalShellHost } from "./ui/utils/opal-shell-guest.js";
 import { Utils } from "./sca/utils.js";

@@ -7,7 +7,7 @@
 import { DRIVE_PROPERTY_OPAL_SHARE_SURFACE } from "@breadboard-ai/utils/google-drive/operations.js";
 import { customElement } from "lit/decorators.js";
 import { MainBase } from "./main-base.js";
-import { makeUrl, parseUrl } from "./ui/utils/urls.js";
+import { makeUrl, parseUrl } from "./ui/navigation/urls.js";
 import { makeShareLinkFromTemplate } from "./utils/make-share-link-from-template.js";
 
 @customElement("bb-open-main")

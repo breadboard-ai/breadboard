@@ -5,7 +5,7 @@
  */
 
 import { Schema } from "@breadboard-ai/types";
-import { AllowedLLMContentTypes } from "../types/types.js";
+import { AllowedLLMContentTypes } from "../../ui/types/types.js";
 
 function updateAllowList(
   allow: AllowedLLMContentTypes,
@@ -102,9 +102,7 @@ export function createAllowListFromProperty(
   let format = property.format;
   if (
     property.type === "array" &&
-    property.type &&
     property.items &&
-    property.type === "array" &&
     !Array.isArray(property.items) &&
     property.items.type === "object" &&
     property.items.format
