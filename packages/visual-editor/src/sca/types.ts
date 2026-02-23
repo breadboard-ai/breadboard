@@ -15,6 +15,8 @@ import {
   ConsentRequest,
   ConsentUIType,
   DataPart,
+  ErrorMetadata,
+  ErrorReason,
   GraphIdentifier,
   InlineDataCapabilityPart,
   InspectableNodePorts,
@@ -28,6 +30,9 @@ import {
   NodeTypeIdentifier,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
+
+// Re-export error types for backward compatibility
+export type { ErrorMetadata, ErrorReason };
 import {
   GuestConfiguration,
   OpalShellHostProtocol,
@@ -356,50 +361,8 @@ export type StepListStepState = {
   tags?: string[];
 };
 
-export type ErrorReason =
-  | "child"
-  | "celebrity"
-  | "unsafe"
-  | "dangerous"
-  | "hate"
-  | "other"
-  | "face"
-  | "pii"
-  | "prohibited"
-  | "sexual"
-  | "toxic"
-  | "violence"
-  | "vulgar";
-
-export type ErrorMetadata = {
-  /**
-   * Origin of the error:
-   * - client -- occured on the client (the step itself)
-   * - server -- comes from the server
-   * - system -- happened within the system (client, but outside of the step)
-   * - unknown -- origin of the error is unknown.
-   */
-  origin?: "client" | "server" | "system" | "unknown";
-  /**
-   * Kind of the error
-   * - capacity -- triggered by capacity issues (eg. quota exceeded)
-   * - safety -- triggered by a safety checker
-   * - recitation -- triggered by recitation checker.
-   * - config -- triggered by invalid configuration (can be fixed by user)
-   * - bug -- triggered by a bug in code somewhere.
-   * - unknown -- (default) unknown kind of error
-   */
-  kind?: "capacity" | "safety" | "recitation" | "config" | "bug" | "unknown";
-  /**
-   * If relevant, the name of the model, that produced the error
-   */
-  model?: string;
-  /**
-   * When kind is "safety", the reasons for triggering. There may be more than
-   * one.
-   */
-  reasons?: ErrorReason[];
-};
+// ErrorReason and ErrorMetadata are now exported from @breadboard-ai/types
+// and re-exported at the top of this file for backward compatibility.
 
 export type GraphAssetDescriptor = {
   metadata?: AssetMetadata;

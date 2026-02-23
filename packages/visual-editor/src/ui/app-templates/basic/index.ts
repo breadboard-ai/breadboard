@@ -80,6 +80,7 @@ import { isDocSlidesOrSheetsOutput } from "../../../a2/a2/utils.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { SCA } from "../../../sca/sca.js";
 import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
+import { createAICreditsUrl } from "../../../sca/utils/google-one-urls.js";
 
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -328,6 +329,42 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       console.warn("Asked to render error, but no error was found");
       return nothing;
     }
+    const errorId = crypto.randomUUID();
+    const details = [];
+
+    if (error.details) {
+      details.push({
+        action: "details",
+        title: "View details",
+        value: html`${markdown(error.details)}`,
+      });
+    }
+
+    // Add metadata-specific actions
+    const kind = error.metadata?.kind;
+    if (kind === "free-quota-exhausted" || kind === "paid-quota-exhausted") {
+      const authuser = this.sca.services.signinAdapter.authuserSignal ?? 0;
+      const url = createAICreditsUrl(authuser, "opal_error_snackbar");
+      details.push({
+        action: "link",
+        title:
+          kind === "free-quota-exhausted"
+            ? "See Google AI plans"
+            : "Add AI credits",
+        value: url,
+      });
+    }
+
+    this.dispatchEvent(
+      new SnackbarEvent(
+        errorId,
+        html`${markdown(error.message)}`,
+        SnackType.ERROR,
+        details,
+        true,
+        true
+      )
+    );
 
     const activityContents = html`<section class="error">
       <h1 class="w-700 sans-flex round md-headline-large">

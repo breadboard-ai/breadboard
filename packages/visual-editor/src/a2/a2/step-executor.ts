@@ -74,9 +74,16 @@ export type ExecuteStepRequest = {
   execution_inputs: ContentMap;
 };
 
+export type QuotaMetadata = {
+  consumedCredits?: number;
+  remainingCredits?: number;
+  warnFreeQuotaExhausted?: boolean;
+};
+
 export type ExecuteStepResponse = {
   executionOutputs: ContentMap;
   errorMessage?: string;
+  quotaMetadata?: QuotaMetadata;
 };
 
 export type ExecuteStepErrorResponse = {
@@ -316,6 +323,29 @@ export function elideEncodedData<T>(obj: T): T {
 
 function decodeMetadata($error: string, model: string): ErrorWithMetadata {
   const origin = "server";
+  // The errorMessage string from AppCat is JSON with structured error information
+  // Previous logic used fuzzy string matching to determine the kind of error
+  // This is brittle, so we're switching to a structured approach
+  try {
+    const json = JSON.parse($error);
+    if (json?.code === "RESOURCE_EXHAUSTED") {
+      return {
+        $error: json.message,
+        metadata: {
+          kind:
+            json?.error_reason === "PAID_QUOTA_EXHAUSTED"
+              ? "paid-quota-exhausted"
+              : json?.error_reason === "FREE_QUOTA_EXHAUSTED"
+                ? "free-quota-exhausted"
+                : "free-quota-exhausted",
+          origin,
+          model,
+        },
+      };
+    }
+  } catch {
+    // ignore
+  }
   const lc = $error.toLocaleLowerCase();
   if (lc.includes("safety")) {
     return { $error, metadata: { kind: "safety", origin, model } };

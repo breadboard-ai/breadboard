@@ -571,7 +571,7 @@ class Orchestrator {
       this.callbacks.stateChangedbyOrchestrator?.(
         id,
         state,
-        node.outputs?.["$error"]
+        node.outputs ?? undefined
       );
     }
   }

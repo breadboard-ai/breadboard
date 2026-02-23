@@ -6,18 +6,20 @@
 
 import {
   BreakpointSpec,
+  ErrorMetadata,
   GraphDescriptor,
   HarnessRunner,
   NodeIdentifier,
   NodeLifecycleState,
-  NodeValue,
   OrchestrationPlan,
   OrchestratorState,
   Outcome,
+  OutputValues,
   PlanNodeInfo,
   RunConfig,
   RunEventTarget,
 } from "@breadboard-ai/types";
+import { decodeErrorData } from "../../../sca/utils/decode-error.js";
 
 import { timestamp } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
@@ -161,8 +163,19 @@ class PlanRunner
   #createOrchestrator(graph: GraphDescriptor) {
     const plan = this.#planCreator(graph);
     return new Orchestrator(plan, {
-      stateChangedbyOrchestrator: (id, newState, message) => {
-        this.#dispatchNodeStateChangeEvent(id, newState, message);
+      stateChangedbyOrchestrator: (id, newState, error) => {
+        if (newState === "failed" && error) {
+          const decoded = decodeErrorData(
+            error["$error"] as string,
+            error["metadata"] as ErrorMetadata
+          );
+          this.#dispatchNodeStateChangeEvent(id, newState, {
+            $error: decoded.message,
+            metadata: decoded.metadata,
+          });
+        } else {
+          this.#dispatchNodeStateChangeEvent(id, newState);
+        }
       },
       stateChanged: (newState, info) => {
         this.#updateEdgeState(newState, info);
@@ -210,9 +223,9 @@ class PlanRunner
   #dispatchNodeStateChangeEvent(
     id: NodeIdentifier,
     state: NodeLifecycleState,
-    message?: NodeValue
+    error?: OutputValues
   ) {
-    this.dispatchEvent(new NodeStateChangeEvent({ id, state, message }));
+    this.dispatchEvent(new NodeStateChangeEvent({ id, state, error }));
   }
 
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {

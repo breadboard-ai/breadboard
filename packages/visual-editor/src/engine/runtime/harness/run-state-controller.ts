@@ -6,6 +6,8 @@
 
 import {
   BreakpointSpec,
+  ErrorMetadata,
+  ErrorObject,
   GraphDescriptor,
   NodeHandlerContext,
   NodeIdentifier,
@@ -15,6 +17,7 @@ import {
 } from "@breadboard-ai/types";
 
 import { ok, timestamp } from "@breadboard-ai/utils";
+import { decodeErrorData } from "../../../sca/utils/decode-error.js";
 import type {
   NodeInvoker,
   ConfigProvider,
@@ -63,11 +66,14 @@ class RunStateController {
     });
   }
 
-  error(error: { $error: string }): { $error: string } {
+  error(error: { $error: string; metadata?: ErrorMetadata }): {
+    $error: string;
+  } {
     this.eventSink.dispatch(
       new RunnerErrorEvent({
         error: error.$error,
         timestamp: timestamp(),
+        metadata: error.metadata,
       })
     );
     return error;
@@ -172,8 +178,21 @@ class RunStateController {
   postamble() {
     if (this.orchestrator.progress !== "finished") return;
     if (this.orchestrator.failed) {
-      // Dispatch error event so the SCA onError action can set run-level error.
-      this.error({ $error: "A step encountered an error" });
+      // Find the first failed node and extract its actual error message
+      const failedNode = Array.from(
+        this.orchestrator.fullState().entries()
+      ).find(([, state]) => state.state === "failed");
+      const outputs = failedNode?.[1].outputs;
+      const rawError = outputs?.$error as string | ErrorObject | undefined;
+      const decoded = rawError
+        ? decodeErrorData(
+            rawError,
+            outputs?.metadata as ErrorMetadata | undefined
+          )
+        : { message: "A step encountered an error" };
+      const metadata =
+        decoded.metadata ?? (outputs?.metadata as ErrorMetadata | undefined);
+      this.error({ $error: decoded.message, metadata });
     }
 
     this.eventSink.dispatch(

@@ -355,7 +355,7 @@ export class SnackbarEvent extends Event {
 
   constructor(
     public readonly snackbarId = globalThis.crypto.randomUUID(),
-    public readonly message: string,
+    public readonly message: string | HTMLTemplateResult,
     public readonly snackType: SnackType,
     public readonly actions: SnackbarAction[] = [],
     public readonly persistent = false,

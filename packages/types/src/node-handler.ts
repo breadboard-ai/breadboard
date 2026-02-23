@@ -26,7 +26,7 @@ import {
   StoredDataCapabilityPart,
 } from "./llm-content.js";
 import { Schema } from "./schema.js";
-import { SimplifiedProjectRunState } from "./state.js";
+import { ErrorMetadata, SimplifiedProjectRunState } from "./state.js";
 
 export type ErrorCapability = Capability & {
   readonly kind: "error";
@@ -276,6 +276,10 @@ export type ErrorResponse = {
   error: string | ErrorObject;
   code?: number;
   timestamp: number;
+  /**
+   * Structured metadata about the error.
+   */
+  metadata?: ErrorMetadata;
 };
 
 export interface NodeHandlerContext {
