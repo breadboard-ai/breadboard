@@ -48,18 +48,7 @@ VOICE_MAP: dict[str, str] = {
 VOICES = list(VOICE_MAP.keys())
 DEFAULT_VOICE = "Female (English)"
 
-_INSTRUCTION = f"""
-
-## When to call "{GENERATE_SPEECH_FUNCTION}" function
-
-Use this function to generate speech from text. It converts written text
-into spoken audio using text-to-speech.
-
-## When to call "{GENERATE_MUSIC_FUNCTION}" function
-
-Use this function to generate instrumental music and audio soundscapes
-based on a text prompt.
-"""
+_INSTRUCTION = ""
 
 
 # ---------------------------------------------------------------------------

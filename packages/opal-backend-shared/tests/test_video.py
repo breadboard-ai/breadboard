@@ -61,7 +61,8 @@ class TestGetVideoFunctionGroup:
         fs = AgentFileSystem()
         group = get_video_function_group(file_system=fs)
         assert group.instruction is not None
-        assert GENERATE_VIDEO_FUNCTION in group.instruction
+        # TS has no extra instruction for video functions
+        assert group.instruction == ""
 
     def test_has_declaration(self):
         fs = AgentFileSystem()

@@ -61,7 +61,8 @@ class TestGetImageFunctionGroup:
         fs = AgentFileSystem()
         group = get_image_function_group(file_system=fs)
         assert group.instruction is not None
-        assert GENERATE_IMAGES_FUNCTION in group.instruction
+        # TS has no extra instruction for image functions
+        assert group.instruction == ""
 
     def test_has_declaration(self):
         fs = AgentFileSystem()

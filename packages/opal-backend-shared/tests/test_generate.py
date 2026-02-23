@@ -136,7 +136,7 @@ class TestGenerateTextHandler:
         "opal_backend_shared.functions.generate.stream_generate_content"
     )
     async def test_skips_thought_parts(self, mock_stream):
-        """Thought parts are filtered out of the result."""
+        """Thought parts are forwarded to status, not the result."""
         chunks = [
             _make_thought_chunk("Hmm let me think..."),
             *_make_gemini_chunks(["The answer is 42"]),
@@ -146,11 +146,13 @@ class TestGenerateTextHandler:
         fs = AgentFileSystem()
         defn = _define_generate_text(file_system=fs)
 
+        statuses = []
         result = await defn.handler(
             {"prompt": "What is the answer?", "model": "pro"},
-            _noop_status,
+            statuses.append,
         )
         assert result == {"text": "The answer is 42"}
+        assert "Hmm let me think..." in statuses
 
     @pytest.mark.asyncio
     @patch(

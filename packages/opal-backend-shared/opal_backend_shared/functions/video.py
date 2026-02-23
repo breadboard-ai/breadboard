@@ -52,14 +52,7 @@ ASPECT_RATIOS = ["16:9", "9:16"]
 
 VIDEO_MODEL_NAME = "veo-3.1-generate-preview"
 
-_INSTRUCTION = f"""
-
-## When to call "{GENERATE_VIDEO_FUNCTION}" function
-
-Use this function to generate videos. It supports:
-- Text-to-Video: Generate videos from text descriptions
-- Image-to-Video: Animate a reference image with a text prompt
-"""
+_INSTRUCTION = ""
 
 
 # ---------------------------------------------------------------------------

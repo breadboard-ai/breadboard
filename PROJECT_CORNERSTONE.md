@@ -446,6 +446,12 @@ Body (resume): {interactionId, response}
 > locally works identically through the dev backend.
 
 - [ ] `MemoryManager` + `StoredData`/`FileData` resolution in Python FS
+- [ ] Status metadata plumbing — `expectedDurationInSec` from handlers → loop →
+      SSE → frontend progress bar
+- [ ] `url_context` consent flow — suspend for `queryConsent` before enabling
+      `urlContext` tool (currently auto-approved in dev)
+- [ ] Consolidate generate function groups — merge image, video, audio into one
+      group with one instruction (matching TS `generate.ts`)
 - [ ] State store for production (Redis/Firestore instead of in-memory)
 - [ ] Reconnection — client re-POSTs with last interaction ID on drop
 - [ ] Remove `LocalAgentRun` path (or keep for offline dev)

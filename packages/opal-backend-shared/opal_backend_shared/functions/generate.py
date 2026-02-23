@@ -250,10 +250,13 @@ def _define_generate_text(
                     if not part:
                         continue
                     if "text" in part:
-                        # Skip thinking/thought parts
                         if part.get("thought"):
-                            continue
-                        result_texts.append(part["text"])
+                            # Forward thought to status (TS passes
+                            # isThought metadata, but Python loop
+                            # only uses the text).
+                            status_cb(part["text"])
+                        else:
+                            result_texts.append(part["text"])
         except Exception as e:
             logger.error("generate_text streaming error: %s", e)
             return {"error": str(e)}

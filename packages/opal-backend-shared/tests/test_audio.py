@@ -61,8 +61,8 @@ class TestGetAudioFunctionGroup:
         fs = AgentFileSystem()
         group = get_audio_function_group(file_system=fs)
         assert group.instruction is not None
-        assert GENERATE_SPEECH_FUNCTION in group.instruction
-        assert GENERATE_MUSIC_FUNCTION in group.instruction
+        # TS has no extra instruction for audio functions
+        assert group.instruction == ""
 
     def test_has_both_declarations(self):
         fs = AgentFileSystem()

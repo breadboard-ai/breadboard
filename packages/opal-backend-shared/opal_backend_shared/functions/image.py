@@ -50,16 +50,7 @@ STEP_NAME = "AI Image Tool"
 OUTPUT_NAME = "generated_image"
 API_NAME = "ai_image_tool"
 
-_INSTRUCTION = f"""
-
-## When to call "{GENERATE_IMAGES_FUNCTION}" function
-
-Use this function to generate or edit images. It supports:
-- Text-to-Image: Generate images from text descriptions
-- Image + Text-to-Image: Edit or transform existing images
-- Multi-Image Composition: Combine multiple images or transfer styles
-- High-Fidelity Text Rendering: Logos, diagrams, posters with legible text
-"""
+_INSTRUCTION = ""
 
 
 # ---------------------------------------------------------------------------
