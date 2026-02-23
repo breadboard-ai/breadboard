@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it } from "node:test";
+import { describe, it, mock, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import {
   createEmptyGraphSelectionState,
@@ -20,6 +20,7 @@ import {
   generateAddEditSpecFromURL,
   generateAddEditSpecFromDescriptor,
   applyDefaultThemeInformationIfNonePresent,
+  createAppPaletteIfNeeded,
   nodeIdsFromSpec,
   MAIN_BOARD_ID,
 } from "../../src/utils/graph-utils.js";
@@ -33,6 +34,7 @@ import type {
   GraphSelectionState,
   MultiGraphSelectionState,
 } from "../../src/utils/graph-types.js";
+import { setDOM, unsetDOM } from "../fake-dom.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -1142,5 +1144,95 @@ describe("graph-utils — applyDefaultThemeInformationIfNonePresent (splash asse
       theme.splashScreen.storedData.handle,
       "https://example.com/image.png"
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createAppPaletteIfNeeded
+// ---------------------------------------------------------------------------
+
+describe("graph-utils — createAppPaletteIfNeeded", () => {
+  beforeEach(() => setDOM());
+  afterEach(() => {
+    unsetDOM();
+    mock.restoreAll();
+  });
+
+  function makeThemeGraph(
+    themeId: string,
+    themeData: Record<string, unknown>,
+    overrides: Partial<GraphDescriptor> = {}
+  ): GraphDescriptor {
+    return {
+      nodes: [],
+      edges: [],
+      metadata: {
+        visual: {
+          presentation: {
+            theme: themeId,
+            themes: { [themeId]: themeData as never },
+          },
+        },
+      },
+      ...overrides,
+    };
+  }
+
+  it("returns early when graph has no theme ID", async () => {
+    const graph: GraphDescriptor = { nodes: [], edges: [] };
+    await createAppPaletteIfNeeded(graph);
+    // No changes — no theme metadata to modify
+    assert.equal(graph.metadata, undefined);
+  });
+
+  it("returns early when theme does not exist in themes map", async () => {
+    const graph = makeThemeGraph("t1", {});
+    graph.metadata!.visual!.presentation!.themes = {}; // remove the theme
+    await createAppPaletteIfNeeded(graph);
+  });
+
+  it("returns early when theme has no splashScreen", async () => {
+    const graph = makeThemeGraph("t1", { template: "basic" });
+    await createAppPaletteIfNeeded(graph);
+  });
+
+  it("returns early when theme already has a palette", async () => {
+    const graph = makeThemeGraph("t1", {
+      splashScreen: {
+        storedData: {
+          handle: "https://example.com/img.png",
+          mimeType: "image/png",
+        },
+      },
+      palette: { some: "existing-palette" },
+    });
+    await createAppPaletteIfNeeded(graph);
+  });
+
+  it("returns early when drive: handle has no googleDriveClient", async () => {
+    const graph = makeThemeGraph("t1", {
+      splashScreen: {
+        storedData: { handle: "drive:file-id", mimeType: "image/png" },
+      },
+    });
+    // No client provided — should return early
+    await createAppPaletteIfNeeded(graph);
+    const theme = graph.metadata!.visual!.presentation!.themes!["t1"] as {
+      palette?: unknown;
+    };
+    assert.equal(theme.palette, undefined);
+  });
+
+  it("returns early when handle does not match any known pattern", async () => {
+    const graph = makeThemeGraph("t1", {
+      splashScreen: {
+        storedData: { handle: "unknown-protocol:foo", mimeType: "image/png" },
+      },
+    });
+    await createAppPaletteIfNeeded(graph);
+    const theme = graph.metadata!.visual!.presentation!.themes!["t1"] as {
+      palette?: unknown;
+    };
+    assert.equal(theme.palette, undefined);
   });
 });
