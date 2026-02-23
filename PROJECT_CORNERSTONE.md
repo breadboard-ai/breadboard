@@ -390,11 +390,11 @@ Body (resume): {interactionId, response}
 > agent calls `generate_video` → `executeStep` with Veo model → `storedData`
 > part saved to agent FS.
 
-- [ ] Port `generate_video` function (prompt + optional reference images →
+- [x] Port `generate_video` function (prompt + optional reference images →
       `executeStep` with `generate_video` API + Veo model selection)
-- [ ] Port `expandVeoError` safety-code mapping
-- [ ] Wire into dev backend `main.py`
-- [ ] Tests
+- [x] Port `expandVeoError` safety-code mapping
+- [x] Wire into dev backend `main.py`
+- [x] Tests
 
 ##### 4.7d: Speech Generation
 
