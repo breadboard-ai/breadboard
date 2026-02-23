@@ -102,6 +102,24 @@ function baz() {
   `FlagController` (frontend), and `unified-server/src/flags.ts` (backend). When
   adding/removing a flag, update all three locations plus tests.
 
+## Codemods
+
+For mechanical, multi-file, type-aware refactors, use `ts-morph` codemods in the
+`codemods/` directory at the repo root. See `codemods/README.md` for the full
+reference.
+
+```bash
+# Dry run (reports what would change):
+npx tsx codemods/run.ts <transform-name>
+
+# Apply changes:
+npx tsx codemods/run.ts <transform-name> --apply
+```
+
+Write each transform in `codemods/transforms/<name>.ts`, exporting
+`description`, `include` (globs), and `transform(file): boolean`. Prefer
+dry-run-first to scout the pattern before committing to a rewrite shape.
+
 ## Codebase Practices
 
 The `.agent/` directory contains practices and workflows. Read

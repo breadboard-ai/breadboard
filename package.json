@@ -142,6 +142,7 @@
     "lint-staged": "^16.2.7",
     "prettier": "^3.8.1",
     "syncpack": "^13.0.3",
+    "ts-morph": "^27.0.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.54.0",
     "wireit": "^0.15.0-pre.2"

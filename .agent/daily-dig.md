@@ -30,3 +30,16 @@ graph-editing agent bypasses `willCreateCycle()` via raw `EditSpec[]`, so
 agent-created cycles hit this path. Our initial hypothesis was wrong too: depth
 relaxation partially works for direct children, making the bug subtler than
 expected.
+
+### 2. The Unseen Cast
+
+|              |                                                                               |
+| ------------ | ----------------------------------------------------------------------------- |
+| **Date**     | Feb 23, 2026                                                                  |
+| **Area**     | [`sca/actions/`](../packages/visual-editor/src/sca/actions/)                  |
+| **Artifact** | [`codemods/transforms/unseen-cast.ts`](../codemods/transforms/unseen-cast.ts) |
+
+26 event-triggered actions cast `evt` to `StateEvent<T>` or `CustomEvent` with
+zero runtime safety. If trigger wiring is wrong, `.detail` silently returns
+`undefined`. Used as the proving candidate for the `ts-morph` codemod
+infrastructure spike.
