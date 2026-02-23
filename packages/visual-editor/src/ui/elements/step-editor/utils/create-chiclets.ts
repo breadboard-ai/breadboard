@@ -5,20 +5,11 @@
  */
 
 import { InspectablePort } from "@breadboard-ai/types";
-import {
-  isStoredData,
-  Template,
-  NOTEBOOKLM_TOOL_PATH,
-} from "@breadboard-ai/utils";
+import { Template, NOTEBOOKLM_TOOL_PATH } from "@breadboard-ai/utils";
 import { html, HTMLTemplateResult, nothing } from "lit";
 import { expandChiclet } from "../../../utils/expand-chiclet.js";
 import { getAssetType } from "../../../utils/mime-type.js";
-import {
-  isInlineData,
-  isLLMContent,
-  isLLMContentArray,
-  isTextCapabilityPart,
-} from "../../../../data/common.js";
+import { summarizeLLMContentValue } from "../../../../utils/summarize-llm-content.js";
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
@@ -34,36 +25,16 @@ export function createChiclets(
     return [];
   }
 
-  let { value } = port;
+  const { value } = port;
   if (value === null || value === undefined) {
     return [];
   }
 
   let valStr = "";
   if (typeof value === "object") {
-    if (isLLMContent(value)) {
-      value = [value];
-    }
-
-    if (isLLMContentArray(value)) {
-      const firstValue = value[0];
-      if (firstValue) {
-        const firstPart = firstValue.parts[0];
-        if (isTextCapabilityPart(firstPart)) {
-          valStr = firstPart.text;
-          if (valStr === "") {
-            valStr = "(empty text)";
-          }
-        } else if (isInlineData(firstPart)) {
-          valStr = firstPart.inlineData.mimeType;
-        } else if (isStoredData(firstPart)) {
-          valStr = firstPart.storedData.mimeType;
-        } else {
-          valStr = "LLM Content Part";
-        }
-      } else {
-        valStr = "0 items";
-      }
+    const summary = summarizeLLMContentValue(value);
+    if (summary !== null) {
+      valStr = summary;
     } else if (Array.isArray(value)) {
       valStr = `${value.length} item${value.length === 1 ? "" : "s"}`;
     } else if ("preview" in value) {

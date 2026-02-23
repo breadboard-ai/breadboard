@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-type SerilializedMap = {
+type SerializedMap = {
   __type: "Map";
   value: [unknown, unknown][];
 };
-type SerilializedSet = {
+type SerializedSet = {
   __type: "Set";
   value: unknown[];
 };
 
-type SerilializedMapSet = SerilializedMap | SerilializedSet;
+type SerializedMapSet = SerializedMap | SerializedSet;
 
-export function jsonReplacer(_key: string, value: SerilializedMapSet) {
+export function jsonReplacer(_key: string, value: SerializedMapSet) {
   if (value instanceof Map) {
     return { __type: "Map", value: Array.from(value.entries()) };
   }
@@ -25,7 +25,7 @@ export function jsonReplacer(_key: string, value: SerilializedMapSet) {
   return value;
 }
 
-export function jsonReviver(_key: string, value: SerilializedMapSet) {
+export function jsonReviver(_key: string, value: SerializedMapSet) {
   if (value && typeof value === "object" && value.__type === "Map") {
     return new Map(value.value);
   }

@@ -5,18 +5,13 @@
  */
 
 import { InspectablePort } from "@breadboard-ai/types";
-import { isStoredData, Template } from "@breadboard-ai/utils";
+import { Template } from "@breadboard-ai/utils";
 import {
   isConfigurableBehavior,
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
 } from "../../../utils/index.js";
-import {
-  isInlineData,
-  isLLMContent,
-  isLLMContentArray,
-  isTextCapabilityPart,
-} from "../../../../data/common.js";
+import { summarizeLLMContentValue } from "../../../../utils/summarize-llm-content.js";
 
 export { truncateString, createTruncatedValue };
 
@@ -126,29 +121,9 @@ function createTruncatedValue(port: InspectablePort | null) {
 
   let valStr = "";
   if (typeof value === "object") {
-    if (isLLMContent(value)) {
-      value = [value];
-    }
-
-    if (isLLMContentArray(value)) {
-      const firstValue = value[0];
-      if (firstValue) {
-        const firstPart = firstValue.parts[0];
-        if (isTextCapabilityPart(firstPart)) {
-          valStr = firstPart.text;
-          if (valStr === "") {
-            valStr = "(Empty)";
-          }
-        } else if (isInlineData(firstPart)) {
-          valStr = firstPart.inlineData.mimeType;
-        } else if (isStoredData(firstPart)) {
-          valStr = firstPart.storedData.mimeType;
-        } else {
-          valStr = "LLM Content Part";
-        }
-      } else {
-        valStr = "0 items";
-      }
+    const summary = summarizeLLMContentValue(value, "(Empty)");
+    if (summary !== null) {
+      valStr = summary;
     } else if (Array.isArray(value)) {
       valStr = `${value.length} item${value.length === 1 ? "" : "s"}`;
     } else if ("preview" in value) {

@@ -6,6 +6,7 @@
 
 import type { Edge, NodeDescriptor } from "@breadboard-ai/types";
 import { changeNodeConfiguration } from "../../../sca/actions/graph/graph-actions.js";
+import { groupBy } from "../../../utils/group-by.js";
 
 export { layoutGraph, computePositions };
 
@@ -92,11 +93,11 @@ function computePositions(
   }
 
   // Group nodes by depth
-  const byDepth = new Map<number, string[]>();
-  for (const [id, d] of depth) {
-    if (!byDepth.has(d)) byDepth.set(d, []);
-    byDepth.get(d)!.push(id);
-  }
+  const byDepth = groupBy(
+    depth,
+    ([_id, d]) => d,
+    ([id]) => id
+  );
 
   // Assign positions
   const positions = new Map<string, { x: number; y: number }>();

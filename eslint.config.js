@@ -30,6 +30,10 @@ import noCrossActionImports from "./packages/visual-editor/eslint-rules/no-cross
 import noDynamicImportsInSca from "./packages/visual-editor/eslint-rules/no-dynamic-imports-in-sca.js";
 import noDirectScaImports from "./packages/visual-editor/eslint-rules/no-direct-sca-imports.js";
 
+// Déjà Code rules — detect inline reimplementations of existing utilities
+import dejaCodePreferGroupBy from "./packages/visual-editor/eslint-rules/deja-code-prefer-group-by.js";
+import dejaCodePreferSummarizeLLMContent from "./packages/visual-editor/eslint-rules/deja-code-prefer-summarize-llm-content.js";
+
 // Create local rules plugin
 const localRulesPlugin = {
   meta: {
@@ -39,7 +43,8 @@ const localRulesPlugin = {
   rules: {
     "sca-consume-type": scaConsumeType,
     "sca-consume-requires-signalwatcher": scaConsumeRequiresSignalwatcher,
-    "field-decorator-only-on-root-controller": fieldDecoratorOnlyOnRootController,
+    "field-decorator-only-on-root-controller":
+      fieldDecoratorOnlyOnRootController,
     "no-optional-chaining-on-sca-controller": noOptionalChainingOnScaController,
     "effect-requires-dispose": effectRequiresDispose,
     "field-deep-for-arrays": fieldDeepForArrays,
@@ -52,6 +57,9 @@ const localRulesPlugin = {
     "no-cross-action-imports": noCrossActionImports,
     "no-dynamic-imports-in-sca": noDynamicImportsInSca,
     "no-direct-sca-imports": noDirectScaImports,
+    // Déjà Code
+    "deja-code-prefer-group-by": dejaCodePreferGroupBy,
+    "deja-code-prefer-summarize-llm-content": dejaCodePreferSummarizeLLMContent,
   },
 };
 
@@ -114,6 +122,10 @@ export default tseslint.config(
       "local-rules/no-cross-action-imports": "error",
       "local-rules/no-dynamic-imports-in-sca": "error",
       "local-rules/no-direct-sca-imports": "error",
+
+      // Déjà Code — flag inline reimplementations of shared utilities
+      "local-rules/deja-code-prefer-group-by": "error",
+      "local-rules/deja-code-prefer-summarize-llm-content": "error",
 
       // expect-type rules (requires type information)
       "expect-type/expect": "error",

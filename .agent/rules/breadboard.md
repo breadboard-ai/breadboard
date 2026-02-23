@@ -102,6 +102,18 @@ function baz() {
   `FlagController` (frontend), and `unified-server/src/flags.ts` (backend). When
   adding/removing a flag, update all three locations plus tests.
 
+## Codebase Practices
+
+The `.agent/` directory contains practices and workflows. Read
+`.agent/README.md` for the full index.
+
+- **Daily Dig** (`/daily-dig`) — proactive bug hunts. Scout an area, find bugs,
+  name them, write tests.
+- **Déjà Code** (`/deja-code`) — detect repeated multi-statement patterns and
+  pave them with shared utilities + ESLint rules that error when the inline
+  pattern reappears. ESLint rules are prefixed `deja-code-*` in
+  `packages/visual-editor/eslint-rules/`.
+
 ## Tests
 
 Use Node's built-in test framework (`node:test`). Tests run in Node, not a

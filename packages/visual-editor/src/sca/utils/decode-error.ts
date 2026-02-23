@@ -42,7 +42,7 @@ const AUDIO_MEDIUM: Readonly<Medium> = {
 };
 
 const POLICY_PREAMBLE =
-  "This prompt might volate our policies about generating";
+  "This prompt might violate our policies about generating";
 
 const NEW_PROMPT_POSTAMBLE = "Please try a different prompt or send feedback.";
 
