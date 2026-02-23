@@ -1727,6 +1727,10 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         this.#edited = true;
         this.#setPendingEditFromForm();
       }}
+      @change=${() => {
+        this.#edited = true;
+        this.#setPendingEditFromForm();
+      }}
     >
       ${value}
     </form>`;
