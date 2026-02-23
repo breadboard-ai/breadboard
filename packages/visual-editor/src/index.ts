@@ -112,7 +112,7 @@ class Main extends MainBase {
       `,
       BreadboardUI.Types.SnackType.WARNING,
       [],
-      true
+      false // persistent
     );
   }
 

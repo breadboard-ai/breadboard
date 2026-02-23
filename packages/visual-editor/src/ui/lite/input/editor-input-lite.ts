@@ -213,7 +213,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
             },
           },
         ],
-        true,
+        true, // persistent
         true
       )
     );

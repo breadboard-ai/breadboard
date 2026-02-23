@@ -16,7 +16,7 @@ import { consume } from "@lit/context";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
-const DEFAULT_TIMEOUT = 8000;
+const DEFAULT_TIMEOUT = 10000;
 
 @customElement("bb-snackbar")
 export class Snackbar extends SignalWatcher(LitElement) {

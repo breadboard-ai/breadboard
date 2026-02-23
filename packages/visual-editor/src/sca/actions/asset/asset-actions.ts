@@ -296,7 +296,7 @@ export const onAddAssets = asAction(
         "Processing assets, please wait...",
         SnackType.PENDING,
         [],
-        true,
+        false, // persistent
         snackbarId,
         true
       );
@@ -351,7 +351,7 @@ export const onAddAssets = asAction(
         "Processed assets",
         SnackType.INFORMATION,
         [],
-        false,
+        false, // persistent
         snackbarId,
         true
       );

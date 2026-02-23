@@ -115,7 +115,7 @@ export const save = asAction(
         messages.start,
         SnackType.PENDING,
         [],
-        true, // persistent
+        false, // persistent
         undefined,
         true // replaceAll
       );
@@ -127,7 +127,7 @@ export const save = asAction(
 
       // Update snackbar on success
       if (snackbarId && messages) {
-        snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
+        snackbars.update(snackbarId, messages.end, SnackType.INFORMATION, false);
       }
 
       return result;
@@ -173,7 +173,7 @@ export const saveAs = asAction(
       messages.start,
       SnackType.PENDING,
       [],
-      true, // persistent
+      false, // persistent
       undefined,
       true // replaceAll
     );
@@ -182,7 +182,7 @@ export const saveAs = asAction(
 
     const boardServer = services.googleDriveBoardServer;
     if (!boardServer) {
-      snackbars.update(snackbarId, messages.error, SnackType.ERROR);
+      snackbars.update(snackbarId, messages.error, SnackType.ERROR, true);
       return fail;
     }
 
@@ -202,7 +202,7 @@ export const saveAs = asAction(
       );
 
       if (!createResult.url) {
-        snackbars.update(snackbarId, messages.error, SnackType.ERROR);
+        snackbars.update(snackbarId, messages.error, SnackType.ERROR, true);
         return fail;
       }
 
@@ -266,7 +266,7 @@ async function remixImpl(
     messages.start,
     SnackType.PENDING,
     [],
-    true,
+    false, // persistent
     undefined,
     true // Replace existing snackbars.
   );
@@ -297,7 +297,7 @@ async function remixImpl(
         messages.error,
         SnackType.ERROR,
         [],
-        false,
+        false, // persistent
         undefined,
         true
       );
@@ -348,7 +348,7 @@ async function deleteBoardImpl(
     messages.start,
     SnackType.PENDING,
     [],
-    true, // persistent
+    false, // persistent
     undefined,
     true // replaceAll
   );
@@ -357,14 +357,14 @@ async function deleteBoardImpl(
 
   const boardServer = services.googleDriveBoardServer;
   if (!boardServer) {
-    snackbars.update(snackbarId, messages.error, SnackType.ERROR);
+    snackbars.update(snackbarId, messages.error, SnackType.ERROR, true);
     return fail;
   }
 
   const result = await boardServer.delete(new URL(url));
 
   // Update snackbar with success message
-  snackbars.update(snackbarId, messages.end, SnackType.INFORMATION);
+  snackbars.update(snackbarId, messages.end, SnackType.INFORMATION, false);
 
   return result;
 }
@@ -601,7 +601,7 @@ export const showNewerVersionSnackbar = asAction(
       "A newer version of this board is available",
       SnackType.INFORMATION,
       [],
-      true, // persistent
+      false, // persistent
       globalThis.crypto.randomUUID() as SnackbarUUID,
       true // replaceAll
     );
