@@ -440,7 +440,7 @@ export const load = asAction(
     // 1. Resolve URL relative to current board
     const resolvedUrl = Helpers.resolveUrl(url, options.baseUrl ?? null);
 
-    if (!resolvedUrl || !Helpers.canParse(resolvedUrl)) {
+    if (!resolvedUrl || !URL.canParse(resolvedUrl)) {
       logger.log(Utils.Logging.Formatter.warning(`Invalid URL: ${url}`), LABEL);
       return { success: false, reason: "invalid-url" };
     }

@@ -34,6 +34,7 @@ import noDirectScaImports from "./packages/visual-editor/eslint-rules/no-direct-
 import dejaCodePreferGroupBy from "./packages/visual-editor/eslint-rules/deja-code-prefer-group-by.js";
 import dejaCodePreferSummarizeLLMContent from "./packages/visual-editor/eslint-rules/deja-code-prefer-summarize-llm-content.js";
 import dejaCodePreferFormatError from "./packages/visual-editor/eslint-rules/deja-code-prefer-format-error.js";
+import dejaCodePreferCanParse from "./packages/visual-editor/eslint-rules/deja-code-prefer-can-parse.js";
 
 // Create local rules plugin
 const localRulesPlugin = {
@@ -62,6 +63,7 @@ const localRulesPlugin = {
     "deja-code-prefer-group-by": dejaCodePreferGroupBy,
     "deja-code-prefer-summarize-llm-content": dejaCodePreferSummarizeLLMContent,
     "deja-code-prefer-format-error": dejaCodePreferFormatError,
+    "deja-code-prefer-can-parse": dejaCodePreferCanParse,
   },
 };
 
@@ -129,6 +131,7 @@ export default tseslint.config(
       "local-rules/deja-code-prefer-group-by": "error",
       "local-rules/deja-code-prefer-summarize-llm-content": "error",
       "local-rules/deja-code-prefer-format-error": "error",
+      "local-rules/deja-code-prefer-can-parse": "error",
 
       // expect-type rules (requires type information)
       "expect-type/expect": "error",

@@ -143,31 +143,9 @@ function tryParsingJson(s: string) {
   }
 }
 
-// We do this unusual concatenation to bamboozle TypeScript. If we just check
-// for the presence of 'canParse' in URL then the else case assumes we're
-// dealing with the nodejs version of URL, which isn't necessarily the case; we
-// could just as well be dealing with an older browser version. So we do this
-// concatenation which is functionally inert but which means the TypeScript
-// compiler continues to work on the assumption that it's a browser URL.
-const cP = "" + "canParse";
 function isUrl(urlLike: string, base?: string): boolean {
-  const maybeFragment = urlLike.startsWith("#");
-
-  if (cP in URL) {
-    if (maybeFragment) {
-      return URL.canParse(urlLike, base);
-    }
-    return URL.canParse(urlLike);
+  if (urlLike.startsWith("#")) {
+    return URL.canParse(urlLike, base);
   }
-
-  try {
-    if (maybeFragment) {
-      new URL(urlLike, base);
-    } else {
-      new URL(urlLike);
-    }
-    return true;
-  } catch {
-    return false;
-  }
+  return URL.canParse(urlLike);
 }

@@ -7,24 +7,26 @@
 import assert from "node:assert";
 import { suite, test } from "node:test";
 import {
-  canParse,
   resolveUrl,
   addResourceKeyIfPresent,
 } from "../../../../../src/sca/actions/board/helpers/resolve-url.js";
 
 suite("resolve-url helpers", () => {
-  suite("canParse", () => {
+  suite("URL.canParse", () => {
     test("returns true for valid absolute URL", () => {
-      assert.strictEqual(canParse("https://example.com/board.json"), true);
+      assert.strictEqual(URL.canParse("https://example.com/board.json"), true);
     });
 
     test("returns true for valid relative URL with base", () => {
-      assert.strictEqual(canParse("board.json", "https://example.com/"), true);
+      assert.strictEqual(
+        URL.canParse("board.json", "https://example.com/"),
+        true
+      );
     });
 
     test("returns false for invalid URL", () => {
       // Empty string with no base should fail
-      assert.strictEqual(canParse("", undefined), false);
+      assert.strictEqual(URL.canParse("", undefined), false);
     });
   });
 

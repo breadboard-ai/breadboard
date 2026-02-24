@@ -8,11 +8,7 @@ import type { AppController } from "../../../controller/controller.js";
 import type { AppServices } from "../../../services/services.js";
 import { parseUrl } from "../../../../ui/navigation/urls.js";
 
-export {
-  canParse,
-  resolveUrl,
-  addResourceKeyIfPresent,
-} from "./resolve-url.js";
+export { resolveUrl, addResourceKeyIfPresent } from "./resolve-url.js";
 export {
   canLoad,
   loadGraph,

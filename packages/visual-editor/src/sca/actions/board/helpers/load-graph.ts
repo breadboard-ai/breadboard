@@ -10,7 +10,7 @@ import type {
   GraphLoader,
 } from "@breadboard-ai/types";
 import type { SigninAdapter } from "../../../../ui/utils/signin-adapter.js";
-import { canParse, addResourceKeyIfPresent } from "./resolve-url.js";
+import { addResourceKeyIfPresent } from "./resolve-url.js";
 
 export type { CanLoadResult, LoadGraphResult };
 
@@ -43,7 +43,7 @@ export function canLoad(
   const base = globalThis.location?.href;
 
   // First check if it's a valid absolute URL
-  if (!canParse(url) && !canParse(url, base)) {
+  if (!URL.canParse(url) && !URL.canParse(url, base)) {
     return { canLoad: false, reason: "invalid-url" };
   }
 

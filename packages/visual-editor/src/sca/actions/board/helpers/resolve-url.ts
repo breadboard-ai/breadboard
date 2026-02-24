@@ -7,28 +7,6 @@
 import { getLogger, Formatter } from "../../../utils/logging/logger.js";
 
 /**
- * Checks if a URL can be parsed, handling older browsers that don't have URL.canParse().
- *
- * @param url The URL to check
- * @param base Optional base URL for relative URLs
- * @returns True if the URL can be parsed
- */
-export function canParse(url: string, base?: string): boolean {
-  // TypeScript assumes that if `canParse` does not exist, then URL is
-  // `never`. However, in older browsers that's not true.
-  if ("c" + "anParse" in URL) {
-    return URL.canParse(url, base);
-  }
-
-  try {
-    new URL(url, base);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Resolves a board URL relative to the current board's URL.
  *
  * @param boardUrl The URL to resolve (may be relative or absolute)
@@ -45,7 +23,7 @@ export function resolveUrl(
 
   // If the URL can be fully parsed on its own and we have a base,
   // try to resolve it relative to the current board
-  if (canParse(boardUrl) && currentUrl) {
+  if (URL.canParse(boardUrl) && currentUrl) {
     try {
       const base = new URL(currentUrl);
       const resolved = new URL(boardUrl, base);
