@@ -130,7 +130,7 @@ function setScreenDuration(screen: AppScreen, duration: number): void {
 
 /**
  * Recomputes `progressCompletion` on an AppScreen from the current time.
- * Call this periodically (e.g. from a `setInterval`) while there are
+ * Call this periodically (e.g. from a recursive `setTimeout`) while there are
  * active screens with a positive `expectedDuration`.
  *
  * @param screen - The app screen to tick

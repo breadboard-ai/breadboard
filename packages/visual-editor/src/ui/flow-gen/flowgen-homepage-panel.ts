@@ -173,23 +173,26 @@ export class FlowgenHomepagePanel extends SignalWatcher(LitElement) {
     Math.random() * SAMPLE_INTENTS.length
   );
 
-  #rotateSampleIntentTimerId?: ReturnType<typeof setInterval>;
+  #rotateSampleIntentTimerId?: ReturnType<typeof setTimeout>;
 
   readonly #descriptionInput = createRef<ExpandingTextarea>();
 
+  #scheduleIntentRotation() {
+    this.#rotateSampleIntentTimerId = setTimeout(() => {
+      this.#sampleIntentIndex =
+        (this.#sampleIntentIndex + 1) % SAMPLE_INTENTS.length;
+      this.#scheduleIntentRotation();
+    }, SAMPLE_INTENTS_ROTATION_MS);
+  }
+
   override connectedCallback() {
     super.connectedCallback();
-    this.#rotateSampleIntentTimerId = setInterval(
-      () =>
-        (this.#sampleIntentIndex =
-          (this.#sampleIntentIndex + 1) % SAMPLE_INTENTS.length),
-      SAMPLE_INTENTS_ROTATION_MS
-    );
+    this.#scheduleIntentRotation();
   }
 
   override disconnectedCallback() {
     super.disconnectedCallback();
-    clearInterval(this.#rotateSampleIntentTimerId);
+    clearTimeout(this.#rotateSampleIntentTimerId);
     this.#rotateSampleIntentTimerId = undefined;
   }
 

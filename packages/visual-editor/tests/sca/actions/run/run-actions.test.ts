@@ -3146,7 +3146,7 @@ suite("progress ticker lifecycle", () => {
       "status should be RUNNING after start"
     );
 
-    // Wait enough for at least one tick (setInterval 250ms)
+    // Wait enough for at least one tick (recursive setTimeout 250ms)
     await new Promise((r) => setTimeout(r, 300));
 
     // Fire end — should clear the ticker
@@ -3182,6 +3182,47 @@ suite("progress ticker lifecycle", () => {
       controller.run.main.status,
       STATUS.STOPPED,
       "status should be STOPPED after error"
+    );
+  });
+
+  test("calling onStart twice does not leak a second ticker", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller);
+    RunActions.prepare();
+
+    // Add a screen with expectedDuration so ticks are visible.
+    const screen = createAppScreen("node-1", undefined);
+    screen.expectedDuration = 10;
+    (screen as { lastSetDurationTimestamp: number }).lastSetDurationTimestamp =
+      performance.now();
+    screen.progressCompletion = 0;
+    controller.run.screen.setScreen("node-1", screen);
+
+    // Fire start TWICE — the second call should cancel the first ticker.
+    await RunActions.onStart();
+    await RunActions.onStart();
+
+    // Let ticks happen (recursive setTimeout at 250ms).
+    await new Promise((r) => setTimeout(r, 600));
+
+    // Stop to clear the ticker.
+    await RunActions.onEnd();
+
+    // Snapshot progress and wait to confirm it stopped.
+    const afterStop = screen.progressCompletion;
+    await new Promise((r) => setTimeout(r, 600));
+
+    assert.strictEqual(
+      screen.progressCompletion,
+      afterStop,
+      "progress should stop advancing after onEnd (no leaked ticker)"
     );
   });
 });

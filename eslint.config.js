@@ -37,6 +37,7 @@ import dejaCodePreferSummarizeLLMContent from "./packages/visual-editor/eslint-r
 import dejaCodePreferFormatError from "./packages/visual-editor/eslint-rules/deja-code-prefer-format-error.js";
 import dejaCodePreferCanParse from "./packages/visual-editor/eslint-rules/deja-code-prefer-can-parse.js";
 import dejaCodePreferRouterNavigate from "./packages/visual-editor/eslint-rules/deja-code-prefer-router-navigate.js";
+import noSetInterval from "./packages/visual-editor/eslint-rules/no-setinterval.js";
 
 // Create local rules plugin
 const localRulesPlugin = {
@@ -68,6 +69,7 @@ const localRulesPlugin = {
     "deja-code-prefer-format-error": dejaCodePreferFormatError,
     "deja-code-prefer-can-parse": dejaCodePreferCanParse,
     "deja-code-prefer-router-navigate": dejaCodePreferRouterNavigate,
+    "no-setinterval": noSetInterval,
   },
 };
 
@@ -138,6 +140,7 @@ export default tseslint.config(
       "local-rules/deja-code-prefer-format-error": "error",
       "local-rules/deja-code-prefer-can-parse": "error",
       "local-rules/deja-code-prefer-router-navigate": "error",
+      "local-rules/no-setinterval": "error",
 
       // expect-type rules (requires type information)
       "expect-type/expect": "error",

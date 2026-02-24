@@ -10,4 +10,7 @@ export { now };
 
 const now = new Signal.State(performance.now());
 
+// Global lifetime clock with no natural stop. Recursive setTimeout would
+// create active refs on each tick, preventing Node from exiting after tests.
+// eslint-disable-next-line local-rules/no-setinterval
 setInterval(() => now.set(performance.now()), 500);

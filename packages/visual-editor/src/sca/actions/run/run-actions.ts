@@ -5,6 +5,7 @@
  */
 
 import type {
+  AppScreen,
   ConsoleEntry,
   ErrorObject,
   NodeLifecycleState,
@@ -193,9 +194,20 @@ export const prepare = asAction(
 
 /**
  * Module-level progress ticker handle, shared between onStart (creates it)
- * and onEnd/onError (clears it).
+ * and onEnd/onError (clears it). Uses recursive setTimeout instead of
+ * setInterval to avoid leaked-interval bugs when start fires twice.
  */
-let progressTickerHandle: ReturnType<typeof setInterval> | null = null;
+let progressTickerHandle: ReturnType<typeof setTimeout> | null = null;
+
+/** Ticks all active screens and schedules the next tick via setTimeout. */
+function scheduleProgressTick(screens: Map<string, AppScreen>) {
+  progressTickerHandle = setTimeout(() => {
+    for (const screen of screens.values()) {
+      tickScreenProgress(screen);
+    }
+    scheduleProgressTick(screens);
+  }, 250);
+}
 
 /**
  * Runner "start" — sets status to RUNNING and starts the progress ticker.
@@ -217,12 +229,11 @@ export const onStart = asAction(
       "Run Actions"
     );
 
-    // Start ticking progress every 250ms
-    progressTickerHandle = setInterval(() => {
-      for (const screen of controller.run.screen.screens.values()) {
-        tickScreenProgress(screen);
-      }
-    }, 250);
+    // Clear any leaked ticker before starting a new one.
+    if (progressTickerHandle) {
+      clearTimeout(progressTickerHandle);
+    }
+    scheduleProgressTick(controller.run.screen.screens);
   }
 );
 
@@ -281,7 +292,7 @@ export const onEnd = asAction(
     const { controller } = bind;
     controller.run.main.setStatus(STATUS.STOPPED);
     if (progressTickerHandle) {
-      clearInterval(progressTickerHandle);
+      clearTimeout(progressTickerHandle);
       progressTickerHandle = null;
     }
     controller.run.main.clearInput();
