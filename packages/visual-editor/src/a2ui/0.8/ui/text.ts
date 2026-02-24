@@ -69,7 +69,6 @@ export class Text extends Root {
 
       :host([usage-hint="input-prompt"]) section {
         font-family: var(--a2ui-text-input-prompt-font-family);
-        text-align: var(--a2ui-text-input-prompt-text-align);
         font-variation-settings: var(--a2ui-text-input-prompt-font-variation);
         font-weight: var(--a2ui-text-input-prompt-font-weight);
         margin: 0;
@@ -78,6 +77,10 @@ export class Text extends Root {
         font-style: normal;
         align-self: normal;
         margin-bottom: var(--a2ui-spacing-2);
+      }
+
+      :host([usage-hint="input-prompt"]) h1 {
+        text-align: var(--a2ui-text-input-prompt-text-align);
       }
 
       :host([usage-hint="h2"]) section,
@@ -202,9 +205,20 @@ export class Text extends Root {
 
     switch (this.usageHint) {
       case "h1":
-      case "input-prompt":
         text = `# ${text}`;
         break;
+      case "input-prompt": {
+        // If the text already has markdown headings (agent-generated),
+        // render as-is — the CSS will center H1s. Otherwise wrap as
+        // H1 for standard input prompts.
+        const hasHeading = text
+          .split("\n")
+          .some((line) => /^#{1,6}\s/.test(line));
+        if (!hasHeading) {
+          text = `# ${text}`;
+        }
+        break;
+      }
       case "h2":
         text = `## ${text}`;
         break;
