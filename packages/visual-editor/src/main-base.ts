@@ -694,7 +694,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "dismiss": {
-            this.sca.controller.run.main.dismissError();
+            // NOOP.
             break;
           }
         }
