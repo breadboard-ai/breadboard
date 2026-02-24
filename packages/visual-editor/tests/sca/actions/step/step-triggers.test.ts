@@ -477,5 +477,59 @@ suite("Step Triggers", () => {
 
       assert.strictEqual(trigger.name, "Graph Change (Memory)");
     });
+
+    test("produces unique stamp per graph URL (no Sticky Trigger)", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              url: "drive:/abc",
+              agentModeTools: new Set(["function-group/use-memory"]),
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphChangeWithMemory(mockBind as never);
+
+      const result1 = trigger.condition();
+      assert.strictEqual(result1, "drive:/abc");
+
+      // Switch to a different graph
+      mockBind.controller.editor.graph.url = "drive:/xyz";
+      const result2 = trigger.condition();
+      assert.strictEqual(result2, "drive:/xyz");
+
+      // Each URL is unique — no Sticky Trigger
+      assert.notStrictEqual(result1, result2);
+    });
+
+    test("returns false when board is closed (intentional falsy)", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              url: "drive:/abc" as string | null,
+              agentModeTools: new Set(["function-group/use-memory"]),
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphChangeWithMemory(mockBind as never);
+
+      // Graph is loaded — truthy
+      assert.ok(trigger.condition());
+
+      // Board closed — URL cleared
+      mockBind.controller.editor.graph.url = null;
+      assert.strictEqual(
+        trigger.condition(),
+        false,
+        "Should return false when graph URL is null (board closed)"
+      );
+    });
   });
 });

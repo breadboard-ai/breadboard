@@ -848,7 +848,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       styles["--splash-image"] = this.options.splashImage;
     }
 
-    if (!this.options.title) {
+    const graphTitle = this.sca.controller.editor.graph.title;
+    const graphDescription =
+      this.sca.controller.editor.graph.graph?.description ?? "";
+
+    if (!graphTitle) {
       if (this.sca.controller.run.main.status === "stopped") {
         return html`<section
           class=${classMap(classes)}
@@ -895,7 +899,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 return;
               }
               const newTitle = evt.target.textContent.trim();
-              if (newTitle === this.options.title) {
+              if (newTitle === graphTitle) {
                 return;
               }
               this.dispatchEvent(
@@ -906,7 +910,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerText=${this.isFreshGraph ? "..." : this.options.title}
+            .innerText=${this.isFreshGraph ? "..." : graphTitle}
           ></h1>
           <p
             ?contenteditable=${editable}
@@ -922,10 +926,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 return;
               }
 
-              if (this.readOnly) {
-                return;
-              }
-
               if (
                 !(evt.target instanceof HTMLElement) ||
                 !evt.target.textContent
@@ -934,7 +934,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               }
 
               const newDescription = evt.target.textContent.trim();
-              if (newDescription === this.options.description) {
+              if (newDescription === graphDescription) {
                 return;
               }
 
@@ -946,9 +946,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerText=${this.isFreshGraph
-              ? "..."
-              : (this.options.description ?? "")}
+            .innerText=${this.isFreshGraph ? "..." : graphDescription}
           ></p>
           <div id="input" class="stopped">
             <div id="run-container">

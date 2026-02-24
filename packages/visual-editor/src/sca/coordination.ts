@@ -676,20 +676,34 @@ class CoordinationRegistry {
               );
             });
           } else {
-            // Warn when a truthy → falsy transition is silently swallowed.
-            // This is the Sticky Trigger Hazard: the developer likely expects
-            // the action to fire on *any* change, but signalTrigger only fires
-            // on truthy values. Nudge them toward a sentinel pattern.
+            // Two distinct non-firing cases, both logged at verbose level.
+            // Runtime detection is useful for initial discovery, but the
+            // ongoing safety net is unit tests (see *-triggers.test.ts files
+            // for "no Sticky Trigger" regression tests).
             if (previousValue) {
-              this.#logger.log(
-                Utils.Logging.Formatter.warning(
-                  `Signal trigger "${trigger.name}" went from truthy to ` +
-                    `falsy. The action "${actionName}" will NOT fire. If the ` +
-                    `action should fire on all changes, return a sentinel ` +
-                    `value instead (e.g., return value ?? "∅").`
-                ),
-                LABEL
-              );
+              if (!value) {
+                // Truthy → falsy: normal lifecycle (board close, readOnly
+                // toggle, presence-based trigger going silent).
+                this.#logger.log(
+                  Utils.Logging.Formatter.verbose(
+                    `Signal trigger "${trigger.name}" went from truthy to ` +
+                      `falsy. The action "${actionName}" will not fire. ` +
+                      `(This is expected during lifecycle transitions.)`
+                  ),
+                  LABEL
+                );
+              } else {
+                // Same truthy value re-evaluated: signal noise (e.g., @field
+                // setter fired without the underlying value changing).
+                this.#logger.log(
+                  Utils.Logging.Formatter.verbose(
+                    `Signal trigger "${trigger.name}" returned the same ` +
+                      `truthy value. The action "${actionName}" will not ` +
+                      `re-fire. (Same value = no change = no action.)`
+                  ),
+                  LABEL
+                );
+              }
             }
             previousValue = value;
           }

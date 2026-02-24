@@ -9,6 +9,7 @@ import assert from "node:assert";
 import {
   onGraphVersionForSync,
   onNodeActionRequested,
+  onTopologyChange,
 } from "../../../../src/sca/actions/run/triggers.js";
 
 suite("Run Triggers", () => {
@@ -84,6 +85,121 @@ suite("Run Triggers", () => {
       const result = trigger.condition();
 
       assert.strictEqual(result, 1, "Should return 1 for version 0");
+    });
+
+    test("produces unique value per version bump (no Sticky Trigger)", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              version: 0,
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onGraphVersionForSync(mockBind as never);
+      const results: unknown[] = [];
+
+      for (let v = 0; v <= 5; v++) {
+        mockBind.controller.editor.graph.version = v;
+        results.push(trigger.condition());
+      }
+
+      assert.ok(
+        results.every((r) => r),
+        "All results should be truthy"
+      );
+
+      const unique = new Set(results);
+      assert.strictEqual(
+        unique.size,
+        results.length,
+        `All ${results.length} values should be unique, got: ${JSON.stringify(results)}`
+      );
+    });
+  });
+
+  suite("onTopologyChange", () => {
+    test("returns topologyVersion + 1", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              topologyVersion: 3,
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onTopologyChange(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(result, 4, "Should return topologyVersion + 1");
+    });
+
+    test("returns 1 for topologyVersion 0", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              topologyVersion: 0,
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onTopologyChange(mockBind as never);
+      const result = trigger.condition();
+
+      assert.strictEqual(result, 1, "Should return 1 for topologyVersion 0");
+    });
+
+    test("produces unique value per topology bump (no Sticky Trigger)", () => {
+      const mockBind = {
+        controller: {
+          editor: {
+            graph: {
+              topologyVersion: 0,
+            },
+          },
+        },
+        services: {},
+      };
+
+      const trigger = onTopologyChange(mockBind as never);
+      const results: unknown[] = [];
+
+      for (let v = 0; v <= 5; v++) {
+        mockBind.controller.editor.graph.topologyVersion = v;
+        results.push(trigger.condition());
+      }
+
+      assert.ok(
+        results.every((r) => r),
+        "All results should be truthy"
+      );
+
+      const unique = new Set(results);
+      assert.strictEqual(
+        unique.size,
+        results.length,
+        `All ${results.length} values should be unique, got: ${JSON.stringify(results)}`
+      );
+    });
+
+    test("has correct trigger name", () => {
+      const mockBind = {
+        controller: { editor: { graph: { topologyVersion: 0 } } },
+        services: {},
+      };
+
+      const trigger = onTopologyChange(mockBind as never);
+
+      assert.strictEqual(trigger.name, "Topology Change (Re-prepare)");
     });
   });
 

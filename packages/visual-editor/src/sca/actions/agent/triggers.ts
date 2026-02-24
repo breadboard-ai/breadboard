@@ -28,8 +28,11 @@ export function onGraphVersionChange(bind: ActionBind): SignalTrigger {
     const { controller } = bind;
     const { version, readOnly } = controller.editor.graph;
 
-    // Return true when version is valid and not read-only
-    return !readOnly && version >= 0;
+    // Skip read-only graphs — invalidation doesn't apply.
+    if (readOnly) return false;
+
+    // +1 so version 0 isn't falsy; each increment produces a unique value.
+    return version >= 0 ? version + 1 : false;
   });
 }
 
