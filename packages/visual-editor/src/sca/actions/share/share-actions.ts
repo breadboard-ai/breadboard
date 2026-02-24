@@ -313,7 +313,7 @@ export const open = asAction(
   "Share.open",
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
-    const { controller } = bind;
+    const { controller, services } = bind;
     const share = controller.editor.share;
 
     if (share.panel !== "closed") {
@@ -321,10 +321,19 @@ export const open = asAction(
       return;
       /* c8 ignore end */
     }
+    const graphUrl = controller.editor.graph.url;
+    if (!graphUrl) {
+      /* c8 ignore next */
+      return;
+    }
     share.panel = "open";
 
-    // When SHARING_2 is off, always re-sync on open to match legacy behavior.
-    if (!CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+      share.status = "initializing";
+      await services.googleDriveBoardServer.flushSaveQueue(graphUrl);
+      share.status = "ready";
+    } else {
+      // Legacy: always re-sync on open. fetchShareData includes its own flush.
       share.status = "initializing";
       if (handleFatalShareError(await fetchShareData())) {
         return;
@@ -1155,10 +1164,10 @@ export const publishStale = asAction(
       return;
     }
     const graph = getGraph();
-    if (!graph) {
+    if (!graph?.url) {
       /* c8 ignore start */
       Utils.Logging.getLogger(controller).log(
-        Utils.Logging.Formatter.error("No graph found"),
+        Utils.Logging.Formatter.error("No graph or graph url found"),
         "Share.publishStale"
       );
       return;
@@ -1166,6 +1175,8 @@ export const publishStale = asAction(
     }
 
     share.status = "publishing-stale";
+
+    await boardServer.flushSaveQueue(graph.url);
 
     const shareableFileUrl = new URL(`drive:/${share.shareableFile.id}`);
     const updatedShareableGraph = structuredClone(graph);
