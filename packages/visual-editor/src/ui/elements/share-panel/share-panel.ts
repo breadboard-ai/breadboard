@@ -28,7 +28,6 @@ import { baseColors } from "../../styles/host/base-colors.js";
 import { match } from "../../styles/host/match.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
-import type { ShareVisibilitySelector } from "./share-visibility-selector.js";
 import "./share-visibility-selector.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
@@ -963,35 +962,8 @@ export class SharePanel extends SignalWatcher(LitElement) {
     `;
   }
 
-  get #domainRestricted(): boolean {
-    const perms = this.sca.env.googleDrive.widePermissions;
-    return perms.length === 0 || perms.some((p) => p.type !== "anyone");
-  }
-
   #renderVisibilityDropdown() {
-    return html`<bb-share-visibility-selector
-      .value=${this.#controller.visibility}
-      .domainRestricted=${this.#domainRestricted}
-      .wideDisabledReason=${this.#wideDisabledReason}
-      .loading=${this.#controller.status === "changing-visibility"}
-      @change=${this.#onVisibilityChange}
-      @edit-access=${this.#onEditAccess}
-    ></bb-share-visibility-selector>`;
-  }
-
-  get #wideDisabledReason(): string {
-    return this.#controller.widePermissionsAllowed
-      ? ""
-      : `Disabled for ${this.#controller.userDomain} users`;
-  }
-
-  async #onVisibilityChange(event: Event) {
-    const selector = event.target as ShareVisibilitySelector;
-    await this.#actions.changeVisibility(selector.value);
-  }
-
-  async #onEditAccess() {
-    await this.#actions.viewSharePermissions();
+    return html`<bb-share-visibility-selector></bb-share-visibility-selector>`;
   }
 
   #renderPublishedSwitch() {
