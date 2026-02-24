@@ -51,7 +51,7 @@ suite("Shell Triggers", () => {
       assert.strictEqual(result, "", "Should return empty string");
     });
 
-    test("returns false when title is null", () => {
+    test("returns sentinel when title is null", () => {
       const mockBind = {
         controller: { editor: { graph: { title: null } } },
         services: {},
@@ -60,7 +60,12 @@ suite("Shell Triggers", () => {
       const trigger = onTitleChange(mockBind as never);
       const result = trigger.condition();
 
-      assert.strictEqual(result, null, "Should return null when title is null");
+      // Returns sentinel "∅" so the trigger stays truthy and the action fires.
+      assert.strictEqual(
+        result,
+        "∅",
+        "Should return sentinel when title is null"
+      );
     });
 
     test("has correct trigger name", () => {

@@ -10,6 +10,7 @@ import { coordination } from "../../../../src/sca/coordination.js";
 import * as shellActions from "../../../../src/sca/actions/shell/shell-actions.js";
 import { createMockEnvironment } from "../../helpers/mock-environment.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
+import type { AppEnvironment } from "../../../../src/sca/environment/environment.js";
 
 suite("Shell Actions", () => {
   let originalWindow: typeof globalThis.window;
@@ -24,14 +25,28 @@ suite("Shell Actions", () => {
     coordination.reset();
   });
 
+  /**
+   * Creates a mock environment whose `shellHost.setTitle` is the given mock fn.
+   */
+  function envWithSetTitle(
+    setTitle: ReturnType<typeof mock.fn>
+  ): AppEnvironment {
+    const env = createMockEnvironment(defaultRuntimeFlags);
+    return {
+      ...env,
+      shellHost: {
+        ...env.shellHost,
+        setTitle,
+      } as unknown as AppEnvironment["shellHost"],
+    };
+  }
+
   suite("updatePageTitle", () => {
     test("sets page title with graph title when present", async () => {
       const setTitle = mock.fn();
 
       shellActions.bind({
-        services: {
-          shellHost: { setTitle },
-        } as never,
+        services: {} as never,
         controller: {
           editor: {
             graph: {
@@ -39,7 +54,7 @@ suite("Shell Actions", () => {
             },
           },
         } as never,
-        env: createMockEnvironment(defaultRuntimeFlags),
+        env: envWithSetTitle(setTitle),
       });
 
       await shellActions.updatePageTitle();
@@ -56,9 +71,7 @@ suite("Shell Actions", () => {
       const setTitle = mock.fn();
 
       shellActions.bind({
-        services: {
-          shellHost: { setTitle },
-        } as never,
+        services: {} as never,
         controller: {
           editor: {
             graph: {
@@ -66,7 +79,7 @@ suite("Shell Actions", () => {
             },
           },
         } as never,
-        env: createMockEnvironment(defaultRuntimeFlags),
+        env: envWithSetTitle(setTitle),
       });
 
       await shellActions.updatePageTitle();
@@ -83,9 +96,7 @@ suite("Shell Actions", () => {
       const setTitle = mock.fn();
 
       shellActions.bind({
-        services: {
-          shellHost: { setTitle },
-        } as never,
+        services: {} as never,
         controller: {
           editor: {
             graph: {
@@ -93,7 +104,7 @@ suite("Shell Actions", () => {
             },
           },
         } as never,
-        env: createMockEnvironment(defaultRuntimeFlags),
+        env: envWithSetTitle(setTitle),
       });
 
       await shellActions.updatePageTitle();
@@ -103,6 +114,31 @@ suite("Shell Actions", () => {
       assert.strictEqual(
         setTitle.mock.calls[0].arguments[0],
         "Whitespace Board - APP_NAME [Experiment]"
+      );
+    });
+
+    test("sets default title when graph title is null", async () => {
+      const setTitle = mock.fn();
+
+      shellActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            graph: {
+              title: null,
+            },
+          },
+        } as never,
+        env: envWithSetTitle(setTitle),
+      });
+
+      await shellActions.updatePageTitle();
+
+      // When title is null (board closed), should set default app title
+      assert.strictEqual(setTitle.mock.calls.length, 1);
+      assert.strictEqual(
+        setTitle.mock.calls[0].arguments[0],
+        "APP_NAME [Experiment]"
       );
     });
   });

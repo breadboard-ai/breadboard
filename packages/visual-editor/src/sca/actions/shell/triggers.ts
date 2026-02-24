@@ -23,6 +23,8 @@ import { type ActionBind } from "../binder.js";
 export function onTitleChange(bind: ActionBind): SignalTrigger {
   return signalTrigger("Graph Title Change", () => {
     const { controller } = bind;
-    return controller.editor.graph.title;
+    // Coerce null → sentinel so the trigger fires when the title is cleared.
+    // signalTrigger only fires on truthy values; raw null would be swallowed.
+    return controller.editor.graph.title ?? "∅";
   });
 }

@@ -670,6 +670,21 @@ class CoordinationRegistry {
               );
             });
           } else {
+            // Warn when a truthy → falsy transition is silently swallowed.
+            // This is the Sticky Trigger Hazard: the developer likely expects
+            // the action to fire on *any* change, but signalTrigger only fires
+            // on truthy values. Nudge them toward a sentinel pattern.
+            if (previousValue) {
+              this.#logger.log(
+                Utils.Logging.Formatter.warning(
+                  `Signal trigger "${trigger.name}" went from truthy to ` +
+                    `falsy. The action "${actionName}" will NOT fire. If the ` +
+                    `action should fire on all changes, return a sentinel ` +
+                    `value instead (e.g., return value ?? "∅").`
+                ),
+                LABEL
+              );
+            }
             previousValue = value;
           }
         });
