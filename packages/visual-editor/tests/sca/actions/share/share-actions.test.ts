@@ -80,7 +80,7 @@ suite("Share Actions", () => {
       "FakeGoogleDrive",
       { state: Promise.resolve("signedin") },
       googleDriveClient,
-      [{ type: "domain", domain: "example.com", role: "reader" }],
+      [{ type: "anyone", role: "reader" }],
       "Breadboard",
       // findUserOpalFolder stub
       async () => ({ ok: true, id: "fake-folder-id" }),
@@ -114,13 +114,6 @@ suite("Share Actions", () => {
         domain: Promise.resolve("example.com"),
       },
       googleDriveBoardServer,
-      globalConfig: {
-        googleDrive: {
-          widePermissions: [
-            { id: "123", type: "domain", domain: "example.com" },
-          ],
-        },
-      },
     });
     const env = createMockEnvironment(defaultRuntimeFlags);
     ShareActions.bind({
@@ -130,9 +123,7 @@ suite("Share Actions", () => {
         ...env,
         googleDrive: {
           ...env.googleDrive,
-          widePermissions: [
-            { id: "123", type: "domain" as const, domain: "example.com" },
-          ],
+          widePermissions: [{ id: "123", type: "anyone" }],
         },
       },
     });
@@ -284,8 +275,7 @@ suite("Share Actions", () => {
     );
     assert.ok(shareableMetadata.permissions, "Permissions should exist");
     assert.strictEqual(shareableMetadata.permissions.length, 1);
-    assert.strictEqual(shareableMetadata.permissions[0].type, "domain");
-    assert.strictEqual(shareableMetadata.permissions[0].domain, "example.com");
+    assert.strictEqual(shareableMetadata.permissions[0].type, "anyone");
     assert.strictEqual(shareableMetadata.permissions[0].role, "reader");
 
     // Verify shareable copy app properties
@@ -552,8 +542,7 @@ suite("Share Actions", () => {
     await googleDriveClient.createPermission(
       shareableFile.id,
       {
-        type: "domain",
-        domain: "example.com",
+        type: "anyone",
         role: "reader",
       },
       { sendNotificationEmail: false }
@@ -678,12 +667,11 @@ suite("Share Actions", () => {
     await ShareActions.viewSharePermissions();
     assert.strictEqual(share.panel, "native-share");
 
-    // User adds domain permission
+    // User adds anyone (wide) permission
     await googleDriveClient.createPermission(
       shareableCopy.id,
       {
-        type: "domain",
-        domain: "example.com",
+        type: "anyone",
         role: "reader",
       },
       { sendNotificationEmail: false }
@@ -793,10 +781,10 @@ suite("Share Actions", () => {
       new Blob(["asset data"]),
       { name: "excess-perms-asset.bin", mimeType: "application/octet-stream" }
     );
-    // Add a permission that matches the publish permission (should be kept)
+    // Add a permission that matches the wide permission (should be kept)
     await googleDriveClient.createPermission(
       excessPermsAsset.id,
-      { type: "domain", domain: "example.com", role: "reader" },
+      { type: "anyone", role: "reader" },
       { sendNotificationEmail: false }
     );
     // Add an extra permission that should be removed
@@ -838,18 +826,15 @@ suite("Share Actions", () => {
     // Publish
     await ShareActions.publish();
 
-    // Verify managed asset got the domain permission added
+    // Verify managed asset got the wide permission added
     const managedAssetMeta = await googleDriveClient.getFileMetadata(
       managedAsset.id,
       { fields: ["permissions"] }
     );
     const addedPerm = managedAssetMeta.permissions?.find(
-      (p) => p.type === "domain" && p.domain === "example.com"
+      (p) => p.type === "anyone"
     );
-    assert.ok(
-      addedPerm,
-      "Managed asset should have received domain permission"
-    );
+    assert.ok(addedPerm, "Managed asset should have received wide permission");
 
     // Verify cant-share asset still has no permissions (skipped)
     const cantShareMeta = await googleDriveClient.getFileMetadata(
@@ -875,11 +860,11 @@ suite("Share Actions", () => {
       undefined,
       "Old permission should have been deleted"
     );
-    // The domain permission should still exist
-    const domainPermExists = excessMeta.permissions?.find(
-      (p) => p.type === "domain" && p.domain === "example.com"
+    // The wide permission should still exist
+    const widePermExists = excessMeta.permissions?.find(
+      (p) => p.type === "anyone"
     );
-    assert.ok(domainPermExists, "Domain permission should still exist");
+    assert.ok(widePermExists, "Wide permission should still exist");
   });
 
   test("fixUnmanagedAssetProblems adds missing permissions", async () => {
@@ -985,25 +970,25 @@ suite("Share Actions", () => {
       { fields: ["permissions"] }
     );
     const addedPerm = unmanagedMeta.permissions?.find(
-      (p) => p.type === "domain" && p.domain === "example.com"
+      (p) => p.type === "anyone"
     );
     assert.ok(
       addedPerm,
-      "Unmanaged asset should have received domain permission"
+      "Unmanaged asset should have received wide permission"
     );
 
-    // Verify cant-share asset still has no domain permissions
+    // Verify cant-share asset still has no wide permissions
     const cantShareMeta = await googleDriveClient.getFileMetadata(
       cantShareAsset.id,
       { fields: ["permissions"] }
     );
-    const cantShareDomainPerm = cantShareMeta.permissions?.find(
-      (p) => p.type === "domain" && p.domain === "example.com"
+    const cantShareWidePerm = cantShareMeta.permissions?.find(
+      (p) => p.type === "anyone"
     );
     assert.strictEqual(
-      cantShareDomainPerm,
+      cantShareWidePerm,
       undefined,
-      "Cant-share asset should NOT have received domain permission"
+      "Cant-share asset should NOT have received wide permission"
     );
   });
 
@@ -1153,13 +1138,11 @@ suite("Share Actions", () => {
       unmanagedAsset.id,
       { fields: ["permissions"] }
     );
-    const domainPerm = assetMeta.permissions?.find(
-      (p) => p.type === "domain" && p.domain === "example.com"
-    );
+    const widePerm = assetMeta.permissions?.find((p) => p.type === "anyone");
     assert.strictEqual(
-      domainPerm,
+      widePerm,
       undefined,
-      "Dismissed asset should NOT have received domain permission"
+      "Dismissed asset should NOT have received wide permission"
     );
   });
 
@@ -1188,8 +1171,7 @@ suite("Share Actions", () => {
       // Verify actual Drive permissions
       const perms = await getNonOwnerPermissions(share.shareableFile.id);
       assert.strictEqual(perms.length, 1);
-      assert.strictEqual(perms[0].type, "domain");
-      assert.strictEqual(perms[0].domain, "example.com");
+      assert.strictEqual(perms[0].type, "anyone");
       assert.strictEqual(perms[0].role, "reader");
     });
 
@@ -1240,17 +1222,16 @@ suite("Share Actions", () => {
         assert.strictEqual(share.hasOtherPermissions, true);
       });
 
-      test("user adds domain permission via native dialog → anyone", async () => {
+      test("user adds anyone permission via native dialog → wide", async () => {
         await ShareActions.initialize();
         await ShareActions.changeVisibility("restricted");
         assert.ok(share.shareableFile);
 
-        // User adds the domain permission (same as "publish") via native dialog
+        // User adds the anyone permission (matches configured wide) via native dialog
         await googleDriveClient.createPermission(
           share.shareableFile.id,
           {
-            type: "domain",
-            domain: "example.com",
+            type: "anyone",
             role: "reader",
           },
           { sendNotificationEmail: false }
@@ -1260,7 +1241,7 @@ suite("Share Actions", () => {
 
         assert.strictEqual(share.panel, "open");
         assert.strictEqual(share.status, "ready");
-        // The domain permission matches the publish permissions → "wide"
+        // The anyone permission matches the wide permissions → "wide"
         assert.strictEqual(share.visibility, "wide");
         assert.strictEqual(share.hasWidePermissions, true);
         assert.strictEqual(share.hasOtherPermissions, false);
@@ -1413,13 +1394,11 @@ suite("Share Actions", () => {
       // user permission as excess.
       assert.strictEqual(share.hasOtherPermissions, false);
 
-      // Verify Drive: only the domain perm exists
+      // Verify Drive: only the anyone perm exists
       const perms = await getNonOwnerPermissions(share.shareableFile.id);
       assert.strictEqual(perms.length, 1);
-      const domainPerm = perms.find(
-        (p) => p.type === "domain" && p.domain === "example.com"
-      );
-      assert.ok(domainPerm, "Domain publish permission should exist");
+      const anyonePerm = perms.find((p) => p.type === "anyone");
+      assert.ok(anyonePerm, "Wide permission should exist");
     });
 
     test("no-op when target matches current visibility", async () => {
@@ -1493,17 +1472,17 @@ suite("Share Actions", () => {
       assert.strictEqual(share.status, "ready");
       assert.strictEqual(share.visibility, "wide");
 
-      // Verify asset got the domain permission
+      // Verify asset got the anyone permission
       const assetMeta = await googleDriveClient.getFileMetadata(
         managedAsset.id,
         { fields: ["permissions"] }
       );
-      const domainPerm = assetMeta.permissions?.find(
-        (p) => p.type === "domain" && p.domain === "example.com"
+      const anyonePerm = assetMeta.permissions?.find(
+        (p) => p.type === "anyone"
       );
       assert.ok(
-        domainPerm,
-        "Managed asset should have received domain permission"
+        anyonePerm,
+        "Managed asset should have received wide permission"
       );
     });
 
@@ -1536,10 +1515,8 @@ suite("Share Actions", () => {
         fields: ["permissions"],
       });
       assert.ok(
-        midMeta.permissions?.some(
-          (p) => p.type === "domain" && p.domain === "example.com"
-        ),
-        "Asset should have domain permission after publishing"
+        midMeta.permissions?.some((p) => p.type === "anyone"),
+        "Asset should have wide permission after publishing"
       );
 
       // Now go back to "only-you" — asset permission should be removed
@@ -1613,12 +1590,12 @@ suite("Share Actions", () => {
         unmanagedAsset.id,
         { fields: ["permissions"] }
       );
-      const domainPerm = assetMeta.permissions?.find(
-        (p) => p.type === "domain" && p.domain === "example.com"
+      const anyonePerm = assetMeta.permissions?.find(
+        (p) => p.type === "anyone"
       );
       assert.ok(
-        domainPerm,
-        "Unmanaged asset should have received domain permission"
+        anyonePerm,
+        "Unmanaged asset should have received wide permission"
       );
     });
 
@@ -1781,7 +1758,7 @@ suite("Share Actions", () => {
       });
       await googleDriveClient.createPermission(
         shareableFile.id,
-        { type: "domain", domain: "example.com", role: "reader" },
+        { type: "anyone", role: "reader" },
         { sendNotificationEmail: false }
       );
 
@@ -2064,7 +2041,7 @@ suite("Share Actions", () => {
       // Pre-populate permissions
       await googleDriveClient.createPermission(
         shareableFile.id,
-        { type: "domain", domain: "example.com", role: "reader" },
+        { type: "anyone", role: "reader" },
         { sendNotificationEmail: false }
       );
 
