@@ -10,14 +10,11 @@ import { isLLMContent, isLLMContentArray } from "../../../../data/common.js";
 import { llmContentToA2UIComponents } from "../../../../a2/agent/llm-content-to-a2ui.js";
 
 export function appScreenToA2UIProcessor(
-  appScreenOutput: AppScreenOutput,
-  screenType?: "progress" | "input" | "a2ui"
+  appScreenOutput: AppScreenOutput
 ): A2UI.v0_8.Types.ModelProcessor | null {
   if (!appScreenOutput.output) {
     return null;
   }
-
-  const isInput = screenType === "input";
 
   const topLevelIds = [];
   const components = [];
@@ -32,7 +29,6 @@ export function appScreenToA2UIProcessor(
     if (isLLMContent(toAppend)) {
       const newComponents = llmContentToA2UIComponents(toAppend, {
         wrapMediaInCard: true,
-        ...(isInput && { textUsageHint: "input-prompt" }),
       });
       topLevelIds.push(...newComponents.ids);
       components.push(...newComponents.parts);
@@ -40,7 +36,6 @@ export function appScreenToA2UIProcessor(
       for (const llmContent of toAppend) {
         const newComponents = llmContentToA2UIComponents(llmContent, {
           wrapMediaInCard: true,
-          ...(isInput && { textUsageHint: "input-prompt" }),
         });
         topLevelIds.push(...newComponents.ids);
         components.push(...newComponents.parts);

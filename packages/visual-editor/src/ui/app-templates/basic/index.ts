@@ -265,10 +265,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           receiver = last.a2ui.receiver;
         } else {
           // Likely a raw LLM Content that needs to be converted to A2UI.
-          processor = appScreenToA2UIProcessor(
-            effectiveOutput,
-            lastScreen?.type
-          );
+          processor = appScreenToA2UIProcessor(effectiveOutput);
           receiver = null;
         }
 

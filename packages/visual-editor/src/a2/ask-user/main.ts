@@ -125,8 +125,16 @@ async function askUser(
     details = substituting;
   }
 
-  // Extract the title for the input schema.
+  // Extract the title for the input schema before modifying details.
   const title = toText(details);
+
+  // Prepend "# " so the prompt renders as a heading on the app screen.
+  // This targets only the ask-user prompt text; the input-prompt CSS hint
+  // handles the rest of the styling (centered, rounded font).
+  const detailsText = details.parts[0];
+  if ("text" in detailsText) {
+    detailsText.text = `# ${detailsText.text}`;
+  }
 
   await report(moduleArgs, {
     actor: "User Input",

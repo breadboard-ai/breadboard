@@ -80,6 +80,16 @@ export class Text extends Root {
         margin-bottom: var(--a2ui-spacing-2);
       }
 
+      /* Center markdown headings produced by the # prefix (e.g. Ask User prompt). */
+      section h1 {
+        font-family: var(--a2ui-text-input-prompt-font-family);
+        text-align: var(--a2ui-text-input-prompt-text-align);
+        font-variation-settings: var(--a2ui-text-input-prompt-font-variation);
+        font-weight: var(--a2ui-text-input-prompt-font-weight);
+        font-size: var(--a2ui-text-input-prompt-font-size);
+        line-height: var(--a2ui-text-input-prompt-line-height);
+      }
+
       :host([usage-hint="h2"]) section,
       :host([usage-hint="h3"]) section,
       :host([usage-hint="h4"]) section,
@@ -202,7 +212,6 @@ export class Text extends Root {
 
     switch (this.usageHint) {
       case "h1":
-      case "input-prompt":
         text = `# ${text}`;
         break;
       case "h2":
