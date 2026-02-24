@@ -704,8 +704,12 @@ export class EntityEditor extends SignalWatcher(LitElement) {
 
             &::after {
               content: "Prompt";
-              font-family: var(--bb-font-family-flex);
-              font-size: 12px;
+              font: 500 12px var(--bb-font-family-flex);
+              font-variation-settings:
+                "slnt" 0,
+                "wdth" 100,
+                "GRAD" 0,
+                "ROND" 100;
               position: absolute;
               left: var(--bb-grid-size-6);
               bottom: calc(var(--bb-grid-size-9) * -1);
