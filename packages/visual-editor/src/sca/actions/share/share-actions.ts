@@ -1446,6 +1446,19 @@ export const setViewerAccess = asAction(
   }
 );
 
+export const flushSave = asAction(
+  "Share.flushSave",
+  { mode: ActionMode.Immediate },
+  async (): Promise<void> => {
+    const { controller, services } = bind;
+    const graphUrl = controller.editor.graph.url;
+    if (!graphUrl) {
+      return;
+    }
+    await services.googleDriveBoardServer.flushSaveQueue(graphUrl);
+  }
+);
+
 function readViewerModeProperty(
   properties: Record<string, string> | undefined
 ): ViewerMode {

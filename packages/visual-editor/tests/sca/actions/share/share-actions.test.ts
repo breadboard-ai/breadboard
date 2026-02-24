@@ -1639,6 +1639,18 @@ suite("Share Actions", () => {
           );
         });
       });
+
+      test("flushSave is a no-op when no graph URL is set", async () => {
+        setGraph(null);
+        // Should not throw.
+        await ShareActions.flushSave();
+      });
+
+      test("flushSave completes when graph URL is set", async () => {
+        // Should not throw — there's nothing pending, but the code path
+        // through boardServer.flushSaveQueue is exercised.
+        await ShareActions.flushSave();
+      });
     }); // regular user
 
     suite("restricted domain member", () => {

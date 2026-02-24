@@ -886,6 +886,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         owner: !!this.isMine,
         "sharing-v2": !!CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2,
       })}
+      @mouseenter=${() => this.sca.actions.share.flushSave()}
       @click=${() => {
         this.dispatchEvent(new ShareRequestedEvent());
       }}
