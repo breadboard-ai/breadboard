@@ -102,6 +102,8 @@ export const TOKENS = {
   textSubheadingColor: "--a2ui-text-subheading-color",
 
   // Text: caption/body
+  textBodyFontSize: "--a2ui-text-body-font-size",
+  textBodyLineHeight: "--a2ui-text-body-line-height",
   textBodyColor: "--a2ui-text-body-color",
 } as const;
 

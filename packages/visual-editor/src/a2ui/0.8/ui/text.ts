@@ -117,6 +117,8 @@ export class Text extends Root {
 
       :host([usage-hint="caption"]) section,
       :host([usage-hint="body"]) section {
+        font-size: var(--a2ui-text-body-font-size);
+        line-height: var(--a2ui-text-body-line-height);
         color: var(--a2ui-text-body-color);
       }
 
@@ -130,8 +132,8 @@ export class Text extends Root {
         font-style: normal;
         font-weight: 400;
         margin: 0;
-        font-size: 14px;
-        line-height: 20px;
+        font-size: var(--a2ui-text-body-font-size, 16px);
+        line-height: var(--a2ui-text-body-line-height, 24px);
         align-self: normal;
       }
 
