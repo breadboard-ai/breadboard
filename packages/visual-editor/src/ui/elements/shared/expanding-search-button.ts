@@ -47,6 +47,28 @@ export class ExpandingSearchButton extends LitElement {
         width: 200px;
         outline: none;
         font-size: 12px;
+
+        &::-webkit-search-cancel-button {
+          display: none;
+        }
+      }
+
+      #clear-button {
+        background: none;
+        border: none;
+        padding: 0;
+        margin-left: -32px;
+        width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        height: 100%;
+
+        & > .g-icon {
+          font-size: 16px;
+          color: var(--light-dark-n-50);
+        }
       }
 
       #label {
@@ -89,7 +111,13 @@ export class ExpandingSearchButton extends LitElement {
           @blur=${this.#onInputBlur}
           class="sans-flex round w-500"
         />
-        <span class="g-icon filled round w-500" id="search-icon">search</span>
+        ${this.value
+          ? html`<button id="clear-button" @pointerdown=${this.#onClearClick}>
+              <span class="g-icon filled round w-500">close</span>
+            </button>`
+          : html`<span class="g-icon filled round w-500" id="search-icon"
+              >search</span
+            >`}
       `;
     } else {
       return html`
@@ -120,6 +148,13 @@ export class ExpandingSearchButton extends LitElement {
 
   #onInputInput() {
     this.value = this.#input.value?.value ?? "";
+  }
+
+  #onClearClick(evt: Event) {
+    evt.preventDefault();
+    this.value = "";
+    this.#input.value?.focus();
+    this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
   }
 
   #onInputFocus() {

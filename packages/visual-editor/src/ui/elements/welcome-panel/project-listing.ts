@@ -455,12 +455,9 @@ export class ProjectListing extends SignalWatcher(LitElement) {
     if (!filter) {
       return items;
     }
-    const filterRegExp = filter ? new RegExp(filter, "gim") : undefined;
+    const lowerFilter = filter.toLowerCase();
     return items.filter(
-      ([name, item]) =>
-        !filterRegExp ||
-        (item.title && filterRegExp.test(item.title)) ||
-        (name && filterRegExp.test(name))
+      ([, item]) => item.title && item.title.toLowerCase().includes(lowerFilter)
     );
   }
 
