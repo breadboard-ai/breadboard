@@ -74,6 +74,7 @@ class PlanRunner
     this.#orchestrator.reset();
     this.#createController();
     this.dispatchEvent(new StartEvent({ timestamp: timestamp() }));
+    this.#controller!.preamble();
     await this.#controller!.run();
     // Clear the controller after the run completes so that a subsequent
     // start() creates a fresh controller rather than taking the restart()

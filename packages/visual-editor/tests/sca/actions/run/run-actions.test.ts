@@ -2537,6 +2537,90 @@ suite("executeNodeAction", () => {
     // Should clear request and not throw
     assert.strictEqual(controller.run.main.nodeActionRequest, null);
   });
+
+  test("runFrom (graph context) resets screens before dispatch", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller);
+    await RunActions.prepare();
+
+    // Seed a screen from a previous run so we can detect the reset.
+    const staleScreen = createAppScreen("Stale Step", undefined);
+    controller.run.screen.setScreen("stale-node", staleScreen);
+    assert.strictEqual(
+      controller.run.screen.screens.size,
+      1,
+      "precondition: one stale screen"
+    );
+
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+      runFrom: () => Promise<unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "ready" }]]);
+    runner.runFrom = () => Promise.resolve({});
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "graph",
+    });
+
+    await RunActions.executeNodeAction();
+
+    assert.strictEqual(
+      controller.run.screen.screens.size,
+      0,
+      "screens should be cleared before runFrom dispatch"
+    );
+  });
+
+  test("runNode (step context) does not reset screens", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller);
+    await RunActions.prepare();
+
+    // Seed a screen from a previous run.
+    const existingScreen = createAppScreen("Existing Step", undefined);
+    controller.run.screen.setScreen("existing-node", existingScreen);
+    assert.strictEqual(
+      controller.run.screen.screens.size,
+      1,
+      "precondition: one existing screen"
+    );
+
+    const runner = controller.run.main.runner as unknown as {
+      state: Map<string, unknown>;
+      runNode: () => Promise<unknown>;
+    };
+    runner.state = new Map([["node-1", { state: "ready" }]]);
+    runner.runNode = () => Promise.resolve({});
+
+    controller.run.main.setNodeActionRequest({
+      nodeId: "node-1",
+      actionContext: "step",
+    });
+
+    await RunActions.executeNodeAction();
+
+    assert.strictEqual(
+      controller.run.screen.screens.size,
+      1,
+      "screens should NOT be cleared for step-only runNode"
+    );
+  });
 });
 
 // =============================================================================

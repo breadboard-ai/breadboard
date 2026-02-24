@@ -794,6 +794,12 @@ export const executeNodeAction = asAction(
       case "failed":
       case "interrupted":
         runController.undismissError(nodeId);
+        // runFrom bypasses start() → onGraphStartAction, so screens
+        // must be cleared here to prevent stale insertion order from the
+        // previous run surfacing the wrong "last" screen.
+        if (runFromNode) {
+          controller.run.screen.reset();
+        }
         dispatchRun(runFromNode, nodeId, runner);
         break;
 
