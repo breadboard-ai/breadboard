@@ -5,6 +5,7 @@
  */
 
 import type { Asset, GraphDescriptor } from "@breadboard-ai/types";
+import type { GoogleDrivePermission } from "@breadboard-ai/types/deployment-configuration.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { DRIVE_PROPERTY_VIEWER_MODE } from "@breadboard-ai/utils/google-drive/operations.js";
@@ -70,50 +71,56 @@ suite("Share Actions", () => {
     await fakeDriveApi.stop();
   });
 
-  beforeEach(async () => {
-    fakeDriveApi.reset();
-    googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl: fakeDriveApi.apiBaseUrl,
-      fetchWithCreds: globalThis.fetch,
-    });
+  interface ShareConfig {
+    widePermissions?: GoogleDrivePermission[];
+    domains?: Record<string, { disallowPublicPublishing?: boolean }>;
+  }
+
+  function bindShareActions(config: ShareConfig = {}) {
+    const widePermissions = config.widePermissions ?? [
+      { id: "anyoneWithLink", type: "anyone" as const },
+    ];
+    const boardServerPerms = widePermissions.map((p) => ({
+      ...p,
+      role: "reader" as const,
+    }));
+    const emptyReadonlyCollection = {
+      loading: false,
+      loaded: Promise.resolve(),
+      error: undefined,
+      size: 0,
+      entries: () => [][Symbol.iterator](),
+      has: () => false,
+    };
     const googleDriveBoardServer = new GoogleDriveBoardServer(
       "FakeGoogleDrive",
       { state: Promise.resolve("signedin") },
       googleDriveClient,
-      [{ type: "anyone", role: "reader" }],
+      boardServerPerms,
       "Breadboard",
-      // findUserOpalFolder stub
       async () => ({ ok: true, id: "fake-folder-id" }),
-      // listUserOpals stub
       async () => ({ ok: true as const, files: [] }),
-      // GalleryGraphCollection stub
+      emptyReadonlyCollection,
       {
-        loading: false,
-        loaded: Promise.resolve(),
-        error: undefined,
-        size: 0,
-        entries: () => [][Symbol.iterator](),
-        has: () => false,
-      },
-      // UserGraphCollection stub
-      {
-        loading: false,
-        loaded: Promise.resolve(),
-        error: undefined,
-        size: 0,
-        entries: () => [][Symbol.iterator](),
-        has: () => false,
+        ...emptyReadonlyCollection,
         put: () => {},
         delete: () => false,
       }
     );
-    ({ controller } = makeTestController());
     const { services } = makeTestServices({
       googleDriveClient,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
       googleDriveBoardServer,
+      signinAdapter: { domain: Promise.resolve("example.com") },
+      ...(config.domains || config.widePermissions
+        ? {
+            globalConfig: {
+              ...(config.widePermissions && {
+                googleDrive: { widePermissions },
+              }),
+              ...(config.domains && { domains: config.domains }),
+            },
+          }
+        : {}),
     });
     const env = createMockEnvironment(defaultRuntimeFlags);
     ShareActions.bind({
@@ -121,16 +128,22 @@ suite("Share Actions", () => {
       services,
       env: {
         ...env,
-        googleDrive: {
-          ...env.googleDrive,
-          widePermissions: [{ id: "123", type: "anyone" }],
-        },
+        googleDrive: { ...env.googleDrive, widePermissions },
+        ...(config.domains && { domains: config.domains }),
       },
     });
+  }
+
+  beforeEach(async () => {
+    fakeDriveApi.reset();
+    googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl: fakeDriveApi.apiBaseUrl,
+      fetchWithCreds: globalThis.fetch,
+    });
+    ({ controller } = makeTestController());
+    bindShareActions();
     share = controller.editor.share;
 
-    // Create a default file and set graph for most tests.
-    // Tests that need special files can override with their own setGraph call.
     graphDriveFile = await googleDriveClient.createFile(
       new Blob(["{}"], { type: "application/json" }),
       { name: "test-board.bgl.json", mimeType: "application/json" }
@@ -1550,63 +1563,12 @@ suite("Share Actions", () => {
 
   suite("domain-restricted config", () => {
     beforeEach(() => {
-      const googleDriveBoardServer = new GoogleDriveBoardServer(
-        "FakeGoogleDrive",
-        { state: Promise.resolve("signedin") },
-        googleDriveClient,
-        [{ type: "domain", domain: "example.com", role: "reader" }],
-        "Breadboard",
-        async () => ({ ok: true, id: "fake-folder-id" }),
-        async () => ({ ok: true as const, files: [] }),
-        {
-          loading: false,
-          loaded: Promise.resolve(),
-          error: undefined,
-          size: 0,
-          entries: () => [][Symbol.iterator](),
-          has: () => false,
-        },
-        {
-          loading: false,
-          loaded: Promise.resolve(),
-          error: undefined,
-          size: 0,
-          entries: () => [][Symbol.iterator](),
-          has: () => false,
-          put: () => {},
-          delete: () => false,
-        }
-      );
-      const { services } = makeTestServices({
-        googleDriveClient,
-        googleDriveBoardServer,
-        signinAdapter: { domain: Promise.resolve("example.com") },
-        globalConfig: {
-          googleDrive: {
-            widePermissions: [
-              { id: "123", type: "domain", domain: "example.com" },
-            ],
-          },
-          domains: {
-            "example.com": { disallowPublicPublishing: true },
-          },
-        },
-      });
-      const env = createMockEnvironment(defaultRuntimeFlags);
-      ShareActions.bind({
-        controller,
-        services,
-        env: {
-          ...env,
-          googleDrive: {
-            ...env.googleDrive,
-            widePermissions: [
-              { id: "123", type: "domain" as const, domain: "example.com" },
-            ],
-          },
-          domains: {
-            "example.com": { disallowPublicPublishing: true },
-          },
+      bindShareActions({
+        widePermissions: [
+          { id: "123", type: "domain" as const, domain: "example.com" },
+        ],
+        domains: {
+          "example.com": { disallowPublicPublishing: true },
         },
       });
     });
