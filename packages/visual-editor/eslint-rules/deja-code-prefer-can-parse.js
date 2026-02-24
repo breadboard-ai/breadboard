@@ -25,7 +25,7 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: "suggestion",
+    type: "problem",
     docs: {
       description:
         "Déjà Code: remove stale URL.canParse polyfill — all target browsers support it natively",

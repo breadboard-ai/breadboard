@@ -26,7 +26,7 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: "suggestion",
+    type: "problem",
     docs: {
       description:
         "Require exported functions in action files to use asAction wrapper",

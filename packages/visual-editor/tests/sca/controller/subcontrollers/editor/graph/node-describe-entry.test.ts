@@ -10,7 +10,7 @@ import {
   NodeDescribeEntry,
   emptyResult,
 } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/node-describe-entry.js";
-import type { NodeDescriber } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/node-describer.js";
+import type { NodeDescriber } from "../../../../../../src/sca/types.js";
 
 suite("NodeDescribeEntry", () => {
   const fakeResult = {

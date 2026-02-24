@@ -25,7 +25,7 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: "suggestion",
+    type: "problem",
     docs: {
       description: "Warn when reactive() return value (stop function) is not captured",
       recommended: false,

@@ -66,6 +66,7 @@ export enum DeviceType {
 // =============================================================================
 
 /** Client info for provenance. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ClientInfo {
   applicationPlatform: ApplicationPlatform;
   device: DeviceType;
@@ -73,6 +74,7 @@ export interface ClientInfo {
 }
 
 /** Provenance information for API calls. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface Provenance {
   originProductType: OriginProductType;
   clientInfo?: ClientInfo;
@@ -82,20 +84,24 @@ export interface Provenance {
 // Types - Source
 // =============================================================================
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface WebContent {
   url: string;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface BlobstoreContent {
   blobId: string;
   fileType: BlobstoreFileType;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface TextContent {
   content: string;
   contentType: TextContentType;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface Source {
   name: string;
   displayName?: string;
@@ -110,11 +116,13 @@ export interface Source {
 // Types - Notebook
 // =============================================================================
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface AdvancedSettings {
   // Add fields as needed based on advanced_settings.proto
   [key: string]: unknown;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface Notebook {
   name: string;
   displayName?: string;
@@ -127,10 +135,12 @@ export interface Notebook {
   advancedSettings?: AdvancedSettings;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface SourceExpansionOptions {
   view: SourceView;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface NotebookExpansion {
   sources?: SourceExpansionOptions;
 }
@@ -139,16 +149,19 @@ export interface NotebookExpansion {
 // Types - Permissions
 // =============================================================================
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type NotebookPermission =
   | { email: string; accessRole: NotebookAccessRole }
   | { gaiaId: string; accessRole: NotebookAccessRole };
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface RpcStatus {
   code: number;
   message?: string;
   details?: unknown[];
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface UpdateNotebookPermissionResponse {
   permission: NotebookPermission;
   status: RpcStatus;
@@ -158,6 +171,7 @@ export interface UpdateNotebookPermissionResponse {
 // Types - Multimodal Content
 // =============================================================================
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ImageReference {
   blobId?: string;
   url?: string;
@@ -165,6 +179,7 @@ export interface ImageReference {
   mimeType?: string;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface AudioReference {
   blobId?: string;
   url?: string;
@@ -172,12 +187,14 @@ export interface AudioReference {
   mimeType?: string;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ContentPiece {
   text?: string;
   image?: ImageReference;
   audio?: AudioReference;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface MultimodalContent {
   pieces: ContentPiece[];
 }
@@ -186,11 +203,13 @@ export interface MultimodalContent {
 // Types - Relevant Chunks
 // =============================================================================
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface RankedContentChunk {
   content: MultimodalContent;
   globalRank: number;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface SourceContext {
   sourceName: string;
   chunks: RankedContentChunk[];
@@ -215,6 +234,7 @@ const DEFAULT_PROVENANCE: Provenance = {
 
 /** Request for ListNotebooks RPC. */
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ListNotebooksRequest {
   filter?: string;
   provenance?: Provenance;
@@ -222,11 +242,13 @@ export interface ListNotebooksRequest {
 }
 
 /** Response for ListNotebooks RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ListNotebooksResponse {
   notebooks: Notebook[];
 }
 
 /** Request for GetNotebook RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface GetNotebookRequest {
   name: string;
   provenance?: Provenance;
@@ -234,6 +256,7 @@ export interface GetNotebookRequest {
 }
 
 /** Request for RetrieveRelevantChunks RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface RetrieveRelevantChunksRequest {
   name: string;
   query: string;
@@ -242,22 +265,26 @@ export interface RetrieveRelevantChunksRequest {
 }
 
 /** Response for RetrieveRelevantChunks RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface RetrieveRelevantChunksResponse {
   sourceContexts: SourceContext[];
 }
 
 /** Request for ListNotebookPermissions RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ListNotebookPermissionsRequest {
   parent: string;
   provenance?: Provenance;
 }
 
 /** Response for ListNotebookPermissions RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ListNotebookPermissionsResponse {
   permissions: NotebookPermission[];
 }
 
 /** Request for BatchUpdateNotebookPermissions RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface BatchUpdateNotebookPermissionsRequest {
   name: string;
   permissions: NotebookPermission[];
@@ -266,6 +293,7 @@ export interface BatchUpdateNotebookPermissionsRequest {
 }
 
 /** Response for BatchUpdateNotebookPermissions RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface BatchUpdateNotebookPermissionsResponse {
   responses: UpdateNotebookPermissionResponse[];
 }
@@ -277,6 +305,7 @@ export enum ResponseContentType {
 }
 
 /** Request for GenerateAnswer RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface GenerateAnswerRequest {
   /** Resource name of the ChatSession: notebooks/{notebook_id}/chatSessions/{chat_session_id} */
   name: string;
@@ -289,6 +318,7 @@ export interface GenerateAnswerRequest {
 }
 
 /** Response for GenerateAnswer RPC. */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface GenerateAnswerResponse {
   /** The markdown content of the response. */
   markdownContent?: string;

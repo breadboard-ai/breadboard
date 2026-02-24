@@ -54,6 +54,7 @@ function loadGoogleFeedbackApi(): Promise<UserFeedbackApi> {
   return googleFeedbackApiPromise;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type FeedbackStatus = "closed" | "loading" | "open";
 
 export class FeedbackController extends RootController {

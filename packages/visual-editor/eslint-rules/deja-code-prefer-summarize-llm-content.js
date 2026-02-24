@@ -32,7 +32,7 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: "suggestion",
+    type: "problem",
     docs: {
       description:
         "Déjà Code: prefer summarizeLLMContentValue() over inline LLM content preview extraction",

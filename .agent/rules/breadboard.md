@@ -86,6 +86,10 @@ break the build"), follow the principle and find a compatible solution — don't
 silently downgrade the principle. If there's a genuine reason to deviate,
 surface the tension explicitly rather than making the choice unilaterally.
 
+When applying a principle, trace its implications across every place it
+manifests — config files, rule metadata, runtime defaults, documentation. Don't
+stop at the first fix.
+
 ## Coding Conventions
 
 Use ES Module syntax. Define exports explicitly at the top of the file, right

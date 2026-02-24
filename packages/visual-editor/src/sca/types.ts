@@ -20,9 +20,12 @@ import {
   InspectableNodePorts,
   InputValues,
   LLMContent,
+  NodeConfiguration,
+  NodeDescriberResult,
   NodeIdentifier,
   NodeMetadata,
   NodeRunState,
+  NodeTypeIdentifier,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import {
@@ -612,3 +615,16 @@ export type FastAccessMode = "tools" | "browse" | "route";
 export type DisplayItem =
   | FastAccessItem
   | { kind: "integration-tool"; url: string; tool: Tool };
+
+/**
+ * A function that resolves a node type's input/output schemas.
+ *
+ * Injected into GraphController at initialization time, keeping the
+ * Controller free of runtime/handler imports (proper SCA Service boundary).
+ *
+ * Built from `getHandler()` + `handler.describe()` at the call site.
+ */
+export type NodeDescriber = (
+  type: NodeTypeIdentifier,
+  configuration: NodeConfiguration
+) => Promise<NodeDescriberResult>;

@@ -26,6 +26,7 @@ export { STATUS };
 /**
  * Represents user input request.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type UserInput = {
   id: NodeIdentifier;
   schema: Schema;
@@ -35,6 +36,7 @@ export type UserInput = {
  * Payload for a requested node action (run/stop/runFrom etc).
  * Set on RunController to trigger pre-action orchestration.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type NodeActionRequest = {
   nodeId: string;
   actionContext: "graph" | "step";

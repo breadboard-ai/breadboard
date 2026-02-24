@@ -331,6 +331,7 @@ export const replace = asAction(
   }
 );
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ReplaceWithThemeOptions {
   /** The replacement graph (will be mutated to apply theme) */
   replacement: GraphDescriptor;

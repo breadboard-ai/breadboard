@@ -18,6 +18,7 @@ import { RuntimeConfig } from "../../utils/graph-types.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../ui/config/client-deployment-configuration.js";
 import type { BuildInfo } from "../types.js";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export { createEnvironment, type AppEnvironment };
 
 /**

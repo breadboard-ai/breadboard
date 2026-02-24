@@ -10,6 +10,7 @@ import type { HarnessRunner, RunConfig } from "@breadboard-ai/types";
 /**
  * Result of createRunner - the harness runner and abort controller.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface CreateRunnerResult {
   runner: HarnessRunner;
   abortController: AbortController;

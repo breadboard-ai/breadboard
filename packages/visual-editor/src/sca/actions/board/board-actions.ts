@@ -127,7 +127,12 @@ export const save = asAction(
 
       // Update snackbar on success
       if (snackbarId && messages) {
-        snackbars.update(snackbarId, messages.end, SnackType.INFORMATION, false);
+        snackbars.update(
+          snackbarId,
+          messages.end,
+          SnackType.INFORMATION,
+          false
+        );
       }
 
       return result;
@@ -221,6 +226,7 @@ export const saveAs = asAction(
 /**
  * Result type for the remix action.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type RemixResult =
   | { success: true; url: URL }
   | { success: false; reason: "no-graph" | "save-failed" };
@@ -378,6 +384,7 @@ export const deleteBoard = asAction(
 /**
  * Options for the load action.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface LoadOptions {
   /** Base URL to resolve relative URLs against */
   baseUrl?: string | null;
@@ -392,6 +399,7 @@ export interface LoadOptions {
 /**
  * Result type for the load action.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type LoadResult =
   | { success: true }
   | {

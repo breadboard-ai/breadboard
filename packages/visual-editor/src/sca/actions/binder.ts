@@ -28,6 +28,7 @@ export function isFocusedOnGraphRenderer(evt: KeyboardEvent): boolean {
     );
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type ActionBind = {
   /** The application controller tree (editor, global, run subcontrollers). */
   controller: AppController;
@@ -103,6 +104,7 @@ export function makeAction<T extends DefaultBindings>(): Action<T> {
 /**
  * Configuration for toast notifications during a blocking action.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ToastConfig {
   /** Message shown while the action is in progress */
   pending?: string;

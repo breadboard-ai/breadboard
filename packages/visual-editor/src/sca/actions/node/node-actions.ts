@@ -54,6 +54,7 @@ export const bind = makeAction();
 /**
  * Configuration for autoname action.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface AutonameConfig {
   nodeId: NodeIdentifier;
   graphId: GraphIdentifier;
@@ -64,10 +65,12 @@ export interface AutonameConfig {
 /**
  * Represents the expected structure of the autonamer result.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface NotEnoughContextResult {
   notEnoughContext: boolean;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface NodeConfigurationUpdateResult {
   title: string;
   description: string;
@@ -76,6 +79,7 @@ export interface NodeConfigurationUpdateResult {
 
 // NodeExpectedOutput is imported from @breadboard-ai/types
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface AutonameArguments {
   nodeConfigurationUpdate: {
     configuration: Record<string, unknown>;
@@ -87,6 +91,7 @@ export interface AutonameArguments {
 /**
  * Union of possible autonamer results.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type AutonameResult =
   | NotEnoughContextResult
   | NodeConfigurationUpdateResult;

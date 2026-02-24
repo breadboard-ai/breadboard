@@ -14,6 +14,7 @@ import {
 /**
  * Options for graph preparation.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface PrepareGraphOptions {
   /** Subgraph ID to focus on */
   subGraphId?: GraphIdentifier | null;
@@ -24,6 +25,7 @@ export interface PrepareGraphOptions {
 /**
  * Result of graph preparation.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface PrepareGraphResult {
   /** The prepared graph (modified in place) */
   graph: GraphDescriptor;

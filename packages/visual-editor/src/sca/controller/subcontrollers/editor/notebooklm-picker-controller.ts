@@ -13,6 +13,7 @@ export { NotebookLmPickerController };
 /**
  * Value returned when a notebook is picked from the picker.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type NotebookPickedValue = {
   /** A special value recognized by the "GraphPortLabel": if present, used as the preview. */
   preview: string;

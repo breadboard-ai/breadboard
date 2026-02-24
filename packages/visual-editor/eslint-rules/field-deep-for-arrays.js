@@ -23,7 +23,7 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: "suggestion",
+    type: "problem",
     docs: {
       description: "Suggest deep: true for @field with array/Map types",
       recommended: false,

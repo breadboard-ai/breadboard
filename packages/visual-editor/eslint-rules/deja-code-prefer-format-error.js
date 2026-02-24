@@ -32,7 +32,7 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: "suggestion",
+    type: "problem",
     docs: {
       description:
         "Déjà Code: prefer formatError() over inline error unwrapping and message extraction",

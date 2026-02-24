@@ -26,7 +26,7 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: "suggestion",
+    type: "problem",
     docs: {
       description:
         "Prefer destructuring bind.controller/bind.services at function start",

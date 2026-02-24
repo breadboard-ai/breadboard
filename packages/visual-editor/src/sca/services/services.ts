@@ -42,6 +42,7 @@ import { NotebookLmApiClient } from "./notebooklm-api-client.js";
 import type { OAuthScope } from "../../ui/connection/oauth-scopes.js";
 import { AgentService } from "../../a2/agent/agent-service.js";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface AppServices {
   actionTracker: ActionTracker;
   /**

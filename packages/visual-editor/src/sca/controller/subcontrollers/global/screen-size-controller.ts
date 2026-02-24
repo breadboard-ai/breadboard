@@ -10,6 +10,7 @@ import { RootController } from "../root-controller.js";
 /**
  * Screen size category based on viewport width breakpoints.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type ScreenSize = "narrow" | "medium" | "wide";
 
 /**

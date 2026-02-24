@@ -28,6 +28,7 @@ import * as Theme from "./theme/theme-actions.js";
 import type { ActionWithTriggers } from "../coordination.js";
 import { Utils } from "../utils.js";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface AppActions {
   agent: typeof Agent;
   graphEditingAgent: typeof GraphEditingAgent;

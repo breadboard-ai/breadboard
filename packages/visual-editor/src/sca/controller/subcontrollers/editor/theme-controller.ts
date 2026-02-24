@@ -11,6 +11,7 @@ import { RootController } from "../root-controller.js";
 
 export { ThemeController };
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type ThemeStatus = "generating" | "uploading" | "editing" | "idle";
 
 class ThemeController extends RootController {

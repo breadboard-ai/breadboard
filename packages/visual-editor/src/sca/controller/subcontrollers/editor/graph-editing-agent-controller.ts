@@ -11,6 +11,7 @@ import {
   type ParsedThought,
 } from "../../../../a2/agent/thought-parser.js";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export { GraphEditingAgentController, type ChatEntry };
 
 const GREETINGS = [

@@ -12,6 +12,7 @@ import type { LiteModeIntentExample } from "../../../types.js";
  * Status type for the flowgen input component.
  * Matches the internal state model of FlowgenEditorInput.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type FlowgenInputStatus =
   | { status: "initial" }
   | { status: "generating" }

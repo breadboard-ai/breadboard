@@ -235,6 +235,7 @@ export const appController = (env?: AppEnvironment): Controller => {
   return controller;
 };
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface AppController extends DebuggableAppController {
   editor: {
     graph: Editor.Graph.GraphController;

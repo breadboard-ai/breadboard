@@ -12,7 +12,7 @@ import type {
   NodeDescribeSnapshot,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import type { NodeDescriber } from "./node-describer.js";
+import type { NodeDescriber } from "../../../../types.js";
 
 export { NodeDescribeEntry, emptyResult };
 

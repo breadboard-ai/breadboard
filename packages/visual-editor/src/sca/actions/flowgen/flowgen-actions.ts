@@ -22,6 +22,7 @@ import type { AppServices } from "../../services/services.js";
 
 export const bind = makeAction();
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type GenerateResult =
   | { success: true }
   | { success: false; error: unknown; suggestedIntent?: string };

@@ -54,6 +54,7 @@ export function canLoad(
 /**
  * Dependencies required by loadGraph.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface LoadGraphDeps {
   loader: GraphLoader;
   signinAdapter: SigninAdapter;

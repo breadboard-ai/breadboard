@@ -29,6 +29,7 @@ import actionExportsUseAsaction from "./packages/visual-editor/eslint-rules/acti
 import noCrossActionImports from "./packages/visual-editor/eslint-rules/no-cross-action-imports.js";
 import noDynamicImportsInSca from "./packages/visual-editor/eslint-rules/no-dynamic-imports-in-sca.js";
 import noDirectScaImports from "./packages/visual-editor/eslint-rules/no-direct-sca-imports.js";
+import noExportedTypesOutsideTypesTs from "./packages/visual-editor/eslint-rules/no-exported-types-outside-types-ts.js";
 
 // Déjà Code rules — detect inline reimplementations of existing utilities
 import dejaCodePreferGroupBy from "./packages/visual-editor/eslint-rules/deja-code-prefer-group-by.js";
@@ -59,6 +60,7 @@ const localRulesPlugin = {
     "no-cross-action-imports": noCrossActionImports,
     "no-dynamic-imports-in-sca": noDynamicImportsInSca,
     "no-direct-sca-imports": noDirectScaImports,
+    "no-exported-types-outside-types-ts": noExportedTypesOutsideTypesTs,
     // Déjà Code
     "deja-code-prefer-group-by": dejaCodePreferGroupBy,
     "deja-code-prefer-summarize-llm-content": dejaCodePreferSummarizeLLMContent,
@@ -114,18 +116,19 @@ export default tseslint.config(
       "local-rules/field-decorator-only-on-root-controller": "error",
       "local-rules/no-consume-in-initializer": "error",
 
-      // Local SCA rules - Medium/Lower priority (warnings)
-      "local-rules/no-optional-chaining-on-sca-controller": "warn",
-      "local-rules/effect-requires-dispose": "warn",
-      "local-rules/field-deep-for-arrays": "warn",
-      "local-rules/prefer-bind-destructure": "warn",
+      // Local SCA rules
+      "local-rules/no-optional-chaining-on-sca-controller": "error",
+      "local-rules/effect-requires-dispose": "error",
+      "local-rules/field-deep-for-arrays": "error",
+      "local-rules/prefer-bind-destructure": "error",
       "local-rules/no-signal-utils-effect": "error",
       "local-rules/no-signal-collections-in-sca": "error",
       "local-rules/no-signal-decorator-in-sca": "error",
-      "local-rules/action-exports-use-asaction": "warn",
+      "local-rules/action-exports-use-asaction": "error",
       "local-rules/no-cross-action-imports": "error",
       "local-rules/no-dynamic-imports-in-sca": "error",
       "local-rules/no-direct-sca-imports": "error",
+      "local-rules/no-exported-types-outside-types-ts": "error",
 
       // Déjà Code — flag inline reimplementations of shared utilities
       "local-rules/deja-code-prefer-group-by": "error",

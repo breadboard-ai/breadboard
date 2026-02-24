@@ -25,7 +25,7 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: "suggestion",
+    type: "problem",
     docs: {
       description:
         "Déjà Code: prefer a shared groupBy utility over inline Map<K, V[]> accumulation",

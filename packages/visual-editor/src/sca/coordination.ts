@@ -48,6 +48,7 @@ export enum ActionMode {
 /**
  * Metadata for a registered action.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ActionMetadata {
   name: string;
   mode: ActionMode;
@@ -60,6 +61,7 @@ export interface ActionMetadata {
 /**
  * A signal-based trigger that fires when reactive dependencies change.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface SignalTrigger {
   type: "signal";
   name: string;
@@ -76,6 +78,7 @@ export interface SignalTrigger {
 /**
  * An event-based trigger that fires on DOM or custom events.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface EventTrigger {
   type: "event";
   name: string;
@@ -93,6 +96,7 @@ export interface EventTrigger {
  * Key strings follow the format used by commands: "Cmd+s", "Ctrl+Shift+z", etc.
  * Modifier order is always: Shift → Cmd → Ctrl.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface KeyboardTrigger {
   type: "keyboard";
   name: string;
@@ -107,6 +111,7 @@ export interface KeyboardTrigger {
 /**
  * Union of all trigger types.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type TriggerDefinition = SignalTrigger | EventTrigger | KeyboardTrigger;
 
 /**
@@ -114,6 +119,7 @@ export type TriggerDefinition = SignalTrigger | EventTrigger | KeyboardTrigger;
  * This allows triggers to be evaluated lazily during activate() rather than at import time.
  * May return null in environments where window is not available.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type TriggerFactory = () => TriggerDefinition | null;
 
 /**
@@ -817,6 +823,7 @@ export const coordination = new CoordinationRegistry();
 /**
  * Options for defining an action with coordination behavior.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ActionOptions {
   /** Coordination mode: Immediate, Awaits, or Exclusive */
   mode: ActionMode;
@@ -866,6 +873,7 @@ export interface ActionOptions {
  * const myParameterizedAction: AppAction<[string, number]> = async (name, count) => { ... };
  * ```
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type AppAction<TArgs extends unknown[] = []> = (
   ...args: TArgs
 ) => Promise<unknown>;
@@ -877,6 +885,7 @@ export type AppAction<TArgs extends unknown[] = []> = (
  * - Call `activate()` to start listening for trigger (returns a dispose function)
  * - Access `trigger` to inspect the trigger factory
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ActionWithTriggers<T extends AppAction<never[]>> {
   /** Execute the action directly */
   (...args: Parameters<T>): ReturnType<T>;

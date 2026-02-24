@@ -16,6 +16,7 @@ import { RootController } from "../root-controller.js";
 /**
  * Snackbar message data stored in the controller.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface SnackbarEntry {
   id: SnackbarUUID;
   message: string | HTMLTemplateResult;

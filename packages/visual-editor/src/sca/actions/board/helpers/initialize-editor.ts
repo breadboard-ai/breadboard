@@ -8,12 +8,13 @@ import type {
 } from "@breadboard-ai/types";
 import { Graph as GraphEditor } from "../../../../engine/editor/graph.js";
 import { getHandler } from "../../../../engine/runtime/legacy.js";
-import type { NodeDescriber } from "../../../../sca/controller/subcontrollers/editor/graph/node-describer.js";
+import type { NodeDescriber } from "../../../types.js";
 import type * as Editor from "../../../controller/subcontrollers/editor/editor.js";
 
 /**
  * Options for initializing the editor.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface InitializeEditorOptions {
   /** The prepared graph to edit */
   graph: GraphDescriptor;
@@ -41,6 +42,7 @@ export interface InitializeEditorOptions {
 /**
  * Result of initializing the editor.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface InitializeEditorResult {
   success: true;
   /** The editor ID (for identifying this editing session) */

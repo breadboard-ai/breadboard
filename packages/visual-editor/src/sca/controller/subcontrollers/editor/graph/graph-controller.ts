@@ -40,7 +40,7 @@ import { notebookLmIcon } from "../../../../../ui/styles/svg-icons.js";
 import { field } from "../../../decorators/field.js";
 import { RootController } from "../../root-controller.js";
 import { NodeDescribeEntry } from "./node-describe-entry.js";
-import type { NodeDescriber } from "./node-describer.js";
+import type { NodeDescriber } from "../../../../types.js";
 import { Graph } from "../../../../../engine/inspector/graph/graph.js";
 import { Node } from "../../../../../engine/inspector/graph/node.js";
 
@@ -53,6 +53,7 @@ import type { FastAccessItem } from "../../../../types.js";
  * Context for tracking node configuration changes.
  * Used by the autoname trigger to react to config updates.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ConfigChangeContext {
   nodeId: NodeIdentifier;
   graphId: GraphIdentifier;
@@ -64,6 +65,7 @@ export interface ConfigChangeContext {
  * Pending graph replacement request.
  * Set by actions (e.g., flowgen), consumed by the Graph.replaceWithTheme trigger.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface PendingGraphReplacement {
   /** The replacement graph (will be mutated to apply theme) */
   replacement: GraphDescriptor;
@@ -80,6 +82,7 @@ export interface PendingGraphReplacement {
  * - `"empty"`   — graph is loaded but contains no nodes, assets, or sub-graphs.
  * - `"loaded"`  — graph has at least one node, asset, or sub-graph.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type GraphContentState = "loading" | "empty" | "loaded";
 
 /**

@@ -23,7 +23,7 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: "suggestion",
+    type: "problem",
     docs: {
       description: "Warn against optional chaining on properly typed SCA context",
       recommended: false,

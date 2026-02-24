@@ -13,6 +13,7 @@ import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 import { PendingConsent } from "../../../types.js";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface ConsentRecord {
   graphUrl: string;
   type: ConsentRequest["type"];
@@ -20,6 +21,7 @@ export interface ConsentRecord {
   allow: boolean;
 }
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type ConsentKey = `${string}|${string}|${string}`;
 
 export function stringifyScope(scope: ConsentRequest["scope"]): string {

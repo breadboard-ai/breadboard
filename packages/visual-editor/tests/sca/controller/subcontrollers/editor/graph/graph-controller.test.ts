@@ -13,7 +13,7 @@ import {
   loadGraphIntoStore,
 } from "../../../../../helpers/_graph-store.js";
 import { editGraphStore } from "../../../../../helpers/_editor.js";
-import type { NodeDescriber } from "../../../../../../src/sca/controller/subcontrollers/editor/graph/node-describer.js";
+import type { NodeDescriber } from "../../../../../../src/sca/types.js";
 
 const noopDescriber: NodeDescriber = async () => ({
   inputSchema: { type: "object" },

@@ -16,6 +16,7 @@ import { getLogger, Formatter } from "./logging/logger.js";
 
 export { idFromPath, toJson, toLLMContentArray, getFirstFileDataPart };
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type Products = {
   products: Record<string, LLMContent>;
 };

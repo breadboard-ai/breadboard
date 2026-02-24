@@ -11,10 +11,12 @@ import type {
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type UnmanagedAssetProblem =
   | UnmanagedDriveAssetProblem
   | UnmanagedNotebookAssetProblem;
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type UnmanagedDriveAssetProblem = {
   type: "drive";
   asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
@@ -23,6 +25,7 @@ export type UnmanagedDriveAssetProblem = {
   | { problem: "missing"; missing: gapi.client.drive.Permission[] }
 );
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type UnmanagedNotebookAssetProblem = {
   type: "notebook";
   notebookId: string;
@@ -32,12 +35,16 @@ export type UnmanagedNotebookAssetProblem = {
   | { problem: "missing"; missingEmails: string[] }
 );
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type SharePanelStatus = "closed" | "open" | "native-share";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type VisibilityLevel = "only-you" | "broad" | "custom";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type ViewerMode = "full" | "app-only";
 
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type ShareStatus =
   /** Fetching basic share state (ownership, permissions) on board load. */
   | "initializing"

@@ -11,6 +11,7 @@ import { getLogger, Formatter } from "../../../utils/logging/logger.js";
 /**
  * Structure of run results stored in Google Drive.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export interface RunResults {
   finalOutputValues?: OutputValues;
 }
@@ -18,6 +19,7 @@ export interface RunResults {
 /**
  * Result of loading run results.
  */
+// eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type LoadResultsResult =
   | { success: true; finalOutputValues: OutputValues }
   | { success: false; reason: "no-client" | "no-results" | "load-failed" };
