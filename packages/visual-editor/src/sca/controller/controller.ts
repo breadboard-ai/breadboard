@@ -60,7 +60,8 @@ class Controller implements AppController {
       step: new Editor.Step.StepController("Editor_Step", "StepController"),
       share: new Editor.Share.ShareController(
         "Editor_Share",
-        "ShareController"
+        "ShareController",
+        env
       ),
       theme: new Editor.Theme.ThemeController(
         "Editor_Theme",

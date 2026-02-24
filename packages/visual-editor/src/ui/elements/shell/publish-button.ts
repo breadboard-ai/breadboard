@@ -161,6 +161,7 @@ export class PublishButton extends SignalWatcher(LitElement) {
             "has-red-dot": !!this.#share?.stale,
           })}
           ?disabled=${!this.#isEnabled}
+          @mouseenter=${this.#onHover}
           @click=${this.#onClickPublish}
         >
           <span
@@ -230,6 +231,10 @@ export class PublishButton extends SignalWatcher(LitElement) {
 
   get #icon() {
     return this.#isPublishing ? "progress_activity" : "cloud_upload";
+  }
+
+  #onHover() {
+    this.sca.actions.share.flushSave();
   }
 
   async #onClickPublish() {

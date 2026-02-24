@@ -30,7 +30,7 @@ import type {
   ViewerMode,
   VisibilityLevel,
 } from "../../controller/subcontrollers/editor/share-controller.js";
-import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+
 import {
   NotebookAccessRole,
   type NotebookPermission,
@@ -39,7 +39,6 @@ import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
 import { makeUrl, parseUrl } from "../../../ui/navigation/urls.js";
-import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
 import { onGraphUrl, onSaveComplete } from "./triggers.js";
 import { SaveCompleteEvent } from "../../../board-server/events.js";
@@ -314,7 +313,7 @@ export const open = asAction(
   "Share.open",
   { mode: ActionMode.Immediate },
   async (): Promise<void> => {
-    const { controller } = bind;
+    const { controller, services } = bind;
     const share = controller.editor.share;
 
     if (share.panel !== "closed") {
@@ -322,10 +321,20 @@ export const open = asAction(
       return;
       /* c8 ignore end */
     }
+    const graphUrl = controller.editor.graph.url;
+    if (!graphUrl) {
+      /* c8 ignore next */
+      return;
+    }
     share.panel = "open";
 
-    // When SHARING_2 is off, always re-sync on open to match legacy behavior.
-    if (!CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+    if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+      await share.waitForPublishToFinish();
+      share.status = "initializing";
+      await services.googleDriveBoardServer.flushSaveQueue(graphUrl);
+      share.status = "ready";
+    } else {
+      // Legacy: always re-sync on open. fetchShareData includes its own flush.
       share.status = "initializing";
       if (handleFatalShareError(await fetchShareData())) {
         return;
@@ -382,43 +391,6 @@ function getConfiguredBroadPermissions(): gapi.client.drive.Permission[] {
     /* c8 ignore end */
   }
   return permissions.map((permission) => ({ role: "reader", ...permission }));
-}
-
-// This computation must live in the actions layer because it needs access to
-// guestConfig and globalConfig from environment, but it can't be wrapped with
-// "asAction" as required by the lint rule, because that forces it to be async.
-// It can't be async because it needs to be rendered synchronously in the
-// share panel.
-// eslint-disable-next-line local-rules/action-exports-use-asaction
-export function computeAppUrl(shareableFile: DriveFileId | null): string {
-  if (!shareableFile) {
-    return "";
-  }
-  const { env } = bind;
-  const shareSurface = env.guestConfig.shareSurface;
-  const shareSurfaceUrlTemplate =
-    shareSurface && env.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
-  if (shareSurfaceUrlTemplate) {
-    return makeShareLinkFromTemplate({
-      urlTemplate: shareSurfaceUrlTemplate,
-      fileId: shareableFile.id,
-      resourceKey: shareableFile.resourceKey,
-    });
-  }
-  const hostOrigin = env.hostOrigin;
-  if (!hostOrigin) {
-    return "";
-  }
-  return makeUrl(
-    {
-      page: "graph",
-      mode: "app",
-      flow: `drive:/${shareableFile.id}`,
-      resourceKey: shareableFile.resourceKey,
-      guestPrefixed: false,
-    },
-    hostOrigin
-  );
 }
 
 interface MakeShareableCopyResult {
@@ -1193,10 +1165,10 @@ export const publishStale = asAction(
       return;
     }
     const graph = getGraph();
-    if (!graph) {
+    if (!graph?.url) {
       /* c8 ignore start */
       Utils.Logging.getLogger(controller).log(
-        Utils.Logging.Formatter.error("No graph found"),
+        Utils.Logging.Formatter.error("No graph or graph url found"),
         "Share.publishStale"
       );
       return;
@@ -1204,6 +1176,9 @@ export const publishStale = asAction(
     }
 
     share.status = "publishing-stale";
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    using _ = share.markPublishAsInProgress();
+    await boardServer.flushSaveQueue(graph.url);
 
     const shareableFileUrl = new URL(`drive:/${share.shareableFile.id}`);
     const updatedShareableGraph = structuredClone(graph);
@@ -1481,6 +1456,19 @@ export const setViewerAccess = asAction(
     }
 
     share.status = "ready";
+  }
+);
+
+export const flushSave = asAction(
+  "Share.flushSave",
+  { mode: ActionMode.Immediate },
+  async (): Promise<void> => {
+    const { controller, services } = bind;
+    const graphUrl = controller.editor.graph.url;
+    if (!graphUrl) {
+      return;
+    }
+    await services.googleDriveBoardServer.flushSaveQueue(graphUrl);
   }
 );
 

@@ -15,6 +15,10 @@ import { ShareController } from "../../../src/sca/controller/subcontrollers/edit
 import { field } from "../../../src/sca/controller/decorators/field.js";
 import { NotebookLmPickerController } from "../../../src/sca/controller/subcontrollers/editor/notebooklm-picker-controller.js";
 import { SnackType, SnackbarUUID } from "../../../src/ui/types/types.js";
+import { createMockEnvironment } from "./mock-environment.js";
+import { defaultRuntimeFlags } from "../controller/data/default-flags.js";
+
+const mockEnv = createMockEnvironment(defaultRuntimeFlags);
 
 /**
  * Shared controller mocks for SCA tests.
@@ -163,7 +167,7 @@ export function makeTestController(options: TestControllerOptions = {}) {
       // test coverage and eliminate the need to configure mock controller
       // behaviors in tests, since we'd be testing the real behavior of
       // controllers directly.
-      share: new ShareController("test-share", "test"),
+      share: new ShareController("test-share", "test", mockEnv),
       notebookLmPicker: new NotebookLmPickerController(
         "test-notebookLmPicker",
         "test"

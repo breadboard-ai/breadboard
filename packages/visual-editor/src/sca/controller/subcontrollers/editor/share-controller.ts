@@ -10,6 +10,9 @@ import type {
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { field } from "../../decorators/field.js";
 import { RootController } from "../root-controller.js";
+import type { AppEnvironment } from "../../../environment/environment.js";
+import { makeUrl } from "../../../../ui/navigation/urls.js";
+import { makeShareLinkFromTemplate } from "../../../../utils/make-share-link-from-template.js";
 
 // eslint-disable-next-line local-rules/no-exported-types-outside-types-ts
 export type UnmanagedAssetProblem =
@@ -63,6 +66,17 @@ export type ShareStatus =
   | "syncing-assets";
 
 export class ShareController extends RootController {
+  readonly #env: AppEnvironment;
+
+  constructor(
+    controllerId: string,
+    persistenceId: string,
+    env: AppEnvironment
+  ) {
+    super(controllerId, persistenceId);
+    this.#env = env;
+  }
+
   @field()
   accessor status: ShareStatus = "initializing";
 
@@ -96,6 +110,38 @@ export class ShareController extends RootController {
     if (this.hasCustomPermissions) return "custom";
     if (this.hasBroadPermissions) return "broad";
     return "only-you";
+  }
+
+  get appUrl(): string {
+    const file = this.shareableFile;
+    if (!file) {
+      return "";
+    }
+    const shareSurface = this.#env.guestConfig.shareSurface;
+    const shareSurfaceUrlTemplate =
+      shareSurface &&
+      this.#env.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
+    if (shareSurfaceUrlTemplate) {
+      return makeShareLinkFromTemplate({
+        urlTemplate: shareSurfaceUrlTemplate,
+        fileId: file.id,
+        resourceKey: file.resourceKey,
+      });
+    }
+    const hostOrigin = this.#env.hostOrigin;
+    if (!hostOrigin) {
+      return "";
+    }
+    return makeUrl(
+      {
+        page: "graph",
+        mode: "app",
+        flow: `drive:/${file.id}`,
+        resourceKey: file.resourceKey,
+        guestPrefixed: false,
+      },
+      hostOrigin
+    );
   }
 
   @field()
@@ -153,6 +199,7 @@ export class ShareController extends RootController {
     this.viewerMode = "full";
     this.lastPublishedIso = "";
     this.error = "";
+    this.#inProgressPublish = null;
   }
 
   #resolveUnmanagedAssets?: () => void;
@@ -170,5 +217,23 @@ export class ShareController extends RootController {
   /** Resolves the unmanaged-assets dialog promise. */
   resolveUnmanagedAssets() {
     this.#resolveUnmanagedAssets?.();
+  }
+
+  #inProgressPublish: Promise<void> | null = null;
+
+  /** Must be used with `using` so that cleanup runs on scope exit. */
+  markPublishAsInProgress(): Disposable {
+    const { promise, resolve } = Promise.withResolvers<void>();
+    this.#inProgressPublish = promise;
+    return {
+      [Symbol.dispose]: () => {
+        resolve();
+        this.#inProgressPublish = null;
+      },
+    };
+  }
+
+  async waitForPublishToFinish(): Promise<void> {
+    await this.#inProgressPublish;
   }
 }
