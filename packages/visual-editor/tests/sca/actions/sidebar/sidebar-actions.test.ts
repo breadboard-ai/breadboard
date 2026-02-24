@@ -30,6 +30,7 @@ suite("Sidebar Actions", () => {
             selection: {
               selection: {
                 nodes: new Set(["node-a", "node-b"]),
+                assets: new Set(),
               },
             },
             sidebar: {
@@ -54,6 +55,76 @@ suite("Sidebar Actions", () => {
       );
     });
 
+    test("switches to editor when an asset is selected", async () => {
+      let sectionSet: string | undefined;
+
+      sidebarActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            selection: {
+              selection: {
+                nodes: new Set(),
+                assets: new Set(["@@asset-a"]),
+              },
+            },
+            sidebar: {
+              get section() {
+                return "preview";
+              },
+              set section(val: string) {
+                sectionSet = val;
+              },
+            },
+          },
+        } as never,
+        env: createMockEnvironment(defaultRuntimeFlags),
+      });
+
+      await sidebarActions.updateSidebarOnSelectionChange();
+
+      assert.strictEqual(
+        sectionSet,
+        "editor",
+        "Should switch to editor when an asset is selected"
+      );
+    });
+
+    test("does not switch to editor when only edges are selected", async () => {
+      let sectionSet: string | undefined;
+
+      sidebarActions.bind({
+        services: {} as never,
+        controller: {
+          editor: {
+            selection: {
+              selection: {
+                nodes: new Set(),
+                assets: new Set(),
+              },
+            },
+            sidebar: {
+              get section() {
+                return "preview";
+              },
+              set section(val: string) {
+                sectionSet = val;
+              },
+            },
+          },
+        } as never,
+        env: createMockEnvironment(defaultRuntimeFlags),
+      });
+
+      await sidebarActions.updateSidebarOnSelectionChange();
+
+      assert.strictEqual(
+        sectionSet,
+        undefined,
+        "Should not switch to editor when only edges are selected"
+      );
+    });
+
     test("switches to preview when selection becomes empty", async () => {
       let sectionSet: string | undefined;
 
@@ -64,6 +135,7 @@ suite("Sidebar Actions", () => {
             selection: {
               selection: {
                 nodes: new Set(),
+                assets: new Set(),
               },
             },
             sidebar: {
@@ -98,6 +170,7 @@ suite("Sidebar Actions", () => {
             selection: {
               selection: {
                 nodes: new Set(["a", "b", "c"]),
+                assets: new Set(),
               },
             },
             sidebar: {
@@ -132,6 +205,7 @@ suite("Sidebar Actions", () => {
             selection: {
               selection: {
                 nodes: new Set(),
+                assets: new Set(),
               },
             },
             sidebar: {
@@ -166,6 +240,7 @@ suite("Sidebar Actions", () => {
             selection: {
               selection: {
                 nodes: new Set(),
+                assets: new Set(),
               },
             },
             sidebar: {
@@ -200,6 +275,7 @@ suite("Sidebar Actions", () => {
             selection: {
               selection: {
                 nodes: new Set(["node-a"]),
+                assets: new Set(),
               },
             },
             sidebar: {
@@ -244,6 +320,7 @@ suite("Sidebar Actions", () => {
             selection: {
               selection: {
                 nodes: new Set(), // No selection after refresh
+                assets: new Set(),
               },
             },
             sidebar: {
