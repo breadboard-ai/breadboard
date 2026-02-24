@@ -4,9 +4,8 @@ trigger: always_on
 
 ## Build System
 
-Monorepo using wireit. `package.json` commands invoke the full build system.
-`npm run build` / `npm run build:tsc` builds all deps then compiles.
-`npm run test` builds deps then runs tests.
+Monorepo using wireit. `npm run build` / `npm run build:tsc` builds all deps
+then compiles. `npm run test` builds deps then runs tests.
 
 When making changes, check if the user has `npm run build --watch` running. If
 not, prompt them to start one. Use its output to verify compilation instead of
@@ -145,14 +144,13 @@ in `.agent/skills/` with detailed instructions.
 ## Tests
 
 Use Node's built-in test framework (`node:test`). Tests run in Node, not a
-browser. If the code under test references DOM globals (`document`, `window`,
-etc.), call `setDOM()` from `tests/fake-dom.ts` in `beforeEach` and `unsetDOM()`
-in `afterEach` to ensure a clean environment between tests. Modules must never
-access DOM globals at the module level (e.g., top-level
-`document.createElement`) — defer all DOM access to function bodies so the
-module can be imported safely in Node. Name tests as `[source-file].test.ts` in
-`packages/[package]/tests/`. In `packages/visual-editor`, mirror `src/sca/`
-structure under `tests/sca/`.
+browser. Name tests as `[source-file].test.ts` in `packages/[package]/tests/`.
+In `packages/visual-editor`, mirror `src/sca/` structure under `tests/sca/`.
+
+For DOM globals (`document`, `window`, etc.): call `setDOM()` from
+`tests/fake-dom.ts` in `beforeEach` and `unsetDOM()` in `afterEach`. Never
+access DOM globals at the module level — defer to function bodies so modules
+import safely in Node.
 
 ### Mocking
 
