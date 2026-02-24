@@ -17,6 +17,7 @@ interface Option {
   label: string;
   icon: string;
   subtitle: string;
+  disabled?: boolean;
 }
 
 @customElement("bb-share-visibility-selector")
@@ -150,9 +151,27 @@ export class ShareVisibilitySelector extends LitElement {
         width: 100%;
         text-align: left;
 
-        &:hover {
+        &:hover:not(:disabled) {
           background: light-dark(#f0f0f0, #3a3a3a);
         }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: default;
+        }
+      }
+
+      .option-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .option-disabled-reason {
+        font-size: 12px;
+        font-weight: 300;
+        line-height: 16px;
+        color: var(--light-dark-n-35);
       }
 
       .check-icon {
@@ -224,6 +243,9 @@ export class ShareVisibilitySelector extends LitElement {
   @property({ type: Boolean })
   accessor domainRestricted = false;
 
+  @property()
+  accessor wideDisabledReason = "";
+
   @property({ type: Boolean, reflect: true })
   accessor loading = false;
 
@@ -231,6 +253,26 @@ export class ShareVisibilitySelector extends LitElement {
   readonly #dropdownRef = createRef<HTMLDivElement>();
 
   get #options(): Option[] {
+    const wideDisabled = this.wideDisabledReason !== "";
+    const wideOption: Option = this.domainRestricted
+      ? {
+          level: "wide",
+          label: "Your Organization",
+          icon: "domain",
+          subtitle: wideDisabled
+            ? this.wideDisabledReason
+            : "Anyone in your organization with the link can view",
+          disabled: wideDisabled,
+        }
+      : {
+          level: "wide",
+          label: "Anyone with the link",
+          icon: "public",
+          subtitle: wideDisabled
+            ? this.wideDisabledReason
+            : "Anyone on the internet with the link can view",
+          disabled: wideDisabled,
+        };
     return [
       {
         level: "only-you",
@@ -244,19 +286,7 @@ export class ShareVisibilitySelector extends LitElement {
         icon: "lock",
         subtitle: "Only people with access can open with the link",
       },
-      this.domainRestricted
-        ? {
-            level: "wide",
-            label: "Your Organization",
-            icon: "domain",
-            subtitle: "Anyone in your organization with the link can view",
-          }
-        : {
-            level: "wide",
-            label: "Anyone with the link",
-            icon: "public",
-            subtitle: "Anyone on the internet with the link can view",
-          },
+      wideOption,
     ];
   }
 
@@ -300,7 +330,8 @@ export class ShareVisibilitySelector extends LitElement {
         ${this.#options.map(
           (opt) => html`
             <button
-              class="dropdown-option"
+              class="dropdown-option ${opt.disabled ? "disabled" : ""}"
+              ?disabled=${opt.disabled}
               @click=${() => this.#selectOption(opt.level)}
             >
               <span class="check-icon">
@@ -308,7 +339,14 @@ export class ShareVisibilitySelector extends LitElement {
                   ? html`<span class="g-icon">check</span>`
                   : nothing}
               </span>
-              ${opt.label}
+              <span class="option-content">
+                <span class="option-label">${opt.label}</span>
+                ${opt.disabled
+                  ? html`<span class="option-disabled-reason"
+                      >${opt.subtitle}</span
+                    >`
+                  : nothing}
+              </span>
             </button>
           `
         )}

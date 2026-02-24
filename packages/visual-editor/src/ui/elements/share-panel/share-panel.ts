@@ -972,10 +972,17 @@ export class SharePanel extends SignalWatcher(LitElement) {
     return html`<bb-share-visibility-selector
       .value=${this.#controller.visibility}
       .domainRestricted=${this.#domainRestricted}
+      .wideDisabledReason=${this.#wideDisabledReason}
       .loading=${this.#controller.status === "changing-visibility"}
       @change=${this.#onVisibilityChange}
       @edit-access=${this.#onEditAccess}
     ></bb-share-visibility-selector>`;
+  }
+
+  get #wideDisabledReason(): string {
+    return this.#controller.widePermissionsAllowed
+      ? ""
+      : `Disabled for ${this.#controller.userDomain} users`;
   }
 
   async #onVisibilityChange(event: Event) {
