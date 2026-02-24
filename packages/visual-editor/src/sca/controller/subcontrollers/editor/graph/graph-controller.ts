@@ -486,7 +486,12 @@ export class GraphController extends RootController implements MutableGraph {
     // Skip derived state updates on visual-only changes (e.g., node movement)
     if (evt.visualOnly) return;
 
-    this.topologyVersion++;
+    // Only bump topologyVersion on structural changes (add/remove node/edge,
+    // replace-graph). Config/metadata edits are NOT topology changes and must
+    // not trigger runner re-preparation, which would wipe the current run state.
+    if (evt.topologyChange) {
+      this.topologyVersion++;
+    }
     this.#refreshDescribers(evt.affectedNodes);
     this.#updateMyTools();
     this.#updateAgentModeTools();

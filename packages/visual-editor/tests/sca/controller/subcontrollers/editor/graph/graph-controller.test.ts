@@ -1116,6 +1116,39 @@ suite("GraphController", () => {
     );
   });
 
+  test("topologyVersion does not increment on configuration changes", async () => {
+    const store = new GraphController("Graph_Topo_Config", "GraphController");
+    await store.isHydrated;
+
+    if (!editableGraph) assert.fail("No editable graph");
+    initAndSetEditor(store, editableGraph);
+    await store.isSettled;
+
+    assert.strictEqual(store.topologyVersion, 0);
+
+    // Configuration change is non-visual but NOT a topology change.
+    const result = await editableGraph.edit(
+      [
+        {
+          type: "changeconfiguration",
+          graphId: "",
+          id: "foo",
+          configuration: { prompt: "new value" },
+        },
+      ],
+      "Change config"
+    );
+    if (!result.success) assert.fail("Edit failed");
+    await store.isSettled;
+
+    assert.ok(store.version > 0, "version should have incremented");
+    assert.strictEqual(
+      store.topologyVersion,
+      0,
+      "topologyVersion should not increment on config change"
+    );
+  });
+
   test("topologyVersion resets to 0 on resetAll", async () => {
     const store = new GraphController("Graph_Topo_Reset", "GraphController");
     await store.isHydrated;
