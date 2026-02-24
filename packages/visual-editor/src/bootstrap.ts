@@ -191,6 +191,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       await signinAdapter.signOut();
       landing.missingScopes = true;
     }
+    // eslint-disable-next-line local-rules/deja-code-prefer-router-navigate -- runs before SCA is initialized
     window.location.href = makeUrl(landing);
     return;
   }

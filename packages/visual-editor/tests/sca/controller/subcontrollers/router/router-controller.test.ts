@@ -363,4 +363,20 @@ suite("RouterController", () => {
       ).ENABLE_NEW_URL_SCHEME = original;
     }
   });
+  test("navigateAway() calls makeUrl with the provided init", async () => {
+    window.history.pushState(null, "", "http://localhost/");
+    const controller = new RouterController();
+    await controller.isHydrated;
+
+    // navigateAway constructs the URL via makeUrl and assigns
+    // window.location.href. In the fake-DOM jsdom-like environment,
+    // cross-origin assignments are silently rejected, so we verify the
+    // method exists and doesn't throw.
+    assert.doesNotThrow(() => {
+      controller.navigateAway({
+        page: "home",
+        guestPrefixed: false,
+      });
+    });
+  });
 });

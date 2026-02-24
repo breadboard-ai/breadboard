@@ -36,6 +36,7 @@ import dejaCodePreferGroupBy from "./packages/visual-editor/eslint-rules/deja-co
 import dejaCodePreferSummarizeLLMContent from "./packages/visual-editor/eslint-rules/deja-code-prefer-summarize-llm-content.js";
 import dejaCodePreferFormatError from "./packages/visual-editor/eslint-rules/deja-code-prefer-format-error.js";
 import dejaCodePreferCanParse from "./packages/visual-editor/eslint-rules/deja-code-prefer-can-parse.js";
+import dejaCodePreferRouterNavigate from "./packages/visual-editor/eslint-rules/deja-code-prefer-router-navigate.js";
 
 // Create local rules plugin
 const localRulesPlugin = {
@@ -66,6 +67,7 @@ const localRulesPlugin = {
     "deja-code-prefer-summarize-llm-content": dejaCodePreferSummarizeLLMContent,
     "deja-code-prefer-format-error": dejaCodePreferFormatError,
     "deja-code-prefer-can-parse": dejaCodePreferCanParse,
+    "deja-code-prefer-router-navigate": dejaCodePreferRouterNavigate,
   },
 };
 
@@ -135,9 +137,21 @@ export default tseslint.config(
       "local-rules/deja-code-prefer-summarize-llm-content": "error",
       "local-rules/deja-code-prefer-format-error": "error",
       "local-rules/deja-code-prefer-can-parse": "error",
+      "local-rules/deja-code-prefer-router-navigate": "error",
 
       // expect-type rules (requires type information)
       "expect-type/expect": "error",
+    },
+  },
+
+  // The router controller IS the canonical implementation of navigateAway —
+  // it's the one place that should use raw window.location.href = makeUrl().
+  {
+    files: [
+      "packages/visual-editor/src/sca/controller/subcontrollers/router/router-controller.ts",
+    ],
+    rules: {
+      "local-rules/deja-code-prefer-router-navigate": "off",
     },
   },
 

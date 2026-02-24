@@ -98,6 +98,17 @@ export class RouterController
   }
 
   /**
+   * Navigate away from the current SPA entirely.
+   *
+   * Use this for navigations that require a full page load (e.g., going to the
+   * landing page, which is a separate HTML entrypoint). Unlike `go()`, this
+   * does NOT use `pushState` — it triggers a hard browser navigation.
+   */
+  navigateAway(init: MakeUrlInit) {
+    window.location.href = makeUrl(init);
+  }
+
+  /**
    * Trigger initial URL change handling.
    *
    * Should be called once after the controller is wired up and triggers

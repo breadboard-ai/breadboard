@@ -36,7 +36,7 @@ import { reactive } from "./sca/reactive.js";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 
 import { RecentBoard, UserSignInResponse } from "./sca/types.js";
-import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/navigation/urls.js";
+import { OAUTH_REDIRECT, parseUrl } from "./ui/navigation/urls.js";
 
 import { Admin } from "./admin.js";
 
@@ -220,7 +220,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         result
       );
       await this.sca.services.signinAdapter.signOut();
-      window.location.href = makeUrl({
+      this.sca.controller.router.navigateAway({
         page: "landing",
         redirect: parseUrl(window.location.href),
         missingScopes: result.code === "missing-scopes",

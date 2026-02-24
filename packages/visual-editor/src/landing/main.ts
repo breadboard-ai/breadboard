@@ -24,10 +24,12 @@ if (parsedUrl.page !== "landing") {
 
 function redirect(target?: MakeUrlInit) {
   if (target) {
+    // eslint-disable-next-line local-rules/deja-code-prefer-router-navigate -- landing page, no SCA
     window.location.href = makeUrl(target);
     return;
   }
 
+  // eslint-disable-next-line local-rules/deja-code-prefer-router-navigate -- landing page, no SCA
   window.location.href = makeUrl(parsedUrl.redirect);
 }
 

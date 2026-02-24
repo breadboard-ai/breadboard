@@ -7,7 +7,7 @@
 import { DRIVE_PROPERTY_OPAL_SHARE_SURFACE } from "@breadboard-ai/utils/google-drive/operations.js";
 import { customElement } from "lit/decorators.js";
 import { MainBase } from "./main-base.js";
-import { makeUrl, parseUrl } from "./ui/navigation/urls.js";
+import { parseUrl } from "./ui/navigation/urls.js";
 import { makeShareLinkFromTemplate } from "./utils/make-share-link-from-template.js";
 
 @customElement("bb-open-main")
@@ -78,7 +78,7 @@ export class OpenMain extends MainBase {
 
     // Fallback to viewing the Opal on this same deployment (note that we don't
     // need window.parent.location here).
-    window.location.href = makeUrl({
+    this.sca.controller.router.navigateAway({
       page: "graph",
       mode: "app",
       flow: `drive:/${url.fileId}`,

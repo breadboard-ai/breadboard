@@ -6,3 +6,4 @@
 | Summarize LLM content to preview string | `deja-code-prefer-summarize-llm-content` | `utils/summarize-llm-content.ts`   |
 | Inline error unwrap + message extract   | `deja-code-prefer-format-error`          | `utils/formatting/format-error.ts` |
 | Inline `URL.canParse` polyfill          | `deja-code-prefer-can-parse`             | Use `URL.canParse()` directly      |
+| Raw `window.location` + `makeUrl()`     | `deja-code-prefer-router-navigate`       | `RouterController.navigateAway()`  |

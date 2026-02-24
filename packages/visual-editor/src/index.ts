@@ -574,9 +574,15 @@ class Main extends MainBase {
       .mode=${this.sca.controller.global.main.mode}
       .graphContentState=${gc.graphContentState}
       @bbsignout=${async () => {
+        // Enforce that we lose the current title.
+        this.sca.env.shellHost.setTitle(
+          `${Strings.from("APP_NAME")} [Experiment]`
+        );
+
+        await this.sca.actions.board.close();
         await this.sca.services.signinAdapter.signOut();
         this.sca.services.actionTracker.signOutSuccess();
-        window.location.href = makeUrl({
+        this.sca.controller.router.navigateAway({
           page: "landing",
           redirect: {
             page: "home",
@@ -607,16 +613,14 @@ class Main extends MainBase {
         if ((await this.sca.services.signinAdapter.state) === "signedin") {
           this.sca.controller.router.go(homepage);
         } else {
-          // Note that router.go() can't navigate to the landing page, because
-          // it's a totally different entrypoint.
-          window.location.assign(
-            makeUrl({
-              page: "landing",
-              dev: parsedUrl.dev,
-              redirect: homepage,
-              guestPrefixed: true,
-            })
-          );
+          // router.go() can't navigate to the landing page — it's a separate
+          // HTML entrypoint, so use navigateAway() for a full page load.
+          this.sca.controller.router.navigateAway({
+            page: "landing",
+            dev: parsedUrl.dev,
+            redirect: homepage,
+            guestPrefixed: true,
+          });
         }
       }}
       @bbsubscribercreditrefresh=${async () => {
