@@ -69,9 +69,6 @@ export default {
   COMMAND_WATCH_DEMO_VIDEO: {
     str: "Watch Demo Video",
   },
-  COMMAND_STATUS_UPDATE: {
-    str: "Status Update",
-  },
   COMMAND_EXPORT_PROJECT: {
     str: "Export JSON",
   },
@@ -145,9 +142,6 @@ export default {
   },
   LABEL_EMPTY: {
     str: "Your app will appear here once it's built",
-  },
-  LABEL_STATUS_UPDATE: {
-    str: "Status Update",
   },
   LABEL_SHARE: {
     str: "A Breadboard mini-app has been shared with you",

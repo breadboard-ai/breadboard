@@ -259,7 +259,6 @@ export type UIOverlays =
   | "GlobalSettings"
   | "TOS"
   | "VideoModal"
-  | "StatusUpdateModal"
   | "SignInModal"
   | "WarmWelcome"
   | "NoAccessModal";

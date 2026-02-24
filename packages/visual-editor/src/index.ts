@@ -221,9 +221,6 @@ class Main extends MainBase {
         this.sca.controller.global.main.show.has("VideoModal")
           ? this.#renderVideoModal()
           : nothing,
-        this.sca.controller.global.main.show.has("StatusUpdateModal")
-          ? this.#renderStatusUpdateModal()
-          : nothing,
         this.sca.controller.global.main.show.has("GlobalSettings")
           ? this.#renderGlobalSettingsModal()
           : nothing,
@@ -381,7 +378,6 @@ class Main extends MainBase {
       class=${classMap(classes)}
       aria-role="button"
       @click=${() => {
-        this.sca.controller.global.main.show.add("StatusUpdateModal");
         this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
       }}
     >
@@ -400,16 +396,6 @@ class Main extends MainBase {
         <span class="g-icon round filled">close</span>
       </button>
     </div>`;
-  }
-
-  #renderStatusUpdateModal() {
-    return html`<bb-status-update-modal
-      .updates=${this.sca.controller.global.statusUpdates.updates}
-      @bbmodaldismissed=${() => {
-        this.sca.controller.global.main.show.delete("StatusUpdateModal");
-        this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
-      }}
-    ></bb-status-update-modal>`;
   }
 
   #renderGlobalSettingsModal() {
@@ -711,12 +697,6 @@ class Main extends MainBase {
 
           case "show-global-settings": {
             this.sca.controller.global.main.show.add("GlobalSettings");
-            break;
-          }
-
-          case "status-update": {
-            this.sca.controller.global.main.show.add("StatusUpdateModal");
-            this.sca.controller.global.statusUpdates.showStatusUpdateChip = false;
             break;
           }
 

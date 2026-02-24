@@ -540,7 +540,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.sca.controller.global.main.show.delete("BoardEditModal");
     this.sca.controller.global.main.show.delete("BetterOnDesktopModal");
     this.sca.controller.global.main.show.delete("MissingShare");
-    this.sca.controller.global.main.show.delete("StatusUpdateModal");
     this.sca.controller.global.main.show.delete("VideoModal");
   }
 

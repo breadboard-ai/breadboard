@@ -687,11 +687,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
       icon: "quick_reference_all",
     },
     {
-      id: "status-update",
-      title: Strings.from("COMMAND_STATUS_UPDATE"),
-      icon: "bigtop_updates",
-    },
-    {
       id: "chat",
       title: Strings.from("COMMAND_JOIN_CHAT"),
       icon: discordIcon,
