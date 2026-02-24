@@ -353,27 +353,20 @@ export const onError = asAction(
       progressTickerHandle = null;
     }
 
-    // Extract error message and metadata from the event detail
-    const detail = (evt as CustomEvent)?.detail;
+    // Extract error details from the event and decode through decodeErrorData.
+    const detail = evt?.detail;
     const error = detail?.error;
-    const metadata = detail?.metadata;
-    const message =
-      typeof error === "string"
-        ? error
-        : ((error as { message?: string })?.message ?? "Unknown error");
-    const details =
-      typeof error === "object"
-        ? (error as { details?: string })?.details
-        : undefined;
-    controller.run.main.setError({ message, details, metadata });
+    const metadata = detail?.metadata as ErrorMetadata | undefined;
+    const decoded = decodeErrorData(error, metadata);
+    controller.run.main.setError(decoded);
     controller.run.main.clearInput();
 
     // Show a persistent error snackbar so the user is notified.
-    const actions = details
-      ? [{ action: "details", title: "View details", value: details }]
+    const actions = decoded.details
+      ? [{ action: "details", title: "View details", value: decoded.details }]
       : [];
     controller.global.snackbars.snackbar(
-      message,
+      decoded.message,
       SnackType.ERROR,
       actions,
       true,
@@ -526,10 +519,12 @@ export const onNodeStateChangeAction = asAction(
     const { id, state, error } = detail;
     if (state === "failed") {
       const errorMessage = (error?.$error as string) ?? "Unknown error";
-      trackError(services.actionTracker, error?.metadata);
+      const metadata = error?.metadata as ErrorMetadata | undefined;
+      const decoded = decodeErrorData(errorMessage, metadata);
+      trackError(services.actionTracker, decoded.metadata);
       controller.run.renderer.setNodeState(id, {
         status: state,
-        errorMessage,
+        errorMessage: decoded.message,
       });
       return;
     }

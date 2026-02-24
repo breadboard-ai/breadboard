@@ -54,19 +54,51 @@ function policy(type: string) {
   return `${POLICY_PREAMBLE} ${type} content.`;
 }
 
-// This is the shape of the error that AppCat serializes into error_message
+// Parsed representation of an error string, optionally carrying classification
+// metadata extracted from structured JSON or fuzzy string matching.
 type RichError = {
-  code?: string;
   message: string;
   details?: string;
+  metadata?: ErrorMetadata;
 };
 
+/**
+ * Attempts to parse a raw error string into a classified RichError.
+ *
+ * Handles two shapes:
+ * 1. Structured JSON from AppCat (e.g. `{code: "RESOURCE_EXHAUSTED", ...}`)
+ * 2. Plain strings — classified by fuzzy keyword matching (safety/quota/recitation)
+ */
 function maybeExtractRichError(s: string): RichError {
   try {
-    return JSON.parse(s);
+    const json = JSON.parse(s);
+    const message = json.message ?? s;
+    // Structured error from AppCat with error classification
+    if (json?.code === "RESOURCE_EXHAUSTED") {
+      return {
+        message,
+        metadata: {
+          kind:
+            json?.error_reason === "PAID_QUOTA_EXHAUSTED"
+              ? "paid-quota-exhausted"
+              : "free-quota-exhausted",
+        },
+      };
+    }
+    // JSON but no structured code — fall through to fuzzy matching
+    return { message, details: json.details, ...classifyByFuzzyMatch(message) };
   } catch {
-    return { message: s };
+    // Not JSON — fuzzy match on the raw string
+    return { message: s, ...classifyByFuzzyMatch(s) };
   }
+}
+
+function classifyByFuzzyMatch(s: string): { metadata?: ErrorMetadata } {
+  const lc = s.toLocaleLowerCase();
+  if (lc.includes("safety")) return { metadata: { kind: "safety" } };
+  if (lc.includes("quota")) return { metadata: { kind: "capacity" } };
+  if (lc.includes("recitation")) return { metadata: { kind: "recitation" } };
+  return {};
 }
 
 /**
@@ -77,6 +109,7 @@ function decodeErrorData(
   error: ErrorResponse["error"],
   metadata?: ErrorMetadata
 ): RunError {
+  // Extract explicit metadata from the error object if not passed directly.
   metadata ??=
     (!(typeof error === "string") &&
       "metadata" in error &&
@@ -84,8 +117,13 @@ function decodeErrorData(
     undefined;
 
   const richError = maybeExtractRichError(formatError(error));
-  if (!metadata) {
-    // Return simple message if there's no metadata.
+
+  // Merge: auto-extracted metadata (kind) fills gaps; explicit metadata
+  // (origin, model) takes precedence.
+  metadata = { ...richError.metadata, ...metadata };
+
+  if (!metadata.kind) {
+    // Return simple message if there's no classified metadata.
     return { message: richError.message };
   }
 

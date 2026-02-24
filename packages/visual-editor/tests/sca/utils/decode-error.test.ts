@@ -86,10 +86,13 @@ suite("decodeErrorData", () => {
     assert.ok(result?.message.includes("too similar"));
   });
 
-  test("handles capacity kind", () => {
-    const error = errorWith("quota exceeded", { kind: "capacity" });
+  test("handles image medium for free-quota-exhausted", () => {
+    const error = errorWith("quota exceeded", {
+      kind: "free-quota-exhausted",
+      model: "imagegeneration",
+    });
     const result = decodeErrorData(error);
-    assert.ok(result?.message.includes("quota"));
+    assert.ok(result?.message.includes("image"));
   });
 
   test("handles safety kind with reasons", () => {
@@ -118,14 +121,17 @@ suite("decodeErrorData", () => {
   });
 
   test("detects video medium from model name", () => {
-    const error = errorWith("quota", { kind: "capacity", model: "veo-2" });
+    const error = errorWith("quota", {
+      kind: "free-quota-exhausted",
+      model: "veo-2",
+    });
     const result = decodeErrorData(error);
     assert.ok(result?.message.includes("video"));
   });
 
   test("detects image medium from model name", () => {
     const error = errorWith("quota", {
-      kind: "capacity",
+      kind: "free-quota-exhausted",
       model: "imagegeneration",
     });
     const result = decodeErrorData(error);
@@ -134,7 +140,7 @@ suite("decodeErrorData", () => {
 
   test("detects audio medium from model name", () => {
     const error = errorWith("quota", {
-      kind: "capacity",
+      kind: "free-quota-exhausted",
       model: "audio-gen",
     });
     const result = decodeErrorData(error);
@@ -142,9 +148,85 @@ suite("decodeErrorData", () => {
   });
 
   test("defaults to text medium", () => {
-    const error = errorWith("quota", { kind: "capacity" });
+    const error = errorWith("quota", { kind: "free-quota-exhausted" });
     const result = decodeErrorData(error);
     assert.ok(result?.message.includes("text"));
+  });
+
+  test("handles capacity kind", () => {
+    const error = errorWith("quota exceeded", { kind: "capacity" });
+    const result = decodeErrorData(error);
+    assert.ok(result?.message.includes("high demand"));
+  });
+
+  // --- Auto-extraction from raw error strings (maybeExtractRichError) ---
+
+  test("auto-extracts free-quota-exhausted from RESOURCE_EXHAUSTED JSON", () => {
+    const json = JSON.stringify({
+      code: "RESOURCE_EXHAUSTED",
+      error_reason: "FREE_QUOTA_EXHAUSTED",
+      message: "Quota exceeded",
+    });
+    const result = decodeErrorData(json);
+    assert.strictEqual(result.metadata?.kind, "free-quota-exhausted");
+    assert.ok(result.message.includes("quota"));
+  });
+
+  test("auto-extracts paid-quota-exhausted from RESOURCE_EXHAUSTED JSON", () => {
+    const json = JSON.stringify({
+      code: "RESOURCE_EXHAUSTED",
+      error_reason: "PAID_QUOTA_EXHAUSTED",
+      message: "Paid quota exceeded",
+    });
+    const result = decodeErrorData(json);
+    assert.strictEqual(result.metadata?.kind, "paid-quota-exhausted");
+    assert.ok(result.message.includes("credits"));
+  });
+
+  test("auto-extracts safety kind from plain string via fuzzy match", () => {
+    const result = decodeErrorData("blocked for safety reasons");
+    assert.strictEqual(result.metadata?.kind, "safety");
+  });
+
+  test("auto-extracts capacity kind from plain string with 'quota'", () => {
+    const result = decodeErrorData("rate limited due to quota");
+    assert.strictEqual(result.metadata?.kind, "capacity");
+  });
+
+  test("auto-extracts recitation kind from plain string", () => {
+    const result = decodeErrorData("recitation detected in output");
+    assert.strictEqual(result.metadata?.kind, "recitation");
+  });
+
+  test("explicit metadata takes precedence over auto-extracted", () => {
+    // JSON has "RESOURCE_EXHAUSTED" → auto-extracts "free-quota-exhausted"
+    // But explicit metadata says "paid-quota-exhausted"
+    const json = JSON.stringify({
+      code: "RESOURCE_EXHAUSTED",
+      error_reason: "FREE_QUOTA_EXHAUSTED",
+      message: "Quota exceeded",
+    });
+    const error = {
+      error: json,
+      metadata: { kind: "paid-quota-exhausted" as const },
+    };
+    const result = decodeErrorData(
+      error as unknown as Parameters<typeof decodeErrorData>[0]
+    );
+    assert.strictEqual(result.metadata?.kind, "paid-quota-exhausted");
+  });
+
+  test("explicit model is preserved when kind is auto-extracted", () => {
+    const json = JSON.stringify({
+      code: "RESOURCE_EXHAUSTED",
+      error_reason: "FREE_QUOTA_EXHAUSTED",
+      message: "Quota exceeded",
+    });
+    const result = decodeErrorData(json, { origin: "server", model: "veo-2" });
+    assert.strictEqual(result.metadata?.kind, "free-quota-exhausted");
+    assert.strictEqual(result.metadata?.model, "veo-2");
+    // Should use video medium since model is "veo-2"
+    assert.ok(result.message.includes("video"));
   });
 });
 

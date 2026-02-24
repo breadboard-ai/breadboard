@@ -266,8 +266,9 @@ async function executeStep(
       );
     }
     if (response.errorMessage) {
-      const errorMessage = decodeMetadata(response.errorMessage, model);
-      return reporter.addError(err(errorMessage.$error, errorMessage.metadata));
+      return reporter.addError(
+        err(response.errorMessage, { origin: "server", model })
+      );
     }
     reporter.addJson("Step Output", elideEncodedData(response), "download");
     const output_key = body.planStep.output || "";
@@ -319,44 +320,6 @@ export function elideEncodedData<T>(obj: T): T {
   }
 
   return o as T;
-}
-
-function decodeMetadata($error: string, model: string): ErrorWithMetadata {
-  const origin = "server";
-  // The errorMessage string from AppCat is JSON with structured error information
-  // Previous logic used fuzzy string matching to determine the kind of error
-  // This is brittle, so we're switching to a structured approach
-  try {
-    const json = JSON.parse($error);
-    if (json?.code === "RESOURCE_EXHAUSTED") {
-      return {
-        $error: json.message,
-        metadata: {
-          kind:
-            json?.error_reason === "PAID_QUOTA_EXHAUSTED"
-              ? "paid-quota-exhausted"
-              : json?.error_reason === "FREE_QUOTA_EXHAUSTED"
-                ? "free-quota-exhausted"
-                : "free-quota-exhausted",
-          origin,
-          model,
-        },
-      };
-    }
-  } catch {
-    // ignore
-  }
-  const lc = $error.toLocaleLowerCase();
-  if (lc.includes("safety")) {
-    return { $error, metadata: { kind: "safety", origin, model } };
-  }
-  if (lc.includes("quota")) {
-    return { $error, metadata: { kind: "capacity", origin, model } };
-  }
-  if (lc.includes("recitation")) {
-    return { $error, metadata: { kind: "recitation", origin, model } };
-  }
-  return { $error, metadata: { origin, model } };
 }
 
 function decodeFetchError($error: string, model?: string): ErrorWithMetadata {

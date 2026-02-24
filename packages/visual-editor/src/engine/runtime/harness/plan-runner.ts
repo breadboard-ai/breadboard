@@ -6,7 +6,6 @@
 
 import {
   BreakpointSpec,
-  ErrorMetadata,
   GraphDescriptor,
   HarnessRunner,
   NodeIdentifier,
@@ -19,7 +18,6 @@ import {
   RunConfig,
   RunEventTarget,
 } from "@breadboard-ai/types";
-import { decodeErrorData } from "../../../sca/utils/decode-error.js";
 
 import { timestamp } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
@@ -164,18 +162,7 @@ class PlanRunner
     const plan = this.#planCreator(graph);
     return new Orchestrator(plan, {
       stateChangedbyOrchestrator: (id, newState, error) => {
-        if (newState === "failed" && error) {
-          const decoded = decodeErrorData(
-            error["$error"] as string,
-            error["metadata"] as ErrorMetadata
-          );
-          this.#dispatchNodeStateChangeEvent(id, newState, {
-            $error: decoded.message,
-            metadata: decoded.metadata,
-          });
-        } else {
-          this.#dispatchNodeStateChangeEvent(id, newState);
-        }
+        this.#dispatchNodeStateChangeEvent(id, newState, error);
       },
       stateChanged: (newState, info) => {
         this.#updateEdgeState(newState, info);

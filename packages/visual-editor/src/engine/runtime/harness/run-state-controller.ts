@@ -7,7 +7,6 @@
 import {
   BreakpointSpec,
   ErrorMetadata,
-  ErrorObject,
   GraphDescriptor,
   NodeHandlerContext,
   NodeIdentifier,
@@ -17,7 +16,6 @@ import {
 } from "@breadboard-ai/types";
 
 import { ok, timestamp } from "@breadboard-ai/utils";
-import { decodeErrorData } from "../../../sca/utils/decode-error.js";
 import type {
   NodeInvoker,
   ConfigProvider,
@@ -178,21 +176,15 @@ class RunStateController {
   postamble() {
     if (this.orchestrator.progress !== "finished") return;
     if (this.orchestrator.failed) {
-      // Find the first failed node and extract its actual error message
+      // Find the first failed node and extract its actual error message.
       const failedNode = Array.from(
         this.orchestrator.fullState().entries()
       ).find(([, state]) => state.state === "failed");
       const outputs = failedNode?.[1].outputs;
-      const rawError = outputs?.$error as string | ErrorObject | undefined;
-      const decoded = rawError
-        ? decodeErrorData(
-            rawError,
-            outputs?.metadata as ErrorMetadata | undefined
-          )
-        : { message: "A step encountered an error" };
-      const metadata =
-        decoded.metadata ?? (outputs?.metadata as ErrorMetadata | undefined);
-      this.error({ $error: decoded.message, metadata });
+      const errorMessage =
+        (outputs?.$error as string) || "A step encountered an error";
+      const metadata = outputs?.metadata as ErrorMetadata | undefined;
+      this.error({ $error: errorMessage, metadata });
     }
 
     this.eventSink.dispatch(
