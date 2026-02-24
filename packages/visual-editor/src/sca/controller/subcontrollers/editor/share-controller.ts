@@ -87,8 +87,10 @@ export class ShareController extends RootController {
   accessor hasOtherPermissions = false;
 
   get visibility(): VisibilityLevel {
-    if (this.hasWidePermissions) return "wide";
+    // Check other (individual) permissions first: if specific people are
+    // shared, we show "restricted" even when wide permissions also exist.
     if (this.hasOtherPermissions) return "restricted";
+    if (this.hasWidePermissions) return "wide";
     return "only-you";
   }
 

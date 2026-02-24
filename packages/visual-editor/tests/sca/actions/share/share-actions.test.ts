@@ -1245,6 +1245,35 @@ suite("Share Actions", () => {
             assert.strictEqual(share.hasOtherPermissions, false);
           });
 
+          test("user adds anyone + person via native dialog → restricted", async () => {
+            await ShareActions.initialize();
+            await ShareActions.changeVisibility("restricted");
+            assert.ok(share.shareableFile);
+
+            await googleDriveClient.createPermission(
+              share.shareableFile.id,
+              { type: "anyone", role: "reader" },
+              { sendNotificationEmail: false }
+            );
+            await googleDriveClient.createPermission(
+              share.shareableFile.id,
+              {
+                type: "user",
+                emailAddress: "colleague@example.com",
+                role: "writer",
+              },
+              { sendNotificationEmail: false }
+            );
+
+            await ShareActions.onGoogleDriveSharePanelClose();
+
+            assert.strictEqual(share.panel, "open");
+            assert.strictEqual(share.status, "ready");
+            assert.strictEqual(share.visibility, "restricted");
+            assert.strictEqual(share.hasWidePermissions, true);
+            assert.strictEqual(share.hasOtherPermissions, true);
+          });
+
           test("user adds nothing and closes → only-you", async () => {
             await ShareActions.initialize();
             await ShareActions.changeVisibility("restricted");
@@ -1719,6 +1748,35 @@ suite("Share Actions", () => {
         (meta.permissions ?? []).filter((p) => p.role !== "owner").length,
         0
       );
+    });
+
+    test("wide + person via native dialog → restricted", async () => {
+      await ShareActions.initialize();
+      await ShareActions.changeVisibility("restricted");
+      assert.ok(share.shareableFile);
+
+      await googleDriveClient.createPermission(
+        share.shareableFile.id,
+        { type: "domain", domain: "example.com", role: "reader" },
+        { sendNotificationEmail: false }
+      );
+      await googleDriveClient.createPermission(
+        share.shareableFile.id,
+        {
+          type: "user",
+          emailAddress: "colleague@example.com",
+          role: "writer",
+        },
+        { sendNotificationEmail: false }
+      );
+
+      await ShareActions.onGoogleDriveSharePanelClose();
+
+      assert.strictEqual(share.panel, "open");
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.visibility, "restricted");
+      assert.strictEqual(share.hasWidePermissions, true);
+      assert.strictEqual(share.hasOtherPermissions, true);
     });
   }); // corp-like
 
