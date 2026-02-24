@@ -324,58 +324,6 @@ suite("Share Actions", () => {
     );
   });
 
-  test("publish blocked by domain config", async () => {
-    const graph = { edges: [], nodes: [], url: `drive:/${graphDriveFile.id}` };
-
-    // Re-bind with domain config that disallows public publishing
-    const { services } = makeTestServices({
-      googleDriveClient,
-      signinAdapter: {
-        domain: Promise.resolve("example.com"),
-      },
-      globalConfig: {
-        googleDrive: {
-          widePermissions: [
-            { id: "123", type: "domain", domain: "example.com" },
-          ],
-        },
-        domains: {
-          "example.com": { disallowPublicPublishing: true },
-        },
-      },
-    });
-    const env = createMockEnvironment(defaultRuntimeFlags);
-    ShareActions.bind({
-      controller,
-      services,
-      env: {
-        ...env,
-        googleDrive: {
-          ...env.googleDrive,
-          widePermissions: [
-            { id: "123", type: "domain" as const, domain: "example.com" },
-          ],
-        },
-        domains: {
-          "example.com": { disallowPublicPublishing: true },
-        },
-      },
-    });
-
-    // Initialize
-    setGraph(graph);
-    await ShareActions.initialize();
-
-    // Verify widePermissionsAllowed is false
-    assert.strictEqual(share.widePermissionsAllowed, false);
-    assert.strictEqual(share.ownership, "owner");
-
-    // Attempt to publish — should be a no-op
-    await ShareActions.publish();
-    assert.strictEqual(share.status, "ready");
-    assert.strictEqual(share.hasWidePermissions, false);
-  });
-
   test("unpublish", async () => {
     // Initialize and publish to get to published state
     await ShareActions.initialize();
@@ -1598,11 +1546,10 @@ suite("Share Actions", () => {
         "Unmanaged asset should have received wide permission"
       );
     });
+  });
 
-    test("anyone blocked when public publishing disallowed", async () => {
-      // Re-bind with domain config that disallows public publishing.
-      // Must include googleDriveBoardServer since changeVisibility may
-      // create a shareable copy before checking the domain restriction.
+  suite("domain-restricted config", () => {
+    beforeEach(() => {
       const googleDriveBoardServer = new GoogleDriveBoardServer(
         "FakeGoogleDrive",
         { state: Promise.resolve("signedin") },
@@ -1662,7 +1609,25 @@ suite("Share Actions", () => {
           },
         },
       });
+    });
 
+    test("publish blocked", async () => {
+      setGraph({
+        edges: [],
+        nodes: [],
+        url: `drive:/${graphDriveFile.id}`,
+      });
+      await ShareActions.initialize();
+
+      assert.strictEqual(share.widePermissionsAllowed, false);
+      assert.strictEqual(share.ownership, "owner");
+
+      await ShareActions.publish();
+      assert.strictEqual(share.status, "ready");
+      assert.strictEqual(share.hasWidePermissions, false);
+    });
+
+    test("changeVisibility to wide blocked", async () => {
       await ShareActions.initialize();
       assert.strictEqual(share.widePermissionsAllowed, false);
 
