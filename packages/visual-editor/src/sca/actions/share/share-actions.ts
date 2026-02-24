@@ -329,6 +329,7 @@ export const open = asAction(
     share.panel = "open";
 
     if (CLIENT_DEPLOYMENT_CONFIG.ENABLE_SHARING_2) {
+      await share.waitForPublishToFinish();
       share.status = "initializing";
       await services.googleDriveBoardServer.flushSaveQueue(graphUrl);
       share.status = "ready";
@@ -1175,7 +1176,8 @@ export const publishStale = asAction(
     }
 
     share.status = "publishing-stale";
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    using _ = share.markPublishAsInProgress();
     await boardServer.flushSaveQueue(graph.url);
 
     const shareableFileUrl = new URL(`drive:/${share.shareableFile.id}`);
