@@ -7,6 +7,7 @@
 import type {
   ConsoleEntry,
   ErrorObject,
+  InspectableNodePorts,
   NodeLifecycleState,
   NodeRunStatus,
   SimplifiedProjectRunState,
@@ -383,37 +384,18 @@ export const onGraphStartAction = asAction(
 
     controller.run.main.setEstimatedEntryCount(nodeIds.length);
 
-    // Pre-populate console with all graph nodes as "inactive" in execution order
+    // Pre-populate console with all graph nodes as "inactive" in execution order.
+    // All describes are awaited before entries are created so that metadata is
+    // fully settled before any node starts running.
     const inspectable = controller.editor.graph.get()?.graphs.get("");
     if (inspectable) {
-      for (const nodeId of nodeIds) {
-        const node = inspectable?.nodeById(nodeId);
-        const title = node?.title() ?? nodeId;
-        const metadata = node?.currentDescribe()?.metadata ?? {};
-        const icon = getStepIcon(metadata.icon, node?.currentPorts());
-
-        const entry = RunController.createConsoleEntry(title, "inactive", {
-          icon,
-          tags: metadata.tags,
-        });
+      const entries = await buildConsoleEntries(
+        nodeIds,
+        inspectable,
+        () => "inactive"
+      );
+      for (const [nodeId, entry] of entries) {
         controller.run.main.setConsoleEntry(nodeId, entry);
-
-        // If metadata wasn't ready (no tags), async fetch full describe
-        if (!metadata.tags && node) {
-          node.describe().then((result) => {
-            const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
-            const resolvedIcon = getStepIcon(asyncIcon, node.currentPorts());
-            const updatedEntry = RunController.createConsoleEntry(
-              title,
-              "inactive",
-              {
-                icon: resolvedIcon,
-                tags: asyncTags,
-              }
-            );
-            controller.run.main.setConsoleEntry(nodeId, updatedEntry);
-          });
-        }
       }
     }
   }
@@ -690,41 +672,19 @@ export const syncConsoleFromRunner = asAction(
       return;
     }
 
-    // Build console entries in a regular Map first
-    const newEntries = new Map<string, ConsoleEntry>();
-
-    for (const nodeId of nodeIds) {
-      const node = inspectable.nodeById(nodeId);
-      const title = node?.title() ?? nodeId;
-      const metadata = node?.currentDescribe()?.metadata ?? {};
-      const icon = getStepIcon(metadata.icon, node?.currentPorts());
-
-      // Get the current state from runner.state (if available)
-      const nodeState = runner.state?.get(nodeId);
-      const status = nodeState
-        ? mapLifecycleToRunStatus(nodeState.state)
-        : "inactive";
-
-      const entry = RunController.createConsoleEntry(title, status, {
-        icon,
-        tags: metadata.tags,
-      });
-      newEntries.set(nodeId, entry);
-
-      // If metadata wasn't ready (no tags), async fetch full describe
-      // Note: These async updates use setConsoleEntry which triggers reactivity
-      if (!metadata.tags && node) {
-        node.describe().then((result) => {
-          const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
-          const resolvedIcon = getStepIcon(asyncIcon, node.currentPorts());
-          const updatedEntry = RunController.createConsoleEntry(title, status, {
-            icon: resolvedIcon,
-            tags: asyncTags,
-          });
-          runController.setConsoleEntry(nodeId, updatedEntry);
-        });
+    // Build console entries with settled metadata and replace atomically.
+    // All describes are awaited so that late-resolving callbacks can't
+    // overwrite entries that onNodeStartAction has already bound.
+    const newEntries = await buildConsoleEntries(
+      nodeIds,
+      inspectable,
+      (nodeId) => {
+        const nodeState = runner.state?.get(nodeId);
+        return nodeState
+          ? mapLifecycleToRunStatus(nodeState.state)
+          : "inactive";
       }
-    }
+    );
 
     // Replace the console atomically with new entries
     // This triggers @field signal due to reference change (immutable pattern)
@@ -866,6 +826,90 @@ export const executeNodeAction = asAction(
 
 // ═════════════════════════════════════════════════════════════════════════════
 // Helpers
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Minimal node shape needed by {@link buildConsoleEntries}.
+ */
+type DescribableNode = {
+  title(): string;
+  currentDescribe(): { metadata?: { icon?: string; tags?: string[] } };
+  currentPorts(): InspectableNodePorts | undefined;
+  describe(): Promise<{ metadata?: { icon?: string; tags?: string[] } }>;
+};
+
+/**
+ * Minimal inspectable graph shape needed by {@link buildConsoleEntries}.
+ */
+type NodeLookup = {
+  nodeById(id: string): DescribableNode | undefined;
+};
+
+/**
+ * Builds console entries for a list of node IDs, resolving any pending
+ * `describe()` calls before creating entries.
+ *
+ * This eliminates the fire-and-forget race where an async `describe()`
+ * callback could overwrite a bound entry that `onNodeStartAction` had
+ * already created.
+ *
+ * @param nodeIds - Ordered node identifiers
+ * @param inspectable - Node lookup (from graph controller)
+ * @param getStatus - Maps a nodeId to its run status
+ */
+async function buildConsoleEntries(
+  nodeIds: string[],
+  inspectable: NodeLookup,
+  getStatus: (nodeId: string) => NodeRunStatus
+): Promise<Map<string, ConsoleEntry>> {
+  // Phase 1: collect sync metadata and queue async describes
+  type NodeInfo = {
+    nodeId: string;
+    title: string;
+    icon: string | undefined;
+    tags: string[] | undefined;
+    status: NodeRunStatus;
+  };
+  const infos: NodeInfo[] = [];
+  const pendingDescribes: Promise<void>[] = [];
+
+  for (const nodeId of nodeIds) {
+    const node = inspectable.nodeById(nodeId);
+    const title = node?.title() ?? nodeId;
+    const metadata = node?.currentDescribe()?.metadata ?? {};
+    const icon = getStepIcon(metadata.icon, node?.currentPorts());
+    const status = getStatus(nodeId);
+
+    const info: NodeInfo = { nodeId, title, icon, tags: metadata.tags, status };
+    infos.push(info);
+
+    // Queue an async describe when sync metadata doesn't include tags
+    if (!metadata.tags && node) {
+      pendingDescribes.push(
+        node.describe().then((result) => {
+          const { icon: asyncIcon, tags: asyncTags } = result.metadata || {};
+          info.icon = getStepIcon(asyncIcon, node.currentPorts());
+          info.tags = asyncTags;
+        })
+      );
+    }
+  }
+
+  // Phase 2: wait for all describes to settle
+  await Promise.all(pendingDescribes);
+
+  // Phase 3: build entries from settled metadata
+  const entries = new Map<string, ConsoleEntry>();
+  for (const { nodeId, title, icon, tags, status } of infos) {
+    const entry = RunController.createConsoleEntry(title, status, {
+      icon,
+      tags,
+    });
+    entries.set(nodeId, entry);
+  }
+  return entries;
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 
 /**

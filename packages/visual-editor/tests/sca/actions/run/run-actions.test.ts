@@ -50,7 +50,7 @@ suite("Run Actions", () => {
     unsetDOM();
   });
 
-  test("prepare sets runner on controller", () => {
+  test("prepare sets runner on controller", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -60,7 +60,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     assert.ok(controller.run.main.runner, "runner should be set on controller");
     assert.ok(
@@ -70,7 +70,7 @@ suite("Run Actions", () => {
     assert.ok(controller.run.main.runner !== null, "runner should be set");
   });
 
-  test("prepare pre-populates renderer with node states from orchestrator", () => {
+  test("prepare pre-populates renderer with node states from orchestrator", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -86,7 +86,7 @@ suite("Run Actions", () => {
         { id: "node-b", type: "test" },
       ],
     });
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // The renderer controller should have node states for each node
     const rendererNodes = controller.run.renderer.nodes;
@@ -113,7 +113,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("prepare sets status to STOPPED (ready)", () => {
+  test("prepare sets status to STOPPED (ready)", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -123,7 +123,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     assert.strictEqual(
       controller.run.main.status,
@@ -142,7 +142,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Simulate runner emitting 'start' event
     await RunActions.onStart();
@@ -164,7 +164,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Simulate paused state then resume
     controller.run.main.setStatus(STATUS.PAUSED);
@@ -187,7 +187,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Simulate running then pause
     controller.run.main.setStatus(STATUS.RUNNING);
@@ -210,7 +210,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Simulate running then end
     controller.run.main.setStatus(STATUS.RUNNING);
@@ -233,7 +233,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Simulate running then error
     controller.run.main.setStatus(STATUS.RUNNING);
@@ -258,7 +258,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Set input first so we can verify it's cleared
     controller.run.main.setInput({ id: "test", schema: {} });
@@ -290,7 +290,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onError(
       new CustomEvent("error", {
@@ -316,7 +316,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onError(new CustomEvent("error", { detail: {} }));
 
@@ -338,7 +338,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Set input first
     controller.run.main.setInput({ id: "test", schema: {} });
@@ -394,7 +394,7 @@ suite("Run Actions", () => {
         ]),
       });
 
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Add some console entries to verify reset
     controller.run.main.setConsoleEntry("existing", {} as ConsoleEntry);
@@ -427,7 +427,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Add a console entry
     controller.run.main.setConsoleEntry("existing", {} as ConsoleEntry);
@@ -463,7 +463,7 @@ suite("Run Actions", () => {
       edges: [],
       nodes: [{ id: "test-node", type: "test" }],
     });
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Top-level node has path with single element
     await RunActions.onNodeStartAction(
@@ -494,7 +494,7 @@ suite("Run Actions", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Nested node has path with more than one element
     await RunActions.onNodeStartAction(
@@ -535,7 +535,7 @@ suite("Run.start action", () => {
 
     // Prepare a runner
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Track if start was called on the runner
     let startCalled = false;
@@ -579,7 +579,7 @@ suite("Run.start action", () => {
 
     // Prepare a runner
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Make the runner.start() take some time
     let startCallCount = 0;
@@ -635,7 +635,7 @@ suite("Run.stop action", () => {
 
     // Prepare a runner to set up abortController
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Track if abort was called
     let abortCalled = false;
@@ -661,7 +661,7 @@ suite("Run.stop action", () => {
 
     // Prepare a runner
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Set status to RUNNING
     controller.run.main.setStatus(STATUS.RUNNING);
@@ -708,7 +708,7 @@ suite("Run.stop action", () => {
 
     // Prepare a runner
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // This should NOT throw because stop uses immediate mode
     await assert.doesNotReject(
@@ -730,7 +730,7 @@ suite("Run.stop action", () => {
 
     // Prepare a runner
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     const versionBefore = controller.run.main.stopVersion;
 
@@ -753,13 +753,13 @@ suite("Run.stop action", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.stop();
     const v1 = controller.run.main.stopVersion;
 
     // Re-prepare so there's a runner to stop again
-    RunActions.prepare();
+    await RunActions.prepare();
     await RunActions.stop();
     const v2 = controller.run.main.stopVersion;
 
@@ -780,7 +780,7 @@ suite("syncConsoleFromRunner", () => {
     unsetDOM();
   });
 
-  test("returns early when no runner", () => {
+  test("returns early when no runner", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -792,13 +792,14 @@ suite("syncConsoleFromRunner", () => {
     // Ensure no runner is set
     controller.run.main.runner = null;
 
-    // Should not throw
-    assert.doesNotThrow(() => {
-      RunActions.syncConsoleFromRunner();
-    });
+    // Should not reject
+    await assert.doesNotReject(
+      () => RunActions.syncConsoleFromRunner(),
+      "should not reject when no runner is set"
+    );
   });
 
-  test("builds console entries from runner plan in execution order", () => {
+  test("builds console entries from runner plan in execution order", async () => {
     const { controller } = makeTestController();
     // Use nodeMetadata option for cleaner mocking
     const { services } = makeTestServices({});
@@ -875,7 +876,7 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    RunActions.syncConsoleFromRunner();
+    await RunActions.syncConsoleFromRunner();
 
     // Verify estimated entry count was updated
     assert.strictEqual(
@@ -900,7 +901,7 @@ suite("syncConsoleFromRunner", () => {
     );
   });
 
-  test("maps node state from runner.state", () => {
+  test("maps node state from runner.state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices({});
     RunActions.bind({
@@ -954,7 +955,7 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    RunActions.syncConsoleFromRunner();
+    await RunActions.syncConsoleFromRunner();
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
@@ -965,7 +966,7 @@ suite("syncConsoleFromRunner", () => {
     );
   });
 
-  test("defaults to 'inactive' when node has no state", () => {
+  test("defaults to 'inactive' when node has no state", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices({});
     RunActions.bind({
@@ -1016,7 +1017,7 @@ suite("syncConsoleFromRunner", () => {
 
     (controller.editor.graph as { editor: unknown }).editor = mockEditor;
 
-    RunActions.syncConsoleFromRunner();
+    await RunActions.syncConsoleFromRunner();
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
@@ -1027,7 +1028,7 @@ suite("syncConsoleFromRunner", () => {
     );
   });
 
-  test("returns early when no graph editor", () => {
+  test("returns early when no graph editor", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -1044,10 +1045,11 @@ suite("syncConsoleFromRunner", () => {
     controller.run.main.runner = mockRunner as unknown as HarnessRunner;
     (controller.editor.graph as { editor: unknown }).editor = null;
 
-    // Should not throw and should not add entries
-    assert.doesNotThrow(() => {
-      RunActions.syncConsoleFromRunner();
-    });
+    // Should not reject and should not add entries
+    await assert.doesNotReject(
+      () => RunActions.syncConsoleFromRunner(),
+      "should not reject when editor is null"
+    );
 
     assert.strictEqual(
       controller.run.main.console.size,
@@ -1056,7 +1058,7 @@ suite("syncConsoleFromRunner", () => {
     );
   });
 
-  test("returns early when graphStore fails", () => {
+  test("returns early when graphStore fails", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -1082,9 +1084,10 @@ suite("syncConsoleFromRunner", () => {
     (controller.editor.graph as unknown as { get: () => unknown }).get = () =>
       null;
 
-    assert.doesNotThrow(() => {
-      RunActions.syncConsoleFromRunner();
-    });
+    await assert.doesNotReject(
+      () => RunActions.syncConsoleFromRunner(),
+      "should not reject when graphStore fails"
+    );
 
     assert.strictEqual(
       controller.run.main.console.size,
@@ -1093,7 +1096,7 @@ suite("syncConsoleFromRunner", () => {
     );
   });
 
-  test("uses nodeId as fallback title when node not found", () => {
+  test("uses nodeId as fallback title when node not found", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -1124,7 +1127,7 @@ suite("syncConsoleFromRunner", () => {
         graphs: new Map([["", mockInspectable]]),
       });
 
-    RunActions.syncConsoleFromRunner();
+    await RunActions.syncConsoleFromRunner();
 
     const entry = controller.run.main.console.get("missing-node");
     assert.ok(entry, "entry should exist");
@@ -1135,7 +1138,7 @@ suite("syncConsoleFromRunner", () => {
     );
   });
 
-  test("handles empty plan gracefully", () => {
+  test("handles empty plan gracefully", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -1162,9 +1165,10 @@ suite("syncConsoleFromRunner", () => {
         graphs: new Map([["", { nodeById: () => undefined }]]),
       });
 
-    assert.doesNotThrow(() => {
-      RunActions.syncConsoleFromRunner();
-    });
+    await assert.doesNotReject(
+      () => RunActions.syncConsoleFromRunner(),
+      "should not reject with empty plan"
+    );
 
     assert.strictEqual(
       controller.run.main.estimatedEntryCount,
@@ -1230,7 +1234,7 @@ suite("reprepareAfterStop", () => {
       });
 
     // Prepare populates console with "inactive" entries
-    RunActions.prepare();
+    await RunActions.prepare();
     assert.ok(controller.run.main.runner, "runner should be set after prepare");
     assert.ok(
       controller.run.main.console.size > 0,
@@ -1317,7 +1321,7 @@ suite("reprepareAfterStop", () => {
         ]),
       });
 
-    RunActions.prepare();
+    await RunActions.prepare();
 
     assert.ok(
       controller.run.main.console.size > 0,
@@ -1428,7 +1432,7 @@ suite("runner nodeend event", () => {
       edges: [],
       nodes: [{ id: "test-node", type: "test" }],
     });
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Set up an existing console entry
     controller.run.main.setConsoleEntry("test-node", {
@@ -1468,7 +1472,7 @@ suite("runner nodeend event", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Set up an existing console entry with working status
     controller.run.main.setConsoleEntry("nested-node", {
@@ -1512,7 +1516,7 @@ suite("runner nodeend event", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Ensure console is empty
     assert.strictEqual(controller.run.main.console.size, 0);
@@ -1541,7 +1545,7 @@ suite("runner nodeend event", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     controller.run.main.setConsoleEntry("error-node", {
       title: "Error Node",
@@ -1587,7 +1591,7 @@ suite("runner nodeend event", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     controller.run.main.setConsoleEntry("error-node-2", {
       title: "Error Node 2",
@@ -1631,7 +1635,7 @@ suite("runner nodeend event", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     controller.run.main.setConsoleEntry("error-node-3", {
       title: "Error Node 3",
@@ -1671,7 +1675,7 @@ suite("runner nodeend event", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     controller.run.main.setConsoleEntry("renderer-error-node", {
       title: "Renderer Error",
@@ -1768,10 +1772,7 @@ suite("syncConsoleFromRunner async describe", () => {
         graphs: new Map([["", mockInspectable]]),
       });
 
-    RunActions.syncConsoleFromRunner();
-
-    // Wait for async describe to complete
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    await RunActions.syncConsoleFromRunner();
 
     assert.strictEqual(describeCalled, true, "describe should be called async");
 
@@ -1825,10 +1826,7 @@ suite("syncConsoleFromRunner async describe", () => {
         graphs: new Map([["", mockInspectable]]),
       });
 
-    RunActions.syncConsoleFromRunner();
-
-    // Wait a bit to ensure async would have been called
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    await RunActions.syncConsoleFromRunner();
 
     assert.strictEqual(
       describeCalled,
@@ -1867,13 +1865,211 @@ suite("syncConsoleFromRunner async describe", () => {
       });
 
     // Should not throw
-    assert.doesNotThrow(() => {
-      RunActions.syncConsoleFromRunner();
-    });
+    await assert.doesNotReject(
+      () => RunActions.syncConsoleFromRunner(),
+      "should not reject when node is null"
+    );
 
     // Entry should still be created with fallback
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist even without node");
+  });
+});
+
+// =============================================================================
+// Regression: async describe race condition (fix for "No controller bound")
+// =============================================================================
+
+suite("describe race condition regression", () => {
+  beforeEach(() => {
+    setDOM();
+  });
+
+  afterEach(() => {
+    unsetDOM();
+  });
+
+  test("onGraphStartAction entries have resolved tags after awaiting (no fire-and-forget)", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    // Simulate a slow describe that resolves after a delay
+    const mockNode = {
+      title: () => "Slow Node",
+      describe: () =>
+        new Promise<{ metadata: { icon: string; tags: string[] } }>(
+          (resolve) => {
+            setTimeout(() => {
+              resolve({
+                metadata: { icon: "resolved-icon", tags: ["resolved-tag"] },
+              });
+            }, 20);
+          }
+        ),
+      currentDescribe: () => ({ metadata: {} }), // No tags initially
+      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
+    };
+
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: () => mockNode }]]),
+      });
+
+    setupGraph(controller, {
+      edges: [],
+      nodes: [{ id: "slow-node", type: "test" }],
+    });
+    await RunActions.prepare();
+
+    // After awaiting, the entry should already contain resolved tags —
+    // no "fire-and-forget" callback that could overwrite a bound entry later.
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
+
+    const entry = controller.run.main.console.get("slow-node");
+    assert.ok(entry, "entry should exist");
+    assert.deepStrictEqual(
+      entry.tags,
+      ["resolved-tag"],
+      "tags should be resolved immediately after onGraphStartAction returns"
+    );
+  });
+
+  test("syncConsoleFromRunner entries have resolved tags after awaiting", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    // Slow describe
+    const mockNode = {
+      title: () => "Async Node",
+      describe: () =>
+        new Promise<{ metadata: { icon: string; tags: string[] } }>(
+          (resolve) => {
+            setTimeout(() => {
+              resolve({
+                metadata: { icon: "resolved", tags: ["sync-resolved"] },
+              });
+            }, 20);
+          }
+        ),
+      currentDescribe: () => ({ metadata: {} }),
+      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
+    };
+
+    const mockRunner = {
+      plan: { stages: [[{ node: { id: "async-node" } }]] },
+      state: new Map<string, { state: string }>([
+        ["async-node", { state: "working" }],
+      ]),
+    };
+
+    controller.run.main.runner = mockRunner as unknown as HarnessRunner;
+
+    const mockEditor = {
+      raw: () => ({ nodes: [{ id: "async-node" }] }),
+    } as unknown as EditableGraph;
+
+    (controller.editor.graph as { editor: unknown }).editor = mockEditor;
+
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: () => mockNode }]]),
+      });
+
+    await RunActions.syncConsoleFromRunner();
+
+    const entry = controller.run.main.console.get("async-node");
+    assert.ok(entry, "entry should exist");
+    assert.deepStrictEqual(
+      entry.tags,
+      ["sync-resolved"],
+      "tags should be resolved immediately after syncConsoleFromRunner returns"
+    );
+  });
+
+  test("onGraphStartAction with multiple nodes awaits all describes", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    let describeCount = 0;
+
+    const makeMockNode = (id: string, hasTags: boolean) => ({
+      title: () => id,
+      describe: async () => {
+        describeCount++;
+        return { metadata: { icon: `icon-${id}`, tags: [`tag-${id}`] } };
+      },
+      currentDescribe: () => ({
+        metadata: hasTags ? { tags: [`sync-${id}`] } : {},
+      }),
+      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
+    });
+
+    const nodeMap: Record<string, ReturnType<typeof makeMockNode>> = {
+      "node-a": makeMockNode("node-a", false), // needs async describe
+      "node-b": makeMockNode("node-b", true), // already has tags
+      "node-c": makeMockNode("node-c", false), // needs async describe
+    };
+
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([["", { nodeById: (id: string) => nodeMap[id] }]]),
+      });
+
+    setupGraph(controller, {
+      edges: [],
+      nodes: [
+        { id: "node-a", type: "test" },
+        { id: "node-b", type: "test" },
+        { id: "node-c", type: "test" },
+      ],
+    });
+    await RunActions.prepare();
+
+    // Reset: prepare() calls syncConsoleFromRunner which also triggers describes
+    describeCount = 0;
+
+    await RunActions.onGraphStartAction(
+      new CustomEvent("graphstart", { detail: { path: [] } })
+    );
+
+    // Only nodes without tags should trigger async describe
+    assert.strictEqual(
+      describeCount,
+      2,
+      "describe should be called for the 2 tagless nodes"
+    );
+
+    // node-a: resolved from async describe
+    const entryA = controller.run.main.console.get("node-a");
+    assert.ok(entryA, "entry A should exist");
+    assert.deepStrictEqual(entryA.tags, ["tag-node-a"]);
+
+    // node-b: kept sync tags (no async describe)
+    const entryB = controller.run.main.console.get("node-b");
+    assert.ok(entryB, "entry B should exist");
+    assert.deepStrictEqual(entryB.tags, ["sync-node-b"]);
+
+    // node-c: resolved from async describe
+    const entryC = controller.run.main.console.get("node-c");
+    assert.ok(entryC, "entry C should exist");
+    assert.deepStrictEqual(entryC.tags, ["tag-node-c"]);
   });
 });
 
@@ -1993,7 +2189,7 @@ suite("executeNodeAction", () => {
 
     // Set up a runner with node state
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Set up runner state
     (
@@ -2025,7 +2221,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     (
       controller.run.main.runner as unknown as { state: Map<string, unknown> }
@@ -2057,7 +2253,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Set up runner with runFrom method and state
     let runFromCalled = false;
@@ -2091,7 +2287,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     let runNodeCalled = false;
     const runner = controller.run.main.runner as unknown as {
@@ -2124,7 +2320,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     let runNodeCalled = false;
     const runner = controller.run.main.runner as unknown as {
@@ -2160,7 +2356,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     let runFromCalled = false;
     const runner = controller.run.main.runner as unknown as {
@@ -2193,7 +2389,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     let stopCalled = false;
     const runner = controller.run.main.runner as unknown as {
@@ -2233,7 +2429,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     let stopCalled = false;
     const runner = controller.run.main.runner as unknown as {
@@ -2266,7 +2462,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     const runner = controller.run.main.runner as unknown as {
       state: Map<string, unknown>;
@@ -2295,7 +2491,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     const runner = controller.run.main.runner as unknown as {
       state: Map<string, unknown>;
@@ -2323,7 +2519,7 @@ suite("executeNodeAction", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Runner state exists but doesn't have our node
     const runner = controller.run.main.runner as unknown as {
@@ -2366,7 +2562,7 @@ suite("runner event handlers", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onNodeStateChangeAction(
       new CustomEvent("nodestatechange", {
@@ -2397,7 +2593,7 @@ suite("runner event handlers", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onNodeStateChangeAction(
       new CustomEvent("nodestatechange", {
@@ -2428,7 +2624,7 @@ suite("runner event handlers", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onEdgeStateChangeAction(
       new CustomEvent("edgestatechange", {
@@ -2456,7 +2652,7 @@ suite("runner event handlers", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Create a screen for the node first
     const screen = createAppScreen("node-1", undefined);
@@ -2488,7 +2684,7 @@ suite("runner event handlers", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Should not throw even with no matching screen
     await RunActions.onOutputAction(
@@ -2528,7 +2724,7 @@ suite("runner nodeend deleteScreen", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Create a screen for the node
     const screen = createAppScreen("node-1", undefined);
@@ -2573,7 +2769,7 @@ suite("runner nodeend deleteScreen", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Create a screen for the node
     const screen = createAppScreen("node-1", undefined);
@@ -2623,7 +2819,7 @@ suite("runner nodeend deleteScreen", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Set up a console entry
     controller.run.main.setConsoleEntry("node-1", {
@@ -2694,26 +2890,20 @@ suite("runner graphstart async describe fallback", () => {
       edges: [],
       nodes: [{ id: "node-1", type: "test" }],
     });
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onGraphStartAction(
       new CustomEvent("graphstart", { detail: { path: [] } })
     );
 
-    // Wait for async describe
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    assert.ok(
-      describeCalled,
-      "describe should be called async for tagless node"
-    );
+    assert.ok(describeCalled, "describe should be called for tagless node");
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
     assert.deepStrictEqual(
       entry.tags,
       ["async-tag"],
-      "tags should be updated from async describe"
+      "tags should be resolved from awaited describe"
     );
   });
 
@@ -2746,13 +2936,11 @@ suite("runner graphstart async describe fallback", () => {
       edges: [],
       nodes: [{ id: "node-1", type: "test" }],
     });
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onGraphStartAction(
       new CustomEvent("graphstart", { detail: { path: [] } })
     );
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     assert.strictEqual(
       describeCalled,
@@ -2780,7 +2968,7 @@ suite("runner graphstart async describe fallback", () => {
       edges: [],
       nodes: [{ id: "node-1", type: "test" }],
     });
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onGraphStartAction(
       new CustomEvent("graphstart", { detail: { path: [] } })
@@ -2809,7 +2997,7 @@ suite("runner graphstart async describe fallback", () => {
       edges: [],
       nodes: [{ id: "node-1", type: "test" }],
     });
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Set plan to null — triggers plan?.stages ?? [] fallback
     (controller.run.main.runner as unknown as { plan: unknown }).plan = null;
@@ -2851,7 +3039,7 @@ suite("runner graphstart async describe fallback", () => {
       edges: [],
       nodes: [{ id: "node-1", type: "test" }],
     });
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onGraphStartAction(
       new CustomEvent("graphstart", { detail: { path: [] } })
@@ -2893,7 +3081,7 @@ suite("runner nodestart fallback branches", () => {
       });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onNodeStartAction(
       new CustomEvent("nodestart", {
@@ -2935,7 +3123,7 @@ suite("runner nodestart fallback branches", () => {
       });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     await RunActions.onNodeStartAction(
       new CustomEvent("nodestart", {
@@ -2970,7 +3158,7 @@ suite("prepare() guard clauses", () => {
     unsetDOM();
   });
 
-  test("prepare() skips re-preparation while status is RUNNING", () => {
+  test("prepare() skips re-preparation while status is RUNNING", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -2980,7 +3168,7 @@ suite("prepare() guard clauses", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     const firstRunner = controller.run.main.runner;
     assert.ok(firstRunner, "runner should be set after first prepare");
@@ -2989,7 +3177,7 @@ suite("prepare() guard clauses", () => {
     controller.run.main.setStatus(STATUS.RUNNING);
 
     // Re-prepare should be a no-op
-    RunActions.prepare();
+    await RunActions.prepare();
 
     assert.strictEqual(
       controller.run.main.runner,
@@ -2998,7 +3186,7 @@ suite("prepare() guard clauses", () => {
     );
   });
 
-  test("prepare() returns early when graph is missing", () => {
+  test("prepare() returns early when graph is missing", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -3015,7 +3203,7 @@ suite("prepare() guard clauses", () => {
     (controller.global as any).flags = { get: () => undefined };
     // Do NOT set editor — graph will be undefined
 
-    RunActions.prepare();
+    await RunActions.prepare();
 
     assert.strictEqual(
       controller.run.main.runner,
@@ -3024,7 +3212,7 @@ suite("prepare() guard clauses", () => {
     );
   });
 
-  test("prepare() returns early when url is missing", () => {
+  test("prepare() returns early when url is missing", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -3043,7 +3231,7 @@ suite("prepare() guard clauses", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (controller.global as any).flags = { get: () => undefined };
 
-    RunActions.prepare();
+    await RunActions.prepare();
 
     assert.strictEqual(
       controller.run.main.runner,
@@ -3062,7 +3250,7 @@ suite("prepare() getProjectRunState callback", () => {
     unsetDOM();
   });
 
-  test("runner config getProjectRunState returns console and screen maps", () => {
+  test("runner config getProjectRunState returns console and screen maps", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -3085,7 +3273,7 @@ suite("prepare() getProjectRunState callback", () => {
 
     // Prepare a console entry and a screen
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Add console data that getProjectRunState should reflect
     controller.run.main.setConsoleEntry("node-1", {
@@ -3131,7 +3319,7 @@ suite("progress ticker lifecycle", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Add a screen with expectedDuration so tickScreenProgress has
     // something to update.
@@ -3168,7 +3356,7 @@ suite("progress ticker lifecycle", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Fire start to begin the progress ticker
     await RunActions.onStart();
@@ -3239,7 +3427,7 @@ suite("nodeend output population", () => {
         ]),
       });
 
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Fire graphstart + nodestart to create the console entry
     await RunActions.onGraphStartAction(
@@ -3325,7 +3513,7 @@ suite("output event with console entry (addOutputWorkItem)", () => {
         ]),
       });
 
-    RunActions.prepare();
+    await RunActions.prepare();
 
     // Create the console entry via graphstart + nodestart
     await RunActions.onGraphStartAction(
@@ -3380,7 +3568,7 @@ suite("onInputRequested wiring", () => {
     unsetDOM();
   });
 
-  test("prepare() sets onInputRequested on RunController", () => {
+  test("prepare() sets onInputRequested on RunController", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -3390,7 +3578,7 @@ suite("onInputRequested wiring", () => {
     });
 
     setupGraph(controller);
-    RunActions.prepare();
+    await RunActions.prepare();
 
     assert.ok(
       controller.run.main.onInputRequested,
