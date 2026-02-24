@@ -5,11 +5,12 @@ humans and agents work together in this codebase.
 
 ## Practices
 
-| Practice      | What it does                                                                                                               | Skill        |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| **Daily Dig** | Proactive bug hunt — scout, catch, tag, log.                                                                               | `daily-dig/` |
-| **Déjà Code** | Detect and pave desire paths — find repeated multi-statement patterns and extract shared utilities backed by ESLint rules. | `deja-code/` |
-| **Codemods**  | Mechanical, multi-file, type-aware refactors via `ts-morph`. See `codemods/README.md`.                                     | `codemod/`   |
+| Practice             | What it does                                                                                                               | Skill               |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| **Daily Dig**        | Proactive bug hunt — scout, catch, tag, log.                                                                               | `daily-dig/`        |
+| **Déjà Code**        | Detect and pave desire paths — find repeated multi-statement patterns and extract shared utilities backed by ESLint rules. | `deja-code/`        |
+| **Codemods**         | Mechanical, multi-file, type-aware refactors via `ts-morph`. See `codemods/README.md`.                                     | `codemod/`          |
+| **Idiomatic TS+Lit** | Living reference for idiomatic TypeScript and Lit — type safety, import hygiene, component design, signal patterns.        | `idiomatic-ts-lit/` |
 
 ## Workflows
 
