@@ -11,9 +11,11 @@ import pytest
 
 from opal_backend_shared.agent_file_system import AgentFileSystem
 from opal_backend_shared.pidgin import (
+    content_to_pidgin_string,
     from_pidgin_string,
     to_pidgin,
     ToPidginResult,
+    MAX_INLINE_CHARACTER_LENGTH,
     ROUTE_TOOL_PATH,
     MEMORY_TOOL_PATH,
     NOTEBOOKLM_TOOL_PATH,
@@ -374,3 +376,76 @@ class TestToPidgin:
         assert len(data_parts) == 1
         assert data_parts[0]["inlineData"]["data"] == "img_data"
 
+
+class TestContentToPidginString:
+    """Tests for content_to_pidgin_string (public API)."""
+
+    def test_inlines_short_text_without_file_handle(self):
+        fs = AgentFileSystem()
+        content = {"parts": [{"text": "Hello, world!"}]}
+        result = content_to_pidgin_string(content, fs)
+        assert result == "Hello, world!"
+        assert fs.list_files() == ""
+
+    def test_wraps_long_text_in_content_tags(self):
+        fs = AgentFileSystem()
+        long_text = "x" * (MAX_INLINE_CHARACTER_LENGTH + 1)
+        content = {"parts": [{"text": long_text}]}
+        result = content_to_pidgin_string(content, fs)
+        assert "<content src=" in result
+        assert long_text in result
+        assert "</content>" in result
+        assert fs.list_files() != ""
+
+    def test_does_not_wrap_long_text_when_text_as_files_false(self):
+        fs = AgentFileSystem()
+        long_text = "x" * (MAX_INLINE_CHARACTER_LENGTH + 1)
+        content = {"parts": [{"text": long_text}]}
+        result = content_to_pidgin_string(content, fs, text_as_files=False)
+        assert result == long_text
+        assert fs.list_files() == ""
+
+    def test_converts_stored_data_to_file_tags(self):
+        fs = AgentFileSystem()
+        content = {
+            "parts": [
+                {"storedData": {"handle": "stored://my-image", "mimeType": "image/png"}}
+            ]
+        }
+        result = content_to_pidgin_string(content, fs)
+        assert '<file src="' in result
+        assert '" />' in result
+        assert fs.list_files() != ""
+
+    def test_passes_notebooklm_stored_data_as_url_text(self):
+        fs = AgentFileSystem()
+        handle = "https://notebooklm.google.com/notebook/abc123"
+        content = {
+            "parts": [
+                {
+                    "storedData": {
+                        "handle": handle,
+                        "mimeType": "application/x-notebooklm",
+                    }
+                }
+            ]
+        }
+        result = content_to_pidgin_string(content, fs)
+        assert result == handle
+        assert "<file" not in result
+        assert fs.list_files() == ""
+
+    def test_handles_mixed_content(self):
+        fs = AgentFileSystem()
+        content = {
+            "parts": [
+                {"text": "Here is the image:"},
+                {"storedData": {"handle": "stored://pic", "mimeType": "image/jpeg"}},
+                {"text": "And the analysis."},
+            ]
+        }
+        result = content_to_pidgin_string(content, fs)
+        lines = result.split("\n")
+        assert lines[0] == "Here is the image:"
+        assert '<file src="' in lines[1]
+        assert lines[2] == "And the analysis."

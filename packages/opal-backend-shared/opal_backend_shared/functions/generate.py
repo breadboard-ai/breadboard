@@ -29,7 +29,7 @@ from ..function_definition import (
     map_definitions,
 )
 from ..gemini_client import stream_generate_content
-from ..pidgin import from_pidgin_string
+from ..pidgin import content_to_pidgin_string, from_pidgin_string
 from ..task_tree_manager import TaskTreeManager
 
 logger = logging.getLogger(__name__)
@@ -266,7 +266,8 @@ def _define_generate_text(
         # 6. Merge and return
         if not result_texts:
             return {"error": "No text was generated. Please try again"}
-        return {"text": "".join(result_texts)}
+        merged = {"parts": [{"text": "".join(result_texts)}]}
+        return {"text": content_to_pidgin_string(merged, file_system)}
 
     return FunctionDefinition(
         name=GENERATE_TEXT_FUNCTION,

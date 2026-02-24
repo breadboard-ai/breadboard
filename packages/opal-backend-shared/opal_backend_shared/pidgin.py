@@ -88,7 +88,7 @@ def to_pidgin(
             if not content or not content.get("parts"):
                 errors.append("Agent: Invalid asset format")
                 continue
-            inner = _substitute_parts(content, file_system, text_as_files=True)
+            inner = content_to_pidgin_string(content, file_system, text_as_files=True)
             values.append(f'<asset title="{title}">\n{inner}\n</asset>')
 
         elif seg_type == "input":
@@ -96,7 +96,7 @@ def to_pidgin(
             content = segment.get("content")
             if not content or not content.get("parts"):
                 continue
-            inner = _substitute_parts(content, file_system, text_as_files=True)
+            inner = content_to_pidgin_string(content, file_system, text_as_files=True)
             values.append(
                 f'<input source-agent="{title}">\n{inner}\n</input>'
             )
@@ -145,20 +145,21 @@ def to_pidgin(
     )
 
 
-def _substitute_parts(
+def content_to_pidgin_string(
     content: dict[str, Any],
     file_system: AgentFileSystem,
     *,
-    text_as_files: bool = False,
+    text_as_files: bool = True,
 ) -> str:
     """Convert LLMContent parts to pidgin text with file references.
 
-    For each part:
-    - Text ≤ MAX_INLINE_CHARACTER_LENGTH → inline
-    - Text > MAX_INLINE_CHARACTER_LENGTH (and text_as_files) → write to FS,
-      emit ``<content src="...">`` tag
-    - NotebookLM storedData → passthrough as URL text
-    - Other data parts → ``file_system.add_part()`` → ``<file src="..." />``
+    Text parts below MAX_INLINE_CHARACTER_LENGTH are inlined as-is; text
+    parts above the threshold (when ``text_as_files`` is True) are stored
+    as files and wrapped in ``<content>`` tags — both inline text AND file
+    handle.  Binary parts become ``<file>`` tags.
+
+    This is the public API for converting any LLMContent to pidgin,
+    including function outputs (e.g. ``generate_text`` results).
     """
     values: list[str] = []
 
