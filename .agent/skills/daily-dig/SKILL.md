@@ -12,42 +12,42 @@ A proactive bug hunt across the Breadboard codebase. Pick an area, go looking,
 and produce a concrete artifact (test, lint rule, or codemod) for anything you
 find.
 
-## How it works
+## Steps
 
-1. **Scout** — pick a hunting ground (recent changes, complex modules, untested
-   corners).
-2. **Catch** — when you find something, name it. Named bugs are memorable bugs.
-3. **Tag** — write a test, lint rule, or codemod that documents the finding.
-4. **Log** — add a short entry to the Hall of Fame below.
+1. **Scout** — Choose a hunting ground. Good options:
+   - Recently changed files (`git log --oneline -20 -- <path>`)
+   - Complex modules with low test coverage
+   - `TODO`, `FIXME`, `HACK`, `WORKAROUND` comments
+   - Error handling patterns (`catch` blocks, `as any` casts)
+   - Event listener add/remove symmetry
+   - Async race conditions
+
+// turbo 2. **Hunt** — Search for bugs, quirks, or gaps using grep, code
+reading, and pattern analysis. Look for:
+
+- Silent failures (errors swallowed, missing null checks)
+- Algorithm edge cases (empty inputs, cycles, overflow)
+- Missing cleanup (listeners, timers, subscriptions)
+- Bypassed guards (code paths that skip validation)
+
+3. **Catch** — When you find something, name it. Good names are memorable and
+   descriptive (e.g., "The Silent Stacking", "The Phantom Caret").
+
+4. **Tag** — Write a concrete artifact:
+   - **Test** (preferred) — documents the bug and prevents regression
+   - **Lint rule** — prevents the pattern from recurring
+   - **Convention test** — enforces architectural invariants
+   - **Codemod** — fixes all instances of a pattern
+
+// turbo 5. **Log** — Add a short entry to the Hall of Fame below.
+
+// turbo 6. **Verify** — Run the test to confirm it passes (for BUG-prefixed
+tests, assert the current broken behavior so it passes now but documents what's
+wrong).
 
 ---
 
 ## Hall of Fame
 
-### 1. The Silent Stacking
-
-|              |                                                                                           |
-| ------------ | ----------------------------------------------------------------------------------------- |
-| **Date**     | Feb 23, 2026                                                                              |
-| **Area**     | [`layout-graph.ts`](../packages/visual-editor/src/a2/agent/graph-editing/layout-graph.ts) |
-| **Artifact** | [`layout-graph.test.ts`](../packages/visual-editor/tests/a2/layout-graph.test.ts)         |
-
-`computePositions` uses Kahn's algorithm, which silently skips nodes in cycles —
-their children's depths never propagate, causing them to pile up at `x=0`. The
-graph-editing agent bypasses `willCreateCycle()` via raw `EditSpec[]`, so
-agent-created cycles hit this path. Our initial hypothesis was wrong too: depth
-relaxation partially works for direct children, making the bug subtler than
-expected.
-
-### 2. The Unseen Cast
-
-|              |                                                                               |
-| ------------ | ----------------------------------------------------------------------------- |
-| **Date**     | Feb 23, 2026                                                                  |
-| **Area**     | [`sca/actions/`](../packages/visual-editor/src/sca/actions/)                  |
-| **Artifact** | [`codemods/transforms/unseen-cast.ts`](../codemods/transforms/unseen-cast.ts) |
-
-26 event-triggered actions cast `evt` to `StateEvent<T>` or `CustomEvent` with
-zero runtime safety. If trigger wiring is wrong, `.detail` silently returns
-`undefined`. Used as the proving candidate for the `ts-morph` codemod
-infrastructure spike.
+See [`.agent/daily-dig.md`](../../daily-dig.md) — kept separate so this skill
+file stays lean in context.
