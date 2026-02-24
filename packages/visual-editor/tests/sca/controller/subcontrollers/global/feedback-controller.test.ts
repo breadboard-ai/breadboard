@@ -62,7 +62,7 @@ suite("FeedbackController", () => {
       hostOrigin: new URL("http://localhost"),
       googleDrive: {
         apiEndpoint: undefined,
-        widePermissions: [],
+        broadPermissions: [],
       },
       buildInfo: {
         packageJsonVersion: "1.0.0",

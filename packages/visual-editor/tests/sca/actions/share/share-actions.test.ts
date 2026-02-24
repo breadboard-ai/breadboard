@@ -72,15 +72,15 @@ suite("Share Actions", () => {
   });
 
   interface ShareConfig {
-    widePermissions?: GoogleDrivePermission[];
+    broadPermissions?: GoogleDrivePermission[];
     domains?: Record<string, { disallowPublicPublishing?: boolean }>;
   }
 
   function bindShareActions(config: ShareConfig = {}) {
-    const widePermissions = config.widePermissions ?? [
+    const broadPermissions = config.broadPermissions ?? [
       { id: "anyoneWithLink", type: "anyone" as const },
     ];
-    const boardServerPerms = widePermissions.map((p) => ({
+    const boardServerPerms = broadPermissions.map((p) => ({
       ...p,
       role: "reader" as const,
     }));
@@ -111,11 +111,11 @@ suite("Share Actions", () => {
       googleDriveClient,
       googleDriveBoardServer,
       signinAdapter: { domain: Promise.resolve("example.com") },
-      ...(config.domains || config.widePermissions
+      ...(config.domains || config.broadPermissions
         ? {
             globalConfig: {
-              ...(config.widePermissions && {
-                googleDrive: { widePermissions },
+              ...(config.broadPermissions && {
+                googleDrive: { broadPermissions },
               }),
               ...(config.domains && { domains: config.domains }),
             },
@@ -128,7 +128,7 @@ suite("Share Actions", () => {
       services,
       env: {
         ...env,
-        googleDrive: { ...env.googleDrive, widePermissions },
+        googleDrive: { ...env.googleDrive, broadPermissions },
         ...(config.domains && { domains: config.domains }),
       },
     });
@@ -167,7 +167,7 @@ suite("Share Actions", () => {
         assert.strictEqual(share.panel, "closed");
         assert.strictEqual(share.status, "ready");
         assert.strictEqual(share.ownership, "owner");
-        assert.strictEqual(share.hasWidePermissions, false);
+        assert.strictEqual(share.hasBroadPermissions, false);
         assert.strictEqual(share.hasOtherPermissions, false);
         assert.strictEqual(share.editableVersion, "1");
         assert.strictEqual(share.shareableFile, null);
@@ -269,20 +269,20 @@ suite("Share Actions", () => {
         await ShareActions.initialize();
         await ShareActions.open();
         assert.strictEqual(share.panel, "open");
-        assert.strictEqual(share.hasWidePermissions, false);
+        assert.strictEqual(share.hasBroadPermissions, false);
 
         // Publish
         const publishPromise = ShareActions.publish();
 
         // Verify intermediate changing-visibility state
         assert.strictEqual(share.status, "changing-visibility");
-        assert.strictEqual(share.hasWidePermissions, true);
+        assert.strictEqual(share.hasBroadPermissions, true);
 
         await publishPromise;
 
         // Verify state is now published
         assert.strictEqual(share.status, "ready");
-        assert.strictEqual(share.hasWidePermissions, true);
+        assert.strictEqual(share.hasBroadPermissions, true);
         assert.ok(
           share.shareableFile,
           "shareableFile should be set after publish"
@@ -350,7 +350,7 @@ suite("Share Actions", () => {
         await ShareActions.initialize();
         await ShareActions.publish();
         assert.strictEqual(share.status, "ready");
-        assert.strictEqual(share.hasWidePermissions, true);
+        assert.strictEqual(share.hasBroadPermissions, true);
         assert.ok(
           share.shareableFile,
           "shareableFile should be set after publish"
@@ -373,7 +373,7 @@ suite("Share Actions", () => {
         // Verify state is now unpublished
         assert.strictEqual(share.status, "ready");
         assert.strictEqual(share.ownership, "owner");
-        assert.strictEqual(share.hasWidePermissions, false);
+        assert.strictEqual(share.hasBroadPermissions, false);
 
         // Verify permission was deleted from the shareable copy
         const afterMetadata = await googleDriveClient.getFileMetadata(
@@ -620,7 +620,7 @@ suite("Share Actions", () => {
         await ShareActions.open();
         assert.strictEqual(share.panel, "open");
         assert.strictEqual(share.ownership, "owner");
-        assert.strictEqual(share.hasWidePermissions, false);
+        assert.strictEqual(share.hasBroadPermissions, false);
         assert.strictEqual(share.hasOtherPermissions, false);
 
         // User opens granular sharing dialog
@@ -645,13 +645,13 @@ suite("Share Actions", () => {
         // We should now be granularly shared, but not published
         assert.strictEqual(share.panel, "open");
         assert.strictEqual(share.hasOtherPermissions, true);
-        assert.strictEqual(share.hasWidePermissions, false);
+        assert.strictEqual(share.hasBroadPermissions, false);
 
         // User opens granular sharing again
         await ShareActions.viewSharePermissions();
         assert.strictEqual(share.panel, "native-share");
 
-        // User adds anyone (wide) permission
+        // User adds anyone (broad) permission
         await googleDriveClient.createPermission(
           shareableCopy.id,
           {
@@ -667,7 +667,7 @@ suite("Share Actions", () => {
         // We should now be granularly shared and published
         assert.strictEqual(share.panel, "open");
         assert.strictEqual(share.hasOtherPermissions, true);
-        assert.strictEqual(share.hasWidePermissions, true);
+        assert.strictEqual(share.hasBroadPermissions, true);
       });
 
       test("closing native share dialog shows updating indicator, not initializing flash", async () => {
@@ -768,7 +768,7 @@ suite("Share Actions", () => {
             mimeType: "application/octet-stream",
           }
         );
-        // Add a permission that matches the wide permission (should be kept)
+        // Add a permission that matches the broad permission (should be kept)
         await googleDriveClient.createPermission(
           excessPermsAsset.id,
           { type: "anyone", role: "reader" },
@@ -812,12 +812,12 @@ suite("Share Actions", () => {
         setGraph(graph);
         await ShareActions.initialize();
         assert.strictEqual(share.ownership, "owner");
-        assert.strictEqual(share.hasWidePermissions, false);
+        assert.strictEqual(share.hasBroadPermissions, false);
 
         // Publish
         await ShareActions.publish();
 
-        // Verify managed asset got the wide permission added
+        // Verify managed asset got the broad permission added
         const managedAssetMeta = await googleDriveClient.getFileMetadata(
           managedAsset.id,
           { fields: ["permissions"] }
@@ -827,7 +827,7 @@ suite("Share Actions", () => {
         );
         assert.ok(
           addedPerm,
-          "Managed asset should have received wide permission"
+          "Managed asset should have received broad permission"
         );
 
         // Verify cant-share asset still has no permissions (skipped)
@@ -854,11 +854,11 @@ suite("Share Actions", () => {
           undefined,
           "Old permission should have been deleted"
         );
-        // The wide permission should still exist
-        const widePermExists = excessMeta.permissions?.find(
+        // The broad permission should still exist
+        const broadPermExists = excessMeta.permissions?.find(
           (p) => p.type === "anyone"
         );
-        assert.ok(widePermExists, "Wide permission should still exist");
+        assert.ok(broadPermExists, "Broad permission should still exist");
       });
 
       test("fixUnmanagedAssetProblems adds missing permissions", async () => {
@@ -970,21 +970,21 @@ suite("Share Actions", () => {
         );
         assert.ok(
           addedPerm,
-          "Unmanaged asset should have received wide permission"
+          "Unmanaged asset should have received broad permission"
         );
 
-        // Verify cant-share asset still has no wide permissions
+        // Verify cant-share asset still has no broad permissions
         const cantShareMeta = await googleDriveClient.getFileMetadata(
           cantShareAsset.id,
           { fields: ["permissions"] }
         );
-        const cantShareWidePerm = cantShareMeta.permissions?.find(
+        const cantShareBroadPerm = cantShareMeta.permissions?.find(
           (p) => p.type === "anyone"
         );
         assert.strictEqual(
-          cantShareWidePerm,
+          cantShareBroadPerm,
           undefined,
-          "Cant-share asset should NOT have received wide permission"
+          "Cant-share asset should NOT have received broad permission"
         );
       });
 
@@ -1054,7 +1054,7 @@ suite("Share Actions", () => {
 
         // Pause the fake API so changeVisibility hangs mid-flight
         fakeDriveApi.pause();
-        const changePromise = ShareActions.changeVisibility("wide");
+        const changePromise = ShareActions.changeVisibility("broad");
 
         // Wait for status to flip to changing-visibility
         for (let i = 0; i < 100; i++) {
@@ -1134,13 +1134,13 @@ suite("Share Actions", () => {
           unmanagedAsset.id,
           { fields: ["permissions"] }
         );
-        const widePerm = assetMeta.permissions?.find(
+        const broadPerm = assetMeta.permissions?.find(
           (p) => p.type === "anyone"
         );
         assert.strictEqual(
-          widePerm,
+          broadPerm,
           undefined,
-          "Dismissed asset should NOT have received wide permission"
+          "Dismissed asset should NOT have received broad permission"
         );
       });
 
@@ -1158,11 +1158,11 @@ suite("Share Actions", () => {
           await ShareActions.initialize();
           assert.strictEqual(share.visibility, "only-you");
 
-          await ShareActions.changeVisibility("wide");
+          await ShareActions.changeVisibility("broad");
 
           assert.strictEqual(share.status, "ready");
-          assert.strictEqual(share.visibility, "wide");
-          assert.strictEqual(share.hasWidePermissions, true);
+          assert.strictEqual(share.visibility, "broad");
+          assert.strictEqual(share.hasBroadPermissions, true);
           assert.strictEqual(share.hasOtherPermissions, false);
           assert.ok(share.shareableFile, "shareableFile should exist");
 
@@ -1185,7 +1185,7 @@ suite("Share Actions", () => {
             // The visibility is still "only-you" because no granular permissions
             // have been added yet (the native dialog is where the user adds them).
             assert.strictEqual(share.visibility, "only-you");
-            assert.strictEqual(share.hasWidePermissions, false);
+            assert.strictEqual(share.hasBroadPermissions, false);
             assert.strictEqual(share.hasOtherPermissions, false);
             assert.ok(share.shareableFile, "shareableFile should exist");
 
@@ -1216,16 +1216,16 @@ suite("Share Actions", () => {
             assert.strictEqual(share.panel, "open");
             assert.strictEqual(share.status, "ready");
             assert.strictEqual(share.visibility, "restricted");
-            assert.strictEqual(share.hasWidePermissions, false);
+            assert.strictEqual(share.hasBroadPermissions, false);
             assert.strictEqual(share.hasOtherPermissions, true);
           });
 
-          test("user adds anyone permission via native dialog → wide", async () => {
+          test("user adds anyone permission via native dialog → broad", async () => {
             await ShareActions.initialize();
             await ShareActions.changeVisibility("restricted");
             assert.ok(share.shareableFile);
 
-            // User adds the anyone permission (matches configured wide) via native dialog
+            // User adds the anyone permission (matches configured broad) via native dialog
             await googleDriveClient.createPermission(
               share.shareableFile.id,
               {
@@ -1239,9 +1239,9 @@ suite("Share Actions", () => {
 
             assert.strictEqual(share.panel, "open");
             assert.strictEqual(share.status, "ready");
-            // The anyone permission matches the wide permissions → "wide"
-            assert.strictEqual(share.visibility, "wide");
-            assert.strictEqual(share.hasWidePermissions, true);
+            // The anyone permission matches the broad permissions → "broad"
+            assert.strictEqual(share.visibility, "broad");
+            assert.strictEqual(share.hasBroadPermissions, true);
             assert.strictEqual(share.hasOtherPermissions, false);
           });
 
@@ -1270,7 +1270,7 @@ suite("Share Actions", () => {
             assert.strictEqual(share.panel, "open");
             assert.strictEqual(share.status, "ready");
             assert.strictEqual(share.visibility, "restricted");
-            assert.strictEqual(share.hasWidePermissions, true);
+            assert.strictEqual(share.hasBroadPermissions, true);
             assert.strictEqual(share.hasOtherPermissions, true);
           });
 
@@ -1285,7 +1285,7 @@ suite("Share Actions", () => {
             assert.strictEqual(share.panel, "open");
             assert.strictEqual(share.status, "ready");
             assert.strictEqual(share.visibility, "only-you");
-            assert.strictEqual(share.hasWidePermissions, false);
+            assert.strictEqual(share.hasBroadPermissions, false);
             assert.strictEqual(share.hasOtherPermissions, false);
           });
 
@@ -1325,14 +1325,14 @@ suite("Share Actions", () => {
         test("anyone → only-you", async () => {
           // Set up published state
           await ShareActions.initialize();
-          await ShareActions.changeVisibility("wide");
-          assert.strictEqual(share.visibility, "wide");
+          await ShareActions.changeVisibility("broad");
+          assert.strictEqual(share.visibility, "broad");
 
           await ShareActions.changeVisibility("only-you");
 
           assert.strictEqual(share.status, "ready");
           assert.strictEqual(share.visibility, "only-you");
-          assert.strictEqual(share.hasWidePermissions, false);
+          assert.strictEqual(share.hasBroadPermissions, false);
           assert.strictEqual(share.hasOtherPermissions, false);
 
           // Verify all permissions removed from Drive
@@ -1343,8 +1343,8 @@ suite("Share Actions", () => {
         test("anyone → restricted", async () => {
           // Set up published state
           await ShareActions.initialize();
-          await ShareActions.changeVisibility("wide");
-          assert.strictEqual(share.visibility, "wide");
+          await ShareActions.changeVisibility("broad");
+          assert.strictEqual(share.visibility, "broad");
 
           await ShareActions.changeVisibility("restricted");
 
@@ -1353,7 +1353,7 @@ suite("Share Actions", () => {
           // Publish permissions were stripped, so visibility drops to "only-you"
           // because no granular permissions remain. The native dialog is where
           // the user will add specific people.
-          assert.strictEqual(share.hasWidePermissions, false);
+          assert.strictEqual(share.hasBroadPermissions, false);
           assert.strictEqual(share.hasOtherPermissions, false);
 
           // Verify publish permissions were removed from Drive
@@ -1385,7 +1385,7 @@ suite("Share Actions", () => {
 
           assert.strictEqual(share.status, "ready");
           assert.strictEqual(share.visibility, "only-you");
-          assert.strictEqual(share.hasWidePermissions, false);
+          assert.strictEqual(share.hasBroadPermissions, false);
           assert.strictEqual(share.hasOtherPermissions, false);
 
           // Verify all permissions removed
@@ -1411,12 +1411,12 @@ suite("Share Actions", () => {
           await ShareActions.onGoogleDriveSharePanelClose();
           assert.strictEqual(share.visibility, "restricted");
 
-          await ShareActions.changeVisibility("wide");
+          await ShareActions.changeVisibility("broad");
 
           assert.strictEqual(share.status, "ready");
-          assert.strictEqual(share.visibility, "wide");
-          assert.strictEqual(share.hasWidePermissions, true);
-          // The granular user permission is removed because "wide" sets desired
+          assert.strictEqual(share.visibility, "broad");
+          assert.strictEqual(share.hasBroadPermissions, true);
+          // The granular user permission is removed because "broad" sets desired
           // permissions to only the publish permissions. The diff treats the
           // user permission as excess.
           assert.strictEqual(share.hasOtherPermissions, false);
@@ -1425,7 +1425,7 @@ suite("Share Actions", () => {
           const perms = await getNonOwnerPermissions(share.shareableFile.id);
           assert.strictEqual(perms.length, 1);
           const anyonePerm = perms.find((p) => p.type === "anyone");
-          assert.ok(anyonePerm, "Wide permission should exist");
+          assert.ok(anyonePerm, "Broad permission should exist");
         });
 
         test("no-op when target matches current visibility", async () => {
@@ -1440,12 +1440,12 @@ suite("Share Actions", () => {
 
         test("no-op: anyone → anyone", async () => {
           await ShareActions.initialize();
-          await ShareActions.changeVisibility("wide");
-          assert.strictEqual(share.visibility, "wide");
+          await ShareActions.changeVisibility("broad");
+          assert.strictEqual(share.visibility, "broad");
 
-          await ShareActions.changeVisibility("wide");
+          await ShareActions.changeVisibility("broad");
           assert.strictEqual(share.status, "ready");
-          assert.strictEqual(share.visibility, "wide");
+          assert.strictEqual(share.visibility, "broad");
         });
 
         test("no-op: restricted → restricted", async () => {
@@ -1498,10 +1498,10 @@ suite("Share Actions", () => {
           });
           await ShareActions.initialize();
 
-          await ShareActions.changeVisibility("wide");
+          await ShareActions.changeVisibility("broad");
 
           assert.strictEqual(share.status, "ready");
-          assert.strictEqual(share.visibility, "wide");
+          assert.strictEqual(share.visibility, "broad");
 
           // Verify asset got the anyone permission
           const assetMeta = await googleDriveClient.getFileMetadata(
@@ -1513,7 +1513,7 @@ suite("Share Actions", () => {
           );
           assert.ok(
             anyonePerm,
-            "Managed asset should have received wide permission"
+            "Managed asset should have received broad permission"
           );
         });
 
@@ -1544,8 +1544,8 @@ suite("Share Actions", () => {
           });
           await ShareActions.initialize();
 
-          // First go to "wide" so asset gets the permission
-          await ShareActions.changeVisibility("wide");
+          // First go to "broad" so asset gets the permission
+          await ShareActions.changeVisibility("broad");
           const midMeta = await googleDriveClient.getFileMetadata(
             managedAsset.id,
             {
@@ -1554,7 +1554,7 @@ suite("Share Actions", () => {
           );
           assert.ok(
             midMeta.permissions?.some((p) => p.type === "anyone"),
-            "Asset should have wide permission after publishing"
+            "Asset should have broad permission after publishing"
           );
 
           // Now go back to "only-you" — asset permission should be removed
@@ -1608,8 +1608,8 @@ suite("Share Actions", () => {
           await ShareActions.initialize();
           await ShareActions.open();
 
-          // changeVisibility to "wide" — should pause for unmanaged assets
-          const visibilityPromise = ShareActions.changeVisibility("wide");
+          // changeVisibility to "broad" — should pause for unmanaged assets
+          const visibilityPromise = ShareActions.changeVisibility("broad");
 
           // Wait for unmanaged asset problems to appear
           for (let i = 0; i < 100; i++) {
@@ -1624,7 +1624,7 @@ suite("Share Actions", () => {
           await visibilityPromise;
 
           assert.strictEqual(share.status, "ready");
-          assert.strictEqual(share.visibility, "wide");
+          assert.strictEqual(share.visibility, "broad");
 
           // Verify the unmanaged asset got the permission
           const assetMeta = await googleDriveClient.getFileMetadata(
@@ -1636,7 +1636,7 @@ suite("Share Actions", () => {
           );
           assert.ok(
             anyonePerm,
-            "Unmanaged asset should have received wide permission"
+            "Unmanaged asset should have received broad permission"
           );
         });
       });
@@ -1645,7 +1645,7 @@ suite("Share Actions", () => {
     suite("restricted domain member", () => {
       beforeEach(() => {
         bindShareActions({
-          widePermissions: [
+          broadPermissions: [
             { id: "123", type: "domain" as const, domain: "example.com" },
           ],
           domains: {
@@ -1662,23 +1662,23 @@ suite("Share Actions", () => {
         });
         await ShareActions.initialize();
 
-        assert.strictEqual(share.widePermissionsAllowed, false);
+        assert.strictEqual(share.broadPermissionsAllowed, false);
         assert.strictEqual(share.ownership, "owner");
 
         await ShareActions.publish();
         assert.strictEqual(share.status, "ready");
-        assert.strictEqual(share.hasWidePermissions, false);
+        assert.strictEqual(share.hasBroadPermissions, false);
       });
 
-      test("changeVisibility to wide blocked", async () => {
+      test("changeVisibility to broad blocked", async () => {
         await ShareActions.initialize();
-        assert.strictEqual(share.widePermissionsAllowed, false);
+        assert.strictEqual(share.broadPermissionsAllowed, false);
 
-        await ShareActions.changeVisibility("wide");
+        await ShareActions.changeVisibility("broad");
 
         assert.strictEqual(share.status, "ready");
         assert.strictEqual(share.visibility, "only-you");
-        assert.strictEqual(share.hasWidePermissions, false);
+        assert.strictEqual(share.hasBroadPermissions, false);
       });
     }); // restricted domain member
   }); // prod-like
@@ -1686,7 +1686,7 @@ suite("Share Actions", () => {
   suite("corp-like", () => {
     beforeEach(() => {
       bindShareActions({
-        widePermissions: [
+        broadPermissions: [
           { id: "123", type: "domain" as const, domain: "example.com" },
         ],
       });
@@ -1698,7 +1698,7 @@ suite("Share Actions", () => {
       await ShareActions.publish();
 
       assert.strictEqual(share.status, "ready");
-      assert.strictEqual(share.hasWidePermissions, true);
+      assert.strictEqual(share.hasBroadPermissions, true);
       assert.ok(share.shareableFile);
 
       const meta = await googleDriveClient.getFileMetadata(
@@ -1712,13 +1712,13 @@ suite("Share Actions", () => {
       assert.strictEqual(meta.permissions[0].role, "reader");
     });
 
-    test("changeVisibility to wide adds domain permission", async () => {
+    test("changeVisibility to broad adds domain permission", async () => {
       await ShareActions.initialize();
-      await ShareActions.changeVisibility("wide");
+      await ShareActions.changeVisibility("broad");
 
       assert.strictEqual(share.status, "ready");
-      assert.strictEqual(share.visibility, "wide");
-      assert.strictEqual(share.hasWidePermissions, true);
+      assert.strictEqual(share.visibility, "broad");
+      assert.strictEqual(share.hasBroadPermissions, true);
       assert.ok(share.shareableFile);
 
       const meta = await googleDriveClient.getFileMetadata(
@@ -1734,13 +1734,13 @@ suite("Share Actions", () => {
     test("unpublish removes domain permission", async () => {
       await ShareActions.initialize();
       await ShareActions.publish();
-      assert.strictEqual(share.hasWidePermissions, true);
+      assert.strictEqual(share.hasBroadPermissions, true);
       const shareableFileId = share.shareableFile!.id;
 
       await ShareActions.unpublish();
 
       assert.strictEqual(share.status, "ready");
-      assert.strictEqual(share.hasWidePermissions, false);
+      assert.strictEqual(share.hasBroadPermissions, false);
       const meta = await googleDriveClient.getFileMetadata(shareableFileId, {
         fields: ["permissions"],
       });
@@ -1750,7 +1750,7 @@ suite("Share Actions", () => {
       );
     });
 
-    test("wide + person via native dialog → restricted", async () => {
+    test("broad + person via native dialog → restricted", async () => {
       await ShareActions.initialize();
       await ShareActions.changeVisibility("restricted");
       assert.ok(share.shareableFile);
@@ -1775,7 +1775,7 @@ suite("Share Actions", () => {
       assert.strictEqual(share.panel, "open");
       assert.strictEqual(share.status, "ready");
       assert.strictEqual(share.visibility, "restricted");
-      assert.strictEqual(share.hasWidePermissions, true);
+      assert.strictEqual(share.hasBroadPermissions, true);
       assert.strictEqual(share.hasOtherPermissions, true);
     });
   }); // corp-like
@@ -1787,13 +1787,13 @@ suite("Share Actions", () => {
     share.panel = "open";
     share.status = "ready";
     share.ownership = "owner";
-    share.hasWidePermissions = true;
+    share.hasBroadPermissions = true;
     share.editableVersion = "42";
     share.sharedVersion = "1";
     share.hasOtherPermissions = true;
     share.userDomain = "example.com";
-    share.widePermissionsAllowed = false;
-    share.actualPermissions = [{ type: "wide", role: "reader" }];
+    share.broadPermissionsAllowed = false;
+    share.actualPermissions = [{ type: "broad", role: "reader" }];
     share.shareableFile = "file-id" as unknown as DriveFileId;
     share.unmanagedAssetProblems = [
       {
@@ -1817,13 +1817,13 @@ suite("Share Actions", () => {
     assert.strictEqual(share.panel, "closed");
     assert.strictEqual(share.status, "initializing");
     assert.strictEqual(share.ownership, "unknown");
-    assert.strictEqual(share.hasWidePermissions, false);
+    assert.strictEqual(share.hasBroadPermissions, false);
     assert.strictEqual(share.stale, false);
     assert.strictEqual(share.editableVersion, "");
     assert.strictEqual(share.sharedVersion, "");
     assert.strictEqual(share.hasOtherPermissions, false);
     assert.strictEqual(share.userDomain, "");
-    assert.strictEqual(share.widePermissionsAllowed, true);
+    assert.strictEqual(share.broadPermissionsAllowed, true);
     assert.deepStrictEqual(share.actualPermissions, []);
     assert.strictEqual(share.shareableFile, null);
     assert.deepStrictEqual(share.unmanagedAssetProblems, []);
@@ -1880,7 +1880,7 @@ suite("Share Actions", () => {
     test("unpublish sets error on Drive failure", async () => {
       await ShareActions.initialize();
       await ShareActions.publish();
-      assert.strictEqual(share.hasWidePermissions, true);
+      assert.strictEqual(share.hasBroadPermissions, true);
 
       fakeDriveApi.forceNextError(403);
       await ShareActions.unpublish();
@@ -1890,7 +1890,7 @@ suite("Share Actions", () => {
     test("changeVisibility sets error on Drive failure", async () => {
       await ShareActions.initialize();
       fakeDriveApi.forceNextError(400);
-      await ShareActions.changeVisibility("wide");
+      await ShareActions.changeVisibility("broad");
       assert.ok(share.error);
     });
 
@@ -1917,7 +1917,7 @@ suite("Share Actions", () => {
           type: "drive",
           asset: { id: "a", resourceKey: "k", name: "n", iconLink: "i" },
           problem: "missing",
-          missing: [{ type: "wide", role: "reader" }],
+          missing: [{ type: "broad", role: "reader" }],
         },
       ];
       fakeDriveApi.forceNextError(403);

@@ -710,7 +710,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderWritableContentsV1() {
     const shared =
-      this.#controller.hasWidePermissions ||
+      this.#controller.hasBroadPermissions ||
       this.#controller.hasOtherPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
@@ -730,7 +730,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderWritableContentsV2() {
     const shared =
-      this.#controller.hasWidePermissions ||
+      this.#controller.hasBroadPermissions ||
       this.#controller.hasOtherPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBannerV2() : nothing,
@@ -971,7 +971,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
-    const published = this.#controller.hasWidePermissions;
+    const published = this.#controller.hasBroadPermissions;
     const domain = this.#controller.userDomain;
     const { disallowPublicPublishing } = this.sca?.env.domains?.[domain] ?? {};
 

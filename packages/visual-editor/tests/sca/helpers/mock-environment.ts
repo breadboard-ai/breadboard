@@ -32,7 +32,7 @@ function createMockEnvironment(flags: RuntimeFlags): AppEnvironment {
     buildInfo: { packageJsonVersion: "0.0.0-test", gitCommitHash: "test" },
     googleDrive: {
       apiEndpoint: undefined,
-      widePermissions: [],
+      broadPermissions: [],
     },
     domains: undefined,
     deploymentConfig: {} as AppEnvironment["deploymentConfig"],

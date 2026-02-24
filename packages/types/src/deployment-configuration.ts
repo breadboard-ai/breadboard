@@ -19,7 +19,7 @@ export type ClientDeploymentConfiguration = {
   GOOGLE_SHEETS_API_ENDPOINT?: string;
   GOOGLE_SLIDES_API_ENDPOINT?: string;
   GOOGLE_DRIVE_API_ENDPOINT?: string;
-  // TODO: Rename to GOOGLE_DRIVE_WIDE_PERMISSIONS
+  // TODO: Rename to GOOGLE_DRIVE_BROAD_PERMISSIONS
   GOOGLE_DRIVE_PUBLISH_PERMISSIONS?: GoogleDrivePermission[];
   GOOGLE_DRIVE_USER_FOLDER_NAME?: string;
   GOOGLE_FEEDBACK_PRODUCT_ID?: string;
@@ -56,7 +56,7 @@ export interface DomainConfiguration {
    * domain. Granular sharing with specific people and groups will still be
    * available.
    */
-  // TODO: Rename to disallowWidePermissions
+  // TODO: Rename to disallowBroadPermissions
   disallowPublicPublishing?: boolean;
 }
 

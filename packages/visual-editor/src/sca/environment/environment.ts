@@ -56,7 +56,7 @@ interface AppEnvironment {
   /** Google Drive configuration for the deployment. */
   readonly googleDrive: {
     readonly apiEndpoint: string | undefined;
-    readonly widePermissions: GoogleDrivePermission[];
+    readonly broadPermissions: GoogleDrivePermission[];
   };
   /** Domain configuration from the client deployment config. */
   readonly domains: ClientDeploymentConfiguration["domains"];
@@ -97,7 +97,7 @@ function createEnvironment(
     buildInfo: config.globalConfig.buildInfo,
     googleDrive: {
       apiEndpoint: CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT,
-      widePermissions: config.globalConfig.googleDrive?.widePermissions ?? [],
+      broadPermissions: config.globalConfig.googleDrive?.broadPermissions ?? [],
     },
     domains: CLIENT_DEPLOYMENT_CONFIG.domains,
     deploymentConfig: CLIENT_DEPLOYMENT_CONFIG,

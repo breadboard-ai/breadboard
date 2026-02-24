@@ -18,7 +18,7 @@ suite("ShareController", () => {
       const ctrl = makeController();
       ctrl.editableVersion = "5";
       ctrl.sharedVersion = "5";
-      ctrl.hasWidePermissions = true;
+      ctrl.hasBroadPermissions = true;
       assert.strictEqual(ctrl.stale, false);
     });
 
@@ -26,7 +26,7 @@ suite("ShareController", () => {
       const ctrl = makeController();
       ctrl.editableVersion = "";
       ctrl.sharedVersion = "3";
-      ctrl.hasWidePermissions = true;
+      ctrl.hasBroadPermissions = true;
       assert.strictEqual(ctrl.stale, false);
     });
 
@@ -34,7 +34,7 @@ suite("ShareController", () => {
       const ctrl = makeController();
       ctrl.editableVersion = "5";
       ctrl.sharedVersion = "";
-      ctrl.hasWidePermissions = true;
+      ctrl.hasBroadPermissions = true;
       assert.strictEqual(ctrl.stale, false);
     });
 
@@ -42,7 +42,7 @@ suite("ShareController", () => {
       const ctrl = makeController();
       ctrl.editableVersion = "6";
       ctrl.sharedVersion = "5";
-      ctrl.hasWidePermissions = true;
+      ctrl.hasBroadPermissions = true;
       assert.strictEqual(ctrl.stale, true);
     });
 
@@ -50,7 +50,7 @@ suite("ShareController", () => {
       const ctrl = makeController();
       ctrl.editableVersion = "6";
       ctrl.sharedVersion = "5";
-      ctrl.hasWidePermissions = false;
+      ctrl.hasBroadPermissions = false;
       ctrl.hasOtherPermissions = true;
       assert.strictEqual(ctrl.stale, true);
     });
@@ -59,7 +59,7 @@ suite("ShareController", () => {
       const ctrl = makeController();
       ctrl.editableVersion = "6";
       ctrl.sharedVersion = "5";
-      ctrl.hasWidePermissions = false;
+      ctrl.hasBroadPermissions = false;
       ctrl.hasOtherPermissions = false;
       assert.strictEqual(ctrl.stale, false);
     });

@@ -50,7 +50,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const globalConfig: GlobalConfig = {
     environmentName: CLIENT_DEPLOYMENT_CONFIG.ENVIRONMENT_NAME,
     googleDrive: {
-      widePermissions:
+      broadPermissions:
         CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [],
     },
     buildInfo: {
@@ -114,10 +114,10 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       parsedUrl,
       hostOrigin,
     };
-    if (mainArgs.globalConfig.googleDrive.widePermissions.length === 0) {
+    if (mainArgs.globalConfig.googleDrive.broadPermissions.length === 0) {
       logger.log(
         Utils.Logging.Formatter.warning(
-          "No googleDrive.widePermissions were configured." +
+          "No googleDrive.broadPermissions were configured." +
             " Publishing with Google Drive will not be supported."
         ),
         "Bootstrap"

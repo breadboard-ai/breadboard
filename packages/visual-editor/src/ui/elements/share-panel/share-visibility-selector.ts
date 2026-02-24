@@ -256,14 +256,14 @@ export class ShareVisibilitySelector extends SignalWatcher(LitElement) {
     return this.#share.status === "changing-visibility";
   }
 
-  get #widePermissionIsAnyone(): boolean {
-    return this.sca.env.googleDrive.widePermissions.some(
+  get #broadPermissionIsAnyone(): boolean {
+    return this.sca.env.googleDrive.broadPermissions.some(
       (p) => p.type === "anyone"
     );
   }
 
   get #options(): Option[] {
-    const { widePermissionsAllowed } = this.#share;
+    const { broadPermissionsAllowed } = this.#share;
     return [
       {
         level: "only-you",
@@ -277,24 +277,24 @@ export class ShareVisibilitySelector extends SignalWatcher(LitElement) {
         icon: "lock",
         subtitle: "Only people with access can open with the link",
       },
-      this.#widePermissionIsAnyone
+      this.#broadPermissionIsAnyone
         ? {
-            level: "wide",
+            level: "broad",
             label: "Anyone with the link",
             icon: "public",
-            subtitle: widePermissionsAllowed
+            subtitle: broadPermissionsAllowed
               ? "Anyone on the internet with the link can view"
               : `Disabled for ${this.#share.userDomain} users`,
-            disabled: !widePermissionsAllowed,
+            disabled: !broadPermissionsAllowed,
           }
         : {
-            level: "wide",
+            level: "broad",
             label: "Your organization",
             icon: "domain",
-            subtitle: widePermissionsAllowed
+            subtitle: broadPermissionsAllowed
               ? "Anyone in your organization with the link can view"
               : `Disabled for ${this.#share.userDomain} users`,
-            disabled: !widePermissionsAllowed,
+            disabled: !broadPermissionsAllowed,
           },
     ];
   }

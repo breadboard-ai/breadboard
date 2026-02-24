@@ -205,7 +205,7 @@ async function fetchShareData(): Promise<Result> {
   // Technically these are global so don't need to be updated more than once
   // ever, but it's super cheap so it doesn't matter.
   share.userDomain = (await services.signinAdapter.domain) ?? "";
-  share.widePermissionsAllowed = !(
+  share.broadPermissionsAllowed = !(
     env.domains?.[share.userDomain]?.disallowPublicPublishing ?? false
   );
 
@@ -367,16 +367,16 @@ function getGraphFileId(graphUrl: string): string | undefined {
   return graphFileId;
 }
 
-function getConfiguredWidePermissions(): gapi.client.drive.Permission[] {
+function getConfiguredBroadPermissions(): gapi.client.drive.Permission[] {
   const { env } = bind;
-  const permissions = env.googleDrive?.widePermissions;
+  const permissions = env.googleDrive?.broadPermissions;
   if (!permissions || permissions.length === 0) {
     /* c8 ignore start */
     Utils.Logging.getLogger().log(
       Utils.Logging.Formatter.error(
-        "No googleDrive.widePermissions configured"
+        "No googleDrive.broadPermissions configured"
       ),
-      "Share.getConfiguredWidePermissions"
+      "Share.getConfiguredBroadPermissions"
     );
     return [];
     /* c8 ignore end */
@@ -466,16 +466,16 @@ function updateControllerPermissionState(
 ): void {
   const { controller } = bind;
   const share = controller.editor.share;
-  const widePermissions = getConfiguredWidePermissions();
+  const broadPermissions = getConfiguredBroadPermissions();
   const diff = diffPermissionsIgnoringRole({
     actual: actualPermissions,
-    expected: widePermissions,
+    expected: broadPermissions,
   });
-  share.hasWidePermissions = diff.missing.length === 0;
+  share.hasBroadPermissions = diff.missing.length === 0;
   share.hasOtherPermissions =
     diff.excess.find((p) => p.role !== "owner") !== undefined;
   share.actualPermissions = actualPermissions.filter((p) =>
-    permissionMatchesAnyOfIgnoringRole(p, widePermissions)
+    permissionMatchesAnyOfIgnoringRole(p, broadPermissions)
   );
 }
 
@@ -931,8 +931,8 @@ export const publish = asAction(
     logger.log(Utils.Logging.Formatter.verbose("Publishing"), LABEL);
     const share = controller.editor.share;
 
-    const widePermissions = getConfiguredWidePermissions();
-    if (widePermissions.length === 0) {
+    const broadPermissions = getConfiguredBroadPermissions();
+    if (broadPermissions.length === 0) {
       /* c8 ignore start */
       logger.log(
         Utils.Logging.Formatter.error("No publish permissions configured"),
@@ -942,7 +942,7 @@ export const publish = asAction(
 
       /* c8 ignore end */
     }
-    if (!share.widePermissionsAllowed) {
+    if (!share.broadPermissionsAllowed) {
       logger.log(
         Utils.Logging.Formatter.error(
           "Public publishing is disallowed for this domain"
@@ -962,13 +962,13 @@ export const publish = asAction(
       /* c8 ignore end */
     }
 
-    if (share.hasWidePermissions) {
+    if (share.hasBroadPermissions) {
       // Already published!
       return;
     }
 
     share.status = "changing-visibility";
-    share.hasWidePermissions = true;
+    share.hasBroadPermissions = true;
 
     if (!share.shareableFile) {
       if (handleFatalShareError(await ensureShareableCopyExists())) {
@@ -979,7 +979,7 @@ export const publish = asAction(
     const permResult = await applyPermissionDiff(
       share.shareableFile!.id,
       [],
-      widePermissions
+      broadPermissions
     );
     if (handleFatalShareError(permResult)) {
       return;
@@ -1001,7 +1001,7 @@ export const publish = asAction(
     }
 
     share.status = "ready";
-    share.hasWidePermissions = true;
+    share.hasBroadPermissions = true;
     share.actualPermissions = permResult.value;
   }
 );
@@ -1024,7 +1024,7 @@ export const unpublish = asAction(
 
       /* c8 ignore end */
     }
-    if (!share.hasWidePermissions) {
+    if (!share.hasBroadPermissions) {
       // Already unpublished!
       return;
     }
@@ -1036,7 +1036,7 @@ export const unpublish = asAction(
       /* c8 ignore end */
     }
     share.status = "changing-visibility";
-    share.hasWidePermissions = false;
+    share.hasBroadPermissions = false;
 
     if (
       handleFatalShareError(
@@ -1059,7 +1059,7 @@ export const unpublish = asAction(
     }
 
     share.status = "ready";
-    share.hasWidePermissions = false;
+    share.hasBroadPermissions = false;
   }
 );
 
@@ -1117,29 +1117,29 @@ export const changeVisibility = asAction(
     }
 
     const actualPermissions = metaResult.value.permissions ?? [];
-    const widePermissions = getConfiguredWidePermissions();
+    const broadPermissions = getConfiguredBroadPermissions();
 
     let desiredPermissions: gapi.client.drive.Permission[];
     if (target === "only-you") {
       desiredPermissions = [];
-    } else if (target === "wide") {
-      if (!share.widePermissionsAllowed) {
+    } else if (target === "broad") {
+      if (!share.broadPermissionsAllowed) {
         logger.log(
           Utils.Logging.Formatter.error(
-            "Wide publishing is disallowed for this domain"
+            "Broad publishing is disallowed for this domain"
           ),
           LABEL
         );
         share.status = "ready";
         return;
       }
-      desiredPermissions = widePermissions;
+      desiredPermissions = broadPermissions;
     } else {
       target satisfies "restricted";
       desiredPermissions = actualPermissions.filter(
         (p) =>
           p.role !== "owner" &&
-          !permissionMatchesAnyOfIgnoringRole(p, widePermissions)
+          !permissionMatchesAnyOfIgnoringRole(p, broadPermissions)
       );
     }
 
