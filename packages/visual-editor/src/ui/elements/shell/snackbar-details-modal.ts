@@ -8,6 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
+import { markdown } from "../../directives/markdown.js";
 
 @customElement("bb-snackbar-details-modal")
 export class VESnackbarDetailsModal extends LitElement {
@@ -44,10 +45,14 @@ export class VESnackbarDetailsModal extends LitElement {
   ];
 
   render() {
+    const content = this.details
+      ? typeof this.details === "string"
+        ? markdown(this.details)
+        : this.details
+      : html`<p>No details provided</p>`;
+
     return html`<bb-modal .modalTitle=${"Details"} .showCloseButton=${true}>
-      <section>
-        ${this.details ? this.details : html`<p>No details provided</p>`}
-      </section>
+      <section>${content}</section>
     </bb-modal>`;
   }
 }

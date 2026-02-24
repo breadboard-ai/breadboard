@@ -19,7 +19,7 @@ import type {
 } from "@breadboard-ai/types";
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
-import { STATUS } from "../../types.js";
+import { SnackType, STATUS } from "../../types.js";
 import { getStepIcon } from "../../../ui/utils/get-step-icon.js";
 import { makeAction, stopRun } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
@@ -320,8 +320,25 @@ export const onError = asAction(
       typeof error === "string"
         ? error
         : ((error as { message?: string })?.message ?? "Unknown error");
-    controller.run.main.setError({ message });
+    const details =
+      typeof error === "object"
+        ? (error as { details?: string })?.details
+        : undefined;
+    controller.run.main.setError({ message, details });
     controller.run.main.clearInput();
+
+    // Show a persistent error snackbar so the user is notified.
+    const actions = details
+      ? [{ action: "details", title: "View details", value: details }]
+      : [];
+    controller.global.snackbars.snackbar(
+      message,
+      SnackType.ERROR,
+      actions,
+      true,
+      globalThis.crypto.randomUUID(),
+      true
+    );
 
     Utils.Logging.getLogger(controller).log(
       Utils.Logging.Formatter.verbose(

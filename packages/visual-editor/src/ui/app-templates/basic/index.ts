@@ -328,27 +328,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       console.warn("Asked to render error, but no error was found");
       return nothing;
     }
-    const errorId = crypto.randomUUID();
-    const details = [];
-
-    if (error.details) {
-      details.push({
-        action: "details",
-        title: "View details",
-        value: html`${markdown(error.details)}`,
-      });
-    }
-
-    this.dispatchEvent(
-      new SnackbarEvent(
-        errorId,
-        error.message,
-        SnackType.ERROR,
-        details,
-        true,
-        true
-      )
-    );
 
     const activityContents = html`<section class="error">
       <h1 class="w-700 sans-flex round md-headline-large">
