@@ -321,11 +321,12 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             }
           }
         }
+      }
 
       #app-version {
         font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
           var(--bb-font-family);
-        color: var(--light-dark-n-98);
+        color: var(--light-dark-n-80);
         position: relative;
         text-align: right;
         margin-top: -32px;
