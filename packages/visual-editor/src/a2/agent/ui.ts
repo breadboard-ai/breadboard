@@ -54,7 +54,11 @@ export type UserResponse = {
 };
 
 class AgentUI implements A2UIRenderer, ChatManager {
-  readonly client: A2UIClient;
+  /**
+   * The current A2UIClient. A new instance is created per interaction so that
+   * each console work item and app screen output preserves its own snapshot.
+   */
+  #currentClient: A2UIClient;
 
   readonly #consoleEntry: ConsoleEntry | undefined;
 
@@ -84,7 +88,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     sink?: AgentEventSink
   ) {
     this.#sink = sink;
-    this.client = new A2UIClient();
+    this.#currentClient = new A2UIClient();
     const { appScreen, consoleEntry } = getCurrentStepState(this.moduleArgs);
     this.#consoleEntry = consoleEntry;
     this.#appScreen = appScreen;
@@ -117,13 +121,20 @@ class AgentUI implements A2UIRenderer, ChatManager {
 
     const outputId = crypto.randomUUID();
 
+    // Create a fresh client so this interaction preserves its own A2UI state.
+    this.#currentClient = new A2UIClient();
+
     // Create new work item for console view
-    this.#currentWorkItem = new A2UIClientWorkItem(this.client, title, icon);
+    this.#currentWorkItem = new A2UIClientWorkItem(
+      this.#currentClient,
+      title,
+      icon
+    );
     this.#consoleEntry.work.set(outputId, this.#currentWorkItem);
 
     // Create new app screen output for app view
     if (this.#appScreen) {
-      const appScreenOutput = new A2UIAppScreenOutput(this.client);
+      const appScreenOutput = new A2UIAppScreenOutput(this.#currentClient);
       this.#appScreen.outputs.set(outputId, appScreenOutput);
       this.#appScreen.last = appScreenOutput;
       this.#appScreen.type = "a2ui";
@@ -303,7 +314,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     const workItem = this.#startNewInteraction(title, icon);
     if (!ok(workItem)) return workItem;
     const translation = this.translator.fromPidginMessages(messages);
-    this.client.processUpdates(translation);
+    this.#currentClient.processUpdates(translation);
 
     this.#onA2UIRender?.(messages);
 
@@ -319,7 +330,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
     }
 
     this.#appScreen.status = "interactive";
-    const result = await this.client.awaitUserInput();
+    const result = await this.#currentClient.awaitUserInput();
     this.#appScreen.status = "processing";
     return result;
   }
