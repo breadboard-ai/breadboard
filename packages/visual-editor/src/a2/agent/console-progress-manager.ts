@@ -22,7 +22,7 @@ import { ProgressReporter } from "./types.js";
 import { StreamingRequestBody } from "../a2/opal-adk-stream.js";
 import { parseThought } from "./thought-parser.js";
 
-export { ConsoleProgressManager };
+export { ConsoleProgressManager, toTitleCase, trimEllipsis };
 
 /**
  * Functions that should not create a work item because
@@ -41,7 +41,7 @@ function trimEllipsis(text: string): string {
  * Convert a string to Title Case.
  */
 function toTitleCase(text: string): string {
-  return text.replace(/\b\w/g, (c) => c.toUpperCase());
+  return text.replace(/(^|\s)\w/g, (c) => c.toUpperCase());
 }
 
 /**
