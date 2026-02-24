@@ -36,13 +36,13 @@ export const updatePageTitle = asAction(
     triggeredBy: () => onTitleChange(bind),
   },
   async (): Promise<void> => {
-    const { controller, services } = bind;
+    const { controller, env } = bind;
     const graphTitle = controller.editor.graph.title?.trim() ?? null;
 
     const appName = Strings.from("APP_NAME");
     const tag = `${appName} [Experiment]`;
 
     const finalTitle = graphTitle ? `${graphTitle} - ${tag}` : tag;
-    services.shellHost.setTitle(finalTitle);
+    env.shellHost.setTitle(finalTitle);
   }
 );
