@@ -711,7 +711,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   #renderWritableContentsV1() {
     const shared =
       this.#controller.hasBroadPermissions ||
-      this.#controller.hasOtherPermissions;
+      this.#controller.hasCustomPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
       html`
@@ -731,7 +731,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   #renderWritableContentsV2() {
     const shared =
       this.#controller.hasBroadPermissions ||
-      this.#controller.hasOtherPermissions;
+      this.#controller.hasCustomPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBannerV2() : nothing,
       this.#renderAdvisoryV2(),

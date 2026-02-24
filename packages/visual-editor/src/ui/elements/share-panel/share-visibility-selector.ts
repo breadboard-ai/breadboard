@@ -271,12 +271,6 @@ export class ShareVisibilitySelector extends SignalWatcher(LitElement) {
         icon: "lock",
         subtitle: "Only you can open this link",
       },
-      {
-        level: "restricted",
-        label: "Restricted",
-        icon: "lock",
-        subtitle: "Only people with access can open with the link",
-      },
       this.#broadPermissionIsAnyone
         ? {
             level: "broad",
@@ -296,6 +290,12 @@ export class ShareVisibilitySelector extends SignalWatcher(LitElement) {
               : `Disabled for ${this.#share.userDomain} users`,
             disabled: !broadPermissionsAllowed,
           },
+      {
+        level: "custom",
+        label: "Custom",
+        icon: "tune",
+        subtitle: "Choose specific people or groups who can open the link",
+      },
     ];
   }
 
@@ -322,7 +322,7 @@ export class ShareVisibilitySelector extends SignalWatcher(LitElement) {
         </div>
         ${this.#loading
           ? html`<span class="g-icon spinner">progress_activity</span>`
-          : this.#share.visibility === "restricted"
+          : this.#share.visibility === "custom"
             ? html`
                 <button id="edit-access-button" @click=${this.#onEditAccess}>
                   Edit access

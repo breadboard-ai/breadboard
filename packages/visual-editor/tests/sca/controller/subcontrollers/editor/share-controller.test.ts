@@ -46,12 +46,12 @@ suite("ShareController", () => {
       assert.strictEqual(ctrl.stale, true);
     });
 
-    test("true for restricted visibility when versions differ", () => {
+    test("true for custom visibility when versions differ", () => {
       const ctrl = makeController();
       ctrl.editableVersion = "6";
       ctrl.sharedVersion = "5";
       ctrl.hasBroadPermissions = false;
-      ctrl.hasOtherPermissions = true;
+      ctrl.hasCustomPermissions = true;
       assert.strictEqual(ctrl.stale, true);
     });
 
@@ -60,7 +60,7 @@ suite("ShareController", () => {
       ctrl.editableVersion = "6";
       ctrl.sharedVersion = "5";
       ctrl.hasBroadPermissions = false;
-      ctrl.hasOtherPermissions = false;
+      ctrl.hasCustomPermissions = false;
       assert.strictEqual(ctrl.stale, false);
     });
   });

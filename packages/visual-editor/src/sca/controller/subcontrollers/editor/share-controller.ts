@@ -34,7 +34,7 @@ export type UnmanagedNotebookAssetProblem = {
 
 export type SharePanelStatus = "closed" | "open" | "native-share";
 
-export type VisibilityLevel = "only-you" | "restricted" | "broad";
+export type VisibilityLevel = "only-you" | "broad" | "custom";
 
 export type ViewerMode = "full" | "app-only";
 
@@ -73,7 +73,7 @@ export class ShareController extends RootController {
 
   get stale(): boolean {
     return (
-      (this.hasBroadPermissions || this.hasOtherPermissions) &&
+      (this.hasBroadPermissions || this.hasCustomPermissions) &&
       this.editableVersion !== this.sharedVersion &&
       this.editableVersion !== "" &&
       this.sharedVersion !== ""
@@ -83,12 +83,10 @@ export class ShareController extends RootController {
   accessor hasBroadPermissions = false;
 
   @field()
-  accessor hasOtherPermissions = false;
+  accessor hasCustomPermissions = false;
 
   get visibility(): VisibilityLevel {
-    // Check other (individual) permissions first: if specific people are
-    // shared, we show "restricted" even when broad permissions also exist.
-    if (this.hasOtherPermissions) return "restricted";
+    if (this.hasCustomPermissions) return "custom";
     if (this.hasBroadPermissions) return "broad";
     return "only-you";
   }
@@ -138,7 +136,7 @@ export class ShareController extends RootController {
     this.hasBroadPermissions = false;
     this.editableVersion = "";
     this.sharedVersion = "";
-    this.hasOtherPermissions = false;
+    this.hasCustomPermissions = false;
     this.userDomain = "";
     this.broadPermissionsAllowed = true;
     this.actualPermissions = [];

@@ -472,7 +472,7 @@ function updateControllerPermissionState(
     expected: broadPermissions,
   });
   share.hasBroadPermissions = diff.missing.length === 0;
-  share.hasOtherPermissions =
+  share.hasCustomPermissions =
     diff.excess.find((p) => p.role !== "owner") !== undefined;
   share.actualPermissions = actualPermissions.filter((p) =>
     permissionMatchesAnyOfIgnoringRole(p, broadPermissions)
@@ -1065,7 +1065,7 @@ export const unpublish = asAction(
 
 /**
  * Unified visibility change for the v2 share panel 3-way dropdown.
- * Handles all transitions between only-you, restricted, and anyone.
+ * Handles all transitions between only-you, broad, and custom.
  *
  * This action is v2-only. The v1 binary toggle continues to use
  * publish()/unpublish() directly.
@@ -1135,12 +1135,10 @@ export const changeVisibility = asAction(
       }
       desiredPermissions = broadPermissions;
     } else {
-      target satisfies "restricted";
-      desiredPermissions = actualPermissions.filter(
-        (p) =>
-          p.role !== "owner" &&
-          !permissionMatchesAnyOfIgnoringRole(p, broadPermissions)
-      );
+      target satisfies "custom";
+      // Keep all existing non-owner permissions intact. Just open the native
+      // share dialog so the user can add/remove specific people.
+      desiredPermissions = actualPermissions.filter((p) => p.role !== "owner");
     }
 
     if (
@@ -1170,10 +1168,10 @@ export const changeVisibility = asAction(
       }
     }
 
-    // For restricted, open the native share dialog so the user
+    // For custom, open the native share dialog so the user
     // can add specific people. Keep the loading state so the selector
     // shows a spinner until the dialog closes and permissions re-sync.
-    if (target === "restricted") {
+    if (target === "custom") {
       share.panel = "native-share";
     } else {
       share.status = "ready";

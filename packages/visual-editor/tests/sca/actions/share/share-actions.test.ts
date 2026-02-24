@@ -168,7 +168,7 @@ suite("Share Actions", () => {
         assert.strictEqual(share.status, "ready");
         assert.strictEqual(share.ownership, "owner");
         assert.strictEqual(share.hasBroadPermissions, false);
-        assert.strictEqual(share.hasOtherPermissions, false);
+        assert.strictEqual(share.hasCustomPermissions, false);
         assert.strictEqual(share.editableVersion, "1");
         assert.strictEqual(share.shareableFile, null);
         assert.strictEqual(share.userDomain, "example.com");
@@ -621,7 +621,7 @@ suite("Share Actions", () => {
         assert.strictEqual(share.panel, "open");
         assert.strictEqual(share.ownership, "owner");
         assert.strictEqual(share.hasBroadPermissions, false);
-        assert.strictEqual(share.hasOtherPermissions, false);
+        assert.strictEqual(share.hasCustomPermissions, false);
 
         // User opens granular sharing dialog
         await ShareActions.viewSharePermissions();
@@ -644,7 +644,7 @@ suite("Share Actions", () => {
 
         // We should now be granularly shared, but not published
         assert.strictEqual(share.panel, "open");
-        assert.strictEqual(share.hasOtherPermissions, true);
+        assert.strictEqual(share.hasCustomPermissions, true);
         assert.strictEqual(share.hasBroadPermissions, false);
 
         // User opens granular sharing again
@@ -666,7 +666,7 @@ suite("Share Actions", () => {
 
         // We should now be granularly shared and published
         assert.strictEqual(share.panel, "open");
-        assert.strictEqual(share.hasOtherPermissions, true);
+        assert.strictEqual(share.hasCustomPermissions, true);
         assert.strictEqual(share.hasBroadPermissions, true);
       });
 
@@ -1163,7 +1163,7 @@ suite("Share Actions", () => {
           assert.strictEqual(share.status, "ready");
           assert.strictEqual(share.visibility, "broad");
           assert.strictEqual(share.hasBroadPermissions, true);
-          assert.strictEqual(share.hasOtherPermissions, false);
+          assert.strictEqual(share.hasCustomPermissions, false);
           assert.ok(share.shareableFile, "shareableFile should exist");
 
           // Verify actual Drive permissions
@@ -1173,20 +1173,20 @@ suite("Share Actions", () => {
           assert.strictEqual(perms[0].role, "reader");
         });
 
-        suite("only-you → restricted", () => {
+        suite("only-you → custom", () => {
           test("opens native share dialog", async () => {
             await ShareActions.initialize();
             assert.strictEqual(share.visibility, "only-you");
 
-            await ShareActions.changeVisibility("restricted");
+            await ShareActions.changeVisibility("custom");
 
-            // "restricted" opens the native share dialog instead of going to "ready"
+            // "custom" opens the native share dialog instead of going to "ready"
             assert.strictEqual(share.panel, "native-share");
             // The visibility is still "only-you" because no granular permissions
             // have been added yet (the native dialog is where the user adds them).
             assert.strictEqual(share.visibility, "only-you");
             assert.strictEqual(share.hasBroadPermissions, false);
-            assert.strictEqual(share.hasOtherPermissions, false);
+            assert.strictEqual(share.hasCustomPermissions, false);
             assert.ok(share.shareableFile, "shareableFile should exist");
 
             // Verify no permissions were added
@@ -1194,9 +1194,9 @@ suite("Share Actions", () => {
             assert.strictEqual(perms.length, 0);
           });
 
-          test("user adds a person via native dialog → restricted", async () => {
+          test("user adds a person via native dialog → custom", async () => {
             await ShareActions.initialize();
-            await ShareActions.changeVisibility("restricted");
+            await ShareActions.changeVisibility("custom");
             assert.ok(share.shareableFile);
 
             // User adds someone via the native Drive share dialog
@@ -1215,14 +1215,14 @@ suite("Share Actions", () => {
 
             assert.strictEqual(share.panel, "open");
             assert.strictEqual(share.status, "ready");
-            assert.strictEqual(share.visibility, "restricted");
+            assert.strictEqual(share.visibility, "custom");
             assert.strictEqual(share.hasBroadPermissions, false);
-            assert.strictEqual(share.hasOtherPermissions, true);
+            assert.strictEqual(share.hasCustomPermissions, true);
           });
 
           test("user adds anyone permission via native dialog → broad", async () => {
             await ShareActions.initialize();
-            await ShareActions.changeVisibility("restricted");
+            await ShareActions.changeVisibility("custom");
             assert.ok(share.shareableFile);
 
             // User adds the anyone permission (matches configured broad) via native dialog
@@ -1242,12 +1242,12 @@ suite("Share Actions", () => {
             // The anyone permission matches the broad permissions → "broad"
             assert.strictEqual(share.visibility, "broad");
             assert.strictEqual(share.hasBroadPermissions, true);
-            assert.strictEqual(share.hasOtherPermissions, false);
+            assert.strictEqual(share.hasCustomPermissions, false);
           });
 
-          test("user adds anyone + person via native dialog → restricted", async () => {
+          test("user adds anyone + person via native dialog → custom", async () => {
             await ShareActions.initialize();
-            await ShareActions.changeVisibility("restricted");
+            await ShareActions.changeVisibility("custom");
             assert.ok(share.shareableFile);
 
             await googleDriveClient.createPermission(
@@ -1269,14 +1269,14 @@ suite("Share Actions", () => {
 
             assert.strictEqual(share.panel, "open");
             assert.strictEqual(share.status, "ready");
-            assert.strictEqual(share.visibility, "restricted");
+            assert.strictEqual(share.visibility, "custom");
             assert.strictEqual(share.hasBroadPermissions, true);
-            assert.strictEqual(share.hasOtherPermissions, true);
+            assert.strictEqual(share.hasCustomPermissions, true);
           });
 
           test("user adds nothing and closes → only-you", async () => {
             await ShareActions.initialize();
-            await ShareActions.changeVisibility("restricted");
+            await ShareActions.changeVisibility("custom");
             assert.ok(share.shareableFile);
 
             // User closes without adding anyone
@@ -1286,12 +1286,12 @@ suite("Share Actions", () => {
             assert.strictEqual(share.status, "ready");
             assert.strictEqual(share.visibility, "only-you");
             assert.strictEqual(share.hasBroadPermissions, false);
-            assert.strictEqual(share.hasOtherPermissions, false);
+            assert.strictEqual(share.hasCustomPermissions, false);
           });
 
           test("user removes a previously shared person → only-you", async () => {
             await ShareActions.initialize();
-            await ShareActions.changeVisibility("restricted");
+            await ShareActions.changeVisibility("custom");
             assert.ok(share.shareableFile);
 
             // Add a person first
@@ -1305,7 +1305,7 @@ suite("Share Actions", () => {
               { sendNotificationEmail: false }
             );
             await ShareActions.onGoogleDriveSharePanelClose();
-            assert.strictEqual(share.visibility, "restricted");
+            assert.strictEqual(share.visibility, "custom");
 
             // Re-open native dialog and remove the person
             await ShareActions.viewSharePermissions();
@@ -1318,7 +1318,7 @@ suite("Share Actions", () => {
             assert.strictEqual(share.panel, "open");
             assert.strictEqual(share.status, "ready");
             assert.strictEqual(share.visibility, "only-you");
-            assert.strictEqual(share.hasOtherPermissions, false);
+            assert.strictEqual(share.hasCustomPermissions, false);
           });
         });
 
@@ -1333,38 +1333,37 @@ suite("Share Actions", () => {
           assert.strictEqual(share.status, "ready");
           assert.strictEqual(share.visibility, "only-you");
           assert.strictEqual(share.hasBroadPermissions, false);
-          assert.strictEqual(share.hasOtherPermissions, false);
+          assert.strictEqual(share.hasCustomPermissions, false);
 
           // Verify all permissions removed from Drive
           const perms = await getNonOwnerPermissions(share.shareableFile!.id);
           assert.strictEqual(perms.length, 0);
         });
 
-        test("anyone → restricted", async () => {
+        test("anyone → custom", async () => {
           // Set up published state
           await ShareActions.initialize();
           await ShareActions.changeVisibility("broad");
           assert.strictEqual(share.visibility, "broad");
 
-          await ShareActions.changeVisibility("restricted");
+          await ShareActions.changeVisibility("custom");
 
           // Opens the native share dialog
           assert.strictEqual(share.panel, "native-share");
-          // Publish permissions were stripped, so visibility drops to "only-you"
-          // because no granular permissions remain. The native dialog is where
-          // the user will add specific people.
-          assert.strictEqual(share.hasBroadPermissions, false);
-          assert.strictEqual(share.hasOtherPermissions, false);
+          // Broad permissions are preserved when switching to custom.
+          assert.strictEqual(share.hasBroadPermissions, true);
+          assert.strictEqual(share.hasCustomPermissions, false);
 
-          // Verify publish permissions were removed from Drive
+          // Verify broad permissions are still on Drive
           const perms = await getNonOwnerPermissions(share.shareableFile!.id);
-          assert.strictEqual(perms.length, 0);
+          assert.strictEqual(perms.length, 1);
+          assert.strictEqual(perms[0].type, "anyone");
         });
 
-        test("restricted → only-you", async () => {
+        test("custom → only-you", async () => {
           // Set up: initialize, create shareable copy, add a granular permission
           await ShareActions.initialize();
-          await ShareActions.changeVisibility("restricted");
+          await ShareActions.changeVisibility("custom");
           assert.ok(share.shareableFile);
           // Simulate user adding a person via the native dialog
           await googleDriveClient.createPermission(
@@ -1378,25 +1377,25 @@ suite("Share Actions", () => {
           );
           // Sync state by closing the native dialog
           await ShareActions.onGoogleDriveSharePanelClose();
-          assert.strictEqual(share.visibility, "restricted");
-          assert.strictEqual(share.hasOtherPermissions, true);
+          assert.strictEqual(share.visibility, "custom");
+          assert.strictEqual(share.hasCustomPermissions, true);
 
           await ShareActions.changeVisibility("only-you");
 
           assert.strictEqual(share.status, "ready");
           assert.strictEqual(share.visibility, "only-you");
           assert.strictEqual(share.hasBroadPermissions, false);
-          assert.strictEqual(share.hasOtherPermissions, false);
+          assert.strictEqual(share.hasCustomPermissions, false);
 
           // Verify all permissions removed
           const perms = await getNonOwnerPermissions(share.shareableFile.id);
           assert.strictEqual(perms.length, 0);
         });
 
-        test("restricted → anyone", async () => {
+        test("custom → anyone", async () => {
           // Set up: initialize, create shareable copy, add a granular permission
           await ShareActions.initialize();
-          await ShareActions.changeVisibility("restricted");
+          await ShareActions.changeVisibility("custom");
           assert.ok(share.shareableFile);
           // Simulate user adding a person
           await googleDriveClient.createPermission(
@@ -1409,7 +1408,7 @@ suite("Share Actions", () => {
             { sendNotificationEmail: false }
           );
           await ShareActions.onGoogleDriveSharePanelClose();
-          assert.strictEqual(share.visibility, "restricted");
+          assert.strictEqual(share.visibility, "custom");
 
           await ShareActions.changeVisibility("broad");
 
@@ -1419,7 +1418,7 @@ suite("Share Actions", () => {
           // The granular user permission is removed because "broad" sets desired
           // permissions to only the publish permissions. The diff treats the
           // user permission as excess.
-          assert.strictEqual(share.hasOtherPermissions, false);
+          assert.strictEqual(share.hasCustomPermissions, false);
 
           // Verify Drive: only the anyone perm exists
           const perms = await getNonOwnerPermissions(share.shareableFile.id);
@@ -1448,11 +1447,11 @@ suite("Share Actions", () => {
           assert.strictEqual(share.visibility, "broad");
         });
 
-        test("no-op: restricted → restricted", async () => {
+        test("no-op: custom → custom", async () => {
           await ShareActions.initialize();
-          await ShareActions.changeVisibility("restricted");
+          await ShareActions.changeVisibility("custom");
           assert.ok(share.shareableFile);
-          // Add a user so we're actually in "restricted" state
+          // Add a user so we're actually in "custom" state
           await googleDriveClient.createPermission(
             share.shareableFile.id,
             {
@@ -1463,12 +1462,12 @@ suite("Share Actions", () => {
             { sendNotificationEmail: false }
           );
           await ShareActions.onGoogleDriveSharePanelClose();
-          assert.strictEqual(share.visibility, "restricted");
+          assert.strictEqual(share.visibility, "custom");
 
-          await ShareActions.changeVisibility("restricted");
+          await ShareActions.changeVisibility("custom");
           // No-op: panel stays open, visibility unchanged
           assert.strictEqual(share.panel, "open");
-          assert.strictEqual(share.visibility, "restricted");
+          assert.strictEqual(share.visibility, "custom");
         });
 
         test("managed assets get permissions synced on only-you → anyone", async () => {
@@ -1750,9 +1749,9 @@ suite("Share Actions", () => {
       );
     });
 
-    test("broad + person via native dialog → restricted", async () => {
+    test("broad + person via native dialog → custom", async () => {
       await ShareActions.initialize();
-      await ShareActions.changeVisibility("restricted");
+      await ShareActions.changeVisibility("custom");
       assert.ok(share.shareableFile);
 
       await googleDriveClient.createPermission(
@@ -1774,9 +1773,9 @@ suite("Share Actions", () => {
 
       assert.strictEqual(share.panel, "open");
       assert.strictEqual(share.status, "ready");
-      assert.strictEqual(share.visibility, "restricted");
+      assert.strictEqual(share.visibility, "custom");
       assert.strictEqual(share.hasBroadPermissions, true);
-      assert.strictEqual(share.hasOtherPermissions, true);
+      assert.strictEqual(share.hasCustomPermissions, true);
     });
   }); // corp-like
 
@@ -1790,7 +1789,7 @@ suite("Share Actions", () => {
     share.hasBroadPermissions = true;
     share.editableVersion = "42";
     share.sharedVersion = "1";
-    share.hasOtherPermissions = true;
+    share.hasCustomPermissions = true;
     share.userDomain = "example.com";
     share.broadPermissionsAllowed = false;
     share.actualPermissions = [{ type: "broad", role: "reader" }];
@@ -1821,7 +1820,7 @@ suite("Share Actions", () => {
     assert.strictEqual(share.stale, false);
     assert.strictEqual(share.editableVersion, "");
     assert.strictEqual(share.sharedVersion, "");
-    assert.strictEqual(share.hasOtherPermissions, false);
+    assert.strictEqual(share.hasCustomPermissions, false);
     assert.strictEqual(share.userDomain, "");
     assert.strictEqual(share.broadPermissionsAllowed, true);
     assert.deepStrictEqual(share.actualPermissions, []);
