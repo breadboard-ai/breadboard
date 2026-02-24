@@ -7,9 +7,15 @@
 import { suite, test } from "node:test";
 import assert from "node:assert/strict";
 import { ShareController } from "../../../../../src/sca/controller/subcontrollers/editor/share-controller.js";
+import { createMockEnvironment } from "../../../helpers/mock-environment.js";
+import { defaultRuntimeFlags } from "../../data/default-flags.js";
 
 function makeController(): ShareController {
-  return new ShareController("share_test", "ShareController");
+  return new ShareController(
+    "share_test",
+    "ShareController",
+    createMockEnvironment(defaultRuntimeFlags)
+  );
 }
 
 suite("ShareController", () => {

@@ -30,7 +30,7 @@ import type {
   ViewerMode,
   VisibilityLevel,
 } from "../../controller/subcontrollers/editor/share-controller.js";
-import type { DriveFileId } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+
 import {
   NotebookAccessRole,
   type NotebookPermission,
@@ -39,7 +39,6 @@ import { makeAction } from "../binder.js";
 import { asAction, ActionMode } from "../../coordination.js";
 import { Utils } from "../../utils.js";
 import { makeUrl, parseUrl } from "../../../ui/navigation/urls.js";
-import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
 import { onGraphUrl, onSaveComplete } from "./triggers.js";
 import { SaveCompleteEvent } from "../../../board-server/events.js";
@@ -382,43 +381,6 @@ function getConfiguredBroadPermissions(): gapi.client.drive.Permission[] {
     /* c8 ignore end */
   }
   return permissions.map((permission) => ({ role: "reader", ...permission }));
-}
-
-// This computation must live in the actions layer because it needs access to
-// guestConfig and globalConfig from environment, but it can't be wrapped with
-// "asAction" as required by the lint rule, because that forces it to be async.
-// It can't be async because it needs to be rendered synchronously in the
-// share panel.
-// eslint-disable-next-line local-rules/action-exports-use-asaction
-export function computeAppUrl(shareableFile: DriveFileId | null): string {
-  if (!shareableFile) {
-    return "";
-  }
-  const { env } = bind;
-  const shareSurface = env.guestConfig.shareSurface;
-  const shareSurfaceUrlTemplate =
-    shareSurface && env.guestConfig.shareSurfaceUrlTemplates?.[shareSurface];
-  if (shareSurfaceUrlTemplate) {
-    return makeShareLinkFromTemplate({
-      urlTemplate: shareSurfaceUrlTemplate,
-      fileId: shareableFile.id,
-      resourceKey: shareableFile.resourceKey,
-    });
-  }
-  const hostOrigin = env.hostOrigin;
-  if (!hostOrigin) {
-    return "";
-  }
-  return makeUrl(
-    {
-      page: "graph",
-      mode: "app",
-      flow: `drive:/${shareableFile.id}`,
-      resourceKey: shareableFile.resourceKey,
-      guestPrefixed: false,
-    },
-    hostOrigin
-  );
 }
 
 interface MakeShareableCopyResult {
