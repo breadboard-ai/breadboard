@@ -468,9 +468,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
                     evt.stopPropagation();
                   }}
                 ></bb-graph-editing-chat>`
-              : html`<bb-flowgen-editor-input
-                  .hasEmptyGraph=${graphIsEmpty}
-                ></bb-flowgen-editor-input>`}
+              : html`<bb-flowgen-editor-input></bb-flowgen-editor-input>`}
         </section>`;
 
     const screenSize = this.sca.controller.global.screenSize.size;

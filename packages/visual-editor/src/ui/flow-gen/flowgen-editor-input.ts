@@ -248,8 +248,9 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
   @property({ type: Boolean, reflect: true })
   accessor generating = false;
 
-  @property({ type: Boolean, reflect: true })
-  accessor hasEmptyGraph = false;
+  get #hasEmptyGraph() {
+    return this.sca.controller.editor.graph.graphContentState !== "loaded";
+  }
 
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
@@ -361,7 +362,7 @@ export class FlowgenEditorInput extends SignalWatcher(LitElement) {
           ${ref(this.#descriptionInput)}
           .disabled=${isGenerating}
           .value=${this.#inputValue}
-          .placeholder=${this.hasEmptyGraph
+          .placeholder=${this.#hasEmptyGraph
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
           @input=${this.#onInputSync}

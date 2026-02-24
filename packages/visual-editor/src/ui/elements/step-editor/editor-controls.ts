@@ -859,7 +859,6 @@ export class EditorControls extends SignalWatcher(LitElement) {
             }}
           ></bb-graph-editing-chat>`
         : html`<bb-flowgen-editor-input
-            .hasEmptyGraph=${this.graph.raw()?.nodes.length === 0}
             @pointerdown=${(evt: PointerEvent) => {
               // <bb-renderer> listens for pointerdown and retains focus so that
               // after selection updates the user can do things like delete nodes
