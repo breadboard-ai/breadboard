@@ -30,7 +30,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { A2_COMPONENTS } from "../../../a2/a2-registry.js";
+import { A2_COMPONENTS, A2_COMPONENT_MAP } from "../../../a2/a2-registry.js";
 import { MAIN_BOARD_ID } from "../../../sca/constants.js";
 import {
   CreateNewAssetsEvent,
@@ -491,7 +491,7 @@ export class Renderer extends SignalWatcher(LitElement) {
     evt.preventDefault();
 
     const nodeType = evt.dataTransfer?.getData(DATA_TYPE);
-    if (!nodeType) {
+    if (!nodeType || !A2_COMPONENT_MAP.has(nodeType)) {
       this.#handleDroppedAssets(evt);
       return;
     }
