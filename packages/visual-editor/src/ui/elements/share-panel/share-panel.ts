@@ -370,10 +370,16 @@ export class SharePanel extends SignalWatcher(LitElement) {
         color: var(--sys-color--on-surface);
 
         button {
+          position: relative;
           font: 700 var(--bb-label-large) / 16px var(--bb-font-family);
           color: var(--light-dark-n-0);
           letter-spacing: 0.25px;
           flex-shrink: 0;
+          .spinner {
+            position: absolute;
+            right: 100%;
+            margin-right: var(--bb-grid-size);
+          }
         }
 
         button[disabled] {
