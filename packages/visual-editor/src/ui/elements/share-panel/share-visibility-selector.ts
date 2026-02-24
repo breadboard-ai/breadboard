@@ -246,13 +246,13 @@ export class ShareVisibilitySelector extends LitElement {
       },
       this.domainRestricted
         ? {
-            level: "anyone",
+            level: "wide",
             label: "Your Organization",
             icon: "domain",
             subtitle: "Anyone in your organization with the link can view",
           }
         : {
-            level: "anyone",
+            level: "wide",
             label: "Anyone with the link",
             icon: "public",
             subtitle: "Anyone on the internet with the link can view",

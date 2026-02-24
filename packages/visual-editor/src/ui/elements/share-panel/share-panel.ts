@@ -711,7 +711,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderWritableContentsV1() {
     const shared =
-      this.#controller.hasPublicPermissions ||
+      this.#controller.hasWidePermissions ||
       this.#controller.hasOtherPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBanner() : nothing,
@@ -731,7 +731,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
 
   #renderWritableContentsV2() {
     const shared =
-      this.#controller.hasPublicPermissions ||
+      this.#controller.hasWidePermissions ||
       this.#controller.hasOtherPermissions;
     return [
       this.#controller.stale && shared ? this.#renderStaleBannerV2() : nothing,
@@ -964,7 +964,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
   }
 
   get #domainRestricted(): boolean {
-    const perms = this.sca.env.googleDrive.publishPermissions;
+    const perms = this.sca.env.googleDrive.widePermissions;
     return perms.length === 0 || perms.some((p) => p.type !== "anyone");
   }
 
@@ -992,7 +992,7 @@ export class SharePanel extends SignalWatcher(LitElement) {
     if (status !== "ready" && status !== "changing-visibility") {
       return nothing;
     }
-    const published = this.#controller.hasPublicPermissions;
+    const published = this.#controller.hasWidePermissions;
     const domain = this.#controller.userDomain;
     const { disallowPublicPublishing } = this.sca?.env.domains?.[domain] ?? {};
 

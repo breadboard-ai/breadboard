@@ -34,7 +34,7 @@ export type UnmanagedNotebookAssetProblem = {
 
 export type SharePanelStatus = "closed" | "open" | "native-share";
 
-export type VisibilityLevel = "only-you" | "restricted" | "anyone";
+export type VisibilityLevel = "only-you" | "restricted" | "wide";
 
 export type ViewerMode = "full" | "app-only";
 
@@ -66,7 +66,7 @@ export class ShareController extends RootController {
   accessor ownership: "unknown" | "owner" | "non-owner" = "unknown";
 
   @field()
-  accessor hasPublicPermissions = false;
+  accessor hasWidePermissions = false;
 
   @field()
   accessor editableVersion = "";
@@ -76,7 +76,7 @@ export class ShareController extends RootController {
 
   get stale(): boolean {
     return (
-      (this.hasPublicPermissions || this.hasOtherPermissions) &&
+      (this.hasWidePermissions || this.hasOtherPermissions) &&
       this.editableVersion !== this.sharedVersion &&
       this.editableVersion !== "" &&
       this.sharedVersion !== ""
@@ -87,7 +87,7 @@ export class ShareController extends RootController {
   accessor hasOtherPermissions = false;
 
   get visibility(): VisibilityLevel {
-    if (this.hasPublicPermissions) return "anyone";
+    if (this.hasWidePermissions) return "wide";
     if (this.hasOtherPermissions) return "restricted";
     return "only-you";
   }
@@ -96,7 +96,7 @@ export class ShareController extends RootController {
   accessor userDomain = "";
 
   @field()
-  accessor publicPublishingAllowed = true;
+  accessor widePermissionsAllowed = true;
 
   @field({ deep: false })
   accessor actualPermissions: gapi.client.drive.Permission[] = [];
@@ -134,12 +134,12 @@ export class ShareController extends RootController {
     this.panel = "closed";
     this.status = "initializing";
     this.ownership = "unknown";
-    this.hasPublicPermissions = false;
+    this.hasWidePermissions = false;
     this.editableVersion = "";
     this.sharedVersion = "";
     this.hasOtherPermissions = false;
     this.userDomain = "";
-    this.publicPublishingAllowed = true;
+    this.widePermissionsAllowed = true;
     this.actualPermissions = [];
     this.shareableFile = null;
     this.unmanagedAssetProblems = [];

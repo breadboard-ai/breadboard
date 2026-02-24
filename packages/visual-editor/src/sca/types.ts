@@ -199,7 +199,7 @@ export type GlobalConfig = {
   environmentName: string | undefined;
   hostOrigin: URL;
   googleDrive: {
-    publishPermissions: GoogleDrivePermission[];
+    widePermissions: GoogleDrivePermission[];
   };
   buildInfo: BuildInfo;
 } & ClientDeploymentConfiguration;

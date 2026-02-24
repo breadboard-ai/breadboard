@@ -93,7 +93,7 @@ class GoogleDriveBoardServer
     public readonly name: string,
     signInInfo: SignInInfo,
     googleDriveClient: GoogleDriveClient,
-    publishPermissions: gapi.client.drive.Permission[],
+    widePermissions: gapi.client.drive.Permission[],
     userFolderName: string,
     findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"],
     listUserOpals: OpalShellHostProtocol["listUserOpals"],
@@ -116,7 +116,7 @@ class GoogleDriveBoardServer
       },
       userFolderName,
       googleDriveClient,
-      publishPermissions,
+      widePermissions,
       findUserOpalFolder,
       (level, ...args) => {
         const logger = getLogger();

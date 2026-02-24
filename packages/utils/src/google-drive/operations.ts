@@ -111,7 +111,7 @@ class DriveOperations {
     DRIVE_IMAGE_CACHE_KEY_PREFIX
   );
   readonly #googleDriveClient: GoogleDriveClient;
-  readonly #publishPermissions: gapi.client.drive.Permission[];
+  readonly #widePermissions: gapi.client.drive.Permission[];
   readonly #log: (level: string, ...args: unknown[]) => void;
 
   /**
@@ -121,7 +121,7 @@ class DriveOperations {
     _refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
     googleDriveClient: GoogleDriveClient,
-    publishPermissions: gapi.client.drive.Permission[],
+    widePermissions: gapi.client.drive.Permission[],
     private readonly findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"],
     log?: (level: string, ...args: unknown[]) => void
   ) {
@@ -130,7 +130,7 @@ class DriveOperations {
     }
     this.#userFolderName = userFolderName;
     this.#googleDriveClient = googleDriveClient;
-    this.#publishPermissions = publishPermissions;
+    this.#widePermissions = widePermissions;
     this.#log = log ?? (() => {});
   }
 
@@ -324,7 +324,7 @@ class DriveOperations {
    */
   async publishFile(fileId: string): Promise<gapi.client.drive.Permission[]> {
     return await Promise.all(
-      this.#publishPermissions.map((permission) =>
+      this.#widePermissions.map((permission) =>
         this.#googleDriveClient.createPermission(
           fileId,
           { ...permission, role: "reader" },
