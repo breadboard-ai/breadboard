@@ -90,6 +90,12 @@ When applying a principle, trace its implications across every place it
 manifests — config files, rule metadata, runtime defaults, documentation. Don't
 stop at the first fix.
 
+## Inclusive Language
+
+All human-readable text — JSDoc, README files, PR summaries, code comments, and
+error messages — must use inclusive, people-first, bias-free language. If you
+spot non-inclusive language while editing a file, fix it as part of the change.
+
 ## Coding Conventions
 
 Use ES Module syntax. Define exports explicitly at the top of the file, right
