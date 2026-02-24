@@ -5,10 +5,18 @@
  */
 
 import { describe, it } from "node:test";
-import { PidginTranslator } from "../../src/a2/agent/pidgin-translator.js";
+import {
+  PidginTranslator,
+  MAX_INLINE_CHARACTER_LENGTH,
+} from "../../src/a2/agent/pidgin-translator.js";
 import { stubMemoryManager, stubModuleArgs } from "../useful-stubs.js";
 import { AgentFileSystem } from "../../src/a2/agent/file-system.js";
-import { deepStrictEqual, fail, strictEqual } from "node:assert";
+import {
+  deepStrictEqual,
+  fail,
+  ok as assertOk,
+  strictEqual,
+} from "node:assert";
 import { ok } from "@breadboard-ai/utils/outcome.js";
 import { Template } from "../../src/a2/a2/template.js";
 import {
@@ -194,6 +202,108 @@ describe("Pidgin Translator", () => {
 
       // File system should not have stored anything
       strictEqual(fileSystem.files.size, 0);
+    });
+  });
+
+  describe("contentToPidginString", () => {
+    it("inlines short text without a file handle", () => {
+      const { translator, fileSystem } = makeTranslatorWithFileSystem();
+      const shortText = "Hello, world!";
+      const content: LLMContent = {
+        parts: [{ text: shortText }],
+      };
+
+      const result = translator.contentToPidginString(content);
+
+      strictEqual(result, shortText);
+      strictEqual(fileSystem.files.size, 0);
+    });
+
+    it("wraps long text in <content> tags with a file handle", () => {
+      const { translator, fileSystem } = makeTranslatorWithFileSystem();
+      const longText = "x".repeat(MAX_INLINE_CHARACTER_LENGTH + 1);
+      const content: LLMContent = {
+        parts: [{ text: longText }],
+      };
+
+      const result = translator.contentToPidginString(content);
+
+      // Should contain both the file reference AND the inline text
+      assertOk(result.includes("<content src="));
+      assertOk(result.includes(longText));
+      assertOk(result.includes("</content>"));
+      // File should be stored
+      strictEqual(fileSystem.files.size, 1);
+    });
+
+    it("does not wrap long text when textAsFiles is false", () => {
+      const { translator, fileSystem } = makeTranslatorWithFileSystem();
+      const longText = "x".repeat(MAX_INLINE_CHARACTER_LENGTH + 1);
+      const content: LLMContent = {
+        parts: [{ text: longText }],
+      };
+
+      const result = translator.contentToPidginString(content, false);
+
+      strictEqual(result, longText);
+      strictEqual(fileSystem.files.size, 0);
+    });
+
+    it("converts storedData parts to <file> tags", () => {
+      const { translator, fileSystem } = makeTranslatorWithFileSystem();
+      const content: LLMContent = {
+        parts: [
+          {
+            storedData: { handle: "stored://my-image", mimeType: "image/png" },
+          },
+        ],
+      };
+
+      const result = translator.contentToPidginString(content);
+
+      assertOk(result.includes('<file src="'));
+      assertOk(result.includes('" />'));
+      strictEqual(fileSystem.files.size, 1);
+    });
+
+    it("passes NotebookLM storedData through as URL text", () => {
+      const { translator, fileSystem } = makeTranslatorWithFileSystem();
+      const handle = "https://notebooklm.google.com/notebook/abc123";
+      const content: LLMContent = {
+        parts: [
+          {
+            storedData: {
+              handle,
+              mimeType: "application/x-notebooklm",
+            },
+          },
+        ],
+      };
+
+      const result = translator.contentToPidginString(content);
+
+      strictEqual(result, handle);
+      strictEqual(result.includes("<file"), false);
+      strictEqual(fileSystem.files.size, 0);
+    });
+
+    it("handles mixed content with text and binary parts", () => {
+      const { translator, fileSystem } = makeTranslatorWithFileSystem();
+      const content: LLMContent = {
+        parts: [
+          { text: "Here is the image:" },
+          { storedData: { handle: "stored://pic", mimeType: "image/jpeg" } },
+          { text: "And the analysis." },
+        ],
+      };
+
+      const result = translator.contentToPidginString(content);
+
+      const lines = result.split("\n");
+      strictEqual(lines[0], "Here is the image:");
+      assertOk(lines[1].includes('<file src="'));
+      strictEqual(lines[2], "And the analysis.");
+      strictEqual(fileSystem.files.size, 1);
     });
   });
 });

@@ -416,13 +416,7 @@ Specify URLs in the prompt.
       if (textParts.length === 0) {
         return { error: `No text was generated. Please try again` };
       }
-      const pidginString = await translator.toPidgin(
-        { parts: textParts },
-        {},
-        true
-      );
-      if (!ok(pidginString)) return pidginString;
-      return { text: pidginString.text };
+      return { text: translator.contentToPidginString({ parts: textParts }) };
     }
   );
   const videoFunction = defineFunction(

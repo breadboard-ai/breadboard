@@ -32,7 +32,7 @@ import {
 } from "@breadboard-ai/utils";
 import { substituteDefaultTool } from "./substitute-default-tool.js";
 
-export { PidginTranslator };
+export { PidginTranslator, MAX_INLINE_CHARACTER_LENGTH };
 
 export type ToPidginResult = {
   text: string;
@@ -44,7 +44,6 @@ export type ToPidginResult = {
 export type SubstitutePartsArgs = {
   title: string | undefined;
   content: LLMContent;
-  fileSystem: AgentFileSystem;
   textAsFiles: boolean;
 };
 
@@ -112,6 +111,44 @@ class PidginTranslator {
     private readonly moduleArgs: A2ModuleArgs,
     private readonly fileSystem: AgentFileSystem
   ) {}
+
+  /**
+   * Converts LLMContent into a pidgin string. Text parts below
+   * MAX_INLINE_CHARACTER_LENGTH are inlined as-is; text parts above the
+   * threshold are stored as files and wrapped in `<content>` tags (both
+   * inline text AND file handle). Binary parts become `<file>` tags.
+   */
+  contentToPidginString(content: LLMContent, textAsFiles = true): string {
+    const values: string[] = [];
+    for (const part of content.parts) {
+      if ("text" in part) {
+        const { text } = part;
+        if (textAsFiles && text.length > MAX_INLINE_CHARACTER_LENGTH) {
+          const name = this.fileSystem.add(part);
+          if (ok(name)) {
+            values.push(`<content src="${name}">\n${text}</content>`);
+            continue;
+          } else {
+            console.warn(name.$error);
+          }
+        }
+        values.push(text);
+      } else if (
+        "storedData" in part &&
+        isNotebookLmUrl(part.storedData.handle)
+      ) {
+        values.push(part.storedData.handle);
+      } else {
+        const name = this.fileSystem.add(part);
+        if (!ok(name)) {
+          console.warn(name.$error);
+          continue;
+        }
+        values.push(`<file src="${name}" />`);
+      }
+    }
+    return values.join("\n");
+  }
 
   async fromPidginString(content: string): Promise<Outcome<LLMContent>> {
     const pidginParts = content.split(SPLIT_REGEX);
@@ -226,6 +263,22 @@ class PidginTranslator {
     const errors: string[] = [];
     let useMemory = false;
     let useNotebookLM = false;
+
+    const substituteParts = ({
+      title,
+      content: value,
+      textAsFiles: asFiles,
+    }: SubstitutePartsArgs): string => {
+      const text = this.contentToPidginString(value, asFiles);
+      if (!title) return text;
+
+      return tr`
+<input source-agent="${title}">
+${text}
+</input>
+`;
+    };
+
     const pidginContent = await template.asyncSimpleSubstitute(
       async (param) => {
         const { type } = param;
@@ -248,7 +301,6 @@ class PidginTranslator {
             const inner = substituteParts({
               title: undefined,
               content: lastContent,
-              fileSystem: this.fileSystem,
               textAsFiles,
             });
             const title = param.title || "asset";
@@ -270,7 +322,6 @@ ${inner}
               return substituteParts({
                 title: param.title,
                 content: value,
-                fileSystem: this.fileSystem,
                 textAsFiles: true,
               });
             } else if (isLLMContentArray(value)) {
@@ -283,7 +334,6 @@ ${inner}
               return substituteParts({
                 title: param.title,
                 content: last,
-                fileSystem: this.fileSystem,
                 textAsFiles: true,
               });
             } else {
@@ -344,7 +394,6 @@ ${inner}
         text: substituteParts({
           title: undefined,
           content: pidginContent,
-          fileSystem: this.fileSystem,
           textAsFiles,
         }),
         tools: toolManager,
@@ -354,53 +403,6 @@ ${inner}
     }
 
     return { text, tools: toolManager, useMemory, useNotebookLM };
-
-    function substituteParts({
-      title,
-      content: value,
-      fileSystem,
-      textAsFiles,
-    }: SubstitutePartsArgs) {
-      const values: string[] = [];
-      for (const part of value.parts) {
-        if ("text" in part) {
-          const { text } = part;
-          if (textAsFiles && text.length > MAX_INLINE_CHARACTER_LENGTH) {
-            const name = fileSystem.add(part);
-            if (ok(name)) {
-              values.push(`<content src="${name}">
-${text}</content>`);
-              continue;
-            } else {
-              console.warn(name.$error);
-            }
-          } else {
-            values.push(text);
-          }
-        } else {
-          // Special handling for NotebookLM references - don't add to file system,
-          // just reference them as text URL the agent can understand
-          if ("storedData" in part && isNotebookLmUrl(part.storedData.handle)) {
-            values.push(part.storedData.handle);
-            continue;
-          }
-          const name = fileSystem.add(part);
-          if (!ok(name)) {
-            console.warn(name.$error);
-            continue;
-          }
-          values.push(`<file src="${name}" />`);
-        }
-      }
-      const text = values.join("\n");
-      if (!title) return text;
-
-      return tr`
-<input source-agent="${title}">
-${text}
-</input>
-`;
-    }
   }
 }
 
