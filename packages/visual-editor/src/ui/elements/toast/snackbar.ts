@@ -16,8 +16,6 @@ import { consume } from "@lit/context";
 import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 
-const DEFAULT_TIMEOUT = 10000;
-
 @customElement("bb-snackbar")
 export class Snackbar extends SignalWatcher(LitElement) {
   @consume({ context: scaContext })
@@ -28,11 +26,6 @@ export class Snackbar extends SignalWatcher(LitElement) {
 
   @property({ reflect: true, type: Boolean })
   accessor error = false;
-
-  @property()
-  accessor timeout = DEFAULT_TIMEOUT;
-
-  #timeout = 0;
 
   static styles = [
     Styles.HostType.type,
@@ -191,14 +184,6 @@ export class Snackbar extends SignalWatcher(LitElement) {
     // Update active/error state based on messages
     this.active = messages.length > 0;
     this.error = messages.some((msg) => msg.type === SnackType.ERROR);
-
-    // Handle auto-dismiss timeout
-    window.clearTimeout(this.#timeout);
-    if (messages.length > 0 && !messages.every((msg) => msg.persistent)) {
-      this.#timeout = window.setTimeout(() => {
-        this.hide();
-      }, this.timeout);
-    }
   }
 
   render() {
