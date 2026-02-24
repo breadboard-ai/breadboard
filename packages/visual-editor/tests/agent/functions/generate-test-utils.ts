@@ -228,6 +228,7 @@ function createMockTranslator(
   overrides: Partial<{
     fromPidginString: PidginTranslator["fromPidginString"];
     toPidgin: PidginTranslator["toPidgin"];
+    contentToPidginString: PidginTranslator["contentToPidginString"];
   }> = {}
 ): PidginTranslator {
   return {
@@ -246,6 +247,14 @@ function createMockTranslator(
           .join(""),
         tools: {},
       })),
+    contentToPidginString:
+      overrides.contentToPidginString ??
+      mock.fn((content: LLMContent) =>
+        content.parts
+          .filter((p): p is { text: string } => "text" in p)
+          .map((p) => p.text)
+          .join("")
+      ),
   } as unknown as PidginTranslator;
 }
 
