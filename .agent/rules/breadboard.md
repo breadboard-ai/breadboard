@@ -78,6 +78,15 @@ into an Action. This makes the behavior testable without the DOM.
 
 The repo uses `signal-polyfill` and `signal-utils` as its signal infrastructure.
 
+## Decision Making
+
+Follow established principles over cautious defaults. This codebase has PRs,
+code review, and a rollback strategy. When an established principle (e.g.,
+"error, not warning") conflicts with a cautious instinct (e.g., "this might
+break the build"), follow the principle and find a compatible solution — don't
+silently downgrade the principle. If there's a genuine reason to deviate,
+surface the tension explicitly rather than making the choice unilaterally.
+
 ## Coding Conventions
 
 Use ES Module syntax. Define exports explicitly at the top of the file, right
