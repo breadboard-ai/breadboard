@@ -203,3 +203,17 @@ finding.
 The developer environment uses corporate mirror for package repositories. When
 unable to install packages, remind the user to run `gcert` to enable access to
 the mirror.
+
+## Project Documents
+
+`PROJECT_[name].md` files in the repo root are living project plans. Each phase
+has a 🎯 objective — a concrete, observable test that proves the system works.
+
+**Plan backward from the objective.** The objective is the real milestone, not
+the checkbox items below it. Before coding, trace the full path from the user's
+action to the expected result. If any link is missing, restructure the plan.
+
+**A checked-off list is not an objective.** Items can be correct (compiles,
+tests pass) without reaching the objective. Don't ship hacks to check a box —
+restructure the phases honestly instead. Quick prototypes that don't match the
+quality bar of the local path should be reverted and re-scoped.

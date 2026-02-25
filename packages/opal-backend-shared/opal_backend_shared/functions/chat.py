@@ -1,0 +1,367 @@
+# Copyright 2026 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+"""
+Chat functions for the agent loop — suspend-based.
+
+Port of ``functions/chat.ts``. These functions request user input by raising
+``SuspendError``. The loop catches it, saves state, and closes the stream
+with a suspend event. The client collects user input and POSTs back to
+resume the loop.
+
+Two functions:
+- ``chat_request_user_input``: freeform text input or file upload
+- ``chat_present_choices``: structured choice selection
+"""
+
+from __future__ import annotations
+
+import uuid
+from typing import Any
+
+from ..function_definition import FunctionDefinition, FunctionGroup
+from ..suspend import SuspendError
+from ..task_tree_manager import TaskTreeManager
+
+
+CHAT_REQUEST_USER_INPUT = "chat_request_user_input"
+CHAT_PRESENT_CHOICES = "chat_present_choices"
+
+VALID_INPUT_TYPES = ["any", "text", "file-upload"]
+VALID_SELECTION_MODES = ["single", "multiple"]
+VALID_LAYOUTS = ["list", "row", "grid"]
+
+INSTRUCTION = """
+
+## Interacting with the User
+
+Use the "chat_present_choices" function when you have a discrete set of options \
+for the user to choose from. This provides a better user experience than asking \
+them to type their selection.
+
+Use the "chat_request_user_input" function for freeform text input or file uploads.
+
+Prefer structured choices over freeform input when the answer space is bounded.
+
+If the user input requires multiple entries, split the conversation into \
+multiple turns. For example, if you have three questions to ask, ask them \
+over three full conversation turns rather than in one call.
+
+"""
+
+
+def _define_request_user_input(
+    task_tree_manager: TaskTreeManager,
+) -> FunctionDefinition:
+    """Port of ``chat_request_user_input`` from chat.ts.
+
+    Raises ``SuspendError`` with a ``waitForInput`` event so the client
+    can show an input UI and post the user's response back.
+    """
+
+    async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+        task_id = args.get("task_id")
+        if task_id:
+            task_tree_manager.set_in_progress(task_id, "")
+
+        user_message = args.get("user_message", "")
+        input_type = args.get("input_type", "any")
+        skip_label = args.get("skip_label")
+
+        if input_type not in VALID_INPUT_TYPES:
+            input_type = "any"
+
+        request_id = str(uuid.uuid4())
+
+        event: dict[str, Any] = {
+            "type": "waitForInput",
+            "requestId": request_id,
+            "prompt": {
+                "parts": [{"text": user_message}],
+                "role": "model",
+            },
+            "inputType": input_type,
+            # Stash the function call part so the server can build the
+            # functionResponse on resume.
+            "_function_call_part": {
+                "functionCall": {
+                    "name": CHAT_REQUEST_USER_INPUT,
+                    "args": args,
+                }
+            },
+        }
+
+        if skip_label:
+            event["skipLabel"] = skip_label
+
+        raise SuspendError(event)
+
+    return FunctionDefinition(
+        name=CHAT_REQUEST_USER_INPUT,
+        description=(
+            "Requests input from user. Call this function to hold a "
+            "conversation with the user. Each call corresponds to a "
+            "conversation turn. Use only when necessary to fulfill "
+            "the objective."
+        ),
+        handler=handler,
+        icon="chat_bubble",
+        title="Asking the user",
+        parameters_json_schema={
+            "type": "object",
+            "properties": {
+                "user_message": {
+                    "type": "string",
+                    "description": (
+                        "Message to display to the user when requesting "
+                        'input. The content may include references to files '
+                        'using <file src="/mnt/name.ext" /> tags.'
+                    ),
+                },
+                "input_type": {
+                    "type": "string",
+                    "enum": VALID_INPUT_TYPES,
+                    "default": "any",
+                    "description": (
+                        "Input type hint for the chat UI. "
+                        '"any" accepts all inputs, "text" constrains to text '
+                        'only, "file-upload" only allows uploading files.'
+                    ),
+                },
+                "skip_label": {
+                    "type": "string",
+                    "description": (
+                        "If provided, adds a Skip button above the input "
+                        "with this label. When the user taps skip, the "
+                        "function returns { skipped: true }."
+                    ),
+                },
+                "task_id": {
+                    "type": "string",
+                    "description": "ID of the task this input is for.",
+                },
+            },
+            "required": ["user_message"],
+        },
+        response_json_schema={
+            "type": "object",
+            "properties": {
+                "user_input": {
+                    "type": "string",
+                    "description": "Response from the user.",
+                },
+                "skipped": {
+                    "type": "boolean",
+                    "description": (
+                        "True when the user tapped the skip button."
+                    ),
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Error description if something failed.",
+                },
+            },
+        },
+    )
+
+
+def _define_present_choices(
+    task_tree_manager: TaskTreeManager,
+) -> FunctionDefinition:
+    """Port of ``chat_present_choices`` from chat.ts.
+
+    Raises ``SuspendError`` with a ``waitForChoice`` event so the client
+    can show a choice UI and post the user's selection back.
+    """
+
+    async def handler(args: dict[str, Any], status_cb: Any) -> dict[str, Any]:
+        task_id = args.get("task_id")
+        if task_id:
+            task_tree_manager.set_in_progress(task_id, "")
+
+        user_message = args.get("user_message", "")
+        choices = args.get("choices", [])
+        selection_mode = args.get("selection_mode", "single")
+        layout = args.get("layout", "list")
+        none_of_the_above_label = args.get("none_of_the_above_label")
+
+        if selection_mode not in VALID_SELECTION_MODES:
+            selection_mode = "single"
+        if layout not in VALID_LAYOUTS:
+            layout = "list"
+
+        # Transform choices: TS uses {id, content: LLMContent} but the
+        # function receives {id, label: string}. Convert label → LLMContent.
+        choice_events = []
+        for c in choices:
+            choice_events.append({
+                "id": c.get("id", ""),
+                "content": {
+                    "parts": [{"text": c.get("label", "")}],
+                    "role": "model",
+                },
+            })
+
+        request_id = str(uuid.uuid4())
+
+        event: dict[str, Any] = {
+            "type": "waitForChoice",
+            "requestId": request_id,
+            "prompt": {
+                "parts": [{"text": user_message}],
+                "role": "model",
+            },
+            "choices": choice_events,
+            "selectionMode": selection_mode,
+            "layout": layout,
+            "_function_call_part": {
+                "functionCall": {
+                    "name": CHAT_PRESENT_CHOICES,
+                    "args": args,
+                }
+            },
+        }
+
+        if none_of_the_above_label:
+            event["noneOfTheAboveLabel"] = none_of_the_above_label
+
+        raise SuspendError(event)
+
+    return FunctionDefinition(
+        name=CHAT_PRESENT_CHOICES,
+        description=(
+            "Presents the user with a set of choices to select from. "
+            "Use when you need the user to make a decision from a "
+            "predefined set of options."
+        ),
+        handler=handler,
+        icon="list",
+        title="Presenting Choices to the User",
+        parameters_json_schema={
+            "type": "object",
+            "properties": {
+                "user_message": {
+                    "type": "string",
+                    "description": (
+                        "Message explaining what the user should choose."
+                    ),
+                },
+                "choices": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "Unique identifier for this choice.",
+                            },
+                            "label": {
+                                "type": "string",
+                                "description": "Display text for the choice.",
+                            },
+                        },
+                        "required": ["id", "label"],
+                    },
+                    "description": "The choices to present to the user.",
+                },
+                "selection_mode": {
+                    "type": "string",
+                    "enum": VALID_SELECTION_MODES,
+                    "description": (
+                        '"single" for choose-one, '
+                        '"multiple" for any-of.'
+                    ),
+                },
+                "layout": {
+                    "type": "string",
+                    "enum": VALID_LAYOUTS,
+                    "default": "list",
+                    "description": (
+                        'Layout hint: "list" (vertical), '
+                        '"row" (horizontal), "grid" (wrapping).'
+                    ),
+                },
+                "none_of_the_above_label": {
+                    "type": "string",
+                    "description": (
+                        "If provided, adds a 'none of the above' escape "
+                        "option with this label."
+                    ),
+                },
+                "task_id": {
+                    "type": "string",
+                    "description": "ID of the task this choice is for.",
+                },
+            },
+            "required": ["user_message", "choices", "selection_mode"],
+        },
+        response_json_schema={
+            "type": "object",
+            "properties": {
+                "selected": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of selected choice IDs.",
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Error description if something failed.",
+                },
+            },
+        },
+    )
+
+
+def get_chat_function_group(
+    *,
+    task_tree_manager: TaskTreeManager,
+) -> FunctionGroup:
+    """Build a FunctionGroup with all chat functions.
+
+    Args:
+        task_tree_manager: For tracking task progress.
+
+    Returns:
+        FunctionGroup with chat_request_user_input and
+        chat_present_choices functions.
+    """
+    request_input = _define_request_user_input(task_tree_manager)
+    present_choices = _define_present_choices(task_tree_manager)
+
+    return FunctionGroup(
+        instruction=INSTRUCTION,
+        definitions=[
+            (request_input.name, request_input),
+            (present_choices.name, present_choices),
+        ],
+        declarations=[
+            {
+                "name": request_input.name,
+                "description": request_input.description,
+                **(
+                    {"parametersJsonSchema": request_input.parameters_json_schema}
+                    if request_input.parameters_json_schema
+                    else {}
+                ),
+                **(
+                    {"responseJsonSchema": request_input.response_json_schema}
+                    if request_input.response_json_schema
+                    else {}
+                ),
+            },
+            {
+                "name": present_choices.name,
+                "description": present_choices.description,
+                **(
+                    {"parametersJsonSchema": present_choices.parameters_json_schema}
+                    if present_choices.parameters_json_schema
+                    else {}
+                ),
+                **(
+                    {"responseJsonSchema": present_choices.response_json_schema}
+                    if present_choices.response_json_schema
+                    else {}
+                ),
+            },
+        ],
+    )

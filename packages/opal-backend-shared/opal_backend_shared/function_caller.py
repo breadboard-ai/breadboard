@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .function_definition import FunctionDefinition
+from .suspend import SuspendError
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,9 @@ class FunctionCaller:
                     }
                 },
             )
+        except SuspendError:
+            # Let SuspendError propagate — the loop catches it to save state.
+            raise
         except Exception as e:
             logger.exception("Function %s failed", name)
             return FunctionCallResult(

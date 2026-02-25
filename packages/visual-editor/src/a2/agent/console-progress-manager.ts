@@ -48,6 +48,12 @@ function toTitleCase(text: string): string {
  * Manages console progress updates for agent execution.
  * Creates individual WorkItems for each progress update and adds them to the
  * console entry. Also manages AppScreen updates for the app view.
+ *
+ * **Important:** This manager is for *internal telemetry* — thoughts, function
+ * calls, request metadata. It is NOT for user-facing content like chat
+ * messages. To render agent → user messages, create a WorkItem with the
+ * content as a `product` and add it to `consoleEntry.work` /
+ * `appScreen.outputs` directly (see `AgentUI.#addChatOutput()`).
  */
 class ConsoleProgressManager implements AgentProgressManager {
   readonly #consoleEntry: ConsoleEntry | undefined;

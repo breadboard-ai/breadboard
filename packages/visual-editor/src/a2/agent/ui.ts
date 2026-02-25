@@ -179,6 +179,12 @@ class AgentUI implements A2UIRenderer, ChatManager {
       .catch((e) => console.warn("Failed to append chat log entry:", e));
   }
 
+  /**
+   * Canonical pattern for rendering an agent → user chat message.
+   *
+   * Creates a WorkItem (console) and output entry (app screen) with the
+   * message as a `product`.
+   */
   #addChatOutput(message: LLMContent): void {
     const outputId = crypto.randomUUID();
     const schema = {

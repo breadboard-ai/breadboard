@@ -37,12 +37,18 @@ from opal_backend_shared.functions.generate import get_generate_function_group
 from opal_backend_shared.functions.image import get_image_function_group
 from opal_backend_shared.functions.video import get_video_function_group
 from opal_backend_shared.functions.audio import get_audio_function_group
+from opal_backend_shared.functions.chat import get_chat_function_group
+from opal_backend_shared.interaction_store import (
+    InteractionStore,
+    InteractionState,
+)
 from opal_backend_shared.local.api_surface import create_api_router
 from opal_backend_shared.loop import (
     AgentRunArgs,
     Loop,
     LoopController,
 )
+from opal_backend_shared.suspend import SuspendResult
 from opal_backend_shared.task_tree_manager import TaskTreeManager
 
 from opal_backend_shared.pidgin import to_pidgin, ToPidginResult
@@ -71,6 +77,9 @@ UPSTREAM_BASE = os.environ.get(
 
 # Persistent HTTP client for proxying.
 _client = httpx.AsyncClient(timeout=120.0)
+
+# In-memory store for suspended interactions (dev only).
+_interaction_store = InteractionStore()
 
 
 # ---------------------------------------------------------------------------
@@ -115,6 +124,60 @@ class DevProxyBackend:
 
 
 # ---------------------------------------------------------------------------
+# Helper: build function groups from config
+# ---------------------------------------------------------------------------
+
+def _build_function_groups(
+    *,
+    controller: LoopController,
+    file_system: AgentFileSystem,
+    task_tree_manager: TaskTreeManager,
+    access_token: str,
+    upstream_base: str,
+    origin: str,
+):
+    """Build the standard set of function groups."""
+    return [
+        get_system_function_group(
+            controller,
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
+        ),
+        get_generate_function_group(
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
+            access_token=access_token,
+            upstream_base=upstream_base,
+            origin=origin,
+        ),
+        get_image_function_group(
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
+            access_token=access_token,
+            upstream_base=upstream_base,
+            origin=origin,
+        ),
+        get_video_function_group(
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
+            access_token=access_token,
+            upstream_base=upstream_base,
+            origin=origin,
+        ),
+        get_audio_function_group(
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
+            access_token=access_token,
+            upstream_base=upstream_base,
+            origin=origin,
+        ),
+        get_chat_function_group(
+            task_tree_manager=task_tree_manager,
+        ),
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Agent backend — real Gemini loop via Resumable Stream Protocol
 # ---------------------------------------------------------------------------
 
@@ -123,20 +186,16 @@ class DevAgentBackend:
 
     Single POST /api/agent/run → SSE stream.
 
-    The handler parses the request body, extracts the access token
-    from the Authorization header, runs the Loop inline, and streams
-    events directly back to the client as SSE.
+    Handles both start and resume requests:
+    - **Start**: ``{kind, segments/objective}`` — creates a new loop
+    - **Resume**: ``{interactionId, response}`` — reconstructs the loop
+      from saved state, injects the response, continues streaming
 
-    Supports two body formats:
-    - **Segments** (Phase 4.5): ``{segments: [...], flags?: {...}}``
-      Template-resolved segments; server calls ``to_pidgin`` to produce
-      the objective text and discover capabilities.
-    - **Legacy**: ``{objective: {...}}``
-      Raw LLMContent passed directly to the loop.
+    Design decision: reconnect, not keepalive. The SSE stream closes
+    when the loop suspends. Suspends can last seconds, hours, or days.
     """
 
     async def run(self, request: Request) -> EventSourceResponse:
-        # Parse the request body.
         body = await request.json()
 
         # Extract access token from Authorization header.
@@ -148,6 +207,20 @@ class DevAgentBackend:
         # OP validates Origin to identify the requesting app.
         origin = request.headers.get("origin", "")
 
+        # Dispatch: resume or start?
+        interaction_id = body.get("interactionId")
+        if interaction_id:
+            return await self._resume(
+                interaction_id, body.get("response", {}),
+                access_token, origin,
+            )
+        else:
+            return await self._start(body, access_token, origin)
+
+    async def _start(
+        self, body: dict, access_token: str, origin: str,
+    ) -> EventSourceResponse:
+        """Start a new agent run."""
         # Create file system and task tree manager.
         file_system = AgentFileSystem()
         task_tree_manager = TaskTreeManager(file_system)
@@ -155,7 +228,6 @@ class DevAgentBackend:
         # Build the objective — segments-based or legacy.
         segments = body.get("segments")
         if segments is not None:
-            # Phase 4.5: structured segments → to_pidgin → objective
             flags = body.get("flags", {})
             use_notebooklm_flag = flags.get("useNotebookLM", False)
 
@@ -168,7 +240,6 @@ class DevAgentBackend:
             if isinstance(pidgin_result, dict) and "$error" in pidgin_result:
                 return _error_stream(pidgin_result["$error"])
 
-            # Wrap pidgin text as <objective>...</objective> content turn.
             objective = {
                 "parts": [{
                     "text": f"<objective>{pidgin_result.text}</objective>"
@@ -176,58 +247,15 @@ class DevAgentBackend:
                 "role": "user",
             }
         else:
-            # Legacy: raw LLMContent objective.
             objective = body.get("objective")
             if not objective:
                 return _error_stream(
                     "Missing 'segments' or 'objective' in request body"
                 )
-            pidgin_result = None
 
-        # Create the event sink and hooks.
-        sink = AgentEventSink()
-        hooks = build_hooks_from_sink(sink)
-
-        # Create the loop with auth.
         controller = LoopController()
-        loop = Loop(access_token=access_token, upstream_base=UPSTREAM_BASE, origin=origin, controller=controller)
-
-        # Wire up all system functions.
-        system_group = get_system_function_group(
-            controller,
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-        )
-
-        # Wire up generate functions.
-        generate_group = get_generate_function_group(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            access_token=access_token,
-            upstream_base=UPSTREAM_BASE,
-            origin=origin,
-        )
-
-        # Wire up image generation functions.
-        image_group = get_image_function_group(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            access_token=access_token,
-            upstream_base=UPSTREAM_BASE,
-            origin=origin,
-        )
-
-        # Wire up video generation functions.
-        video_group = get_video_function_group(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            access_token=access_token,
-            upstream_base=UPSTREAM_BASE,
-            origin=origin,
-        )
-
-        # Wire up audio generation functions (speech + music).
-        audio_group = get_audio_function_group(
+        function_groups = _build_function_groups(
+            controller=controller,
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
@@ -237,11 +265,92 @@ class DevAgentBackend:
 
         run_args = AgentRunArgs(
             objective=objective,
-            function_groups=[
-                system_group, generate_group, image_group,
-                video_group, audio_group,
-            ],
-            hooks=hooks,
+            function_groups=function_groups,
+        )
+
+        return self._stream_loop(
+            run_args=run_args,
+            controller=controller,
+            file_system=file_system,
+            task_tree_manager=task_tree_manager,
+            access_token=access_token,
+            origin=origin,
+        )
+
+    async def _resume(
+        self, interaction_id: str, response: dict,
+        access_token: str, origin: str,
+    ) -> EventSourceResponse:
+        """Resume a suspended agent run."""
+        state = _interaction_store.load(interaction_id)
+        if state is None:
+            return _error_stream(
+                f"Unknown interaction ID: {interaction_id}"
+            )
+
+        # Inject the client's response as a function result.
+        # The saved function_call_part has the function name — wrap the
+        # response as a functionResponse so the loop can continue.
+        fc = state.function_call_part.get("functionCall", {})
+        func_name = fc.get("name", "unknown")
+
+        function_response_turn = {
+            "parts": [{
+                "functionResponse": {
+                    "name": func_name,
+                    "response": response,
+                }
+            }],
+            "role": "user",
+        }
+
+        # Rebuild the conversation: saved contents + injected response.
+        contents = state.contents + [function_response_turn]
+
+        controller = LoopController()
+        function_groups = _build_function_groups(
+            controller=controller,
+            file_system=state.file_system,
+            task_tree_manager=state.task_tree_manager,
+            access_token=access_token,
+            upstream_base=UPSTREAM_BASE,
+            origin=origin,
+        )
+
+        run_args = AgentRunArgs(
+            objective=contents[0],  # Original objective.
+            function_groups=function_groups,
+            contents=contents,
+        )
+
+        return self._stream_loop(
+            run_args=run_args,
+            controller=controller,
+            file_system=state.file_system,
+            task_tree_manager=state.task_tree_manager,
+            access_token=access_token,
+            origin=origin,
+        )
+
+    def _stream_loop(
+        self,
+        *,
+        run_args: AgentRunArgs,
+        controller: LoopController,
+        file_system: AgentFileSystem,
+        task_tree_manager: TaskTreeManager,
+        access_token: str,
+        origin: str,
+    ) -> EventSourceResponse:
+        """Common streaming logic for both start and resume."""
+        sink = AgentEventSink()
+        run_args.hooks = build_hooks_from_sink(sink)
+
+        loop = Loop(
+            access_token=access_token,
+            upstream_base=UPSTREAM_BASE,
+            origin=origin,
+            controller=controller,
         )
 
         async def generate():
@@ -249,9 +358,29 @@ class DevAgentBackend:
             try:
                 result = await loop.run(run_args)
 
-                # The loop returns err() dicts ({"$error": "message"})
-                # on caught exceptions. Surface them as error events.
-                if isinstance(result, dict) and "$error" in result:
+                if isinstance(result, SuspendResult):
+                    # Save state for later resume.
+                    _interaction_store.save(
+                        result.interaction_id,
+                        InteractionState(
+                            contents=result.contents,
+                            function_call_part=result.function_call_part,
+                            access_token=access_token,
+                            upstream_base=UPSTREAM_BASE,
+                            origin=origin,
+                            file_system=file_system,
+                            task_tree_manager=task_tree_manager,
+                        ),
+                    )
+                    # Emit the suspend event — the client reads this,
+                    # collects user input, and POSTs back to resume.
+                    suspend_event = {
+                        **result.suspend_event,
+                        "interactionId": result.interaction_id,
+                    }
+                    sink.emit(suspend_event)
+
+                elif isinstance(result, dict) and "$error" in result:
                     sink.emit({
                         "type": "error",
                         "message": result["$error"],
@@ -295,11 +424,7 @@ class DevAgentBackend:
                 sink.close()
 
         async def stream():
-            """Yield SSE-formatted events from the sink.
-
-            We start the loop as a concurrent task so the sink can
-            drain events as they're produced.
-            """
+            """Yield SSE-formatted events from the sink."""
             import asyncio
 
             loop_task = asyncio.create_task(generate())

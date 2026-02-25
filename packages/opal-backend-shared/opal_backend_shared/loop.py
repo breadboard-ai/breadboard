@@ -31,6 +31,7 @@ from .gemini_client import (
     GeminiChunk,
     stream_generate_content,
 )
+from .suspend import SuspendError, SuspendResult
 
 logger = logging.getLogger(__name__)
 
@@ -160,20 +161,29 @@ class Loop:
         self._upstream_base = upstream_base
         self._origin = origin
 
-    async def run(self, args: AgentRunArgs) -> AgentResult | Outcome:
+    async def run(
+        self, args: AgentRunArgs
+    ) -> AgentResult | SuspendResult | Outcome:
         """Execute the agent loop.
 
         Args:
             args: The run configuration (objective, function groups, hooks).
 
         Returns:
-            AgentResult on success/failure, or an error Outcome dict.
+            AgentResult on success/failure, SuspendResult if a function
+            needs client input, or an error Outcome dict.
         """
         hooks = args.hooks or LoopHooks()
         contents = args.contents or [args.objective]
 
-        if hooks.on_start:
+        # Only fire on_start for fresh runs. Resume runs (args.contents
+        # is pre-populated) are continuations — firing start would reset
+        # the client's progress UI.
+        is_resume = args.contents is not None
+        if hooks.on_start and not is_resume:
             hooks.on_start(args.objective)
+
+        _suspended = False
 
         try:
             # Merge all function declarations into a single tool set
@@ -305,7 +315,22 @@ class Loop:
                             )
 
                 # Get function results
-                function_results = await function_caller.get_results()
+                try:
+                    function_results = await function_caller.get_results()
+                except SuspendError as suspend:
+                    # A function needs client input. Package the current
+                    # conversation state so the caller can save it and
+                    # resume later.
+                    _suspended = True
+                    return SuspendResult(
+                        interaction_id=suspend.interaction_id,
+                        suspend_event=suspend.event,
+                        contents=contents,
+                        function_call_part=suspend.event.get(
+                            "_function_call_part", {}
+                        ),
+                    )
+
                 if function_results is None:
                     continue
 
@@ -332,5 +357,7 @@ class Loop:
             return err(f"Agent error: {error_message}")
 
         finally:
-            if hooks.on_finish:
+            # Don't fire on_finish when suspending — the agent is paused,
+            # not done. Firing it would close the progress UI session.
+            if hooks.on_finish and not _suspended:
                 hooks.on_finish()

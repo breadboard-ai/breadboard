@@ -434,11 +434,51 @@ Body (resume): {interactionId, response}
 > **🎯 Objective:** Open graph editor, use AI chat to edit a graph through the
 > dev backend. Each interaction round-trips as: POST → stream → suspend → POST →
 > stream → complete.
+>
+> **Design decision: reconnect, not keepalive.** The SSE stream closes when the
+> loop suspends. The client POSTs again with `{interactionId, response}` to
+> resume. This is the only viable approach — suspends can last seconds, hours,
+> or days. A keepalive stream cannot stay open that long, and the production
+> backend is stateless. The dev backend must match this model.
 
-- [ ] Emit `suspend` event with `interactionId` when loop needs client input
-- [ ] State serialization — save `contents` + config keyed by interaction ID
-- [ ] Resume path — POST with `{interactionId, response}` reconstructs loop
-- [ ] Graph-editing functions use suspend for `readGraph`, `applyEdits`, etc.
+##### 4.8a: Suspend/Resume Protocol ✅
+
+- [x] `SuspendError` + `SuspendResult` in `opal-backend-shared`
+- [x] `InteractionStore` — in-memory state store keyed by `interactionId`
+- [x] Loop catches `SuspendError`, returns `SuspendResult`
+- [x] Dev backend: `_start()` / `_resume()` / `_stream_loop()` with state
+      save/load
+- [x] Client `SSEAgentEventSource`: reconnect loop — suspend → await handler →
+      POST resume → new stream
+- [x] Tests: 11 Python (suspend/resume round-trip) + TS reconnect test
+
+##### 4.8b: Chat Suspend Functions
+
+- [x] Port `chat_request_user_input` + `chat_present_choices` to Python (raises
+      `SuspendError` with `waitForInput` / `waitForChoice`)
+- [x] `waitForInput` handler in `invokeRemoteAgent` — prompt display + input
+- [x] Loop: suppress `on_finish` on suspend, suppress `on_start` on resume
+- [x] End-to-end: Generate step (Agent mode, prompt: "ask user to provide their
+      name") through `dev:backend` — suspend → user types → resume → complete
+
+##### 4.8c: Unified Suspend Handler Rendering
+
+> **🎯 Objective:** Both `waitForInput` and `waitForChoice` work identically
+> through local and remote paths. The rendering logic (prompt display, input
+> collection, choice presentation) is shared — not duplicated between `AgentUI`
+> and `invokeRemoteAgent`.
+
+- [ ] Extract `#addChatOutput` pattern into a shared utility usable by both
+      local (`AgentUI`) and remote (`invokeRemoteAgent`) paths
+- [ ] `waitForInput` remote handler uses the shared utility (deduplicate)
+- [ ] Design + implement `waitForChoice` remote handler with proper choice
+      buttons / checkboxes (not enum dropdown hack)
+- [ ] End-to-end: choice-based interaction through `dev:backend`
+
+##### 4.8d: Graph-Editing Functions (deferred)
+
+- [ ] Port graph-editing chat functions to Python (uses suspend protocol for
+      `readGraph`, `applyEdits`, etc.)
 
 #### 4.9: Production Readiness
 
@@ -454,4 +494,6 @@ Body (resume): {interactionId, response}
       group with one instruction (matching TS `generate.ts`)
 - [ ] State store for production (Redis/Firestore instead of in-memory)
 - [ ] Reconnection — client re-POSTs with last interaction ID on drop
+- [ ] Cancel concurrent function caller tasks on suspend — avoids benign "emit()
+      called on closed sink: functionCallUpdate" warning
 - [ ] Remove `LocalAgentRun` path (or keep for offline dev)
