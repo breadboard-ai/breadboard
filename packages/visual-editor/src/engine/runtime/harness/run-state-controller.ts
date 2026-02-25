@@ -6,6 +6,7 @@
 
 import {
   BreakpointSpec,
+  ErrorMetadata,
   GraphDescriptor,
   NodeHandlerContext,
   NodeIdentifier,
@@ -63,11 +64,14 @@ class RunStateController {
     });
   }
 
-  error(error: { $error: string }): { $error: string } {
+  error(error: { $error: string; metadata?: ErrorMetadata }): {
+    $error: string;
+  } {
     this.eventSink.dispatch(
       new RunnerErrorEvent({
         error: error.$error,
         timestamp: timestamp(),
+        metadata: error.metadata,
       })
     );
     return error;
@@ -172,8 +176,15 @@ class RunStateController {
   postamble() {
     if (this.orchestrator.progress !== "finished") return;
     if (this.orchestrator.failed) {
-      // Dispatch error event so the SCA onError action can set run-level error.
-      this.error({ $error: "A step encountered an error" });
+      // Find the first failed node and extract its actual error message.
+      const failedNode = Array.from(
+        this.orchestrator.fullState().entries()
+      ).find(([, state]) => state.state === "failed");
+      const outputs = failedNode?.[1].outputs;
+      const errorMessage =
+        (outputs?.$error as string) || "A step encountered an error";
+      const metadata = outputs?.metadata as ErrorMetadata | undefined;
+      this.error({ $error: errorMessage, metadata });
     }
 
     this.eventSink.dispatch(

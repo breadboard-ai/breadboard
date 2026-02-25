@@ -94,6 +94,15 @@ export class SigninAdapter implements SignInInfo {
     return this.#state.then(() => this.scopesSignal);
   }
 
+  @signal
+  get authuserSignal(): number {
+    if (this.stateSignal?.status === "signedin" && this.stateSignal.authuser) {
+      const parsed = Number.parseInt(this.stateSignal.authuser, 10);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  }
+
   async signIn(scopes: OAuthScope[] = []): Promise<SignInResult> {
     const result = await this.#opalShell.signIn(scopes);
     if (result.ok) {

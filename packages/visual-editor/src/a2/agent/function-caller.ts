@@ -109,7 +109,10 @@ class FunctionCallerImpl implements FunctionCaller {
         !ok(response)
     );
     if (errors.length > 0) {
-      return err(errors.map((e) => e.$error).join(","));
+      // Use the first error only. Comma-joining multiple errors corrupts
+      // structured JSON strings (e.g. RESOURCE_EXHAUSTED payloads), making
+      // them unparseable by downstream consumers like decodeErrorData.
+      return errors[0];
     }
     const successResults = functionResponses.filter(ok) as FunctionCallResult[];
     const combined: LLMContent = {

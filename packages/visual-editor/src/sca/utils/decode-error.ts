@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorResponse, RunError, RunErrorEvent } from "@breadboard-ai/types";
+import { ErrorResponse, RunError } from "@breadboard-ai/types";
 import type { ErrorMetadata } from "../types.js";
 import { formatError } from "./format-error.js";
 import { ActionTracker } from "../types.js";
 
-export { decodeError, decodeErrorData };
+export { decodeErrorData, mediumFromModel, trackError };
 
 type Medium = {
   title: string;
@@ -54,32 +54,83 @@ function policy(type: string) {
   return `${POLICY_PREAMBLE} ${type} content.`;
 }
 
+// Parsed representation of an error string, optionally carrying classification
+// metadata extracted from structured JSON or fuzzy string matching.
 type RichError = {
-  code?: string;
   message: string;
   details?: string;
+  metadata?: ErrorMetadata;
 };
 
+/**
+ * Attempts to parse a raw error string into a classified RichError.
+ *
+ * Handles two shapes:
+ * 1. Structured JSON from AppCat (e.g. `{code: "RESOURCE_EXHAUSTED", ...}`)
+ * 2. Plain strings — classified by fuzzy keyword matching (safety/quota/recitation)
+ */
 function maybeExtractRichError(s: string): RichError {
   try {
-    return JSON.parse(s);
+    const json = JSON.parse(s);
+    const message = json.message ?? s;
+    // Structured error from AppCat with error classification
+    if (json?.code === "RESOURCE_EXHAUSTED") {
+      return {
+        message,
+        metadata: {
+          kind:
+            json?.error_reason === "PAID_QUOTA_EXHAUSTED"
+              ? "paid-quota-exhausted"
+              : json?.error_reason === "FREE_QUOTA_EXHAUSTED"
+                ? "free-quota-exhausted"
+                : "capacity",
+        },
+      };
+    }
+    // JSON but no structured code — fall through to fuzzy matching
+    return { message, details: json.details, ...classifyByFuzzyMatch(message) };
   } catch {
-    return { message: s };
+    // Not JSON — fuzzy match on the raw string
+    return { message: s, ...classifyByFuzzyMatch(s) };
   }
 }
 
+function classifyByFuzzyMatch(s: string): { metadata?: ErrorMetadata } {
+  const lc = s.toLocaleLowerCase();
+  if (lc.includes("safety")) return { metadata: { kind: "safety" } };
+  if (lc.includes("quota")) return { metadata: { kind: "capacity" } };
+  if (lc.includes("recitation")) return { metadata: { kind: "recitation" } };
+  return {};
+}
+
+/**
+ * Pure function that decodes a raw error into a user-facing RunError.
+ * No side effects — analytics tracking is handled separately by `trackError`.
+ */
 function decodeErrorData(
-  actionTracker: ActionTracker | undefined,
-  error: ErrorResponse["error"]
-) {
-  const metadata =
-    !(typeof error === "string") &&
-    "metadata" in error &&
-    (error.metadata as ErrorMetadata);
+  error: ErrorResponse["error"],
+  metadata?: ErrorMetadata
+): RunError {
+  if (error == null) {
+    return { message: "Unknown error" };
+  }
+
+  // Extract explicit metadata from the error object if not passed directly.
+  metadata ??=
+    (error != null &&
+      !(typeof error === "string") &&
+      "metadata" in error &&
+      (error.metadata as ErrorMetadata)) ||
+    undefined;
 
   const richError = maybeExtractRichError(formatError(error));
-  if (!metadata) {
-    // Return simple message if there's no metadata.
+
+  // Merge: auto-extracted metadata (kind) fills gaps; explicit metadata
+  // (origin, model) takes precedence.
+  metadata = { ...richError.metadata, ...metadata };
+
+  if (!metadata.kind) {
+    // Return simple message if there's no classified metadata.
     return { message: richError.message };
   }
 
@@ -89,32 +140,43 @@ function decodeErrorData(
   switch (kind) {
     case "unknown":
     case "bug": {
-      actionTracker?.errorUnknown();
       return {
         message: `Something went wrong. ${TRY_AGAIN_POSTAMBLE}`,
         details: `${richError.message}\n\n${richError.details || ""}`,
+        metadata,
       };
     }
     case "config": {
-      actionTracker?.errorConfig();
       return {
         message: richError.message,
+        metadata,
       };
     }
     case "recitation": {
-      actionTracker?.errorRecitation();
       return {
         message: `The generated ${medium.singular} was too similar to existing content. ${NEW_PROMPT_POSTAMBLE}`,
+        metadata,
       };
     }
     case "capacity": {
-      actionTracker?.errorCapacity(medium.singular);
       return {
-        message: `No ${medium.plural} generated. Opal has limited quota and it was exceeded. ${TRY_LATER_POSTAMBLE}`,
+        message: `The model currently is experiencing high demand. ${TRY_LATER_POSTAMBLE}`,
+        metadata,
+      };
+    }
+    case "free-quota-exhausted": {
+      return {
+        message: `You have reached the ${medium.singular} generation quota. To generate more ${medium.plural}, upgrade to a Google AI plan`,
+        metadata,
+      };
+    }
+    case "paid-quota-exhausted": {
+      return {
+        message: `You need more AI credits to generate more ${medium.plural}. To generate more ${medium.plural}, add AI credits to your account.`,
+        metadata,
       };
     }
     case "safety": {
-      actionTracker?.errorSafety();
       const preamble = `No ${medium.plural} generated`;
       const reasonDescriptions =
         reasons?.map((reason) => {
@@ -137,27 +199,58 @@ function decodeErrorData(
       if (reasonDescriptions.length === 0) {
         return {
           message: `${preamble}. ${policy("unsafe")} ${NEW_PROMPT_POSTAMBLE}`,
+          metadata,
         };
       } else if (reasonDescriptions.length === 1) {
         // The most common case, just stuff it into the snack bar.
         return {
           message: `${preamble}. ${reasonDescriptions.at(0)} ${NEW_PROMPT_POSTAMBLE}`,
+          metadata,
         };
       } else {
         return {
           message: `${preamble}.`,
           details: `${preamble} for the following reasons:\n\n ${reasonDescriptions.map((reason) => `- ${reason}`).join("\n")}`,
+          metadata,
         };
       }
+    }
+    default: {
+      return { message: richError.message, metadata };
     }
   }
 }
 
-function decodeError(
+/**
+ * Tracks error analytics based on error metadata.
+ * Separated from `decodeErrorData` to keep decoding pure.
+ */
+function trackError(
   actionTracker: ActionTracker | undefined,
-  event: RunErrorEvent
-): RunError {
-  return decodeErrorData(actionTracker, event.data.error);
+  metadata: ErrorMetadata | undefined
+): void {
+  if (!actionTracker || !metadata) return;
+  const medium = mediumFromModel(metadata.model);
+  switch (metadata.kind) {
+    case "unknown":
+    case "bug":
+      actionTracker.errorUnknown();
+      break;
+    case "config":
+      actionTracker.errorConfig();
+      break;
+    case "recitation":
+      actionTracker.errorRecitation();
+      break;
+    case "free-quota-exhausted": // TODO: Add separate tracking for free vs paid quota exhaustion.
+    case "paid-quota-exhausted":
+    case "capacity":
+      actionTracker.errorCapacity(medium.singular);
+      break;
+    case "safety":
+      actionTracker.errorSafety();
+      break;
+  }
 }
 
 function mediumFromModel(model?: string): Readonly<Medium> {

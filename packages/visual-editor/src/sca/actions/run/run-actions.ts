@@ -6,7 +6,7 @@
 
 import type {
   ConsoleEntry,
-  ErrorObject,
+  ErrorMetadata,
   InspectableNodePorts,
   NodeLifecycleState,
   NodeRunStatus,
@@ -44,7 +44,11 @@ import {
   onRunnerOutput,
 } from "./triggers.js";
 import { edgeToString } from "../../../utils/graph-utils.js";
-import { decodeErrorData } from "../../utils/decode-error.js";
+import {
+  decodeErrorData,
+  mediumFromModel,
+  trackError,
+} from "../../utils/decode-error.js";
 import { createAppScreen, tickScreenProgress } from "../../utils/app-screen.js";
 import { computeControlState } from "../../../utils/control.js";
 import { toLLMContentArray } from "../../utils/common.js";
@@ -353,26 +357,20 @@ export const onError = asAction(
       progressTickerHandle = null;
     }
 
-    // Extract error message from the event detail
+    // Extract error details from the event and decode through decodeErrorData.
     const detail = evt?.detail;
     const error = detail?.error;
-    const message =
-      typeof error === "string"
-        ? error
-        : ((error as { message?: string })?.message ?? "Unknown error");
-    const details =
-      typeof error === "object"
-        ? (error as { details?: string })?.details
-        : undefined;
-    controller.run.main.setError({ message, details });
+    const metadata = detail?.metadata as ErrorMetadata | undefined;
+    const decoded = decodeErrorData(error, metadata);
+    controller.run.main.setError(decoded);
     controller.run.main.clearInput();
 
     // Show a persistent error snackbar so the user is notified.
-    const actions = details
-      ? [{ action: "details", title: "View details", value: details }]
+    const actions = decoded.details
+      ? [{ action: "details", title: "View details", value: decoded.details }]
       : [];
     controller.global.snackbars.snackbar(
-      message,
+      decoded.message,
       SnackType.ERROR,
       actions,
       true,
@@ -470,13 +468,12 @@ export const onNodeEndAction = asAction(
       const hasFailed = outputs && "$error" in outputs;
 
       if (hasFailed) {
-        // Extract error message from the $error field.
-        const errorData = outputs.$error;
-        const message =
-          typeof errorData === "string"
-            ? errorData
-            : ((errorData as { message?: string })?.message ?? "Unknown error");
-        existing.error = { message };
+        // Decode the error through decodeErrorData for consistent messaging.
+        const decoded = decodeErrorData(
+          outputs.$error as string,
+          outputs.metadata as ErrorMetadata | undefined
+        );
+        existing.error = { message: decoded.message };
       } else if (outputs) {
         // Populate the output map for completed step display.
         const inspectable = controller.editor.graph.get()?.graphs.get("");
@@ -485,6 +482,19 @@ export const onNodeEndAction = asAction(
         const { products } = toLLMContentArray(outputSchema as Schema, outputs);
         for (const [name, product] of Object.entries(products)) {
           existing.output.set(name, product as LLMContent);
+        }
+
+        // Show a warning snackbar if the user's free quota is exhausted but
+        // AI credits are available (i.e. they are a g1 subscriber). Note the
+        // warning flag is only set if credits are available.
+        if (outputs.warnFreeQuotaExhaustedForMedia) {
+          const medium = mediumFromModel(
+            outputs.warnFreeQuotaExhaustedForMedia as string
+          );
+          controller.global.snackbars.snackbar(
+            `${medium.title} generation will now use AI credits. You have reached the free ${medium.singular} generation quota for the day. Each ${medium.singular} you generate after this will use your AI credits.`,
+            SnackType.INFORMATION
+          );
         }
       }
 
@@ -529,14 +539,15 @@ export const onNodeStateChangeAction = asAction(
     const detail = evt?.detail;
     if (!detail) return;
 
-    const { id, state, message } = detail;
+    const { id, state, error } = detail;
     if (state === "failed") {
-      const errorMessage =
-        decodeErrorData(services.actionTracker, message as ErrorObject) ??
-        "Unknown error";
+      const errorMessage = (error?.$error as string) ?? "Unknown error";
+      const metadata = error?.metadata as ErrorMetadata | undefined;
+      const decoded = decodeErrorData(errorMessage, metadata);
+      trackError(services.actionTracker, decoded.metadata);
       controller.run.renderer.setNodeState(id, {
         status: state,
-        errorMessage: errorMessage.message,
+        errorMessage: decoded.message,
       });
       return;
     }

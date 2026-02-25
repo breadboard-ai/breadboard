@@ -74,9 +74,16 @@ export type ExecuteStepRequest = {
   execution_inputs: ContentMap;
 };
 
+export type QuotaMetadata = {
+  consumedCredits?: number;
+  remainingCredits?: number;
+  warnFreeQuotaExhausted?: boolean;
+};
+
 export type ExecuteStepResponse = {
   executionOutputs: ContentMap;
   errorMessage?: string;
+  quotaMetadata?: QuotaMetadata;
 };
 
 export type ExecuteStepErrorResponse = {
@@ -259,10 +266,14 @@ async function executeStep(
       );
     }
     if (response.errorMessage) {
-      const errorMessage = decodeMetadata(response.errorMessage, model);
-      return reporter.addError(err(errorMessage.$error, errorMessage.metadata));
+      return reporter.addError(
+        err(response.errorMessage, { origin: "server", model })
+      );
     }
     reporter.addJson("Step Output", elideEncodedData(response), "download");
+    if (response.quotaMetadata?.warnFreeQuotaExhausted) {
+      context.warnFreeQuotaExhaustedForMedia = model;
+    }
     const output_key = body.planStep.output || "";
     return parseExecutionOutput(response.executionOutputs[output_key]?.chunks);
   } finally {
@@ -312,21 +323,6 @@ export function elideEncodedData<T>(obj: T): T {
   }
 
   return o as T;
-}
-
-function decodeMetadata($error: string, model: string): ErrorWithMetadata {
-  const origin = "server";
-  const lc = $error.toLocaleLowerCase();
-  if (lc.includes("safety")) {
-    return { $error, metadata: { kind: "safety", origin, model } };
-  }
-  if (lc.includes("quota")) {
-    return { $error, metadata: { kind: "capacity", origin, model } };
-  }
-  if (lc.includes("recitation")) {
-    return { $error, metadata: { kind: "recitation", origin, model } };
-  }
-  return { $error, metadata: { origin, model } };
 }
 
 function decodeFetchError($error: string, model?: string): ErrorWithMetadata {

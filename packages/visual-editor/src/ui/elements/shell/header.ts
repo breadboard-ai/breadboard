@@ -31,6 +31,10 @@ import { scaContext } from "../../../sca/context/context.js";
 import { type SCA } from "../../../sca/sca.js";
 import { until } from "lit/directives/until.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
+import {
+  createAICreditsUrl,
+  createMembershipUrl,
+} from "../../../sca/utils/google-one-urls.js";
 
 @customElement("bb-ve-header")
 export class VEHeader extends SignalWatcher(LitElement) {
@@ -923,40 +927,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
       ${this.#renderAccountSwitcher()}`;
   }
 
-  #createUserSuffix(authuser = 0) {
-    let userSuffix = "";
-    if (authuser !== 0) {
-      userSuffix = `/u/${authuser + 1}`;
-    }
-
-    return userSuffix;
-  }
-
-  #createMembershipUrl(authuser = 0) {
-    const userSuffix = this.#createUserSuffix(authuser);
-    return `https://one.google.com${userSuffix}/settings?utm_source=opal&utm_medium=web&utm_campaign=opal_manage_membership`;
-  }
-
-  #createAICreditsUrl(authuser = 0) {
-    const userSuffix = this.#createUserSuffix(authuser);
-    return `https://one.google.com${userSuffix}/ai/credits?utm_source=opal&utm_medium=web&utm_campaign=opal_account_menu_add_credits`;
-  }
-
-  #getAuthUser() {
-    let authUser = 0;
-    if (this.sca.services.signinAdapter.stateSignal?.status === "signedin") {
-      const { authuser } = this.sca.services.signinAdapter.stateSignal;
-      if (authuser) {
-        authUser = Number.parseInt(authuser, 10);
-        if (Number.isNaN(authUser)) {
-          authUser = 0;
-        }
-      }
-    }
-
-    return authUser;
-  }
-
   #renderAccountSwitcher() {
     if (!this.#showAccountSwitcher) {
       return nothing;
@@ -978,13 +948,18 @@ export class VEHeader extends SignalWatcher(LitElement) {
           }
 
           case "manage-membership": {
-            const url = this.#createMembershipUrl(this.#getAuthUser());
+            const authuser = this.sca.services.signinAdapter.authuserSignal;
+            const url = createMembershipUrl(authuser);
             window.open(url, "_blank", "noopener,noreferrer");
             break;
           }
 
           case "get-ai-credits": {
-            const url = this.#createAICreditsUrl(this.#getAuthUser());
+            const authuser = this.sca.services.signinAdapter.authuserSignal;
+            const url = createAICreditsUrl(
+              authuser,
+              "opal_account_menu_add_credits"
+            );
             window.open(url, "_blank", "noopener,noreferrer");
             break;
           }

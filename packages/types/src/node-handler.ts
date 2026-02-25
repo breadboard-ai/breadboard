@@ -26,7 +26,7 @@ import {
   StoredDataCapabilityPart,
 } from "./llm-content.js";
 import { Schema } from "./schema.js";
-import { SimplifiedProjectRunState } from "./state.js";
+import { ErrorMetadata, SimplifiedProjectRunState } from "./state.js";
 
 export type ErrorCapability = Capability & {
   readonly kind: "error";
@@ -276,6 +276,10 @@ export type ErrorResponse = {
   error: string | ErrorObject;
   code?: number;
   timestamp: number;
+  /**
+   * Structured metadata about the error.
+   */
+  metadata?: ErrorMetadata;
 };
 
 export interface NodeHandlerContext {
@@ -317,6 +321,12 @@ export interface NodeHandlerContext {
    * A way to look at all the config flags.
    */
   readonly clientDeploymentConfiguration?: ClientDeploymentConfiguration;
+  /**
+   * Set by executeStep when the server returns a quota warning.
+   * Holds the model name so the UI can derive the media type.
+   * Read by the handler wrapper to surface in OutputValues.
+   */
+  warnFreeQuotaExhaustedForMedia?: string;
 }
 
 export type RunArguments = NodeHandlerContext & {

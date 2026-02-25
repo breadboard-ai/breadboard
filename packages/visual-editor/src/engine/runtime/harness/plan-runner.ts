@@ -10,10 +10,10 @@ import {
   HarnessRunner,
   NodeIdentifier,
   NodeLifecycleState,
-  NodeValue,
   OrchestrationPlan,
   OrchestratorState,
   Outcome,
+  OutputValues,
   PlanNodeInfo,
   RunConfig,
   RunEventTarget,
@@ -161,8 +161,8 @@ class PlanRunner
   #createOrchestrator(graph: GraphDescriptor) {
     const plan = this.#planCreator(graph);
     return new Orchestrator(plan, {
-      stateChangedbyOrchestrator: (id, newState, message) => {
-        this.#dispatchNodeStateChangeEvent(id, newState, message);
+      stateChangedbyOrchestrator: (id, newState, error) => {
+        this.#dispatchNodeStateChangeEvent(id, newState, error);
       },
       stateChanged: (newState, info) => {
         this.#updateEdgeState(newState, info);
@@ -210,9 +210,9 @@ class PlanRunner
   #dispatchNodeStateChangeEvent(
     id: NodeIdentifier,
     state: NodeLifecycleState,
-    message?: NodeValue
+    error?: OutputValues
   ) {
-    this.dispatchEvent(new NodeStateChangeEvent({ id, state, message }));
+    this.dispatchEvent(new NodeStateChangeEvent({ id, state, error }));
   }
 
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {

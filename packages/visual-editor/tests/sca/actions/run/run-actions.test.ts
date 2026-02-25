@@ -3086,6 +3086,144 @@ suite("runner nodeend deleteScreen", () => {
       "renderer should show succeeded"
     );
   });
+
+  test("nodeend with $error decodes through decodeErrorData", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller);
+    await RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("node-1", {
+      title: "Test Node",
+      status: { status: "working" },
+      completed: false,
+    } as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1" },
+          outputs: {
+            $error: JSON.stringify({
+              code: "RESOURCE_EXHAUSTED",
+              error_reason: "FREE_QUOTA_EXHAUSTED",
+              message: "Quota exceeded",
+            }),
+            metadata: { origin: "server", model: "veo-2" },
+          },
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("node-1");
+    assert.ok(entry, "console entry should exist");
+    assert.ok(
+      entry.status?.status === "failed",
+      "console entry should show failed"
+    );
+    // The decoded message should mention "video" because the model is "veo-2"
+    assert.ok(
+      entry.error?.message.includes("video"),
+      "error message should mention video medium"
+    );
+
+    const nodeState = controller.run.renderer.nodes.get("node-1");
+    assert.ok(nodeState, "renderer node state should be set");
+    assert.strictEqual(nodeState.status, "failed");
+  });
+
+  test("nodeend with warnFreeQuotaExhaustedForMedia shows snackbar", async () => {
+    const { controller, mocks } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller);
+    await RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("node-1", {
+      title: "Test Node",
+      status: { status: "working" },
+      completed: false,
+      output: new Map(),
+    } as unknown as ConsoleEntry);
+
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1" },
+          outputs: {
+            result: "some output",
+            warnFreeQuotaExhaustedForMedia: "veo-2",
+          },
+        },
+      })
+    );
+
+    // The snackbar should have been shown with a video-specific message
+    assert.ok(
+      mocks.snackbars.entries.size > 0,
+      "a snackbar should have been shown"
+    );
+    const lastEntry = [...mocks.snackbars.entries.values()].at(-1);
+    assert.ok(
+      lastEntry?.message.includes("Video"),
+      "snackbar should mention Video medium"
+    );
+    assert.ok(
+      lastEntry?.message.includes("AI credits"),
+      "snackbar should mention AI credits"
+    );
+  });
+
+  test("nodeend without outputs does not crash", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller);
+    await RunActions.prepare();
+
+    controller.run.main.setConsoleEntry("node-1", {
+      title: "Test Node",
+      status: { status: "working" },
+      completed: false,
+    } as ConsoleEntry);
+
+    // nodeend with no outputs should still set succeeded
+    await RunActions.onNodeEndAction(
+      new CustomEvent("nodeend", {
+        detail: {
+          path: ["node-1"],
+          node: { id: "node-1" },
+          // no outputs
+        },
+      })
+    );
+
+    const entry = controller.run.main.console.get("node-1");
+    assert.ok(entry, "console entry should exist");
+    assert.strictEqual(
+      entry.status?.status,
+      "succeeded",
+      "should succeed when no outputs"
+    );
+  });
 });
 
 // graphstart async describe fallback tests removed —

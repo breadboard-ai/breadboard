@@ -692,6 +692,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
             break;
           }
 
+          case "link": {
+            if (evt.value && typeof evt.value === "string") {
+              window.open(evt.value, "_blank", "noopener,noreferrer");
+            }
+            break;
+          }
+
           case "dismiss": {
             // NOOP.
             break;

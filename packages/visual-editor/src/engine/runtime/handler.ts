@@ -59,8 +59,17 @@ export async function getHandler(
   if (component && context.sandbox) {
     const factory = context.sandbox as A2ModuleFactory;
     return {
-      invoke: async (inputs, invokeContext) =>
-        component.invoke(inputs, factory.createModuleArgs(invokeContext)),
+      invoke: async (inputs, invokeContext) => {
+        const result = await component.invoke(
+          inputs,
+          factory.createModuleArgs(invokeContext)
+        );
+        if (invokeContext.warnFreeQuotaExhaustedForMedia && result) {
+          (result as Record<string, unknown>).warnFreeQuotaExhaustedForMedia =
+            invokeContext.warnFreeQuotaExhaustedForMedia;
+        }
+        return result;
+      },
       describe: async (inputs, inputSchema, outputSchema, describerContext) =>
         component.describe(
           {

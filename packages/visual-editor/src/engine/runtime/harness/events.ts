@@ -16,7 +16,7 @@ import {
   NodeIdentifier,
   NodeLifecycleState,
   NodeStartResponse,
-  NodeValue,
+  OutputValues,
   OutputResponse,
   RunEdgeStateChangeEvent,
   RunEndEvent,
@@ -169,7 +169,7 @@ export class NodeStateChangeEvent
     public data: {
       id: NodeIdentifier;
       state: NodeLifecycleState;
-      message: NodeValue;
+      error?: OutputValues;
     }
   ) {
     super(NodeStateChangeEvent.eventName, { ...opts });

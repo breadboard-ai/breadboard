@@ -111,6 +111,10 @@ export class Snackbar extends SignalWatcher(LitElement) {
           opacity: 0.7;
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
 
+          /* Wraps the text to fit nicely into the snackbar */
+          width: 100%;
+          text-wrap: balance;
+
           &:not([disabled]) {
             cursor: pointer;
 
