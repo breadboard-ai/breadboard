@@ -60,12 +60,6 @@ export const styles = [
         & p {
           display: inline;
           margin: 0;
-
-          &::after {
-            content: " More information";
-            cursor: pointer;
-            font-weight: 500;
-          }
         }
 
         & > .g-icon {
