@@ -6,54 +6,44 @@
 
 export { fetchWithRetry };
 
-/** Delay between GDrive API retries. */
 const RETRY_MS = 200;
+const MAX_ATTEMPTS = 3;
 
 /** Retries fetch() calls until status is not an internal server error. */
 async function fetchWithRetry(
-  fetchToUse: typeof fetch,
-  input: string | Request | URL,
-  init?: RequestInit,
-  numAttempts: 1 | 2 | 3 | 4 | 5 = 3
+  realFetch: typeof fetch,
+  input: Parameters<typeof fetch>[0],
+  init?: Parameters<typeof fetch>[1]
 ): Promise<Response> {
-  function shouldRetry(response: Response): boolean {
-    return 500 <= response.status && response.status <= 599;
-  }
-
-  async function recursiveHelper(numAttemptsLeft: number): Promise<Response> {
-    numAttemptsLeft -= 1;
-    let response: Response | null = null;
+  let attemptsLeft = MAX_ATTEMPTS;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let response: Response;
+    let isRetryable = false;
     try {
-      response = await fetchToUse(input, init);
-      if (shouldRetry(response)) {
+      response = await realFetch(input, init);
+      if (response.status >= 500 && response.status <= 599) {
+        isRetryable = true;
         console.warn(
-          `Error in fetch(${input}). Attempts left: ${numAttemptsLeft}/${numAttempts}. Response:`,
+          `Error in fetch(${input}). Attempts left: ${attemptsLeft - 1}/${MAX_ATTEMPTS}. Response:`,
           response
         );
-      } else {
-        return response;
       }
     } catch (e) {
+      isRetryable = true;
       console.warn(
-        `Exception in fetch(${input}). Attempts left: ${numAttemptsLeft}/${numAttempts}`,
+        `Exception in fetch(${input}). Attempts left: ${attemptsLeft - 1}/${MAX_ATTEMPTS}`,
         e
       );
-      // return "403 Forbidden" response, as this is likely a CORS error
-      response = new Response(null, {
-        status: 403,
-      });
+      // TODO: Faking a 403 here is misleading. We should throw instead so
+      // that we preserve the normal fetch behavior. We'll need to look
+      // for places we might depend on this behavior first, though.
+      response = new Response(null, { status: 403 });
     }
-
-    if (numAttemptsLeft <= 0) {
+    attemptsLeft--;
+    if (!isRetryable || attemptsLeft <= 0) {
       return response;
     }
-
-    return await new Promise((resolve) => {
-      setTimeout(async () => {
-        resolve(await recursiveHelper(numAttemptsLeft));
-      }, RETRY_MS);
-    });
+    await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
   }
-
-  return recursiveHelper(numAttempts);
 }
