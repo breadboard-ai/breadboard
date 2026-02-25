@@ -62,6 +62,11 @@ export const bind = makeAction();
  *
  * Uses `Exclusive` mode to prevent concurrent runs.
  *
+ * Pre-populates the console with bound entries (with controller + id) BEFORE
+ * calling runner.start(). This eliminates the race condition where
+ * onGraphStartAction's async describe-awaiting could overwrite entries that
+ * onNodeStartAction had already bound.
+ *
  * @throws Error if no runner is set (programming error)
  */
 export const start = asAction(
@@ -73,7 +78,41 @@ export const start = asAction(
     if (!runController.runner) {
       throw new Error("start() called without an active runner");
     }
-    runController.runner.start();
+
+    const runner = runController.runner;
+
+    // Reset state before populating — same reset that onGraphStartAction used
+    // to do, but now runs synchronously before any events fire.
+    runController.reset();
+    controller.run.renderer.reset();
+    controller.run.screen.reset();
+
+    // Flatten plan stages to get node IDs in execution order.
+    const nodeIds: string[] = [];
+    for (const stage of runner.plan?.stages ?? []) {
+      for (const planNode of stage) {
+        nodeIds.push(planNode.node.id);
+      }
+    }
+    runController.setEstimatedEntryCount(nodeIds.length);
+
+    // Pre-populate console with bound entries. The describes are awaited here
+    // (safe because Exclusive mode isolates us) so metadata is fully settled
+    // before any node starts running.
+    const inspectable = controller.editor.graph.get()?.graphs.get("");
+    if (inspectable) {
+      const entries = await buildConsoleEntries(
+        nodeIds,
+        inspectable,
+        () => "inactive",
+        runController
+      );
+      for (const [nodeId, entry] of entries) {
+        runController.setConsoleEntry(nodeId, entry);
+      }
+    }
+
+    runner.start();
     // Note: Status will be updated by the trigger listening to runner events
   }
 );
@@ -351,7 +390,13 @@ export const onError = asAction(
 );
 
 /**
- * Runner "graphstart" — resets controllers and pre-populates console.
+ * Runner "graphstart" — no-op for top-level graphs.
+ *
+ * Console pre-population and resets are handled by `start()` BEFORE
+ * runner.start() fires events, so the graphstart handler no longer needs
+ * to do any async work. This eliminates the race condition where an async
+ * describe callback could overwrite entries that onNodeStartAction had
+ * already bound with a controller.
  */
 export const onGraphStartAction = asAction(
   "Run.onGraphStart",
@@ -360,44 +405,14 @@ export const onGraphStartAction = asAction(
     triggeredBy: () => onRunnerGraphStart(bind),
   },
   async (evt?: CustomEvent): Promise<void> => {
-    const { controller } = bind;
     const detail = evt?.detail;
     const path = detail?.path;
 
-    // Only reset for top-level graph
+    // Only handle top-level graph; nested graphs are ignored.
+    // Top-level console pre-population is handled by start().
     if (!path || path.length !== 0) return;
 
-    controller.run.main.reset();
-    controller.run.renderer.reset();
-    controller.run.screen.reset();
-
-    const runner = controller.run.main.runner;
-
-    // Use runner.plan.stages for execution-ordered iteration
-    // Flatten stages to get nodes in execution order
-    const nodeIds: string[] = [];
-    for (const stage of runner?.plan?.stages ?? []) {
-      for (const planNode of stage) {
-        nodeIds.push(planNode.node.id);
-      }
-    }
-
-    controller.run.main.setEstimatedEntryCount(nodeIds.length);
-
-    // Pre-populate console with all graph nodes as "inactive" in execution order.
-    // All describes are awaited before entries are created so that metadata is
-    // fully settled before any node starts running.
-    const inspectable = controller.editor.graph.get()?.graphs.get("");
-    if (inspectable) {
-      const entries = await buildConsoleEntries(
-        nodeIds,
-        inspectable,
-        () => "inactive"
-      );
-      for (const [nodeId, entry] of entries) {
-        controller.run.main.setConsoleEntry(nodeId, entry);
-      }
-    }
+    // No-op: start() already reset controllers and populated entries.
   }
 );
 
@@ -866,7 +881,8 @@ type NodeLookup = {
 async function buildConsoleEntries(
   nodeIds: string[],
   inspectable: NodeLookup,
-  getStatus: (nodeId: string) => NodeRunStatus
+  getStatus: (nodeId: string) => NodeRunStatus,
+  runController?: RunController
 ): Promise<Map<string, ConsoleEntry>> {
   // Phase 1: collect sync metadata and queue async describes
   type NodeInfo = {
@@ -905,11 +921,14 @@ async function buildConsoleEntries(
   await Promise.all(pendingDescribes);
 
   // Phase 3: build entries from settled metadata
+  // When a runController is provided, entries are created bound (with id +
+  // controller) so that requestInput() works immediately.
   const entries = new Map<string, ConsoleEntry>();
   for (const { nodeId, title, icon, tags, status } of infos) {
     const entry = RunController.createConsoleEntry(title, status, {
       icon,
       tags,
+      ...(runController ? { id: nodeId, controller: runController } : {}),
     });
     entries.set(nodeId, entry);
   }

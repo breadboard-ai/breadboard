@@ -353,7 +353,7 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'graphstart' event resets and pre-populates output for top-level graph", async () => {
+  test("runner 'graphstart' event is a no-op for top-level graph", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -372,48 +372,27 @@ suite("Run Actions", () => {
       ],
     });
 
-    // Mock controller.editor.graph.get() to return inspectable graph data
-    (controller.editor.graph as unknown as { get: () => unknown }).get =
-      () => ({
-        graphs: new Map([
-          [
-            "",
-            {
-              nodeById: (id: string) => ({
-                title: () => id,
-                currentDescribe: () => ({ metadata: { tags: ["test"] } }),
-                currentPorts: () => ({
-                  inputs: { ports: [] },
-                  outputs: { ports: [] },
-                }),
-                describe: () =>
-                  Promise.resolve({ metadata: { tags: ["test"] } }),
-              }),
-            },
-          ],
-        ]),
-      });
-
     await RunActions.prepare();
 
-    // Add some console entries to verify reset
+    // Add a console entry to verify it is NOT cleared
     controller.run.main.setConsoleEntry("existing", {} as ConsoleEntry);
+    controller.run.main.setEstimatedEntryCount(5);
 
-    // Top-level graph has empty path
+    // Top-level graphstart should be a no-op (start() handles pre-population)
     await RunActions.onGraphStartAction(
       new CustomEvent("graphstart", { detail: { path: [] } })
     );
 
-    // Console should now have 3 entries (one per graph node with 'inactive' status)
+    // Console should NOT be modified — start() is responsible now
     assert.strictEqual(
       controller.run.main.console.size,
-      3,
-      "console should be pre-populated with graph nodes on graphstart"
+      1,
+      "console should NOT be modified by graphstart (start() handles it)"
     );
     assert.strictEqual(
       controller.run.main.estimatedEntryCount,
-      3,
-      "estimated entry count should match node count"
+      5,
+      "estimated entry count should NOT change"
     );
   });
 
@@ -524,7 +503,7 @@ suite("Run.start action", () => {
     unsetDOM();
   });
 
-  test("start calls runner.start()", async () => {
+  test("start pre-populates console with bound entries then calls runner.start()", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -533,8 +512,37 @@ suite("Run.start action", () => {
       env: createMockEnvironment(defaultRuntimeFlags),
     });
 
-    // Prepare a runner
-    setupGraph(controller);
+    // Prepare a runner with 2 nodes
+    setupGraph(controller, {
+      edges: [],
+      nodes: [
+        { id: "agent-node", type: "test" },
+        { id: "output-node", type: "test" },
+      ],
+    });
+
+    // Mock controller.editor.graph.get() to return inspectable graph data
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => ({
+                title: () => id,
+                currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                currentPorts: () => ({
+                  inputs: { ports: [] },
+                  outputs: { ports: [] },
+                }),
+                describe: () =>
+                  Promise.resolve({ metadata: { tags: ["test"] } }),
+              }),
+            },
+          ],
+        ]),
+      });
+
     await RunActions.prepare();
 
     // Track if start was called on the runner
@@ -547,6 +555,16 @@ suite("Run.start action", () => {
     await RunActions.start();
 
     assert.ok(startCalled, "runner.start() should be called");
+    assert.strictEqual(
+      controller.run.main.console.size,
+      2,
+      "console should have 2 entries pre-populated by start()"
+    );
+    assert.strictEqual(
+      controller.run.main.estimatedEntryCount,
+      2,
+      "estimated entry count should match node count"
+    );
   });
 
   test("start throws when no runner is set", async () => {
@@ -610,6 +628,213 @@ suite("Run.start action", () => {
       startCallCount,
       2,
       "runner.start() should be called twice"
+    );
+  });
+
+  test("start() creates entries with controller binding (requestInput regression)", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller, {
+      edges: [],
+      nodes: [{ id: "agent-node", type: "test" }],
+    });
+
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => ({
+                title: () => id,
+                currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                currentPorts: () => ({
+                  inputs: { ports: [] },
+                  outputs: { ports: [] },
+                }),
+                describe: () =>
+                  Promise.resolve({ metadata: { tags: ["test"] } }),
+              }),
+            },
+          ],
+        ]),
+      });
+
+    await RunActions.prepare();
+
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {};
+
+    await RunActions.start();
+
+    const entry = controller.run.main.console.get("agent-node");
+    assert.ok(entry, "entry should exist");
+
+    // The original bug: requestInput() rejected with "No controller bound"
+    // because entries were created without id/controller. After the fix,
+    // entries are born bound, so requestInput() should NOT reject with
+    // that specific error.
+    const result = entry.requestInput({ properties: {} });
+    // requestInput returns a Promise that won't resolve (it waits for user
+    // input), but it should NOT reject with "No controller bound for input".
+    const raceResult = await Promise.race([
+      result
+        .then(() => "resolved")
+        .catch((e: Error) => `rejected: ${e.message}`),
+      new Promise<string>((r) => setTimeout(() => r("pending"), 50)),
+    ]);
+
+    assert.notStrictEqual(
+      raceResult,
+      "rejected: No controller bound for input",
+      "entry.requestInput() should NOT reject with 'No controller bound'"
+    );
+  });
+
+  test("start() clears stale console entries from previous runs", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller, {
+      edges: [],
+      nodes: [{ id: "node-a", type: "test" }],
+    });
+
+    (controller.editor.graph as unknown as { get: () => unknown }).get =
+      () => ({
+        graphs: new Map([
+          [
+            "",
+            {
+              nodeById: (id: string) => ({
+                title: () => id,
+                currentDescribe: () => ({ metadata: { tags: ["test"] } }),
+                currentPorts: () => ({
+                  inputs: { ports: [] },
+                  outputs: { ports: [] },
+                }),
+                describe: () =>
+                  Promise.resolve({ metadata: { tags: ["test"] } }),
+              }),
+            },
+          ],
+        ]),
+      });
+
+    await RunActions.prepare();
+
+    // Simulate leftover entry not in the current graph
+    controller.run.main.setConsoleEntry("stale-node", {} as ConsoleEntry);
+
+    assert.ok(
+      controller.run.main.console.has("stale-node"),
+      "stale entry should exist before start"
+    );
+
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {};
+
+    await RunActions.start();
+
+    // Stale entry should be gone, replaced by current graph's entries
+    assert.ok(
+      !controller.run.main.console.has("stale-node"),
+      "stale entry should be cleared"
+    );
+    assert.ok(
+      controller.run.main.console.has("node-a"),
+      "node-a entry should exist"
+    );
+    assert.strictEqual(
+      controller.run.main.estimatedEntryCount,
+      1,
+      "estimated count should be reset to actual node count"
+    );
+  });
+
+  test("start() works when inspectable graph is unavailable", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller, {
+      edges: [],
+      nodes: [{ id: "node-a", type: "test" }],
+    });
+
+    // Return null from get() to simulate unavailable inspectable graph
+    (controller.editor.graph as unknown as { get: () => unknown }).get = () =>
+      null;
+
+    await RunActions.prepare();
+
+    let startCalled = false;
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {
+        startCalled = true;
+      };
+
+    // Should not throw; runner.start() should still be called
+    await assert.doesNotReject(
+      () => RunActions.start(),
+      "start() should not throw when inspectable is unavailable"
+    );
+    assert.ok(startCalled, "runner.start() should still be called");
+    assert.strictEqual(
+      controller.run.main.console.size,
+      0,
+      "console should be empty (no inspectable to build entries from)"
+    );
+  });
+
+  test("start() resets screen controller", async () => {
+    const { controller } = makeTestController();
+    const { services } = makeTestServices();
+    RunActions.bind({
+      controller,
+      services,
+      env: createMockEnvironment(defaultRuntimeFlags),
+    });
+
+    setupGraph(controller);
+    await RunActions.prepare();
+
+    // Simulate a screen from a previous run
+    controller.run.screen.setScreen(
+      "stale-node",
+      createAppScreen("stale", undefined)
+    );
+
+    assert.strictEqual(
+      controller.run.screen.screens.size,
+      1,
+      "should have a screen before start"
+    );
+
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {};
+
+    await RunActions.start();
+
+    assert.strictEqual(
+      controller.run.screen.screens.size,
+      0,
+      "screens should be reset after start()"
     );
   });
 });
@@ -1889,7 +2114,7 @@ suite("describe race condition regression", () => {
     unsetDOM();
   });
 
-  test("onGraphStartAction entries have resolved tags after awaiting (no fire-and-forget)", async () => {
+  test("start() entries have resolved tags after awaiting describes", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -1926,18 +2151,20 @@ suite("describe race condition regression", () => {
     });
     await RunActions.prepare();
 
+    // Mock runner.start() to be a no-op
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {};
+
     // After awaiting, the entry should already contain resolved tags —
     // no "fire-and-forget" callback that could overwrite a bound entry later.
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    await RunActions.start();
 
     const entry = controller.run.main.console.get("slow-node");
     assert.ok(entry, "entry should exist");
     assert.deepStrictEqual(
       entry.tags,
       ["resolved-tag"],
-      "tags should be resolved immediately after onGraphStartAction returns"
+      "tags should be resolved immediately after start() returns"
     );
   });
 
@@ -1998,7 +2225,7 @@ suite("describe race condition regression", () => {
     );
   });
 
-  test("onGraphStartAction with multiple nodes awaits all describes", async () => {
+  test("start() with multiple nodes awaits all describes", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
     RunActions.bind({
@@ -2045,9 +2272,11 @@ suite("describe race condition regression", () => {
     // Reset: prepare() calls syncConsoleFromRunner which also triggers describes
     describeCount = 0;
 
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    // Mock runner.start() to be a no-op
+    (controller.run.main.runner as unknown as { start: () => void }).start =
+      () => {};
+
+    await RunActions.start();
 
     // Only nodes without tags should trigger async describe
     assert.strictEqual(
