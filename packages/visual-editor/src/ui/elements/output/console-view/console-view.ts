@@ -373,7 +373,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         color: light-dark(var(--n-40), var(--n-80));
 
         & .g-icon {
-          font-size: 16px;
+          font-size: 20px;
         }
 
         & .token-group {
@@ -392,11 +392,14 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         }
 
         & .token-label {
-          font: 400 9px / 1 var(--bb-font-family);
+          font: 400 8px / 1 var(--bb-font-family);
           color: light-dark(var(--n-50), var(--n-60));
           text-transform: uppercase;
           letter-spacing: 0.5px;
           white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
         }
 
         & .token-value {
@@ -497,6 +500,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               return html`<li class="output" data-label="${item.title}">
                 <div class="token-usage-row">
                   <span class="g-icon round filled">${item.icon}</span>
+                  <div class="token-group">
+                    <span class="token-label">Requests</span>
+                    <span class="token-value">${item.requestCount}</span>
+                  </div>
                   <div class="token-group">
                     <span class="token-label">Input</span>
                     <span class="token-value">${item.promptTokenCount}</span>
@@ -776,11 +783,13 @@ export class ConsoleView extends SignalWatcher(LitElement) {
     candidatesTokenCount: number;
     thoughtsTokenCount: number;
     cachedContentTokenCount: number;
+    requestCount: number;
   } {
     let prompt = 0;
     let candidates = 0;
     let thoughts = 0;
     let cached = 0;
+    let requests = 0;
 
     for (const [, entry] of this.#currentEntries) {
       const t = entry.tokenUsage;
@@ -789,6 +798,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         candidates += t.candidatesTokenCount;
         thoughts += t.thoughtsTokenCount;
         cached += t.cachedContentTokenCount;
+        requests += t.requestCount;
       }
     }
     return {
@@ -796,6 +806,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       candidatesTokenCount: candidates,
       thoughtsTokenCount: thoughts,
       cachedContentTokenCount: cached,
+      requestCount: requests,
     };
   }
 
@@ -819,6 +830,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         cumulativeTokens
           ? html`<div id="token-counter">
               <span class="g-icon round filled">token_auto</span>
+              <div class="token-group">
+                <span class="token-label">Requests</span>
+                <span class="token-value"
+                  >${cumulativeTokens.requestCount}</span
+                >
+              </div>
               <div class="token-group">
                 <span class="token-label">Input</span>
                 <span class="token-value"

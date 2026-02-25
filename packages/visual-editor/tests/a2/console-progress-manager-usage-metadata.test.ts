@@ -41,6 +41,7 @@ describe("ConsoleProgressManager.usageMetadata", () => {
       candidatesTokenCount: 50,
       thoughtsTokenCount: 25,
       cachedContentTokenCount: 0,
+      requestCount: 1,
     });
   });
 
@@ -62,6 +63,7 @@ describe("ConsoleProgressManager.usageMetadata", () => {
       candidatesTokenCount: 150,
       thoughtsTokenCount: 75,
       cachedContentTokenCount: 0,
+      requestCount: 2,
     });
   });
 
@@ -76,6 +78,7 @@ describe("ConsoleProgressManager.usageMetadata", () => {
       candidatesTokenCount: 0,
       thoughtsTokenCount: 0,
       cachedContentTokenCount: 0,
+      requestCount: 1,
     });
   });
 

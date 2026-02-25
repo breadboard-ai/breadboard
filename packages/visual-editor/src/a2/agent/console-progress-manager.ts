@@ -302,6 +302,7 @@ class ConsoleProgressManager implements AgentProgressManager {
       candidatesTokenCount: 0,
       thoughtsTokenCount: 0,
       cachedContentTokenCount: 0,
+      requestCount: 0,
     };
     this.#consoleEntry.tokenUsage = {
       promptTokenCount:
@@ -312,6 +313,7 @@ class ConsoleProgressManager implements AgentProgressManager {
         prev.thoughtsTokenCount + (metadata.thoughtsTokenCount ?? 0),
       cachedContentTokenCount:
         prev.cachedContentTokenCount + (metadata.cachedContentTokenCount ?? 0),
+      requestCount: prev.requestCount + 1,
     };
 
     // Also add a per-turn work item showing the token usage
@@ -324,6 +326,7 @@ class ConsoleProgressManager implements AgentProgressManager {
       candidatesTokenCount: metadata.candidatesTokenCount ?? 0,
       thoughtsTokenCount: metadata.thoughtsTokenCount ?? 0,
       cachedContentTokenCount: metadata.cachedContentTokenCount ?? 0,
+      requestCount: 1,
     };
     const workItem = new ConsoleWorkItem(
       "Token Usage",

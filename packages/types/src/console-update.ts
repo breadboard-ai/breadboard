@@ -46,6 +46,7 @@ export type TokenUsageUpdate = {
   candidatesTokenCount: number;
   thoughtsTokenCount: number;
   cachedContentTokenCount: number;
+  requestCount: number;
 };
 
 /**

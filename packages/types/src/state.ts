@@ -137,6 +137,7 @@ export type ConsoleEntry = {
     candidatesTokenCount: number;
     thoughtsTokenCount: number;
     cachedContentTokenCount: number;
+    requestCount: number;
   } | null;
 
   /**

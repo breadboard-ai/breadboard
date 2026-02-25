@@ -229,6 +229,7 @@ function accumulateUsageMetadata(
     candidatesTokenCount: 0,
     thoughtsTokenCount: 0,
     cachedContentTokenCount: 0,
+    requestCount: 0,
   };
   consoleEntry.tokenUsage = {
     promptTokenCount: prev.promptTokenCount + (metadata.promptTokenCount ?? 0),
@@ -238,6 +239,7 @@ function accumulateUsageMetadata(
       prev.thoughtsTokenCount + (metadata.thoughtsTokenCount ?? 0),
     cachedContentTokenCount:
       prev.cachedContentTokenCount + (metadata.cachedContentTokenCount ?? 0),
+    requestCount: prev.requestCount + 1,
   };
 
   // Also add a per-call work item showing the token usage
@@ -247,6 +249,7 @@ function accumulateUsageMetadata(
     candidatesTokenCount: metadata.candidatesTokenCount ?? 0,
     thoughtsTokenCount: metadata.thoughtsTokenCount ?? 0,
     cachedContentTokenCount: metadata.cachedContentTokenCount ?? 0,
+    requestCount: 1,
   });
   reporter.finish();
   consoleEntry.work.set(crypto.randomUUID(), reporter);
