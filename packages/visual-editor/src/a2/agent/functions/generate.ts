@@ -236,7 +236,7 @@ The Gemini model to use for image generation. How to choose the right model:
         true,
         aspect_ratio
       );
-      if (!ok(generated)) return asErrorOrResponse(generated);
+      if (!ok(generated)) return toErrorOrResponse(generated);
       const errors: string[] = [];
       const parts = mergeContent(generated, "user").parts;
       const images = parts
@@ -401,7 +401,7 @@ Specify URLs in the prompt.
         body,
         moduleArgs
       );
-      if (!ok(generating)) return asErrorOrResponse(generating);
+      if (!ok(generating)) return toErrorOrResponse(generating);
       for await (const chunk of generating) {
         const parts = chunk.candidates.at(0)?.content?.parts;
         if (!parts) continue;
@@ -507,7 +507,7 @@ The following elements should be included in your prompt:
         VIDEO_MODEL_NAME
       );
       if (!ok(generating))
-        return asErrorOrResponse(expandVeoError(generating, VIDEO_MODEL_NAME));
+        return toErrorOrResponse(expandVeoError(generating, VIDEO_MODEL_NAME));
       const dataPart = generating.parts.at(0);
       if (!dataPart || !("storedData" in dataPart)) {
         return { error: `No video was generated` };
@@ -568,7 +568,7 @@ The following elements should be included in your prompt:
         reporter: effectiveReporter,
       };
       const generating = await generators.callAudio(args, text, voice);
-      if (!ok(generating)) return asErrorOrResponse(generating);
+      if (!ok(generating)) return toErrorOrResponse(generating);
 
       const dataPart = generating.parts.at(0);
       if (!dataPart || !("storedData" in dataPart)) {
@@ -641,7 +641,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
         reporter: effectiveReporter,
       };
       const generating = await generators.callMusic(args, prompt);
-      if (!ok(generating)) return asErrorOrResponse(generating);
+      if (!ok(generating)) return toErrorOrResponse(generating);
 
       const dataPart = generating.parts.at(0);
       if (!dataPart || !("storedData" in dataPart)) {
@@ -783,7 +783,7 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
         body,
         moduleArgs
       );
-      if (!ok(generating)) return asErrorOrResponse(generating);
+      if (!ok(generating)) return toErrorOrResponse(generating);
       let lastCodeExecutionError: string | null = null;
       for await (const chunk of generating) {
         const parts = chunk.candidates.at(0)?.content?.parts;
@@ -878,7 +878,7 @@ const FATAL_KINDS: ReadonlySet<string> = new Set([
  * it returns `{ error: ... }` — a successful function response that the LLM
  * sees and can decide how to handle (retry, report to user, etc.).
  */
-function asErrorOrResponse(error: {
+function toErrorOrResponse(error: {
   $error: string;
   metadata?: ErrorMetadata;
 }): { error: string } | { $error: string; metadata?: ErrorMetadata } {

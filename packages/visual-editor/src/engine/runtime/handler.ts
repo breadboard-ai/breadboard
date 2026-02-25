@@ -64,9 +64,9 @@ export async function getHandler(
           inputs,
           factory.createModuleArgs(invokeContext)
         );
-        if (invokeContext.quotaWarning && result) {
-          (result as Record<string, unknown>).quotaWarning =
-            invokeContext.quotaWarning;
+        if (invokeContext.warnFreeQuotaExhaustedForMedia && result) {
+          (result as Record<string, unknown>).warnFreeQuotaExhaustedForMedia =
+            invokeContext.warnFreeQuotaExhaustedForMedia;
         }
         return result;
       },

@@ -326,7 +326,7 @@ export interface NodeHandlerContext {
    * Holds the model name so the UI can derive the media type.
    * Read by the handler wrapper to surface in OutputValues.
    */
-  quotaWarning?: string;
+  warnFreeQuotaExhaustedForMedia?: string;
 }
 
 export type RunArguments = NodeHandlerContext & {

@@ -239,6 +239,9 @@ class Loop {
         const functionResults = await functionCaller.getResults();
         if (!functionResults) continue;
         if (!ok(functionResults)) {
+          // Note only fatal errors from function calls are returned here.
+          // Non-fatal errors are handled by the agent as it sees fit, giving it a
+          // chance to consider alternatives and fail more gracefully.
           return functionResults;
         }
         // Report each function result individually

@@ -272,7 +272,7 @@ async function executeStep(
     }
     reporter.addJson("Step Output", elideEncodedData(response), "download");
     if (response.quotaMetadata?.warnFreeQuotaExhausted) {
-      context.quotaWarning = model;
+      context.warnFreeQuotaExhaustedForMedia = model;
     }
     const output_key = body.planStep.output || "";
     return parseExecutionOutput(response.executionOutputs[output_key]?.chunks);

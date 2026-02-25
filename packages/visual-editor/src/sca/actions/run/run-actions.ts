@@ -484,9 +484,13 @@ export const onNodeEndAction = asAction(
           existing.output.set(name, product as LLMContent);
         }
 
-        // Show a warning snackbar if the server signalled quota is running low.
-        if (outputs.quotaWarning) {
-          const medium = mediumFromModel(outputs.quotaWarning as string);
+        // Show a warning snackbar if the user's free quota is exhausted but
+        // AI credits are available (i.e. they are a g1 subscriber). Note the
+        // warning flag is only set if credits are available.
+        if (outputs.warnFreeQuotaExhaustedForMedia) {
+          const medium = mediumFromModel(
+            outputs.warnFreeQuotaExhaustedForMedia as string
+          );
           controller.global.snackbars.snackbar(
             `${medium.title} generation will now use AI credits. You have reached the free ${medium.singular} generation quota for the day. Each ${medium.singular} you generate after this will use your AI credits.`,
             SnackType.INFORMATION
