@@ -47,8 +47,6 @@ class RunStateController {
 
   context: NodeHandlerContext;
 
-  index: number = 0;
-
   constructor(
     public readonly config: RunConfig,
     private graph: GraphDescriptor,
@@ -63,10 +61,6 @@ class RunStateController {
         controller.abort();
       });
     });
-  }
-
-  path(): number[] {
-    return [this.index++];
   }
 
   error(error: { $error: string }): { $error: string } {
@@ -92,12 +86,12 @@ class RunStateController {
       return "breakpoint";
     }
 
-    const path = this.path();
+    const index = crypto.randomUUID();
     this.eventSink.dispatch(
       new NodeStartEvent({
         node: task.node,
         inputs: task.inputs,
-        path,
+        index,
         timestamp: timestamp(),
       })
     );
@@ -154,7 +148,7 @@ class RunStateController {
         node: task.node,
         inputs: task.inputs,
         outputs,
-        path,
+        index,
         newOpportunities: [],
         timestamp: timestamp(),
       })
@@ -169,7 +163,6 @@ class RunStateController {
       new GraphStartEvent({
         graph: this.graph,
         graphId: "",
-        path: [],
         timestamp: timestamp(),
       })
     );
@@ -185,7 +178,6 @@ class RunStateController {
 
     this.eventSink.dispatch(
       new GraphEndEvent({
-        path: [],
         timestamp: timestamp(),
       })
     );

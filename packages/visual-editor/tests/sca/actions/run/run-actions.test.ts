@@ -379,9 +379,7 @@ suite("Run Actions", () => {
     controller.run.main.setEstimatedEntryCount(5);
 
     // Top-level graphstart should be a no-op (start() handles pre-population)
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    await RunActions.onGraphStartAction();
 
     // Console should NOT be modified — start() is responsible now
     assert.strictEqual(
@@ -413,9 +411,7 @@ suite("Run Actions", () => {
     controller.run.main.setEstimatedEntryCount(5);
 
     // Nested graph has non-empty path
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: ["parent-node"] } })
-    );
+    await RunActions.onGraphStartAction();
 
     assert.strictEqual(
       controller.run.main.console.size,
@@ -463,34 +459,8 @@ suite("Run Actions", () => {
     assert.ok(entry, "entry should exist");
   });
 
-  test("runner 'nodestart' event ignores nested nodes", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({
-      controller,
-      services,
-      env: createMockEnvironment(defaultRuntimeFlags),
-    });
-
-    setupGraph(controller);
-    await RunActions.prepare();
-
-    // Nested node has path with more than one element
-    await RunActions.onNodeStartAction(
-      new CustomEvent("nodestart", {
-        detail: {
-          path: ["parent-node", "test-node"],
-          node: { id: "test-node", type: "test" },
-        },
-      })
-    );
-
-    assert.strictEqual(
-      controller.run.main.console.size,
-      0,
-      "console should be empty for nested node"
-    );
-  });
+  // Nested node guard test removed — the path.length > 1 guard was removed
+  // because nested graph traversal no longer exists in the static orchestrator.
 });
 
 suite("Run.start action", () => {
@@ -1667,11 +1637,10 @@ suite("runner nodeend event", () => {
       completed: false,
     } as ConsoleEntry);
 
-    // Fire nodeend for a top-level node (path.length === 1)
+    // Fire nodeend for a top-level node
     await RunActions.onNodeEndAction(
       new CustomEvent("nodeend", {
         detail: {
-          path: ["test-node"],
           node: { id: "test-node" },
         },
       })
@@ -1687,49 +1656,8 @@ suite("runner nodeend event", () => {
     assert.strictEqual(entry.completed, true, "completed should be true");
   });
 
-  test("ignores nodeend for nested nodes (path.length > 1)", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({
-      controller,
-      services,
-      env: createMockEnvironment(defaultRuntimeFlags),
-    });
-
-    setupGraph(controller);
-    await RunActions.prepare();
-
-    // Set up an existing console entry with working status
-    controller.run.main.setConsoleEntry("nested-node", {
-      title: "Nested Node",
-      status: { status: "working" },
-      icon: "star",
-      completed: false,
-    } as ConsoleEntry);
-
-    // Fire nodeend for a nested node (path.length > 1)
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["parent-node", "nested-node"],
-          node: { id: "nested-node" },
-        },
-      })
-    );
-
-    const entry = controller.run.main.console.get("nested-node");
-    assert.ok(entry, "entry should exist");
-    assert.strictEqual(
-      entry.status?.status,
-      "working",
-      "status should still be working"
-    );
-    assert.strictEqual(
-      entry.completed,
-      false,
-      "completed should still be false"
-    );
-  });
+  // Nested node guard test removed — the path.length > 1 guard was removed
+  // because nested graph traversal no longer exists in the static orchestrator.
 
   test("does nothing if node is not in console", async () => {
     const { controller } = makeTestController();
@@ -3160,11 +3088,9 @@ suite("runner nodeend deleteScreen", () => {
   });
 });
 
-// =============================================================================
-// graphstart async describe fallback (via _fireEvent path)
-// =============================================================================
-
-suite("runner graphstart async describe fallback", () => {
+// graphstart async describe fallback tests removed —
+// this logic moved to start() and is tested in "Run.start action" suite.
+suite("runner graphstart async describe fallback (retired)", () => {
   beforeEach(() => {
     setDOM();
   });
@@ -3205,9 +3131,7 @@ suite("runner graphstart async describe fallback", () => {
     });
     await RunActions.prepare();
 
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    await RunActions.onGraphStartAction();
 
     assert.ok(describeCalled, "describe should be called for tagless node");
 
@@ -3251,9 +3175,7 @@ suite("runner graphstart async describe fallback", () => {
     });
     await RunActions.prepare();
 
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    await RunActions.onGraphStartAction();
 
     assert.strictEqual(
       describeCalled,
@@ -3283,9 +3205,7 @@ suite("runner graphstart async describe fallback", () => {
     });
     await RunActions.prepare();
 
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    await RunActions.onGraphStartAction();
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist even when node is not inspectable");
@@ -3315,9 +3235,7 @@ suite("runner graphstart async describe fallback", () => {
     // Set plan to null — triggers plan?.stages ?? [] fallback
     (controller.run.main.runner as unknown as { plan: unknown }).plan = null;
 
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    await RunActions.onGraphStartAction();
 
     // Should not throw, console should have 0 entries because stages is empty
     assert.strictEqual(
@@ -3354,9 +3272,7 @@ suite("runner graphstart async describe fallback", () => {
     });
     await RunActions.prepare();
 
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    await RunActions.onGraphStartAction();
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
@@ -3742,14 +3658,11 @@ suite("nodeend output population", () => {
 
     await RunActions.prepare();
 
-    // Fire graphstart + nodestart to create the console entry
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    // graphstart is a no-op; nodestart creates the console entry
+    await RunActions.onGraphStartAction();
     await RunActions.onNodeStartAction(
       new CustomEvent("nodestart", {
         detail: {
-          path: ["node-1"],
           node: { id: "node-1", type: "test" },
           inputs: {},
         },
@@ -3760,7 +3673,6 @@ suite("nodeend output population", () => {
     await RunActions.onNodeEndAction(
       new CustomEvent("nodeend", {
         detail: {
-          path: ["node-1"],
           node: { id: "node-1", type: "test" },
           outputs: { text: "hello world" },
         },
@@ -3828,14 +3740,11 @@ suite("output event with console entry (addOutputWorkItem)", () => {
 
     await RunActions.prepare();
 
-    // Create the console entry via graphstart + nodestart
-    await RunActions.onGraphStartAction(
-      new CustomEvent("graphstart", { detail: { path: [] } })
-    );
+    // graphstart is a no-op; nodestart creates the console entry
+    await RunActions.onGraphStartAction();
     await RunActions.onNodeStartAction(
       new CustomEvent("nodestart", {
         detail: {
-          path: ["node-1"],
           node: { id: "node-1", type: "test" },
           inputs: {},
         },

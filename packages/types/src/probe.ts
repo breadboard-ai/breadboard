@@ -23,7 +23,10 @@ export type NodeStartResponse = {
    */
   node: NodeDescriptor;
   inputs: InputValues;
-  path: number[];
+  /**
+   * Unique identifier for this node invocation within the current run.
+   */
+  index: string;
   timestamp: number;
 };
 
@@ -31,7 +34,10 @@ export type NodeEndResponse = {
   node: NodeDescriptor;
   inputs: InputValues;
   outputs: OutputValues;
-  path: number[];
+  /**
+   * Unique identifier for this node invocation within the current run.
+   */
+  index: string;
   timestamp: number;
   newOpportunities: Edge[];
 };
@@ -39,7 +45,6 @@ export type NodeEndResponse = {
 export type GraphStartProbeData = {
   graph: GraphDescriptor;
   graphId: string;
-  path: number[];
   timestamp: number;
   edges?: { edge: Edge; value: NodeValue }[];
 };
@@ -50,7 +55,6 @@ export type GraphStartProbeMessage = {
 };
 
 export type GraphEndProbeData = {
-  path: number[];
   timestamp: number;
 };
 
@@ -65,7 +69,6 @@ export type SkipProbeMessage = {
     node: NodeDescriptor;
     inputs: InputValues;
     missingInputs: string[];
-    path: number[];
     timestamp: number;
   };
 };

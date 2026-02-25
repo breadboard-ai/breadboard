@@ -7,24 +7,20 @@
 import assert from "node:assert";
 import { suite, test } from "node:test";
 import {
-  idFromPath,
+  idFromIndex,
   toLLMContentArray,
   getFirstFileDataPart,
   toJson,
 } from "../../../src/sca/utils/common.js";
 import type { Schema, OutputValues } from "@breadboard-ai/types";
 
-suite("idFromPath", () => {
-  test("creates id from single element path", () => {
-    assert.strictEqual(idFromPath([0]), "e-0");
+suite("idFromIndex", () => {
+  test("creates id from index", () => {
+    assert.strictEqual(idFromIndex("abc"), "e-abc");
   });
 
-  test("creates id from multi-element path", () => {
-    assert.strictEqual(idFromPath([1, 2, 3]), "e-1-2-3");
-  });
-
-  test("creates id from empty path", () => {
-    assert.strictEqual(idFromPath([]), "e-");
+  test("creates id from UUID-like index", () => {
+    assert.strictEqual(idFromIndex("550e-8400"), "e-550e-8400");
   });
 });
 

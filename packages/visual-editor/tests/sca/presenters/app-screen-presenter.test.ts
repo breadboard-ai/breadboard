@@ -130,7 +130,7 @@ suite("AppScreenPresenter state derivation", () => {
     // After setScreen, use the wrapped reference from the controller.
     screen.screens.get("node-1")!.finalize({
       outputs: {},
-      path: [0],
+      index: "0",
       node: { id: "node-1", type: "test" },
       inputs: {},
       timestamp: 0,
@@ -196,7 +196,7 @@ suite("AppScreenPresenter current and last", () => {
     // After setScreen, must use the wrapped reference from the controller.
     screen.screens.get("node-1")!.finalize({
       outputs: {},
-      path: [0],
+      index: "0",
       node: { id: "node-1", type: "test" },
       inputs: {},
       timestamp: 0,

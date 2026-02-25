@@ -11,7 +11,7 @@ import type {
   OutputResponse,
   Schema,
 } from "@breadboard-ai/types";
-import { idFromPath } from "./common.js";
+import { idFromIndex } from "./common.js";
 import { getElasticProgress } from "./elastic-progress.js";
 
 export { createAppScreen, setScreenDuration, tickScreenProgress };
@@ -78,7 +78,7 @@ function createAppScreen(
     last: null,
 
     addOutput(data: OutputResponse): void {
-      const { node, outputs, path } = data;
+      const { node, outputs } = data;
       const { configuration = {} } = node;
       const { schema: s = {} } = configuration;
 
@@ -86,7 +86,7 @@ function createAppScreen(
         schema: s as Schema,
         output: outputs,
       };
-      this.outputs.set(idFromPath(path), entry);
+      this.outputs.set(idFromIndex(data.index), entry);
       this.last = entry;
     },
 
@@ -95,12 +95,12 @@ function createAppScreen(
     },
 
     finalize(data: NodeEndResponse): void {
-      const { outputs, path } = data;
+      const { outputs } = data;
       const entry: AppScreenOutput = {
         output: outputs,
         schema: outputSchema,
       };
-      this.outputs.set(idFromPath(path), entry);
+      this.outputs.set(idFromIndex(data.index), entry);
       this.last = entry;
       this.status = "complete";
     },

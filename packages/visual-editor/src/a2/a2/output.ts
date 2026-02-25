@@ -74,9 +74,9 @@ function report(moduleArgs: A2ModuleArgs, inputs: ReportInputs): void {
       metadata: { title, description, icon },
     },
     outputs: { details } as OutputResponse["outputs"],
-    // Random path: no real invocation path exists since we bypass graph
-    // traversal. Used by idFromPath() as a unique map key.
-    path: [Math.floor(Math.random() * 1e9)],
+    // Random index: no real invocation index exists since we bypass graph
+    // traversal. Used by idFromIndex() as a unique map key.
+    index: crypto.randomUUID(),
     bubbled: true,
     timestamp: performance.now(),
   };

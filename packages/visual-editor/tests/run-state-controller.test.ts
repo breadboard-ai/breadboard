@@ -290,18 +290,8 @@ suite("RunStateController", () => {
   });
 
   // -----------------------------------------------------------------------
-  // Path Generation
-  // -----------------------------------------------------------------------
-
-  suite("path generation", () => {
-    it("generates incrementing paths", () => {
-      const { controller } = makeController({});
-
-      assert.deepStrictEqual(controller.path(), [0]);
-      assert.deepStrictEqual(controller.path(), [1]);
-      assert.deepStrictEqual(controller.path(), [2]);
-    });
-  });
+  // Index generation test removed — nextIndex() was eliminated in favor
+  // of inline crypto.randomUUID() at each dispatch site.
 
   // -----------------------------------------------------------------------
   // Stop / Interrupt

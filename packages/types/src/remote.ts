@@ -38,7 +38,10 @@ export type OutputResponse = {
    * Whether or not this input was bubbled.
    */
   bubbled: boolean;
-  path: number[];
+  /**
+   * Unique identifier for this node invocation within the current run.
+   */
+  index: string;
   timestamp: number;
 };
 
@@ -58,10 +61,6 @@ export type InputResponse = {
    * @see [InputValues]
    */
   inputArguments: InputValues & { schema?: Schema };
-  /**
-   * The path to the node in the invocation tree, from the root graph.
-   */
-  path: number[];
   /**
    * Whether or not this input was bubbled.
    */

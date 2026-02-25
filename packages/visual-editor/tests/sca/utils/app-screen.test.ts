@@ -25,7 +25,7 @@ import type { AppScreenData } from "../../../src/sca/utils/app-screen.js";
 
 /** Minimal OutputResponse for testing `addOutput`. */
 function fakeOutputResponse(
-  path: number[],
+  index: string,
   outputs: OutputValues = { text: "hello" },
   schema: Schema = { type: "object" }
 ): OutputResponse {
@@ -33,21 +33,21 @@ function fakeOutputResponse(
     node: { id: "test-node", type: "output", configuration: { schema } },
     outputs,
     bubbled: false,
-    path,
+    index,
     timestamp: Date.now(),
   };
 }
 
 /** Minimal NodeEndResponse for testing `finalize`. */
 function fakeNodeEndResponse(
-  path: number[],
+  index: string,
   outputs: OutputValues = { result: "done" }
 ): NodeEndResponse {
   return {
     node: { id: "test-node", type: "output" },
     inputs: {},
     outputs,
-    path,
+    index,
     timestamp: Date.now(),
     newOpportunities: [],
   };
@@ -74,14 +74,14 @@ suite("createAppScreen", () => {
 
   test("addOutput stores entry and sets last", () => {
     const screen = createAppScreen("Test", undefined);
-    const response = fakeOutputResponse([0, 1]);
+    const response = fakeOutputResponse("a");
 
     screen.addOutput(response);
 
     assert.strictEqual(screen.outputs.size, 1);
-    // idFromPath([0, 1]) → "e-0-1"
-    const entry = screen.outputs.get("e-0-1");
-    assert.ok(entry, "Expected output at key e-0-1");
+    // idFromIndex("a") → "e-a"
+    const entry = screen.outputs.get("e-a");
+    assert.ok(entry, "Expected output at key e-a");
     assert.deepStrictEqual(entry.output, { text: "hello" });
     assert.strictEqual(screen.last, entry);
   });
@@ -90,9 +90,9 @@ suite("createAppScreen", () => {
     const schema: Schema = { type: "object", properties: { x: {} } };
     const screen = createAppScreen("Test", undefined);
 
-    screen.addOutput(fakeOutputResponse([0], {}, schema));
+    screen.addOutput(fakeOutputResponse("x", {}, schema));
 
-    const entry = screen.outputs.get("e-0");
+    const entry = screen.outputs.get("e-x");
     assert.ok(entry);
     assert.deepStrictEqual(entry.schema, schema);
   });
@@ -103,40 +103,40 @@ suite("createAppScreen", () => {
       node: { id: "n", type: "output" }, // no configuration
       outputs: {},
       bubbled: false,
-      path: [0],
+      index: "z",
       timestamp: Date.now(),
     };
 
     screen.addOutput(response);
 
-    const entry = screen.outputs.get("e-0");
+    const entry = screen.outputs.get("e-z");
     assert.ok(entry);
     assert.deepStrictEqual(entry.schema, {});
   });
 
-  test("addOutput with same path overwrites previous entry", () => {
+  test("addOutput with same index overwrites previous entry", () => {
     const screen = createAppScreen("Test", undefined);
 
-    screen.addOutput(fakeOutputResponse([0], { first: true }));
-    screen.addOutput(fakeOutputResponse([0], { second: true }));
+    screen.addOutput(fakeOutputResponse("k", { first: true }));
+    screen.addOutput(fakeOutputResponse("k", { second: true }));
 
     assert.strictEqual(screen.outputs.size, 1);
-    const entry = screen.outputs.get("e-0");
+    const entry = screen.outputs.get("e-k");
     assert.ok(entry);
     assert.deepStrictEqual(entry.output, { second: true });
   });
 
-  test("multiple addOutput calls with different paths accumulate", () => {
+  test("multiple addOutput calls with different indices accumulate", () => {
     const screen = createAppScreen("Test", undefined);
 
-    screen.addOutput(fakeOutputResponse([0], { a: 1 }));
-    screen.addOutput(fakeOutputResponse([1], { b: 2 }));
-    screen.addOutput(fakeOutputResponse([2], { c: 3 }));
+    screen.addOutput(fakeOutputResponse("a", { a: 1 }));
+    screen.addOutput(fakeOutputResponse("b", { b: 2 }));
+    screen.addOutput(fakeOutputResponse("c", { c: 3 }));
 
     assert.strictEqual(screen.outputs.size, 3);
-    assert.ok(screen.outputs.has("e-0"));
-    assert.ok(screen.outputs.has("e-1"));
-    assert.ok(screen.outputs.has("e-2"));
+    assert.ok(screen.outputs.has("e-a"));
+    assert.ok(screen.outputs.has("e-b"));
+    assert.ok(screen.outputs.has("e-c"));
     // last should be the most recent
     assert.deepStrictEqual(screen.last?.output, { c: 3 });
   });
@@ -154,11 +154,11 @@ suite("createAppScreen", () => {
     const outputSchema: Schema = { type: "object", properties: { r: {} } };
     const screen = createAppScreen("Test", outputSchema);
 
-    screen.finalize(fakeNodeEndResponse([0, 2], { result: "final" }));
+    screen.finalize(fakeNodeEndResponse("f", { result: "final" }));
 
     assert.strictEqual(screen.status, "complete");
-    const entry = screen.outputs.get("e-0-2");
-    assert.ok(entry, "Expected output at key e-0-2");
+    const entry = screen.outputs.get("e-f");
+    assert.ok(entry, "Expected output at key e-f");
     assert.deepStrictEqual(entry.output, { result: "final" });
     assert.strictEqual(entry.schema, outputSchema);
     assert.strictEqual(screen.last, entry);
@@ -168,9 +168,9 @@ suite("createAppScreen", () => {
     const outputSchema: Schema = { type: "string" };
     const screen = createAppScreen("Test", outputSchema);
 
-    screen.finalize(fakeNodeEndResponse([0]));
+    screen.finalize(fakeNodeEndResponse("g"));
 
-    const entry = screen.outputs.get("e-0");
+    const entry = screen.outputs.get("e-g");
     assert.ok(entry);
     assert.strictEqual(entry.schema, outputSchema);
   });
@@ -178,9 +178,9 @@ suite("createAppScreen", () => {
   test("finalize with undefined outputSchema stores undefined schema", () => {
     const screen = createAppScreen("Test", undefined);
 
-    screen.finalize(fakeNodeEndResponse([0]));
+    screen.finalize(fakeNodeEndResponse("h"));
 
-    const entry = screen.outputs.get("e-0");
+    const entry = screen.outputs.get("e-h");
     assert.ok(entry);
     assert.strictEqual(entry.schema, undefined);
   });

@@ -390,11 +390,11 @@ export const onError = asAction(
 );
 
 /**
- * Runner "graphstart" — no-op for top-level graphs.
+ * Runner "graphstart" — intentional no-op.
  *
  * Console pre-population and resets are handled by `start()` BEFORE
  * runner.start() fires events, so the graphstart handler no longer needs
- * to do any async work. This eliminates the race condition where an async
+ * to do any work. This eliminates the race condition where an async
  * describe callback could overwrite entries that onNodeStartAction had
  * already bound with a controller.
  */
@@ -404,16 +404,8 @@ export const onGraphStartAction = asAction(
     mode: ActionMode.Immediate,
     triggeredBy: () => onRunnerGraphStart(bind),
   },
-  async (evt?: CustomEvent): Promise<void> => {
-    const detail = evt?.detail;
-    const path = detail?.path;
-
-    // Only handle top-level graph; nested graphs are ignored.
-    // Top-level console pre-population is handled by start().
-    if (!path || path.length !== 0) return;
-
-    // No-op: start() already reset controllers and populated entries.
-  }
+  // No-op: start() already reset controllers and populated entries.
+  async (): Promise<void> => {}
 );
 
 /**
@@ -429,8 +421,7 @@ export const onNodeStartAction = asAction(
     const { controller } = bind;
     const detail = evt?.detail;
 
-    // Only handle top-level nodes
-    if (!detail || detail.path.length > 1) return;
+    if (!detail) return;
 
     const nodeId = detail.node.id;
     const inspectable = controller.editor.graph.get()?.graphs.get("");
@@ -470,8 +461,7 @@ export const onNodeEndAction = asAction(
     const { controller } = bind;
     const detail = evt?.detail;
 
-    // Only handle top-level nodes
-    if (!detail || detail.path.length > 1) return;
+    if (!detail) return;
 
     const nodeId = detail.node.id;
     const existing = controller.run.main.console.get(nodeId);
@@ -942,10 +932,10 @@ async function buildConsoleEntries(
  * This provides live output display in the console view while a step runs.
  */
 function addOutputWorkItem(entry: ConsoleEntry, data: OutputResponse): void {
-  const { path, node, outputs } = data;
+  const { node, outputs } = data;
   const { configuration = {}, metadata } = node;
   const { schema = {} } = configuration;
-  const id = path.join("-");
+  const id = data.index;
   const title = metadata?.description || metadata?.title || "Output";
   const icon = metadata?.icon || "output";
   const { products } = toLLMContentArray(schema as Schema, outputs);
