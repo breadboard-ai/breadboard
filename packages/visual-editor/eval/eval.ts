@@ -272,6 +272,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
                 output: new Map(),
                 error: null,
                 completed: false,
+                tokenUsage: null,
                 current: null,
                 addOutput() {},
                 requestInput() {

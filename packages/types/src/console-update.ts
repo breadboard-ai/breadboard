@@ -36,7 +36,21 @@ export type LinksUpdate = {
 };
 
 /**
+ * Token usage update for structured token display.
+ */
+export type TokenUsageUpdate = {
+  type: "token-usage";
+  title: string;
+  icon: string;
+  promptTokenCount: number;
+  candidatesTokenCount: number;
+  thoughtsTokenCount: number;
+  cachedContentTokenCount: number;
+  requestCount: number;
+};
+
+/**
  * A simplified update for console progress display.
  * Used by ProgressWorkItem to track agent execution updates.
  */
-export type ConsoleUpdate = TextUpdate | LinksUpdate;
+export type ConsoleUpdate = TextUpdate | LinksUpdate | TokenUsageUpdate;

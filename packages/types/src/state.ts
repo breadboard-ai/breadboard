@@ -130,6 +130,17 @@ export type ConsoleEntry = {
   completed: boolean;
 
   /**
+   * Cumulative token usage for this entry, updated as usage metadata arrives.
+   */
+  tokenUsage: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    thoughtsTokenCount: number;
+    cachedContentTokenCount: number;
+    requestCount: number;
+  } | null;
+
+  /**
    * A convenient pointer at the last work item.
    */
   current: WorkItem | null;

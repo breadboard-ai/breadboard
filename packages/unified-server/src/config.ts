@@ -84,6 +84,7 @@ export async function createClientConfig(opts: {
       enableResumeAgentRun: flags.ENABLE_RESUME_AGENT_RUN,
       enableGraphEditorAgent: flags.ENABLE_GRAPH_EDITOR_AGENT,
       textEditorRemix: flags.ENABLE_TEXT_EDITOR_REMIX,
+      showTokenCounter: flags.ENABLE_SHOW_TOKEN_COUNTER,
     },
   };
 }

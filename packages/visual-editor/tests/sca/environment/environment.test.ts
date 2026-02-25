@@ -50,6 +50,7 @@ function makeRuntimeConfig(
         enableNotebookLm: false,
         enableGraphEditorAgent: false,
         textEditorRemix: false,
+        showTokenCounter: false,
       },
     },
     shellHost: {
@@ -82,6 +83,7 @@ const testFlags: RuntimeFlags = {
   enableNotebookLm: false,
   enableGraphEditorAgent: false,
   textEditorRemix: false,
+  showTokenCounter: false,
 };
 
 suite("createEnvironment", () => {

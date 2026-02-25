@@ -89,6 +89,11 @@ export type RuntimeFlags = {
    * Use the remix text editor (model-driven, Lit-rendered)
    */
   textEditorRemix: boolean;
+
+  /**
+   * Show a running token counter in the console view
+   */
+  showTokenCounter: boolean;
 };
 
 /**
@@ -225,6 +230,11 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   textEditorRemix: {
     title: "Text Editor (Remix)",
     description: "Use the newer, model-driven text editor",
+    visibility: "experimental",
+  },
+  showTokenCounter: {
+    title: "Token Counter",
+    description: "Show a running token counter in the console view",
     visibility: "experimental",
   },
 };

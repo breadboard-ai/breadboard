@@ -24,4 +24,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableResumeAgentRun: false,
   enableGraphEditorAgent: false,
   textEditorRemix: false,
+  showTokenCounter: false,
 };

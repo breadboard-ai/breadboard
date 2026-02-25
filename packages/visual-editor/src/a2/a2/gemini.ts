@@ -5,6 +5,7 @@
 import {
   getCurrentStepState,
   createReporter,
+  accumulateUsageMetadata,
 } from "../agent/progress-work-item.js";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
@@ -270,8 +271,17 @@ export type Candidate = {
   groundingMetadata: GroundingMetadata;
 };
 
+export type UsageMetadata = {
+  promptTokenCount?: number;
+  candidatesTokenCount?: number;
+  totalTokenCount?: number;
+  thoughtsTokenCount?: number;
+  cachedContentTokenCount?: number;
+};
+
 export type GeminiAPIOutputs = {
   candidates: Candidate[];
+  usageMetadata?: UsageMetadata;
 };
 
 export type GeminiOutputs =
@@ -579,6 +589,9 @@ async function callAPI(
             reporter.addLinks("Grounding metadata", links, "link");
           }
           reporter.addContent("Model Response", candidate.content, "download");
+          if (outputs.usageMetadata) {
+            accumulateUsageMetadata(moduleArgs, outputs.usageMetadata);
+          }
           return outputs;
         }
         reporter.addJson("Model response", outputs, "warning");

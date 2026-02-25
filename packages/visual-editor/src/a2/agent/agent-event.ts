@@ -6,7 +6,7 @@
 
 import type { LLMContent, EditSpec, ConsentType } from "@breadboard-ai/types";
 import type { StatusUpdateCallbackOptions } from "./function-definition.js";
-import type { GeminiBody } from "../a2/gemini.js";
+import type { GeminiBody, UsageMetadata } from "../a2/gemini.js";
 import type { ErrorMetadata } from "../a2/utils.js";
 import type {
   ChatChoiceLayout,
@@ -44,6 +44,7 @@ export type {
   SubagentAddJsonEvent,
   SubagentErrorEvent,
   SubagentFinishEvent,
+  UsageMetadataEvent,
 };
 
 type StartEvent = {
@@ -233,6 +234,11 @@ type SubagentFinishEvent = {
   callId: string;
 };
 
+type UsageMetadataEvent = {
+  type: "usageMetadata";
+  metadata: UsageMetadata;
+};
+
 type AgentEvent =
   | StartEvent
   | ThoughtEvent
@@ -254,7 +260,8 @@ type AgentEvent =
   | FinishEvent
   | SubagentAddJsonEvent
   | SubagentErrorEvent
-  | SubagentFinishEvent;
+  | SubagentFinishEvent
+  | UsageMetadataEvent;
 
 /**
  * All event types that suspend the loop and wait for a client response.

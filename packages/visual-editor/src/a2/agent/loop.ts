@@ -11,6 +11,7 @@ import {
   GeminiBody,
   streamGenerateContent,
   Tool,
+  UsageMetadata,
 } from "../a2/gemini.js";
 import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
@@ -191,12 +192,16 @@ class Loop {
           functionDefinitionMap,
           toolManager
         );
+        let lastUsageMetadata: UsageMetadata | undefined;
         for await (const chunk of generated) {
           const content = chunk.candidates?.at(0)?.content;
           if (!content) {
             return err(
               `Agent unable to proceed: no content in Gemini response`
             );
+          }
+          if (chunk.usageMetadata) {
+            lastUsageMetadata = chunk.usageMetadata;
           }
           contents.push(content);
           hooks.onContent?.(content);
@@ -235,6 +240,9 @@ class Loop {
               );
             }
           }
+        }
+        if (lastUsageMetadata) {
+          hooks.onUsageMetadata?.(lastUsageMetadata);
         }
         const functionResults = await functionCaller.getResults();
         if (!functionResults) continue;
