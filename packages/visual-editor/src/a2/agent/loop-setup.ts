@@ -252,5 +252,8 @@ function buildHooksFromSink(sink: AgentEventSink): LoopHooks {
     onSendRequest(model, body) {
       sink.emit({ type: "sendRequest", model, body });
     },
+    onUsageMetadata(metadata) {
+      sink.emit({ type: "usageMetadata", metadata });
+    },
   };
 }

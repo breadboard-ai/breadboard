@@ -43,6 +43,7 @@ function mockConsoleEntry(overrides: Partial<ConsoleEntry> = {}): ConsoleEntry {
     output: new Map(),
     error: null,
     completed: false,
+    tokenUsage: null,
     current: null,
     addOutput() {},
     requestInput() {

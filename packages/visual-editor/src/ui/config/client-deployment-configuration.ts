@@ -32,6 +32,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   enableNotebookLm: false,
   enableGraphEditorAgent: false,
   textEditorRemix: false,
+  showTokenCounter: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

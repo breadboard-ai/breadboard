@@ -36,7 +36,12 @@ import { hasControlPart } from "../../../../utils/control.js";
 function isConsoleUpdate(
   item: LLMContent | SimplifiedA2UIClient | ConsoleUpdate
 ): item is ConsoleUpdate {
-  return "type" in item && (item.type === "text" || item.type === "links");
+  return (
+    "type" in item &&
+    (item.type === "text" ||
+      item.type === "links" ||
+      item.type === "token-usage")
+  );
 }
 
 @customElement("bb-console-view")
@@ -357,6 +362,56 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           }
         }
       }
+      #token-counter,
+      .token-usage-row {
+        display: flex;
+        align-items: center;
+        gap: var(--bb-grid-size-4);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+        font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+          var(--bb-font-family-mono, monospace);
+        color: light-dark(var(--n-40), var(--n-80));
+
+        & .g-icon {
+          font-size: 16px;
+        }
+
+        & .token-group {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1px;
+          border-right: 1px solid light-dark(var(--n-90), var(--n-30));
+          padding-right: var(--bb-grid-size-4);
+
+          &:last-child {
+            border-right: none;
+            padding-right: 0;
+          }
+        }
+
+        & .token-label {
+          font: 400 9px / 1 var(--bb-font-family);
+          color: light-dark(var(--n-50), var(--n-60));
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          white-space: nowrap;
+        }
+
+        & .token-value {
+          font-weight: 500;
+          color: light-dark(var(--n-20), var(--n-90));
+        }
+      }
+
+      #token-counter {
+        background: light-dark(
+          color-mix(in srgb, var(--n-98) 90%, transparent),
+          color-mix(in srgb, var(--n-10) 90%, transparent)
+        );
+        border-bottom: 1px solid light-dark(var(--n-90), var(--n-30));
+      }
     `,
   ];
 
@@ -435,6 +490,38 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                     `
                   )}
                 </ul>
+              </li>`;
+            }
+            if (item.type === "token-usage") {
+              const net = item.promptTokenCount - item.cachedContentTokenCount;
+              return html`<li class="output" data-label="${item.title}">
+                <div class="token-usage-row">
+                  <span class="g-icon round filled">${item.icon}</span>
+                  <div class="token-group">
+                    <span class="token-label">Input</span>
+                    <span class="token-value">${item.promptTokenCount}</span>
+                  </div>
+                  <div class="token-group">
+                    <span class="token-label">Cached</span>
+                    <span class="token-value"
+                      >${item.cachedContentTokenCount}</span
+                    >
+                  </div>
+                  <div class="token-group">
+                    <span class="token-label">Net Input</span>
+                    <span class="token-value">${net}</span>
+                  </div>
+                  <div class="token-group">
+                    <span class="token-label">Thoughts</span>
+                    <span class="token-value">${item.thoughtsTokenCount}</span>
+                  </div>
+                  <div class="token-group">
+                    <span class="token-label">Output</span>
+                    <span class="token-value"
+                      >${item.candidatesTokenCount}</span
+                    >
+                  </div>
+                </div>
               </li>`;
             }
           }
@@ -684,7 +771,40 @@ export class ConsoleView extends SignalWatcher(LitElement) {
     </section>`;
   }
 
+  #computeCumulativeTokenUsage(): {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    thoughtsTokenCount: number;
+    cachedContentTokenCount: number;
+  } {
+    let prompt = 0;
+    let candidates = 0;
+    let thoughts = 0;
+    let cached = 0;
+
+    for (const [, entry] of this.#currentEntries) {
+      const t = entry.tokenUsage;
+      if (t) {
+        prompt += t.promptTokenCount;
+        candidates += t.candidatesTokenCount;
+        thoughts += t.thoughtsTokenCount;
+        cached += t.cachedContentTokenCount;
+      }
+    }
+    return {
+      promptTokenCount: prompt,
+      candidatesTokenCount: candidates,
+      thoughtsTokenCount: thoughts,
+      cachedContentTokenCount: cached,
+    };
+  }
+
   render() {
+    const showTokenCounter = !!this.sca.env.flags.get("showTokenCounter");
+    const cumulativeTokens = showTokenCounter
+      ? this.#computeCumulativeTokenUsage()
+      : null;
+
     return html`<section id="container">
       ${[
         html`<bb-app-header
@@ -696,6 +816,42 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           .replayAutoStart=${true}
           .progress=${this.sca.controller.run.main.progress}
         ></bb-app-header>`,
+        cumulativeTokens
+          ? html`<div id="token-counter">
+              <span class="g-icon round filled">token_auto</span>
+              <div class="token-group">
+                <span class="token-label">Input</span>
+                <span class="token-value"
+                  >${cumulativeTokens.promptTokenCount}</span
+                >
+              </div>
+              <div class="token-group">
+                <span class="token-label">Cached</span>
+                <span class="token-value"
+                  >${cumulativeTokens.cachedContentTokenCount}</span
+                >
+              </div>
+              <div class="token-group">
+                <span class="token-label">Net Input</span>
+                <span class="token-value"
+                  >${cumulativeTokens.promptTokenCount -
+                  cumulativeTokens.cachedContentTokenCount}</span
+                >
+              </div>
+              <div class="token-group">
+                <span class="token-label">Thoughts</span>
+                <span class="token-value"
+                  >${cumulativeTokens.thoughtsTokenCount}</span
+                >
+              </div>
+              <div class="token-group">
+                <span class="token-label">Output</span>
+                <span class="token-value"
+                  >${cumulativeTokens.candidatesTokenCount}</span
+                >
+              </div>
+            </div>`
+          : nothing,
         this.#renderRun(),
       ]}
     </section>`;

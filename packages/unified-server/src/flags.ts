@@ -163,6 +163,10 @@ export const ENABLE_GRAPH_EDITOR_AGENT = getBoolean(
 
 export const ENABLE_TEXT_EDITOR_REMIX = getBoolean("ENABLE_TEXT_EDITOR_REMIX");
 
+export const ENABLE_SHOW_TOKEN_COUNTER = getBoolean(
+  "ENABLE_SHOW_TOKEN_COUNTER"
+);
+
 function getDomainConfig(
   flagName: string
 ): Record<string, DomainConfiguration> {

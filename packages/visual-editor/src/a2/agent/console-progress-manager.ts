@@ -11,7 +11,7 @@ import {
   JsonSerializable,
   LLMContent,
 } from "@breadboard-ai/types";
-import { GeminiBody } from "../a2/gemini.js";
+import { GeminiBody, UsageMetadata } from "../a2/gemini.js";
 import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import { AgentProgressManager } from "./types.js";
 import { llm, progressFromThought } from "../a2/utils.js";
@@ -288,6 +288,50 @@ class ConsoleProgressManager implements AgentProgressManager {
       workItem.finish();
       this.#pendingCalls.delete(callId);
     }
+  }
+
+  /**
+   * The agent received usage metadata from a Gemini response.
+   * Accumulates token counts on the console entry.
+   */
+  usageMetadata(metadata: UsageMetadata) {
+    if (!this.#consoleEntry) return;
+
+    const prev = this.#consoleEntry.tokenUsage ?? {
+      promptTokenCount: 0,
+      candidatesTokenCount: 0,
+      thoughtsTokenCount: 0,
+      cachedContentTokenCount: 0,
+    };
+    this.#consoleEntry.tokenUsage = {
+      promptTokenCount:
+        prev.promptTokenCount + (metadata.promptTokenCount ?? 0),
+      candidatesTokenCount:
+        prev.candidatesTokenCount + (metadata.candidatesTokenCount ?? 0),
+      thoughtsTokenCount:
+        prev.thoughtsTokenCount + (metadata.thoughtsTokenCount ?? 0),
+      cachedContentTokenCount:
+        prev.cachedContentTokenCount + (metadata.cachedContentTokenCount ?? 0),
+    };
+
+    // Also add a per-turn work item showing the token usage
+    if (!this.#consoleEntry) return;
+    const tokenUpdate = {
+      type: "token-usage" as const,
+      title: "Token Usage",
+      icon: "token_auto",
+      promptTokenCount: metadata.promptTokenCount ?? 0,
+      candidatesTokenCount: metadata.candidatesTokenCount ?? 0,
+      thoughtsTokenCount: metadata.thoughtsTokenCount ?? 0,
+      cachedContentTokenCount: metadata.cachedContentTokenCount ?? 0,
+    };
+    const workItem = new ConsoleWorkItem(
+      "Token Usage",
+      "token_auto",
+      tokenUpdate
+    );
+    workItem.finish();
+    this.#consoleEntry.work.set(crypto.randomUUID(), workItem);
   }
 
   /**

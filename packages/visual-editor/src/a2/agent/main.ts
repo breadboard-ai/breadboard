@@ -223,6 +223,9 @@ async function invokeAgent(
       progress.sendRequest(event.model, event.body);
       runStateManager.captureRequestBody(event.model, event.body);
     })
+    .on("usageMetadata", (event) => {
+      progress.usageMetadata(event.metadata);
+    })
     .on("subagentAddJson", (event) => {
       reporterMap
         .get(event.callId)
@@ -349,6 +352,9 @@ async function invokeRemoteAgent(
     })
     .on("sendRequest", (event) => {
       progress.sendRequest(event.model, event.body);
+    })
+    .on("usageMetadata", (event) => {
+      progress.usageMetadata(event.metadata);
     })
     .on("subagentAddJson", (event) => {
       reporterMap

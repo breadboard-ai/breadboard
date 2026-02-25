@@ -569,6 +569,7 @@ export class RunController extends RootController {
       output: new Map(),
       error: null,
       completed: status === "succeeded",
+      tokenUsage: null,
       current: null,
       addOutput() {},
       requestInput(schema: Schema, skipLabel?: string): Promise<OutputValues> {

@@ -11,7 +11,11 @@ import type {
   NodeHandlerContext,
   Outcome,
 } from "@breadboard-ai/types";
-import type { FunctionDeclaration, GeminiBody } from "../a2/gemini.js";
+import type {
+  FunctionDeclaration,
+  GeminiBody,
+  UsageMetadata,
+} from "../a2/gemini.js";
 import type { streamGenerateContent, conformGeminiBody } from "../a2/gemini.js";
 import type { callGeminiImage } from "../a2/image-utils.js";
 import type { callVideoGen } from "../video-generator/main.js";
@@ -335,6 +339,12 @@ export type LoopHooks = {
    * Use for run state tracking (capturing the first request).
    */
   onSendRequest?(model: string, body: GeminiBody): void;
+
+  /**
+   * Called when a Gemini response includes usage metadata.
+   * Use for token counting UI.
+   */
+  onUsageMetadata?(metadata: UsageMetadata): void;
 };
 
 /**
@@ -374,6 +384,9 @@ export function mergeHooks(...hookSets: LoopHooks[]): LoopHooks {
     },
     onSendRequest(model, body) {
       hookSets.forEach((h) => h.onSendRequest?.(model, body));
+    },
+    onUsageMetadata(metadata) {
+      hookSets.forEach((h) => h.onUsageMetadata?.(metadata));
     },
   };
 }

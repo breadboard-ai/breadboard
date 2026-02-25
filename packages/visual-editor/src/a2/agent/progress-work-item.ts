@@ -7,6 +7,7 @@ import {
   LLMContent,
   NodeMetadata,
   SimplifiedA2UIClient,
+  TokenUsageUpdate,
   WorkItem,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
@@ -18,7 +19,12 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import type { ProgressReporter } from "./types.js";
 import { setScreenDuration } from "../../sca/utils/app-screen.js";
 
-export { ProgressWorkItem, createReporter, getCurrentStepState };
+export {
+  ProgressWorkItem,
+  createReporter,
+  getCurrentStepState,
+  accumulateUsageMetadata,
+};
 export type { ProgressReporter };
 
 export type Link = {
@@ -104,6 +110,20 @@ class ProgressWorkItem implements WorkItem {
   /**
    * Add links to the progress work item.
    */
+  addTokenUsage(
+    title: string,
+    data: Omit<TokenUsageUpdate, "type" | "title" | "icon">,
+    icon?: string
+  ) {
+    const key = `update-${this.#updateCounter++}`;
+    this.product.set(key, {
+      type: "token-usage",
+      title,
+      icon: icon ?? "token_auto",
+      ...data,
+    });
+  }
+
   addLinks(title: string, links: ConsoleLink[], icon?: string) {
     const key = `update-${this.#updateCounter++}`;
     this.product.set(key, {
@@ -184,4 +204,50 @@ function createReporter(
     consoleEntry.work.set(crypto.randomUUID(), reporter);
   }
   return reporter;
+}
+
+/**
+ * Accumulates usage metadata from a Gemini API response onto the current
+ * step's ConsoleEntry. This is the centralized hook that all model call
+ * paths (agent loop streaming, non-agent callAPI, etc.) use to report
+ * token usage to the console.
+ */
+function accumulateUsageMetadata(
+  moduleArgs: A2ModuleArgs,
+  metadata: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    thoughtsTokenCount?: number;
+    cachedContentTokenCount?: number;
+  }
+): void {
+  const { consoleEntry } = getCurrentStepState(moduleArgs);
+  if (!consoleEntry) return;
+
+  const prev = consoleEntry.tokenUsage ?? {
+    promptTokenCount: 0,
+    candidatesTokenCount: 0,
+    thoughtsTokenCount: 0,
+    cachedContentTokenCount: 0,
+  };
+  consoleEntry.tokenUsage = {
+    promptTokenCount: prev.promptTokenCount + (metadata.promptTokenCount ?? 0),
+    candidatesTokenCount:
+      prev.candidatesTokenCount + (metadata.candidatesTokenCount ?? 0),
+    thoughtsTokenCount:
+      prev.thoughtsTokenCount + (metadata.thoughtsTokenCount ?? 0),
+    cachedContentTokenCount:
+      prev.cachedContentTokenCount + (metadata.cachedContentTokenCount ?? 0),
+  };
+
+  // Also add a per-call work item showing the token usage
+  const reporter = new ProgressWorkItem("Token Usage", "token_auto", undefined);
+  reporter.addTokenUsage("Token Usage", {
+    promptTokenCount: metadata.promptTokenCount ?? 0,
+    candidatesTokenCount: metadata.candidatesTokenCount ?? 0,
+    thoughtsTokenCount: metadata.thoughtsTokenCount ?? 0,
+    cachedContentTokenCount: metadata.cachedContentTokenCount ?? 0,
+  });
+  reporter.finish();
+  consoleEntry.work.set(crypto.randomUUID(), reporter);
 }
