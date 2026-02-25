@@ -228,6 +228,118 @@ suite("decodeErrorData", () => {
     // Should use video medium since model is "veo-2"
     assert.ok(result.message.includes("video"));
   });
+
+  // --- Null/undefined guard ---
+
+  test("returns fallback message when error is undefined", () => {
+    const result = decodeErrorData(
+      undefined as unknown as Parameters<typeof decodeErrorData>[0]
+    );
+    assert.strictEqual(result.message, "Unknown error");
+  });
+
+  test("returns fallback message when error is null", () => {
+    const result = decodeErrorData(
+      null as unknown as Parameters<typeof decodeErrorData>[0]
+    );
+    assert.strictEqual(result.message, "Unknown error");
+  });
+
+  // --- RESOURCE_EXHAUSTED with unknown error_reason ---
+
+  test("RESOURCE_EXHAUSTED with unknown error_reason falls back to capacity", () => {
+    const json = JSON.stringify({
+      code: "RESOURCE_EXHAUSTED",
+      error_reason: "SOMETHING_ELSE",
+      message: "Other quota issue",
+    });
+    const result = decodeErrorData(json);
+    assert.strictEqual(result.metadata?.kind, "capacity");
+    assert.ok(result.message.includes("high demand"));
+  });
+
+  // --- Structured JSON without RESOURCE_EXHAUSTED ---
+
+  test("JSON without RESOURCE_EXHAUSTED code falls through to fuzzy match", () => {
+    const json = JSON.stringify({
+      code: "INTERNAL",
+      message: "something about safety went wrong",
+    });
+    const result = decodeErrorData(json);
+    // Should fuzzy-match on "safety" in the message
+    assert.strictEqual(result.metadata?.kind, "safety");
+  });
+
+  test("JSON without RESOURCE_EXHAUSTED and no fuzzy match returns simple message", () => {
+    const json = JSON.stringify({
+      code: "INTERNAL",
+      message: "unexpected failure",
+    });
+    const result = decodeErrorData(json);
+    assert.strictEqual(result.message, "unexpected failure");
+    assert.strictEqual(result.metadata, undefined);
+  });
+
+  // --- Safety reason branches ---
+
+  test("handles safety celebrity reason", () => {
+    const error = errorWith("safety", {
+      kind: "safety",
+      reasons: ["celebrity"],
+    });
+    const result = decodeErrorData(error);
+    assert.ok(result.message.includes("prominent people"));
+  });
+
+  test("handles safety sexual reason", () => {
+    const error = errorWith("safety", {
+      kind: "safety",
+      reasons: ["sexual"],
+    });
+    const result = decodeErrorData(error);
+    assert.ok(result.message.includes("sexual"));
+  });
+
+  test("handles safety dangerous reason", () => {
+    const error = errorWith("safety", {
+      kind: "safety",
+      reasons: ["dangerous"],
+    });
+    const result = decodeErrorData(error);
+    assert.ok(result.message.includes("harmful"));
+  });
+
+  test("handles safety unknown reason with default policy", () => {
+    const error = errorWith("safety", {
+      kind: "safety",
+      reasons: ["other-unknown"],
+    });
+    const result = decodeErrorData(error);
+    assert.ok(result.message.includes("unsafe"));
+  });
+
+  // --- Default kind switch ---
+
+  test("unrecognized kind returns raw message with metadata", () => {
+    const error = errorWith("custom error", {
+      kind: "some-future-kind",
+    });
+    const result = decodeErrorData(error);
+    assert.strictEqual(result.message, "custom error");
+    assert.strictEqual(result.metadata?.kind, "some-future-kind");
+  });
+
+  // --- paid-quota-exhausted message verification ---
+
+  test("paid-quota-exhausted message mentions credits", () => {
+    const error = errorWith("quota", {
+      kind: "paid-quota-exhausted",
+      model: "veo-2",
+    });
+    const result = decodeErrorData(error);
+    assert.ok(result.message.includes("credits"));
+    assert.ok(result.message.includes("video"));
+  });
 });
 
 suite("trackError", () => {
@@ -264,6 +376,12 @@ suite("trackError", () => {
   test("calls errorCapacity for free-quota-exhausted kind", () => {
     const tracker = createTracker();
     trackError(tracker, { kind: "free-quota-exhausted" });
+    assert.strictEqual(callCount(tracker.errorCapacity), 1);
+  });
+
+  test("calls errorCapacity for paid-quota-exhausted kind", () => {
+    const tracker = createTracker();
+    trackError(tracker, { kind: "paid-quota-exhausted" });
     assert.strictEqual(callCount(tracker.errorCapacity), 1);
   });
 
