@@ -82,7 +82,7 @@ class ChoicePresenter {
       translatedChoices.push({ id: choice.id, content: labelContent });
     }
 
-    return this.#presentChoicesAsMultipleChoice(
+    return this.presentTranslatedChoices(
       messageContent,
       translatedChoices,
       surfaceId,
@@ -91,11 +91,17 @@ class ChoicePresenter {
     );
   }
 
-  async #presentChoicesAsMultipleChoice(
+  /**
+   * Presents choices that are already translated (LLMContent, not pidgin).
+   *
+   * Used by the remote path where the server has already performed pidgin
+   * translation. Callers provide LLMContent directly.
+   */
+  async presentTranslatedChoices(
     messageContent: LLMContent,
     choices: { id: string; content: LLMContent }[],
-    surfaceId: string,
-    selectionMode: ChatChoiceSelectionMode,
+    surfaceId: string = "@choices",
+    selectionMode: ChatChoiceSelectionMode = "single",
     noneOfTheAboveLabel?: string
   ): Promise<Outcome<ChatChoicesResponse>> {
     const allParts: v0_8.Types.ComponentInstance[] = [];

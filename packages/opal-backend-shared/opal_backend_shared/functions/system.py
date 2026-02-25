@@ -26,6 +26,7 @@ from ..loop import AgentResult, FileData, LoopController
 from ..agent_file_system import AgentFileSystem
 from ..task_tree_manager import TaskTreeManager, TASK_TREE_SCHEMA
 from ..pidgin import from_pidgin_string
+from ..shared_schemas import STATUS_UPDATE_SCHEMA
 
 # Function name constants (must match the TypeScript originals exactly).
 OBJECTIVE_FULFILLED_FUNCTION = "system_objective_fulfilled"
@@ -399,13 +400,7 @@ def _define_list_files(
         parameters_json_schema={
             "type": "object",
             "properties": {
-                "status_update": {
-                    "type": "string",
-                    "description": (
-                        "A short, user-facing status update that will be "
-                        "displayed in the UI while this function executes."
-                    ),
-                },
+                **STATUS_UPDATE_SCHEMA,
             },
         },
         response_json_schema={
@@ -510,7 +505,9 @@ def _define_read_text_from_file(
         description=(
             "Reads text from a file and return text as string. If the file "
             "does not contain text or is not supported, an error will be "
-            "returned."
+            "returned. Google Drive files may contain images and other "
+            "non-textual content. Please use 'generate_text' to read them "
+            "at full fidelity."
         ),
         handler=handler,
         icon="description",

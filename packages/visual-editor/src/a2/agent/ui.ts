@@ -11,18 +11,14 @@ import {
   LLMContent,
   NodeHandlerContext,
   Outcome,
-  OutputValues,
-  Schema,
-  WorkItem,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
+import { addChatOutput } from "./chat-output.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { A2UIClientWorkItem } from "./a2ui/client-work-item.js";
 import { A2UIClientEventMessage } from "./a2ui/schemas.js";
 import { v0_8 } from "../../a2ui/index.js";
-import { A2UIClient } from "./a2ui/client.js";
-import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
+import { A2UIInteraction } from "./a2ui-interaction.js";
 import { ConsoleProgressManager } from "./console-progress-manager.js";
 import {
   A2UIRenderer,
@@ -55,10 +51,11 @@ export type UserResponse = {
 
 class AgentUI implements A2UIRenderer, ChatManager {
   /**
-   * The current A2UIClient. A new instance is created per interaction so that
-   * each console work item and app screen output preserves its own snapshot.
+   * Shared A2UI rendering core. Owns WorkItem creation, A2UIClient
+   * management, and user input awaiting. AgentUI adds pidgin translation
+   * on top.
    */
-  #currentClient: A2UIClient;
+  readonly #interaction: A2UIInteraction;
 
   readonly #consoleEntry: ConsoleEntry | undefined;
 
@@ -66,12 +63,6 @@ class AgentUI implements A2UIRenderer, ChatManager {
    * Handles the console updates for various parts of agent execution
    */
   readonly progress: ConsoleProgressManager;
-
-  /**
-   * The current work item for A2UI interaction. Each interaction creates a new
-   * work item with a unique ID, so multiple A2UI screens can be shown.
-   */
-  #currentWorkItem: A2UIClientWorkItem | undefined;
 
   readonly #appScreen: AppScreen | undefined;
 
@@ -88,10 +79,10 @@ class AgentUI implements A2UIRenderer, ChatManager {
     sink?: AgentEventSink
   ) {
     this.#sink = sink;
-    this.#currentClient = new A2UIClient();
     const { appScreen, consoleEntry } = getCurrentStepState(this.moduleArgs);
     this.#consoleEntry = consoleEntry;
     this.#appScreen = appScreen;
+    this.#interaction = new A2UIInteraction(consoleEntry, appScreen);
     if (!this.#appScreen) {
       console.warn(
         `Unable to find app screen for this agent. Trying to render UI will fail.`
@@ -101,46 +92,6 @@ class AgentUI implements A2UIRenderer, ChatManager {
       this.#consoleEntry,
       this.#appScreen
     );
-  }
-
-  /**
-   * Starts a new A2UI interaction by creating a fresh work item and app screen
-   * output. This ensures each A2UI screen appears separately in the console
-   * view and the app view shows the latest screen.
-   */
-  #startNewInteraction(
-    title: string = "A2UI",
-    icon: string = "web"
-  ): Outcome<A2UIClientWorkItem> {
-    // Finish the previous work item if it exists
-    this.#currentWorkItem?.finish();
-
-    if (!this.#consoleEntry) {
-      return err(`Unable to create UI: Console is not available`);
-    }
-
-    const outputId = crypto.randomUUID();
-
-    // Create a fresh client so this interaction preserves its own A2UI state.
-    this.#currentClient = new A2UIClient();
-
-    // Create new work item for console view
-    this.#currentWorkItem = new A2UIClientWorkItem(
-      this.#currentClient,
-      title,
-      icon
-    );
-    this.#consoleEntry.work.set(outputId, this.#currentWorkItem);
-
-    // Create new app screen output for app view
-    if (this.#appScreen) {
-      const appScreenOutput = new A2UIAppScreenOutput(this.#currentClient);
-      this.#appScreen.outputs.set(outputId, appScreenOutput);
-      this.#appScreen.last = appScreenOutput;
-      this.#appScreen.type = "a2ui";
-    }
-
-    return this.#currentWorkItem;
   }
 
   get chatLog(): DeepReadonly<LLMContent[]> {
@@ -180,37 +131,11 @@ class AgentUI implements A2UIRenderer, ChatManager {
   }
 
   /**
-   * Canonical pattern for rendering an agent → user chat message.
-   *
-   * Creates a WorkItem (console) and output entry (app screen) with the
-   * message as a `product`.
+   * Renders an agent → user chat message.
+   * Delegates to the shared `addChatOutput()` utility.
    */
   #addChatOutput(message: LLMContent): void {
-    const outputId = crypto.randomUUID();
-    const schema = {
-      properties: { message: { type: "object", behavior: ["llm-content"] } },
-    } satisfies Schema;
-
-    // Add to app screen outputs directly
-    if (this.#appScreen) {
-      const entry = { schema, output: { message } as OutputValues };
-      this.#appScreen.outputs.set(outputId, entry);
-      this.#appScreen.last = entry;
-    }
-
-    // Add to console entry as a work item
-    if (this.#consoleEntry) {
-      const product: WorkItem["product"] = new Map();
-      product.set("message", message);
-      this.#consoleEntry.work.set(outputId, {
-        title: "Response",
-        start: 0,
-        end: 0,
-        elapsed: 0,
-        awaitingUserInput: false,
-        product,
-      });
-    }
+    addChatOutput(message, this.#consoleEntry, this.#appScreen);
   }
 
   async chat(
@@ -319,33 +244,23 @@ class AgentUI implements A2UIRenderer, ChatManager {
     title: string = "A2UI",
     icon: string = "web"
   ): Outcome<void> {
-    const workItem = this.#startNewInteraction(title, icon);
-    if (!ok(workItem)) return workItem;
+    // AgentUI adds pidgin translation before delegating to the shared
+    // rendering core.
     const translation = this.translator.fromPidginMessages(messages);
-    this.#currentClient.processUpdates(translation);
+    const result = this.#interaction.renderTranslated(translation, title, icon);
 
     this.#onA2UIRender?.(messages);
 
-    workItem.renderUserInterface();
+    return result;
   }
 
   async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
-    if (!this.#currentWorkItem) {
-      return err(`Unable to await user input: No active A2UI interaction`);
-    }
-    if (!this.#appScreen) {
-      return err(`Unable to await user input: App screen is not available`);
-    }
-
-    this.#appScreen.status = "interactive";
-    const result = await this.#currentClient.awaitUserInput();
-    this.#appScreen.status = "processing";
-    return result;
+    return this.#interaction.awaitUserInput();
   }
 
   finish() {
     this.progress.finish();
-    this.#currentWorkItem?.finish();
+    this.#interaction.finish();
   }
 }
 

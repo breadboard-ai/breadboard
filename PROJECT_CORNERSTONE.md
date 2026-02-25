@@ -461,19 +461,27 @@ Body (resume): {interactionId, response}
 - [x] End-to-end: Generate step (Agent mode, prompt: "ask user to provide their
       name") through `dev:backend` — suspend → user types → resume → complete
 
-##### 4.8c: Unified Suspend Handler Rendering
+##### 4.8c: Unified Suspend Handler Rendering ✅
 
 > **🎯 Objective:** Both `waitForInput` and `waitForChoice` work identically
 > through local and remote paths. The rendering logic (prompt display, input
 > collection, choice presentation) is shared — not duplicated between `AgentUI`
 > and `invokeRemoteAgent`.
 
-- [ ] Extract `#addChatOutput` pattern into a shared utility usable by both
-      local (`AgentUI`) and remote (`invokeRemoteAgent`) paths
-- [ ] `waitForInput` remote handler uses the shared utility (deduplicate)
-- [ ] Design + implement `waitForChoice` remote handler with proper choice
-      buttons / checkboxes (not enum dropdown hack)
-- [ ] End-to-end: choice-based interaction through `dev:backend`
+- [x] Extract `#addChatOutput` pattern into a shared utility (`chat-output.ts`)
+      usable by both local (`AgentUI`) and remote (`invokeRemoteAgent`) paths
+- [x] `waitForInput` remote handler uses the shared utility (deduplicate)
+- [x] `waitForChoice` remote handler with `ChoicePresenter` + `A2UIInteraction`
+      (proper choice buttons / checkboxes)
+- [x] `A2UIInteraction` extracted as shared rendering core — `AgentUI` delegates
+      to it, adding only pidgin translation on top
+- [x] Server-side pidgin resolution for choice labels (`from_pidgin_string` in
+      `chat.py`) — images and file refs render correctly in choices
+- [x] End-to-end: choice-based interaction through `dev:backend`
+- [x] Port fidelity audit — all function groups (`image`, `video`, `audio`,
+      `generate`, `chat`, `system`) verified against TS source; descriptions
+      restored; `shared_schemas.py` centralizes `statusUpdateSchema`,
+      `taskIdSchema`, `fileNameSchema`
 
 ##### 4.8d: Graph-Editing Functions (deferred)
 
