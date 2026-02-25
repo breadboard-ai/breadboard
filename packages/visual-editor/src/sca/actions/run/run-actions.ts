@@ -505,8 +505,14 @@ export const onNodeEndAction = asAction(
           : { status: "succeeded" },
         completed: true,
       });
-      // Note: renderer node state (including decoded errors) is already
-      // managed by onNodeStateChangeAction — no setNodeState call needed here.
+      if (hasFailed) {
+        controller.run.renderer.setNodeState(nodeId, {
+          status: "failed",
+          errorMessage: existing.error!.message,
+        });
+      } else {
+        controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
+      }
     }
 
     // Finalize or delete screen based on node state

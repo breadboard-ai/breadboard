@@ -111,9 +111,14 @@ function decodeErrorData(
   error: ErrorResponse["error"],
   metadata?: ErrorMetadata
 ): RunError {
+  if (error == null) {
+    return { message: "Unknown error" };
+  }
+
   // Extract explicit metadata from the error object if not passed directly.
   metadata ??=
-    (!(typeof error === "string") &&
+    (error != null &&
+      !(typeof error === "string") &&
       "metadata" in error &&
       (error.metadata as ErrorMetadata)) ||
     undefined;
