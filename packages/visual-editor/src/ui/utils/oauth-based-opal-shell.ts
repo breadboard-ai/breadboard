@@ -923,8 +923,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   };
 
   private readonly actionEventSender = new GTagEventSender(
-    CLIENT_DEPLOYMENT_CONFIG.MEASUREMENT_ID,
-    async () => (await this.getSignInState()).status === "signedin"
+    CLIENT_DEPLOYMENT_CONFIG.MEASUREMENT_ID
   );
   trackAction = async (action: string, payload: Record<string, string>) => {
     this.actionEventSender.sendEvent(action, payload);

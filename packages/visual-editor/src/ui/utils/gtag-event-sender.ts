@@ -15,26 +15,12 @@ declare global {
   }
 }
 
-function getActionTrackerLocalStorageKey() {
-  // b/458498343 This should be simply be a module-scope const
-  // LOCAL_STORAGE_KEY. However there appears to be a bug affecting iOS 18 such
-  // that exported functions can be invoked by importers before module-level
-  // consts are initialized. It only affects our bundled production mode, but
-  // the relevant module factoring is similar, so it seems more like a JSC bug
-  // than a bundler bug. As a hacky workaround, writing this as a hoisted
-  // function corrects the ordering.
-  return "ga_user_id";
-}
-
 /**
  * Initializes Google Analytics.
  *
  * @param id - Google Analytics measurement ID
  */
-async function initializeAnalytics(
-  id: string,
-  signedInCallback: () => Promise<boolean>
-): Promise<void> {
+async function initializeAnalytics(id: string): Promise<void> {
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () {
     // eslint-disable-next-line prefer-rest-params
@@ -49,30 +35,15 @@ async function initializeAnalytics(
   tagManagerScript.async = true;
   document.body.appendChild(tagManagerScript);
 
-  const signedIn = await signedInCallback();
-
-  // IP anonymized per OOGA policy.
-  const userId = signedIn ? { user_id: getUserId() } : {};
-
   // Get site mode from the URL
   const site_mode = parseUrl(window.location.href).lite ? "lite" : "standard";
 
+  // IP anonymized per OOGA policy.
   window.gtag("config", id, {
     site_mode,
     anonymize_ip: true,
     cookie_flags: "SameSite=None; Secure",
-    ...userId,
   });
-
-  function getUserId() {
-    let userId = window.localStorage.getItem(getActionTrackerLocalStorageKey());
-    if (!userId) {
-      // Generate a random GUUID that will be associated with this user.
-      userId = crypto.randomUUID();
-      window.localStorage.setItem(getActionTrackerLocalStorageKey(), userId);
-    }
-    return userId;
-  }
 }
 
 function shouldSend() {
@@ -82,13 +53,10 @@ function shouldSend() {
 class GTagEventSender {
   private readonly initialized: Promise<void> | undefined;
 
-  constructor(
-    measurementId: string | undefined,
-    signedInCallback: () => Promise<boolean>
-  ) {
+  constructor(measurementId: string | undefined) {
     if (!shouldSend()) return;
     if (measurementId) {
-      this.initialized = initializeAnalytics(measurementId, signedInCallback);
+      this.initialized = initializeAnalytics(measurementId);
     }
   }
 
@@ -106,9 +74,6 @@ class GTagEventSender {
     if (!shouldSend()) return;
 
     await this.initialized;
-    if (action === "sign_out_success" || action === "sign_in_success") {
-      resetAnalyticsUserId();
-    }
     sendGTagEvent(action, params);
   }
 }
@@ -118,12 +83,5 @@ function sendGTagEvent(
   params?: Record<string, string | undefined>
 ) {
   if (!shouldSend()) return;
-  if (action === "sign_out_success" || action === "sign_in_success") {
-    resetAnalyticsUserId();
-  }
   globalThis.gtag?.("event", action, params);
-}
-
-function resetAnalyticsUserId() {
-  window.localStorage.removeItem(getActionTrackerLocalStorageKey());
 }
