@@ -554,19 +554,8 @@ export class LLMOutput extends LitElement {
               let dataHref;
               if (isInlineData(data)) {
                 downloadSuffix = data.inlineData.mimeType.split("/").at(-1);
-                let inlineData = data.inlineData.data;
-                if (data.inlineData.mimeType === "text/html") {
-                  const textEncoder = new TextEncoder();
-                  const bytes = textEncoder.encode(data.inlineData.data);
-
-                  let byteString = "";
-                  bytes.forEach(
-                    (byte) => (byteString += String.fromCharCode(byte))
-                  );
-
-                  inlineData = btoa(byteString);
-                }
-                dataHref = `data:${data.inlineData.mimeType};base64,${inlineData}`;
+                // inlineData.data is always base64-encoded.
+                dataHref = `data:${data.inlineData.mimeType};base64,${data.inlineData.data}`;
               } else if (isStoredData(data)) {
                 dataHref = data.storedData.handle;
                 if (dataHref.startsWith(".") && this.graphUrl) {
@@ -668,7 +657,7 @@ export class LLMOutput extends LitElement {
                 this.#outputLoaded();
                 return cache(html`
                   <bb-app-sandbox
-                    .srcdoc=${part.inlineData.data}
+                    .srcdoc=${atob(part.inlineData.data)}
                     .graphUrl=${this.graphUrl?.href ?? ""}
                   ></bb-app-sandbox>
                 `);

@@ -174,13 +174,41 @@ describe("Agent File System", () => {
       memoryManager: stubMemoryManager,
     });
 
-    const path = fileSystem.write("page.html", "<h1>Hi</h1>");
+    const html = "<h1>Hi</h1>";
+    const path = fileSystem.write("page.html", html);
     strictEqual(path, "/mnt/page.html");
 
     const file = fileSystem.files.get(path);
     success(file);
     strictEqual(file!.mimeType, "text/html");
     strictEqual(file!.type, "inlineData");
+    // Data must be base64-encoded to match the inlineData convention.
+    strictEqual(file!.data, btoa(html));
+  });
+
+  it("write HTML round-trips through get as base64 inlineData", async () => {
+    const fileSystem = new AgentFileSystem({
+      context: stubModuleArgs.context,
+      memoryManager: stubMemoryManager,
+    });
+
+    const html = "<h1>Hello</h1>";
+    const path = fileSystem.write("page.html", html);
+    const parts = await fileSystem.get(path);
+    if (!ok(parts)) {
+      fail(parts.$error);
+    }
+    deepStrictEqual(parts, [
+      {
+        inlineData: {
+          data: btoa(html),
+          mimeType: "text/html",
+          title: undefined,
+        },
+      },
+    ]);
+    // Verify decoding round-trip
+    strictEqual(atob(parts[0].inlineData.data), html);
   });
 
   it("write infers mime type from .csv extension", () => {

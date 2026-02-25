@@ -165,7 +165,7 @@ function llmContentToA2UIComponents(
       if (part.inlineData.mimeType === "text/html") {
         addTopLevel(generateId("html"), {
           "a2ui-custom-html": {
-            srcdoc: { literalString: part.inlineData.data },
+            srcdoc: { literalString: base64toUTF8(part.inlineData.data) },
           },
         });
       } else if (part.inlineData.mimeType === "text/plain") {

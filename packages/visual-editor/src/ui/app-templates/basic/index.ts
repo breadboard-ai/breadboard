@@ -97,7 +97,7 @@ function getHTMLOutput(screen: AppScreenOutput): string | null {
         isInlineData(firstPart) &&
         firstPart.inlineData.mimeType === "text/html"
       ) {
-        return firstPart.inlineData.data;
+        return atob(firstPart.inlineData.data);
       }
     }
   }

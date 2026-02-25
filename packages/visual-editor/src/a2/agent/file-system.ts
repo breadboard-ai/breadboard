@@ -74,7 +74,15 @@ class AgentFileSystem {
   write(name: string, data: string): string {
     const { path, mimeType } = this.#createNamed(name, true);
     if (mimeType === "text/html") {
-      this.#files.set(path, { data, mimeType, type: "inlineData" });
+      // Encode to base64 to match the inlineData convention: .data is always
+      // base64-encoded. This keeps write()-created HTML consistent with HTML
+      // returned by code execution and the Gemini API.
+      const encoded = btoa(
+        new TextEncoder()
+          .encode(data)
+          .reduce((s, b) => s + String.fromCharCode(b), "")
+      );
+      this.#files.set(path, { data: encoded, mimeType, type: "inlineData" });
     } else {
       this.#files.set(path, { data, mimeType, type: "text" });
     }
