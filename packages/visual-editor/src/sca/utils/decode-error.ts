@@ -9,7 +9,7 @@ import type { ErrorMetadata } from "../types.js";
 import { formatError } from "./format-error.js";
 import { ActionTracker } from "../types.js";
 
-export { decodeErrorData, trackError };
+export { decodeErrorData, mediumFromModel, trackError };
 
 type Medium = {
   title: string;

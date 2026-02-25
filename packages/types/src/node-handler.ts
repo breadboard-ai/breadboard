@@ -321,6 +321,12 @@ export interface NodeHandlerContext {
    * A way to look at all the config flags.
    */
   readonly clientDeploymentConfiguration?: ClientDeploymentConfiguration;
+  /**
+   * Set by executeStep when the server returns a quota warning.
+   * Holds the model name so the UI can derive the media type.
+   * Read by the handler wrapper to surface in OutputValues.
+   */
+  quotaWarning?: string;
 }
 
 export type RunArguments = NodeHandlerContext & {

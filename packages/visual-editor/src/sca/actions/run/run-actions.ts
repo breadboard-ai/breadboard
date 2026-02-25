@@ -44,7 +44,11 @@ import {
   onRunnerOutput,
 } from "./triggers.js";
 import { edgeToString } from "../../../utils/graph-utils.js";
-import { decodeErrorData, trackError } from "../../utils/decode-error.js";
+import {
+  decodeErrorData,
+  mediumFromModel,
+  trackError,
+} from "../../utils/decode-error.js";
 import { createAppScreen, tickScreenProgress } from "../../utils/app-screen.js";
 import { computeControlState } from "../../../utils/control.js";
 import { toLLMContentArray } from "../../utils/common.js";
@@ -478,6 +482,15 @@ export const onNodeEndAction = asAction(
         const { products } = toLLMContentArray(outputSchema as Schema, outputs);
         for (const [name, product] of Object.entries(products)) {
           existing.output.set(name, product as LLMContent);
+        }
+
+        // Show a warning snackbar if the server signalled quota is running low.
+        if (outputs.quotaWarning) {
+          const medium = mediumFromModel(outputs.quotaWarning as string);
+          controller.global.snackbars.snackbar(
+            `${medium.title} generation will now use AI credits. You have reached the free ${medium.singular} generation quota for the day. Each ${medium.singular} you generate after this will use your AI credits.`,
+            SnackType.INFORMATION
+          );
         }
       }
 
