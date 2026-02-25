@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ConsentType, TextCapabilityPart } from "@breadboard-ai/types";
+import {
+  ConsentType,
+  ErrorMetadata,
+  TextCapabilityPart,
+} from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import z from "zod";
 import { GenerationConfig, Tool } from "../../a2/gemini.js";
@@ -32,6 +36,7 @@ import { fileNameSchema, statusUpdateSchema, taskIdSchema } from "./system.js";
 import { TaskTreeManager } from "../task-tree-manager.js";
 import { createReporter } from "../progress-work-item.js";
 import type { AgentEventSink } from "../agent-event-sink.js";
+import { decodeErrorData } from "../../../sca/utils/decode-error.js";
 
 export { getGenerateFunctionGroup, GENERATE_TEXT_FUNCTION };
 
@@ -231,7 +236,7 @@ The Gemini model to use for image generation. How to choose the right model:
         true,
         aspect_ratio
       );
-      if (!ok(generated)) return { error: generated.$error };
+      if (!ok(generated)) return asErrorOrResponse(generated);
       const errors: string[] = [];
       const parts = mergeContent(generated, "user").parts;
       const images = parts
@@ -396,9 +401,7 @@ Specify URLs in the prompt.
         body,
         moduleArgs
       );
-      if (!ok(generating)) {
-        return { error: generating.$error };
-      }
+      if (!ok(generating)) return asErrorOrResponse(generating);
       for await (const chunk of generating) {
         const parts = chunk.candidates.at(0)?.content?.parts;
         if (!parts) continue;
@@ -503,11 +506,8 @@ The following elements should be included in your prompt:
         aspect_ratio ?? "16:9",
         VIDEO_MODEL_NAME
       );
-      if (!ok(generating)) {
-        return {
-          error: expandVeoError(generating, VIDEO_MODEL_NAME).$error,
-        };
-      }
+      if (!ok(generating))
+        return asErrorOrResponse(expandVeoError(generating, VIDEO_MODEL_NAME));
       const dataPart = generating.parts.at(0);
       if (!dataPart || !("storedData" in dataPart)) {
         return { error: `No video was generated` };
@@ -568,7 +568,7 @@ The following elements should be included in your prompt:
         reporter: effectiveReporter,
       };
       const generating = await generators.callAudio(args, text, voice);
-      if (!ok(generating)) return { error: generating.$error };
+      if (!ok(generating)) return asErrorOrResponse(generating);
 
       const dataPart = generating.parts.at(0);
       if (!dataPart || !("storedData" in dataPart)) {
@@ -641,7 +641,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
         reporter: effectiveReporter,
       };
       const generating = await generators.callMusic(args, prompt);
-      if (!ok(generating)) return { error: generating.$error };
+      if (!ok(generating)) return asErrorOrResponse(generating);
 
       const dataPart = generating.parts.at(0);
       if (!dataPart || !("storedData" in dataPart)) {
@@ -783,9 +783,7 @@ DO NOT start with "Okay", or "Alright" or any preambles. Just the output, please
         body,
         moduleArgs
       );
-      if (!ok(generating)) {
-        return { error: generating.$error };
-      }
+      if (!ok(generating)) return asErrorOrResponse(generating);
       let lastCodeExecutionError: string | null = null;
       for await (const chunk of generating) {
         const parts = chunk.candidates.at(0)?.content?.parts;
@@ -854,4 +852,39 @@ function resolveTextModel(model: "pro" | "lite" | "flash"): string {
     default:
       return LITE_MODEL_NAME;
   }
+}
+
+/**
+ * Error kinds that should immediately terminate the agent loop rather than
+ * being sent back to the LLM as a function response. Quota-exhausted errors
+ * are unrecoverable — retrying would just hit the same wall, and the UI
+ * provides special treatment for them, so we don't want the agent to re-
+ * interpret the error, but rather return it to the system directly.
+ */
+const FATAL_KINDS: ReadonlySet<string> = new Set([
+  "free-quota-exhausted",
+  "paid-quota-exhausted",
+]);
+
+/**
+ * Classifies a generation error and decides whether to break the agent loop
+ * or let the LLM retry.
+ *
+ * When a generation function (image, video, text, etc.) fails, the error
+ * string may contain structured JSON (e.g. RESOURCE_EXHAUSTED) that
+ * `decodeErrorData` can classify. If the error is fatal (quota exhausted),
+ * this returns `err()` — an Outcome error that propagates up through
+ * `FunctionCallerImpl.getResults()` and causes the loop to exit. Otherwise,
+ * it returns `{ error: ... }` — a successful function response that the LLM
+ * sees and can decide how to handle (retry, report to user, etc.).
+ */
+function asErrorOrResponse(error: {
+  $error: string;
+  metadata?: ErrorMetadata;
+}): { error: string } | { $error: string; metadata?: ErrorMetadata } {
+  const decoded = decodeErrorData(error.$error, error.metadata);
+  if (decoded.metadata?.kind && FATAL_KINDS.has(decoded.metadata.kind)) {
+    return error;
+  }
+  return { error: error.$error };
 }

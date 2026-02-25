@@ -239,7 +239,7 @@ class Loop {
         const functionResults = await functionCaller.getResults();
         if (!functionResults) continue;
         if (!ok(functionResults)) {
-          return err(`Agent unable to proceed: ${functionResults.$error}`);
+          return functionResults;
         }
         // Report each function result individually
         for (const { callId, response } of functionResults.results) {

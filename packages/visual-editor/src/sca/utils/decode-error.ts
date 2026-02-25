@@ -81,7 +81,9 @@ function maybeExtractRichError(s: string): RichError {
           kind:
             json?.error_reason === "PAID_QUOTA_EXHAUSTED"
               ? "paid-quota-exhausted"
-              : "free-quota-exhausted",
+              : json?.error_reason === "FREE_QUOTA_EXHAUSTED"
+                ? "free-quota-exhausted"
+                : "capacity",
         },
       };
     }
