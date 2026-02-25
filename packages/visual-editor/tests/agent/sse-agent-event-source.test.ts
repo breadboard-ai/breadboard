@@ -106,29 +106,62 @@ suite("SSEAgentEventSource", () => {
     assert.deepStrictEqual(body, TEST_CONFIG);
   });
 
-  test("suspend events are dispatched to consumer", async () => {
-    // In the Resumable Stream Protocol, suspend events are just events
-    // like any other. The client will POST again with the interaction ID
-    // in Phase 4.5 — for now, they're simply passed to the consumer.
-    const events: AgentEvent[] = [
+  test("suspend event triggers reconnect with interactionId", async () => {
+    // Reconnect model: when a suspend event arrives (has requestId +
+    // interactionId), the client awaits the handler, then POSTs again
+    // with {interactionId, response} to resume on a new stream.
+
+    // Stream 1: events → suspend (stream closes)
+    const stream1Events: AgentEvent[] = [
+      { type: "thought", text: "thinking" },
       {
         type: "waitForInput",
         requestId: "req-42",
-        prompt: { parts: [{ text: "What?" }], role: "model" },
+        interactionId: "int-abc",
+        prompt: { parts: [{ text: "What is your name?" }], role: "model" },
         inputType: "text",
       } as AgentEvent,
-      { type: "finish" },
     ];
-    installFetch(events);
+
+    // Stream 2: resumed events → complete
+    const stream2Events: AgentEvent[] = [
+      { type: "thought", text: "processing response" },
+      {
+        type: "complete",
+        result: { success: true, href: "/", outcomes: undefined },
+      } as AgentEvent,
+    ];
+
+    let callCount = 0;
+    mock.method(
+      globalThis,
+      "fetch",
+      async (url: string | URL | Request, init?: RequestInit) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        fetchCalls.push({ url: urlStr, init });
+        callCount++;
+        if (callCount === 1) {
+          return mockFetchResponse(sseStream(stream1Events));
+        }
+        return mockFetchResponse(sseStream(stream2Events));
+      }
+    );
 
     const consumer = new AgentEventConsumer();
-    const received: AgentEvent[] = [];
+    const received: string[] = [];
 
-    consumer.on("waitForInput", (event) => {
-      received.push(event);
+    consumer.on("thought", (event) => {
+      received.push(`thought:${event.text}`);
     });
-    consumer.on("finish", (event) => {
-      received.push(event);
+    consumer.on("complete", () => {
+      received.push("complete");
+    });
+
+    // Suspend handler: the consumer returns the user's response.
+    consumer.on("waitForInput", () => {
+      return Promise.resolve({
+        input: { parts: [{ text: "Alice" }] },
+      });
     });
 
     const source = new SSEAgentEventSource(
@@ -139,11 +172,26 @@ suite("SSEAgentEventSource", () => {
     );
     await source.connect();
 
-    assert.strictEqual(received.length, 2);
-    assert.strictEqual(received[0].type, "waitForInput");
+    // Both streams' events should be dispatched.
+    assert.deepStrictEqual(received, [
+      "thought:thinking",
+      "thought:processing response",
+      "complete",
+    ]);
 
-    // No side-channel POST — only the initial POST to start the stream.
-    assert.strictEqual(fetchCalls.length, 1);
+    // Two fetch calls: initial + resume.
+    assert.strictEqual(fetchCalls.length, 2);
+
+    // First call: original config.
+    const body1 = JSON.parse(fetchCalls[0].init?.body as string);
+    assert.deepStrictEqual(body1, TEST_CONFIG);
+
+    // Second call: resume with interactionId + response.
+    const body2 = JSON.parse(fetchCalls[1].init?.body as string);
+    assert.strictEqual(body2.interactionId, "int-abc");
+    assert.deepStrictEqual(body2.response, {
+      input: { parts: [{ text: "Alice" }] },
+    });
   });
 
   test("processes events between finish and complete", async () => {

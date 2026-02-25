@@ -10,8 +10,10 @@ import {
   ConsentUIType,
   LLMContent,
   Outcome,
+  OutputValues,
   RuntimeFlags,
   Schema,
+  WorkItem,
 } from "@breadboard-ai/types";
 import { ok, err } from "@breadboard-ai/utils";
 import { Params } from "../a2/common.js";
@@ -357,6 +359,56 @@ async function invokeRemoteAgent(
     })
     .on("subagentFinish", (event) => {
       reporterMap.get(event.callId)?.finish();
+    })
+    .on("waitForInput", (event) => {
+      // Display the suspend event's prompt as a chat output, matching
+      // AgentUI.#addChatOutput(). This creates a WorkItem visible in
+      // the console and an output entry in the app screen.
+      const outputId = crypto.randomUUID();
+      const promptContent = event.prompt;
+      if (consoleEntry) {
+        const product: WorkItem["product"] = new Map();
+        product.set("message", promptContent);
+        consoleEntry.work.set(outputId, {
+          title: "Response",
+          start: 0,
+          end: 0,
+          elapsed: 0,
+          awaitingUserInput: false,
+          product,
+        });
+      }
+      if (appScreen) {
+        const schema = {
+          properties: {
+            message: { type: "object", behavior: ["llm-content"] },
+          },
+        } satisfies Schema;
+        const entry = {
+          schema,
+          output: { message: promptContent } as OutputValues,
+        };
+        appScreen.outputs.set(outputId, entry);
+        appScreen.last = entry;
+      }
+
+      const behaviors: BehaviorSchema[] = ["transient", "llm-content"];
+      if (!event.skipLabel) {
+        behaviors.push("hint-required");
+      }
+      return requestInput(
+        moduleArgs,
+        {
+          properties: {
+            input: {
+              type: "object",
+              behavior: behaviors,
+              format: event.inputType,
+            },
+          },
+        },
+        event.skipLabel
+      ) as Promise<unknown>;
     });
 
   await handle.connect();

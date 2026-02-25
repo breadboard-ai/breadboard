@@ -259,14 +259,19 @@ type AgentEvent =
 /**
  * All event types that suspend the loop and wait for a client response.
  * Each has a `requestId` for correlation.
+ *
+ * When received from a remote backend (SSE), these also carry an
+ * `interactionId` for the reconnect protocol — the client POSTs it
+ * back to resume the stream.
  */
-type SuspendEvent =
+type SuspendEvent = (
   | WaitForInputEvent
   | WaitForChoiceEvent
   | ReadGraphEvent
   | InspectNodeEvent
   | ApplyEditsEvent
-  | QueryConsentEvent;
+  | QueryConsentEvent
+) & { interactionId?: string };
 
 /**
  * The response the client sends back to resume a suspended request.
