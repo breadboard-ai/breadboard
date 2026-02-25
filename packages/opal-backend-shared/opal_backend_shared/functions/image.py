@@ -34,6 +34,11 @@ from ..step_executor import (
     encode_base64,
 )
 from ..task_tree_manager import TaskTreeManager
+from ..shared_schemas import (
+    STATUS_UPDATE_SCHEMA,
+    TASK_ID_SCHEMA,
+    FILE_NAME_SCHEMA,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -207,25 +212,58 @@ def _define_generate_images(
                     "type": "string",
                     "description": (
                         "Detailed prompt to use for image generation. "
-                        "Be as descriptive as possible. Describe the scene, "
-                        "don't just list keywords. A narrative, descriptive "
-                        "paragraph will almost always produce a better image."
+                        "This model can generate multiple images from a "
+                        "single prompt. Especially when looking for "
+                        "consistency across images (for instance, when "
+                        "generating video keyframes), this is a very useful "
+                        "capability. Be specific about how many images to "
+                        "generate. "
+                        "When composing the prompt, be as descriptive as "
+                        "possible. Describe the scene, don't just list "
+                        "keywords. The model's core strength is its deep "
+                        "language understanding. A narrative, descriptive "
+                        "paragraph will almost always produce a better, more "
+                        "coherent image than a list of disconnected words. "
+                        "This function allows you to use multiple input "
+                        "images to compose a new scene or transfer the style "
+                        "from one image to another. "
+                        "Here are some possible applications: "
+                        "Text-to-Image: Generate high-quality images from "
+                        "simple or complex text descriptions. Provide a text "
+                        "prompt and no images as input. "
+                        "Image + Text-to-Image (Editing): Provide an image "
+                        "and use the text prompt to add, remove, or modify "
+                        "elements, change the style, or adjust the color "
+                        "grading. "
+                        "Multi-Image to Image (Composition & style transfer): "
+                        "Use multiple input images to compose a new scene or "
+                        "transfer the style from one image to another. "
+                        "High-Fidelity text rendering: Accurately generate "
+                        "images that contain legible and well-placed text, "
+                        "ideal for logos, diagrams, and posters."
                     ),
                 },
                 "model": {
                     "type": "string",
                     "enum": ["pro", "flash"],
+                    "default": "flash",
                     "description": (
-                        'The model to use. "pro" for professional asset '
-                        'production and text rendering; "flash" for speed.'
+                        "The Gemini model to use for image generation. "
+                        "How to choose the right model: "
+                        'choose "pro" to accurately generate images that '
+                        "contain legible and well-placed text, ideal for "
+                        "logos, diagrams, and posters. This model is designed "
+                        "for professional asset production and complex "
+                        "instructions. "
+                        'Choose "flash" for speed and efficiency. This model '
+                        "is optimized for high-volume, low-latency tasks."
                     ),
                 },
                 "images": {
                     "type": "array",
                     "items": {"type": "string"},
                     "description": (
-                        "Optional list of input image file paths for "
-                        "editing or style transfer."
+                        "A list of input images, specified as file paths."
                     ),
                 },
                 "aspect_ratio": {
@@ -233,20 +271,11 @@ def _define_generate_images(
                     "enum": ["1:1", "9:16", "16:9", "4:3", "3:4"],
                     "description": "The aspect ratio for generated images.",
                 },
-                "file_name": {
-                    "type": "string",
-                    "description": "Optional file name for the output.",
-                },
-                "task_id": {
-                    "type": "string",
-                    "description": "Task ID for progress tracking.",
-                },
-                "status_update": {
-                    "type": "string",
-                    "description": "Brief status text shown in the UI.",
-                },
+                **FILE_NAME_SCHEMA,
+                **TASK_ID_SCHEMA,
+                **STATUS_UPDATE_SCHEMA,
             },
-            "required": ["prompt", "model"],
+            "required": ["prompt"],
         },
         response_json_schema={
             "type": "object",

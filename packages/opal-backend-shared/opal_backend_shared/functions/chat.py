@@ -22,6 +22,9 @@ from typing import Any
 from ..function_definition import FunctionDefinition, FunctionGroup
 from ..suspend import SuspendError
 from ..task_tree_manager import TaskTreeManager
+from ..agent_file_system import AgentFileSystem
+from ..pidgin import from_pidgin_string
+from ..shared_schemas import TASK_ID_SCHEMA
 
 
 CHAT_REQUEST_USER_INPUT = "chat_request_user_input"
@@ -136,10 +139,7 @@ def _define_request_user_input(
                         "function returns { skipped: true }."
                     ),
                 },
-                "task_id": {
-                    "type": "string",
-                    "description": "ID of the task this input is for.",
-                },
+                **TASK_ID_SCHEMA,
             },
             "required": ["user_message"],
         },
@@ -167,6 +167,7 @@ def _define_request_user_input(
 
 def _define_present_choices(
     task_tree_manager: TaskTreeManager,
+    file_system: AgentFileSystem,
 ) -> FunctionDefinition:
     """Port of ``chat_present_choices`` from chat.ts.
 
@@ -190,16 +191,18 @@ def _define_present_choices(
         if layout not in VALID_LAYOUTS:
             layout = "list"
 
-        # Transform choices: TS uses {id, content: LLMContent} but the
-        # function receives {id, label: string}. Convert label → LLMContent.
+        # Resolve pidgin file references in the prompt and choice labels.
+        # The agent writes pidgin text (<file src="/mnt/..." />) which
+        # must be resolved to inline data before sending to the client.
+        prompt_content = from_pidgin_string(user_message, file_system)
+
         choice_events = []
         for c in choices:
+            label = c.get("label", "")
+            choice_content = from_pidgin_string(label, file_system)
             choice_events.append({
                 "id": c.get("id", ""),
-                "content": {
-                    "parts": [{"text": c.get("label", "")}],
-                    "role": "model",
-                },
+                "content": choice_content,
             })
 
         request_id = str(uuid.uuid4())
@@ -207,10 +210,7 @@ def _define_present_choices(
         event: dict[str, Any] = {
             "type": "waitForChoice",
             "requestId": request_id,
-            "prompt": {
-                "parts": [{"text": user_message}],
-                "role": "model",
-            },
+            "prompt": prompt_content,
             "choices": choice_events,
             "selectionMode": selection_mode,
             "layout": layout,
@@ -243,7 +243,9 @@ def _define_present_choices(
                 "user_message": {
                     "type": "string",
                     "description": (
-                        "Message explaining what the user should choose."
+                        "Message explaining what the user should choose. "
+                        "The content may include references to files using "
+                        '<file src="/mnt/name.ext" /> tags.'
                     ),
                 },
                 "choices": {
@@ -257,7 +259,11 @@ def _define_present_choices(
                             },
                             "label": {
                                 "type": "string",
-                                "description": "Display text for the choice.",
+                                "description": (
+                                    "Display text for the choice. The content "
+                                    "may include references to files using "
+                                    '<file src="/mnt/name.ext" /> tags.'
+                                ),
                             },
                         },
                         "required": ["id", "label"],
@@ -277,21 +283,28 @@ def _define_present_choices(
                     "enum": VALID_LAYOUTS,
                     "default": "list",
                     "description": (
-                        'Layout hint: "list" (vertical), '
-                        '"row" (horizontal), "grid" (wrapping).'
+                        'Layout hint for displaying choices: '
+                        '"list" (default): Vertical stack, best for longer '
+                        'choice labels. '
+                        '"row": Horizontal inline, best for short choices '
+                        'like "Yes/No" or side-by-side comparisons '
+                        '(e.g. images). '
+                        '"grid": Wrapping grid that adapts to available space.'
                     ),
                 },
                 "none_of_the_above_label": {
                     "type": "string",
                     "description": (
-                        "If provided, adds a 'none of the above' escape "
-                        "option with this label."
+                        "If provided, adds a visually distinct 'none of the "
+                        "above' escape option with this label (e.g., 'Exit', "
+                        "'Skip', 'Try Again'). Rendered below a separator "
+                        "with secondary styling. When selected, returns ID "
+                        '"__none_of_the_above__". Best suited for single '
+                        "selection mode; in multiple mode it behaves as a "
+                        "regular checkbox."
                     ),
                 },
-                "task_id": {
-                    "type": "string",
-                    "description": "ID of the task this choice is for.",
-                },
+                **TASK_ID_SCHEMA,
             },
             "required": ["user_message", "choices", "selection_mode"],
         },
@@ -315,18 +328,20 @@ def _define_present_choices(
 def get_chat_function_group(
     *,
     task_tree_manager: TaskTreeManager,
+    file_system: AgentFileSystem,
 ) -> FunctionGroup:
     """Build a FunctionGroup with all chat functions.
 
     Args:
         task_tree_manager: For tracking task progress.
+        file_system: For resolving pidgin file references in choices.
 
     Returns:
         FunctionGroup with chat_request_user_input and
         chat_present_choices functions.
     """
     request_input = _define_request_user_input(task_tree_manager)
-    present_choices = _define_present_choices(task_tree_manager)
+    present_choices = _define_present_choices(task_tree_manager, file_system)
 
     return FunctionGroup(
         instruction=INSTRUCTION,

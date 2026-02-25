@@ -173,6 +173,7 @@ def _build_function_groups(
         ),
         get_chat_function_group(
             task_tree_manager=task_tree_manager,
+            file_system=file_system,
         ),
     ]
 

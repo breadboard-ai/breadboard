@@ -22,7 +22,7 @@ class TestChatFunctionGroup(unittest.TestCase):
     def test_returns_function_group(self):
         fs = AgentFileSystem()
         ttm = TaskTreeManager(fs)
-        group = get_chat_function_group(task_tree_manager=ttm)
+        group = get_chat_function_group(task_tree_manager=ttm, file_system=fs)
         self.assertIsNotNone(group.instruction)
         self.assertTrue(len(group.definitions) == 2)
         self.assertTrue(len(group.declarations) == 2)
@@ -30,7 +30,7 @@ class TestChatFunctionGroup(unittest.TestCase):
     def test_has_both_functions(self):
         fs = AgentFileSystem()
         ttm = TaskTreeManager(fs)
-        group = get_chat_function_group(task_tree_manager=ttm)
+        group = get_chat_function_group(task_tree_manager=ttm, file_system=fs)
         names = [name for name, _ in group.definitions]
         self.assertIn(CHAT_REQUEST_USER_INPUT, names)
         self.assertIn(CHAT_PRESENT_CHOICES, names)
@@ -42,7 +42,7 @@ class TestChatRequestUserInput(unittest.TestCase):
     def _get_handler(self):
         fs = AgentFileSystem()
         ttm = TaskTreeManager(fs)
-        group = get_chat_function_group(task_tree_manager=ttm)
+        group = get_chat_function_group(task_tree_manager=ttm, file_system=fs)
         for name, defn in group.definitions:
             if name == CHAT_REQUEST_USER_INPUT:
                 return defn.handler
@@ -132,7 +132,7 @@ class TestChatPresentChoices(unittest.TestCase):
     def _get_handler(self):
         fs = AgentFileSystem()
         ttm = TaskTreeManager(fs)
-        group = get_chat_function_group(task_tree_manager=ttm)
+        group = get_chat_function_group(task_tree_manager=ttm, file_system=fs)
         for name, defn in group.definitions:
             if name == CHAT_PRESENT_CHOICES:
                 return defn.handler

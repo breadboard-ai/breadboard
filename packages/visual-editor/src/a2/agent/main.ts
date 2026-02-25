@@ -10,12 +10,13 @@ import {
   ConsentUIType,
   LLMContent,
   Outcome,
-  OutputValues,
   RuntimeFlags,
   Schema,
-  WorkItem,
 } from "@breadboard-ai/types";
 import { ok, err } from "@breadboard-ai/utils";
+import { addChatOutput } from "./chat-output.js";
+import { A2UIInteraction } from "./a2ui-interaction.js";
+import { ChoicePresenter } from "./choice-presenter.js";
 import { Params } from "../a2/common.js";
 import type { ProgressReporter } from "./types.js";
 import { Template } from "../a2/template.js";
@@ -361,36 +362,8 @@ async function invokeRemoteAgent(
       reporterMap.get(event.callId)?.finish();
     })
     .on("waitForInput", (event) => {
-      // Display the suspend event's prompt as a chat output, matching
-      // AgentUI.#addChatOutput(). This creates a WorkItem visible in
-      // the console and an output entry in the app screen.
-      const outputId = crypto.randomUUID();
-      const promptContent = event.prompt;
-      if (consoleEntry) {
-        const product: WorkItem["product"] = new Map();
-        product.set("message", promptContent);
-        consoleEntry.work.set(outputId, {
-          title: "Response",
-          start: 0,
-          end: 0,
-          elapsed: 0,
-          awaitingUserInput: false,
-          product,
-        });
-      }
-      if (appScreen) {
-        const schema = {
-          properties: {
-            message: { type: "object", behavior: ["llm-content"] },
-          },
-        } satisfies Schema;
-        const entry = {
-          schema,
-          output: { message: promptContent } as OutputValues,
-        };
-        appScreen.outputs.set(outputId, entry);
-        appScreen.last = entry;
-      }
+      // Display the prompt as a chat output.
+      addChatOutput(event.prompt, consoleEntry, appScreen);
 
       const behaviors: BehaviorSchema[] = ["transient", "llm-content"];
       if (!event.skipLabel) {
@@ -409,6 +382,26 @@ async function invokeRemoteAgent(
         },
         event.skipLabel
       ) as Promise<unknown>;
+    })
+    .on("waitForChoice", async (event) => {
+      // Display the prompt as a chat output.
+      addChatOutput(event.prompt, consoleEntry, appScreen);
+
+      // Create an A2UIInteraction for rendering the choice UI.
+      // No PidginTranslator needed — the server already translated.
+      const interaction = new A2UIInteraction(consoleEntry, appScreen);
+      const choicePresenter = new ChoicePresenter(
+        null as never, // translator unused — presentTranslatedChoices skips it
+        interaction
+      );
+
+      return choicePresenter.presentTranslatedChoices(
+        event.prompt,
+        event.choices,
+        undefined, // surfaceId default
+        event.selectionMode,
+        event.noneOfTheAboveLabel
+      );
     });
 
   await handle.connect();

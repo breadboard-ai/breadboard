@@ -31,6 +31,10 @@ from ..function_definition import (
 from ..gemini_client import stream_generate_content
 from ..pidgin import content_to_pidgin_string, from_pidgin_string
 from ..task_tree_manager import TaskTreeManager
+from ..shared_schemas import (
+    STATUS_UPDATE_SCHEMA,
+    TASK_ID_SCHEMA,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -325,18 +329,8 @@ def _define_generate_text(
                         "context from URLs specified in the prompt."
                     ),
                 },
-                "task_id": {
-                    "type": "string",
-                    "description": (
-                        "The task ID for progress tracking."
-                    ),
-                },
-                "status_update": {
-                    "type": "string",
-                    "description": (
-                        "Brief status text shown in the UI."
-                    ),
-                },
+                **TASK_ID_SCHEMA,
+                **STATUS_UPDATE_SCHEMA,
             },
             "required": ["prompt", "model"],
         },
@@ -541,18 +535,8 @@ def _define_generate_and_execute_code(
                         "real-time web content."
                     ),
                 },
-                "task_id": {
-                    "type": "string",
-                    "description": (
-                        "The task ID for progress tracking."
-                    ),
-                },
-                "status_update": {
-                    "type": "string",
-                    "description": (
-                        "Brief status text shown in the UI."
-                    ),
-                },
+                **TASK_ID_SCHEMA,
+                **STATUS_UPDATE_SCHEMA,
             },
             "required": ["prompt"],
         },

@@ -35,6 +35,11 @@ from ..step_executor import (
     encode_base64,
 )
 from ..task_tree_manager import TaskTreeManager
+from ..shared_schemas import (
+    STATUS_UPDATE_SCHEMA,
+    TASK_ID_SCHEMA,
+    FILE_NAME_SCHEMA,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -257,8 +262,8 @@ def _define_generate_video(
     return FunctionDefinition(
         name=GENERATE_VIDEO_FUNCTION,
         description=(
-            "Generates a video based on a text prompt and optionally "
-            "a reference image"
+            "Generating high-fidelity, 8-second videos featuring stunning "
+            "realism and natively generated audio"
         ),
         handler=handler,
         icon="videocam_auto",
@@ -269,36 +274,55 @@ def _define_generate_video(
                 "prompt": {
                     "type": "string",
                     "description": (
-                        "Detailed prompt describing the video to generate. "
-                        "Be descriptive — describe the scene, motion, "
-                        "camera angles, and mood."
+                        "The prompt to generate the video. "
+                        "Good prompts are descriptive and clear. Start with "
+                        "identifying your core idea, refine your idea by "
+                        "adding keywords and modifiers, and incorporate "
+                        "video-specific terminology into your prompts. "
+                        "The following elements should be included in your "
+                        "prompt: "
+                        "Subject: The object, person, animal, or scenery "
+                        "that you want in your video, such as cityscape, "
+                        "nature, vehicles, or puppies. "
+                        "Action: What the subject is doing (for example, "
+                        "walking, running, or turning their head). "
+                        "Style: Specify creative direction using specific "
+                        "film style keywords, such as sci-fi, horror film, "
+                        "film noir, or animated styles like cartoon. "
+                        "Camera positioning and motion: [Optional] Control "
+                        "the camera's location and movement using terms like "
+                        "aerial view, eye-level, top-down shot, dolly shot, "
+                        "or worms eye. "
+                        "Composition: [Optional] How the shot is framed, "
+                        "such as wide shot, close-up, single-shot or "
+                        "two-shot. "
+                        "Focus and lens effects: [Optional] Use terms like "
+                        "shallow focus, deep focus, soft focus, macro lens, "
+                        "and wide-angle lens to achieve specific visual "
+                        "effects. "
+                        "Ambiance: [Optional] How the color and light "
+                        "contribute to the scene, such as blue tones, "
+                        "night, or warm tones."
                     ),
                 },
                 "images": {
                     "type": "array",
                     "items": {"type": "string"},
                     "description": (
-                        "Optional reference image file paths for "
-                        "image-to-video generation."
+                        "A list of input reference images, specified as "
+                        "file paths. Use reference images only when you "
+                        "need to start with a particular image."
                     ),
                 },
                 "aspect_ratio": {
                     "type": "string",
                     "enum": ASPECT_RATIOS,
-                    "description": "The aspect ratio for the generated video.",
+                    "default": "16:9",
+                    "description": "The aspect ratio of the video.",
                 },
-                "file_name": {
-                    "type": "string",
-                    "description": "Optional file name for the output.",
-                },
-                "task_id": {
-                    "type": "string",
-                    "description": "Task ID for progress tracking.",
-                },
-                "status_update": {
-                    "type": "string",
-                    "description": "Brief status text shown in the UI.",
-                },
+                **FILE_NAME_SCHEMA,
+                **TASK_ID_SCHEMA,
+                **STATUS_UPDATE_SCHEMA,
             },
             "required": ["prompt"],
         },
