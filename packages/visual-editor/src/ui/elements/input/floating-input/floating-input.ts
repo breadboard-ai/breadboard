@@ -49,6 +49,12 @@ import { scaContext } from "../../../../sca/context/context.js";
 import { type SCA } from "../../../../sca/sca.js";
 import { NOTEBOOKLM_MIMETYPE, toNotebookLmUrl } from "@breadboard-ai/utils";
 
+/**
+ * Sentinel value that signals a skip action.
+ * Must match the SKIPPED_SENTINEL in chat.ts.
+ */
+const SKIPPED_SENTINEL = "__skipped__";
+
 interface SupportedActions {
   allowAddAssets: boolean;
   allowedUploadMimeTypes: string | null;
@@ -79,6 +85,9 @@ export class FloatingInput extends SignalWatcher(LitElement) {
 
   @property()
   accessor disclaimerContent: HTMLTemplateResult | string | null = null;
+
+  @property()
+  accessor skipLabel: string | null = null;
 
   @property({ reflect: true, type: Boolean })
   accessor neutral = false;
@@ -220,6 +229,40 @@ export class FloatingInput extends SignalWatcher(LitElement) {
         }
       }
 
+      #skip-container {
+        display: flex;
+        justify-content: flex-end;
+        width: calc(
+          100% - var(--bb-floating-input-margin, var(--bb-grid-size-12))
+        );
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 0 var(--bb-grid-size-4) 0;
+
+        & button {
+          cursor: pointer;
+          font-family: var(--a2ui-font-family-flex, var(--bb-font-family));
+          font-weight: 500;
+          font-style: normal;
+          height: var(--a2ui-button-height, 40px);
+          padding: var(--a2ui-button-padding, 0 16px);
+          border-radius: var(--a2ui-button-radius, 20px);
+          border: 1px solid var(--n-60);
+          background: transparent;
+          color: var(
+            --a2ui-button-color,
+            light-dark(var(--p-20), var(--n-100))
+          );
+          overflow: hidden;
+          position: relative;
+          transition: background var(--a2ui-transition-speed, 0.2s) ease;
+
+          &:hover {
+            background: var(--a2ui-button-hover-bg, var(--light-dark-n-100));
+          }
+        }
+      }
+
       bb-speech-to-text,
       bb-add-asset-button {
         --text-color: light-dark(var(--p-40), var(--n-95));
@@ -265,6 +308,30 @@ export class FloatingInput extends SignalWatcher(LitElement) {
 
   disconnectedCallback(): void {
     this.#resizeObserver.disconnect();
+  }
+
+  /**
+   * Resolves the current input with the skip sentinel, which bubbles
+   * back through the resolve chain to chat.ts where it becomes { skipped: true }.
+   */
+  #skipInput(): void {
+    if (!this.schema) return;
+    const props = Object.entries(this.schema.properties ?? {});
+    if (!props.length) return;
+
+    const [name] = props[0];
+    const inputValues: OutputValues = {
+      [name]: { role: "user", parts: [{ text: SKIPPED_SENTINEL }] },
+    };
+
+    this.dispatchEvent(
+      new StateEvent({
+        eventType: "board.input",
+        id: "unknown",
+        data: inputValues,
+        allowSavingIfSecret: true,
+      })
+    );
   }
 
   #attemptNotebookLMPickerFlow() {
@@ -656,6 +723,17 @@ export class FloatingInput extends SignalWatcher(LitElement) {
     }
 
     return [
+      this.skipLabel
+        ? html`<div id="skip-container">
+            <button
+              @click=${() => {
+                this.#skipInput();
+              }}
+            >
+              ${this.skipLabel}
+            </button>
+          </div>`
+        : nothing,
       html`<section id="container">
         <bb-asset-shelf
           @assetchanged=${() => {

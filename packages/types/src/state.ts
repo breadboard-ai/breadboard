@@ -82,7 +82,7 @@ export type ConsoleEntry = {
    * This is the direct-access path used by A2 modules via caps.input().
    * It bypasses the old event-based bubbling machinery entirely.
    */
-  requestInput(schema: Schema): Promise<OutputValues>;
+  requestInput(schema: Schema, skipLabel?: string): Promise<OutputValues>;
 
   /**
    * Makes a pending input request visible by creating its WorkItem.

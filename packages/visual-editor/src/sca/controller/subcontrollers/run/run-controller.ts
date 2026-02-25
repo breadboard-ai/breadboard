@@ -30,6 +30,7 @@ export { STATUS };
 export type UserInput = {
   id: NodeIdentifier;
   schema: Schema;
+  skipLabel?: string;
 };
 
 /**
@@ -138,8 +139,9 @@ export class RunController extends RootController {
    * Set by the action layer to handle cross-controller coordination
    * (bumping screens, setting renderer state, etc.).
    */
-  onInputRequested: ((id: NodeIdentifier, schema: Schema) => void) | null =
-    null;
+  onInputRequested:
+    | ((id: NodeIdentifier, schema: Schema, skipLabel?: string) => void)
+    | null = null;
 
   /**
    * Pending node action request.
@@ -474,7 +476,8 @@ export class RunController extends RootController {
    */
   requestInputForNode(
     id: NodeIdentifier,
-    schema: Schema
+    schema: Schema,
+    skipLabel?: string
   ): Promise<OutputValues> {
     return new Promise((resolve) => {
       this._pendingInputResolvers.set(id, resolve);
@@ -482,7 +485,7 @@ export class RunController extends RootController {
 
       // Notify the action layer so it can handle cross-controller
       // coordination (bump screen, set renderer state, set reactive input).
-      this.onInputRequested?.(id, schema);
+      this.onInputRequested?.(id, schema, skipLabel);
     });
   }
 
@@ -568,11 +571,11 @@ export class RunController extends RootController {
       completed: status === "succeeded",
       current: null,
       addOutput() {},
-      requestInput(schema: Schema): Promise<OutputValues> {
+      requestInput(schema: Schema, skipLabel?: string): Promise<OutputValues> {
         if (!ctrl || !nodeId) {
           return Promise.reject(new Error("No controller bound for input"));
         }
-        return ctrl.requestInputForNode(nodeId, schema);
+        return ctrl.requestInputForNode(nodeId, schema, skipLabel);
       },
       activateInput() {
         if (ctrl && nodeId) {

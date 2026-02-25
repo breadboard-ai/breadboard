@@ -205,7 +205,11 @@ export type ChatChoicesResponse = {
 };
 
 export type ChatManager = {
-  chat(pidginString: string, inputType: string): Promise<Outcome<ChatResponse>>;
+  chat(
+    pidginString: string,
+    inputType: string,
+    skipLabel?: string
+  ): Promise<Outcome<ChatResponse>>;
   presentChoices(
     message: string,
     choices: ChatChoice[],

@@ -20,7 +20,8 @@ export { requestInput };
  */
 async function requestInput(
   args: A2ModuleArgs,
-  schema: Schema
+  schema: Schema,
+  skipLabel?: string
 ): Promise<Outcome<OutputValues>> {
   const { currentStep, getProjectRunState } = args.context;
   const stepId = currentStep?.id;
@@ -30,5 +31,5 @@ async function requestInput(
       `Unable to request input: no console entry found for node "${stepId}"`
     );
   }
-  return entry.requestInput(schema);
+  return entry.requestInput(schema, skipLabel);
 }

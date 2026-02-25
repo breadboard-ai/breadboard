@@ -138,9 +138,10 @@ async function askUser(
   });
 
   const inputSchema = createInputSchema(title, modality, required);
+  const skipLabel = required ? undefined : "Skip";
 
   // === input phase: Get user input ===
-  const response = await requestInput(moduleArgs, inputSchema);
+  const response = await requestInput(moduleArgs, inputSchema, skipLabel);
   if (!ok(response)) {
     return response;
   }
@@ -152,6 +153,14 @@ async function askUser(
   if (!request) {
     // No input provided - return empty context
     return { context: [] };
+  }
+
+  // Check if user tapped Skip
+  const firstText = request.parts?.find(
+    (p): p is { text: string } => "text" in p
+  )?.text;
+  if (firstText === "__skipped__") {
+    return { context: [{ parts: [{ text: "" }] }] };
   }
 
   return { context: [request] };

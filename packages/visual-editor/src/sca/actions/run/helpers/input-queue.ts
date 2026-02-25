@@ -28,14 +28,15 @@ import { getLogger, Formatter } from "../../../utils/logging/logger.js";
 export function handleInputRequested(
   id: string,
   schema: Schema,
-  run: AppController["run"]
+  run: AppController["run"],
+  skipLabel?: string
 ): void {
   // Add to the pending queue.
   run.main.addPendingInput(id, schema);
 
   // Only activate if no input is currently active.
   if (!run.main.input) {
-    activateInputEntry(id, schema, run);
+    activateInputEntry(id, schema, run, skipLabel);
   }
 }
 
@@ -46,7 +47,8 @@ export function handleInputRequested(
 function activateInputEntry(
   id: string,
   schema: Schema,
-  run: AppController["run"]
+  run: AppController["run"],
+  skipLabel?: string
 ): void {
   // Bump the screen to the bottom of the list (last = current).
   run.screen.bumpScreen(id);
@@ -62,7 +64,7 @@ function activateInputEntry(
   run.renderer.setNodeState(id, { status: "waiting" });
 
   // Set the reactive input signal so the UI shows the input form.
-  run.main.setInput({ id, schema });
+  run.main.setInput({ id, schema, skipLabel });
 }
 
 /**

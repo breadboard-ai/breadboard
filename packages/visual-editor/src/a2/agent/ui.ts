@@ -209,7 +209,8 @@ class AgentUI implements A2UIRenderer, ChatManager {
 
   async chat(
     pidginString: string,
-    inputType: string
+    inputType: string,
+    skipLabel?: string
   ): Promise<Outcome<ChatResponse>> {
     const typedInputType = (VALID_INPUT_TYPES as readonly string[]).includes(
       inputType
@@ -229,6 +230,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
       requestId: crypto.randomUUID(),
       prompt: message,
       inputType: computeFormat(typedInputType),
+      skipLabel,
     });
     this.#chatLog.push({ ...chatResponse.input, role: "user" });
     const userText =

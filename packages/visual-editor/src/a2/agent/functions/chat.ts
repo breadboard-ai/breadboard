@@ -30,6 +30,7 @@ const CHAT_REQUEST_USER_INPUT = "chat_request_user_input";
 const CHAT_PRESENT_CHOICES = "chat_present_choices";
 const CHAT_LOG_PATH = "/mnt/system/chat_log.json";
 const NONE_OF_THE_ABOVE_ID = "__none_of_the_above__";
+const SKIPPED_SENTINEL = "__skipped__";
 
 export type ChatFunctionsArgs = {
   chatManager: ChatManager;
@@ -85,10 +86,22 @@ Unless the objective explicitly asks for a particular type of input, use the "an
 `
             )
             .default("any"),
+          skip_label: z
+            .string()
+            .optional()
+            .describe(
+              tr`If provided, adds a "Skip" button above the input with this label (e.g., "Skip", "Not now", "Continue without input"). When the user taps skip, the function returns { skipped: true } instead of waiting for input.`
+            ),
           ...taskIdSchema,
         },
         response: {
           user_input: z.string().describe(`Response from the user`).optional(),
+          skipped: z
+            .boolean()
+            .describe(
+              `True when the user tapped the skip button instead of providing input.`
+            )
+            .optional(),
           error: z
             .string()
             .describe(
@@ -97,14 +110,22 @@ Unless the objective explicitly asks for a particular type of input, use the "an
             .optional(),
         },
       },
-      async ({ user_message, input_type, task_id }) => {
+      async ({ user_message, input_type, skip_label, task_id }) => {
         args.taskTreeManager.setInProgress(task_id, "");
         const chatResponse = await args.chatManager.chat(
           user_message,
-          input_type
+          input_type,
+          skip_label
         );
         if (!ok(chatResponse)) return { error: chatResponse.$error };
         const { input } = chatResponse;
+        // Check for the skip sentinel before pidgin translation.
+        const firstText = input.parts?.find(
+          (p): p is { text: string } => "text" in p
+        )?.text;
+        if (firstText === SKIPPED_SENTINEL) {
+          return { skipped: true };
+        }
         const pidgin = await args.translator.toPidgin(input, {}, true);
         if (!ok(pidgin)) return { error: pidgin.$error };
         return { user_input: pidgin.text };

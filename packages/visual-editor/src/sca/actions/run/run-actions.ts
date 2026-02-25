@@ -198,8 +198,8 @@ export const prepare = asAction(
 
     // Wire input lifecycle: when a console entry calls requestInputForNode,
     // notify the input queue to handle activation (bump screen, set input, etc.)
-    controller.run.main.onInputRequested = (id, schema) =>
-      handleInputRequested(id, schema, controller.run);
+    controller.run.main.onInputRequested = (id, schema, skipLabel) =>
+      handleInputRequested(id, schema, controller.run, skipLabel);
 
     // Set on controller
     controller.run.main.setRunner(runner, abortController);

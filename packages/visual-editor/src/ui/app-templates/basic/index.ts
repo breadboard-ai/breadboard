@@ -788,6 +788,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     const PADDING = 24;
     return html`<bb-floating-input
       .schema=${input.schema}
+      .skipLabel=${input.skipLabel ?? null}
       .focusWhenIn=${this.focusWhenIn}
       .disclaimerContent=${this.disclaimerContent}
       @bbresize=${(evt: ResizeEvent) => {

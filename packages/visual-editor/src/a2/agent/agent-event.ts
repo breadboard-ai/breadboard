@@ -98,6 +98,7 @@ type WaitForInputEvent = {
   requestId: string;
   prompt: LLMContent;
   inputType: string;
+  skipLabel?: string;
 };
 
 type WaitForChoiceEvent = {

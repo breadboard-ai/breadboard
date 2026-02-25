@@ -5,6 +5,7 @@
  */
 
 import {
+  BehaviorSchema,
   ConsentRequest,
   ConsentUIType,
   LLMContent,
@@ -231,15 +232,23 @@ async function invokeAgent(
       reporterMap.get(event.callId)?.finish();
     })
     .on("waitForInput", (event) => {
-      return requestInput(moduleArgs, {
-        properties: {
-          input: {
-            type: "object",
-            behavior: ["transient", "llm-content", "hint-required"],
-            format: event.inputType,
+      const behaviors: BehaviorSchema[] = ["transient", "llm-content"];
+      if (!event.skipLabel) {
+        behaviors.push("hint-required");
+      }
+      return requestInput(
+        moduleArgs,
+        {
+          properties: {
+            input: {
+              type: "object",
+              behavior: behaviors,
+              format: event.inputType,
+            },
           },
         },
-      }) as Promise<unknown>;
+        event.skipLabel
+      ) as Promise<unknown>;
     })
     .on("waitForChoice", (event) => {
       const promptText = event.prompt.parts

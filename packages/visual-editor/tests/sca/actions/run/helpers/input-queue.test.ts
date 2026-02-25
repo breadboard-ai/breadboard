@@ -59,7 +59,7 @@ suite("input-queue helpers", () => {
 
       assert.deepStrictEqual(
         run.main.input,
-        { id: "node-1", schema: SCHEMA },
+        { id: "node-1", schema: SCHEMA, skipLabel: undefined },
         "input signal should be set"
       );
     });
