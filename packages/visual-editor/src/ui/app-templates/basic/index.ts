@@ -76,7 +76,10 @@ import {
 
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 import { CONSENT_RENDER_INFO } from "../../utils/consent-content-items.js";
-import { isDocSlidesOrSheetsOutput } from "../../../a2/a2/utils.js";
+import {
+  decodeBase64,
+  isDocSlidesOrSheetsOutput,
+} from "../../../a2/a2/utils.js";
 import { scaContext } from "../../../sca/context/context.js";
 import { SCA } from "../../../sca/sca.js";
 import { AppScreenPresenter } from "../../presenters/app-screen-presenter.js";
@@ -98,7 +101,7 @@ function getHTMLOutput(screen: AppScreenOutput): string | null {
         isInlineData(firstPart) &&
         firstPart.inlineData.mimeType === "text/html"
       ) {
-        return atob(firstPart.inlineData.data);
+        return decodeBase64(firstPart.inlineData.data);
       }
     }
   }
