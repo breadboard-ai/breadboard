@@ -719,6 +719,37 @@ export class GoogleDriveClient {
     const result = (await response.json()) as gapi.client.drive.GeneratedIds;
     return result.ids as [string, ...string[]];
   }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list */
+  async listRevisions(
+    fileId: string,
+    options?: BaseRequestOptions
+  ): Promise<gapi.client.drive.RevisionList> {
+    const url = new URL(
+      `${await this.#apiUrl}/${encodeURIComponent(fileId)}/revisions`
+    );
+    const response = await this.#fetch(url, { signal: options?.signal });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive listRevisions ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    return response.json();
+  }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get */
+  async getRevisionContent(
+    fileId: string,
+    revisionId: string,
+    options?: BaseRequestOptions
+  ): Promise<Response> {
+    const url = new URL(
+      `${await this.#apiUrl}/${encodeURIComponent(fileId)}/revisions/${encodeURIComponent(revisionId)}`
+    );
+    url.searchParams.set("alt", "media");
+    return this.#fetch(url, { signal: options?.signal });
+  }
 }
 
 /**

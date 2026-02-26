@@ -774,4 +774,93 @@ suite("GoogleDriveClient", () => {
       assert.strictEqual(meta.createdTime, T0);
     });
   });
+
+  suite("revisions", () => {
+    test("newly created file has one revision", async () => {
+      const file = await client.createFile(
+        new Blob(["v1"], { type: "application/json" }),
+        { name: "test.json", mimeType: "application/json" }
+      );
+
+      const list = await client.listRevisions(file.id);
+      assert.strictEqual(list.revisions!.length, 1);
+      assert.ok(list.revisions![0]!.id!.startsWith("fAkE-rEv-"));
+      assert.strictEqual(list.revisions![0]!.modifiedTime, "2000-01-01T08:00:00Z");
+    });
+
+    test("updates accumulate revisions", async () => {
+      const file = await client.createFile(
+        new Blob(["v1"], { type: "application/json" }),
+        { name: "test.json", mimeType: "application/json" }
+      );
+
+      await client.updateFile(
+        file.id,
+        new Blob(["v2"], { type: "application/json" })
+      );
+      await client.updateFile(
+        file.id,
+        new Blob(["v3"], { type: "application/json" })
+      );
+
+      const list = await client.listRevisions(file.id);
+      assert.strictEqual(list.revisions!.length, 3);
+    });
+
+    test("getRevisionContent returns content for older revision", async () => {
+      const file = await client.createFile(
+        new Blob(["v1-content"], { type: "text/plain" }),
+        { name: "test.txt", mimeType: "text/plain" }
+      );
+
+      const listBefore = await client.listRevisions(file.id);
+      const firstRevisionId = listBefore.revisions![0]!.id!;
+
+      await client.updateFile(
+        file.id,
+        new Blob(["v2-content"], { type: "text/plain" })
+      );
+
+      // Latest content should be v2
+      const latestResponse = await client.getFileMedia(file.id);
+      assert.strictEqual(await latestResponse.text(), "v2-content");
+
+      // First revision should return v1 content
+      const revResponse = await client.getRevisionContent(
+        file.id,
+        firstRevisionId
+      );
+      assert.ok(revResponse.ok);
+      assert.strictEqual(await revResponse.text(), "v1-content");
+    });
+
+    test("getRevisionContent returns latest content for latest revision", async () => {
+      const file = await client.createFile(
+        new Blob(["v1"], { type: "text/plain" }),
+        { name: "test.txt", mimeType: "text/plain" }
+      );
+
+      await client.updateFile(
+        file.id,
+        new Blob(["v2-latest"], { type: "text/plain" })
+      );
+
+      const list = await client.listRevisions(file.id);
+      const latestRevisionId = list.revisions![list.revisions!.length - 1]!.id!;
+
+      const response = await client.getRevisionContent(
+        file.id,
+        latestRevisionId
+      );
+      assert.ok(response.ok);
+      assert.strictEqual(await response.text(), "v2-latest");
+    });
+
+    test("listRevisions throws 404 for non-existent file", async () => {
+      await assert.rejects(
+        () => client.listRevisions("non-existent-file-id"),
+        /404/
+      );
+    });
+  });
 });

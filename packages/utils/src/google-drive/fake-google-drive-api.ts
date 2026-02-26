@@ -16,8 +16,17 @@ import type { AddressInfo } from "net";
 
 type DriveFile = gapi.client.drive.File;
 
+interface FakeRevision {
+  id: string;
+  modifiedTime: string;
+  data?: Uint8Array;
+}
+
 interface FakeGoogleDriveApiSession {
-  files: Map<string, { metadata: DriveFile; data?: Uint8Array }>;
+  files: Map<
+    string,
+    { metadata: DriveFile; data?: Uint8Array; revisions: FakeRevision[] }
+  >;
   requests: Array<{
     method: string;
     url: string;
@@ -366,6 +375,28 @@ export class FakeGoogleDriveApi {
       return this.#handleCreatePermission(fileId, body, res);
     }
 
+    // /drive/v3/files/:fileId/revisions
+    const revisionsMatch = new URLPattern({
+      pathname: "/drive/v3/files/:fileId/revisions",
+    }).exec(url);
+    if (revisionsMatch && req.method === "GET") {
+      const fileId = revisionsMatch.pathname.groups.fileId!;
+      return this.#handleListRevisions(fileId, res);
+    }
+
+    // /drive/v3/files/:fileId/revisions/:revisionId
+    const revisionMatch = new URLPattern({
+      pathname: "/drive/v3/files/:fileId/revisions/:revisionId",
+    }).exec(url);
+    if (revisionMatch && req.method === "GET") {
+      const fileId = revisionMatch.pathname.groups.fileId!;
+      const revisionId = revisionMatch.pathname.groups.revisionId!;
+      if (url.searchParams.get("alt") === "media") {
+        return this.#handleGetRevisionContent(fileId, revisionId, res);
+      }
+      return this.#handleGetRevisionMetadata(fileId, revisionId, res);
+    }
+
     // /drive/v3/files/:fileId/permissions/:permissionId
     const deletePermissionMatch = new URLPattern({
       pathname: "/drive/v3/files/:fileId/permissions/:permissionId",
@@ -472,7 +503,10 @@ export class FakeGoogleDriveApi {
       properties: {},
       ...metadata,
     };
-    this.#session.files.set(newFileId, { metadata: fileMetadata });
+    this.#session.files.set(newFileId, {
+      metadata: fileMetadata,
+      revisions: [{ id: this.#generateFakeRevisionId(), modifiedTime: now }],
+    });
 
     const response = this.#filterFields(fileMetadata, url);
     this.#jsonResponse(res, response);
@@ -558,6 +592,12 @@ export class FakeGoogleDriveApi {
       modifiedTime: this.#nextTimestamp(),
     };
 
+    existingFile.revisions.push({
+      id: this.#generateFakeRevisionId(),
+      modifiedTime: updatedMetadata.modifiedTime!,
+      data: existingFile.data ? new Uint8Array(existingFile.data) : undefined,
+    });
+
     this.#session.files.set(fileId, {
       ...existingFile,
       metadata: updatedMetadata,
@@ -606,9 +646,11 @@ export class FakeGoogleDriveApi {
       id: newFileId,
       version: "1",
     };
+    const now = copiedFileMetadata.createdTime ?? this.#nextTimestamp();
     this.#session.files.set(newFileId, {
       metadata: copiedFileMetadata,
       data: sourceFile.data,
+      revisions: [{ id: this.#generateFakeRevisionId(), modifiedTime: now }],
     });
 
     const response = this.#filterFields(copiedFileMetadata, url);
@@ -725,7 +767,17 @@ export class FakeGoogleDriveApi {
       }),
       ...metadata,
     };
-    this.#session.files.set(fileId, { metadata: fileMetadata, data });
+    this.#session.files.set(fileId, {
+      metadata: fileMetadata,
+      data,
+      revisions: [
+        {
+          id: this.#generateFakeRevisionId(),
+          modifiedTime: now,
+          data: data.length > 0 ? new Uint8Array(data) : undefined,
+        },
+      ],
+    });
     const response = this.#filterFields(fileMetadata, url);
 
     this.#jsonResponse(res, response);
@@ -761,7 +813,17 @@ export class FakeGoogleDriveApi {
       modifiedTime: this.#nextTimestamp(),
     };
 
-    this.#session.files.set(fileId, { metadata: updatedMetadata, data });
+    existingFile.revisions.push({
+      id: this.#generateFakeRevisionId(),
+      modifiedTime: updatedMetadata.modifiedTime!,
+      data: existingFile.data ? new Uint8Array(existingFile.data) : undefined,
+    });
+
+    this.#session.files.set(fileId, {
+      ...existingFile,
+      metadata: updatedMetadata,
+      data,
+    });
 
     const response = this.#filterFields(updatedMetadata, url);
 
@@ -857,5 +919,75 @@ export class FakeGoogleDriveApi {
 
   #generateFakePermissionId(): string {
     return this.#generateFakeId("12345", 20, "0123456789");
+  }
+
+  #generateFakeRevisionId(): string {
+    return this.#generateFakeId(
+      "fAkE-rEv-",
+      24,
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    );
+  }
+
+  #handleListRevisions(fileId: string, res: ServerResponse): void {
+    const file = this.#session.files.get(fileId);
+    if (!file) {
+      this.#errorResponse(res, 404, `File not found: ${fileId}`);
+      return;
+    }
+    const revisions = file.revisions.map((r) => ({
+      kind: "drive#revision",
+      id: r.id,
+      modifiedTime: r.modifiedTime,
+    }));
+    this.#jsonResponse(res, { kind: "drive#revisionList", revisions });
+  }
+
+  #handleGetRevisionMetadata(
+    fileId: string,
+    revisionId: string,
+    res: ServerResponse
+  ): void {
+    const file = this.#session.files.get(fileId);
+    if (!file) {
+      this.#errorResponse(res, 404, `File not found: ${fileId}`);
+      return;
+    }
+    const revision = file.revisions.find((r) => r.id === revisionId);
+    if (!revision) {
+      this.#errorResponse(res, 404, `Revision not found: ${revisionId}`);
+      return;
+    }
+    this.#jsonResponse(res, {
+      kind: "drive#revision",
+      id: revision.id,
+      modifiedTime: revision.modifiedTime,
+    });
+  }
+
+  #handleGetRevisionContent(
+    fileId: string,
+    revisionId: string,
+    res: ServerResponse
+  ): void {
+    const file = this.#session.files.get(fileId);
+    if (!file) {
+      this.#errorResponse(res, 404, `File not found: ${fileId}`);
+      return;
+    }
+    const revision = file.revisions.find((r) => r.id === revisionId);
+    if (!revision) {
+      this.#errorResponse(res, 404, `Revision not found: ${revisionId}`);
+      return;
+    }
+    // For the latest revision, use the current file data.
+    const isLatest =
+      file.revisions.indexOf(revision) === file.revisions.length - 1;
+    const content = isLatest
+      ? (file.data ?? new Uint8Array(0))
+      : (revision.data ?? new Uint8Array(0));
+    const mimeType = file.metadata.mimeType ?? "application/octet-stream";
+    res.writeHead(200, { "Content-Type": mimeType });
+    res.end(Buffer.from(content));
   }
 }
