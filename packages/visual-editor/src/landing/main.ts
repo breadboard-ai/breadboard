@@ -126,6 +126,7 @@ async function init() {
       genericErrorDialog,
       genericErrorDialogTitle,
       genericErrorDialogDetail,
+      genericErrorReloadButton,
       sharedFlowDialog,
       sharedFlowDialogSignInButton,
       sharedFlowDialogTitle,
@@ -137,6 +138,15 @@ async function init() {
 
     Shell.setAllAppNameHolders(Strings.from("APP_NAME"));
     landingCarousel.appName = Strings.from("APP_NAME");
+
+    genericErrorReloadButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      // eslint-disable-next-line local-rules/deja-code-prefer-router-navigate -- landing page, no SCA
+      window.location.href = makeUrl({
+        ...parsedUrl,
+        autoSignIn: true,
+      });
+    });
 
     const showGeoRestrictionDialog = () => {
       genericErrorDialogTitle.textContent = `${Strings.from("APP_NAME")} is not available in your country yet`;
@@ -158,9 +168,9 @@ async function init() {
           // Do nothing. The user can click sign-in again if they want.
         } else {
           error.code satisfies "other";
-          genericErrorDialogTitle.textContent = `An unexpected signin error occured`;
+          genericErrorDialogTitle.textContent = `Oops, something went wrong.`;
           if (error.userMessage) {
-            genericErrorDialogDetail.textContent = error.userMessage;
+            genericErrorDialogDetail.textContent = `Please reload the page to try signing in again`;
           }
           genericErrorDialog.showModal();
         }
@@ -204,6 +214,13 @@ async function init() {
         "",
         makeUrl({ ...parsedUrl, missingScopes: false })
       );
+    } else if (parsedUrl.autoSignIn) {
+      window.history.replaceState(
+        null,
+        "",
+        makeUrl({ ...parsedUrl, autoSignIn: false })
+      );
+      onClickSignIn(new Event("auto-sign-in"));
     } else if (parsedUrl.redirect.page === "graph") {
       sharedFlowDialogTitle.textContent = Strings.from("LABEL_SHARE");
       sharedFlowDialog.showModal();

@@ -775,6 +775,12 @@ main {
       color: var(--n-100);
       padding: 0 var(--bb-grid-size-4);
       text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+      &:hover {
+        background: var(--n-25);
+      }
     }
   }
 

@@ -65,6 +65,13 @@ export function obtainElements() {
   if (!genericErrorDialogDetail) {
     throw new Error("Unable to find generic error dialog detail");
   }
+  const genericErrorReloadButton =
+    genericErrorDialog.querySelector<HTMLAnchorElement>(
+      "#generic-error-reload"
+    );
+  if (!genericErrorReloadButton) {
+    throw new Error("Unable to find generic error reload button");
+  }
 
   // Shared Flow Dialog.
   const sharedFlowDialog = document.querySelector<HTMLDialogElement>(
@@ -112,6 +119,7 @@ export function obtainElements() {
     genericErrorDialog,
     genericErrorDialogTitle,
     genericErrorDialogDetail,
+    genericErrorReloadButton,
     sharedFlowDialog,
     sharedFlowDialogSignInButton,
     sharedFlowDialogTitle,

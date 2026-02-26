@@ -165,6 +165,7 @@ export interface LandingUrlInit extends BaseUrlInit {
   redirect: MakeUrlInit;
   missingScopes?: boolean;
   geoRestriction?: boolean;
+  autoSignIn?: boolean;
 }
 
 export interface OpenUrlInit extends BaseUrlInit {
