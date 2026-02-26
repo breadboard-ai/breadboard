@@ -1,0 +1,29 @@
+{
+  "name": "opal-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Opal backend — agent loop, functions, and dev/fake servers",
+  "scripts": {
+    "setup": "wireit",
+    "dev": ".venv/bin/uvicorn opal_backend.dev.main:app --reload --port 8080",
+    "dev:fake": ".venv/bin/uvicorn opal_backend.fake.main:app --reload --port 8000",
+    "test": "wireit"
+  },
+  "wireit": {
+    "setup": {
+      "command": "python3 -m venv .venv && PIP_INDEX_URL=https://pypi.org/simple/ .venv/bin/pip install -e '.[local,dev]'",
+      "files": [
+        "pyproject.toml"
+      ],
+      "output": []
+    },
+    "test": {
+      "command": ".venv/bin/python -m pytest tests/ -v",
+      "files": [
+        "opal_backend/**/*.py",
+        "tests/**/*.py"
+      ],
+      "dependencies": []
+    }
+  }
+}
