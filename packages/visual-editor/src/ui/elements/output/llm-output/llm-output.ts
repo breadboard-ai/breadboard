@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type { DataPart, LLMContent } from "@breadboard-ai/types";
+import { decodeBase64 } from "../../../../a2/a2/utils.js";
 import {
   isStoredData,
   Template,
@@ -657,7 +658,7 @@ export class LLMOutput extends LitElement {
                 this.#outputLoaded();
                 return cache(html`
                   <bb-app-sandbox
-                    .srcdoc=${atob(part.inlineData.data)}
+                    .srcdoc=${decodeBase64(part.inlineData.data)}
                     .graphUrl=${this.graphUrl?.href ?? ""}
                   ></bb-app-sandbox>
                 `);
@@ -676,7 +677,7 @@ export class LLMOutput extends LitElement {
               if (part.inlineData.mimeType.startsWith("text")) {
                 return cache(
                   // prettier-ignore
-                  html`<div class="plain-text">${atob(part.inlineData.data)}</div>`
+                  html`<div class="plain-text">${decodeBase64(part.inlineData.data)}</div>`
                 );
               }
               if (part.inlineData.mimeType === "application/pdf") {

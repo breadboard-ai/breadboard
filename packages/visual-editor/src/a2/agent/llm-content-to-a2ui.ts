@@ -13,6 +13,7 @@ import {
   isTextCapabilityPart,
 } from "../../data/common.js";
 import { isNotebookLmUrl } from "@breadboard-ai/utils";
+import { decodeBase64 } from "../a2/utils.js";
 
 export { llmContentToA2UIComponents, type ConvertedLLMContent };
 
@@ -38,17 +39,6 @@ type ConversionOptions = {
    */
   wrapMediaInCard?: boolean;
 };
-
-function base64toUTF8(str: string) {
-  const binaryString = atob(str);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-
-  const decoder = new TextDecoder("utf-8");
-  return decoder.decode(bytes);
-}
 
 /**
  * Converts LLMContent to A2UI ComponentInstances.
@@ -165,13 +155,13 @@ function llmContentToA2UIComponents(
       if (part.inlineData.mimeType === "text/html") {
         addTopLevel(generateId("html"), {
           "a2ui-custom-html": {
-            srcdoc: { literalString: base64toUTF8(part.inlineData.data) },
+            srcdoc: { literalString: decodeBase64(part.inlineData.data) },
           },
         });
       } else if (part.inlineData.mimeType === "text/plain") {
         addTopLevel(generateId("text"), {
           Text: {
-            text: { literalString: base64toUTF8(part.inlineData.data) },
+            text: { literalString: decodeBase64(part.inlineData.data) },
             usageHint: "body",
           },
         });

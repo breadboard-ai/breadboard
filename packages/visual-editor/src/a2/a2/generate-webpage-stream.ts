@@ -16,7 +16,12 @@ import {
   getCurrentStepState,
   createReporter,
 } from "../agent/progress-work-item.js";
-import { err, progressFromThought, toLLMContentInline } from "./utils.js";
+import {
+  encodeBase64,
+  err,
+  progressFromThought,
+  toLLMContentInline,
+} from "./utils.js";
 import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
@@ -255,7 +260,7 @@ async function executeWebpageStream(
     }
 
     // Return HTML as inlineData with text/html mimeType to match legacy behavior
-    return toLLMContentInline("text/html", htmlResult, "model");
+    return toLLMContentInline("text/html", encodeBase64(htmlResult), "model");
   } catch (e) {
     return reporter.addError(err((e as Error).message));
   } finally {
