@@ -369,14 +369,12 @@ suite("Run Actions", () => {
     await RunActions.prepare();
 
     // Top-level node has path with single element
-    await RunActions.onNodeStartAction(
-      new CustomEvent("nodestart", {
-        detail: {
-          path: ["test-node"],
-          node: { id: "test-node", type: "test" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeStart!({
+      node: { id: "test-node", type: "test" },
+      inputs: {},
+      index: "idx-1",
+      timestamp: 0,
+    });
 
     assert.strictEqual(
       controller.run.main.console.size,
@@ -3185,15 +3183,12 @@ suite("runner nodestart fallback branches", () => {
     setupGraph(controller);
     await RunActions.prepare();
 
-    await RunActions.onNodeStartAction(
-      new CustomEvent("nodestart", {
-        detail: {
-          path: ["node-1"],
-          node: { id: "node-1" },
-          inputs: {},
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeStart!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      index: "idx-1",
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
@@ -3227,15 +3222,12 @@ suite("runner nodestart fallback branches", () => {
     setupGraph(controller);
     await RunActions.prepare();
 
-    await RunActions.onNodeStartAction(
-      new CustomEvent("nodestart", {
-        detail: {
-          path: ["node-1"],
-          node: { id: "node-1" },
-          inputs: {},
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeStart!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      index: "idx-1",
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "entry should exist");
@@ -3532,14 +3524,12 @@ suite("nodeend output population", () => {
     await RunActions.prepare();
 
     // nodestart creates the console entry
-    await RunActions.onNodeStartAction(
-      new CustomEvent("nodestart", {
-        detail: {
-          node: { id: "node-1", type: "test" },
-          inputs: {},
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeStart!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      index: "idx-1",
+      timestamp: 0,
+    });
 
     // Fire nodeend with outputs that do NOT contain $error
     await RunActions.onNodeEndAction(
@@ -3613,14 +3603,12 @@ suite("output event with console entry (addOutputWorkItem)", () => {
     await RunActions.prepare();
 
     // nodestart creates the console entry
-    await RunActions.onNodeStartAction(
-      new CustomEvent("nodestart", {
-        detail: {
-          node: { id: "node-1", type: "test" },
-          inputs: {},
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeStart!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      index: "idx-1",
+      timestamp: 0,
+    });
 
     // Now fire output event with bubbled=true and a matching node id
     await RunActions.onOutputAction(

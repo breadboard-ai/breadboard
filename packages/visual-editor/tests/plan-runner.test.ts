@@ -53,7 +53,6 @@ function collectEvents(runner: PlanRunner): Event[] {
     "start",
     "pause",
     "resume",
-    "nodestart",
     "nodeend",
     "end",
     "error",
@@ -73,6 +72,18 @@ function collectEvents(runner: PlanRunner): Event[] {
 /** Get event type names from a collected events array. */
 function eventNames(events: Event[]): string[] {
   return events.map((e) => e.type);
+}
+
+/**
+ * Track onNodeStart callback invocations on a PlanRunner.
+ * Returns an object with a `count` property.
+ */
+function collectNodeStartCount(runner: PlanRunner): { count: number } {
+  const counter = { count: 0 };
+  runner.onNodeStart = () => {
+    counter.count++;
+  };
+  return counter;
 }
 
 /**
@@ -151,13 +162,13 @@ suite("PlanRunner", () => {
         testConfigProvider
       );
       const events = collectEvents(runner);
+      const nodeStarts = collectNodeStartCount(runner);
 
       await runner.start();
 
       const names = eventNames(events);
-      const nodeStarts = names.filter((n) => n === "nodestart");
+      assert.strictEqual(nodeStarts.count, 3, "should start 3 nodes");
       const nodeEnds = names.filter((n) => n === "nodeend");
-      assert.strictEqual(nodeStarts.length, 3, "should start 3 nodes");
       assert.strictEqual(nodeEnds.length, 3, "should end 3 nodes");
     });
 
@@ -172,25 +183,23 @@ suite("PlanRunner", () => {
     it("second start() after completion resets orchestrator and re-runs", async () => {
       const runner = makePlanRunner(makeSingleNodeGraph("node"));
       const events = collectEvents(runner);
+      const nodeStarts = collectNodeStartCount(runner);
 
       // First run — completes normally.
       await runner.start();
-      const firstNodeStarts = eventNames(events).filter(
-        (n) => n === "nodestart"
-      );
-      assert.strictEqual(firstNodeStarts.length, 1, "first run: 1 nodestart");
+      assert.strictEqual(nodeStarts.count, 1, "first run: 1 nodestart");
 
-      // Clear events for second run.
+      // Clear events and reset counter for second run.
       events.length = 0;
+      nodeStarts.count = 0;
 
       // Second start() — should reset orchestrator and run again,
       // not speed through with stale "succeeded" states.
       await runner.start();
 
       const secondNames = eventNames(events);
-      const secondNodeStarts = secondNames.filter((n) => n === "nodestart");
       assert.strictEqual(
-        secondNodeStarts.length,
+        nodeStarts.count,
         1,
         "second run should start the node again (not skip due to stale state)"
       );
@@ -296,27 +305,31 @@ suite("PlanRunner", () => {
     it("dispatches node start and end events", async () => {
       const runner = makePlanRunner(makeSingleNodeGraph("s"));
       const events = collectEvents(runner);
+      const nodeStarts = collectNodeStartCount(runner);
 
       await runner.start();
 
       const names = eventNames(events);
-      assert.ok(names.includes("nodestart"), "should dispatch nodestart");
+      assert.strictEqual(nodeStarts.count, 1, "should call onNodeStart");
       assert.ok(names.includes("nodeend"), "should dispatch nodeend");
     });
 
     it("dispatches multiple event types during a run", async () => {
       const runner = makePlanRunner(makeSingleNodeGraph("s"));
       const events = collectEvents(runner);
+      const nodeStarts = collectNodeStartCount(runner);
 
       await runner.start();
 
-      // A full run dispatches start, nodestart, nodeend, end
+      // A full run dispatches start, nodeend, end
       // at minimum, plus potentially nodestatechange/edgestatechange
+      // nodestart now goes through callback
       const types = new Set(eventNames(events));
       assert.ok(
         types.size >= 3,
         `should dispatch multiple event types, got: ${[...types].join(", ")}`
       );
+      assert.strictEqual(nodeStarts.count, 1, "should call onNodeStart");
     });
 
     it("dispatches edgestatechange events for connected graph", async () => {
@@ -386,6 +399,7 @@ suite("PlanRunner", () => {
       const graph = makeSingleNodeGraph("target");
       const runner = makePlanRunner(graph);
       const events = collectEvents(runner);
+      const nodeStarts = collectNodeStartCount(runner);
 
       assert.ok(!runner.running(), "should not be running initially");
 
@@ -396,7 +410,7 @@ suite("PlanRunner", () => {
       assert.ok(runner.running(), "should be running after runNode");
 
       const names = eventNames(events);
-      assert.ok(names.includes("nodestart"), "should dispatch nodestart");
+      assert.strictEqual(nodeStarts.count, 1, "should call onNodeStart");
       assert.ok(names.includes("nodeend"), "should dispatch nodeend");
     });
 
@@ -448,7 +462,6 @@ suite("PlanRunner", () => {
       await runner.runFrom("solo");
 
       const names = eventNames(events);
-      assert.ok(names.includes("nodestart"), "should dispatch nodestart");
       assert.ok(names.includes("nodeend"), "should dispatch nodeend");
     });
 

@@ -38,6 +38,7 @@ import type {
   NodeDescriptor,
   NodeHandlerContext,
   NodeIdentifier,
+  NodeStartResponse,
   OrchestrationPlan,
   Outcome,
   OutputValues,
@@ -69,4 +70,5 @@ export type { RunEventSink };
 interface RunEventSink {
   pause(): void;
   dispatch(event: Event): void;
+  onNodeStart(data: NodeStartResponse): void;
 }

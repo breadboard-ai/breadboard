@@ -198,7 +198,6 @@ export type RunEventMap = {
   output: RunOutputEvent;
   error: RunErrorEvent;
   skip: RunSkipEvent;
-  nodestart: RunNodeStartEvent;
   nodeend: RunNodeEndEvent;
   end: RunEndEvent;
   nodestatechange: RunNodeStateChangeEvent;
@@ -227,11 +226,6 @@ export type RunEndEvent = Event & {
 
 export type RunSkipEvent = Event & {
   data: SkipProbeMessage["data"];
-  running: true;
-};
-
-export type RunNodeStartEvent = Event & {
-  data: NodeStartResponse;
   running: true;
 };
 
@@ -267,6 +261,12 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * Starts a run
    */
   start(): Promise<void>;
+
+  /**
+   * Callback invoked when a node begins execution.
+   * Set by the action layer to wire controller updates.
+   */
+  onNodeStart: ((data: NodeStartResponse) => void) | null;
 
   /**
    * For new runtime only: the current plan for the run.

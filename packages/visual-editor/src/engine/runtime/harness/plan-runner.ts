@@ -10,6 +10,7 @@ import {
   HarnessRunner,
   NodeIdentifier,
   NodeLifecycleState,
+  NodeStartResponse,
   OrchestrationPlan,
   OrchestratorState,
   Outcome,
@@ -60,6 +61,12 @@ class PlanRunner
   readonly #invoker: NodeInvoker;
   readonly #configProvider: ConfigProvider | undefined;
 
+  /**
+   * Callback invoked when a node begins execution.
+   * Set by the `prepare()` action to wire SCA controller updates.
+   */
+  onNodeStart: ((data: NodeStartResponse) => void) | null = null;
+
   running() {
     return !!this.#controller;
   }
@@ -99,6 +106,9 @@ class PlanRunner
         },
         dispatch: (event: Event) => {
           this.dispatchEvent(event);
+        },
+        onNodeStart: (data: NodeStartResponse) => {
+          this.onNodeStart?.(data);
         },
       },
       this.#invoker,
