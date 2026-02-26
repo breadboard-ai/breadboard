@@ -6,10 +6,8 @@
 
 import type {
   Edge,
-  GraphDescriptor,
   InputValues,
   NodeDescriptor,
-  NodeValue,
   OutputValues,
 } from "./graph-descriptor.js";
 
@@ -40,27 +38,6 @@ export type NodeEndResponse = {
   index: string;
   timestamp: number;
   newOpportunities: Edge[];
-};
-
-export type GraphStartProbeData = {
-  graph: GraphDescriptor;
-  graphId: string;
-  timestamp: number;
-  edges?: { edge: Edge; value: NodeValue }[];
-};
-
-export type GraphStartProbeMessage = {
-  type: "graphstart";
-  data: GraphStartProbeData;
-};
-
-export type GraphEndProbeData = {
-  timestamp: number;
-};
-
-export type GraphEndProbeMessage = {
-  type: "graphend";
-  data: GraphEndProbeData;
 };
 
 export type SkipProbeMessage = {
@@ -103,8 +80,6 @@ export type EdgeProbeMessage = {
 };
 
 export type ProbeMessage =
-  | GraphStartProbeMessage
-  | GraphEndProbeMessage
   | SkipProbeMessage
   | EdgeProbeMessage
   | NodeStartProbeMessage

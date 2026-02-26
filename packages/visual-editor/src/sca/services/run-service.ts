@@ -29,8 +29,6 @@ const RUNNER_EVENT_TYPES = [
   "output",
   "error",
   "skip",
-  "graphstart",
-  "graphend",
   "nodestart",
   "nodeend",
   "end",

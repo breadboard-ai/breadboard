@@ -353,78 +353,6 @@ suite("Run Actions", () => {
     );
   });
 
-  test("runner 'graphstart' event is a no-op for top-level graph", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({
-      controller,
-      services,
-      env: createMockEnvironment(defaultRuntimeFlags),
-    });
-
-    // Create config with 3 nodes
-    setupGraph(controller, {
-      edges: [],
-      nodes: [
-        { id: "node1", type: "test" },
-        { id: "node2", type: "test" },
-        { id: "node3", type: "test" },
-      ],
-    });
-
-    await RunActions.prepare();
-
-    // Add a console entry to verify it is NOT cleared
-    controller.run.main.setConsoleEntry("existing", {} as ConsoleEntry);
-    controller.run.main.setEstimatedEntryCount(5);
-
-    // Top-level graphstart should be a no-op (start() handles pre-population)
-    await RunActions.onGraphStartAction();
-
-    // Console should NOT be modified — start() is responsible now
-    assert.strictEqual(
-      controller.run.main.console.size,
-      1,
-      "console should NOT be modified by graphstart (start() handles it)"
-    );
-    assert.strictEqual(
-      controller.run.main.estimatedEntryCount,
-      5,
-      "estimated entry count should NOT change"
-    );
-  });
-
-  test("runner 'graphstart' event ignores nested graphs", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({
-      controller,
-      services,
-      env: createMockEnvironment(defaultRuntimeFlags),
-    });
-
-    setupGraph(controller);
-    await RunActions.prepare();
-
-    // Add a console entry
-    controller.run.main.setConsoleEntry("existing", {} as ConsoleEntry);
-    controller.run.main.setEstimatedEntryCount(5);
-
-    // Nested graph has non-empty path
-    await RunActions.onGraphStartAction();
-
-    assert.strictEqual(
-      controller.run.main.console.size,
-      1,
-      "console should NOT be cleared for nested graph"
-    );
-    assert.strictEqual(
-      controller.run.main.estimatedEntryCount,
-      5,
-      "estimated entry count should NOT change for nested graph"
-    );
-  });
-
   test("runner 'nodestart' event adds console entry", async () => {
     const { controller } = makeTestController();
     const { services } = makeTestServices();
@@ -3226,199 +3154,6 @@ suite("runner nodeend deleteScreen", () => {
   });
 });
 
-// graphstart async describe fallback tests removed —
-// this logic moved to start() and is tested in "Run.start action" suite.
-suite("runner graphstart async describe fallback (retired)", () => {
-  beforeEach(() => {
-    setDOM();
-  });
-
-  afterEach(() => {
-    unsetDOM();
-  });
-
-  test("async fetches describe when metadata has no tags during graphstart", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({
-      controller,
-      services,
-      env: createMockEnvironment(defaultRuntimeFlags),
-    });
-
-    // Create a node without tags initially
-    let describeCalled = false;
-    const mockNode = {
-      title: () => "Node 1",
-      describe: async () => {
-        describeCalled = true;
-        return { metadata: { icon: "async-icon", tags: ["async-tag"] } };
-      },
-      currentDescribe: () => ({ metadata: {} }), // No tags
-      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
-    };
-
-    (controller.editor.graph as unknown as { get: () => unknown }).get =
-      () => ({
-        graphs: new Map([["", { nodeById: () => mockNode }]]),
-      });
-
-    setupGraph(controller, {
-      edges: [],
-      nodes: [{ id: "node-1", type: "test" }],
-    });
-    await RunActions.prepare();
-
-    await RunActions.onGraphStartAction();
-
-    assert.ok(describeCalled, "describe should be called for tagless node");
-
-    const entry = controller.run.main.console.get("node-1");
-    assert.ok(entry, "entry should exist");
-    assert.deepStrictEqual(
-      entry.tags,
-      ["async-tag"],
-      "tags should be resolved from awaited describe"
-    );
-  });
-
-  test("does NOT async fetch when tags are already present", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({
-      controller,
-      services,
-      env: createMockEnvironment(defaultRuntimeFlags),
-    });
-
-    let describeCalled = false;
-    const mockNode = {
-      title: () => "Node 1",
-      describe: async () => {
-        describeCalled = true;
-        return { metadata: { tags: ["should-not-see"] } };
-      },
-      currentDescribe: () => ({ metadata: { tags: ["existing-tag"] } }), // Has tags
-      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
-    };
-
-    (controller.editor.graph as unknown as { get: () => unknown }).get =
-      () => ({
-        graphs: new Map([["", { nodeById: () => mockNode }]]),
-      });
-
-    setupGraph(controller, {
-      edges: [],
-      nodes: [{ id: "node-1", type: "test" }],
-    });
-    await RunActions.prepare();
-
-    await RunActions.onGraphStartAction();
-
-    assert.strictEqual(
-      describeCalled,
-      false,
-      "describe should NOT be called when tags exist"
-    );
-  });
-
-  test("graphstart falls back to nodeId when node is not found", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({
-      controller,
-      services,
-      env: createMockEnvironment(defaultRuntimeFlags),
-    });
-
-    // nodeById returns null — triggers all ?? fallbacks
-    (controller.editor.graph as unknown as { get: () => unknown }).get =
-      () => ({
-        graphs: new Map([["", { nodeById: () => null }]]),
-      });
-
-    setupGraph(controller, {
-      edges: [],
-      nodes: [{ id: "node-1", type: "test" }],
-    });
-    await RunActions.prepare();
-
-    await RunActions.onGraphStartAction();
-
-    const entry = controller.run.main.console.get("node-1");
-    assert.ok(entry, "entry should exist even when node is not inspectable");
-    // Title falls back to nodeId when node is null
-    assert.strictEqual(
-      entry.title,
-      "node-1",
-      "title should fall back to nodeId"
-    );
-  });
-
-  test("graphstart handles null plan.stages by using empty array", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({
-      controller,
-      services,
-      env: createMockEnvironment(defaultRuntimeFlags),
-    });
-
-    setupGraph(controller, {
-      edges: [],
-      nodes: [{ id: "node-1", type: "test" }],
-    });
-    await RunActions.prepare();
-
-    // Set plan to null — triggers plan?.stages ?? [] fallback
-    (controller.run.main.runner as unknown as { plan: unknown }).plan = null;
-
-    await RunActions.onGraphStartAction();
-
-    // Should not throw, console should have 0 entries because stages is empty
-    assert.strictEqual(
-      controller.run.main.console.size,
-      0,
-      "no entries when plan has no stages"
-    );
-  });
-
-  test("graphstart uses empty metadata when currentDescribe returns null", async () => {
-    const { controller } = makeTestController();
-    const { services } = makeTestServices();
-    RunActions.bind({
-      controller,
-      services,
-      env: createMockEnvironment(defaultRuntimeFlags),
-    });
-
-    const mockNode = {
-      title: () => "Node 1",
-      describe: async () => ({ metadata: null }),
-      currentDescribe: () => null, // null describe — metadata ?? {} kicks in
-      currentPorts: () => ({ inputs: { ports: [] }, outputs: { ports: [] } }),
-    };
-
-    (controller.editor.graph as unknown as { get: () => unknown }).get =
-      () => ({
-        graphs: new Map([["", { nodeById: () => mockNode }]]),
-      });
-
-    setupGraph(controller, {
-      edges: [],
-      nodes: [{ id: "node-1", type: "test" }],
-    });
-    await RunActions.prepare();
-
-    await RunActions.onGraphStartAction();
-
-    const entry = controller.run.main.console.get("node-1");
-    assert.ok(entry, "entry should exist");
-    // No tags because metadata was null
-    assert.strictEqual(entry.tags, undefined, "tags should be undefined");
-  });
-});
-
 // =============================================================================
 // nodestart fallback branches
 // =============================================================================
@@ -3796,8 +3531,7 @@ suite("nodeend output population", () => {
 
     await RunActions.prepare();
 
-    // graphstart is a no-op; nodestart creates the console entry
-    await RunActions.onGraphStartAction();
+    // nodestart creates the console entry
     await RunActions.onNodeStartAction(
       new CustomEvent("nodestart", {
         detail: {
@@ -3878,8 +3612,7 @@ suite("output event with console entry (addOutputWorkItem)", () => {
 
     await RunActions.prepare();
 
-    // graphstart is a no-op; nodestart creates the console entry
-    await RunActions.onGraphStartAction();
+    // nodestart creates the console entry
     await RunActions.onNodeStartAction(
       new CustomEvent("nodestart", {
         detail: {

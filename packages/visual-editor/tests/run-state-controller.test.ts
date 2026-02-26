@@ -82,15 +82,10 @@ suite("RunStateController", () => {
       controller.preamble();
       await controller.run();
 
-      // Should have dispatched: GraphStart, NodeStart, NodeEnd, GraphEnd, End
+      // Should have dispatched: NodeStart, NodeEnd, End
       const names = eventSink.events.map((e: Event) => e.constructor.name);
-      assert.ok(
-        names.includes("GraphStartEvent"),
-        "should dispatch GraphStart"
-      );
       assert.ok(names.includes("NodeStartEvent"), "should dispatch NodeStart");
       assert.ok(names.includes("NodeEndEvent"), "should dispatch NodeEnd");
-      assert.ok(names.includes("GraphEndEvent"), "should dispatch GraphEnd");
       assert.ok(names.includes("EndEvent"), "should dispatch End");
     });
 
@@ -108,21 +103,7 @@ suite("RunStateController", () => {
       assert.deepStrictEqual(invoked, ["a", "b", "c"]);
     });
 
-    it("preamble dispatches GraphStartEvent", async () => {
-      const { controller, eventSink } = makeController({
-        graph: makeSingleNodeGraph(),
-      });
-
-      controller.preamble();
-      const graphStarts = eventsByType(eventSink.events, "GraphStartEvent");
-      assert.strictEqual(
-        graphStarts.length,
-        1,
-        "should dispatch GraphStartEvent"
-      );
-    });
-
-    it("dispatches postamble GraphEnd and End events when finished", async () => {
+    it("dispatches postamble End event when finished", async () => {
       const { controller, eventSink } = makeController({
         graph: makeSingleNodeGraph(),
       });
@@ -130,13 +111,7 @@ suite("RunStateController", () => {
       await controller.run();
 
       const endEvents = eventsByType(eventSink.events, "EndEvent");
-      const graphEndEvents = eventsByType(eventSink.events, "GraphEndEvent");
       assert.strictEqual(endEvents.length, 1, "should dispatch one EndEvent");
-      assert.strictEqual(
-        graphEndEvents.length,
-        1,
-        "should dispatch one GraphEndEvent"
-      );
     });
 
     it("does not re-enter run() if already running", async () => {

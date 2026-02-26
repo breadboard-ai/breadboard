@@ -137,16 +137,6 @@ export function onRunnerError(bind: ActionBind): EventTrigger {
   );
 }
 
-/** Fires when a graph starts execution. */
-export function onRunnerGraphStart(bind: ActionBind): EventTrigger {
-  const { services } = bind;
-  return eventTrigger(
-    "Runner Graph Start",
-    services.runService.runnerEventBus,
-    "graphstart"
-  );
-}
-
 /** Fires when a node starts execution. */
 export function onRunnerNodeStart(bind: ActionBind): EventTrigger {
   const { services } = bind;

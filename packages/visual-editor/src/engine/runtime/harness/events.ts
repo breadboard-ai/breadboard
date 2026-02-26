@@ -9,8 +9,6 @@ import {
   EdgeLifecycleState,
   End,
   ErrorResponse,
-  GraphEndProbeData,
-  GraphStartProbeData,
   InputValues,
   NodeEndResponse,
   NodeIdentifier,
@@ -21,8 +19,6 @@ import {
   RunEdgeStateChangeEvent,
   RunEndEvent,
   RunErrorEvent,
-  RunGraphEndEvent,
-  RunGraphStartEvent,
   RunLifecycleEvent,
   RunNodeEndEvent,
   RunNodeStartEvent,
@@ -79,24 +75,6 @@ export class SkipEvent extends Event implements RunSkipEvent {
 
   constructor(public data: SkipProbeMessage["data"]) {
     super(SkipEvent.eventName, { ...opts });
-  }
-}
-
-export class GraphStartEvent extends Event implements RunGraphStartEvent {
-  static readonly eventName = "graphstart";
-  readonly running = true;
-
-  constructor(public data: GraphStartProbeData) {
-    super(GraphStartEvent.eventName, { ...opts });
-  }
-}
-
-export class GraphEndEvent extends Event implements RunGraphEndEvent {
-  static readonly eventName = "graphend";
-  readonly running = true;
-
-  constructor(public data: GraphEndProbeData) {
-    super(GraphEndEvent.eventName, { ...opts });
   }
 }
 

@@ -36,7 +36,6 @@ import {
   onRunnerPause,
   onRunnerEnd,
   onRunnerError,
-  onRunnerGraphStart,
   onRunnerNodeStart,
   onRunnerNodeEnd,
   onRunnerNodeStateChange,
@@ -67,9 +66,9 @@ export const bind = makeAction();
  * Uses `Exclusive` mode to prevent concurrent runs.
  *
  * Pre-populates the console with bound entries (with controller + id) BEFORE
- * calling runner.start(). This eliminates the race condition where
- * onGraphStartAction's async describe-awaiting could overwrite entries that
- * onNodeStartAction had already bound.
+ * calling runner.start(). This eliminates the race condition where an async
+ * describe callback could overwrite entries that onNodeStartAction had already
+ * bound.
  *
  * @throws Error if no runner is set (programming error)
  */
@@ -85,8 +84,8 @@ export const start = asAction(
 
     const runner = runController.runner;
 
-    // Reset state before populating — same reset that onGraphStartAction used
-    // to do, but now runs synchronously before any events fire.
+    // Reset state before populating — runs synchronously before any events
+    // fire.
     runController.reset();
     controller.run.renderer.reset();
     controller.run.screen.reset();
@@ -385,25 +384,6 @@ export const onError = asAction(
       "Run Actions"
     );
   }
-);
-
-/**
- * Runner "graphstart" — intentional no-op.
- *
- * Console pre-population and resets are handled by `start()` BEFORE
- * runner.start() fires events, so the graphstart handler no longer needs
- * to do any work. This eliminates the race condition where an async
- * describe callback could overwrite entries that onNodeStartAction had
- * already bound with a controller.
- */
-export const onGraphStartAction = asAction(
-  "Run.onGraphStart",
-  {
-    mode: ActionMode.Immediate,
-    triggeredBy: () => onRunnerGraphStart(bind),
-  },
-  // No-op: start() already reset controllers and populated entries.
-  async (): Promise<void> => {}
 );
 
 /**
@@ -810,7 +790,7 @@ export const executeNodeAction = asAction(
       case "failed":
       case "interrupted":
         runController.undismissError(nodeId);
-        // runFrom bypasses start() → onGraphStartAction, so screens
+        // runFrom bypasses start(), so screens
         // must be cleared here to prevent stale insertion order from the
         // previous run surfacing the wrong "last" screen.
         if (runFromNode) {

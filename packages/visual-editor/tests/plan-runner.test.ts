@@ -55,8 +55,6 @@ function collectEvents(runner: PlanRunner): Event[] {
     "resume",
     "nodestart",
     "nodeend",
-    "graphstart",
-    "graphend",
     "end",
     "error",
     "nodestatechange",
@@ -134,15 +132,10 @@ suite("PlanRunner", () => {
 
       const names = eventNames(events);
       assert.ok(names.includes("start"), "should dispatch start");
-      assert.ok(names.includes("graphstart"), "should dispatch graphstart");
       assert.ok(names.includes("end"), "should dispatch end");
       assert.ok(
-        names.indexOf("start") < names.indexOf("graphstart"),
-        "start should precede graphstart"
-      );
-      assert.ok(
-        names.indexOf("graphstart") < names.indexOf("end"),
-        "graphstart should precede end"
+        names.indexOf("start") < names.indexOf("end"),
+        "start should precede end"
       );
     });
 
@@ -202,10 +195,6 @@ suite("PlanRunner", () => {
         "second run should start the node again (not skip due to stale state)"
       );
       assert.ok(secondNames.includes("start"), "should dispatch start event");
-      assert.ok(
-        secondNames.includes("graphstart"),
-        "second run should dispatch graphstart (resets screens)"
-      );
       assert.ok(secondNames.includes("end"), "should dispatch end event");
     });
   });
@@ -304,16 +293,6 @@ suite("PlanRunner", () => {
       assert.ok(names.includes("end"), "should dispatch end");
     });
 
-    it("dispatches graphend event after successful run", async () => {
-      const runner = makePlanRunner(makeSingleNodeGraph());
-      const events = collectEvents(runner);
-
-      await runner.start();
-
-      const names = eventNames(events);
-      assert.ok(names.includes("graphend"), "should dispatch graphend");
-    });
-
     it("dispatches node start and end events", async () => {
       const runner = makePlanRunner(makeSingleNodeGraph("s"));
       const events = collectEvents(runner);
@@ -331,7 +310,7 @@ suite("PlanRunner", () => {
 
       await runner.start();
 
-      // A full run dispatches start, nodestart, nodeend, graphend, end
+      // A full run dispatches start, nodestart, nodeend, end
       // at minimum, plus potentially nodestatechange/edgestatechange
       const types = new Set(eventNames(events));
       assert.ok(

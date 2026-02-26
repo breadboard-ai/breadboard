@@ -24,8 +24,6 @@ import type {
 import { Orchestrator } from "../static/orchestrator.js";
 import {
   EndEvent,
-  GraphEndEvent,
-  GraphStartEvent,
   NodeEndEvent,
   NodeStartEvent,
   RunnerErrorEvent,
@@ -163,13 +161,6 @@ class RunStateController {
   preamble(): NodeHandlerContext {
     const context = this.context;
     if (this.orchestrator.progress !== "initial") return context;
-    this.eventSink.dispatch(
-      new GraphStartEvent({
-        graph: this.graph,
-        graphId: "",
-        timestamp: timestamp(),
-      })
-    );
     return context;
   }
 
@@ -186,12 +177,6 @@ class RunStateController {
       const metadata = outputs?.metadata as ErrorMetadata | undefined;
       this.error({ $error: errorMessage, metadata });
     }
-
-    this.eventSink.dispatch(
-      new GraphEndEvent({
-        timestamp: timestamp(),
-      })
-    );
 
     this.eventSink.dispatch(
       new EndEvent({

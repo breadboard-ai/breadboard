@@ -12,8 +12,6 @@ import {
 import { ErrorResponse } from "./node-handler.js";
 import {
   EdgeProbeMessage,
-  GraphEndProbeMessage,
-  GraphStartProbeMessage,
   NodeEndProbeMessage,
   NodeStartProbeMessage,
   SkipProbeMessage,
@@ -206,16 +204,12 @@ export type AnyRunRequestMessage =
 
 export type NodeStartRemoteMessage = AsRemoteMessage<NodeStartProbeMessage>;
 export type NodeEndRemoteMessage = AsRemoteMessage<NodeEndProbeMessage>;
-export type GraphStartRemoteMessage = AsRemoteMessage<GraphStartProbeMessage>;
-export type GraphEndRemoteMessage = AsRemoteMessage<GraphEndProbeMessage>;
 export type SkipRemoteMessage = AsRemoteMessage<SkipProbeMessage>;
 export type EdgeRemoteMessage = AsRemoteMessage<EdgeProbeMessage>;
 
 export type DiagnosticsRemoteMessage =
   | NodeStartRemoteMessage
   | NodeEndRemoteMessage
-  | GraphStartRemoteMessage
-  | GraphEndRemoteMessage
   | SkipRemoteMessage
   | EdgeRemoteMessage;
 
