@@ -32,6 +32,7 @@ const COLOR_SCHEME_DARK = "dark" as const;
 const RESULTS = "results";
 const GEO_RESTRICTION = "geo-restriction";
 const MISSING_SCOPES = "missing-scopes";
+const AUTO_SIGN_IN = "auto-sign-in";
 const RESOURCE_KEY = "resourcekey";
 export const OAUTH_REDIRECT = "oauth_redirect";
 const DEV_PREFIX = "dev-";
@@ -120,6 +121,9 @@ export function makeUrl(
     }
     if (init.missingScopes) {
       url.searchParams.set(MISSING_SCOPES, "true");
+    }
+    if (init.autoSignIn) {
+      url.searchParams.set(AUTO_SIGN_IN, "true");
     }
     if (init.lite) {
       url.searchParams.set(LITE, init.lite === true ? "true" : "false");
@@ -223,6 +227,9 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     }
     if (url.searchParams.has(MISSING_SCOPES)) {
       landing.missingScopes = true;
+    }
+    if (url.searchParams.has(AUTO_SIGN_IN)) {
+      landing.autoSignIn = true;
     }
     if (oauthRedirect) {
       landing.oauthRedirect = oauthRedirect;
