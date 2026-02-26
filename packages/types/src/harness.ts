@@ -27,8 +27,6 @@ import {
   OrchestratorState,
 } from "./orchestration.js";
 import {
-  GraphEndProbeData,
-  GraphStartProbeData,
   NodeEndResponse,
   NodeStartResponse,
   SkipProbeMessage,
@@ -201,8 +199,6 @@ export type RunEventMap = {
   output: RunOutputEvent;
   error: RunErrorEvent;
   skip: RunSkipEvent;
-  graphstart: RunGraphStartEvent;
-  graphend: RunGraphEndEvent;
   nodestart: RunNodeStartEvent;
   nodeend: RunNodeEndEvent;
   end: RunEndEvent;
@@ -232,16 +228,6 @@ export type RunEndEvent = Event & {
 
 export type RunSkipEvent = Event & {
   data: SkipProbeMessage["data"];
-  running: true;
-};
-
-export type RunGraphStartEvent = Event & {
-  data: GraphStartProbeData;
-  running: true;
-};
-
-export type RunGraphEndEvent = Event & {
-  data: GraphEndProbeData;
   running: true;
 };
 

@@ -14,7 +14,7 @@ import { RootController } from "../root-controller.js";
  *
  * Owns the node and edge visual states displayed by the graph renderer.
  * Updated by Actions in response to runner events (`nodestatechange`,
- * `edgestatechange`, `nodestart`, `nodeend`, `graphstart`).
+ * `edgestatechange`, `nodestart`, `nodeend`).
  *
  * Consumers: graph renderer (`bb-renderer` via `canvas-controller.ts`).
  */
@@ -60,7 +60,7 @@ export class RendererController extends RootController {
 
   /**
    * Clears all node visual states.
-   * Called on graphstart to reset for a new run.
+   * Called during reset for a new run.
    */
   clearNodes(): void {
     this._nodes.clear();

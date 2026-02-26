@@ -335,7 +335,7 @@ suite("RunController progress tracking", () => {
     // Simulate run start
     controller.setStatus(STATUS.RUNNING);
 
-    // Pre-populate with 5 entries as inactive (simulating graphstart)
+    // Pre-populate with 5 entries as inactive (simulating start())
     for (let i = 0; i < 5; i++) {
       controller.setConsoleEntry(`node-${i}`, {
         completed: false,

@@ -42,7 +42,7 @@ export function makeTestGraphStoreWithEditor() {
 /**
  * Creates a mock runner that can fire events to its registered listeners.
  *
- * @param nodes - Optional array of nodes to include in the plan.stages for graphstart pre-population
+ * @param nodes - Optional array of nodes to include in the plan.stages for console pre-population
  */
 export function createMockRunner(
   nodes: Array<{ id: string; type?: string }> = []
@@ -59,7 +59,7 @@ export function createMockRunner(
     removeEventListener: () => {},
     start: () => {},
     running: () => false,
-    // Plan property for graphstart pre-population
+    // Plan property for console pre-population
     plan:
       nodes.length > 0
         ? {
