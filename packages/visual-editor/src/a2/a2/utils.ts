@@ -402,7 +402,13 @@ function encodeBase64(value: string): string {
 }
 
 function decodeBase64(s: string): string {
-  const latin1 = atob(s);
+  let latin1: string;
+  try {
+    latin1 = atob(s);
+  } catch {
+    // Input is not valid base64 — assume it is already decoded text.
+    return s;
+  }
   try {
     return decodeURIComponent(
       latin1
