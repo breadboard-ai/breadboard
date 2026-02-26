@@ -188,7 +188,7 @@ items — whatever makes the path to the objective honest.
 - [x] `SSEAgentRun` / `LocalAgentRun` — split run implementations
 - [x] `AgentService.configureRemote(baseUrl, fetchFn)`
 
-### Phase 4: Python Backend Packages ← **we are here**
+### Phase 4: Python Backend Packages
 
 #### 4.1: Scaffolding ✅
 
@@ -483,15 +483,54 @@ Body (resume): {interactionId, response}
       restored; `shared_schemas.py` centralizes `statusUpdateSchema`,
       `taskIdSchema`, `fileNameSchema`
 
-##### 4.8d: Graph-Editing Functions (deferred)
+### Phase 5: Python Consolidation & Copybara Prep ← **we are here**
+
+> **🎯 Objective:** `opal-backend-shared` code is pure Python (no `httpx`,
+> `fastapi`, or `pydantic` imports in synced files). The shared code can be
+> copybara'd to `third_party/py/opal_backend` and the production backend can
+> inject its own HTTP transport.
+>
+> ```bash
+> # Verify: no transport deps in synced code
+> grep -r "import httpx\|from fastapi\|from sse_starlette" \
+>   packages/opal-backend/opal_backend/*.py \
+>   packages/opal-backend/opal_backend/functions/
+> # → no results
+> ```
+
+#### 5.1: Package Consolidation
+
+- [x] Merge `opal-backend-shared`, `opal-backend-dev`, `opal-backend-fake` into
+      single `packages/opal-backend/` with one `pyproject.toml` and one `.venv`
+- [x] Directory structure: `opal_backend/` (synced), `opal_backend/local/` (not
+      synced), `opal_backend/dev/`, `opal_backend/fake/`
+- [x] Move fake-server artifacts (`events.py`, `sse_sink.py`,
+      `pending_requests.py`) to `local/` (not synced to google3)
+- [x] Update all imports across source and test files
+- [x] Update wireit scripts (`setup:python`, `test:python`, `dev:backend`,
+      `dev:fake`)
+
+#### 5.2: HTTP Transport Abstraction
+
+- [x] `http_client.py` — `HttpClient` protocol (synced, no deps)
+- [x] `local/http_client_impl.py` — `httpx`-based implementation (not synced)
+- [x] Update `gemini_client.py` — replace `import httpx` with `HttpClient`
+- [x] Update `conform_body.py` — replace `import httpx` with `HttpClient`
+- [x] Update `step_executor.py` — replace `import httpx` with `HttpClient`
+- [x] Thread `HttpClient` through `Loop` and function group factories
+- [x] Update all tests to inject `HttpClient`
+
+#### Future Phases (deferred)
+
+##### Graph-Editing Functions (from 4.8d)
 
 - [ ] Port graph-editing chat functions to Python (uses suspend protocol for
       `readGraph`, `applyEdits`, etc.)
 
-#### 4.9: Production Readiness
+##### Production Readiness (from 4.9)
 
-> **🎯 Objective:** Full parity with the in-process agent. Everything that works
-> locally works identically through the dev backend.
+> Full parity with the in-process agent. Everything that works locally works
+> identically through the dev backend.
 
 - [ ] `MemoryManager` + `StoredData`/`FileData` resolution in Python FS
 - [ ] Status metadata plumbing — `expectedDurationInSec` from handlers → loop →
@@ -505,3 +544,8 @@ Body (resume): {interactionId, response}
 - [ ] Cancel concurrent function caller tasks on suspend — avoids benign "emit()
       called on closed sink: functionCallUpdate" warning
 - [ ] Remove `LocalAgentRun` path (or keep for offline dev)
+
+##### Event Models & Fake Server
+
+- [ ] Strongly type event models with Pydantic (synced to google3)
+- [ ] Rebuild fake server to align with dev server's approach

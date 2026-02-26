@@ -2,13 +2,13 @@
 # Copyright 2026 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
-# Starts the opal-backend-dev server if its venv has been set up.
+# Starts the opal-backend dev server if its venv has been set up.
 # If not, prints a helpful message and exits cleanly (so the main
 # server still starts).
 
-DEV_DIR="$(dirname "$0")/../../opal-backend-dev"
+BACKEND_DIR="$(dirname "$0")/../../opal-backend"
 
-if [ ! -d "$DEV_DIR/.venv" ]; then
+if [ ! -d "$BACKEND_DIR/.venv" ]; then
   echo ""
   echo "╔══════════════════════════════════════════════════════════╗"
   echo "║  Dev Python backend not set up.                         ║"
@@ -32,8 +32,6 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 export PROXY_UPSTREAM_URL="${UPSTREAM:-https://appcatalyst.pa.googleapis.com}"
-echo "Starting opal-backend-dev on port 8080 (upstream: $PROXY_UPSTREAM_URL)..."
-SHARED_DIR="$(cd "$DEV_DIR/../opal-backend-shared/opal_backend_shared" 2>/dev/null && pwd)"
-cd "$DEV_DIR" && .venv/bin/uvicorn opal_backend_dev.main:app --reload --port 8080 \
-  --reload-dir opal_backend_dev \
-  ${SHARED_DIR:+--reload-dir "$SHARED_DIR"}
+echo "Starting opal-backend dev server on port 8080 (upstream: $PROXY_UPSTREAM_URL)..."
+cd "$BACKEND_DIR" && .venv/bin/uvicorn opal_backend.dev.main:app --reload --port 8080 \
+  --reload-dir opal_backend

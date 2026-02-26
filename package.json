@@ -39,39 +39,30 @@
         "<workspaces>#<this>",
         "!./packages/ui-tests#<this>",
         "!./experiments/screens#<this>",
-        "!./packages/opal-backend-shared#<this>",
-        "!./packages/opal-backend-fake#<this>",
-        "!./packages/opal-backend-dev#<this>"
+        "!./packages/opal-backend#<this>"
       ]
     },
     "test:python": {
       "dependencies": [
-        "./packages/opal-backend-shared#test",
-        "./packages/opal-backend-fake#test",
-        "./packages/opal-backend-dev#test"
+        "./packages/opal-backend#test"
       ]
     },
     "setup:python": {
       "dependencies": [
-        "./packages/opal-backend-fake#setup",
-        "./packages/opal-backend-dev#setup"
+        "./packages/opal-backend#setup"
       ]
     },
     "coverage": {
       "dependencies": [
         "<workspaces>#<this>",
-        "!./packages/opal-backend-shared#<this>",
-        "!./packages/opal-backend-fake#<this>",
-        "!./packages/opal-backend-dev#<this>"
+        "!./packages/opal-backend#<this>"
       ]
     },
     "lint": {
       "dependencies": [
         "<workspaces>#<this>",
         "!./packages/jsandbox#<this>",
-        "!./packages/opal-backend-shared#<this>",
-        "!./packages/opal-backend-fake#<this>",
-        "!./packages/opal-backend-dev#<this>"
+        "!./packages/opal-backend#<this>"
       ]
     },
     "ci:local": {
