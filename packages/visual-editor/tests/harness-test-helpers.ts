@@ -79,15 +79,20 @@ function makeConfig(graph: GraphDescriptor): RunConfig {
 function makeEventSink(): RunEventSink & {
   events: Event[];
   paused: boolean;
+  nodeStartCount: number;
 } {
   const sink = {
     events: [] as Event[],
     paused: false,
+    nodeStartCount: 0,
     dispatch(event: Event) {
       sink.events.push(event);
     },
     pause() {
       sink.paused = true;
+    },
+    onNodeStart() {
+      sink.nodeStartCount++;
     },
   };
   return sink;

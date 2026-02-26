@@ -10,6 +10,7 @@ import type {
   InspectableNodePorts,
   NodeLifecycleState,
   NodeRunStatus,
+  NodeStartResponse,
   SimplifiedProjectRunState,
 } from "@breadboard-ai/types";
 import type {
@@ -36,7 +37,6 @@ import {
   onRunnerPause,
   onRunnerEnd,
   onRunnerError,
-  onRunnerNodeStart,
   onRunnerNodeEnd,
   onRunnerNodeStateChange,
   onRunnerEdgeStateChange,
@@ -67,7 +67,7 @@ export const bind = makeAction();
  *
  * Pre-populates the console with bound entries (with controller + id) BEFORE
  * calling runner.start(). This eliminates the race condition where an async
- * describe callback could overwrite entries that onNodeStartAction had already
+ * describe callback could overwrite entries that handleNodeStart had already
  * bound.
  *
  * @throws Error if no runner is set (programming error)
@@ -198,6 +198,11 @@ export const prepare = asAction(
 
     // Register on service — this hooks up event forwarding to runnerEventBus.
     services.runService.registerRunner(runner);
+
+    // Wire nodestart callback — calls handleNodeStart directly.
+    runner.onNodeStart = (data: NodeStartResponse) => {
+      handleNodeStart(data, controller);
+    };
 
     // Wire input lifecycle: when a console entry calls requestInputForNode,
     // notify the input queue to handle activation (bump screen, set input, etc.)
@@ -387,44 +392,36 @@ export const onError = asAction(
 );
 
 /**
- * Runner "nodestart" — creates console entry, sets renderer state, creates screen.
+ * Handles a node start event: creates console entry, sets renderer state,
+ * creates screen. Called directly via the runner's onNodeStart callback.
  */
-export const onNodeStartAction = asAction(
-  "Run.onNodeStart",
-  {
-    mode: ActionMode.Immediate,
-    triggeredBy: () => onRunnerNodeStart(bind),
-  },
-  async (evt?: CustomEvent): Promise<void> => {
-    const { controller } = bind;
-    const detail = evt?.detail;
+function handleNodeStart(
+  data: NodeStartResponse,
+  controller: typeof bind.controller
+): void {
+  const nodeId = data.node.id;
+  const inspectable = controller.editor.graph.get()?.graphs.get("");
+  const node = inspectable?.nodeById(nodeId);
+  const title = node?.title() ?? nodeId;
+  const metadata = node?.currentDescribe()?.metadata ?? {};
 
-    if (!detail) return;
+  const entry = RunController.createConsoleEntry(title, "working", {
+    icon: getStepIcon(metadata.icon, node?.currentPorts()),
+    tags: metadata.tags,
+    id: nodeId,
+    controller: controller.run.main,
+  });
+  controller.run.main.setConsoleEntry(nodeId, entry);
+  controller.run.renderer.setNodeState(nodeId, { status: "working" });
 
-    const nodeId = detail.node.id;
-    const inspectable = controller.editor.graph.get()?.graphs.get("");
-    const node = inspectable?.nodeById(nodeId);
-    const title = node?.title() ?? nodeId;
-    const metadata = node?.currentDescribe()?.metadata ?? {};
-
-    const entry = RunController.createConsoleEntry(title, "working", {
-      icon: getStepIcon(metadata.icon, node?.currentPorts()),
-      tags: metadata.tags,
-      id: nodeId,
-      controller: controller.run.main,
-    });
-    controller.run.main.setConsoleEntry(nodeId, entry);
-    controller.run.renderer.setNodeState(nodeId, { status: "working" });
-
-    // Create screen for this node (unless it should be skipped)
-    const outputSchema = node?.currentDescribe()?.outputSchema;
-    const controlState = computeControlState(detail.inputs ?? {});
-    if (!controlState.skip) {
-      const screen = createAppScreen(title, outputSchema);
-      controller.run.screen.setScreen(nodeId, screen);
-    }
+  // Create screen for this node (unless it should be skipped)
+  const outputSchema = node?.currentDescribe()?.outputSchema;
+  const controlState = computeControlState(data.inputs ?? {});
+  if (!controlState.skip) {
+    const screen = createAppScreen(title, outputSchema);
+    controller.run.screen.setScreen(nodeId, screen);
   }
-);
+}
 
 /**
  * Runner "nodeend" — updates console entry status, finalizes screen.
@@ -670,7 +667,7 @@ export const syncConsoleFromRunner = asAction(
 
     // Build console entries with settled metadata and replace atomically.
     // All describes are awaited so that late-resolving callbacks can't
-    // overwrite entries that onNodeStartAction has already bound.
+    // overwrite entries that handleNodeStart has already bound.
     const newEntries = await buildConsoleEntries(
       nodeIds,
       inspectable,
@@ -852,7 +849,7 @@ type NodeLookup = {
  * `describe()` calls before creating entries.
  *
  * This eliminates the fire-and-forget race where an async `describe()`
- * callback could overwrite a bound entry that `onNodeStartAction` had
+ * callback could overwrite a bound entry that `handleNodeStart` had
  * already created.
  *
  * @param nodeIds - Ordered node identifiers

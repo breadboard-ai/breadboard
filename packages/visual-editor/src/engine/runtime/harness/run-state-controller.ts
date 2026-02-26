@@ -22,12 +22,7 @@ import type {
   RunEventSink,
 } from "../../../engine/types.js";
 import { Orchestrator } from "../static/orchestrator.js";
-import {
-  EndEvent,
-  NodeEndEvent,
-  NodeStartEvent,
-  RunnerErrorEvent,
-} from "./events.js";
+import { EndEvent, NodeEndEvent, RunnerErrorEvent } from "./events.js";
 import {
   augmentWithSkipOutputs,
   computeControlState,
@@ -89,14 +84,12 @@ class RunStateController {
     }
 
     const index = crypto.randomUUID();
-    this.eventSink.dispatch(
-      new NodeStartEvent({
-        node: task.node,
-        inputs: task.inputs,
-        index,
-        timestamp: timestamp(),
-      })
-    );
+    this.eventSink.onNodeStart({
+      node: task.node,
+      inputs: task.inputs,
+      index,
+      timestamp: timestamp(),
+    });
     const working = this.orchestrator.setWorking(task.node.id);
     if (!ok(working)) {
       console.warn(working.$error);
