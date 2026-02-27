@@ -435,7 +435,8 @@ export class Header extends SignalWatcher(LitElement) {
       <ul slot="bottom">
         <li>
           <a
-            href="https://policies.google.com/"
+            href="https://policies.google.com/terms"
+            target="_blank"
             class="w-400 round md-title-medium"
             ><span class="g-icon filled round w-500">shield_person</span>Privacy
             & Terms<span class="g-icon filled round w-500 open-in-new"
