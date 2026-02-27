@@ -427,7 +427,10 @@ export class FakeGoogleDriveApi {
     this.#errorResponse(res, 404, "Not Found");
   }
 
-  // /drive/v3/files
+  /**
+   * /drive/v3/files
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/list
+   */
   #handleListFiles(url: URL, res: ServerResponse): void {
     const query = url.searchParams.get("q");
     if (!query) {
@@ -484,6 +487,10 @@ export class FakeGoogleDriveApi {
     return [token.slice(0, sep), parseInt(token.slice(sep + 1), 10)];
   }
 
+  /**
+   * /drive/v3/files
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create
+   */
   #handleCreateFileMetadata(
     body: Uint8Array,
     url: URL,
@@ -512,7 +519,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, response);
   }
 
-  // /drive/v3/files/generateIds
+  /**
+   * /drive/v3/files/generateIds
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/generateIds
+   */
   #handleGenerateIds(url: URL, res: ServerResponse): void {
     const countParam = url.searchParams.get("count");
     const count = countParam ? parseInt(countParam, 10) : 1;
@@ -527,7 +537,10 @@ export class FakeGoogleDriveApi {
     });
   }
 
-  // /drive/v3/files/:fileId
+  /**
+   * /drive/v3/files/:fileId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get
+   */
   #handleGetFileMetadata(fileId: string, url: URL, res: ServerResponse): void {
     const file = this.#session.files.get(fileId);
 
@@ -552,6 +565,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, response);
   }
 
+  /**
+   * /drive/v3/files/:fileId (alt=media)
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get
+   */
   #handleGetFileMedia(fileId: string, res: ServerResponse): void {
     const file = this.#session.files.get(fileId);
 
@@ -565,6 +582,10 @@ export class FakeGoogleDriveApi {
     res.end(Buffer.from(file.data ?? new Uint8Array(0)));
   }
 
+  /**
+   * /drive/v3/files/:fileId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update
+   */
   #handleUpdateFileMetadata(
     fileId: string,
     body: Uint8Array,
@@ -607,6 +628,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, response);
   }
 
+  /**
+   * /drive/v3/files/:fileId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/delete
+   */
   #handleDeleteFile(fileId: string, res: ServerResponse): void {
     const file = this.#session.files.get(fileId);
     if (!file) {
@@ -621,7 +646,10 @@ export class FakeGoogleDriveApi {
     res.end();
   }
 
-  // /drive/v3/files/:fileId/copy
+  /**
+   * /drive/v3/files/:fileId/copy
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy
+   */
   #handleCopyFile(
     fileId: string,
     body: Uint8Array,
@@ -657,7 +685,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, response);
   }
 
-  // /drive/v3/files/:fileId/export
+  /**
+   * /drive/v3/files/:fileId/export
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/export
+   */
   #handleExportFile(fileId: string, url: URL, res: ServerResponse): void {
     const mimeType = url.searchParams.get("mimeType");
     if (!mimeType) {
@@ -681,7 +712,10 @@ export class FakeGoogleDriveApi {
     res.end(Buffer.from(content));
   }
 
-  // /drive/v3/files/:fileId/permissions
+  /**
+   * /drive/v3/files/:fileId/permissions
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create
+   */
   #handleCreatePermission(
     fileId: string,
     body: Uint8Array,
@@ -709,7 +743,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, permissionWithId);
   }
 
-  // /drive/v3/files/:fileId/permissions/:permissionId
+  /**
+   * /drive/v3/files/:fileId/permissions/:permissionId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete
+   */
   #handleDeletePermission(
     fileId: string,
     permissionId: string,
@@ -741,7 +778,10 @@ export class FakeGoogleDriveApi {
     res.end();
   }
 
-  // /upload/drive/v3/files
+  /**
+   * /upload/drive/v3/files
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create (upload)
+   */
   async #handleCreateFile(
     body: Uint8Array,
     headers: IncomingHttpHeaders,
@@ -783,7 +823,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, response);
   }
 
-  // /upload/drive/v3/files/:fileId
+  /**
+   * /upload/drive/v3/files/:fileId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update (upload)
+   */
   async #handleUpdateFile(
     fileId: string,
     body: Uint8Array,
@@ -929,6 +972,10 @@ export class FakeGoogleDriveApi {
     );
   }
 
+  /**
+   * /drive/v3/files/:fileId/revisions
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
+   */
   #handleListRevisions(fileId: string, res: ServerResponse): void {
     const file = this.#session.files.get(fileId);
     if (!file) {
@@ -943,6 +990,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, { kind: "drive#revisionList", revisions });
   }
 
+  /**
+   * /drive/v3/files/:fileId/revisions/:revisionId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
+   */
   #handleGetRevisionMetadata(
     fileId: string,
     revisionId: string,
@@ -965,6 +1016,10 @@ export class FakeGoogleDriveApi {
     });
   }
 
+  /**
+   * /drive/v3/files/:fileId/revisions/:revisionId (alt=media)
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
+   */
   #handleGetRevisionContent(
     fileId: string,
     revisionId: string,
