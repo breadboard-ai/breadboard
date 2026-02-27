@@ -399,6 +399,8 @@ export class FloatingInput extends SignalWatcher(LitElement) {
           supportedActions.allowedUploadMimeTypes = "video/*";
           supportedActions.actions.upload = true;
           supportedActions.actions.youtube = true;
+          supportedActions.actions.gdrive = true;
+          supportedActions.actions.webcamVideo = true;
           return supportedActions;
         }
 
