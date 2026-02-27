@@ -69,7 +69,7 @@ async def _fake_stream(chunks):
 
 class TestResolveTextModel:
     def test_pro(self):
-        assert _resolve_text_model("pro") == "gemini-3-pro-preview"
+        assert _resolve_text_model("pro") == "gemini-3.1-pro-preview"
 
     def test_flash(self):
         assert _resolve_text_model("flash") == "gemini-3-flash-preview"
