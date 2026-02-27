@@ -1107,6 +1107,12 @@ suite("Asset Actions — Event-Triggered", () => {
             url: "https://example.com/board.json",
             graphAssets: new Map(),
           },
+          selection: {
+            selectAssets: () => {},
+          },
+          sidebar: {
+            section: "",
+          },
         },
         global: {
           main: { blockingAction: false },
@@ -1311,6 +1317,12 @@ suite("Asset Actions — Event-Triggered", () => {
               url: "https://example.com/board.json",
               graphAssets: new Map(),
             },
+            selection: {
+              selectAssets: () => {},
+            },
+            sidebar: {
+              section: "",
+            },
           },
           global: {
             main: { blockingAction: false },
@@ -1382,6 +1394,12 @@ suite("Asset Actions — Event-Triggered", () => {
               editor: mockEditor,
               url: "https://example.com/board.json",
               graphAssets: new Map(),
+            },
+            selection: {
+              selectAssets: () => {},
+            },
+            sidebar: {
+              section: "",
             },
           },
           global: {
