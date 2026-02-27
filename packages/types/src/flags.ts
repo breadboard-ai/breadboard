@@ -173,7 +173,7 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   },
   googleOne: {
     title: "Google One Quotas",
-    description: "Enable Google One quota limits",
+    description: "Enable Google One charging for certain models",
     visibility: "experimental",
   },
   opalAdk: {

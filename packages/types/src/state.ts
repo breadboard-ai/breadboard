@@ -52,7 +52,12 @@ export type ErrorMetadata = {
   /**
    * Kind of the error:
    * - capacity -- triggered by capacity issues (e.g. model throttled Opal)
-   * - user-quota -- triggered by user quota issues (e.g. no credits left)
+   * - free-quota-exhausted -- user hit daily free quota limit for certain models
+   * - free-quota-exhausted-can-pay -- user hit daily free quota limit for
+   *     certain models and is not a G1 subscriber and should upgrade to continue
+   * - paid-quota-exhausted -- user hit daily free quota limit for certain
+   *     models and is a G1 subscriber but has no more credits and should
+   *     add more to continue
    * - safety -- triggered by a safety checker
    * - recitation -- triggered by recitation checker.
    * - config -- triggered by invalid configuration (can be fixed by user)
@@ -62,6 +67,7 @@ export type ErrorMetadata = {
   kind?:
     | "capacity"
     | "free-quota-exhausted"
+    | "free-quota-exhausted-can-pay"
     | "paid-quota-exhausted"
     | "safety"
     | "recitation"
