@@ -16,8 +16,17 @@ import type { AddressInfo } from "net";
 
 type DriveFile = gapi.client.drive.File;
 
+interface FakeRevision {
+  id: string;
+  modifiedTime: string;
+  data?: Uint8Array;
+}
+
 interface FakeGoogleDriveApiSession {
-  files: Map<string, { metadata: DriveFile; data?: Uint8Array }>;
+  files: Map<
+    string,
+    { metadata: DriveFile; data?: Uint8Array; revisions: FakeRevision[] }
+  >;
   requests: Array<{
     method: string;
     url: string;
@@ -366,6 +375,28 @@ export class FakeGoogleDriveApi {
       return this.#handleCreatePermission(fileId, body, res);
     }
 
+    // /drive/v3/files/:fileId/revisions
+    const revisionsMatch = new URLPattern({
+      pathname: "/drive/v3/files/:fileId/revisions",
+    }).exec(url);
+    if (revisionsMatch && req.method === "GET") {
+      const fileId = revisionsMatch.pathname.groups.fileId!;
+      return this.#handleListRevisions(fileId, res);
+    }
+
+    // /drive/v3/files/:fileId/revisions/:revisionId
+    const revisionMatch = new URLPattern({
+      pathname: "/drive/v3/files/:fileId/revisions/:revisionId",
+    }).exec(url);
+    if (revisionMatch && req.method === "GET") {
+      const fileId = revisionMatch.pathname.groups.fileId!;
+      const revisionId = revisionMatch.pathname.groups.revisionId!;
+      if (url.searchParams.get("alt") === "media") {
+        return this.#handleGetRevisionContent(fileId, revisionId, res);
+      }
+      return this.#handleGetRevisionMetadata(fileId, revisionId, res);
+    }
+
     // /drive/v3/files/:fileId/permissions/:permissionId
     const deletePermissionMatch = new URLPattern({
       pathname: "/drive/v3/files/:fileId/permissions/:permissionId",
@@ -396,7 +427,10 @@ export class FakeGoogleDriveApi {
     this.#errorResponse(res, 404, "Not Found");
   }
 
-  // /drive/v3/files
+  /**
+   * /drive/v3/files
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/list
+   */
   #handleListFiles(url: URL, res: ServerResponse): void {
     const query = url.searchParams.get("q");
     if (!query) {
@@ -453,6 +487,10 @@ export class FakeGoogleDriveApi {
     return [token.slice(0, sep), parseInt(token.slice(sep + 1), 10)];
   }
 
+  /**
+   * /drive/v3/files
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create
+   */
   #handleCreateFileMetadata(
     body: Uint8Array,
     url: URL,
@@ -462,23 +500,32 @@ export class FakeGoogleDriveApi {
     const newFileId = metadata.id ?? this.#generateFakeFileId();
 
     const now = this.#nextTimestamp();
+    const revisionId = this.#generateFakeRevisionId();
     const fileMetadata: DriveFile = {
+      properties: {},
+      ...metadata,
+      // Output-only fields: must follow the spread so callers can't override.
       id: newFileId,
       kind: "drive#file",
       ownedByMe: true,
       version: "1",
       createdTime: now,
       modifiedTime: now,
-      properties: {},
-      ...metadata,
+      headRevisionId: revisionId,
     };
-    this.#session.files.set(newFileId, { metadata: fileMetadata });
+    this.#session.files.set(newFileId, {
+      metadata: fileMetadata,
+      revisions: [{ id: revisionId, modifiedTime: now }],
+    });
 
     const response = this.#filterFields(fileMetadata, url);
     this.#jsonResponse(res, response);
   }
 
-  // /drive/v3/files/generateIds
+  /**
+   * /drive/v3/files/generateIds
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/generateIds
+   */
   #handleGenerateIds(url: URL, res: ServerResponse): void {
     const countParam = url.searchParams.get("count");
     const count = countParam ? parseInt(countParam, 10) : 1;
@@ -493,7 +540,10 @@ export class FakeGoogleDriveApi {
     });
   }
 
-  // /drive/v3/files/:fileId
+  /**
+   * /drive/v3/files/:fileId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get
+   */
   #handleGetFileMetadata(fileId: string, url: URL, res: ServerResponse): void {
     const file = this.#session.files.get(fileId);
 
@@ -518,6 +568,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, response);
   }
 
+  /**
+   * /drive/v3/files/:fileId (alt=media)
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get
+   */
   #handleGetFileMedia(fileId: string, res: ServerResponse): void {
     const file = this.#session.files.get(fileId);
 
@@ -531,6 +585,10 @@ export class FakeGoogleDriveApi {
     res.end(Buffer.from(file.data ?? new Uint8Array(0)));
   }
 
+  /**
+   * /drive/v3/files/:fileId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update
+   */
   #handleUpdateFileMetadata(
     fileId: string,
     body: Uint8Array,
@@ -545,6 +603,7 @@ export class FakeGoogleDriveApi {
 
     const metadata: DriveFile = JSON.parse(new TextDecoder().decode(body));
     const currentVersion = parseInt(existingFile.metadata.version ?? "1", 10);
+    const revisionId = this.#generateFakeRevisionId();
     // Deep merge properties to avoid losing existing properties when only some are updated
     const updatedMetadata: DriveFile = {
       ...existingFile.metadata,
@@ -553,10 +612,21 @@ export class FakeGoogleDriveApi {
         ...existingFile.metadata.properties,
         ...metadata.properties,
       },
+      // Output-only fields: must follow the spread so callers can't override.
       id: fileId,
+      kind: existingFile.metadata.kind,
+      ownedByMe: existingFile.metadata.ownedByMe,
+      createdTime: existingFile.metadata.createdTime,
       version: String(currentVersion + 1),
       modifiedTime: this.#nextTimestamp(),
+      headRevisionId: revisionId,
     };
+
+    existingFile.revisions.push({
+      id: revisionId,
+      modifiedTime: updatedMetadata.modifiedTime!,
+      data: existingFile.data ? new Uint8Array(existingFile.data) : undefined,
+    });
 
     this.#session.files.set(fileId, {
       ...existingFile,
@@ -567,6 +637,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, response);
   }
 
+  /**
+   * /drive/v3/files/:fileId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/delete
+   */
   #handleDeleteFile(fileId: string, res: ServerResponse): void {
     const file = this.#session.files.get(fileId);
     if (!file) {
@@ -581,7 +655,10 @@ export class FakeGoogleDriveApi {
     res.end();
   }
 
-  // /drive/v3/files/:fileId/copy
+  /**
+   * /drive/v3/files/:fileId/copy
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy
+   */
   #handleCopyFile(
     fileId: string,
     body: Uint8Array,
@@ -606,16 +683,23 @@ export class FakeGoogleDriveApi {
       id: newFileId,
       version: "1",
     };
+    const now = copiedFileMetadata.createdTime ?? this.#nextTimestamp();
+    const revisionId = this.#generateFakeRevisionId();
+    copiedFileMetadata.headRevisionId = revisionId;
     this.#session.files.set(newFileId, {
       metadata: copiedFileMetadata,
       data: sourceFile.data,
+      revisions: [{ id: revisionId, modifiedTime: now }],
     });
 
     const response = this.#filterFields(copiedFileMetadata, url);
     this.#jsonResponse(res, response);
   }
 
-  // /drive/v3/files/:fileId/export
+  /**
+   * /drive/v3/files/:fileId/export
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/export
+   */
   #handleExportFile(fileId: string, url: URL, res: ServerResponse): void {
     const mimeType = url.searchParams.get("mimeType");
     if (!mimeType) {
@@ -639,7 +723,10 @@ export class FakeGoogleDriveApi {
     res.end(Buffer.from(content));
   }
 
-  // /drive/v3/files/:fileId/permissions
+  /**
+   * /drive/v3/files/:fileId/permissions
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create
+   */
   #handleCreatePermission(
     fileId: string,
     body: Uint8Array,
@@ -667,7 +754,10 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, permissionWithId);
   }
 
-  // /drive/v3/files/:fileId/permissions/:permissionId
+  /**
+   * /drive/v3/files/:fileId/permissions/:permissionId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete
+   */
   #handleDeletePermission(
     fileId: string,
     permissionId: string,
@@ -699,7 +789,10 @@ export class FakeGoogleDriveApi {
     res.end();
   }
 
-  // /upload/drive/v3/files
+  /**
+   * /upload/drive/v3/files
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create (upload)
+   */
   async #handleCreateFile(
     body: Uint8Array,
     headers: IncomingHttpHeaders,
@@ -711,27 +804,43 @@ export class FakeGoogleDriveApi {
     const fileId = metadata.id ?? this.#generateFakeFileId();
 
     const now = this.#nextTimestamp();
+    const revisionId = this.#generateFakeRevisionId();
     const fileMetadata: DriveFile = {
+      properties: {},
+      ...metadata,
+      // Output-only fields: must follow the spread so callers can't override.
       id: fileId,
       kind: "drive#file",
       ownedByMe: true,
       version: "1",
       createdTime: now,
       modifiedTime: now,
-      properties: {},
+      headRevisionId: revisionId,
       permissions: [],
       ...(this.#session.generatesResourceKey && {
         resourceKey: this.#generateFakeResourceKey(),
       }),
-      ...metadata,
     };
-    this.#session.files.set(fileId, { metadata: fileMetadata, data });
+    this.#session.files.set(fileId, {
+      metadata: fileMetadata,
+      data,
+      revisions: [
+        {
+          id: revisionId,
+          modifiedTime: now,
+          data: data.length > 0 ? new Uint8Array(data) : undefined,
+        },
+      ],
+    });
     const response = this.#filterFields(fileMetadata, url);
 
     this.#jsonResponse(res, response);
   }
 
-  // /upload/drive/v3/files/:fileId
+  /**
+   * /upload/drive/v3/files/:fileId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update (upload)
+   */
   async #handleUpdateFile(
     fileId: string,
     body: Uint8Array,
@@ -749,6 +858,7 @@ export class FakeGoogleDriveApi {
 
     // Deep merge properties to avoid losing existing properties when only some are updated
     const currentVersion = parseInt(existingFile.metadata.version ?? "1", 10);
+    const revisionId = this.#generateFakeRevisionId();
     const updatedMetadata: DriveFile = {
       ...existingFile.metadata,
       ...metadata,
@@ -756,16 +866,106 @@ export class FakeGoogleDriveApi {
         ...existingFile.metadata.properties,
         ...metadata.properties,
       },
+      // Output-only fields: must follow the spread so callers can't override.
       id: fileId,
+      kind: existingFile.metadata.kind,
+      ownedByMe: existingFile.metadata.ownedByMe,
+      createdTime: existingFile.metadata.createdTime,
       version: String(currentVersion + 1),
       modifiedTime: this.#nextTimestamp(),
+      headRevisionId: revisionId,
     };
 
-    this.#session.files.set(fileId, { metadata: updatedMetadata, data });
+    existingFile.revisions.push({
+      id: revisionId,
+      modifiedTime: updatedMetadata.modifiedTime!,
+      data: existingFile.data ? new Uint8Array(existingFile.data) : undefined,
+    });
+
+    this.#session.files.set(fileId, {
+      ...existingFile,
+      metadata: updatedMetadata,
+      data,
+    });
 
     const response = this.#filterFields(updatedMetadata, url);
 
     this.#jsonResponse(res, response);
+  }
+
+
+  /**
+   * /drive/v3/files/:fileId/revisions
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
+   */
+  #handleListRevisions(fileId: string, res: ServerResponse): void {
+    const file = this.#session.files.get(fileId);
+    if (!file) {
+      this.#errorResponse(res, 404, `File not found: ${fileId}`);
+      return;
+    }
+    const revisions = file.revisions.map((r) => ({
+      kind: "drive#revision",
+      id: r.id,
+      modifiedTime: r.modifiedTime,
+    }));
+    this.#jsonResponse(res, { kind: "drive#revisionList", revisions });
+  }
+
+  /**
+   * /drive/v3/files/:fileId/revisions/:revisionId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
+   */
+  #handleGetRevisionMetadata(
+    fileId: string,
+    revisionId: string,
+    res: ServerResponse
+  ): void {
+    const file = this.#session.files.get(fileId);
+    if (!file) {
+      this.#errorResponse(res, 404, `File not found: ${fileId}`);
+      return;
+    }
+    const revision = file.revisions.find((r) => r.id === revisionId);
+    if (!revision) {
+      this.#errorResponse(res, 404, `Revision not found: ${revisionId}`);
+      return;
+    }
+    this.#jsonResponse(res, {
+      kind: "drive#revision",
+      id: revision.id,
+      modifiedTime: revision.modifiedTime,
+    });
+  }
+
+  /**
+   * /drive/v3/files/:fileId/revisions/:revisionId (alt=media)
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
+   */
+  #handleGetRevisionContent(
+    fileId: string,
+    revisionId: string,
+    res: ServerResponse
+  ): void {
+    const file = this.#session.files.get(fileId);
+    if (!file) {
+      this.#errorResponse(res, 404, `File not found: ${fileId}`);
+      return;
+    }
+    const revision = file.revisions.find((r) => r.id === revisionId);
+    if (!revision) {
+      this.#errorResponse(res, 404, `Revision not found: ${revisionId}`);
+      return;
+    }
+    // For the latest revision, use the current file data.
+    const isLatest =
+      file.revisions.indexOf(revision) === file.revisions.length - 1;
+    const content = isLatest
+      ? (file.data ?? new Uint8Array(0))
+      : (revision.data ?? new Uint8Array(0));
+    const mimeType = file.metadata.mimeType ?? "application/octet-stream";
+    res.writeHead(200, { "Content-Type": mimeType });
+    res.end(Buffer.from(content));
   }
 
   async #parseMultipartBody(
@@ -857,5 +1057,13 @@ export class FakeGoogleDriveApi {
 
   #generateFakePermissionId(): string {
     return this.#generateFakeId("12345", 20, "0123456789");
+  }
+
+  #generateFakeRevisionId(): string {
+    return this.#generateFakeId(
+      "fAkE-rEv-",
+      24,
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    );
   }
 }
