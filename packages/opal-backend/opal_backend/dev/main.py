@@ -469,6 +469,57 @@ def _error_stream(message: str) -> EventSourceResponse:
 _proxy = DevProxyBackend()
 _agent = DevAgentBackend()
 
+# ---------------------------------------------------------------------------
+# CreateCachedContent — dedicated endpoint (before catch-all proxy)
+# ---------------------------------------------------------------------------
+
+GEMINI_KEY = os.environ.get("GEMINI_KEY", "")
+GENAI_CACHE_URL = "https://generativelanguage.googleapis.com/v1beta/cachedContents"
+
+
+@app.post("/v1beta1/createCachedContent")
+async def create_cached_content(request: Request) -> Response:
+    """Create cached content via the Gemini API.
+
+    Mirrors the production backend's CreateCachedContent RPC.
+    The Gemini cache API does not support OAuth, so the dev server
+    hides the API key behind the user's OAuth-authenticated request.
+    """
+    if not GEMINI_KEY:
+        return Response(
+            content=json.dumps({"errorMessage": "GEMINI_KEY not set in .env"}),
+            status_code=500,
+            media_type="application/json",
+        )
+
+    body = await request.json()
+    cached_content = body.get("cachedContent", {})
+
+    resp = await _proxy_client.post(
+        f"{GENAI_CACHE_URL}?key={GEMINI_KEY}",
+        json=cached_content,
+        headers={"Content-Type": "application/json"},
+    )
+
+    if resp.status_code == 200:
+        resp_body = json.loads(resp.content)
+        # Wrap in the CreateCachedContentResponse envelope
+        # to match the production protobuf shape.
+        wrapped = json.dumps({"cachedContent": resp_body})
+        return Response(
+            content=wrapped,
+            status_code=200,
+            media_type="application/json",
+        )
+    else:
+        error_body = resp.content.decode("utf-8", errors="replace")
+        return Response(
+            content=json.dumps({"errorMessage": error_body}),
+            status_code=resp.status_code,
+            media_type="application/json",
+        )
+
+
 router = create_api_router(
     proxy=_proxy,
     agent=_agent,

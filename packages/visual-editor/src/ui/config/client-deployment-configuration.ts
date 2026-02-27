@@ -33,6 +33,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   enableGraphEditorAgent: false,
   textEditorRemix: false,
   showTokenCounter: false,
+  enableContextCaching: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

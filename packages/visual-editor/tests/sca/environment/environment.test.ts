@@ -51,6 +51,7 @@ function makeRuntimeConfig(
         enableGraphEditorAgent: false,
         textEditorRemix: false,
         showTokenCounter: false,
+        enableContextCaching: false,
       },
     },
     shellHost: {
@@ -84,6 +85,7 @@ const testFlags: RuntimeFlags = {
   enableGraphEditorAgent: false,
   textEditorRemix: false,
   showTokenCounter: false,
+  enableContextCaching: false,
 };
 
 suite("createEnvironment", () => {
