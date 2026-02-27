@@ -345,7 +345,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     // Add metadata-specific actions
     const kind = error.metadata?.kind;
-    if (kind === "free-quota-exhausted" || kind === "paid-quota-exhausted") {
+    if (
+      kind === "free-quota-exhausted-can-pay" ||
+      kind === "paid-quota-exhausted"
+    ) {
       const authuser = this.sca.services.signinAdapter.authuserSignal ?? 0;
       const url = createAICreditsUrl(
         authuser,
@@ -354,7 +357,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       details.push({
         action: "link",
         title:
-          kind === "free-quota-exhausted"
+          kind === "free-quota-exhausted-can-pay"
             ? "See Google AI plans"
             : "Add AI credits",
         value: url,

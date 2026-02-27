@@ -863,6 +863,7 @@ function resolveTextModel(model: "pro" | "lite" | "flash"): string {
  */
 const FATAL_KINDS: ReadonlySet<string> = new Set([
   "free-quota-exhausted",
+  "free-quota-exhausted-can-pay",
   "paid-quota-exhausted",
 ]);
 

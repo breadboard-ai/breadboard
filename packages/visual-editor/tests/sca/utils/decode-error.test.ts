@@ -93,6 +93,26 @@ suite("decodeErrorData", () => {
     });
     const result = decodeErrorData(error);
     assert.ok(result?.message.includes("image"));
+    assert.ok(result?.message.includes("try again later"));
+  });
+
+  test("free-quota-exhausted-can-pay message mentions upgrade", () => {
+    const error = errorWith("quota exceeded", {
+      kind: "free-quota-exhausted-can-pay",
+    });
+    const result = decodeErrorData(error);
+    assert.ok(result?.message.includes("upgrade"));
+    assert.ok(result?.message.includes("text"));
+  });
+
+  test("free-quota-exhausted-can-pay with video medium", () => {
+    const error = errorWith("quota exceeded", {
+      kind: "free-quota-exhausted-can-pay",
+      model: "veo-2",
+    });
+    const result = decodeErrorData(error);
+    assert.ok(result?.message.includes("video"));
+    assert.ok(result?.message.includes("upgrade"));
   });
 
   test("handles safety kind with reasons", () => {
@@ -151,6 +171,7 @@ suite("decodeErrorData", () => {
     const error = errorWith("quota", { kind: "free-quota-exhausted" });
     const result = decodeErrorData(error);
     assert.ok(result?.message.includes("text"));
+    assert.ok(result?.message.includes("try again later"));
   });
 
   test("handles capacity kind", () => {
@@ -376,6 +397,12 @@ suite("trackError", () => {
   test("calls errorCapacity for free-quota-exhausted kind", () => {
     const tracker = createTracker();
     trackError(tracker, { kind: "free-quota-exhausted" });
+    assert.strictEqual(callCount(tracker.errorCapacity), 1);
+  });
+
+  test("calls errorCapacity for free-quota-exhausted-can-pay kind", () => {
+    const tracker = createTracker();
+    trackError(tracker, { kind: "free-quota-exhausted-can-pay" });
     assert.strictEqual(callCount(tracker.errorCapacity), 1);
   });
 

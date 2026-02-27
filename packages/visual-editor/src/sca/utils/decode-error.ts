@@ -166,6 +166,12 @@ function decodeErrorData(
     }
     case "free-quota-exhausted": {
       return {
+        message: `You have reached the ${medium.singular} generation quota. Please try again later.`,
+        metadata,
+      };
+    }
+    case "free-quota-exhausted-can-pay": {
+      return {
         message: `You have reached the ${medium.singular} generation quota. To generate more ${medium.plural}, upgrade to a Google AI plan`,
         metadata,
       };
@@ -243,6 +249,7 @@ function trackError(
       actionTracker.errorRecitation();
       break;
     case "free-quota-exhausted": // TODO: Add separate tracking for free vs paid quota exhaustion.
+    case "free-quota-exhausted-can-pay":
     case "paid-quota-exhausted":
     case "capacity":
       actionTracker.errorCapacity(medium.singular);
