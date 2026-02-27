@@ -775,6 +775,54 @@ suite("GoogleDriveClient", () => {
     });
   });
 
+  suite("output-only fields", () => {
+    const outputOnlyFields: Array<[keyof gapi.client.drive.File, unknown]> = [
+      ["kind", "bogus-kind"],
+      ["ownedByMe", false],
+      ["version", "999"],
+      ["createdTime", "1999-01-01T00:00:00Z"],
+      ["modifiedTime", "1999-01-01T00:00:00Z"],
+      ["headRevisionId", "bogus-rev-id"],
+    ];
+    for (const [field, bogusValue] of outputOnlyFields) {
+      test(`createFile ignores caller-supplied ${field}`, async () => {
+        const file = await client.createFile(
+          new Blob(["v1"], { type: "text/plain" }),
+          { name: "test.txt", mimeType: "text/plain", [field]: bogusValue }
+        );
+
+        const meta = await client.getFileMetadata(file.id, {
+          fields: [field],
+        });
+        assert.notStrictEqual(
+          (meta as Record<string, unknown>)[field],
+          bogusValue
+        );
+      });
+
+      test(`updateFile ignores caller-supplied ${field}`, async () => {
+        const file = await client.createFile(
+          new Blob(["v1"], { type: "text/plain" }),
+          { name: "test.txt", mimeType: "text/plain" }
+        );
+
+        await client.updateFile(
+          file.id,
+          new Blob(["v2"], { type: "text/plain" }),
+          { [field]: bogusValue }
+        );
+
+        const meta = await client.getFileMetadata(file.id, {
+          fields: [field],
+        });
+        assert.notStrictEqual(
+          (meta as Record<string, unknown>)[field],
+          bogusValue
+        );
+      });
+    }
+  });
+
   suite("revisions", () => {
     test("newly created file has one revision", async () => {
       const file = await client.createFile(

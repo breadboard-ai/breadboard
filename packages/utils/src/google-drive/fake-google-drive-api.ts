@@ -502,6 +502,9 @@ export class FakeGoogleDriveApi {
     const now = this.#nextTimestamp();
     const revisionId = this.#generateFakeRevisionId();
     const fileMetadata: DriveFile = {
+      properties: {},
+      ...metadata,
+      // Output-only fields: must follow the spread so callers can't override.
       id: newFileId,
       kind: "drive#file",
       ownedByMe: true,
@@ -509,8 +512,6 @@ export class FakeGoogleDriveApi {
       createdTime: now,
       modifiedTime: now,
       headRevisionId: revisionId,
-      properties: {},
-      ...metadata,
     };
     this.#session.files.set(newFileId, {
       metadata: fileMetadata,
@@ -611,7 +612,11 @@ export class FakeGoogleDriveApi {
         ...existingFile.metadata.properties,
         ...metadata.properties,
       },
+      // Output-only fields: must follow the spread so callers can't override.
       id: fileId,
+      kind: existingFile.metadata.kind,
+      ownedByMe: existingFile.metadata.ownedByMe,
+      createdTime: existingFile.metadata.createdTime,
       version: String(currentVersion + 1),
       modifiedTime: this.#nextTimestamp(),
       headRevisionId: revisionId,
@@ -801,6 +806,9 @@ export class FakeGoogleDriveApi {
     const now = this.#nextTimestamp();
     const revisionId = this.#generateFakeRevisionId();
     const fileMetadata: DriveFile = {
+      properties: {},
+      ...metadata,
+      // Output-only fields: must follow the spread so callers can't override.
       id: fileId,
       kind: "drive#file",
       ownedByMe: true,
@@ -808,12 +816,10 @@ export class FakeGoogleDriveApi {
       createdTime: now,
       modifiedTime: now,
       headRevisionId: revisionId,
-      properties: {},
       permissions: [],
       ...(this.#session.generatesResourceKey && {
         resourceKey: this.#generateFakeResourceKey(),
       }),
-      ...metadata,
     };
     this.#session.files.set(fileId, {
       metadata: fileMetadata,
@@ -860,7 +866,11 @@ export class FakeGoogleDriveApi {
         ...existingFile.metadata.properties,
         ...metadata.properties,
       },
+      // Output-only fields: must follow the spread so callers can't override.
       id: fileId,
+      kind: existingFile.metadata.kind,
+      ownedByMe: existingFile.metadata.ownedByMe,
+      createdTime: existingFile.metadata.createdTime,
       version: String(currentVersion + 1),
       modifiedTime: this.#nextTimestamp(),
       headRevisionId: revisionId,
