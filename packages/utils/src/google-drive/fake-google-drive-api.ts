@@ -873,6 +873,81 @@ export class FakeGoogleDriveApi {
     this.#jsonResponse(res, response);
   }
 
+
+  /**
+   * /drive/v3/files/:fileId/revisions
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
+   */
+  #handleListRevisions(fileId: string, res: ServerResponse): void {
+    const file = this.#session.files.get(fileId);
+    if (!file) {
+      this.#errorResponse(res, 404, `File not found: ${fileId}`);
+      return;
+    }
+    const revisions = file.revisions.map((r) => ({
+      kind: "drive#revision",
+      id: r.id,
+      modifiedTime: r.modifiedTime,
+    }));
+    this.#jsonResponse(res, { kind: "drive#revisionList", revisions });
+  }
+
+  /**
+   * /drive/v3/files/:fileId/revisions/:revisionId
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
+   */
+  #handleGetRevisionMetadata(
+    fileId: string,
+    revisionId: string,
+    res: ServerResponse
+  ): void {
+    const file = this.#session.files.get(fileId);
+    if (!file) {
+      this.#errorResponse(res, 404, `File not found: ${fileId}`);
+      return;
+    }
+    const revision = file.revisions.find((r) => r.id === revisionId);
+    if (!revision) {
+      this.#errorResponse(res, 404, `Revision not found: ${revisionId}`);
+      return;
+    }
+    this.#jsonResponse(res, {
+      kind: "drive#revision",
+      id: revision.id,
+      modifiedTime: revision.modifiedTime,
+    });
+  }
+
+  /**
+   * /drive/v3/files/:fileId/revisions/:revisionId (alt=media)
+   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
+   */
+  #handleGetRevisionContent(
+    fileId: string,
+    revisionId: string,
+    res: ServerResponse
+  ): void {
+    const file = this.#session.files.get(fileId);
+    if (!file) {
+      this.#errorResponse(res, 404, `File not found: ${fileId}`);
+      return;
+    }
+    const revision = file.revisions.find((r) => r.id === revisionId);
+    if (!revision) {
+      this.#errorResponse(res, 404, `Revision not found: ${revisionId}`);
+      return;
+    }
+    // For the latest revision, use the current file data.
+    const isLatest =
+      file.revisions.indexOf(revision) === file.revisions.length - 1;
+    const content = isLatest
+      ? (file.data ?? new Uint8Array(0))
+      : (revision.data ?? new Uint8Array(0));
+    const mimeType = file.metadata.mimeType ?? "application/octet-stream";
+    res.writeHead(200, { "Content-Type": mimeType });
+    res.end(Buffer.from(content));
+  }
+
   async #parseMultipartBody(
     body: Uint8Array,
     headers: IncomingHttpHeaders
@@ -970,79 +1045,5 @@ export class FakeGoogleDriveApi {
       24,
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     );
-  }
-
-  /**
-   * /drive/v3/files/:fileId/revisions
-   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
-   */
-  #handleListRevisions(fileId: string, res: ServerResponse): void {
-    const file = this.#session.files.get(fileId);
-    if (!file) {
-      this.#errorResponse(res, 404, `File not found: ${fileId}`);
-      return;
-    }
-    const revisions = file.revisions.map((r) => ({
-      kind: "drive#revision",
-      id: r.id,
-      modifiedTime: r.modifiedTime,
-    }));
-    this.#jsonResponse(res, { kind: "drive#revisionList", revisions });
-  }
-
-  /**
-   * /drive/v3/files/:fileId/revisions/:revisionId
-   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
-   */
-  #handleGetRevisionMetadata(
-    fileId: string,
-    revisionId: string,
-    res: ServerResponse
-  ): void {
-    const file = this.#session.files.get(fileId);
-    if (!file) {
-      this.#errorResponse(res, 404, `File not found: ${fileId}`);
-      return;
-    }
-    const revision = file.revisions.find((r) => r.id === revisionId);
-    if (!revision) {
-      this.#errorResponse(res, 404, `Revision not found: ${revisionId}`);
-      return;
-    }
-    this.#jsonResponse(res, {
-      kind: "drive#revision",
-      id: revision.id,
-      modifiedTime: revision.modifiedTime,
-    });
-  }
-
-  /**
-   * /drive/v3/files/:fileId/revisions/:revisionId (alt=media)
-   * https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
-   */
-  #handleGetRevisionContent(
-    fileId: string,
-    revisionId: string,
-    res: ServerResponse
-  ): void {
-    const file = this.#session.files.get(fileId);
-    if (!file) {
-      this.#errorResponse(res, 404, `File not found: ${fileId}`);
-      return;
-    }
-    const revision = file.revisions.find((r) => r.id === revisionId);
-    if (!revision) {
-      this.#errorResponse(res, 404, `Revision not found: ${revisionId}`);
-      return;
-    }
-    // For the latest revision, use the current file data.
-    const isLatest =
-      file.revisions.indexOf(revision) === file.revisions.length - 1;
-    const content = isLatest
-      ? (file.data ?? new Uint8Array(0))
-      : (revision.data ?? new Uint8Array(0));
-    const mimeType = file.metadata.mimeType ?? "application/octet-stream";
-    res.writeHead(200, { "Content-Type": mimeType });
-    res.end(Buffer.from(content));
   }
 }
