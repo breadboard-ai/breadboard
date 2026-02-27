@@ -137,16 +137,6 @@ export function onRunnerError(bind: ActionBind): EventTrigger {
   );
 }
 
-/** Fires when a node finishes execution. */
-export function onRunnerNodeEnd(bind: ActionBind): EventTrigger {
-  const { services } = bind;
-  return eventTrigger(
-    "Runner Node End",
-    services.runService.runnerEventBus,
-    "nodeend"
-  );
-}
-
 /** Fires when a node's lifecycle state changes. */
 export function onRunnerNodeStateChange(bind: ActionBind): EventTrigger {
   const { services } = bind;

@@ -80,11 +80,13 @@ function makeEventSink(): RunEventSink & {
   events: Event[];
   paused: boolean;
   nodeStartCount: number;
+  nodeEndCount: number;
 } {
   const sink = {
     events: [] as Event[],
     paused: false,
     nodeStartCount: 0,
+    nodeEndCount: 0,
     dispatch(event: Event) {
       sink.events.push(event);
     },
@@ -93,6 +95,9 @@ function makeEventSink(): RunEventSink & {
     },
     onNodeStart() {
       sink.nodeStartCount++;
+    },
+    onNodeEnd() {
+      sink.nodeEndCount++;
     },
   };
   return sink;

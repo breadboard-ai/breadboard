@@ -82,14 +82,14 @@ suite("RunStateController", () => {
       controller.preamble();
       await controller.run();
 
-      // Should have dispatched: NodeEnd, End (NodeStart goes through callback)
+      // Should have dispatched: End (NodeStart and NodeEnd go through callbacks)
       const names = eventSink.events.map((e: Event) => e.constructor.name);
       assert.strictEqual(
         eventSink.nodeStartCount,
         1,
         "should call onNodeStart"
       );
-      assert.ok(names.includes("NodeEndEvent"), "should dispatch NodeEnd");
+      assert.strictEqual(eventSink.nodeEndCount, 1, "should call onNodeEnd");
       assert.ok(names.includes("EndEvent"), "should dispatch End");
     });
 
@@ -184,8 +184,7 @@ suite("RunStateController", () => {
 
       await controller.run();
 
-      const nodeEndEvents = eventsByType(eventSink.events, "NodeEndEvent");
-      assert.strictEqual(nodeEndEvents.length, 1, "node should still end");
+      assert.strictEqual(eventSink.nodeEndCount, 1, "node should still end");
     });
   });
 

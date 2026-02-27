@@ -53,7 +53,6 @@ function collectEvents(runner: PlanRunner): Event[] {
     "start",
     "pause",
     "resume",
-    "nodeend",
     "end",
     "error",
     "nodestatechange",
@@ -81,6 +80,18 @@ function eventNames(events: Event[]): string[] {
 function collectNodeStartCount(runner: PlanRunner): { count: number } {
   const counter = { count: 0 };
   runner.onNodeStart = () => {
+    counter.count++;
+  };
+  return counter;
+}
+
+/**
+ * Track onNodeEnd callback invocations on a PlanRunner.
+ * Returns an object with a `count` property.
+ */
+function collectNodeEndCount(runner: PlanRunner): { count: number } {
+  const counter = { count: 0 };
+  runner.onNodeEnd = () => {
     counter.count++;
   };
   return counter;
@@ -161,15 +172,13 @@ suite("PlanRunner", () => {
         invoker,
         testConfigProvider
       );
-      const events = collectEvents(runner);
       const nodeStarts = collectNodeStartCount(runner);
+      const nodeEnds = collectNodeEndCount(runner);
 
       await runner.start();
 
-      const names = eventNames(events);
       assert.strictEqual(nodeStarts.count, 3, "should start 3 nodes");
-      const nodeEnds = names.filter((n) => n === "nodeend");
-      assert.strictEqual(nodeEnds.length, 3, "should end 3 nodes");
+      assert.strictEqual(nodeEnds.count, 3, "should end 3 nodes");
     });
 
     it("running() returns false after start() completes", async () => {
@@ -304,14 +313,13 @@ suite("PlanRunner", () => {
 
     it("dispatches node start and end events", async () => {
       const runner = makePlanRunner(makeSingleNodeGraph("s"));
-      const events = collectEvents(runner);
       const nodeStarts = collectNodeStartCount(runner);
+      const nodeEnds = collectNodeEndCount(runner);
 
       await runner.start();
 
-      const names = eventNames(events);
       assert.strictEqual(nodeStarts.count, 1, "should call onNodeStart");
-      assert.ok(names.includes("nodeend"), "should dispatch nodeend");
+      assert.strictEqual(nodeEnds.count, 1, "should call onNodeEnd");
     });
 
     it("dispatches multiple event types during a run", async () => {
@@ -321,9 +329,9 @@ suite("PlanRunner", () => {
 
       await runner.start();
 
-      // A full run dispatches start, nodeend, end
+      // A full run dispatches start, end
       // at minimum, plus potentially nodestatechange/edgestatechange
-      // nodestart now goes through callback
+      // nodestart and nodeend now go through callbacks
       const types = new Set(eventNames(events));
       assert.ok(
         types.size >= 3,
@@ -398,8 +406,8 @@ suite("PlanRunner", () => {
     it("creates controller and runs node by ID", async () => {
       const graph = makeSingleNodeGraph("target");
       const runner = makePlanRunner(graph);
-      const events = collectEvents(runner);
       const nodeStarts = collectNodeStartCount(runner);
+      const nodeEnds = collectNodeEndCount(runner);
 
       assert.ok(!runner.running(), "should not be running initially");
 
@@ -409,9 +417,8 @@ suite("PlanRunner", () => {
       // Controller should still exist (runNode doesn't null it).
       assert.ok(runner.running(), "should be running after runNode");
 
-      const names = eventNames(events);
       assert.strictEqual(nodeStarts.count, 1, "should call onNodeStart");
-      assert.ok(names.includes("nodeend"), "should dispatch nodeend");
+      assert.strictEqual(nodeEnds.count, 1, "should call onNodeEnd");
     });
 
     it("dispatches ResumeEvent when orchestrator is not working", async () => {
@@ -454,15 +461,14 @@ suite("PlanRunner", () => {
     it("creates controller and runs from a node", async () => {
       const graph = makeSingleNodeGraph("solo");
       const runner = makePlanRunner(graph);
-      const events = collectEvents(runner);
+      const nodeEnds = collectNodeEndCount(runner);
 
       assert.ok(!runner.running(), "should not be running initially");
 
       // runFrom creates controller if needed and runs from the given node.
       await runner.runFrom("solo");
 
-      const names = eventNames(events);
-      assert.ok(names.includes("nodeend"), "should dispatch nodeend");
+      assert.strictEqual(nodeEnds.count, 1, "should call onNodeEnd");
     });
 
     it("dispatches ResumeEvent when resuming from a non-working state", async () => {

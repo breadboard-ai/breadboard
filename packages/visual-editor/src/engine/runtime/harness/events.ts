@@ -10,7 +10,6 @@ import {
   End,
   ErrorResponse,
   InputValues,
-  NodeEndResponse,
   NodeIdentifier,
   NodeLifecycleState,
   OutputValues,
@@ -19,7 +18,6 @@ import {
   RunEndEvent,
   RunErrorEvent,
   RunLifecycleEvent,
-  RunNodeEndEvent,
   RunNodeStateChangeEvent,
   RunOutputEvent,
   RunSkipEvent,
@@ -73,15 +71,6 @@ export class SkipEvent extends Event implements RunSkipEvent {
 
   constructor(public data: SkipProbeMessage["data"]) {
     super(SkipEvent.eventName, { ...opts });
-  }
-}
-
-export class NodeEndEvent extends Event implements RunNodeEndEvent {
-  static readonly eventName = "nodeend";
-  readonly running = true;
-
-  constructor(public data: NodeEndResponse) {
-    super(NodeEndEvent.eventName, { ...opts });
   }
 }
 

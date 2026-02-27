@@ -8,6 +8,7 @@ import {
   BreakpointSpec,
   GraphDescriptor,
   HarnessRunner,
+  NodeEndResponse,
   NodeIdentifier,
   NodeLifecycleState,
   NodeStartResponse,
@@ -67,6 +68,12 @@ class PlanRunner
    */
   onNodeStart: ((data: NodeStartResponse) => void) | null = null;
 
+  /**
+   * Callback invoked when a node finishes execution.
+   * Set by the `prepare()` action to wire SCA controller updates.
+   */
+  onNodeEnd: ((data: NodeEndResponse) => void) | null = null;
+
   running() {
     return !!this.#controller;
   }
@@ -109,6 +116,9 @@ class PlanRunner
         },
         onNodeStart: (data: NodeStartResponse) => {
           this.onNodeStart?.(data);
+        },
+        onNodeEnd: (data: NodeEndResponse) => {
+          this.onNodeEnd?.(data);
         },
       },
       this.#invoker,
