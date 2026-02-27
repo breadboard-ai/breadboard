@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 import uuid
 
-from opal_backend.local.events import (
+from opal_backend.events import (
     ApplyEditsEvent,
     ContentEvent,
     FinishEvent,
@@ -35,14 +35,14 @@ from opal_backend.local.sse_sink import SSEAgentEventSink
 DEFAULT_DELAY = 0.3
 
 
-def _text(s: str) -> LLMContent:
+def _text(s: str) -> dict:
     """Helper to create a simple text LLMContent."""
-    return LLMContent(parts=[{"text": s}], role="user")
+    return {"parts": [{"text": s}], "role": "user"}
 
 
-def _model_text(s: str) -> LLMContent:
+def _model_text(s: str) -> dict:
     """Helper to create a model-role text LLMContent."""
-    return LLMContent(parts=[{"text": s}], role="model")
+    return {"parts": [{"text": s}], "role": "model"}
 
 
 # ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ async def echo_scenario(sink: SSEAgentEventSink, *, delay: float = DEFAULT_DELAY
 
     call_id = str(uuid.uuid4())
     await sink.emit(FunctionCallEvent(
-        callId=call_id,
+        call_id=call_id,
         name="generate_text",
         args={"prompt": "Hello world"},
         icon="text_analysis",
@@ -71,14 +71,13 @@ async def echo_scenario(sink: SSEAgentEventSink, *, delay: float = DEFAULT_DELAY
     await asyncio.sleep(delay)
 
     await sink.emit(FunctionCallUpdateEvent(
-        callId=call_id,
+        call_id=call_id,
         status="Generating Text",
-        opts={"expectedDurationInSec": 5},
     ))
     await asyncio.sleep(delay)
 
     await sink.emit(FunctionResultEvent(
-        callId=call_id,
+        call_id=call_id,
         content=_model_text("Hello from the mock server!"),
     ))
     await asyncio.sleep(delay)
@@ -113,9 +112,9 @@ async def chat_scenario(sink: SSEAgentEventSink, *, delay: float = DEFAULT_DELAY
     # Suspend: wait for user input
     request_id = str(uuid.uuid4())
     response = await sink.suspend(WaitForInputEvent(
-        requestId=request_id,
+        request_id=request_id,
         prompt=_text("Hello! What would you like to work on today?"),
-        inputType="text",
+        input_type="text",
     ))
 
     # Extract the user's text from the response
@@ -159,7 +158,7 @@ async def graph_edit_scenario(sink: SSEAgentEventSink, *, delay: float = DEFAULT
 
     # Suspend: read the current graph
     read_id = str(uuid.uuid4())
-    graph_response = await sink.suspend(ReadGraphEvent(requestId=read_id))
+    graph_response = await sink.suspend(ReadGraphEvent(request_id=read_id))
 
     node_count = 0
     if isinstance(graph_response, dict):
@@ -176,7 +175,7 @@ async def graph_edit_scenario(sink: SSEAgentEventSink, *, delay: float = DEFAULT
     # Suspend: apply edits to the graph
     edit_id = str(uuid.uuid4())
     edit_response = await sink.suspend(ApplyEditsEvent(
-        requestId=edit_id,
+        request_id=edit_id,
         label="Add Research step",
         edits=[{
             "type": "addnode",
@@ -234,10 +233,10 @@ async def consent_scenario(sink: SSEAgentEventSink, *, delay: float = DEFAULT_DE
     # Suspend: request consent
     consent_id = str(uuid.uuid4())
     consent = await sink.suspend(QueryConsentEvent(
-        requestId=consent_id,
-        consentType="GET_ANY_WEBPAGE",
+        request_id=consent_id,
+        consent_type="GET_ANY_WEBPAGE",
         scope={},
-        graphUrl="https://example.com/my-opal",
+        graph_url="https://example.com/my-opal",
     ))
 
     if consent:

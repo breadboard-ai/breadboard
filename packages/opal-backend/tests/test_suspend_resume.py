@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from opal_backend.suspend import SuspendError, SuspendResult
+from opal_backend.events import WaitForInputEvent
 from opal_backend.interaction_store import (
     InteractionStore,
     InteractionState,
@@ -23,19 +24,22 @@ class TestSuspendError(unittest.TestCase):
     """Tests for SuspendError."""
 
     def test_creates_with_event_and_interaction_id(self):
-        event = {"type": "waitForInput", "requestId": "req-1", "prompt": {}}
+        event = WaitForInputEvent(
+            request_id="req-1", prompt={},
+        )
         error = SuspendError(event)
         self.assertEqual(error.event, event)
         self.assertIsInstance(error.interaction_id, str)
         self.assertTrue(len(error.interaction_id) > 0)
 
     def test_unique_interaction_ids(self):
-        e1 = SuspendError({"type": "waitForInput", "requestId": "a"})
-        e2 = SuspendError({"type": "waitForInput", "requestId": "b"})
+        e1 = SuspendError(WaitForInputEvent(request_id="a"))
+        e2 = SuspendError(WaitForInputEvent(request_id="b"))
         self.assertNotEqual(e1.interaction_id, e2.interaction_id)
 
     def test_str_includes_event_type(self):
-        error = SuspendError({"type": "waitForChoice", "requestId": "x"})
+        from opal_backend.events import WaitForChoiceEvent
+        error = SuspendError(WaitForChoiceEvent(request_id="x"))
         self.assertIn("waitForChoice", str(error))
 
 
@@ -96,10 +100,9 @@ class TestFunctionCallerSuspend(unittest.TestCase):
 
     def test_suspend_error_propagates(self):
         """SuspendError should not be caught as a generic exception."""
-        suspend_event = {
-            "type": "waitForInput",
-            "requestId": "req-1",
-        }
+        suspend_event = WaitForInputEvent(
+            request_id="req-1",
+        )
 
         async def suspending_handler(args, status_cb):
             raise SuspendError(suspend_event)
@@ -128,20 +131,19 @@ class TestLoopSuspend(unittest.TestCase):
 
     def test_loop_returns_suspend_result(self):
         """When a function raises SuspendError, loop returns SuspendResult."""
-        suspend_event = {
-            "type": "waitForInput",
-            "requestId": "req-1",
-            "prompt": {"parts": [{"text": "What is your name?"}]},
-            "_function_call_part": {
-                "functionCall": {
-                    "name": "chat_request_user_input",
-                    "args": {"user_message": "What is your name?"},
-                }
-            },
+        suspend_event = WaitForInputEvent(
+            request_id="req-1",
+            prompt={"parts": [{"text": "What is your name?"}]},
+        )
+        function_call_part = {
+            "functionCall": {
+                "name": "chat_request_user_input",
+                "args": {"user_message": "What is your name?"},
+            }
         }
 
         async def suspending_handler(args, status_cb):
-            raise SuspendError(suspend_event)
+            raise SuspendError(suspend_event, function_call_part)
 
         defn = FunctionDefinition(
             name="chat_request_user_input",
@@ -196,7 +198,7 @@ class TestLoopSuspend(unittest.TestCase):
                     )
                 )
                 self.assertIsInstance(result, SuspendResult)
-                self.assertEqual(result.suspend_event["type"], "waitForInput")
+                self.assertEqual(result.suspend_event.type, "waitForInput")
                 self.assertIsInstance(result.interaction_id, str)
                 # Contents should include the objective + model's function call
                 self.assertTrue(len(result.contents) >= 2)
@@ -285,20 +287,19 @@ class TestLoopSuspend(unittest.TestCase):
 
     def test_on_finish_not_called_on_suspend(self):
         """on_finish must NOT fire when the loop suspends."""
-        suspend_event = {
-            "type": "waitForInput",
-            "requestId": "req-1",
-            "prompt": {"parts": [{"text": "Name?"}]},
-            "_function_call_part": {
-                "functionCall": {
-                    "name": "chat_request_user_input",
-                    "args": {"user_message": "Name?"},
-                }
-            },
+        suspend_event = WaitForInputEvent(
+            request_id="req-1",
+            prompt={"parts": [{"text": "Name?"}]},
+        )
+        function_call_part = {
+            "functionCall": {
+                "name": "chat_request_user_input",
+                "args": {"user_message": "Name?"},
+            }
         }
 
         async def suspending_handler(args, status_cb):
-            raise SuspendError(suspend_event)
+            raise SuspendError(suspend_event, function_call_part)
 
         defn = FunctionDefinition(
             name="chat_request_user_input",

@@ -59,11 +59,11 @@ class TestChatRequestUserInput(unittest.TestCase):
                     lambda s, **kw: None,
                 )
             event = ctx.exception.event
-            self.assertEqual(event["type"], "waitForInput")
-            self.assertIn("requestId", event)
-            self.assertEqual(event["inputType"], "any")
+            self.assertEqual(event.type, "waitForInput")
+            self.assertTrue(len(event.request_id) > 0)
+            self.assertEqual(event.input_type, "any")
             self.assertEqual(
-                event["prompt"]["parts"][0]["text"],
+                event.prompt["parts"][0]["text"],
                 "What is your name?",
             )
 
@@ -78,7 +78,7 @@ class TestChatRequestUserInput(unittest.TestCase):
                     {"user_message": "Upload a file", "input_type": "file-upload"},
                     lambda s, **kw: None,
                 )
-            self.assertEqual(ctx.exception.event["inputType"], "file-upload")
+            self.assertEqual(ctx.exception.event.input_type, "file-upload")
 
         asyncio.run(run())
 
@@ -91,7 +91,7 @@ class TestChatRequestUserInput(unittest.TestCase):
                     {"user_message": "test", "input_type": "invalid"},
                     lambda s, **kw: None,
                 )
-            self.assertEqual(ctx.exception.event["inputType"], "any")
+            self.assertEqual(ctx.exception.event.input_type, "any")
 
         asyncio.run(run())
 
@@ -104,7 +104,7 @@ class TestChatRequestUserInput(unittest.TestCase):
                     {"user_message": "test", "skip_label": "Skip this"},
                     lambda s, **kw: None,
                 )
-            self.assertEqual(ctx.exception.event["skipLabel"], "Skip this")
+            self.assertEqual(ctx.exception.event.skip_label, "Skip this")
 
         asyncio.run(run())
 
@@ -117,7 +117,7 @@ class TestChatRequestUserInput(unittest.TestCase):
                     {"user_message": "test"},
                     lambda s, **kw: None,
                 )
-            fc = ctx.exception.event["_function_call_part"]
+            fc = ctx.exception.function_call_part
             self.assertEqual(
                 fc["functionCall"]["name"],
                 CHAT_REQUEST_USER_INPUT,
@@ -155,13 +155,13 @@ class TestChatPresentChoices(unittest.TestCase):
                     lambda s, **kw: None,
                 )
             event = ctx.exception.event
-            self.assertEqual(event["type"], "waitForChoice")
-            self.assertIn("requestId", event)
-            self.assertEqual(event["selectionMode"], "single")
-            self.assertEqual(len(event["choices"]), 2)
+            self.assertEqual(event.type, "waitForChoice")
+            self.assertTrue(len(event.request_id) > 0)
+            self.assertEqual(event.selection_mode, "single")
+            self.assertEqual(len(event.choices), 2)
             # Choices should be transformed to LLMContent format.
             self.assertEqual(
-                event["choices"][0]["content"]["parts"][0]["text"],
+                event.choices[0].content["parts"][0]["text"],
                 "Red",
             )
 
@@ -182,7 +182,7 @@ class TestChatPresentChoices(unittest.TestCase):
                     lambda s, **kw: None,
                 )
             self.assertEqual(
-                ctx.exception.event["noneOfTheAboveLabel"], "Neither"
+                ctx.exception.event.none_of_the_above_label, "Neither"
             )
 
         asyncio.run(run())

@@ -5,24 +5,37 @@
 Agent event sink and hooks adapter.
 
 Port of the ``buildHooksFromSink`` pattern from ``loop-setup.ts``. The event
-sink is an asyncio queue of typed event dicts that mirrors the TS
+sink is an asyncio queue of typed event dataclasses that mirrors the TS
 ``AgentEventSink``. The ``build_hooks_from_sink`` function creates
 ``LoopHooks`` that push events into the queue — matching the TS version
 exactly.
-
-The events are plain dicts with a ``type`` key that matches the TS
-``AgentEvent`` union types (``start``, ``thought``, ``functionCall``, etc.).
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import uuid
 from typing import Any
 
-from .loop import GeminiBody, LLMContent, LoopHooks
+from .events import (
+    AgentEvent,
+    ContentEvent,
+    FinishEvent,
+    FunctionCallEvent,
+    FunctionCallUpdateEvent,
+    FunctionResultEvent,
+    GeminiBody,
+    LLMContent,
+    SendRequestEvent,
+    StartEvent,
+    SubagentAddJsonEvent,
+    SubagentErrorEvent,
+    SubagentFinishEvent,
+    ThoughtEvent,
+    TurnCompleteEvent,
+)
+from .loop import LoopHooks
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +51,16 @@ class AgentEventSink:
     """
 
     def __init__(self) -> None:
-        self._queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
+        self._queue: asyncio.Queue[AgentEvent | None] = asyncio.Queue()
         self._closed = False
 
-    def emit(self, event: dict[str, Any]) -> None:
+    def emit(self, event: AgentEvent) -> None:
         """Push an event into the sink."""
         if self._closed:
-            logger.warning("emit() called on closed sink: %s", event.get("type"))
+            logger.warning(
+                "emit() called on closed sink: %s",
+                getattr(event, "type", "unknown"),
+            )
             return
         self._queue.put_nowait(event)
 
@@ -67,29 +83,29 @@ def build_hooks_from_sink(sink: AgentEventSink) -> LoopHooks:
 
     Port of ``buildHooksFromSink`` from ``loop-setup.ts``.
 
-    Each hook emits an AgentEvent dict instead of calling managers directly.
+    Each hook emits a typed AgentEvent instead of calling managers directly.
     The consumer on the other end of the sink dispatches events to the
     appropriate handlers (progress UI, SSE stream, etc.).
     """
     return LoopHooks(
         on_start=lambda objective: sink.emit(
-            {"type": "start", "objective": objective}
+            StartEvent(objective=objective)
         ),
-        on_finish=lambda: sink.emit({"type": "finish"}),
+        on_finish=lambda: sink.emit(FinishEvent()),
         on_content=lambda content: sink.emit(
-            {"type": "content", "content": content}
+            ContentEvent(content=content)
         ),
-        on_thought=lambda text: sink.emit({"type": "thought", "text": text}),
+        on_thought=lambda text: sink.emit(ThoughtEvent(text=text)),
         on_function_call=_make_on_function_call(sink),
         on_function_call_update=lambda call_id, status: sink.emit(
-            {"type": "functionCallUpdate", "callId": call_id, "status": status}
+            FunctionCallUpdateEvent(call_id=call_id, status=status)
         ),
         on_function_result=lambda call_id, content: sink.emit(
-            {"type": "functionResult", "callId": call_id, "content": content}
+            FunctionResultEvent(call_id=call_id, content=content)
         ),
-        on_turn_complete=lambda: sink.emit({"type": "turnComplete"}),
+        on_turn_complete=lambda: sink.emit(TurnCompleteEvent()),
         on_send_request=lambda model, body: sink.emit(
-            {"type": "sendRequest", "model": model, "body": body}
+            SendRequestEvent(model=model, body=body)
         ),
     )
 
@@ -110,38 +126,36 @@ def _make_on_function_call(sink: AgentEventSink):
         call_id = str(uuid.uuid4())
 
         fc = part.get("functionCall", {})
-        sink.emit({
-            "type": "functionCall",
-            "callId": call_id,
-            "name": fc.get("name", ""),
-            "args": fc.get("args", {}),
-            **({"icon": icon} if icon else {}),
-            **({"title": title} if title else {}),
-        })
+        sink.emit(FunctionCallEvent(
+            call_id=call_id,
+            name=fc.get("name", ""),
+            args=fc.get("args", {}),
+            icon=icon,
+            title=title,
+        ))
 
         # Return a proxy reporter that emits subagent events through the sink.
         # Function handlers call addJson/addError/finish as usual — the events
         # travel through the event layer to the consumer.
         reporter = {
-            "addJson": lambda json_title, data, json_icon=None: sink.emit({
-                "type": "subagentAddJson",
-                "callId": call_id,
-                "title": json_title,
-                "data": data,
-                **({"icon": json_icon} if json_icon else {}),
-            }),
+            "addJson": lambda json_title, data, json_icon=None: sink.emit(
+                SubagentAddJsonEvent(
+                    call_id=call_id,
+                    title=json_title,
+                    data=data,
+                    icon=json_icon,
+                )
+            ),
             "addError": lambda error: (
-                sink.emit({
-                    "type": "subagentError",
-                    "callId": call_id,
-                    "error": error,
-                }),
+                sink.emit(SubagentErrorEvent(
+                    call_id=call_id,
+                    error=error,
+                )),
                 error,
             )[-1],
-            "finish": lambda: sink.emit({
-                "type": "subagentFinish",
-                "callId": call_id,
-            }),
+            "finish": lambda: sink.emit(SubagentFinishEvent(
+                call_id=call_id,
+            )),
         }
 
         return {"callId": call_id, "reporter": reporter}
