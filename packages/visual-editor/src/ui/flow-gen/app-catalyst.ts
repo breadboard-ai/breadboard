@@ -12,6 +12,7 @@ export interface AppCatalystChatRequest {
   messages: AppCatalystContentChunk[];
   appOptions: {
     format: "FORMAT_GEMINI_FLOWS";
+    appId: string;
     featureFlags?: Record<string, boolean>;
   };
 }
@@ -21,6 +22,7 @@ export interface AppCatalystChatRequestV2 {
   intent?: string;
   appOptions: {
     format: "FORMAT_GEMINI_FLOWS";
+    appId: string;
     featureFlags?: Record<string, boolean>;
   };
   app?: { parts: FlowGenLLMContentPart[] };
@@ -159,12 +161,14 @@ export class AppCatalystApiClient {
 
   async *generateOpalStream(
     intent: string,
+    appId: string,
     agentMode = false
   ): AsyncGenerator<LLMContent> {
     const request: AppCatalystChatRequestV2 = {
       intent,
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
+        appId: appId,
         ...(agentMode && {
           featureFlags: { enable_agent_mode_planner: true },
         }),
@@ -175,6 +179,7 @@ export class AppCatalystApiClient {
 
   async *editOpalStream(
     intent: string,
+    appId: string,
     flow: GraphDescriptor,
     agentMode = false
   ): AsyncGenerator<LLMContent> {
@@ -182,6 +187,7 @@ export class AppCatalystApiClient {
       reviseIntent: intent,
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
+        appId: appId,
         ...(agentMode && {
           featureFlags: { enable_agent_mode_planner: true },
         }),
