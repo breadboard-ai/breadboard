@@ -94,6 +94,10 @@ export type RuntimeFlags = {
    * Show a running token counter in the console view
    */
   showTokenCounter: boolean;
+  /**
+   * Enables explicit context caching for agent loop invocations
+   */
+  enableContextCaching: boolean;
 };
 
 /**
@@ -235,6 +239,11 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   showTokenCounter: {
     title: "Token Counter",
     description: "Show a running token counter in the console view",
+    visibility: "experimental",
+  },
+  enableContextCaching: {
+    title: "Context Caching",
+    description: "Enable explicit context caching for agent loop invocations",
     visibility: "experimental",
   },
 };

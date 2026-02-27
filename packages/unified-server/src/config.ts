@@ -85,6 +85,7 @@ export async function createClientConfig(opts: {
       enableGraphEditorAgent: flags.ENABLE_GRAPH_EDITOR_AGENT,
       textEditorRemix: flags.ENABLE_TEXT_EDITOR_REMIX,
       showTokenCounter: flags.ENABLE_SHOW_TOKEN_COUNTER,
+      enableContextCaching: flags.ENABLE_CONTEXT_CACHING,
     },
   };
 }

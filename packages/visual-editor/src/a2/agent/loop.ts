@@ -18,6 +18,7 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { SimplifiedToolManager } from "../a2/tool-manager.js";
 import { FunctionCallerImpl } from "./function-caller.js";
 import { FunctionGroup, LoopHooks } from "./types.js";
+import { createCachedContent } from "../a2/cached-content.js";
 
 export { Loop, LoopController };
 export type { AgentRunArgs, AgentResult, FileData };
@@ -156,6 +157,12 @@ class Loop {
         ...functionGroups.flatMap((group) => group.definitions),
       ]);
 
+      // Check if context caching is enabled.
+      const flags = await moduleArgs.context.flags?.flags();
+      const enableContextCaching = flags?.enableContextCaching ?? false;
+      let cachedContentName: string | undefined;
+      let turn = 0;
+
       while (!this.controller.terminated) {
         const body: GeminiBody = {
           contents,
@@ -176,6 +183,26 @@ class Loop {
         const conformedBody = await conformGeminiBody(moduleArgs, body);
         if (!ok(conformedBody)) {
           return conformedBody;
+        }
+
+        // On the first turn, attempt to create a cached content resource.
+        if (turn === 0 && enableContextCaching) {
+          const cacheName = await createCachedContent(
+            moduleArgs,
+            AGENT_MODEL,
+            conformedBody
+          );
+          if (ok(cacheName)) {
+            cachedContentName = cacheName;
+          }
+        }
+
+        // Attach the cache and strip already-cached fields.
+        if (cachedContentName) {
+          conformedBody.cachedContent = cachedContentName;
+          delete conformedBody.systemInstruction;
+          delete conformedBody.tools;
+          delete conformedBody.toolConfig;
         }
 
         hooks.onSendRequest?.(AGENT_MODEL, conformedBody);
@@ -259,6 +286,7 @@ class Loop {
         contents.push(functionResults.combined);
         hooks.onContent?.(functionResults.combined);
         hooks.onTurnComplete?.();
+        turn++;
       }
       return this.controller.result;
     } catch (e) {

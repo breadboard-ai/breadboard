@@ -25,4 +25,5 @@ export const defaultRuntimeFlags: RuntimeFlags = {
   enableGraphEditorAgent: false,
   textEditorRemix: false,
   showTokenCounter: false,
+  enableContextCaching: false,
 };

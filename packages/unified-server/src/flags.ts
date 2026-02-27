@@ -167,6 +167,8 @@ export const ENABLE_SHOW_TOKEN_COUNTER = getBoolean(
   "ENABLE_SHOW_TOKEN_COUNTER"
 );
 
+export const ENABLE_CONTEXT_CACHING = getBoolean("ENABLE_CONTEXT_CACHING");
+
 function getDomainConfig(
   flagName: string
 ): Record<string, DomainConfiguration> {

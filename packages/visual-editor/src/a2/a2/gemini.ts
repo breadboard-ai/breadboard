@@ -132,6 +132,7 @@ export type GeminiBody = {
   systemInstruction?: LLMContent;
   safetySettings?: SafetySetting[];
   generationConfig?: GenerationConfig;
+  cachedContent?: string;
 };
 
 /** The thinking features configuration. */

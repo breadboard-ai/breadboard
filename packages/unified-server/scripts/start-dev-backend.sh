@@ -29,9 +29,11 @@ SCRIPT_DIR="$(dirname "$0")"
 ENV_FILE="$SCRIPT_DIR/../.env"
 if [ -f "$ENV_FILE" ]; then
   UPSTREAM=$(grep '^BACKEND_API_ENDPOINT=' "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d '"')
+  GEMINI_KEY_VAL=$(grep '^GEMINI_KEY=' "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d '"')
 fi
 
 export PROXY_UPSTREAM_URL="${UPSTREAM:-https://appcatalyst.pa.googleapis.com}"
+export GEMINI_KEY="${GEMINI_KEY_VAL:-}"
 echo "Starting opal-backend dev server on port 8080 (upstream: $PROXY_UPSTREAM_URL)..."
 cd "$BACKEND_DIR" && .venv/bin/uvicorn opal_backend.dev.main:app --reload --port 8080 \
   --reload-dir opal_backend
