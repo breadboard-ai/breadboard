@@ -856,6 +856,87 @@ suite("GoogleDriveClient", () => {
       assert.strictEqual(await response.text(), "v2-latest");
     });
 
+    test("createFile sets headRevisionId matching the initial revision", async () => {
+      const file = await client.createFile(
+        new Blob(["v1"], { type: "application/json" }),
+        { name: "test.json", mimeType: "application/json" }
+      );
+
+      const meta = await client.getFileMetadata(file.id, {
+        fields: ["headRevisionId"],
+      });
+      const list = await client.listRevisions(file.id);
+
+      assert.strictEqual(meta.headRevisionId, list.revisions![0]!.id);
+    });
+
+    test("headRevisionId updates after updateFile", async () => {
+      const file = await client.createFile(
+        new Blob(["v1"], { type: "text/plain" }),
+        { name: "test.txt", mimeType: "text/plain" }
+      );
+
+      await client.updateFile(
+        file.id,
+        new Blob(["v2"], { type: "text/plain" })
+      );
+
+      const meta = await client.getFileMetadata(file.id, {
+        fields: ["headRevisionId"],
+      });
+      const list = await client.listRevisions(file.id);
+      const latestRevision = list.revisions![list.revisions!.length - 1]!;
+
+      assert.strictEqual(meta.headRevisionId, latestRevision.id);
+    });
+
+    test("headRevisionId updates after updateFileMetadata", async () => {
+      const file = await client.createFileMetadata(
+        { name: "test.json", mimeType: "application/json" },
+        { fields: ["id"] }
+      );
+
+      await client.updateFileMetadata(file.id, { name: "renamed.json" });
+
+      const meta = await client.getFileMetadata(file.id, {
+        fields: ["headRevisionId"],
+      });
+      const list = await client.listRevisions(file.id);
+      const latestRevision = list.revisions![list.revisions!.length - 1]!;
+
+      assert.strictEqual(meta.headRevisionId, latestRevision.id);
+    });
+
+    test("copyFile sets a fresh headRevisionId", async () => {
+      const original = await client.createFile(
+        new Blob(["data"], { type: "text/plain" }),
+        { name: "original.txt", mimeType: "text/plain" }
+      );
+
+      const copyResult = await client.copyFile(original.id, {
+        name: "copy.txt",
+      });
+      assert.ok(copyResult.ok);
+
+      const copyMeta = await client.getFileMetadata(copyResult.value.id!, {
+        fields: ["headRevisionId"],
+      });
+      const copyRevisions = await client.listRevisions(copyResult.value.id!);
+
+      assert.strictEqual(
+        copyMeta.headRevisionId,
+        copyRevisions.revisions![0]!.id
+      );
+      // Copy should have its own distinct revision ID
+      const originalMeta = await client.getFileMetadata(original.id, {
+        fields: ["headRevisionId"],
+      });
+      assert.notStrictEqual(
+        copyMeta.headRevisionId,
+        originalMeta.headRevisionId
+      );
+    });
+
     test("listRevisions throws 404 for non-existent file", async () => {
       await assert.rejects(
         () => client.listRevisions("non-existent-file-id"),

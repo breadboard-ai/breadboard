@@ -500,6 +500,7 @@ export class FakeGoogleDriveApi {
     const newFileId = metadata.id ?? this.#generateFakeFileId();
 
     const now = this.#nextTimestamp();
+    const revisionId = this.#generateFakeRevisionId();
     const fileMetadata: DriveFile = {
       id: newFileId,
       kind: "drive#file",
@@ -507,12 +508,13 @@ export class FakeGoogleDriveApi {
       version: "1",
       createdTime: now,
       modifiedTime: now,
+      headRevisionId: revisionId,
       properties: {},
       ...metadata,
     };
     this.#session.files.set(newFileId, {
       metadata: fileMetadata,
-      revisions: [{ id: this.#generateFakeRevisionId(), modifiedTime: now }],
+      revisions: [{ id: revisionId, modifiedTime: now }],
     });
 
     const response = this.#filterFields(fileMetadata, url);
@@ -600,6 +602,7 @@ export class FakeGoogleDriveApi {
 
     const metadata: DriveFile = JSON.parse(new TextDecoder().decode(body));
     const currentVersion = parseInt(existingFile.metadata.version ?? "1", 10);
+    const revisionId = this.#generateFakeRevisionId();
     // Deep merge properties to avoid losing existing properties when only some are updated
     const updatedMetadata: DriveFile = {
       ...existingFile.metadata,
@@ -611,10 +614,11 @@ export class FakeGoogleDriveApi {
       id: fileId,
       version: String(currentVersion + 1),
       modifiedTime: this.#nextTimestamp(),
+      headRevisionId: revisionId,
     };
 
     existingFile.revisions.push({
-      id: this.#generateFakeRevisionId(),
+      id: revisionId,
       modifiedTime: updatedMetadata.modifiedTime!,
       data: existingFile.data ? new Uint8Array(existingFile.data) : undefined,
     });
@@ -675,10 +679,12 @@ export class FakeGoogleDriveApi {
       version: "1",
     };
     const now = copiedFileMetadata.createdTime ?? this.#nextTimestamp();
+    const revisionId = this.#generateFakeRevisionId();
+    copiedFileMetadata.headRevisionId = revisionId;
     this.#session.files.set(newFileId, {
       metadata: copiedFileMetadata,
       data: sourceFile.data,
-      revisions: [{ id: this.#generateFakeRevisionId(), modifiedTime: now }],
+      revisions: [{ id: revisionId, modifiedTime: now }],
     });
 
     const response = this.#filterFields(copiedFileMetadata, url);
@@ -793,6 +799,7 @@ export class FakeGoogleDriveApi {
     const fileId = metadata.id ?? this.#generateFakeFileId();
 
     const now = this.#nextTimestamp();
+    const revisionId = this.#generateFakeRevisionId();
     const fileMetadata: DriveFile = {
       id: fileId,
       kind: "drive#file",
@@ -800,6 +807,7 @@ export class FakeGoogleDriveApi {
       version: "1",
       createdTime: now,
       modifiedTime: now,
+      headRevisionId: revisionId,
       properties: {},
       permissions: [],
       ...(this.#session.generatesResourceKey && {
@@ -812,7 +820,7 @@ export class FakeGoogleDriveApi {
       data,
       revisions: [
         {
-          id: this.#generateFakeRevisionId(),
+          id: revisionId,
           modifiedTime: now,
           data: data.length > 0 ? new Uint8Array(data) : undefined,
         },
@@ -844,6 +852,7 @@ export class FakeGoogleDriveApi {
 
     // Deep merge properties to avoid losing existing properties when only some are updated
     const currentVersion = parseInt(existingFile.metadata.version ?? "1", 10);
+    const revisionId = this.#generateFakeRevisionId();
     const updatedMetadata: DriveFile = {
       ...existingFile.metadata,
       ...metadata,
@@ -854,10 +863,11 @@ export class FakeGoogleDriveApi {
       id: fileId,
       version: String(currentVersion + 1),
       modifiedTime: this.#nextTimestamp(),
+      headRevisionId: revisionId,
     };
 
     existingFile.revisions.push({
-      id: this.#generateFakeRevisionId(),
+      id: revisionId,
       modifiedTime: updatedMetadata.modifiedTime!,
       data: existingFile.data ? new Uint8Array(existingFile.data) : undefined,
     });
