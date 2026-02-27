@@ -1564,13 +1564,14 @@ suite("runner nodeend event", () => {
     } as ConsoleEntry);
 
     // Fire nodeend for a top-level node
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          node: { id: "test-node" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "test-node", type: "test" },
+      inputs: {},
+      outputs: {},
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("test-node");
     assert.ok(entry, "entry should exist");
@@ -1601,14 +1602,14 @@ suite("runner nodeend event", () => {
     assert.strictEqual(controller.run.main.console.size, 0);
 
     // Fire nodeend for a node that doesn't exist in console
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["nonexistent-node"],
-          node: { id: "nonexistent-node" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "nonexistent-node", type: "test" },
+      inputs: {},
+      outputs: {},
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     // Should not throw and console should still be empty
     assert.strictEqual(controller.run.main.console.size, 0);
@@ -1634,15 +1635,14 @@ suite("runner nodeend event", () => {
       error: null,
     } as ConsoleEntry);
 
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["error-node"],
-          node: { id: "error-node" },
-          outputs: { $error: "Simulated 503: model overloaded" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "error-node", type: "test" },
+      inputs: {},
+      outputs: { $error: "Simulated 503: model overloaded" },
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("error-node");
     assert.ok(entry, "entry should exist");
@@ -1680,15 +1680,14 @@ suite("runner nodeend event", () => {
       error: null,
     } as ConsoleEntry);
 
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["error-node-2"],
-          node: { id: "error-node-2" },
-          outputs: { $error: { message: "Rate limit exceeded" } },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "error-node-2", type: "test" },
+      inputs: {},
+      outputs: { $error: { message: "Rate limit exceeded" } },
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("error-node-2");
     assert.ok(entry, "entry should exist");
@@ -1725,15 +1724,14 @@ suite("runner nodeend event", () => {
       output: new Map(),
     } as unknown as ConsoleEntry);
 
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["error-node-3"],
-          node: { id: "error-node-3" },
-          outputs: { $error: "Something went wrong" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "error-node-3", type: "test" },
+      inputs: {},
+      outputs: { $error: "Something went wrong" },
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("error-node-3");
     assert.ok(entry, "entry should exist");
@@ -1764,15 +1762,14 @@ suite("runner nodeend event", () => {
       error: null,
     } as ConsoleEntry);
 
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["renderer-error-node"],
-          node: { id: "renderer-error-node" },
-          outputs: { $error: "API failure" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "renderer-error-node", type: "test" },
+      inputs: {},
+      outputs: { $error: "API failure" },
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("renderer-error-node");
     assert.ok(entry, "entry should exist");
@@ -2909,14 +2906,14 @@ suite("runner nodeend deleteScreen", () => {
       controller.run.main.runner as unknown as { state: Map<string, unknown> }
     ).state = new Map([["node-1", { state: "interrupted" }]]);
 
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["node-1"],
-          node: { id: "node-1" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      outputs: {},
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     // Screen should be deleted for interrupted nodes
     assert.strictEqual(
@@ -2958,14 +2955,14 @@ suite("runner nodeend deleteScreen", () => {
       controller.run.main.runner as unknown as { state: Map<string, unknown> }
     ).state = new Map([["node-1", { state: "succeeded" }]]);
 
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["node-1"],
-          node: { id: "node-1" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      outputs: {},
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     // Screen should still exist (finalized, not deleted)
     assert.strictEqual(
@@ -2995,14 +2992,14 @@ suite("runner nodeend deleteScreen", () => {
       completed: false,
     } as ConsoleEntry);
 
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["node-1"],
-          node: { id: "node-1" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      outputs: {},
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     const nodeState = controller.run.renderer.nodes.get("node-1");
     assert.ok(nodeState, "renderer node state should be set");
@@ -3031,22 +3028,21 @@ suite("runner nodeend deleteScreen", () => {
       completed: false,
     } as ConsoleEntry);
 
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["node-1"],
-          node: { id: "node-1" },
-          outputs: {
-            $error: JSON.stringify({
-              code: "RESOURCE_EXHAUSTED",
-              error_reason: "FREE_QUOTA_EXHAUSTED",
-              message: "Quota exceeded",
-            }),
-            metadata: { origin: "server", model: "veo-2" },
-          },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      outputs: {
+        $error: JSON.stringify({
+          code: "RESOURCE_EXHAUSTED",
+          error_reason: "FREE_QUOTA_EXHAUSTED",
+          message: "Quota exceeded",
+        }),
+        metadata: { origin: "server", model: "veo-2" },
+      },
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "console entry should exist");
@@ -3084,18 +3080,17 @@ suite("runner nodeend deleteScreen", () => {
       output: new Map(),
     } as unknown as ConsoleEntry);
 
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["node-1"],
-          node: { id: "node-1" },
-          outputs: {
-            result: "some output",
-            warnFreeQuotaExhaustedForMedia: "veo-2",
-          },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      outputs: {
+        result: "some output",
+        warnFreeQuotaExhaustedForMedia: "veo-2",
+      },
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     // The snackbar should have been shown with a video-specific message
     assert.ok(
@@ -3132,15 +3127,14 @@ suite("runner nodeend deleteScreen", () => {
     } as ConsoleEntry);
 
     // nodeend with no outputs should still set succeeded
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          path: ["node-1"],
-          node: { id: "node-1" },
-          // no outputs
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      outputs: {},
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "console entry should exist");
@@ -3532,14 +3526,14 @@ suite("nodeend output population", () => {
     });
 
     // Fire nodeend with outputs that do NOT contain $error
-    await RunActions.onNodeEndAction(
-      new CustomEvent("nodeend", {
-        detail: {
-          node: { id: "node-1", type: "test" },
-          outputs: { text: "hello world" },
-        },
-      })
-    );
+    controller.run.main.runner!.onNodeEnd!({
+      node: { id: "node-1", type: "test" },
+      inputs: {},
+      outputs: { text: "hello world" },
+      index: "idx-1",
+      newOpportunities: [],
+      timestamp: 0,
+    });
 
     const entry = controller.run.main.console.get("node-1");
     assert.ok(entry, "console entry should exist");

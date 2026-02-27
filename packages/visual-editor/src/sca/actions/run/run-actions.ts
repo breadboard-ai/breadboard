@@ -8,6 +8,7 @@ import type {
   ConsoleEntry,
   ErrorMetadata,
   InspectableNodePorts,
+  NodeEndResponse,
   NodeLifecycleState,
   NodeRunStatus,
   NodeStartResponse,
@@ -37,7 +38,6 @@ import {
   onRunnerPause,
   onRunnerEnd,
   onRunnerError,
-  onRunnerNodeEnd,
   onRunnerNodeStateChange,
   onRunnerEdgeStateChange,
   onRunnerOutput,
@@ -199,9 +199,12 @@ export const prepare = asAction(
     // Register on service — this hooks up event forwarding to runnerEventBus.
     services.runService.registerRunner(runner);
 
-    // Wire nodestart callback — calls handleNodeStart directly.
+    // Wire node lifecycle callbacks — calls handlers directly.
     runner.onNodeStart = (data: NodeStartResponse) => {
       handleNodeStart(data, controller);
+    };
+    runner.onNodeEnd = (data: NodeEndResponse) => {
+      handleNodeEnd(data, controller);
     };
 
     // Wire input lifecycle: when a console entry calls requestInputForNode,
@@ -424,83 +427,75 @@ function handleNodeStart(
 }
 
 /**
- * Runner "nodeend" — updates console entry status, finalizes screen.
+ * Handles a node end event: updates console entry status, finalizes screen.
+ * Called directly via the runner's onNodeEnd callback.
  */
-export const onNodeEndAction = asAction(
-  "Run.onNodeEnd",
-  {
-    mode: ActionMode.Immediate,
-    triggeredBy: () => onRunnerNodeEnd(bind),
-  },
-  async (evt?: CustomEvent): Promise<void> => {
-    const { controller } = bind;
-    const detail = evt?.detail;
+function handleNodeEnd(
+  data: NodeEndResponse,
+  controller: typeof bind.controller
+): void {
+  const nodeId = data.node.id;
+  const existing = controller.run.main.console.get(nodeId);
+  if (existing) {
+    const { outputs } = data;
+    const hasFailed = outputs && "$error" in outputs;
 
-    if (!detail) return;
-
-    const nodeId = detail.node.id;
-    const existing = controller.run.main.console.get(nodeId);
-    if (existing) {
-      const { outputs } = detail;
-      const hasFailed = outputs && "$error" in outputs;
-
-      if (hasFailed) {
-        // Decode the error through decodeErrorData for consistent messaging.
-        const decoded = decodeErrorData(
-          outputs.$error as string,
-          outputs.metadata as ErrorMetadata | undefined
-        );
-        existing.error = { message: decoded.message };
-      } else if (outputs) {
-        // Populate the output map for completed step display.
-        const inspectable = controller.editor.graph.get()?.graphs.get("");
-        const node = inspectable?.nodeById(nodeId);
-        const outputSchema = node?.currentDescribe()?.outputSchema ?? {};
-        const { products } = toLLMContentArray(outputSchema as Schema, outputs);
-        for (const [name, product] of Object.entries(products)) {
-          existing.output.set(name, product as LLMContent);
-        }
-
-        // Show a warning snackbar if the user's free quota is exhausted but
-        // AI credits are available (i.e. they are a g1 subscriber). Note the
-        // warning flag is only set if credits are available.
-        if (outputs.warnFreeQuotaExhaustedForMedia) {
-          const medium = mediumFromModel(
-            outputs.warnFreeQuotaExhaustedForMedia as string
-          );
-          controller.global.snackbars.snackbar(
-            `${medium.title} generation will now use AI credits. You have reached the free ${medium.singular} generation quota for the day. Each ${medium.singular} you generate after this will use your AI credits.`,
-            SnackType.INFORMATION
-          );
-        }
+    if (hasFailed) {
+      // Decode the error through decodeErrorData for consistent messaging.
+      const decoded = decodeErrorData(
+        outputs.$error as string,
+        outputs.metadata as ErrorMetadata | undefined
+      );
+      existing.error = { message: decoded.message };
+    } else if (outputs) {
+      // Populate the output map for completed step display.
+      const inspectable = controller.editor.graph.get()?.graphs.get("");
+      const node = inspectable?.nodeById(nodeId);
+      const outputSchema = node?.currentDescribe()?.outputSchema ?? {};
+      const { products } = toLLMContentArray(outputSchema as Schema, outputs);
+      for (const [name, product] of Object.entries(products)) {
+        existing.output.set(name, product as LLMContent);
       }
 
-      controller.run.main.setConsoleEntry(nodeId, {
-        ...existing,
-        status: hasFailed
-          ? { status: "failed", errorMessage: existing.error!.message }
-          : { status: "succeeded" },
-        completed: true,
-      });
-      if (hasFailed) {
-        controller.run.renderer.setNodeState(nodeId, {
-          status: "failed",
-          errorMessage: existing.error!.message,
-        });
-      } else {
-        controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
+      // Show a warning snackbar if the user's free quota is exhausted but
+      // AI credits are available (i.e. they are a g1 subscriber). Note the
+      // warning flag is only set if credits are available.
+      if (outputs.warnFreeQuotaExhaustedForMedia) {
+        const medium = mediumFromModel(
+          outputs.warnFreeQuotaExhaustedForMedia as string
+        );
+        controller.global.snackbars.snackbar(
+          `${medium.title} generation will now use AI credits. You have reached the free ${medium.singular} generation quota for the day. Each ${medium.singular} you generate after this will use your AI credits.`,
+          SnackType.INFORMATION
+        );
       }
     }
 
-    // Finalize or delete screen based on node state
-    const nodeState = controller.run.main.runner?.state?.get(nodeId);
-    if (nodeState?.state === "interrupted") {
-      controller.run.screen.deleteScreen(nodeId);
+    controller.run.main.setConsoleEntry(nodeId, {
+      ...existing,
+      status: hasFailed
+        ? { status: "failed", errorMessage: existing.error!.message }
+        : { status: "succeeded" },
+      completed: true,
+    });
+    if (hasFailed) {
+      controller.run.renderer.setNodeState(nodeId, {
+        status: "failed",
+        errorMessage: existing.error!.message,
+      });
     } else {
-      controller.run.screen.screens.get(nodeId)?.finalize(detail);
+      controller.run.renderer.setNodeState(nodeId, { status: "succeeded" });
     }
   }
-);
+
+  // Finalize or delete screen based on node state
+  const nodeState = controller.run.main.runner?.state?.get(nodeId);
+  if (nodeState?.state === "interrupted") {
+    controller.run.screen.deleteScreen(nodeId);
+  } else {
+    controller.run.screen.screens.get(nodeId)?.finalize(data);
+  }
+}
 
 /**
  * Runner "nodestatechange" — updates renderer node state.

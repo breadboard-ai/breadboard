@@ -36,6 +36,7 @@ import type {
   InputValues,
   NodeConfiguration,
   NodeDescriptor,
+  NodeEndResponse,
   NodeHandlerContext,
   NodeIdentifier,
   NodeStartResponse,
@@ -71,4 +72,5 @@ interface RunEventSink {
   pause(): void;
   dispatch(event: Event): void;
   onNodeStart(data: NodeStartResponse): void;
+  onNodeEnd(data: NodeEndResponse): void;
 }

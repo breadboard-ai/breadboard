@@ -29,7 +29,6 @@ const RUNNER_EVENT_TYPES = [
   "output",
   "error",
   "skip",
-  "nodeend",
   "end",
   "nodestatechange",
   "edgestatechange",

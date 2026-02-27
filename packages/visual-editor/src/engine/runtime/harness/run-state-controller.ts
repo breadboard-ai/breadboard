@@ -22,7 +22,7 @@ import type {
   RunEventSink,
 } from "../../../engine/types.js";
 import { Orchestrator } from "../static/orchestrator.js";
-import { EndEvent, NodeEndEvent, RunnerErrorEvent } from "./events.js";
+import { EndEvent, RunnerErrorEvent } from "./events.js";
 import {
   augmentWithSkipOutputs,
   computeControlState,
@@ -138,16 +138,14 @@ class RunStateController {
         }
       }
     }
-    this.eventSink.dispatch(
-      new NodeEndEvent({
-        node: task.node,
-        inputs: task.inputs,
-        outputs,
-        index,
-        newOpportunities: [],
-        timestamp: timestamp(),
-      })
-    );
+    this.eventSink.onNodeEnd({
+      node: task.node,
+      inputs: task.inputs,
+      outputs,
+      index,
+      newOpportunities: [],
+      timestamp: timestamp(),
+    });
     return "success";
   }
 
