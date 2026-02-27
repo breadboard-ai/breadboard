@@ -75,6 +75,12 @@ type FileData = {
 
 const AGENT_MODEL = "gemini-3-flash-preview";
 
+/**
+ * When uncached tokens exceed this threshold, create a new cache
+ * that includes the accumulated conversation history.
+ */
+const RECACHE_THRESHOLD = 16_384;
+
 const EMPTY_TOOL_MANAGER: SimplifiedToolManager = {
   callTool: () => Promise.resolve(err("No custom tools available")),
   list: () => [],
@@ -157,52 +163,66 @@ class Loop {
         ...functionGroups.flatMap((group) => group.definitions),
       ]);
 
+      // Static fields — identical across every turn, built once.
+      const systemInstruction = llm`${functionGroups
+        .flatMap((group) => group.instruction)
+        .filter((instruction) => instruction !== undefined)
+        .join("\n\n")}`.asContent();
+      const generationConfig = {
+        temperature: 1,
+        topP: 1,
+        thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
+      };
+      const toolConfig = {
+        functionCallingConfig: { mode: "ANY" as const },
+      };
+
       // Check if context caching is enabled.
       const flags = await moduleArgs.context.flags?.flags();
       const enableContextCaching = flags?.enableContextCaching ?? false;
       let cachedContentName: string | undefined;
-      let turn = 0;
+      // How many entries in `contents` are covered by the current cache.
+      // 0 means the cache only has the static envelope (SI + tools).
+      let cachedContentCount = 0;
 
-      while (!this.controller.terminated) {
-        const body: GeminiBody = {
-          contents,
-          generationConfig: {
-            temperature: 1,
-            topP: 1,
-            thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
-          },
-          systemInstruction: llm`${functionGroups
-            .flatMap((group) => group.instruction)
-            .filter((instruction) => instruction !== undefined)
-            .join("\n\n")}`.asContent(),
-          toolConfig: {
-            functionCallingConfig: { mode: "ANY" },
-          },
+      // Create a cache with only the static parts (SI + tools).
+      // Contents are always sent fresh — no duplication, no empty arrays.
+      if (enableContextCaching) {
+        const cacheBody: GeminiBody = {
+          contents: [],
+          systemInstruction,
+          toolConfig,
           tools,
         };
+        const cacheName = await createCachedContent(
+          moduleArgs,
+          AGENT_MODEL,
+          cacheBody
+        );
+        if (ok(cacheName)) {
+          cachedContentName = cacheName;
+        }
+      }
+
+      while (!this.controller.terminated) {
+        // Build the request body. When a cache exists, reference it
+        // and only send content accumulated after what's cached.
+        const body: GeminiBody = cachedContentName
+          ? {
+              contents: contents.slice(cachedContentCount),
+              generationConfig,
+              cachedContent: cachedContentName,
+            }
+          : {
+              contents,
+              generationConfig,
+              systemInstruction,
+              toolConfig,
+              tools,
+            };
         const conformedBody = await conformGeminiBody(moduleArgs, body);
         if (!ok(conformedBody)) {
           return conformedBody;
-        }
-
-        // On the first turn, attempt to create a cached content resource.
-        if (turn === 0 && enableContextCaching) {
-          const cacheName = await createCachedContent(
-            moduleArgs,
-            AGENT_MODEL,
-            conformedBody
-          );
-          if (ok(cacheName)) {
-            cachedContentName = cacheName;
-          }
-        }
-
-        // Attach the cache and strip already-cached fields.
-        if (cachedContentName) {
-          conformedBody.cachedContent = cachedContentName;
-          delete conformedBody.systemInstruction;
-          delete conformedBody.tools;
-          delete conformedBody.toolConfig;
         }
 
         hooks.onSendRequest?.(AGENT_MODEL, conformedBody);
@@ -286,7 +306,40 @@ class Loop {
         contents.push(functionResults.combined);
         hooks.onContent?.(functionResults.combined);
         hooks.onTurnComplete?.();
-        turn++;
+
+        // Progressive cache refresh: when uncached tokens grow large,
+        // create a new cache that includes the conversation so far.
+        if (cachedContentName && lastUsageMetadata) {
+          const uncached =
+            (lastUsageMetadata.promptTokenCount ?? 0) -
+            (lastUsageMetadata.cachedContentTokenCount ?? 0);
+          if (uncached > RECACHE_THRESHOLD) {
+            // Cache all contents except the last entry — Gemini requires
+            // non-empty `contents`, so we always leave at least one entry
+            // uncached for the next turn to send.
+            const refreshBody: GeminiBody = {
+              contents: contents.slice(0, -1),
+              systemInstruction,
+              toolConfig,
+              tools,
+            };
+            const conformedRefresh = await conformGeminiBody(
+              moduleArgs,
+              refreshBody
+            );
+            if (ok(conformedRefresh)) {
+              const newCache = await createCachedContent(
+                moduleArgs,
+                AGENT_MODEL,
+                conformedRefresh
+              );
+              if (ok(newCache)) {
+                cachedContentName = newCache;
+                cachedContentCount = contents.length - 1;
+              }
+            }
+          }
+        }
       }
       return this.controller.result;
     } catch (e) {
