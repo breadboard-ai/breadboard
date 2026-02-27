@@ -141,6 +141,7 @@ def _define_generate_video(
     upstream_base: str = "",
     origin: str = "",
     client: HttpClient | None = None,
+    enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
     """Port of ``callVideoGen`` from video-generator/main.ts."""
 
@@ -226,6 +227,7 @@ def _define_generate_video(
                 "output": OUTPUT_NAME,
             },
             "execution_inputs": execution_inputs,
+            **({"enableG1Quota": True} if enable_g1_quota else {}),
         }
 
         # 4. Call executeStep
@@ -359,6 +361,7 @@ def get_video_function_group(
     upstream_base: str = "",
     origin: str = "",
     client: HttpClient | None = None,
+    enable_g1_quota: bool = False,
 ) -> FunctionGroup:
     """Build a FunctionGroup with the generate_video function."""
     functions = [
@@ -369,6 +372,7 @@ def get_video_function_group(
             upstream_base=upstream_base,
             origin=origin,
             client=client,
+            enable_g1_quota=enable_g1_quota,
         ),
     ]
 

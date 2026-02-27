@@ -72,6 +72,7 @@ def _define_generate_images(
     upstream_base: str = "",
     origin: str = "",
     client: HttpClient | None = None,
+    enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
     """Port of the ``generate_images`` function from generate.ts."""
 
@@ -159,6 +160,7 @@ def _define_generate_images(
                 "output": OUTPUT_NAME,
             },
             "execution_inputs": execution_inputs,
+            **({"enableG1Quota": True} if enable_g1_quota else {}),
         }
 
         # 4. Call executeStep
@@ -311,6 +313,7 @@ def get_image_function_group(
     upstream_base: str = "",
     origin: str = "",
     client: HttpClient | None = None,
+    enable_g1_quota: bool = False,
 ) -> FunctionGroup:
     """Build a FunctionGroup with the generate_images function."""
     functions = [
@@ -321,6 +324,7 @@ def get_image_function_group(
             upstream_base=upstream_base,
             origin=origin,
             client=client,
+            enable_g1_quota=enable_g1_quota,
         ),
     ]
 
