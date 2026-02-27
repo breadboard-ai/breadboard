@@ -269,7 +269,7 @@ suite("AgentService — Remote Mode", () => {
     const handle = service.startRun({
       kind: "test",
       segments: [{ type: "text", text: "hello" }],
-      flags: { useNotebookLM: false },
+      flags: { useNotebookLM: false, googleOne: false },
     });
     assert.ok(handle.runId);
     assert.strictEqual(handle.kind, "test");

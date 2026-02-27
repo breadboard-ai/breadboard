@@ -141,6 +141,7 @@ def _build_function_groups(
     upstream_base: str,
     origin: str,
     client: HttpxClient,
+    enable_g1_quota: bool = False,
 ):
     """Build the standard set of function groups."""
     return [
@@ -164,6 +165,7 @@ def _build_function_groups(
             upstream_base=upstream_base,
             origin=origin,
             client=client,
+            enable_g1_quota=enable_g1_quota,
         ),
         get_video_function_group(
             file_system=file_system,
@@ -172,6 +174,7 @@ def _build_function_groups(
             upstream_base=upstream_base,
             origin=origin,
             client=client,
+            enable_g1_quota=enable_g1_quota,
         ),
         get_audio_function_group(
             file_system=file_system,
@@ -180,6 +183,7 @@ def _build_function_groups(
             upstream_base=upstream_base,
             origin=origin,
             client=client,
+            enable_g1_quota=enable_g1_quota,
         ),
         get_chat_function_group(
             task_tree_manager=task_tree_manager,
@@ -238,8 +242,9 @@ class DevAgentBackend:
 
         # Build the objective — segments-based or legacy.
         segments = body.get("segments")
+        flags = body.get("flags", {})
+        enable_g1_quota = flags.get("googleOne", False)
         if segments is not None:
-            flags = body.get("flags", {})
             use_notebooklm_flag = flags.get("useNotebookLM", False)
 
             pidgin_result = to_pidgin(
@@ -273,6 +278,7 @@ class DevAgentBackend:
             upstream_base=UPSTREAM_BASE,
             origin=origin,
             client=_http_client,
+            enable_g1_quota=enable_g1_quota,
         )
 
         run_args = AgentRunArgs(

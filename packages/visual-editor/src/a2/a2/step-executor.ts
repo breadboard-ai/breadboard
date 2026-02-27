@@ -72,6 +72,7 @@ export type GcsConfig = {
 export type ExecuteStepRequest = {
   planStep: PlanStep;
   execution_inputs: ContentMap;
+  enableG1Quota?: boolean;
 };
 
 export type QuotaMetadata = {
@@ -229,6 +230,11 @@ async function executeStep(
     }
 
     reporter.addJson("Step Input", elideEncodedData(body), "upload");
+    // Inject the G1 quota flag from runtime flags (only when enabled).
+    const runtimeFlags = await context.flags?.flags();
+    if (runtimeFlags?.googleOne) {
+      body.enableG1Quota = true;
+    }
     // Call the API.
     const url = BACKEND_ENDPOINT;
     let response: ExecuteStepResponse;

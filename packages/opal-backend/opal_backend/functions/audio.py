@@ -70,6 +70,7 @@ def _define_generate_speech(
     upstream_base: str = "",
     origin: str = "",
     client: HttpClient | None = None,
+    enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
     """Port of the speech agent function from generate.ts + callAudioGen."""
 
@@ -121,6 +122,7 @@ def _define_generate_speech(
                 "output": "generated_speech",
             },
             "execution_inputs": execution_inputs,
+            **({"enableG1Quota": True} if enable_g1_quota else {}),
         }
 
         # Call executeStep.
@@ -209,6 +211,7 @@ def _define_generate_music(
     upstream_base: str = "",
     origin: str = "",
     client: HttpClient | None = None,
+    enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
     """Port of the music agent function from generate.ts + callMusicGen."""
 
@@ -248,6 +251,7 @@ def _define_generate_music(
                 "output": "generated_music",
             },
             "execution_inputs": execution_inputs,
+            **({"enableG1Quota": True} if enable_g1_quota else {}),
         }
 
         # Call executeStep.
@@ -369,6 +373,7 @@ def get_audio_function_group(
     upstream_base: str = "",
     origin: str = "",
     client: HttpClient | None = None,
+    enable_g1_quota: bool = False,
 ) -> FunctionGroup:
     """Build a FunctionGroup with speech and music generation functions."""
     functions = [
@@ -379,6 +384,7 @@ def get_audio_function_group(
             upstream_base=upstream_base,
             origin=origin,
             client=client,
+            enable_g1_quota=enable_g1_quota,
         ),
         _define_generate_music(
             file_system=file_system,
@@ -387,6 +393,7 @@ def get_audio_function_group(
             upstream_base=upstream_base,
             origin=origin,
             client=client,
+            enable_g1_quota=enable_g1_quota,
         ),
     ]
 

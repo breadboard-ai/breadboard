@@ -52,6 +52,7 @@ type SegmentResolution = {
   segments: Segment[];
   flags: {
     useNotebookLM: boolean;
+    googleOne: boolean;
   };
 };
 
@@ -156,9 +157,14 @@ async function resolveToSegments(
     return err(`Agent: ${errors.join(",")}`);
   }
 
+  const runtimeFlags = await moduleArgs.context.flags?.flags();
+
   return {
     segments: segments.filter((s): s is Segment => s !== null),
-    flags: { useNotebookLM },
+    flags: {
+      useNotebookLM,
+      googleOne: runtimeFlags?.googleOne ?? false,
+    },
   };
 }
 
