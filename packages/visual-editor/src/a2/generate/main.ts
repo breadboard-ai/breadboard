@@ -185,10 +185,10 @@ const ALL_MODES: Mode[] = [
     id: "text-3-pro",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-    title: "Gemini 3 Pro",
+    title: "Gemini 3.1 Pro",
     description: "Best for complex tasks",
     icon: "text_analysis",
-    modelName: "gemini-3-pro-preview",
+    modelName: "gemini-3.1-pro-preview",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
     portMap: new Map([[PROMPT_PORT, "description"]]),

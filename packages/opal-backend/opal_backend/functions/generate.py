@@ -49,7 +49,7 @@ GENERATE_TEXT_FUNCTION = "generate_text"
 GENERATE_AND_EXECUTE_CODE_FUNCTION = "generate_and_execute_code"
 
 FLASH_MODEL_NAME = "gemini-3-flash-preview"
-PRO_MODEL_NAME = "gemini-3-pro-preview"
+PRO_MODEL_NAME = "gemini-3.1-pro-preview"
 LITE_MODEL_NAME = "gemini-2.5-flash-lite"
 
 # The default system instruction for generate_text sub-calls.
