@@ -34,6 +34,12 @@ from opal_backend.agent_events import (
     build_hooks_from_sink,
 )
 from opal_backend.agent_file_system import AgentFileSystem
+from opal_backend.events import (
+    AgentResult,
+    CompleteEvent,
+    ErrorEvent,
+    FileData,
+)
 from opal_backend.functions.system import get_system_function_group
 from opal_backend.functions.generate import get_generate_function_group
 from opal_backend.functions.image import get_image_function_group
@@ -388,52 +394,42 @@ class DevAgentBackend:
                     )
                     # Emit the suspend event — the client reads this,
                     # collects user input, and POSTs back to resume.
-                    suspend_event = {
-                        **result.suspend_event,
-                        "interactionId": result.interaction_id,
-                    }
-                    sink.emit(suspend_event)
+                    # Set the interaction_id on the typed event.
+                    result.suspend_event.interaction_id = (
+                        result.interaction_id
+                    )
+                    sink.emit(result.suspend_event)
 
                 elif isinstance(result, dict) and "$error" in result:
-                    sink.emit({
-                        "type": "error",
-                        "message": result["$error"],
-                    })
-                    sink.emit({
-                        "type": "complete",
-                        "result": {"success": False, "outcomes": None},
-                    })
+                    sink.emit(ErrorEvent(message=result["$error"]))
+                    sink.emit(CompleteEvent(
+                        result=AgentResult(success=False),
+                    ))
                 else:
                     # Collect intermediate files from the file system.
                     intermediate = None
                     if result.success and file_system.files:
                         intermediate = [
-                            {
-                                "path": path,
-                                "content": file_system._file_to_part(desc),
-                            }
+                            FileData(
+                                path=path,
+                                content=file_system._file_to_part(desc),
+                            )
                             for path, desc in file_system.files.items()
                         ]
-                    sink.emit({
-                        "type": "complete",
-                        "result": {
-                            "success": result.success
+                    sink.emit(CompleteEvent(
+                        result=AgentResult(
+                            success=result.success
                             if hasattr(result, "success")
                             else False,
-                            "outcomes": result.outcomes
+                            outcomes=result.outcomes
                             if hasattr(result, "outcomes")
                             else None,
-                            **({
-                                "intermediate": intermediate,
-                            } if intermediate else {}),
-                        },
-                    })
+                            intermediate=intermediate,
+                        ),
+                    ))
             except Exception as e:
                 logger.exception("Agent loop failed")
-                sink.emit({
-                    "type": "error",
-                    "message": str(e),
-                })
+                sink.emit(ErrorEvent(message=str(e)))
             finally:
                 sink.close()
 
@@ -444,10 +440,9 @@ class DevAgentBackend:
             loop_task = asyncio.create_task(generate())
             try:
                 async for event in sink:
-                    event_type = event.get("type", "message")
                     yield {
-                        "event": event_type,
-                        "data": json.dumps(event),
+                        "event": event.type,
+                        "data": json.dumps(event.to_dict()),
                     }
             finally:
                 if not loop_task.done():
@@ -459,9 +454,10 @@ class DevAgentBackend:
 def _error_stream(message: str) -> EventSourceResponse:
     """Return an SSE stream with a single error event."""
     async def generate():
+        event = ErrorEvent(message=message)
         yield {
-            "event": "error",
-            "data": json.dumps({"type": "error", "message": message}),
+            "event": event.type,
+            "data": json.dumps(event.to_dict()),
         }
     return EventSourceResponse(content=generate())
 

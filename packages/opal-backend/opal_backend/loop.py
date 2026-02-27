@@ -23,6 +23,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Awaitable
 
+from .events import AgentResult, FileData, LLMContent
 from .function_caller import FunctionCaller
 from .function_definition import FunctionGroup
 from .conform_body import conform_body
@@ -36,8 +37,7 @@ from .suspend import SuspendError, SuspendResult
 
 logger = logging.getLogger(__name__)
 
-# Types
-LLMContent = dict[str, Any]
+# Types — LLMContent, AgentResult, FileData imported from events.py
 Outcome = dict[str, Any]  # Either a result dict or {"$error": "message"}
 
 AGENT_MODEL = "gemini-3-flash-preview"
@@ -55,22 +55,7 @@ def ok(value: Any) -> bool:
     return True
 
 
-@dataclass
-class FileData:
-    """A file from the agent file system, keyed by path."""
-
-    path: str
-    content: LLMContent
-
-
-@dataclass
-class AgentResult:
-    """Result of an agent loop run."""
-
-    success: bool
-    href: str = "/"
-    outcomes: LLMContent | None = None
-    intermediate: list[FileData] | None = None
+# AgentResult and FileData are defined in events.py (wire-format types).
 
 
 @dataclass
@@ -336,9 +321,7 @@ class Loop:
                         interaction_id=suspend.interaction_id,
                         suspend_event=suspend.event,
                         contents=contents,
-                        function_call_part=suspend.event.get(
-                            "_function_call_part", {}
-                        ),
+                        function_call_part=suspend.function_call_part,
                     )
 
                 if function_results is None:

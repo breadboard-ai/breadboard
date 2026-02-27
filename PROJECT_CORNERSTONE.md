@@ -520,6 +520,25 @@ Body (resume): {interactionId, response}
 - [x] Thread `HttpClient` through `Loop` and function group factories
 - [x] Update all tests to inject `HttpClient`
 
+#### 5.3: Typed Event Models
+
+- [x] `opal_backend/events.py` — dataclass models for all 22 `AgentEvent` types,
+      `AgentResult`, `FileData`, request/response bodies (`StartRunRequest`,
+      `ResumeRunRequest`), segment types — all with `to_dict()` producing
+      camelCase JSON (no pydantic dependency)
+- [x] `agent_events.py` — `AgentEventSink` queue and `build_hooks_from_sink`
+      emit typed events instead of `dict[str, Any]`
+- [x] `suspend.py` — `SuspendError` takes typed `SuspendEvent` + explicit
+      `function_call_part` parameter (moved out of event dict)
+- [x] `loop.py` — imports wire-format types from `events.py`
+- [x] `functions/chat.py` — constructs `WaitForInputEvent`/`WaitForChoiceEvent`
+- [x] `dev/main.py` — SSE serialization via `event.to_dict()` + `json.dumps()`
+- [x] `local/sse_sink.py` — uses `to_dict()` instead of Pydantic
+      `model_dump_json()`
+- [x] Delete `local/events.py` (replaced by synced `events.py`)
+- [x] Update all tests (`test_agent_events.py`, `test_chat_functions.py`,
+      `test_suspend_resume.py`)
+
 #### Future Phases (deferred)
 
 ##### Graph-Editing Functions (from 4.8d)
@@ -545,7 +564,6 @@ Body (resume): {interactionId, response}
       called on closed sink: functionCallUpdate" warning
 - [ ] Remove `LocalAgentRun` path (or keep for offline dev)
 
-##### Event Models & Fake Server
+##### Fake Server
 
-- [ ] Strongly type event models with Pydantic (synced to google3)
 - [ ] Rebuild fake server to align with dev server's approach

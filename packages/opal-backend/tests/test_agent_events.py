@@ -3,6 +3,7 @@
 
 """
 Tests for the AgentEventSink and build_hooks_from_sink (Phase 4.4c).
+Updated for Phase 5.3: typed event dataclasses.
 """
 
 from __future__ import annotations
@@ -13,6 +14,20 @@ import pytest
 from opal_backend.agent_events import (
     AgentEventSink,
     build_hooks_from_sink,
+)
+from opal_backend.events import (
+    ContentEvent,
+    FinishEvent,
+    FunctionCallEvent,
+    FunctionCallUpdateEvent,
+    FunctionResultEvent,
+    SendRequestEvent,
+    StartEvent,
+    SubagentAddJsonEvent,
+    SubagentErrorEvent,
+    SubagentFinishEvent,
+    ThoughtEvent,
+    TurnCompleteEvent,
 )
 
 
@@ -27,8 +42,8 @@ class TestAgentEventSink:
     @pytest.mark.asyncio
     async def test_emit_and_iterate(self):
         sink = AgentEventSink()
-        sink.emit({"type": "start", "objective": {}})
-        sink.emit({"type": "thought", "text": "hello"})
+        sink.emit(StartEvent(objective={}))
+        sink.emit(ThoughtEvent(text="hello"))
         sink.close()
 
         collected = []
@@ -36,8 +51,8 @@ class TestAgentEventSink:
             collected.append(event)
 
         assert len(collected) == 2
-        assert collected[0]["type"] == "start"
-        assert collected[1]["type"] == "thought"
+        assert isinstance(collected[0], StartEvent)
+        assert isinstance(collected[1], ThoughtEvent)
 
     @pytest.mark.asyncio
     async def test_close_stops_iteration(self):
@@ -55,7 +70,7 @@ class TestAgentEventSink:
         sink = AgentEventSink()
         sink.close()
         # Should not raise, just warn.
-        sink.emit({"type": "late"})
+        sink.emit(ThoughtEvent(text="late"))
 
     @pytest.mark.asyncio
     async def test_concurrent_producer_consumer(self):
@@ -64,7 +79,7 @@ class TestAgentEventSink:
 
         async def produce():
             for i in range(n):
-                sink.emit({"type": "thought", "text": str(i)})
+                sink.emit(ThoughtEvent(text=str(i)))
                 await asyncio.sleep(0)
             sink.close()
 
@@ -100,7 +115,10 @@ class TestBuildHooksFromSink:
             events.append(event)
 
         assert len(events) == 1
-        assert events[0] == {"type": "start", "objective": objective}
+        assert isinstance(events[0], StartEvent)
+        assert events[0].objective == objective
+        # Verify wire-format output
+        assert events[0].to_dict() == {"type": "start", "objective": objective}
 
     @pytest.mark.asyncio
     async def test_on_thought_emits_thought_event(self):
@@ -114,7 +132,12 @@ class TestBuildHooksFromSink:
         async for event in sink:
             events.append(event)
 
-        assert events[0] == {"type": "thought", "text": "thinking about it"}
+        assert isinstance(events[0], ThoughtEvent)
+        assert events[0].text == "thinking about it"
+        assert events[0].to_dict() == {
+            "type": "thought",
+            "text": "thinking about it",
+        }
 
     @pytest.mark.asyncio
     async def test_on_finish_emits_finish_event(self):
@@ -128,7 +151,8 @@ class TestBuildHooksFromSink:
         async for event in sink:
             events.append(event)
 
-        assert events[0] == {"type": "finish"}
+        assert isinstance(events[0], FinishEvent)
+        assert events[0].to_dict() == {"type": "finish"}
 
     @pytest.mark.asyncio
     async def test_on_content_emits_content_event(self):
@@ -143,7 +167,9 @@ class TestBuildHooksFromSink:
         async for event in sink:
             events.append(event)
 
-        assert events[0] == {"type": "content", "content": content}
+        assert isinstance(events[0], ContentEvent)
+        assert events[0].content == content
+        assert events[0].to_dict() == {"type": "content", "content": content}
 
     @pytest.mark.asyncio
     async def test_on_turn_complete_emits_event(self):
@@ -157,7 +183,8 @@ class TestBuildHooksFromSink:
         async for event in sink:
             events.append(event)
 
-        assert events[0] == {"type": "turnComplete"}
+        assert isinstance(events[0], TurnCompleteEvent)
+        assert events[0].to_dict() == {"type": "turnComplete"}
 
     @pytest.mark.asyncio
     async def test_on_function_call_emits_event_and_returns_call_id(self):
@@ -178,12 +205,12 @@ class TestBuildHooksFromSink:
 
         assert len(events) == 1
         fc_event = events[0]
-        assert fc_event["type"] == "functionCall"
-        assert fc_event["callId"] == result["callId"]
-        assert fc_event["name"] == "system_do_thing"
-        assert fc_event["args"] == {"a": 1}
-        assert fc_event["icon"] == "wrench"
-        assert fc_event["title"] == "Doing thing"
+        assert isinstance(fc_event, FunctionCallEvent)
+        assert fc_event.call_id == result["callId"]
+        assert fc_event.name == "system_do_thing"
+        assert fc_event.args == {"a": 1}
+        assert fc_event.icon == "wrench"
+        assert fc_event.title == "Doing thing"
 
     @pytest.mark.asyncio
     async def test_function_call_without_icon_omits_icon(self):
@@ -198,8 +225,13 @@ class TestBuildHooksFromSink:
         async for event in sink:
             events.append(event)
 
-        assert "icon" not in events[0]
-        assert "title" not in events[0]
+        fc_event = events[0]
+        assert isinstance(fc_event, FunctionCallEvent)
+        assert fc_event.icon is None
+        assert fc_event.title is None
+        # Wire format should omit None fields
+        assert "icon" not in fc_event.to_dict()
+        assert "title" not in fc_event.to_dict()
 
     @pytest.mark.asyncio
     async def test_reporter_emits_subagent_events(self):
@@ -221,19 +253,22 @@ class TestBuildHooksFromSink:
             events.append(event)
 
         # First event is the functionCall itself.
-        assert events[1] == {
+        assert isinstance(events[1], SubagentAddJsonEvent)
+        assert events[1].to_dict() == {
             "type": "subagentAddJson",
             "callId": call_id,
             "title": "Step 1",
             "data": {"progress": 50},
             "icon": "loader",
         }
-        assert events[2] == {
+        assert isinstance(events[2], SubagentErrorEvent)
+        assert events[2].to_dict() == {
             "type": "subagentError",
             "callId": call_id,
             "error": {"$error": "oops"},
         }
-        assert events[3] == {
+        assert isinstance(events[3], SubagentFinishEvent)
+        assert events[3].to_dict() == {
             "type": "subagentFinish",
             "callId": call_id,
         }
@@ -252,7 +287,8 @@ class TestBuildHooksFromSink:
         async for event in sink:
             events.append(event)
 
-        assert events[0] == {
+        assert isinstance(events[0], FunctionCallUpdateEvent)
+        assert events[0].to_dict() == {
             "type": "functionCallUpdate",
             "callId": "call-1",
             "status": "loading data",
@@ -271,7 +307,8 @@ class TestBuildHooksFromSink:
         async for event in sink:
             events.append(event)
 
-        assert events[0] == {
+        assert isinstance(events[0], FunctionResultEvent)
+        assert events[0].to_dict() == {
             "type": "functionResult",
             "callId": "call-1",
             "content": content,
@@ -290,7 +327,8 @@ class TestBuildHooksFromSink:
         async for event in sink:
             events.append(event)
 
-        assert events[0] == {
+        assert isinstance(events[0], SendRequestEvent)
+        assert events[0].to_dict() == {
             "type": "sendRequest",
             "model": "gemini-3-flash",
             "body": body,

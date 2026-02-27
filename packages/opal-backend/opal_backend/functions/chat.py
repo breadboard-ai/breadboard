@@ -20,6 +20,7 @@ import uuid
 from typing import Any
 
 from ..function_definition import FunctionDefinition, FunctionGroup
+from ..events import WaitForInputEvent, WaitForChoiceEvent, ChoiceItem
 from ..suspend import SuspendError
 from ..task_tree_manager import TaskTreeManager
 from ..agent_file_system import AgentFileSystem
@@ -76,28 +77,24 @@ def _define_request_user_input(
 
         request_id = str(uuid.uuid4())
 
-        event: dict[str, Any] = {
-            "type": "waitForInput",
-            "requestId": request_id,
-            "prompt": {
+        event = WaitForInputEvent(
+            request_id=request_id,
+            prompt={
                 "parts": [{"text": user_message}],
                 "role": "model",
             },
-            "inputType": input_type,
-            # Stash the function call part so the server can build the
-            # functionResponse on resume.
-            "_function_call_part": {
-                "functionCall": {
-                    "name": CHAT_REQUEST_USER_INPUT,
-                    "args": args,
-                }
-            },
+            input_type=input_type,
+            skip_label=skip_label,
+        )
+
+        function_call_part = {
+            "functionCall": {
+                "name": CHAT_REQUEST_USER_INPUT,
+                "args": args,
+            }
         }
 
-        if skip_label:
-            event["skipLabel"] = skip_label
-
-        raise SuspendError(event)
+        raise SuspendError(event, function_call_part)
 
     return FunctionDefinition(
         name=CHAT_REQUEST_USER_INPUT,
@@ -207,25 +204,23 @@ def _define_present_choices(
 
         request_id = str(uuid.uuid4())
 
-        event: dict[str, Any] = {
-            "type": "waitForChoice",
-            "requestId": request_id,
-            "prompt": prompt_content,
-            "choices": choice_events,
-            "selectionMode": selection_mode,
-            "layout": layout,
-            "_function_call_part": {
-                "functionCall": {
-                    "name": CHAT_PRESENT_CHOICES,
-                    "args": args,
-                }
-            },
+        event = WaitForChoiceEvent(
+            request_id=request_id,
+            prompt=prompt_content,
+            choices=[ChoiceItem(id=c["id"], content=c["content"]) for c in choice_events],
+            selection_mode=selection_mode,
+            layout=layout,
+            none_of_the_above_label=none_of_the_above_label,
+        )
+
+        function_call_part = {
+            "functionCall": {
+                "name": CHAT_PRESENT_CHOICES,
+                "args": args,
+            }
         }
 
-        if none_of_the_above_label:
-            event["noneOfTheAboveLabel"] = none_of_the_above_label
-
-        raise SuspendError(event)
+        raise SuspendError(event, function_call_part)
 
     return FunctionDefinition(
         name=CHAT_PRESENT_CHOICES,

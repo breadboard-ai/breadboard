@@ -154,7 +154,7 @@ async def _run_scenario(
     except asyncio.CancelledError:
         pass
     except Exception as exc:
-        from opal_backend.local.events import ErrorEvent
+        from opal_backend.events import ErrorEvent
         await sink.emit(ErrorEvent(message=str(exc)))
         await sink.close()
     finally:
