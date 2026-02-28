@@ -27,40 +27,14 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
-from opal_backend.backend_client import HttpBackendClient
-from opal_backend.local.http_client_impl import HttpxClient
-
-from opal_backend.agent_events import (
-    AgentEventSink,
-    build_hooks_from_sink,
-)
 from opal_backend.agent_file_system import AgentFileSystem
-from opal_backend.events import (
-    AgentResult,
-    CompleteEvent,
-    ErrorEvent,
-    FileData,
-)
-from opal_backend.functions.system import get_system_function_group
-from opal_backend.functions.generate import get_generate_function_group
-from opal_backend.functions.image import get_image_function_group
-from opal_backend.functions.video import get_video_function_group
-from opal_backend.functions.audio import get_audio_function_group
-from opal_backend.functions.chat import get_chat_function_group
-from opal_backend.interaction_store import (
-    InteractionStore,
-    InteractionState,
-)
+from opal_backend.events import ErrorEvent
 from opal_backend.local.api_surface import create_api_router
-from opal_backend.loop import (
-    AgentRunArgs,
-    Loop,
-    LoopController,
-)
-from opal_backend.suspend import SuspendResult
-from opal_backend.task_tree_manager import TaskTreeManager
-
-from opal_backend.pidgin import to_pidgin, ToPidginResult
+from opal_backend.local.backend_client_impl import HttpBackendClient
+from opal_backend.local.http_client_impl import HttpxClient
+from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
+from opal_backend.pidgin import to_pidgin
+from opal_backend.run import run as run_agent, resume as resume_agent
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +62,7 @@ UPSTREAM_BASE = os.environ.get(
 _proxy_client = httpx.AsyncClient(timeout=120.0)
 
 # In-memory store for suspended interactions (dev only).
-_interaction_store = InteractionStore()
+_interaction_store = InMemoryInteractionStore()
 
 
 # ---------------------------------------------------------------------------
@@ -131,56 +105,6 @@ class DevProxyBackend:
             headers=resp_headers,
         )
 
-
-# ---------------------------------------------------------------------------
-# Helper: build function groups from config
-# ---------------------------------------------------------------------------
-
-def _build_function_groups(
-    *,
-    controller: LoopController,
-    file_system: AgentFileSystem,
-    task_tree_manager: TaskTreeManager,
-    client: HttpxClient,
-    backend: HttpBackendClient,
-    enable_g1_quota: bool = False,
-):
-    """Build the standard set of function groups."""
-    return [
-        get_system_function_group(
-            controller,
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-        ),
-        get_generate_function_group(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            client=client,
-            backend=backend,
-        ),
-        get_image_function_group(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            backend=backend,
-            enable_g1_quota=enable_g1_quota,
-        ),
-        get_video_function_group(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            backend=backend,
-            enable_g1_quota=enable_g1_quota,
-        ),
-        get_audio_function_group(
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            backend=backend,
-            enable_g1_quota=enable_g1_quota,
-        ),
-        get_chat_function_group(
-            task_tree_manager=task_tree_manager,
-            file_system=file_system,
-        ),
-    ]
 
 
 # ---------------------------------------------------------------------------
@@ -240,17 +164,17 @@ class DevAgentBackend:
         self, body: dict, access_token: str, origin: str,
     ) -> EventSourceResponse:
         """Start a new agent run."""
-        # Create file system and task tree manager.
-        file_system = AgentFileSystem()
-        task_tree_manager = TaskTreeManager(file_system)
-
         # Build the objective — segments-based or legacy.
         segments = body.get("segments")
         flags = body.get("flags", {})
-        enable_g1_quota = flags.get("googleOne", False)
         if segments is not None:
             use_notebooklm_flag = flags.get("useNotebookLM", False)
 
+            # to_pidgin needs a file_system to register data parts.
+            # run() creates its own, but pidgin resolution happens
+            # before we call run(). Create a temporary one that
+            # run() will adopt via the objective parts.
+            file_system = AgentFileSystem()
             pidgin_result = to_pidgin(
                 segments,
                 file_system,
@@ -273,191 +197,48 @@ class DevAgentBackend:
                     "Missing 'segments' or 'objective' in request body"
                 )
 
-        # Per-request HttpClient with baked-in credentials.
         client = HttpxClient(access_token=access_token)
-
-        controller = LoopController()
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
             client=client,
             origin=origin,
         )
-        function_groups = _build_function_groups(
-            controller=controller,
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
-            client=client,
-            backend=backend,
-            enable_g1_quota=enable_g1_quota,
-        )
 
-        run_args = AgentRunArgs(
+        return self._as_sse(run_agent(
             objective=objective,
-            function_groups=function_groups,
-        )
-
-        return self._stream_loop(
-            run_args=run_args,
-            controller=controller,
-            file_system=file_system,
-            task_tree_manager=task_tree_manager,
             client=client,
             backend=backend,
-        )
+            store=_interaction_store,
+            flags=flags,
+        ))
 
     async def _resume(
         self, interaction_id: str, response: dict,
         access_token: str, origin: str,
     ) -> EventSourceResponse:
         """Resume a suspended agent run."""
-        state = _interaction_store.load(interaction_id)
-        if state is None:
-            return _error_stream(
-                f"Unknown interaction ID: {interaction_id}"
-            )
-
-        # Inject the client's response as a function result.
-        # The saved function_call_part has the function name — wrap the
-        # response as a functionResponse so the loop can continue.
-        fc = state.function_call_part.get("functionCall", {})
-        func_name = fc.get("name", "unknown")
-
-        function_response_turn = {
-            "parts": [{
-                "functionResponse": {
-                    "name": func_name,
-                    "response": response,
-                }
-            }],
-            "role": "user",
-        }
-
-        # Rebuild the conversation: saved contents + injected response.
-        contents = state.contents + [function_response_turn]
-
-        # Per-request HttpClient with baked-in credentials.
         client = HttpxClient(access_token=access_token)
-
-        controller = LoopController()
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
             client=client,
             origin=origin,
         )
-        function_groups = _build_function_groups(
-            controller=controller,
-            file_system=state.file_system,
-            task_tree_manager=state.task_tree_manager,
+
+        return self._as_sse(resume_agent(
+            interaction_id=interaction_id,
+            response=response,
             client=client,
             backend=backend,
-        )
+            store=_interaction_store,
+        ))
 
-        run_args = AgentRunArgs(
-            objective=contents[0],  # Original objective.
-            function_groups=function_groups,
-            contents=contents,
-        )
-
-        return self._stream_loop(
-            run_args=run_args,
-            controller=controller,
-            file_system=state.file_system,
-            task_tree_manager=state.task_tree_manager,
-            client=client,
-            backend=backend,
-        )
-
-    def _stream_loop(
-        self,
-        *,
-        run_args: AgentRunArgs,
-        controller: LoopController,
-        file_system: AgentFileSystem,
-        task_tree_manager: TaskTreeManager,
-        client: HttpxClient,
-        backend: HttpBackendClient,
-    ) -> EventSourceResponse:
-        """Common streaming logic for both start and resume."""
-        sink = AgentEventSink()
-        run_args.hooks = build_hooks_from_sink(sink)
-
-        loop = Loop(
-            client=client,
-            backend=backend,
-            controller=controller,
-        )
-
-        async def generate():
-            """Run the loop and yield SSE events."""
-            try:
-                result = await loop.run(run_args)
-
-                if isinstance(result, SuspendResult):
-                    # Save state for later resume.
-                    _interaction_store.save(
-                        result.interaction_id,
-                        InteractionState(
-                            contents=result.contents,
-                            function_call_part=result.function_call_part,
-                            file_system=file_system,
-                            task_tree_manager=task_tree_manager,
-                        ),
-                    )
-                    # Emit the suspend event — the client reads this,
-                    # collects user input, and POSTs back to resume.
-                    # Set the interaction_id on the typed event.
-                    result.suspend_event.interaction_id = (
-                        result.interaction_id
-                    )
-                    sink.emit(result.suspend_event)
-
-                elif isinstance(result, dict) and "$error" in result:
-                    sink.emit(ErrorEvent(message=result["$error"]))
-                    sink.emit(CompleteEvent(
-                        result=AgentResult(success=False),
-                    ))
-                else:
-                    # Collect intermediate files from the file system.
-                    intermediate = None
-                    if result.success and file_system.files:
-                        intermediate = [
-                            FileData(
-                                path=path,
-                                content=file_system._file_to_part(desc),
-                            )
-                            for path, desc in file_system.files.items()
-                        ]
-                    sink.emit(CompleteEvent(
-                        result=AgentResult(
-                            success=result.success
-                            if hasattr(result, "success")
-                            else False,
-                            outcomes=result.outcomes
-                            if hasattr(result, "outcomes")
-                            else None,
-                            intermediate=intermediate,
-                        ),
-                    ))
-            except Exception as e:
-                logger.exception("Agent loop failed")
-                sink.emit(ErrorEvent(message=str(e)))
-            finally:
-                sink.close()
-
+    def _as_sse(self, events) -> EventSourceResponse:
+        """Wrap an async event iterator as an SSE response."""
         async def stream():
-            """Yield SSE-formatted events from the sink."""
-            import asyncio
-
-            loop_task = asyncio.create_task(generate())
-            try:
-                async for event in sink:
-                    yield {
-                        "data": json.dumps(event.to_dict()),
-                    }
-            finally:
-                if not loop_task.done():
-                    loop_task.cancel()
-
+            async for event in events:
+                yield {
+                    "data": json.dumps(event.to_dict()),
+                }
         return EventSourceResponse(content=stream())
 
 

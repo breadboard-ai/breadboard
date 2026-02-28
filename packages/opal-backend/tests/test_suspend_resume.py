@@ -9,10 +9,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from opal_backend.suspend import SuspendError, SuspendResult
 from opal_backend.events import WaitForInputEvent
-from opal_backend.interaction_store import (
-    InteractionStore,
-    InteractionState,
-)
+from opal_backend.interaction_store import InteractionState
+from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.agent_file_system import AgentFileSystem
 from opal_backend.task_tree_manager import TaskTreeManager
 from opal_backend.function_caller import FunctionCaller
@@ -59,32 +57,32 @@ class TestInteractionStore(unittest.TestCase):
         )
 
     def test_save_and_load(self):
-        store = InteractionStore()
+        store = InMemoryInteractionStore()
         state = self._make_state()
         store.save("int-1", state)
         loaded = store.load("int-1")
         self.assertIs(loaded, state)
 
     def test_load_removes_entry(self):
-        store = InteractionStore()
+        store = InMemoryInteractionStore()
         state = self._make_state()
         store.save("int-1", state)
         store.load("int-1")
         self.assertIsNone(store.load("int-1"))
 
     def test_load_unknown_returns_none(self):
-        store = InteractionStore()
+        store = InMemoryInteractionStore()
         self.assertIsNone(store.load("unknown"))
 
     def test_has(self):
-        store = InteractionStore()
+        store = InMemoryInteractionStore()
         state = self._make_state()
         self.assertFalse(store.has("int-1"))
         store.save("int-1", state)
         self.assertTrue(store.has("int-1"))
 
     def test_clear(self):
-        store = InteractionStore()
+        store = InMemoryInteractionStore()
         store.save("a", self._make_state())
         store.save("b", self._make_state())
         store.clear()
