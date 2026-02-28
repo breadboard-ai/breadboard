@@ -127,6 +127,10 @@ export const SHELL_PREFIX = getString("SHELL_PREFIX");
 
 export const ENABLE_EMAIL_OPT_IN = getBoolean("ENABLE_EMAIL_OPT_IN");
 
+export const ENABLE_BACKEND_TRACK_ACTION = getBoolean(
+  "ENABLE_BACKEND_TRACK_ACTION"
+);
+
 export const ENABLE_OPAL_ADK = getBoolean("ENABLE_OPAL_ADK");
 
 export const ENABLE_OUTPUT_TEMPLATES = getBoolean("ENABLE_OUTPUT_TEMPLATES");
