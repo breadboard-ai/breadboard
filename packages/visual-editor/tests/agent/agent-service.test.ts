@@ -106,7 +106,7 @@ suite("LocalAgentRun (via AgentRunHandle)", () => {
       received.push(event.text);
     });
 
-    handle.sink.emit({ type: "thought", text: "hello" });
+    handle.sink.emit({ thought: { text: "hello" } });
     assert.deepStrictEqual(received, ["hello"]);
 
     service.endRun(handle.runId);
@@ -156,29 +156,31 @@ suite("LocalAgentRun (via AgentRunHandle)", () => {
     const received: { type: string; callId: string }[] = [];
 
     handle.events
-      .on("subagentAddJson", (event) => {
-        received.push({ type: event.type, callId: event.callId });
+      .on("subagentAddJson", (payload) => {
+        received.push({ type: "subagentAddJson", callId: payload.callId });
       })
-      .on("subagentError", (event) => {
-        received.push({ type: event.type, callId: event.callId });
+      .on("subagentError", (payload) => {
+        received.push({ type: "subagentError", callId: payload.callId });
       })
-      .on("subagentFinish", (event) => {
-        received.push({ type: event.type, callId: event.callId });
+      .on("subagentFinish", (payload) => {
+        received.push({ type: "subagentFinish", callId: payload.callId });
       });
 
     handle.sink.emit({
-      type: "subagentAddJson",
-      callId: "c1",
-      title: "Step 1",
-      data: { progress: 0.5 },
-      icon: "hourglass",
+      subagentAddJson: {
+        callId: "c1",
+        title: "Step 1",
+        data: { progress: 0.5 },
+        icon: "hourglass",
+      },
     });
     handle.sink.emit({
-      type: "subagentError",
-      callId: "c1",
-      error: { $error: "timeout" },
+      subagentError: {
+        callId: "c1",
+        error: { $error: "timeout" },
+      },
     });
-    handle.sink.emit({ type: "subagentFinish", callId: "c1" });
+    handle.sink.emit({ subagentFinish: { callId: "c1" } });
 
     assert.strictEqual(received.length, 3);
     assert.deepStrictEqual(
@@ -206,10 +208,11 @@ suite("LocalAgentRun (via AgentRunHandle)", () => {
     });
 
     handle.sink.emit({
-      type: "functionCall",
-      callId: "fc-1",
-      name: "generate_text",
-      args: { prompt: "hello world", status_update: "Writing text" },
+      functionCall: {
+        callId: "fc-1",
+        name: "generate_text",
+        args: { prompt: "hello world", status_update: "Writing text" },
+      },
     });
 
     assert.strictEqual(received.length, 1);

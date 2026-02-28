@@ -157,11 +157,12 @@ class AgentUI implements A2UIRenderer, ChatManager {
       return err(`Unable to request chat input: no event sink available`);
     }
     const chatResponse = await this.#sink.suspend<ChatResponse>({
-      type: "waitForInput",
-      requestId: crypto.randomUUID(),
-      prompt: message,
-      inputType: computeFormat(typedInputType),
-      skipLabel,
+      waitForInput: {
+        requestId: crypto.randomUUID(),
+        prompt: message,
+        inputType: computeFormat(typedInputType),
+        skipLabel,
+      },
     });
     this.#chatLog.push({ ...chatResponse.input, role: "user" });
     const userText =
@@ -197,16 +198,17 @@ class AgentUI implements A2UIRenderer, ChatManager {
       return err(`Unable to present choices: no event sink available`);
     }
     const choicesResponse = await this.#sink.suspend<ChatChoicesResponse>({
-      type: "waitForChoice",
-      requestId: crypto.randomUUID(),
-      prompt: messageContent,
-      choices: choices.map((c) => ({
-        id: c.id,
-        content: { parts: [{ text: c.label }] },
-      })),
-      selectionMode,
-      layout,
-      noneOfTheAboveLabel,
+      waitForChoice: {
+        requestId: crypto.randomUUID(),
+        prompt: messageContent,
+        choices: choices.map((c) => ({
+          id: c.id,
+          content: { parts: [{ text: c.label }] },
+        })),
+        selectionMode,
+        layout,
+        noneOfTheAboveLabel,
+      },
     });
     if (!ok(choicesResponse)) return choicesResponse;
 

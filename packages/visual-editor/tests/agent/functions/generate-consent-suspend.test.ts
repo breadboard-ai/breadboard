@@ -17,6 +17,7 @@ import {
 } from "./generate-test-utils.js";
 import { getGenerateFunctionGroup } from "../../../src/a2/agent/functions/generate.js";
 import { stubModuleArgs } from "../../useful-stubs.js";
+import { eventType, eventPayload } from "../../../src/a2/agent/agent-event.js";
 import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
 
 suite("generate_text queryConsent suspend", () => {
@@ -48,7 +49,7 @@ suite("generate_text queryConsent suspend", () => {
 
     // Find the queryConsent event in the captured events
     const consentEvents = sink.emitted.filter(
-      (e: AgentEvent) => e.type === "queryConsent"
+      (e: AgentEvent) => eventType(e) === "queryConsent"
     );
     assert.strictEqual(
       consentEvents.length,
@@ -56,18 +57,15 @@ suite("generate_text queryConsent suspend", () => {
       `Expected 1 queryConsent event, got ${consentEvents.length}`
     );
 
-    const event = consentEvents[0];
-    assert.strictEqual(event.type, "queryConsent");
-    if (event.type === "queryConsent") {
-      assert.ok(event.requestId, "Should have a requestId");
-      assert.strictEqual(
-        event.consentType,
-        ConsentType.GET_ANY_WEBPAGE,
-        "Should request GET_ANY_WEBPAGE consent"
-      );
-      assert.ok("scope" in event, "Should include scope");
-      assert.ok("graphUrl" in event, "Should include graphUrl");
-    }
+    const payload = eventPayload(consentEvents[0]) as Record<string, unknown>;
+    assert.ok(payload.requestId, "Should have a requestId");
+    assert.strictEqual(
+      payload.consentType,
+      ConsentType.GET_ANY_WEBPAGE,
+      "Should request GET_ANY_WEBPAGE consent"
+    );
+    assert.ok("scope" in payload, "Should include scope");
+    assert.ok("graphUrl" in payload, "Should include graphUrl");
   });
 
   test("returns error when url_context consent is denied", async () => {
@@ -126,7 +124,7 @@ suite("generate_text queryConsent suspend", () => {
 
     // Should NOT have any queryConsent events
     const consentEvents = sink.emitted.filter(
-      (e: AgentEvent) => e.type === "queryConsent"
+      (e: AgentEvent) => eventType(e) === "queryConsent"
     );
     assert.strictEqual(
       consentEvents.length,

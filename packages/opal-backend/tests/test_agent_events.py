@@ -118,7 +118,7 @@ class TestBuildHooksFromSink:
         assert isinstance(events[0], StartEvent)
         assert events[0].objective == objective
         # Verify wire-format output
-        assert events[0].to_dict() == {"type": "start", "objective": objective}
+        assert events[0].to_dict() == {"start": {"objective": objective}}
 
     @pytest.mark.asyncio
     async def test_on_thought_emits_thought_event(self):
@@ -135,8 +135,9 @@ class TestBuildHooksFromSink:
         assert isinstance(events[0], ThoughtEvent)
         assert events[0].text == "thinking about it"
         assert events[0].to_dict() == {
-            "type": "thought",
-            "text": "thinking about it",
+            "thought": {
+                "text": "thinking about it",
+            },
         }
 
     @pytest.mark.asyncio
@@ -152,7 +153,7 @@ class TestBuildHooksFromSink:
             events.append(event)
 
         assert isinstance(events[0], FinishEvent)
-        assert events[0].to_dict() == {"type": "finish"}
+        assert events[0].to_dict() == {"finish": {}}
 
     @pytest.mark.asyncio
     async def test_on_content_emits_content_event(self):
@@ -169,7 +170,7 @@ class TestBuildHooksFromSink:
 
         assert isinstance(events[0], ContentEvent)
         assert events[0].content == content
-        assert events[0].to_dict() == {"type": "content", "content": content}
+        assert events[0].to_dict() == {"content": {"content": content}}
 
     @pytest.mark.asyncio
     async def test_on_turn_complete_emits_event(self):
@@ -184,7 +185,7 @@ class TestBuildHooksFromSink:
             events.append(event)
 
         assert isinstance(events[0], TurnCompleteEvent)
-        assert events[0].to_dict() == {"type": "turnComplete"}
+        assert events[0].to_dict() == {"turnComplete": {}}
 
     @pytest.mark.asyncio
     async def test_on_function_call_emits_event_and_returns_call_id(self):
@@ -230,8 +231,9 @@ class TestBuildHooksFromSink:
         assert fc_event.icon is None
         assert fc_event.title is None
         # Wire format should omit None fields
-        assert "icon" not in fc_event.to_dict()
-        assert "title" not in fc_event.to_dict()
+        fc_dict = fc_event.to_dict()
+        assert "icon" not in fc_dict["functionCall"]
+        assert "title" not in fc_dict["functionCall"]
 
     @pytest.mark.asyncio
     async def test_reporter_emits_subagent_events(self):
@@ -255,22 +257,25 @@ class TestBuildHooksFromSink:
         # First event is the functionCall itself.
         assert isinstance(events[1], SubagentAddJsonEvent)
         assert events[1].to_dict() == {
-            "type": "subagentAddJson",
-            "callId": call_id,
-            "title": "Step 1",
-            "data": {"progress": 50},
-            "icon": "loader",
+            "subagentAddJson": {
+                "callId": call_id,
+                "title": "Step 1",
+                "data": {"progress": 50},
+                "icon": "loader",
+            },
         }
         assert isinstance(events[2], SubagentErrorEvent)
         assert events[2].to_dict() == {
-            "type": "subagentError",
-            "callId": call_id,
-            "error": {"$error": "oops"},
+            "subagentError": {
+                "callId": call_id,
+                "error": {"$error": "oops"},
+            },
         }
         assert isinstance(events[3], SubagentFinishEvent)
         assert events[3].to_dict() == {
-            "type": "subagentFinish",
-            "callId": call_id,
+            "subagentFinish": {
+                "callId": call_id,
+            },
         }
         # addError returns the error for chaining.
         assert err == {"$error": "oops"}
@@ -289,9 +294,10 @@ class TestBuildHooksFromSink:
 
         assert isinstance(events[0], FunctionCallUpdateEvent)
         assert events[0].to_dict() == {
-            "type": "functionCallUpdate",
-            "callId": "call-1",
-            "status": "loading data",
+            "functionCallUpdate": {
+                "callId": "call-1",
+                "status": "loading data",
+            },
         }
 
     @pytest.mark.asyncio
@@ -309,9 +315,10 @@ class TestBuildHooksFromSink:
 
         assert isinstance(events[0], FunctionResultEvent)
         assert events[0].to_dict() == {
-            "type": "functionResult",
-            "callId": "call-1",
-            "content": content,
+            "functionResult": {
+                "callId": "call-1",
+                "content": content,
+            },
         }
 
     @pytest.mark.asyncio
@@ -329,7 +336,8 @@ class TestBuildHooksFromSink:
 
         assert isinstance(events[0], SendRequestEvent)
         assert events[0].to_dict() == {
-            "type": "sendRequest",
-            "model": "gemini-3-flash",
-            "body": body,
+            "sendRequest": {
+                "model": "gemini-3-flash",
+                "body": body,
+            },
         }

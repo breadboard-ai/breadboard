@@ -18,47 +18,51 @@ import type { AgentResult } from "./loop.js";
 
 export type {
   AgentEvent,
+  AgentEventMap,
+  AgentEventType,
+  Payload,
   SuspendEvent,
   AgentInputResponse,
   TransformDescriptor,
   UpdateNodeDescriptor,
   LayoutGraphDescriptor,
-  StartEvent,
-  ThoughtEvent,
-  FunctionCallEvent,
-  FunctionCallUpdateEvent,
-  FunctionResultEvent,
-  ContentEvent,
-  TurnCompleteEvent,
-  SendRequestEvent,
-  WaitForInputEvent,
-  WaitForChoiceEvent,
-  ReadGraphEvent,
-  InspectNodeEvent,
-  ApplyEditsEvent,
-  QueryConsentEvent,
-  GraphEditEvent,
-  CompleteEvent,
-  ErrorEvent,
-  FinishEvent,
-  SubagentAddJsonEvent,
-  SubagentErrorEvent,
-  SubagentFinishEvent,
-  UsageMetadataEvent,
+  StartPayload,
+  ThoughtPayload,
+  FunctionCallPayload,
+  FunctionCallUpdatePayload,
+  FunctionResultPayload,
+  ContentPayload,
+  TurnCompletePayload,
+  SendRequestPayload,
+  WaitForInputPayload,
+  WaitForChoicePayload,
+  ReadGraphPayload,
+  InspectNodePayload,
+  ApplyEditsPayload,
+  QueryConsentPayload,
+  GraphEditPayload,
+  CompletePayload,
+  ErrorPayload,
+  FinishPayload,
+  SubagentAddJsonPayload,
+  SubagentErrorPayload,
+  SubagentFinishPayload,
+  UsageMetadataPayload,
 };
 
-type StartEvent = {
-  type: "start";
+// ---------------------------------------------------------------------------
+// Payload types (the data inside each oneof variant — no `type` field)
+// ---------------------------------------------------------------------------
+
+type StartPayload = {
   objective: LLMContent;
 };
 
-type ThoughtEvent = {
-  type: "thought";
+type ThoughtPayload = {
   text: string;
 };
 
-type FunctionCallEvent = {
-  type: "functionCall";
+type FunctionCallPayload = {
   callId: string;
   name: string;
   args: Record<string, unknown>;
@@ -66,59 +70,53 @@ type FunctionCallEvent = {
   title?: string;
 };
 
-type FunctionCallUpdateEvent = {
-  type: "functionCallUpdate";
+type FunctionCallUpdatePayload = {
   callId: string;
   status: string | null;
   opts?: StatusUpdateCallbackOptions;
 };
 
-type FunctionResultEvent = {
-  type: "functionResult";
+type FunctionResultPayload = {
   callId: string;
   content: LLMContent;
 };
 
-type ContentEvent = {
-  type: "content";
+type ContentPayload = {
   content: LLMContent;
 };
 
-type TurnCompleteEvent = {
-  type: "turnComplete";
-};
+type TurnCompletePayload = Record<string, never>;
 
-type SendRequestEvent = {
-  type: "sendRequest";
+type SendRequestPayload = {
   model: string;
   body: GeminiBody;
 };
 
-type WaitForInputEvent = {
-  type: "waitForInput";
+type WaitForInputPayload = {
   requestId: string;
   prompt: LLMContent;
   inputType: string;
   skipLabel?: string;
+  interactionId?: string;
 };
 
-type WaitForChoiceEvent = {
-  type: "waitForChoice";
+type WaitForChoicePayload = {
   requestId: string;
   prompt: LLMContent;
   choices: { id: string; content: LLMContent }[];
   selectionMode: ChatChoiceSelectionMode;
   layout?: ChatChoiceLayout;
   noneOfTheAboveLabel?: string;
+  interactionId?: string;
 };
 
 /**
  * Suspend: server needs the current graph structure.
  * Client reads `editor.raw()` and responds with `GraphDescriptor`.
  */
-type ReadGraphEvent = {
-  type: "readGraph";
+type ReadGraphPayload = {
   requestId: string;
+  interactionId?: string;
 };
 
 /**
@@ -126,10 +124,10 @@ type ReadGraphEvent = {
  * Client reads `editor.inspect("").nodeById(id)` and responds with
  * the node descriptor and metadata.
  */
-type InspectNodeEvent = {
-  type: "inspectNode";
+type InspectNodePayload = {
   requestId: string;
   nodeId: string;
+  interactionId?: string;
 };
 
 /**
@@ -144,10 +142,10 @@ type InspectNodeEvent = {
  * Differs from fire-and-forget `graphEdit` — the server waits for confirmation
  * before continuing.
  */
-type ApplyEditsEvent = {
-  type: "applyEdits";
+type ApplyEditsPayload = {
   requestId: string;
   label: string;
+  interactionId?: string;
 } & (
   | { edits: EditSpec[]; transform?: never }
   | { edits?: never; transform: TransformDescriptor }
@@ -177,12 +175,12 @@ type LayoutGraphDescriptor = {
  * Suspend: server needs user consent for an operation.
  * Client shows a consent dialog and responds with allow/deny.
  */
-type QueryConsentEvent = {
-  type: "queryConsent";
+type QueryConsentPayload = {
   requestId: string;
   consentType: ConsentType;
   scope: Record<string, unknown>;
   graphUrl: string;
+  interactionId?: string;
 };
 
 /**
@@ -190,95 +188,152 @@ type QueryConsentEvent = {
  * `EditTransform` interface (which has an `apply` method). The consumer
  * wraps them in a transform and applies them to the graph.
  */
-type GraphEditEvent = {
-  type: "graphEdit";
+type GraphEditPayload = {
   edits: EditSpec[];
   label: string;
 };
 
-type CompleteEvent = {
-  type: "complete";
+type CompletePayload = {
   result: AgentResult;
 };
 
-type ErrorEvent = {
-  type: "error";
+type ErrorPayload = {
   message: string;
 };
 
-type FinishEvent = {
-  type: "finish";
-};
+type FinishPayload = Record<string, never>;
 
 /**
  * Progress events emitted by sub-processes (image/video/audio/music gen)
  * running inside a function call. Scoped to a `callId` so the consumer
  * can dispatch to the correct work item.
  */
-type SubagentAddJsonEvent = {
-  type: "subagentAddJson";
+type SubagentAddJsonPayload = {
   callId: string;
   title: string;
   data: unknown;
   icon?: string;
 };
 
-type SubagentErrorEvent = {
-  type: "subagentError";
+type SubagentErrorPayload = {
   callId: string;
   error: { $error: string; metadata?: ErrorMetadata };
 };
 
-type SubagentFinishEvent = {
-  type: "subagentFinish";
+type SubagentFinishPayload = {
   callId: string;
 };
 
-type UsageMetadataEvent = {
-  type: "usageMetadata";
+type UsageMetadataPayload = {
   metadata: UsageMetadata;
 };
 
-type AgentEvent =
-  | StartEvent
-  | ThoughtEvent
-  | FunctionCallEvent
-  | FunctionCallUpdateEvent
-  | FunctionResultEvent
-  | ContentEvent
-  | TurnCompleteEvent
-  | SendRequestEvent
-  | WaitForInputEvent
-  | WaitForChoiceEvent
-  | ReadGraphEvent
-  | InspectNodeEvent
-  | ApplyEditsEvent
-  | QueryConsentEvent
-  | GraphEditEvent
-  | CompleteEvent
-  | ErrorEvent
-  | FinishEvent
-  | SubagentAddJsonEvent
-  | SubagentErrorEvent
-  | SubagentFinishEvent
-  | UsageMetadataEvent;
+// ---------------------------------------------------------------------------
+// Wire format: proto-style oneof union.
+//
+// Each variant is a single-key object whose key names the event type
+// and whose value is the payload. Example:
+//   {"thought": {"text": "Thinking..."}}
+//
+// The `AgentEventType` union extracts all valid keys. The `Payload<T>`
+// utility maps a key to its payload type.
+// ---------------------------------------------------------------------------
+
+/**
+ * A map from event type name to its payload type.
+ * Used by `AgentEvent`, `AgentEventType`, and `Payload<T>`.
+ */
+type AgentEventMap = {
+  start: StartPayload;
+  thought: ThoughtPayload;
+  functionCall: FunctionCallPayload;
+  functionCallUpdate: FunctionCallUpdatePayload;
+  functionResult: FunctionResultPayload;
+  content: ContentPayload;
+  turnComplete: TurnCompletePayload;
+  sendRequest: SendRequestPayload;
+  waitForInput: WaitForInputPayload;
+  waitForChoice: WaitForChoicePayload;
+  readGraph: ReadGraphPayload;
+  inspectNode: InspectNodePayload;
+  applyEdits: ApplyEditsPayload;
+  queryConsent: QueryConsentPayload;
+  graphEdit: GraphEditPayload;
+  complete: CompletePayload;
+  error: ErrorPayload;
+  finish: FinishPayload;
+  subagentAddJson: SubagentAddJsonPayload;
+  subagentError: SubagentErrorPayload;
+  subagentFinish: SubagentFinishPayload;
+  usageMetadata: UsageMetadataPayload;
+};
+
+/**
+ * All valid event type names (the oneof key).
+ */
+type AgentEventType = keyof AgentEventMap;
+
+/**
+ * Extract the payload type for a given event type name.
+ */
+type Payload<T extends AgentEventType> = AgentEventMap[T];
+
+/**
+ * The proto-style oneof discriminated union.
+ *
+ * Each member is a single-key object: `{ eventType: payload }`.
+ * On the wire (SSE `data:` line), this is exactly what the backend emits.
+ */
+type AgentEvent = {
+  [K in AgentEventType]: { [P in K]: AgentEventMap[K] };
+}[AgentEventType];
 
 /**
  * All event types that suspend the loop and wait for a client response.
- * Each has a `requestId` for correlation.
+ * Each payload has a `requestId` for correlation.
  *
- * When received from a remote backend (SSE), these also carry an
+ * When received from a remote backend (SSE), the payloads also carry an
  * `interactionId` for the reconnect protocol — the client POSTs it
  * back to resume the stream.
  */
-type SuspendEvent = (
-  | WaitForInputEvent
-  | WaitForChoiceEvent
-  | ReadGraphEvent
-  | InspectNodeEvent
-  | ApplyEditsEvent
-  | QueryConsentEvent
-) & { interactionId?: string };
+type SuspendEvent =
+  | { waitForInput: WaitForInputPayload }
+  | { waitForChoice: WaitForChoicePayload }
+  | { readGraph: ReadGraphPayload }
+  | { inspectNode: InspectNodePayload }
+  | { applyEdits: ApplyEditsPayload }
+  | { queryConsent: QueryConsentPayload };
+
+/**
+ * The set of event type names that are suspend events.
+ */
+const SUSPEND_TYPES = new Set<AgentEventType>([
+  "waitForInput",
+  "waitForChoice",
+  "readGraph",
+  "inspectNode",
+  "applyEdits",
+  "queryConsent",
+]);
+
+/**
+ * Extract the event type name (the single key) from an `AgentEvent`.
+ */
+function eventType(event: AgentEvent): AgentEventType {
+  return Object.keys(event)[0] as AgentEventType;
+}
+
+/**
+ * Extract the payload object from an `AgentEvent`.
+ */
+function eventPayload(event: AgentEvent): AgentEventMap[AgentEventType] {
+  const key = eventType(event);
+  return (event as Record<string, unknown>)[
+    key
+  ] as AgentEventMap[AgentEventType];
+}
+
+export { SUSPEND_TYPES, eventType, eventPayload };
 
 /**
  * The response the client sends back to resume a suspended request.

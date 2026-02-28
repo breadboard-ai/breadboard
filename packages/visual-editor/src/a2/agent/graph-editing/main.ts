@@ -37,8 +37,9 @@ async function invokeGraphEditingAgent(
 
   // Read the current graph via suspend so the agent knows the state.
   const { graph } = await sink.suspend<ReadGraphResponse>({
-    type: "readGraph",
-    requestId: crypto.randomUUID(),
+    readGraph: {
+      requestId: crypto.randomUUID(),
+    },
   });
 
   const overview = graphOverviewYaml(

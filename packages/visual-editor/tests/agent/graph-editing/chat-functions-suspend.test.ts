@@ -11,7 +11,7 @@ import {
   LocalAgentEventBridge,
 } from "../../../src/a2/agent/agent-event-consumer.js";
 import { getChatFunctionGroup } from "../../../src/a2/agent/graph-editing/chat-functions.js";
-import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
+import type { ReadGraphPayload } from "../../../src/a2/agent/agent-event.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { EditingAgentPidginTranslator } from "../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
 import type { FunctionDefinition } from "../../../src/a2/agent/function-definition.js";
@@ -83,11 +83,11 @@ suite("Chat functions readGraph suspend", () => {
     const bridge = new LocalAgentEventBridge(consumer);
     const translator = new EditingAgentPidginTranslator();
 
-    const readGraphCalls: AgentEvent[] = [];
+    const readGraphCalls: ReadGraphPayload[] = [];
 
     // readGraph handler returns the mock graph
-    consumer.on("readGraph", (event) => {
-      readGraphCalls.push(event);
+    consumer.on("readGraph", (payload) => {
+      readGraphCalls.push(payload);
       return Promise.resolve({ graph: makeMockGraph() });
     });
 
@@ -113,25 +113,17 @@ suite("Chat functions readGraph suspend", () => {
       `Expected 2 readGraph calls, got ${readGraphCalls.length}`
     );
 
-    // Both should be readGraph type with requestIds
-    for (const event of readGraphCalls) {
-      assert.strictEqual(event.type, "readGraph");
-      if (event.type === "readGraph") {
-        assert.ok(event.requestId, "Should have a requestId");
-      }
+    // Both should have requestIds
+    for (const payload of readGraphCalls) {
+      assert.ok(payload.requestId, "Should have a requestId");
     }
 
     // The requestIds should be different (unique per call)
-    if (
-      readGraphCalls[0].type === "readGraph" &&
-      readGraphCalls[1].type === "readGraph"
-    ) {
-      assert.notStrictEqual(
-        readGraphCalls[0].requestId,
-        readGraphCalls[1].requestId,
-        "Each readGraph call should have a unique requestId"
-      );
-    }
+    assert.notStrictEqual(
+      readGraphCalls[0].requestId,
+      readGraphCalls[1].requestId,
+      "Each readGraph call should have a unique requestId"
+    );
 
     // Result should contain user's message and current graph
     assert.strictEqual(result.user_message, "Hello, agent!");

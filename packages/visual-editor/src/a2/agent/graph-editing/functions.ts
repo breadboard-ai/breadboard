@@ -358,8 +358,9 @@ function defineGraphEditingFunctions(
   async function readGraph(): Promise<GraphDescriptor> {
     return sink
       .suspend<ReadGraphResponse>({
-        type: "readGraph",
-        requestId: crypto.randomUUID(),
+        readGraph: {
+          requestId: crypto.randomUUID(),
+        },
       })
       .then((r) => r.graph);
   }
@@ -372,10 +373,11 @@ function defineGraphEditingFunctions(
     label: string
   ): Promise<ApplyEditsResponse> {
     return sink.suspend<ApplyEditsResponse>({
-      type: "applyEdits",
-      requestId: crypto.randomUUID(),
-      edits,
-      label,
+      applyEdits: {
+        requestId: crypto.randomUUID(),
+        edits,
+        label,
+      },
     });
   }
 
@@ -390,20 +392,21 @@ function defineGraphEditingFunctions(
     portsToAutowire: InPort[] | null
   ): Promise<ApplyEditsResponse> {
     return sink.suspend<ApplyEditsResponse>({
-      type: "applyEdits",
-      requestId: crypto.randomUUID(),
-      label: `Update step: ${nodeId}`,
-      transform: {
-        kind: "updateNode",
-        nodeId,
-        graphId,
-        configuration,
-        metadata,
-        portsToAutowire:
-          portsToAutowire?.map((p) => ({
-            path: p.path,
-            title: p.title,
-          })) ?? null,
+      applyEdits: {
+        requestId: crypto.randomUUID(),
+        label: `Update step: ${nodeId}`,
+        transform: {
+          kind: "updateNode",
+          nodeId,
+          graphId,
+          configuration,
+          metadata,
+          portsToAutowire:
+            portsToAutowire?.map((p) => ({
+              path: p.path,
+              title: p.title,
+            })) ?? null,
+        },
       },
     });
   }
@@ -413,10 +416,11 @@ function defineGraphEditingFunctions(
    */
   async function applyLayout(): Promise<ApplyEditsResponse> {
     return sink.suspend<ApplyEditsResponse>({
-      type: "applyEdits",
-      requestId: crypto.randomUUID(),
-      label: "Layout graph",
-      transform: { kind: "layoutGraph" },
+      applyEdits: {
+        requestId: crypto.randomUUID(),
+        label: "Layout graph",
+        transform: { kind: "layoutGraph" },
+      },
     });
   }
 

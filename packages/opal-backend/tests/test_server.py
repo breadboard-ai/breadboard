@@ -56,6 +56,20 @@ async def collect_sink_events(
     return events
 
 
+def event_type(e: dict) -> str:
+    """Extract the event type from a proto-style oneof dict.
+
+    Events are serialized as ``{"eventType": {payload}}``.  The single
+    top-level key is the event type.
+    """
+    return next(iter(e))
+
+
+def event_payload(e: dict) -> dict:
+    """Extract the payload from a proto-style oneof dict."""
+    return e[event_type(e)]
+
+
 # ---------------------------------------------------------------------------
 # Echo scenario (no suspends)
 # ---------------------------------------------------------------------------
@@ -71,7 +85,7 @@ async def test_echo_scenario():
     events = await collect_sink_events(sink)
     await task
 
-    types = [e["type"] for e in events]
+    types = [event_type(e) for e in events]
     assert types[0] == "start"
     assert "thought" in types
     assert "functionCall" in types
@@ -102,9 +116,9 @@ async def test_chat_scenario():
                 break
             event = json.loads(line)
             collected.append(event)
-            if event.get("type") == "waitForInput":
+            if event_type(event) == "waitForInput":
                 await asyncio.sleep(0.01)
-                pending.resolve(event["requestId"], {
+                pending.resolve(event_payload(event)["requestId"], {
                     "input": {"parts": [{"text": user_message}]},
                 })
 
@@ -114,14 +128,14 @@ async def test_chat_scenario():
     await consumer
 
     events = [e for e in collected if e is not None]
-    types = [e["type"] for e in events]
+    types = [event_type(e) for e in events]
 
     assert "waitForInput" in types
     assert types[-1] == "finish"
 
-    content_events = [e for e in events if e["type"] == "content"]
+    content_events = [e for e in events if event_type(e) == "content"]
     assert len(content_events) > 0
-    content_text = content_events[0]["content"]["parts"][0]["text"]
+    content_text = event_payload(content_events[0])["content"]["parts"][0]["text"]
     assert user_message in content_text
 
 
@@ -153,12 +167,12 @@ async def test_graph_edit_scenario():
                 break
             event = json.loads(line)
             collected.append(event)
-            if event.get("type") == "readGraph":
+            if event_type(event) == "readGraph":
                 await asyncio.sleep(0.01)
-                pending.resolve(event["requestId"], mock_graph)
-            elif event.get("type") == "applyEdits":
+                pending.resolve(event_payload(event)["requestId"], mock_graph)
+            elif event_type(event) == "applyEdits":
                 await asyncio.sleep(0.01)
-                pending.resolve(event["requestId"], {"success": True})
+                pending.resolve(event_payload(event)["requestId"], {"success": True})
 
     collected: list[dict | None] = []
     consumer = asyncio.create_task(respond_to_suspends())
@@ -166,14 +180,14 @@ async def test_graph_edit_scenario():
     await consumer
 
     events = [e for e in collected if e is not None]
-    types = [e["type"] for e in events]
+    types = [event_type(e) for e in events]
 
     assert "readGraph" in types
     assert "applyEdits" in types
     assert types[-1] == "finish"
 
-    thought_events = [e for e in events if e["type"] == "thought"]
-    assert any("1 node" in e["text"] for e in thought_events)
+    thought_events = [e for e in events if event_type(e) == "thought"]
+    assert any("1 node" in event_payload(e)["text"] for e in thought_events)
 
 
 # ---------------------------------------------------------------------------
@@ -195,9 +209,9 @@ async def test_consent_granted():
                 break
             event = json.loads(line)
             collected.append(event)
-            if event.get("type") == "queryConsent":
+            if event_type(event) == "queryConsent":
                 await asyncio.sleep(0.01)
-                pending.resolve(event["requestId"], True)
+                pending.resolve(event_payload(event)["requestId"], True)
 
     collected: list[dict | None] = []
     consumer = asyncio.create_task(respond_to_suspends())
@@ -205,13 +219,13 @@ async def test_consent_granted():
     await consumer
 
     events = [e for e in collected if e is not None]
-    types = [e["type"] for e in events]
+    types = [event_type(e) for e in events]
 
     assert "queryConsent" in types
     assert types[-1] == "finish"
 
-    content_events = [e for e in events if e["type"] == "content"]
-    content_text = content_events[0]["content"]["parts"][0]["text"]
+    content_events = [e for e in events if event_type(e) == "content"]
+    content_text = event_payload(content_events[0])["content"]["parts"][0]["text"]
     assert "granting" in content_text.lower()
 
 
@@ -229,9 +243,9 @@ async def test_consent_denied():
                 break
             event = json.loads(line)
             collected.append(event)
-            if event.get("type") == "queryConsent":
+            if event_type(event) == "queryConsent":
                 await asyncio.sleep(0.01)
-                pending.resolve(event["requestId"], False)
+                pending.resolve(event_payload(event)["requestId"], False)
 
     collected: list[dict | None] = []
     consumer = asyncio.create_task(respond_to_suspends())
@@ -239,8 +253,8 @@ async def test_consent_denied():
     await consumer
 
     events = [e for e in collected if e is not None]
-    content_events = [e for e in events if e["type"] == "content"]
-    content_text = content_events[0]["content"]["parts"][0]["text"]
+    content_events = [e for e in events if event_type(e) == "content"]
+    content_text = event_payload(content_events[0])["content"]["parts"][0]["text"]
     assert "declined" in content_text.lower()
 
 

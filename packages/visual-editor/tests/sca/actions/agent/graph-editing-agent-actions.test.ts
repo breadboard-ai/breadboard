@@ -17,7 +17,7 @@ import {
   type ChatEntry,
 } from "../../../../src/sca/controller/subcontrollers/editor/graph-editing-agent-controller.js";
 import { AgentService } from "../../../../src/a2/agent/agent-service.js";
-import type { WaitForInputEvent } from "../../../../src/a2/agent/agent-event.js";
+import type { WaitForInputPayload } from "../../../../src/a2/agent/agent-event.js";
 import { setDOM, unsetDOM } from "../../../fake-dom.js";
 import { createMockEnvironment } from "../../helpers/mock-environment.js";
 import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
@@ -194,7 +194,7 @@ suite("graph-editing-agent-actions", () => {
       agent.addThought(event.text);
     });
 
-    handle.sink.emit({ type: "thought", text: "**Analyzing** the graph" });
+    handle.sink.emit({ thought: { text: "**Analyzing** the graph" } });
     await agent.isSettled;
 
     const thoughtGroup = agent.entries.find(
@@ -236,20 +236,22 @@ suite("graph-editing-agent-actions", () => {
 
     // Non-wait function call → should add system message
     handle.sink.emit({
-      type: "functionCall",
-      callId: "call-1",
-      name: "add_node",
-      args: {},
-      title: "Adding node",
+      functionCall: {
+        callId: "call-1",
+        name: "add_node",
+        args: {},
+        title: "Adding node",
+      },
     });
 
     // Wait function call → should NOT add system message
     handle.sink.emit({
-      type: "functionCall",
-      callId: "call-2",
-      name: "wait_for_user_input",
-      args: {},
-      title: undefined,
+      functionCall: {
+        callId: "call-2",
+        name: "wait_for_user_input",
+        args: {},
+        title: undefined,
+      },
     });
 
     await agent.isSettled;
@@ -291,9 +293,9 @@ suite("graph-editing-agent-actions", () => {
     });
 
     // Wire the handler exactly as the action does
-    handle.events.on("waitForInput", (event: WaitForInputEvent) => {
+    handle.events.on("waitForInput", (payload: WaitForInputPayload) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const parts = event.prompt.parts as any[];
+      const parts = payload.prompt.parts as any[];
       const promptText = parts
         .filter((p) => "text" in p)
         .map((p) => p.text)
@@ -308,10 +310,11 @@ suite("graph-editing-agent-actions", () => {
 
     // Trigger the suspend event
     handle.events.handle({
-      type: "waitForInput",
-      requestId: "req-1",
-      prompt: { parts: [{ text: "What would you like me to do?" }] },
-      inputType: "text",
+      waitForInput: {
+        requestId: "req-1",
+        prompt: { parts: [{ text: "What would you like me to do?" }] },
+        inputType: "text",
+      },
     });
 
     await agent.isSettled;
@@ -356,9 +359,9 @@ suite("graph-editing-agent-actions", () => {
     });
 
     let capturedResolve: ((v: unknown) => void) | null = null;
-    handle.events.on("waitForInput", (event: WaitForInputEvent) => {
+    handle.events.on("waitForInput", (payload: WaitForInputPayload) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const parts = event.prompt.parts as any[];
+      const parts = payload.prompt.parts as any[];
       const promptText = parts
         .filter((p) => "text" in p)
         .map((p) => p.text)
@@ -373,10 +376,11 @@ suite("graph-editing-agent-actions", () => {
 
     // Trigger suspend
     const resultPromise = handle.events.handle({
-      type: "waitForInput",
-      requestId: "req-2",
-      prompt: { parts: [{ text: "Hello" }] },
-      inputType: "text",
+      waitForInput: {
+        requestId: "req-2",
+        prompt: { parts: [{ text: "Hello" }] },
+        inputType: "text",
+      },
     }) as Promise<unknown>;
 
     assert.strictEqual(agent.waiting, true);
@@ -430,10 +434,11 @@ suite("graph-editing-agent-actions", () => {
 
     // Use sink.suspend (the actual bridge path)
     const response = (await handle.sink.suspend({
-      type: "waitForInput",
-      requestId: "req-3",
-      prompt: { parts: [{ text: "Waiting..." }] },
-      inputType: "text",
+      waitForInput: {
+        requestId: "req-3",
+        prompt: { parts: [{ text: "Waiting..." }] },
+        inputType: "text",
+      },
     })) as { input: { parts: { text: string }[] } };
 
     assert.deepStrictEqual(response, {

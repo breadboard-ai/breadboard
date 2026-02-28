@@ -4,21 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { AgentEvent, SuspendEvent } from "./agent-event.js";
+import type { AgentEvent } from "./agent-event.js";
+import { SUSPEND_TYPES, eventType, eventPayload } from "./agent-event.js";
 import type { AgentEventConsumer } from "./agent-event-consumer.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 
 export { SSEAgentEventSource };
-
-/**
- * Whether an event is a suspend event (has a `requestId`, meaning the
- * server is waiting for the client to respond).
- */
-function isSuspendEvent(
-  event: AgentEvent
-): event is SuspendEvent & { interactionId: string } {
-  return "requestId" in event && "interactionId" in event;
-}
 
 /**
  * Client-side SSE adapter that reads an agent event stream from the
@@ -115,17 +106,21 @@ class SSEAgentEventSource {
       throw new Error("SSE response has no body");
     }
 
+    // The stream yields proto-style oneof objects — our AgentEvent type
+    // matches the wire format directly, no transformation needed.
     const events = iteratorFromStream<AgentEvent>(response.body);
     for await (const event of events) {
-      console.log("[SSE] Event:", event.type, event);
+      const type = eventType(event);
+      console.log("[SSE] Event:", type, event);
 
-      if (isSuspendEvent(event)) {
+      if (SUSPEND_TYPES.has(type)) {
         // Suspend: await the consumer handler to get the user's response.
+        const payload = eventPayload(event) as { interactionId: string };
         const userResponse = await this.consumer.handle(event);
-        console.log("[SSE] Suspend resolved, reconnecting:", event.type);
+        console.log("[SSE] Suspend resolved, reconnecting:", type);
         return {
           done: false,
-          interactionId: event.interactionId,
+          interactionId: payload.interactionId,
           response: userResponse,
         };
       }
@@ -133,7 +128,7 @@ class SSEAgentEventSource {
       // Fire-and-forget: dispatch and continue.
       this.consumer.handle(event);
 
-      if (event.type === "complete" || event.type === "error") {
+      if (type === "complete" || type === "error") {
         return { done: true };
       }
     }

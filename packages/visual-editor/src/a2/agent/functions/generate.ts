@@ -367,11 +367,12 @@ Specify URLs in the prompt.
       }
       if (url_context) {
         const consent = await sink.suspend<boolean>({
-          type: "queryConsent",
-          requestId: crypto.randomUUID(),
-          consentType: ConsentType.GET_ANY_WEBPAGE,
-          scope: {},
-          graphUrl: moduleArgs.context.currentGraph?.url || "",
+          queryConsent: {
+            requestId: crypto.randomUUID(),
+            consentType: ConsentType.GET_ANY_WEBPAGE,
+            scope: {},
+            graphUrl: moduleArgs.context.currentGraph?.url || "",
+          },
         });
         if (!consent) {
           return { error: "User declined to consent to access URLs" };

@@ -463,7 +463,6 @@ class DevAgentBackend:
             try:
                 async for event in sink:
                     yield {
-                        "event": event.type,
                         "data": json.dumps(event.to_dict()),
                     }
             finally:
@@ -478,7 +477,6 @@ def _error_stream(message: str) -> EventSourceResponse:
     async def generate():
         event = ErrorEvent(message=message)
         yield {
-            "event": event.type,
             "data": json.dumps(event.to_dict()),
         }
     return EventSourceResponse(content=generate())
