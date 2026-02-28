@@ -217,7 +217,7 @@ class DevAgentBackend:
     """
 
     async def run(self, request: Request) -> EventSourceResponse:
-        body = await request.json()
+        raw_body = await request.json()
 
         # Extract access token from Authorization header.
         auth_header = request.headers.get("authorization", "")
@@ -228,15 +228,28 @@ class DevAgentBackend:
         # OP validates Origin to identify the requesting app.
         origin = request.headers.get("origin", "")
 
-        # Dispatch: resume or start?
-        interaction_id = body.get("interactionId")
-        if interaction_id:
+        # Unwrap proto oneof envelope:
+        #   {start: {kind, segments, flags}}  → start run
+        #   {resume: {interactionId, response}} → resume run
+        if "resume" in raw_body:
+            resume = raw_body["resume"]
             return await self._resume(
-                interaction_id, body.get("response", {}),
+                resume.get("interactionId", ""),
+                resume.get("response", {}),
                 access_token, origin,
             )
+        elif "start" in raw_body:
+            return await self._start(raw_body["start"], access_token, origin)
         else:
-            return await self._start(body, access_token, origin)
+            # Flat format fallback (legacy / dev tooling).
+            interaction_id = raw_body.get("interactionId")
+            if interaction_id:
+                return await self._resume(
+                    interaction_id, raw_body.get("response", {}),
+                    access_token, origin,
+                )
+            else:
+                return await self._start(raw_body, access_token, origin)
 
     async def _start(
         self, body: dict, access_token: str, origin: str,

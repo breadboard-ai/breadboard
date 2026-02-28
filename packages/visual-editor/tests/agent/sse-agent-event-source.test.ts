@@ -103,7 +103,7 @@ suite("SSEAgentEventSource", () => {
     assert.strictEqual(fetchCalls[0].url, "http://test/v1beta1/streamRunAgent");
     assert.strictEqual(fetchCalls[0].init?.method, "POST");
     const body = JSON.parse(fetchCalls[0].init?.body as string);
-    assert.deepStrictEqual(body, TEST_CONFIG);
+    assert.deepStrictEqual(body, { start: TEST_CONFIG });
   });
 
   test("suspend event triggers reconnect with interactionId", async () => {
@@ -182,14 +182,14 @@ suite("SSEAgentEventSource", () => {
     // Two fetch calls: initial + resume.
     assert.strictEqual(fetchCalls.length, 2);
 
-    // First call: original config.
+    // First call: original config wrapped under "start".
     const body1 = JSON.parse(fetchCalls[0].init?.body as string);
-    assert.deepStrictEqual(body1, TEST_CONFIG);
+    assert.deepStrictEqual(body1, { start: TEST_CONFIG });
 
-    // Second call: resume with interactionId + response.
+    // Second call: resume with interactionId + response under "resume".
     const body2 = JSON.parse(fetchCalls[1].init?.body as string);
-    assert.strictEqual(body2.interactionId, "int-abc");
-    assert.deepStrictEqual(body2.response, {
+    assert.strictEqual(body2.resume.interactionId, "int-abc");
+    assert.deepStrictEqual(body2.resume.response, {
       input: { parts: [{ text: "Alice" }] },
     });
   });
