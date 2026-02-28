@@ -6,9 +6,34 @@
 
 import { AgentEventConsumer } from "./agent-event-consumer.js";
 import type { RemoteAgentRunConfig, AgentRunHandle } from "./agent-service.js";
+import type { Segment } from "./resolve-to-segments.js";
 import { SSEAgentEventSource } from "./sse-agent-event-source.js";
 
 export { SSEAgentRun };
+
+/**
+ * Convert a flat segment (`{type: "text", text: "hello"}`) to
+ * proto-compatible JSON (`{textSegment: {text: "hello"}}`).
+ *
+ * The proto `RunSegment` message uses `oneof segment` — the JSON key
+ * selects the variant, not a `type` field.
+ */
+function segmentToProto(segment: Segment): Record<string, unknown> {
+  // Strip the discriminant — proto oneof doesn't use "type".
+  const { type, ...fields } = segment;
+  const keyMap: Record<string, string> = {
+    text: "textSegment",
+    asset: "assetSegment",
+    input: "inputSegment",
+    tool: "toolSegment",
+  };
+  const key = keyMap[type];
+  if (!key) {
+    // Unknown segment type — pass through as-is for forward compat.
+    return segment;
+  }
+  return { [key]: fields };
+}
 
 /**
  * Remote agent run backed by SSE (Resumable Stream Protocol).
@@ -37,7 +62,7 @@ class SSEAgentRun implements AgentRunHandle {
       baseUrl,
       {
         kind: config.kind,
-        segments: config.segments,
+        segments: config.segments.map(segmentToProto),
         flags: config.flags,
       },
       this.events,
