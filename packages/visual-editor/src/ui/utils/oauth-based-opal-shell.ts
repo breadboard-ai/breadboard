@@ -933,6 +933,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   };
 
   #trackActionViaAppCatalyst(event: string, payload: Record<string, string>) {
+    if (!CLIENT_DEPLOYMENT_CONFIG.ENABLE_BACKEND_TRACK_ACTION) {
+      return;
+    }
     this.fetchWithCreds(
       new URL(
         "/v1beta1/trackAction",
