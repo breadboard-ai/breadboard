@@ -125,7 +125,7 @@ class TestResolvePartToChunk:
         """inlineData parts pass through directly."""
         part = {"inlineData": {"mimeType": "image/png", "data": "base64img"}}
         chunk = await resolve_part_to_chunk(
-            part, access_token="tok",
+            part,
             backend=_mock_backend(),
         )
         assert chunk["mimetype"] == "image/png"
@@ -137,7 +137,7 @@ class TestResolvePartToChunk:
         handle = "http://localhost:3000/board/blobs/12345678-1234-1234-1234-123456789012"
         part = {"storedData": {"handle": handle, "mimeType": "image/png"}}
         chunk = await resolve_part_to_chunk(
-            part, access_token="tok",
+            part,
             backend=_mock_backend(),
         )
         assert chunk["mimetype"] == "text/gcs-path"
@@ -151,12 +151,12 @@ class TestResolvePartToChunk:
         backend.upload_blob_file.return_value = "/board/blobs/aaaabbbb-1111-2222-3333-444455556666"
         part = {"storedData": {"handle": "drive://file123", "mimeType": "image/png"}}
         chunk = await resolve_part_to_chunk(
-            part, access_token="tok",
+            part,
             backend=backend,
         )
         assert chunk["mimetype"] == "text/gcs-path"
         backend.upload_blob_file.assert_called_once_with(
-            "file123", access_token="tok"
+            "file123"
         )
 
     @pytest.mark.asyncio
@@ -165,7 +165,7 @@ class TestResolvePartToChunk:
         part = {"storedData": {"handle": "ftp://weird", "mimeType": "image/png"}}
         with pytest.raises(ValueError, match="Unknown storedData"):
             await resolve_part_to_chunk(
-                part, access_token="tok",
+                part,
                 backend=_mock_backend(),
             )
 
@@ -175,7 +175,7 @@ class TestResolvePartToChunk:
         part = {"fileData": {"fileUri": "http://example.com/file", "mimeType": "image/png"}}
         with pytest.raises(ValueError, match="fileData parts are not supported"):
             await resolve_part_to_chunk(
-                part, access_token="tok",
+                part,
                 backend=_mock_backend(),
             )
 
@@ -184,7 +184,7 @@ class TestResolvePartToChunk:
         """Unknown part types → ValueError."""
         with pytest.raises(ValueError, match="Unknown part type"):
             await resolve_part_to_chunk(
-                {"weirdKey": "value"}, access_token="tok",
+                {"weirdKey": "value"},
                 backend=_mock_backend(),
             )
 
@@ -242,7 +242,6 @@ class TestExecuteStep:
         }
         result = await execute_step(
             body,
-            access_token="tok",
             backend=mock_backend,
         )
         assert len(result["chunks"]) == 1
@@ -259,7 +258,6 @@ class TestExecuteStep:
         with pytest.raises(ValueError, match="Model quota exceeded"):
             await execute_step(
                 body,
-                access_token="tok",
                 backend=mock_backend,
             )
 
@@ -276,12 +274,11 @@ class TestExecuteStep:
         body = {"planStep": {"output": "out"}, "execution_inputs": {}}
         await execute_step(
             body,
-            access_token="mytoken",
             backend=mock_backend,
         )
 
         mock_backend.execute_step.assert_called_once_with(
-            body, access_token="mytoken"
+            body
         )
 
 
@@ -307,6 +304,7 @@ class TestHttpBackendClient:
             },
         )
         mock_client = AsyncMock()
+        mock_client.access_token = "test-token"
         mock_client.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
@@ -315,7 +313,6 @@ class TestHttpBackendClient:
         )
         result = await backend.execute_step(
             {"planStep": {"output": "output"}},
-            access_token="tok",
         )
         assert "executionOutputs" in result
 
@@ -331,6 +328,7 @@ class TestHttpBackendClient:
             json={"error": {"message": "Internal error"}},
         )
         mock_client = AsyncMock()
+        mock_client.access_token = "test-token"
         mock_client.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
@@ -340,7 +338,6 @@ class TestHttpBackendClient:
         with pytest.raises(ValueError, match="Internal error"):
             await backend.execute_step(
                 {"planStep": {"output": "out"}},
-                access_token="tok",
             )
 
     @pytest.mark.asyncio
@@ -351,6 +348,7 @@ class TestHttpBackendClient:
             json={"errorMessage": "Model quota exceeded"},
         )
         mock_client = AsyncMock()
+        mock_client.access_token = "test-token"
         mock_client.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
@@ -360,7 +358,6 @@ class TestHttpBackendClient:
         with pytest.raises(ValueError, match="Model quota exceeded"):
             await backend.execute_step(
                 {"planStep": {"output": "out"}},
-                access_token="tok",
             )
 
     @pytest.mark.asyncio
@@ -371,6 +368,7 @@ class TestHttpBackendClient:
             json={"executionOutputs": {}},
         )
         mock_client = AsyncMock()
+        mock_client.access_token = "mytoken"
         mock_client.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
@@ -380,7 +378,6 @@ class TestHttpBackendClient:
         )
         await backend.execute_step(
             {"planStep": {"output": "out"}},
-            access_token="mytoken",
         )
 
         call_kwargs = mock_client.post.call_args
@@ -402,6 +399,7 @@ class TestHttpBackendClient:
         }
 
         mock_client = AsyncMock()
+        mock_client.access_token = "my-secret-token"
         mock_client.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
@@ -412,7 +410,6 @@ class TestHttpBackendClient:
 
         result = await backend.upload_blob_file(
             "drive-file-id-abc",
-            access_token="my-secret-token",
         )
 
         assert result == "/board/blobs/new-blob-id-123"
@@ -528,7 +525,6 @@ class TestRealWorldRegressions:
 
         result = await execute_step(
             body,
-            access_token="tok",
             backend=mock_backend,
         )
 

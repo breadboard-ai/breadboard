@@ -66,8 +66,17 @@ class HttpxClient:
                 ...
     """
 
-    def __init__(self, timeout: float = DEFAULT_TIMEOUT) -> None:
+    def __init__(
+        self,
+        timeout: float = DEFAULT_TIMEOUT,
+        access_token: str = "",
+    ) -> None:
         self._client = httpx.AsyncClient(timeout=timeout)
+        self._access_token = access_token
+
+    @property
+    def access_token(self) -> str:
+        return self._access_token
 
     async def post(
         self,

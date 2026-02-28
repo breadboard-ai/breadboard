@@ -483,7 +483,7 @@ Body (resume): {interactionId, response}
       restored; `shared_schemas.py` centralizes `statusUpdateSchema`,
       `taskIdSchema`, `fileNameSchema`
 
-### Phase 5: Python Consolidation & Copybara Prep ← **we are here**
+### Phase 5: Python Consolidation & Copybara Prep ← **we are here** (5.5b next)
 
 > **🎯 Objective:** `opal-backend-shared` code is pure Python (no `httpx`,
 > `fastapi`, or `pydantic` imports in synced files). The shared code can be
@@ -549,6 +549,55 @@ Body (resume): {interactionId, response}
 - [x] All function groups (`image`, `audio`, `video`, `generate`) updated
 - [x] `dev/main.py` — per-request `HttpBackendClient` with `origin`
 - [x] Tests updated (step_executor, conform_body, suspend_resume)
+
+#### 5.5: High-Level Entry Point
+
+##### 5.5a: Credential Internalization ✅
+
+> **🎯 Objective:** `access_token` and `origin` are no longer parameters of
+> `Loop`, function group factories, or `conform_body`. Credentials are a
+> transport concern — baked into `HttpClient` and `BackendClient`.
+
+- [x] `HttpClient` protocol — `access_token` property
+- [x] `HttpxClient` — accepts and exposes `access_token`
+- [x] `GeminiClient` — reads `client.access_token`
+- [x] `BackendClient` protocol — removed `access_token` from all methods;
+      `HttpBackendClient` reads from `self._client.access_token`
+- [x] `conform_body` — removed `access_token` param
+- [x] `step_executor` — removed `access_token` from functions
+- [x] All 4 function group factories — removed `access_token` param
+- [x] `Loop.__init__` — removed `access_token` and `origin`
+- [x] `dev/main.py` — per-request `HttpxClient` with baked-in token; removed
+      `access_token`/`origin` from `InteractionState`
+- [x] Tests updated (all 322 pass)
+
+##### 5.5b: `run()` / `resume()` Entry Point
+
+> **🎯 Objective:** `opal_backend.run()` is a single async iterator that takes
+> an objective + injected deps and yields `AgentEvent`s. Consumers provide only
+> what varies by environment. Everything else is internal.
+>
+> ```python
+> async for event in opal_backend.run(
+>     objective=objective,
+>     client=http_client,
+>     backend=backend_client,
+>     store=interaction_store,
+> ):
+>     yield event
+> ```
+
+- [ ] `opal_backend/run.py` — `run()` async generator: creates
+      `AgentFileSystem`, `TaskTreeManager`, `AgentEventSink`, `LoopController`,
+      builds function groups, runs loop, dispatches
+      `CompleteEvent`/`ErrorEvent`, closes sink
+- [ ] `opal_backend/run.py` — `resume()` async generator: loads state from
+      `InteractionStore`, injects function response, runs loop, dispatches
+      events
+- [ ] `dev/main.py` — delegates to `opal_backend.run()` / `resume()`; delete
+      `_build_function_groups`, `_stream_loop`
+- [ ] `opal_backend/__init__.py` — re-export `run`, `resume`
+- [ ] Tests: `test_run.py` — end-to-end with mock transports
 
 #### Future Phases (deferred)
 

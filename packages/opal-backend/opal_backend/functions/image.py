@@ -68,7 +68,6 @@ def _define_generate_images(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    access_token: str = "",
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
@@ -107,7 +106,6 @@ def _define_generate_images(
             try:
                 chunk = await resolve_part_to_chunk(
                     data_part,
-                    access_token=access_token,
                     backend=backend,
                 )
                 image_chunks.append(chunk)
@@ -163,7 +161,6 @@ def _define_generate_images(
         try:
             result = await execute_step(
                 body,
-                access_token=access_token,
                 backend=backend,
             )
         except ValueError as e:
@@ -303,7 +300,6 @@ def get_image_function_group(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    access_token: str = "",
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionGroup:
@@ -312,7 +308,6 @@ def get_image_function_group(
         _define_generate_images(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
             backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),

@@ -62,7 +62,15 @@ class HttpClient(Protocol):
     the synced boundary:
     - ``local/http_client_impl.py`` — httpx-based (dev/test)
     - google3 production — internal RPC-based
+
+    Credentials are a transport concern: the ``access_token`` property
+    carries the OAuth2 token so callers don't need to thread it.
     """
+
+    @property
+    def access_token(self) -> str:
+        """OAuth2 access token for Authorization headers."""
+        ...
 
     async def post(
         self,

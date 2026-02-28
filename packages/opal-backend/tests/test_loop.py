@@ -271,7 +271,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_terminates_on_success(self):
         """The loop should stop when system_objective_fulfilled is called."""
-        loop = Loop()
+        loop = Loop(client=MagicMock(access_token="test-token"))
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -311,7 +311,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_terminates_on_failure(self):
         """The loop should stop when system_failed_to_fulfill is called."""
-        loop = Loop()
+        loop = Loop(client=MagicMock(access_token="test-token"))
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -348,7 +348,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_emits_hooks(self):
         """Hooks should be called at the right lifecycle points."""
-        loop = Loop()
+        loop = Loop(client=MagicMock(access_token="test-token"))
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -408,7 +408,7 @@ class TestLoop:
         but the loop read result.get("call_id") (snake_case), silently falling
         back to a different UUID, breaking progress UI correlation.
         """
-        loop = Loop()
+        loop = Loop(client=MagicMock(access_token="test-token"))
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -465,7 +465,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_handles_empty_candidates(self):
         """The loop should return an error if Gemini returns no candidates."""
-        loop = Loop()
+        loop = Loop(client=MagicMock(access_token="test-token"))
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -494,7 +494,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_multiple_turns(self):
         """The loop should handle multiple turns before termination."""
-        loop = Loop()
+        loop = Loop(client=MagicMock(access_token="test-token"))
 
         call_count = 0
 

@@ -66,7 +66,6 @@ def _define_generate_speech(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    access_token: str = "",
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
@@ -127,7 +126,6 @@ def _define_generate_speech(
         try:
             result = await execute_step(
                 body,
-                access_token=access_token,
                 backend=backend,
             )
         except ValueError as e:
@@ -203,7 +201,6 @@ def _define_generate_music(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    access_token: str = "",
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
@@ -252,7 +249,6 @@ def _define_generate_music(
         try:
             result = await execute_step(
                 body,
-                access_token=access_token,
                 backend=backend,
             )
         except ValueError as e:
@@ -361,7 +357,6 @@ def get_audio_function_group(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    access_token: str = "",
     backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionGroup:
@@ -370,14 +365,12 @@ def get_audio_function_group(
         _define_generate_speech(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
             backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
         _define_generate_music(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
             backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),

@@ -8,8 +8,7 @@ Calls the Gemini REST API via the HttpClient protocol, yielding response
 chunks as async iterables. The actual HTTP transport is injected — this
 module has no external dependencies.
 
-The access token must be provided by the caller — this module
-does not manage authentication.
+Credentials are carried by the ``HttpClient.access_token`` property.
 """
 
 from __future__ import annotations
@@ -42,7 +41,6 @@ async def stream_generate_content(
     model: str,
     body: GeminiBody,
     *,
-    access_token: str,
     client: HttpClient,
 ) -> AsyncIterator[GeminiChunk]:
     """Stream content from Gemini with automatic retry on empty responses.
@@ -55,8 +53,8 @@ async def stream_generate_content(
     Args:
         model: Gemini model name (e.g. "gemini-3-flash-preview").
         body: The full request body (contents, tools, etc.).
-        access_token: OAuth2 access token forwarded from the user's request.
-        client: HttpClient implementation for making HTTP calls.
+        client: HttpClient implementation (carries credentials via
+            ``access_token`` property).
 
     Yields:
         Parsed JSON chunks from the Gemini streaming response.
@@ -68,7 +66,7 @@ async def stream_generate_content(
 
     headers: dict[str, str] = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {access_token}",
+        "Authorization": f"Bearer {client.access_token}",
     }
 
     for attempt in range(STREAM_MAX_RETRIES):

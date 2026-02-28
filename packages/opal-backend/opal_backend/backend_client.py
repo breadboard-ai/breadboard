@@ -40,16 +40,19 @@ class BackendClient(Protocol):
     Implementations:
     - ``HttpBackendClient`` (this file) — POSTs to One Platform via HTTP.
     - google3 ``DirectBackendClient`` — calls backend handlers directly.
+
+    Credentials are a transport concern: each implementation carries its
+    own auth mechanism (``HttpBackendClient`` reads from its
+    ``HttpClient.access_token``; google3 uses service accounts).
     """
 
     async def execute_step(
-        self, body: dict[str, Any], *, access_token: str
+        self, body: dict[str, Any]
     ) -> dict[str, Any]:
         """Execute a plan step via the backend.
 
         Args:
             body: The full ExecuteStepRequest (planStep + execution_inputs).
-            access_token: OAuth2 access token.
 
         Returns:
             The raw API response dict (callers parse with
@@ -61,14 +64,13 @@ class BackendClient(Protocol):
         ...
 
     async def upload_gemini_file(
-        self, request: dict[str, str], *, access_token: str
+        self, request: dict[str, str]
     ) -> dict[str, Any]:
         """Upload a file to Gemini File API via the backend.
 
         Args:
             request: Upload request (e.g. ``{driveFileId: "..."}`` or
                 ``{blobId: "..."}``).
-            access_token: OAuth2 access token.
 
         Returns:
             The raw API response dict with ``fileUrl`` and ``mimeType``.
@@ -79,13 +81,12 @@ class BackendClient(Protocol):
         ...
 
     async def upload_blob_file(
-        self, drive_file_id: str, *, access_token: str
+        self, drive_file_id: str
     ) -> str:
         """Upload a Drive file to blob store via the backend.
 
         Args:
             drive_file_id: The Google Drive file ID.
-            access_token: OAuth2 access token.
 
         Returns:
             The blob handle path (``/board/blobs/{blobId}``).
@@ -100,8 +101,8 @@ class HttpBackendClient:
     """Default HTTP-based backend client.
 
     POSTs to One Platform endpoints via ``HttpClient``. Used by the dev
-    backend and local testing. The ``origin`` parameter is an HTTP
-    transport concern (google3's ``DirectBackendClient`` won't need it).
+    backend and local testing. Credentials and origin are carried by the
+    ``HttpClient`` (google3's ``DirectBackendClient`` won't need them).
     """
 
     def __init__(
@@ -115,22 +116,22 @@ class HttpBackendClient:
         self._client = client
         self._origin = origin
 
-    def _headers(self, access_token: str) -> dict[str, str]:
+    def _headers(self) -> dict[str, str]:
         """Build standard request headers."""
         headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}",
+            "Authorization": f"Bearer {self._client.access_token}",
         }
         if self._origin:
             headers["Origin"] = self._origin
         return headers
 
     async def execute_step(
-        self, body: dict[str, Any], *, access_token: str
+        self, body: dict[str, Any]
     ) -> dict[str, Any]:
         """POST to /v1beta1/executeStep and return the raw response."""
         url = f"{self._upstream_base.rstrip('/')}{EXECUTE_STEP_ENDPOINT}"
-        headers = self._headers(access_token)
+        headers = self._headers()
 
         response = await self._client.post(url, json=body, headers=headers)
 
@@ -154,18 +155,20 @@ class HttpBackendClient:
         return data
 
     async def upload_gemini_file(
-        self, request: dict[str, str], *, access_token: str
+        self, request: dict[str, str]
     ) -> dict[str, Any]:
         """POST to /v1beta1/uploadGeminiFile and return the raw response."""
         url = (
             f"{self._upstream_base.rstrip('/')}{UPLOAD_GEMINI_FILE_ENDPOINT}"
         )
-        headers = self._headers(access_token)
+        headers = self._headers()
 
         # OP requires the access token in the JSON body (in addition to the
         # Authorization header).  The TS client does this via
         # shouldAddAccessTokenToJsonBody in fetch-allowlist.ts.
-        augmented_request = {**request, "accessToken": access_token}
+        augmented_request = {
+            **request, "accessToken": self._client.access_token
+        }
 
         response = await self._client.post(
             url, json=augmented_request, headers=headers
@@ -182,20 +185,23 @@ class HttpBackendClient:
         return response.json()
 
     async def upload_blob_file(
-        self, drive_file_id: str, *, access_token: str
+        self, drive_file_id: str
     ) -> str:
         """POST to /v1beta1/uploadBlobFile and return the blob handle."""
         url = (
             f"{self._upstream_base.rstrip('/')}{UPLOAD_BLOB_FILE_ENDPOINT}"
         )
-        headers = self._headers(access_token)
+        headers = self._headers()
 
         # OP requires the access token in the JSON body (same pattern as
         # upload_gemini_file — see shouldAddAccessTokenToJsonBody in
         # fetch-allowlist.ts).
         response = await self._client.post(
             url,
-            json={"driveFileId": drive_file_id, "accessToken": access_token},
+            json={
+                "driveFileId": drive_file_id,
+                "accessToken": self._client.access_token,
+            },
             headers=headers,
         )
         response.raise_for_status()

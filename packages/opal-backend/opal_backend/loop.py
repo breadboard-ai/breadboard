@@ -138,15 +138,11 @@ class Loop:
     def __init__(
         self,
         *,
-        access_token: str = "",
-        origin: str = "",
         client: HttpClient | None = None,
         backend: BackendClient | None = None,
         controller: LoopController | None = None,
     ) -> None:
         self.controller = controller or LoopController()
-        self._access_token = access_token
-        self._origin = origin
         self._client = client
         self._backend = backend
 
@@ -226,23 +222,19 @@ class Loop:
                 if self._backend:
                     body = await conform_body(
                         body,
-                        access_token=self._access_token,
                         backend=self._backend,
                     )
 
                 # Stream from Gemini
                 function_caller = FunctionCaller(definition_map)
 
-                stream_kwargs: dict = {
-                    "access_token": self._access_token,
-                }
-                if self._client:
-                    stream_kwargs["client"] = self._client
+                if not self._client:
+                    return err("No HttpClient provided")
 
                 async for chunk in stream_generate_content(
                     AGENT_MODEL,
                     body,
-                    **stream_kwargs,
+                    client=self._client,
                 ):
                     candidates = chunk.get("candidates", [])
                     if not candidates:

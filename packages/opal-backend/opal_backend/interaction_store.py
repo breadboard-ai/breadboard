@@ -37,10 +37,6 @@ class InteractionState:
     # the client's response is wrapped as a functionResponse for this call.
     function_call_part: dict[str, Any]
 
-    # Loop configuration — needed to reconstruct the loop.
-    access_token: str
-    origin: str
-
     # Agent state — mutable objects that persist across resume.
     file_system: AgentFileSystem
     task_tree_manager: TaskTreeManager
