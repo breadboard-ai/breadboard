@@ -34,7 +34,7 @@ from ..step_executor import (
     resolve_part_to_chunk,
     encode_base64,
 )
-from ..http_client import HttpClient
+from ..backend_client import BackendClient
 from ..task_tree_manager import TaskTreeManager
 from ..shared_schemas import (
     STATUS_UPDATE_SCHEMA,
@@ -138,9 +138,7 @@ def _define_generate_video(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     access_token: str = "",
-    upstream_base: str = "",
-    origin: str = "",
-    client: HttpClient | None = None,
+    backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
     """Port of ``callVideoGen`` from video-generator/main.ts."""
@@ -181,9 +179,7 @@ def _define_generate_video(
                 chunk = await resolve_part_to_chunk(
                     data_part,
                     access_token=access_token,
-                    upstream_base=upstream_base,
-                    origin=origin,
-                    client=client,
+                    backend=backend,
                 )
                 image_chunks.append(chunk)
             except ValueError as e:
@@ -235,9 +231,7 @@ def _define_generate_video(
             result = await execute_step(
                 body,
                 access_token=access_token,
-                upstream_base=upstream_base,
-                origin=origin,
-                client=client,
+                backend=backend,
             )
         except ValueError as e:
             logger.error("generate_video executeStep error: %s", e)
@@ -358,9 +352,7 @@ def get_video_function_group(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     access_token: str = "",
-    upstream_base: str = "",
-    origin: str = "",
-    client: HttpClient | None = None,
+    backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionGroup:
     """Build a FunctionGroup with the generate_video function."""
@@ -369,9 +361,7 @@ def get_video_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=upstream_base,
-            origin=origin,
-            client=client,
+            backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
     ]

@@ -55,7 +55,6 @@ class TestInteractionStore(unittest.TestCase):
                 "functionCall": {"name": "test_fn", "args": {}}
             },
             access_token="token-123",
-            upstream_base="https://example.com",
             origin="https://origin.com",
             file_system=fs,
             task_tree_manager=ttm,

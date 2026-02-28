@@ -27,6 +27,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
+from opal_backend.backend_client import HttpBackendClient
 from opal_backend.local.http_client_impl import HttpxClient
 
 from opal_backend.agent_events import (
@@ -144,9 +145,8 @@ def _build_function_groups(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager,
     access_token: str,
-    upstream_base: str,
-    origin: str,
     client: HttpxClient,
+    backend: HttpBackendClient,
     enable_g1_quota: bool = False,
 ):
     """Build the standard set of function groups."""
@@ -160,35 +160,28 @@ def _build_function_groups(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=upstream_base,
-            origin=origin,
             client=client,
+            backend=backend,
         ),
         get_image_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=upstream_base,
-            origin=origin,
-            client=client,
+            backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
         get_video_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=upstream_base,
-            origin=origin,
-            client=client,
+            backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
         get_audio_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=upstream_base,
-            origin=origin,
-            client=client,
+            backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
         get_chat_function_group(
@@ -289,14 +282,18 @@ class DevAgentBackend:
                 )
 
         controller = LoopController()
+        backend = HttpBackendClient(
+            upstream_base=UPSTREAM_BASE,
+            client=_http_client,
+            origin=origin,
+        )
         function_groups = _build_function_groups(
             controller=controller,
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=UPSTREAM_BASE,
-            origin=origin,
             client=_http_client,
+            backend=backend,
             enable_g1_quota=enable_g1_quota,
         )
 
@@ -312,6 +309,7 @@ class DevAgentBackend:
             task_tree_manager=task_tree_manager,
             access_token=access_token,
             origin=origin,
+            backend=backend,
         )
 
     async def _resume(
@@ -345,14 +343,18 @@ class DevAgentBackend:
         contents = state.contents + [function_response_turn]
 
         controller = LoopController()
+        backend = HttpBackendClient(
+            upstream_base=UPSTREAM_BASE,
+            client=_http_client,
+            origin=origin,
+        )
         function_groups = _build_function_groups(
             controller=controller,
             file_system=state.file_system,
             task_tree_manager=state.task_tree_manager,
             access_token=access_token,
-            upstream_base=UPSTREAM_BASE,
-            origin=origin,
             client=_http_client,
+            backend=backend,
         )
 
         run_args = AgentRunArgs(
@@ -368,6 +370,7 @@ class DevAgentBackend:
             task_tree_manager=state.task_tree_manager,
             access_token=access_token,
             origin=origin,
+            backend=backend,
         )
 
     def _stream_loop(
@@ -379,6 +382,7 @@ class DevAgentBackend:
         task_tree_manager: TaskTreeManager,
         access_token: str,
         origin: str,
+        backend: HttpBackendClient,
     ) -> EventSourceResponse:
         """Common streaming logic for both start and resume."""
         sink = AgentEventSink()
@@ -386,9 +390,9 @@ class DevAgentBackend:
 
         loop = Loop(
             access_token=access_token,
-            upstream_base=UPSTREAM_BASE,
             origin=origin,
             client=_http_client,
+            backend=backend,
             controller=controller,
         )
 
@@ -405,7 +409,6 @@ class DevAgentBackend:
                             contents=result.contents,
                             function_call_part=result.function_call_part,
                             access_token=access_token,
-                            upstream_base=UPSTREAM_BASE,
                             origin=origin,
                             file_system=file_system,
                             task_tree_manager=task_tree_manager,

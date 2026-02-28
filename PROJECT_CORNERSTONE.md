@@ -350,7 +350,7 @@ Body (resume): {interactionId, response}
 - [x] `json` parts → `{text: json.dumps()}` (inline transform)
 - [x] `NotebookLM` storedData → `{text: url}` passthrough
 - [x] `_upload_gemini_file` helper: authenticated POST to One Platform,
-      `upstream_base` threaded from dev backend → `Loop.__init__`
+      `BackendClient` protocol injected via `Loop.__init__`
 - [x] Tests: 21 tests covering all 6 transforms, error handling, mixed content
 
 #### 4.7: Function Groups
@@ -538,6 +538,17 @@ Body (resume): {interactionId, response}
 - [x] Delete `local/events.py` (replaced by synced `events.py`)
 - [x] Update all tests (`test_agent_events.py`, `test_chat_functions.py`,
       `test_suspend_resume.py`)
+
+#### 5.4: BackendClient Protocol
+
+- [x] `backend_client.py` — `BackendClient` protocol (`execute_step`,
+      `upload_gemini_file`, `upload_blob_file`) + `HttpBackendClient` impl
+- [x] `step_executor.py` — delegates to `BackendClient`, removed HTTP logic
+- [x] `conform_body.py` — delegates to `BackendClient.upload_gemini_file`
+- [x] `loop.py` — `upstream_base: str` → `backend: BackendClient | None`
+- [x] All function groups (`image`, `audio`, `video`, `generate`) updated
+- [x] `dev/main.py` — per-request `HttpBackendClient` with `origin`
+- [x] Tests updated (step_executor, conform_body, suspend_resume)
 
 #### Future Phases (deferred)
 

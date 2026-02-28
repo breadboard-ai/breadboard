@@ -39,7 +39,6 @@ class InteractionState:
 
     # Loop configuration — needed to reconstruct the loop.
     access_token: str
-    upstream_base: str
     origin: str
 
     # Agent state — mutable objects that persist across resume.

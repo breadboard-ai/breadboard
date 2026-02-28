@@ -24,7 +24,7 @@ import logging
 import re
 from typing import Any
 
-from .http_client import HttpClient
+from .backend_client import BackendClient
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,6 @@ NOTEBOOKLM_URL_PREFIX = "https://notebooklm.google.com/notebook/"
 
 # Matches the TS regex: /^drive:\/+/  (strip "drive:" + all leading slashes)
 _DRIVE_PREFIX_RE = re.compile(r"^drive:/+")
-UPLOAD_GEMINI_FILE_ENDPOINT = "/v1beta1/uploadGeminiFile"
 
 # Blob handle: <origin>/board/blobs/<uuid>
 _BLOB_UUID_RE = re.compile(
@@ -52,18 +51,14 @@ async def conform_body(
     body: GeminiBody,
     *,
     access_token: str,
-    upstream_base: str,
-    client: HttpClient,
-    origin: str = "",
+    backend: BackendClient,
 ) -> GeminiBody:
     """Transform Breadboard-specific parts to Gemini-native formats.
 
     Args:
         body: The full Gemini request body (contents, tools, etc.).
         access_token: OAuth2 access token for upload endpoints.
-        upstream_base: Base URL for One Platform (e.g.
-            ``https://appcatalyst.pa.googleapis.com``).
-        client: HttpClient implementation for making HTTP calls.
+        backend: BackendClient implementation for upload calls.
 
     Returns:
         A new body dict with transformed contents.
@@ -84,9 +79,7 @@ async def conform_body(
             transformed = await _transform_part(
                 part,
                 access_token=access_token,
-                upstream_base=upstream_base,
-                client=client,
-                origin=origin,
+                backend=backend,
             )
             new_parts.append(transformed)
 
@@ -99,9 +92,7 @@ async def _transform_part(
     part: LLMContentPart,
     *,
     access_token: str,
-    upstream_base: str,
-    client: HttpClient,
-    origin: str = "",
+    backend: BackendClient,
 ) -> LLMContentPart:
     """Transform a single content part."""
 
@@ -125,9 +116,7 @@ async def _transform_part(
             return await _upload_gemini_file(
                 {"driveFileId": drive_file_id},
                 access_token=access_token,
-                upstream_base=upstream_base,
-                client=client,
-                origin=origin,
+                backend=backend,
             )
 
         # Blob handle → uploadGeminiFile
@@ -136,9 +125,7 @@ async def _transform_part(
             return await _upload_gemini_file(
                 {"blobId": blob_id},
                 access_token=access_token,
-                upstream_base=upstream_base,
-                client=client,
-                origin=origin,
+                backend=backend,
             )
 
         # Unknown storedData — error (matches TS err("Unknown part"))
@@ -168,9 +155,7 @@ async def _transform_part(
             return await _upload_gemini_file(
                 request,
                 access_token=access_token,
-                upstream_base=upstream_base,
-                client=client,
-                origin=origin,
+                backend=backend,
             )
 
         # Unknown fileData — error (matches TS err("Unknown part"))
@@ -184,14 +169,12 @@ async def _upload_gemini_file(
     request: dict[str, str],
     *,
     access_token: str,
-    upstream_base: str,
-    client: HttpClient,
-    origin: str = "",
+    backend: BackendClient,
 ) -> LLMContentPart:
-    """Upload a file to Gemini File API via One Platform.
+    """Upload a file to Gemini File API via the backend.
 
-    Calls ``/v1beta1/uploadGeminiFile`` which returns
-    ``{fileUrl, mimeType}``.
+    Delegates to ``backend.upload_gemini_file()`` and builds the
+    ``fileData`` part from the response.
 
     Returns:
         A ``fileData`` part with the resolved Gemini File API URL.
@@ -199,35 +182,9 @@ async def _upload_gemini_file(
     Raises:
         ValueError: If the upload fails.
     """
-    url = f"{upstream_base.rstrip('/')}{UPLOAD_GEMINI_FILE_ENDPOINT}"
-
-    # OP requires the access token in the JSON body (in addition to the
-    # Authorization header).  The TS client does this via
-    # shouldAddAccessTokenToJsonBody in fetch-allowlist.ts.
-    augmented_request = {**request, "accessToken": access_token}
-
-    headers: dict[str, str] = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {access_token}",
-    }
-    if origin:
-        headers["Origin"] = origin
-
-    response = await client.post(
-        url,
-        json=augmented_request,
-        headers=headers,
+    data = await backend.upload_gemini_file(
+        request, access_token=access_token
     )
-    if response.status_code >= 400:
-        logger.error(
-            "uploadGeminiFile failed: %d %s — request=%s response=%s",
-            response.status_code,
-            response.reason_phrase,
-            augmented_request,
-            response.text[:500],
-        )
-    response.raise_for_status()
-    data = response.json()
 
     file_url = data.get("fileUrl", "")
     mime_type = data.get("mimeType", "")
