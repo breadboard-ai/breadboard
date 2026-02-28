@@ -51,6 +51,32 @@ class ToPidginResult:
     custom_tool_urls: list[dict[str, str]] = field(default_factory=list)
 
 
+# Proto oneof key → flat segment type.
+_PROTO_ONEOF_KEYS = {
+    "textSegment": "text",
+    "assetSegment": "asset",
+    "inputSegment": "input",
+    "toolSegment": "tool",
+}
+
+
+def _normalize_segment(segment: dict[str, Any]) -> dict[str, Any]:
+    """Convert a proto-style oneof segment to the flat format.
+
+    Proto format: ``{"textSegment": {"text": "hello"}}``
+    Flat format:  ``{"type": "text", "text": "hello"}``
+
+    Flat segments (already have a ``type`` key) pass through unchanged.
+    """
+    if "type" in segment:
+        return segment
+    for oneof_key, seg_type in _PROTO_ONEOF_KEYS.items():
+        if oneof_key in segment:
+            inner = segment[oneof_key]
+            return {"type": seg_type, **inner}
+    return segment
+
+
 def to_pidgin(
     segments: list[dict[str, Any]],
     file_system: AgentFileSystem,
@@ -75,6 +101,7 @@ def to_pidgin(
     custom_tool_urls: list[dict[str, str]] = []
 
     for segment in segments:
+        segment = _normalize_segment(segment)
         seg_type = segment.get("type", "")
 
         if seg_type == "text":
