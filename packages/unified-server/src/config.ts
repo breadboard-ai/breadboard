@@ -86,6 +86,7 @@ export async function createClientConfig(opts: {
       textEditorRemix: flags.ENABLE_TEXT_EDITOR_REMIX,
       showTokenCounter: flags.ENABLE_SHOW_TOKEN_COUNTER,
       enableContextCaching: flags.ENABLE_CONTEXT_CACHING,
+      enableOpalBackend: flags.ENABLE_OPAL_BACKEND,
     },
   };
 }

@@ -98,6 +98,11 @@ export type RuntimeFlags = {
    * Enables explicit context caching for agent loop invocations
    */
   enableContextCaching: boolean;
+
+  /**
+   * Use the remote (Python) agent backend instead of in-process execution
+   */
+  enableOpalBackend: boolean;
 };
 
 /**
@@ -244,6 +249,11 @@ export const RUNTIME_FLAG_META: Record<keyof RuntimeFlags, RuntimeFlagMeta> = {
   enableContextCaching: {
     title: "Context Caching",
     description: "Enable explicit context caching for agent loop invocations",
+    visibility: "experimental",
+  },
+  enableOpalBackend: {
+    title: "Opal Backend",
+    description: "Route agent runs through the backend instead of in-process",
     visibility: "experimental",
   },
 };

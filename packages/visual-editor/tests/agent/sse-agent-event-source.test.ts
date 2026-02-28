@@ -100,7 +100,10 @@ suite("SSEAgentEventSource", () => {
     assert.strictEqual(received[1].type, "finish");
 
     // Verify the POST URL and body
-    assert.strictEqual(fetchCalls[0].url, "http://test/v1beta1/streamRunAgent");
+    assert.strictEqual(
+      fetchCalls[0].url,
+      "http://test/v1beta1/streamRunAgent?alt=sse"
+    );
     assert.strictEqual(fetchCalls[0].init?.method, "POST");
     const body = JSON.parse(fetchCalls[0].init?.body as string);
     assert.deepStrictEqual(body, { start: TEST_CONFIG });
