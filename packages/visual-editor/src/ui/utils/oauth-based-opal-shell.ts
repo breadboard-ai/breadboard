@@ -927,7 +927,26 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   );
   trackAction = async (action: string, payload: Record<string, string>) => {
     this.actionEventSender.sendEvent(action, payload);
+
+    // Also send to the appcatalyst backend for server-side analytics.
+    this.#trackActionViaAppCatalyst(action, payload);
   };
+
+  #trackActionViaAppCatalyst(event: string, payload: Record<string, string>) {
+    this.fetchWithCreds(
+      new URL(
+        "/v1beta1/trackAction",
+        CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT
+      ),
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ event, payload }),
+      }
+    ).catch((error) => {
+      console.warn("[shell host] trackAction RPC failed", error);
+    });
+  }
 
   trackProperties = async (payload: Record<string, string | undefined>) => {
     this.actionEventSender.setProperties(payload);
