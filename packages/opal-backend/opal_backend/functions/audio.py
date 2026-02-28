@@ -28,7 +28,7 @@ from ..step_executor import (
     execute_step,
     encode_base64,
 )
-from ..http_client import HttpClient
+from ..backend_client import BackendClient
 from ..task_tree_manager import TaskTreeManager
 from ..shared_schemas import (
     STATUS_UPDATE_SCHEMA,
@@ -67,9 +67,7 @@ def _define_generate_speech(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     access_token: str = "",
-    upstream_base: str = "",
-    origin: str = "",
-    client: HttpClient | None = None,
+    backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
     """Port of the speech agent function from generate.ts + callAudioGen."""
@@ -130,9 +128,7 @@ def _define_generate_speech(
             result = await execute_step(
                 body,
                 access_token=access_token,
-                upstream_base=upstream_base,
-                origin=origin,
-                client=client,
+                backend=backend,
             )
         except ValueError as e:
             logger.error("generate_speech executeStep error: %s", e)
@@ -208,9 +204,7 @@ def _define_generate_music(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     access_token: str = "",
-    upstream_base: str = "",
-    origin: str = "",
-    client: HttpClient | None = None,
+    backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionDefinition:
     """Port of the music agent function from generate.ts + callMusicGen."""
@@ -259,9 +253,7 @@ def _define_generate_music(
             result = await execute_step(
                 body,
                 access_token=access_token,
-                upstream_base=upstream_base,
-                origin=origin,
-                client=client,
+                backend=backend,
             )
         except ValueError as e:
             logger.error("generate_music executeStep error: %s", e)
@@ -370,9 +362,7 @@ def get_audio_function_group(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     access_token: str = "",
-    upstream_base: str = "",
-    origin: str = "",
-    client: HttpClient | None = None,
+    backend: BackendClient | None = None,
     enable_g1_quota: bool = False,
 ) -> FunctionGroup:
     """Build a FunctionGroup with speech and music generation functions."""
@@ -381,18 +371,14 @@ def get_audio_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=upstream_base,
-            origin=origin,
-            client=client,
+            backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
         _define_generate_music(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=upstream_base,
-            origin=origin,
-            client=client,
+            backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
     ]

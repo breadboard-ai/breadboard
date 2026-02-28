@@ -22,6 +22,7 @@ from opal_backend.step_executor import (
     _to_gcs_chunk,
     _is_blob_handle,
 )
+from opal_backend.backend_client import HttpBackendClient
 
 
 # ---------------------------------------------------------------------------
@@ -111,14 +112,21 @@ class TestParseExecutionOutput:
 # ---------------------------------------------------------------------------
 
 
+def _mock_backend():
+    """Create an AsyncMock BackendClient."""
+    backend = AsyncMock()
+    backend.upload_blob_file = AsyncMock()
+    return backend
+
+
 class TestResolvePartToChunk:
     @pytest.mark.asyncio
     async def test_inline_data_passthrough(self):
         """inlineData parts pass through directly."""
         part = {"inlineData": {"mimeType": "image/png", "data": "base64img"}}
         chunk = await resolve_part_to_chunk(
-            part, access_token="tok", upstream_base="http://example.com",
-            client=AsyncMock(),
+            part, access_token="tok",
+            backend=_mock_backend(),
         )
         assert chunk["mimetype"] == "image/png"
         assert chunk["data"] == "base64img"
@@ -129,25 +137,27 @@ class TestResolvePartToChunk:
         handle = "http://localhost:3000/board/blobs/12345678-1234-1234-1234-123456789012"
         part = {"storedData": {"handle": handle, "mimeType": "image/png"}}
         chunk = await resolve_part_to_chunk(
-            part, access_token="tok", upstream_base="http://example.com",
-            client=AsyncMock(),
+            part, access_token="tok",
+            backend=_mock_backend(),
         )
         assert chunk["mimetype"] == "text/gcs-path"
         decoded = base64.b64decode(chunk["data"]).decode()
         assert decoded == "12345678-1234-1234-1234-123456789012"
 
     @pytest.mark.asyncio
-    @patch("opal_backend.step_executor._upload_blob_file")
-    async def test_stored_data_drive_handle(self, mock_upload):
+    async def test_stored_data_drive_handle(self):
         """storedData with drive:/ handle → uploadBlobFile → GCS chunk."""
-        mock_upload.return_value = "/board/blobs/aaaabbbb-1111-2222-3333-444455556666"
+        backend = _mock_backend()
+        backend.upload_blob_file.return_value = "/board/blobs/aaaabbbb-1111-2222-3333-444455556666"
         part = {"storedData": {"handle": "drive://file123", "mimeType": "image/png"}}
         chunk = await resolve_part_to_chunk(
-            part, access_token="tok", upstream_base="http://example.com",
-            client=AsyncMock(),
+            part, access_token="tok",
+            backend=backend,
         )
         assert chunk["mimetype"] == "text/gcs-path"
-        mock_upload.assert_called_once()
+        backend.upload_blob_file.assert_called_once_with(
+            "file123", access_token="tok"
+        )
 
     @pytest.mark.asyncio
     async def test_unknown_stored_data_raises(self):
@@ -155,8 +165,8 @@ class TestResolvePartToChunk:
         part = {"storedData": {"handle": "ftp://weird", "mimeType": "image/png"}}
         with pytest.raises(ValueError, match="Unknown storedData"):
             await resolve_part_to_chunk(
-                part, access_token="tok", upstream_base="http://example.com",
-                client=AsyncMock(),
+                part, access_token="tok",
+                backend=_mock_backend(),
             )
 
     @pytest.mark.asyncio
@@ -165,8 +175,8 @@ class TestResolvePartToChunk:
         part = {"fileData": {"fileUri": "http://example.com/file", "mimeType": "image/png"}}
         with pytest.raises(ValueError, match="fileData parts are not supported"):
             await resolve_part_to_chunk(
-                part, access_token="tok", upstream_base="http://example.com",
-                client=AsyncMock(),
+                part, access_token="tok",
+                backend=_mock_backend(),
             )
 
     @pytest.mark.asyncio
@@ -174,8 +184,8 @@ class TestResolvePartToChunk:
         """Unknown part types → ValueError."""
         with pytest.raises(ValueError, match="Unknown part type"):
             await resolve_part_to_chunk(
-                {"weirdKey": "value"}, access_token="tok", upstream_base="http://x",
-                client=AsyncMock(),
+                {"weirdKey": "value"}, access_token="tok",
+                backend=_mock_backend(),
             )
 
 
@@ -207,7 +217,7 @@ class TestHelpers:
 
 
 # ---------------------------------------------------------------------------
-# execute_step (mock HTTP)
+# execute_step (mock backend)
 # ---------------------------------------------------------------------------
 
 
@@ -215,6 +225,75 @@ class TestExecuteStep:
     @pytest.mark.asyncio
     async def test_success(self):
         """Successful executeStep call."""
+        mock_backend = AsyncMock()
+        mock_backend.execute_step = AsyncMock(return_value={
+            "executionOutputs": {
+                "output": {
+                    "chunks": [
+                        {"mimetype": "image/png", "data": "imgdata"}
+                    ]
+                }
+            }
+        })
+
+        body = {
+            "planStep": {"output": "output", "stepName": "test"},
+            "execution_inputs": {},
+        }
+        result = await execute_step(
+            body,
+            access_token="tok",
+            backend=mock_backend,
+        )
+        assert len(result["chunks"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_error_raised_from_backend(self):
+        """Backend ValueError → propagated to caller."""
+        mock_backend = AsyncMock()
+        mock_backend.execute_step = AsyncMock(
+            side_effect=ValueError("Model quota exceeded")
+        )
+
+        body = {"planStep": {"output": "out"}, "execution_inputs": {}}
+        with pytest.raises(ValueError, match="Model quota exceeded"):
+            await execute_step(
+                body,
+                access_token="tok",
+                backend=mock_backend,
+            )
+
+    @pytest.mark.asyncio
+    async def test_delegates_to_backend(self):
+        """execute_step delegates to backend.execute_step with correct args."""
+        mock_backend = AsyncMock()
+        mock_backend.execute_step = AsyncMock(return_value={
+            "executionOutputs": {
+                "out": {"chunks": [{"mimetype": "text/plain", "data": "ok"}]}
+            }
+        })
+
+        body = {"planStep": {"output": "out"}, "execution_inputs": {}}
+        await execute_step(
+            body,
+            access_token="mytoken",
+            backend=mock_backend,
+        )
+
+        mock_backend.execute_step.assert_called_once_with(
+            body, access_token="mytoken"
+        )
+
+
+# ---------------------------------------------------------------------------
+# HttpBackendClient tests
+# ---------------------------------------------------------------------------
+
+
+class TestHttpBackendClient:
+    @pytest.mark.asyncio
+    async def test_execute_step_success(self):
+        """HttpBackendClient.execute_step posts to correct URL."""
         mock_response = httpx.Response(
             200,
             json={
@@ -229,88 +308,128 @@ class TestExecuteStep:
         )
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
-        mock_client.aclose = AsyncMock()
 
-        body = {
-            "planStep": {"output": "output", "stepName": "test"},
-            "execution_inputs": {},
-        }
-        result = await execute_step(
-            body,
-            access_token="tok",
+        backend = HttpBackendClient(
             upstream_base="http://example.com",
             client=mock_client,
         )
-        assert len(result["chunks"]) == 1
-
-    @pytest.mark.asyncio
-    async def test_error_message_in_response(self):
-        """Response with errorMessage → ValueError."""
-        mock_response = httpx.Response(
-            200,
-            json={"errorMessage": "Model quota exceeded"},
+        result = await backend.execute_step(
+            {"planStep": {"output": "output"}},
+            access_token="tok",
         )
-        mock_client = AsyncMock()
-        mock_client.post = AsyncMock(return_value=mock_response)
-        mock_client.aclose = AsyncMock()
+        assert "executionOutputs" in result
 
-        body = {"planStep": {"output": "out"}, "execution_inputs": {}}
-        with pytest.raises(ValueError, match="Model quota exceeded"):
-            await execute_step(
-                body,
-                access_token="tok",
-                upstream_base="http://example.com",
-                client=mock_client,
-            )
+        # Verify URL
+        call_args = mock_client.post.call_args
+        assert call_args.args[0] == "http://example.com/v1beta1/executeStep"
 
     @pytest.mark.asyncio
-    async def test_http_error(self):
-        """HTTP 500 → ValueError."""
+    async def test_execute_step_error(self):
+        """HttpBackendClient.execute_step raises on HTTP error."""
         mock_response = httpx.Response(
             500,
             json={"error": {"message": "Internal error"}},
         )
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
-        mock_client.aclose = AsyncMock()
 
-        body = {"planStep": {"output": "out"}, "execution_inputs": {}}
+        backend = HttpBackendClient(
+            upstream_base="http://example.com",
+            client=mock_client,
+        )
         with pytest.raises(ValueError, match="Internal error"):
-            await execute_step(
-                body,
+            await backend.execute_step(
+                {"planStep": {"output": "out"}},
                 access_token="tok",
-                upstream_base="http://example.com",
-                client=mock_client,
+            )
+
+    @pytest.mark.asyncio
+    async def test_execute_step_error_message(self):
+        """HttpBackendClient.execute_step raises on errorMessage in response."""
+        mock_response = httpx.Response(
+            200,
+            json={"errorMessage": "Model quota exceeded"},
+        )
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+
+        backend = HttpBackendClient(
+            upstream_base="http://example.com",
+            client=mock_client,
+        )
+        with pytest.raises(ValueError, match="Model quota exceeded"):
+            await backend.execute_step(
+                {"planStep": {"output": "out"}},
+                access_token="tok",
             )
 
     @pytest.mark.asyncio
     async def test_sends_auth_and_origin(self):
-        """Access token and Origin header are sent."""
+        """Auth and Origin headers are sent."""
         mock_response = httpx.Response(
             200,
-            json={
-                "executionOutputs": {
-                    "out": {"chunks": [{"mimetype": "text/plain", "data": "ok"}]}
-                }
-            },
+            json={"executionOutputs": {}},
         )
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
-        mock_client.aclose = AsyncMock()
 
-        body = {"planStep": {"output": "out"}, "execution_inputs": {}}
-        await execute_step(
-            body,
-            access_token="mytoken",
+        backend = HttpBackendClient(
             upstream_base="http://example.com",
-            origin="http://localhost:3000",
             client=mock_client,
+            origin="http://localhost:3000",
+        )
+        await backend.execute_step(
+            {"planStep": {"output": "out"}},
+            access_token="mytoken",
         )
 
         call_kwargs = mock_client.post.call_args
         headers = call_kwargs.kwargs.get("headers", {})
         assert headers["Authorization"] == "Bearer mytoken"
         assert headers["Origin"] == "http://localhost:3000"
+
+    @pytest.mark.asyncio
+    async def test_upload_blob_file_sends_access_token_in_body(self):
+        """Regression: OP requires accessToken in the JSON body, not just
+        the Authorization header. Without it, the endpoint returns 500.
+        """
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = MagicMock()
+        mock_response.json.return_value = {
+            "blobId": "new-blob-id-123",
+            "mimeType": "image/jpeg",
+        }
+
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+
+        backend = HttpBackendClient(
+            upstream_base="https://staging-appcatalyst.sandbox.googleapis.com",
+            client=mock_client,
+            origin="http://localhost:3000",
+        )
+
+        result = await backend.upload_blob_file(
+            "drive-file-id-abc",
+            access_token="my-secret-token",
+        )
+
+        assert result == "/board/blobs/new-blob-id-123"
+
+        # Verify accessToken is in the body
+        call_kwargs = mock_client.post.call_args
+        body = call_kwargs.kwargs.get("json", {})
+        assert body["driveFileId"] == "drive-file-id-abc"
+        assert body["accessToken"] == "my-secret-token", (
+            "OP requires accessToken in JSON body (not just header)"
+        )
+
+        # Verify upstream URL (not origin)
+        url = call_kwargs.args[0]
+        assert url.startswith("https://staging-appcatalyst"), (
+            "uploadBlobFile should call upstream, not unified server"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -377,31 +496,26 @@ class TestRealWorldRegressions:
     async def test_e2e_execute_step_with_gcs_output(self):
         """End-to-end: executeStep returns GCS path chunks → correct handles.
 
-        This simulates the full flow: API returns GCS path chunks,
-        execute_step parses them, and the resulting LLMContent has
+        This simulates the full flow: backend returns raw response,
+        execute_step parses it, and the resulting LLMContent has
         properly formed /board/blobs/ handles.
         """
         gcs_path = "labs-opal-dev-blobs/ef5dfcdd-0cf6-4d23-9519-241a05e2de59"
         encoded = base64.b64encode(gcs_path.encode()).decode()
 
-        mock_response = httpx.Response(
-            200,
-            json={
-                "executionOutputs": {
-                    "generated_image": {
-                        "chunks": [
-                            {
-                                "mimetype": "text/gcs-path/image/jpeg",
-                                "data": encoded,
-                            }
-                        ]
-                    }
+        mock_backend = AsyncMock()
+        mock_backend.execute_step = AsyncMock(return_value={
+            "executionOutputs": {
+                "generated_image": {
+                    "chunks": [
+                        {
+                            "mimetype": "text/gcs-path/image/jpeg",
+                            "data": encoded,
+                        }
+                    ]
                 }
-            },
-        )
-        mock_client = AsyncMock()
-        mock_client.post = AsyncMock(return_value=mock_response)
-        mock_client.aclose = AsyncMock()
+            }
+        })
 
         body = {
             "planStep": {
@@ -415,58 +529,10 @@ class TestRealWorldRegressions:
         result = await execute_step(
             body,
             access_token="tok",
-            upstream_base="http://example.com",
-            client=mock_client,
+            backend=mock_backend,
         )
 
         assert len(result["chunks"]) == 1
         part = result["chunks"][0]["parts"][0]
         assert part["storedData"]["handle"] == "/board/blobs/ef5dfcdd-0cf6-4d23-9519-241a05e2de59"
         assert part["storedData"]["mimeType"] == "image/jpeg"
-
-    @pytest.mark.asyncio
-    async def test_upload_blob_file_sends_access_token_in_body(self):
-        """Regression: OP requires accessToken in the JSON body, not just
-        the Authorization header. Without it, the endpoint returns 500.
-
-        This mirrors the same pattern used by _upload_gemini_file in
-        conform_body.py (see shouldAddAccessTokenToJsonBody in
-        fetch-allowlist.ts).
-        """
-        from opal_backend.step_executor import _upload_blob_file
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.raise_for_status = MagicMock()
-        mock_response.json.return_value = {
-            "blobId": "new-blob-id-123",
-            "mimeType": "image/jpeg",
-        }
-
-        mock_client = AsyncMock()
-        mock_client.post = AsyncMock(return_value=mock_response)
-        mock_client.aclose = AsyncMock()
-
-        result = await _upload_blob_file(
-            "drive-file-id-abc",
-            access_token="my-secret-token",
-            upstream_base="https://staging-appcatalyst.sandbox.googleapis.com",
-            origin="http://localhost:3000",
-            client=mock_client,
-        )
-
-        assert result == "/board/blobs/new-blob-id-123"
-
-        # Verify accessToken is in the body
-        call_kwargs = mock_client.post.call_args
-        body = call_kwargs.kwargs.get("json", {})
-        assert body["driveFileId"] == "drive-file-id-abc"
-        assert body["accessToken"] == "my-secret-token", (
-            "OP requires accessToken in JSON body (not just header)"
-        )
-
-        # Verify upstream URL (not origin)
-        url = call_kwargs.args[0]
-        assert url.startswith("https://staging-appcatalyst"), (
-            "uploadBlobFile should call upstream, not unified server"
-        )

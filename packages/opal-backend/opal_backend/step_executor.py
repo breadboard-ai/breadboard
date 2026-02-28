@@ -23,7 +23,7 @@ import logging
 import re
 from typing import Any
 
-from .http_client import HttpClient
+from .backend_client import BackendClient
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,6 @@ logger = logging.getLogger(__name__)
 Chunk = dict[str, Any]  # {mimetype, data, substreamName?}
 ContentMap = dict[str, Any]  # {content_name: {chunks: [...]}}
 LLMContentPart = dict[str, Any]
-
-EXECUTE_STEP_ENDPOINT = "/v1beta1/executeStep"
-UPLOAD_BLOB_FILE_ENDPOINT = "/v1beta1/uploadBlobFile"
 
 GCS_PATH_PREFIX = "text/gcs-path/"
 
@@ -53,18 +50,14 @@ async def execute_step(
     body: dict[str, Any],
     *,
     access_token: str,
-    upstream_base: str,
-    origin: str = "",
-    client: HttpClient,
+    backend: BackendClient,
 ) -> dict[str, Any]:
     """POST to /v1beta1/executeStep and return parsed output.
 
     Args:
         body: The full ExecuteStepRequest (planStep + execution_inputs).
         access_token: OAuth2 access token.
-        upstream_base: Base URL for One Platform.
-        origin: Origin header value.
-        client: HttpClient implementation for making HTTP calls.
+        backend: BackendClient implementation for making backend calls.
 
     Returns:
         Parsed ExecutionOutput: ``{chunks: [...], requestedModel?, executedModel?}``
@@ -72,33 +65,7 @@ async def execute_step(
     Raises:
         ValueError: On API error or missing output.
     """
-    url = f"{upstream_base.rstrip('/')}{EXECUTE_STEP_ENDPOINT}"
-
-    headers: dict[str, str] = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {access_token}",
-    }
-    if origin:
-        headers["Origin"] = origin
-
-    response = await client.post(url, json=body, headers=headers)
-
-    if response.status_code >= 400:
-        error_text = response.text[:500]
-        logger.error(
-            "executeStep failed: %d %s — %s",
-            response.status_code,
-            response.reason_phrase,
-            error_text,
-        )
-        raise ValueError(
-            f"executeStep request failed: {_decode_error(error_text)}"
-        )
-
-    data = response.json()
-
-    if data.get("errorMessage"):
-        raise ValueError(data["errorMessage"])
+    data = await backend.execute_step(body, access_token=access_token)
 
     output_key = body.get("planStep", {}).get("output", "")
     outputs = data.get("executionOutputs", {})
@@ -224,9 +191,7 @@ async def resolve_part_to_chunk(
     part: LLMContentPart,
     *,
     access_token: str,
-    upstream_base: str,
-    origin: str = "",
-    client: HttpClient,
+    backend: BackendClient,
 ) -> Chunk:
     """Resolve an agent FS part to an executeStep-compatible chunk.
 
@@ -242,7 +207,7 @@ async def resolve_part_to_chunk(
 
     Args:
         part: A single LLMContent part from the agent file system.
-        client: HttpClient implementation for making HTTP calls.
+        backend: BackendClient implementation for making backend calls.
 
     Returns:
         An executeStep-compatible chunk ``{mimetype, data}``.
@@ -267,12 +232,8 @@ async def resolve_part_to_chunk(
         # Drive handle → uploadBlobFile → GCS path chunk
         if handle.startswith("drive:"):
             drive_file_id = re.sub(r"^drive:/+", "", handle)
-            blob_handle = await _upload_blob_file(
-                drive_file_id,
-                access_token=access_token,
-                upstream_base=upstream_base,
-                origin=origin,
-                client=client,
+            blob_handle = await backend.upload_blob_file(
+                drive_file_id, access_token=access_token
             )
             return _to_gcs_chunk(blob_handle)
 
@@ -302,50 +263,6 @@ def _to_gcs_chunk(blob_handle: str) -> Chunk:
     return {"data": encoded, "mimetype": "text/gcs-path"}
 
 
-async def _upload_blob_file(
-    drive_file_id: str,
-    *,
-    access_token: str,
-    upstream_base: str,
-    origin: str = "",
-    client: HttpClient,
-) -> str:
-    """Upload a Drive file to blob store via /v1beta1/uploadBlobFile.
-
-    Port of ``driveFileToBlob`` from data-transforms.ts (D2B transform).
-
-    Note: ``uploadBlobFile`` is a **unified server** endpoint, not an
-    upstream One Platform API. The TS frontend calls it via ``callBackend``
-    which routes through the local server. We must use ``origin`` (the
-    unified server URL) as the base, not ``upstream_base``.
-
-    Returns:
-        The blob handle path (``/board/blobs/{blobId}``).
-    """
-    url = f"{upstream_base.rstrip('/')}{UPLOAD_BLOB_FILE_ENDPOINT}"
-
-    headers: dict[str, str] = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {access_token}",
-    }
-    if origin:
-        headers["Origin"] = origin
-
-    # OP requires the access token in the JSON body (in addition to the
-    # Authorization header).  Same pattern as _upload_gemini_file —
-    # see shouldAddAccessTokenToJsonBody in fetch-allowlist.ts.
-    response = await client.post(
-        url,
-        json={"driveFileId": drive_file_id, "accessToken": access_token},
-        headers=headers,
-    )
-    response.raise_for_status()
-    data = response.json()
-
-    blob_id = data.get("blobId", "")
-    return f"/board/blobs/{blob_id}"
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -354,13 +271,3 @@ async def _upload_blob_file(
 def encode_base64(text: str) -> str:
     """Base64-encode a UTF-8 string (for executeStep text inputs)."""
     return base64.b64encode(text.encode("utf-8")).decode("ascii")
-
-
-def _decode_error(text: str) -> str:
-    """Try to extract error message from JSON error response."""
-    try:
-        import json
-        data = json.loads(text)
-        return data.get("error", {}).get("message", "Unknown error")
-    except Exception:
-        return "Unknown error"

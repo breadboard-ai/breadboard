@@ -23,6 +23,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Awaitable
 
+from .backend_client import BackendClient
 from .events import AgentResult, FileData, LLMContent
 from .function_caller import FunctionCaller
 from .function_definition import FunctionGroup
@@ -138,16 +139,16 @@ class Loop:
         self,
         *,
         access_token: str = "",
-        upstream_base: str = "",
         origin: str = "",
         client: HttpClient | None = None,
+        backend: BackendClient | None = None,
         controller: LoopController | None = None,
     ) -> None:
         self.controller = controller or LoopController()
         self._access_token = access_token
-        self._upstream_base = upstream_base
         self._origin = origin
         self._client = client
+        self._backend = backend
 
     async def run(
         self, args: AgentRunArgs
@@ -222,13 +223,11 @@ class Loop:
                     hooks.on_send_request(AGENT_MODEL, body)
 
                 # Resolve storedData/fileData/json parts before calling Gemini
-                if self._upstream_base and self._client:
+                if self._backend:
                     body = await conform_body(
                         body,
                         access_token=self._access_token,
-                        upstream_base=self._upstream_base,
-                        origin=self._origin,
-                        client=self._client,
+                        backend=self._backend,
                     )
 
                 # Stream from Gemini

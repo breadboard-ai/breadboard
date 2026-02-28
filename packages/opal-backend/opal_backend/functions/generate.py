@@ -23,6 +23,7 @@ from typing import Any, Callable, Awaitable
 
 from ..agent_file_system import AgentFileSystem
 from ..conform_body import conform_body
+from ..backend_client import BackendClient
 from ..http_client import HttpClient
 from ..function_definition import (
     FunctionDefinition,
@@ -160,9 +161,8 @@ def _define_generate_text(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     access_token: str = "",
-    upstream_base: str = "",
-    origin: str = "",
     client: HttpClient | None = None,
+    backend: BackendClient | None = None,
 ) -> FunctionDefinition:
     """Port of the ``generate_text`` function from generate.ts.
 
@@ -226,13 +226,11 @@ def _define_generate_text(
 
         # 4. Resolve storedData/fileData parts
         try:
-            if upstream_base:
+            if backend:
                 body = await conform_body(
                     body,
                     access_token=access_token,
-                    upstream_base=upstream_base,
-                    origin=origin,
-                    client=client,
+                    backend=backend,
                 )
         except Exception as e:
             logger.error("generate_text conform_body error: %s", e)
@@ -383,9 +381,8 @@ def _define_generate_and_execute_code(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     access_token: str = "",
-    upstream_base: str = "",
-    origin: str = "",
     client: HttpClient | None = None,
+    backend: BackendClient | None = None,
 ) -> FunctionDefinition:
     """Port of the ``generate_and_execute_code`` function from generate.ts.
 
@@ -434,13 +431,11 @@ def _define_generate_and_execute_code(
 
         # 4. Resolve storedData/fileData parts
         try:
-            if upstream_base:
+            if backend:
                 body = await conform_body(
                     body,
                     access_token=access_token,
-                    upstream_base=upstream_base,
-                    origin=origin,
-                    client=client,
+                    backend=backend,
                 )
         except Exception as e:
             logger.error("generate_code conform_body error: %s", e)
@@ -578,9 +573,8 @@ def get_generate_function_group(
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
     access_token: str = "",
-    upstream_base: str = "",
-    origin: str = "",
     client: HttpClient | None = None,
+    backend: BackendClient | None = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with the generate_text function.
 
@@ -591,7 +585,8 @@ def get_generate_function_group(
         file_system: The AgentFileSystem for resolving file references.
         task_tree_manager: Optional TaskTreeManager for progress tracking.
         access_token: OAuth2 access token for Gemini and upload endpoints.
-        upstream_base: Base URL for One Platform upload endpoints.
+        client: HttpClient for Gemini streaming calls.
+        backend: BackendClient for One Platform upload calls.
 
     Returns:
         A FunctionGroup with the generate_text declaration, definition,
@@ -602,17 +597,15 @@ def get_generate_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=upstream_base,
-            origin=origin,
             client=client,
+            backend=backend,
         ),
         _define_generate_and_execute_code(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
             access_token=access_token,
-            upstream_base=upstream_base,
-            origin=origin,
             client=client,
+            backend=backend,
         ),
     ]
 
