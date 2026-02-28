@@ -89,7 +89,10 @@ class FakeAgentBackend:
     """
 
     async def run(self, request: Request) -> EventSourceResponse:
-        body = await request.json()
+        raw_body = await request.json()
+
+        # Unwrap proto oneof envelope: {start: {kind, objective, ...}}
+        body = raw_body.get("start", raw_body)
 
         # Extract scenario name from the request body.
         # Start request: {"kind": "fake", "objective": {"scenario": "echo"}}

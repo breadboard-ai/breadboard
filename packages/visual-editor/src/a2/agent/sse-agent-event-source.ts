@@ -58,8 +58,8 @@ class SSEAgentEventSource {
    * new stream.
    */
   async connect(): Promise<void> {
-    // First connection uses the original config.
-    let body: Record<string, unknown> = this.config;
+    // First connection: wrap config under "start" (proto oneof).
+    let body: Record<string, unknown> = { start: this.config };
 
     // Reconnect loop: each iteration is one POST → stream cycle.
     // eslint-disable-next-line no-constant-condition
@@ -75,8 +75,10 @@ class SSEAgentEventSource {
       // The handler has already been called and the user has responded.
       // POST again with the interaction ID and response to continue.
       body = {
-        interactionId: result.interactionId,
-        response: result.response,
+        resume: {
+          interactionId: result.interactionId,
+          response: result.response,
+        },
       };
     }
   }
