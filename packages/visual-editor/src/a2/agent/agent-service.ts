@@ -105,13 +105,14 @@ class AgentService {
   readonly #runs = new Map<string, AgentRunHandle>();
 
   /**
-   * Remote server URL. When set, `startRun()` creates `SSEAgentRun`
-   * instances that connect via SSE. When null, local mode is used.
+   * Remote server URL. When set, `startRun()` will POST to the server and
+   * return an `SSEAgentRun` that streams events via SSE. When null, local mode is used.
    *
    * Set via `configureRemote()` — intended for tests and dev mode.
    */
   #remoteBaseUrl: string | null = null;
   #remoteFetchWithCreds: typeof fetch = fetch;
+  #remoteIsEnabled: () => boolean = () => true;
 
   /**
    * Configure the service for remote (SSE) mode.
@@ -119,20 +120,25 @@ class AgentService {
    * When `baseUrl` is set, `startRun()` will POST to the server and
    * return an `SSEAgentRun` that streams events via SSE.
    * The `fetchFn` is used for all HTTP requests (typically `fetchWithCreds`).
+   * The `isEnabled` predicate is checked at `startRun()` time — when it
+   * returns false, the service falls back to local mode. This allows
+   * runtime flags to toggle remote mode without a page reload.
    *
    * Pass `null` for baseUrl to revert to local mode.
    */
   configureRemote(
     baseUrl: string | null,
-    fetchWithCreds: typeof fetch = fetch
+    fetchWithCreds: typeof fetch = fetch,
+    isEnabled: () => boolean = () => true
   ): void {
     this.#remoteBaseUrl = baseUrl;
     this.#remoteFetchWithCreds = fetchWithCreds;
+    this.#remoteIsEnabled = isEnabled;
   }
 
-  /** Whether the service is configured for remote (SSE) mode. */
+  /** Whether the service is configured for remote (SSE) mode AND the flag is currently enabled. */
   get isRemote(): boolean {
-    return this.#remoteBaseUrl !== null;
+    return this.#remoteBaseUrl !== null && this.#remoteIsEnabled();
   }
 
   /**
@@ -148,7 +154,7 @@ class AgentService {
     const runId = crypto.randomUUID();
 
     let run: AgentRunHandle;
-    if (this.#remoteBaseUrl) {
+    if (this.#remoteBaseUrl && this.#remoteIsEnabled()) {
       if (!("segments" in config)) {
         throw new Error("Remote mode requires RemoteAgentRunConfig (segments)");
       }

@@ -52,6 +52,7 @@ function makeRuntimeConfig(
         textEditorRemix: false,
         showTokenCounter: false,
         enableContextCaching: false,
+        enableOpalBackend: false,
       },
     },
     shellHost: {
@@ -86,6 +87,7 @@ const testFlags: RuntimeFlags = {
   textEditorRemix: false,
   showTokenCounter: false,
   enableContextCaching: false,
+  enableOpalBackend: false,
 };
 
 suite("createEnvironment", () => {
