@@ -5,7 +5,7 @@
 
 import asyncio
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from opal_backend.suspend import SuspendError, SuspendResult
 from opal_backend.events import WaitForInputEvent
@@ -54,8 +54,6 @@ class TestInteractionStore(unittest.TestCase):
             function_call_part={
                 "functionCall": {"name": "test_fn", "args": {}}
             },
-            access_token="token-123",
-            origin="https://origin.com",
             file_system=fs,
             task_tree_manager=ttm,
         )
@@ -189,7 +187,7 @@ class TestLoopSuspend(unittest.TestCase):
                 "opal_backend.loop.stream_generate_content",
                 side_effect=fake_stream,
             ):
-                loop = Loop()
+                loop = Loop(client=MagicMock(access_token="test-token"))
                 result = await loop.run(
                     AgentRunArgs(
                         objective=objective,
@@ -268,7 +266,7 @@ class TestLoopSuspend(unittest.TestCase):
                 "opal_backend.loop.stream_generate_content",
                 side_effect=fake_stream,
             ):
-                loop = Loop(controller=controller)
+                loop = Loop(controller=controller, client=MagicMock(access_token="test-token"))
                 result = await loop.run(
                     AgentRunArgs(
                         objective=saved_contents[0],
@@ -348,7 +346,7 @@ class TestLoopSuspend(unittest.TestCase):
                 "opal_backend.loop.stream_generate_content",
                 side_effect=fake_stream,
             ):
-                loop = Loop()
+                loop = Loop(client=MagicMock(access_token="test-token"))
                 result = await loop.run(
                     AgentRunArgs(
                         objective=objective,
@@ -428,7 +426,7 @@ class TestLoopSuspend(unittest.TestCase):
                 "opal_backend.loop.stream_generate_content",
                 side_effect=fake_stream,
             ):
-                loop = Loop(controller=controller)
+                loop = Loop(controller=controller, client=MagicMock(access_token="test-token"))
                 result = await loop.run(
                     AgentRunArgs(
                         objective=saved_contents[0],

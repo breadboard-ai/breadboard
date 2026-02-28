@@ -50,15 +50,14 @@ _BLOB_UUID_RE = re.compile(
 async def conform_body(
     body: GeminiBody,
     *,
-    access_token: str,
     backend: BackendClient,
 ) -> GeminiBody:
     """Transform Breadboard-specific parts to Gemini-native formats.
 
     Args:
         body: The full Gemini request body (contents, tools, etc.).
-        access_token: OAuth2 access token for upload endpoints.
-        backend: BackendClient implementation for upload calls.
+        backend: BackendClient implementation for upload calls
+            (carries credentials internally).
 
     Returns:
         A new body dict with transformed contents.
@@ -78,7 +77,6 @@ async def conform_body(
         for part in parts:
             transformed = await _transform_part(
                 part,
-                access_token=access_token,
                 backend=backend,
             )
             new_parts.append(transformed)
@@ -91,7 +89,6 @@ async def conform_body(
 async def _transform_part(
     part: LLMContentPart,
     *,
-    access_token: str,
     backend: BackendClient,
 ) -> LLMContentPart:
     """Transform a single content part."""
@@ -115,7 +112,6 @@ async def _transform_part(
             drive_file_id = _DRIVE_PREFIX_RE.sub("", handle)
             return await _upload_gemini_file(
                 {"driveFileId": drive_file_id},
-                access_token=access_token,
                 backend=backend,
             )
 
@@ -124,7 +120,6 @@ async def _transform_part(
         if blob_id:
             return await _upload_gemini_file(
                 {"blobId": blob_id},
-                access_token=access_token,
                 backend=backend,
             )
 
@@ -154,7 +149,6 @@ async def _transform_part(
                 request["driveResourceKey"] = resource_key
             return await _upload_gemini_file(
                 request,
-                access_token=access_token,
                 backend=backend,
             )
 
@@ -168,7 +162,6 @@ async def _transform_part(
 async def _upload_gemini_file(
     request: dict[str, str],
     *,
-    access_token: str,
     backend: BackendClient,
 ) -> LLMContentPart:
     """Upload a file to Gemini File API via the backend.
@@ -182,9 +175,7 @@ async def _upload_gemini_file(
     Raises:
         ValueError: If the upload fails.
     """
-    data = await backend.upload_gemini_file(
-        request, access_token=access_token
-    )
+    data = await backend.upload_gemini_file(request)
 
     file_url = data.get("fileUrl", "")
     mime_type = data.get("mimeType", "")

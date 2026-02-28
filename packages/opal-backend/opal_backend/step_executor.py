@@ -49,15 +49,13 @@ _BLOB_UUID_RE = re.compile(
 async def execute_step(
     body: dict[str, Any],
     *,
-    access_token: str,
     backend: BackendClient,
 ) -> dict[str, Any]:
     """POST to /v1beta1/executeStep and return parsed output.
 
     Args:
         body: The full ExecuteStepRequest (planStep + execution_inputs).
-        access_token: OAuth2 access token.
-        backend: BackendClient implementation for making backend calls.
+        backend: BackendClient implementation (carries credentials).
 
     Returns:
         Parsed ExecutionOutput: ``{chunks: [...], requestedModel?, executedModel?}``
@@ -65,7 +63,7 @@ async def execute_step(
     Raises:
         ValueError: On API error or missing output.
     """
-    data = await backend.execute_step(body, access_token=access_token)
+    data = await backend.execute_step(body)
 
     output_key = body.get("planStep", {}).get("output", "")
     outputs = data.get("executionOutputs", {})
@@ -190,7 +188,6 @@ def _chunk_to_llm_content(chunk: Chunk, origin: str = "") -> dict[str, Any]:
 async def resolve_part_to_chunk(
     part: LLMContentPart,
     *,
-    access_token: str,
     backend: BackendClient,
 ) -> Chunk:
     """Resolve an agent FS part to an executeStep-compatible chunk.
@@ -207,7 +204,7 @@ async def resolve_part_to_chunk(
 
     Args:
         part: A single LLMContent part from the agent file system.
-        backend: BackendClient implementation for making backend calls.
+        backend: BackendClient implementation (carries credentials).
 
     Returns:
         An executeStep-compatible chunk ``{mimetype, data}``.
@@ -233,7 +230,7 @@ async def resolve_part_to_chunk(
         if handle.startswith("drive:"):
             drive_file_id = re.sub(r"^drive:/+", "", handle)
             blob_handle = await backend.upload_blob_file(
-                drive_file_id, access_token=access_token
+                drive_file_id
             )
             return _to_gcs_chunk(blob_handle)
 

@@ -87,9 +87,6 @@ UPSTREAM_BASE = os.environ.get(
 # Persistent HTTP client for proxying (raw httpx — proxy needs full request control).
 _proxy_client = httpx.AsyncClient(timeout=120.0)
 
-# HttpClient protocol impl for the agent loop and functions.
-_http_client = HttpxClient(timeout=120.0)
-
 # In-memory store for suspended interactions (dev only).
 _interaction_store = InteractionStore()
 
@@ -144,7 +141,6 @@ def _build_function_groups(
     controller: LoopController,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager,
-    access_token: str,
     client: HttpxClient,
     backend: HttpBackendClient,
     enable_g1_quota: bool = False,
@@ -159,28 +155,24 @@ def _build_function_groups(
         get_generate_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
             client=client,
             backend=backend,
         ),
         get_image_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
             backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
         get_video_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
             backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
         get_audio_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
             backend=backend,
             enable_g1_quota=enable_g1_quota,
         ),
@@ -281,18 +273,20 @@ class DevAgentBackend:
                     "Missing 'segments' or 'objective' in request body"
                 )
 
+        # Per-request HttpClient with baked-in credentials.
+        client = HttpxClient(access_token=access_token)
+
         controller = LoopController()
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
-            client=_http_client,
+            client=client,
             origin=origin,
         )
         function_groups = _build_function_groups(
             controller=controller,
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
-            client=_http_client,
+            client=client,
             backend=backend,
             enable_g1_quota=enable_g1_quota,
         )
@@ -307,8 +301,7 @@ class DevAgentBackend:
             controller=controller,
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
-            origin=origin,
+            client=client,
             backend=backend,
         )
 
@@ -342,18 +335,20 @@ class DevAgentBackend:
         # Rebuild the conversation: saved contents + injected response.
         contents = state.contents + [function_response_turn]
 
+        # Per-request HttpClient with baked-in credentials.
+        client = HttpxClient(access_token=access_token)
+
         controller = LoopController()
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
-            client=_http_client,
+            client=client,
             origin=origin,
         )
         function_groups = _build_function_groups(
             controller=controller,
             file_system=state.file_system,
             task_tree_manager=state.task_tree_manager,
-            access_token=access_token,
-            client=_http_client,
+            client=client,
             backend=backend,
         )
 
@@ -368,8 +363,7 @@ class DevAgentBackend:
             controller=controller,
             file_system=state.file_system,
             task_tree_manager=state.task_tree_manager,
-            access_token=access_token,
-            origin=origin,
+            client=client,
             backend=backend,
         )
 
@@ -380,8 +374,7 @@ class DevAgentBackend:
         controller: LoopController,
         file_system: AgentFileSystem,
         task_tree_manager: TaskTreeManager,
-        access_token: str,
-        origin: str,
+        client: HttpxClient,
         backend: HttpBackendClient,
     ) -> EventSourceResponse:
         """Common streaming logic for both start and resume."""
@@ -389,9 +382,7 @@ class DevAgentBackend:
         run_args.hooks = build_hooks_from_sink(sink)
 
         loop = Loop(
-            access_token=access_token,
-            origin=origin,
-            client=_http_client,
+            client=client,
             backend=backend,
             controller=controller,
         )
@@ -408,8 +399,6 @@ class DevAgentBackend:
                         InteractionState(
                             contents=result.contents,
                             function_call_part=result.function_call_part,
-                            access_token=access_token,
-                            origin=origin,
                             file_system=file_system,
                             task_tree_manager=task_tree_manager,
                         ),

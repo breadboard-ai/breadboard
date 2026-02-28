@@ -160,7 +160,6 @@ def _define_generate_text(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    access_token: str = "",
     client: HttpClient | None = None,
     backend: BackendClient | None = None,
 ) -> FunctionDefinition:
@@ -229,7 +228,6 @@ def _define_generate_text(
             if backend:
                 body = await conform_body(
                     body,
-                    access_token=access_token,
                     backend=backend,
                 )
         except Exception as e:
@@ -244,7 +242,6 @@ def _define_generate_text(
             async for chunk in stream_generate_content(
                 resolved_model,
                 body,
-                access_token=access_token,
                 client=client,
             ):
                 candidates = chunk.get("candidates", [])
@@ -380,7 +377,6 @@ def _define_generate_and_execute_code(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    access_token: str = "",
     client: HttpClient | None = None,
     backend: BackendClient | None = None,
 ) -> FunctionDefinition:
@@ -434,7 +430,6 @@ def _define_generate_and_execute_code(
             if backend:
                 body = await conform_body(
                     body,
-                    access_token=access_token,
                     backend=backend,
                 )
         except Exception as e:
@@ -449,7 +444,6 @@ def _define_generate_and_execute_code(
             async for chunk in stream_generate_content(
                 FLASH_MODEL_NAME,
                 body,
-                access_token=access_token,
                 client=client,
             ):
                 candidates = chunk.get("candidates", [])
@@ -572,7 +566,6 @@ def get_generate_function_group(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    access_token: str = "",
     client: HttpClient | None = None,
     backend: BackendClient | None = None,
 ) -> FunctionGroup:
@@ -584,7 +577,6 @@ def get_generate_function_group(
     Args:
         file_system: The AgentFileSystem for resolving file references.
         task_tree_manager: Optional TaskTreeManager for progress tracking.
-        access_token: OAuth2 access token for Gemini and upload endpoints.
         client: HttpClient for Gemini streaming calls.
         backend: BackendClient for One Platform upload calls.
 
@@ -596,14 +588,12 @@ def get_generate_function_group(
         _define_generate_text(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
             client=client,
             backend=backend,
         ),
         _define_generate_and_execute_code(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            access_token=access_token,
             client=client,
             backend=backend,
         ),

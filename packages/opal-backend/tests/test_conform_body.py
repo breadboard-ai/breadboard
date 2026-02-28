@@ -75,7 +75,7 @@ class TestPassthroughTransforms:
         """json part → {text: json.dumps()}"""
         body = body_with_parts([{"json": {"key": "value", "n": 42}}])
         result = await conform_body(
-            body, access_token=TOKEN, backend=mock_backend()
+            body, backend=mock_backend()
         )
         parts = first_parts(result)
         assert len(parts) == 1
@@ -89,7 +89,7 @@ class TestPassthroughTransforms:
             [{"storedData": {"handle": nlm_url, "mimeType": "text/plain"}}]
         )
         result = await conform_body(
-            body, access_token=TOKEN, backend=mock_backend()
+            body, backend=mock_backend()
         )
         parts = first_parts(result)
         assert len(parts) == 1
@@ -106,7 +106,7 @@ class TestPassthroughTransforms:
         }
         body = body_with_parts([part])
         result = await conform_body(
-            body, access_token=TOKEN, backend=mock_backend()
+            body, backend=mock_backend()
         )
         parts = first_parts(result)
         assert parts[0] == part
@@ -122,7 +122,7 @@ class TestPassthroughTransforms:
         }
         body = body_with_parts([part])
         result = await conform_body(
-            body, access_token=TOKEN, backend=mock_backend()
+            body, backend=mock_backend()
         )
         parts = first_parts(result)
         assert parts[0] == part
@@ -133,7 +133,7 @@ class TestPassthroughTransforms:
         part = {"text": "hello world"}
         body = body_with_parts([part])
         result = await conform_body(
-            body, access_token=TOKEN, backend=mock_backend()
+            body, backend=mock_backend()
         )
         parts = first_parts(result)
         assert parts[0] == part
@@ -144,7 +144,7 @@ class TestPassthroughTransforms:
         part = {"inlineData": {"data": "base64==", "mimeType": "image/png"}}
         body = body_with_parts([part])
         result = await conform_body(
-            body, access_token=TOKEN, backend=mock_backend()
+            body, backend=mock_backend()
         )
         parts = first_parts(result)
         assert parts[0] == part
@@ -154,7 +154,7 @@ class TestPassthroughTransforms:
         """Body with no contents → passthrough"""
         body: dict = {"contents": []}
         result = await conform_body(
-            body, access_token=TOKEN, backend=mock_backend()
+            body, backend=mock_backend()
         )
         assert result == body
 
@@ -163,7 +163,7 @@ class TestPassthroughTransforms:
         """Body without contents key → passthrough"""
         body: dict = {"tools": []}
         result = await conform_body(
-            body, access_token=TOKEN, backend=mock_backend()
+            body, backend=mock_backend()
         )
         assert result == body
 
@@ -183,7 +183,7 @@ class TestUploadTransforms:
             [{"storedData": {"handle": "drive:/file-id-123", "mimeType": "image/jpeg"}}]
         )
         result = await conform_body(
-            body, access_token=TOKEN, backend=backend
+            body, backend=backend
         )
         parts = first_parts(result)
         assert len(parts) == 1
@@ -193,7 +193,7 @@ class TestUploadTransforms:
 
         # Verify upload was called with driveFileId
         backend.upload_gemini_file.assert_called_once_with(
-            {"driveFileId": "file-id-123"}, access_token=TOKEN
+            {"driveFileId": "file-id-123"}
         )
 
     @pytest.mark.asyncio
@@ -206,7 +206,7 @@ class TestUploadTransforms:
             [{"storedData": {"handle": blob_url, "mimeType": "audio/wav"}}]
         )
         result = await conform_body(
-            body, access_token=TOKEN, backend=backend
+            body, backend=backend
         )
         parts = first_parts(result)
         assert "fileData" in parts[0]
@@ -214,7 +214,7 @@ class TestUploadTransforms:
 
         # Verify the request sent the blobId
         backend.upload_gemini_file.assert_called_once_with(
-            {"blobId": "12345678-1234-1234-1234-123456789abc"}, access_token=TOKEN
+            {"blobId": "12345678-1234-1234-1234-123456789abc"}
         )
 
     @pytest.mark.asyncio
@@ -226,7 +226,7 @@ class TestUploadTransforms:
             [{"fileData": {"fileUri": "drive:/drive-file-id", "mimeType": "image/png"}}]
         )
         result = await conform_body(
-            body, access_token=TOKEN, backend=backend
+            body, backend=backend
         )
         parts = first_parts(result)
         assert "fileData" in parts[0]
@@ -234,7 +234,7 @@ class TestUploadTransforms:
 
         # Verify the request sent driveFileId
         backend.upload_gemini_file.assert_called_once_with(
-            {"driveFileId": "drive-file-id"}, access_token=TOKEN
+            {"driveFileId": "drive-file-id"}
         )
 
     @pytest.mark.asyncio
@@ -254,12 +254,11 @@ class TestUploadTransforms:
             ]
         )
         result = await conform_body(
-            body, access_token=TOKEN, backend=backend
+            body, backend=backend
         )
 
         backend.upload_gemini_file.assert_called_once_with(
             {"driveFileId": "rk-file", "driveResourceKey": "rk-abc"},
-            access_token=TOKEN,
         )
 
     @pytest.mark.asyncio
@@ -275,7 +274,7 @@ class TestUploadTransforms:
         )
         with pytest.raises(ValueError, match="Upload failed"):
             await conform_body(
-                body, access_token=TOKEN, backend=backend
+                body, backend=backend
             )
 
     @pytest.mark.asyncio
@@ -286,7 +285,7 @@ class TestUploadTransforms:
         )
         with pytest.raises(ValueError, match="Unknown storedData handle"):
             await conform_body(
-                body, access_token=TOKEN, backend=mock_backend()
+                body, backend=mock_backend()
             )
 
     @pytest.mark.asyncio
@@ -297,7 +296,7 @@ class TestUploadTransforms:
         )
         with pytest.raises(ValueError, match="Unknown fileData URI"):
             await conform_body(
-                body, access_token=TOKEN, backend=mock_backend()
+                body, backend=mock_backend()
             )
 
     @pytest.mark.asyncio
@@ -309,10 +308,10 @@ class TestUploadTransforms:
             [{"storedData": {"handle": "drive:///file-id-123", "mimeType": "image/png"}}]
         )
         result = await conform_body(
-            body, access_token=TOKEN, backend=backend
+            body, backend=backend
         )
         backend.upload_gemini_file.assert_called_once_with(
-            {"driveFileId": "file-id-123"}, access_token=TOKEN
+            {"driveFileId": "file-id-123"}
         )
 
     @pytest.mark.asyncio
@@ -324,7 +323,7 @@ class TestUploadTransforms:
             [{"storedData": {"handle": "drive:/x", "mimeType": "image/png"}}]
         )
         result = await conform_body(
-            body, access_token=TOKEN, backend=backend
+            body, backend=backend
         )
         parts = first_parts(result)
         file_uri = parts[0]["fileData"]["fileUri"]
@@ -357,7 +356,7 @@ class TestMixedContent:
             ]
         )
         result = await conform_body(
-            body, access_token=TOKEN, backend=backend
+            body, backend=backend
         )
         parts = first_parts(result)
         assert len(parts) == 4
@@ -387,7 +386,7 @@ class TestMixedContent:
             ]
         }
         result = await conform_body(
-            body, access_token=TOKEN, backend=backend
+            body, backend=backend
         )
         assert len(result["contents"]) == 2
         # First: json → text
@@ -404,7 +403,7 @@ class TestMixedContent:
             "generationConfig": {"temperature": 0.5},
         }
         result = await conform_body(
-            body, access_token=TOKEN, backend=mock_backend()
+            body, backend=mock_backend()
         )
         assert result["tools"] == body["tools"]
         assert result["generationConfig"] == body["generationConfig"]
