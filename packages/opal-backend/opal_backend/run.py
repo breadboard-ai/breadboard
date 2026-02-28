@@ -294,7 +294,7 @@ async def _stream_loop(
                 sink.emit(CompleteEvent(
                     result=AgentResult(success=False),
                 ))
-            else:
+            elif isinstance(result, AgentResult):
                 # Collect intermediate files.
                 intermediate = None
                 if result.success and file_system.files:
@@ -307,14 +307,15 @@ async def _stream_loop(
                     ]
                 sink.emit(CompleteEvent(
                     result=AgentResult(
-                        success=result.success
-                        if hasattr(result, "success")
-                        else False,
-                        outcomes=result.outcomes
-                        if hasattr(result, "outcomes")
-                        else None,
+                        success=result.success,
+                        outcomes=result.outcomes,
                         intermediate=intermediate,
                     ),
+                ))
+            else:
+                # Unknown result type — treat as error.
+                sink.emit(ErrorEvent(
+                    message=f"Unexpected result: {result}"
                 ))
         except Exception as e:
             logger.exception("Agent loop failed")
