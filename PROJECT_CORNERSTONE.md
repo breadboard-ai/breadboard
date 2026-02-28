@@ -483,7 +483,7 @@ Body (resume): {interactionId, response}
       restored; `shared_schemas.py` centralizes `statusUpdateSchema`,
       `taskIdSchema`, `fileNameSchema`
 
-### Phase 5: Python Consolidation & Copybara Prep ← **we are here** (5.5b next)
+### Phase 5: Python Consolidation & Copybara Prep ← **we are here** (5.6 next)
 
 > **🎯 Objective:** `opal-backend-shared` code is pure Python (no `httpx`,
 > `fastapi`, or `pydantic` imports in synced files). The shared code can be
@@ -587,17 +587,32 @@ Body (resume): {interactionId, response}
 >     yield event
 > ```
 
-- [ ] `opal_backend/run.py` — `run()` async generator: creates
+- [x] `opal_backend/run.py` — `run()` async generator: creates
       `AgentFileSystem`, `TaskTreeManager`, `AgentEventSink`, `LoopController`,
-      builds function groups, runs loop, dispatches
-      `CompleteEvent`/`ErrorEvent`, closes sink
-- [ ] `opal_backend/run.py` — `resume()` async generator: loads state from
-      `InteractionStore`, injects function response, runs loop, dispatches
-      events
-- [ ] `dev/main.py` — delegates to `opal_backend.run()` / `resume()`; delete
-      `_build_function_groups`, `_stream_loop`
-- [ ] `opal_backend/__init__.py` — re-export `run`, `resume`
-- [ ] Tests: `test_run.py` — end-to-end with mock transports
+      builds function groups internally, runs loop, dispatches
+      `CompleteEvent`/`ErrorEvent`, closes sink. Accepts extensible `flags`
+      dict.
+- [x] `opal_backend/run.py` — `resume()` async generator: loads state from
+      `InteractionStore`, injects function response, rebuilds function groups,
+      runs loop, dispatches events
+- [x] `dev/main.py` — delegates to `opal_backend.run()` / `resume()`; deleted
+      `_build_function_groups`, `_stream_loop` (~130 lines removed)
+- [x] `opal_backend/__init__.py` — re-export `run`, `resume`
+- [x] Tests: `test_run.py` — 6 tests (complete, error, suspend, failed, unknown
+      ID, full suspend→resume round-trip). All 328 pass.
+
+##### 5.5c: Protocol Boundary Extraction ✅
+
+> **🎯 Objective:** Core modules depend only on protocols. All
+> transport-specific implementations live in `local/`.
+
+- [x] `backend_client.py` — protocol-only (removed `HttpBackendClient`,
+      `HttpClient` import, logging)
+- [x] `local/backend_client_impl.py` — `HttpBackendClient` moved here
+- [x] `interaction_store.py` — converted `InteractionStore` class to `Protocol`
+- [x] `local/interaction_store_impl.py` — `InMemoryInteractionStore` moved here
+- [x] Updated imports: `dev/main.py`, `test_step_executor.py`,
+      `test_suspend_resume.py`, `test_run.py` (328 pass)
 
 #### Future Phases (deferred)
 

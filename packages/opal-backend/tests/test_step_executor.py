@@ -22,7 +22,7 @@ from opal_backend.step_executor import (
     _to_gcs_chunk,
     _is_blob_handle,
 )
-from opal_backend.backend_client import HttpBackendClient
+from opal_backend.local.backend_client_impl import HttpBackendClient
 
 
 # ---------------------------------------------------------------------------

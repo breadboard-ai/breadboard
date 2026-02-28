@@ -2,24 +2,28 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-InteractionStore — in-memory state store for suspend/resume.
+InteractionStore — protocol for suspend/resume state management.
 
 When the agent loop suspends (function needs client input), the loop's
 state is saved here keyed by ``interactionId``. When the client POSTs
 back with ``{interactionId, response}``, the state is loaded and the
 loop is reconstructed.
 
-This is an in-memory dict — suitable for local dev. Production uses
-a persistent store (Redis/Firestore).
+Implementations:
+- ``InMemoryInteractionStore`` (``local/interaction_store_impl.py``)
+  — in-memory dict, suitable for local dev.
+- Production uses a persistent store (Redis/Firestore).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 from .agent_file_system import AgentFileSystem
 from .task_tree_manager import TaskTreeManager
+
+__all__ = ["InteractionState", "InteractionStore"]
 
 
 @dataclass
@@ -47,18 +51,17 @@ class InteractionState:
     function_group_args: dict[str, Any] = field(default_factory=dict)
 
 
-class InteractionStore:
-    """In-memory store for suspended interactions.
+@runtime_checkable
+class InteractionStore(Protocol):
+    """Protocol for storing suspended interaction state.
 
-    Thread-safe for asyncio (single-threaded event loop).
+    Implementations manage the lifecycle of ``InteractionState`` objects:
+    save on suspend, load (and remove) on resume.
     """
-
-    def __init__(self) -> None:
-        self._store: dict[str, InteractionState] = {}
 
     def save(self, interaction_id: str, state: InteractionState) -> None:
         """Save interaction state for later resume."""
-        self._store[interaction_id] = state
+        ...
 
     def load(self, interaction_id: str) -> InteractionState | None:
         """Load and remove interaction state.
@@ -66,12 +69,12 @@ class InteractionStore:
         Returns None if the interaction ID is not found.
         The state is removed after loading (single-use).
         """
-        return self._store.pop(interaction_id, None)
+        ...
 
     def has(self, interaction_id: str) -> bool:
         """Check if an interaction is stored."""
-        return interaction_id in self._store
+        ...
 
     def clear(self) -> None:
         """Remove all stored interactions."""
-        self._store.clear()
+        ...
