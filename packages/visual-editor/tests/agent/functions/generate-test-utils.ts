@@ -22,7 +22,11 @@ import type {
 } from "../../../src/a2/a2/gemini.js";
 import { stubModuleArgs } from "../../useful-stubs.js";
 import type { AgentEventSink } from "../../../src/a2/agent/agent-event-sink.js";
-import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
+import type {
+  AgentEvent,
+  SuspendEvent,
+} from "../../../src/a2/agent/agent-event.js";
+import { eventType } from "../../../src/a2/agent/agent-event.js";
 
 export {
   createMockGenerators,
@@ -304,9 +308,10 @@ function createMockSink(
     emit(event: AgentEvent) {
       emitted.push(event);
     },
-    async suspend<T>(event: AgentEvent & { requestId: string }): Promise<T> {
-      emitted.push(event);
-      const response = suspendResponses[event.type];
+    async suspend<T>(event: SuspendEvent): Promise<T> {
+      emitted.push(event as AgentEvent);
+      const type = eventType(event as AgentEvent);
+      const response = suspendResponses[type];
       return (response ?? {}) as T;
     },
   };

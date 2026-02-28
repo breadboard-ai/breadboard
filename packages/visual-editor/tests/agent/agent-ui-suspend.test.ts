@@ -11,7 +11,10 @@ import {
   AgentEventConsumer,
   LocalAgentEventBridge,
 } from "../../src/a2/agent/agent-event-consumer.js";
-import type { AgentEvent } from "../../src/a2/agent/agent-event.js";
+import type {
+  WaitForInputPayload,
+  WaitForChoicePayload,
+} from "../../src/a2/agent/agent-event.js";
 import type { A2ModuleArgs } from "../../src/a2/runnable-module-factory.js";
 import type { PidginTranslator } from "../../src/a2/agent/pidgin-translator.js";
 import type {
@@ -121,9 +124,9 @@ suite("AgentUI suspend/resume", () => {
     const consumer = new AgentEventConsumer();
     const bridge = new LocalAgentEventBridge(consumer);
 
-    const captured: AgentEvent[] = [];
-    consumer.on("waitForInput", (event) => {
-      captured.push(event);
+    const captured: WaitForInputPayload[] = [];
+    consumer.on("waitForInput", (payload) => {
+      captured.push(payload);
       return Promise.resolve({
         input: { parts: [{ text: "user reply" }] },
       });
@@ -134,14 +137,11 @@ suite("AgentUI suspend/resume", () => {
 
     assert.ok(ok(result), "chat() should return ok");
     assert.strictEqual(captured.length, 1);
-    assert.strictEqual(captured[0].type, "waitForInput");
-    if (captured[0].type === "waitForInput") {
-      assert.strictEqual(captured[0].inputType, "edit_note");
-      assert.deepStrictEqual(captured[0].prompt, {
-        parts: [{ text: "What do you want?" }],
-      });
-      assert.ok(captured[0].requestId, "Should have a requestId");
-    }
+    assert.strictEqual(captured[0].inputType, "edit_note");
+    assert.deepStrictEqual(captured[0].prompt, {
+      parts: [{ text: "What do you want?" }],
+    });
+    assert.ok(captured[0].requestId, "Should have a requestId");
   });
 
   test("chat() returns the ChatResponse from the consumer handler", async () => {
@@ -180,9 +180,9 @@ suite("AgentUI suspend/resume", () => {
     const consumer = new AgentEventConsumer();
     const bridge = new LocalAgentEventBridge(consumer);
 
-    const captured: AgentEvent[] = [];
-    consumer.on("waitForChoice", (event) => {
-      captured.push(event);
+    const captured: WaitForChoicePayload[] = [];
+    consumer.on("waitForChoice", (payload) => {
+      captured.push(payload);
       return Promise.resolve({ selected: ["a"] });
     });
 
@@ -198,19 +198,16 @@ suite("AgentUI suspend/resume", () => {
 
     assert.ok(ok(result), "presentChoices() should return ok");
     assert.strictEqual(captured.length, 1);
-    assert.strictEqual(captured[0].type, "waitForChoice");
-    if (captured[0].type === "waitForChoice") {
-      assert.strictEqual(captured[0].selectionMode, "single");
-      assert.deepStrictEqual(captured[0].prompt, {
-        parts: [{ text: "Pick one" }],
-      });
-      assert.strictEqual(captured[0].choices.length, 2);
-      assert.strictEqual(captured[0].choices[0].id, "a");
-      assert.deepStrictEqual(captured[0].choices[0].content, {
-        parts: [{ text: "Option A" }],
-      });
-      assert.ok(captured[0].requestId, "Should have a requestId");
-    }
+    assert.strictEqual(captured[0].selectionMode, "single");
+    assert.deepStrictEqual(captured[0].prompt, {
+      parts: [{ text: "Pick one" }],
+    });
+    assert.strictEqual(captured[0].choices.length, 2);
+    assert.strictEqual(captured[0].choices[0].id, "a");
+    assert.deepStrictEqual(captured[0].choices[0].content, {
+      parts: [{ text: "Option A" }],
+    });
+    assert.ok(captured[0].requestId, "Should have a requestId");
   });
 
   test("presentChoices() returns the ChatChoicesResponse from the consumer", async () => {
@@ -244,9 +241,9 @@ suite("AgentUI suspend/resume", () => {
     const consumer = new AgentEventConsumer();
     const bridge = new LocalAgentEventBridge(consumer);
 
-    const captured: AgentEvent[] = [];
-    consumer.on("waitForChoice", (event) => {
-      captured.push(event);
+    const captured: WaitForChoicePayload[] = [];
+    consumer.on("waitForChoice", (payload) => {
+      captured.push(payload);
       return Promise.resolve({ selected: [] });
     });
 
@@ -260,10 +257,8 @@ suite("AgentUI suspend/resume", () => {
     );
 
     assert.strictEqual(captured.length, 1);
-    if (captured[0].type === "waitForChoice") {
-      assert.strictEqual(captured[0].layout, "grid");
-      assert.strictEqual(captured[0].noneOfTheAboveLabel, "None of these");
-    }
+    assert.strictEqual(captured[0].layout, "grid");
+    assert.strictEqual(captured[0].noneOfTheAboveLabel, "None of these");
   });
 
   test("presentChoices() returns error when no sink is available", async () => {

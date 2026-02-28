@@ -11,7 +11,10 @@ import {
   LocalAgentEventBridge,
 } from "../../../src/a2/agent/agent-event-consumer.js";
 import { getGraphEditingFunctionGroup } from "../../../src/a2/agent/graph-editing/functions.js";
-import type { AgentEvent } from "../../../src/a2/agent/agent-event.js";
+import type {
+  ReadGraphPayload,
+  ApplyEditsPayload,
+} from "../../../src/a2/agent/agent-event.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { EditingAgentPidginTranslator } from "../../../src/a2/agent/graph-editing/editing-agent-pidgin-translator.js";
 import type { FunctionDefinition } from "../../../src/a2/agent/function-definition.js";
@@ -67,9 +70,9 @@ suite("Graph editing functions suspend/resume", () => {
     const bridge = new LocalAgentEventBridge(consumer);
     const translator = new EditingAgentPidginTranslator();
 
-    const captured: AgentEvent[] = [];
-    consumer.on("readGraph", (event) => {
-      captured.push(event);
+    const captured: ReadGraphPayload[] = [];
+    consumer.on("readGraph", (payload) => {
+      captured.push(payload);
       return Promise.resolve({ graph: makeMockGraph() });
     });
 
@@ -78,10 +81,7 @@ suite("Graph editing functions suspend/resume", () => {
     const result = await handler({}, noop, null);
 
     assert.strictEqual(captured.length, 1);
-    assert.strictEqual(captured[0].type, "readGraph");
-    if (captured[0].type === "readGraph") {
-      assert.ok(captured[0].requestId, "Should have a requestId");
-    }
+    assert.ok(captured[0].requestId, "Should have a requestId");
 
     // The result should contain a YAML overview string
     assert.ok("overview" in result);
@@ -99,9 +99,9 @@ suite("Graph editing functions suspend/resume", () => {
     const bridge = new LocalAgentEventBridge(consumer);
     const translator = new EditingAgentPidginTranslator();
 
-    const captured: AgentEvent[] = [];
-    consumer.on("applyEdits", (event) => {
-      captured.push(event);
+    const captured: ApplyEditsPayload[] = [];
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
       return Promise.resolve({ success: true });
     });
 
@@ -110,17 +110,14 @@ suite("Graph editing functions suspend/resume", () => {
     const result = await handler({ step_id: "step-a" }, noop, null);
 
     assert.strictEqual(captured.length, 1);
-    assert.strictEqual(captured[0].type, "applyEdits");
-    if (captured[0].type === "applyEdits") {
-      assert.ok(captured[0].requestId, "Should have a requestId");
-      assert.ok(captured[0].edits, "Should have edits");
-      assert.strictEqual(captured[0].edits!.length, 1);
-      assert.deepStrictEqual(captured[0].edits![0], {
-        type: "removenode",
-        id: "step-a",
-        graphId: "",
-      });
-    }
+    assert.ok(captured[0].requestId, "Should have a requestId");
+    assert.ok(captured[0].edits, "Should have edits");
+    assert.strictEqual(captured[0].edits!.length, 1);
+    assert.deepStrictEqual(captured[0].edits![0], {
+      type: "removenode",
+      id: "step-a",
+      graphId: "",
+    });
 
     assert.strictEqual(result.success, true);
   });
@@ -148,15 +145,15 @@ suite("Graph editing functions suspend/resume", () => {
     const bridge = new LocalAgentEventBridge(consumer);
     const translator = new EditingAgentPidginTranslator();
 
-    const captured: AgentEvent[] = [];
+    const captured: ApplyEditsPayload[] = [];
 
     // readGraph will be called for nodeTitleResolver
     consumer.on("readGraph", () => {
       return Promise.resolve({ graph: makeMockGraph() });
     });
 
-    consumer.on("applyEdits", (event) => {
-      captured.push(event);
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
       return Promise.resolve({ success: true });
     });
 
@@ -178,19 +175,14 @@ suite("Graph editing functions suspend/resume", () => {
     );
 
     // First should be addnode
-    const addEvent = captured[0];
-    assert.strictEqual(addEvent.type, "applyEdits");
-    if (addEvent.type === "applyEdits") {
-      assert.ok(addEvent.edits, "Should have raw edits for addnode");
-      assert.strictEqual(addEvent.edits![0].type, "addnode");
-    }
+    const addPayload = captured[0];
+    assert.ok(addPayload.edits, "Should have raw edits for addnode");
+    assert.strictEqual(addPayload.edits![0].type, "addnode");
 
     // Last should be layoutGraph transform
-    const layoutEvent = captured[captured.length - 1];
-    if (layoutEvent.type === "applyEdits") {
-      assert.ok(layoutEvent.transform, "Last event should be a transform");
-      assert.strictEqual(layoutEvent.transform!.kind, "layoutGraph");
-    }
+    const layoutPayload = captured[captured.length - 1];
+    assert.ok(layoutPayload.transform, "Last event should be a transform");
+    assert.strictEqual(layoutPayload.transform!.kind, "layoutGraph");
 
     assert.ok(result.step_id, "Should return a step_id handle");
   });
@@ -205,14 +197,14 @@ suite("Graph editing functions suspend/resume", () => {
     // Pre-register a handle for step-a so translator can resolve it
     translator.getOrCreateHandle("step-a");
 
-    const captured: AgentEvent[] = [];
+    const captured: ApplyEditsPayload[] = [];
 
     consumer.on("readGraph", () => {
       return Promise.resolve({ graph: makeMockGraph() });
     });
 
-    consumer.on("applyEdits", (event) => {
-      captured.push(event);
+    consumer.on("applyEdits", (payload) => {
+      captured.push(payload);
       return Promise.resolve({ success: true });
     });
 
@@ -238,17 +230,15 @@ suite("Graph editing functions suspend/resume", () => {
     );
 
     // First should be updateNode transform
-    const updateEvent = captured[0];
-    if (updateEvent.type === "applyEdits") {
-      assert.ok(updateEvent.transform, "Should have transform descriptor");
-      assert.strictEqual(updateEvent.transform!.kind, "updateNode");
-      if (updateEvent.transform!.kind === "updateNode") {
-        assert.strictEqual(updateEvent.transform!.nodeId, "step-a");
-        assert.ok(
-          updateEvent.transform!.configuration,
-          "Should have configuration"
-        );
-      }
+    const updatePayload = captured[0];
+    assert.ok(updatePayload.transform, "Should have transform descriptor");
+    assert.strictEqual(updatePayload.transform!.kind, "updateNode");
+    if (updatePayload.transform!.kind === "updateNode") {
+      assert.strictEqual(updatePayload.transform!.nodeId, "step-a");
+      assert.ok(
+        updatePayload.transform!.configuration,
+        "Should have configuration"
+      );
     }
 
     assert.ok(result.step_id, "Should return a step_id handle");

@@ -72,19 +72,19 @@ suite("SSEAgentEventSource", () => {
 
   test("dispatches fire-and-forget events to consumer", async () => {
     const events: AgentEvent[] = [
-      { type: "thought", text: "thinking" },
-      { type: "finish" },
+      { thought: { text: "thinking" } },
+      { finish: {} },
     ];
     installFetch(events);
 
     const consumer = new AgentEventConsumer();
-    const received: AgentEvent[] = [];
+    const received: string[] = [];
 
-    consumer.on("thought", (event) => {
-      received.push(event);
+    consumer.on("thought", (payload) => {
+      received.push(`thought:${payload.text}`);
     });
-    consumer.on("finish", (event) => {
-      received.push(event);
+    consumer.on("finish", () => {
+      received.push("finish");
     });
 
     const source = new SSEAgentEventSource(
@@ -96,8 +96,8 @@ suite("SSEAgentEventSource", () => {
     await source.connect();
 
     assert.strictEqual(received.length, 2);
-    assert.strictEqual(received[0].type, "thought");
-    assert.strictEqual(received[1].type, "finish");
+    assert.strictEqual(received[0], "thought:thinking");
+    assert.strictEqual(received[1], "finish");
 
     // Verify the POST URL and body
     assert.strictEqual(
@@ -116,23 +116,25 @@ suite("SSEAgentEventSource", () => {
 
     // Stream 1: events → suspend (stream closes)
     const stream1Events: AgentEvent[] = [
-      { type: "thought", text: "thinking" },
+      { thought: { text: "thinking" } },
       {
-        type: "waitForInput",
-        requestId: "req-42",
-        interactionId: "int-abc",
-        prompt: { parts: [{ text: "What is your name?" }], role: "model" },
-        inputType: "text",
-      } as AgentEvent,
+        waitForInput: {
+          requestId: "req-42",
+          interactionId: "int-abc",
+          prompt: { parts: [{ text: "What is your name?" }], role: "model" },
+          inputType: "text",
+        },
+      },
     ];
 
     // Stream 2: resumed events → complete
     const stream2Events: AgentEvent[] = [
-      { type: "thought", text: "processing response" },
+      { thought: { text: "processing response" } },
       {
-        type: "complete",
-        result: { success: true, href: "/", outcomes: undefined },
-      } as AgentEvent,
+        complete: {
+          result: { success: true, href: "/", outcomes: undefined },
+        },
+      } as unknown as AgentEvent,
     ];
 
     let callCount = 0;
@@ -153,8 +155,8 @@ suite("SSEAgentEventSource", () => {
     const consumer = new AgentEventConsumer();
     const received: string[] = [];
 
-    consumer.on("thought", (event) => {
-      received.push(`thought:${event.text}`);
+    consumer.on("thought", (payload) => {
+      received.push(`thought:${payload.text}`);
     });
     consumer.on("complete", () => {
       received.push("complete");
@@ -201,26 +203,27 @@ suite("SSEAgentEventSource", () => {
     // The server emits `finish` then `complete`. The client must NOT
     // break on `finish` — it needs the `complete` event for outcomes.
     const events: AgentEvent[] = [
-      { type: "thought", text: "before finish" },
-      { type: "finish" },
+      { thought: { text: "before finish" } },
+      { finish: {} },
       {
-        type: "complete",
-        result: {
-          success: true,
-          href: "/",
-          outcomes: { parts: [{ text: "the outcome" }] },
+        complete: {
+          result: {
+            success: true,
+            href: "/",
+            outcomes: { parts: [{ text: "the outcome" }] },
+          },
         },
-      } as AgentEvent,
+      } as unknown as AgentEvent,
       // Anything after complete should be ignored
-      { type: "thought", text: "after complete" },
+      { thought: { text: "after complete" } },
     ];
     installFetch(events);
 
     const consumer = new AgentEventConsumer();
     const received: string[] = [];
 
-    consumer.on("thought", (event) => {
-      received.push(`thought:${event.text}`);
+    consumer.on("thought", (payload) => {
+      received.push(`thought:${payload.text}`);
     });
     consumer.on("finish", () => {
       received.push("finish");
@@ -249,16 +252,17 @@ suite("SSEAgentEventSource", () => {
   test("complete event carries AgentResult with outcomes", async () => {
     const outcomeContent = { parts: [{ text: "Why did the chicken..." }] };
     const events: AgentEvent[] = [
-      { type: "start", objective: { parts: [{ text: "tell a joke" }] } },
-      { type: "finish" },
+      { start: { objective: { parts: [{ text: "tell a joke" }] } } },
+      { finish: {} },
       {
-        type: "complete",
-        result: {
-          success: true,
-          href: "/",
-          outcomes: outcomeContent,
+        complete: {
+          result: {
+            success: true,
+            href: "/",
+            outcomes: outcomeContent,
+          },
         },
-      } as AgentEvent,
+      } as unknown as AgentEvent,
     ];
     installFetch(events);
 
@@ -267,8 +271,8 @@ suite("SSEAgentEventSource", () => {
 
     consumer.on("start", () => {});
     consumer.on("finish", () => {});
-    consumer.on("complete", (event) => {
-      capturedResult = event.result as unknown as Record<string, unknown>;
+    consumer.on("complete", (payload) => {
+      capturedResult = payload.result as unknown as Record<string, unknown>;
     });
 
     const source = new SSEAgentEventSource(
@@ -288,16 +292,16 @@ suite("SSEAgentEventSource", () => {
     // If the server closes the stream after `finish` (no `complete`),
     // the client should still process all events up to `finish`.
     const events: AgentEvent[] = [
-      { type: "thought", text: "working" },
-      { type: "finish" },
+      { thought: { text: "working" } },
+      { finish: {} },
     ];
     installFetch(events);
 
     const consumer = new AgentEventConsumer();
     const received: string[] = [];
 
-    consumer.on("thought", (event) => {
-      received.push(event.text);
+    consumer.on("thought", (payload) => {
+      received.push(payload.text);
     });
     consumer.on("finish", () => {
       received.push("finish");
@@ -320,41 +324,42 @@ suite("SSEAgentEventSource", () => {
     //   start → sendRequest → content → functionCall → functionResult →
     //   turnComplete → finish → complete
     const events: AgentEvent[] = [
-      { type: "start", objective: { parts: [{ text: "make a joke" }] } },
+      { start: { objective: { parts: [{ text: "make a joke" }] } } },
       {
-        type: "sendRequest",
-        model: "gemini-3-flash-preview",
-        body: {} as AgentEvent extends { type: "sendRequest"; body: infer B }
-          ? B
-          : never,
-      } as AgentEvent,
-      {
-        type: "content",
-        content: { parts: [{ text: "Here is a joke" }] },
-      },
-      {
-        type: "functionCall",
-        callId: "call-1",
-        name: "system_objective_fulfilled",
-        args: { objective_outcome: "A joke about chickens" },
-        icon: "check_circle",
-        title: "Returning final outcome",
-      },
-      {
-        type: "functionResult",
-        callId: "call-1",
-        content: { parts: [{ text: "{}" }] },
-      },
-      { type: "turnComplete" },
-      { type: "finish" },
-      {
-        type: "complete",
-        result: {
-          success: true,
-          href: "/",
-          outcomes: { parts: [{ text: "A joke about chickens" }] },
+        sendRequest: {
+          model: "gemini-3-flash-preview",
+          body: { contents: [] },
         },
-      } as AgentEvent,
+      },
+      {
+        content: { content: { parts: [{ text: "Here is a joke" }] } },
+      },
+      {
+        functionCall: {
+          callId: "call-1",
+          name: "system_objective_fulfilled",
+          args: { objective_outcome: "A joke about chickens" },
+          icon: "check_circle",
+          title: "Returning final outcome",
+        },
+      },
+      {
+        functionResult: {
+          callId: "call-1",
+          content: { parts: [{ text: "{}" }] },
+        },
+      },
+      { turnComplete: {} },
+      { finish: {} },
+      {
+        complete: {
+          result: {
+            success: true,
+            href: "/",
+            outcomes: { parts: [{ text: "A joke about chickens" }] },
+          },
+        },
+      } as unknown as AgentEvent,
     ];
     installFetch(events);
 
@@ -384,9 +389,9 @@ suite("SSEAgentEventSource", () => {
       .on("finish", () => {
         timeline.push("finish");
       })
-      .on("complete", (event) => {
+      .on("complete", (payload) => {
         timeline.push("complete");
-        finalOutcomes = event.result.outcomes;
+        finalOutcomes = payload.result.outcomes;
       });
 
     const source = new SSEAgentEventSource(
@@ -413,9 +418,7 @@ suite("SSEAgentEventSource", () => {
   });
 
   test("stops on error event", async () => {
-    const events: AgentEvent[] = [
-      { type: "error", message: "boom" } as AgentEvent,
-    ];
+    const events: AgentEvent[] = [{ error: { message: "boom" } }];
     installFetch(events);
 
     const consumer = new AgentEventConsumer();

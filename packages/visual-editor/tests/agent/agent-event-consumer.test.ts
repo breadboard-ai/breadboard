@@ -10,19 +10,24 @@ import {
   AgentEventConsumer,
   LocalAgentEventBridge,
 } from "../../src/a2/agent/agent-event-consumer.js";
-import type { AgentEvent } from "../../src/a2/agent/agent-event.js";
+import type {
+  SubagentAddJsonPayload,
+  SubagentErrorPayload,
+  SubagentFinishPayload,
+  FunctionCallPayload,
+} from "../../src/a2/agent/agent-event.js";
 
 suite("AgentEventConsumer", () => {
   test("dispatches events to registered handlers", () => {
     const consumer = new AgentEventConsumer();
     const received: string[] = [];
 
-    consumer.on("thought", (event) => {
-      received.push(event.text);
+    consumer.on("thought", (payload) => {
+      received.push(payload.text);
     });
 
-    consumer.handle({ type: "thought", text: "hello" });
-    consumer.handle({ type: "thought", text: "world" });
+    consumer.handle({ thought: { text: "hello" } });
+    consumer.handle({ thought: { text: "world" } });
 
     assert.deepStrictEqual(received, ["hello", "world"]);
   });
@@ -31,29 +36,28 @@ suite("AgentEventConsumer", () => {
     const consumer = new AgentEventConsumer();
 
     // Should not throw
-    const result = consumer.handle({ type: "thought", text: "no handler" });
+    const result = consumer.handle({ thought: { text: "no handler" } });
     assert.strictEqual(result, undefined);
   });
 
   test("on() is chainable", () => {
     const consumer = new AgentEventConsumer();
     const thoughts: string[] = [];
-    const contents: AgentEvent[] = [];
+    const contents: unknown[] = [];
 
     const returned = consumer
-      .on("thought", (event) => {
-        thoughts.push(event.text);
+      .on("thought", (payload) => {
+        thoughts.push(payload.text);
       })
-      .on("content", (event) => {
-        contents.push(event);
+      .on("content", (payload) => {
+        contents.push(payload);
       });
 
     assert.strictEqual(returned, consumer, "on() should return this");
 
-    consumer.handle({ type: "thought", text: "thinking" });
+    consumer.handle({ thought: { text: "thinking" } });
     consumer.handle({
-      type: "content",
-      content: { parts: [{ text: "result" }] },
+      content: { content: { parts: [{ text: "result" }] } },
     });
 
     assert.strictEqual(thoughts.length, 1);
@@ -68,10 +72,11 @@ suite("AgentEventConsumer", () => {
     });
 
     const result = consumer.handle({
-      type: "waitForInput",
-      requestId: "req-1",
-      inputType: "text",
-      prompt: { parts: [{ text: "What next?" }] },
+      waitForInput: {
+        requestId: "req-1",
+        inputType: "text",
+        prompt: { parts: [{ text: "What next?" }] },
+      },
     });
 
     assert.ok(result instanceof Promise);
@@ -84,7 +89,7 @@ suite("AgentEventConsumer", () => {
       // void handler
     });
 
-    const result = consumer.handle({ type: "thought", text: "hi" });
+    const result = consumer.handle({ thought: { text: "hi" } });
     assert.strictEqual(result, undefined);
   });
 
@@ -99,7 +104,7 @@ suite("AgentEventConsumer", () => {
       calls.push("second");
     });
 
-    consumer.handle({ type: "thought", text: "test" });
+    consumer.handle({ thought: { text: "test" } });
     assert.deepStrictEqual(calls, ["second"]);
   });
 });
@@ -110,11 +115,11 @@ suite("LocalAgentEventBridge", () => {
     const bridge = new LocalAgentEventBridge(consumer);
     const received: string[] = [];
 
-    consumer.on("thought", (event) => {
-      received.push(event.text);
+    consumer.on("thought", (payload) => {
+      received.push(payload.text);
     });
 
-    bridge.emit({ type: "thought", text: "via bridge" });
+    bridge.emit({ thought: { text: "via bridge" } });
     assert.deepStrictEqual(received, ["via bridge"]);
   });
 
@@ -127,10 +132,11 @@ suite("LocalAgentEventBridge", () => {
     });
 
     const result = await bridge.suspend<string>({
-      type: "waitForInput",
-      requestId: "req-2",
-      inputType: "text",
-      prompt: { parts: [{ text: "Enter input" }] },
+      waitForInput: {
+        requestId: "req-2",
+        inputType: "text",
+        prompt: { parts: [{ text: "Enter input" }] },
+      },
     });
 
     assert.strictEqual(result, "reply from UI");
@@ -139,75 +145,74 @@ suite("LocalAgentEventBridge", () => {
   test("emits subagent events through the bridge intact", () => {
     const consumer = new AgentEventConsumer();
     const bridge = new LocalAgentEventBridge(consumer);
-    const received: AgentEvent[] = [];
+    const addJsonPayloads: SubagentAddJsonPayload[] = [];
+    const errorPayloads: SubagentErrorPayload[] = [];
+    const finishPayloads: SubagentFinishPayload[] = [];
 
     consumer
-      .on("subagentAddJson", (event) => {
-        received.push(event);
+      .on("subagentAddJson", (payload) => {
+        addJsonPayloads.push(payload);
       })
-      .on("subagentError", (event) => {
-        received.push(event);
+      .on("subagentError", (payload) => {
+        errorPayloads.push(payload);
       })
-      .on("subagentFinish", (event) => {
-        received.push(event);
+      .on("subagentFinish", (payload) => {
+        finishPayloads.push(payload);
       });
 
     bridge.emit({
-      type: "subagentAddJson",
-      callId: "c1",
-      title: "Image ready",
-      data: { url: "http://img" },
-      icon: "photo",
+      subagentAddJson: {
+        callId: "c1",
+        title: "Image ready",
+        data: { url: "http://img" },
+        icon: "photo",
+      },
     });
     bridge.emit({
-      type: "subagentError",
-      callId: "c1",
-      error: { $error: "fail" },
+      subagentError: {
+        callId: "c1",
+        error: { $error: "fail" },
+      },
     });
-    bridge.emit({ type: "subagentFinish", callId: "c1" });
+    bridge.emit({ subagentFinish: { callId: "c1" } });
 
-    assert.strictEqual(received.length, 3);
-    assert.strictEqual(received[0].type, "subagentAddJson");
-    assert.strictEqual(received[1].type, "subagentError");
-    assert.strictEqual(received[2].type, "subagentFinish");
+    assert.strictEqual(addJsonPayloads.length, 1);
+    assert.strictEqual(errorPayloads.length, 1);
+    assert.strictEqual(finishPayloads.length, 1);
 
-    if (received[0].type === "subagentAddJson") {
-      assert.strictEqual(received[0].callId, "c1");
-      assert.strictEqual(received[0].title, "Image ready");
-      assert.deepStrictEqual(received[0].data, { url: "http://img" });
-      assert.strictEqual(received[0].icon, "photo");
-    }
+    assert.strictEqual(addJsonPayloads[0].callId, "c1");
+    assert.strictEqual(addJsonPayloads[0].title, "Image ready");
+    assert.deepStrictEqual(addJsonPayloads[0].data, { url: "http://img" });
+    assert.strictEqual(addJsonPayloads[0].icon, "photo");
   });
 
   test("functionCall event preserves args through the bridge", () => {
     const consumer = new AgentEventConsumer();
     const bridge = new LocalAgentEventBridge(consumer);
-    const received: AgentEvent[] = [];
+    const received: FunctionCallPayload[] = [];
 
-    consumer.on("functionCall", (event) => {
-      received.push(event);
+    consumer.on("functionCall", (payload) => {
+      received.push(payload);
     });
 
     bridge.emit({
-      type: "functionCall",
-      callId: "call-99",
-      name: "generate_text",
-      args: { prompt: "hello", status_update: "Writing a poem" },
-      icon: "text_analysis",
-      title: "Generating Text",
+      functionCall: {
+        callId: "call-99",
+        name: "generate_text",
+        args: { prompt: "hello", status_update: "Writing a poem" },
+        icon: "text_analysis",
+        title: "Generating Text",
+      },
     });
 
     assert.strictEqual(received.length, 1);
-    const event = received[0];
-    assert.strictEqual(event.type, "functionCall");
-    if (event.type === "functionCall") {
-      assert.deepStrictEqual(event.args, {
-        prompt: "hello",
-        status_update: "Writing a poem",
-      });
-      assert.strictEqual(event.name, "generate_text");
-      assert.strictEqual(event.icon, "text_analysis");
-      assert.strictEqual(event.title, "Generating Text");
-    }
+    const payload = received[0];
+    assert.deepStrictEqual(payload.args, {
+      prompt: "hello",
+      status_update: "Writing a poem",
+    });
+    assert.strictEqual(payload.name, "generate_text");
+    assert.strictEqual(payload.icon, "text_analysis");
+    assert.strictEqual(payload.title, "Generating Text");
   });
 });

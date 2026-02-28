@@ -196,26 +196,27 @@ async function buildAgentRun(args: {
 function buildHooksFromSink(sink: AgentEventSink): LoopHooks {
   return {
     onStart(objective: LLMContent) {
-      sink.emit({ type: "start", objective });
+      sink.emit({ start: { objective } });
     },
     onFinish() {
-      sink.emit({ type: "finish" });
+      sink.emit({ finish: {} });
     },
     onContent(content: LLMContent) {
-      sink.emit({ type: "content", content });
+      sink.emit({ content: { content } });
     },
     onThought(text: string) {
-      sink.emit({ type: "thought", text });
+      sink.emit({ thought: { text } });
     },
     onFunctionCall(part, icon?, title?) {
       const callId = crypto.randomUUID();
       sink.emit({
-        type: "functionCall",
-        callId,
-        name: part.functionCall.name,
-        args: (part.functionCall.args ?? {}) as Record<string, unknown>,
-        icon: typeof icon === "string" ? icon : undefined,
-        title,
+        functionCall: {
+          callId,
+          name: part.functionCall.name,
+          args: (part.functionCall.args ?? {}) as Record<string, unknown>,
+          icon: typeof icon === "string" ? icon : undefined,
+          title,
+        },
       });
       // Return a proxy reporter that emits subagent events through the sink.
       // Function handlers call addJson/addError/finish as usual — the events
@@ -223,37 +224,38 @@ function buildHooksFromSink(sink: AgentEventSink): LoopHooks {
       const reporter: ProgressReporter = {
         addJson(jsonTitle, data, jsonIcon?) {
           sink.emit({
-            type: "subagentAddJson",
-            callId,
-            title: jsonTitle,
-            data,
-            icon: jsonIcon,
+            subagentAddJson: {
+              callId,
+              title: jsonTitle,
+              data,
+              icon: jsonIcon,
+            },
           });
         },
         addError(error) {
-          sink.emit({ type: "subagentError", callId, error });
+          sink.emit({ subagentError: { callId, error } });
           return error;
         },
         finish() {
-          sink.emit({ type: "subagentFinish", callId });
+          sink.emit({ subagentFinish: { callId } });
         },
       };
       return { callId, reporter };
     },
     onFunctionCallUpdate(callId, status, opts?) {
-      sink.emit({ type: "functionCallUpdate", callId, status, opts });
+      sink.emit({ functionCallUpdate: { callId, status, opts } });
     },
     onFunctionResult(callId, content) {
-      sink.emit({ type: "functionResult", callId, content });
+      sink.emit({ functionResult: { callId, content } });
     },
     onTurnComplete() {
-      sink.emit({ type: "turnComplete" });
+      sink.emit({ turnComplete: {} });
     },
     onSendRequest(model, body) {
-      sink.emit({ type: "sendRequest", model, body });
+      sink.emit({ sendRequest: { model, body } });
     },
     onUsageMetadata(metadata) {
-      sink.emit({ type: "usageMetadata", metadata });
+      sink.emit({ usageMetadata: { metadata } });
     },
   };
 }

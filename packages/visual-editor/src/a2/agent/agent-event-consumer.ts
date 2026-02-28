@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { AgentEvent } from "./agent-event.js";
+import type {
+  AgentEvent,
+  AgentEventMap,
+  AgentEventType,
+  Payload,
+  SuspendEvent,
+} from "./agent-event.js";
+import { eventType, eventPayload } from "./agent-event.js";
 import type { AgentEventSink } from "./agent-event-sink.js";
 
 export { AgentEventConsumer, LocalAgentEventBridge };
@@ -20,37 +27,47 @@ export { AgentEventConsumer, LocalAgentEventBridge };
  * signal when the user has responded.
  */
 class AgentEventConsumer {
+  /** Handler signature after type erasure — operates on the full payload union. */
   readonly #handlers = new Map<
-    AgentEvent["type"],
-    (event: AgentEvent) => void | Promise<unknown>
+    AgentEventType,
+    (payload: AgentEventMap[AgentEventType]) => void | Promise<unknown>
   >();
 
   /**
    * Register a handler for a specific event type.
    * Suspend-event handlers (waitForInput, waitForChoice) must return
    * a Promise that resolves with the user's response.
+   *
+   * The handler receives the narrow `Payload<T>`, but the internal map
+   * stores it under the broader payload union. This cast is sound because
+   * `handle()` always matches the key to the correct payload type at
+   * runtime — the Map simply can't express the per-key relationship.
    */
-  on<T extends AgentEvent["type"]>(
+  on<T extends AgentEventType>(
     type: T,
-    handler: (
-      event: Extract<AgentEvent, { type: T }>
-    ) => void | Promise<unknown>
+    handler: (payload: Payload<T>) => void | Promise<unknown>
   ): this {
     this.#handlers.set(
       type,
-      handler as (event: AgentEvent) => void | Promise<unknown>
+      handler as (
+        payload: AgentEventMap[AgentEventType]
+      ) => void | Promise<unknown>
     );
     return this;
   }
 
   /**
    * Dispatch an event to its registered handler.
+   *
+   * Extracts the oneof key and passes the payload to the handler.
    * Returns a Promise for suspend events, undefined otherwise.
    */
   handle(event: AgentEvent): void | Promise<unknown> {
-    const handler = this.#handlers.get(event.type);
+    const type = eventType(event);
+    const payload = eventPayload(event);
+    const handler = this.#handlers.get(type);
     if (handler) {
-      return handler(event);
+      return handler(payload);
     }
   }
 }
@@ -74,7 +91,7 @@ class LocalAgentEventBridge implements AgentEventSink {
     this.consumer.handle(event);
   }
 
-  async suspend<T>(event: AgentEvent & { requestId: string }): Promise<T> {
-    return this.consumer.handle(event) as Promise<T>;
+  async suspend<T>(event: SuspendEvent): Promise<T> {
+    return this.consumer.handle(event as AgentEvent) as Promise<T>;
   }
 }

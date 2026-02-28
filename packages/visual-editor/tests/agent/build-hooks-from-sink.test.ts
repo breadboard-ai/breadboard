@@ -7,8 +7,13 @@
 import assert from "node:assert";
 import { suite, test } from "node:test";
 import { buildHooksFromSink } from "../../src/a2/agent/loop-setup.js";
-import type { AgentEvent } from "../../src/a2/agent/agent-event.js";
+import type {
+  AgentEvent,
+  AgentEventType,
+} from "../../src/a2/agent/agent-event.js";
+import { eventType, eventPayload } from "../../src/a2/agent/agent-event.js";
 import type { AgentEventSink } from "../../src/a2/agent/agent-event-sink.js";
+import type { SuspendEvent } from "../../src/a2/agent/agent-event.js";
 
 // ── Spy sink ─────────────────────────────────────────────────────────────────
 
@@ -20,11 +25,22 @@ function createSpySink(): AgentEventSink & { emitted: AgentEvent[] } {
     emit(event: AgentEvent) {
       emitted.push(event);
     },
-    async suspend<T>(event: AgentEvent & { requestId: string }): Promise<T> {
-      emitted.push(event);
+    async suspend<T>(event: SuspendEvent): Promise<T> {
+      emitted.push(event as AgentEvent);
       return undefined as T;
     },
   };
+}
+
+/** Extract event type name from a proto-style oneof event. */
+function eType(event: AgentEvent): AgentEventType {
+  return eventType(event);
+}
+
+/** Extract payload from a proto-style oneof event. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ePayload(event: AgentEvent): any {
+  return eventPayload(event);
 }
 
 suite("buildHooksFromSink", () => {
@@ -36,10 +52,8 @@ suite("buildHooksFromSink", () => {
     hooks.onStart!(objective);
 
     assert.strictEqual(sink.emitted.length, 1);
-    assert.strictEqual(sink.emitted[0].type, "start");
-    if (sink.emitted[0].type === "start") {
-      assert.deepStrictEqual(sink.emitted[0].objective, objective);
-    }
+    assert.strictEqual(eType(sink.emitted[0]), "start");
+    assert.deepStrictEqual(ePayload(sink.emitted[0]).objective, objective);
   });
 
   test("onFinish emits a finish event", () => {
@@ -49,7 +63,7 @@ suite("buildHooksFromSink", () => {
     hooks.onFinish!();
 
     assert.strictEqual(sink.emitted.length, 1);
-    assert.strictEqual(sink.emitted[0].type, "finish");
+    assert.strictEqual(eType(sink.emitted[0]), "finish");
   });
 
   test("onContent emits a content event", () => {
@@ -60,10 +74,8 @@ suite("buildHooksFromSink", () => {
     hooks.onContent!(content);
 
     assert.strictEqual(sink.emitted.length, 1);
-    assert.strictEqual(sink.emitted[0].type, "content");
-    if (sink.emitted[0].type === "content") {
-      assert.deepStrictEqual(sink.emitted[0].content, content);
-    }
+    assert.strictEqual(eType(sink.emitted[0]), "content");
+    assert.deepStrictEqual(ePayload(sink.emitted[0]).content, content);
   });
 
   test("onThought emits a thought event", () => {
@@ -73,10 +85,8 @@ suite("buildHooksFromSink", () => {
     hooks.onThought!("Analyzing the graph");
 
     assert.strictEqual(sink.emitted.length, 1);
-    assert.strictEqual(sink.emitted[0].type, "thought");
-    if (sink.emitted[0].type === "thought") {
-      assert.strictEqual(sink.emitted[0].text, "Analyzing the graph");
-    }
+    assert.strictEqual(eType(sink.emitted[0]), "thought");
+    assert.strictEqual(ePayload(sink.emitted[0]).text, "Analyzing the graph");
   });
 
   test("onFunctionCall emits a functionCall event and returns callId", () => {
@@ -87,15 +97,13 @@ suite("buildHooksFromSink", () => {
     const result = hooks.onFunctionCall!(part, "icon-url", "Adding node");
 
     assert.strictEqual(sink.emitted.length, 1);
-    const event = sink.emitted[0];
-    assert.strictEqual(event.type, "functionCall");
-    if (event.type === "functionCall") {
-      assert.strictEqual(event.name, "add_node");
-      assert.strictEqual(event.icon, "icon-url");
-      assert.strictEqual(event.title, "Adding node");
-      assert.ok(event.callId, "Should have a callId");
-      assert.strictEqual(result.callId, event.callId);
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.strictEqual(eType(sink.emitted[0]), "functionCall");
+    assert.strictEqual(payload.name, "add_node");
+    assert.strictEqual(payload.icon, "icon-url");
+    assert.strictEqual(payload.title, "Adding node");
+    assert.ok(payload.callId, "Should have a callId");
+    assert.strictEqual(result.callId, payload.callId);
     assert.ok(result.reporter, "Should return a proxy reporter");
     assert.strictEqual(typeof result.reporter.addJson, "function");
     assert.strictEqual(typeof result.reporter.addError, "function");
@@ -111,14 +119,12 @@ suite("buildHooksFromSink", () => {
     reporter!.addJson("Image result", { url: "http://img" }, "photo");
 
     assert.strictEqual(sink.emitted.length, 2);
-    const event = sink.emitted[1];
-    assert.strictEqual(event.type, "subagentAddJson");
-    if (event.type === "subagentAddJson") {
-      assert.strictEqual(event.callId, callId);
-      assert.strictEqual(event.title, "Image result");
-      assert.deepStrictEqual(event.data, { url: "http://img" });
-      assert.strictEqual(event.icon, "photo");
-    }
+    const payload = ePayload(sink.emitted[1]);
+    assert.strictEqual(eType(sink.emitted[1]), "subagentAddJson");
+    assert.strictEqual(payload.callId, callId);
+    assert.strictEqual(payload.title, "Image result");
+    assert.deepStrictEqual(payload.data, { url: "http://img" });
+    assert.strictEqual(payload.icon, "photo");
   });
 
   test("proxy reporter emits subagentError", () => {
@@ -132,12 +138,10 @@ suite("buildHooksFromSink", () => {
 
     assert.strictEqual(returned, errorObj, "addError should return the error");
     assert.strictEqual(sink.emitted.length, 2);
-    const event = sink.emitted[1];
-    assert.strictEqual(event.type, "subagentError");
-    if (event.type === "subagentError") {
-      assert.strictEqual(event.callId, callId);
-      assert.deepStrictEqual(event.error, errorObj);
-    }
+    const payload = ePayload(sink.emitted[1]);
+    assert.strictEqual(eType(sink.emitted[1]), "subagentError");
+    assert.strictEqual(payload.callId, callId);
+    assert.deepStrictEqual(payload.error, errorObj);
   });
 
   test("proxy reporter emits subagentFinish", () => {
@@ -149,11 +153,9 @@ suite("buildHooksFromSink", () => {
     reporter!.finish();
 
     assert.strictEqual(sink.emitted.length, 2);
-    const event = sink.emitted[1];
-    assert.strictEqual(event.type, "subagentFinish");
-    if (event.type === "subagentFinish") {
-      assert.strictEqual(event.callId, callId);
-    }
+    const payload = ePayload(sink.emitted[1]);
+    assert.strictEqual(eType(sink.emitted[1]), "subagentFinish");
+    assert.strictEqual(payload.callId, callId);
   });
 
   test("onFunctionCall handles non-string icon", () => {
@@ -164,10 +166,8 @@ suite("buildHooksFromSink", () => {
     // icon can be a non-string (object), should be filtered to undefined
     hooks.onFunctionCall!(part, { url: "icon" } as unknown as string);
 
-    const event = sink.emitted[0];
-    if (event.type === "functionCall") {
-      assert.strictEqual(event.icon, undefined);
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.strictEqual(payload.icon, undefined);
   });
 
   test("onFunctionCallUpdate emits a functionCallUpdate event", () => {
@@ -177,12 +177,10 @@ suite("buildHooksFromSink", () => {
     hooks.onFunctionCallUpdate!("call-1", "running");
 
     assert.strictEqual(sink.emitted.length, 1);
-    const event = sink.emitted[0];
-    assert.strictEqual(event.type, "functionCallUpdate");
-    if (event.type === "functionCallUpdate") {
-      assert.strictEqual(event.callId, "call-1");
-      assert.strictEqual(event.status, "running");
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.strictEqual(eType(sink.emitted[0]), "functionCallUpdate");
+    assert.strictEqual(payload.callId, "call-1");
+    assert.strictEqual(payload.status, "running");
   });
 
   test("onFunctionResult emits a functionResult event", () => {
@@ -193,12 +191,10 @@ suite("buildHooksFromSink", () => {
     hooks.onFunctionResult!("call-1", content);
 
     assert.strictEqual(sink.emitted.length, 1);
-    const event = sink.emitted[0];
-    assert.strictEqual(event.type, "functionResult");
-    if (event.type === "functionResult") {
-      assert.strictEqual(event.callId, "call-1");
-      assert.deepStrictEqual(event.content, content);
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.strictEqual(eType(sink.emitted[0]), "functionResult");
+    assert.strictEqual(payload.callId, "call-1");
+    assert.deepStrictEqual(payload.content, content);
   });
 
   test("onTurnComplete emits a turnComplete event", () => {
@@ -208,7 +204,7 @@ suite("buildHooksFromSink", () => {
     hooks.onTurnComplete!();
 
     assert.strictEqual(sink.emitted.length, 1);
-    assert.strictEqual(sink.emitted[0].type, "turnComplete");
+    assert.strictEqual(eType(sink.emitted[0]), "turnComplete");
   });
 
   test("onSendRequest emits a sendRequest event", () => {
@@ -219,12 +215,10 @@ suite("buildHooksFromSink", () => {
     hooks.onSendRequest!("gemini-2.0-flash", body);
 
     assert.strictEqual(sink.emitted.length, 1);
-    const event = sink.emitted[0];
-    assert.strictEqual(event.type, "sendRequest");
-    if (event.type === "sendRequest") {
-      assert.strictEqual(event.model, "gemini-2.0-flash");
-      assert.deepStrictEqual(event.body, body);
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.strictEqual(eType(sink.emitted[0]), "sendRequest");
+    assert.strictEqual(payload.model, "gemini-2.0-flash");
+    assert.deepStrictEqual(payload.body, body);
   });
   test("onFunctionCall forwards args in the event", () => {
     const sink = createSpySink();
@@ -234,10 +228,8 @@ suite("buildHooksFromSink", () => {
 
     hooks.onFunctionCall!(part, "photo_spark", "Generating Image(s)");
 
-    const event = sink.emitted[0];
-    if (event.type === "functionCall") {
-      assert.deepStrictEqual(event.args, args);
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.deepStrictEqual(payload.args, args);
   });
 
   test("onFunctionCall uses empty args when part has no args", () => {
@@ -247,10 +239,8 @@ suite("buildHooksFromSink", () => {
 
     hooks.onFunctionCall!(part as never);
 
-    const event = sink.emitted[0];
-    if (event.type === "functionCall") {
-      assert.deepStrictEqual(event.args, {});
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.deepStrictEqual(payload.args, {});
   });
 
   test("onFunctionCallUpdate forwards opts", () => {
@@ -260,11 +250,9 @@ suite("buildHooksFromSink", () => {
 
     hooks.onFunctionCallUpdate!("call-1", "Researching", opts);
 
-    const event = sink.emitted[0];
-    if (event.type === "functionCallUpdate") {
-      assert.strictEqual(event.status, "Researching");
-      assert.deepStrictEqual(event.opts, opts);
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.strictEqual(payload.status, "Researching");
+    assert.deepStrictEqual(payload.opts, opts);
   });
 
   test("onFunctionCallUpdate forwards null status", () => {
@@ -273,11 +261,9 @@ suite("buildHooksFromSink", () => {
 
     hooks.onFunctionCallUpdate!("call-1", null);
 
-    const event = sink.emitted[0];
-    if (event.type === "functionCallUpdate") {
-      assert.strictEqual(event.status, null);
-      assert.strictEqual(event.opts, undefined);
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.strictEqual(payload.status, null);
+    assert.strictEqual(payload.opts, undefined);
   });
 
   test("onFunctionCallUpdate forwards isThought opt", () => {
@@ -288,10 +274,8 @@ suite("buildHooksFromSink", () => {
       isThought: true,
     });
 
-    const event = sink.emitted[0];
-    if (event.type === "functionCallUpdate") {
-      assert.deepStrictEqual(event.opts, { isThought: true });
-    }
+    const payload = ePayload(sink.emitted[0]);
+    assert.deepStrictEqual(payload.opts, { isThought: true });
   });
 
   test("subagentAddJson without icon omits it", () => {
@@ -302,10 +286,8 @@ suite("buildHooksFromSink", () => {
     const { reporter } = hooks.onFunctionCall!(part);
     reporter!.addJson("Result", { ok: true });
 
-    const event = sink.emitted[1];
-    if (event.type === "subagentAddJson") {
-      assert.strictEqual(event.icon, undefined);
-    }
+    const payload = ePayload(sink.emitted[1]);
+    assert.strictEqual(payload.icon, undefined);
   });
 
   test("multiple function calls get independent reporters", () => {
@@ -323,14 +305,12 @@ suite("buildHooksFromSink", () => {
     call2.reporter!.addJson("from fn2", { n: 2 });
 
     // Events: functionCall, functionCall, subagentAddJson, subagentAddJson
-    const sub1 = sink.emitted[2];
-    const sub2 = sink.emitted[3];
-    if (sub1.type === "subagentAddJson" && sub2.type === "subagentAddJson") {
-      assert.strictEqual(sub1.callId, call1.callId);
-      assert.strictEqual(sub2.callId, call2.callId);
-      assert.strictEqual(sub1.title, "from fn1");
-      assert.strictEqual(sub2.title, "from fn2");
-    }
+    const sub1 = ePayload(sink.emitted[2]);
+    const sub2 = ePayload(sink.emitted[3]);
+    assert.strictEqual(sub1.callId, call1.callId);
+    assert.strictEqual(sub2.callId, call2.callId);
+    assert.strictEqual(sub1.title, "from fn1");
+    assert.strictEqual(sub2.title, "from fn2");
   });
 
   test("full lifecycle: functionCall → subagent events → result", () => {
@@ -358,7 +338,7 @@ suite("buildHooksFromSink", () => {
     });
 
     // Verify event sequence
-    const types = sink.emitted.map((e) => e.type);
+    const types = sink.emitted.map((e) => eType(e));
     assert.deepStrictEqual(types, [
       "start",
       "functionCall",
@@ -369,11 +349,11 @@ suite("buildHooksFromSink", () => {
     ]);
 
     // Verify all subagent events scoped to the same callId
-    const subEvents = sink.emitted.filter((e) => e.type.startsWith("subagent"));
+    const subEvents = sink.emitted.filter((e) =>
+      eType(e).startsWith("subagent")
+    );
     for (const event of subEvents) {
-      if ("callId" in event) {
-        assert.strictEqual(event.callId, callId);
-      }
+      assert.strictEqual(ePayload(event).callId, callId);
     }
   });
 });

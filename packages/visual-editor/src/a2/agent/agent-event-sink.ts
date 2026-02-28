@@ -26,8 +26,8 @@ interface AgentEventSink {
   /**
    * Suspend the loop and wait for a client response.
    *
-   * The `requestId` inside the event correlates the eventual response
-   * back to this pending request.
+   * The `requestId` inside the event payload correlates the eventual
+   * response back to this pending request.
    *
    * Returns the client's reply — the concrete type depends on the event
    * (e.g., `ChatResponse` for `waitForInput`, `GraphDescriptor` for

@@ -26,8 +26,9 @@ export { getChatFunctionGroup };
  */
 async function readGraphData(sink: AgentEventSink) {
   const { graph } = await sink.suspend<ReadGraphResponse>({
-    type: "readGraph",
-    requestId: crypto.randomUUID(),
+    readGraph: {
+      requestId: crypto.randomUUID(),
+    },
   });
   return {
     title: graph.title,
@@ -100,10 +101,11 @@ function getChatFunctionGroup(
         }
 
         const response = await sink.suspend<ChatResponse>({
-          type: "waitForInput",
-          requestId: crypto.randomUUID(),
-          prompt: { parts: [{ text: message }] },
-          inputType: "text",
+          waitForInput: {
+            requestId: crypto.randomUUID(),
+            prompt: { parts: [{ text: message }] },
+            inputType: "text",
+          },
         });
 
         // Extract text from the ChatResponse

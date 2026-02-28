@@ -304,12 +304,11 @@ class ResumeRunRequest:
 # .. proto-guide::
 #     Each event becomes a message. They are all members of the
 #     ``AgentEvent.oneof event`` discriminated union. The ``type``
-#     string field on each is the discriminant *on the wire only* —
-#     in proto, the oneof case serves this purpose. Include ``type``
-#     as a convenience field if you want the JSON to self-describe.
+#     string on each dataclass is the Python-side discriminant only;
+#     on the wire, the oneof key names the variant.
 #
 #     Wire example (SSE ``data:`` line):
-#       {"type": "thought", "text": "Thinking about what to echo..."}
+#       {"thought": {"text": "Thinking about what to echo..."}}
 #
 #     Field naming convention: Python snake_case → camelCase on wire.
 #     Use ``json_name`` in proto to produce the correct camelCase.
@@ -324,7 +323,7 @@ class StartEvent:
     objective: LLMContent = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, "objective": self.objective}
+        return {"start": {"objective": self.objective}}
 
 
 @dataclass
@@ -335,7 +334,7 @@ class ThoughtEvent:
     text: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, "text": self.text}
+        return {"thought": {"text": self.text}}
 
 
 @dataclass
@@ -362,17 +361,16 @@ class FunctionCallEvent:
     title: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        d: dict[str, Any] = {
-            "type": self.type,
+        payload: dict[str, Any] = {
             "callId": self.call_id,
             "name": self.name,
             "args": self.args,
         }
         if self.icon is not None:
-            d["icon"] = self.icon
+            payload["icon"] = self.icon
         if self.title is not None:
-            d["title"] = self.title
-        return d
+            payload["title"] = self.title
+        return {"functionCall": payload}
 
 
 @dataclass
@@ -384,11 +382,10 @@ class FunctionCallUpdateEvent:
     status: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "type": self.type,
+        return {"functionCallUpdate": {
             "callId": self.call_id,
             "status": self.status,
-        }
+        }}
 
 
 @dataclass
@@ -400,11 +397,10 @@ class FunctionResultEvent:
     content: LLMContent = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "type": self.type,
+        return {"functionResult": {
             "callId": self.call_id,
             "content": self.content,
-        }
+        }}
 
 
 @dataclass
@@ -415,7 +411,7 @@ class ContentEvent:
     content: LLMContent = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, "content": self.content}
+        return {"content": {"content": self.content}}
 
 
 @dataclass
@@ -425,7 +421,7 @@ class TurnCompleteEvent:
     type: str = "turnComplete"
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type}
+        return {"turnComplete": {}}
 
 
 @dataclass
@@ -437,7 +433,7 @@ class SendRequestEvent:
     body: GeminiBody = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, "model": self.model, "body": self.body}
+        return {"sendRequest": {"model": self.model, "body": self.body}}
 
 
 @dataclass
@@ -449,7 +445,7 @@ class GraphEditEvent:
     label: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, "edits": self.edits, "label": self.label}
+        return {"graphEdit": {"edits": self.edits, "label": self.label}}
 
 
 @dataclass
@@ -460,7 +456,7 @@ class CompleteEvent:
     result: AgentResult = field(default_factory=lambda: AgentResult(success=False))
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, "result": self.result.to_dict()}
+        return {"complete": {"result": self.result.to_dict()}}
 
 
 @dataclass
@@ -471,7 +467,7 @@ class ErrorEvent:
     message: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, "message": self.message}
+        return {"error": {"message": self.message}}
 
 
 @dataclass
@@ -481,7 +477,7 @@ class FinishEvent:
     type: str = "finish"
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type}
+        return {"finish": {}}
 
 
 @dataclass
@@ -504,15 +500,14 @@ class SubagentAddJsonEvent:
     icon: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        d: dict[str, Any] = {
-            "type": self.type,
+        payload: dict[str, Any] = {
             "callId": self.call_id,
             "title": self.title,
             "data": self.data,
         }
         if self.icon is not None:
-            d["icon"] = self.icon
-        return d
+            payload["icon"] = self.icon
+        return {"subagentAddJson": payload}
 
 
 @dataclass
@@ -524,11 +519,10 @@ class SubagentErrorEvent:
     error: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "type": self.type,
+        return {"subagentError": {
             "callId": self.call_id,
             "error": self.error,
-        }
+        }}
 
 
 @dataclass
@@ -539,7 +533,7 @@ class SubagentFinishEvent:
     call_id: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, "callId": self.call_id}
+        return {"subagentFinish": {"callId": self.call_id}}
 
 
 @dataclass
@@ -550,7 +544,7 @@ class UsageMetadataEvent:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, "metadata": self.metadata}
+        return {"usageMetadata": {"metadata": self.metadata}}
 
 
 # ---------------------------------------------------------------------------
@@ -606,17 +600,16 @@ class WaitForInputEvent:
     interaction_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        d: dict[str, Any] = {
-            "type": self.type,
+        payload: dict[str, Any] = {
             "requestId": self.request_id,
             "prompt": self.prompt,
             "inputType": self.input_type,
         }
         if self.skip_label is not None:
-            d["skipLabel"] = self.skip_label
+            payload["skipLabel"] = self.skip_label
         if self.interaction_id is not None:
-            d["interactionId"] = self.interaction_id
-        return d
+            payload["interactionId"] = self.interaction_id
+        return {"waitForInput": payload}
 
 
 @dataclass
@@ -664,20 +657,19 @@ class WaitForChoiceEvent:
     interaction_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        d: dict[str, Any] = {
-            "type": self.type,
+        payload: dict[str, Any] = {
             "requestId": self.request_id,
             "prompt": self.prompt,
             "choices": [c.to_dict() for c in self.choices],
             "selectionMode": self.selection_mode,
         }
         if self.layout is not None:
-            d["layout"] = self.layout
+            payload["layout"] = self.layout
         if self.none_of_the_above_label is not None:
-            d["noneOfTheAboveLabel"] = self.none_of_the_above_label
+            payload["noneOfTheAboveLabel"] = self.none_of_the_above_label
         if self.interaction_id is not None:
-            d["interactionId"] = self.interaction_id
-        return d
+            payload["interactionId"] = self.interaction_id
+        return {"waitForChoice": payload}
 
 
 @dataclass
@@ -689,13 +681,12 @@ class ReadGraphEvent:
     interaction_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        d: dict[str, Any] = {
-            "type": self.type,
+        payload: dict[str, Any] = {
             "requestId": self.request_id,
         }
         if self.interaction_id is not None:
-            d["interactionId"] = self.interaction_id
-        return d
+            payload["interactionId"] = self.interaction_id
+        return {"readGraph": payload}
 
 
 @dataclass
@@ -708,14 +699,13 @@ class InspectNodeEvent:
     interaction_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        d: dict[str, Any] = {
-            "type": self.type,
+        payload: dict[str, Any] = {
             "requestId": self.request_id,
             "nodeId": self.node_id,
         }
         if self.interaction_id is not None:
-            d["interactionId"] = self.interaction_id
-        return d
+            payload["interactionId"] = self.interaction_id
+        return {"inspectNode": payload}
 
 
 @dataclass
@@ -730,18 +720,17 @@ class ApplyEditsEvent:
     interaction_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        d: dict[str, Any] = {
-            "type": self.type,
+        payload: dict[str, Any] = {
             "requestId": self.request_id,
             "label": self.label,
         }
         if self.edits is not None:
-            d["edits"] = self.edits
+            payload["edits"] = self.edits
         if self.transform is not None:
-            d["transform"] = self.transform
+            payload["transform"] = self.transform
         if self.interaction_id is not None:
-            d["interactionId"] = self.interaction_id
-        return d
+            payload["interactionId"] = self.interaction_id
+        return {"applyEdits": payload}
 
 
 @dataclass
@@ -766,16 +755,15 @@ class QueryConsentEvent:
     interaction_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        d: dict[str, Any] = {
-            "type": self.type,
+        payload: dict[str, Any] = {
             "requestId": self.request_id,
             "consentType": self.consent_type,
             "scope": self.scope,
             "graphUrl": self.graph_url,
         }
         if self.interaction_id is not None:
-            d["interactionId"] = self.interaction_id
-        return d
+            payload["interactionId"] = self.interaction_id
+        return {"queryConsent": payload}
 
 
 # ---------------------------------------------------------------------------
@@ -791,10 +779,10 @@ class QueryConsentEvent:
 #     a client response (via ``ResumeRunRequest``), while all other
 #     events are fire-and-forget.
 #
-#     The ``type`` string literal (e.g. "waitForInput") must appear
-#     in the JSON output because the TypeScript client uses it to
-#     discriminate. If proto's default JSON serialization of oneof
-#     doesn't produce this, add a ``string type`` field.
+#     ``to_dict()`` produces the proto-style oneof JSON directly:
+#     ``{"thought": {"text": "..."}}`` — the key names the variant.
+#     The client-side ``protoToAgentEvent()`` recovers the ``type``
+#     discriminant for TypeScript dispatch.
 # ---------------------------------------------------------------------------
 
 AgentEvent = Union[
