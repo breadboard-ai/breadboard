@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from .agent_file_system import AgentFileSystem
 
@@ -239,7 +239,8 @@ def from_pidgin_string(
             if isinstance(result, dict) and "$error" in result:
                 errors.append(result["$error"])
                 continue
-            parts.extend(result)
+            assert isinstance(result, list)
+            parts.extend(cast(list[dict[str, Any]], result))
             continue
 
         # Check for <a href="...">title</a>

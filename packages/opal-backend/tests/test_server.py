@@ -270,7 +270,7 @@ async def test_root_endpoint(client: AsyncClient):
 async def test_unknown_scenario_returns_400(client: AsyncClient):
     """Starting an unknown scenario returns 400."""
     resp = await client.post(
-        "/api/agent/run",
+        "/v1beta1/streamRunAgent",
         json={"objective": {"scenario": "nonexistent"}},
     )
     assert resp.status_code == 400
@@ -280,7 +280,7 @@ async def test_unknown_scenario_returns_400(client: AsyncClient):
 async def test_start_run_returns_sse_stream(client: AsyncClient):
     """Starting a run returns an SSE stream (text/event-stream)."""
     resp = await client.post(
-        "/api/agent/run",
+        "/v1beta1/streamRunAgent",
         json={"objective": {"scenario": "echo"}},
     )
     assert resp.status_code == 200

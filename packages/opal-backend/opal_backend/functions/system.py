@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import inspect
-from typing import Any, Callable, Awaitable
+from typing import Any, Callable, Awaitable, cast
 
 from ..function_definition import (
     FunctionDefinition,
@@ -224,7 +224,8 @@ def _define_objective_fulfilled(
             resolved = from_pidgin_string(outcome_text, file_system)
             if isinstance(resolved, dict) and "$error" in resolved:
                 return {"error": resolved["$error"]}
-            outcomes = resolved
+            # from_pidgin_string returns dict (LLMContent) on success.
+            outcomes = cast(dict[str, Any], resolved)
 
             # Collect all intermediate files with their resolved parts.
             # Port of the intermediate file collection in loop-setup.ts.
@@ -429,9 +430,11 @@ def _define_write_file(
         if isinstance(translated, dict) and "$error" in translated:
             return {"error": translated["$error"]}
 
-        # Extract text from the translated content parts
+        # Extract text from the translated content parts.
+        # from_pidgin_string returns dict (LLMContent) on success.
+        translated_dict = cast(dict[str, Any], translated)
         text_parts = []
-        for part in translated.get("parts", []):
+        for part in translated_dict.get("parts", []):
             if "text" in part:
                 text_parts.append(part["text"])
         resolved_content = "\n".join(text_parts) if text_parts else content

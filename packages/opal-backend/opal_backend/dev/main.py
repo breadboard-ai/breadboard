@@ -9,7 +9,7 @@ auth headers as-is. Agent runs use the real Gemini loop from
 opal-backend-shared with system termination functions.
 
 Protocol:
-    POST /api/agent/run → SSE stream (Resumable Stream Protocol)
+    POST /v1beta1/streamRunAgent → SSE stream (Resumable Stream Protocol)
     Body (segments): {"kind": "...", "segments": [...], "flags": {...}}
     Body (legacy):   {"kind": "...", "objective": {...}}
 
@@ -205,7 +205,7 @@ def _build_function_groups(
 class DevAgentBackend:
     """Implements AgentBackend using the real Python agent loop.
 
-    Single POST /api/agent/run → SSE stream.
+    Single POST /v1beta1/streamRunAgent → SSE stream.
 
     Handles both start and resume requests:
     - **Start**: ``{kind, segments/objective}`` — creates a new loop
@@ -540,5 +540,5 @@ async def root():
         "name": "Opal Dev Backend",
         "upstream": UPSTREAM_BASE,
         "agent": "active (Resumable Stream Protocol)",
-        "endpoint": "POST /api/agent/run → SSE stream",
+        "endpoint": "POST /v1beta1/streamRunAgent → SSE stream",
     }
