@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-02-27",
+    "type": "info",
+    "text": "All systems green. If you see any problems with quota, please use the \"Send feedback\" link in the gear menu."
+  },
+  {
     "date": "2026-02-25",
     "type": "warning",
     "text": "Our new Agent feature is pushing our models to the limit. We're working through increased error rates while we work on a fix. Thanks for your patience!"
