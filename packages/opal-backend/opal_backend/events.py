@@ -157,7 +157,7 @@ class AgentResult:
 
 
 # ---------------------------------------------------------------------------
-# Request / response body models (POST /api/agent/run)
+# Request / response body models (POST /v1beta1/streamRunAgent)
 #
 # .. proto-guide::
 #     The client sends one of two shapes to the same endpoint:
@@ -559,7 +559,7 @@ class UsageMetadataEvent:
 # .. proto-guide::
 #     Suspend events follow a request-response pattern *within* the SSE
 #     stream. The server emits the event, then the SSE connection closes.
-#     The client collects user input and POSTs back to ``/api/agent/run``
+#     The client collects user input and POSTs back to ``/v1beta1/streamRunAgent``
 #     with ``{interactionId, response}`` (a ``ResumeRunRequest``).
 #
 #     All suspend events share a common ``request_id`` field and an

@@ -97,7 +97,7 @@ interface AgentRunHandle {
  *
  * | Client method              | Server endpoint                      |
  * |----------------------------|--------------------------------------|
- * | `startRun(config)`         | `POST /api/agent/run` → SSE stream   |
+ * | `startRun(config)`         | `POST /v1beta1/streamRunAgent` → SSE stream   |
  * | `handle.events` (consumer) | (events arrive in the SSE response)  |
  * | `handle.abort()`           | Client closes the connection         |
  */

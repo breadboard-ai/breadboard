@@ -93,7 +93,7 @@ class SSEAgentEventSource {
   ): Promise<
     { done: true } | { done: false; interactionId: string; response: unknown }
   > {
-    const url = `${this.baseUrl}/api/agent/run`;
+    const url = `${this.baseUrl}/v1beta1/streamRunAgent`;
     console.log("[SSE] Connecting:", url, body);
 
     const response = await this.fetchWithCreds(url, {

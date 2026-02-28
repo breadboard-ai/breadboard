@@ -195,7 +195,7 @@ def _define_generate_images(
                 result_path = file_system.add_part(part, name)
                 if isinstance(result_path, dict) and "$error" in result_path:
                     errors.append(result_path["$error"])
-                else:
+                elif isinstance(result_path, str):
                     image_paths.append(result_path)
 
         if errors:

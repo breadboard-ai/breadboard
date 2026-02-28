@@ -6,7 +6,7 @@ FastAPI application implementing the Opal agent event protocol
 with canned scenarios for integration testing.
 
 Protocol:
-    POST /api/agent/run → SSE stream (Resumable Stream Protocol)
+    POST /v1beta1/streamRunAgent → SSE stream (Resumable Stream Protocol)
 
     Body (start): {"kind": "fake", "objective": {"scenario": "<name>"}}
     Body (resume): {"interactionId": "...", "response": {...}}
@@ -53,7 +53,7 @@ async def root():
     """Landing page with available scenarios and endpoints."""
     return {
         "name": "Opal Fake Backend",
-        "endpoint": "POST /api/agent/run → SSE stream",
+        "endpoint": "POST /v1beta1/streamRunAgent → SSE stream",
         "scenarios": list(SCENARIOS.keys()),
     }
 
@@ -84,7 +84,7 @@ _runs: dict[str, RunState] = {}
 class FakeAgentBackend:
     """Canned-scenario implementation of the AgentBackend protocol.
 
-    Single POST /api/agent/run → SSE stream.
+    Single POST /v1beta1/streamRunAgent → SSE stream.
     Scenario name is extracted from the objective.
     """
 

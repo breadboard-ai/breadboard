@@ -7,7 +7,8 @@
     "setup": "wireit",
     "dev": ".venv/bin/uvicorn opal_backend.dev.main:app --reload --port 8080",
     "dev:fake": ".venv/bin/uvicorn opal_backend.fake.main:app --reload --port 8000",
-    "test": "wireit"
+    "test": "wireit",
+    "typecheck": "wireit"
   },
   "wireit": {
     "setup": {
@@ -23,6 +24,14 @@
         "opal_backend/**/*.py",
         "tests/**/*.py"
       ],
+      "dependencies": []
+    },
+    "typecheck": {
+      "command": ".venv/bin/pytype opal_backend/*.py opal_backend/functions/*.py",
+      "files": [
+        "opal_backend/**/*.py"
+      ],
+      "output": [],
       "dependencies": []
     }
   }

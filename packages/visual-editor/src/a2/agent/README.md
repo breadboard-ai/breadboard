@@ -28,7 +28,7 @@
 ┌─────────────────────────────────────────────────│───────────┐
 │  SERVER (unified-server)                        │           │
 │                                                 │           │
-│   POST /api/agent/run ──→ AgentService          │           │
+│   POST /v1beta1/streamRunAgent ──→ AgentService          │           │
 │                              │                  │           │
 │                        Loop + Functions         │           │
 │                              │                  │           │

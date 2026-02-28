@@ -8,7 +8,7 @@ This module is NOT synced to the production backend — it lives in the `local/`
 directory. The production backend has its own HTTP plumbing.
 
 The Resumable Stream Protocol:
-    POST /api/agent/run  →  SSE stream
+    POST /v1beta1/streamRunAgent  →  SSE stream
 
 Body (start):  {"kind": "...", "objective": {...}}
 Body (resume): {"interactionId": "...", "response": {...}}
@@ -39,7 +39,7 @@ from sse_starlette.sse import EventSourceResponse
 class AgentBackend(Protocol):
     """What each wrapper must implement for the agent run endpoint.
 
-    A single POST /api/agent/run that returns an SSE stream.
+    A single POST /v1beta1/streamRunAgent that returns an SSE stream.
     The implementation receives the full Request to access both
     the JSON body and the Authorization header.
     """
@@ -66,15 +66,15 @@ def create_api_router(
     """Create a FastAPI router with the shared Opal API surface.
 
     Args:
-        agent: Handler for POST /api/agent/run (optional).
+        agent: Handler for POST /v1beta1/streamRunAgent (optional).
         proxy: Handler for v1beta1/* proxy endpoints (optional).
     """
     router = APIRouter()
 
-    # ----- Agent endpoint -----
+    # ----- Agent endpoint (must come before the catch-all proxy) -----
     if agent is not None:
 
-        @router.post("/api/agent/run")
+        @router.post("/v1beta1/streamRunAgent")
         async def run(request: Request) -> EventSourceResponse:
             return await agent.run(request)
 

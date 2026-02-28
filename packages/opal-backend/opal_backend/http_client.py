@@ -14,7 +14,7 @@ typing.
 
 from __future__ import annotations
 
-from typing import Any, AsyncIterator, Protocol, runtime_checkable
+from typing import Any, AsyncContextManager, AsyncIterator, Protocol, runtime_checkable
 
 
 class HttpResponse:
@@ -29,11 +29,11 @@ class HttpResponse:
 
     def json(self) -> Any:
         """Parse the response body as JSON."""
-        ...
+        raise NotImplementedError
 
     def raise_for_status(self) -> None:
         """Raise an exception if the response status is >= 400."""
-        ...
+        raise NotImplementedError
 
 
 class StreamResponse:
@@ -46,11 +46,12 @@ class StreamResponse:
 
     async def aread(self) -> bytes:
         """Read the full response body (for error messages)."""
-        ...
+        raise NotImplementedError
 
     async def aiter_lines(self) -> AsyncIterator[str]:
         """Iterate over response lines asynchronously."""
-        ...  # type: ignore[return]
+        raise NotImplementedError  # pragma: no cover
+        yield  # type: ignore[misc]  # make this a generator function
 
 
 @runtime_checkable
@@ -71,18 +72,18 @@ class HttpClient(Protocol):
         headers: dict[str, str],
     ) -> HttpResponse:
         """Send a POST request and return the full response."""
-        ...
+        raise NotImplementedError
 
-    async def stream_post(
+    def stream_post(
         self,
         url: str,
         *,
         json: Any,
         headers: dict[str, str],
-    ) -> StreamResponse:
+    ) -> AsyncContextManager[StreamResponse]:
         """Send a POST request and return a streaming response.
 
         The caller must consume the stream. The response object is valid
         only within the caller's async context.
         """
-        ...
+        raise NotImplementedError
