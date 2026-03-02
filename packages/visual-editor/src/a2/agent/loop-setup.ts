@@ -128,7 +128,7 @@ async function buildAgentRun(args: {
       )
     ).flat();
     if (errors.length > 0) {
-      return err(errors.join(","));
+      return err(errors.join("; "));
     }
 
     runStateManager.complete();

@@ -29,6 +29,10 @@ import {
 } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { setScreenDuration } from "../../sca/utils/app-screen.js";
+import {
+  formatAgentError,
+  classifyCaughtError,
+} from "../../utils/formatting/format-agent-error.js";
 
 const BACKEND_ENDPOINT = new URL("v1beta1/executeStep", OPAL_BACKEND_API_PREFIX)
   .href;
@@ -257,8 +261,8 @@ async function executeStep(
       response = await fetchResponse.json();
     } catch (e) {
       return reporter.addError(
-        err((e as Error).message, {
-          origin: "server",
+        err(formatAgentError(e), {
+          ...classifyCaughtError(e),
           model,
         })
       );

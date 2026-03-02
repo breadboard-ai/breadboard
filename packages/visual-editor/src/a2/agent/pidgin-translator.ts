@@ -15,6 +15,7 @@ import { Template } from "../a2/template.js";
 import { mergeTextParts, tr } from "../a2/utils.js";
 import { AgentFileSystem } from "./file-system.js";
 import { err, ok } from "@breadboard-ai/utils";
+import { formatAgentError } from "../../utils/formatting/format-agent-error.js";
 import {
   ROUTE_TOOL_PATH,
   MEMORY_TOOL_PATH,
@@ -178,7 +179,7 @@ class PidginTranslator {
       .filter((part) => part !== null);
 
     if (errors.length > 0) {
-      return err(`Agent unable to proceed: ${errors.join(",")}`);
+      return err(errors.join("; "));
     }
 
     return { parts: mergeTextParts(parts, "\n"), role: "user" };
@@ -243,7 +244,7 @@ class PidginTranslator {
       .filter((part) => part !== null);
 
     if (errors.length > 0) {
-      return err(`Agent unable to proceed: ${errors.join(",")}`);
+      return err(errors.join("; "));
     }
 
     return { parts: mergeTextParts(parts, "\n"), role: "user" };
@@ -378,7 +379,7 @@ ${inner}
     );
 
     if (errors.length > 0) {
-      return err(`Agent: ${errors.join(",")}`);
+      return err(errors.join("; "));
     }
 
     const text =
@@ -451,7 +452,7 @@ function substituteLiterals<T>(
   try {
     recursiveReplace(clonedData as JsonSerializable);
   } catch (e) {
-    return err((e as Error).message);
+    return err(formatAgentError(e));
   }
   return clonedData;
 }
@@ -484,7 +485,7 @@ function substituteContents<T>(
   try {
     recursiveReplace(clonedData as JsonSerializable);
   } catch (e) {
-    return err((e as Error).message);
+    return err(formatAgentError(e));
   }
   return clonedData;
 }

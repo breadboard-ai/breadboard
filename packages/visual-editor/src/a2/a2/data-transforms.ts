@@ -16,6 +16,7 @@ import {
 import { err, ok, isNotebookLmUrl } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { isFileDataCapabilityPart } from "../../data/common.js";
+import { formatAgentError } from "../../utils/formatting/format-agent-error.js";
 
 export { createDataPartTansformer, driveFileToBlob, toGcsAwareChunk };
 
@@ -208,7 +209,7 @@ async function callBackend<Req, Res>(
     const response = (await fetching.json()) as Outcome<Res>;
     return response;
   } catch (e) {
-    return err((e as Error).message);
+    return err(formatAgentError(e));
   }
 }
 

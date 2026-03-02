@@ -24,6 +24,10 @@ import {
 } from "./utils.js";
 import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import {
+  formatAgentError,
+  classifyCaughtError,
+} from "../../utils/formatting/format-agent-error.js";
 
 const STREAM_BACKEND_ENDPOINT = new URL(
   "v1beta1/generateWebpageStream",
@@ -262,7 +266,7 @@ async function executeWebpageStream(
     // Return HTML as inlineData with text/html mimeType to match legacy behavior
     return toLLMContentInline("text/html", encodeBase64(htmlResult), "model");
   } catch (e) {
-    return reporter.addError(err((e as Error).message));
+    return reporter.addError(err(formatAgentError(e), classifyCaughtError(e)));
   } finally {
     if (appScreen) {
       appScreen.progress = undefined;

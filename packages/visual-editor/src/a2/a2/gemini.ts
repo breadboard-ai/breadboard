@@ -9,6 +9,10 @@ import {
 } from "../agent/progress-work-item.js";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
+import {
+  formatAgentError,
+  classifyCaughtError,
+} from "../../utils/formatting/format-agent-error.js";
 import { setScreenDuration } from "../../sca/utils/app-screen.js";
 import {
   LLMContent,
@@ -631,7 +635,7 @@ async function callAPI(
       metadata: { origin: "server", kind: "bug" },
     });
   } catch (e) {
-    return err((e as Error).message);
+    return err(formatAgentError(e), { ...classifyCaughtError(e), model });
   } finally {
     reporter.finish();
   }
@@ -765,7 +769,7 @@ async function generateContent(
       return result.json();
     }
   } catch (e) {
-    return err((e as Error).message, { origin: "client", model });
+    return err(formatAgentError(e), { ...classifyCaughtError(e), model });
   }
 }
 
@@ -895,7 +899,7 @@ async function streamGenerateContent(
         }
       })();
     } catch (e) {
-      return err((e as Error).message, { origin: "client", model });
+      return err(formatAgentError(e), { ...classifyCaughtError(e), model });
     }
   }
 

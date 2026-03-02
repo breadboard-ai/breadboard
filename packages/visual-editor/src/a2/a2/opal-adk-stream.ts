@@ -12,6 +12,10 @@ import { PidginTranslator } from "../agent/pidgin-translator.js";
 import { AgentUI } from "../agent/ui.js";
 import { AgentFileSystem } from "../agent/file-system.js";
 import { MemoryManager } from "../agent/types.js";
+import {
+  formatAgentError,
+  classifyCaughtError,
+} from "../../utils/formatting/format-agent-error.js";
 
 const OPAL_ADK_ENDPOINT = new URL(
   "v1beta1/executeAgentNodeStream",
@@ -334,7 +338,7 @@ class OpalAdkStream {
       // Return HTML as inlineData with text/html mimeType to match legacy behavior
       return toLLMContent(agentResult, "model");
     } catch (e) {
-      const error = err((e as Error).message);
+      const error = err(formatAgentError(e), classifyCaughtError(e));
       console.error(error);
       return error;
     } finally {
