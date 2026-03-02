@@ -2,9 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Function caller — dispatches function calls from Gemini responses.
+Function-call dispatch for the agent loop.
 
-Port of ``function-caller.ts``. Collects async function call tasks,
+Port of ``function-caller.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+Collects async function call tasks,
 awaits them all in parallel, and returns a combined ``LLMContent``
 with all function responses.
 """

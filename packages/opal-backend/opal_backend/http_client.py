@@ -4,6 +4,12 @@
 """
 HTTP client protocol for the agent loop.
 
+No direct TypeScript counterpart — this protocol was created for the Python
+backend's sync boundary. The TypeScript implementation handles HTTP inline.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path.
+
 Defines abstract types that the synced code uses for HTTP calls. The actual
 implementation (httpx in dev, internal RPC in google3) is injected at
 runtime.

@@ -4,6 +4,12 @@
 """
 InteractionStore — protocol for suspend/resume state management.
 
+No direct TypeScript counterpart — this protocol was created for the Python
+backend's reconnect-based suspend/resume architecture.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path.
+
 When the agent loop suspends (function needs client input), the loop's
 state is saved here keyed by ``interactionId``. When the client POSTs
 back with ``{interactionId, response}``, the state is loaded and the

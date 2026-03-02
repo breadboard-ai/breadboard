@@ -4,13 +4,13 @@
 """
 Audio generation function group for the agent loop.
 
-Contains two functions:
-- ``generate_speech_from_text`` — port of the speech agent function from
-  ``generate.ts`` + ``callAudioGen`` from ``audio-generator/main.ts``.
-  Uses executeStep with the ``tts`` model API.
-- ``generate_music_from_text`` — port of the music agent function from
-  ``generate.ts`` + ``callMusicGen`` from ``music-generator/main.ts``.
-  Uses executeStep with the ``generate_music`` model API.
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+Contains two functions, both ported from ``functions/generate.ts``:
+- ``generate_speech_from_text`` — uses executeStep with the ``tts`` model API.
+- ``generate_music_from_text`` — uses executeStep with the ``generate_music``
+  model API.
 """
 
 from __future__ import annotations

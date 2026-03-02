@@ -4,6 +4,12 @@
 """
 Backend client protocol for One Platform operations.
 
+No direct TypeScript counterpart — this protocol was created for the Python
+backend's sync boundary. The TypeScript implementation calls One Platform inline.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path.
+
 Separates "One Platform backend calls" (executeStep, uploadGeminiFile,
 uploadBlobFile) from "Gemini HTTP calls" (streaming content generation).
 This allows google3 to inject a direct backend client that bypasses HTTP.

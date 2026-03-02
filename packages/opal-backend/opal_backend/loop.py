@@ -4,7 +4,12 @@
 """
 The main agent loop — a pure Gemini function-calling orchestrator.
 
-Port of ``loop.ts``. It does not create or own any external dependencies
+Port of ``loop.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+It does not create or own any external dependencies
 (file systems, translators, progress managers). Instead, callers provide:
 
 - **function_groups**: the tools the agent can call

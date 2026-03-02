@@ -2,9 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Function definitions and groups for the agent loop.
+Types and helpers for defining agent functions.
 
-Port of ``function-definition.ts`` — provides the types and helpers that
+Port of ``function-definition.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+Provides the types and helpers that
 the Loop uses to declare and dispatch function calls.
 """
 

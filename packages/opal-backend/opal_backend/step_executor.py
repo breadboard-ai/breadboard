@@ -10,6 +10,9 @@ music). Each generator builds an ``ExecuteStepRequest`` and calls
 
 Port of ``step-executor.ts``.
 
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
 The API contract:
     POST /v1beta1/executeStep
     Body:    {planStep: {...}, execution_inputs: {...}}
