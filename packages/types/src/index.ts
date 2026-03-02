@@ -6,6 +6,7 @@
 
 export type * from "./capabilities.js";
 export * from "./canonical-endpoints.js";
+export { geminiApiPrefix } from "./gemini-endpoint.js";
 export type * from "./data.js";
 export type * from "./deep-read-only.js";
 export type * from "./edit.js";

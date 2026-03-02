@@ -150,7 +150,8 @@ async function flowGenWithTheme(
         intent,
         abortController.signal,
         controller,
-        services
+        services,
+        bind.env.flags.get("enableGeminiBackend")
       )
     : Promise.resolve(err(`Existing graph, skipping theme generation`));
 
@@ -182,13 +183,15 @@ async function generateThemeFromIntent(
   intent: string,
   abortSignal: AbortSignal,
   controller: AppController,
-  services: AppServices
+  services: AppServices,
+  enableGeminiBackend: boolean
 ): Promise<Outcome<GraphTheme>> {
   const appTheme = await generateImage(
     getThemeFromIntentGenerationPrompt(intent),
     abortSignal,
     controller,
-    services
+    services,
+    enableGeminiBackend
   );
   if (!ok(appTheme)) return appTheme;
   return persistTheme(appTheme, controller, services);

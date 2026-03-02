@@ -14,7 +14,7 @@ import {
   LLMContent,
   Outcome,
   Schema,
-  GOOGLE_GENAI_API_PREFIX,
+  geminiApiPrefix,
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { createDataPartTansformer } from "./data-transforms.js";
@@ -45,12 +45,21 @@ const defaultSafetySettings = (): SafetySetting[] => [
   },
 ];
 
-function endpointURL(model: string) {
-  return `${GOOGLE_GENAI_API_PREFIX}/${model}:generateContent`;
+function endpointURL(prefix: string, model: string) {
+  return `${prefix}/${model}:generateContent`;
 }
 
-function streamEndpointURL(model: string) {
-  return `${GOOGLE_GENAI_API_PREFIX}/${model}:streamGenerateContent?alt=sse`;
+function streamEndpointURL(prefix: string, model: string) {
+  return `${prefix}/${model}:streamGenerateContent?alt=sse`;
+}
+
+/**
+ * Reads the enableGeminiBackend flag and returns the resolved API prefix.
+ * Defaults to true (direct Gemini API) when flags are unavailable.
+ */
+async function resolvePrefix({ context }: A2ModuleArgs): Promise<string> {
+  const flags = await context.flags?.flags();
+  return geminiApiPrefix(flags?.enableGeminiBackend ?? false);
 }
 
 /**
@@ -510,14 +519,18 @@ async function callAPI(
       setScreenDuration(appScreen, calculateDuration(model));
     }
 
+    const prefix = await resolvePrefix(moduleArgs);
     let $error: string = "Unknown error";
     const maxRetries = retries;
     while (retries) {
-      const result = await moduleArgs.fetchWithCreds(endpointURL(model), {
-        method: "POST",
-        body: JSON.stringify(conformedBody),
-        signal: moduleArgs.context.signal,
-      });
+      const result = await moduleArgs.fetchWithCreds(
+        endpointURL(prefix, model),
+        {
+          method: "POST",
+          body: JSON.stringify(conformedBody),
+          signal: moduleArgs.context.signal,
+        }
+      );
       const json = await result.json();
       if (!result.ok) {
         // Fetch is a bit weird, because it returns various props
@@ -735,10 +748,12 @@ function kindFromStatus(status: number): ErrorMetadata["kind"] {
 async function generateContent(
   model: string,
   body: GeminiBody,
-  { fetchWithCreds, context }: A2ModuleArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<GeminiAPIOutputs>> {
+  const { fetchWithCreds, context } = moduleArgs;
   try {
-    const result = await fetchWithCreds(endpointURL(model), {
+    const prefix = await resolvePrefix(moduleArgs);
+    const result = await fetchWithCreds(endpointURL(prefix, model), {
       method: "POST",
       body: JSON.stringify(body),
       signal: context.signal,
@@ -783,11 +798,13 @@ function hasStreamContent(chunks: GeminiAPIOutputs[]): boolean {
 async function streamGenerateContent(
   model: string,
   body: GeminiBody,
-  { fetchWithCreds, context }: A2ModuleArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
+  const { fetchWithCreds, context } = moduleArgs;
+  const prefix = await resolvePrefix(moduleArgs);
   for (let attempt = 0; attempt < STREAM_MAX_RETRIES; attempt++) {
     try {
-      const result = await fetchWithCreds(streamEndpointURL(model), {
+      const result = await fetchWithCreds(streamEndpointURL(prefix, model), {
         method: "POST",
         body: JSON.stringify(body),
         signal: context.signal,

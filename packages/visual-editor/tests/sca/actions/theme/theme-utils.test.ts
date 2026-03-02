@@ -14,6 +14,11 @@ import {
 import type { AppController } from "../../../../src/sca/controller/controller.js";
 import type { AppServices } from "../../../../src/sca/services/services.js";
 import type { LLMContent, Outcome } from "@breadboard-ai/types";
+import {
+  geminiApiPrefix,
+  GOOGLE_GENAI_API_PREFIX,
+  OPAL_BACKEND_API_PREFIX,
+} from "@breadboard-ai/types";
 import type { AppTheme } from "../../../../src/ui/types/types.js";
 
 // ---------------------------------------------------------------------------
@@ -93,6 +98,23 @@ function makeContents(): LLMContent {
 }
 
 // ---------------------------------------------------------------------------
+// geminiApiPrefix
+// ---------------------------------------------------------------------------
+
+describe("geminiApiPrefix", () => {
+  it("returns direct Gemini API prefix when disabled (default)", () => {
+    assert.strictEqual(geminiApiPrefix(false), GOOGLE_GENAI_API_PREFIX);
+  });
+
+  it("returns Opal backend prefix when enabled", () => {
+    assert.strictEqual(
+      geminiApiPrefix(true),
+      `${OPAL_BACKEND_API_PREFIX}/v1beta/models`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // generateImage
 // ---------------------------------------------------------------------------
 
@@ -105,7 +127,8 @@ describe("generateImage", () => {
       makeContents(),
       undefined,
       controller,
-      services
+      services,
+      true
     );
 
     assert.ok(!ok(result));
@@ -113,6 +136,32 @@ describe("generateImage", () => {
       (result as Outcome<AppTheme> & { $error: string }).$error.includes(
         "can't edit the graph"
       )
+    );
+  });
+
+  it("uses direct Gemini API URL when enableGeminiBackend is false", async () => {
+    const { controller } = makeController();
+    const { services, fetchWithCreds } = makeServices();
+
+    await generateImage(makeContents(), undefined, controller, services, false);
+
+    const url = fetchWithCreds.mock.calls[0].arguments[0] as string;
+    assert.ok(
+      url.startsWith(GOOGLE_GENAI_API_PREFIX),
+      `Expected URL to start with ${GOOGLE_GENAI_API_PREFIX}, got ${url}`
+    );
+  });
+
+  it("uses Opal backend URL when enableGeminiBackend is true", async () => {
+    const { controller } = makeController();
+    const { services, fetchWithCreds } = makeServices();
+
+    await generateImage(makeContents(), undefined, controller, services, true);
+
+    const url = fetchWithCreds.mock.calls[0].arguments[0] as string;
+    assert.ok(
+      url.startsWith(`${OPAL_BACKEND_API_PREFIX}/v1beta/models`),
+      `Expected URL to start with ${OPAL_BACKEND_API_PREFIX}/v1beta/models, got ${url}`
     );
   });
 
@@ -125,7 +174,8 @@ describe("generateImage", () => {
       makeContents(),
       undefined,
       controller,
-      services
+      services,
+      true
     );
 
     assert.ok(!ok(result));
@@ -150,7 +200,7 @@ describe("generateImage", () => {
       return (originalFetch as (...a: unknown[]) => unknown)(...args);
     };
 
-    await generateImage(makeContents(), undefined, controller, services);
+    await generateImage(makeContents(), undefined, controller, services, true);
 
     assert.ok(statusesSeen.includes("generating"));
     assert.strictEqual(themeCtrl.status, "idle");
@@ -164,7 +214,8 @@ describe("generateImage", () => {
       makeContents(),
       undefined,
       controller,
-      services
+      services,
+      true
     );
 
     assert.ok(!ok(result));
@@ -186,7 +237,8 @@ describe("generateImage", () => {
       makeContents(),
       undefined,
       controller,
-      services
+      services,
+      true
     );
 
     assert.ok(!ok(result));
@@ -214,7 +266,8 @@ describe("generateImage", () => {
       makeContents(),
       undefined,
       controller,
-      services
+      services,
+      true
     );
 
     assert.ok(!ok(result));
@@ -236,7 +289,8 @@ describe("generateImage", () => {
       makeContents(),
       undefined,
       controller,
-      services
+      services,
+      true
     );
 
     assert.ok(!ok(result));
@@ -268,7 +322,8 @@ describe("generateImage", () => {
       makeContents(),
       undefined,
       controller,
-      services
+      services,
+      true
     );
 
     assert.ok(!ok(result));
@@ -286,7 +341,8 @@ describe("generateImage", () => {
       makeContents(),
       undefined,
       controller,
-      services
+      services,
+      true
     );
 
     assert.ok(!ok(result));
@@ -307,7 +363,8 @@ describe("generateImage", () => {
       makeContents(),
       abortController.signal,
       controller,
-      services
+      services,
+      true
     );
 
     assert.strictEqual(fetchWithCreds.mock.calls.length, 1);
@@ -452,7 +509,8 @@ describe("persistTheme", () => {
         makeContents(),
         undefined,
         controller,
-        services
+        services,
+        true
       );
 
       // generatePaletteFromImage returns null in Node (no canvas),
@@ -523,7 +581,13 @@ describe("persistTheme", () => {
       };
       const { services } = makeServices({ ok: true, json: storedDataResponse });
 
-      await generateImage(makeContents(), undefined, controller, services);
+      await generateImage(
+        makeContents(),
+        undefined,
+        controller,
+        services,
+        true
+      );
 
       // Even if the overall call errors (due to palette generation in Node),
       // crossOrigin should have been set at L90
