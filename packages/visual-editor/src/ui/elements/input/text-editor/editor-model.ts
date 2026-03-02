@@ -365,10 +365,24 @@ class EditorModel {
    * adjacent chiclets always have a text node between them for cursor
    * placement. The invariant keeps the model/render segment indices aligned.
    *
+   * ### The `afterChiclet` disambiguation
+   *
+   * When a chiclet sits at a boundary, the same visible-text offset maps to
+   * two insertion points: the text segment *before* the chiclet or the text
+   * segment *after* it. By default (`afterChiclet=false`), insertion happens
+   * at the first matching text segment (before the chiclet). When
+   * `afterChiclet=true`, the method skips past one chiclet at the boundary
+   * to insert in the following text segment instead.
+   *
    * @param charOffset Position in visible text (chiclets are zero-width).
    * @param part The TemplatePart for the new chiclet.
+   * @param afterChiclet When true, skip past a chiclet at the boundary.
    */
-  insertChicletAtOffset(charOffset: number, part: TemplatePart): void {
+  insertChicletAtOffset(
+    charOffset: number,
+    part: TemplatePart,
+    afterChiclet = false
+  ): void {
     let runningOffset = 0;
 
     for (let i = 0; i < this.#segments.length; i++) {
@@ -376,8 +390,19 @@ class EditorModel {
       if (seg.kind === "text") {
         const segLen = seg.text.length;
         if (runningOffset + segLen >= charOffset) {
-          // Split this text segment at the offset.
+          // At a chiclet boundary with afterChiclet: skip past it so
+          // the new chiclet lands after the existing one rather than before.
           const localOffset = charOffset - runningOffset;
+          if (afterChiclet && localOffset === segLen) {
+            const nextSeg = this.#segments[i + 1];
+            if (nextSeg && nextSeg.kind === "chiclet") {
+              afterChiclet = false;
+              runningOffset += segLen;
+              continue;
+            }
+          }
+
+          // Split this text segment at the offset.
           const before = seg.text.slice(0, localOffset);
           const after = seg.text.slice(localOffset);
 
@@ -646,8 +671,12 @@ class EditorModel {
    * selection are removed. This matches user expectation: if you select
    * across a chiclet and hit Delete, the chiclet should be deleted too.
    */
-  deleteSelection(startOffset: number, endOffset: number): number {
-    return this.#deleteRange(startOffset, endOffset, true);
+  deleteSelection(
+    startOffset: number,
+    endOffset: number,
+    inclusive = true
+  ): number {
+    return this.#deleteRange(startOffset, endOffset, inclusive);
   }
 
   /**

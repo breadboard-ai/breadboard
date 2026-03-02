@@ -843,6 +843,128 @@ describe("EditorModel", () => {
       const newOffset = model.deleteSelection(0, 5);
       assert.equal(newOffset, 0);
     });
+
+    it("preserves chiclet at boundary with exclusive deletion", () => {
+      // Simulate: ["", chicletA, "@"] — chiclet at offset 0, "@" is the
+      // only visible text. Exclusive delete of [0,1] should remove "@"
+      // but leave chicletA intact.
+      const partA = makePart({ path: "A", title: "Node A" });
+      const model = EditorModel.empty();
+      model.insertChicletAtOffset(0, partA);
+      model.insertTextAtOffset(0, "@"); // Goes after chiclet
+
+      // Verify setup: ["", chicletA, "@"]
+      assert.equal(model.visibleTextLength, 1);
+      assert.equal(model.hasChicletAtBoundary(0), true);
+
+      // Exclusive delete: should remove "@" but NOT the chiclet.
+      const newOffset = model.deleteSelection(0, 1, false);
+      assert.equal(newOffset, 0);
+      assert.equal(model.visibleTextLength, 0);
+
+      // ChicletA must still be present.
+      let foundChiclet = false;
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg) && seg.part.path === "A") {
+          foundChiclet = true;
+        }
+      }
+      assert.ok(foundChiclet, "chicletA should still be in the model");
+    });
+
+    it("inclusive delete removes chiclet at boundary", () => {
+      // Same setup but with inclusive=true (default): the chiclet at
+      // offset 0 should be included in the delete range [0,1].
+      const partA = makePart({ path: "A", title: "Node A" });
+      const model = EditorModel.empty();
+      model.insertChicletAtOffset(0, partA);
+      model.insertTextAtOffset(0, "@");
+
+      const newOffset = model.deleteSelection(0, 1, true);
+      assert.equal(newOffset, 0);
+
+      // Both chiclet and "@" should be gone.
+      let foundChiclet = false;
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg)) foundChiclet = true;
+      }
+      assert.ok(!foundChiclet, "chicletA should be removed with inclusive");
+    });
+
+    it("consecutive fast-access insertions preserve both chiclets in order", () => {
+      // Full scenario: blank editor → insert chicletA → type "@" →
+      // exclusive-delete "@" → insert chicletB after chicletA → [A, B].
+      const partA = makePart({ path: "A", title: "Node A" });
+      const partB = makePart({ path: "B", title: "Node B" });
+
+      const model = EditorModel.empty();
+
+      // 1. Insert chicletA at offset 0.
+      model.insertChicletAtOffset(0, partA);
+      // Model: ["", chicletA, ""]
+
+      // 2. Type "@" after chicletA.
+      model.insertTextAtOffset(0, "@");
+      // Model: ["", chicletA, "@"]
+
+      // 3. Exclusive-delete the "@" (simulating addItem's range deletion).
+      model.deleteSelection(0, 1, false);
+      // Model: ["", chicletA, ""]
+
+      // 4. Insert chicletB after chicletA (afterChiclet=true because
+      //    hasChicletAtBoundary(0) is true — addItem detects this).
+      const afterChiclet = model.hasChicletAtBoundary(0);
+      assert.ok(afterChiclet, "chicletA should be at boundary 0");
+      model.insertChicletAtOffset(0, partB, afterChiclet);
+      // Model: ["", chicletA, "", chicletB, ""]
+
+      // Both chiclets should be present in insertion order: A then B.
+      const paths: string[] = [];
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg)) paths.push(seg.part.path);
+      }
+      assert.deepEqual(paths, ["A", "B"]);
+    });
+  });
+
+  describe("insertChicletAtOffset with afterChiclet", () => {
+    it("inserts after an existing chiclet at offset 0", () => {
+      const partA = makePart({ path: "A" });
+      const partB = makePart({ path: "B" });
+      const model = EditorModel.empty();
+      model.insertChicletAtOffset(0, partA);
+      // Model: ["", chicletA, ""]
+
+      model.insertChicletAtOffset(0, partB, true);
+      // Model: ["", chicletA, "", chicletB, ""]
+
+      const paths: string[] = [];
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg)) paths.push(seg.part.path);
+      }
+      assert.deepEqual(paths, ["A", "B"]);
+    });
+
+    it("inserts before when afterChiclet is false (default)", () => {
+      const partA = makePart({ path: "A" });
+      const partB = makePart({ path: "B" });
+      const model = EditorModel.empty();
+      model.insertChicletAtOffset(0, partA);
+
+      model.insertChicletAtOffset(0, partB, false);
+      // Model: ["", chicletB, "", chicletA, ""]
+
+      const paths: string[] = [];
+      for (let i = 0; i < model.length; i++) {
+        const seg = model.segmentAt(i)!;
+        if (isChiclet(seg)) paths.push(seg.part.path);
+      }
+      assert.deepEqual(paths, ["B", "A"]);
+    });
   });
 
   // ---------------------------------------------------------------------------
