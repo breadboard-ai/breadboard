@@ -28,21 +28,24 @@ import { defaultRuntimeFlags } from "../../controller/data/default-flags.js";
  * setting error state, replacing graph). Other concerns like blockingAction,
  * status="generating", stop(), and analytics are handled by the event router.
  */
-function setupFlowgenTest(flowGeneratorMock: Partial<FlowGenerator>) {
+async function setupFlowgenTest(flowGeneratorMock: Partial<FlowGenerator>) {
   const { controller, services, mocks } = makeTestFixtures({
     withEditor: true,
     flowGeneratorMock,
   });
 
+  const env = createMockEnvironment(defaultRuntimeFlags);
+  await env.isHydrated;
+
   FlowgenActions.bind({
     controller,
     services,
-    env: createMockEnvironment(defaultRuntimeFlags),
+    env,
   });
   GraphActions.bind({
     controller,
     services,
-    env: createMockEnvironment(defaultRuntimeFlags),
+    env,
   });
 
   return { controller, services, mocks };
@@ -61,7 +64,7 @@ suite("Flowgen Actions", () => {
   // as well as the standalone `generate` function.
 
   test("generate returns success on successful generation", async () => {
-    setupFlowgenTest({
+    await setupFlowgenTest({
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
@@ -71,7 +74,7 @@ suite("Flowgen Actions", () => {
   });
 
   test("generate returns error on failure", async () => {
-    const { mocks } = setupFlowgenTest({
+    const { mocks } = await setupFlowgenTest({
       oneShot: mock.fn(() =>
         Promise.resolve({
           error: "Generation failed",
@@ -97,7 +100,7 @@ suite("Flowgen Actions", () => {
   });
 
   test("generate sets pendingGraphReplacement on success", async () => {
-    const { controller } = setupFlowgenTest({
+    const { controller } = await setupFlowgenTest({
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
@@ -120,10 +123,13 @@ suite("Flowgen Actions", () => {
       withEditor: false,
     });
 
+    const env = createMockEnvironment(defaultRuntimeFlags);
+    await env.isHydrated;
+
     FlowgenActions.bind({
       controller,
       services,
-      env: createMockEnvironment(defaultRuntimeFlags),
+      env,
     });
 
     const result = await FlowgenActions.generate("test intent");
@@ -136,7 +142,7 @@ suite("Flowgen Actions", () => {
 
   test("generate handles thrown errors", async () => {
     const testError = new Error("Simulated failure for test");
-    const { mocks } = setupFlowgenTest({
+    const { mocks } = await setupFlowgenTest({
       oneShot: mock.fn(() => Promise.reject(testError)),
     });
 
@@ -171,7 +177,9 @@ suite("onFlowgenGenerate", () => {
     unsetDOM();
   });
 
-  function setupOnFlowgenGenerate(flowGeneratorMock: Partial<FlowGenerator>) {
+  async function setupOnFlowgenGenerate(
+    flowGeneratorMock: Partial<FlowGenerator>
+  ) {
     const { controller, services, mocks } = makeTestFixtures({
       withEditor: true,
       flowGeneratorMock,
@@ -199,22 +207,25 @@ suite("onFlowgenGenerate", () => {
     (controller.run.renderer as unknown as Record<string, unknown>).reset ??=
       () => {};
 
+    const env = createMockEnvironment(defaultRuntimeFlags);
+    await env.isHydrated;
+
     FlowgenActions.bind({
       controller,
       services,
-      env: createMockEnvironment(defaultRuntimeFlags),
+      env,
     });
     GraphActions.bind({
       controller,
       services,
-      env: createMockEnvironment(defaultRuntimeFlags),
+      env,
     });
 
     return { controller, services, mocks, runMocks };
   }
 
   test("calls stopRun before generating", async () => {
-    const { runMocks } = setupOnFlowgenGenerate({
+    const { runMocks } = await setupOnFlowgenGenerate({
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
@@ -233,7 +244,7 @@ suite("onFlowgenGenerate", () => {
   });
 
   test("sets generating status", async () => {
-    const { mocks } = setupOnFlowgenGenerate({
+    const { mocks } = await setupOnFlowgenGenerate({
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
@@ -251,7 +262,7 @@ suite("onFlowgenGenerate", () => {
   });
 
   test("tracks analytics event", async () => {
-    const { controller, mocks } = setupOnFlowgenGenerate({
+    const { controller, mocks } = await setupOnFlowgenGenerate({
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
@@ -277,7 +288,7 @@ suite("onFlowgenGenerate", () => {
   });
 
   test("wraps generation in withUIBlocking", async () => {
-    const { controller } = setupOnFlowgenGenerate({
+    const { controller } = await setupOnFlowgenGenerate({
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 
@@ -300,7 +311,7 @@ suite("onFlowgenGenerate", () => {
   });
 
   test("passes empty string when no url", async () => {
-    const { controller, mocks } = setupOnFlowgenGenerate({
+    const { controller, mocks } = await setupOnFlowgenGenerate({
       oneShot: mock.fn(() => Promise.resolve({ flow: makeTestGraph() })),
     });
 

@@ -123,7 +123,7 @@ function removeEditor(
   ).editor.graph.editor = undefined;
 }
 
-function setupThemeTest(
+async function setupThemeTest(
   opts: {
     editor?: ReturnType<typeof makeMockEditor>;
     fetchResponse?: { ok?: boolean; json?: unknown };
@@ -161,10 +161,13 @@ function setupThemeTest(
     );
   }
 
+  const env = createMockEnvironment(defaultRuntimeFlags);
+  await env.isHydrated;
+
   ThemeActions.bind({
     controller,
     services,
-    env: createMockEnvironment(defaultRuntimeFlags),
+    env,
   });
 
   return { controller, services, mocks, editor };
@@ -189,7 +192,7 @@ suite("Theme Actions", () => {
 
   suite("add", () => {
     test("returns error when there is no editor", async () => {
-      const { controller } = setupThemeTest();
+      const { controller } = await setupThemeTest();
       removeEditor(controller);
 
       const result = await ThemeActions.add(makeAppTheme());
@@ -198,7 +201,7 @@ suite("Theme Actions", () => {
     });
 
     test("returns error when theme status is not idle", async () => {
-      const { controller } = setupThemeTest();
+      const { controller } = await setupThemeTest();
       themeStatus(controller).status = "generating";
 
       const result = await ThemeActions.add(makeAppTheme());
@@ -208,7 +211,7 @@ suite("Theme Actions", () => {
 
     test("persists theme and adds it to the graph", async () => {
       const editor = makeMockEditor();
-      setupThemeTest({ editor });
+      await setupThemeTest({ editor });
 
       const result = await ThemeActions.add(makeAppTheme());
 
@@ -233,7 +236,7 @@ suite("Theme Actions", () => {
 
   suite("setTheme", () => {
     test("returns error when there is no editor", async () => {
-      const { controller } = setupThemeTest();
+      const { controller } = await setupThemeTest();
       removeEditor(controller);
 
       const result = await ThemeActions.setTheme(makeGraphTheme());
@@ -242,7 +245,7 @@ suite("Theme Actions", () => {
     });
 
     test("returns error when theme status is not idle", async () => {
-      const { controller } = setupThemeTest();
+      const { controller } = await setupThemeTest();
       themeStatus(controller).status = "editing";
 
       const result = await ThemeActions.setTheme(makeGraphTheme());
@@ -252,7 +255,7 @@ suite("Theme Actions", () => {
 
     test("assigns UUID and sets theme as current", async () => {
       const editor = makeMockEditor();
-      setupThemeTest({ editor });
+      await setupThemeTest({ editor });
 
       const graphTheme = makeGraphTheme();
       const result = await ThemeActions.setTheme(graphTheme);
@@ -275,7 +278,7 @@ suite("Theme Actions", () => {
     });
 
     test("resets theme status to idle after completion", async () => {
-      const { controller } = setupThemeTest();
+      const { controller } = await setupThemeTest();
 
       await ThemeActions.setTheme(makeGraphTheme());
       assert.strictEqual(themeStatus(controller).status, "idle");
@@ -288,7 +291,7 @@ suite("Theme Actions", () => {
 
   suite("deleteTheme", () => {
     test("returns error when there is no editor", async () => {
-      const { controller } = setupThemeTest();
+      const { controller } = await setupThemeTest();
       removeEditor(controller);
 
       const result = await ThemeActions.deleteTheme("some-id");
@@ -297,7 +300,7 @@ suite("Theme Actions", () => {
     });
 
     test("returns error when theme status is not idle", async () => {
-      const { controller } = setupThemeTest();
+      const { controller } = await setupThemeTest();
       themeStatus(controller).status = "uploading";
 
       const result = await ThemeActions.deleteTheme("some-id");
@@ -306,7 +309,7 @@ suite("Theme Actions", () => {
     });
 
     test("returns error when theme does not exist", async () => {
-      setupThemeTest();
+      await setupThemeTest();
 
       const result = await ThemeActions.deleteTheme("nonexistent-id");
       assert.ok(!ok(result));
@@ -326,7 +329,7 @@ suite("Theme Actions", () => {
           },
         },
       });
-      setupThemeTest({ editor });
+      await setupThemeTest({ editor });
 
       const result = await ThemeActions.deleteTheme("theme-a");
       assert.ok(ok(result) || result === undefined);
@@ -356,7 +359,7 @@ suite("Theme Actions", () => {
           },
         },
       });
-      const { controller } = setupThemeTest({ editor });
+      const { controller } = await setupThemeTest({ editor });
 
       await ThemeActions.deleteTheme("theme-a");
       assert.strictEqual(themeStatus(controller).status, "idle");
@@ -374,7 +377,7 @@ suite("Theme Actions", () => {
           },
         },
       });
-      setupThemeTest({ editor });
+      await setupThemeTest({ editor });
 
       const result = await ThemeActions.deleteTheme("theme-a");
       assert.ok(!ok(result));
@@ -387,7 +390,7 @@ suite("Theme Actions", () => {
 
   suite("setCurrent", () => {
     test("returns error when there is no editor", async () => {
-      const { controller } = setupThemeTest();
+      const { controller } = await setupThemeTest();
       removeEditor(controller);
 
       const result = await ThemeActions.setCurrent("some-id");
@@ -396,7 +399,7 @@ suite("Theme Actions", () => {
     });
 
     test("returns error when theme status is not idle", async () => {
-      const { controller } = setupThemeTest();
+      const { controller } = await setupThemeTest();
       themeStatus(controller).status = "editing";
 
       const result = await ThemeActions.setCurrent("some-id");
@@ -405,7 +408,7 @@ suite("Theme Actions", () => {
     });
 
     test("returns error when theme does not exist", async () => {
-      setupThemeTest();
+      await setupThemeTest();
 
       const result = await ThemeActions.setCurrent("nonexistent-id");
       assert.ok(!ok(result));
@@ -426,7 +429,7 @@ suite("Theme Actions", () => {
           },
         },
       });
-      setupThemeTest({ editor });
+      await setupThemeTest({ editor });
 
       const result = await ThemeActions.setCurrent("theme-b");
       assert.ok(ok(result) || result === undefined);
@@ -450,7 +453,7 @@ suite("Theme Actions", () => {
           },
         },
       });
-      const { controller } = setupThemeTest({ editor });
+      const { controller } = await setupThemeTest({ editor });
 
       await ThemeActions.setCurrent("theme-a");
       assert.strictEqual(themeStatus(controller).status, "idle");
@@ -468,7 +471,7 @@ suite("Theme Actions", () => {
           },
         },
       });
-      setupThemeTest({ editor });
+      await setupThemeTest({ editor });
 
       const result = await ThemeActions.setCurrent("theme-a");
       assert.ok(!ok(result));
@@ -481,7 +484,7 @@ suite("Theme Actions", () => {
 
   suite("generate", () => {
     test("returns error when theme generation fails", async () => {
-      setupThemeTest({
+      await setupThemeTest({
         fetchResponse: { ok: false, json: { error: "generation failed" } },
       });
 
@@ -503,7 +506,7 @@ suite("Theme Actions", () => {
 
   suite("generateFromIntent", () => {
     test("returns error when theme generation fails", async () => {
-      setupThemeTest({
+      await setupThemeTest({
         fetchResponse: { ok: false, json: { error: "generation failed" } },
       });
 
@@ -528,7 +531,7 @@ suite("Theme Actions", () => {
 
       try {
         const editor = makeMockEditor();
-        const { controller, services } = setupThemeTest({
+        const { controller, services } = await setupThemeTest({
           editor,
           fetchResponse: {
             ok: true,

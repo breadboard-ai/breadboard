@@ -8,7 +8,7 @@ import {
   GraphTheme,
   LLMContent,
   Outcome,
-  GOOGLE_GENAI_API_PREFIX,
+  geminiApiPrefix,
 } from "@breadboard-ai/types";
 import { err, ok, isStoredData } from "@breadboard-ai/utils";
 import {
@@ -25,8 +25,8 @@ export { generateImage, persistTheme };
 
 const IMAGE_GENERATOR = "gemini-2.5-flash-image";
 
-function endpointURL(model: string) {
-  return `${GOOGLE_GENAI_API_PREFIX}/${encodeURIComponent(model)}:generateContent`;
+function endpointURL(model: string, enableGeminiBackend: boolean) {
+  return `${geminiApiPrefix(enableGeminiBackend)}/${encodeURIComponent(model)}:generateContent`;
 }
 
 /**
@@ -38,7 +38,8 @@ async function generateImage(
   contents: LLMContent,
   abortSignal: AbortSignal | undefined,
   controller: AppController,
-  services: AppServices
+  services: AppServices,
+  enableGeminiBackend: boolean
 ): Promise<Outcome<AppTheme>> {
   const editor = controller.editor.graph.editor;
   if (!editor) {
@@ -52,7 +53,7 @@ async function generateImage(
   controller.editor.theme.status = "generating";
   try {
     const response = await services.fetchWithCreds(
-      endpointURL(IMAGE_GENERATOR),
+      endpointURL(IMAGE_GENERATOR, enableGeminiBackend),
       {
         method: "POST",
         body: JSON.stringify({ contents }),
