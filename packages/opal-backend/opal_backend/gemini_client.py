@@ -9,25 +9,21 @@ Port of the streaming logic extracted from ``loop.ts``.
 Status: Behind flag (enableOpalBackend). The TypeScript implementation is
 the production code path. Changes to the TS source may need to be ported here.
 
-Calls the Gemini REST API via the HttpClient protocol, yielding response
-chunks as async iterables. The actual HTTP transport is injected — this
+Streams from Gemini via the ``BackendClient`` protocol, with automatic
+retry on empty responses. The actual HTTP transport is injected — this
 module has no external dependencies.
-
-Credentials are carried by the ``HttpClient.access_token`` property.
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 from typing import Any, AsyncIterator
 
-from .http_client import HttpClient
+from .backend_client import BackendClient
 
 logger = logging.getLogger(__name__)
 
-GENAI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 STREAM_RETRY_DELAY_S = 0.7
 STREAM_MAX_RETRIES = 5
 
@@ -46,20 +42,19 @@ async def stream_generate_content(
     model: str,
     body: GeminiBody,
     *,
-    client: HttpClient,
+    backend: BackendClient,
 ) -> AsyncIterator[GeminiChunk]:
     """Stream content from Gemini with automatic retry on empty responses.
 
     Mirrors the TypeScript ``streamGenerateContent`` function:
-    1. POST to ``/{model}:streamGenerateContent?alt=sse``
-    2. Parse the SSE stream line-by-line
-    3. Retry (up to MAX_RETRIES) if no content is found in the response
+    1. Delegate to ``backend.stream_generate_content``
+    2. Buffer the response and check for content
+    3. Retry (up to MAX_RETRIES) if no content is found
 
     Args:
         model: Gemini model name (e.g. "gemini-3-flash-preview").
         body: The full request body (contents, tools, etc.).
-        client: HttpClient implementation (carries credentials via
-            ``access_token`` property).
+        backend: BackendClient implementation (handles transport).
 
     Yields:
         Parsed JSON chunks from the Gemini streaming response.
@@ -67,31 +62,14 @@ async def stream_generate_content(
     Raises:
         GeminiAPIError: If the API returns a non-200 status.
     """
-    url = f"{GENAI_API_BASE}/{model}:streamGenerateContent?alt=sse"
-
-    headers: dict[str, str] = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {client.access_token}",
-    }
-
     for attempt in range(STREAM_MAX_RETRIES):
         found_content = False
         buffer: list[GeminiChunk] = []
 
-        async with client.stream_post(
-            url, json=body, headers=headers
-        ) as response:
-            if response.status_code != 200:
-                error_text = await response.aread()
-                raise GeminiAPIError(
-                    f"Gemini API error {response.status_code}: "
-                    f"{error_text.decode()}"
-                )
-
-            async for chunk in _parse_sse_stream(response):
-                if has_content(chunk):
-                    found_content = True
-                buffer.append(chunk)
+        async for chunk in backend.stream_generate_content(model, body):
+            if has_content(chunk):
+                found_content = True
+            buffer.append(chunk)
 
         if found_content:
             for chunk in buffer:
@@ -110,26 +88,6 @@ async def stream_generate_content(
             # Exhausted retries — yield whatever we got
             for chunk in buffer:
                 yield chunk
-
-
-async def _parse_sse_stream(
-    response: Any,
-) -> AsyncIterator[GeminiChunk]:
-    """Parse an SSE stream from Gemini into JSON chunks.
-
-    Gemini's ``alt=sse`` format sends lines like:
-        data: {"candidates": [...]}
-
-    Each ``data:`` line contains a complete JSON object.
-    """
-    async for line in response.aiter_lines():
-        line = line.strip()
-        if line.startswith("data: "):
-            json_str = line[len("data: "):]
-            try:
-                yield json.loads(json_str)
-            except json.JSONDecodeError:
-                logger.warning("Failed to parse SSE chunk: %s", json_str[:100])
 
 
 def has_content(chunk: GeminiChunk) -> bool:

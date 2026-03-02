@@ -73,9 +73,7 @@ def make_objective() -> dict:
     }
 
 
-def make_mock_client() -> MagicMock:
-    """Create a mock HttpClient with access_token."""
-    return MagicMock(access_token="test-token")
+
 
 
 def make_mock_backend() -> MagicMock:
@@ -125,7 +123,6 @@ class TestRun:
         ):
             events = await collect_events(run(
                 objective=make_objective(),
-                client=make_mock_client(),
                 backend=make_mock_backend(),
                 store=InMemoryInteractionStore(),
             ))
@@ -151,7 +148,6 @@ class TestRun:
         ):
             events = await collect_events(run(
                 objective=make_objective(),
-                client=make_mock_client(),
                 backend=make_mock_backend(),
                 store=InMemoryInteractionStore(),
             ))
@@ -181,7 +177,6 @@ class TestRun:
         ):
             events = await collect_events(run(
                 objective=make_objective(),
-                client=make_mock_client(),
                 backend=make_mock_backend(),
                 store=store,
             ))
@@ -213,7 +208,6 @@ class TestRun:
         ):
             events = await collect_events(run(
                 objective=make_objective(),
-                client=make_mock_client(),
                 backend=make_mock_backend(),
                 store=InMemoryInteractionStore(),
             ))
@@ -239,7 +233,6 @@ class TestResume:
         events = await collect_events(resume(
             interaction_id="nonexistent",
             response={"text": "hi"},
-            client=make_mock_client(),
             backend=make_mock_backend(),
             store=InMemoryInteractionStore(),
         ))
@@ -271,7 +264,6 @@ class TestResume:
         ):
             run_events = await collect_events(run(
                 objective=make_objective(),
-                client=make_mock_client(),
                 backend=make_mock_backend(),
                 store=store,
             ))
@@ -301,7 +293,6 @@ class TestResume:
             resume_events = await collect_events(resume(
                 interaction_id=interaction_id,
                 response={"text": "Continue!"},
-                client=make_mock_client(),
                 backend=make_mock_backend(),
                 store=store,
             ))

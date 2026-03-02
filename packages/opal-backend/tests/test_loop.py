@@ -271,7 +271,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_terminates_on_success(self):
         """The loop should stop when system_objective_fulfilled is called."""
-        loop = Loop(client=MagicMock(access_token="test-token"))
+        loop = Loop(backend=MagicMock())
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -311,7 +311,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_terminates_on_failure(self):
         """The loop should stop when system_failed_to_fulfill is called."""
-        loop = Loop(client=MagicMock(access_token="test-token"))
+        loop = Loop(backend=MagicMock())
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -348,7 +348,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_emits_hooks(self):
         """Hooks should be called at the right lifecycle points."""
-        loop = Loop(client=MagicMock(access_token="test-token"))
+        loop = Loop(backend=MagicMock())
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -408,7 +408,7 @@ class TestLoop:
         but the loop read result.get("call_id") (snake_case), silently falling
         back to a different UUID, breaking progress UI correlation.
         """
-        loop = Loop(client=MagicMock(access_token="test-token"))
+        loop = Loop(backend=MagicMock())
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -465,7 +465,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_handles_empty_candidates(self):
         """The loop should return an error if Gemini returns no candidates."""
-        loop = Loop(client=MagicMock(access_token="test-token"))
+        loop = Loop(backend=MagicMock())
 
         system_fns = make_system_functions(loop.controller)
         mapped = map_definitions(system_fns)
@@ -494,7 +494,7 @@ class TestLoop:
     @pytest.mark.asyncio
     async def test_loop_multiple_turns(self):
         """The loop should handle multiple turns before termination."""
-        loop = Loop(client=MagicMock(access_token="test-token"))
+        loop = Loop(backend=MagicMock())
 
         call_count = 0
 
@@ -557,23 +557,49 @@ class TestGeminiClient:
     """Tests for the Gemini streaming client."""
 
     @pytest.mark.asyncio
-    async def test_parse_sse_chunks(self):
-        from opal_backend.gemini_client import _parse_sse_stream
+    async def test_stream_generate_content_parses_sse(self):
+        """HttpBackendClient.stream_generate_content parses SSE lines."""
+        from unittest.mock import AsyncMock
+        from opal_backend.local.backend_client_impl import HttpBackendClient
 
-        # Simulate an httpx response with SSE data
-        chunks_data = [
+        # Build SSE lines that the mock httpx stream will yield.
+        sse_lines = [
             'data: {"candidates": [{"content": {"parts": [{"text": "Hello"}]}}]}',
             "",
             'data: {"candidates": [{"content": {"parts": [{"text": " World"}]}}]}',
         ]
 
-        class FakeResponse:
-            async def aiter_lines(self):
-                for line in chunks_data:
-                    yield line
+        # Fake httpx streaming response.
+        mock_response = AsyncMock()
+        mock_response.status_code = 200
+
+        async def fake_aiter_lines():
+            for line in sse_lines:
+                yield line
+
+        mock_response.aiter_lines = fake_aiter_lines
+
+        # Fake httpx client with a stream context manager.
+        mock_httpx = AsyncMock()
+
+        from contextlib import asynccontextmanager
+
+        @asynccontextmanager
+        async def fake_stream(*args, **kwargs):
+            yield mock_response
+
+        mock_httpx.stream = fake_stream
+
+        backend = HttpBackendClient(
+            upstream_base="http://example.com",
+            httpx_client=mock_httpx,
+            access_token="test-token",
+        )
 
         parsed = []
-        async for chunk in _parse_sse_stream(FakeResponse()):
+        async for chunk in backend.stream_generate_content(
+            "gemini-3-flash-preview", {"contents": []}
+        ):
             parsed.append(chunk)
 
         assert len(parsed) == 2
@@ -587,3 +613,4 @@ class TestGeminiClient:
         assert has_content({"candidates": []}) is False
         assert has_content({"candidates": [{"content": {}}]}) is False
         assert has_content({"candidates": [{"content": {"parts": []}}]}) is False
+

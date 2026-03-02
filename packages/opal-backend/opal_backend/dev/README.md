@@ -29,7 +29,7 @@ npm run dev -w packages/opal-backend
 Handles `POST /v1beta1/streamRunAgent`:
 
 1. Parses the request body (start or resume)
-2. Creates per-request `HttpxClient` with the caller's OAuth token
+2. Creates per-request `HttpBackendClient` with the caller's OAuth token
 3. Delegates to `opal_backend.run()` or `opal_backend.resume()`
 4. Wraps the async event iterator as an `EventSourceResponse` (SSE)
 

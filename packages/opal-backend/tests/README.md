@@ -30,19 +30,8 @@ npm run typecheck -w packages/opal-backend
 
 ## Mock Patterns
 
-Tests inject mock implementations of the three transport protocols. Here are the
+Tests inject mock implementations of the two transport protocols. Here are the
 minimal shapes:
-
-### `HttpClient`
-
-```python
-class MockHttpClient:
-    access_token = "test-token"
-
-    @contextlib.asynccontextmanager
-    async def stream_post(self, url, *, json, headers):
-        yield MockStreamResponse(lines=["data: {...}"])
-```
 
 ### `BackendClient`
 
@@ -56,6 +45,9 @@ class MockBackendClient:
 
     async def upload_blob_file(self, drive_file_id):
         return "/board/blobs/uuid-here"
+
+    async def stream_generate_content(self, model, body):
+        yield {"candidates": [{"content": {"parts": [{"text": "Hello!"}]}}]}
 ```
 
 ### `InteractionStore`
@@ -67,7 +59,7 @@ directly in tests — it's already suitable for testing.
 
 Function group tests typically:
 
-1. Create mock `HttpClient` / `BackendClient` with canned responses
+1. Create mock `BackendClient` with canned responses
 2. Create `AgentFileSystem` and `TaskTreeManager`
 3. Build the function group via its factory
 4. Call the handler directly with test args
@@ -75,12 +67,11 @@ Function group tests typically:
 
 ```python
 async def test_generate_text_basic():
-    client = MockHttpClient(responses=[mock_gemini_response("Hello!")])
     backend = MockBackendClient()
     fs = AgentFileSystem()
 
     group = get_generate_function_group(
-        file_system=fs, client=client, backend=backend
+        file_system=fs, backend=backend
     )
 
     handler = dict(group.definitions)["generate_text"].handler

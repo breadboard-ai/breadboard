@@ -38,7 +38,6 @@ from .gemini_client import (
     GeminiChunk,
     stream_generate_content,
 )
-from .http_client import HttpClient
 from .suspend import SuspendError, SuspendResult
 
 logger = logging.getLogger(__name__)
@@ -143,12 +142,10 @@ class Loop:
     def __init__(
         self,
         *,
-        client: HttpClient | None = None,
         backend: BackendClient | None = None,
         controller: LoopController | None = None,
     ) -> None:
         self.controller = controller or LoopController()
-        self._client = client
         self._backend = backend
 
     async def run(
@@ -233,13 +230,13 @@ class Loop:
                 # Stream from Gemini
                 function_caller = FunctionCaller(definition_map)
 
-                if not self._client:
-                    return err("No HttpClient provided")
+                if not self._backend:
+                    return err("No BackendClient provided")
 
                 async for chunk in stream_generate_content(
                     AGENT_MODEL,
                     body,
-                    client=self._client,
+                    backend=self._backend,
                 ):
                     candidates = chunk.get("candidates", [])
                     if not candidates:

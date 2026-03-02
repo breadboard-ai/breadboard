@@ -30,7 +30,7 @@ from ..agent_file_system import AgentFileSystem
 from ..conform_body import conform_body
 from ..backend_client import BackendClient
 from ..error_classifier import to_error_or_response
-from ..http_client import HttpClient
+
 from ..function_definition import (
     FunctionDefinition,
     FunctionGroup,
@@ -168,7 +168,7 @@ def _define_generate_text(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    client: HttpClient | None = None,
+
     backend: BackendClient | None = None,
 ) -> FunctionDefinition:
     """Port of the ``generate_text`` function from generate.ts.
@@ -251,7 +251,7 @@ def _define_generate_text(
             async for chunk in stream_generate_content(
                 resolved_model,
                 body,
-                client=client,
+                backend=backend,
             ):
                 candidates = chunk.get("candidates", [])
                 if not candidates:
@@ -418,7 +418,7 @@ def _define_generate_and_execute_code(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    client: HttpClient | None = None,
+
     backend: BackendClient | None = None,
 ) -> FunctionDefinition:
     """Port of the ``generate_and_execute_code`` function from generate.ts.
@@ -485,7 +485,7 @@ def _define_generate_and_execute_code(
             async for chunk in stream_generate_content(
                 FLASH_MODEL_NAME,
                 body,
-                client=client,
+                backend=backend,
             ):
                 candidates = chunk.get("candidates", [])
                 if not candidates:
@@ -638,7 +638,7 @@ def get_generate_function_group(
     *,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager | None = None,
-    client: HttpClient | None = None,
+
     backend: BackendClient | None = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with the generate_text function.
@@ -649,7 +649,7 @@ def get_generate_function_group(
     Args:
         file_system: The AgentFileSystem for resolving file references.
         task_tree_manager: Optional TaskTreeManager for progress tracking.
-        client: HttpClient for Gemini streaming calls.
+
         backend: BackendClient for One Platform upload calls.
 
     Returns:
@@ -660,13 +660,11 @@ def get_generate_function_group(
         _define_generate_text(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            client=client,
             backend=backend,
         ),
         _define_generate_and_execute_code(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            client=client,
             backend=backend,
         ),
     ]

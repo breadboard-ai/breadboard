@@ -51,10 +51,9 @@ stdlib + typing.
 
 ### Transport Protocols
 
-| Module              | Purpose                                         |
-| ------------------- | ----------------------------------------------- |
-| `http_client.py`    | `HttpClient` protocol (POST, streaming, token)  |
-| `backend_client.py` | `BackendClient` protocol (executeStep, uploads) |
+| Module              | Purpose                                                           |
+| ------------------- | ----------------------------------------------------------------- |
+| `backend_client.py` | `BackendClient` protocol (executeStep, uploads, Gemini streaming) |
 
 ### Shared
 
@@ -67,7 +66,7 @@ stdlib + typing.
 ```
 run.py
 ├── loop.py
-│   ├── gemini_client.py ← HttpClient
+│   ├── gemini_client.py ← BackendClient
 │   ├── function_caller.py
 │   │   └── function_definition.py
 │   └── suspend.py

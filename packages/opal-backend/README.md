@@ -23,7 +23,6 @@ opal_backend/                 ← SYNCED to production (google3)
 ├── task_tree_manager.py         Hierarchical task tree
 ├── suspend.py                   Suspend/resume primitives
 ├── interaction_store.py         InteractionStore protocol
-├── http_client.py               HttpClient protocol (no deps)
 ├── backend_client.py            BackendClient protocol (no deps)
 ├── function_definition.py       FunctionDefinition / FunctionGroup types
 ├── function_caller.py           Async function dispatch
@@ -32,7 +31,6 @@ opal_backend/                 ← SYNCED to production (google3)
 
 opal_backend/local/           ← NOT synced (local-only implementations)
 ├── api_surface.py               FastAPI router + AgentBackend protocol
-├── http_client_impl.py          httpx-based HttpClient
 ├── backend_client_impl.py       HTTP-based BackendClient
 ├── interaction_store_impl.py    In-memory InteractionStore
 ├── pending_requests.py          Pending request map for fake server
@@ -53,7 +51,7 @@ tests/                        ← pytest test suite (20 files, 300+ tests)
 Everything in `opal_backend/*.py` and `opal_backend/functions/` ships to the
 production backend via copybara. These modules have **zero external
 dependencies** — no `httpx`, `fastapi`, or `pydantic` imports. All transport is
-injected through protocols (`HttpClient`, `BackendClient`, `InteractionStore`).
+injected through protocols (`BackendClient`, `InteractionStore`).
 
 Everything in `opal_backend/local/`, `opal_backend/dev/`, and
 `opal_backend/fake/` is local-only development infrastructure.
