@@ -8,25 +8,24 @@
 
 ## Synced Core (`opal_backend/`)
 
-| Python module            | TypeScript source                                | Notes                                      |
-| ------------------------ | ------------------------------------------------ | ------------------------------------------ |
-| `run.py`                 | `local-agent-run.ts`, `loop-setup.ts`            | Public API; wires deps + starts loop       |
-| `loop.py`                | `loop.ts`                                        | Core function-calling orchestrator         |
-| `events.py`              | `agent-event.ts`                                 | Wire format — both sides must match        |
-| `agent_events.py`        | `loop-setup.ts` (`buildHooksFromSink`)           | Event sink + hooks adapter                 |
-| `gemini_client.py`       | _(inline in loop.ts)_                            | Extracted into own module in Python        |
-| `conform_body.py`        | `resolve-to-segments.ts`, data transform helpers | Data part transforms                       |
-| `pidgin.py`              | `pidgin-translator.ts`                           | Segment → pidgin text translation          |
-| `step_executor.py`       | `step-executor.ts`                               | executeStep client for media gen           |
-| `agent_file_system.py`   | `file-system.ts`                                 | In-memory virtual file system              |
-| `task_tree_manager.py`   | `task-tree-manager.ts`                           | Hierarchical task tree                     |
-| `suspend.py`             | _(no direct counterpart)_                        | New for Python; TS handles suspend inline  |
-| `interaction_store.py`   | _(no direct counterpart)_                        | New protocol for Python's reconnect model  |
-| `http_client.py`         | _(no direct counterpart)_                        | Transport abstraction for sync boundary    |
-| `backend_client.py`      | _(no direct counterpart)_                        | One Platform abstraction for sync boundary |
-| `function_definition.py` | `function-definition.ts`                         | FunctionDefinition / FunctionGroup types   |
-| `function_caller.py`     | `function-caller.ts`                             | Async function dispatch                    |
-| `shared_schemas.py`      | _(spread across function files in TS)_           | Centralized in Python                      |
+| Python module            | TypeScript source                                | Notes                                          |
+| ------------------------ | ------------------------------------------------ | ---------------------------------------------- |
+| `run.py`                 | `local-agent-run.ts`, `loop-setup.ts`            | Public API; wires deps + starts loop           |
+| `loop.py`                | `loop.ts`                                        | Core function-calling orchestrator             |
+| `events.py`              | `agent-event.ts`                                 | Wire format — both sides must match            |
+| `agent_events.py`        | `loop-setup.ts` (`buildHooksFromSink`)           | Event sink + hooks adapter                     |
+| `gemini_client.py`       | _(inline in loop.ts)_                            | Extracted into own module in Python            |
+| `conform_body.py`        | `resolve-to-segments.ts`, data transform helpers | Data part transforms                           |
+| `pidgin.py`              | `pidgin-translator.ts`                           | Segment → pidgin text translation              |
+| `step_executor.py`       | `step-executor.ts`                               | executeStep client for media gen               |
+| `agent_file_system.py`   | `file-system.ts`                                 | In-memory virtual file system                  |
+| `task_tree_manager.py`   | `task-tree-manager.ts`                           | Hierarchical task tree                         |
+| `suspend.py`             | _(no direct counterpart)_                        | New for Python; TS handles suspend inline      |
+| `interaction_store.py`   | _(no direct counterpart)_                        | New protocol for Python's reconnect model      |
+| `backend_client.py`      | _(no direct counterpart)_                        | Backend + Gemini abstraction for sync boundary |
+| `function_definition.py` | `function-definition.ts`                         | FunctionDefinition / FunctionGroup types       |
+| `function_caller.py`     | `function-caller.ts`                             | Async function dispatch                        |
+| `shared_schemas.py`      | _(spread across function files in TS)_           | Centralized in Python                          |
 
 ## Function Groups (`opal_backend/functions/`)
 

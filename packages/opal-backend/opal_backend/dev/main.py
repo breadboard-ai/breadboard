@@ -31,7 +31,7 @@ from opal_backend.agent_file_system import AgentFileSystem
 from opal_backend.events import ErrorEvent
 from opal_backend.local.api_surface import create_api_router
 from opal_backend.local.backend_client_impl import HttpBackendClient
-from opal_backend.local.http_client_impl import HttpxClient
+
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.pidgin import to_pidgin
 from opal_backend.run import run as run_agent, resume as resume_agent
@@ -197,17 +197,15 @@ class DevAgentBackend:
                     "Missing 'segments' or 'objective' in request body"
                 )
 
-        client = HttpxClient(access_token=access_token)
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
-            httpx_client=client.httpx_client,
+            httpx_client=httpx.AsyncClient(timeout=120.0),
             access_token=access_token,
             origin=origin,
         )
 
         return self._as_sse(run_agent(
             objective=objective,
-            client=client,
             backend=backend,
             store=_interaction_store,
             flags=flags,
@@ -218,10 +216,9 @@ class DevAgentBackend:
         access_token: str, origin: str,
     ) -> EventSourceResponse:
         """Resume a suspended agent run."""
-        client = HttpxClient(access_token=access_token)
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
-            httpx_client=client.httpx_client,
+            httpx_client=httpx.AsyncClient(timeout=120.0),
             access_token=access_token,
             origin=origin,
         )
@@ -229,7 +226,6 @@ class DevAgentBackend:
         return self._as_sse(resume_agent(
             interaction_id=interaction_id,
             response=response,
-            client=client,
             backend=backend,
             store=_interaction_store,
         ))

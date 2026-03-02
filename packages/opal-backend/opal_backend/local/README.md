@@ -8,14 +8,13 @@ Everything outside this directory IS synced to production.
 
 ## Module Reference
 
-| Module                      | Purpose                                                                  |
-| --------------------------- | ------------------------------------------------------------------------ |
-| `api_surface.py`            | FastAPI router factory + `AgentBackend`/`ProxyBackend` protocols         |
-| `http_client_impl.py`       | `HttpxClient` — `httpx`-based `HttpClient` implementation                |
-| `backend_client_impl.py`    | `HttpBackendClient` — HTTP-based `BackendClient` (POSTs to One Platform) |
-| `interaction_store_impl.py` | `InMemoryInteractionStore` — dict-based `InteractionStore`               |
-| `pending_requests.py`       | `PendingRequestMap` — asyncio futures for fake server suspend/resume     |
-| `sse_sink.py`               | `SSEAgentEventSink` — bridges `AgentEvent` → SSE strings for fake server |
+| Module                      | Purpose                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------- |
+| `api_surface.py`            | FastAPI router factory + `AgentBackend`/`ProxyBackend` protocols                |
+| `backend_client_impl.py`    | `HttpBackendClient` — HTTP-based `BackendClient` (POSTs to OP + streams Gemini) |
+| `interaction_store_impl.py` | `InMemoryInteractionStore` — dict-based `InteractionStore`                      |
+| `pending_requests.py`       | `PendingRequestMap` — asyncio futures for fake server suspend/resume            |
+| `sse_sink.py`               | `SSEAgentEventSink` — bridges `AgentEvent` → SSE strings for fake server        |
 
 ## The Resumable Stream Protocol
 
@@ -38,6 +37,5 @@ Body (resume): {"interactionId": "...", "response": {...}}
 
 | Protocol (synced)  | Implementation (local)                                   |
 | ------------------ | -------------------------------------------------------- |
-| `HttpClient`       | `HttpxClient` (`http_client_impl.py`)                    |
 | `BackendClient`    | `HttpBackendClient` (`backend_client_impl.py`)           |
 | `InteractionStore` | `InMemoryInteractionStore` (`interaction_store_impl.py`) |

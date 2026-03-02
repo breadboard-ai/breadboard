@@ -4,7 +4,7 @@
 """
 HTTP-based implementation of ``BackendClient``.
 
-POSTs to One Platform endpoints via ``httpx``. Used by the dev
+POSTs to One Platform and Gemini endpoints via ``httpx``. Used by the dev
 backend and local testing. This module is NOT synced to google3 —
 it lives in ``local/``.
 """
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any
+from typing import Any, AsyncIterator
 
 import httpx
 
@@ -23,17 +23,20 @@ from ..backend_client import (
     UPLOAD_GEMINI_FILE_ENDPOINT,
     UPLOAD_BLOB_FILE_ENDPOINT,
 )
+from ..gemini_client import GeminiAPIError
 
 __all__ = ["HttpBackendClient"]
 
 logger = logging.getLogger(__name__)
 
+GENAI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+
 
 class HttpBackendClient:
     """Default HTTP-based backend client.
 
-    POSTs to One Platform endpoints via ``httpx``. Used by the dev
-    backend and local testing.
+    POSTs to One Platform and Gemini endpoints via ``httpx``. Used by
+    the dev backend and local testing.
     """
 
     def __init__(
@@ -142,6 +145,43 @@ class HttpBackendClient:
 
         blob_id = data.get("blobId", "")
         return f"/board/blobs/{blob_id}"
+
+    async def stream_generate_content(
+        self,
+        model: str,
+        body: dict[str, Any],
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Stream from Gemini via httpx and parse SSE chunks.
+
+        Builds the ``streamGenerateContent`` URL, sends an authenticated
+        POST, and yields parsed JSON chunks from the SSE stream.
+        """
+        url = f"{GENAI_API_BASE}/{model}:streamGenerateContent?alt=sse"
+        headers: dict[str, str] = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self._access_token}",
+        }
+
+        async with self._httpx.stream(
+            "POST", url, json=body, headers=headers
+        ) as response:
+            if response.status_code != 200:
+                error_text = await response.aread()
+                raise GeminiAPIError(
+                    f"Gemini API error {response.status_code}: "
+                    f"{error_text.decode()}"
+                )
+
+            async for line in response.aiter_lines():
+                line = line.strip()
+                if line.startswith("data: "):
+                    json_str = line[len("data: "):]
+                    try:
+                        yield json.loads(json_str)
+                    except json.JSONDecodeError:
+                        logger.warning(
+                            "Failed to parse SSE chunk: %s", json_str[:100]
+                        )
 
 
 def _decode_error(text: str) -> str:

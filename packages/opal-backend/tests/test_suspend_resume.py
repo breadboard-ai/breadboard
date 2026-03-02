@@ -185,7 +185,7 @@ class TestLoopSuspend(unittest.TestCase):
                 "opal_backend.loop.stream_generate_content",
                 side_effect=fake_stream,
             ):
-                loop = Loop(client=MagicMock(access_token="test-token"))
+                loop = Loop(backend=MagicMock())
                 result = await loop.run(
                     AgentRunArgs(
                         objective=objective,
@@ -264,7 +264,7 @@ class TestLoopSuspend(unittest.TestCase):
                 "opal_backend.loop.stream_generate_content",
                 side_effect=fake_stream,
             ):
-                loop = Loop(controller=controller, client=MagicMock(access_token="test-token"))
+                loop = Loop(controller=controller, backend=MagicMock())
                 result = await loop.run(
                     AgentRunArgs(
                         objective=saved_contents[0],
@@ -344,7 +344,7 @@ class TestLoopSuspend(unittest.TestCase):
                 "opal_backend.loop.stream_generate_content",
                 side_effect=fake_stream,
             ):
-                loop = Loop(client=MagicMock(access_token="test-token"))
+                loop = Loop(backend=MagicMock())
                 result = await loop.run(
                     AgentRunArgs(
                         objective=objective,
@@ -424,7 +424,7 @@ class TestLoopSuspend(unittest.TestCase):
                 "opal_backend.loop.stream_generate_content",
                 side_effect=fake_stream,
             ):
-                loop = Loop(controller=controller, client=MagicMock(access_token="test-token"))
+                loop = Loop(controller=controller, backend=MagicMock())
                 result = await loop.run(
                     AgentRunArgs(
                         objective=saved_contents[0],

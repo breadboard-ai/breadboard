@@ -11,14 +11,13 @@ the production code path. Changes to the TS source may need to be ported here.
 
 ``run()`` and ``resume()`` are async generators that yield typed
 ``AgentEvent``s. They are the canonical API for running an agent from
-any environment — callers provide only transport deps (``HttpClient``,
-``BackendClient``, ``InteractionStore``). Everything else is internal.
+any environment — callers provide only transport deps (``BackendClient``,
+``InteractionStore``). Everything else is internal.
 
 Usage::
 
     async for event in opal_backend.run(
         objective=objective,
-        client=http_client,
         backend=backend_client,
         store=interaction_store,
     ):
@@ -48,7 +47,6 @@ from .functions.generate import get_generate_function_group
 from .functions.image import get_image_function_group
 from .functions.system import get_system_function_group
 from .functions.video import get_video_function_group
-from .http_client import HttpClient
 from .interaction_store import InteractionState, InteractionStore
 from .loop import AgentRunArgs, Loop, LoopController
 from .suspend import SuspendResult
@@ -67,7 +65,6 @@ logger = logging.getLogger(__name__)
 async def run(
     *,
     objective: dict[str, Any],
-    client: HttpClient,
     backend: BackendClient,
     store: InteractionStore,
     flags: dict[str, Any] | None = None,
@@ -79,8 +76,7 @@ async def run(
 
     Args:
         objective: The user's objective as an LLMContent dict.
-        client: HTTP transport (carries credentials).
-        backend: One Platform backend client.
+        backend: Backend client for all API calls.
         store: Interaction store for suspend/resume state.
         flags: Optional feature flags (e.g. ``{"googleOne": True}``).
 
@@ -97,7 +93,6 @@ async def run(
         controller=controller,
         file_system=file_system,
         task_tree_manager=task_tree_manager,
-        client=client,
         backend=backend,
         flags=resolved_flags,
     )
@@ -112,7 +107,6 @@ async def run(
         controller=controller,
         file_system=file_system,
         task_tree_manager=task_tree_manager,
-        client=client,
         backend=backend,
         store=store,
     ):
@@ -123,7 +117,6 @@ async def resume(
     *,
     interaction_id: str,
     response: dict[str, Any],
-    client: HttpClient,
     backend: BackendClient,
     store: InteractionStore,
     flags: dict[str, Any] | None = None,
@@ -136,8 +129,7 @@ async def resume(
     Args:
         interaction_id: The interaction ID from the suspend event.
         response: The client's response to the suspend prompt.
-        client: HTTP transport (carries credentials).
-        backend: One Platform backend client.
+        backend: Backend client for all API calls.
         store: Interaction store for suspend/resume state.
         flags: Optional feature flags.
 
@@ -174,7 +166,6 @@ async def resume(
         controller=controller,
         file_system=state.file_system,
         task_tree_manager=state.task_tree_manager,
-        client=client,
         backend=backend,
         flags=resolved_flags,
     )
@@ -190,7 +181,6 @@ async def resume(
         controller=controller,
         file_system=state.file_system,
         task_tree_manager=state.task_tree_manager,
-        client=client,
         backend=backend,
         store=store,
     ):
@@ -207,7 +197,6 @@ def _build_function_groups(
     controller: LoopController,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager,
-    client: HttpClient,
     backend: BackendClient,
     flags: dict[str, Any],
 ) -> list:
@@ -223,7 +212,6 @@ def _build_function_groups(
         get_generate_function_group(
             file_system=file_system,
             task_tree_manager=task_tree_manager,
-            client=client,
             backend=backend,
         ),
         get_image_function_group(
@@ -257,7 +245,6 @@ async def _stream_loop(
     controller: LoopController,
     file_system: AgentFileSystem,
     task_tree_manager: TaskTreeManager,
-    client: HttpClient,
     backend: BackendClient,
     store: InteractionStore,
 ) -> AsyncIterator[AgentEvent]:
@@ -269,7 +256,6 @@ async def _stream_loop(
     run_args.hooks = build_hooks_from_sink(sink)
 
     loop = Loop(
-        client=client,
         backend=backend,
         controller=controller,
     )

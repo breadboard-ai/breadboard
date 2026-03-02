@@ -10,9 +10,10 @@ backend's sync boundary. The TypeScript implementation calls One Platform inline
 Status: Behind flag (enableOpalBackend). The TypeScript implementation is
 the production code path.
 
-Separates "One Platform backend calls" (executeStep, uploadGeminiFile,
-uploadBlobFile) from "Gemini HTTP calls" (streaming content generation).
-This allows google3 to inject a direct backend client that bypasses HTTP.
+Consolidates all backend API calls — both One Platform operations
+(executeStep, uploadGeminiFile, uploadBlobFile) and Gemini streaming
+(streamGenerateContent). This allows google3 to inject a direct backend
+client that uses RPC bindings instead of HTTP.
 
 This module has NO external dependencies — it uses only Python stdlib +
 typing. The protocol defines the contract; implementations live elsewhere
@@ -21,7 +22,7 @@ typing. The protocol defines the contract; implementations live elsewhere
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, AsyncIterator, Protocol, runtime_checkable
 
 __all__ = ["BackendClient"]
 
@@ -33,20 +34,17 @@ UPLOAD_BLOB_FILE_ENDPOINT = "/v1beta1/uploadBlobFile"
 
 @runtime_checkable
 class BackendClient(Protocol):
-    """Protocol for One Platform backend operations.
-
-    Three methods cover all the backend-specific HTTP calls that the
-    agent loop makes to One Platform. Everything else (Gemini streaming)
-    goes through ``HttpClient`` directly.
+    """Protocol for backend operations (One Platform + Gemini).
 
     Implementations:
     - ``HttpBackendClient`` (``local/backend_client_impl.py``) — POSTs
-      to One Platform via HTTP.
-    - google3 ``DirectBackendClient`` — calls backend handlers directly.
+      to One Platform and Gemini via HTTP.
+    - google3 ``DirectBackendClient`` — calls backend handlers directly
+      using RPC bindings.
 
     Credentials are a transport concern: each implementation carries its
-    own auth mechanism (``HttpBackendClient`` reads from its
-    ``HttpClient.access_token``; google3 uses service accounts).
+    own auth mechanism (``HttpBackendClient`` uses an access token;
+    google3 uses service accounts).
     """
 
     async def execute_step(
@@ -96,5 +94,28 @@ class BackendClient(Protocol):
 
         Raises:
             ValueError: If the upload fails.
+        """
+        ...
+
+    def stream_generate_content(
+        self,
+        model: str,
+        body: dict[str, Any],
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Stream content generation from Gemini.
+
+        Yields parsed JSON chunks from the Gemini ``streamGenerateContent``
+        API. Transport details (URL construction, auth headers, SSE parsing)
+        are handled by the implementation.
+
+        Args:
+            model: Gemini model name (e.g. ``"gemini-3-flash-preview"``).
+            body: The full Gemini request body (contents, tools, etc.).
+
+        Yields:
+            Parsed JSON response chunks.
+
+        Raises:
+            GeminiAPIError: If the API returns a non-200 status.
         """
         ...

@@ -34,17 +34,15 @@ your change. The how-to checklists below include these reminders explicitly.
 external dependencies.** No `httpx`, `fastapi`, `pydantic`, or `sse_starlette`
 imports. Only Python stdlib + typing.
 
-All transport is injected through three protocols:
+All transport is injected through two protocols:
 
-| Protocol           | File                   | What it abstracts                |
-| ------------------ | ---------------------- | -------------------------------- |
-| `HttpClient`       | `http_client.py`       | HTTP POST + streaming            |
-| `BackendClient`    | `backend_client.py`    | One Platform operations          |
-| `InteractionStore` | `interaction_store.py` | Suspend/resume state persistence |
+| Protocol           | File                   | What it abstracts                   |
+| ------------------ | ---------------------- | ----------------------------------- |
+| `BackendClient`    | `backend_client.py`    | One Platform ops + Gemini streaming |
+| `InteractionStore` | `interaction_store.py` | Suspend/resume state persistence    |
 
 Implementations live in `local/`:
 
-- `HttpxClient` → `local/http_client_impl.py`
 - `HttpBackendClient` → `local/backend_client_impl.py`
 - `InMemoryInteractionStore` → `local/interaction_store_impl.py`
 
@@ -56,7 +54,6 @@ The public API is two async generators in `run.py`:
 # Start a new run
 async for event in opal_backend.run(
     objective=objective,
-    client=http_client,
     backend=backend_client,
     store=interaction_store,
     flags={"enable_g1_quota": True},
@@ -67,7 +64,6 @@ async for event in opal_backend.run(
 async for event in opal_backend.resume(
     interaction_id=interaction_id,
     response=user_response,
-    client=http_client,
     backend=backend_client,
     store=interaction_store,
 ):
@@ -186,16 +182,12 @@ npm run typecheck -w packages/opal-backend
 Tests inject mock implementations of protocols:
 
 ```python
-# Minimal HttpClient mock
-class MockHttpClient:
-    access_token = "test-token"
-    def stream_post(self, url, *, json, headers): ...
-
 # Minimal BackendClient mock
 class MockBackendClient:
     async def execute_step(self, body): ...
     async def upload_gemini_file(self, request): ...
     async def upload_blob_file(self, drive_file_id): ...
+    async def stream_generate_content(self, model, body): ...
 ```
 
 ### Test File Mapping
@@ -224,7 +216,7 @@ class MockBackendClient:
 
 ## Common Pitfalls
 
-1. **Importing httpx in synced code** — Don't. Use `HttpClient` protocol.
+1. **Importing httpx in synced code** — Don't. Use `BackendClient` protocol.
    Production injects its own transport.
 
 2. **Forgetting `to_dict()` on new events** — The SSE layer calls
@@ -232,8 +224,8 @@ class MockBackendClient:
    `to_dict()` too (camelCase key, omit if `None`).
 
 3. **Not threading deps through `_build_function_groups()`** — New function
-   groups need `file_system`, `task_tree_manager`, `client`, and `backend`.
-   These are threaded in `run.py` → `_build_function_groups()`.
+   groups need `file_system`, `task_tree_manager`, and `backend`. These are
+   threaded in `run.py` → `_build_function_groups()`.
 
 4. **Suspend without `function_call_part`** — `SuspendError` needs the function
    call part that triggered it so the loop can inject the response as a matching
