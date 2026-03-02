@@ -189,7 +189,6 @@ Tests inject mock implementations of protocols:
 # Minimal HttpClient mock
 class MockHttpClient:
     access_token = "test-token"
-    async def post(self, url, *, json, headers): ...
     def stream_post(self, url, *, json, headers): ...
 
 # Minimal BackendClient mock

@@ -16,26 +16,12 @@ from typing import Any, AsyncIterator
 
 import httpx
 
-from ..http_client import HttpClient, HttpResponse, StreamResponse
+from ..http_client import HttpClient, StreamResponse
 
 
 DEFAULT_TIMEOUT = 120.0
 
 
-class HttpxResponse(HttpResponse):
-    """Wraps an httpx.Response to match the HttpResponse interface."""
-
-    def __init__(self, response: httpx.Response) -> None:
-        self._response = response
-        self.status_code = response.status_code
-        self.text = response.text
-        self.reason_phrase = response.reason_phrase or ""
-
-    def json(self) -> Any:
-        return self._response.json()
-
-    def raise_for_status(self) -> None:
-        self._response.raise_for_status()
 
 
 class HttpxStreamResponse(StreamResponse):
@@ -57,10 +43,6 @@ class HttpxClient:
     """httpx-based implementation of HttpClient for local dev.
 
     Usage:
-        client = HttpxClient()
-        response = await client.post(url, json=body, headers=headers)
-
-    For streaming:
         async with client.stream_post(url, json=body, headers=headers) as stream:
             async for line in stream.aiter_lines():
                 ...
@@ -78,15 +60,10 @@ class HttpxClient:
     def access_token(self) -> str:
         return self._access_token
 
-    async def post(
-        self,
-        url: str,
-        *,
-        json: Any,
-        headers: dict[str, str],
-    ) -> HttpxResponse:
-        response = await self._client.post(url, json=json, headers=headers)
-        return HttpxResponse(response)
+    @property
+    def httpx_client(self) -> httpx.AsyncClient:
+        """Expose the underlying httpx client for direct use."""
+        return self._client
 
     @asynccontextmanager
     async def stream_post(

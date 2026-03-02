@@ -78,16 +78,6 @@ class HttpClient(Protocol):
         """OAuth2 access token for Authorization headers."""
         ...
 
-    async def post(
-        self,
-        url: str,
-        *,
-        json: Any,
-        headers: dict[str, str],
-    ) -> HttpResponse:
-        """Send a POST request and return the full response."""
-        raise NotImplementedError
-
     def stream_post(
         self,
         url: str,

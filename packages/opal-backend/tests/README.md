@@ -39,9 +39,6 @@ minimal shapes:
 class MockHttpClient:
     access_token = "test-token"
 
-    async def post(self, url, *, json, headers):
-        return MockResponse(status_code=200, body={"result": "ok"})
-
     @contextlib.asynccontextmanager
     async def stream_post(self, url, *, json, headers):
         yield MockStreamResponse(lines=["data: {...}"])

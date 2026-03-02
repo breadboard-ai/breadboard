@@ -303,13 +303,13 @@ class TestHttpBackendClient:
                 }
             },
         )
-        mock_client = AsyncMock()
-        mock_client.access_token = "test-token"
-        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_httpx = AsyncMock()
+        mock_httpx.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
             upstream_base="http://example.com",
-            client=mock_client,
+            httpx_client=mock_httpx,
+            access_token="test-token",
         )
         result = await backend.execute_step(
             {"planStep": {"output": "output"}},
@@ -317,7 +317,7 @@ class TestHttpBackendClient:
         assert "executionOutputs" in result
 
         # Verify URL
-        call_args = mock_client.post.call_args
+        call_args = mock_httpx.post.call_args
         assert call_args.args[0] == "http://example.com/v1beta1/executeStep"
 
     @pytest.mark.asyncio
@@ -327,13 +327,13 @@ class TestHttpBackendClient:
             500,
             json={"error": {"message": "Internal error"}},
         )
-        mock_client = AsyncMock()
-        mock_client.access_token = "test-token"
-        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_httpx = AsyncMock()
+        mock_httpx.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
             upstream_base="http://example.com",
-            client=mock_client,
+            httpx_client=mock_httpx,
+            access_token="test-token",
         )
         with pytest.raises(ValueError, match="Internal error"):
             await backend.execute_step(
@@ -347,13 +347,13 @@ class TestHttpBackendClient:
             200,
             json={"errorMessage": "Model quota exceeded"},
         )
-        mock_client = AsyncMock()
-        mock_client.access_token = "test-token"
-        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_httpx = AsyncMock()
+        mock_httpx.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
             upstream_base="http://example.com",
-            client=mock_client,
+            httpx_client=mock_httpx,
+            access_token="test-token",
         )
         with pytest.raises(ValueError, match="Model quota exceeded"):
             await backend.execute_step(
@@ -367,20 +367,20 @@ class TestHttpBackendClient:
             200,
             json={"executionOutputs": {}},
         )
-        mock_client = AsyncMock()
-        mock_client.access_token = "mytoken"
-        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_httpx = AsyncMock()
+        mock_httpx.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
             upstream_base="http://example.com",
-            client=mock_client,
+            httpx_client=mock_httpx,
+            access_token="mytoken",
             origin="http://localhost:3000",
         )
         await backend.execute_step(
             {"planStep": {"output": "out"}},
         )
 
-        call_kwargs = mock_client.post.call_args
+        call_kwargs = mock_httpx.post.call_args
         headers = call_kwargs.kwargs.get("headers", {})
         assert headers["Authorization"] == "Bearer mytoken"
         assert headers["Origin"] == "http://localhost:3000"
@@ -398,13 +398,13 @@ class TestHttpBackendClient:
             "mimeType": "image/jpeg",
         }
 
-        mock_client = AsyncMock()
-        mock_client.access_token = "my-secret-token"
-        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_httpx = AsyncMock()
+        mock_httpx.post = AsyncMock(return_value=mock_response)
 
         backend = HttpBackendClient(
             upstream_base="https://staging-appcatalyst.sandbox.googleapis.com",
-            client=mock_client,
+            httpx_client=mock_httpx,
+            access_token="my-secret-token",
             origin="http://localhost:3000",
         )
 
@@ -415,7 +415,7 @@ class TestHttpBackendClient:
         assert result == "/board/blobs/new-blob-id-123"
 
         # Verify accessToken is in the body
-        call_kwargs = mock_client.post.call_args
+        call_kwargs = mock_httpx.post.call_args
         body = call_kwargs.kwargs.get("json", {})
         assert body["driveFileId"] == "drive-file-id-abc"
         assert body["accessToken"] == "my-secret-token", (

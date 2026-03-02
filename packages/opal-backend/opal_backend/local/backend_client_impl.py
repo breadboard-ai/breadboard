@@ -4,9 +4,9 @@
 """
 HTTP-based implementation of ``BackendClient``.
 
-POSTs to One Platform endpoints via ``HttpClient``. Used by the dev
-backend and local testing. Credentials and origin are carried by the
-``HttpClient`` (google3's ``DirectBackendClient`` won't need them).
+POSTs to One Platform endpoints via ``httpx``. Used by the dev
+backend and local testing. This module is NOT synced to google3 —
+it lives in ``local/``.
 """
 
 from __future__ import annotations
@@ -15,13 +15,14 @@ import json
 import logging
 from typing import Any
 
+import httpx
+
 from ..backend_client import (
     BackendClient,
     EXECUTE_STEP_ENDPOINT,
     UPLOAD_GEMINI_FILE_ENDPOINT,
     UPLOAD_BLOB_FILE_ENDPOINT,
 )
-from ..http_client import HttpClient
 
 __all__ = ["HttpBackendClient"]
 
@@ -31,27 +32,28 @@ logger = logging.getLogger(__name__)
 class HttpBackendClient:
     """Default HTTP-based backend client.
 
-    POSTs to One Platform endpoints via ``HttpClient``. Used by the dev
-    backend and local testing. Credentials and origin are carried by the
-    ``HttpClient`` (google3's ``DirectBackendClient`` won't need them).
+    POSTs to One Platform endpoints via ``httpx``. Used by the dev
+    backend and local testing.
     """
 
     def __init__(
         self,
         *,
         upstream_base: str,
-        client: HttpClient,
+        httpx_client: httpx.AsyncClient,
+        access_token: str,
         origin: str = "",
     ) -> None:
         self._upstream_base = upstream_base
-        self._client = client
+        self._httpx = httpx_client
+        self._access_token = access_token
         self._origin = origin
 
     def _headers(self) -> dict[str, str]:
         """Build standard request headers."""
         headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self._client.access_token}",
+            "Authorization": f"Bearer {self._access_token}",
         }
         if self._origin:
             headers["Origin"] = self._origin
@@ -64,7 +66,7 @@ class HttpBackendClient:
         url = f"{self._upstream_base.rstrip('/')}{EXECUTE_STEP_ENDPOINT}"
         headers = self._headers()
 
-        response = await self._client.post(url, json=body, headers=headers)
+        response = await self._httpx.post(url, json=body, headers=headers)
 
         if response.status_code >= 400:
             error_text = response.text[:500]
@@ -98,10 +100,10 @@ class HttpBackendClient:
         # Authorization header).  The TS client does this via
         # shouldAddAccessTokenToJsonBody in fetch-allowlist.ts.
         augmented_request = {
-            **request, "accessToken": self._client.access_token
+            **request, "accessToken": self._access_token
         }
 
-        response = await self._client.post(
+        response = await self._httpx.post(
             url, json=augmented_request, headers=headers
         )
         if response.status_code >= 400:
@@ -127,11 +129,11 @@ class HttpBackendClient:
         # OP requires the access token in the JSON body (same pattern as
         # upload_gemini_file — see shouldAddAccessTokenToJsonBody in
         # fetch-allowlist.ts).
-        response = await self._client.post(
+        response = await self._httpx.post(
             url,
             json={
                 "driveFileId": drive_file_id,
-                "accessToken": self._client.access_token,
+                "accessToken": self._access_token,
             },
             headers=headers,
         )
