@@ -200,7 +200,8 @@ class DevAgentBackend:
         client = HttpxClient(access_token=access_token)
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
-            client=client,
+            httpx_client=client.httpx_client,
+            access_token=access_token,
             origin=origin,
         )
 
@@ -220,7 +221,8 @@ class DevAgentBackend:
         client = HttpxClient(access_token=access_token)
         backend = HttpBackendClient(
             upstream_base=UPSTREAM_BASE,
-            client=client,
+            httpx_client=client.httpx_client,
+            access_token=access_token,
             origin=origin,
         )
 
