@@ -361,6 +361,56 @@ suite("decodeErrorData", () => {
     assert.ok(result.message.includes("credits"));
     assert.ok(result.message.includes("video"));
   });
+
+  // --- Network kind ---
+
+  test("handles network kind via explicit metadata", () => {
+    const result = decodeErrorData("Failed to fetch", {
+      kind: "network",
+      origin: "client",
+    });
+    assert.ok(result.message.includes("Unable to reach the server"));
+    assert.strictEqual(result.metadata?.kind, "network");
+  });
+
+  test("network kind preserves original error in details", () => {
+    const result = decodeErrorData("Failed to fetch", {
+      kind: "network",
+      origin: "client",
+    });
+    assert.strictEqual(result.details, "Failed to fetch");
+  });
+
+  test("network kind via error object metadata", () => {
+    const error = errorWith("NetworkError when attempting to fetch", {
+      kind: "network",
+      origin: "client",
+    });
+    const result = decodeErrorData(error);
+    assert.ok(result.message.includes("Unable to reach the server"));
+    assert.strictEqual(result.metadata?.kind, "network");
+  });
+
+  // --- Abort kind ---
+
+  test("handles abort kind via explicit metadata", () => {
+    const result = decodeErrorData("Run stopped", {
+      kind: "abort",
+      origin: "client",
+    });
+    assert.strictEqual(result.message, "Run stopped.");
+    assert.strictEqual(result.metadata?.kind, "abort");
+  });
+
+  test("abort kind via error object metadata", () => {
+    const error = errorWith("The operation was aborted", {
+      kind: "abort",
+      origin: "client",
+    });
+    const result = decodeErrorData(error);
+    assert.strictEqual(result.message, "Run stopped.");
+    assert.strictEqual(result.metadata?.kind, "abort");
+  });
 });
 
 suite("trackError", () => {
