@@ -323,6 +323,12 @@ class Loop:
                 if function_results is None:
                     continue
 
+                # Fatal error from a function handler — propagate
+                # to the caller. Port of getResults() $error check
+                # from TS FunctionCallerImpl.
+                if isinstance(function_results, dict) and "$error" in function_results:
+                    return function_results
+
                 # Report each function result individually
                 if hooks.on_function_result:
                     for r in function_results["results"]:

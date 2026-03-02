@@ -29,6 +29,7 @@ from ..step_executor import (
     encode_base64,
 )
 from ..backend_client import BackendClient
+from ..error_classifier import to_error_or_response
 from ..task_tree_manager import TaskTreeManager
 from ..shared_schemas import (
     STATUS_UPDATE_SCHEMA,
@@ -130,7 +131,7 @@ def _define_generate_speech(
             )
         except ValueError as e:
             logger.error("generate_speech executeStep error: %s", e)
-            return {"error": str(e)}
+            return to_error_or_response({"error": str(e)})
 
         status_cb(None)
 
@@ -253,7 +254,7 @@ def _define_generate_music(
             )
         except ValueError as e:
             logger.error("generate_music executeStep error: %s", e)
-            return {"error": str(e)}
+            return to_error_or_response({"error": str(e)})
 
         status_cb(None)
 

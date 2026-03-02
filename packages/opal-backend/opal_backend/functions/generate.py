@@ -29,6 +29,7 @@ from typing import Any, Callable, Awaitable
 from ..agent_file_system import AgentFileSystem
 from ..conform_body import conform_body
 from ..backend_client import BackendClient
+from ..error_classifier import to_error_or_response
 from ..http_client import HttpClient
 from ..function_definition import (
     FunctionDefinition,
@@ -270,7 +271,7 @@ def _define_generate_text(
                             result_texts.append(part["text"])
         except Exception as e:
             logger.error("generate_text streaming error: %s", e)
-            return {"error": str(e)}
+            return to_error_or_response({"error": str(e)})
 
         status_cb(None)
 
@@ -524,7 +525,7 @@ def _define_generate_and_execute_code(
                             last_code_execution_error = None
         except Exception as e:
             logger.error("generate_code streaming error: %s", e)
-            return {"error": str(e)}
+            return to_error_or_response({"error": str(e)})
 
         # 6. Check for code execution errors
         if last_code_execution_error:

@@ -40,6 +40,7 @@ from ..step_executor import (
     encode_base64,
 )
 from ..backend_client import BackendClient
+from ..error_classifier import to_error_or_response
 from ..task_tree_manager import TaskTreeManager
 from ..shared_schemas import (
     STATUS_UPDATE_SCHEMA,
@@ -239,7 +240,7 @@ def _define_generate_video(
             logger.error("generate_video executeStep error: %s", e)
             error_msg = str(e)
             expanded = expand_veo_error(error_msg, VIDEO_MODEL_NAME)
-            return expanded
+            return to_error_or_response(expanded)
 
         status_cb(None)
 
