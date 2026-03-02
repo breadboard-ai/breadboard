@@ -4,7 +4,12 @@
 """
 In-memory virtual file system for the agent loop.
 
-Port of ``visual-editor/src/a2/agent/file-system.ts``. Provides a simple
+Port of ``visual-editor/src/a2/agent/file-system.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+Provides a simple
 ``/mnt/``-prefixed virtual file system that the agent uses to store and
 retrieve files during execution. Files are keyed by path and stored as
 ``FileDescriptor`` dicts.

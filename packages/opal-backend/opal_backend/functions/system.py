@@ -4,7 +4,12 @@
 """
 System functions for the agent loop.
 
-Port of ``functions/system.ts``. This module provides all system functions:
+Port of ``functions/system.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+This module provides all system functions:
 termination (``system_objective_fulfilled`` / ``system_failed_to_fulfill_objective``),
 file operations (``system_list_files``, ``system_write_file``,
 ``system_read_text_from_file``), and task tree management

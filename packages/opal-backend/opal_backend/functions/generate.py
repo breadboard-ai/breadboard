@@ -4,7 +4,12 @@
 """
 Generate function group for the agent loop.
 
-Port of ``functions/generate.ts``. Currently provides ``generate_text``,
+Port of ``functions/generate.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+Currently provides ``generate_text``,
 the core text-generation function that makes a sub-call to Gemini.
 
 The handler flow:

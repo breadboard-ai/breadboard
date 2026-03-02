@@ -4,7 +4,12 @@
 """
 Video generation function group for the agent loop.
 
-Port of ``callVideoGen`` from ``video-generator/main.ts``. Uses the
+Port of ``generate_video`` from ``functions/generate.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+Uses the
 ``executeStep`` API with the ``generate_video`` model API to generate
 video via One Platform (Veo models).
 

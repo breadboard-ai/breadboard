@@ -4,9 +4,15 @@
 """
 Pidgin translation utilities for the agent loop.
 
-This module is the **single source of truth** for the pidgin vocabulary —
-the set of XML-like tags (``<objective>``, ``<asset>``, ``<input>``,
-``<file>``, ``<content>``, ``<a>``) understood by Gemini.
+Port of ``pidgin-translator.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+This module is the single place in the Python package that defines the pidgin
+vocabulary — the set of XML-like tags (``<objective>``, ``<asset>``,
+``<input>``, ``<file>``, ``<content>``, ``<a>``) understood by Gemini.
+Do not duplicate pidgin logic elsewhere in the Python code.
 
 **to_pidgin**: Converts structured segments (from the wire protocol) into
 pidgin text. Registers data parts in ``AgentFileSystem`` and emits tags.

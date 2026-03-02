@@ -4,6 +4,11 @@
 """
 High-level entry points for running the agent loop.
 
+Port of ``local-agent-run.ts`` and ``loop-setup.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
 ``run()`` and ``resume()`` are async generators that yield typed
 ``AgentEvent``s. They are the canonical API for running an agent from
 any environment — callers provide only transport deps (``HttpClient``,

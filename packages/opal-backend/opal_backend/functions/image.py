@@ -4,7 +4,12 @@
 """
 Image generation function group for the agent loop.
 
-Port of ``generate_images`` from ``functions/generate.ts``. Uses the
+Port of ``generate_images`` from ``functions/generate.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+Uses the
 ``executeStep`` API with the ``ai_image_tool`` model API to generate
 images via One Platform.
 

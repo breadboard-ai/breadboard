@@ -4,6 +4,13 @@
 """
 Suspend primitives for the reconnect-based suspend/resume protocol.
 
+No direct TypeScript counterpart — the TS implementation handles suspend
+inline within the loop. This module was created for the Python backend's
+reconnect-based architecture.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path.
+
 When a function handler needs client input (e.g., ``chat_request_user_input``),
 it raises ``SuspendError``. The loop catches this, saves its state via
 ``InteractionStore``, and returns a ``SuspendResult`` to the caller.

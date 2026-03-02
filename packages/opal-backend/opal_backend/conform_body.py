@@ -4,9 +4,15 @@
 """
 Data part transforms for Gemini API compatibility.
 
+Port of the TypeScript ``conformBody`` function from
+``resolve-to-segments.ts`` and related data transform helpers.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
 Walks ``body["contents"]`` and resolves Breadboard-specific data parts
 (``storedData``, ``fileData``, ``json``) into formats that Gemini can
-consume. Port of the TypeScript ``conformBody`` function.
+consume.
 
 Transform table:
   json part            → {text: json.dumps()}

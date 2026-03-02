@@ -4,6 +4,11 @@
 """
 Streaming Gemini API client for the agent loop.
 
+Port of the streaming logic extracted from ``loop.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
 Calls the Gemini REST API via the HttpClient protocol, yielding response
 chunks as async iterables. The actual HTTP transport is injected — this
 module has no external dependencies.

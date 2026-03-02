@@ -5,7 +5,12 @@
 Shared parameter schemas for agent function definitions.
 
 Port of ``statusUpdateSchema``, ``taskIdSchema``, and ``fileNameSchema``
-from ``functions/system.ts``. These are spread into every function's
+from ``functions/system.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+These are spread into every function's
 ``parameters_json_schema`` to ensure consistent descriptions across all
 function groups.
 

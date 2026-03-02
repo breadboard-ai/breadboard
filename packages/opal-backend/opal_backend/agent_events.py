@@ -4,7 +4,12 @@
 """
 Agent event sink and hooks adapter.
 
-Port of the ``buildHooksFromSink`` pattern from ``loop-setup.ts``. The event
+Port of the ``buildHooksFromSink`` pattern from ``loop-setup.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+The event
 sink is an asyncio queue of typed event dataclasses that mirrors the TS
 ``AgentEventSink``. The ``build_hooks_from_sink`` function creates
 ``LoopHooks`` that push events into the queue — matching the TS version

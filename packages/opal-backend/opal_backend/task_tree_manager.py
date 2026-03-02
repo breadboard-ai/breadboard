@@ -4,7 +4,12 @@
 """
 Task tree manager for the agent loop.
 
-Port of ``visual-editor/src/a2/agent/task-tree-manager.ts``. Manages a
+Port of ``visual-editor/src/a2/agent/task-tree-manager.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+Manages a
 hierarchical task tree that the agent uses to plan and track execution.
 The tree is persisted as ``task_tree.json`` in the ``AgentFileSystem``.
 """

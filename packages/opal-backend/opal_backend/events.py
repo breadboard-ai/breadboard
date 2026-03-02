@@ -4,8 +4,13 @@
 """
 Strongly typed event and request models for the agent wire protocol.
 
+Port of ``agent-event.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
 These dataclasses mirror the TypeScript ``AgentEvent`` union from
-``agent-event.ts``. They are the canonical type definitions — the single
+``agent-event.ts``. They are the single place in the Python package for the
 source of truth for the SSE wire format. Google3 will have proto-generated
 bindings that mirror these structures.
 

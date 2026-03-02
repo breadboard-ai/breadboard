@@ -4,7 +4,12 @@
 """
 Chat functions for the agent loop — suspend-based.
 
-Port of ``functions/chat.ts``. These functions request user input by raising
+Port of ``functions/chat.ts``.
+
+Status: Behind flag (enableOpalBackend). The TypeScript implementation is
+the production code path. Changes to the TS source may need to be ported here.
+
+These functions request user input by raising
 ``SuspendError``. The loop catches it, saves state, and closes the stream
 with a suspend event. The client collects user input and POSTs back to
 resume the loop.
