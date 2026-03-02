@@ -151,9 +151,11 @@ def _resolve_text_model(model: str) -> str:
     """Resolve a model shorthand to a full model name."""
     if model == "pro":
         return PRO_MODEL_NAME
+    if model == "flash":
+        return FLASH_MODEL_NAME
     if model == "lite":
         return LITE_MODEL_NAME
-    return FLASH_MODEL_NAME  # default
+    return LITE_MODEL_NAME  # default — matches TS fallback
 
 
 # ---------------------------------------------------------------------------
@@ -209,7 +211,8 @@ def _define_generate_text(
         if maps_grounding:
             tools.append({"googleMaps": {}})
         if url_context:
-            # Auto-approved in dev backend (no consent flow)
+            # TODO: Implement consent flow using suspend/resume machinery
+            # (TS uses sink.suspend with ConsentType.GET_ANY_WEBPAGE).
             tools.append({"urlContext": {}})
 
         # 3. Build the Gemini body
@@ -309,28 +312,60 @@ def _define_generate_text(
                     "enum": ["pro", "flash", "lite"],
                     "description": (
                         "The Gemini model to use for text generation. "
-                        '"pro" for complex reasoning, "flash" for '
-                        'general use, "lite" for speed.'
+                        "How to choose the right model:\n\n"
+                        '- choose "pro" when reasoning over complex '
+                        "problems in code, math, and STEM, as well as "
+                        "analyzing large datasets, codebases, and "
+                        "documents using long context. Use this model "
+                        "only when dealing with exceptionally complex "
+                        "problems.\n"
+                        '- choose "flash" for large scale processing, '
+                        "low-latency, high volume tasks that require "
+                        "thinking. This is the model you would use most "
+                        "of the time.\n"
+                        '- choose "lite" for high throughput. Use this '
+                        "model when speed is paramount."
                     ),
                 },
                 "search_grounding": {
                     "type": "boolean",
                     "description": (
-                        "Whether to use Google Search grounding for "
-                        "real-time web content."
+                        "Whether or not to use Google Search grounding. "
+                        "Grounding with Google Search connects the "
+                        "Gemini model to real-time web content and works "
+                        "with all available languages. This allows "
+                        "Gemini to provide more accurate answers and "
+                        "cite verifiable sources beyond its knowledge "
+                        "cutoff."
                     ),
                 },
                 "maps_grounding": {
                     "type": "boolean",
                     "description": (
-                        "Whether to use Google Maps grounding."
+                        "Whether or not to use Google Maps grounding. "
+                        "Grounding with Google Maps connects the "
+                        "generative capabilities of Gemini with the "
+                        "rich, factual, and up-to-date data of "
+                        "Google Maps."
                     ),
                 },
                 "url_context": {
                     "type": "boolean",
                     "description": (
                         "Set to true to allow Gemini to retrieve "
-                        "context from URLs specified in the prompt."
+                        "context from URLs. Useful for tasks like: "
+                        "extracting data (pull specific info like "
+                        "prices, names, or key findings from multiple "
+                        "URLs), comparing documents (analyze multiple "
+                        "reports, articles, or PDFs to identify "
+                        "differences and track trends), synthesizing "
+                        "and creating content (combine information from "
+                        "several source URLs to generate accurate "
+                        "summaries, blog posts, or reports), and "
+                        "analyzing code and docs (point to a GitHub "
+                        "repository or technical documentation URL to "
+                        "explain code, generate setup instructions, or "
+                        "answer questions). Specify URLs in the prompt."
                     ),
                 },
                 **TASK_ID_SCHEMA,
@@ -505,6 +540,8 @@ def _define_generate_and_execute_code(
         # 7. Merge and return
         if not result_texts:
             return {"error": "No text was generated. Please try again"}
+        if len(result_texts) > 1:
+            logger.warning("More than one part generated: %s", result_texts)
         merged = "".join(result_texts)
         return {"result": merged}
 
@@ -512,7 +549,27 @@ def _define_generate_and_execute_code(
         name=GENERATE_AND_EXECUTE_CODE_FUNCTION,
         description=(
             "Generates and executes Python code, returning the result "
-            "of execution."
+            "of execution.\n\n"
+            "The code is generated by a Gemini model, so a precise spec "
+            "is all that's necessary in the prompt: Gemini will generate "
+            "the actual code.\n\n"
+            "After it's generated, the code is immediately executed in a "
+            "sandboxed environment that has access to the following "
+            "libraries:\n\n"
+            "attrs, chess, contourpy, fpdf, geopandas, imageio, jinja2, "
+            "joblib, jsonschema, jsonschema-specifications, lxml, "
+            "matplotlib, mpmath, numpy, opencv-python, openpyxl, "
+            "packaging, pandas, pillow, protobuf, pylatex, pyparsing, "
+            "PyPDF2, python-dateutil, python-docx, python-pptx, "
+            "reportlab, scikit-learn, scipy, seaborn, six, striprtf, "
+            "sympy, tabulate, tensorflow, toolz, xlrd\n\n"
+            "Code execution works best with text and CSV files.\n\n"
+            "If the code environment generates an error, the model may "
+            "decide to regenerate the code output. This can happen up "
+            "to 5 times.\n\n"
+            "NOTE: The Python code execution environment has no access "
+            "to your file system, so don't use it to access or "
+            "manipulate your files."
         ),
         handler=handler,
         icon="code",
@@ -525,15 +582,24 @@ def _define_generate_and_execute_code(
                     "description": (
                         "Detailed prompt for the code to generate. "
                         "DO NOT write Python code as the prompt. Instead "
-                        "DO use natural language. The prompt may include "
-                        "references to files as <file> tags."
+                        "DO use the natural language. This will let the "
+                        "code generator within this tool make the best "
+                        "decisions on what code to write. Your job is "
+                        "not to write code, but to direct the code "
+                        "generator.\n\n"
+                        "The prompt may include references to files as "
+                        "<file> tags. They will be correctly marshalled "
+                        "across the sandbox boundary."
                     ),
                 },
                 "search_grounding": {
                     "type": "boolean",
                     "description": (
-                        "Whether to use Google Search grounding for "
-                        "real-time web content."
+                        "Whether or not to use Google Search grounding. "
+                        "Grounding with Google Search connects the code "
+                        "generation model to real-time web content and "
+                        "works with all available languages. This allows "
+                        "Gemini to power more complex use cases."
                     ),
                 },
                 **TASK_ID_SCHEMA,
