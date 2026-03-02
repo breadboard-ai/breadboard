@@ -77,8 +77,8 @@ class TestResolveTextModel:
     def test_lite(self):
         assert _resolve_text_model("lite") == "gemini-2.5-flash-lite"
 
-    def test_unknown_defaults_to_flash(self):
-        assert _resolve_text_model("unknown") == "gemini-3-flash-preview"
+    def test_unknown_defaults_to_lite(self):
+        assert _resolve_text_model("unknown") == "gemini-2.5-flash-lite"
 
 
 # ---------------------------------------------------------------------------
