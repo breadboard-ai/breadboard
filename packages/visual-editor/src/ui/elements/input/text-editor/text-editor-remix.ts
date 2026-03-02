@@ -478,17 +478,21 @@ export class TextEditorRemix extends SignalWatcher(LitElement) {
     let charOffset = this.#selection.rangeToCharOffset(range);
 
     // Delete any selected content (e.g. the @ trigger character) via model.
+    // Use exclusive boundaries (false) so chiclets at the selection edges
+    // are preserved — deleteAtOffset's single-char chiclet-boundary shortcut
+    // would incorrectly remove an adjacent chiclet instead of the text.
     if (range && !range.collapsed) {
       const endRange = range.cloneRange();
       endRange.collapse(false);
       const endOffset = this.#selection.rangeToCharOffset(endRange);
-      charOffset = this.#model.deleteAtOffset(
-        charOffset,
-        endOffset - charOffset
-      );
+      charOffset = this.#model.deleteSelection(charOffset, endOffset, false);
     }
 
-    this.#model.insertChicletAtOffset(charOffset, part);
+    // When a chiclet already sits at this offset, the cursor was positioned
+    // after it (in the following text node). Pass afterChiclet so the new
+    // chiclet is inserted after the existing one, not before it.
+    const insertAfterChiclet = this.#model.hasChicletAtBoundary(charOffset);
+    this.#model.insertChicletAtOffset(charOffset, part, insertAfterChiclet);
 
     // Discard any pending debounced snapshot (e.g., the '@' trigger) so
     // undo jumps straight from pre-@ to post-chiclet.

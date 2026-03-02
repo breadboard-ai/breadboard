@@ -518,16 +518,28 @@ class EditorSelection {
         // If so, advance past it to the next text node so the cursor
         // appears on the far side of the chiclet.
         if (afterChiclet) {
-          const nextSig = nextSignificantSibling(child);
-          if (nextSig && isChicletNode(nextSig)) {
+          // Advance past all consecutive chiclets at this boundary.
+          // Between adjacent chiclets the text nodes contain only ZWNBSPs
+          // (zero visible chars), so we keep going until we hit a text
+          // node with real content or no more chiclets follow.
+          let curNode: Node | null = child;
+          while (curNode) {
+            const nextSig = nextSignificantSibling(curNode);
+            if (!nextSig || !isChicletNode(nextSig)) break;
             const afterNode = nextSignificantSibling(nextSig);
-            if (afterNode && afterNode.nodeType === Node.TEXT_NODE) {
-              // Offset 1 = just past the ZWNBSP landing pad.
-              const t = afterNode.textContent ?? "";
+            if (!afterNode || afterNode.nodeType !== Node.TEXT_NODE) break;
+            const t = afterNode.textContent ?? "";
+            const visibleLen = stripZWNBSP(t).length;
+            // If this text node has visible chars or no further chiclet
+            // follows, this is our final destination.
+            const nextNextSig = nextSignificantSibling(afterNode);
+            if (visibleLen > 0 || !nextNextSig || !isChicletNode(nextNextSig)) {
               const pos = t.startsWith(ZWNBSP) ? 1 : 0;
               this.#setCursorAt(afterNode, pos);
               return;
             }
+            // More chiclets ahead — keep advancing.
+            curNode = afterNode;
           }
         }
         this.#setCursorAt(child, text.length);
