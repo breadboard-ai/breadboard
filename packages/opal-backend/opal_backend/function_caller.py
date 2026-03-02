@@ -109,6 +109,11 @@ class FunctionCaller:
 
         try:
             response = await definition.handler(args, cb)
+            # If the handler returned a $error outcome (fatal error),
+            # propagate it directly — don't wrap in functionResponse.
+            # Port of FunctionCallerImpl.#callBuiltIn check from TS.
+            if isinstance(response, dict) and "$error" in response:
+                return response
             return FunctionCallResult(
                 call_id=call_id,
                 response={
@@ -141,12 +146,22 @@ class FunctionCaller:
         Returns:
             None if no function calls were queued.
             A dict with ``combined`` (LLMContent) and ``results`` (list)
-            if function calls were present.
+            if function calls were present, or a ``{"$error": ...}`` dict
+            if any function returned a fatal error.
         """
         if not self._tasks:
             return None
 
         raw_results = await asyncio.gather(*self._tasks)
+
+        # Check for fatal ($error) outcomes — port of getResults() from TS.
+        # Use the first fatal error only. Comma-joining multiple errors
+        # corrupts structured JSON strings (e.g. RESOURCE_EXHAUSTED
+        # payloads), making them unparseable by downstream consumers.
+        for r in raw_results:
+            if isinstance(r, dict) and "$error" in r:
+                return r
+
         results = [r for r in raw_results if r is not None]
 
         combined: LLMContent = {
