@@ -56,7 +56,7 @@ class FunctionCaller:
         built_in: dict[str, FunctionDefinition],
     ) -> None:
         self._built_in = built_in
-        self._tasks: list[asyncio.Task[FunctionCallResult | None]] = []
+        self._tasks: list[asyncio.Task[FunctionCallResult | dict[str, Any] | None]] = []
 
     def call(
         self,
@@ -81,7 +81,7 @@ class FunctionCaller:
         part: FunctionCallPart,
         status_callback: Any,
         reporter: Any,
-    ) -> FunctionCallResult | None:
+    ) -> FunctionCallResult | dict[str, Any] | None:
         """Execute a single function call."""
         fc = part.get("functionCall", {})
         name = fc.get("name", "")
