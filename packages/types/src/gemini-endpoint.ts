@@ -20,6 +20,6 @@ export { geminiApiPrefix };
  */
 function geminiApiPrefix(enableGeminiBackend: boolean): string {
   return enableGeminiBackend
-    ? `${OPAL_BACKEND_API_PREFIX}/v1beta/models`
+    ? `${OPAL_BACKEND_API_PREFIX}/v1beta1/models`
     : GOOGLE_GENAI_API_PREFIX;
 }

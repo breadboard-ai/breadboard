@@ -109,7 +109,7 @@ describe("geminiApiPrefix", () => {
   it("returns Opal backend prefix when enabled", () => {
     assert.strictEqual(
       geminiApiPrefix(true),
-      `${OPAL_BACKEND_API_PREFIX}/v1beta/models`
+      `${OPAL_BACKEND_API_PREFIX}/v1beta1/models`
     );
   });
 });
@@ -160,8 +160,8 @@ describe("generateImage", () => {
 
     const url = fetchWithCreds.mock.calls[0].arguments[0] as string;
     assert.ok(
-      url.startsWith(`${OPAL_BACKEND_API_PREFIX}/v1beta/models`),
-      `Expected URL to start with ${OPAL_BACKEND_API_PREFIX}/v1beta/models, got ${url}`
+      url.startsWith(`${OPAL_BACKEND_API_PREFIX}/v1beta1/models`),
+      `Expected URL to start with ${OPAL_BACKEND_API_PREFIX}/v1beta1/models, got ${url}`
     );
   });
 

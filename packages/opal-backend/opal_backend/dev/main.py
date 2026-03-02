@@ -318,13 +318,13 @@ async def create_cached_content(request: Request) -> Response:
 GENAI_MODELS_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
 
-@app.post("/v1beta/models/{model}:generateContent")
+@app.post("/v1beta1/models/{model}:generateContent")
 async def proxy_generate_content(model: str, request: Request) -> Response:
     """Proxy a generateContent call to the Gemini API."""
     return await _proxy_gemini_model_call(model, "generateContent", request)
 
 
-@app.post("/v1beta/models/{model}:streamGenerateContent")
+@app.post("/v1beta1/models/{model}:streamGenerateContent")
 async def proxy_stream_generate_content(
     model: str, request: Request
 ) -> Response:
