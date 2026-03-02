@@ -248,7 +248,7 @@ class RunStateController {
       return;
     }
     try {
-      stopController.abort(`Interrupt node "${id}"`);
+      stopController.abort(new DOMException("Run stopped", "AbortError"));
     } catch (e) {
       console.log(e);
     }

@@ -6,6 +6,7 @@
 
 import { LLMContent, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
+import { formatAgentError } from "../../utils/formatting/format-agent-error.js";
 import {
   conformGeminiBody,
   GeminiBody,
@@ -343,8 +344,7 @@ class Loop {
       }
       return this.controller.result;
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      return err(`Agent error: ${errorMessage}`);
+      return err(formatAgentError(e), { origin: "client", kind: "bug" });
     } finally {
       hooks.onFinish?.();
     }

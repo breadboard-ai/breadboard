@@ -8,6 +8,7 @@ import { OPAL_BACKEND_API_PREFIX, Outcome } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { GeminiBody } from "./gemini.js";
+import { formatAgentError } from "../../utils/formatting/format-agent-error.js";
 
 export { createCachedContent };
 
@@ -78,6 +79,6 @@ async function createCachedContent(
     }
     return json.cachedContent.name;
   } catch (e) {
-    return err((e as Error).message);
+    return err(formatAgentError(e));
   }
 }

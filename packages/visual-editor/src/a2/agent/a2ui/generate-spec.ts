@@ -20,6 +20,7 @@ import type {
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { parseJson } from "../../parse-json.js";
 import { err, ok } from "@breadboard-ai/utils";
+import { formatAgentError } from "../../../utils/formatting/format-agent-error.js";
 import { Validator } from "@cfworker/json-schema";
 
 export { generateSpec };
@@ -202,7 +203,7 @@ function toPlainJson(s: string): Outcome<JsonSerializable> {
   try {
     return JSON.parse(s);
   } catch (e) {
-    return err((e as Error).message);
+    return err(formatAgentError(e));
   }
 }
 
@@ -214,6 +215,6 @@ function parseToSchema(s: string): Outcome<GeminiSchema> {
     return maybeSchema;
   } catch (e) {
     console.log("FAILED TO PARSE SURFACE SPEC SCHEMA", e);
-    return err((e as Error).message);
+    return err(formatAgentError(e));
   }
 }

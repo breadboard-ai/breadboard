@@ -221,6 +221,19 @@ function decodeErrorData(
         };
       }
     }
+    case "network": {
+      return {
+        message: `Unable to reach the server. Please check your connection and try again.`,
+        details: richError.message,
+        metadata,
+      };
+    }
+    case "abort": {
+      return {
+        message: `Run stopped.`,
+        metadata,
+      };
+    }
     default: {
       return { message: richError.message, metadata };
     }

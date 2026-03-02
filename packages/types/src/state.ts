@@ -62,6 +62,8 @@ export type ErrorMetadata = {
    * - recitation -- triggered by recitation checker.
    * - config -- triggered by invalid configuration (can be fixed by user)
    * - bug -- triggered by a bug in code somewhere.
+   * - network -- a network-level failure (server unreachable, offline, DNS)
+   * - abort -- the operation was cancelled by the user
    * - unknown -- (default) unknown kind of error
    */
   kind?:
@@ -73,6 +75,8 @@ export type ErrorMetadata = {
     | "recitation"
     | "config"
     | "bug"
+    | "network"
+    | "abort"
     | "unknown";
   /**
    * If relevant, the name of the model that produced the error.

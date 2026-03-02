@@ -154,7 +154,7 @@ async function resolveToSegments(
   });
 
   if (errors.length > 0) {
-    return err(`Agent: ${errors.join(",")}`);
+    return err(errors.join("; "));
   }
 
   const runtimeFlags = await moduleArgs.context.flags?.flags();

@@ -132,7 +132,7 @@ class AgentFileSystem {
   #getFile(path: string): Outcome<DataPart> {
     const file = this.#files.get(path);
     if (!file) {
-      return err(`file "${path}" not found`);
+      return err(`File "${path}" not found`);
     }
     switch (file.type) {
       case "fileData":
