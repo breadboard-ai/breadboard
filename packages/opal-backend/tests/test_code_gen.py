@@ -13,6 +13,7 @@ from unittest.mock import patch, AsyncMock
 import pytest
 
 from opal_backend.agent_file_system import AgentFileSystem
+from opal_backend.task_tree_manager import TaskTreeManager
 from opal_backend.functions.generate import (
     _define_generate_and_execute_code,
     GENERATE_AND_EXECUTE_CODE_FUNCTION,
@@ -27,6 +28,11 @@ from opal_backend.functions.generate import (
 
 def _noop_status(_msg):
     pass
+
+
+def _mock_ttm() -> TaskTreeManager:
+    """Create a TaskTreeManager for tests."""
+    return TaskTreeManager(AgentFileSystem())
 
 
 async def _make_stream(*chunks: list[dict[str, Any]]) -> AsyncIterator:
@@ -89,7 +95,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler(
             {"prompt": "Calculate 2+2"},
@@ -112,7 +118,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler({"prompt": "test"}, _noop_status)
 
@@ -136,7 +142,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {"prompt": "test", "search_grounding": True},
@@ -164,7 +170,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler({"prompt": "test"}, _noop_status)
 
@@ -185,7 +191,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
         result = await defn.handler({"prompt": "test"}, statuses.append)
@@ -209,7 +215,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler({"prompt": "test"}, _noop_status)
 
@@ -233,7 +239,7 @@ class TestGenerateAndExecuteCode:
         fs = AgentFileSystem()
         fs.add_part = lambda part, name=None: {"$error": "FS full"}
 
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler({"prompt": "test"}, _noop_status)
         assert "error" in result
@@ -253,7 +259,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler({"prompt": "test"}, _noop_status)
         assert "error" in result
@@ -275,7 +281,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler({"prompt": "test"}, _noop_status)
         assert "result" in result
@@ -299,7 +305,7 @@ class TestGenerateAndExecuteCode:
         mock_stream.return_value = empty_stream()
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler({"prompt": "test"}, _noop_status)
         assert "error" in result
@@ -322,7 +328,7 @@ class TestGenerateAndExecuteCode:
         mock_stream.return_value = error_stream()
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler({"prompt": "test"}, _noop_status)
         assert "error" in result
@@ -337,7 +343,7 @@ class TestGenerateAndExecuteCode:
             "opal_backend.functions.generate.from_pidgin_string"
         ) as mock_pidgin:
             mock_pidgin.return_value = {"$error": "File not found"}
-            defn = _define_generate_and_execute_code(file_system=fs)
+            defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
             result = await defn.handler({"prompt": "test"}, _noop_status)
             assert "error" in result
             assert "File not found" in result["error"]
@@ -356,7 +362,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
         await defn.handler({"prompt": "test"}, statuses.append)
@@ -377,7 +383,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
         await defn.handler(
@@ -389,7 +395,7 @@ class TestGenerateAndExecuteCode:
     def test_function_name(self):
         """Function definition has correct name."""
         fs = AgentFileSystem()
-        defn = _define_generate_and_execute_code(file_system=fs)
+        defn = _define_generate_and_execute_code(file_system=fs, task_tree_manager=_mock_ttm())
         assert defn.name == GENERATE_AND_EXECUTE_CODE_FUNCTION
 
     def test_function_group_includes_code(self):
@@ -399,7 +405,7 @@ class TestGenerateAndExecuteCode:
         )
 
         fs = AgentFileSystem()
-        group = get_generate_function_group(file_system=fs)
+        group = get_generate_function_group(file_system=fs, task_tree_manager=_mock_ttm())
         defn_names = [name for name, _ in group.definitions]
         assert GENERATE_AND_EXECUTE_CODE_FUNCTION in defn_names
 

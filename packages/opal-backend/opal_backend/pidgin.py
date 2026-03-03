@@ -291,11 +291,11 @@ def from_pidgin_string(
         return {"$error": f"Agent unable to proceed: {','.join(errors)}"}
 
     # Merge consecutive text parts
-    merged = _merge_text_parts(parts)
+    merged = merge_text_parts(parts)
     return {"parts": merged, "role": "user"}
 
 
-def _merge_text_parts(
+def merge_text_parts(
     parts: list[dict[str, Any]], separator: str = "\n"
 ) -> list[dict[str, Any]]:
     """Merge consecutive text parts into a single text part.
