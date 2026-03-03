@@ -177,6 +177,8 @@ def _define_generate_text(
     tools, and returns the generated text.
     """
 
+    # TODO: Port full statusUpdater options from TS (expectedDurationInSec,
+    # isThought). Currently only the text is forwarded.
     StatusUpdateCallback = Callable[[str | None], None]
 
     async def handler(
@@ -263,9 +265,9 @@ def _define_generate_text(
                         continue
                     if "text" in part:
                         if part.get("thought"):
-                            # Forward thought to status (TS passes
-                            # isThought metadata, but Python loop
-                            # only uses the text).
+                            # TODO: Forward isThought metadata to
+                            # status_cb (TS passes { isThought: true }
+                            # to statusUpdater).
                             status_cb(part["text"])
                         else:
                             result_texts.append(part["text"])
@@ -427,6 +429,8 @@ def _define_generate_and_execute_code(
     returning text results and inline file outputs.
     """
 
+    # TODO: Port full statusUpdater options from TS (expectedDurationInSec,
+    # isThought). Currently only the text is forwarded.
     StatusUpdateCallback = Callable[[str | None], None]
 
     async def handler(
@@ -497,7 +501,9 @@ def _define_generate_and_execute_code(
                         continue
                     if "text" in part:
                         if part.get("thought"):
-                            # Thought parts → status update
+                            # TODO: Forward isThought metadata to
+                            # status_cb (TS passes { isThought: true }
+                            # to statusUpdater).
                             status_cb(part["text"])
                         else:
                             result_texts.append(part["text"])
