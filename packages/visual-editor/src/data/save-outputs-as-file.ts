@@ -12,6 +12,7 @@ import {
 } from "@breadboard-ai/types";
 import { isLLMContentArray } from "./common.js";
 import { createZip } from "littlezipper";
+import { decodeBase64 } from "../a2/a2/utils.js";
 
 export { saveOutputsAsFile, extensionFromMimeType };
 
@@ -87,7 +88,7 @@ function getFilename(mimeType: string, index: number) {
 function encode(file: FileData) {
   const { mimeType: type, data } = file;
   if (type.startsWith("text/")) {
-    return data;
+    return decodeBase64(data);
   }
   return b64toBlob(data);
 }
