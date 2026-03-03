@@ -37,7 +37,7 @@ from ..function_definition import (
     map_definitions,
 )
 from ..gemini_client import stream_generate_content
-from ..pidgin import content_to_pidgin_string, from_pidgin_string
+from ..pidgin import content_to_pidgin_string, from_pidgin_string, merge_text_parts
 from ..task_tree_manager import TaskTreeManager
 from ..shared_schemas import (
     STATUS_UPDATE_SCHEMA,
@@ -167,8 +167,7 @@ def _resolve_text_model(model: str) -> str:
 def _define_generate_text(
     *,
     file_system: AgentFileSystem,
-    task_tree_manager: TaskTreeManager | None = None,
-
+    task_tree_manager: TaskTreeManager,
     backend: BackendClient | None = None,
 ) -> FunctionDefinition:
     """Port of the ``generate_text`` function from generate.ts.
@@ -192,8 +191,7 @@ def _define_generate_text(
         task_id = args.get("task_id")
         status_update = args.get("status_update")
 
-        if task_tree_manager and task_id:
-            task_tree_manager.set_in_progress(task_id, status_update)
+        task_tree_manager.set_in_progress(task_id, status_update)
 
         if status_update:
             status_cb(status_update)
@@ -247,7 +245,7 @@ def _define_generate_text(
 
         # 5. Stream from Gemini
         resolved_model = _resolve_text_model(model)
-        result_texts: list[str] = []
+        result_parts: list[dict[str, Any]] = []
 
         try:
             async for chunk in stream_generate_content(
@@ -270,7 +268,7 @@ def _define_generate_text(
                             # to statusUpdater).
                             status_cb(part["text"])
                         else:
-                            result_texts.append(part["text"])
+                            result_parts.append(part)
         except Exception as e:
             logger.error("generate_text streaming error: %s", e)
             return to_error_or_response({"error": str(e)})
@@ -278,9 +276,10 @@ def _define_generate_text(
         status_cb(None)
 
         # 6. Merge and return
-        if not result_texts:
+        text_parts = merge_text_parts(result_parts, separator="")
+        if not text_parts:
             return {"error": "No text was generated. Please try again"}
-        merged = {"parts": [{"text": "".join(result_texts)}]}
+        merged = {"parts": text_parts}
         return {"text": content_to_pidgin_string(merged, file_system)}
 
     return FunctionDefinition(
@@ -419,8 +418,7 @@ _CODE_SYSTEM_INSTRUCTION = {
 def _define_generate_and_execute_code(
     *,
     file_system: AgentFileSystem,
-    task_tree_manager: TaskTreeManager | None = None,
-
+    task_tree_manager: TaskTreeManager,
     backend: BackendClient | None = None,
 ) -> FunctionDefinition:
     """Port of the ``generate_and_execute_code`` function from generate.ts.
@@ -441,8 +439,7 @@ def _define_generate_and_execute_code(
         task_id = args.get("task_id")
         status_update = args.get("status_update")
 
-        if task_tree_manager and task_id:
-            task_tree_manager.set_in_progress(task_id, status_update)
+        task_tree_manager.set_in_progress(task_id, status_update)
 
         if status_update:
             status_cb(status_update)
@@ -482,7 +479,7 @@ def _define_generate_and_execute_code(
             return {"error": f"Failed to resolve data parts: {e}"}
 
         # 5. Stream from Gemini
-        result_texts: list[str] = []
+        result_parts: list[dict[str, Any]] = []
         last_code_execution_error: str | None = None
 
         try:
@@ -506,7 +503,7 @@ def _define_generate_and_execute_code(
                             # to statusUpdater).
                             status_cb(part["text"])
                         else:
-                            result_texts.append(part["text"])
+                            result_parts.append(part)
                     elif "inlineData" in part:
                         # File result from code execution
                         file_path = file_system.add_part(part)
@@ -517,7 +514,7 @@ def _define_generate_and_execute_code(
                                     "invalid file output."
                                 )
                             }
-                        result_texts.append(f'<file src="{file_path}" />')
+                        result_parts.append({"text": f'<file src="{file_path}" />'})
                     elif "codeExecutionResult" in part:
                         outcome = part["codeExecutionResult"].get(
                             "outcome", ""
@@ -545,11 +542,12 @@ def _define_generate_and_execute_code(
         status_cb(None)
 
         # 7. Merge and return
-        if not result_texts:
+        text_parts = merge_text_parts(result_parts, separator="")
+        if not text_parts:
             return {"error": "No text was generated. Please try again"}
-        if len(result_texts) > 1:
-            logger.warning("More than one part generated: %s", result_texts)
-        merged = "".join(result_texts)
+        if len(text_parts) > 1:
+            logger.warning("More than one part generated: %s", text_parts)
+        merged = "".join(p["text"] for p in text_parts if "text" in p)
         return {"result": merged}
 
     return FunctionDefinition(
@@ -643,8 +641,7 @@ def _define_generate_and_execute_code(
 def get_generate_function_group(
     *,
     file_system: AgentFileSystem,
-    task_tree_manager: TaskTreeManager | None = None,
-
+    task_tree_manager: TaskTreeManager,
     backend: BackendClient | None = None,
 ) -> FunctionGroup:
     """Build a FunctionGroup with the generate_text function.

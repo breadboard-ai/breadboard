@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from opal_backend.agent_file_system import AgentFileSystem
+from opal_backend.task_tree_manager import TaskTreeManager
 from opal_backend.functions.generate import (
     get_generate_function_group,
     _define_generate_text,
@@ -29,6 +30,11 @@ from opal_backend.functions.generate import (
 def _noop_status(_msg):
     """No-op status callback."""
     pass
+
+
+def _mock_ttm() -> TaskTreeManager:
+    """Create a TaskTreeManager for tests."""
+    return TaskTreeManager(AgentFileSystem())
 
 
 def _make_gemini_chunks(texts: list[str]):
@@ -89,19 +95,19 @@ class TestResolveTextModel:
 class TestGetGenerateFunctionGroup:
     def test_returns_function_group(self):
         fs = AgentFileSystem()
-        group = get_generate_function_group(file_system=fs)
+        group = get_generate_function_group(file_system=fs, task_tree_manager=_mock_ttm())
         assert group.instruction is not None
         assert GENERATE_TEXT_FUNCTION in group.instruction
 
     def test_has_generate_text_declaration(self):
         fs = AgentFileSystem()
-        group = get_generate_function_group(file_system=fs)
+        group = get_generate_function_group(file_system=fs, task_tree_manager=_mock_ttm())
         names = [d["name"] for d in group.declarations]
         assert GENERATE_TEXT_FUNCTION in names
 
     def test_has_generate_text_definition(self):
         fs = AgentFileSystem()
-        group = get_generate_function_group(file_system=fs)
+        group = get_generate_function_group(file_system=fs, task_tree_manager=_mock_ttm())
         defn_names = [name for name, _ in group.definitions]
         assert GENERATE_TEXT_FUNCTION in defn_names
 
@@ -122,7 +128,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler(
             {"prompt": "Say hello", "model": "flash"},
@@ -144,7 +150,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
         result = await defn.handler(
@@ -163,7 +169,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream([])
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler(
             {"prompt": "Generate something", "model": "flash"},
@@ -182,7 +188,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {
@@ -210,7 +216,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {
@@ -236,7 +242,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {
@@ -262,7 +268,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {"prompt": "Simple prompt", "model": "flash"},
@@ -283,7 +289,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {"prompt": "Complex problem", "model": "pro"},
@@ -305,7 +311,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {"prompt": "test", "model": "lite"},
@@ -326,7 +332,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         await defn.handler(
             {"prompt": "test", "model": "flash"},
@@ -353,7 +359,7 @@ class TestGenerateTextHandler:
         })
         # The auto-generated path is /mnt/image1.png
 
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler(
             {
@@ -386,7 +392,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = failing_stream()
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         result = await defn.handler(
             {"prompt": "test", "model": "flash"},
@@ -405,7 +411,7 @@ class TestGenerateTextHandler:
         mock_stream.return_value = _fake_stream(chunks)
 
         fs = AgentFileSystem()
-        defn = _define_generate_text(file_system=fs)
+        defn = _define_generate_text(file_system=fs, task_tree_manager=_mock_ttm())
 
         statuses = []
         def track_status(msg):
