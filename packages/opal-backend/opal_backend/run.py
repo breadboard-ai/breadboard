@@ -29,11 +29,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, TypedDict
 
 from .agent_events import AgentEventSink, build_hooks_from_sink
 from .agent_file_system import AgentFileSystem
 from .backend_client import BackendClient
+from .drive_operations_client import DriveOperationsClient
 from .events import (
     AgentEvent,
     AgentResult,
@@ -52,9 +53,20 @@ from .loop import AgentRunArgs, Loop, LoopController
 from .suspend import SuspendResult
 from .task_tree_manager import TaskTreeManager
 
-__all__ = ["run", "resume"]
+__all__ = ["run", "resume", "GraphInfo", "DriveOperationsClient"]
 
 logger = logging.getLogger(__name__)
+
+
+class GraphInfo(TypedDict, total=False):
+    """Lightweight graph identity passed into run/resume.
+
+    Mirrors the ``url`` and ``title`` fields of ``GraphDescriptor``
+    from ``packages/types``.
+    """
+
+    url: str
+    title: str
 
 
 # ---------------------------------------------------------------------------
@@ -68,6 +80,8 @@ async def run(
     backend: BackendClient,
     store: InteractionStore,
     flags: dict[str, Any] | None = None,
+    graph: GraphInfo | None = None,
+    drive: DriveOperationsClient | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Start a new agent run.
 
@@ -79,6 +93,8 @@ async def run(
         backend: Backend client for all API calls.
         store: Interaction store for suspend/resume state.
         flags: Optional feature flags (e.g. ``{"googleOne": True}``).
+        graph: Optional graph identity (url, title). Reserved for future use.
+        drive: Optional Drive/Sheets operations client. Reserved for future use.
 
     Yields:
         Typed ``AgentEvent`` instances.
@@ -109,6 +125,8 @@ async def run(
         task_tree_manager=task_tree_manager,
         backend=backend,
         store=store,
+        flags=resolved_flags,
+        graph=graph,
     ):
         yield event
 
@@ -119,31 +137,35 @@ async def resume(
     response: dict[str, Any],
     backend: BackendClient,
     store: InteractionStore,
-    flags: dict[str, Any] | None = None,
+    drive: DriveOperationsClient | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Resume a suspended agent run.
 
     Loads saved state from ``store``, injects the client's response as a
     function result, rebuilds function groups, and continues the loop.
 
+    Flags and graph identity are restored from the saved interaction
+    state — callers do not need to re-supply them.
+
     Args:
         interaction_id: The interaction ID from the suspend event.
         response: The client's response to the suspend prompt.
         backend: Backend client for all API calls.
         store: Interaction store for suspend/resume state.
-        flags: Optional feature flags.
+        drive: Optional Drive/Sheets operations client. Reserved for future use.
 
     Yields:
         Typed ``AgentEvent`` instances.
 
     If the interaction ID is not found, yields a single ``ErrorEvent``.
     """
-    resolved_flags = flags or {}
-
-    state = store.load(interaction_id)
+    state = await store.load(interaction_id)
     if state is None:
         yield ErrorEvent(message=f"Unknown interaction ID: {interaction_id}")
         return
+
+    # Restore flags and graph from saved state.
+    resolved_flags = state.flags
 
     # Inject the client's response as a function result.
     fc = state.function_call_part.get("functionCall", {})
@@ -183,6 +205,8 @@ async def resume(
         task_tree_manager=state.task_tree_manager,
         backend=backend,
         store=store,
+        flags=resolved_flags,
+        graph=state.graph,
     ):
         yield event
 
@@ -247,6 +271,8 @@ async def _stream_loop(
     task_tree_manager: TaskTreeManager,
     backend: BackendClient,
     store: InteractionStore,
+    flags: dict[str, Any] | None = None,
+    graph: dict[str, Any] | None = None,
 ) -> AsyncIterator[AgentEvent]:
     """Run the loop and yield events.
 
@@ -266,13 +292,15 @@ async def _stream_loop(
             result = await loop.run(run_args)
 
             if isinstance(result, SuspendResult):
-                store.save(
+                await store.save(
                     result.interaction_id,
                     InteractionState(
                         contents=result.contents,
                         function_call_part=result.function_call_part,
                         file_system=file_system,
                         task_tree_manager=task_tree_manager,
+                        flags=flags or {},
+                        graph=graph,
                     ),
                 )
                 result.suspend_event.interaction_id = (

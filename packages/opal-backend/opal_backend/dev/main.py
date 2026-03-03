@@ -31,6 +31,9 @@ from opal_backend.agent_file_system import AgentFileSystem
 from opal_backend.events import ErrorEvent
 from opal_backend.local.api_surface import create_api_router
 from opal_backend.local.backend_client_impl import HttpBackendClient
+from opal_backend.local.drive_operations_client_impl import (
+    HttpDriveOperationsClient,
+)
 
 from opal_backend.local.interaction_store_impl import InMemoryInteractionStore
 from opal_backend.pidgin import to_pidgin
@@ -204,11 +207,17 @@ class DevAgentBackend:
             origin=origin,
         )
 
+        drive = HttpDriveOperationsClient(
+            httpx_client=httpx.AsyncClient(timeout=120.0),
+            access_token=access_token,
+        )
+
         return self._as_sse(run_agent(
             objective=objective,
             backend=backend,
             store=_interaction_store,
             flags=flags,
+            drive=drive,
         ))
 
     async def _resume(
@@ -223,11 +232,17 @@ class DevAgentBackend:
             origin=origin,
         )
 
+        drive = HttpDriveOperationsClient(
+            httpx_client=httpx.AsyncClient(timeout=120.0),
+            access_token=access_token,
+        )
+
         return self._as_sse(resume_agent(
             interaction_id=interaction_id,
             response=response,
             backend=backend,
             store=_interaction_store,
+            drive=drive,
         ))
 
     def _as_sse(self, events) -> EventSourceResponse:

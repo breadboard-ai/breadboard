@@ -51,6 +51,14 @@ class InteractionState:
     file_system: AgentFileSystem
     task_tree_manager: TaskTreeManager
 
+    # Feature flags active at the time of suspend. Restored on resume
+    # so the agent continues with the same configuration.
+    flags: dict[str, Any] = field(default_factory=dict)
+
+    # Lightweight graph identity (url, title) — a GraphInfo dict.
+    # Stored so resume() doesn't need to re-receive it.
+    graph: dict[str, Any] | None = None
+
     # The function groups config — needed to re-register tools on resume.
     # Stored as the raw arguments to the function group constructors so
     # groups can be rebuilt with the same file_system/task_tree references.
@@ -65,11 +73,11 @@ class InteractionStore(Protocol):
     save on suspend, load (and remove) on resume.
     """
 
-    def save(self, interaction_id: str, state: InteractionState) -> None:
+    async def save(self, interaction_id: str, state: InteractionState) -> None:
         """Save interaction state for later resume."""
         ...
 
-    def load(self, interaction_id: str) -> InteractionState | None:
+    async def load(self, interaction_id: str) -> InteractionState | None:
         """Load and remove interaction state.
 
         Returns None if the interaction ID is not found.
@@ -77,10 +85,10 @@ class InteractionStore(Protocol):
         """
         ...
 
-    def has(self, interaction_id: str) -> bool:
+    async def has(self, interaction_id: str) -> bool:
         """Check if an interaction is stored."""
         ...
 
-    def clear(self) -> None:
+    async def clear(self) -> None:
         """Remove all stored interactions."""
         ...

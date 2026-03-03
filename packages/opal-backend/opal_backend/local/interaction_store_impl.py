@@ -24,11 +24,11 @@ class InMemoryInteractionStore:
     def __init__(self) -> None:
         self._store: dict[str, InteractionState] = {}
 
-    def save(self, interaction_id: str, state: InteractionState) -> None:
+    async def save(self, interaction_id: str, state: InteractionState) -> None:
         """Save interaction state for later resume."""
         self._store[interaction_id] = state
 
-    def load(self, interaction_id: str) -> InteractionState | None:
+    async def load(self, interaction_id: str) -> InteractionState | None:
         """Load and remove interaction state.
 
         Returns None if the interaction ID is not found.
@@ -36,10 +36,10 @@ class InMemoryInteractionStore:
         """
         return self._store.pop(interaction_id, None)
 
-    def has(self, interaction_id: str) -> bool:
+    async def has(self, interaction_id: str) -> bool:
         """Check if an interaction is stored."""
         return interaction_id in self._store
 
-    def clear(self) -> None:
+    async def clear(self) -> None:
         """Remove all stored interactions."""
         self._store.clear()
