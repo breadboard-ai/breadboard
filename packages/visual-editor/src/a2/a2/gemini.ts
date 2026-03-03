@@ -296,6 +296,7 @@ export type UsageMetadata = {
 export type GeminiAPIOutputs = {
   candidates: Candidate[];
   usageMetadata?: UsageMetadata;
+  errorMessage?: string;
 };
 
 export type GeminiOutputs =
@@ -576,6 +577,11 @@ async function callAPI(
         );
       } else {
         const outputs = json as GeminiAPIOutputs;
+        if (outputs.errorMessage) {
+          return reporter.addError(
+            err(outputs.errorMessage, { origin: "server", model })
+          );
+        }
         const candidate = outputs?.candidates?.at(0);
         if (!candidate) {
           reporter.addJson("Model Response", outputs || result, "warning");
@@ -766,7 +772,11 @@ async function generateContent(
       const errObject = await result.text();
       return err(maybeExtractError(errObject), { origin: "server", model });
     } else {
-      return result.json();
+      const outputs = (await result.json()) as GeminiAPIOutputs;
+      if (outputs.errorMessage) {
+        return err(outputs.errorMessage, { origin: "server", model });
+      }
+      return outputs;
     }
   } catch (e) {
     return err(formatAgentError(e), { ...classifyCaughtError(e), model });
@@ -844,6 +854,11 @@ async function streamGenerateContent(
       }
 
       const firstChunk = firstResult.value;
+
+      // Check for errorMessage in the first chunk (Opal backend proxy error).
+      if (firstChunk.errorMessage) {
+        return err(firstChunk.errorMessage, { origin: "server", model });
+      }
 
       // If first chunk has meaningful content, stream in real-time
       if (hasChunkContent(firstChunk)) {
