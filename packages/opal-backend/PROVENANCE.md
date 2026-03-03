@@ -29,14 +29,14 @@
 
 ## Function Groups (`opal_backend/functions/`)
 
-| Python module | TypeScript source                         | Notes                                    |
-| ------------- | ----------------------------------------- | ---------------------------------------- |
-| `system.py`   | `functions/system.ts`                     | 7 system functions                       |
-| `generate.py` | `functions/generate.ts`                   | generate_text, generate_and_execute_code |
-| `image.py`    | `functions/generate.ts` (generate_images) | Split into own module in Python          |
-| `video.py`    | `functions/generate.ts`                   | Split into own module in Python          |
-| `audio.py`    | `functions/generate.ts`                   | Split into own module in Python          |
-| `chat.py`     | `functions/chat.ts`                       | Suspend-based user input                 |
+| Python module | TypeScript source                         | Notes                                                             |
+| ------------- | ----------------------------------------- | ----------------------------------------------------------------- |
+| `system.py`   | `functions/system.ts`                     | 7 system functions                                                |
+| `generate.py` | `functions/generate.ts`                   | generate_text, generate_and_execute_code                          |
+| `image.py`    | `functions/generate.ts` (generate_images) | Split into own module in Python; enableG1Quota is caller-injected |
+| `video.py`    | `functions/generate.ts`                   | Split into own module in Python                                   |
+| `audio.py`    | `functions/generate.ts`                   | Split into own module in Python                                   |
+| `chat.py`     | `functions/chat.ts`                       | Suspend-based user input                                          |
 
 ## Not Ported (TS-only)
 

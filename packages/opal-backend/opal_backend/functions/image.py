@@ -180,20 +180,24 @@ def _define_generate_images(
         if not output_chunks:
             return {"error": "No images were generated. Please try again"}
 
+        # Flatten all parts from all chunks (port of TS mergeContent).
+        all_parts: list[dict[str, Any]] = []
+        for llm_content in output_chunks:
+            for part in llm_content.get("parts", []):
+                all_parts.append(part)
+
         errors: list[str] = []
         image_paths: list[str] = []
 
-        for i, llm_content in enumerate(output_chunks):
-            parts = llm_content.get("parts", [])
-            for part in parts:
-                name = file_name
-                if name and len(output_chunks) > 1:
-                    name = f"{name}_{i + 1}"
-                result_path = file_system.add_part(part, name)
-                if isinstance(result_path, dict) and "$error" in result_path:
-                    errors.append(result_path["$error"])
-                elif isinstance(result_path, str):
-                    image_paths.append(result_path)
+        for i, part in enumerate(all_parts):
+            name = file_name
+            if name and len(all_parts) > 1:
+                name = f"{name}_{i + 1}"
+            result_path = file_system.add_part(part, name)
+            if isinstance(result_path, dict) and "$error" in result_path:
+                errors.append(result_path["$error"])
+            elif isinstance(result_path, str):
+                image_paths.append(result_path)
 
         if errors:
             return {"error": ", ".join(errors)}
