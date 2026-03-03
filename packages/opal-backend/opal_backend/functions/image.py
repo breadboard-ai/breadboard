@@ -97,18 +97,14 @@ def _define_generate_images(
 
         status_cb(status_update or "Generating Image(s)")
 
-        # 1. Resolve input image paths from agent FS
-        image_chunks: list[dict[str, Any]] = []
-        for image_path in input_images:
-            result = file_system.get(image_path)
-            if isinstance(result, dict) and "$error" in result:
-                return {"error": result["$error"]}
-            # result is a list of data parts
-            if not result:
-                return {"error": f'Empty file: "{image_path}"'}
-            data_part = result[0]
+        # 1. Resolve input image paths from agent FS (batch, like TS getMany)
+        image_parts = file_system.get_many(input_images)
+        if isinstance(image_parts, dict) and "$error" in image_parts:
+            return {"error": image_parts["$error"]}
 
-            # 2. Convert to executeStep chunk
+        # 2. Convert to executeStep chunks
+        image_chunks: list[dict[str, Any]] = []
+        for data_part in image_parts:
             try:
                 chunk = await resolve_part_to_chunk(
                     data_part,

@@ -141,6 +141,28 @@ class AgentFileSystem:
 
         return [self._file_to_part(file)]
 
+    def get_many(
+        self, paths: list[str]
+    ) -> list[dict[str, Any]] | dict[str, str]:
+        """Get data parts for multiple file paths.
+
+        Port of ``getMany`` from ``file-system.ts``.
+
+        Resolves all paths (even if some fail), collects all errors,
+        and returns them joined by ``","``.
+        """
+        errors: list[str] = []
+        parts: list[dict[str, Any]] = []
+        for path in paths:
+            result = self.get(path)
+            if isinstance(result, dict) and "$error" in result:
+                errors.append(result["$error"])
+            else:
+                parts.extend(result)
+        if errors:
+            return {"$error": ",".join(errors)}
+        return parts
+
     def list_files(self) -> str:
         """List all files as newline-separated paths."""
         all_paths = list(self._files.keys()) + list(self._system_files.keys())
